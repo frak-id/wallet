@@ -43,26 +43,6 @@ export function Balance() {
         setIsHidden((prev) => !prev);
     };
 
-    const handlePendingClick = () => {
-        if (document.activeElement instanceof HTMLElement) {
-            document.activeElement.blur();
-        }
-        if (amount <= 0) {
-            openModal({ id: "emptyPendingGains" });
-        } else {
-            openModal({ id: "pendingGains" });
-        }
-    };
-
-    const handleLifetimeClick = () => {
-        if (amount <= 0) {
-            if (document.activeElement instanceof HTMLElement) {
-                document.activeElement.blur();
-            }
-            openModal({ id: "emptyTransferredGains" });
-        }
-    };
-
     return (
         <Card className={styles.balanceLayout}>
             <Box className={styles.balanceCardHeader}>
@@ -119,24 +99,37 @@ export function Balance() {
                 </Button>
             </Box>
 
-            <StatCardsRow
-                onPendingClick={handlePendingClick}
-                onLifetimeClick={handleLifetimeClick}
-            />
+            <StatCardsRow />
         </Card>
     );
 }
 
-type StatCardsRowProps = {
-    onPendingClick: () => void;
-    onLifetimeClick: () => void;
-};
-
-function StatCardsRow({ onPendingClick, onLifetimeClick }: StatCardsRowProps) {
+function StatCardsRow() {
     const { t } = useTranslation();
     const { userBalance } = useGetUserBalance();
     const { totalClaimable } = useGetPendingRewards();
     const totalEur = userBalance?.total?.eurAmount ?? 0;
+    const openModal = modalStore((s) => s.openModal);
+
+    const handlePendingClick = () => {
+        if (document.activeElement instanceof HTMLElement) {
+            document.activeElement.blur();
+        }
+        if (totalClaimable <= 0) {
+            openModal({ id: "emptyPendingGains" });
+        } else {
+            openModal({ id: "pendingGains" });
+        }
+    };
+
+    const handleLifetimeClick = () => {
+        if (totalEur <= 0) {
+            if (document.activeElement instanceof HTMLElement) {
+                document.activeElement.blur();
+            }
+            openModal({ id: "emptyTransferredGains" });
+        }
+    };
 
     return (
         <Box className={styles.statCardsRow}>
@@ -144,7 +137,7 @@ function StatCardsRow({ onPendingClick, onLifetimeClick }: StatCardsRowProps) {
                 as="button"
                 type="button"
                 className={styles.statCardButton}
-                onClick={onPendingClick}
+                onClick={handlePendingClick}
             >
                 <StatCard
                     amount={`${totalClaimable.toFixed(0)}€`}
@@ -156,7 +149,7 @@ function StatCardsRow({ onPendingClick, onLifetimeClick }: StatCardsRowProps) {
                 as="button"
                 type="button"
                 className={styles.statCardButton}
-                onClick={onLifetimeClick}
+                onClick={handleLifetimeClick}
             >
                 <StatCard
                     amount={`${totalEur.toFixed(0)}€`}
