@@ -1,4 +1,3 @@
-import type { ButtonProps } from "@frak-labs/ui/component/Button";
 import type {
     OnPairingSuccessCallback,
     OriginIdentityNode,
@@ -13,7 +12,7 @@ type AuthenticateWithPhoneProps = {
     as?: ElementType;
     text: string;
     className?: string;
-    width?: ButtonProps["width"];
+    width?: "auto" | "full";
     onSuccess?: OnPairingSuccessCallback;
 };
 

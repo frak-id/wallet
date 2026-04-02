@@ -54,7 +54,7 @@ vi.mock("@/module/stores/resolvingContextStore", () => ({
         }),
 }));
 
-vi.mock("@frak-labs/ui/hook/useMediaQuery", () => ({
+vi.mock("@frak-labs/design-system/hooks/useMediaQuery", () => ({
     useMediaQuery: () => true,
 }));
 

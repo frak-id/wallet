@@ -1,4 +1,4 @@
-import { Overlay } from "@frak-labs/ui/component/Overlay";
+import { Overlay } from "@frak-labs/design-system/components/Overlay";
 import { prefixWalletCss } from "@frak-labs/ui/utils/prefixWalletCss";
 import { InAppBrowserToast, sessionStore } from "@frak-labs/wallet-shared";
 import { cva, cx } from "class-variance-authority";
@@ -42,13 +42,7 @@ export function ListenerWallet() {
             >
                 <CurrentEmbeddedViewComponent />
             </div>
-            <Overlay
-                onOpenChange={(value) => {
-                    if (!value) {
-                        clearRequest();
-                    }
-                }}
-            />
+            <Overlay onClick={() => clearRequest()} />
         </>
     );
 }

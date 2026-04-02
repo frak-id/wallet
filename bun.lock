@@ -105,6 +105,7 @@
       "dependencies": {
         "@frak-labs/app-essentials": "workspace:*",
         "@frak-labs/core-sdk": "workspace:*",
+        "@frak-labs/design-system": "workspace:*",
         "@frak-labs/frame-connector": "workspace:*",
         "@frak-labs/ui": "workspace:*",
         "@frak-labs/wallet-shared": "workspace:*",
@@ -132,6 +133,7 @@
         "@types/jsdom": "^28.0.0",
         "@types/react": "catalog:",
         "@types/react-dom": "catalog:",
+        "@vanilla-extract/vite-plugin": "^5.2.0",
         "@vitejs/plugin-react": "catalog:",
         "@vitest/coverage-v8": "^4.1.0",
         "@vitest/ui": "^4.1.0",

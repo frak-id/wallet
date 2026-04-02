@@ -1,5 +1,5 @@
+import { useMediaQuery } from "@frak-labs/design-system/hooks/useMediaQuery";
 import { RpcErrorCodes } from "@frak-labs/frame-connector";
-import { useMediaQuery } from "@frak-labs/ui/hook/useMediaQuery";
 import { LogoFrakWithName } from "@frak-labs/ui/icons/LogoFrakWithName";
 import { prefixModalCss } from "@frak-labs/ui/utils/prefixModalCss";
 import {
