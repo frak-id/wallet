@@ -61,12 +61,13 @@ export function WelcomeCard() {
         setIsDetailOpen(true);
     };
 
-    const handleKeyDown = (callback: (() => void) | undefined) => (event: KeyboardEvent) => {
-        if (callback && (event.key === "Enter" || event.key === " ")) {
-            event.preventDefault();
-            callback();
-        }
-    };
+    const handleKeyDown =
+        (callback: (() => void) | undefined) => (event: KeyboardEvent) => {
+            if (callback && (event.key === "Enter" || event.key === " ")) {
+                event.preventDefault();
+                callback();
+            }
+        };
 
     if (visibleSlides.length === 0) {
         return null;

@@ -1,4 +1,6 @@
 import { SuccessOverlay } from "@/module/common/component/SuccessOverlay";
+import { Keypass } from "@/module/onboarding/component/Keypass";
+import { RecoveryCodeSuccessModal } from "@/module/recovery-code/component/RecoveryCodeSuccessModal";
 import { modalStore, selectModal } from "@/module/stores/modalStore";
 import { EmptyPendingGainsModal } from "@/module/tokens/component/EmptyPendingGainsModal";
 import { EmptyTransferModal } from "@/module/tokens/component/EmptyTransferModal";
@@ -30,5 +32,9 @@ export function ModalOutlet() {
             return <EmptyTransferredGainsModal onClose={closeModal} />;
         case "successOverlay":
             return <SuccessOverlay visible={true} onDone={closeModal} />;
+        case "keypass":
+            return <Keypass onClose={closeModal} {...modal} />;
+        case "recoveryCodeSuccess":
+            return <RecoveryCodeSuccessModal onClose={closeModal} />;
     }
 }
