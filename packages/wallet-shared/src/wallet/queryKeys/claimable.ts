@@ -8,6 +8,7 @@ export namespace claimableKey {
      * The base key
      */
     const base = "claimable" as const;
+    export const baseKey = [base] as const;
 
     /**
      * Query keys for pending claimable

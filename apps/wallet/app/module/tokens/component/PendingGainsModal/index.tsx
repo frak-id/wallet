@@ -1,6 +1,5 @@
 import {
     addresses,
-    currentStablecoinsList,
     rewarderHubAbi,
 } from "@frak-labs/app-essentials/blockchain";
 import { Box } from "@frak-labs/design-system/components/Box";
@@ -13,14 +12,14 @@ import {
     currentViemClient,
     rewardsKey,
 } from "@frak-labs/wallet-shared";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useMemo } from "react";
+import { useMutation } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
-import { encodeFunctionData, erc20Abi, formatUnits } from "viem";
-import { multicall, waitForTransactionReceipt } from "viem/actions";
+import { encodeFunctionData } from "viem";
+import { waitForTransactionReceipt } from "viem/actions";
 import { useAccount, useSendTransaction } from "wagmi";
 import { CloseButton } from "@/module/common/component/CloseButton";
 import { modalStore } from "@/module/stores/modalStore";
+import { useGetPendingRewards } from "../../hooks/useGetPendingRewards";
 import * as styles from "./index.css";
 
 type PendingGainsModalProps = {
@@ -29,69 +28,20 @@ type PendingGainsModalProps = {
 
 export function PendingGainsModal({ onClose }: PendingGainsModalProps) {
     const { t } = useTranslation();
-    const queryClient = useQueryClient();
     const { address } = useAccount();
     const { sendTransactionAsync } = useSendTransaction();
-
-    // Fetch claimable amounts via on-chain multicall
-    const { data: pendingReward, refetch: refetchPendingReward } = useQuery({
-        queryKey: claimableKey.pending.byAddress(address),
-        queryFn: async () => {
-            if (!address) return [];
-
-            const contracts = currentStablecoinsList.flatMap(
-                (token) =>
-                    [
-                        {
-                            address: addresses.rewarderHub,
-                            abi: rewarderHubAbi,
-                            functionName: "getClaimable",
-                            args: [address, token],
-                        },
-                        {
-                            address: token,
-                            abi: erc20Abi,
-                            functionName: "decimals",
-                        },
-                    ] as const
-            );
-
-            const result = await multicall(currentViemClient, {
-                contracts,
-                allowFailure: false,
-            });
-
-            return currentStablecoinsList
-                .map((token, index) => ({
-                    token,
-                    amount: result[index * 2] as bigint,
-                    decimals: result[index * 2 + 1] as number,
-                }))
-                .filter((item) => item.amount > 0n);
-        },
-        enabled: !!address,
-        meta: { storable: false },
-    });
-
-    const totalClaimable = useMemo(() => {
-        if (!pendingReward?.length) return 0;
-        return pendingReward.reduce(
-            (sum, item) =>
-                sum + Number(formatUnits(item.amount, item.decimals)),
-            0
-        );
-    }, [pendingReward]);
+    const { totalClaimable, pendingRewards } = useGetPendingRewards();
 
     // Claim mutation
     const { mutateAsync: sendClaimTxs, isPending } = useMutation({
         mutationKey: claimableKey.claim.byAddress(address),
-        mutationFn: async () => {
-            if (!(pendingReward?.length && address)) return;
+        mutationFn: async (_data, { client }) => {
+            if (!(pendingRewards?.length && address)) return;
 
             const data = encodeFunctionData({
                 abi: rewarderHubAbi,
                 functionName: "claimBatch",
-                args: [pendingReward.map(({ token }) => token)],
+                args: [pendingRewards.map(({ token }) => token)],
             });
 
             const txHash = await sendTransactionAsync({
@@ -99,32 +49,31 @@ export function PendingGainsModal({ onClose }: PendingGainsModalProps) {
                 data,
             });
 
-            queryClient.setQueryData(
-                claimableKey.pending.byAddress(address),
-                []
-            );
+            client.setQueryData(claimableKey.pending.byAddress(address), []);
             await waitForTransactionReceipt(currentViemClient, {
                 hash: txHash,
             });
-            await refetchPendingReward();
-            await queryClient.invalidateQueries({
-                queryKey: balanceKey.baseKey,
-                exact: false,
-            });
-            await queryClient.invalidateQueries({
-                queryKey: rewardsKey.all,
-                exact: false,
-            });
+
+            await Promise.all([
+                client.invalidateQueries({
+                    queryKey: claimableKey.baseKey,
+                    exact: false,
+                }),
+                client.invalidateQueries({
+                    queryKey: balanceKey.baseKey,
+                    exact: false,
+                }),
+                client.invalidateQueries({
+                    queryKey: rewardsKey.all,
+                    exact: false,
+                }),
+            ]);
             return txHash;
         },
         onSuccess: () => {
             modalStore.getState().openModal({ id: "successOverlay" });
         },
     });
-
-    const title = t("wallet.pendingGains.subtitle");
-    const description = t("wallet.pendingGains.description");
-    const closeLabel = t("common.close");
 
     const formattedAmount = `+${totalClaimable.toFixed(2).replace(".", ",")}€`;
 
@@ -134,11 +83,11 @@ export function PendingGainsModal({ onClose }: PendingGainsModalProps) {
             onOpenChange={(open) => {
                 if (!open) onClose();
             }}
-            title={title}
-            description={description}
+            title={t("wallet.pendingGains.subtitle")}
+            description={t("wallet.pendingGains.description")}
             header={
                 <CloseButton
-                    ariaLabel={closeLabel}
+                    ariaLabel={t("common.close")}
                     iconSize={24}
                     variant="inline"
                     onClick={onClose}

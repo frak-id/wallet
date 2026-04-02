@@ -16,6 +16,7 @@ import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { isCryptoMode } from "@/module/common/utils/walletMode";
 import { modalStore } from "@/module/stores/modalStore";
+import { useGetPendingRewards } from "../../hooks/useGetPendingRewards";
 import * as styles from "./index.css";
 
 export function Balance() {
@@ -134,6 +135,7 @@ type StatCardsRowProps = {
 function StatCardsRow({ onPendingClick, onLifetimeClick }: StatCardsRowProps) {
     const { t } = useTranslation();
     const { userBalance } = useGetUserBalance();
+    const { totalClaimable } = useGetPendingRewards();
     const totalEur = userBalance?.total?.eurAmount ?? 0;
 
     return (
@@ -145,7 +147,7 @@ function StatCardsRow({ onPendingClick, onLifetimeClick }: StatCardsRowProps) {
                 onClick={onPendingClick}
             >
                 <StatCard
-                    amount={`${totalEur.toFixed(0)}€`}
+                    amount={`${totalClaimable.toFixed(0)}€`}
                     label={t("wallet.stats.pending")}
                     icon={<HourglassIcon width={14} height={14} />}
                 />
