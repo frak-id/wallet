@@ -49,7 +49,6 @@
   },
   "dependencies": {
     "@frak-labs/core-sdk": "workspace:*",
-    "@frak-labs/ui": "workspace:*"
   },
   "devDependencies": {
     "@frak-labs/dev-tooling": "workspace:*",

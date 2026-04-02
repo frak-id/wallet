@@ -1,8 +1,8 @@
-import { mergeElement } from "@frak-labs/ui/utils/mergeElement";
-import { prefixModalCss } from "@frak-labs/ui/utils/prefixModalCss";
 import * as AlertDialogPrimitive from "@radix-ui/react-alert-dialog";
 import { X } from "lucide-react";
 import type { ReactNode } from "react";
+import { mergeElement } from "../../../common/utils/mergeElement";
+import { prefixModalCss } from "../../../common/utils/prefixModalCss";
 import styles from "./index.module.css";
 
 type WalletModalProps = {

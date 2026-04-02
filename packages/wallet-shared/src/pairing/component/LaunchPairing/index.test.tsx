@@ -15,7 +15,7 @@ vi.mock("react-i18next", () => ({
 }));
 
 // Mock UI components
-vi.mock("@frak-labs/ui/component/Spinner", () => ({
+vi.mock("@frak-labs/design-system/components/Spinner", () => ({
     Spinner: () => <div data-testid="spinner">Loading</div>,
 }));
 

@@ -1,5 +1,5 @@
-import { onDocumentReady } from "@frak-labs/ui/utils/onDocumentReady";
 import { initFrakSdk } from "./initFrakSdk";
+import { onDocumentReady } from "./onDocumentReady";
 import { styleManager } from "./styleManager";
 
 // Prevent FOUCE: hide undefined custom elements until they're registered

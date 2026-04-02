@@ -84,7 +84,6 @@
   "devDependencies": {
     "@frak-labs/dev-tooling": "workspace:*",
     "@frak-labs/test-foundation": "workspace:*",
-    "@frak-labs/ui": "workspace:*",
     "@preact/preset-vite": "^2.10.4",
     "@rolldown/plugin-node-polyfills": "^1.0.3",
     "@testing-library/jest-dom": "^6.9.1",

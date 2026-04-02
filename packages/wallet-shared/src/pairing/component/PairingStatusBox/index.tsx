@@ -1,5 +1,4 @@
-import { Button } from "@frak-labs/ui/component/Button";
-import { Spinner } from "@frak-labs/ui/component/Spinner";
+import { Spinner } from "@frak-labs/design-system/components/Spinner";
 import { RefreshCcw } from "lucide-react";
 import { type PropsWithChildren, useMemo } from "react";
 import { useTranslation } from "react-i18next";
@@ -105,15 +104,14 @@ function StatusBoxRetry() {
 
     return (
         <>
-            <Button
-                size={"none"}
-                variant={"ghost"}
+            <button
+                type="button"
                 className={styles.statusBox__retry}
                 onClick={() => client.reconnect()}
             >
                 <RefreshCcw size={12} />
                 {t("wallet.pairing.refresh")}
-            </Button>
+            </button>
             {(code || reason) && (
                 <p className={styles.statusBox__retryText}>
                     {code && (
