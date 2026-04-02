@@ -1,6 +1,4 @@
 import { isTauri } from "@frak-labs/app-essentials/utils/platform";
-import { Box } from "@frak-labs/design-system/components/Box";
-import { Card } from "@frak-labs/design-system/components/Card";
 import {
     Select,
     SelectContent,
@@ -9,7 +7,6 @@ import {
     SelectValue,
 } from "@frak-labs/design-system/components/Select";
 import { Switch } from "@frak-labs/design-system/components/Switch";
-import { Text } from "@frak-labs/design-system/components/Text";
 import { BellIcon, FaceIdIcon } from "@frak-labs/design-system/icons";
 import { useQueryClient } from "@tanstack/react-query";
 import { ShieldCheck } from "lucide-react";
@@ -27,6 +24,10 @@ import { notificationAdapter } from "@/module/notification/adapter";
 import { useNotificationStatus } from "@/module/notification/hook/useNotificationSetupStatus";
 import { useUnsubscribeFromPushNotification } from "@/module/notification/hook/useUnsubscribeFromPushNotification";
 import { notificationKey } from "@/module/notification/queryKeys/notification";
+import {
+    SettingsCard,
+    SettingsRow,
+} from "@/module/settings/component/SettingsCard";
 import * as styles from "./index.css";
 
 function NotificationRow() {
@@ -58,22 +59,19 @@ function NotificationRow() {
     };
 
     return (
-        <Box className={styles.row}>
-            <Box className={styles.rowContent}>
-                <BellIcon width={24} height={24} className={styles.icon} />
-                <Box className={styles.textGroup}>
-                    <Text as="span" variant="body" weight="medium">
-                        {t("wallet.profile.notificationSettings")}
-                    </Text>
-                </Box>
-            </Box>
-            <Switch
-                checked={true}
-                disabled={isPending}
-                onCheckedChange={handleToggle}
-                className={styles.switchControl}
+        <SettingsCard>
+            <SettingsRow
+                icon={BellIcon}
+                label={t("wallet.profile.notificationSettings")}
+                action={
+                    <Switch
+                        checked={true}
+                        disabled={isPending}
+                        onCheckedChange={handleToggle}
+                    />
+                }
             />
-        </Box>
+        </SettingsCard>
     );
 }
 
@@ -110,66 +108,50 @@ function BiometricRow() {
     };
 
     return (
-        <>
-            <Box className={styles.row}>
-                <Box className={styles.rowContent}>
-                    <FaceIdIcon
-                        width={24}
-                        height={24}
-                        strokeWidth={1.5}
-                        className={styles.icon}
-                    />
-                    <Box className={styles.textGroup}>
-                        <Text as="span" variant="body" weight="medium">
-                            {t("wallet.profile.biometricPrompt", {
-                                defaultValue:
-                                    "Require {{biometryLabel}} at every app launch",
-                                biometryLabel,
-                            })}
-                        </Text>
-                    </Box>
-                </Box>
-                <Switch
-                    checked={enabled}
-                    onCheckedChange={handleToggle}
-                    className={styles.switchControl}
-                />
-            </Box>
+        <SettingsCard>
+            <SettingsRow
+                icon={FaceIdIcon}
+                align="top"
+                label={t("wallet.profile.biometricPrompt", {
+                    defaultValue:
+                        "Require {{biometryLabel}} at every app launch",
+                    biometryLabel,
+                })}
+                action={
+                    <Switch checked={enabled} onCheckedChange={handleToggle} />
+                }
+            />
             {enabled ? (
-                <Box className={styles.row}>
-                    <Box className={styles.rowContent}>
-                        <ShieldCheck size={18} className={styles.icon} />
-                        <Box className={styles.textGroup}>
-                            <Text as="span" variant="body" weight="medium">
-                                {t("biometrics.settings.timeout")}
-                            </Text>
-                        </Box>
-                    </Box>
-                    <Select
-                        value={lockTimeout}
-                        onValueChange={handleTimeoutChange}
-                    >
-                        <SelectTrigger className={styles.selectTrigger}>
-                            <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                            <SelectItem value="immediate">
-                                {t("biometrics.settings.timeoutImmediate")}
-                            </SelectItem>
-                            <SelectItem value="1min">
-                                {t("biometrics.settings.timeout1min")}
-                            </SelectItem>
-                            <SelectItem value="5min">
-                                {t("biometrics.settings.timeout5min")}
-                            </SelectItem>
-                            <SelectItem value="15min">
-                                {t("biometrics.settings.timeout15min")}
-                            </SelectItem>
-                        </SelectContent>
-                    </Select>
-                </Box>
+                <SettingsRow
+                    icon={ShieldCheck}
+                    label={t("biometrics.settings.timeout")}
+                    action={
+                        <Select
+                            value={lockTimeout}
+                            onValueChange={handleTimeoutChange}
+                        >
+                            <SelectTrigger className={styles.selectTrigger}>
+                                <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="immediate">
+                                    {t("biometrics.settings.timeoutImmediate")}
+                                </SelectItem>
+                                <SelectItem value="1min">
+                                    {t("biometrics.settings.timeout1min")}
+                                </SelectItem>
+                                <SelectItem value="5min">
+                                    {t("biometrics.settings.timeout5min")}
+                                </SelectItem>
+                                <SelectItem value="15min">
+                                    {t("biometrics.settings.timeout15min")}
+                                </SelectItem>
+                            </SelectContent>
+                        </Select>
+                    }
+                />
             ) : null}
-        </>
+        </SettingsCard>
     );
 }
 
@@ -179,16 +161,8 @@ export function ProfilePreferencesCard() {
 
     return (
         <>
-            {hasLocalCapability && (
-                <Card padding="none" className={styles.card}>
-                    <NotificationRow />
-                </Card>
-            )}
-            {isBiometricsAvailable && (
-                <Card padding="none" className={styles.card}>
-                    <BiometricRow />
-                </Card>
-            )}
+            {hasLocalCapability && <NotificationRow />}
+            {isBiometricsAvailable && <BiometricRow />}
         </>
     );
 }

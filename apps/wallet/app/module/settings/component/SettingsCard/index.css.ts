@@ -12,13 +12,13 @@ export const row = style({
     alignItems: "center",
     justifyContent: "space-between",
     gap: alias.spacing.s,
+    padding: `${alias.spacing.s} ${alias.spacing.m}`,
     color: "inherit",
     textDecoration: "none",
-    selectors: {
-        "&:first-of-type": {
-            borderTop: "none",
-        },
-    },
+});
+
+export const rowTop = style({
+    alignItems: "flex-start",
 });
 
 export const rowContent = style({
@@ -26,7 +26,10 @@ export const rowContent = style({
     display: "flex",
     alignItems: "center",
     gap: alias.spacing.m,
-    padding: alias.spacing.s,
+});
+
+export const rowContentTop = style({
+    alignItems: "flex-start",
 });
 
 export const icon = style({
@@ -34,9 +37,19 @@ export const icon = style({
     flexShrink: 0,
 });
 
-export const textGroup = style({
-    minWidth: 0,
-    display: "flex",
-    flexDirection: "column",
-    gap: alias.spacing.xxs,
+export const action = style({
+    flexShrink: 0,
+});
+
+export const actionButton = style({
+    cursor: "pointer",
+    background: "none",
+    border: "none",
+    padding: 0,
+    textDecoration: "none",
+    selectors: {
+        "&:disabled": {
+            cursor: "not-allowed",
+        },
+    },
 });
