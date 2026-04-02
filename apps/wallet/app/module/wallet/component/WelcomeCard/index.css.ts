@@ -112,13 +112,6 @@ export const featureItem = style({
     gap: alias.spacing.xxs,
 });
 
-export const notificationAction = style({
-    alignSelf: "flex-start",
-    paddingInline: 0,
-    paddingBlock: 0,
-    textAlign: "left",
-});
-
 export const featureIcon = style({
     width: "12px",
     height: "20px",

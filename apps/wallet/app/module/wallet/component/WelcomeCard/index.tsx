@@ -1,6 +1,6 @@
 import { Box } from "@frak-labs/design-system/components/Box";
 import { Card } from "@frak-labs/design-system/components/Card";
-import { type MouseEvent, useState } from "react";
+import { type KeyboardEvent, type MouseEvent, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { CloseButton } from "@/module/common/component/CloseButton";
 import { useSlideCarousel } from "@/module/common/hook/useSlideCarousel";
@@ -61,6 +61,13 @@ export function WelcomeCard() {
         setIsDetailOpen(true);
     };
 
+    const handleKeyDown = (callback: (() => void) | undefined) => (event: KeyboardEvent) => {
+        if (callback && (event.key === "Enter" || event.key === " ")) {
+            event.preventDefault();
+            callback();
+        }
+    };
+
     if (visibleSlides.length === 0) {
         return null;
     }
@@ -90,16 +97,19 @@ export function WelcomeCard() {
                                 variant="secondary"
                                 padding="none"
                                 className={styles.cardContainer}
+                                role="button"
+                                tabIndex={0}
                                 onClick={
                                     slide.kind === "intro"
                                         ? handleIntroClick
-                                        : undefined
+                                        : slide.onAction
                                 }
-                                style={
+                                onKeyDown={handleKeyDown(
                                     slide.kind === "intro"
-                                        ? { cursor: "pointer" }
-                                        : undefined
-                                }
+                                        ? handleIntroClick
+                                        : slide.onAction
+                                )}
+                                style={{ cursor: "pointer" }}
                             >
                                 {index === currentIndex && (
                                     <CloseButton
@@ -117,8 +127,6 @@ export function WelcomeCard() {
                                     <NotificationSlide
                                         title={slide.title}
                                         actionI18nKey={slide.actionI18nKey}
-                                        onAction={slide.onAction}
-                                        isActionPending={slide.isActionPending}
                                     />
                                 )}
                             </Card>

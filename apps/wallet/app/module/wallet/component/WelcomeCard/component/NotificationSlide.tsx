@@ -1,5 +1,4 @@
 import { Box } from "@frak-labs/design-system/components/Box";
-import { Button } from "@frak-labs/design-system/components/Button";
 import { Text } from "@frak-labs/design-system/components/Text";
 import { Trans } from "react-i18next";
 import * as styles from "../index.css";
@@ -8,15 +7,11 @@ import notificationIcon from "../notification_icon.svg";
 
 type NotificationSlideProps = {
     actionI18nKey: string;
-    isActionPending: boolean;
-    onAction: () => void | Promise<void>;
     title: string;
 };
 
 export function NotificationSlide({
     actionI18nKey,
-    isActionPending,
-    onAction,
     title,
 }: NotificationSlideProps) {
     return (
@@ -26,14 +21,7 @@ export function NotificationSlide({
                     <Text variant="body" weight="semiBold">
                         {title}
                     </Text>
-                    <Button
-                        variant="ghost"
-                        size="small"
-                        width="auto"
-                        className={styles.notificationAction}
-                        onClick={onAction}
-                        disabled={isActionPending}
-                    >
+                    <Box display="flex" alignItems="flex-start" gap="xxs">
                         <img
                             src={notificationIcon}
                             alt=""
@@ -46,7 +34,7 @@ export function NotificationSlide({
                         >
                             <Trans i18nKey={actionI18nKey} />
                         </Text>
-                    </Button>
+                    </Box>
                 </Box>
             </Box>
             <Box className={styles.logosSection}>
