@@ -10,6 +10,7 @@ const safeTop = "var(--safe-area-inset-top, env(safe-area-inset-top, 0px))";
  * Mobile: 100% width. Desktop: 393px width (centered by parent body flex).
  */
 export const shellContainer = style({
+    position: "relative",
     display: "flex",
     flexDirection: "column",
     height: "100dvh",
@@ -45,14 +46,9 @@ const mainContentBase = style({
 export const mainContentWithNav = style([
     mainContentBase,
     {
+        // Bar is absolute-positioned on all breakpoints, so content
+        // needs bottom padding everywhere to stay above it.
         paddingBottom: `calc(110px + env(safe-area-inset-bottom, 0px))`,
-        "@media": {
-            [`(min-width: ${tablet}px)`]: {
-                // Nav is in-flow on tablet+, no extra clearance needed
-                paddingBottom: alias.spacing.m,
-                maxHeight: "758px",
-            },
-        },
     },
 ]);
 
@@ -73,27 +69,15 @@ export const mainContentNoNav = style([
 ]);
 
 /**
- * Bottom tab bar — fixed at viewport bottom on mobile, in-flow on tablet+.
- * Mobile: position fixed, always visible while scrolling.
- * Tablet+: normal flow at bottom of shell flex column.
+ * Bottom tab bar — overlays content on all breakpoints.
+ * Positioned absolute inside shellContainer so it stays within the
+ * shell bounds on tablet (393px) without needing transform centering,
+ * which would break backdrop-filter compositing.
  */
 export const bottomBar = style({
-    position: "fixed",
+    position: "absolute",
     bottom: 0,
-    left: "50%",
-    transform: "translateX(-50%)",
-    width: "100%",
-    zIndex: 10,
-    padding: `0 ${alias.spacing.m}`,
-    paddingBottom: `calc(${alias.spacing.s} + env(safe-area-inset-bottom, 0px))`,
-    paddingTop: alias.spacing.s,
-    "@media": {
-        [`(min-width: ${tablet}px)`]: {
-            position: "static",
-            transform: "none",
-            width: "auto",
-            left: "auto",
-            zIndex: "auto",
-        },
-    },
+    left: 0,
+    right: 0,
+    zIndex: 20,
 });

@@ -1,41 +1,73 @@
 import { vars } from "@frak-labs/design-system/theme";
-import { brand, easing, transition } from "@frak-labs/design-system/tokens";
+import {
+    alias,
+    brand,
+    easing,
+    transition,
+} from "@frak-labs/design-system/tokens";
 import { style } from "@vanilla-extract/css";
 
 const pillRadius = "999px";
 
 export const bottomTabBarStyles = {
+    /**
+     * Outer wrapper — fills the entire bottom bar area.
+     * Hosts the progressive blur background and the glass pill.
+     * Padding moved here from AppShell's bottomBar so the blur
+     * covers the full fixed area (including padding zones).
+     *
+     * No isolation: isolate — that would create a compositing
+     * boundary that prevents backdrop-filter from seeing through
+     * to the actual page content.
+     */
     wrapper: style({
         position: "relative",
         width: "100%",
-        maxWidth: "346px",
-        aspectRatio: "346 / 114",
-        margin: "0 auto",
-        isolation: "isolate",
+        display: "flex",
+        justifyContent: "center",
+        alignItems: "flex-end",
+        padding: `${alias.spacing.s} ${alias.spacing.m}`,
+        paddingBottom: `calc(${alias.spacing.s} + env(safe-area-inset-bottom, 0px))`,
     }),
 
-    backgroundImage: style({
+    /**
+     * Progressive blur — fades from strong blur at the bottom to
+     * transparent at the top, so scrolled content smoothly dissolves
+     * behind the tab bar.
+     *
+     * The near-transparent background (0.01 alpha) gives the
+     * compositor a painted surface to apply the filter on.
+     * Mask is oriented to-top: full opacity at bottom, transparent at top.
+     */
+    progressiveBlur: style({
         position: "absolute",
         inset: 0,
-        width: "100%",
-        height: "100%",
-        pointerEvents: "none",
+        background: "rgba(255, 255, 255, 0.01)",
+        backdropFilter: "blur(14px) saturate(130%)",
+        maskImage:
+            "linear-gradient(to top, rgba(0, 0, 0, 0.95) 0%, rgba(0, 0, 0, 0.45) 55%, transparent 100%)",
         zIndex: 0,
-        userSelect: "none",
+        pointerEvents: "none",
     }),
 
+    /**
+     * Glass pill — the frosted-glass tab container.
+     * backdrop-filter for the blur, whitish fill, subtle gray
+     * border + inner shadow for glass edge definition.
+     */
     pill: style({
-        position: "absolute",
-        // Inset 4px from PNG pill bounds (x=26 y=26 w=294 h=62) → x=30 y=30 w=286 h=54
-        left: "8.671%",
-        top: "26.316%",
-        width: "82.659%",
-        height: "47.368%",
+        position: "relative",
         display: "flex",
         alignItems: "stretch",
+        width: "100%",
+        maxWidth: "286px",
         borderRadius: pillRadius,
         overflow: "hidden",
         zIndex: 1,
+        backdropFilter: "blur(5px) saturate(180%)",
+        background: "rgba(255, 255, 255, 0.55)",
+        border: "1px solid rgba(0, 0, 0, 0.06)",
+        boxShadow: "inset 0 0 8px rgba(0, 0, 0, 0.06)",
     }),
 
     tab: style({
@@ -47,7 +79,7 @@ export const bottomTabBarStyles = {
         alignItems: "center",
         justifyContent: "center",
         gap: "2px",
-        padding: "8px 12px",
+        padding: "8px 22px",
         border: "none",
         borderRadius: pillRadius,
         background: "transparent",
@@ -82,11 +114,17 @@ export const bottomTabBarStyles = {
         color: vars.icon.action,
     }),
 
+    /**
+     * Active tab indicator — slides behind the active tab.
+     * Width is set inline as `(1 / tabs.length) * 100%` so it
+     * adapts to any number of tabs.
+     */
     glider: style({
         position: "absolute",
-        inset: "0 auto 0 0",
+        top: "2px",
+        bottom: "2px",
+        left: "2px",
         display: "block",
-        width: "35.6643%",
         borderRadius: pillRadius,
         background: "rgba(118, 118, 128, 0.12)",
         mixBlendMode: "plus-darker",
