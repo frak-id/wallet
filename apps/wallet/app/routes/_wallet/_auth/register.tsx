@@ -1,14 +1,8 @@
-import {
-    authenticatorStorage,
-    isWebAuthNSupported,
-    useLogin,
-} from "@frak-labs/wallet-shared";
+import { authenticatorStorage, useLogin } from "@frak-labs/wallet-shared";
 import { createFileRoute, redirect, useNavigate } from "@tanstack/react-router";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { DemoTapZone } from "@/module/authentication/component/DemoTapZone";
-import { useRegister } from "@/module/authentication/hook/useRegister";
-import { isAuthenticatorAlreadyRegistered } from "@/module/authentication/lib/isAuthenticatorAlreadyRegistered";
 import { useNotificationStatus } from "@/module/notification/hook/useNotificationSetupStatus";
 import { useSubscribeToPushNotification } from "@/module/notification/hook/useSubscribeToPushNotification";
 import { NotificationOptIn } from "@/module/onboarding/component/NotificationOptIn";
@@ -49,8 +43,6 @@ function RegisterPage() {
     const { pairingInfo } = usePendingPairingInfo();
     const hasPendingPairing = Boolean(pairingInfo?.id);
     const [step, setStep] = useState<FlowStep>("onboarding");
-    const [isRegistering, setIsRegistering] = useState(false);
-    const { register, error, isSuccess } = useRegister({});
 
     const openModal = modalStore((s) => s.openModal);
     const closeModal = modalStore((s) => s.closeModal);
@@ -60,28 +52,9 @@ function RegisterPage() {
         setStep("notification");
     }, [closeModal]);
 
-    const {
-        login,
-        isLoading: isLoginLoading,
-        error: loginError,
-    } = useLogin({
+    const { login, isLoading: isLoginLoading } = useLogin({
         onSuccess: advanceToNotification,
     });
-
-    const isPreviouslyUsedAuthenticatorError = useMemo(
-        () => !!error && isAuthenticatorAlreadyRegistered(error),
-        [error]
-    );
-
-    useEffect(() => {
-        if (error) setIsRegistering(false);
-    }, [error]);
-
-    useEffect(() => {
-        if (isSuccess) {
-            advanceToNotification();
-        }
-    }, [isSuccess, advanceToNotification]);
 
     const { permissionStatus, permissionGranted, hasBackendToken } =
         useNotificationStatus();
@@ -106,38 +79,9 @@ function RegisterPage() {
         }
         openModal({
             id: "keypass",
-            onContinue: () => {
-                if (isRegistering) return;
-                setIsRegistering(true);
-                register().catch(() => {});
-            },
-            isLoading: isRegistering,
-            error: isPreviouslyUsedAuthenticatorError ? null : error,
-            existingAccount: isPreviouslyUsedAuthenticatorError,
-            isLoginLoading,
-            loginError,
-            onLogin: () => login(),
-            webAuthNSupported: isWebAuthNSupported,
-            onNavigateToLogin: () => navigate({ to: "/login", replace: true }),
+            onAuthSuccess: advanceToNotification,
         });
-    }, [
-        openModal,
-        isRegistering,
-        register,
-        isPreviouslyUsedAuthenticatorError,
-        error,
-        isLoginLoading,
-        loginError,
-        login,
-        navigate,
-    ]);
-
-    // Keep the keypass modal props in sync when reactive state changes
-    const isKeypassOpen = modalStore((s) => s.modal?.id === "keypass");
-    useEffect(() => {
-        if (!isKeypassOpen) return;
-        handleOpenKeypass();
-    }, [isKeypassOpen, handleOpenKeypass]);
+    }, [openModal, advanceToNotification]);
 
     return (
         <>

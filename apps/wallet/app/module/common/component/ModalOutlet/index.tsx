@@ -33,7 +33,12 @@ export function ModalOutlet() {
         case "successOverlay":
             return <SuccessOverlay visible={true} onDone={closeModal} />;
         case "keypass":
-            return <Keypass onClose={closeModal} {...modal} />;
+            return (
+                <Keypass
+                    onClose={closeModal}
+                    onAuthSuccess={modal.onAuthSuccess}
+                />
+            );
         case "recoveryCodeSuccess":
             return <RecoveryCodeSuccessModal onClose={closeModal} />;
     }

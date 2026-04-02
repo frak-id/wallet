@@ -16,25 +16,13 @@ import { create } from "zustand";
  * Discriminated union of every modal in the wallet app.
  * Extend with new variants (and optional per-variant props) as needed.
  */
-export type KeypassProps = {
-    onContinue: () => void;
-    isLoading: boolean;
-    error: Error | null;
-    existingAccount?: boolean;
-    isLoginLoading?: boolean;
-    loginError?: Error | null;
-    onLogin?: () => void;
-    webAuthNSupported?: boolean;
-    onNavigateToLogin?: () => void;
-};
-
 export type ModalState =
     | { id: "emptyTransfer" }
     | { id: "emptyPendingGains" }
     | { id: "pendingGains" }
     | { id: "emptyTransferredGains" }
     | { id: "successOverlay" }
-    | ({ id: "keypass" } & KeypassProps)
+    | { id: "keypass"; onAuthSuccess: () => void }
     | { id: "recoveryCodeSuccess" };
 
 type ModalStore = {

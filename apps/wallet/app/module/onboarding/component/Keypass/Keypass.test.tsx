@@ -2,46 +2,59 @@ import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import { Keypass } from "./index";
 
+const mockRegister = vi.fn().mockResolvedValue({});
+const mockLogin = vi.fn();
+
+vi.mock("@frak-labs/wallet-shared", async () => {
+    const actual = await vi.importActual<
+        typeof import("@frak-labs/wallet-shared")
+    >("@frak-labs/wallet-shared");
+    return {
+        ...actual,
+        isWebAuthNSupported: true,
+        useLogin: () => ({
+            login: mockLogin,
+            isLoading: false,
+            isSuccess: false,
+            isError: false,
+            error: null,
+        }),
+        HandleErrors: ({ error }: { error: Error }) => (
+            <span data-testid="error">{error.message}</span>
+        ),
+    };
+});
+
+vi.mock("@/module/authentication/hook/useRegister", () => ({
+    useRegister: () => ({
+        register: mockRegister,
+        isRegisterInProgress: false,
+        isSuccess: false,
+        isError: false,
+        error: null,
+    }),
+}));
+
+vi.mock("@/module/authentication/lib/isAuthenticatorAlreadyRegistered", () => ({
+    isAuthenticatorAlreadyRegistered: () => false,
+}));
+
+vi.mock("react-i18next", () => ({
+    useTranslation: () => ({
+        t: (key: string) => key,
+    }),
+}));
+
+vi.mock("@tanstack/react-router", () => ({
+    useNavigate: () => vi.fn(),
+}));
+
 describe("Keypass", () => {
-    it("should render normal variant with content", async () => {
+    it("should render modal content", async () => {
         const onClose = vi.fn();
-        const onContinue = vi.fn();
+        const onAuthSuccess = vi.fn();
 
-        render(
-            <Keypass
-                onClose={onClose}
-                onContinue={onContinue}
-                isLoading={false}
-                error={null}
-            />
-        );
-
-        // Wait for modal content to render
-        await waitFor(() => {
-            const drawer = document.querySelector("[data-vaul-drawer]");
-            expect(drawer).toBeInTheDocument();
-        });
-
-        const drawer = document.querySelector("[data-vaul-drawer]");
-        expect(drawer).toBeInTheDocument();
-    });
-
-    it("should render existingAccount variant when existingAccount={true}", async () => {
-        const onClose = vi.fn();
-        const onLogin = vi.fn();
-
-        render(
-            <Keypass
-                onClose={onClose}
-                onContinue={vi.fn()}
-                isLoading={false}
-                error={null}
-                existingAccount={true}
-                onLogin={onLogin}
-                isLoginLoading={false}
-                loginError={null}
-            />
-        );
+        render(<Keypass onClose={onClose} onAuthSuccess={onAuthSuccess} />);
 
         await waitFor(() => {
             const drawer = document.querySelector("[data-vaul-drawer]");
@@ -52,42 +65,11 @@ describe("Keypass", () => {
         expect(drawer).toBeInTheDocument();
     });
 
-    it("should render webAuthNUnsupported variant when webAuthNSupported={false}", async () => {
+    it("should call register when Continue button clicked", async () => {
         const onClose = vi.fn();
-        const onNavigateToLogin = vi.fn();
+        const onAuthSuccess = vi.fn();
 
-        render(
-            <Keypass
-                onClose={onClose}
-                onContinue={vi.fn()}
-                isLoading={false}
-                error={null}
-                webAuthNSupported={false}
-                onNavigateToLogin={onNavigateToLogin}
-            />
-        );
-
-        await waitFor(() => {
-            const drawer = document.querySelector("[data-vaul-drawer]");
-            expect(drawer).toBeInTheDocument();
-        });
-
-        const drawer = document.querySelector("[data-vaul-drawer]");
-        expect(drawer).toBeInTheDocument();
-    });
-
-    it("should call onContinue when Continue button clicked", async () => {
-        const onClose = vi.fn();
-        const onContinue = vi.fn();
-
-        render(
-            <Keypass
-                onClose={onClose}
-                onContinue={onContinue}
-                isLoading={false}
-                error={null}
-            />
-        );
+        render(<Keypass onClose={onClose} onAuthSuccess={onAuthSuccess} />);
 
         await waitFor(() => {
             const drawer = document.querySelector("[data-vaul-drawer]");
@@ -101,45 +83,15 @@ describe("Keypass", () => {
 
         if (continueButton) {
             fireEvent.click(continueButton);
-            expect(onContinue).toHaveBeenCalled();
+            expect(mockRegister).toHaveBeenCalled();
         }
-    });
-
-    it("should display error when error prop set", async () => {
-        const onClose = vi.fn();
-        const onContinue = vi.fn();
-        const testError = new Error("test error");
-
-        render(
-            <Keypass
-                onClose={onClose}
-                onContinue={onContinue}
-                isLoading={false}
-                error={testError}
-            />
-        );
-
-        await waitFor(() => {
-            const drawer = document.querySelector("[data-vaul-drawer]");
-            expect(drawer).toBeInTheDocument();
-        });
-
-        const drawer = document.querySelector("[data-vaul-drawer]");
-        expect(drawer).toBeInTheDocument();
     });
 
     it("should render as always open (controlled by outlet)", async () => {
         const onClose = vi.fn();
-        const onContinue = vi.fn();
+        const onAuthSuccess = vi.fn();
 
-        render(
-            <Keypass
-                onClose={onClose}
-                onContinue={onContinue}
-                isLoading={false}
-                error={null}
-            />
-        );
+        render(<Keypass onClose={onClose} onAuthSuccess={onAuthSuccess} />);
 
         await waitFor(() => {
             const drawer = document.querySelector("[data-vaul-drawer]");

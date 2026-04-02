@@ -2,31 +2,51 @@ import { Box } from "@frak-labs/design-system/components/Box";
 import { Button } from "@frak-labs/design-system/components/Button";
 import { ResponsiveModal } from "@frak-labs/design-system/components/ResponsiveModal";
 import { FaceIdIcon } from "@frak-labs/design-system/icons";
-import { HandleErrors } from "@frak-labs/wallet-shared";
+import {
+    HandleErrors,
+    isWebAuthNSupported,
+    useLogin,
+} from "@frak-labs/wallet-shared";
+import { useNavigate } from "@tanstack/react-router";
 import type { ReactNode } from "react";
+import { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { AuthenticateWithPhone } from "@/module/authentication/component/AuthenticateWithPhone";
+import { useRegister } from "@/module/authentication/hook/useRegister";
+import { isAuthenticatorAlreadyRegistered } from "@/module/authentication/lib/isAuthenticatorAlreadyRegistered";
 import { ContentBlock } from "@/module/common/component/ContentBlock";
-import type { KeypassProps } from "@/module/stores/modalStore";
 import * as styles from "./index.css";
 
-type KeypassModalProps = KeypassProps & {
+type KeypassProps = {
     onClose: () => void;
+    onAuthSuccess: () => void;
 };
 
-export function Keypass({
-    onClose,
-    onContinue,
-    isLoading,
-    error,
-    existingAccount,
-    isLoginLoading,
-    loginError,
-    onLogin,
-    webAuthNSupported = true,
-    onNavigateToLogin,
-}: KeypassModalProps) {
+export function Keypass({ onClose, onAuthSuccess }: KeypassProps) {
     const { t } = useTranslation();
+    const navigate = useNavigate();
+    const [isRegistering, setIsRegistering] = useState(false);
+
+    const { register, error: registerError } = useRegister({});
+    const {
+        login,
+        isLoading: isLoginLoading,
+        error: loginError,
+    } = useLogin({ onSuccess: onAuthSuccess });
+
+    const existingAccount = useMemo(
+        () =>
+            !!registerError && isAuthenticatorAlreadyRegistered(registerError),
+        [registerError]
+    );
+
+    const handleRegister = () => {
+        if (isRegistering) return;
+        setIsRegistering(true);
+        register()
+            .then(() => onAuthSuccess())
+            .catch(() => setIsRegistering(false));
+    };
 
     return (
         <ResponsiveModal
@@ -38,15 +58,16 @@ export function Keypass({
             description={t("onboarding.keypass.description")}
         >
             <KeypassContent
-                onContinue={onContinue}
-                isLoading={isLoading}
-                error={error}
+                onRegister={handleRegister}
+                isRegistering={isRegistering}
+                registerError={existingAccount ? null : registerError}
                 existingAccount={existingAccount}
                 isLoginLoading={isLoginLoading}
                 loginError={loginError}
-                onLogin={onLogin}
-                webAuthNSupported={webAuthNSupported}
-                onNavigateToLogin={onNavigateToLogin}
+                onLogin={() => login()}
+                onNavigateToLogin={() =>
+                    navigate({ to: "/login", replace: true })
+                }
             />
         </ResponsiveModal>
     );
@@ -84,20 +105,30 @@ function KeypassBlock({
     );
 }
 
+type KeypassContentProps = {
+    onRegister: () => void;
+    isRegistering: boolean;
+    registerError: Error | null;
+    existingAccount: boolean;
+    isLoginLoading: boolean;
+    loginError: Error | null;
+    onLogin: () => void;
+    onNavigateToLogin: () => void;
+};
+
 function KeypassContent({
-    onContinue,
-    isLoading,
-    error,
+    onRegister,
+    isRegistering,
+    registerError,
     existingAccount,
     isLoginLoading,
     loginError,
     onLogin,
-    webAuthNSupported = true,
     onNavigateToLogin,
-}: KeypassProps) {
+}: KeypassContentProps) {
     const { t } = useTranslation();
 
-    if (!webAuthNSupported) {
+    if (!isWebAuthNSupported) {
         return (
             <KeypassBlock
                 title={t("onboarding.keypass.unsupported.title")}
@@ -132,10 +163,10 @@ function KeypassContent({
         <KeypassBlock
             title={t("onboarding.keypass.title")}
             description={t("onboarding.keypass.description")}
-            error={error}
+            error={registerError}
             footer={
                 <>
-                    <Button onClick={onContinue} loading={isLoading}>
+                    <Button onClick={onRegister} loading={isRegistering}>
                         {t("onboarding.continue")}
                     </Button>
                     <AuthenticateWithPhone
