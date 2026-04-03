@@ -43,6 +43,11 @@ export function ModalOutlet() {
                 />
             );
         case "recoveryCodeSuccess":
-            return <RecoveryCodeSuccessModal onClose={closeModal} />;
+            return (
+                <RecoveryCodeSuccessModal
+                    onClose={closeModal}
+                    merchant={modal.merchant}
+                />
+            );
     }
 }

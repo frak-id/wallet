@@ -24,7 +24,10 @@ export type ModalState =
     | { id: "transfer" }
     | { id: "successOverlay" }
     | { id: "keypass"; onAuthSuccess: () => void }
-    | { id: "recoveryCodeSuccess" };
+    | {
+          id: "recoveryCodeSuccess";
+          merchant?: { name: string; domain: string };
+      };
 
 type ModalStore = {
     modal: ModalState | null;

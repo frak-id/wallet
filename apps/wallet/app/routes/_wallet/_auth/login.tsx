@@ -1,6 +1,6 @@
-import { HandleErrors, sessionStore } from "@frak-labs/wallet-shared";
+import { HandleErrors } from "@frak-labs/wallet-shared";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useState } from "react";
 import { Trans, useTranslation } from "react-i18next";
 import { AuthActions } from "@/module/authentication/component/AuthActions";
 import { AuthenticateWithPhone } from "@/module/authentication/component/AuthenticateWithPhone";
@@ -29,7 +29,6 @@ function LoginPage() {
     const { t } = useTranslation();
     const navigate = useNavigate();
     const [error, setError] = useState<Error | null>(null);
-    const session = sessionStore((state) => state.session);
     const { executePendingActions } = useExecutePendingActions();
 
     const handlePostLoginRedirect = useCallback(async () => {
@@ -38,14 +37,6 @@ function LoginPage() {
             navigate({ to: "/wallet", replace: true });
         }
     }, [executePendingActions, navigate]);
-
-    // Redirect after successful login: pending deep link > pairing > wallet
-    // Catches QR/phone auth where session appears without a direct callback
-    useEffect(() => {
-        if (!session) return;
-        handlePostLoginRedirect();
-    }, [session, handlePostLoginRedirect]);
-
     return (
         <>
             <DemoTapZone navigate={navigate} />

@@ -3,17 +3,13 @@ import type { ReactNode } from "react";
 import { vi } from "vitest";
 import { beforeEach, describe, expect, test } from "@/tests/vitest-fixtures";
 
-const {
-    mockNavigate,
-    mockSessionStore,
-    mockExecutePendingActions,
-    mockOnSuccess,
-} = vi.hoisted(() => ({
-    mockNavigate: vi.fn(),
-    mockSessionStore: vi.fn(),
-    mockExecutePendingActions: vi.fn(),
-    mockOnSuccess: vi.fn<() => void>(),
-}));
+const { mockNavigate, mockExecutePendingActions, mockOnSuccess } = vi.hoisted(
+    () => ({
+        mockNavigate: vi.fn(),
+        mockExecutePendingActions: vi.fn(),
+        mockOnSuccess: vi.fn<() => void>(),
+    })
+);
 
 vi.mock("@tanstack/react-router", async () => {
     const actual = await vi.importActual<
@@ -34,8 +30,6 @@ vi.mock("@frak-labs/wallet-shared", async (importOriginal) => {
     return {
         ...original,
         HandleErrors: () => null,
-        sessionStore: (selector: (state: { session: unknown }) => unknown) =>
-            mockSessionStore(selector),
     };
 });
 
@@ -104,27 +98,21 @@ describe("LoginPage", () => {
         mockExecutePendingActions.mockResolvedValue(false);
     });
 
-    test("should not redirect when unauthenticated", async () => {
-        mockSessionStore.mockImplementation(
-            (selector: (state: { session: unknown }) => unknown) =>
-                selector({ session: null })
-        );
-
+    test("should render without auto-redirecting", () => {
         render(<LoginPage />);
 
         expect(mockNavigate).not.toHaveBeenCalled();
         expect(mockExecutePendingActions).not.toHaveBeenCalled();
     });
 
-    test("should navigate to /wallet when authenticated with no pending actions", async () => {
-        mockSessionStore.mockImplementation(
-            (selector: (state: { session: unknown }) => unknown) =>
-                selector({ session: { token: "tok" } })
-        );
-
+    test("should navigate to /wallet via onSuccess when no pending actions", async () => {
         render(<LoginPage />);
 
+        // Simulate AuthActions calling onSuccess after WebAuthn auth
+        mockOnSuccess();
+
         await waitFor(() => {
+            expect(mockExecutePendingActions).toHaveBeenCalled();
             expect(mockNavigate).toHaveBeenCalledWith({
                 to: "/wallet",
                 replace: true,
@@ -132,14 +120,13 @@ describe("LoginPage", () => {
         });
     });
 
-    test("should execute pending actions when authenticated and let them navigate", async () => {
-        mockSessionStore.mockImplementation(
-            (selector: (state: { session: unknown }) => unknown) =>
-                selector({ session: { token: "tok" } })
-        );
+    test("should let pending actions handle navigation via onSuccess", async () => {
         mockExecutePendingActions.mockResolvedValue(true);
 
         render(<LoginPage />);
+
+        // Simulate AuthActions calling onSuccess after WebAuthn auth
+        mockOnSuccess();
 
         await waitFor(() => {
             expect(mockExecutePendingActions).toHaveBeenCalled();
@@ -148,23 +135,5 @@ describe("LoginPage", () => {
         expect(mockNavigate).not.toHaveBeenCalledWith(
             expect.objectContaining({ to: "/wallet" })
         );
-    });
-
-    test("should call executePendingActions from both useEffect and onSuccess", async () => {
-        mockSessionStore.mockImplementation(
-            (selector: (state: { session: unknown }) => unknown) =>
-                selector({ session: { token: "tok" } })
-        );
-
-        render(<LoginPage />);
-
-        // Simulate onSuccess callback firing (as AuthActions would)
-        mockOnSuccess();
-
-        await waitFor(() => {
-            // Both useEffect (session change) and onSuccess trigger handlePostLoginRedirect.
-            // In production, TanStack Query mutation dedup ensures single execution.
-            expect(mockExecutePendingActions).toHaveBeenCalled();
-        });
     });
 });

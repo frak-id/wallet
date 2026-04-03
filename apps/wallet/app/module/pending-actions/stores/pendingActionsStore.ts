@@ -5,7 +5,8 @@ import type {
     PendingActionInput,
 } from "@/module/pending-actions/types";
 
-const DEFAULT_TTL_MS = 10 * 60 * 1000; // 10 minutes
+const DEFAULT_NAV_TTL_MS = 10 * 60 * 1000; // 10 minutes
+const DEFAULT_ENSURE_TTL_MS = 7 * 24 * 60 * 60 * 1000; // One week
 
 type PendingActionsState = {
     actions: PendingAction[];
@@ -33,7 +34,21 @@ function dedupeKey(action: PendingActionInput): string {
         case "ensure":
             return `ensure:${action.merchantId}:${action.anonymousId}`;
         case "navigation":
-            return `navigation:${action.to}`;
+            return "navigation";
+    }
+}
+
+/**
+ * Default TTL by action type.
+ *   - navigation: 10 minutes (stale deep links should expire quickly)
+ *   - ensure: 24 hours (referral attribution must survive download + onboarding)
+ */
+function defaultTtl(action: PendingActionInput): number {
+    switch (action.type) {
+        case "ensure":
+            return DEFAULT_ENSURE_TTL_MS;
+        case "navigation":
+            return DEFAULT_NAV_TTL_MS;
     }
 }
 
@@ -54,9 +69,10 @@ export const pendingActionsStore = create<PendingActionsStore>()(
         (set, get) => ({
             ...initialState,
 
-            addAction: (input, ttlMs = DEFAULT_TTL_MS) => {
+            addAction: (input, ttlMs) => {
                 const now = Date.now();
                 const key = dedupeKey(input);
+                const ttl = ttlMs ?? defaultTtl(input);
                 set((state) => {
                     // Remove expired actions + duplicates of the same key
                     const filtered = state.actions.filter(
@@ -69,7 +85,7 @@ export const pendingActionsStore = create<PendingActionsStore>()(
                                 ...input,
                                 id: crypto.randomUUID(),
                                 createdAt: now,
-                                expiresAt: now + ttlMs,
+                                expiresAt: now + ttl,
                             },
                         ],
                     };

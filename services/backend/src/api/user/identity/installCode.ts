@@ -1,13 +1,8 @@
-import {
-    log,
-    rateLimitMiddleware,
-    sessionContext,
-} from "@backend-infrastructure";
+import { rateLimitMiddleware } from "@backend-infrastructure";
 import { t } from "@backend-utils";
 import { Elysia, status } from "elysia";
 import { IdentityContext } from "../../../domain/identity/context";
 import { MerchantContext } from "../../../domain/merchant/context";
-import { OrchestrationContext } from "../../../orchestration/context";
 
 const installCodeGenerateRoute = new Elysia()
     .use(rateLimitMiddleware({ windowMs: 60_000, maxRequests: 5 }))
@@ -112,76 +107,6 @@ const installCodeResolveRoute = new Elysia()
         }
     );
 
-const installCodeConsumeRoute = new Elysia()
-    .use(sessionContext)
-    .use(rateLimitMiddleware({ windowMs: 60_000, maxRequests: 10 }))
-    .post(
-        "/consume",
-        async ({ body, walletSession }) => {
-            const walletAddress = walletSession.address;
-
-            const consumeResult =
-                await IdentityContext.services.installCode.consume({
-                    code: body.code,
-                    onConsume: async ({ merchantId, anonymousId }) => {
-                        const mergeResult =
-                            await OrchestrationContext.orchestrators.identity.resolveAndAssociate(
-                                [
-                                    { type: "wallet", value: walletAddress },
-                                    {
-                                        type: "anonymous_fingerprint",
-                                        value: anonymousId,
-                                        merchantId,
-                                    },
-                                ]
-                            );
-
-                        log.info(
-                            {
-                                walletAddress,
-                                merchantId,
-                                anonymousId,
-                                ...mergeResult,
-                            },
-                            "Install code consumed"
-                        );
-
-                        return mergeResult;
-                    },
-                });
-
-            if (!consumeResult.success) {
-                return status(400, {
-                    success: false as const,
-                    error: consumeResult.error,
-                    code: consumeResult.code,
-                });
-            }
-
-            return {
-                success: true as const,
-                finalGroupId: consumeResult.result.finalGroupId,
-                merged: consumeResult.result.merged,
-            };
-        },
-        {
-            withWalletAuthent: true,
-            body: t.Object({
-                code: t.String(),
-            }),
-            response: {
-                200: t.Object({
-                    success: t.Literal(true),
-                    finalGroupId: t.String({ format: "uuid" }),
-                    merged: t.Boolean(),
-                }),
-                400: t.ErrorResponse,
-                401: t.String(),
-            },
-        }
-    );
-
 export const installCodeRoutes = new Elysia({ prefix: "/install-code" })
     .use(installCodeGenerateRoute)
-    .use(installCodeResolveRoute)
-    .use(installCodeConsumeRoute);
+    .use(installCodeResolveRoute);

@@ -86,14 +86,14 @@ function InstallProcessing({ m: merchantId, a: anonymousId }: InstallSearch) {
         const isLoggedIn = !!getSafeSession()?.token;
 
         if (isLoggedIn) {
-            // Store + drain all pending actions (including the new one)
             Promise.all([
-                executePendingActions({ newAction: ensureAction }),
+                executePendingActions({
+                    newAction: ensureAction,
+                    skipNavigation: true,
+                }),
                 sleep(MIN_PROCESSING_MS),
-            ]).then(([navigated]) => {
-                if (!navigated) {
-                    navigate({ to: "/wallet", replace: true });
-                }
+            ]).then(() => {
+                navigate({ to: "/wallet", replace: true });
             });
         } else {
             // Not logged in — store for post-auth, redirect to register

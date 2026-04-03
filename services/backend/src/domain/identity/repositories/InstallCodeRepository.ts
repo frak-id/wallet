@@ -76,39 +76,10 @@ export class InstallCodeRepository {
         return result ?? null;
     }
 
-    async consumeByCode<T>(
-        code: string,
-        onConsume: (installCode: InstallCodeSelect) => Promise<T>
-    ): Promise<{ installCode: InstallCodeSelect; result: T } | null> {
-        return db.transaction(async (trx) => {
-            const [locked] = await trx
-                .select()
-                .from(installCodesTable)
-                .where(
-                    and(
-                        eq(installCodesTable.code, code.toUpperCase()),
-                        gt(installCodesTable.expiresAt, new Date())
-                    )
-                )
-                .for("update");
-
-            if (!locked) {
-                return null;
-            }
-
-            const result = await onConsume(locked);
-
-            await trx
-                .delete(installCodesTable)
-                .where(eq(installCodesTable.id, locked.id));
-
-            return { installCode: locked, result };
-        });
-    }
-
-    async deleteExpired(): Promise<void> {
-        await db
+    async deleteExpired(): Promise<number> {
+        const result = await db
             .delete(installCodesTable)
             .where(lt(installCodesTable.expiresAt, new Date()));
+        return result.length;
     }
 }

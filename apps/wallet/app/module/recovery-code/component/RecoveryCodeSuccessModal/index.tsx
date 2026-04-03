@@ -5,16 +5,19 @@ import { CircleCheckIcon } from "@frak-labs/design-system/icons";
 import { useNavigate } from "@tanstack/react-router";
 import { useCallback } from "react";
 import { useTranslation } from "react-i18next";
-import { pendingActionsStore } from "@/module/pending-actions/stores/pendingActionsStore";
 import * as styles from "./index.css";
 
-export function RecoveryCodeSuccessModal({ onClose }: { onClose: () => void }) {
+type RecoveryCodeSuccessModalProps = {
+    onClose: () => void;
+    merchant?: { name: string; domain: string };
+};
+
+export function RecoveryCodeSuccessModal({
+    onClose,
+    merchant,
+}: RecoveryCodeSuccessModalProps) {
     const { t } = useTranslation();
     const navigate = useNavigate();
-    const ensureAction = pendingActionsStore((s) =>
-        s.actions.find((a) => a.type === "ensure")
-    );
-
     const handleClose = useCallback(() => {
         onClose();
         // Navigate back to register to continue the onboarding
@@ -44,10 +47,10 @@ export function RecoveryCodeSuccessModal({ onClose }: { onClose: () => void }) {
                 <Text variant="bodySmall" weight="medium" color="secondary">
                     {t("recoveryCode.success.description")}
                 </Text>
-                {ensureAction?.type === "ensure" && ensureAction.merchant && (
+                {merchant && (
                     <Text variant="bodySmall" weight="semiBold">
                         {t("recoveryCode.success.merchantInfo", {
-                            merchantName: ensureAction.merchant.name,
+                            merchantName: merchant.name,
                         })}
                     </Text>
                 )}

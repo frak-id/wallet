@@ -9,6 +9,7 @@ export function PairingInProgress() {
             (a) =>
                 a.type === "navigation" &&
                 a.to === "/pairing" &&
+                !!a.search?.id &&
                 a.expiresAt > Date.now()
         )
     );

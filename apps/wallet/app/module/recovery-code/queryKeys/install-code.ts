@@ -19,5 +19,4 @@ export namespace installCodeKey {
      * Mutation keys
      */
     export const resolve = [base, "resolve"] as const;
-    export const consume = [base, "consume"] as const;
 }

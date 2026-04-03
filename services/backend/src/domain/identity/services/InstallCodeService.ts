@@ -9,10 +9,6 @@ type ResolveResult =
       }
     | { success: false; error: string; code: string };
 
-type ConsumeResult<T> =
-    | { success: true; result: T }
-    | { success: false; error: string; code: string };
-
 export class InstallCodeService {
     constructor(
         private readonly installCodeRepository: InstallCodeRepository
@@ -53,34 +49,5 @@ export class InstallCodeService {
             merchantId: installCode.merchantId,
             anonymousId: installCode.anonymousId,
         };
-    }
-
-    async consume<T>(params: {
-        code: string;
-        onConsume: (installCode: {
-            merchantId: string;
-            anonymousId: string;
-        }) => Promise<T>;
-    }): Promise<ConsumeResult<T>> {
-        const consumed = await this.installCodeRepository.consumeByCode(
-            params.code,
-            async (installCode) =>
-                params.onConsume({
-                    merchantId: installCode.merchantId,
-                    anonymousId: installCode.anonymousId,
-                })
-        );
-
-        if (!consumed) {
-            return {
-                success: false,
-                error: "Invalid or expired install code",
-                code: "CODE_NOT_FOUND",
-            };
-        }
-
-        this.installCodeRepository.deleteExpired().catch(() => {});
-
-        return { success: true, result: consumed.result };
     }
 }

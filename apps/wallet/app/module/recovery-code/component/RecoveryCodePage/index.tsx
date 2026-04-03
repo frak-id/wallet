@@ -40,8 +40,11 @@ export function RecoveryCodePage() {
         if (!isComplete || isPending) return;
 
         try {
-            await resolveAsync(code);
-            openModal({ id: "recoveryCodeSuccess" });
+            const result = await resolveAsync(code);
+            openModal({
+                id: "recoveryCodeSuccess",
+                merchant: result.merchant,
+            });
         } catch {
             // Error is captured by the mutation state
         }
