@@ -386,14 +386,15 @@
         }
     },
     "installCode": {
-        "title": "Install Frak Wallet",
-        "description": "Get the app to track your rewards and earn from referrals.",
-        "codeTitle": "Your setup code",
-        "codeDescription": "Save this code — you'll need it after installing the app.",
-        "appStore": "Download on the App Store",
-        "playStore": "Get it on Google Play",
+        "title": "Copy this code",
+        "description": "Paste it when opening the app. It will let you claim your rewards once logged in.",
+        "copyCode": "Copy the code",
+        "codeCopied": "Code copied!",
         "loading": "Generating your code...",
         "error": "Failed to generate code. Please refresh.",
+        "infoTitle": "Code valid for 3 days",
+        "infoDescription": "When opening the app, tap 'I have a recovery code'.",
+        "download": "Download the app"
     },
     "onboarding": {
         "start": "Get started",

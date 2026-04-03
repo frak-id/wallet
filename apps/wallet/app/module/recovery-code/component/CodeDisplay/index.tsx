@@ -1,20 +1,26 @@
+import { Button } from "@frak-labs/design-system/components/Button";
 import { Inline } from "@frak-labs/design-system/components/Inline";
 import { Stack } from "@frak-labs/design-system/components/Stack";
-import { Text } from "@frak-labs/design-system/components/Text";
+import { CopyIcon } from "@frak-labs/design-system/icons";
+import { useCallback, useState } from "react";
 import { useTranslation } from "react-i18next";
 import * as styles from "./index.css";
 
 /**
- * Displays a generated install code as individual character boxes.
+ * Displays a generated install code with copy-to-clipboard button.
  */
 export function CodeDisplay({ code }: { code: string }) {
     const { t } = useTranslation();
+    const [copied, setCopied] = useState(false);
+
+    const handleCopy = useCallback(async () => {
+        await navigator.clipboard.writeText(code);
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
+    }, [code]);
 
     return (
-        <Stack space={"s"} align={"center"}>
-            <Text variant="overline" color="secondary">
-                {t("installCode.codeTitle")}
-            </Text>
+        <Stack space={"m"} align={"center"}>
             <Inline space={"s"} align={"center"}>
                 {code.split("").map((char, index) => (
                     <span key={index} className={styles.codeChar}>
@@ -22,9 +28,16 @@ export function CodeDisplay({ code }: { code: string }) {
                     </span>
                 ))}
             </Inline>
-            <Text variant="bodySmall" color="disabled">
-                {t("installCode.codeDescription")}
-            </Text>
+            <Button
+                variant={"secondary"}
+                size={"small"}
+                onClick={handleCopy}
+                icon={<CopyIcon />}
+            >
+                {copied
+                    ? t("installCode.codeCopied")
+                    : t("installCode.copyCode")}
+            </Button>
         </Stack>
     );
 }
