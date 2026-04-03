@@ -6,6 +6,7 @@ import { EmptyPendingGainsModal } from "@/module/tokens/component/EmptyPendingGa
 import { EmptyTransferModal } from "@/module/tokens/component/EmptyTransferModal";
 import { EmptyTransferredGainsModal } from "@/module/tokens/component/EmptyTransferredGainsModal";
 import { PendingGainsModal } from "@/module/tokens/component/PendingGainsModal";
+import { TransferModal } from "@/module/tokens/component/TransferModal";
 
 /**
  * Global modal outlet — mounted once at the app root.
@@ -30,6 +31,8 @@ export function ModalOutlet() {
             return <PendingGainsModal onClose={closeModal} />;
         case "emptyTransferredGains":
             return <EmptyTransferredGainsModal onClose={closeModal} />;
+        case "transfer":
+            return <TransferModal onClose={closeModal} />;
         case "successOverlay":
             return <SuccessOverlay visible={true} onDone={closeModal} />;
         case "keypass":

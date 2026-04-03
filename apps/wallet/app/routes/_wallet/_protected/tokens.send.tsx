@@ -1,5 +1,7 @@
+import { Box } from "@frak-labs/design-system/components/Box";
 import { Button } from "@frak-labs/design-system/components/Button";
 import { Input } from "@frak-labs/design-system/components/Input";
+import { Text } from "@frak-labs/design-system/components/Text";
 import type { BalanceItem } from "@frak-labs/wallet-shared";
 import { useGetUserBalance } from "@frak-labs/wallet-shared";
 import { createFileRoute } from "@tanstack/react-router";
@@ -22,7 +24,6 @@ import { TokenMax } from "@/module/tokens/component/TokenMax";
 import { TokenModalList } from "@/module/tokens/component/TokenModalList";
 import { TransactionError } from "@/module/tokens/component/TransactionError";
 import { TransactionSuccess } from "@/module/tokens/component/TransactionSuccess";
-import * as styles from "@/module/tokens/page/tokensSendPage.css";
 import { getUpdatedToken } from "@/module/tokens/utils/getUpdatedToken";
 import { validateAmount } from "@/module/tokens/utils/validateAmount";
 
@@ -52,10 +53,10 @@ const AddressInput = function AddressInput({
     const { t } = useTranslation();
 
     return (
-        <p className={styles.inputWrapper}>
-            <label htmlFor="toAddress" className={styles.label}>
+        <Box display={"flex"} flexDirection={"column"} gap={"xs"}>
+            <Text variant="label" color="secondary">
                 {t("common.to")}
-            </label>
+            </Text>
             <Input
                 type={"text"}
                 id={"toAddress"}
@@ -71,9 +72,11 @@ const AddressInput = function AddressInput({
                 })}
             />
             {errors.toAddress && (
-                <span className={"error"}>{errors.toAddress.message}</span>
+                <Text variant="caption" color="error">
+                    {errors.toAddress.message}
+                </Text>
             )}
-        </p>
+        </Box>
     );
 };
 
@@ -109,11 +112,17 @@ const AmountInput = function AmountInput({
     );
 
     return (
-        <p className={styles.inputWrapper}>
-            <label htmlFor="amount" className={styles.label}>
-                {t("common.balance")}: {selectedToken.amount}
+        <Box display={"flex"} flexDirection={"column"} gap={"xs"}>
+            <Box
+                display={"flex"}
+                alignItems={"center"}
+                justifyContent={"space-between"}
+            >
+                <Text variant="label" color="secondary">
+                    {t("common.balance")}: {selectedToken.amount}
+                </Text>
                 <TokenMax onClick={handleMaxClick} />
-            </label>
+            </Box>
             <Input
                 leftSection={
                     <TokenModalList
@@ -134,9 +143,11 @@ const AmountInput = function AmountInput({
                 aria-invalid={errors.amount ? "true" : "false"}
             />
             {errors.amount && (
-                <span className={"error"}>{errors.amount.message}</span>
+                <Text variant="caption" color="error">
+                    {errors.amount.message}
+                </Text>
             )}
-        </p>
+        </Box>
     );
 };
 
@@ -247,8 +258,13 @@ function TokensSendPage() {
     return (
         <>
             <Back href={"/wallet"}>{t("wallet.tokens.backToWallet")}</Back>
-            <div>
-                <form onSubmit={handleSubmit(onSubmit)}>
+            <form onSubmit={handleSubmit(onSubmit)}>
+                <Box
+                    display={"flex"}
+                    flexDirection={"column"}
+                    gap={"l"}
+                    paddingTop={"m"}
+                >
                     <AddressInput register={register} errors={errors} />
 
                     {selectedToken && (
@@ -262,27 +278,23 @@ function TokensSendPage() {
                                 resetField={resetField}
                             />
 
-                            <p>
-                                <Button
-                                    type={"submit"}
-                                    disabled={isPending || isConfirming}
-                                >
-                                    {t("common.send")}
-                                </Button>
-                            </p>
+                            <Button
+                                type={"submit"}
+                                disabled={isPending || isConfirming}
+                            >
+                                {t("common.send")}
+                            </Button>
 
-                            <p className={styles.bottom}>
-                                <TransactionStatus
-                                    isSuccess={isSuccess}
-                                    isError={isError}
-                                    hash={hash}
-                                    error={error}
-                                />
-                            </p>
+                            <TransactionStatus
+                                isSuccess={isSuccess}
+                                isError={isError}
+                                hash={hash}
+                                error={error}
+                            />
                         </>
                     )}
-                </form>
-            </div>
+                </Box>
+            </form>
         </>
     );
 }

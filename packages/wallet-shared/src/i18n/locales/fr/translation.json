@@ -108,6 +108,14 @@
             "description": "La somme de tes gains apparaîtront ici dès que tu effectueras un transfert vers ton compte bancaire.",
             "confirm": "J'ai compris"
         },
+        "transferModal": {
+            "title": "Transférer",
+            "description": "Choisis l'une des options suivantes pour transférer tes gains.",
+            "bankAccount": "Compte bancaire",
+            "bankAccountDescription": "Ajouter un IBAN",
+            "wallet": "Wallet",
+            "walletDescription": "Transférer vers un crypto wallet"
+        },
         "activateNotifications": "<strong>Activer les notifications</strong><br /> pour être prévenu du versement de vos gains",
         "activateNotificationsRationale": "<strong>Activer les notifications</strong><br /> Nous avons besoin de votre permission pour vous notifier du versement de vos gains",
         "openNotificationSettings": "<strong>Notifications désactivées</strong><br /> Ouvrez les paramètres pour activer les notifications",

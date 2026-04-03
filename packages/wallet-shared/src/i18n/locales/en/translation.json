@@ -110,6 +110,14 @@
             "description": "The total of your earnings will appear here once you make a transfer to your bank account.",
             "confirm": "Got it"
         },
+        "transferModal": {
+            "title": "Transfer",
+            "description": "Choose one of the following options to transfer your earnings.",
+            "bankAccount": "Bank account",
+            "bankAccountDescription": "Add an IBAN",
+            "wallet": "Wallet",
+            "walletDescription": "Transfer to a crypto wallet"
+        },
         "activateNotifications": "<strong>Enable notifications</strong> <br /> to be notified when your gains are paid",
         "activateNotificationsRationale": "<strong>Enable notifications</strong> <br /> We need your permission to notify you when gains are paid",
         "openNotificationSettings": "<strong>Notifications disabled</strong> <br /> Open settings to enable notifications",

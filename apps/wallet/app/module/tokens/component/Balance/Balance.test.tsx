@@ -213,7 +213,7 @@ describe("Balance", () => {
         });
     });
 
-    it("should navigate to offramp when amount is positive", () => {
+    it("should open transfer modal when amount is positive", () => {
         mockUseGetUserBalance.mockReturnValue({
             userBalance: {
                 total: { eurAmount: 100 },
@@ -226,8 +226,8 @@ describe("Balance", () => {
             screen.getByRole("button", { name: "wallet.transferToBank" })
         );
 
-        expect(mockNavigate).toHaveBeenCalledWith({
-            to: "/monerium/offramp",
+        expect(modalStore.getState().modal).toEqual({
+            id: "transfer",
         });
     });
 });

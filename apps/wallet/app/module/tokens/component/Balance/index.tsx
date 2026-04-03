@@ -11,7 +11,6 @@ import {
     TransferIcon,
 } from "@frak-labs/design-system/icons";
 import { useGetUserBalance } from "@frak-labs/wallet-shared";
-import { useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { modalStore } from "@/module/stores/modalStore";
@@ -21,7 +20,6 @@ import * as styles from "./index.css";
 export function Balance() {
     const { t } = useTranslation();
     const { userBalance } = useGetUserBalance();
-    const navigate = useNavigate();
     const [isHidden, setIsHidden] = useState(false);
 
     const openModal = modalStore((s) => s.openModal);
@@ -35,7 +33,7 @@ export function Balance() {
             return;
         }
 
-        navigate({ to: "/monerium/offramp" });
+        openModal({ id: "transfer" });
     };
 
     const toggleHidden = () => {

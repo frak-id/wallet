@@ -21,6 +21,7 @@ export type ModalState =
     | { id: "emptyPendingGains" }
     | { id: "pendingGains" }
     | { id: "emptyTransferredGains" }
+    | { id: "transfer" }
     | { id: "successOverlay" }
     | { id: "keypass"; onAuthSuccess: () => void }
     | { id: "recoveryCodeSuccess" };
