@@ -1,9 +1,9 @@
 import { triggerDeepLinkWithFallback } from "@frak-labs/core-sdk";
 import { Spinner } from "@frak-labs/design-system/components/Spinner";
-import { pairingStore } from "@frak-labs/wallet-shared";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useRef } from "react";
 import { useTranslation } from "react-i18next";
+import { pendingActionsStore } from "@/module/pending-actions/stores/pendingActionsStore";
 import * as styles from "./pair.css";
 
 type NavigateFn = ReturnType<typeof useNavigate>;
@@ -34,7 +34,9 @@ export function validatePairSearch(search: Record<string, unknown>) {
  * Redirect the user to the web-based pairing flow
  */
 export function redirectToWebPairing(id: string, navigate: NavigateFn) {
-    pairingStore.getState().setPendingPairingId(id);
+    pendingActionsStore
+        .getState()
+        .addAction({ type: "pairing", pairingId: id });
     navigate({ to: "/pairing", search: { mode: "embedded" }, replace: true });
 }
 

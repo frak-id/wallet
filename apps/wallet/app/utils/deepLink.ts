@@ -1,6 +1,10 @@
 import { isTauri } from "@frak-labs/app-essentials/utils/platform";
-import { getSafeSession, pairingStore } from "@frak-labs/wallet-shared";
+import {
+    authenticatedBackendApi,
+    getSafeSession,
+} from "@frak-labs/wallet-shared";
 import { isCryptoMode } from "@/module/common/utils/walletMode";
+import { pendingActionsStore } from "@/module/pending-actions/stores/pendingActionsStore";
 
 type DeepLinkParams = {
     action: string;
@@ -10,34 +14,9 @@ type DeepLinkParams = {
     mode?: string;
     code?: string;
     state?: string;
+    m?: string;
+    a?: string;
 };
-
-/**
- * Pending deep link stored when user is unauthenticated.
- * Consumed by login/register pages after successful auth.
- */
-let pendingDeepLink: DeepLinkParams | null = null;
-
-export function getPendingDeepLink(): DeepLinkParams | null {
-    return pendingDeepLink;
-}
-
-export function clearPendingDeepLink(): void {
-    pendingDeepLink = null;
-}
-
-/**
- * After auth, consume the pending deep link and navigate to it.
- * Returns true if a pending deep link was consumed, false otherwise.
- */
-export function consumePendingDeepLink(navigate: NavigateFn): boolean {
-    const pending = pendingDeepLink;
-    if (!pending) return false;
-
-    pendingDeepLink = null;
-    routeDeepLink(navigate, pending);
-    return true;
-}
 
 function extractSearchParams(
     searchParams: URLSearchParams
@@ -49,6 +28,8 @@ function extractSearchParams(
         mode: searchParams.get("mode") ?? undefined,
         code: searchParams.get("code") ?? undefined,
         state: searchParams.get("state") ?? undefined,
+        m: searchParams.get("m") ?? undefined,
+        a: searchParams.get("a") ?? undefined,
     };
 }
 
@@ -70,7 +51,7 @@ function parseDeepLink(url: string): DeepLinkParams | null {
             return { action, ...extractSearchParams(parsed.searchParams) };
         }
 
-        // https://wallet.v2.gcp-dev.frak.id/pair?id=... (Android App Links)
+        // https://wallet.frak.id/pair?id=... (Android App Links)
         if (
             parsed.protocol === "https:" &&
             knownWalletHosts.has(parsed.hostname)
@@ -102,11 +83,8 @@ function handleDeepLinkAction(navigate: NavigateFn, params: DeepLinkParams) {
     if (!publicActions.has(params.action)) {
         const session = getSafeSession();
         if (!session?.token) {
-            // Store for post-auth redirect, set up pairing if needed
-            if (params.action === "pair" && params.id) {
-                pairingStore.getState().setPendingPairingId(params.id);
-            }
-            pendingDeepLink = params;
+            // Convert deep link to typed pending actions in the store
+            storePendingActions(params);
             navigate({ to: "/register" });
             return;
         }
@@ -116,78 +94,137 @@ function handleDeepLinkAction(navigate: NavigateFn, params: DeepLinkParams) {
 }
 
 /**
- * Route deep link params to the appropriate screen.
- * Extracted so post-auth redirect can call it directly.
+ * Convert deep link params to typed pending actions for post-auth execution.
+ * Stores them in `pendingActionsStore` (persisted, survives refresh).
  */
-export function routeDeepLink(navigate: NavigateFn, params: DeepLinkParams) {
+function storePendingActions(params: DeepLinkParams) {
+    const store = pendingActionsStore.getState();
+
     switch (params.action) {
-        case "send":
-            if (isCryptoMode) {
-                navigate({
-                    to: "/tokens/send",
-                    search: params.to ? { to: params.to } : undefined,
+        case "install":
+            if (params.m && params.a) {
+                store.addAction({
+                    type: "ensure",
+                    merchantId: params.m,
+                    anonymousId: params.a,
                 });
-            } else {
-                navigate({ to: "/wallet" });
             }
-            break;
-
-        case "receive":
-            if (isCryptoMode) {
-                navigate({ to: "/tokens/receive" });
-            } else {
-                navigate({ to: "/wallet" });
-            }
-            break;
-
-        case "settings":
-            navigate({ to: "/profile" });
-            break;
-
-        case "recovery":
-            navigate({ to: "/profile/recovery" });
-            break;
-
-        case "notifications":
-            navigate({ to: "/notifications" });
-            break;
-
-        case "history":
-            navigate({ to: "/history" });
             break;
 
         case "pair":
-            // Pairing codes are resolved server-side via /pairing; deep link only needs the id.
-            if (params.id && params.id.length > 0 && params.id.length <= 128) {
-                pairingStore.getState().setPendingPairingId(params.id);
-            } else {
-                console.warn(
-                    "[DeepLink] Invalid pair params — id missing or out of bounds"
-                );
+            if (params.id) {
+                store.addAction({
+                    type: "pairing",
+                    pairingId: params.id,
+                });
             }
-            navigate({
-                to: "/pairing",
-                search: params.mode
-                    ? { mode: params.mode }
-                    : { mode: "embedded" },
-            });
             break;
 
+        default: {
+            // Convert generic deep link to a navigation action
+            const target = deepLinkToRoute(params);
+            if (target) {
+                store.addAction({
+                    type: "navigation",
+                    to: target.to,
+                    search: target.search,
+                });
+            }
+            break;
+        }
+    }
+}
+
+/**
+ * Map deep link params to a route path + search params.
+ * Used to build navigation-type pending actions.
+ */
+function deepLinkToRoute(
+    params: DeepLinkParams
+): { to: string; search?: Record<string, string> } | null {
+    switch (params.action) {
+        case "send":
+            return isCryptoMode
+                ? {
+                      to: "/tokens/send",
+                      search: params.to ? { to: params.to } : undefined,
+                  }
+                : { to: "/wallet" };
+        case "receive":
+            return isCryptoMode ? { to: "/tokens/receive" } : { to: "/wallet" };
+        case "settings":
+            return { to: "/profile" };
+        case "recovery":
+            return { to: "/profile/recovery" };
+        case "notifications":
+            return { to: "/notifications" };
+        case "history":
+            return { to: "/history" };
         case "monerium":
         case "monerium-callback": {
-            // Both HTTPS App Link (action: "monerium") and custom scheme (action: "monerium-callback")
-            // route to the OAuth callback handler
             const search: Record<string, string> = {};
             if (params.code) search.code = params.code;
             if (params.state) search.state = params.state;
-            navigate({ to: "/monerium/callback", search });
-            break;
+            return { to: "/monerium/callback", search };
         }
-
         default:
-            navigate({ to: "/wallet" });
-            break;
+            return { to: "/wallet" };
     }
+}
+
+/**
+ * Route deep link params to the appropriate screen.
+ * Called when the user is already authenticated.
+ */
+export function routeDeepLink(navigate: NavigateFn, params: DeepLinkParams) {
+    // Special cases that need side-effects beyond simple navigation
+    switch (params.action) {
+        case "pair":
+            routePairDeepLink(navigate, params);
+            return;
+        case "install":
+            routeInstallDeepLink(navigate, params);
+            return;
+    }
+
+    // All other actions map directly to a route
+    const route = deepLinkToRoute(params);
+    if (route) {
+        navigate(route);
+    }
+}
+
+function routePairDeepLink(navigate: NavigateFn, params: DeepLinkParams) {
+    // Store the pairing ID and navigate to the pairing page
+    if (params.id && params.id.length > 0 && params.id.length <= 128) {
+        pendingActionsStore.getState().addAction({
+            type: "pairing",
+            pairingId: params.id,
+        });
+    } else {
+        console.warn(
+            "[DeepLink] Invalid pair params \u2014 id missing or out of bounds"
+        );
+    }
+    navigate({
+        to: "/pairing",
+        search: params.mode ? { mode: params.mode } : { mode: "embedded" },
+    });
+}
+
+function routeInstallDeepLink(navigate: NavigateFn, params: DeepLinkParams) {
+    // User is authenticated \u2014 fire ensure call immediately (background)
+    if (params.m && params.a) {
+        authenticatedBackendApi.user.identity.ensure
+            .post({
+                merchantId: params.m,
+                anonymousId: params.a,
+            })
+            .catch((error: unknown) => {
+                console.error("[DeepLink] Install ensure failed:", error);
+            });
+    }
+    navigate({ to: "/wallet" });
 }
 
 export async function initDeepLinks(navigate: NavigateFn): Promise<void> {

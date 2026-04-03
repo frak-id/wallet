@@ -8,8 +8,7 @@ import { DemoTapZone } from "@/module/authentication/component/DemoTapZone";
 import { LoginList } from "@/module/authentication/component/LoginList";
 import { StepLayout } from "@/module/common/component/StepLayout";
 import { PairingInProgress } from "@/module/pairing/component/PairingInProgress";
-import { usePendingPairingInfo } from "@/module/pairing/hook/usePendingPairingInfo";
-import { consumePendingDeepLink } from "@/utils/deepLink";
+import { executePendingActions } from "@/module/pending-actions/utils/executePendingActions";
 import * as styles from "./login.css";
 
 export const Route = createFileRoute("/_wallet/_auth/login")({
@@ -29,22 +28,20 @@ export const Route = createFileRoute("/_wallet/_auth/login")({
 function LoginPage() {
     const { t } = useTranslation();
     const navigate = useNavigate();
-    const { pairingInfo } = usePendingPairingInfo();
-    const hasPendingPairing = Boolean(pairingInfo?.id);
     const [error, setError] = useState<Error | null>(null);
     const session = sessionStore((state) => state.session);
     const hasHandledPostLoginRedirect = useRef(false);
 
-    const handlePostLoginRedirect = useCallback(() => {
+    const handlePostLoginRedirect = useCallback(async () => {
         if (hasHandledPostLoginRedirect.current) return;
         hasHandledPostLoginRedirect.current = true;
 
-        if (consumePendingDeepLink(navigate)) return;
-        navigate({
-            to: hasPendingPairing ? "/pairing" : "/wallet",
-            replace: true,
-        });
-    }, [navigate, hasPendingPairing]);
+        // Execute all pending actions (ensure calls, deep links, pairing)
+        const navigated = await executePendingActions(navigate);
+        if (!navigated) {
+            navigate({ to: "/wallet", replace: true });
+        }
+    }, [navigate]);
 
     // Redirect after successful login: pending deep link > pairing > wallet
     useEffect(() => {

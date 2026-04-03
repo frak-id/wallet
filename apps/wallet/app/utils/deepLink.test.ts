@@ -1,5 +1,5 @@
-import { pairingStore } from "@frak-labs/wallet-shared";
 import { vi } from "vitest";
+import { pendingActionsStore } from "@/module/pending-actions/stores/pendingActionsStore";
 import {
     afterEach,
     beforeEach,
@@ -26,6 +26,8 @@ const getSafeSessionMock = vi.fn<() => { token: string } | null | undefined>(
     () => null
 );
 
+const mockEnsurePost = vi.fn(() => Promise.resolve({ error: null }));
+
 vi.mock("@frak-labs/app-essentials/utils/platform", () => ({
     isAndroid: vi.fn(() => false),
     isIOS: vi.fn(() => false),
@@ -43,6 +45,15 @@ vi.mock("@frak-labs/wallet-shared", async (importOriginal) => {
     return {
         ...actual,
         getSafeSession: () => getSafeSessionMock(),
+        authenticatedBackendApi: {
+            user: {
+                identity: {
+                    ensure: {
+                        post: mockEnsurePost,
+                    },
+                },
+            },
+        },
     };
 });
 
@@ -53,16 +64,13 @@ vi.mock("@/module/common/utils/walletMode", () => ({
 describe("initDeepLinks", () => {
     beforeEach(async () => {
         vi.clearAllMocks();
-        pairingStore.getState().clearPendingPairing();
+        pendingActionsStore.getState().clearAll();
         openUrlHandler = null;
         getSafeSessionMock.mockReturnValue({ token: "valid-token" });
         const { isTauri } = await import(
             "@frak-labs/app-essentials/utils/platform"
         );
         vi.mocked(isTauri).mockReturnValue(true);
-
-        const { clearPendingDeepLink } = await import("./deepLink");
-        clearPendingDeepLink();
     });
 
     afterEach(() => {
@@ -95,7 +103,13 @@ describe("initDeepLinks", () => {
         await initDeepLinks(navigate);
         vi.runAllTimers();
 
-        expect(pairingStore.getState().pendingPairingId).toBe("pair-123");
+        const actions = pendingActionsStore.getState().getValidActions();
+        const pairingAction = actions.find((a) => a.type === "pairing");
+        expect(pairingAction).toBeDefined();
+        expect(
+            pairingAction?.type === "pairing" &&
+                pairingAction.pairingId === "pair-123"
+        ).toBe(true);
         expect(navigate).toHaveBeenCalledWith({
             to: "/pairing",
             search: { mode: "embedded" },
@@ -147,7 +161,13 @@ describe("initDeepLinks", () => {
         await initDeepLinks(navigate);
         vi.runAllTimers();
 
-        expect(pairingStore.getState().pendingPairingId).toBe("pair-456");
+        const actions = pendingActionsStore.getState().getValidActions();
+        const pairingAction = actions.find((a) => a.type === "pairing");
+        expect(pairingAction).toBeDefined();
+        expect(
+            pairingAction?.type === "pairing" &&
+                pairingAction.pairingId === "pair-456"
+        ).toBe(true);
         expect(navigate).toHaveBeenCalledWith({
             to: "/pairing",
             search: { mode: "embedded" },
@@ -166,7 +186,13 @@ describe("initDeepLinks", () => {
 
         openUrlHandler(["https://wallet.frak.id/pair?id=pair-789"]);
 
-        expect(pairingStore.getState().pendingPairingId).toBe("pair-789");
+        const actions = pendingActionsStore.getState().getValidActions();
+        const pairingAction = actions.find((a) => a.type === "pairing");
+        expect(pairingAction).toBeDefined();
+        expect(
+            pairingAction?.type === "pairing" &&
+                pairingAction.pairingId === "pair-789"
+        ).toBe(true);
         expect(navigate).toHaveBeenCalledWith({
             to: "/pairing",
             search: { mode: "embedded" },
@@ -187,21 +213,39 @@ describe("initDeepLinks", () => {
 
         expect(navigate).not.toHaveBeenCalled();
     });
+
+    test("should handle install deep link when authenticated", async () => {
+        const { initDeepLinks } = await import("./deepLink");
+        const navigate = vi.fn();
+
+        await initDeepLinks(navigate);
+
+        if (!openUrlHandler) {
+            throw new Error("Expected openUrlHandler to be set");
+        }
+
+        openUrlHandler(["frakwallet://install?m=merchant-123&a=anonymous-456"]);
+
+        // Should fire ensure call in background
+        expect(mockEnsurePost).toHaveBeenCalledWith({
+            merchantId: "merchant-123",
+            anonymousId: "anonymous-456",
+        });
+        // Should navigate to /wallet
+        expect(navigate).toHaveBeenCalledWith({ to: "/wallet" });
+    });
 });
 
 describe("deep link auth gate", () => {
     beforeEach(async () => {
         vi.clearAllMocks();
-        pairingStore.getState().clearPendingPairing();
+        pendingActionsStore.getState().clearAll();
         openUrlHandler = null;
         getSafeSessionMock.mockReturnValue(null);
         const { isTauri } = await import(
             "@frak-labs/app-essentials/utils/platform"
         );
         vi.mocked(isTauri).mockReturnValue(true);
-
-        const { clearPendingDeepLink } = await import("./deepLink");
-        clearPendingDeepLink();
     });
 
     afterEach(() => {
@@ -226,10 +270,8 @@ describe("deep link auth gate", () => {
         );
     });
 
-    test("should store pending deep link when unauthenticated", async () => {
-        const { initDeepLinks, getPendingDeepLink } = await import(
-            "./deepLink"
-        );
+    test("should store pending navigation action when unauthenticated", async () => {
+        const { initDeepLinks } = await import("./deepLink");
         const navigate = vi.fn();
 
         await initDeepLinks(navigate);
@@ -240,20 +282,16 @@ describe("deep link auth gate", () => {
 
         openUrlHandler(["frakwallet://send?to=0xabc"]);
 
-        const pending = getPendingDeepLink();
-        expect(pending).toEqual({
-            action: "send",
-            to: "0xabc",
-            amount: undefined,
-            id: undefined,
-            mode: undefined,
-        });
+        const actions = pendingActionsStore.getState().getValidActions();
+        const navAction = actions.find((a) => a.type === "navigation");
+        expect(navAction).toBeDefined();
+        expect(
+            navAction?.type === "navigation" && navAction.to === "/tokens/send"
+        ).toBe(true);
     });
 
-    test("should store pairing ID when unauthenticated pair deep link", async () => {
-        const { initDeepLinks, getPendingDeepLink } = await import(
-            "./deepLink"
-        );
+    test("should store pending pairing action when unauthenticated", async () => {
+        const { initDeepLinks } = await import("./deepLink");
         const navigate = vi.fn();
 
         await initDeepLinks(navigate);
@@ -264,12 +302,37 @@ describe("deep link auth gate", () => {
 
         openUrlHandler(["frakwallet://pair?id=pair-abc"]);
 
-        expect(pairingStore.getState().pendingPairingId).toBe("pair-abc");
+        const actions = pendingActionsStore.getState().getValidActions();
+        const pairingAction = actions.find((a) => a.type === "pairing");
+        expect(pairingAction).toBeDefined();
+        expect(
+            pairingAction?.type === "pairing" &&
+                pairingAction.pairingId === "pair-abc"
+        ).toBe(true);
         expect(navigate).toHaveBeenCalledWith({ to: "/register" });
+    });
 
-        const pending = getPendingDeepLink();
-        expect(pending?.action).toBe("pair");
-        expect(pending?.id).toBe("pair-abc");
+    test("should store pending ensure action when unauthenticated install deep link", async () => {
+        const { initDeepLinks } = await import("./deepLink");
+        const navigate = vi.fn();
+
+        await initDeepLinks(navigate);
+
+        if (!openUrlHandler) {
+            throw new Error("Expected openUrlHandler to be set");
+        }
+
+        openUrlHandler(["frakwallet://install?m=merchant-123&a=anonymous-456"]);
+
+        const actions = pendingActionsStore.getState().getValidActions();
+        const ensureAction = actions.find((a) => a.type === "ensure");
+        expect(ensureAction).toBeDefined();
+        expect(
+            ensureAction?.type === "ensure" &&
+                ensureAction.merchantId === "merchant-123" &&
+                ensureAction.anonymousId === "anonymous-456"
+        ).toBe(true);
+        expect(navigate).toHaveBeenCalledWith({ to: "/register" });
     });
 
     test("should allow recovery deep link without auth", async () => {
@@ -286,56 +349,18 @@ describe("deep link auth gate", () => {
 
         expect(navigate).toHaveBeenCalledWith({ to: "/profile/recovery" });
     });
-
-    test("should consume pending deep link after auth", async () => {
-        const { initDeepLinks, consumePendingDeepLink, getPendingDeepLink } =
-            await import("./deepLink");
-        const navigate = vi.fn();
-
-        await initDeepLinks(navigate);
-
-        if (!openUrlHandler) {
-            throw new Error("Expected openUrlHandler to be set");
-        }
-
-        // Trigger unauthenticated deep link
-        openUrlHandler(["frakwallet://settings"]);
-        expect(navigate).toHaveBeenCalledWith({ to: "/register" });
-        expect(getPendingDeepLink()?.action).toBe("settings");
-
-        // Simulate post-auth consumption
-        navigate.mockClear();
-        const consumed = consumePendingDeepLink(navigate);
-
-        expect(consumed).toBe(true);
-        expect(navigate).toHaveBeenCalledWith({ to: "/profile" });
-        expect(getPendingDeepLink()).toBeNull();
-    });
-
-    test("should return false when no pending deep link to consume", async () => {
-        const { consumePendingDeepLink } = await import("./deepLink");
-        const navigate = vi.fn();
-
-        const consumed = consumePendingDeepLink(navigate);
-
-        expect(consumed).toBe(false);
-        expect(navigate).not.toHaveBeenCalled();
-    });
 });
 
 describe("monerium OAuth callback", () => {
     beforeEach(async () => {
         vi.clearAllMocks();
-        pairingStore.getState().clearPendingPairing();
+        pendingActionsStore.getState().clearAll();
         openUrlHandler = null;
         getSafeSessionMock.mockReturnValue({ token: "valid-token" });
         const { isTauri } = await import(
             "@frak-labs/app-essentials/utils/platform"
         );
         vi.mocked(isTauri).mockReturnValue(true);
-
-        const { clearPendingDeepLink } = await import("./deepLink");
-        clearPendingDeepLink();
     });
 
     afterEach(() => {

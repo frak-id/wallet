@@ -85,6 +85,7 @@ const installCodeResolveRoute = new Elysia()
 
             return {
                 merchantId: result.merchantId,
+                anonymousId: result.anonymousId,
                 merchant: {
                     name: merchant.name,
                     domain: merchant.domain,
@@ -99,6 +100,7 @@ const installCodeResolveRoute = new Elysia()
             response: {
                 200: t.Object({
                     merchantId: t.String(),
+                    anonymousId: t.String(),
                     merchant: t.Object({
                         name: t.String(),
                         domain: t.String(),

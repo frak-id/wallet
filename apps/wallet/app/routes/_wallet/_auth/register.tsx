@@ -13,10 +13,8 @@ import {
 } from "@/module/onboarding/component/slides/OnboardingSlides";
 import { Welcome } from "@/module/onboarding/component/Welcome";
 import { PairingInProgress } from "@/module/pairing/component/PairingInProgress";
-import { usePendingPairingInfo } from "@/module/pairing/hook/usePendingPairingInfo";
-import { useConsumeInstallCode } from "@/module/recovery-code/hook/useConsumeInstallCode";
+import { executePendingActions } from "@/module/pending-actions/utils/executePendingActions";
 import { modalStore } from "@/module/stores/modalStore";
-import { consumePendingDeepLink } from "@/utils/deepLink";
 
 export const Route = createFileRoute("/_wallet/_auth/register")({
     component: RegisterPage,
@@ -41,21 +39,17 @@ type FlowStep = "onboarding" | "notification" | "welcome";
 function RegisterPage() {
     const { t } = useTranslation();
     const navigate = useNavigate();
-    const { pairingInfo } = usePendingPairingInfo();
-    const hasPendingPairing = Boolean(pairingInfo?.id);
     const [step, setStep] = useState<FlowStep>("onboarding");
 
     const openModal = modalStore((s) => s.openModal);
     const closeModal = modalStore((s) => s.closeModal);
 
-    const { consumePendingCode } = useConsumeInstallCode();
-
     const advanceToNotification = useCallback(() => {
         closeModal();
         setStep("notification");
-        // Silently consume any pending install code after auth
-        consumePendingCode();
-    }, [closeModal, consumePendingCode]);
+        // Execute all pending actions (ensure calls, etc.) after auth
+        executePendingActions(navigate);
+    }, [closeModal, navigate]);
 
     const { login, isLoading: isLoginLoading } = useLogin({
         onSuccess: advanceToNotification,
@@ -122,12 +116,14 @@ function RegisterPage() {
             )}
             {step === "welcome" && (
                 <Welcome
-                    onContinue={() => {
-                        if (consumePendingDeepLink(navigate)) return;
-                        navigate({
-                            to: hasPendingPairing ? "/pairing" : "/wallet",
-                            replace: true,
-                        });
+                    onContinue={async () => {
+                        const navigated = await executePendingActions(navigate);
+                        if (!navigated) {
+                            navigate({
+                                to: "/wallet",
+                                replace: true,
+                            });
+                        }
                     }}
                 />
             )}

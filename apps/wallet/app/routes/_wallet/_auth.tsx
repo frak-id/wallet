@@ -1,10 +1,10 @@
-import {
-    getSafeSession,
-    getValidPendingPairingId,
-    pairingStore,
-} from "@frak-labs/wallet-shared";
+import { getSafeSession } from "@frak-labs/wallet-shared";
 import { createFileRoute, Outlet, redirect } from "@tanstack/react-router";
 import { AppShell } from "@/module/common/component/AppShell";
+import {
+    pendingActionsStore,
+    selectPendingPairingId,
+} from "@/module/pending-actions/stores/pendingActionsStore";
 
 export const Route = createFileRoute("/_wallet/_auth")({
     component: AuthenticationLayout,
@@ -18,10 +18,15 @@ export const Route = createFileRoute("/_wallet/_auth")({
             const searchPairingId = search.get("id");
 
             if (searchPairingId) {
-                pairingStore.getState().setPendingPairingId(searchPairingId);
+                pendingActionsStore.getState().addAction({
+                    type: "pairing",
+                    pairingId: searchPairingId,
+                });
             }
 
-            const pairingId = searchPairingId || getValidPendingPairingId();
+            const pairingId =
+                searchPairingId ||
+                selectPendingPairingId(pendingActionsStore.getState());
 
             throw redirect({
                 to: pairingId ? "/pairing" : "/wallet",
@@ -32,7 +37,10 @@ export const Route = createFileRoute("/_wallet/_auth")({
         const search = new URLSearchParams(location.search);
         const pairingId = search.get("id");
         if (pairingId) {
-            pairingStore.getState().setPendingPairingId(pairingId);
+            pendingActionsStore.getState().addAction({
+                type: "pairing",
+                pairingId,
+            });
         }
     },
 });

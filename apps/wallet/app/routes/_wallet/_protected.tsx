@@ -1,13 +1,7 @@
-import {
-    getSafeSession,
-    // OriginPairingState,
-    pairingStore,
-    // selectDistantWebauthnSession,
-    // sessionStore,
-} from "@frak-labs/wallet-shared";
+import { getSafeSession } from "@frak-labs/wallet-shared";
 import { createFileRoute, Outlet, redirect } from "@tanstack/react-router";
 import { AppShell } from "@/module/common/component/AppShell";
-// import { TargetPairingState } from "@/module/pairing/component/TargetPairingState";
+import { pendingActionsStore } from "@/module/pending-actions/stores/pendingActionsStore";
 
 export const Route = createFileRoute("/_wallet/_protected")({
     component: ProtectedLayout,
@@ -16,7 +10,10 @@ export const Route = createFileRoute("/_wallet/_protected")({
         const pairingId = search.get("id");
 
         if (pairingId) {
-            pairingStore.getState().setPendingPairingId(pairingId);
+            pendingActionsStore.getState().addAction({
+                type: "pairing",
+                pairingId,
+            });
         }
 
         // Check if user is authenticated

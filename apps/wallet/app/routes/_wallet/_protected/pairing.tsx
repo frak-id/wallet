@@ -14,7 +14,10 @@ import { useStore } from "zustand";
 import { Title } from "@/module/common/component/Title";
 import { PairingHeader } from "@/module/pairing/component/PairingHeader";
 import { PairingInfo } from "@/module/pairing/component/PairingInfo";
-import { usePendingPairingInfo } from "@/module/pairing/hook/usePendingPairingInfo";
+import {
+    pendingActionsStore,
+    selectPendingPairingId,
+} from "@/module/pending-actions/stores/pendingActionsStore";
 import * as styles from "./pairing.css";
 
 export const Route = createFileRoute("/_wallet/_protected/pairing")({
@@ -49,8 +52,7 @@ export function getPairingErrorState(
 function PairingPage() {
     const client = getTargetPairingClient();
     const { t } = useTranslation();
-    const { pairingInfo: pendingPairingInfo, resetPairingInfo } =
-        usePendingPairingInfo();
+    const pendingPairingId = pendingActionsStore(selectPendingPairingId);
     const navigate = useNavigate();
     const { mode } = Route.useSearch();
     const pairingState = useStore(client.store);
@@ -60,7 +62,7 @@ function PairingPage() {
         isError: isPairingError,
         refetch: refetchPairingInfo,
     } = usePairingInfo({
-        id: pendingPairingInfo?.id,
+        id: pendingPairingId ?? undefined,
     });
     const hasPairingCode = Boolean(pairingInfo?.pairingCode?.trim());
     const shouldShowCode = mode !== "embedded" && hasPairingCode;
@@ -71,23 +73,20 @@ function PairingPage() {
 
     const actionPairing = useCallback(
         (action: "join" | "cancel") => {
-            if (action === "join" && pendingPairingInfo && pairingInfo) {
-                client.joinPairing(
-                    pendingPairingInfo.id,
-                    pairingInfo.pairingCode
-                );
+            if (action === "join" && pendingPairingId && pairingInfo) {
+                client.joinPairing(pendingPairingId, pairingInfo.pairingCode);
             }
             if (action === "cancel") {
                 client.disconnect();
             }
-            resetPairingInfo();
+            pendingActionsStore.getState().clearPendingPairing();
             navigate({ to: "/wallet" });
         },
-        [navigate, resetPairingInfo, client, pairingInfo, pendingPairingInfo]
+        [navigate, client, pairingInfo, pendingPairingId]
     );
 
     // No pairing info
-    if (!pendingPairingInfo) {
+    if (!pendingPairingId) {
         return (
             <div>
                 <Title size="big" align="center">
@@ -156,7 +155,7 @@ function PairingPage() {
     return (
         <div>
             <PairingHeader />
-            <PairingInfo state={pairingState} id={pendingPairingInfo.id} />
+            <PairingInfo state={pairingState} id={pendingPairingId} />
             {shouldShowCode ? (
                 <PairingCode code={pairingInfo.pairingCode} />
             ) : (

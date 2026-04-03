@@ -1,59 +1,49 @@
-import { log, rateLimitMiddleware } from "@backend-infrastructure";
+import {
+    log,
+    rateLimitMiddleware,
+    sessionContext,
+} from "@backend-infrastructure";
 import { t } from "@backend-utils";
 import { Elysia, status } from "elysia";
 import { OrchestrationContext } from "../../../orchestration/context";
-import {
-    buildIdentityNodes,
-    resolveWalletAddress,
-    sdkIdentityHeaderSchema,
-} from "../track/sdkIdentity";
+import { buildIdentityNodes } from "../track/sdkIdentity";
 
 /**
- * Failsafe endpoint to ensure a wallet ↔ clientId link exists.
+ * Failsafe endpoint to ensure a wallet ↔ anonymousId link exists.
  *
- * Called by the SDK on merchant websites after wallet connection is detected.
+ * Supports two authentication paths:
+ *   1. Wallet session auth (x-wallet-auth header) — used by the wallet app
+ *      when opening from a deep link or consuming an install code.
+ *      Requires `anonymousId` in the request body.
+ *   2. SDK auth (x-wallet-sdk-auth header) — used by the SDK on merchant
+ *      websites. Uses `x-frak-client-id` header as the anonymousId.
+ *
  * Uses `resolveAndAssociate()` which is idempotent — if the link already
  * exists, it returns immediately with no DB writes.
- *
- * Required headers:
- *   - x-wallet-sdk-auth: SDK JWT (interactionToken from wallet status)
- *   - x-frak-client-id: Anonymous client identifier
- *
- * Required body:
- *   - merchantId: UUID of the merchant
  */
 export const identityEnsureRoutes = new Elysia({ prefix: "/ensure" })
+    .use(sessionContext)
     .use(rateLimitMiddleware({ windowMs: 60_000, maxRequests: 10 }))
     .post(
         "",
-        async ({ headers, body }) => {
-            const walletSdkAuth = headers["x-wallet-sdk-auth"];
-            const clientId = headers["x-frak-client-id"];
-            const { merchantId } = body;
+        async ({ headers, body, walletSession }) => {
+            const { merchantId, anonymousId: bodyAnonymousId } = body;
 
-            // Both identifiers are required for an ensure call
-            if (!walletSdkAuth || !clientId) {
+            // Determine the anonymousId: body (wallet app) or header (SDK)
+            const anonymousId = bodyAnonymousId || headers["x-frak-client-id"];
+
+            if (!anonymousId) {
                 return status(400, {
                     success: false as const,
-                    error: "Both x-wallet-sdk-auth and x-frak-client-id headers are required",
-                    code: "MISSING_IDENTITY",
-                });
-            }
-
-            // Resolve the wallet address from the SDK JWT
-            const walletAddress = await resolveWalletAddress(walletSdkAuth);
-            if (!walletAddress) {
-                return status(401, {
-                    success: false as const,
-                    error: "Invalid or expired SDK JWT",
-                    code: "INVALID_TOKEN",
+                    error: "anonymousId must be provided in body or via x-frak-client-id header",
+                    code: "MISSING_ANONYMOUS_ID",
                 });
             }
 
             // Build identity nodes for both wallet and anonymous fingerprint
             const identityNodes = buildIdentityNodes({
-                walletAddress,
-                clientId,
+                walletAddress: walletSession.address,
+                clientId: anonymousId,
                 merchantId,
             });
 
@@ -74,12 +64,12 @@ export const identityEnsureRoutes = new Elysia({ prefix: "/ensure" })
             if (merged) {
                 log.info(
                     {
-                        walletAddress,
-                        clientId,
+                        walletAddress: walletSession.address,
+                        anonymousId,
                         merchantId,
                         finalGroupId,
                     },
-                    "Identity ensure: merged wallet with anonymous identity (failsafe triggered)"
+                    "Identity ensure: merged wallet with anonymous identity"
                 );
             }
 
@@ -90,9 +80,15 @@ export const identityEnsureRoutes = new Elysia({ prefix: "/ensure" })
             };
         },
         {
-            headers: sdkIdentityHeaderSchema,
+            withWalletOrSdkAuthent: true,
+            headers: t.Partial(
+                t.Object({
+                    "x-frak-client-id": t.String(),
+                })
+            ),
             body: t.Object({
                 merchantId: t.String({ format: "uuid" }),
+                anonymousId: t.Optional(t.String()),
             }),
             response: {
                 200: t.Object({
@@ -102,7 +98,7 @@ export const identityEnsureRoutes = new Elysia({ prefix: "/ensure" })
                     ]),
                 }),
                 400: t.ErrorResponse,
-                401: t.ErrorResponse,
+                401: t.String(),
             },
         }
     );

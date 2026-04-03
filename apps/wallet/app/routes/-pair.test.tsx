@@ -1,4 +1,4 @@
-import { pairingStore } from "@frak-labs/wallet-shared";
+import { pendingActionsStore } from "@/module/pending-actions/stores/pendingActionsStore";
 import {
     afterEach,
     beforeEach,
@@ -78,14 +78,20 @@ describe("PairTrampolinePage", () => {
 
     describe("redirectToWebPairing", () => {
         afterEach(() => {
-            pairingStore.getState().clearPendingPairing();
+            pendingActionsStore.getState().clearAll();
         });
 
-        test("should store pending pairing id and navigate to /pairing", () => {
+        test("should store pending pairing action and navigate to /pairing", () => {
             const navigate = vi.fn();
             redirectToWebPairing("test-id-42", navigate);
 
-            expect(pairingStore.getState().pendingPairingId).toBe("test-id-42");
+            const actions = pendingActionsStore.getState().getValidActions();
+            const pairingAction = actions.find((a) => a.type === "pairing");
+            expect(pairingAction).toBeDefined();
+            expect(
+                pairingAction?.type === "pairing" &&
+                    pairingAction.pairingId === "test-id-42"
+            ).toBe(true);
             expect(navigate).toHaveBeenCalledWith({
                 to: "/pairing",
                 search: { mode: "embedded" },
@@ -104,7 +110,7 @@ describe("PairTrampolinePage", () => {
 
         afterEach(() => {
             vi.useRealTimers();
-            pairingStore.getState().clearPendingPairing();
+            pendingActionsStore.getState().clearAll();
             // Restore href
             Object.defineProperty(window, "location", {
                 value: { ...window.location, href: originalHref },

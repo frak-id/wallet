@@ -6,14 +6,12 @@ import { beforeEach, describe, expect, test } from "@/tests/vitest-fixtures";
 const {
     mockNavigate,
     mockSessionStore,
-    mockUsePendingPairingInfo,
-    mockConsumePendingDeepLink,
+    mockExecutePendingActions,
     mockOnSuccess,
 } = vi.hoisted(() => ({
     mockNavigate: vi.fn(),
     mockSessionStore: vi.fn(),
-    mockUsePendingPairingInfo: vi.fn(),
-    mockConsumePendingDeepLink: vi.fn(),
+    mockExecutePendingActions: vi.fn(),
     mockOnSuccess: vi.fn<() => void>(),
 }));
 
@@ -79,13 +77,9 @@ vi.mock("@/module/pairing/component/PairingInProgress", () => ({
     PairingInProgress: () => <div>pairing-in-progress</div>,
 }));
 
-vi.mock("@/module/pairing/hook/usePendingPairingInfo", () => ({
-    usePendingPairingInfo: () => mockUsePendingPairingInfo(),
-}));
-
-vi.mock("@/utils/deepLink", () => ({
-    consumePendingDeepLink: (navigate: unknown) =>
-        mockConsumePendingDeepLink(navigate),
+vi.mock("@/module/pending-actions/utils/executePendingActions", () => ({
+    executePendingActions: (...args: unknown[]) =>
+        mockExecutePendingActions(...args),
 }));
 
 vi.mock("react-i18next", () => ({
@@ -102,8 +96,7 @@ const LoginPage = Route.options.component!;
 describe("LoginPage", () => {
     beforeEach(() => {
         vi.clearAllMocks();
-        mockUsePendingPairingInfo.mockReturnValue({ pairingInfo: null });
-        mockConsumePendingDeepLink.mockReturnValue(false);
+        mockExecutePendingActions.mockResolvedValue(false);
     });
 
     test("should not redirect when unauthenticated", async () => {
@@ -115,10 +108,10 @@ describe("LoginPage", () => {
         render(<LoginPage />);
 
         expect(mockNavigate).not.toHaveBeenCalled();
-        expect(mockConsumePendingDeepLink).not.toHaveBeenCalled();
+        expect(mockExecutePendingActions).not.toHaveBeenCalled();
     });
 
-    test("should navigate to /wallet when authenticated with no deep link and no pairing", async () => {
+    test("should navigate to /wallet when authenticated with no pending actions", async () => {
         mockSessionStore.mockImplementation(
             (selector: (state: { session: unknown }) => unknown) =>
                 selector({ session: { token: "tok" } })
@@ -134,45 +127,24 @@ describe("LoginPage", () => {
         });
     });
 
-    test("should navigate to /pairing when authenticated with pending pairing", async () => {
+    test("should execute pending actions when authenticated and let them navigate", async () => {
         mockSessionStore.mockImplementation(
             (selector: (state: { session: unknown }) => unknown) =>
                 selector({ session: { token: "tok" } })
         );
-        mockUsePendingPairingInfo.mockReturnValue({
-            pairingInfo: { id: "pair-123" },
-        });
+        mockExecutePendingActions.mockResolvedValue(true);
 
         render(<LoginPage />);
 
         await waitFor(() => {
-            expect(mockNavigate).toHaveBeenCalledWith({
-                to: "/pairing",
-                replace: true,
-            });
-        });
-    });
-
-    test("should consume pending deep link instead of fallback navigate", async () => {
-        mockSessionStore.mockImplementation(
-            (selector: (state: { session: unknown }) => unknown) =>
-                selector({ session: { token: "tok" } })
-        );
-        mockConsumePendingDeepLink.mockReturnValue(true);
-
-        render(<LoginPage />);
-
-        await waitFor(() => {
-            expect(mockConsumePendingDeepLink).toHaveBeenCalledWith(
+            expect(mockExecutePendingActions).toHaveBeenCalledWith(
                 mockNavigate
             );
         });
 
+        // Should NOT fallback to /wallet since pending actions handled navigation
         expect(mockNavigate).not.toHaveBeenCalledWith(
             expect.objectContaining({ to: "/wallet" })
-        );
-        expect(mockNavigate).not.toHaveBeenCalledWith(
-            expect.objectContaining({ to: "/pairing" })
         );
     });
 
@@ -188,6 +160,7 @@ describe("LoginPage", () => {
         mockOnSuccess();
 
         await waitFor(() => {
+            // handlePostLoginRedirect uses a ref guard, so navigate should be called once
             expect(mockNavigate).toHaveBeenCalledTimes(1);
         });
     });

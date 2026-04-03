@@ -1,18 +1,18 @@
 import { authenticatedBackendApi } from "@frak-labs/wallet-shared";
 import { type UseMutationOptions, useMutation } from "@tanstack/react-query";
+import { pendingActionsStore } from "@/module/pending-actions/stores/pendingActionsStore";
 import { installCodeKey } from "@/module/recovery-code/queryKeys/install-code";
-import { installCodeStore } from "@/module/recovery-code/stores/installCodeStore";
 
 type ResolveResult = {
     merchantId: string;
+    anonymousId: string;
     merchant: { name: string; domain: string };
 };
 
 /**
  * Hook to resolve an install code via the backend.
- *
- * On success, stores the resolved data (code + merchant info) in the
- * persisted `installCodeStore` so it can be consumed after registration.
+ * On success, adds a pending ensure action to `pendingActionsStore`
+ * so the anonymous identity will be merged with the wallet after auth.
  */
 export function useResolveInstallCode(
     options?: UseMutationOptions<ResolveResult, Error, string>
@@ -33,10 +33,11 @@ export function useResolveInstallCode(
                 throw error;
             }
 
-            // Store the resolved code for post-registration consumption
-            installCodeStore.getState().setPendingCode({
-                code,
+            // Add ensure action for post-auth identity merge
+            pendingActionsStore.getState().addAction({
+                type: "ensure",
                 merchantId: data.merchantId,
+                anonymousId: data.anonymousId,
                 merchant: data.merchant,
             });
 
