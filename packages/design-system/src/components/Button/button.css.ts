@@ -78,6 +78,11 @@ export const button = recipe({
                 lineHeight: "21px",
                 fontWeight: 600,
             },
+            medium: {
+                padding: alias.spacing.m,
+                fontSize: fontSize.s,
+                fontWeight: 600,
+            },
             large: {
                 padding: alias.spacing.m,
                 fontSize: fontSize.m,

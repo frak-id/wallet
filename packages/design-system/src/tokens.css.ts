@@ -321,6 +321,7 @@ export const shadow = {
 } as const;
 
 export const fontSize = {
+    xxs: "10px",
     xs: "12px",
     s: "14px",
     m: "16px",

@@ -41,6 +41,9 @@ export const bodyStyle = style({
 });
 
 export const footerStyle = style({
+    position: "sticky",
+    bottom: 0,
+    zIndex: 2,
     flexShrink: 0,
     padding: `${alias.spacing.m} ${alias.spacing.xl}`,
     paddingBottom: `max(${alias.spacing.xl}, env(safe-area-inset-bottom))`,

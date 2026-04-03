@@ -86,4 +86,11 @@ export const textStyles = {
             textTransform: "uppercase" as const,
         },
     ]),
+    tiny: style([
+        base,
+        {
+            fontSize: fontSize.xxs,
+            lineHeight: "12px",
+        },
+    ]),
 };

@@ -15,7 +15,8 @@ type TextVariant =
     | "bodySmall"
     | "caption"
     | "label"
-    | "overline";
+    | "overline"
+    | "tiny";
 
 const defaultTagMap: Record<TextVariant, string> = {
     heading1: "h1",
@@ -29,6 +30,7 @@ const defaultTagMap: Record<TextVariant, string> = {
     caption: "span",
     label: "label",
     overline: "span",
+    tiny: "span",
 };
 
 const defaultWeightMap: Record<TextVariant, Sprinkles["fontWeight"]> = {
@@ -43,6 +45,7 @@ const defaultWeightMap: Record<TextVariant, Sprinkles["fontWeight"]> = {
     caption: "regular",
     label: "medium",
     overline: "semiBold",
+    tiny: "semiBold",
 };
 
 const tagToVariant: Partial<Record<string, TextVariant>> = {
@@ -59,9 +62,20 @@ type TextProps = {
     color?: Sprinkles["color"];
     weight?: Sprinkles["fontWeight"];
     align?: Sprinkles["textAlign"];
-    as?: "h1" | "h2" | "h3" | "h4" | "h5" | "h6" | "p" | "span" | "label";
+    as?:
+        | "h1"
+        | "h2"
+        | "h3"
+        | "h4"
+        | "h5"
+        | "h6"
+        | "p"
+        | "span"
+        | "label"
+        | "button";
     children?: ReactNode;
     className?: string;
+    onClick?: () => void;
 };
 
 export function Text({
@@ -72,6 +86,7 @@ export function Text({
     as,
     children,
     className,
+    onClick,
 }: TextProps) {
     const resolvedVariant = variant ?? (as && tagToVariant[as]) ?? "body";
     const tag = (as ?? defaultTagMap[resolvedVariant]) as
@@ -83,7 +98,8 @@ export function Text({
         | "h6"
         | "p"
         | "span"
-        | "label";
+        | "label"
+        | "button";
     const variantClass = textStyles[resolvedVariant];
 
     return (
@@ -93,6 +109,7 @@ export function Text({
             fontWeight={weight ?? defaultWeightMap[resolvedVariant]}
             textAlign={align}
             className={clsx(variantClass, className) || undefined}
+            onClick={onClick}
         >
             {children}
         </Box>

@@ -22,7 +22,7 @@ export const card = recipe({
         padding: {
             none: { padding: "0" },
             compact: { padding: alias.spacing.s },
-            default: { padding: `${alias.spacing.l} ${alias.spacing.m}` },
+            default: { padding: alias.spacing.m },
         },
     },
     defaultVariants: {
