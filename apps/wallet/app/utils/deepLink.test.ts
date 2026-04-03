@@ -103,16 +103,9 @@ describe("initDeepLinks", () => {
         await initDeepLinks(navigate);
         vi.runAllTimers();
 
-        const actions = pendingActionsStore.getState().getValidActions();
-        const pairingAction = actions.find((a) => a.type === "pairing");
-        expect(pairingAction).toBeDefined();
-        expect(
-            pairingAction?.type === "pairing" &&
-                pairingAction.pairingId === "pair-123"
-        ).toBe(true);
         expect(navigate).toHaveBeenCalledWith({
             to: "/pairing",
-            search: { mode: "embedded" },
+            search: { id: "pair-123", mode: "embedded" },
         });
     });
 
@@ -161,16 +154,9 @@ describe("initDeepLinks", () => {
         await initDeepLinks(navigate);
         vi.runAllTimers();
 
-        const actions = pendingActionsStore.getState().getValidActions();
-        const pairingAction = actions.find((a) => a.type === "pairing");
-        expect(pairingAction).toBeDefined();
-        expect(
-            pairingAction?.type === "pairing" &&
-                pairingAction.pairingId === "pair-456"
-        ).toBe(true);
         expect(navigate).toHaveBeenCalledWith({
             to: "/pairing",
-            search: { mode: "embedded" },
+            search: { id: "pair-456", mode: "embedded" },
         });
     });
 
@@ -186,16 +172,9 @@ describe("initDeepLinks", () => {
 
         openUrlHandler(["https://wallet.frak.id/pair?id=pair-789"]);
 
-        const actions = pendingActionsStore.getState().getValidActions();
-        const pairingAction = actions.find((a) => a.type === "pairing");
-        expect(pairingAction).toBeDefined();
-        expect(
-            pairingAction?.type === "pairing" &&
-                pairingAction.pairingId === "pair-789"
-        ).toBe(true);
         expect(navigate).toHaveBeenCalledWith({
             to: "/pairing",
-            search: { mode: "embedded" },
+            search: { id: "pair-789", mode: "embedded" },
         });
     });
 
@@ -290,7 +269,7 @@ describe("deep link auth gate", () => {
         ).toBe(true);
     });
 
-    test("should store pending pairing action when unauthenticated", async () => {
+    test("should store pending navigation action for pairing when unauthenticated", async () => {
         const { initDeepLinks } = await import("./deepLink");
         const navigate = vi.fn();
 
@@ -303,11 +282,13 @@ describe("deep link auth gate", () => {
         openUrlHandler(["frakwallet://pair?id=pair-abc"]);
 
         const actions = pendingActionsStore.getState().getValidActions();
-        const pairingAction = actions.find((a) => a.type === "pairing");
-        expect(pairingAction).toBeDefined();
+        const navAction = actions.find(
+            (a) => a.type === "navigation" && a.to === "/pairing"
+        );
+        expect(navAction).toBeDefined();
         expect(
-            pairingAction?.type === "pairing" &&
-                pairingAction.pairingId === "pair-abc"
+            navAction?.type === "navigation" &&
+                navAction.search?.id === "pair-abc"
         ).toBe(true);
         expect(navigate).toHaveBeenCalledWith({ to: "/register" });
     });

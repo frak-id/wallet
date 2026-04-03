@@ -15,8 +15,7 @@ type NavigateFn = (options: {
  *
  * Execution order:
  *   1. ensure actions  → silent background API calls (non-blocking)
- *   2. pairing actions → navigate to /pairing (pairing page consumes the action)
- *   3. navigation actions → navigate to target
+ *   2. navigation actions → navigate to target (pairing, deep links, etc.)
  *
  * Returns `true` if a navigation was triggered (pairing or explicit navigation),
  * `false` if no redirect-type actions were found — caller should apply default
@@ -49,22 +48,7 @@ export async function executePendingActions(
         );
     }
 
-    // 2. Pairing takes priority for navigation
-    const pairingAction = actions.find(
-        (a): a is Extract<PendingAction, { type: "pairing" }> =>
-            a.type === "pairing"
-    );
-    if (pairingAction) {
-        // Don't remove — the pairing page needs to read the pairingId,
-        // it will call clearPendingPairing() when done.
-        navigate({
-            to: "/pairing",
-            search: { mode: "embedded" },
-            replace: true,
-        });
-        return true;
-    }
-
+    // 2. Navigation actions (pairing, deep link redirects, etc.)
     // 3. Navigation actions (deep link redirects, etc.)
     const navigationAction = actions.find(
         (a): a is Extract<PendingAction, { type: "navigation" }> =>

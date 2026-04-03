@@ -15,7 +15,6 @@ type PendingActionsActions = {
     addAction: (action: PendingActionInput, ttlMs?: number) => void;
     removeAction: (id: string) => void;
     getValidActions: () => PendingAction[];
-    clearPendingPairing: () => void;
     clearAll: () => void;
 };
 
@@ -35,8 +34,6 @@ function dedupeKey(action: PendingActionInput): string {
             return `ensure:${action.merchantId}:${action.anonymousId}`;
         case "navigation":
             return `navigation:${action.to}`;
-        case "pairing":
-            return `pairing:${action.pairingId}`;
     }
 }
 
@@ -46,7 +43,7 @@ function dedupeKey(action: PendingActionInput): string {
  * Replaces:
  *   - installCodeStore (pending install codes → ensure actions)
  *   - pendingDeepLink variable (volatile deep link → navigation actions)
- *   - pairingStore.pendingPairingId (pending pairing → pairing actions)
+ *   - pairingStore.pendingPairingId (pending pairing → navigation actions)
  *
  * Persisted in localStorage so actions survive page refreshes.
  * Auto-deduplicates by type + key fields.
@@ -98,11 +95,6 @@ export const pendingActionsStore = create<PendingActionsStore>()(
                 return valid;
             },
 
-            clearPendingPairing: () => {
-                set((state) => ({
-                    actions: state.actions.filter((a) => a.type !== "pairing"),
-                }));
-            },
 
             clearAll: () => set(initialState),
         }),
@@ -123,11 +115,3 @@ export const selectPendingActions = (state: PendingActionsStore) =>
 
 export const selectHasPendingActions = (state: PendingActionsStore) =>
     state.actions.length > 0;
-
-export const selectPendingPairingId = (state: PendingActionsStore) => {
-    const now = Date.now();
-    const action = state.actions.find(
-        (a) => a.type === "pairing" && a.expiresAt > now
-    );
-    return action?.type === "pairing" ? action.pairingId : null;
-};

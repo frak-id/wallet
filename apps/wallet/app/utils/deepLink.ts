@@ -110,16 +110,6 @@ function storePendingActions(params: DeepLinkParams) {
                 });
             }
             break;
-
-        case "pair":
-            if (params.id) {
-                store.addAction({
-                    type: "pairing",
-                    pairingId: params.id,
-                });
-            }
-            break;
-
         default: {
             // Convert generic deep link to a navigation action
             const target = deepLinkToRoute(params);
@@ -143,6 +133,18 @@ function deepLinkToRoute(
     params: DeepLinkParams
 ): { to: string; search?: Record<string, string> } | null {
     switch (params.action) {
+        case "pair":
+            return params.id &&
+                params.id.length > 0 &&
+                params.id.length <= 128
+                ? {
+                      to: "/pairing",
+                      search: {
+                          id: params.id,
+                          mode: params.mode ?? "embedded",
+                      },
+                  }
+                : { to: "/wallet" };
         case "send":
             return isCryptoMode
                 ? {
@@ -179,9 +181,6 @@ function deepLinkToRoute(
 export function routeDeepLink(navigate: NavigateFn, params: DeepLinkParams) {
     // Special cases that need side-effects beyond simple navigation
     switch (params.action) {
-        case "pair":
-            routePairDeepLink(navigate, params);
-            return;
         case "install":
             routeInstallDeepLink(navigate, params);
             return;
@@ -192,24 +191,6 @@ export function routeDeepLink(navigate: NavigateFn, params: DeepLinkParams) {
     if (route) {
         navigate(route);
     }
-}
-
-function routePairDeepLink(navigate: NavigateFn, params: DeepLinkParams) {
-    // Store the pairing ID and navigate to the pairing page
-    if (params.id && params.id.length > 0 && params.id.length <= 128) {
-        pendingActionsStore.getState().addAction({
-            type: "pairing",
-            pairingId: params.id,
-        });
-    } else {
-        console.warn(
-            "[DeepLink] Invalid pair params \u2014 id missing or out of bounds"
-        );
-    }
-    navigate({
-        to: "/pairing",
-        search: params.mode ? { mode: params.mode } : { mode: "embedded" },
-    });
 }
 
 function routeInstallDeepLink(navigate: NavigateFn, params: DeepLinkParams) {

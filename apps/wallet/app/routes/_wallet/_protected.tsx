@@ -6,20 +6,18 @@ import { pendingActionsStore } from "@/module/pending-actions/stores/pendingActi
 export const Route = createFileRoute("/_wallet/_protected")({
     component: ProtectedLayout,
     beforeLoad: async ({ location }) => {
-        const search = new URLSearchParams(location.search);
-        const pairingId = search.get("id");
-
-        if (pairingId) {
-            pendingActionsStore.getState().addAction({
-                type: "pairing",
-                pairingId,
-            });
-        }
-
-        // Check if user is authenticated
-        // Use getSafeSession() to handle cases where Zustand store hasn't hydrated from localStorage yet
         const session = getSafeSession();
         if (!session?.token) {
+            // Preserve the intended destination for post-auth resume
+            const search = Object.fromEntries(
+                new URLSearchParams(location.search)
+            );
+            pendingActionsStore.getState().addAction({
+                type: "navigation",
+                to: location.pathname,
+                search:
+                    Object.keys(search).length > 0 ? search : undefined,
+            });
             throw redirect({
                 to: "/register",
                 replace: true,

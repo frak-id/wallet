@@ -12,7 +12,7 @@ type PendingEnsureAction = {
 
 /**
  * Pending navigation action — navigate to a specific route after auth.
- * Replaces the volatile `pendingDeepLink` variable.
+ * Also used for pairing (navigate to /pairing?id=xxx after auth).
  */
 type PendingNavigationAction = {
     type: "navigation";
@@ -21,22 +21,9 @@ type PendingNavigationAction = {
 };
 
 /**
- * Pending pairing action — initiate device pairing after auth.
- * Replaces `pendingPairingId` in the old pairingStore.
- */
-type PendingPairingAction = {
-    type: "pairing";
-    pairingId: string;
-};
-
-/**
  * Union of all pending action types with metadata.
  */
-export type PendingAction = (
-    | PendingEnsureAction
-    | PendingNavigationAction
-    | PendingPairingAction
-) & {
+export type PendingAction = (PendingEnsureAction | PendingNavigationAction) & {
     id: string;
     createdAt: number;
     expiresAt: number;
@@ -45,7 +32,4 @@ export type PendingAction = (
 /**
  * Input type for adding actions — id, createdAt, expiresAt are auto-generated.
  */
-export type PendingActionInput =
-    | PendingEnsureAction
-    | PendingNavigationAction
-    | PendingPairingAction;
+export type PendingActionInput = PendingEnsureAction | PendingNavigationAction;

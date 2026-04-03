@@ -116,7 +116,7 @@ function PairingContent({ clientState }: { clientState: OriginPairingState }) {
                 >
                     <Cuer
                         arena={"/icon.svg"}
-                        value={`${process.env.FRAK_WALLET_URL}/pair?id=${pairingInfo.id}`}
+                        value={`${process.env.FRAK_WALLET_URL}/pairing?id=${pairingInfo.id}&mode=embedded`}
                         size={200}
                     />
                 </button>
