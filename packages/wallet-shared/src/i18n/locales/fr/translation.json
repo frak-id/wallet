@@ -527,5 +527,37 @@
             "failed": "Échec de l'authentification",
             "tryAgain": "Réessayer"
         }
+    },
+    "explorer": {
+        "pageTitle": "Explorer",
+        "empty": {
+            "title": "Aucune offre disponible",
+            "description": "De nouvelles offres arrivent bientôt. Revenez plus tard !"
+        },
+        "card": {
+            "badge": "Jusqu'à {{amount}}€"
+        },
+        "detail": {
+            "close": "Fermer",
+            "share": "Partager",
+            "endDateBadge": "Se termine {{date}} ({{days}} j)",
+            "rewardPerReferral": "{{amount}}€ par parrainage",
+            "readMore": "Lire la suite",
+            "legal": "Les <termsLink>conditions générales de {{merchantName}}</termsLink> et les <termsLink>conditions générales de FRAK</termsLink> s'appliquent.",
+            "shareAndEarn": "Partager et gagner",
+            "endsIn": "Se termine dans {{count}} jour",
+            "endsIn_other": "Se termine dans {{count}} jours",
+            "referrerReward": "Récompense en tant que parrain",
+            "refereeReward": "Récompense en tant que filleul",
+            "earningsAvailability": "Disponibilité des gains",
+            "immediate": "Immédiate",
+            "instructions": "Instructions",
+            "step1Title": "Partage un article à tes ami·e·s",
+            "step1Description": "Un lien personnel est généré automatiquement à chaque partage.",
+            "step2Title": "Gagne {{amount}}€ à chaque achat réalisé grâce à toi",
+            "step2Description": "Chaque commande réalisée grâce à toi sur {{name}} te rapporte du cash directement dans ton porte-monnaie.",
+            "step3Title": "Récupère tes gains dans ton porte-monnaie",
+            "step3Description": "En un clic, transfère tes gains vers ton compte bancaire."
+        }
     }
 }

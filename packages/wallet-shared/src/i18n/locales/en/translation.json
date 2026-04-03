@@ -530,5 +530,37 @@
             "failed": "Failed to complete authentication",
             "tryAgain": "Try again"
         }
+    },
+    "explorer": {
+        "pageTitle": "Explorer",
+        "empty": {
+            "title": "No offers available",
+            "description": "New offers are coming soon. Check back later!"
+        },
+        "card": {
+            "badge": "Up to {{amount}}€"
+        },
+        "detail": {
+            "close": "Close",
+            "share": "Share",
+            "endDateBadge": "Ends {{date}} ({{days}}d)",
+            "rewardPerReferral": "{{amount}}€ per referral",
+            "readMore": "Read more",
+            "legal": "<termsLink>{{merchantName}}'s terms and conditions</termsLink> and <termsLink>FRAK's terms and conditions</termsLink> apply.",
+            "shareAndEarn": "Share and earn",
+            "endsIn": "Ends in {{count}} day",
+            "endsIn_other": "Ends in {{count}} days",
+            "referrerReward": "Reward as referrer",
+            "refereeReward": "Reward as referee",
+            "earningsAvailability": "Earnings availability",
+            "immediate": "Immediate",
+            "instructions": "Instructions",
+            "step1Title": "Share a product with your friends",
+            "step1Description": "A personal link is automatically generated with each share.",
+            "step2Title": "Earn {{amount}}€ for every purchase you help generate",
+            "step2Description": "Every order made through your link on {{name}} earns you cash directly in your wallet.",
+            "step3Title": "Collect your earnings in your wallet",
+            "step3Description": "In one click, transfer your earnings to your bank account."
+        }
     }
 }

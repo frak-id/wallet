@@ -129,6 +129,7 @@ interface Resources {
             refresh: "Refresh";
             rewards: "Rewards";
             send: "Send";
+            share: "Share";
             submit: "Submit";
             to: "To";
             transactionHash: "Transaction Hash:";
@@ -145,6 +146,38 @@ interface Resources {
                 notAllowed: "You have cancelled the authentication process, please try again.";
                 userOperationExecution: "An error occurred while executing the transaction. Please try again.";
             };
+        };
+        explorer: {
+            card: {
+                badge: "Up to {{amount}}€";
+            };
+            detail: {
+                close: "Close";
+                earningsAvailability: "Earnings availability";
+                endDateBadge: "Ends {{date}} ({{days}}d)";
+                endsIn: "Ends in {{count}} day";
+                endsIn_other: "Ends in {{count}} days";
+                immediate: "Immediate";
+                instructions: "Instructions";
+                legal: "The merchant's <termsLink>terms and conditions</termsLink> and FRAK's <termsLink>terms and conditions</termsLink> apply.";
+                readMore: "Read more";
+                refereeReward: "Reward as referee";
+                referrerReward: "Reward as referrer";
+                rewardPerReferral: "{{amount}}€ per referral";
+                share: "Share";
+                shareAndEarn: "Share and earn";
+                step1Description: "A personal link is automatically generated with each share.";
+                step1Title: "Share a product with your friends";
+                step2Description: "Every order made through your link on {{name}} earns you cash directly in your wallet.";
+                step2Title: "Earn {{amount}}€ for every purchase you help generate";
+                step3Description: "In one click, transfer your earnings to your bank account.";
+                step3Title: "Collect your earnings in your wallet";
+            };
+            empty: {
+                description: "New offers are coming soon. Check back later!";
+                title: "No offers available";
+            };
+            pageTitle: "Explorer";
         };
         "mobile-sso": {
             appNotFound: "Frak Wallet app not found";
@@ -178,11 +211,11 @@ interface Resources {
                 noCode: "No authorization code received";
                 tryAgain: "Try again";
             };
-            completeSetup: "Complete setup on Monerium";
-            connect: "Connect to Monerium";
+            completeSetup: "Complete setup";
+            connect: "Connect";
             connecting: "Connecting...";
             disconnect: "Disconnect";
-            linkWallet: "Link your wallet to Monerium";
+            linkWallet: "Link wallet";
             offramp: {
                 amountInvalid: "Amount must be greater than 0";
                 amountLabel: "Amount (EURe)";
@@ -254,6 +287,18 @@ interface Resources {
                 legal: "By continuing, you accept our <termsLink>Terms of Use</termsLink> and our <privacyLink>Privacy Policy</privacyLink>";
                 title: "Welcome to your wallet";
             };
+        };
+        recoveryCode: {
+            description: "Paste the code copied from wallet.frak.id to recover your earnings.";
+            digitLabel: "Digit";
+            error: "Incorrect or expired code — check the code copied from wallet.frak.id";
+            paste: "Paste the code";
+            success: {
+                description: "You'll receive a notification as soon as a friend purchases via your link.";
+                title: "Your referral link has been found!";
+            };
+            title: "Recover your code";
+            validate: "Validate the code";
         };
         reward: {
             history: {
@@ -410,6 +455,13 @@ interface Resources {
                 description: "As soon as a purchase is made through your sharing link, your earnings will appear here.";
                 title: "You don't have any earnings yet";
             };
+            pendingGains: {
+                confirm: "Collect my earnings";
+                description: "A purchase through your link earned you rewards. Collect them now into your wallet.";
+                heading: "Great news!\nMoney is waiting for you.";
+                subtitle: "Pending earnings";
+                success: "Earnings collected!";
+            };
             pendingReferral: {
                 success: "You have claimed your reward successfully!";
                 text: "You got {{eurClaimable}} EUR pending thanks to your referral activities!";
@@ -528,6 +580,17 @@ interface Resources {
                 check1: "Explore partner brands";
                 check2: "Recommend your favorite products";
                 check3: "Earn money with every referral";
+                detail: {
+                    discoverOffers: "Discover offers";
+                    howItWorks: "How does it work?";
+                    legal: "FRAK's <termsLink>terms and conditions</termsLink> apply.";
+                    step1Description: "A personal link is automatically generated with each share.";
+                    step1Title: "Explore our partner brands";
+                    step2Description: "A personal link is automatically generated with each share.";
+                    step2Title: "Share an article with your friends";
+                    step3Description: "In one click, transfer your earnings to your bank account.";
+                    step3Title: "Earn money";
+                };
                 notifications: {
                     description: "Enable notifications to track your earnings in real time.";
                     title: "Don't miss any earnings!";
