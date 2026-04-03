@@ -20,10 +20,10 @@ export function RecoveryCodePage() {
     const openModal = modalStore((s) => s.openModal);
 
     const {
-        resolve,
-        isLoading,
-        error: resolveError,
-        setError,
+        resolveAsync,
+        isPending,
+        error,
+        reset: resetMutation,
     } = useResolveInstallCode();
 
     const isComplete = code.length === CODE_LENGTH;
@@ -31,25 +31,23 @@ export function RecoveryCodePage() {
     const handleCodeChange = useCallback(
         (value: string) => {
             setCode(value);
-            if (resolveError) setError(undefined);
+            if (error) resetMutation();
         },
-        [resolveError, setError]
+        [error, resetMutation]
     );
 
     const handleValidate = useCallback(async () => {
-        if (!isComplete || isLoading) return;
+        if (!isComplete || isPending) return;
 
-        const result = await resolve(code);
-        if (result) {
+        try {
+            await resolveAsync(code);
             openModal({ id: "recoveryCodeSuccess" });
+        } catch {
+            // Error is captured by the mutation state
         }
-    }, [isComplete, isLoading, code, resolve, openModal]);
+    }, [isComplete, isPending, code, resolveAsync, openModal]);
 
-    const errorMessage = resolveError
-        ? t(
-              `recoveryCode.error.${resolveError === "UNKNOWN" ? "generic" : "invalid"}`
-          )
-        : undefined;
+    const errorMessage = error ? t("recoveryCode.error.invalid") : undefined;
 
     return (
         <PageLayout
@@ -57,7 +55,7 @@ export function RecoveryCodePage() {
                 <Button
                     onClick={handleValidate}
                     disabled={!isComplete}
-                    loading={isLoading}
+                    loading={isPending}
                 >
                     {t("recoveryCode.validate")}
                 </Button>

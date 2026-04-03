@@ -5,13 +5,16 @@ import { CircleCheckIcon } from "@frak-labs/design-system/icons";
 import { useNavigate } from "@tanstack/react-router";
 import { useCallback } from "react";
 import { useTranslation } from "react-i18next";
-import { installCodeStore } from "@/module/recovery-code/stores/installCodeStore";
+import {
+    installCodeStore,
+    selectPendingCode,
+} from "@/module/recovery-code/stores/installCodeStore";
 import * as styles from "./index.css";
 
 export function RecoveryCodeSuccessModal({ onClose }: { onClose: () => void }) {
     const { t } = useTranslation();
     const navigate = useNavigate();
-    const pendingCode = installCodeStore((s) => s.pendingCode);
+    const pendingCode = installCodeStore(selectPendingCode);
 
     const handleClose = useCallback(() => {
         onClose();

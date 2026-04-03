@@ -20,19 +20,33 @@ type InstallCodeState = {
 
 type InstallCodeActions = {
     setPendingCode: (data: InstallCodeData) => void;
-    clearPendingCode: () => void;
+    reset: () => void;
 };
 
-export const installCodeStore = create<InstallCodeState & InstallCodeActions>()(
+type InstallCodeStore = InstallCodeState & InstallCodeActions;
+
+const initialState: InstallCodeState = {
+    pendingCode: null,
+};
+
+export const installCodeStore = create<InstallCodeStore>()(
     persist(
         (set) => ({
-            pendingCode: null,
+            ...initialState,
+
             setPendingCode: (data) => set({ pendingCode: data }),
-            clearPendingCode: () => set({ pendingCode: null }),
+            reset: () => set(initialState),
         }),
         {
             name: "frak_install_code_store",
-            partialize: (state) => ({ pendingCode: state.pendingCode }),
+            partialize: (state) => ({
+                pendingCode: state.pendingCode,
+            }),
         }
     )
 );
+
+/**
+ * Selectors
+ */
+export const selectPendingCode = (state: InstallCodeStore) => state.pendingCode;

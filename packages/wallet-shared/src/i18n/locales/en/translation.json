@@ -394,8 +394,6 @@
         "playStore": "Get it on Google Play",
         "loading": "Generating your code...",
         "error": "Failed to generate code. Please refresh.",
-        "contextSaved": "Context saved",
-        "contextSavedDescription": "Install the app — your referral data will be picked up automatically."
     },
     "onboarding": {
         "start": "Get started",

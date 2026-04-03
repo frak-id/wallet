@@ -1,6 +1,12 @@
 import { authenticatedBackendApi } from "@frak-labs/wallet-shared";
-import { useCallback, useState } from "react";
-import { installCodeStore } from "../stores/installCodeStore";
+import { type UseMutationOptions, useMutation } from "@tanstack/react-query";
+import { installCodeKey } from "@/module/recovery-code/queryKeys/install-code";
+import { installCodeStore } from "@/module/recovery-code/stores/installCodeStore";
+
+type ResolveResult = {
+    merchantId: string;
+    merchant: { name: string; domain: string };
+};
 
 /**
  * Hook to resolve an install code via the backend.
@@ -8,29 +14,27 @@ import { installCodeStore } from "../stores/installCodeStore";
  * On success, stores the resolved data (code + merchant info) in the
  * persisted `installCodeStore` so it can be consumed after registration.
  */
-export function useResolveInstallCode() {
-    const [isLoading, setIsLoading] = useState(false);
-    const [error, setError] = useState<string>();
-    const setPendingCode = installCodeStore((s) => s.setPendingCode);
+export function useResolveInstallCode(
+    options?: UseMutationOptions<ResolveResult, Error, string>
+) {
+    const {
+        mutate: resolve,
+        mutateAsync: resolveAsync,
+        ...mutationState
+    } = useMutation({
+        ...options,
+        mutationKey: installCodeKey.resolve,
+        mutationFn: async (code: string) => {
+            const { data, error } = await authenticatedBackendApi.user.identity[
+                "install-code"
+            ].resolve.post({ code });
 
-    const resolve = useCallback(
-        async (code: string) => {
-            setIsLoading(true);
-            setError(undefined);
-
-            const { data, error: apiError } =
-                await authenticatedBackendApi.user.identity[
-                    "install-code"
-                ].resolve.post({ code });
-
-            setIsLoading(false);
-
-            if (apiError || !data || "error" in data) {
-                setError("INVALID");
-                return null;
+            if (error) {
+                throw error;
             }
 
-            setPendingCode({
+            // Store the resolved code for post-registration consumption
+            installCodeStore.getState().setPendingCode({
                 code,
                 merchantId: data.merchantId,
                 merchant: data.merchant,
@@ -38,8 +42,7 @@ export function useResolveInstallCode() {
 
             return data;
         },
-        [setPendingCode]
-    );
+    });
 
-    return { resolve, isLoading, error, setError };
+    return { resolve, resolveAsync, ...mutationState };
 }

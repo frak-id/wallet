@@ -1,34 +1,47 @@
 import { authenticatedBackendApi } from "@frak-labs/wallet-shared";
-import { useCallback, useRef } from "react";
-import { installCodeStore } from "../stores/installCodeStore";
+import { useMutation } from "@tanstack/react-query";
+import { installCodeKey } from "@/module/recovery-code/queryKeys/install-code";
+import {
+    installCodeStore,
+    selectPendingCode,
+} from "@/module/recovery-code/stores/installCodeStore";
 
 /**
  * Hook to consume a pending install code after registration.
  *
  * Call `consumePendingCode()` once the user is authenticated.
  * It reads the code from the persisted store, calls `/consume`,
- * and clears the store on success. Idempotent — won't fire twice.
+ * and clears the store on success.
  */
 export function useConsumeInstallCode() {
-    const pendingCode = installCodeStore((s) => s.pendingCode);
-    const clearPendingCode = installCodeStore((s) => s.clearPendingCode);
-    const consumingRef = useRef(false);
+    const pendingCode = installCodeStore(selectPendingCode);
 
-    const consumePendingCode = useCallback(async () => {
-        if (!pendingCode || consumingRef.current) return;
-        consumingRef.current = true;
+    const {
+        mutate: consumePendingCode,
+        mutateAsync: consumePendingCodeAsync,
+        ...mutationState
+    } = useMutation({
+        mutationKey: installCodeKey.consume,
+        mutationFn: async () => {
+            const code = installCodeStore.getState().pendingCode;
+            if (!code) return;
 
-        const { error } = await authenticatedBackendApi.user.identity[
-            "install-code"
-        ].consume.post({ code: pendingCode.code });
+            const { error } = await authenticatedBackendApi.user.identity[
+                "install-code"
+            ].consume.post({ code: code.code });
 
-        if (error) {
-            consumingRef.current = false;
-            return;
-        }
+            if (error) {
+                throw new Error("Failed to consume install code");
+            }
 
-        clearPendingCode();
-    }, [pendingCode, clearPendingCode]);
+            installCodeStore.getState().reset();
+        },
+    });
 
-    return { pendingCode, consumePendingCode };
+    return {
+        pendingCode,
+        consumePendingCode,
+        consumePendingCodeAsync,
+        ...mutationState,
+    };
 }

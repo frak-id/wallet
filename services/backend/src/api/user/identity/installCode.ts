@@ -21,7 +21,7 @@ const installCodeGenerateRoute = new Elysia()
 
             return {
                 code: result.code,
-                expiresAt: result.expiresAt.toISOString(),
+                expiresAt: new Date(result.expiresAt).toISOString(),
             };
         },
         {
