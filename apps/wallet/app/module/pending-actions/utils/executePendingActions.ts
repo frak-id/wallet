@@ -1,6 +1,9 @@
 import { authenticatedBackendApi } from "@frak-labs/wallet-shared";
 import { pendingActionsStore } from "@/module/pending-actions/stores/pendingActionsStore";
-import type { PendingAction } from "@/module/pending-actions/types";
+import type {
+    PendingAction,
+    PendingActionInput,
+} from "@/module/pending-actions/types";
 
 type NavigateFn = (options: {
     to: string;
@@ -9,22 +12,35 @@ type NavigateFn = (options: {
 }) => unknown;
 
 /**
- * Execute all pending actions after successful authentication.
+ * Execute all pending actions.
  *
- * Call this from both login and register post-auth callbacks.
+ * Can be called:
+ *   - After login/register to drain persisted pending actions.
+ *   - From a page (e.g. /install) with a `newAction` that should be
+ *     stored first and executed immediately alongside any existing ones.
+ *
+ * When `newAction` is provided it is added to the store before draining,
+ * so it benefits from deduplication, TTL, and automatic retry on failure
+ * (the action stays in the store if execution fails).
  *
  * Execution order:
  *   1. ensure actions  → silent background API calls (non-blocking)
  *   2. navigation actions → navigate to target (pairing, deep links, etc.)
  *
- * Returns `true` if a navigation was triggered (pairing or explicit navigation),
- * `false` if no redirect-type actions were found — caller should apply default
- * navigation (e.g. navigate to /wallet).
+ * Returns `true` if a navigation was triggered, `false` otherwise —
+ * callers should apply a default navigation (e.g. /wallet) when `false`.
  */
 export async function executePendingActions(
-    navigate: NavigateFn
+    navigate: NavigateFn,
+    newAction?: PendingActionInput
 ): Promise<boolean> {
     const store = pendingActionsStore.getState();
+
+    // Store the new action first — deduped, persisted, survives crashes
+    if (newAction) {
+        store.addAction(newAction);
+    }
+
     const actions = store.getValidActions();
 
     if (actions.length === 0) {
@@ -49,7 +65,6 @@ export async function executePendingActions(
     }
 
     // 2. Navigation actions (pairing, deep link redirects, etc.)
-    // 3. Navigation actions (deep link redirects, etc.)
     const navigationAction = actions.find(
         (a): a is Extract<PendingAction, { type: "navigation" }> =>
             a.type === "navigation"

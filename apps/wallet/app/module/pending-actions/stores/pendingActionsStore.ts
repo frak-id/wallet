@@ -15,6 +15,7 @@ type PendingActionsActions = {
     addAction: (action: PendingActionInput, ttlMs?: number) => void;
     removeAction: (id: string) => void;
     getValidActions: () => PendingAction[];
+    clearPendingPairing: () => void;
     clearAll: () => void;
 };
 
@@ -95,6 +96,13 @@ export const pendingActionsStore = create<PendingActionsStore>()(
                 return valid;
             },
 
+            clearPendingPairing: () => {
+                set((state) => ({
+                    actions: state.actions.filter(
+                        (a) => !(a.type === "navigation" && a.to === "/pairing")
+                    ),
+                }));
+            },
 
             clearAll: () => set(initialState),
         }),
@@ -115,3 +123,14 @@ export const selectPendingActions = (state: PendingActionsStore) =>
 
 export const selectHasPendingActions = (state: PendingActionsStore) =>
     state.actions.length > 0;
+
+export const selectPendingPairingId = (
+    state: PendingActionsStore
+): string | null => {
+    const now = Date.now();
+    const action = state.actions.find(
+        (a) =>
+            a.type === "navigation" && a.to === "/pairing" && a.expiresAt > now
+    );
+    return action?.type === "navigation" ? (action.search?.id ?? null) : null;
+};

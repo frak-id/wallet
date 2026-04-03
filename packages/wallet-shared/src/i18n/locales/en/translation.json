@@ -394,7 +394,8 @@
         "error": "Failed to generate code. Please refresh.",
         "infoTitle": "Code valid for 3 days",
         "infoDescription": "When opening the app, tap 'I have a recovery code'.",
-        "download": "Download the app"
+        "download": "Download the app",
+        "processing": "Setting up your wallet..."
     },
     "onboarding": {
         "start": "Get started",

@@ -5,7 +5,12 @@ import { pendingActionsStore } from "@/module/pending-actions/stores/pendingActi
 export function PairingInProgress() {
     const { t } = useTranslation();
     const hasPendingPairing = pendingActionsStore((s) =>
-        s.actions.some((a) => a.type === "pairing" && a.expiresAt > Date.now())
+        s.actions.some(
+            (a) =>
+                a.type === "navigation" &&
+                a.to === "/pairing" &&
+                a.expiresAt > Date.now()
+        )
     );
 
     if (!hasPendingPairing) return null;

@@ -1,8 +1,5 @@
 import { isTauri } from "@frak-labs/app-essentials/utils/platform";
-import {
-    authenticatedBackendApi,
-    getSafeSession,
-} from "@frak-labs/wallet-shared";
+import { getSafeSession } from "@frak-labs/wallet-shared";
 import { isCryptoMode } from "@/module/common/utils/walletMode";
 import { pendingActionsStore } from "@/module/pending-actions/stores/pendingActionsStore";
 
@@ -74,9 +71,11 @@ type NavigateFn = (options: {
 }) => unknown;
 
 /**
- * Routes that don't require authentication (auth pages, recovery).
+ * Routes that bypass the auth gate.
+ * These actions always reach `routeDeepLink` regardless of session state,
+ * so the destination page handles its own auth logic.
  */
-const publicActions = new Set(["register", "login", "recovery"]);
+const publicActions = new Set(["register", "login", "recovery", "install"]);
 
 function handleDeepLinkAction(navigate: NavigateFn, params: DeepLinkParams) {
     // Gate protected deep links behind auth
@@ -98,114 +97,86 @@ function handleDeepLinkAction(navigate: NavigateFn, params: DeepLinkParams) {
  * Stores them in `pendingActionsStore` (persisted, survives refresh).
  */
 function storePendingActions(params: DeepLinkParams) {
-    const store = pendingActionsStore.getState();
-
-    switch (params.action) {
-        case "install":
-            if (params.m && params.a) {
-                store.addAction({
-                    type: "ensure",
-                    merchantId: params.m,
-                    anonymousId: params.a,
-                });
-            }
-            break;
-        default: {
-            // Convert generic deep link to a navigation action
-            const target = deepLinkToRoute(params);
-            if (target) {
-                store.addAction({
-                    type: "navigation",
-                    to: target.to,
-                    search: target.search,
-                });
-            }
-            break;
-        }
+    const target = deepLinkToRoute(params);
+    if (target) {
+        pendingActionsStore.getState().addAction({
+            type: "navigation",
+            to: target.to,
+            search: target.search,
+        });
     }
 }
 
+type Route = { to: string; search?: Record<string, string> };
+
+/**
+ * Resolve a monerium OAuth callback deep link.
+ */
+const resolveMoneriumRoute = (params: DeepLinkParams): Route => {
+    const search: Record<string, string> = {};
+    if (params.code) search.code = params.code;
+    if (params.state) search.state = params.state;
+    return { to: "/monerium/callback", search };
+};
+
+/**
+ * Action → route resolver map.
+ *
+ * Each entry maps a deep link action name to a function that builds
+ * the target route. Keeps `deepLinkToRoute` trivial and under the
+ * cognitive complexity limit.
+ */
+const routeResolvers: Record<string, (params: DeepLinkParams) => Route> = {
+    pair: (params) =>
+        params.id && params.id.length > 0 && params.id.length <= 128
+            ? {
+                  to: "/pairing",
+                  search: {
+                      id: params.id,
+                      mode: params.mode ?? "embedded",
+                  },
+              }
+            : { to: "/wallet" },
+    install: (params) => {
+        const search: Record<string, string> = {};
+        if (params.m) search.m = params.m;
+        if (params.a) search.a = params.a;
+        return { to: "/install", search };
+    },
+    send: (params) =>
+        isCryptoMode
+            ? {
+                  to: "/tokens/send",
+                  search: params.to ? { to: params.to } : undefined,
+              }
+            : { to: "/wallet" },
+    receive: () =>
+        isCryptoMode ? { to: "/tokens/receive" } : { to: "/wallet" },
+    settings: () => ({ to: "/profile" }),
+    recovery: () => ({ to: "/profile/recovery" }),
+    notifications: () => ({ to: "/notifications" }),
+    history: () => ({ to: "/history" }),
+    monerium: resolveMoneriumRoute,
+    "monerium-callback": resolveMoneriumRoute,
+};
+
 /**
  * Map deep link params to a route path + search params.
- * Used to build navigation-type pending actions.
  */
-function deepLinkToRoute(
-    params: DeepLinkParams
-): { to: string; search?: Record<string, string> } | null {
-    switch (params.action) {
-        case "pair":
-            return params.id &&
-                params.id.length > 0 &&
-                params.id.length <= 128
-                ? {
-                      to: "/pairing",
-                      search: {
-                          id: params.id,
-                          mode: params.mode ?? "embedded",
-                      },
-                  }
-                : { to: "/wallet" };
-        case "send":
-            return isCryptoMode
-                ? {
-                      to: "/tokens/send",
-                      search: params.to ? { to: params.to } : undefined,
-                  }
-                : { to: "/wallet" };
-        case "receive":
-            return isCryptoMode ? { to: "/tokens/receive" } : { to: "/wallet" };
-        case "settings":
-            return { to: "/profile" };
-        case "recovery":
-            return { to: "/profile/recovery" };
-        case "notifications":
-            return { to: "/notifications" };
-        case "history":
-            return { to: "/history" };
-        case "monerium":
-        case "monerium-callback": {
-            const search: Record<string, string> = {};
-            if (params.code) search.code = params.code;
-            if (params.state) search.state = params.state;
-            return { to: "/monerium/callback", search };
-        }
-        default:
-            return { to: "/wallet" };
-    }
+function deepLinkToRoute(params: DeepLinkParams): Route {
+    const resolver = routeResolvers[params.action];
+    return resolver ? resolver(params) : { to: "/wallet" };
 }
 
 /**
  * Route deep link params to the appropriate screen.
- * Called when the user is already authenticated.
+ * Called when the user is already authenticated, or for public actions.
  */
 export function routeDeepLink(navigate: NavigateFn, params: DeepLinkParams) {
-    // Special cases that need side-effects beyond simple navigation
-    switch (params.action) {
-        case "install":
-            routeInstallDeepLink(navigate, params);
-            return;
-    }
-
-    // All other actions map directly to a route
     const route = deepLinkToRoute(params);
     if (route) {
         navigate(route);
     }
-}
-
-function routeInstallDeepLink(navigate: NavigateFn, params: DeepLinkParams) {
-    // User is authenticated \u2014 fire ensure call immediately (background)
-    if (params.m && params.a) {
-        authenticatedBackendApi.user.identity.ensure
-            .post({
-                merchantId: params.m,
-                anonymousId: params.a,
-            })
-            .catch((error: unknown) => {
-                console.error("[DeepLink] Install ensure failed:", error);
-            });
-    }
-    navigate({ to: "/wallet" });
 }
 
 export async function initDeepLinks(navigate: NavigateFn): Promise<void> {

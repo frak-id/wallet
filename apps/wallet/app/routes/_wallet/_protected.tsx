@@ -15,8 +15,7 @@ export const Route = createFileRoute("/_wallet/_protected")({
             pendingActionsStore.getState().addAction({
                 type: "navigation",
                 to: location.pathname,
-                search:
-                    Object.keys(search).length > 0 ? search : undefined,
+                search: Object.keys(search).length > 0 ? search : undefined,
             });
             throw redirect({
                 to: "/register",

@@ -193,7 +193,7 @@ describe("initDeepLinks", () => {
         expect(navigate).not.toHaveBeenCalled();
     });
 
-    test("should handle install deep link when authenticated", async () => {
+    test("should navigate to /install for install deep link when authenticated", async () => {
         const { initDeepLinks } = await import("./deepLink");
         const navigate = vi.fn();
 
@@ -205,13 +205,12 @@ describe("initDeepLinks", () => {
 
         openUrlHandler(["frakwallet://install?m=merchant-123&a=anonymous-456"]);
 
-        // Should fire ensure call in background
-        expect(mockEnsurePost).toHaveBeenCalledWith({
-            merchantId: "merchant-123",
-            anonymousId: "anonymous-456",
+        // Install is a public action — deep link handler just navigates to /install
+        // (the /install page handles ensure logic)
+        expect(navigate).toHaveBeenCalledWith({
+            to: "/install",
+            search: { m: "merchant-123", a: "anonymous-456" },
         });
-        // Should navigate to /wallet
-        expect(navigate).toHaveBeenCalledWith({ to: "/wallet" });
     });
 });
 
@@ -293,7 +292,7 @@ describe("deep link auth gate", () => {
         expect(navigate).toHaveBeenCalledWith({ to: "/register" });
     });
 
-    test("should store pending ensure action when unauthenticated install deep link", async () => {
+    test("should navigate to /install for install deep link when unauthenticated (public action)", async () => {
         const { initDeepLinks } = await import("./deepLink");
         const navigate = vi.fn();
 
@@ -305,15 +304,14 @@ describe("deep link auth gate", () => {
 
         openUrlHandler(["frakwallet://install?m=merchant-123&a=anonymous-456"]);
 
+        // Install is a public action — bypasses auth gate, navigates directly to /install
+        expect(navigate).toHaveBeenCalledWith({
+            to: "/install",
+            search: { m: "merchant-123", a: "anonymous-456" },
+        });
+        // No pending actions stored by deep link handler (the /install page handles that)
         const actions = pendingActionsStore.getState().getValidActions();
-        const ensureAction = actions.find((a) => a.type === "ensure");
-        expect(ensureAction).toBeDefined();
-        expect(
-            ensureAction?.type === "ensure" &&
-                ensureAction.merchantId === "merchant-123" &&
-                ensureAction.anonymousId === "anonymous-456"
-        ).toBe(true);
-        expect(navigate).toHaveBeenCalledWith({ to: "/register" });
+        expect(actions).toHaveLength(0);
     });
 
     test("should allow recovery deep link without auth", async () => {

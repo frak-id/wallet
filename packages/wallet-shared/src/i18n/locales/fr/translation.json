@@ -392,7 +392,8 @@
         "error": "Échec de la génération du code. Rafraîchis la page.",
         "infoTitle": "Code valable 3 jours",
         "infoDescription": "À l'ouverture de l'app, appuyez sur 'J'ai un code de récupération'.",
-        "download": "Télécharger l'app"
+        "download": "Télécharger l'app",
+        "processing": "Configuration de votre portefeuille..."
     },
     "onboarding": {
         "start": "Commencer",
