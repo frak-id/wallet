@@ -7,6 +7,7 @@ export const balanceLayout = style({
     flexDirection: "column",
     alignItems: "center",
     gap: alias.spacing.l,
+    paddingTop: alias.spacing.l,
     paddingBottom: "20px",
 });
 
