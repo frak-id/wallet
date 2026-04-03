@@ -45,7 +45,6 @@
         "logout": "Déconnexion",
         "notifications": "Notifications",
         "pending": "en attente",
-        "receive": "Recevoir",
         "refresh": "Rafraîchir",
         "rewards": "Total balance",
         "send": "Envoyer",
@@ -213,10 +212,7 @@
             "amountLessThanBalance": "Le montant doit être inférieur au solde",
             "amountPositive": "Le montant doit être positif",
             "amountToSend": "Montant à envoyer",
-            "backToWallet": "Retour au porte-monnaie",
-            "receive": {
-                "title": "Recevoir des actifs sur <strong>les réseaux de test</strong>"
-            }
+            "backToWallet": "Retour au porte-monnaie"
         },
         "welcome": {
             "title": "Bienvenue dans Frak 🎉",

@@ -14,7 +14,6 @@ import { useGetUserBalance } from "@frak-labs/wallet-shared";
 import { useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
-import { isCryptoMode } from "@/module/common/utils/walletMode";
 import { modalStore } from "@/module/stores/modalStore";
 import { useGetPendingRewards } from "../../hooks/useGetPendingRewards";
 import * as styles from "./index.css";
@@ -49,9 +48,7 @@ export function Balance() {
                 <Box display={"flex"} flexDirection={"column"} gap={"xs"}>
                     <Box className={styles.headerRow}>
                         <Text variant="bodySmall" color="secondary">
-                            {isCryptoMode
-                                ? t("common.balance")
-                                : t("common.rewards")}
+                            {t("common.rewards")}
                         </Text>
                         {isHidden ? (
                             <EyeIcon

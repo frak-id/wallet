@@ -7,7 +7,6 @@ import { Gift } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { Panel } from "@/module/common/component/Panel";
 import { Skeleton } from "@/module/common/component/Skeleton";
-import { isCryptoMode } from "@/module/common/utils/walletMode";
 import { useGetRewardHistory } from "@/module/history/hook/useGetRewardHistory";
 import * as styles from "./index.css";
 
@@ -70,9 +69,7 @@ function RewardHistoryItem({ item }: { item: RewardHistoryItemType }) {
 
     const roleLabel = t(`reward.role.${item.role}`, item.role);
 
-    const displayAmount = isCryptoMode
-        ? `+${item.amount.amount.toFixed(2)} ${item.token.symbol}`
-        : `+${item.amount.eurAmount.toFixed(2)}€`;
+    const displayAmount = `+${item.amount.amount.toFixed(2)} ${item.token.symbol}`;
 
     return (
         <Panel variant={"primary"} size={"small"}>
@@ -109,7 +106,7 @@ function RewardHistoryItem({ item }: { item: RewardHistoryItemType }) {
                     <Text variant="caption" className={styles.itemDate}>
                         {new Date(item.createdAt).toLocaleString()}
                     </Text>
-                    {isCryptoMode && item.txHash && (
+                    {item.txHash && (
                         <Text variant="caption" className={styles.itemTxHash}>
                             {item.txHash.slice(0, 10)}...
                         </Text>

@@ -1,6 +1,5 @@
 import { isTauri } from "@frak-labs/app-essentials/utils/platform";
 import { getSafeSession } from "@frak-labs/wallet-shared";
-import { isCryptoMode } from "@/module/common/utils/walletMode";
 import { pendingActionsStore } from "@/module/pending-actions/stores/pendingActionsStore";
 
 type DeepLinkParams = {
@@ -143,15 +142,11 @@ const routeResolvers: Record<string, (params: DeepLinkParams) => Route> = {
         if (params.a) search.a = params.a;
         return { to: "/install", search };
     },
-    send: (params) =>
-        isCryptoMode
-            ? {
-                  to: "/tokens/send",
-                  search: params.to ? { to: params.to } : undefined,
-              }
-            : { to: "/wallet" },
-    receive: () =>
-        isCryptoMode ? { to: "/tokens/receive" } : { to: "/wallet" },
+    send: (params) => ({
+        to: "/tokens/send",
+        search: params.to ? { to: params.to } : undefined,
+    }),
+    receive: () => ({ to: "/wallet" }),
     settings: () => ({ to: "/profile" }),
     recovery: () => ({ to: "/profile/recovery" }),
     notifications: () => ({ to: "/notifications" }),

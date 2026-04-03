@@ -12,7 +12,6 @@ import { useTranslation } from "react-i18next";
 import { useHydrated } from "remix-utils/use-hydrated";
 import { type Hex, slice, toHex } from "viem";
 import { useAccount } from "wagmi";
-import { isCryptoMode } from "@/module/common/utils/walletMode";
 import * as styles from "./index.css";
 
 function formatHash({
@@ -106,10 +105,6 @@ export function ProfileIdentityCard() {
     const webauthnWallet = sessionStore(selectWebauthnSession);
     const ecdsaWallet = sessionStore(selectEcdsaSession);
 
-    const accountLabel = isCryptoMode
-        ? t("common.wallet")
-        : t("common.accountId", "Account ID:");
-
     const authenticatorValue = useMemo(() => {
         if (!webauthnWallet) return null;
         const authenticatorId = toHex(webauthnWallet.authenticatorId);
@@ -148,7 +143,7 @@ export function ProfileIdentityCard() {
         return null;
     }
 
-    if (!webauthnWallet && !ecdsaWallet) {
+    if (!walletValue) {
         return null;
     }
 
@@ -161,13 +156,6 @@ export function ProfileIdentityCard() {
                     displayValue={authenticatorValue.displayValue}
                 />
             ) : null}
-            {webauthnWallet && walletValue ? (
-                <IdentityRow
-                    label={accountLabel}
-                    value={walletValue.value}
-                    displayValue={walletValue.displayValue}
-                />
-            ) : null}
             {ecdsaWallet && ecdsaValue ? (
                 <IdentityRow
                     label={t("wallet.settings.ecdsaWallet")}
@@ -175,9 +163,9 @@ export function ProfileIdentityCard() {
                     displayValue={ecdsaValue.displayValue}
                 />
             ) : null}
-            {!webauthnWallet && ecdsaWallet && walletValue ? (
+            {walletValue ? (
                 <IdentityRow
-                    label={accountLabel}
+                    label={t("common.wallet")}
                     value={walletValue.value}
                     displayValue={walletValue.displayValue}
                 />

@@ -47,7 +47,6 @@
         "logout": "Logout",
         "notifications": "Notifications",
         "pending": "pending",
-        "receive": "Receive",
         "refresh": "Refresh",
         "rewards": "Rewards",
         "send": "Send",
@@ -215,10 +214,7 @@
             "amountLessThanBalance": "Amount must be less than balance",
             "amountPositive": "Amount must be positive",
             "amountToSend": "Amount to send",
-            "backToWallet": "Back to wallet page",
-            "receive": {
-                "title": "Receive assets on <strong>Testnets</strong>"
-            }
+            "backToWallet": "Back to wallet page"
         },
         "welcome": {
             "title": "Welcome in your wallet",

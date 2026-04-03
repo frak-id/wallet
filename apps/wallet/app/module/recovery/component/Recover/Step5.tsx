@@ -8,7 +8,6 @@ import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import type { Hex } from "viem";
 import { AccordionRecoveryItem } from "@/module/common/component/AccordionRecoveryItem";
-import { isCryptoMode } from "@/module/common/utils/walletMode";
 import { usePerformRecovery } from "@/module/recovery/hook/usePerformRecovery";
 import { useRecoveryAvailability } from "@/module/recovery/hook/useRecoveryAvailability";
 import {
@@ -168,16 +167,14 @@ function useRecoveryStatus({
             return (
                 <Text as="span" className={styles.statusSuccess}>
                     {t("wallet.recovery.status.done")}
-                    {isCryptoMode && (
-                        <>
-                            {" "}
-                            <ExplorerTxLink
-                                hash={txHash ?? "0x"}
-                                icon={false}
-                                className={styles.statusLink}
-                            />
-                        </>
-                    )}
+                    <>
+                        {" "}
+                        <ExplorerTxLink
+                            hash={txHash ?? "0x"}
+                            icon={false}
+                            className={styles.statusLink}
+                        />
+                    </>
                 </Text>
             );
         }

@@ -2,7 +2,7 @@ import { Button } from "@frak-labs/design-system/components/Button";
 import { Input } from "@frak-labs/design-system/components/Input";
 import type { BalanceItem } from "@frak-labs/wallet-shared";
 import { useGetUserBalance } from "@frak-labs/wallet-shared";
-import { createFileRoute, redirect } from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-router";
 import { memo, useCallback, useEffect, useState } from "react";
 import type {
     FieldErrors,
@@ -18,7 +18,6 @@ import { erc20Abi, parseUnits } from "viem";
 import { useWriteContract } from "wagmi";
 import { useBiometricConfirm } from "@/module/biometrics";
 import { Back } from "@/module/common/component/Back";
-import { isCryptoMode } from "@/module/common/utils/walletMode";
 import { TokenMax } from "@/module/tokens/component/TokenMax";
 import { TokenModalList } from "@/module/tokens/component/TokenModalList";
 import { TransactionError } from "@/module/tokens/component/TransactionError";
@@ -32,11 +31,6 @@ type SendSearchParams = {
 };
 
 export const Route = createFileRoute("/_wallet/_protected/tokens/send")({
-    beforeLoad: () => {
-        if (!isCryptoMode) {
-            throw redirect({ to: "/wallet" });
-        }
-    },
     component: TokensSendPage,
     validateSearch: (search: Record<string, unknown>): SendSearchParams => ({
         to: typeof search.to === "string" ? search.to : undefined,
