@@ -1,20 +1,28 @@
-import { isRunningInProd } from "@frak-labs/app-essentials";
-import { createFileRoute, redirect } from "@tanstack/react-router";
-import { useEffect, useMemo, useState } from "react";
+import { isTauri } from "@frak-labs/app-essentials/utils/platform";
+import { Box } from "@frak-labs/design-system/components/Box";
+import { Card } from "@frak-labs/design-system/components/Card";
+import { Inline } from "@frak-labs/design-system/components/Inline";
+import { Spinner } from "@frak-labs/design-system/components/Spinner";
+import { Stack } from "@frak-labs/design-system/components/Stack";
+import { Text } from "@frak-labs/design-system/components/Text";
+import { getSafeSession } from "@frak-labs/wallet-shared";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { Info } from "lucide-react";
+import { useEffect, useMemo } from "react";
+import { useTranslation } from "react-i18next";
+import { PageLayout } from "@/module/common/component/PageLayout";
+import { Title } from "@/module/common/component/Title";
+import { useExecutePendingActions } from "@/module/pending-actions/hook/useExecutePendingActions";
+import { pendingActionsStore } from "@/module/pending-actions/stores/pendingActionsStore";
+import { CodeDisplay } from "@/module/recovery-code/component/CodeDisplay";
+import { useGenerateInstallCode } from "@/module/recovery-code/hook/useGenerateInstallCode";
 
 type InstallSearch = {
     m?: string;
     a?: string;
 };
 
-const localStorageKey = "frak_install_context";
-
 export const Route = createFileRoute("/install")({
-    beforeLoad: () => {
-        if (isRunningInProd) {
-            throw redirect({ to: "/" });
-        }
-    },
     validateSearch: (search: Record<string, unknown>): InstallSearch => ({
         m: typeof search.m === "string" ? search.m : undefined,
         a: typeof search.a === "string" ? search.a : undefined,
@@ -22,97 +30,180 @@ export const Route = createFileRoute("/install")({
     component: InstallPage,
 });
 
+/**
+ * Install page — unified entry point for the install/ensure flow.
+ *
+ * Decision matrix:
+ *   Web + not logged in  → Install code + store links (user needs to download the app)
+ *   Everything else      → Processing screen (fire ensure or store for post-auth)
+ */
 function InstallPage() {
-    const { m: merchantId, a: anonymousId } = Route.useSearch();
-    const [isSaved, setIsSaved] = useState(false);
+    const search = Route.useSearch();
 
-    const mId = merchantId ?? "test-merchant-123";
-    const aId = anonymousId ?? "anon-abc-456";
+    // Web + not logged in → show install code + store download links
+    if (!isTauri() && !getSafeSession()?.token) {
+        return <InstallCodeView {...search} />;
+    }
+
+    // Tauri (any auth) or web + logged in → processing
+    return <InstallProcessing {...search} />;
+}
+
+// ---------------------------------------------------------------------------
+//  Processing screen — shown on Tauri or when already logged in on web
+// ---------------------------------------------------------------------------
+
+const MIN_PROCESSING_MS = 500;
+
+function sleep(ms: number): Promise<void> {
+    return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+/**
+ * Brief processing screen that handles the ensure call.
+ *
+ *   Logged in     → store ensure action + drain all pending actions + navigate /wallet
+ *   Not logged in → store ensure action for post-auth + navigate /register
+ *
+ * Always shows for at least MIN_PROCESSING_MS to avoid a flash.
+ */
+function InstallProcessing({ m: merchantId, a: anonymousId }: InstallSearch) {
+    const navigate = useNavigate();
+    const { t } = useTranslation();
+    const { executePendingActions } = useExecutePendingActions();
 
     useEffect(() => {
-        localStorage.setItem(
-            localStorageKey,
-            JSON.stringify({ merchantId: mId, anonymousId: aId })
-        );
-        setIsSaved(true);
-    }, [mId, aId]);
+        // Build ensure action from install referral params
+        const ensureAction =
+            merchantId && anonymousId
+                ? ({
+                      type: "ensure",
+                      merchantId,
+                      anonymousId,
+                  } as const)
+                : undefined;
 
-    const playStoreUrl = useMemo(() => {
-        const referrerData = `merchantId=${mId}&anonymousId=${aId}`;
-        return `https://play.google.com/store/apps/details?id=id.frak.wallet&referrer=${encodeURIComponent(referrerData)}`;
-    }, [mId, aId]);
+        const isLoggedIn = !!getSafeSession()?.token;
 
-    const appStoreUrl = "https://apps.apple.com/app/frak-wallet/id6740261164";
+        if (isLoggedIn) {
+            // Store + drain all pending actions (including the new one)
+            Promise.all([
+                executePendingActions({ newAction: ensureAction }),
+                sleep(MIN_PROCESSING_MS),
+            ]).then(([navigated]) => {
+                if (!navigated) {
+                    navigate({ to: "/wallet", replace: true });
+                }
+            });
+        } else {
+            // Not logged in — store for post-auth, redirect to register
+            if (ensureAction) {
+                pendingActionsStore.getState().addAction(ensureAction);
+            }
+            sleep(MIN_PROCESSING_MS).then(() => {
+                navigate({ to: "/register", replace: true });
+            });
+        }
+    }, [merchantId, anonymousId, navigate, executePendingActions]);
 
     return (
-        <div
-            style={{
-                padding: "24px",
-                maxWidth: "480px",
-                margin: "0 auto",
-                fontFamily: "system-ui",
-            }}
+        <PageLayout>
+            <Stack space={"l"} align={"center"}>
+                <Spinner />
+                <Text variant="bodySmall" color="secondary">
+                    {t("installCode.processing")}
+                </Text>
+            </Stack>
+        </PageLayout>
+    );
+}
+
+// ---------------------------------------------------------------------------
+//  Install code view — web only, when the user needs to download the app
+// ---------------------------------------------------------------------------
+
+const appStoreUrl = "https://apps.apple.com/app/frak-wallet/id6740261164";
+const playStoreUrl =
+    "https://play.google.com/store/apps/details?id=id.frak.wallet";
+
+function InstallCodeView({ m: merchantId, a: anonymousId }: InstallSearch) {
+    const { t } = useTranslation();
+
+    const { data, isLoading, error } = useGenerateInstallCode({
+        merchantId,
+        anonymousId,
+    });
+
+    // Platform-aware store URL
+    const downloadUrl = useMemo(() => {
+        const isAndroid = /android/i.test(navigator.userAgent);
+        if (!isAndroid) return appStoreUrl;
+        if (!merchantId || !anonymousId) return playStoreUrl;
+        const referrerData = `merchantId=${merchantId}&anonymousId=${anonymousId}`;
+        return `${playStoreUrl}&referrer=${encodeURIComponent(referrerData)}`;
+    }, [merchantId, anonymousId]);
+
+    return (
+        <PageLayout
+            footer={
+                <Box
+                    as="a"
+                    href={downloadUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    display={"flex"}
+                    alignItems={"center"}
+                    justifyContent={"center"}
+                    padding={"m"}
+                    borderRadius={"full"}
+                    backgroundColor={"primary"}
+                    color={"onAction"}
+                    fontWeight={"semiBold"}
+                    fontSize={"m"}
+                >
+                    {t("installCode.download")}
+                </Box>
+            }
         >
-            <h1>Install Frak Wallet</h1>
-            <p>Get the app to track your rewards and earn from referrals.</p>
+            <Stack space={"l"} align={"center"}>
+                <Stack space={"m"} align={"center"}>
+                    <Title size="page">{t("installCode.title")}</Title>
+                    <Text variant="body" color="secondary" align="center">
+                        {t("installCode.description")}
+                    </Text>
+                </Stack>
 
-            {isSaved && (
-                <div
-                    style={{
-                        padding: "12px",
-                        borderRadius: "8px",
-                        marginBottom: "16px",
-                        fontSize: "14px",
-                        background: "#e8f5e9",
-                    }}
-                >
-                    <strong>Context saved</strong>
-                    <p style={{ margin: "4px 0 0", fontSize: "12px" }}>
-                        Install the app — your referral data will be picked up
-                        automatically.
-                    </p>
-                </div>
-            )}
+                {isLoading && (
+                    <Stack space={"m"} align={"center"}>
+                        <Spinner />
+                        <Text variant="bodySmall" color="secondary">
+                            {t("installCode.loading")}
+                        </Text>
+                    </Stack>
+                )}
 
-            <div
-                style={{
-                    display: "flex",
-                    flexDirection: "column",
-                    gap: "12px",
-                    marginTop: "24px",
-                }}
-            >
-                <a
-                    href={appStoreUrl}
-                    style={{
-                        display: "block",
-                        padding: "16px",
-                        background: "#000",
-                        color: "#fff",
-                        borderRadius: "12px",
-                        textDecoration: "none",
-                        textAlign: "center",
-                        fontWeight: 600,
-                    }}
-                >
-                    Download on the App Store
-                </a>
-                <a
-                    href={playStoreUrl}
-                    style={{
-                        display: "block",
-                        padding: "16px",
-                        background: "#01875f",
-                        color: "#fff",
-                        borderRadius: "12px",
-                        textDecoration: "none",
-                        textAlign: "center",
-                        fontWeight: 600,
-                    }}
-                >
-                    Get it on Google Play
-                </a>
-            </div>
-        </div>
+                {error && (
+                    <Text variant="bodySmall" color="error">
+                        {t("installCode.error")}
+                    </Text>
+                )}
+
+                {data?.code && <CodeDisplay code={data.code} />}
+
+                <Card variant={"muted"} padding={"compact"}>
+                    <Inline space={"s"} alignY={"center"}>
+                        <Info size={18} />
+                        <Stack space={"xxs"}>
+                            <Text variant="bodySmall" weight="semiBold">
+                                {t("installCode.infoTitle")}
+                            </Text>
+                            <Text variant="caption" color="secondary">
+                                {t("installCode.infoDescription")}
+                            </Text>
+                        </Stack>
+                    </Inline>
+                </Card>
+            </Stack>
+        </PageLayout>
     );
 }

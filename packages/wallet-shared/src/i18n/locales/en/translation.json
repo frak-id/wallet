@@ -373,12 +373,29 @@
         "description": "Paste the code copied from wallet.frak.id to recover your earnings.",
         "paste": "Paste the code",
         "validate": "Validate the code",
-        "digitLabel": "Digit",
-        "error": "Incorrect or expired code — check the code copied from wallet.frak.id",
+        "digitLabel": "Character",
+        "error": {
+            "invalid": "Incorrect or expired code — check the code copied from wallet.frak.id",
+            "alreadyLinked": "This code has already been used.",
+            "generic": "Something went wrong — please try again."
+        },
         "success": {
             "title": "Your referral link has been found!",
-            "description": "You'll receive a notification as soon as a friend purchases via your link."
+            "description": "You'll receive a notification as soon as a friend purchases via your link.",
+            "merchantInfo": "Connected to {{merchantName}}"
         }
+    },
+    "installCode": {
+        "title": "Copy this code",
+        "description": "Paste it when opening the app. It will let you claim your rewards once logged in.",
+        "copyCode": "Copy the code",
+        "codeCopied": "Code copied!",
+        "loading": "Generating your code...",
+        "error": "Failed to generate code. Please refresh.",
+        "infoTitle": "Code valid for 3 days",
+        "infoDescription": "When opening the app, tap 'I have a recovery code'.",
+        "download": "Download the app",
+        "processing": "Setting up your wallet..."
     },
     "onboarding": {
         "start": "Get started",

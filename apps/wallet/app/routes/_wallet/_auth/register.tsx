@@ -13,9 +13,8 @@ import {
 } from "@/module/onboarding/component/slides/OnboardingSlides";
 import { Welcome } from "@/module/onboarding/component/Welcome";
 import { PairingInProgress } from "@/module/pairing/component/PairingInProgress";
-import { usePendingPairingInfo } from "@/module/pairing/hook/usePendingPairingInfo";
+import { useExecutePendingActions } from "@/module/pending-actions/hook/useExecutePendingActions";
 import { modalStore } from "@/module/stores/modalStore";
-import { consumePendingDeepLink } from "@/utils/deepLink";
 
 export const Route = createFileRoute("/_wallet/_auth/register")({
     component: RegisterPage,
@@ -40,17 +39,20 @@ type FlowStep = "onboarding" | "notification" | "welcome";
 function RegisterPage() {
     const { t } = useTranslation();
     const navigate = useNavigate();
-    const { pairingInfo } = usePendingPairingInfo();
-    const hasPendingPairing = Boolean(pairingInfo?.id);
     const [step, setStep] = useState<FlowStep>("onboarding");
 
     const openModal = modalStore((s) => s.openModal);
     const closeModal = modalStore((s) => s.closeModal);
 
+    const { executePendingActions } = useExecutePendingActions();
+
     const advanceToNotification = useCallback(() => {
         closeModal();
+        // Drain logical pending actions (ensure calls) immediately after auth.
+        // Navigation actions are deferred until after the welcome screen.
+        executePendingActions({ skipNavigation: true });
         setStep("notification");
-    }, [closeModal]);
+    }, [closeModal, executePendingActions]);
 
     const { login, isLoading: isLoginLoading } = useLogin({
         onSuccess: advanceToNotification,
@@ -117,12 +119,12 @@ function RegisterPage() {
             )}
             {step === "welcome" && (
                 <Welcome
-                    onContinue={() => {
-                        if (consumePendingDeepLink(navigate)) return;
-                        navigate({
-                            to: hasPendingPairing ? "/pairing" : "/wallet",
-                            replace: true,
-                        });
+                    onContinue={async () => {
+                        // Drain navigation actions now that onboarding is done
+                        const navigated = await executePendingActions();
+                        if (!navigated) {
+                            navigate({ to: "/wallet", replace: true });
+                        }
                     }}
                 />
             )}

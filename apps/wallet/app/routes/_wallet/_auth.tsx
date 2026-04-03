@@ -1,38 +1,16 @@
-import {
-    getSafeSession,
-    getValidPendingPairingId,
-    pairingStore,
-} from "@frak-labs/wallet-shared";
+import { getSafeSession } from "@frak-labs/wallet-shared";
 import { createFileRoute, Outlet, redirect } from "@tanstack/react-router";
 import { AppShell } from "@/module/common/component/AppShell";
 
 export const Route = createFileRoute("/_wallet/_auth")({
     component: AuthenticationLayout,
-    beforeLoad: async ({ location }) => {
-        // Check if user is already authenticated
-        // Use getSafeSession() to handle cases where Zustand store hasn't hydrated from localStorage yet
+    beforeLoad: async () => {
+        // If already authenticated, redirect to wallet.
+        // Pending actions (from deep links, pairing) are handled by
+        // executePendingActions in the post-auth flow.
         const session = getSafeSession();
         if (session?.token) {
-            // Check if there's a pairing ID in search params
-            const search = new URLSearchParams(location.search);
-            const searchPairingId = search.get("id");
-
-            if (searchPairingId) {
-                pairingStore.getState().setPendingPairingId(searchPairingId);
-            }
-
-            const pairingId = searchPairingId || getValidPendingPairingId();
-
-            throw redirect({
-                to: pairingId ? "/pairing" : "/wallet",
-                replace: true,
-            });
-        }
-
-        const search = new URLSearchParams(location.search);
-        const pairingId = search.get("id");
-        if (pairingId) {
-            pairingStore.getState().setPendingPairingId(pairingId);
+            throw redirect({ to: "/wallet", replace: true });
         }
     },
 });

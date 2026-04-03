@@ -7,6 +7,7 @@ import { Back } from "@/module/common/component/Back";
 import { CodeInput } from "@/module/common/component/CodeInput";
 import { PageLayout } from "@/module/common/component/PageLayout";
 import { Title } from "@/module/common/component/Title";
+import { useResolveInstallCode } from "@/module/recovery-code/hook/useResolveInstallCode";
 import { modalStore } from "@/module/stores/modalStore";
 import * as styles from "./index.css";
 
@@ -16,30 +17,46 @@ export function RecoveryCodePage() {
     const { t } = useTranslation();
     const navigate = useNavigate();
     const [code, setCode] = useState("");
-    const [error, setError] = useState<string>();
     const openModal = modalStore((s) => s.openModal);
+
+    const {
+        resolveAsync,
+        isPending,
+        error,
+        reset: resetMutation,
+    } = useResolveInstallCode();
 
     const isComplete = code.length === CODE_LENGTH;
 
     const handleCodeChange = useCallback(
         (value: string) => {
             setCode(value);
-            // Clear error when user edits the code
-            if (error) setError(undefined);
+            if (error) resetMutation();
         },
-        [error]
+        [error, resetMutation]
     );
 
-    const handleValidate = useCallback(() => {
-        if (!isComplete) return;
-        // TODO: wire validation logic — set error on failure, success on success
-        openModal({ id: "recoveryCodeSuccess" });
-    }, [isComplete, openModal]);
+    const handleValidate = useCallback(async () => {
+        if (!isComplete || isPending) return;
+
+        try {
+            await resolveAsync(code);
+            openModal({ id: "recoveryCodeSuccess" });
+        } catch {
+            // Error is captured by the mutation state
+        }
+    }, [isComplete, isPending, code, resolveAsync, openModal]);
+
+    const errorMessage = error ? t("recoveryCode.error.invalid") : undefined;
 
     return (
         <PageLayout
             footer={
-                <Button onClick={handleValidate} disabled={!isComplete}>
+                <Button
+                    onClick={handleValidate}
+                    disabled={!isComplete}
+                    loading={isPending}
+                >
                     {t("recoveryCode.validate")}
                 </Button>
             }
@@ -56,10 +73,11 @@ export function RecoveryCodePage() {
                 </Box>
                 <CodeInput
                     length={CODE_LENGTH}
+                    mode="alphanumeric"
                     onChange={handleCodeChange}
                     digitLabel={(i) => `${t("recoveryCode.digitLabel")} ${i}`}
                     pasteLabel={t("recoveryCode.paste")}
-                    error={error}
+                    error={errorMessage}
                 />
             </div>
         </PageLayout>

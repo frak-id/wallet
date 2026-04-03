@@ -4,6 +4,7 @@ import type { IdentityRepository } from "../../domain/identity/repositories/Iden
 import type { IdentityMergeService } from "./IdentityMergeService";
 import type { IdentityWeightService } from "./IdentityWeightService";
 import type { AssociateResult, IdentityNode, ResolveResult } from "./types";
+import { WalletConflictError } from "./types";
 
 export class IdentityOrchestrator {
     constructor(
@@ -56,6 +57,15 @@ export class IdentityOrchestrator {
             this.weightService.getGroupWeight(groupId1),
             this.weightService.getGroupWeight(groupId2),
         ]);
+
+        // Prevent merging groups linked to different wallets
+        if (
+            weight1.wallet &&
+            weight2.wallet &&
+            weight1.wallet !== weight2.wallet
+        ) {
+            throw new WalletConflictError(weight1.wallet, weight2.wallet);
+        }
 
         const { anchorGroupId, mergingGroupId } =
             this.weightService.determineAnchor(weight1, weight2);

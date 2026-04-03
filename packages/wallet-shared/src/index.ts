@@ -20,7 +20,6 @@ export * from "./recovery";
 export * from "./sdk";
 export * from "./stores/authenticationStore";
 export * from "./stores/clientIdStore";
-export * from "./stores/pairingStore";
 export * from "./stores/sessionStore";
 export * from "./stores/userStore";
 // Tokens
