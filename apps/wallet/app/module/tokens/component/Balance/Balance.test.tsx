@@ -49,7 +49,7 @@ describe("Balance", () => {
 
         render(<Balance />);
 
-        expect(mockT).toHaveBeenCalledWith("common.balance");
+        expect(mockT).toHaveBeenCalledWith("common.rewards");
     });
 
     it("should render integer and decimal parts separately", () => {

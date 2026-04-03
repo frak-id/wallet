@@ -166,15 +166,12 @@ function useRecoveryStatus({
         if (status === "success") {
             return (
                 <Text as="span" className={styles.statusSuccess}>
-                    {t("wallet.recovery.status.done")}
-                    <>
-                        {" "}
-                        <ExplorerTxLink
-                            hash={txHash ?? "0x"}
-                            icon={false}
-                            className={styles.statusLink}
-                        />
-                    </>
+                    {t("wallet.recovery.status.done")}{" "}
+                    <ExplorerTxLink
+                        hash={txHash ?? "0x"}
+                        icon={false}
+                        className={styles.statusLink}
+                    />
                 </Text>
             );
         }

@@ -151,7 +151,7 @@ describe("LaunchPairing", () => {
 
             const qrCode = screen.getByTestId("qr-code");
             expect(qrCode.getAttribute("data-value")).toContain(
-                "/pair?id=pairing-456"
+                "/pairing?id=pairing-456"
             );
         });
 
