@@ -1,9 +1,8 @@
 import { log } from "@backend-infrastructure";
 import type { IdentityRepository } from "../../domain/identity/repositories/IdentityRepository";
 import type { AnonymousMergeService } from "../../domain/identity/services/AnonymousMergeService";
-import type { IdentityMergeService } from "./IdentityMergeService";
 import type { IdentityOrchestrator } from "./IdentityOrchestrator";
-import type { IdentityWeightService } from "./IdentityWeightService";
+import { WalletConflictError } from "./types";
 
 type InitiateMergeResult =
     | { success: true; mergeToken: string; expiresAt: Date }
@@ -17,8 +16,6 @@ export class AnonymousMergeOrchestrator {
     constructor(
         private readonly anonymousMergeService: AnonymousMergeService,
         private readonly identityRepository: IdentityRepository,
-        private readonly weightService: IdentityWeightService,
-        private readonly mergeService: IdentityMergeService,
         private readonly identityOrchestrator: IdentityOrchestrator
     ) {}
 
@@ -59,7 +56,11 @@ export class AnonymousMergeOrchestrator {
     }
 
     /**
-     * Execute the merge using a valid token
+     * Execute the merge using a valid token.
+     *
+     * Delegates the actual merge to IdentityOrchestrator.associate() which
+     * handles idempotency, wallet conflict detection, weight-based anchor
+     * determination, merge execution, and cache invalidation.
      */
     async executeMerge(params: {
         mergeToken: string;
@@ -95,68 +96,52 @@ export class AnonymousMergeOrchestrator {
             };
         }
 
-        // 3. Check if they're already the same group (idempotent)
-        if (sourceGroupId === targetGroup.id) {
-            log.debug(
-                { sourceGroupId, targetGroupId: targetGroup.id },
-                "Anonymous merge: groups already identical"
-            );
+        // 3. Delegate to IdentityOrchestrator.associate() which handles:
+        //    - Idempotency (same group → no-op)
+        //    - Wallet conflict detection (throws WalletConflictError)
+        //    - Weight-based anchor determination
+        //    - Merge execution and cache invalidation
+        try {
+            const { finalGroupId, merged } =
+                await this.identityOrchestrator.associate(
+                    sourceGroupId,
+                    targetGroup.id
+                );
+
+            if (merged) {
+                log.info(
+                    {
+                        sourceGroupId,
+                        targetGroupId: targetGroup.id,
+                        finalGroupId,
+                    },
+                    "Anonymous identity groups merged successfully"
+                );
+            }
+
             return {
                 success: true,
-                finalGroupId: sourceGroupId,
-                merged: false,
+                finalGroupId,
+                merged,
             };
-        }
-
-        // 4. Check for wallet conflicts
-        const [sourceWeight, targetWeight] = await Promise.all([
-            this.weightService.getGroupWeight(sourceGroupId),
-            this.weightService.getGroupWeight(targetGroup.id),
-        ]);
-
-        if (sourceWeight.hasWallet && targetWeight.hasWallet) {
-            if (sourceWeight.wallet !== targetWeight.wallet) {
+        } catch (error) {
+            if (error instanceof WalletConflictError) {
                 log.warn(
                     {
                         sourceGroupId,
                         targetGroupId: targetGroup.id,
-                        sourceWallet: sourceWeight.wallet,
-                        targetWallet: targetWeight.wallet,
+                        sourceWallet: error.sourceWallet,
+                        targetWallet: error.targetWallet,
                     },
                     "Attempted to merge groups with different wallets"
                 );
                 return {
                     success: false,
-                    error: "Cannot merge identities linked to different wallets",
-                    code: "WALLET_CONFLICT",
+                    error: error.message,
+                    code: error.code,
                 };
             }
+            throw error;
         }
-
-        // 5. Determine anchor and perform merge
-        const { anchorGroupId, mergingGroupId } =
-            this.weightService.determineAnchor(sourceWeight, targetWeight);
-
-        await this.mergeService.mergeGroups({ anchorGroupId, mergingGroupId });
-
-        // 6. Invalidate caches
-        this.weightService.invalidateWeight(mergingGroupId);
-        this.identityRepository.invalidateCachesForGroup(mergingGroupId);
-
-        log.info(
-            {
-                sourceGroupId,
-                targetGroupId: targetGroup.id,
-                anchorGroupId,
-                mergingGroupId,
-            },
-            "Anonymous identity groups merged successfully"
-        );
-
-        return {
-            success: true,
-            finalGroupId: anchorGroupId,
-            merged: true,
-        };
     }
 }
