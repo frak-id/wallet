@@ -20,14 +20,11 @@ import {
     selectIsAvailable,
 } from "@/module/biometrics/stores/biometricsStore";
 import { authenticateWithBiometrics } from "@/module/biometrics/utils/biometrics";
+import { InfoCard, InfoRow } from "@/module/common/component/InfoCard";
 import { notificationAdapter } from "@/module/notification/adapter";
 import { useNotificationStatus } from "@/module/notification/hook/useNotificationSetupStatus";
 import { useUnsubscribeFromPushNotification } from "@/module/notification/hook/useUnsubscribeFromPushNotification";
 import { notificationKey } from "@/module/notification/queryKeys/notification";
-import {
-    SettingsCard,
-    SettingsRow,
-} from "@/module/settings/component/SettingsCard";
 import * as styles from "./index.css";
 
 function NotificationRow() {
@@ -59,8 +56,8 @@ function NotificationRow() {
     };
 
     return (
-        <SettingsCard>
-            <SettingsRow
+        <InfoCard>
+            <InfoRow
                 icon={BellIcon}
                 label={t("wallet.profile.notificationSettings")}
                 action={
@@ -71,7 +68,7 @@ function NotificationRow() {
                     />
                 }
             />
-        </SettingsCard>
+        </InfoCard>
     );
 }
 
@@ -108,8 +105,8 @@ function BiometricRow() {
     };
 
     return (
-        <SettingsCard>
-            <SettingsRow
+        <InfoCard>
+            <InfoRow
                 icon={FaceIdIcon}
                 align="top"
                 label={t("wallet.profile.biometricPrompt", {
@@ -122,7 +119,7 @@ function BiometricRow() {
                 }
             />
             {enabled ? (
-                <SettingsRow
+                <InfoRow
                     icon={ShieldCheck}
                     label={t("biometrics.settings.timeout")}
                     action={
@@ -151,7 +148,7 @@ function BiometricRow() {
                     }
                 />
             ) : null}
-        </SettingsCard>
+        </InfoCard>
     );
 }
 

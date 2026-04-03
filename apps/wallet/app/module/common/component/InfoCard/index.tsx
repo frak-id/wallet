@@ -4,14 +4,14 @@ import { Text } from "@frak-labs/design-system/components/Text";
 import type { ComponentType, ReactNode, SVGProps } from "react";
 import * as styles from "./index.css";
 
-export { styles as settingsCardStyles };
+export { styles as infoCardStyles };
 
 type IconComponent = ComponentType<SVGProps<SVGSVGElement>>;
 
 /**
- * Shared card wrapper for settings rows
+ * Shared card wrapper for grouped rows.
  */
-export function SettingsCard({ children }: { children: ReactNode }) {
+export function InfoCard({ children }: { children: ReactNode }) {
     return (
         <Card padding="none" className={styles.card}>
             {children}
@@ -20,19 +20,24 @@ export function SettingsCard({ children }: { children: ReactNode }) {
 }
 
 /**
- * A row inside a SettingsCard.
+ * A row inside an InfoCard.
+ * - With `icon`: renders an icon left of the label
  * - With `href`: renders as a link (`<a>`)
  * - With `action`: renders a static row with a right-side action element
  */
-export function SettingsRow({
+export function InfoRow({
     icon: Icon,
     label,
+    labelColor,
+    labelVariant = "body",
     href,
     action,
     align = "center",
 }: {
-    icon: IconComponent;
+    icon?: IconComponent;
     label: string;
+    labelColor?: "primary" | "secondary";
+    labelVariant?: "body" | "bodySmall";
     href?: string;
     action?: ReactNode;
     align?: "center" | "top";
@@ -45,8 +50,13 @@ export function SettingsRow({
 
     const content = (
         <Box className={contentClass}>
-            <Icon width={24} height={24} className={styles.icon} />
-            <Text as="span" variant="body" weight="medium">
+            {Icon && <Icon width={24} height={24} className={styles.icon} />}
+            <Text
+                as="span"
+                variant={labelVariant}
+                weight="medium"
+                color={labelColor}
+            >
                 {label}
             </Text>
         </Box>

@@ -4,15 +4,15 @@ import { Text } from "@frak-labs/design-system/components/Text";
 import { PersonIcon } from "@frak-labs/design-system/icons";
 import { useTranslation } from "react-i18next";
 import { useAccount } from "wagmi";
+import {
+    InfoCard,
+    InfoRow,
+    infoCardStyles,
+} from "@/module/common/component/InfoCard";
 import { useMoneriumAddresses } from "@/module/monerium/hooks/useMoneriumAddresses";
 import { useMoneriumAuth } from "@/module/monerium/hooks/useMoneriumAuth";
 import { useMoneriumLinkWallet } from "@/module/monerium/hooks/useMoneriumLinkWallet";
 import { useMoneriumProfile } from "@/module/monerium/hooks/useMoneriumProfile";
-import {
-    SettingsCard,
-    SettingsRow,
-    settingsCardStyles,
-} from "@/module/settings/component/SettingsCard";
 
 export function MoneriumConnect() {
     const { t } = useTranslation();
@@ -30,8 +30,8 @@ export function MoneriumConnect() {
     };
 
     return (
-        <SettingsCard>
-            <SettingsRow
+        <InfoCard>
+            <InfoRow
                 icon={PersonIcon}
                 label={t("monerium.account")}
                 action={
@@ -48,7 +48,7 @@ export function MoneriumConnect() {
                     />
                 }
             />
-        </SettingsCard>
+        </InfoCard>
     );
 }
 
@@ -82,7 +82,7 @@ function MoneriumAction({
                 display="flex"
                 alignItems="center"
                 gap="xxs"
-                className={settingsCardStyles.actionButton}
+                className={infoCardStyles.actionButton}
             >
                 <Spinner size="s" />
                 <Text
@@ -143,7 +143,7 @@ function ActionButton({
     return (
         <button
             type="button"
-            className={settingsCardStyles.actionButton}
+            className={infoCardStyles.actionButton}
             onClick={onClick}
             disabled={disabled}
         >
