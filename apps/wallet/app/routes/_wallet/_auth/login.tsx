@@ -1,6 +1,6 @@
 import { HandleErrors, sessionStore } from "@frak-labs/wallet-shared";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Trans, useTranslation } from "react-i18next";
 import { AuthActions } from "@/module/authentication/component/AuthActions";
 import { AuthenticateWithPhone } from "@/module/authentication/component/AuthenticateWithPhone";
@@ -8,7 +8,7 @@ import { DemoTapZone } from "@/module/authentication/component/DemoTapZone";
 import { LoginList } from "@/module/authentication/component/LoginList";
 import { StepLayout } from "@/module/common/component/StepLayout";
 import { PairingInProgress } from "@/module/pairing/component/PairingInProgress";
-import { executePendingActions } from "@/module/pending-actions/utils/executePendingActions";
+import { useExecutePendingActions } from "@/module/pending-actions/hook/useExecutePendingActions";
 import * as styles from "./login.css";
 
 export const Route = createFileRoute("/_wallet/_auth/login")({
@@ -30,28 +30,21 @@ function LoginPage() {
     const navigate = useNavigate();
     const [error, setError] = useState<Error | null>(null);
     const session = sessionStore((state) => state.session);
-    const hasHandledPostLoginRedirect = useRef(false);
+    const { executePendingActions } = useExecutePendingActions();
 
     const handlePostLoginRedirect = useCallback(async () => {
-        if (hasHandledPostLoginRedirect.current) return;
-        hasHandledPostLoginRedirect.current = true;
-
-        // Execute all pending actions (ensure calls, deep links, pairing)
-        const navigated = await executePendingActions(navigate);
+        const navigated = await executePendingActions();
         if (!navigated) {
             navigate({ to: "/wallet", replace: true });
         }
-    }, [navigate]);
+    }, [executePendingActions, navigate]);
 
     // Redirect after successful login: pending deep link > pairing > wallet
+    // Catches QR/phone auth where session appears without a direct callback
     useEffect(() => {
         if (!session) return;
         handlePostLoginRedirect();
     }, [session, handlePostLoginRedirect]);
-
-    const handleLoginSuccess = () => {
-        handlePostLoginRedirect();
-    };
 
     return (
         <>
@@ -64,12 +57,13 @@ function LoginPage() {
                 footer={
                     <>
                         <AuthActions
-                            onSuccess={handleLoginSuccess}
+                            onSuccess={handlePostLoginRedirect}
                             onError={setError}
                             loginButtonText={t("wallet.login.button")}
                         />
                         <AuthenticateWithPhone
                             text={t("wallet.login.useQRCode")}
+                            onSuccess={handlePostLoginRedirect}
                         />
                         <Link to={"/recovery"} viewTransition>
                             {t("wallet.login.recover")}

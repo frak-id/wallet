@@ -13,7 +13,7 @@ import {
 } from "@/module/onboarding/component/slides/OnboardingSlides";
 import { Welcome } from "@/module/onboarding/component/Welcome";
 import { PairingInProgress } from "@/module/pairing/component/PairingInProgress";
-import { executePendingActions } from "@/module/pending-actions/utils/executePendingActions";
+import { useExecutePendingActions } from "@/module/pending-actions/hook/useExecutePendingActions";
 import { modalStore } from "@/module/stores/modalStore";
 
 export const Route = createFileRoute("/_wallet/_auth/register")({
@@ -44,12 +44,15 @@ function RegisterPage() {
     const openModal = modalStore((s) => s.openModal);
     const closeModal = modalStore((s) => s.closeModal);
 
+    const { executePendingActions } = useExecutePendingActions();
+
     const advanceToNotification = useCallback(() => {
         closeModal();
+        // Drain logical pending actions (ensure calls) immediately after auth.
+        // Navigation actions are deferred until after the welcome screen.
+        executePendingActions({ skipNavigation: true });
         setStep("notification");
-        // Execute all pending actions (ensure calls, etc.) after auth
-        executePendingActions(navigate);
-    }, [closeModal, navigate]);
+    }, [closeModal, executePendingActions]);
 
     const { login, isLoading: isLoginLoading } = useLogin({
         onSuccess: advanceToNotification,
@@ -117,12 +120,10 @@ function RegisterPage() {
             {step === "welcome" && (
                 <Welcome
                     onContinue={async () => {
-                        const navigated = await executePendingActions(navigate);
+                        // Drain navigation actions now that onboarding is done
+                        const navigated = await executePendingActions();
                         if (!navigated) {
-                            navigate({
-                                to: "/wallet",
-                                replace: true,
-                            });
+                            navigate({ to: "/wallet", replace: true });
                         }
                     }}
                 />

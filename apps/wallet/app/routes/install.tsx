@@ -8,12 +8,12 @@ import { Text } from "@frak-labs/design-system/components/Text";
 import { getSafeSession } from "@frak-labs/wallet-shared";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { Info } from "lucide-react";
-import { useEffect, useMemo, useRef } from "react";
+import { useEffect, useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { PageLayout } from "@/module/common/component/PageLayout";
 import { Title } from "@/module/common/component/Title";
+import { useExecutePendingActions } from "@/module/pending-actions/hook/useExecutePendingActions";
 import { pendingActionsStore } from "@/module/pending-actions/stores/pendingActionsStore";
-import { executePendingActions } from "@/module/pending-actions/utils/executePendingActions";
 import { CodeDisplay } from "@/module/recovery-code/component/CodeDisplay";
 import { useGenerateInstallCode } from "@/module/recovery-code/hook/useGenerateInstallCode";
 
@@ -70,47 +70,41 @@ function sleep(ms: number): Promise<void> {
 function InstallProcessing({ m: merchantId, a: anonymousId }: InstallSearch) {
     const navigate = useNavigate();
     const { t } = useTranslation();
-    const hasProcessed = useRef(false);
+    const { executePendingActions } = useExecutePendingActions();
 
     useEffect(() => {
-        // Guard against StrictMode double-fire
-        if (hasProcessed.current) return;
-        hasProcessed.current = true;
+        // Build ensure action from install referral params
+        const ensureAction =
+            merchantId && anonymousId
+                ? ({
+                      type: "ensure",
+                      merchantId,
+                      anonymousId,
+                  } as const)
+                : undefined;
 
-        async function process() {
-            // Build ensure action from install referral params
-            const ensureAction =
-                merchantId && anonymousId
-                    ? ({
-                          type: "ensure",
-                          merchantId,
-                          anonymousId,
-                      } as const)
-                    : undefined;
+        const isLoggedIn = !!getSafeSession()?.token;
 
-            const isLoggedIn = !!getSafeSession()?.token;
-
-            if (isLoggedIn) {
-                // Store + drain all pending actions (including the new one)
-                const [navigated] = await Promise.all([
-                    executePendingActions(navigate, ensureAction),
-                    sleep(MIN_PROCESSING_MS),
-                ]);
+        if (isLoggedIn) {
+            // Store + drain all pending actions (including the new one)
+            Promise.all([
+                executePendingActions({ newAction: ensureAction }),
+                sleep(MIN_PROCESSING_MS),
+            ]).then(([navigated]) => {
                 if (!navigated) {
                     navigate({ to: "/wallet", replace: true });
                 }
-            } else {
-                // Not logged in — store for post-auth, redirect to register
-                if (ensureAction) {
-                    pendingActionsStore.getState().addAction(ensureAction);
-                }
-                await sleep(MIN_PROCESSING_MS);
-                navigate({ to: "/register", replace: true });
+            });
+        } else {
+            // Not logged in — store for post-auth, redirect to register
+            if (ensureAction) {
+                pendingActionsStore.getState().addAction(ensureAction);
             }
+            sleep(MIN_PROCESSING_MS).then(() => {
+                navigate({ to: "/register", replace: true });
+            });
         }
-
-        process();
-    }, [merchantId, anonymousId, navigate]);
+    }, [merchantId, anonymousId, navigate, executePendingActions]);
 
     return (
         <PageLayout>

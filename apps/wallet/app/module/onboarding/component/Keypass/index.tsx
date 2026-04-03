@@ -65,6 +65,7 @@ export function Keypass({ onClose, onAuthSuccess }: KeypassProps) {
                 isLoginLoading={isLoginLoading}
                 loginError={loginError}
                 onLogin={() => login()}
+                onAuthSuccess={onAuthSuccess}
                 onNavigateToLogin={() =>
                     navigate({ to: "/login", replace: true })
                 }
@@ -113,6 +114,7 @@ type KeypassContentProps = {
     isLoginLoading: boolean;
     loginError: Error | null;
     onLogin: () => void;
+    onAuthSuccess: () => void;
     onNavigateToLogin: () => void;
 };
 
@@ -124,6 +126,7 @@ function KeypassContent({
     isLoginLoading,
     loginError,
     onLogin,
+    onAuthSuccess,
     onNavigateToLogin,
 }: KeypassContentProps) {
     const { t } = useTranslation();
@@ -171,6 +174,7 @@ function KeypassContent({
                     </Button>
                     <AuthenticateWithPhone
                         text={t("wallet.register.useQRCode")}
+                        onSuccess={onAuthSuccess}
                     />
                 </>
             }

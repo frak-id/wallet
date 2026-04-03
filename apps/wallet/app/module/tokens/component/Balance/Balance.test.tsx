@@ -4,6 +4,7 @@ import { modalStore } from "@/module/stores/modalStore";
 import { Balance } from "./index";
 
 const mockUseGetUserBalance = vi.fn();
+const mockUseGetPendingRewards = vi.fn();
 const mockT = vi.fn((key: string) => key);
 const mockNavigate = vi.fn();
 
@@ -26,19 +27,19 @@ vi.mock("@/module/common/utils/walletMode", () => ({
 }));
 
 vi.mock("@/module/tokens/hooks/useGetPendingRewards", () => ({
-    useGetPendingRewards: () => ({
-        totalClaimable: 0,
-        pendingRewards: [],
-        queryData: {},
-    }),
+    useGetPendingRewards: () => mockUseGetPendingRewards(),
 }));
 
 describe("Balance", () => {
     beforeEach(() => {
         vi.clearAllMocks();
         modalStore.getState().closeModal();
+        mockUseGetPendingRewards.mockReturnValue({
+            totalClaimable: 0,
+            pendingRewards: [],
+            queryData: {},
+        });
     });
-
     it("should render balance label via i18n", () => {
         mockUseGetUserBalance.mockReturnValue({
             userBalance: {
@@ -169,6 +170,11 @@ describe("Balance", () => {
             userBalance: {
                 total: { eurAmount: 50 },
             },
+        });
+        mockUseGetPendingRewards.mockReturnValue({
+            totalClaimable: 50,
+            pendingRewards: [],
+            queryData: {},
         });
 
         render(<Balance />);
