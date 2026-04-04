@@ -11,11 +11,11 @@ import type {
     ExtractReturnType,
     RpcResponse,
 } from "@frak-labs/frame-connector";
+import { emitLifecycleEvent } from "@frak-labs/wallet-shared";
 import {
-    emitLifecycleEvent,
     mapI18nConfig,
     translationKeyPathToObject,
-} from "@frak-labs/wallet-shared";
+} from "@/module/utils/i18nMapper";
 import type { i18n, TOptions } from "i18next";
 
 /**

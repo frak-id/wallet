@@ -9,9 +9,9 @@ import {
     authenticatedBackendApi,
     clientIdStore,
     emitLifecycleEvent,
-    mapI18nConfig,
-    restoreBackupData,
 } from "@frak-labs/wallet-shared";
+import { mapI18nConfig } from "@/module/utils/i18nMapper";
+import { restoreBackupData } from "@/module/utils/backup";
 import { getI18n } from "react-i18next";
 import {
     iframeClientId,

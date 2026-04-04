@@ -9,9 +9,9 @@ import type {
 import {
     getSafeSdkSession,
     getSafeSession,
-    pushBackupData,
     sessionStore,
 } from "@frak-labs/wallet-shared";
+import { pushBackupData } from "@/module/utils/backup";
 import { useCallback, useEffect, useRef } from "react";
 import type { WalletRpcContext } from "@/module/types/context";
 

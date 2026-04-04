@@ -1,8 +1,11 @@
 import { base64urlDecode, base64urlEncode } from "@frak-labs/core-sdk";
+import {
+    emitLifecycleEvent,
+    type SdkSession,
+    type Session,
+    sessionStore,
+} from "@frak-labs/wallet-shared";
 import { sha256 } from "viem";
-import { sessionStore } from "../../stores/sessionStore";
-import type { SdkSession, Session } from "../../types/Session";
-import { emitLifecycleEvent } from "./lifecycleEvents";
 
 /**
  * Represent backed up data

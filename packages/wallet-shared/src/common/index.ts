@@ -59,3 +59,4 @@ export {
     getSafeSdkSession,
     getSafeSession,
 } from "./utils/safeSession";
+export { emitLifecycleEvent } from "./utils/lifecycleEvents";

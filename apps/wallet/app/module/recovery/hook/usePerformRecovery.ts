@@ -3,10 +3,10 @@ import type {
     WebAuthNWallet,
 } from "@frak-labs/wallet-shared";
 import {
-    doAddPassKeyFnAbi,
     getPimlicoClient,
     getPimlicoTransport,
 } from "@frak-labs/wallet-shared";
+import { doAddPassKeyFnAbi } from "@/module/recovery/utils/abi";
 import type { UseMutationOptions } from "@tanstack/react-query";
 import { type DefaultError, useMutation } from "@tanstack/react-query";
 import { smartAccountActions } from "permissionless";

@@ -27,7 +27,7 @@ vi.mock("react-i18next", () => ({
     }),
 }));
 
-vi.mock("../../../sdk/utils/lifecycleEvents", () => ({
+vi.mock("../../utils/lifecycleEvents", () => ({
     emitLifecycleEvent: eventMocks.emitLifecycleEvent,
 }));
 
