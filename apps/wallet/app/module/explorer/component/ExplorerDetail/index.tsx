@@ -18,12 +18,10 @@ import {
     ShareIcon,
 } from "@frak-labs/design-system/icons";
 import { useCallback, useMemo, useState } from "react";
-import { createPortal } from "react-dom";
 import { Trans, useTranslation } from "react-i18next";
 import { GlassButton } from "@/module/common/component/GlassButton";
 import { InfoCard, InfoRow } from "@/module/common/component/InfoCard";
 import { InstructionList } from "@/module/common/component/InstructionList";
-import { useAnimatedClose } from "@/module/common/hook/useAnimatedClose";
 import { useSlideCarousel } from "@/module/common/hook/useSlideCarousel";
 import type { ExplorerMerchantItem } from "@/module/explorer/component/ExplorerCard/types";
 import * as styles from "./index.css";
@@ -34,7 +32,6 @@ type ExplorerDetailProps = {
 };
 
 export function ExplorerDetail({ merchant, onClose }: ExplorerDetailProps) {
-    const { isClosing, overlayRef, handleClose } = useAnimatedClose(onClose);
     const [isDescriptionExpanded, setIsDescriptionExpanded] = useState(false);
     const { t, i18n } = useTranslation();
 
@@ -75,170 +72,159 @@ export function ExplorerDetail({ merchant, onClose }: ExplorerDetailProps) {
         ? getDaysRemaining(merchant.endDate)
         : undefined;
 
-    return createPortal(
-        <div
-            ref={overlayRef}
-            className={isClosing ? styles.overlayClosing : styles.overlay}
-        >
-            <DetailSheet style={{ paddingTop: 0 }}>
-                <DetailSheetHero height={375} className={styles.heroImageSheet}>
-                    {images.length === 1 && (
-                        <img
-                            src={images[0]}
-                            alt={merchant.name}
-                            className={styles.heroImage}
-                        />
-                    )}
+    return (
+        <DetailSheet style={{ paddingTop: 0 }}>
+            <DetailSheetHero height={375} className={styles.heroImageSheet}>
+                {images.length === 1 && (
+                    <img
+                        src={images[0]}
+                        alt={merchant.name}
+                        className={styles.heroImage}
+                    />
+                )}
 
-                    {images.length > 1 && (
-                        <div
-                            ref={scrollContainerRef}
-                            className={styles.heroSlider}
-                        >
-                            {images.map((url, index) => (
-                                <div
-                                    key={index}
-                                    className={styles.heroSlide}
-                                    data-index={index}
-                                >
-                                    <img
-                                        src={url}
-                                        alt={`${merchant.name} ${index + 1}`}
-                                        className={styles.heroImage}
-                                    />
-                                </div>
-                            ))}
-                        </div>
-                    )}
+                {images.length > 1 && (
+                    <div ref={scrollContainerRef} className={styles.heroSlider}>
+                        {images.map((url, index) => (
+                            <div
+                                key={index}
+                                className={styles.heroSlide}
+                                data-index={index}
+                            >
+                                <img
+                                    src={url}
+                                    alt={`${merchant.name} ${index + 1}`}
+                                    className={styles.heroImage}
+                                />
+                            </div>
+                        ))}
+                    </div>
+                )}
 
-                    <DetailSheetActions>
-                        <GlassButton
-                            as="button"
-                            icon={<CloseIcon width={20} height={20} />}
-                            onClick={handleClose}
-                            aria-label={t("explorer.detail.close")}
-                        />
-                        <GlassButton
-                            as="button"
-                            icon={<ShareIcon width={20} height={20} />}
-                            onClick={handleShare}
-                            aria-label={t("explorer.detail.share")}
-                        />
-                    </DetailSheetActions>
+                <DetailSheetActions>
+                    <GlassButton
+                        as="button"
+                        icon={<CloseIcon width={20} height={20} />}
+                        onClick={onClose}
+                        aria-label={t("explorer.detail.close")}
+                    />
+                    <GlassButton
+                        as="button"
+                        icon={<ShareIcon width={20} height={20} />}
+                        onClick={handleShare}
+                        aria-label={t("explorer.detail.share")}
+                    />
+                </DetailSheetActions>
 
-                    {daysRemaining != null && formattedEndDate && (
-                        <Text
-                            variant="bodySmall"
-                            weight="medium"
-                            className={styles.endDate}
-                        >
-                            <ClockIcon width={16} height={16} />
-                            {t("explorer.detail.endDateBadge", {
-                                date: formattedEndDate,
-                                days: daysRemaining,
-                            })}
+                {daysRemaining != null && formattedEndDate && (
+                    <Text
+                        variant="bodySmall"
+                        weight="medium"
+                        className={styles.endDate}
+                    >
+                        <ClockIcon width={16} height={16} />
+                        {t("explorer.detail.endDateBadge", {
+                            date: formattedEndDate,
+                            days: daysRemaining,
+                        })}
+                    </Text>
+                )}
+
+                {images.length > 1 && (
+                    <Text variant="tiny" className={styles.imageCountBadge}>
+                        <ImageIcon width={12} height={12} /> {currentIndex + 1}{" "}
+                        / {images.length}
+                    </Text>
+                )}
+            </DetailSheetHero>
+
+            <DetailSheetBody className={styles.bodyContent}>
+                <div className={styles.brandHeader}>
+                    <div className={styles.brandInfo}>
+                        <Text as="h1" variant="heading1">
+                            {merchant.name}
                         </Text>
-                    )}
-
-                    {images.length > 1 && (
-                        <Text variant="tiny" className={styles.imageCountBadge}>
-                            <ImageIcon width={12} height={12} />{" "}
-                            {currentIndex + 1} / {images.length}
-                        </Text>
-                    )}
-                </DetailSheetHero>
-
-                <DetailSheetBody className={styles.bodyContent}>
-                    <div className={styles.brandHeader}>
-                        <div className={styles.brandInfo}>
-                            <Text as="h1" variant="heading1">
-                                {merchant.name}
+                        {merchant.maxRewardEur != null && (
+                            <Text variant="body" weight="medium">
+                                {t("explorer.detail.rewardPerReferral", {
+                                    amount: merchant.maxRewardEur,
+                                })}
                             </Text>
-                            {merchant.maxRewardEur != null && (
-                                <Text variant="body" weight="medium">
-                                    {t("explorer.detail.rewardPerReferral", {
-                                        amount: merchant.maxRewardEur,
-                                    })}
-                                </Text>
-                            )}
-                        </div>
-                        {logoUrl && (
-                            <img
-                                src={logoUrl}
-                                alt={`${merchant.name} logo`}
-                                className={styles.brandLogo}
-                            />
                         )}
                     </div>
-
-                    {description && (
-                        <Card className={styles.description}>
-                            <Text
-                                variant="bodySmall"
-                                color="secondary"
-                                className={
-                                    isDescriptionExpanded
-                                        ? undefined
-                                        : styles.descriptionText
-                                }
-                            >
-                                {description}
-                            </Text>
-                            {!isDescriptionExpanded && (
-                                <Text
-                                    as="button"
-                                    variant="bodySmall"
-                                    color="action"
-                                    onClick={() =>
-                                        setIsDescriptionExpanded(true)
-                                    }
-                                >
-                                    {t("explorer.detail.readMore")}
-                                </Text>
-                            )}
-                        </Card>
+                    {logoUrl && (
+                        <img
+                            src={logoUrl}
+                            alt={`${merchant.name} logo`}
+                            className={styles.brandLogo}
+                        />
                     )}
+                </div>
 
-                    <CampaignInfoSection
-                        merchant={merchant}
-                        daysRemaining={daysRemaining}
-                        formattedEndDate={formattedEndDate}
-                    />
-                    <Box paddingX="m">
-                        <Text as="p" variant="caption" align="center">
-                            <Trans
-                                i18nKey="explorer.detail.legal"
-                                values={{ merchantName: merchant.name }}
-                                components={{
-                                    termsLink: (
-                                        <a
-                                            href="https://frak.id/terms"
-                                            target="_blank"
-                                            rel="noopener noreferrer"
-                                        >
-                                            {" "}
-                                        </a>
-                                    ),
-                                }}
-                            />
+                {description && (
+                    <Card className={styles.description}>
+                        <Text
+                            variant="bodySmall"
+                            color="secondary"
+                            className={
+                                isDescriptionExpanded
+                                    ? undefined
+                                    : styles.descriptionText
+                            }
+                        >
+                            {description}
                         </Text>
-                    </Box>
-                </DetailSheetBody>
+                        {!isDescriptionExpanded && (
+                            <Text
+                                as="button"
+                                variant="bodySmall"
+                                color="action"
+                                onClick={() => setIsDescriptionExpanded(true)}
+                            >
+                                {t("explorer.detail.readMore")}
+                            </Text>
+                        )}
+                    </Card>
+                )}
 
-                <DetailSheetFooter>
-                    <Button
-                        variant="primary"
-                        width="full"
-                        onClick={handleShare}
-                        size="medium"
-                    >
-                        {t("explorer.detail.shareAndEarn")}
-                        <CoinsIcon width={16} height={16} />
-                    </Button>
-                </DetailSheetFooter>
-            </DetailSheet>
-        </div>,
-        document.body
+                <CampaignInfoSection
+                    merchant={merchant}
+                    daysRemaining={daysRemaining}
+                    formattedEndDate={formattedEndDate}
+                />
+                <Box paddingX="m">
+                    <Text as="p" variant="caption" align="center">
+                        <Trans
+                            i18nKey="explorer.detail.legal"
+                            values={{ merchantName: merchant.name }}
+                            components={{
+                                termsLink: (
+                                    <a
+                                        href="https://frak.id/terms"
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                    >
+                                        {" "}
+                                    </a>
+                                ),
+                            }}
+                        />
+                    </Text>
+                </Box>
+            </DetailSheetBody>
+
+            <DetailSheetFooter>
+                <Button
+                    variant="primary"
+                    width="full"
+                    onClick={handleShare}
+                    size="medium"
+                >
+                    {t("explorer.detail.shareAndEarn")}
+                    <CoinsIcon width={16} height={16} />
+                </Button>
+            </DetailSheetFooter>
+        </DetailSheet>
     );
 }
 

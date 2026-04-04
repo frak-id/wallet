@@ -4,6 +4,7 @@ import { type KeyboardEvent, type MouseEvent, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { CloseButton } from "@/module/common/component/CloseButton";
 import { useSlideCarousel } from "@/module/common/hook/useSlideCarousel";
+import { modalStore } from "@/module/stores/modalStore";
 import { IntroSlide } from "./component/IntroSlide";
 import { NotificationSlide } from "./component/NotificationSlide";
 import { useWelcomeNotificationSlide } from "./hook/useWelcomeNotificationSlide";
@@ -13,11 +14,10 @@ import {
     persistDismissedSlides,
 } from "./utils/dismissedSlides";
 import type { WelcomeSlide, WelcomeSlideId } from "./utils/types";
-import { WelcomeDetail } from "./WelcomeDetail";
 
 export function WelcomeCard() {
     const { t } = useTranslation();
-    const [isDetailOpen, setIsDetailOpen] = useState(false);
+    const openModal = modalStore((s) => s.openModal);
     const notificationSlide = useWelcomeNotificationSlide();
     const [dismissedSlides, setDismissedSlides] =
         useState<WelcomeSlideId[]>(getDismissedSlides);
@@ -58,7 +58,7 @@ export function WelcomeCard() {
     };
 
     const handleIntroClick = () => {
-        setIsDetailOpen(true);
+        openModal({ id: "welcomeDetail" });
     };
 
     const handleKeyDown =
@@ -74,70 +74,65 @@ export function WelcomeCard() {
     }
 
     return (
-        <>
-            <Box display="flex" flexDirection="column" gap="xs">
-                <Box
-                    className={
-                        hasMultipleSlides
-                            ? styles.slider.multiple
-                            : styles.slider.single
-                    }
-                    ref={scrollContainerRef}
-                >
-                    {visibleSlides.map((slide, index) => (
-                        <Box
-                            key={slide.id}
-                            className={
-                                hasMultipleSlides
-                                    ? styles.slide.multiple
-                                    : styles.slide.single
+        <Box display="flex" flexDirection="column" gap="xs">
+            <Box
+                className={
+                    hasMultipleSlides
+                        ? styles.slider.multiple
+                        : styles.slider.single
+                }
+                ref={scrollContainerRef}
+            >
+                {visibleSlides.map((slide, index) => (
+                    <Box
+                        key={slide.id}
+                        className={
+                            hasMultipleSlides
+                                ? styles.slide.multiple
+                                : styles.slide.single
+                        }
+                        data-index={index}
+                    >
+                        <Card
+                            variant="secondary"
+                            padding="none"
+                            className={styles.cardContainer}
+                            role="button"
+                            tabIndex={0}
+                            onClick={
+                                slide.kind === "intro"
+                                    ? handleIntroClick
+                                    : slide.onAction
                             }
-                            data-index={index}
+                            onKeyDown={handleKeyDown(
+                                slide.kind === "intro"
+                                    ? handleIntroClick
+                                    : slide.onAction
+                            )}
+                            style={{ cursor: "pointer" }}
                         >
-                            <Card
-                                variant="secondary"
-                                padding="none"
-                                className={styles.cardContainer}
-                                role="button"
-                                tabIndex={0}
-                                onClick={
-                                    slide.kind === "intro"
-                                        ? handleIntroClick
-                                        : slide.onAction
-                                }
-                                onKeyDown={handleKeyDown(
-                                    slide.kind === "intro"
-                                        ? handleIntroClick
-                                        : slide.onAction
-                                )}
-                                style={{ cursor: "pointer" }}
-                            >
-                                {index === currentIndex && (
-                                    <CloseButton
-                                        onClick={handleDismiss}
-                                        ariaLabel={t("common.close")}
-                                        className={styles.dismissButton}
-                                    />
-                                )}
-                                {slide.kind === "intro" ? (
-                                    <IntroSlide
-                                        title={slide.title}
-                                        items={slide.items}
-                                    />
-                                ) : (
-                                    <NotificationSlide
-                                        title={slide.title}
-                                        actionI18nKey={slide.actionI18nKey}
-                                    />
-                                )}
-                            </Card>
-                        </Box>
-                    ))}
-                </Box>
+                            {index === currentIndex && (
+                                <CloseButton
+                                    onClick={handleDismiss}
+                                    ariaLabel={t("common.close")}
+                                    className={styles.dismissButton}
+                                />
+                            )}
+                            {slide.kind === "intro" ? (
+                                <IntroSlide
+                                    title={slide.title}
+                                    items={slide.items}
+                                />
+                            ) : (
+                                <NotificationSlide
+                                    title={slide.title}
+                                    actionI18nKey={slide.actionI18nKey}
+                                />
+                            )}
+                        </Card>
+                    </Box>
+                ))}
             </Box>
-            {isDetailOpen && (
-                <WelcomeDetail onClose={() => setIsDetailOpen(false)} />
-            )}
-        </>
+        </Box>
     );
 }

@@ -5,11 +5,6 @@ import { style } from "@vanilla-extract/css";
 const heroOverlap = 25;
 const heroBadgeBottom = `calc(${alias.spacing.m} + ${heroOverlap}px)`;
 
-export {
-    overlay,
-    overlayClosing,
-} from "@/module/common/styles/detailOverlay.css";
-
 export const heroImageSheet = style({
     marginBottom: `-${heroOverlap}px`,
 });

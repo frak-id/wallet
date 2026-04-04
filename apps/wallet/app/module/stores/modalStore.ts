@@ -11,6 +11,7 @@
  */
 
 import { create } from "zustand";
+import type { ExplorerMerchantItem } from "@/module/explorer/component/ExplorerCard/types";
 
 /**
  * Discriminated union of every modal in the wallet app.
@@ -23,6 +24,8 @@ export type ModalState =
     | { id: "emptyTransferredGains" }
     | { id: "transfer" }
     | { id: "successOverlay" }
+    | { id: "explorerDetail"; merchant: ExplorerMerchantItem }
+    | { id: "welcomeDetail" }
     | { id: "keypass"; onAuthSuccess: () => void }
     | {
           id: "recoveryCodeSuccess";

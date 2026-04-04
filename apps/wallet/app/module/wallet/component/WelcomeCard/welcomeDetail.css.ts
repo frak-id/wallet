@@ -1,11 +1,6 @@
 import { alias } from "@frak-labs/design-system/tokens";
 import { style } from "@vanilla-extract/css";
 
-export {
-    overlay,
-    overlayClosing,
-} from "@/module/common/styles/detailOverlay.css";
-
 /**
  * Hero image — cover the hero area, centered.
  */

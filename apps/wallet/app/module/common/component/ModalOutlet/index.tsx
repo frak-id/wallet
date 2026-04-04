@@ -1,4 +1,6 @@
+import { DetailOverlay } from "@/module/common/component/DetailOverlay";
 import { SuccessOverlay } from "@/module/common/component/SuccessOverlay";
+import { ExplorerDetail } from "@/module/explorer/component/ExplorerDetail";
 import { Keypass } from "@/module/onboarding/component/Keypass";
 import { RecoveryCodeSuccessModal } from "@/module/recovery-code/component/RecoveryCodeSuccessModal";
 import { modalStore, selectModal } from "@/module/stores/modalStore";
@@ -7,6 +9,7 @@ import { EmptyTransferModal } from "@/module/tokens/component/EmptyTransferModal
 import { EmptyTransferredGainsModal } from "@/module/tokens/component/EmptyTransferredGainsModal";
 import { PendingGainsModal } from "@/module/tokens/component/PendingGainsModal";
 import { TransferModal } from "@/module/tokens/component/TransferModal";
+import { WelcomeDetail } from "@/module/wallet/component/WelcomeCard/WelcomeDetail";
 
 /**
  * Global modal outlet — mounted once at the app root.
@@ -48,6 +51,25 @@ export function ModalOutlet() {
                     onClose={closeModal}
                     merchant={modal.merchant}
                 />
+            );
+        case "explorerDetail":
+            return (
+                <DetailOverlay onClose={closeModal}>
+                    {({ handleClose }) => (
+                        <ExplorerDetail
+                            merchant={modal.merchant}
+                            onClose={handleClose}
+                        />
+                    )}
+                </DetailOverlay>
+            );
+        case "welcomeDetail":
+            return (
+                <DetailOverlay onClose={closeModal}>
+                    {({ handleClose }) => (
+                        <WelcomeDetail onClose={handleClose} />
+                    )}
+                </DetailOverlay>
             );
     }
 }

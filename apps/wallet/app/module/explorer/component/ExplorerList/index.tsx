@@ -1,22 +1,15 @@
 import { EmptyState } from "@frak-labs/design-system/components/EmptyState";
 import { Skeleton } from "@frak-labs/design-system/components/Skeleton";
 import { Stack } from "@frak-labs/design-system/components/Stack";
-import { useCallback, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { ExplorerCard } from "@/module/explorer/component/ExplorerCard";
-import type { ExplorerMerchantItem } from "@/module/explorer/component/ExplorerCard/types";
-import { ExplorerDetail } from "@/module/explorer/component/ExplorerDetail";
 import { useGetExplorerMerchants } from "@/module/explorer/hook/useGetExplorerMerchants";
+import { modalStore } from "@/module/stores/modalStore";
 
 export function ExplorerList() {
     const { merchants, isLoading } = useGetExplorerMerchants();
     const { t } = useTranslation();
-    const [selectedMerchant, setSelectedMerchant] =
-        useState<ExplorerMerchantItem | null>(null);
-
-    const handleCloseDetail = useCallback(() => {
-        setSelectedMerchant(null);
-    }, []);
+    const openModal = modalStore((s) => s.openModal);
 
     if (isLoading) {
         return (
@@ -37,24 +30,20 @@ export function ExplorerList() {
     }
 
     return (
-        <>
-            <Stack as="ul" space="m">
-                {merchants.map((merchant) => (
-                    <li key={merchant.id} style={{ listStyle: "none" }}>
-                        <ExplorerCard
-                            merchant={merchant}
-                            onClick={() => setSelectedMerchant(merchant)}
-                        />
-                    </li>
-                ))}
-            </Stack>
-
-            {selectedMerchant && (
-                <ExplorerDetail
-                    merchant={selectedMerchant}
-                    onClose={handleCloseDetail}
-                />
-            )}
-        </>
+        <Stack as="ul" space="m">
+            {merchants.map((merchant) => (
+                <li key={merchant.id} style={{ listStyle: "none" }}>
+                    <ExplorerCard
+                        merchant={merchant}
+                        onClick={() =>
+                            openModal({
+                                id: "explorerDetail",
+                                merchant,
+                            })
+                        }
+                    />
+                </li>
+            ))}
+        </Stack>
     );
 }
