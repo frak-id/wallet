@@ -529,6 +529,45 @@
             "noCode": "No authorization code received",
             "failed": "Failed to complete authentication",
             "tryAgain": "Try again"
+        },
+        "bankFlow": {
+            "info": {
+                "title": "Complete your account to claim your earnings.",
+                "description": "To transfer your earnings to your bank account, you need to complete your secure payment account setup.",
+                "redirectNotice": "You will be redirected to our financial partner, Monerium, to:",
+                "feature1Title": "Verify your identity",
+                "feature1Description": "To secure your account and verify that you are the rightful owner of the earnings.",
+                "feature2Title": "Add your IBAN",
+                "feature2Description": "To receive your earnings directly into your bank account.",
+                "feature3Title": "Secure your transfers",
+                "feature3Description": "Your transactions are protected and comply with current security standards.",
+                "cta": "Accept and continue"
+            },
+            "kyc": {
+                "title": "Complete your identity verification",
+                "description": "To transfer your earnings, you need to verify your identity.",
+                "notice": "This step is quick and secure.",
+                "featureTitle": "Verify your identity",
+                "featureDescription": "To secure your account and confirm that you are the rightful owner of the earnings, we use a financial partner, Monerium.",
+                "cta": "Verify my identity"
+            },
+            "link": {
+                "title": "Link your wallet",
+                "description": "Your wallet is not yet connected to your Monerium account, connect it to transfer your earnings.",
+                "featureTitle": "Link your Monerium account to your wallet",
+                "featureDescription": "To fully use your wallet, we need to link your account.",
+                "cta": "Link my account"
+            },
+            "success": {
+                "title": "You can now transfer your earnings \uD83C\uDF89",
+                "description": "Your account is ready. You can now transfer your earnings to your bank account with ease.",
+                "cta": "Transfer my earnings"
+            },
+            "transfer": {
+                "title": "Transfer my earnings",
+                "description": "Coming soon. You will be able to select an IBAN and amount to transfer your earnings.",
+                "cta": "Close"
+            }
         }
     },
     "explorer": {

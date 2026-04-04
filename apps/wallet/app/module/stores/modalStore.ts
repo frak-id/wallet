@@ -30,7 +30,8 @@ export type ModalState =
     | {
           id: "recoveryCodeSuccess";
           merchant?: { name: string; domain: string };
-      };
+      }
+    | { id: "moneriumBankFlow" };
 
 type ModalStore = {
     modal: ModalState | null;

@@ -8,6 +8,7 @@ import { useNavigate } from "@tanstack/react-router";
 import type { SVGProps } from "react";
 import { useTranslation } from "react-i18next";
 import { CloseButton } from "@/module/common/component/CloseButton";
+import { modalStore } from "@/module/stores/modalStore";
 import * as styles from "./index.css";
 
 type TransferModalProps = {
@@ -63,7 +64,7 @@ export function TransferModal({ onClose }: TransferModalProps) {
     const description = t("wallet.transferModal.description");
 
     const handleBankClick = () => {
-        // Bank account flow — not yet implemented
+        modalStore.getState().openModal({ id: "moneriumBankFlow" });
     };
 
     const handleWalletClick = () => {

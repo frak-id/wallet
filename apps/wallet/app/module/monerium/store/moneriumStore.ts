@@ -6,9 +6,11 @@ type MoneriumStoreState = {
     refreshToken: string | null;
     tokenExpiry: number | null;
     pendingCodeVerifier: string | null;
+    hasSeenSetupSuccess: boolean;
 
     setTokens: (access: string, refresh: string, expiresIn: number) => void;
     setPendingCodeVerifier: (verifier: string | null) => void;
+    markSetupSuccessSeen: () => void;
     disconnect: () => void;
 };
 
@@ -19,6 +21,7 @@ export const moneriumStore = create<MoneriumStoreState>()(
             refreshToken: null,
             tokenExpiry: null,
             pendingCodeVerifier: null,
+            hasSeenSetupSuccess: false,
 
             setTokens: (access, refresh, expiresIn) =>
                 set({
@@ -28,12 +31,14 @@ export const moneriumStore = create<MoneriumStoreState>()(
                 }),
             setPendingCodeVerifier: (pendingCodeVerifier) =>
                 set({ pendingCodeVerifier }),
+            markSetupSuccessSeen: () => set({ hasSeenSetupSuccess: true }),
             disconnect: () =>
                 set({
                     accessToken: null,
                     refreshToken: null,
                     tokenExpiry: null,
                     pendingCodeVerifier: null,
+                    hasSeenSetupSuccess: false,
                 }),
         }),
         {

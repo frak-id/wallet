@@ -526,6 +526,45 @@
             "noCode": "Aucun code d'autorisation reçu",
             "failed": "Échec de l'authentification",
             "tryAgain": "Réessayer"
+        },
+        "bankFlow": {
+            "info": {
+                "title": "Finalise ton compte pour toucher tes gains.",
+                "description": "Pour transférer tes gains sur ton compte bancaire, tu dois finaliser ton compte de paiement sécurisé.",
+                "redirectNotice": "Tu vas être redirigé vers notre partenaire financier, Monerium, pour :",
+                "feature1Title": "Vérifier ton identité",
+                "feature1Description": "Pour sécuriser ton compte et vérifier que tu es bien le titulaire des gains.",
+                "feature2Title": "Ajouter ton IBAN",
+                "feature2Description": "Pour recevoir tes gains directement sur ton compte bancaire.",
+                "feature3Title": "Sécuriser tes transferts",
+                "feature3Description": "Tes transactions sont protégées et conformes aux normes de sécurité en vigueur.",
+                "cta": "Accepter et continuer"
+            },
+            "kyc": {
+                "title": "Finalise la vérification de ton identité",
+                "description": "Pour transférer tes gains, tu dois vérifier ton identité.",
+                "notice": "Cette étape est rapide et sécurisée.",
+                "featureTitle": "Vérifie ton identité",
+                "featureDescription": "Pour sécuriser ton compte et confirmer que tu es bien le titulaire des gains, nous utilisons un partenaire financier, Monerium.",
+                "cta": "Vérifier mon identité"
+            },
+            "link": {
+                "title": "Associe ton porte-monnaie",
+                "description": "Ton porte-monnaie n'est pas encore connecté à ton compte Monerium, connecte-le pour transférer tes gains.",
+                "featureTitle": "Associe ton compte Monerium à ton porte-monnaie",
+                "featureDescription": "Pour utiliser pleinement ton porte-monnaie, nous avons besoin de lié ton compte.",
+                "cta": "Associer mon compte"
+            },
+            "success": {
+                "title": "Tu peux maintenant transférer tes gains \uD83C\uDF89",
+                "description": "Ton compte est prêt. Tu peux maintenant transférer tes gains sur ton compte bancaire en toute simplicité.",
+                "cta": "Transférer mes gains"
+            },
+            "transfer": {
+                "title": "Transférer mes gains",
+                "description": "Bientôt disponible. Tu pourras sélectionner un IBAN et un montant pour transférer tes gains.",
+                "cta": "Fermer"
+            }
         }
     },
     "explorer": {
