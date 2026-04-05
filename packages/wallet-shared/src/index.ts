@@ -17,7 +17,6 @@ export * from "./providers";
 export * from "./stores/authenticationStore";
 export * from "./stores/clientIdStore";
 export * from "./stores/sessionStore";
-export * from "./stores/userStore";
 // Tokens
 export * from "./tokens";
 // Types

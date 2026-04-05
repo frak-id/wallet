@@ -11,7 +11,6 @@ import {
     authenticationStore,
 } from "../../stores/authenticationStore";
 import { sessionStore } from "../../stores/sessionStore";
-import { userStore } from "../../stores/userStore";
 import type { Session } from "../../types/Session";
 import { authKey } from "../queryKeys/auth";
 import { getTauriGetFn } from "../webauthn/tauriBridge";
@@ -99,13 +98,6 @@ export function useLogin(
             // Store the session
             sessionStore.getState().setSession(session);
             sessionStore.getState().setSdkSession(sdkJwt);
-
-            // Store the mocked user for now
-            // TODO: Remove this once the user is properly stored in the database
-            userStore.getState().setUser({
-                _id: data.address,
-                username: "mocked-username",
-            });
 
             // Track the event
             events.push(trackAuthCompleted("login", session));

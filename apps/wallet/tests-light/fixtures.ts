@@ -3,7 +3,6 @@ import { mockDefaultApiRoutes } from "./mocks/api";
 import {
     sessionStoreValue,
     unauthenticatedSessionStoreValue,
-    userStoreValue,
 } from "./mocks/sessions";
 
 type LightFixtures = {
@@ -29,19 +28,12 @@ export const test = base.extend<LightFixtures>({
                     ? unauthenticatedSessionStoreValue
                     : sessionStoreValue;
 
-            await page.addInitScript(
-                ({ session, user }) => {
-                    localStorage.setItem(
-                        "frak_session_store",
-                        JSON.stringify(session)
-                    );
-                    localStorage.setItem(
-                        "frak_user_store",
-                        JSON.stringify(user)
-                    );
-                },
-                { session: sessionValue, user: userStoreValue }
-            );
+            await page.addInitScript((session) => {
+                localStorage.setItem(
+                    "frak_session_store",
+                    JSON.stringify(session)
+                );
+            }, sessionValue);
         };
 
         await use(inject);

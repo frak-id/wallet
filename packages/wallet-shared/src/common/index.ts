@@ -52,11 +52,10 @@ export { sdkKey } from "./queryKeys/sdk";
 // Storage
 export { authenticatorStorage } from "./storage/authenticators";
 export type { PreviousAuthenticatorModel } from "./storage/PreviousAuthenticatorModel";
-
+export { emitLifecycleEvent } from "./utils/lifecycleEvents";
 // Utils
 export {
     getFromLocalStorage,
     getSafeSdkSession,
     getSafeSession,
 } from "./utils/safeSession";
-export { emitLifecycleEvent } from "./utils/lifecycleEvents";

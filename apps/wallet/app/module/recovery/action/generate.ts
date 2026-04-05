@@ -4,8 +4,11 @@ import {
     kernelAddresses,
 } from "@frak-labs/app-essentials";
 import type { GeneratedRecoveryData } from "@frak-labs/wallet-shared";
-import { doAddPassKeyFnAbi, setExecutionAbi } from "@/module/recovery/utils/abi";
 import { type Address, encodeFunctionData, toFunctionSelector } from "viem";
+import {
+    doAddPassKeyFnAbi,
+    setExecutionAbi,
+} from "@/module/recovery/utils/abi";
 
 /**
  * Generate the recovery data

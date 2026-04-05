@@ -18,14 +18,6 @@ type SessionStoreState = {
     version: 0;
 };
 
-type UserStoreState = {
-    state: {
-        user: null;
-        userSetupLater: null;
-    };
-    version: 0;
-};
-
 const mockAddress =
     "0x1234567890abcdef1234567890abcdef12345678" as const satisfies Address;
 
@@ -46,14 +38,6 @@ export const sessionStoreValue: SessionStoreState = {
         session: authenticatedSession,
         sdkSession: null,
         demoPrivateKey: null,
-    },
-    version: 0,
-};
-
-export const userStoreValue: UserStoreState = {
-    state: {
-        user: null,
-        userSetupLater: null,
     },
     version: 0,
 };

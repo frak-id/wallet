@@ -11,9 +11,9 @@ import {
     getSafeSession,
     sessionStore,
 } from "@frak-labs/wallet-shared";
-import { pushBackupData } from "@/module/utils/backup";
 import { useCallback, useEffect, useRef } from "react";
 import type { WalletRpcContext } from "@/module/types/context";
+import { pushBackupData } from "@/module/utils/backup";
 
 function extractDomainFromUrl(url: string): string {
     try {

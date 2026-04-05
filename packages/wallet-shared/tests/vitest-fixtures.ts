@@ -57,7 +57,6 @@ export type BaseTestFixtures = {
      * Fresh Zustand stores that auto-reset before/after each test
      */
     freshSessionStore: typeof import("@frak-labs/wallet-shared").sessionStore;
-    freshUserStore: typeof import("@frak-labs/wallet-shared").userStore;
     freshAuthenticationStore: typeof import("@frak-labs/wallet-shared").authenticationStore;
 
     /**
@@ -73,10 +72,6 @@ export type BaseTestFixtures = {
             setLastWebAuthNAction: ReturnType<typeof import("vitest").vi.fn>;
             setLastAuthenticator: ReturnType<typeof import("vitest").vi.fn>;
             clearAuthentication: ReturnType<typeof import("vitest").vi.fn>;
-        };
-        user: {
-            setUser: ReturnType<typeof import("vitest").vi.fn>;
-            clearUser: ReturnType<typeof import("vitest").vi.fn>;
         };
     };
 
@@ -233,17 +228,6 @@ export const test = baseTest.extend<BaseTestFixtures>({
     },
 
     /**
-     * Provides fresh userStore that auto-resets after each test
-     * Note: Only resets after use to avoid redundant overhead
-     */
-    // biome-ignore lint/correctness/noEmptyPattern: Vitest requires object destructuring
-    freshUserStore: async ({}, use) => {
-        const { userStore } = await import("@frak-labs/wallet-shared");
-        await use(userStore);
-        userStore.getState().clearUser();
-    },
-
-    /**
      * Provides fresh authenticationStore that auto-resets after each test
      * Note: Only resets after use to avoid redundant overhead
      */
@@ -272,10 +256,6 @@ export const test = baseTest.extend<BaseTestFixtures>({
                 setLastWebAuthNAction: vi.fn(),
                 setLastAuthenticator: vi.fn(),
                 clearAuthentication: vi.fn(),
-            },
-            user: {
-                setUser: vi.fn(),
-                clearUser: vi.fn(),
             },
         };
         await use(actions);

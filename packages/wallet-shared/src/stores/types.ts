@@ -7,7 +7,6 @@ import type { Signature } from "ox";
 import type { SignMetadata } from "ox/WebAuthnP256";
 import type { Address, Hex } from "viem";
 import type { SdkSession, Session } from "../types/Session";
-import type { User } from "../types/User";
 
 /**
  * WebAuthn authentication response structure
@@ -34,20 +33,6 @@ export type SessionStore = {
     setSdkSession: (sdkSession: SdkSession | null) => void;
     setDemoPrivateKey: (key: Hex | null) => void;
     clearSession: () => void;
-};
-
-/**
- * User Store Types
- */
-export type UserStore = {
-    // State
-    user: User | null;
-    userSetupLater: boolean | null;
-
-    // Actions
-    setUser: (user: User | null) => void;
-    setUserSetupLater: (setupLater: boolean | null) => void;
-    clearUser: () => void;
 };
 
 /**

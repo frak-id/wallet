@@ -54,10 +54,6 @@ export const authenticationStore = create<AuthenticationStore>()(
  * Selector functions for computed values
  */
 
-// Get the last authenticator
-export const selectLastAuthenticator = (state: AuthenticationStore) =>
-    state.lastAuthenticator;
-
 // Get the last authentication timestamp
 export const selectLastAuthenticationAt = (state: AuthenticationStore) =>
     state.lastAuthenticationAt;
@@ -65,14 +61,6 @@ export const selectLastAuthenticationAt = (state: AuthenticationStore) =>
 // Get the last WebAuthN action
 export const selectLastWebAuthNAction = (state: AuthenticationStore) =>
     state.lastWebAuthNAction;
-
-// Get the SSO context
-export const selectSsoContext = (state: AuthenticationStore) =>
-    state.ssoContext;
-
-// Get the current SSO metadata (derived selector)
-export const selectCurrentSsoMetadata = (state: AuthenticationStore) =>
-    state.ssoContext?.metadata;
 
 /**
  * Helper function to add last authentication

@@ -6,7 +6,6 @@ import {
     getPimlicoClient,
     getPimlicoTransport,
 } from "@frak-labs/wallet-shared";
-import { doAddPassKeyFnAbi } from "@/module/recovery/utils/abi";
 import type { UseMutationOptions } from "@tanstack/react-query";
 import { type DefaultError, useMutation } from "@tanstack/react-query";
 import { smartAccountActions } from "permissionless";
@@ -21,6 +20,7 @@ import {
 import { createBundlerClient } from "viem/account-abstraction";
 import { useClient } from "wagmi";
 import { recoveryKey } from "@/module/recovery/queryKeys/recovery";
+import { doAddPassKeyFnAbi } from "@/module/recovery/utils/abi";
 import { recoverySmartAccount } from "@/module/wallet/smartWallet/RecoverySmartWallet";
 
 type MutationParams = {

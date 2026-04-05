@@ -230,9 +230,8 @@ BaseTestFixtures (wallet-shared/tests/vitest-fixtures.ts)
 ├── queryWrapper: React.FC (wraps components with QueryClientProvider)
 ├── freshSessionStore: SessionStoreType
 ├── freshWalletStore: WalletStoreType
-├── freshUserStore: UserStoreType
 ├── freshAuthenticationStore: AuthenticationStoreType
-├── mockStoreActions: { session, wallet, user, authentication }
+├── mockStoreActions: { session, wallet, authentication }
 ├── mockWagmiHooks: { useAccount, useConnect, useDisconnect, useBalance }
 ├── mockBackendAPI: MSW handlers
 └── mockWebAuthN: WebAuthn API mocks

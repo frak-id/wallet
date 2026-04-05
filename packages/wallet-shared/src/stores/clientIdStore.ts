@@ -36,10 +36,3 @@ export const clientIdStore = create<ClientIdStore>()(
         }
     )
 );
-
-/**
- * Selector functions for computed values
- */
-
-// Get the current client ID
-export const selectClientId = (state: ClientIdStore) => state.clientId;
