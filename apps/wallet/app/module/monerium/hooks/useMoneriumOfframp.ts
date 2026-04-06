@@ -1,6 +1,7 @@
 import { useMutation } from "@tanstack/react-query";
 import { useAccount, useSignMessage } from "wagmi";
 import { moneriumStore } from "@/module/monerium/store/moneriumStore";
+import { shortenIban } from "@/module/monerium/utils/maskIban";
 import { placeOrder } from "@/module/monerium/utils/moneriumApi";
 import { moneriumConfig } from "@/module/monerium/utils/moneriumConfig";
 import { useMoneriumTokenRefresh } from "./useMoneriumClient";
@@ -15,13 +16,6 @@ function rfc3339(d: Date): string {
     };
 
     return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}${tzOffset(d.getTimezoneOffset())}`;
-}
-
-function shortenIban(iban: string): string {
-    const ns = iban.replace(/\s/g, "");
-    return ns.length > 11
-        ? `${ns.substring(0, 4)}...${ns.substring(ns.length - 4)}`
-        : iban;
 }
 
 function buildPlaceOrderMessage(amount: string, iban: string): string {

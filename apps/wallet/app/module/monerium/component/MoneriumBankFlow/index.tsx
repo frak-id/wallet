@@ -1,50 +1,97 @@
+import { isRunningInProd } from "@frak-labs/app-essentials";
 import { Box } from "@frak-labs/design-system/components/Box";
 import { DetailSheet } from "@frak-labs/design-system/components/DetailSheet";
 import { Spinner } from "@frak-labs/design-system/components/Spinner";
+import { useEffect } from "react";
 import { useMoneriumAddresses } from "@/module/monerium/hooks/useMoneriumAddresses";
 import { useMoneriumAuth } from "@/module/monerium/hooks/useMoneriumAuth";
 import { useMoneriumProfile } from "@/module/monerium/hooks/useMoneriumProfile";
+import {
+    type MoneriumFlowScreen,
+    moneriumFlowStore,
+    selectScreen,
+} from "@/module/monerium/store/moneriumFlowStore";
 import { moneriumStore } from "@/module/monerium/store/moneriumStore";
-import { MoneriumInfoScreen } from "./MoneriumInfoScreen";
-import { MoneriumKycScreen } from "./MoneriumKycScreen";
+import { MoneriumConnectScreen } from "./MoneriumConnectScreen";
 import { MoneriumLinkScreen } from "./MoneriumLinkScreen";
 import { MoneriumSuccessScreen } from "./MoneriumSuccessScreen";
-import { MoneriumTransferScreen } from "./MoneriumTransferScreen";
-
-type FlowStep = "info" | "kyc" | "link" | "success" | "transfer" | "loading";
+import { MoneriumTransferAmountScreen } from "./MoneriumTransferAmountScreen";
+import { MoneriumTransferIbanScreen } from "./MoneriumTransferIbanScreen";
+import { MoneriumTransferRecapScreen } from "./MoneriumTransferRecapScreen";
 
 /**
- * Determines which screen to show based on the current Monerium state.
- *
- *  1. Not connected          → "info"    (show explanation, CTA → OAuth)
- *  2. Connected, KYC pending → "kyc"     (redirect to Monerium)
- *  3. KYC done, wallet unlinked → "link" (sign + link wallet)
- *  4. All done, first time   → "success" (shown once)
- *  5. All done               → "transfer" (placeholder)
+ * Pure derivation: given the current Monerium account state, return the
+ * setup screen that should be shown.  Returns `null` when the user has
+ * completed setup (i.e. ready for transfer).
  */
-function useFlowStep(): FlowStep {
+function deriveSetupScreen(params: {
+    isConnected: boolean;
+    profileState: string | null;
+    isProfileLoading: boolean;
+    isWalletLinked: boolean | undefined;
+    isAddressesLoading: boolean;
+    hasSeenSetupSuccess: boolean;
+}): MoneriumFlowScreen {
+    if (!params.isConnected) return "info";
+    if (params.isProfileLoading) return "loading";
+
+    const needsKyc =
+        !params.profileState ||
+        (isRunningInProd &&
+            (params.profileState === "created" ||
+                params.profileState === "pending"));
+    if (needsKyc) return "kyc";
+
+    if (params.profileState === "approved" && params.isAddressesLoading)
+        return "loading";
+    if (params.profileState === "approved" && !params.isWalletLinked)
+        return "link";
+    if (
+        params.profileState === "approved" &&
+        params.isWalletLinked &&
+        !params.hasSeenSetupSuccess
+    )
+        return "success";
+
+    return "transfer-amount";
+}
+
+/**
+ * Watches Monerium auth / profile / address state and drives the flow
+ * store to the correct setup screen.  Transfer screens are navigated
+ * imperatively by the user, so we skip auto-transitions once there.
+ */
+function useMoneriumFlowSync() {
     const { isConnected } = useMoneriumAuth();
     const { profileState, isLoading: isProfileLoading } = useMoneriumProfile();
     const { isWalletLinked, isLoading: isAddressesLoading } =
         useMoneriumAddresses();
     const hasSeenSetupSuccess = moneriumStore((s) => s.hasSeenSetupSuccess);
 
-    if (!isConnected) return "info";
+    useEffect(() => {
+        const { screen, goTo } = moneriumFlowStore.getState();
+        const target = deriveSetupScreen({
+            isConnected,
+            profileState,
+            isProfileLoading,
+            isWalletLinked,
+            isAddressesLoading,
+            hasSeenSetupSuccess,
+        });
 
-    if (isProfileLoading) return "loading";
+        // Don't override an active transfer sub-flow unless disconnected
+        if (screen.startsWith("transfer-") && target.startsWith("transfer-"))
+            return;
 
-    const needsKyc =
-        !profileState ||
-        profileState === "created" ||
-        profileState === "pending";
-    if (needsKyc) return "kyc";
-
-    if (profileState === "approved" && isAddressesLoading) return "loading";
-    if (profileState === "approved" && !isWalletLinked) return "link";
-    if (profileState === "approved" && isWalletLinked && !hasSeenSetupSuccess)
-        return "success";
-
-    return "transfer";
+        goTo(target);
+    }, [
+        isConnected,
+        profileState,
+        isProfileLoading,
+        isWalletLinked,
+        isAddressesLoading,
+        hasSeenSetupSuccess,
+    ]);
 }
 
 type MoneriumBankFlowProps = {
@@ -54,13 +101,24 @@ type MoneriumBankFlowProps = {
 /**
  * Root component of the Monerium bank-transfer flow.
  *
- * Reads the current Monerium state and renders the appropriate step.
+ * Uses a flat Zustand store (`moneriumFlowStore`) to manage which screen
+ * is visible.  Setup screens are auto-driven by `useMoneriumFlowSync`;
+ * transfer screens are navigated imperatively by user actions.
+ *
  * Wrapped by `DetailOverlay` in the `ModalOutlet`.
  */
 export function MoneriumBankFlow({ onClose }: MoneriumBankFlowProps) {
-    const step = useFlowStep();
+    useMoneriumFlowSync();
+    const screen = moneriumFlowStore(selectScreen);
 
-    if (step === "loading") {
+    // Reset transfer form data when the flow unmounts
+    useEffect(() => {
+        return () => {
+            moneriumFlowStore.getState().resetTransfer();
+        };
+    }, []);
+
+    if (screen === "loading") {
         return (
             <DetailSheet>
                 <Box
@@ -75,16 +133,20 @@ export function MoneriumBankFlow({ onClose }: MoneriumBankFlowProps) {
         );
     }
 
-    switch (step) {
+    switch (screen) {
         case "info":
-            return <MoneriumInfoScreen onClose={onClose} />;
+            return <MoneriumConnectScreen variant="info" onClose={onClose} />;
         case "kyc":
-            return <MoneriumKycScreen onClose={onClose} />;
+            return <MoneriumConnectScreen variant="kyc" onClose={onClose} />;
         case "link":
             return <MoneriumLinkScreen onClose={onClose} />;
         case "success":
             return <MoneriumSuccessScreen onClose={onClose} />;
-        case "transfer":
-            return <MoneriumTransferScreen onClose={onClose} />;
+        case "transfer-amount":
+            return <MoneriumTransferAmountScreen onClose={onClose} />;
+        case "transfer-recap":
+            return <MoneriumTransferRecapScreen onClose={onClose} />;
+        case "transfer-iban":
+            return <MoneriumTransferIbanScreen />;
     }
 }

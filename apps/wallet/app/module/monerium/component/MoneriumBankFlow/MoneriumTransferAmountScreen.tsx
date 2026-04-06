@@ -7,17 +7,21 @@ import { TransferIcon, WalletIcon } from "@frak-labs/design-system/icons";
 import { useGetUserBalance } from "@frak-labs/wallet-shared";
 import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
-import type { IbanEntry } from "@/module/monerium/store/ibanStore";
+import {
+    ibanStore,
+    selectEffectiveIban,
+} from "@/module/monerium/store/ibanStore";
+import {
+    moneriumFlowStore,
+    selectAmount,
+    selectSelectedIbanOverride,
+} from "@/module/monerium/store/moneriumFlowStore";
+import { maskIban } from "@/module/monerium/utils/maskIban";
 import * as styles from "./index.css";
 import { MoneriumScreen } from "./MoneriumScreen";
 
 type MoneriumTransferAmountScreenProps = {
     onClose: () => void;
-    onContinue: () => void;
-    onPickIban: () => void;
-    amount: string;
-    onAmountChange: (value: string) => void;
-    selectedIban: IbanEntry | null;
 };
 
 function parseAmount(value: string): number {
@@ -27,26 +31,22 @@ function parseAmount(value: string): number {
     return Number.isFinite(parsed) ? parsed : 0;
 }
 
-function maskIban(iban: string): string {
-    const cleaned = iban.replace(/\s/g, "");
-    if (cleaned.length <= 8) return cleaned;
-    return `${cleaned.slice(0, 4)} •••• •••• ${cleaned.slice(-4)}`;
-}
-
 /**
  * Step 1 of the offramp sub-flow — the user enters the amount to transfer
  * and can pick a beneficiary IBAN.
  */
 export function MoneriumTransferAmountScreen({
     onClose,
-    onContinue,
-    onPickIban,
-    amount,
-    onAmountChange,
-    selectedIban,
 }: MoneriumTransferAmountScreenProps) {
     const { t } = useTranslation();
     const { userBalance } = useGetUserBalance();
+
+    const amount = moneriumFlowStore(selectAmount);
+    const setAmount = moneriumFlowStore((s) => s.setAmount);
+    const goTo = moneriumFlowStore((s) => s.goTo);
+    const selectedOverride = moneriumFlowStore(selectSelectedIbanOverride);
+    const effectiveIban = ibanStore(selectEffectiveIban);
+    const selectedIban = selectedOverride ?? effectiveIban;
 
     const eureBalance = useMemo(() => {
         if (!userBalance?.balances) return 0;
@@ -63,7 +63,7 @@ export function MoneriumTransferAmountScreen({
         const raw = event.target.value;
         // Allow empty, digits, and a single separator (. or ,).
         if (raw === "" || /^\d+([.,]\d{0,2})?$/.test(raw)) {
-            onAmountChange(raw);
+            setAmount(raw);
         }
     }
 
@@ -71,7 +71,7 @@ export function MoneriumTransferAmountScreen({
         <MoneriumScreen
             onClose={onClose}
             ctaLabel={t("monerium.bankFlow.transfer.amount.continue")}
-            ctaOnClick={onContinue}
+            ctaOnClick={() => goTo("transfer-recap")}
             ctaDisabled={!canContinue}
         >
             <Stack space="l">
@@ -136,7 +136,7 @@ export function MoneriumTransferAmountScreen({
                         <button
                             type="button"
                             className={styles.linkButton}
-                            onClick={onPickIban}
+                            onClick={() => goTo("transfer-iban")}
                         >
                             <Text variant="bodySmall" color="action">
                                 {t("monerium.bankFlow.transfer.amount.modify")}

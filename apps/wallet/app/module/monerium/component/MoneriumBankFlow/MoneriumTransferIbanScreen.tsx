@@ -17,20 +17,13 @@ import {
     ibanStore,
     selectKnownIbans,
 } from "@/module/monerium/store/ibanStore";
+import {
+    moneriumFlowStore,
+    selectSelectedIbanOverride,
+} from "@/module/monerium/store/moneriumFlowStore";
+import { maskIban } from "@/module/monerium/utils/maskIban";
 import * as styles from "./index.css";
 import { MoneriumScreen } from "./MoneriumScreen";
-
-type MoneriumTransferIbanScreenProps = {
-    onBack: () => void;
-    onSelect: (entry: IbanEntry) => void;
-    currentIban: string | null;
-};
-
-function maskIban(iban: string): string {
-    const cleaned = iban.replace(/\s/g, "");
-    if (cleaned.length <= 8) return cleaned;
-    return `${cleaned.slice(0, 4)} •••• ${cleaned.slice(-4)}`;
-}
 
 function isValidIbanFormat(value: string): boolean {
     const cleaned = value.replace(/\s/g, "").toUpperCase();
@@ -42,21 +35,28 @@ function isValidIbanFormat(value: string): boolean {
  * Beneficiary IBAN manager — list existing IBANs, add new ones, remove,
  * and pick one as the selected beneficiary for the current transfer.
  */
-export function MoneriumTransferIbanScreen({
-    onBack,
-    onSelect,
-    currentIban,
-}: MoneriumTransferIbanScreenProps) {
+export function MoneriumTransferIbanScreen() {
     const { t } = useTranslation();
     const knownIbans = ibanStore(selectKnownIbans);
     const addIban = ibanStore((s) => s.addIban);
     const removeIban = ibanStore((s) => s.removeIban);
     const setLastUsedIban = ibanStore((s) => s.setLastUsedIban);
 
+    const goTo = moneriumFlowStore((s) => s.goTo);
+    const setSelectedIban = moneriumFlowStore((s) => s.setSelectedIban);
+    const currentOverride = moneriumFlowStore(selectSelectedIbanOverride);
+    const currentIban = currentOverride?.iban ?? null;
+
     const [name, setName] = useState("");
     const [iban, setIban] = useState("");
 
     const canSave = name.trim().length > 0 && isValidIbanFormat(iban);
+
+    function handleSelect(entry: IbanEntry) {
+        setLastUsedIban(entry.iban);
+        setSelectedIban(entry);
+        goTo("transfer-amount");
+    }
 
     function handleSave() {
         if (!canSave) return;
@@ -66,19 +66,14 @@ export function MoneriumTransferIbanScreen({
         setName("");
         setIban("");
         // Immediately select the just-added IBAN.
-        onSelect({
+        handleSelect({
             name: trimmed.name,
             iban: trimmed.iban.replace(/\s/g, "").toUpperCase(),
         });
     }
 
-    function handlePick(entry: IbanEntry) {
-        setLastUsedIban(entry.iban);
-        onSelect(entry);
-    }
-
     return (
-        <MoneriumScreen onClose={onBack} leftIcon="back">
+        <MoneriumScreen onClose={() => goTo("transfer-amount")} leftIcon="back">
             <Stack space="l">
                 <Text variant="heading2">
                     {t("monerium.bankFlow.transfer.ibanManager.title")}
@@ -103,7 +98,7 @@ export function MoneriumTransferIbanScreen({
                                         <button
                                             type="button"
                                             className={styles.ibanRow}
-                                            onClick={() => handlePick(entry)}
+                                            onClick={() => handleSelect(entry)}
                                         >
                                             <Inline space="m" alignY="center">
                                                 <Box
