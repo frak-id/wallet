@@ -31,6 +31,7 @@ function buildPlaceOrderMessage(amount: string, iban: string): string {
 type PlaceOrderParams = {
     amount: string;
     iban: string;
+    memo?: string;
 };
 
 function isSigningCancelledError(errorMessage: string): boolean {
@@ -79,7 +80,7 @@ export function useMoneriumOfframp() {
     const { isReady } = useMoneriumTokenRefresh();
 
     const mutation = useMutation({
-        mutationFn: async ({ amount, iban }: PlaceOrderParams) => {
+        mutationFn: async ({ amount, iban, memo }: PlaceOrderParams) => {
             if (!accessToken || !isReady) {
                 throw new Error("Monerium is not ready");
             }
@@ -107,7 +108,7 @@ export function useMoneriumOfframp() {
                         details: {},
                     },
                     message,
-                    memo: "Frak Wallet offramp",
+                    memo: memo?.trim() || "Frak Wallet offramp",
                 });
             } catch (error) {
                 const errorMessage = extractErrorMessage(error);
