@@ -73,6 +73,6 @@ export function buildCampaignRule({
             },
         ],
         rewards,
-        maxRewardsPerUser: 1,
+        merchantMaxRewardsPerUser: 1,
     };
 }
