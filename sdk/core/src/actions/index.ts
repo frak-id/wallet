@@ -1,5 +1,6 @@
 export { displayEmbeddedWallet } from "./displayEmbeddedWallet";
 export { displayModal } from "./displayModal";
+export { displaySharingPage } from "./displaySharingPage";
 export { ensureIdentity } from "./ensureIdentity";
 export { getMerchantInformation } from "./getMerchantInformation";
 export { getUserReferralStatus } from "./getUserReferralStatus";

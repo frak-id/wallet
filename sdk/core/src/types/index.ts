@@ -36,6 +36,12 @@ export type {
     ModalRpcStepsResultType,
     ModalStepTypes,
 } from "./rpc/displayModal";
+// Sharing page related
+export type {
+    DisplaySharingPageParamsType,
+    DisplaySharingPageResultType,
+    SharingPageProduct,
+} from "./rpc/displaySharingPage";
 export type {
     DisplayEmbeddedWalletParamsType,
     DisplayEmbeddedWalletResultType,

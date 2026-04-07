@@ -1,5 +1,6 @@
 import type {
     DisplayEmbeddedWalletParamsType,
+    DisplaySharingPageParamsType,
     FrakWalletSdkConfig,
     IFrameRpcSchema,
     InteractionTypeKey,
@@ -82,7 +83,24 @@ export type ModalUiType = {
     ) => Promise<void>;
 };
 
-export type UIRequest = (EmbeddedWalletUiType | ModalUiType) &
+/**
+ * Type for the sharing page ui type
+ */
+export type SharingPageUiType = {
+    type: "sharing";
+    params: DisplaySharingPageParamsType;
+    emitter: (
+        response: RpcResponse<
+            ExtractReturnType<IFrameRpcSchema, "frak_displaySharingPage">
+        >
+    ) => Promise<void>;
+};
+
+export type UIRequest = (
+    | EmbeddedWalletUiType
+    | ModalUiType
+    | SharingPageUiType
+) &
     GenericWalletUiType;
 
 type UIContext = {
@@ -203,7 +221,9 @@ export function ListenerUiProvider({ children }: PropsWithChildren) {
             const requestI18n =
                 request.type === "embedded"
                     ? request.params.metadata?.i18n
-                    : request.metadata.i18n;
+                    : request.type === "sharing"
+                      ? request.params.metadata?.i18n
+                      : request.metadata.i18n;
             if (requestI18n) {
                 mapI18nConfig(requestI18n, i18n);
             }
@@ -354,6 +374,21 @@ export function useEmbeddedListenerUI() {
     }
     return uiContext as Omit<UIContext, "currentRequest"> & {
         currentRequest: EmbeddedWalletUiType & GenericWalletUiType;
+    };
+}
+
+/**
+ * Custom hook to get the listener ui context only when displaying a sharing page
+ */
+export function useSharingListenerUI() {
+    const uiContext = useListenerUI();
+    if (uiContext.currentRequest?.type !== "sharing") {
+        throw new Error(
+            "useSharingListenerUI must be used within a sharing page displayed UI"
+        );
+    }
+    return uiContext as Omit<UIContext, "currentRequest"> & {
+        currentRequest: SharingPageUiType & GenericWalletUiType;
     };
 }
 

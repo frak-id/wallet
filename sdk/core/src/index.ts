@@ -19,6 +19,9 @@ export type {
     DisplayEmbeddedWalletParamsType,
     DisplayEmbeddedWalletResultType,
     DisplayModalParamsType,
+    // RPC Sharing page
+    DisplaySharingPageParamsType,
+    DisplaySharingPageResultType,
     EmbeddedViewActionReferred,
     EmbeddedViewActionSharing,
     EstimatedReward,
@@ -69,6 +72,7 @@ export type {
     SendTransactionModalStepType,
     SendTransactionReturnType,
     SendTransactionTxType,
+    SharingPageProduct,
     SiweAuthenticateModalStepType,
     SiweAuthenticateReturnType,
     SiweAuthenticationParams,

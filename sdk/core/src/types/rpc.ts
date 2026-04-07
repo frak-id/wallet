@@ -5,6 +5,10 @@ import type {
     ModalRpcStepsResultType,
 } from "./rpc/displayModal";
 import type {
+    DisplaySharingPageParamsType,
+    DisplaySharingPageResultType,
+} from "./rpc/displaySharingPage";
+import type {
     DisplayEmbeddedWalletParamsType,
     DisplayEmbeddedWalletResultType,
 } from "./rpc/embedded";
@@ -56,6 +60,11 @@ import type { WalletStatusReturnType } from "./rpc/walletStatus";
  * #### frak_displayEmbeddedWallet
  * - Params: [request: {@link DisplayEmbeddedWalletParamsType}, metadata: {@link FrakWalletSdkConfig}["metadata"], placement?: string]
  * - Returns: {@link DisplayEmbeddedWalletResultType}
+ * - Response Type: promise (one-shot)
+ *
+ * #### frak_displaySharingPage
+ * - Params: [request: {@link DisplaySharingPageParamsType}, configMetadata: {@link FrakWalletSdkConfig}["metadata"], placement?: string]
+ * - Returns: {@link DisplaySharingPageResultType}
  * - Response Type: promise (one-shot)
  */
 export type IFrameRpcSchema = [
@@ -160,5 +169,19 @@ export type IFrameRpcSchema = [
         Method: "frak_getUserReferralStatus";
         Parameters?: undefined;
         ReturnType: UserReferralStatusType | null;
+    },
+    /**
+     * Method to display a sharing page with product info and sharing buttons
+     * Resolves on first user action (share/copy) but the page stays visible
+     * This is a one-shot request
+     */
+    {
+        Method: "frak_displaySharingPage";
+        Parameters: [
+            request: DisplaySharingPageParamsType,
+            configMetadata: FrakWalletSdkConfig["metadata"],
+            placement?: string,
+        ];
+        ReturnType: DisplaySharingPageResultType;
     },
 ];
