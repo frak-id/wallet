@@ -1,19 +1,19 @@
 import type { ReactNode } from "react";
 import type { ResponsiveSpace } from "../../sprinkles.css";
 import { Box } from "../Box";
+import * as styles from "./index.css";
 
 type ValidInlineElement = "div" | "span" | "nav" | "ul" | "ol" | "li";
-
-type InlineAlign = "left" | "center" | "right";
+type InlineAlign = "left" | "center" | "right" | "space-between";
 type InlineAlignY = "top" | "center" | "bottom";
-
-type JustifyContent = "flex-start" | "center" | "flex-end";
+type JustifyContent = "flex-start" | "center" | "flex-end" | "space-between";
 type AlignItems = "flex-start" | "center" | "flex-end";
 
 const alignToJustifyContent: Record<InlineAlign, JustifyContent> = {
     left: "flex-start",
     center: "center",
     right: "flex-end",
+    "space-between": "space-between",
 } as const;
 
 const alignYToFlexAlign: Record<InlineAlignY, AlignItems> = {
@@ -24,16 +24,22 @@ const alignYToFlexAlign: Record<InlineAlignY, AlignItems> = {
 
 export type InlineProps = {
     space: ResponsiveSpace;
+    padding?: ResponsiveSpace;
     align?: InlineAlign;
     alignY?: InlineAlignY;
+    fill?: boolean;
+    wrap?: boolean;
     as?: ValidInlineElement;
     children?: ReactNode;
 };
 
 export function Inline({
     space,
+    padding,
     align,
     alignY,
+    fill,
+    wrap = true,
     as = "div",
     children,
 }: InlineProps) {
@@ -41,10 +47,12 @@ export function Inline({
         <Box
             as={as}
             display="flex"
-            flexWrap="wrap"
+            flexWrap={fill ? undefined : wrap ? "wrap" : "nowrap"}
             gap={space}
+            padding={padding}
             justifyContent={align ? alignToJustifyContent[align] : undefined}
             alignItems={alignY ? alignYToFlexAlign[alignY] : undefined}
+            className={fill ? styles.fill : undefined}
         >
             {children}
         </Box>

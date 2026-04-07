@@ -14,10 +14,11 @@ type ValidStackElement =
     | "aside"
     | "main"
     | "details";
-
 type StackAlign = "left" | "center" | "right";
+type StackJustify = "start" | "center" | "end" | "space-between";
 
 type AlignItems = "flex-start" | "center" | "flex-end";
+type JustifyContent = "flex-start" | "center" | "flex-end" | "space-between";
 type TextAlign = "left" | "center" | "right";
 
 const alignToFlexAlign: Record<StackAlign, AlignItems> = {
@@ -32,22 +33,43 @@ const alignToTextAlign: Record<StackAlign, TextAlign> = {
     right: "right",
 } as const;
 
+const justifyToFlexJustify: Record<StackJustify, JustifyContent> = {
+    start: "flex-start",
+    center: "center",
+    end: "flex-end",
+    "space-between": "space-between",
+} as const;
+
 export type StackProps = {
     space: ResponsiveSpace;
+    padding?: ResponsiveSpace;
     align?: StackAlign;
+    justify?: StackJustify;
     as?: ValidStackElement;
+    className?: string;
     children?: ReactNode;
 };
 
-export function Stack({ space, align, as = "div", children }: StackProps) {
+export function Stack({
+    space,
+    padding,
+    align,
+    justify,
+    as = "div",
+    className,
+    children,
+}: StackProps) {
     return (
         <Box
             as={as}
             display="flex"
             flexDirection="column"
             gap={space}
+            padding={padding}
             alignItems={align ? alignToFlexAlign[align] : undefined}
+            justifyContent={justify ? justifyToFlexJustify[justify] : undefined}
             textAlign={align ? alignToTextAlign[align] : undefined}
+            className={className}
         >
             {children}
         </Box>

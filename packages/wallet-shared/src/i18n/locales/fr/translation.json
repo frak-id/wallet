@@ -49,6 +49,8 @@
         "rewards": "Total balance",
         "send": "Envoyer",
         "submit": "Envoyer",
+        "today": "Aujourd'hui",
+        "yesterday": "Hier",
         "to": "À",
         "transactionHash": "Hash de transaction :",
         "transactionLink": "Lien de transaction",
@@ -444,9 +446,9 @@
     },
     "reward": {
         "status": {
-            "pending": "En attente",
+            "pending": "En attente de validation par la marque",
             "processing": "En cours de traitement",
-            "settled": "Réglé",
+            "settled": "À collecter",
             "consumed": "Consommé",
             "cancelled": "Annulé",
             "expired": "Expiré"

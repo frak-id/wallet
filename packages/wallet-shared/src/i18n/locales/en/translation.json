@@ -51,6 +51,8 @@
         "rewards": "Rewards",
         "send": "Send",
         "submit": "Submit",
+        "today": "Today",
+        "yesterday": "Yesterday",
         "to": "To",
         "transactionHash": "Transaction Hash:",
         "transactionLink": "Transaction Link",
@@ -447,9 +449,9 @@
     },
     "reward": {
         "status": {
-            "pending": "Pending",
+            "pending": "Awaiting validation by the brand",
             "processing": "Processing",
-            "settled": "Settled",
+            "settled": "To collect",
             "consumed": "Consumed",
             "cancelled": "Cancelled",
             "expired": "Expired"

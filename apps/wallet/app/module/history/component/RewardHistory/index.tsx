@@ -1,16 +1,23 @@
-import { Badge } from "@frak-labs/design-system/components/Badge";
-import { Box } from "@frak-labs/design-system/components/Box";
 import { Button } from "@frak-labs/design-system/components/Button";
 import { Card } from "@frak-labs/design-system/components/Card";
 import { IconCircle } from "@frak-labs/design-system/components/IconCircle";
+import { Inline } from "@frak-labs/design-system/components/Inline";
 import { Stack } from "@frak-labs/design-system/components/Stack";
 import { Text } from "@frak-labs/design-system/components/Text";
-import { EarningsIcon } from "@frak-labs/design-system/icons";
+import {
+    ClockHandsIcon,
+    EarningsIcon,
+    HourglassIcon,
+    LockIcon,
+} from "@frak-labs/design-system/icons";
 import { vars } from "@frak-labs/design-system/theme";
-import type { RewardHistoryItem as RewardHistoryItemType } from "@frak-labs/wallet-shared";
+import type {
+    MerchantInfo,
+    RewardHistoryItem as RewardHistoryItemType,
+} from "@frak-labs/wallet-shared";
 import { useNavigate } from "@tanstack/react-router";
+import type { TFunction } from "i18next";
 import { useTranslation } from "react-i18next";
-import { Panel } from "@/module/common/component/Panel";
 import { Skeleton } from "@/module/common/component/Skeleton";
 import { useGetRewardHistory } from "@/module/history/hook/useGetRewardHistory";
 import * as styles from "./index.css";
@@ -25,16 +32,17 @@ export function RewardHistoryList() {
     }
 
     return (
-        <Box>
-            <Stack space="xs">
-                {items.map((item, index) => (
-                    <RewardHistoryItem
-                        key={`${item.createdAt}-${index}`}
-                        item={item}
-                    />
-                ))}
-            </Stack>
-        </Box>
+        <Card padding="none">
+            {items.map((item) => (
+                <RewardHistoryItem
+                    key={
+                        item.txHash ??
+                        `${item.createdAt}-${item.merchant.domain}`
+                    }
+                    item={item}
+                />
+            ))}
+        </Card>
     );
 }
 
@@ -47,14 +55,14 @@ function RewardHistoryEmpty() {
             <IconCircle>
                 <EarningsIcon color={vars.text.action} />
             </IconCircle>
-            <Box display="flex" flexDirection="column" gap={"xxs"}>
+            <Stack space="xxs">
                 <Text variant="body" weight="semiBold" as="h3">
                     {t("reward.history.emptyTitle")}
                 </Text>
                 <Text variant="bodySmall" color="tertiary">
                     {t("reward.history.emptyDescription")}
                 </Text>
-            </Box>
+            </Stack>
             <Button
                 variant="secondary"
                 size="small"
@@ -68,58 +76,172 @@ function RewardHistoryEmpty() {
 }
 
 function RewardHistoryItem({ item }: { item: RewardHistoryItemType }) {
-    const { t } = useTranslation();
-
-    const statusLabel = t(`reward.status.${item.status}`, item.status);
-
-    const triggerLabel = t(`reward.trigger.${item.trigger}`, item.trigger);
-
-    const roleLabel = t(`reward.role.${item.role}`, item.role);
-
-    const displayAmount = `+${item.amount.amount.toFixed(2)} ${item.token.symbol}`;
+    const { t, i18n } = useTranslation();
+    const locale = i18n.language;
+    const displayAmount = `+${formatCurrency(item.amount.eurAmount, "EUR", locale)}`;
+    const purchaseAmount = item.purchase
+        ? `-${formatCurrency(item.purchase.amount, item.purchase.currency, locale)}`
+        : undefined;
 
     return (
-        <Panel variant={"primary"} size={"small"}>
-            <Stack space="xs">
-                <Box
-                    display="flex"
-                    flexDirection="row"
-                    justifyContent="space-between"
-                    alignItems="center"
-                >
-                    <Text variant="body" className={styles.itemMerchant}>
+        <Inline space="m" padding="m" fill>
+            <MerchantLogo merchant={item.merchant} status={item.status} />
+            <Inline space="m" align="space-between" fill>
+                <Stack space="xxs" className={styles.itemInfo}>
+                    <Text variant="body" weight="medium">
                         {item.merchant.name}
                     </Text>
-                    <Text variant="body" className={styles.itemAmount}>
-                        {displayAmount}
-                    </Text>
-                </Box>
-                <Box
-                    display="flex"
-                    flexDirection="row"
-                    gap="xs"
-                    flexWrap="wrap"
-                >
-                    <Badge variant="neutral">{statusLabel}</Badge>
-                    <Badge variant="neutral">{triggerLabel}</Badge>
-                    <Badge variant="neutral">{roleLabel}</Badge>
-                </Box>
-                <Box
-                    display="flex"
-                    flexDirection="row"
-                    justifyContent="space-between"
-                    alignItems="center"
-                >
-                    <Text variant="caption" className={styles.itemDate}>
-                        {new Date(item.createdAt).toLocaleString()}
-                    </Text>
-                    {item.txHash && (
-                        <Text variant="caption" className={styles.itemTxHash}>
-                            {item.txHash.slice(0, 10)}...
+                    <Stack space="none">
+                        <Text variant="bodySmall" color="secondary">
+                            {formatRewardDate(item.createdAt, locale, t)}
                         </Text>
+                        {item.status !== "consumed" && (
+                            <Text
+                                variant="bodySmall"
+                                color={
+                                    item.status === "pending"
+                                        ? "warning"
+                                        : "secondary"
+                                }
+                                className={styles.statusText}
+                            >
+                                {t(`reward.status.${item.status}`)}
+                            </Text>
+                        )}
+                    </Stack>
+                </Stack>
+                <Stack space="xxs" align="right" justify="end">
+                    {purchaseAmount && (
+                        <Text variant="body">{purchaseAmount}</Text>
                     )}
-                </Box>
-            </Stack>
-        </Panel>
+                    <DisplayAmount
+                        amount={displayAmount}
+                        status={item.status}
+                    />
+                </Stack>
+            </Inline>
+        </Inline>
+    );
+}
+
+function MerchantLogo({
+    merchant,
+    status,
+}: {
+    merchant: MerchantInfo;
+    status: RewardHistoryItemType["status"];
+}) {
+    return (
+        <div className={styles.merchantLogo}>
+            {merchant.logoUrl ? (
+                <img
+                    src={merchant.logoUrl}
+                    alt={merchant.name}
+                    className={styles.merchantLogoImg}
+                />
+            ) : (
+                <span className={styles.merchantLogoFallback}>
+                    {merchant.name.charAt(0).toUpperCase()}.
+                </span>
+            )}
+            <Badge status={status} />
+        </div>
+    );
+}
+
+// --- Pure helpers ---
+
+function formatRewardDate(
+    timestamp: number,
+    locale: string,
+    t: TFunction
+): string {
+    const date = new Date(timestamp);
+    const now = new Date();
+
+    const time = date.toLocaleTimeString(locale, {
+        hour: "2-digit",
+        minute: "2-digit",
+    });
+
+    if (date.toDateString() === now.toDateString()) {
+        return `${t("common.today")}, ${time}`;
+    }
+
+    const yesterday = new Date(now);
+    yesterday.setDate(yesterday.getDate() - 1);
+    if (date.toDateString() === yesterday.toDateString()) {
+        return `${t("common.yesterday")}, ${time}`;
+    }
+
+    const dayMonth = date.toLocaleDateString(locale, {
+        day: "numeric",
+        month: "long",
+    });
+    return `${dayMonth}, ${time}`;
+}
+
+function formatCurrency(
+    amount: number,
+    currency: string,
+    locale: string
+): string {
+    return new Intl.NumberFormat(locale, {
+        style: "currency",
+        currency,
+    }).format(amount);
+}
+
+// --- Sub-components ---
+
+const displayAmountIcons: Partial<
+    Record<
+        RewardHistoryItemType["status"],
+        typeof HourglassIcon | typeof LockIcon
+    >
+> = {
+    settled: HourglassIcon,
+    pending: LockIcon,
+};
+
+function DisplayAmount({
+    amount,
+    status,
+}: {
+    amount: string;
+    status: RewardHistoryItemType["status"];
+}) {
+    const Icon = displayAmountIcons[status];
+    const color = status === "consumed" ? "success" : "disabled";
+    return (
+        <Inline space="xxs" alignY="center" wrap={false}>
+            {Icon && <Icon color={vars.text.secondary} />}
+            <Text variant="bodySmall" color={color}>
+                {amount}
+            </Text>
+        </Inline>
+    );
+}
+
+const badgeIcons: Record<
+    "settled" | "pending",
+    typeof ClockHandsIcon | typeof LockIcon
+> = {
+    settled: ClockHandsIcon,
+    pending: LockIcon,
+};
+
+function Badge({ status }: { status: RewardHistoryItemType["status"] }) {
+    if (status !== "settled" && status !== "pending") {
+        return null;
+    }
+
+    const Icon = badgeIcons[status];
+    return (
+        <div className={styles.badge}>
+            <div className={styles.badgeInner[status]}>
+                <Icon color={vars.surface.background} width={12} height={12} />
+            </div>
+        </div>
     );
 }

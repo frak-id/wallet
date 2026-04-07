@@ -75,6 +75,7 @@ type TextProps = {
         | "button";
     children?: ReactNode;
     className?: string;
+    title?: string;
     onClick?: () => void;
 };
 
@@ -86,6 +87,7 @@ export function Text({
     as,
     children,
     className,
+    title,
     onClick,
 }: TextProps) {
     const resolvedVariant = variant ?? (as && tagToVariant[as]) ?? "body";
@@ -110,6 +112,7 @@ export function Text({
             textAlign={align}
             className={clsx(variantClass, className) || undefined}
             onClick={onClick}
+            title={title}
         >
             {children}
         </Box>

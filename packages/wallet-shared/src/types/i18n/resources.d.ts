@@ -132,6 +132,7 @@ interface Resources {
             share: "Share";
             submit: "Submit";
             to: "To";
+            today: "Today";
             transactionHash: "Transaction Hash:";
             transactionLink: "Transaction Link";
             transactionSuccess: "Transaction Success!";
@@ -139,6 +140,7 @@ interface Resources {
             walletAddress: "Wallet address:";
             walletAddressRequired: "Wallet address is required";
             walletInvalid: "Invalid wallet address";
+            yesterday: "Yesterday";
         };
         error: {
             webauthn: {
@@ -400,9 +402,9 @@ interface Resources {
                 cancelled: "Cancelled";
                 consumed: "Consumed";
                 expired: "Expired";
-                pending: "Pending";
+                pending: "Awaiting validation by the brand";
                 processing: "Processing";
-                settled: "Settled";
+                settled: "To collect";
             };
             trigger: {
                 create_referral_link: "Shared Link";
