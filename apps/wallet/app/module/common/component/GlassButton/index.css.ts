@@ -2,15 +2,16 @@ import { vars } from "@frak-labs/design-system/theme";
 import { style } from "@vanilla-extract/css";
 
 /**
- * Liquid Glass circle — iOS 26 style frosted-glass button.
- * Renders a circular button with a Figma-exported WebP background
- * and a centered icon on top.
+ * Liquid Glass circle — iOS 26 style, powered by @tinymomentum/liquid-glass-react.
+ *
+ * The inner LiquidGlassBase renders a div.liquid-glass-container (width/height: 100%)
+ * that fills this wrapper. Our wrapper controls the final 44×44 dimensions.
  */
 export const glassCircle = style({
     position: "relative",
     width: 44,
     height: 44,
-    display: "flex",
+    display: "inline-flex",
     alignItems: "center",
     justifyContent: "center",
     flexShrink: 0,
@@ -24,14 +25,6 @@ export const glassCircle = style({
 export const glassCircleDisabled = style({
     color: vars.text.disabled,
     cursor: "not-allowed",
-});
-
-export const glassImage = style({
-    position: "absolute",
-    inset: 0,
-    width: "100%",
-    height: "100%",
-    objectFit: "contain",
     pointerEvents: "none",
 });
 

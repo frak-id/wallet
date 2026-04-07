@@ -89,6 +89,7 @@
   },
   "dependencies": {
     "@tauri-apps/api": "^2.10.1",
+    "@tinymomentum/liquid-glass-react": "^1.0.6",
     "caniuse-lite": "^1.0.30001779",
     "vite": "^8.0.3"
   },

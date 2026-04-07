@@ -1,8 +1,24 @@
-import { Box } from "@frak-labs/design-system/components/Box";
+import { LiquidGlassBase } from "@tinymomentum/liquid-glass-react";
+import "@tinymomentum/liquid-glass-react/dist/components/LiquidGlassBase.css";
 import type { ButtonHTMLAttributes, HTMLAttributes, ReactNode } from "react";
-import glassCircleBg from "./glass-circle.webp";
 import * as styles from "./index.css";
 
+/**
+ * Liquid glass visual config matching the iOS 26 Figma spec.
+ */
+const glassConfig = {
+    width: 44,
+    height: 44,
+    borderRadius: 50,
+    innerShadowColor: "#ffffff",
+    innerShadowBlur: 15,
+    innerShadowSpread: -5,
+    glassTintColor: "#f7f7f7",
+    glassTintOpacity: 80,
+    frostBlurRadius: 3,
+    noiseFrequency: 0.008,
+    noiseStrength: 1,
+} as const;
 type GlassButtonBaseProps = {
     /** Icon rendered inside the glass circle. */
     icon: ReactNode;
@@ -24,7 +40,7 @@ type GlassButtonAsSpan = GlassButtonBaseProps &
 type GlassButtonProps = GlassButtonAsButton | GlassButtonAsSpan;
 
 /**
- * Frosted-glass circular icon — iOS 26 liquid glass style.
+ * Frosted-glass circular icon — iOS 26 liquid glass via @tinymomentum/liquid-glass-react.
  *
  * - `as="button"` (standalone): renders `<button>` — use for close, share, etc.
  * - `as="span"` (default): renders `<span>` — use inside `<Back>` or `<Link>` to avoid nested buttons.
@@ -44,12 +60,17 @@ export function GlassButton({
         .filter(Boolean)
         .join(" ");
 
-    const content = (
+    const glassContent = (
         <>
-            <img src={glassCircleBg} alt="" className={styles.glassImage} />
-            <Box as="span" className={styles.glassIcon}>
-                {icon}
-            </Box>
+            {/* Runtime <style> bypasses Lightning CSS which converts backdrop-filter
+               to -webkit-backdrop-filter only (safari 14 target), rejected as invalid. */}
+            <style
+                href="liquid-glass-backdrop"
+                precedence="default"
+            >{`.liquid-glass::after{backdrop-filter:blur(var(--frost-blur-radius))}`}</style>
+            <LiquidGlassBase {...glassConfig}>
+                <span className={styles.glassIcon}>{icon}</span>
+            </LiquidGlassBase>
         </>
     );
 
@@ -64,7 +85,7 @@ export function GlassButton({
                     "children"
                 >)}
             >
-                {content}
+                {glassContent}
             </button>
         );
     }
@@ -75,7 +96,7 @@ export function GlassButton({
             aria-disabled={disabled}
             {...(props as Omit<HTMLAttributes<HTMLSpanElement>, "children">)}
         >
-            {content}
+            {glassContent}
         </span>
     );
 }

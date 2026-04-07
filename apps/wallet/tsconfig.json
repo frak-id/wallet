@@ -23,7 +23,8 @@
       "@backend-utils": ["../../services/backend/src/utils/index.ts"],
       "@backend-infrastructure": ["../../services/backend/src/infrastructure/index.ts"],
       "@backend-infrastructure/*": ["../../services/backend/src/infrastructure/*"],
-      "@backend-domain/*": ["../../services/backend/src/domain/*"]
+      "@backend-domain/*": ["../../services/backend/src/domain/*"],
+      "@tinymomentum/liquid-glass-react": ["../../node_modules/@tinymomentum/liquid-glass-react/dist"]
     },
     "noEmit": true
   }
