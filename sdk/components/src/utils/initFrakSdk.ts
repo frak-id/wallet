@@ -1,5 +1,5 @@
 import * as coreSdkIndex from "@frak-labs/core-sdk";
-import { setupClient } from "@frak-labs/core-sdk";
+import { setupClient, withCache } from "@frak-labs/core-sdk";
 import * as coreSdkActions from "@frak-labs/core-sdk/actions";
 import { openWalletModal } from "../components/ButtonWallet/utils";
 import { dispatchClientReadyEvent } from "./clientReady";
@@ -7,34 +7,48 @@ import { setupReferral } from "./setup";
 
 /**
  * Initializes the Frak SDK client and sets up necessary configurations.
- * This function handles the one-time setup of the Frak client and related features.
+ * Uses withCache for inflight dedup — concurrent callers share the same promise.
+ * Failures are not cached, allowing retry on next call.
  *
  * @returns {Promise<void>}
  */
-export async function initFrakSdk(): Promise<void> {
+export function initFrakSdk(): Promise<void> {
+    // Expose core SDK immediately (idempotent)
     window.FrakSetup.core = { ...coreSdkIndex, ...coreSdkActions };
 
-    // Pre-checks passed?
-    if (!preChecks()) {
-        return;
+    // Already initialized
+    if (window.FrakSetup?.client) {
+        return Promise.resolve();
+    }
+
+    // withCache deduplicates concurrent calls and caches success with Infinity TTL.
+    // doInit throws on failure → withCache won't cache rejections → retry is possible.
+    // .catch prevents unhandled rejections (callers don't await the return value).
+    return withCache(() => doInit(), {
+        cacheKey: "frak-sdk-init",
+        cacheTime: Number.POSITIVE_INFINITY,
+    }).catch(() => {});
+}
+
+/**
+ * Performs the actual SDK initialization.
+ * Throws on failure so withCache doesn't cache failed attempts.
+ */
+async function doInit(): Promise<void> {
+    if (!window.FrakSetup?.config) {
+        throw new Error(
+            "[Frak SDK] Configuration not found. Please ensure window.FrakSetup.config is set."
+        );
     }
 
     console.log("[Frak SDK] Starting initialization");
-
-    if (!window.FrakSetup.config) {
-        console.error("[Frak SDK] Configuration not found");
-        window.frakSetupInProgress = false;
-        return;
-    }
 
     const client = await setupClient({
         config: window.FrakSetup.config,
     });
 
     if (!client) {
-        console.error("[Frak SDK] Failed to create client");
-        window.frakSetupInProgress = false;
-        return;
+        throw new Error("[Frak SDK] Failed to create client");
     }
 
     // Set up global client instance
@@ -48,43 +62,8 @@ export async function initFrakSdk(): Promise<void> {
     // Setup the referral
     setupReferral(client);
 
-    // Reset the setup flag
-    window.frakSetupInProgress = false;
-
     // Handle the action query param
     handleActionQueryParam();
-}
-
-/**
- * Pre-checks for the Frak SDK initialization
- * Sets frakSetupInProgress flag atomically to prevent race conditions
- */
-function preChecks(): boolean {
-    // Prevent multiple simultaneous initializations (atomic check-and-set)
-    if (window.frakSetupInProgress) {
-        console.log("[Frak SDK] Initialization already in progress");
-        return false;
-    }
-    // Set flag immediately to prevent race condition with concurrent calls
-    window.frakSetupInProgress = true;
-
-    if (window.FrakSetup?.client) {
-        // Prevent re-initialization if client exists
-        console.log("[Frak SDK] Client already initialized");
-        window.frakSetupInProgress = false;
-        return false;
-    }
-
-    if (!window.FrakSetup?.config) {
-        // Validate configuration
-        console.error(
-            "[Frak SDK] Configuration not found. Please ensure window.FrakSetup.config is set."
-        );
-        window.frakSetupInProgress = false;
-        return false;
-    }
-
-    return true;
 }
 
 /**

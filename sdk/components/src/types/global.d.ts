@@ -6,7 +6,6 @@ import type {
 
 declare global {
     interface Window {
-        frakSetupInProgress?: boolean;
         // The Frak Setup config
         FrakSetup: {
             // Inner built client

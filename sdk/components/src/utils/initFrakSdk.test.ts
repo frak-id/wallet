@@ -6,10 +6,16 @@ import * as clientReadyUtils from "./clientReady";
 import { initFrakSdk } from "./initFrakSdk";
 import * as setupUtils from "./setup";
 
-// Mock dependencies
-vi.mock("@frak-labs/core-sdk", () => ({
-    setupClient: vi.fn(),
-}));
+// Mock dependencies — pass through withCache/clearAllCache so the real cache works
+vi.mock("@frak-labs/core-sdk", async () => {
+    const actual = await vi.importActual<typeof import("@frak-labs/core-sdk")>(
+        "@frak-labs/core-sdk"
+    );
+    return {
+        ...actual,
+        setupClient: vi.fn(),
+    };
+});
 
 vi.mock("@frak-labs/core-sdk/actions", () => ({
     displayModal: vi.fn(),
@@ -28,8 +34,11 @@ vi.mock("../components/ButtonWallet/utils", () => ({
 }));
 
 describe("initFrakSdk", () => {
-    beforeEach(() => {
+    beforeEach(async () => {
         vi.clearAllMocks();
+        // Clear withCache global state between tests
+        const { clearAllCache } = await import("@frak-labs/core-sdk");
+        clearAllCache();
         // Reset window state
         window.FrakSetup = {
             config: {
@@ -39,7 +48,6 @@ describe("initFrakSdk", () => {
             client: undefined,
             core: undefined,
         } as any;
-        window.frakSetupInProgress = false;
         // Reset URL search params
         Object.defineProperty(window, "location", {
             value: {
@@ -62,12 +70,35 @@ describe("initFrakSdk", () => {
         });
     });
 
-    it("should not initialize if setup is already in progress", async () => {
-        window.frakSetupInProgress = true;
+    it("should deduplicate concurrent calls (only one setupClient call)", async () => {
+        let resolveSetup: ((value: unknown) => void) | undefined;
+        vi.mocked(coreSdkIndex.setupClient).mockImplementation(
+            () =>
+                new Promise((resolve) => {
+                    resolveSetup = resolve;
+                })
+        );
 
-        await initFrakSdk();
+        const consoleLogSpy = vi
+            .spyOn(console, "log")
+            .mockImplementation(() => {});
 
-        expect(coreSdkIndex.setupClient).not.toHaveBeenCalled();
+        // Fire 3 concurrent init calls
+        const p1 = initFrakSdk();
+        const p2 = initFrakSdk();
+        const p3 = initFrakSdk();
+
+        // Only one setupClient call should have been made
+        expect(coreSdkIndex.setupClient).toHaveBeenCalledTimes(1);
+
+        // Resolve the init
+        resolveSetup?.({ config: { domain: "example.com" } });
+        await Promise.all([p1, p2, p3]);
+
+        // Still only one call
+        expect(coreSdkIndex.setupClient).toHaveBeenCalledTimes(1);
+
+        consoleLogSpy.mockRestore();
     });
 
     it("should not initialize if client already exists", async () => {
@@ -83,19 +114,9 @@ describe("initFrakSdk", () => {
     it("should not initialize if config is missing", async () => {
         window.FrakSetup.config = undefined;
 
-        const consoleErrorSpy = vi
-            .spyOn(console, "error")
-            .mockImplementation(() => {});
-
         await initFrakSdk();
 
         expect(coreSdkIndex.setupClient).not.toHaveBeenCalled();
-        expect(consoleErrorSpy).toHaveBeenCalledWith(
-            "[Frak SDK] Configuration not found. Please ensure window.FrakSetup.config is set."
-        );
-        expect(window.frakSetupInProgress).toBe(false);
-
-        consoleErrorSpy.mockRestore();
     });
 
     it("should initialize client successfully", async () => {
@@ -119,7 +140,6 @@ describe("initFrakSdk", () => {
         expect(window.FrakSetup.client).toBe(mockClient);
         expect(clientReadyUtils.dispatchClientReadyEvent).toHaveBeenCalled();
         expect(setupUtils.setupReferral).toHaveBeenCalledWith(mockClient);
-        expect(window.frakSetupInProgress).toBe(false);
         expect(consoleLogSpy).toHaveBeenCalledWith(
             "[Frak SDK] Starting initialization"
         );
@@ -133,19 +153,32 @@ describe("initFrakSdk", () => {
     it("should handle client creation failure", async () => {
         vi.mocked(coreSdkIndex.setupClient).mockResolvedValue(undefined);
 
-        const consoleErrorSpy = vi
-            .spyOn(console, "error")
-            .mockImplementation(() => {});
-
         await initFrakSdk();
 
-        expect(consoleErrorSpy).toHaveBeenCalledWith(
-            "[Frak SDK] Failed to create client"
-        );
-        expect(window.frakSetupInProgress).toBe(false);
+        expect(window.FrakSetup.client).toBeUndefined();
+    });
+
+    it("should allow re-initialization after failure", async () => {
+        const mockClient = {
+            config: { domain: "example.com" },
+        } as any;
+
+        const consoleLogSpy = vi
+            .spyOn(console, "log")
+            .mockImplementation(() => {});
+
+        // First call fails
+        vi.mocked(coreSdkIndex.setupClient).mockResolvedValueOnce(undefined);
+
+        await initFrakSdk();
         expect(window.FrakSetup.client).toBeUndefined();
 
-        consoleErrorSpy.mockRestore();
+        // Second call succeeds (withCache didn't cache the failure)
+        vi.mocked(coreSdkIndex.setupClient).mockResolvedValueOnce(mockClient);
+        await initFrakSdk();
+        expect(window.FrakSetup.client).toBe(mockClient);
+
+        consoleLogSpy.mockRestore();
     });
 
     it("should open wallet modal when frakAction=share query param is present", async () => {
