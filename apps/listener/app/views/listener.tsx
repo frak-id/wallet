@@ -1,7 +1,6 @@
 import type { FrakLifecycleEvent } from "@frak-labs/core-sdk";
 import { createRpcListener } from "@frak-labs/frame-connector";
 import { useEffect } from "react";
-import { loadPolyfills } from "@/module/common/utils/polyfills";
 import { ListenerUiRenderer } from "@/module/component/ListenerUiRenderer";
 import {
     createClientLifecycleHandler,
@@ -28,8 +27,6 @@ import type {
     CombinedRpcSchema,
     WalletRpcContext,
 } from "@/module/types/context";
-
-loadPolyfills();
 
 /**
  * Top level listener, wrapped with the Listener Ui context
