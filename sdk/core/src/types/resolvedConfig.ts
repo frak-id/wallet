@@ -35,6 +35,9 @@ export type ResolvedPlacement = {
             text?: string;
             css?: string;
         };
+        postPurchase?: {
+            css?: string;
+        };
     };
     targetInteraction?: string;
     /** Already flattened: default + lang-specific merged into one record */

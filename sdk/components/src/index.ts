@@ -4,3 +4,5 @@ export * from "./components/ButtonWallet";
 export type { ButtonWalletProps } from "./components/ButtonWallet/types";
 export * from "./components/OpenInAppButton";
 export type { OpenInAppButtonProps } from "./components/OpenInAppButton/types";
+export * from "./components/PostPurchase";
+export type { PostPurchaseProps } from "./components/PostPurchase/types";

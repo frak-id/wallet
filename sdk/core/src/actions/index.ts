@@ -2,6 +2,7 @@ export { displayEmbeddedWallet } from "./displayEmbeddedWallet";
 export { displayModal } from "./displayModal";
 export { ensureIdentity } from "./ensureIdentity";
 export { getMerchantInformation } from "./getMerchantInformation";
+export { getUserReferralStatus } from "./getUserReferralStatus";
 export { openSso } from "./openSso";
 export { prepareSso } from "./prepareSso";
 export {

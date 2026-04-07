@@ -16,6 +16,7 @@ import type {
     PrepareSsoParamsType,
     PrepareSsoReturnType,
 } from "./rpc/sso";
+import type { UserReferralStatusType } from "./rpc/userReferralStatus";
 import type { WalletStatusReturnType } from "./rpc/walletStatus";
 
 /**
@@ -148,5 +149,16 @@ export type IFrameRpcSchema = [
             metadata?: { clientId?: string },
         ];
         ReturnType: undefined;
+    },
+    /**
+     * Method to get the current user's referral status on this merchant.
+     * Returns whether the user was referred (has a referral link as referee).
+     * Returns null when the user's identity cannot be resolved.
+     * This is a one-shot request.
+     */
+    {
+        Method: "frak_getUserReferralStatus";
+        Parameters?: undefined;
+        ReturnType: UserReferralStatusType | null;
     },
 ];

@@ -5,7 +5,7 @@ import { styleManager } from "./styleManager";
 // Prevent FOUCE: hide undefined custom elements until they're registered
 styleManager.injectBase(
     "fouce",
-    "frak-button-share:not(:defined), frak-button-wallet:not(:defined), frak-open-in-app:not(:defined) { display: none !important; }"
+    "frak-button-share:not(:defined), frak-button-wallet:not(:defined), frak-open-in-app:not(:defined), frak-post-purchase:not(:defined) { display: none !important; }"
 );
 
 onDocumentReady(initFrakSdk);
@@ -25,6 +25,10 @@ const COMPONENTS_MAP = {
     "open-in-app": () =>
         import(
             /* webpackChunkName: "open-in-app" */ "../components/OpenInAppButton"
+        ),
+    "post-purchase": () =>
+        import(
+            /* webpackChunkName: "post-purchase" */ "../components/PostPurchase"
         ),
 } as const;
 

@@ -57,6 +57,7 @@ export type {
     ModalStepTypes,
     OpenSsoParamsType,
     OpenSsoReturnType,
+    // Rpc
     PrepareSsoParamsType,
     PrepareSsoReturnType,
     ResolvedPlacement,
@@ -76,8 +77,8 @@ export type {
     // Tracking
     TrackArrivalParams,
     TrackArrivalResult,
+    UserReferralStatusType,
     UtmParams,
-    // Rpc
     WalletStatusReturnType,
 } from "./types";
 export { isV1Context, isV2Context } from "./types";
