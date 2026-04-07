@@ -251,12 +251,6 @@
             "pending": "Pending",
             "lifetime": "Lifetime"
         },
-        "earnings": {
-            "historyTitle": "Earnings history",
-            "emptyTitle": "Ready to earn money?",
-            "emptyDescription": "Explore offers and recommend your favorite products to friends to earn money.",
-            "discover": "Discover offers"
-        },
         "pairing": {
             "title": "Confirm device pairing",
             "text": "You're about to connect this device to your account",
@@ -468,8 +462,10 @@
             "custom": "Custom"
         },
         "history": {
-            "empty": "No rewards yet",
-            "emptyDescription": "Your rewards will appear here once you start earning"
+            "emptyTitle": "Ready to earn money?",
+            "emptyDescription": "Explore offers and recommend your favorite products to friends to earn money.",
+            "discover": "Discover offers",
+            "title": "Earnings history"
         }
     },
     "mobile-sso": {

@@ -249,12 +249,6 @@
             "pending": "En attente",
             "lifetime": "Depuis le début"
         },
-        "earnings": {
-            "historyTitle": "Historique des gains",
-            "emptyTitle": "Prêt à gagner de l'argent ?",
-            "emptyDescription": "Explore les offres et recommande tes produits coups de cœur à tes ami·e·s pour gagner de l'argent.",
-            "discover": "Découvrir les offres"
-        },
         "pairing": {
             "title": "Confirmation de l'appairage",
             "text": "Vous êtes sur le point de connecter un appareil à votre compte",
@@ -465,8 +459,10 @@
             "custom": "Personnalisé"
         },
         "history": {
-            "empty": "Pas encore de récompenses",
-            "emptyDescription": "Vos récompenses apparaîtront ici dès que vous commencerez à en gagner"
+            "emptyTitle": "Prêt à gagner de l'argent ?",
+            "emptyDescription": "Explore les offres et recommande tes produits coups de cœur à tes ami·e·s pour gagner de l'argent.",
+            "discover": "Découvrir les offres",
+            "title": "Historique des gains"
         }
     },
     "mobile-sso": {

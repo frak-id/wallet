@@ -391,8 +391,10 @@ interface Resources {
         };
         reward: {
             history: {
-                empty: "No rewards yet";
-                emptyDescription: "Your rewards will appear here once you start earning";
+                discover: "Discover offers";
+                emptyDescription: "Explore offers and recommend your favorite products to friends to earn money.";
+                emptyTitle: "Ready to earn money?";
+                title: "Earnings history";
             };
             status: {
                 cancelled: "Cancelled";
@@ -423,12 +425,6 @@ interface Resources {
         wallet: {
             activateNotifications: "<strong>Enable notifications</strong> <br /> to be notified when your gains are paid";
             activateNotificationsRationale: "<strong>Enable notifications</strong> <br /> We need your permission to notify you when gains are paid";
-            earnings: {
-                discover: "Discover offers";
-                emptyDescription: "Explore offers and recommend your favorite products to friends to earn money.";
-                emptyTitle: "Ready to earn money?";
-                historyTitle: "Earnings history";
-            };
             inAppBrowser: {
                 clickToOpen: "Tap to open in your browser.";
                 clipboardAlert: "This browser doesn't support all features needed.\n\nThe link has been copied to your clipboard.\n\nTo continue:\n1. Open Safari\n2. Tap the address bar\n3. Paste and go";

@@ -1,9 +1,14 @@
 import { Badge } from "@frak-labs/design-system/components/Badge";
 import { Box } from "@frak-labs/design-system/components/Box";
+import { Button } from "@frak-labs/design-system/components/Button";
+import { Card } from "@frak-labs/design-system/components/Card";
+import { IconCircle } from "@frak-labs/design-system/components/IconCircle";
 import { Stack } from "@frak-labs/design-system/components/Stack";
 import { Text } from "@frak-labs/design-system/components/Text";
+import { EarningsIcon } from "@frak-labs/design-system/icons";
+import { vars } from "@frak-labs/design-system/theme";
 import type { RewardHistoryItem as RewardHistoryItemType } from "@frak-labs/wallet-shared";
-import { Gift } from "lucide-react";
+import { useNavigate } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
 import { Panel } from "@/module/common/component/Panel";
 import { Skeleton } from "@/module/common/component/Skeleton";
@@ -20,7 +25,7 @@ export function RewardHistoryList() {
     }
 
     return (
-        <Box className={styles.list}>
+        <Box>
             <Stack space="xs">
                 {items.map((item, index) => (
                     <RewardHistoryItem
@@ -35,28 +40,30 @@ export function RewardHistoryList() {
 
 function RewardHistoryEmpty() {
     const { t } = useTranslation();
+    const navigate = useNavigate();
 
     return (
-        <Box
-            display="flex"
-            flexDirection="column"
-            alignItems="center"
-            justifyContent="center"
-            padding="l"
-            gap="m"
-            className={styles.empty}
-        >
-            <Gift size={48} className={styles.emptyIcon} />
-            <Text variant="heading4" className={styles.emptyTitle}>
-                {t("reward.history.empty")}
-            </Text>
-            <Text variant="bodySmall" className={styles.emptyDescription}>
-                {t(
-                    "reward.history.emptyDescription",
-                    "Your rewards will appear here once you start earning"
-                )}
-            </Text>
-        </Box>
+        <Card className={styles.emptyLayout}>
+            <IconCircle>
+                <EarningsIcon color={vars.text.action} />
+            </IconCircle>
+            <Box display="flex" flexDirection="column" gap={"xxs"}>
+                <Text variant="body" weight="semiBold" as="h3">
+                    {t("reward.history.emptyTitle")}
+                </Text>
+                <Text variant="bodySmall" color="tertiary">
+                    {t("reward.history.emptyDescription")}
+                </Text>
+            </Box>
+            <Button
+                variant="secondary"
+                size="small"
+                width="auto"
+                onClick={() => navigate({ to: "/explorer" })}
+            >
+                {t("reward.history.discover")}
+            </Button>
+        </Card>
     );
 }
 
