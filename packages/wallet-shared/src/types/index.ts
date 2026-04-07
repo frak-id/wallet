@@ -27,7 +27,6 @@ export type {
     Session,
 } from "./Session";
 export type { SsoRpcSchema } from "./sso-rpc";
-export type { User } from "./User";
 export type {
     P256PubKey,
     P256Signature,

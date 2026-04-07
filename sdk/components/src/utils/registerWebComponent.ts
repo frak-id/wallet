@@ -1,7 +1,7 @@
-import { onDocumentReady } from "@frak-labs/ui/utils/onDocumentReady";
 import type { ComponentType } from "preact";
 import register from "preact-custom-element";
 import { initFrakSdk } from "./initFrakSdk";
+import { onDocumentReady } from "./onDocumentReady";
 
 /**
  * Registers a Preact component as a custom web component

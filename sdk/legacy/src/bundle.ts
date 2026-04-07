@@ -1,6 +1,6 @@
 import { createIFrameFrakClient } from "@frak-labs/core-sdk";
-import { onDocumentReady } from "@frak-labs/ui/utils/onDocumentReady";
 import { websiteOverrides } from "./specifics";
+import { onDocumentReady } from "./utils/onDocumentReady";
 
 /**
  * This whole script is only a flat pass to the newer SDK versions

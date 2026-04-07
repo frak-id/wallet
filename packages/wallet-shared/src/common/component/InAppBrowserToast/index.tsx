@@ -1,6 +1,5 @@
 import { useCallback, useEffect } from "react";
 import { useTranslation } from "react-i18next";
-import { emitLifecycleEvent } from "../../../sdk/utils/lifecycleEvents";
 import { trackGenericEvent } from "../../analytics";
 import { useSessionFlag } from "../../hook/useSessionFlag";
 import {
@@ -10,6 +9,7 @@ import {
     isIPad,
     redirectToExternalBrowser,
 } from "../../lib/inApp";
+import { emitLifecycleEvent } from "../../utils/lifecycleEvents";
 import { Toast } from "../Toast";
 
 type InAppBrowserToastProps = {

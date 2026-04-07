@@ -18,7 +18,7 @@
 Shared between wallet and listener apps only. 201 files, 15 domains.
 
 **Key Exports:**
-- `src/stores/` - Zustand stores (sessionStore, userStore, walletStore, authenticationStore)
+- `src/stores/` - Zustand stores (sessionStore, walletStore, authenticationStore, clientIdStore)
 - `src/wallet/smartWallet/` - Smart wallet logic
 - `src/authentication/` - WebAuthn flows
 

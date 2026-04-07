@@ -1,4 +1,4 @@
-import { Spinner } from "@frak-labs/ui/component/Spinner";
+import { Spinner } from "@frak-labs/design-system/components/Spinner";
 import { Check } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import type { BasePairingState } from "../../types";

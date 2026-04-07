@@ -31,6 +31,4 @@ export {
     getStubSignature,
 } from "./smartWallet/webAuthN";
 
-// Utils
-export { formatUsd } from "./utils/mUsdFormatter";
 export { encodeWalletMulticall } from "./utils/multicall";

@@ -1,4 +1,5 @@
 import * as process from "node:process";
+import { vanillaExtractPlugin } from "@vanilla-extract/vite-plugin";
 import react from "@vitejs/plugin-react";
 import type { UserConfig } from "vite";
 import { defineConfig } from "vite";
@@ -68,6 +69,7 @@ export default defineConfig(async () => {
         },
         plugins: [
             react(),
+            vanillaExtractPlugin(),
             ...(isSandbox ? [] : [mkcert()]),
             ...(isProd ? [removeConsole()] : []),
         ],

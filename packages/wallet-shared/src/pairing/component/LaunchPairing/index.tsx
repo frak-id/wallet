@@ -1,4 +1,4 @@
-import { Spinner } from "@frak-labs/ui/component/Spinner";
+import { Spinner } from "@frak-labs/design-system/components/Spinner";
 import { cx } from "class-variance-authority";
 import { Cuer } from "cuer";
 import { useEffect, useMemo, useRef, useState } from "react";

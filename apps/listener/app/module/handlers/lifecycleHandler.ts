@@ -9,8 +9,6 @@ import {
     authenticatedBackendApi,
     clientIdStore,
     emitLifecycleEvent,
-    mapI18nConfig,
-    restoreBackupData,
 } from "@frak-labs/wallet-shared";
 import { getI18n } from "react-i18next";
 import {
@@ -18,6 +16,8 @@ import {
     resolvingContextStore,
 } from "@/module/stores/resolvingContextStore";
 import type { ResolvedSdkConfig } from "@/module/stores/types";
+import { restoreBackupData } from "@/module/utils/backup";
+import { mapI18nConfig } from "@/module/utils/i18nMapper";
 import { processSsoCompletion } from "./ssoHandler";
 
 /**

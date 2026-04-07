@@ -9,10 +9,7 @@ import type { Session } from "../types/Session";
 import {
     addLastAuthentication,
     authenticationStore,
-    selectCurrentSsoMetadata,
-    selectLastAuthenticator,
     selectLastWebAuthNAction,
-    selectSsoContext,
 } from "./authenticationStore";
 import type {
     AuthenticationResponseJSON,
@@ -84,26 +81,6 @@ describe("authenticationStore", () => {
                 .setLastAuthenticator(mockAuthenticator);
             authenticationStore.getState().setLastAuthenticator(null);
             expect(authenticationStore.getState().lastAuthenticator).toBeNull();
-        });
-
-        test("should work with selector", () => {
-            const mockAuthenticator: LastAuthentication = {
-                token: "test-token",
-                address: "0x1234567890123456789012345678901234567890",
-                type: "webauthn",
-                authenticatorId: "auth-123",
-                publicKey: {
-                    x: "0x1234567890123456789012345678901234567890123456789012345678901234",
-                    y: "0xabcdef1234567890123456789012345678901234567890123456789012345678",
-                },
-            };
-
-            authenticationStore
-                .getState()
-                .setLastAuthenticator(mockAuthenticator);
-            expect(
-                selectLastAuthenticator(authenticationStore.getState())
-            ).toEqual(mockAuthenticator);
         });
     });
 
@@ -200,18 +177,6 @@ describe("authenticationStore", () => {
             authenticationStore.getState().setSsoContext(null);
             expect(authenticationStore.getState().ssoContext).toBeNull();
         });
-
-        test("should work with selector", () => {
-            const mockSsoContext = {
-                merchantId: "product-123",
-                metadata: { name: "Example App" },
-            };
-
-            authenticationStore.getState().setSsoContext(mockSsoContext);
-            expect(selectSsoContext(authenticationStore.getState())).toEqual(
-                mockSsoContext
-            );
-        });
     });
 
     describe("clearAuthentication", () => {
@@ -254,43 +219,6 @@ describe("authenticationStore", () => {
             expect(state.lastAuthenticator).toBeNull();
             expect(state.lastWebAuthNAction).toBeNull();
             expect(state.ssoContext).toBeNull();
-        });
-    });
-
-    describe("selectCurrentSsoMetadata", () => {
-        test("should return SSO metadata when context exists", () => {
-            const mockMetadata = { name: "Example App", domain: "example.com" };
-            const mockSsoContext = {
-                merchantId: "product-123",
-                metadata: mockMetadata,
-            };
-
-            authenticationStore.getState().setSsoContext(mockSsoContext);
-
-            const result = selectCurrentSsoMetadata(
-                authenticationStore.getState()
-            );
-            expect(result).toEqual(mockMetadata);
-        });
-
-        test("should return undefined when no SSO context", () => {
-            const result = selectCurrentSsoMetadata(
-                authenticationStore.getState()
-            );
-            expect(result).toBeUndefined();
-        });
-
-        test("should return undefined when SSO context has no metadata", () => {
-            const mockSsoContext = {
-                merchantId: "product-123",
-            };
-
-            authenticationStore.getState().setSsoContext(mockSsoContext);
-
-            const result = selectCurrentSsoMetadata(
-                authenticationStore.getState()
-            );
-            expect(result).toBeUndefined();
         });
     });
 
@@ -453,12 +381,7 @@ describe("authenticationStore", () => {
 
             const state = authenticationStore.getState();
 
-            expect(selectLastAuthenticator(state)).toEqual(mockAuthenticator);
             expect(selectLastWebAuthNAction(state)).toEqual(mockAction);
-            expect(selectSsoContext(state)).toEqual(mockSsoContext);
-            expect(selectCurrentSsoMetadata(state)).toEqual(
-                mockSsoContext.metadata
-            );
         });
     });
 });

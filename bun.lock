@@ -106,6 +106,7 @@
       "dependencies": {
         "@frak-labs/app-essentials": "workspace:*",
         "@frak-labs/core-sdk": "workspace:*",
+        "@frak-labs/design-system": "workspace:*",
         "@frak-labs/frame-connector": "workspace:*",
         "@frak-labs/ui": "workspace:*",
         "@frak-labs/wallet-shared": "workspace:*",
@@ -133,6 +134,7 @@
         "@types/jsdom": "^28.0.0",
         "@types/react": "catalog:",
         "@types/react-dom": "catalog:",
+        "@vanilla-extract/vite-plugin": "^5.2.0",
         "@vitejs/plugin-react": "catalog:",
         "@vitest/coverage-v8": "^4.1.0",
         "@vitest/ui": "^4.1.0",
@@ -512,8 +514,8 @@
         "@frak-labs/app-essentials": "workspace:*",
         "@frak-labs/backend-elysia": "workspace:*",
         "@frak-labs/core-sdk": "workspace:*",
+        "@frak-labs/design-system": "workspace:*",
         "@frak-labs/frame-connector": "workspace:*",
-        "@frak-labs/ui": "workspace:*",
         "@openpanel/web": "^1.2.0",
         "@radix-ui/react-alert-dialog": "^1.1.15",
         "@simplewebauthn/types": "^12.0.0",
@@ -546,6 +548,7 @@
         "@types/node": "catalog:",
         "@types/react": "catalog:",
         "@types/react-dom": "catalog:",
+        "@vanilla-extract/vite-plugin": "^5.2.0",
         "@vitejs/plugin-react": "catalog:",
         "@vitest/coverage-v8": "^4.1.0",
         "@vitest/ui": "^4.1.0",
@@ -569,7 +572,6 @@
       "devDependencies": {
         "@frak-labs/dev-tooling": "workspace:*",
         "@frak-labs/test-foundation": "workspace:*",
-        "@frak-labs/ui": "workspace:*",
         "@preact/preset-vite": "^2.10.4",
         "@rolldown/plugin-node-polyfills": "^1.0.3",
         "@testing-library/jest-dom": "^6.9.1",
@@ -617,7 +619,6 @@
       "version": "0.0.44",
       "dependencies": {
         "@frak-labs/core-sdk": "workspace:*",
-        "@frak-labs/ui": "workspace:*",
       },
       "devDependencies": {
         "@frak-labs/dev-tooling": "workspace:*",

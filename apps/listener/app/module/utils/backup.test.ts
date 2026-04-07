@@ -1,10 +1,4 @@
-import { vi } from "vitest";
-import {
-    beforeEach,
-    describe,
-    expect,
-    test,
-} from "../../../tests/vitest-fixtures";
+import { beforeEach, describe, expect, test, vi } from "vitest";
 
 vi.mock("@frak-labs/core-sdk", () => ({
     base64urlDecode: vi.fn(),
@@ -15,14 +9,11 @@ vi.mock("viem", () => ({
     sha256: vi.fn(),
 }));
 
-vi.mock("../../stores/sessionStore", () => ({
+vi.mock("@frak-labs/wallet-shared", () => ({
+    emitLifecycleEvent: vi.fn(),
     sessionStore: {
         getState: vi.fn(),
     },
-}));
-
-vi.mock("./lifecycleEvents", () => ({
-    emitLifecycleEvent: vi.fn(),
 }));
 
 describe("backup", () => {
@@ -52,7 +43,7 @@ describe("backup", () => {
 
             const { base64urlDecode } = await import("@frak-labs/core-sdk");
             const { sha256 } = await import("viem");
-            const { sessionStore } = await import("../../stores/sessionStore");
+            const { sessionStore } = await import("@frak-labs/wallet-shared");
 
             vi.mocked(base64urlDecode).mockReturnValue(encoded);
             vi.mocked(sha256).mockReturnValue(validationHash);
@@ -93,7 +84,7 @@ describe("backup", () => {
 
             const { base64urlDecode } = await import("@frak-labs/core-sdk");
             const { sha256 } = await import("viem");
-            const { sessionStore } = await import("../../stores/sessionStore");
+            const { sessionStore } = await import("@frak-labs/wallet-shared");
 
             vi.mocked(base64urlDecode).mockReturnValue(encoded);
             vi.mocked(sha256).mockReturnValue(validationHash);
@@ -134,7 +125,7 @@ describe("backup", () => {
 
             const { base64urlDecode } = await import("@frak-labs/core-sdk");
             const { sha256 } = await import("viem");
-            const { sessionStore } = await import("../../stores/sessionStore");
+            const { sessionStore } = await import("@frak-labs/wallet-shared");
 
             vi.mocked(base64urlDecode).mockReturnValue(encoded);
             vi.mocked(sha256).mockReturnValue(validationHash);
@@ -199,8 +190,9 @@ describe("backup", () => {
 
             const { base64urlDecode } = await import("@frak-labs/core-sdk");
             const { sha256 } = await import("viem");
-            const { emitLifecycleEvent } = await import("./lifecycleEvents");
-            const { sessionStore } = await import("../../stores/sessionStore");
+            const { emitLifecycleEvent, sessionStore } = await import(
+                "@frak-labs/wallet-shared"
+            );
 
             vi.mocked(base64urlDecode).mockReturnValue(encoded);
             vi.mocked(sha256).mockReturnValue(validationHash);
@@ -239,7 +231,7 @@ describe("backup", () => {
 
             const { base64urlDecode } = await import("@frak-labs/core-sdk");
             const { sha256 } = await import("viem");
-            const { sessionStore } = await import("../../stores/sessionStore");
+            const { sessionStore } = await import("@frak-labs/wallet-shared");
 
             vi.mocked(base64urlDecode).mockReturnValue(encoded);
             vi.mocked(sha256).mockReturnValue("0xwrong");
@@ -260,7 +252,7 @@ describe("backup", () => {
 
         test("should return early on malformed base64", async () => {
             const { base64urlDecode } = await import("@frak-labs/core-sdk");
-            const { sessionStore } = await import("../../stores/sessionStore");
+            const { sessionStore } = await import("@frak-labs/wallet-shared");
 
             vi.mocked(base64urlDecode).mockImplementation(() => {
                 throw new Error("Invalid base64");
@@ -283,7 +275,9 @@ describe("backup", () => {
 
     describe("pushBackupData", () => {
         test("should return early when no domain provided", async () => {
-            const { emitLifecycleEvent } = await import("./lifecycleEvents");
+            const { emitLifecycleEvent } = await import(
+                "@frak-labs/wallet-shared"
+            );
 
             const { pushBackupData } = await import("./backup");
             await pushBackupData();
@@ -292,7 +286,9 @@ describe("backup", () => {
         });
 
         test("should return early when domain is undefined", async () => {
-            const { emitLifecycleEvent } = await import("./lifecycleEvents");
+            const { emitLifecycleEvent } = await import(
+                "@frak-labs/wallet-shared"
+            );
 
             const { pushBackupData } = await import("./backup");
             await pushBackupData({ domain: undefined });
@@ -301,8 +297,9 @@ describe("backup", () => {
         });
 
         test("should emit remove-backup when no session tokens exist", async () => {
-            const { sessionStore } = await import("../../stores/sessionStore");
-            const { emitLifecycleEvent } = await import("./lifecycleEvents");
+            const { emitLifecycleEvent, sessionStore } = await import(
+                "@frak-labs/wallet-shared"
+            );
 
             vi.mocked(sessionStore.getState).mockReturnValue({
                 session: { address: "0x123", token: "" },
@@ -318,8 +315,9 @@ describe("backup", () => {
         });
 
         test("should emit remove-backup when no sessions at all", async () => {
-            const { sessionStore } = await import("../../stores/sessionStore");
-            const { emitLifecycleEvent } = await import("./lifecycleEvents");
+            const { emitLifecycleEvent, sessionStore } = await import(
+                "@frak-labs/wallet-shared"
+            );
 
             vi.mocked(sessionStore.getState).mockReturnValue({
                 session: undefined,
@@ -335,8 +333,9 @@ describe("backup", () => {
         });
 
         test("should encode and emit do-backup when session has token", async () => {
-            const { sessionStore } = await import("../../stores/sessionStore");
-            const { emitLifecycleEvent } = await import("./lifecycleEvents");
+            const { emitLifecycleEvent, sessionStore } = await import(
+                "@frak-labs/wallet-shared"
+            );
             const { base64urlEncode } = await import("@frak-labs/core-sdk");
             const { sha256 } = await import("viem");
 
@@ -359,8 +358,9 @@ describe("backup", () => {
         });
 
         test("should include both session and sdkSession when both have tokens", async () => {
-            const { sessionStore } = await import("../../stores/sessionStore");
-            const { emitLifecycleEvent } = await import("./lifecycleEvents");
+            const { emitLifecycleEvent, sessionStore } = await import(
+                "@frak-labs/wallet-shared"
+            );
             const { base64urlEncode } = await import("@frak-labs/core-sdk");
             const { sha256 } = await import("viem");
 

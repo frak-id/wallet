@@ -13,7 +13,7 @@
 .modalListenerWallet {
     position: fixed;
     bottom: 19px;
-    z-index: 20;
+    z-index: 1001;
     border-radius: 25px;
     border: 2px solid #fff;
     text-align: center;

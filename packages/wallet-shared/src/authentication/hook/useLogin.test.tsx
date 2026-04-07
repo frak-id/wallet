@@ -51,12 +51,6 @@ vi.mock("../../stores/sessionStore", () => ({
     },
 }));
 
-vi.mock("../../stores/userStore", () => ({
-    userStore: {
-        getState: vi.fn(),
-    },
-}));
-
 describe("useLogin", () => {
     const mockAuthResponse = {
         id: "credential-id",
@@ -102,7 +96,6 @@ describe("useLogin", () => {
             "../../stores/authenticationStore"
         );
         const { sessionStore } = await import("../../stores/sessionStore");
-        const { userStore } = await import("../../stores/userStore");
         const { addLastAuthentication } = await import(
             "../../stores/authenticationStore"
         );
@@ -110,7 +103,6 @@ describe("useLogin", () => {
         const setLastWebAuthNAction = vi.fn();
         const setSession = vi.fn();
         const setSdkSession = vi.fn();
-        const setUser = vi.fn();
 
         const mockSessionData = {
             ...mockSession,
@@ -150,9 +142,6 @@ describe("useLogin", () => {
         vi.mocked(sessionStore.getState).mockReturnValue({
             setSession,
             setSdkSession,
-        } as any);
-        vi.mocked(userStore.getState).mockReturnValue({
-            setUser,
         } as any);
         vi.mocked(addLastAuthentication).mockResolvedValue(undefined);
 
@@ -195,10 +184,6 @@ describe("useLogin", () => {
             })
         );
         expect(setSdkSession).toHaveBeenCalledWith(mockSessionData.sdkJwt);
-        expect(setUser).toHaveBeenCalledWith({
-            _id: mockAddress,
-            username: "mocked-username",
-        });
     });
 
     test("should login with specific authenticator", async ({
@@ -215,7 +200,6 @@ describe("useLogin", () => {
             "../../stores/authenticationStore"
         );
         const { sessionStore } = await import("../../stores/sessionStore");
-        const { userStore } = await import("../../stores/userStore");
         const { addLastAuthentication } = await import(
             "../../stores/authenticationStore"
         );
@@ -265,9 +249,6 @@ describe("useLogin", () => {
             setSession: vi.fn(),
             setSdkSession: vi.fn(),
         } as any);
-        vi.mocked(userStore.getState).mockReturnValue({
-            setUser: vi.fn(),
-        } as any);
         vi.mocked(addLastAuthentication).mockResolvedValue(undefined);
 
         const { result } = renderHook(() => useLogin(), {
@@ -304,7 +285,6 @@ describe("useLogin", () => {
             "../../stores/authenticationStore"
         );
         const { sessionStore } = await import("../../stores/sessionStore");
-        const { userStore } = await import("../../stores/userStore");
         const { trackAuthInitiated, trackAuthCompleted } = await import(
             "../../common/analytics"
         );
@@ -347,9 +327,6 @@ describe("useLogin", () => {
         vi.mocked(sessionStore.getState).mockReturnValue({
             setSession: vi.fn(),
             setSdkSession: vi.fn(),
-        } as any);
-        vi.mocked(userStore.getState).mockReturnValue({
-            setUser: vi.fn(),
         } as any);
 
         const { result } = renderHook(() => useLogin(), {
@@ -461,7 +438,6 @@ describe("useLogin", () => {
             "../../stores/authenticationStore"
         );
         const { sessionStore } = await import("../../stores/sessionStore");
-        const { userStore } = await import("../../stores/userStore");
 
         const mockSessionData = {
             ...mockSession,
@@ -501,9 +477,6 @@ describe("useLogin", () => {
         vi.mocked(sessionStore.getState).mockReturnValue({
             setSession: vi.fn(),
             setSdkSession: vi.fn(),
-        } as any);
-        vi.mocked(userStore.getState).mockReturnValue({
-            setUser: vi.fn(),
         } as any);
 
         const { result } = renderHook(() => useLogin(), {
@@ -561,7 +534,6 @@ describe("useLogin", () => {
             "../../stores/authenticationStore"
         );
         const { sessionStore } = await import("../../stores/sessionStore");
-        const { userStore } = await import("../../stores/userStore");
         const { addLastAuthentication } = await import(
             "../../stores/authenticationStore"
         );
@@ -605,9 +577,6 @@ describe("useLogin", () => {
             setSession: vi.fn(),
             setSdkSession: vi.fn(),
         } as any);
-        vi.mocked(userStore.getState).mockReturnValue({
-            setUser: vi.fn(),
-        } as any);
         vi.mocked(addLastAuthentication).mockResolvedValue(undefined);
 
         const { result } = renderHook(() => useLogin(), {
@@ -643,7 +612,6 @@ describe("useLogin", () => {
             "../../stores/authenticationStore"
         );
         const { sessionStore } = await import("../../stores/sessionStore");
-        const { userStore } = await import("../../stores/userStore");
 
         const onSuccess = vi.fn();
 
@@ -685,9 +653,6 @@ describe("useLogin", () => {
         vi.mocked(sessionStore.getState).mockReturnValue({
             setSession: vi.fn(),
             setSdkSession: vi.fn(),
-        } as any);
-        vi.mocked(userStore.getState).mockReturnValue({
-            setUser: vi.fn(),
         } as any);
 
         const { result } = renderHook(() => useLogin({ onSuccess }), {

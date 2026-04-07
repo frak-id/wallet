@@ -48,8 +48,7 @@
     "publish": "echo 'Publishing legacy...'"
   },
   "dependencies": {
-    "@frak-labs/core-sdk": "workspace:*",
-    "@frak-labs/ui": "workspace:*"
+    "@frak-labs/core-sdk": "workspace:*"
   },
   "devDependencies": {
     "@frak-labs/dev-tooling": "workspace:*",

@@ -14,14 +14,9 @@ export * from "./pairing";
 export { setupBigIntSerialization } from "./polyfills/bigint-serialization";
 // Providers
 export * from "./providers";
-// Recovery
-export * from "./recovery";
-// SDK utilities
-export * from "./sdk";
 export * from "./stores/authenticationStore";
 export * from "./stores/clientIdStore";
 export * from "./stores/sessionStore";
-export * from "./stores/userStore";
 // Tokens
 export * from "./tokens";
 // Types
