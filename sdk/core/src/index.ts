@@ -93,6 +93,7 @@ export {
     base64urlEncode,
     baseIframeProps,
     type CompressedSsoData,
+    clearAllCache,
     compressJsonToB64,
     createIframe,
     DEEP_LINK_SCHEME,
@@ -105,6 +106,7 @@ export {
     formatAmount,
     generateSsoUrl,
     getBackendUrl,
+    getCache,
     getClientId,
     getCurrencyAmountKey,
     getSupportedCurrency,
@@ -115,5 +117,6 @@ export {
     toAndroidIntentUrl,
     trackEvent,
     triggerDeepLinkWithFallback,
+    withCache,
 } from "./utils";
 export { computeLegacyProductId } from "./utils/computeLegacyProductId";

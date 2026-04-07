@@ -12,6 +12,7 @@ import type { FrakWalletSdkConfig } from "../types/config";
 import type { SdkResolvedConfig } from "../types/resolvedConfig";
 import type { IFrameRpcSchema } from "../types/rpc";
 import { getClientId } from "../utils";
+import { clearAllCache } from "../utils/cache";
 import { BACKUP_KEY } from "../utils/constants";
 import { sdkConfigStore } from "../utils/sdkConfigStore";
 import { setupSsoUrlListener } from "../utils/ssoUrlListener";
@@ -138,6 +139,7 @@ export function createIFrameFrakClient({
         stopHeartbeat();
         rpcClient.cleanup();
         iframe.remove();
+        clearAllCache();
         sdkConfigStore.clearCache();
         sdkConfigStore.reset();
     };

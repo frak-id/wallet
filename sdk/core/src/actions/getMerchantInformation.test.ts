@@ -1,9 +1,21 @@
 import type { Address, Hex } from "viem";
-import { describe, expect, it, vi } from "../../tests/vitest-fixtures";
+import {
+    beforeEach,
+    describe,
+    expect,
+    it,
+    vi,
+} from "../../tests/vitest-fixtures";
 import type { FrakClient, GetMerchantInformationReturnType } from "../types";
+import { clearAllCache } from "../utils/cache";
 import { getMerchantInformation } from "./getMerchantInformation";
 
 describe("getMerchantInformation", () => {
+    // Clear cache between tests to ensure isolation
+    beforeEach(() => {
+        clearAllCache();
+    });
+
     describe("success cases", () => {
         it("should call client.request with correct method", async () => {
             const mockResponse: GetMerchantInformationReturnType = {
