@@ -51,6 +51,32 @@
                     "share_referred": "🚀 Share your turn to win more!"
                 }
             }
+        },
+        "sharingPage": {
+            "dismiss": "Later",
+            "reward": {
+                "title": "Share with your friends",
+                "tagline": "You earn a reward every time a friend makes a purchase through your link."
+            },
+            "steps": {
+                "title": "",
+                "1": "Share in 1 click. A personal link is automatically generated with each share.",
+                "2": "Earn on every purchase. Every order placed through your link earns you cash.",
+                "3": "Collect your earnings in the app. Install FRAK to collect your earnings."
+            },
+            "faq": {
+                "title": "Frequently asked questions",
+                "q1": "Who can become an \"ambassador\"?",
+                "a1": "Anyone can become an ambassador by sharing products through their unique link.",
+                "q2": "How much can I earn?",
+                "a2": "Your earnings depend on the brand's reward program and the number of purchases made through your link.",
+                "q3": "When do I get paid?",
+                "a3": "Your earnings are credited as soon as a purchase is confirmed through your sharing link.",
+                "q4": "Can my friends also become \"ambassadors\"?",
+                "a4": "Yes, everyone can create their own sharing link and become an ambassador too.",
+                "q5": "Why do brands use Frak?",
+                "a5": "Frak enables brands to reward their community for word-of-mouth, in a transparent and decentralized way."
+            }
         }
     }
 }

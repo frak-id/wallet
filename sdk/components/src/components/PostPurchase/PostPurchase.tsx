@@ -3,14 +3,19 @@ import type {
     GetMerchantInformationReturnType,
     UserReferralStatusType,
 } from "@frak-labs/core-sdk";
-import { trackPurchaseStatus } from "@frak-labs/core-sdk/actions";
+import {
+    getMerchantInformation,
+    getUserReferralStatus,
+    trackPurchaseStatus,
+} from "@frak-labs/core-sdk/actions";
 import { FrakRpcError, RpcErrorCodes } from "@frak-labs/frame-connector";
-import { useCallback, useEffect, useMemo, useState } from "preact/hooks";
+import { useEffect, useMemo, useState } from "preact/hooks";
 import { useClientReady } from "@/hooks/useClientReady";
 import { useLightDomStyles } from "@/hooks/useLightDomStyles";
 import { usePlacement } from "@/hooks/usePlacement";
+import { formatEstimatedReward } from "@/utils/formatReward";
+import { useShareModal } from "../ButtonShare/hooks/useShareModal";
 import type { PostPurchaseProps } from "./types";
-import { formatEstimatedReward } from "./utils";
 
 /**
  * Resolved context computed locally from referral status + merchant info.
@@ -127,8 +132,8 @@ export function PostPurchase({
         setHasFetched(true);
 
         Promise.all([
-            client.request({ method: "frak_getUserReferralStatus" }),
-            client.request({ method: "frak_getMerchantInformation" }),
+            getUserReferralStatus(client),
+            getMerchantInformation(client),
         ])
             .then(([referralStatus, merchantInfo]) => {
                 setContext(
@@ -149,8 +154,7 @@ export function PostPurchase({
 
     // Resolve variant and reward
     const resolvedVariant = forcedVariant ?? context?.variant;
-    const resolvedSharingUrl =
-        sharingUrl ?? context?.merchantDomain ?? undefined;
+    const resolvedSharingUrl = sharingUrl ?? context?.merchantDomain;
 
     const rewardText = useMemo(() => {
         if (!context?.reward) return undefined;
@@ -158,28 +162,12 @@ export function PostPurchase({
         return formatEstimatedReward(context.reward, currency);
     }, [context?.reward]);
 
-    // CTA handler — opens existing sharing modal
-    const handleCta = useCallback(async () => {
-        const client = window.FrakSetup?.client;
-        if (!client) return;
-
-        // Dynamic import to keep chunk small
-        const { modalBuilder } = await import("@frak-labs/core-sdk/actions");
-
-        try {
-            await modalBuilder(client, {})
-                .sharing(resolvedSharingUrl ? { link: resolvedSharingUrl } : {})
-                .display(undefined, placementId);
-        } catch (e) {
-            if (
-                e instanceof FrakRpcError &&
-                e.code === RpcErrorCodes.clientAborted
-            ) {
-                return;
-            }
-            console.error("[Frak] Share modal error", e);
-        }
-    }, [resolvedSharingUrl, placementId]);
+    // Reuse shared share-modal hook (includes error tracking + debug info)
+    const { handleShare } = useShareModal(
+        undefined,
+        placementId,
+        resolvedSharingUrl
+    );
 
     // Bail conditions
     if (!shouldRender || isHidden) return null;
@@ -208,7 +196,7 @@ export function PostPurchase({
                 type="button"
                 class="post-purchase__cta button"
                 disabled={!isClientReady}
-                onClick={handleCta}
+                onClick={handleShare}
             >
                 {rewardText ? `Share & earn ${rewardText}` : "Share & earn"}
             </button>

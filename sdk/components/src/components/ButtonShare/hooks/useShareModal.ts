@@ -15,7 +15,8 @@ import { useCallback, useState } from "preact/hooks";
  */
 export function useShareModal(
     targetInteraction?: InteractionTypeKey,
-    placement?: string
+    placement?: string,
+    sharingLink?: string
 ) {
     const [debugInfo, setDebugInfo] = useState<string | undefined>(undefined);
     const [isError, setIsError] = useState(false);
@@ -36,7 +37,7 @@ export function useShareModal(
 
         try {
             await builder
-                .sharing({})
+                .sharing(sharingLink ? { link: sharingLink } : {})
                 .display(
                     (metadata) => ({ ...metadata, targetInteraction }),
                     placement
@@ -66,7 +67,7 @@ export function useShareModal(
             setIsError(true);
             console.error("Error while opening the modal", e);
         }
-    }, [targetInteraction, placement]);
+    }, [targetInteraction, placement, sharingLink]);
 
     return { handleShare, isError, debugInfo };
 }

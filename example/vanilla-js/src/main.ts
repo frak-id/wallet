@@ -1,6 +1,6 @@
 import type { FrakClient } from "@frak-labs/core-sdk";
-import { getClientId, sdkConfigStore } from "@frak-labs/core-sdk";
-import { displayModal } from "@frak-labs/core-sdk/actions";
+import { getClientId } from "@frak-labs/core-sdk";
+import { displayModal, displaySharingPage } from "@frak-labs/core-sdk/actions";
 
 function log(
     message: string,
@@ -101,17 +101,10 @@ async function handleModalWithPlacement(
     }
 }
 
-async function handleModalBackendTranslations() {
-    const statusBoxId = "backend-i18n-status";
+async function handleSharingPage(withProduct: boolean) {
+    const statusBoxId = "sharing-page-status";
     log(
-        "Opening modal — translations come from backend sdkConfig",
-        "info",
-        statusBoxId
-    );
-
-    const config = sdkConfigStore.getConfig();
-    log(
-        `Config resolved: ${config.isResolved}, global translations: ${config.translations ? Object.keys(config.translations).length : 0} keys`,
+        `Opening sharing page${withProduct ? " (with product)" : ""}...`,
         "info",
         statusBoxId
     );
@@ -119,153 +112,27 @@ async function handleModalBackendTranslations() {
     const client = await waitForClient();
 
     try {
-        const result = await displayModal(client, {
-            steps: {
-                login: { allowSso: true },
-                final: {
-                    action: { key: "reward" },
-                },
-            },
-            metadata: {
-                header: {
-                    title: "Backend Translations Test",
-                },
-            },
-        });
-        log(
-            `Modal completed: ${JSON.stringify(result)}`,
-            "success",
-            statusBoxId
-        );
-    } catch (e) {
-        log(`Modal error: ${e}`, "error", statusBoxId);
-    }
-}
-
-async function handleModalDevI18n() {
-    const statusBoxId = "dev-vs-backend-status";
-    log(
-        "Opening modal — uses SDK customizations.i18n (dev), overwritten by backend for overlapping keys",
-        "info",
-        statusBoxId
-    );
-
-    const client = await waitForClient();
-
-    try {
-        const result = await displayModal(client, {
-            steps: {
-                login: { allowSso: true },
-                final: {
-                    action: { key: "reward" },
-                },
-            },
-            metadata: {
-                header: {
-                    title: "Dev i18n (from SDK config)",
-                },
-            },
-        });
-        log(
-            `Modal completed: ${JSON.stringify(result)}`,
-            "success",
-            statusBoxId
-        );
-    } catch (e) {
-        log(`Modal error: ${e}`, "error", statusBoxId);
-    }
-}
-
-async function handleModalPerModalI18n() {
-    const statusBoxId = "dev-vs-backend-status";
-    log(
-        "Opening modal — per-modal metadata.i18n overrides SDK and backend translations",
-        "info",
-        statusBoxId
-    );
-
-    const client = await waitForClient();
-
-    try {
-        const result = await displayModal(client, {
-            steps: {
-                login: { allowSso: true },
-                final: {
-                    action: { key: "reward" },
-                },
-            },
-            metadata: {
-                header: {
-                    title: "Per-modal i18n Override",
-                },
-                i18n: {
-                    fr: {
-                        "sharing.modal.title":
-                            "Partager (PER-MODAL override FR)",
-                        "sharing.modal.description":
-                            "Cette traduction vient du paramètre metadata.i18n de displayModal()",
-                    },
-                    en: {
-                        "sharing.modal.title": "Share (PER-MODAL override EN)",
-                        "sharing.modal.description":
-                            "This translation comes from displayModal() metadata.i18n parameter",
-                    },
-                },
-            },
-        });
-        log(
-            `Modal completed: ${JSON.stringify(result)}`,
-            "success",
-            statusBoxId
-        );
-    } catch (e) {
-        log(`Modal error: ${e}`, "error", statusBoxId);
-    }
-}
-
-async function handleModalPlacementI18n() {
-    const statusBoxId = "dev-vs-backend-status";
-    log(
-        'Opening modal with placement="hero-share" — placement translations override everything',
-        "info",
-        statusBoxId
-    );
-
-    const placement = "hero-share";
-    const resolved = sdkConfigStore.getConfig().placements?.[placement];
-    log(
-        `Placement "${placement}" resolved: ${resolved ? `components=${JSON.stringify(resolved.components)}, translations=${resolved.translations ? Object.keys(resolved.translations).length : 0} keys` : "NOT FOUND"}`,
-        resolved ? "info" : "warn",
-        statusBoxId
-    );
-
-    const client = await waitForClient();
-
-    try {
-        const result = await displayModal(
+        const result = await displaySharingPage(
             client,
-            {
-                steps: {
-                    login: { allowSso: true },
-                    final: {
-                        action: { key: "reward" },
-                    },
-                },
-                metadata: {
-                    header: {
-                        title: "Placement i18n (hero-share)",
-                    },
-                },
-            },
-            placement
+            withProduct
+                ? {
+                      products: [
+                          {
+                              title: "Babies camel cuir velours bout carré",
+                              imageUrl:
+                                  "https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=200",
+                          },
+                      ],
+                  }
+                : {}
         );
         log(
-            `Modal completed: ${JSON.stringify(result)}`,
+            `Sharing page result: ${JSON.stringify(result)}`,
             "success",
             statusBoxId
         );
     } catch (e) {
-        log(`Modal error: ${e}`, "error", statusBoxId);
+        log(`Sharing page error: ${e}`, "error", statusBoxId);
     }
 }
 
@@ -286,17 +153,11 @@ function bindTestButtons() {
             handleModalWithPlacement("sidebar-promo", "modal-placement-status")
         );
     document
-        .getElementById("btn-modal-backend-translations")
-        ?.addEventListener("click", handleModalBackendTranslations);
+        .getElementById("btn-sharing-page")
+        ?.addEventListener("click", () => handleSharingPage(false));
     document
-        .getElementById("btn-modal-dev-i18n")
-        ?.addEventListener("click", handleModalDevI18n);
-    document
-        .getElementById("btn-modal-permodal-i18n")
-        ?.addEventListener("click", handleModalPerModalI18n);
-    document
-        .getElementById("btn-modal-placement-i18n")
-        ?.addEventListener("click", handleModalPlacementI18n);
+        .getElementById("btn-sharing-page-product")
+        ?.addEventListener("click", () => handleSharingPage(true));
 }
 
 async function init() {
@@ -305,6 +166,7 @@ async function init() {
             import("@frak-labs/components/dist/buttonWallet.js"),
             import("@frak-labs/components/dist/buttonShare.js"),
             import("@frak-labs/components/dist/openInApp.js"),
+            import("@frak-labs/components/dist/postPurchase.js"),
         ]);
     }
 

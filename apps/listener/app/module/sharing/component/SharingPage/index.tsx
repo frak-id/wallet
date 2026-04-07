@@ -117,7 +117,7 @@ export function ListenerSharingPage() {
                     onClick={handleDismiss}
                     className={styles.dismissButton}
                 >
-                    {t("sharingPage.dismiss")}
+                    {t("sdk.sharingPage.dismiss")}
                 </button>
             </header>
 
@@ -125,10 +125,10 @@ export function ListenerSharingPage() {
                 <section className={styles.rewardSection}>
                     <div className={styles.rewardCard}>
                         <h2 className={styles.rewardTitle}>
-                            {t("sharingPage.reward.title")}
+                            {t("sdk.sharingPage.reward.title")}
                         </h2>
                         <p className={styles.rewardTagline}>
-                            {t("sharingPage.reward.tagline")}
+                            {t("sdk.sharingPage.reward.tagline")}
                         </p>
                     </div>
                 </section>
@@ -161,48 +161,48 @@ export function ListenerSharingPage() {
 
                 <section className={styles.stepsSection}>
                     <h3 className={styles.sectionTitle}>
-                        {t("sharingPage.steps.title")}
+                        {t("sdk.sharingPage.steps.title")}
                     </h3>
                     <ol className={styles.stepsList}>
                         <li className={styles.stepItem}>
                             <span className={styles.stepNumber}>1</span>
-                            <p>{t("sharingPage.steps.1")}</p>
+                            <p>{t("sdk.sharingPage.steps.1")}</p>
                         </li>
                         <li className={styles.stepItem}>
                             <span className={styles.stepNumber}>2</span>
-                            <p>{t("sharingPage.steps.2")}</p>
+                            <p>{t("sdk.sharingPage.steps.2")}</p>
                         </li>
                         <li className={styles.stepItem}>
                             <span className={styles.stepNumber}>3</span>
-                            <p>{t("sharingPage.steps.3")}</p>
+                            <p>{t("sdk.sharingPage.steps.3")}</p>
                         </li>
                     </ol>
                 </section>
 
                 <section className={styles.faqSection}>
                     <h3 className={styles.sectionTitle}>
-                        {t("sharingPage.faq.title")}
+                        {t("sdk.sharingPage.faq.title")}
                     </h3>
                     <div className={styles.faqList}>
                         <FaqItem
-                            question={t("sharingPage.faq.q1")}
-                            answer={t("sharingPage.faq.a1")}
+                            question={t("sdk.sharingPage.faq.q1")}
+                            answer={t("sdk.sharingPage.faq.a1")}
                         />
                         <FaqItem
-                            question={t("sharingPage.faq.q2")}
-                            answer={t("sharingPage.faq.a2")}
+                            question={t("sdk.sharingPage.faq.q2")}
+                            answer={t("sdk.sharingPage.faq.a2")}
                         />
                         <FaqItem
-                            question={t("sharingPage.faq.q3")}
-                            answer={t("sharingPage.faq.a3")}
+                            question={t("sdk.sharingPage.faq.q3")}
+                            answer={t("sdk.sharingPage.faq.a3")}
                         />
                         <FaqItem
-                            question={t("sharingPage.faq.q4")}
-                            answer={t("sharingPage.faq.a4")}
+                            question={t("sdk.sharingPage.faq.q4")}
+                            answer={t("sdk.sharingPage.faq.a4")}
                         />
                         <FaqItem
-                            question={t("sharingPage.faq.q5")}
-                            answer={t("sharingPage.faq.a5")}
+                            question={t("sdk.sharingPage.faq.q5")}
+                            answer={t("sdk.sharingPage.faq.a5")}
                         />
                     </div>
                 </section>
