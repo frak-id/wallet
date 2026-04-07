@@ -60,6 +60,7 @@
         "walletAddressRequired": "Wallet address is required",
         "walletInvalid": "Invalid wallet address",
         "back-to-wallet": "Back to Wallet",
+        "back": "Back",
         "close": "Close",
         "share": "Share"
     },
@@ -564,9 +565,42 @@
                 "cta": "Transfer my earnings"
             },
             "transfer": {
-                "title": "Transfer my earnings",
-                "description": "Coming soon. You will be able to select an IBAN and amount to transfer your earnings.",
-                "cta": "Close"
+                "amount": {
+                    "title": "Transfer my earnings",
+                    "walletLabel": "Frak Wallet",
+                    "totalBalance": "Total balance",
+                    "ibanLabel": "Recipient",
+                    "ibanEmpty": "No IBAN saved",
+                    "modify": "Edit",
+                    "continue": "Continue",
+                    "insufficientBalance": "Insufficient balance"
+                },
+                "recap": {
+                    "title": "Summary",
+                    "cancel": "Cancel",
+                    "amountLabel": "Amount",
+                    "beneficiaryLabel": "Beneficiary",
+                    "addNote": "Add a note",
+                    "defaultNote": "Sent from FRAK",
+                    "warning": "Once confirmed, this operation cannot be cancelled",
+                    "confirm": "Confirm transfer"
+                },
+                "success": {
+                    "title": "Your transfer request of {{amount}} € has been received",
+                    "description": "You will receive your payout within 10 seconds."
+                },
+                "ibanManager": {
+                    "title": "Manage my IBANs",
+                    "addNew": "Add an IBAN",
+                    "nameLabel": "Beneficiary name",
+                    "namePlaceholder": "e.g. My checking account",
+                    "ibanLabel": "IBAN",
+                    "ibanPlaceholder": "FR76...",
+                    "save": "Save",
+                    "remove": "Remove",
+                    "empty": "No IBAN saved. Add one to get started.",
+                    "select": "Select"
+                }
             }
         }
     },

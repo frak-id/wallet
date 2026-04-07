@@ -58,6 +58,7 @@
         "walletAddressRequired": "L'adresse du porte-monnaie est requise",
         "walletInvalid": "Adresse de porte-monnaie invalide",
         "back-to-wallet": "Retour au porte-monnaie",
+        "back": "Retour",
         "close": "Fermer",
         "share": "Partager"
     },
@@ -561,9 +562,42 @@
                 "cta": "Transférer mes gains"
             },
             "transfer": {
-                "title": "Transférer mes gains",
-                "description": "Bientôt disponible. Tu pourras sélectionner un IBAN et un montant pour transférer tes gains.",
-                "cta": "Fermer"
+                "amount": {
+                    "title": "Transférer mes gains",
+                    "walletLabel": "Porte-monnaie Frak",
+                    "totalBalance": "Total balance",
+                    "ibanLabel": "Destinataire",
+                    "ibanEmpty": "Aucun IBAN enregistré",
+                    "modify": "Modifier",
+                    "continue": "Continuer",
+                    "insufficientBalance": "Total balance Insuffisante"
+                },
+                "recap": {
+                    "title": "Récapitulatif",
+                    "cancel": "Annuler",
+                    "amountLabel": "Montant",
+                    "beneficiaryLabel": "Bénéficiaire",
+                    "addNote": "Ajouter une note",
+                    "defaultNote": "Envoyé depuis FRAK",
+                    "warning": "Une fois validée, l'opération ne peut être annulée",
+                    "confirm": "Confirmer le transfert"
+                },
+                "success": {
+                    "title": "Ta demande de transfert de {{amount}} € a été prise en compte",
+                    "description": "Tu recevras ton gain sous 10 secondes."
+                },
+                "ibanManager": {
+                    "title": "Gérer mes IBAN",
+                    "addNew": "Ajouter un IBAN",
+                    "nameLabel": "Nom du bénéficiaire",
+                    "namePlaceholder": "Ex. Mon compte courant",
+                    "ibanLabel": "IBAN",
+                    "ibanPlaceholder": "FR76...",
+                    "save": "Enregistrer",
+                    "remove": "Supprimer",
+                    "empty": "Aucun IBAN enregistré. Ajoutes-en un pour commencer.",
+                    "select": "Sélectionner"
+                }
             }
         }
     },

@@ -113,6 +113,7 @@ interface Resources {
             amountRequired: "Amount is required";
             at: "at";
             authenticator: "Authenticator";
+            back: "Back";
             "back-to-wallet": "Back to Wallet";
             balance: "Balance";
             claim: "Claim";
@@ -125,7 +126,6 @@ interface Resources {
             logout: "Logout";
             notifications: "Notifications";
             pending: "pending";
-            receive: "Receive";
             refresh: "Refresh";
             rewards: "Rewards";
             send: "Send";
@@ -159,7 +159,7 @@ interface Resources {
                 endsIn_other: "Ends in {{count}} days";
                 immediate: "Immediate";
                 instructions: "Instructions";
-                legal: "The merchant's <termsLink>terms and conditions</termsLink> and FRAK's <termsLink>terms and conditions</termsLink> apply.";
+                legal: "<termsLink>{{merchantName}}'s terms and conditions</termsLink> and <termsLink>FRAK's terms and conditions</termsLink> apply.";
                 readMore: "Read more";
                 refereeReward: "Reward as referee";
                 referrerReward: "Reward as referrer";
@@ -178,6 +178,18 @@ interface Resources {
                 title: "No offers available";
             };
             pageTitle: "Explorer";
+        };
+        installCode: {
+            codeCopied: "Code copied!";
+            copyCode: "Copy the code";
+            description: "Paste it when opening the app. It will let you claim your rewards once logged in.";
+            download: "Download the app";
+            error: "Failed to generate code. Please refresh.";
+            infoDescription: "When opening the app, tap 'I have a recovery code'.";
+            infoTitle: "Code valid for 3 days";
+            loading: "Generating your code...";
+            processing: "Setting up your wallet...";
+            title: "Copy this code";
         };
         "mobile-sso": {
             appNotFound: "Frak Wallet app not found";
@@ -205,6 +217,78 @@ interface Resources {
                 notLinked: "IBAN not linked to this wallet";
                 pending: "Bank verification in progress...";
                 rejected: "Verification failed";
+            };
+            bankFlow: {
+                info: {
+                    cta: "Accept and continue";
+                    description: "To transfer your earnings to your bank account, you need to complete your secure payment account setup.";
+                    feature1Description: "To secure your account and verify that you are the rightful owner of the earnings.";
+                    feature1Title: "Verify your identity";
+                    feature2Description: "To receive your earnings directly into your bank account.";
+                    feature2Title: "Add your IBAN";
+                    feature3Description: "Your transactions are protected and comply with current security standards.";
+                    feature3Title: "Secure your transfers";
+                    redirectNotice: "You will be redirected to our financial partner, Monerium, to:";
+                    title: "Complete your account to claim your earnings.";
+                };
+                kyc: {
+                    cta: "Verify my identity";
+                    description: "To transfer your earnings, you need to verify your identity.";
+                    featureDescription: "To secure your account and confirm that you are the rightful owner of the earnings, we use a financial partner, Monerium.";
+                    featureTitle: "Verify your identity";
+                    notice: "This step is quick and secure.";
+                    title: "Complete your identity verification";
+                };
+                link: {
+                    cta: "Link my account";
+                    description: "Your wallet is not yet connected to your Monerium account, connect it to transfer your earnings.";
+                    featureDescription: "To fully use your wallet, we need to link your account.";
+                    featureTitle: "Link your Monerium account to your wallet";
+                    title: "Link your wallet";
+                };
+                success: {
+                    cta: "Transfer my earnings";
+                    description: "Your account is ready. You can now transfer your earnings to your bank account with ease.";
+                    title: "You can now transfer your earnings 🎉";
+                };
+                transfer: {
+                    amount: {
+                        continue: "Continue";
+                        ibanEmpty: "No IBAN saved";
+                        ibanLabel: "Recipient";
+                        insufficientBalance: "Insufficient balance";
+                        modify: "Edit";
+                        title: "Transfer my earnings";
+                        totalBalance: "Total balance";
+                        walletLabel: "Frak Wallet";
+                    };
+                    ibanManager: {
+                        addNew: "Add an IBAN";
+                        empty: "No IBAN saved. Add one to get started.";
+                        ibanLabel: "IBAN";
+                        ibanPlaceholder: "FR76...";
+                        nameLabel: "Beneficiary name";
+                        namePlaceholder: "e.g. My checking account";
+                        remove: "Remove";
+                        save: "Save";
+                        select: "Select";
+                        title: "Manage my IBANs";
+                    };
+                    recap: {
+                        addNote: "Add a note";
+                        amountLabel: "Amount";
+                        beneficiaryLabel: "Beneficiary";
+                        cancel: "Cancel";
+                        confirm: "Confirm transfer";
+                        defaultNote: "Sent from FRAK";
+                        title: "Summary";
+                        warning: "Once confirmed, this operation cannot be cancelled";
+                    };
+                    success: {
+                        description: "You will receive your payout within 10 seconds.";
+                        title: "Your transfer request of {{amount}} € has been received";
+                    };
+                };
             };
             callback: {
                 failed: "Failed to complete authentication";
@@ -290,11 +374,16 @@ interface Resources {
         };
         recoveryCode: {
             description: "Paste the code copied from wallet.frak.id to recover your earnings.";
-            digitLabel: "Digit";
-            error: "Incorrect or expired code — check the code copied from wallet.frak.id";
+            digitLabel: "Character";
+            error: {
+                alreadyLinked: "This code has already been used.";
+                generic: "Something went wrong — please try again.";
+                invalid: "Incorrect or expired code — check the code copied from wallet.frak.id";
+            };
             paste: "Paste the code";
             success: {
                 description: "You'll receive a notification as soon as a friend purchases via your link.";
+                merchantInfo: "Connected to {{merchantName}}";
                 title: "Your referral link has been found!";
             };
             title: "Recover your code";
@@ -561,14 +650,19 @@ interface Resources {
                 amountPositive: "Amount must be positive";
                 amountToSend: "Amount to send";
                 backToWallet: "Back to wallet page";
-                receive: {
-                    title: "Receive assets on <strong>Testnets</strong>";
-                };
             };
             transferEmpty: {
                 description: "Share products with your friends to start earning money.";
                 discover: "Discover offers";
                 title: "You don't have any money to transfer yet";
+            };
+            transferModal: {
+                bankAccount: "Bank account";
+                bankAccountDescription: "Add an IBAN";
+                description: "Choose one of the following options to transfer your earnings.";
+                title: "Transfer";
+                wallet: "Wallet";
+                walletDescription: "Transfer to a crypto wallet";
             };
             transferToBank: "Transfer to my bank";
             transferredEmpty: {

@@ -5,17 +5,11 @@ import {
     authenticationStore,
     selectLastAuthenticationAt,
 } from "@frak-labs/wallet-shared";
-import { Link } from "@tanstack/react-router";
 import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { Title } from "@/module/common/component/Title";
 // import { Logout } from "@/module/authentication/component/Logout";
 import { MoneriumConnect } from "@/module/monerium/component/MoneriumConnect";
-import { useMoneriumProfile } from "@/module/monerium/hooks/useMoneriumProfile";
-import {
-    isMoneriumConnected,
-    moneriumStore,
-} from "@/module/monerium/store/moneriumStore";
 import { PairingList } from "@/module/pairing/component/PairingList";
 import { PrivateKey } from "@/module/settings/component/PrivateKey";
 import { ProfileIdentityCard } from "@/module/settings/component/ProfileIdentityCard";
@@ -23,20 +17,6 @@ import { ProfileLinksCard } from "@/module/settings/component/ProfileLinksCard";
 import { ProfilePreferencesCard } from "@/module/settings/component/ProfilePreferencesCard";
 // import { ProfileSecurityCard } from "@/module/settings/component/ProfileSecurityCard";
 import * as styles from "./index.css";
-
-function MoneriumSection() {
-    const isConnected = moneriumStore(isMoneriumConnected);
-    const { profileState } = useMoneriumProfile();
-
-    return (
-        <>
-            <MoneriumConnect />
-            {isConnected && profileState === "approved" ? (
-                <Link to="/monerium/offramp">Offramp</Link>
-            ) : null}
-        </>
-    );
-}
 
 export function ProfilePage() {
     const { t, i18n } = useTranslation();
@@ -71,7 +51,7 @@ export function ProfilePage() {
             <ProfileLinksCard />
             <PrivateKey />
             <PairingList />
-            {!isRunningInProd ? <MoneriumSection /> : null}
+            {!isRunningInProd ? <MoneriumConnect /> : null}
             {/*<Logout />*/}
             <Box className={styles.footer}>
                 {displayVersion ? (
