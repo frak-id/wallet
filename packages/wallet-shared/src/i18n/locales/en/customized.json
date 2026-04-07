@@ -76,6 +76,25 @@
                 "a4": "Yes, everyone can create their own sharing link and become an ambassador too.",
                 "q5": "Why do brands use Frak?",
                 "a5": "Frak enables brands to reward their community for word-of-mouth, in a transparent and decentralized way."
+            },
+            "confirmation": {
+                "title": "Thank you for sharing!\nDon't miss out on your {{ estimatedReward }}.",
+                "subtitle": "Install the Frak app, official partner of {{ productName }}, and track your earnings in real time.",
+                "benefits": {
+                    "wallet": {
+                        "title": "Your wallet secured in 10 seconds",
+                        "description": "No email, no password, no form. Simple, fast and secure."
+                    },
+                    "notify": {
+                        "title": "Get notified as soon as you earn",
+                        "description": "Receive a notification when a purchase is made thanks to you."
+                    },
+                    "cashout": {
+                        "title": "Cash out whenever you want",
+                        "description": "Transfer your earnings directly to your bank account in 3 clicks."
+                    }
+                },
+                "cta": "Collect my {{ estimatedReward }}"
             }
         }
     }

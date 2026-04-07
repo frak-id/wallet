@@ -11,7 +11,6 @@ import {
 import { cx } from "class-variance-authority";
 import { useCallback, useMemo, useRef, useState } from "react";
 import { Toaster, toast } from "sonner";
-
 import { Copy } from "@/module/common/icons/Copy";
 import { Share } from "@/module/common/icons/Share";
 import { useShareLink } from "@/module/hooks/useShareLink";
@@ -20,6 +19,7 @@ import {
     useListenerTranslation,
     useSharingListenerUI,
 } from "@/module/providers/ListenerUiProvider";
+import { PostShareConfirmation } from "@/module/sharing/component/PostShareConfirmation";
 import { useSafeResolvingContext } from "@/module/stores/hooks";
 
 import styles from "./index.module.css";
@@ -33,6 +33,7 @@ export function ListenerSharingPage() {
     const { mutate: trackSharing } = useTrackSharing();
 
     const hasResolvedRef = useRef(false);
+    const [showConfirmation, setShowConfirmation] = useState(false);
 
     const resolveAction = useCallback(
         (action: "shared" | "copied" | "dismissed") => {
@@ -67,6 +68,7 @@ export function ListenerSharingPage() {
             onSuccess: (message) => {
                 if (message) toast.success(message as string);
                 resolveAction("shared");
+                setShowConfirmation(true);
             },
         }
     );
@@ -80,6 +82,7 @@ export function ListenerSharingPage() {
         trackSharing();
         toast.success(t("sharing.btn.copySuccess"));
         resolveAction("copied");
+        setShowConfirmation(true);
     };
 
     const handleShare = () => {
@@ -93,6 +96,10 @@ export function ListenerSharingPage() {
     const products = currentRequest.params.products ?? [];
     const appName = currentRequest.appName;
     const logoUrl = currentRequest.logoUrl;
+
+    if (showConfirmation) {
+        return <PostShareConfirmation onDismiss={clearRequest} />;
+    }
 
     return (
         <div className={styles.container}>

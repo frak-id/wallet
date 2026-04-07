@@ -77,6 +77,25 @@
                 "a4": "Oui, chaque personne peut créer son propre lien de partage et devenir ambassadeur à son tour.",
                 "q5": "Pourquoi les marques utilisent-elles Frak ?",
                 "a5": "Frak permet aux marques de récompenser leur communauté pour le bouche-à-oreille, de manière transparente et décentralisée."
+            },
+            "confirmation": {
+                "title": "Merci pour votre partage !\nNe passez pas à côté de vos {{ estimatedReward }}.",
+                "subtitle": "Installez l'app Frak, partenaire officiel de {{ productName }}, et suivez vos gains en temps réel.",
+                "benefits": {
+                    "wallet": {
+                        "title": "Votre porte-monnaie sécurisé en 10 secondes",
+                        "description": "Sans email, sans mot de passe, sans formulaire. Simple, rapide et sécurisé."
+                    },
+                    "notify": {
+                        "title": "Soyez alerté dès que vous gagnez",
+                        "description": "Recevez une notification dès qu'un achat est réalisé grâce à vous."
+                    },
+                    "cashout": {
+                        "title": "Encaissez quand vous le souhaitez",
+                        "description": "Transférez vos gains directement vers votre compte bancaire en 3 clics."
+                    }
+                },
+                "cta": "Récupérer mes {{ estimatedReward }}"
             }
         }
     }
