@@ -1,7 +1,7 @@
 import type { FrakLifecycleEvent } from "@frak-labs/core-sdk";
 import { createRpcListener } from "@frak-labs/frame-connector";
-import { loadPolyfills } from "@frak-labs/ui/utils/polyfills";
 import { useEffect } from "react";
+import { loadPolyfills } from "@/module/common/utils/polyfills";
 import { ListenerUiRenderer } from "@/module/component/ListenerUiRenderer";
 import {
     createClientLifecycleHandler,

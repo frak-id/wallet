@@ -1,4 +1,4 @@
-import { prefixModalCss } from "@frak-labs/ui/utils/prefixModalCss";
+import { prefixModalCss } from "@frak-labs/wallet-shared";
 import type { ComponentProps } from "react";
 import styles from "./index.module.css";
 

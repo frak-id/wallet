@@ -5,9 +5,9 @@ import {
     AccordionItem,
     AccordionTrigger,
 } from "@frak-labs/design-system/components/Accordion";
-import { WalletAddress } from "@frak-labs/ui/component/HashDisplay";
 import { useTranslation } from "react-i18next";
 import { formatEther } from "viem";
+import { WalletAddress } from "@/module/component/WalletAddress";
 import styles from "./index.module.css";
 
 export function AccordionTransactions({

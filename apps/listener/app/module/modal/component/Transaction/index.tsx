@@ -1,6 +1,5 @@
 import type { SendTransactionModalStepType } from "@frak-labs/core-sdk";
 import { DEEP_LINK_SCHEME } from "@frak-labs/core-sdk";
-import { ButtonAuth } from "@frak-labs/ui/component/ButtonAuth";
 import {
     encodeWalletMulticall,
     HandleErrors,
@@ -11,6 +10,7 @@ import {
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useAccount, useSendTransaction } from "wagmi";
 import { useStore } from "zustand";
+import { ButtonAuth } from "@/module/component/ButtonAuth";
 import { useDeepLinkFallback } from "@/module/hooks/useDeepLinkFallback";
 import { AccordionTransactions } from "@/module/modal/component/Transaction/AccordionTransactions";
 import { useListenerTranslation } from "@/module/providers/ListenerUiProvider";

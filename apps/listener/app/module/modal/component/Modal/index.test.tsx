@@ -58,19 +58,17 @@ vi.mock("@frak-labs/design-system/hooks/useMediaQuery", () => ({
     useMediaQuery: () => true,
 }));
 
-vi.mock("@frak-labs/ui/icons/LogoFrakWithName", () => ({
-    LogoFrakWithName: ({ className }: { className?: string }) => (
-        <span className={className}>frak-logo</span>
-    ),
-}));
-
 vi.mock("@frak-labs/wallet-shared", () => ({
     Drawer: ({ children }: { children: ReactNode }) => <div>{children}</div>,
     DrawerContent: ({ children }: { children: ReactNode }) => (
         <div>{children}</div>
     ),
     InAppBrowserToast: () => null,
+    LogoFrakWithName: ({ className }: { className?: string }) => (
+        <span className={className}>frak-logo</span>
+    ),
     OriginPairingState: () => <div>origin-pairing</div>,
+    prefixModalCss: (name: string) => `nexus-modal-${name}`,
     WalletModal: ({ title, text }: { title: ReactNode; text: ReactNode }) => (
         <div>
             <div>{title}</div>

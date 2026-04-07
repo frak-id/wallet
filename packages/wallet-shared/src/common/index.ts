@@ -29,12 +29,14 @@ export { TextData } from "./component/TextData";
 export { Toast } from "./component/Toast";
 export { WalletModal } from "./component/WalletModal";
 export { Warning } from "./component/Warning";
-
 // Hooks
 export { useAddToHomeScreenPrompt } from "./hook/useAddToHomeScreenPrompt";
+export { useCopyToClipboardWithState } from "./hook/useCopyToClipboardWithState";
 export { useGetSafeSdkSession } from "./hook/useGetSafeSdkSession";
 export { useMountedTimeout } from "./hook/useMountedTimeout";
 export { useSessionFlag } from "./hook/useSessionFlag";
+// Icons
+export { LogoFrakWithName } from "./icons/LogoFrakWithName";
 // Lib
 export {
     inAppRedirectUrl,
@@ -53,6 +55,7 @@ export { sdkKey } from "./queryKeys/sdk";
 export { authenticatorStorage } from "./storage/authenticators";
 export type { PreviousAuthenticatorModel } from "./storage/PreviousAuthenticatorModel";
 export { emitLifecycleEvent } from "./utils/lifecycleEvents";
+export { prefixModalCss } from "./utils/prefixModalCss";
 // Utils
 export {
     getFromLocalStorage,
