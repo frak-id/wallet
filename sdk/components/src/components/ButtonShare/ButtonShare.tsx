@@ -81,8 +81,7 @@ export function ButtonShare({
         [componentConfig?.useReward, rawUseReward]
     );
     const resolvedClickAction = useMemo(
-        () =>
-            componentConfig?.clickAction ?? rawClickAction ?? "embedded-wallet",
+        () => componentConfig?.clickAction ?? rawClickAction ?? "sharing-page",
         [componentConfig?.clickAction, rawClickAction]
     );
     const { shouldRender, isHidden, isClientReady } = useClientReady();
@@ -108,12 +107,12 @@ export function ButtonShare({
 
     const onClick = useCallback(async () => {
         trackEvent(window.FrakSetup.client, "share_button_clicked");
-        if (resolvedClickAction === "share-modal") {
-            await handleShare();
-        } else if (resolvedClickAction === "sharing-page") {
-            openSharingPage(resolvedTargetInteraction, placementId);
-        } else {
+        if (resolvedClickAction === "embedded-wallet") {
             openEmbeddedWallet(resolvedTargetInteraction, placementId);
+        } else if (resolvedClickAction === "share-modal") {
+            await handleShare();
+        } else {
+            openSharingPage(resolvedTargetInteraction, placementId);
         }
     }, [
         resolvedClickAction,

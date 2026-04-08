@@ -6,14 +6,13 @@ import { FormActions } from "@/module/forms/FormActions";
 import styles from "./index.module.css";
 import {
     EMBEDDED_TRANSLATION_GROUPS,
-    getNestedFieldError,
     MODAL_TRANSLATION_GROUPS,
     SHARING_PAGE_TRANSLATION_GROUPS,
     TRANSLATION_KEY_META,
     TRANSLATION_LANG_FIELDS,
-    type TranslationFormValues,
-    type TranslationLang,
-} from "./utils";
+} from "./translations";
+import type { TranslationFormValues, TranslationLang } from "./types";
+import { getNestedFieldError } from "./utils";
 
 type TranslationGroups = Record<string, readonly string[]>;
 
@@ -204,6 +203,16 @@ export function TranslationEditor({
         }));
     };
 
+    const sharedProps = {
+        expandedGroups,
+        onToggleGroup: handleToggleGroup,
+        form,
+        fieldPrefix,
+        activeField,
+        defaultValues,
+        lang,
+    };
+
     return (
         <div>
             <div className={styles.customize__translationLangTabs}>
@@ -243,25 +252,8 @@ export function TranslationEditor({
             </div>
 
             <TranslationGroupList
-                groups={EMBEDDED_TRANSLATION_GROUPS}
-                expandedGroups={expandedGroups}
-                onToggleGroup={handleToggleGroup}
-                form={form}
-                fieldPrefix={fieldPrefix}
-                activeField={activeField}
-                defaultValues={defaultValues}
-                lang={lang}
-            />
-
-            <TranslationGroupList
                 groups={SHARING_PAGE_TRANSLATION_GROUPS}
-                expandedGroups={expandedGroups}
-                onToggleGroup={handleToggleGroup}
-                form={form}
-                fieldPrefix={fieldPrefix}
-                activeField={activeField}
-                defaultValues={defaultValues}
-                lang={lang}
+                {...sharedProps}
             />
 
             <div className={styles.customize__advancedSection}>
@@ -275,25 +267,34 @@ export function TranslationEditor({
                     ) : (
                         <ChevronRight size={16} />
                     )}
-                    Advanced — Modal flow translations
+                    Advanced
                 </button>
 
                 {showAdvanced && (
                     <div className={styles.customize__advancedBody}>
                         <p className={styles.customize__hint}>
-                            These translations apply to the pop-up modal flow,
-                            which is used less frequently than the embedded
-                            wallet.
+                            Advanced — Embedded Wallet translations
+                        </p>
+                        <p className={styles.customize__fieldDescription}>
+                            These translations apply to the embedded wallet
+                            flow.
+                        </p>
+                        <TranslationGroupList
+                            groups={EMBEDDED_TRANSLATION_GROUPS}
+                            {...sharedProps}
+                        />
+
+                        <hr />
+
+                        <p className={styles.customize__hint}>
+                            Modal Flow translations
+                        </p>
+                        <p className={styles.customize__fieldDescription}>
+                            These translations apply to the pop-up modal flow.
                         </p>
                         <TranslationGroupList
                             groups={MODAL_TRANSLATION_GROUPS}
-                            expandedGroups={expandedGroups}
-                            onToggleGroup={handleToggleGroup}
-                            form={form}
-                            fieldPrefix={fieldPrefix}
-                            activeField={activeField}
-                            defaultValues={defaultValues}
-                            lang={lang}
+                            {...sharedProps}
                         />
                     </div>
                 )}

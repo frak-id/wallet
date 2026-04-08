@@ -8,12 +8,14 @@ import { useMerchantUpdate } from "@/module/merchant/hook/useMerchantUpdate";
 import styles from "./index.module.css";
 import { LoginPreview } from "./ModalPreview";
 import { CssEditor, TranslationEditor } from "./TranslationEditor";
+import type {
+    CssFormValues,
+    TranslationFormValues,
+    TranslationLang,
+} from "./types";
 import {
     buildTranslationsPayload,
-    type CssFormValues,
     getTranslationsFormValues,
-    type TranslationFormValues,
-    type TranslationLang,
     valueOrNull,
 } from "./utils";
 
