@@ -32,7 +32,7 @@ export const COMPONENT_LABELS: Record<ComponentType, string> = {
 export type ButtonShareFormValues = {
     text: string;
     noRewardText: string;
-    clickAction: "embedded-wallet" | "share-modal";
+    clickAction: "embedded-wallet" | "share-modal" | "sharing-page";
     useReward: boolean;
     css: string;
 };
@@ -67,6 +67,47 @@ export const EMBEDDED_TRANSLATION_GROUPS = {
         "sdk.wallet.loggedIn.onboarding.welcome",
         "sdk.wallet.loggedIn.onboarding.share",
         "sdk.wallet.loggedIn.onboarding.share_referred",
+    ],
+} as const;
+
+/**
+ * Translation groups for the sharing page flow (primary — always visible).
+ */
+export const SHARING_PAGE_TRANSLATION_GROUPS = {
+    "Sharing Page": [
+        "sdk.sharingPage.dismiss",
+        "sdk.sharingPage.reward.title",
+        "sdk.sharingPage.reward.tagline",
+    ],
+    "Sharing Steps": [
+        "sdk.sharingPage.steps.title",
+        "sdk.sharingPage.steps.1",
+        "sdk.sharingPage.steps.2",
+        "sdk.sharingPage.steps.3",
+    ],
+    "Sharing FAQ": [
+        "sdk.sharingPage.faq.title",
+        "sdk.sharingPage.faq.q1",
+        "sdk.sharingPage.faq.a1",
+        "sdk.sharingPage.faq.q2",
+        "sdk.sharingPage.faq.a2",
+        "sdk.sharingPage.faq.q3",
+        "sdk.sharingPage.faq.a3",
+        "sdk.sharingPage.faq.q4",
+        "sdk.sharingPage.faq.a4",
+        "sdk.sharingPage.faq.q5",
+        "sdk.sharingPage.faq.a5",
+    ],
+    "Post-Share Confirmation": [
+        "sdk.sharingPage.confirmation.title",
+        "sdk.sharingPage.confirmation.subtitle",
+        "sdk.sharingPage.confirmation.benefits.wallet.title",
+        "sdk.sharingPage.confirmation.benefits.wallet.description",
+        "sdk.sharingPage.confirmation.benefits.notify.title",
+        "sdk.sharingPage.confirmation.benefits.notify.description",
+        "sdk.sharingPage.confirmation.benefits.cashout.title",
+        "sdk.sharingPage.confirmation.benefits.cashout.description",
+        "sdk.sharingPage.confirmation.cta",
     ],
 } as const;
 
@@ -115,6 +156,7 @@ export const MODAL_TRANSLATION_GROUPS = {
  */
 export const ALL_TRANSLATION_GROUPS = {
     ...EMBEDDED_TRANSLATION_GROUPS,
+    ...SHARING_PAGE_TRANSLATION_GROUPS,
     ...MODAL_TRANSLATION_GROUPS,
 } as const;
 
@@ -243,6 +285,115 @@ export const TRANSLATION_KEY_META: Record<
     "sdk.modal.siweAuthenticate.title": {
         label: "Authentication title",
         description: "Heading of the SIWE authentication modal",
+    },
+    "sdk.sharingPage.dismiss": {
+        label: "Dismiss button",
+        description: "Text on the dismiss / later button on the sharing page",
+    },
+    "sdk.sharingPage.reward.title": {
+        label: "Reward title",
+        description: "Main heading in the reward card section",
+    },
+    "sdk.sharingPage.reward.tagline": {
+        label: "Reward tagline",
+        description:
+            "Description below the reward title explaining the sharing incentive",
+    },
+    "sdk.sharingPage.steps.title": {
+        label: "Steps title",
+        description: "Heading above the step-by-step instructions",
+    },
+    "sdk.sharingPage.steps.1": {
+        label: "Step 1",
+        description: "First step instruction (share in 1 click)",
+    },
+    "sdk.sharingPage.steps.2": {
+        label: "Step 2",
+        description: "Second step instruction (earn on every purchase)",
+    },
+    "sdk.sharingPage.steps.3": {
+        label: "Step 3",
+        description: "Third step instruction (collect earnings)",
+    },
+    "sdk.sharingPage.faq.title": {
+        label: "FAQ title",
+        description: "Heading above the FAQ section",
+    },
+    "sdk.sharingPage.faq.q1": {
+        label: "FAQ question 1",
+        description: "First frequently asked question",
+    },
+    "sdk.sharingPage.faq.a1": {
+        label: "FAQ answer 1",
+        description: "Answer to the first question",
+    },
+    "sdk.sharingPage.faq.q2": {
+        label: "FAQ question 2",
+        description: "Second frequently asked question",
+    },
+    "sdk.sharingPage.faq.a2": {
+        label: "FAQ answer 2",
+        description: "Answer to the second question",
+    },
+    "sdk.sharingPage.faq.q3": {
+        label: "FAQ question 3",
+        description: "Third frequently asked question",
+    },
+    "sdk.sharingPage.faq.a3": {
+        label: "FAQ answer 3",
+        description: "Answer to the third question",
+    },
+    "sdk.sharingPage.faq.q4": {
+        label: "FAQ question 4",
+        description: "Fourth frequently asked question",
+    },
+    "sdk.sharingPage.faq.a4": {
+        label: "FAQ answer 4",
+        description: "Answer to the fourth question",
+    },
+    "sdk.sharingPage.faq.q5": {
+        label: "FAQ question 5",
+        description: "Fifth frequently asked question",
+    },
+    "sdk.sharingPage.faq.a5": {
+        label: "FAQ answer 5",
+        description: "Answer to the fifth question",
+    },
+    "sdk.sharingPage.confirmation.title": {
+        label: "Confirmation title",
+        description: "Heading shown after a successful share",
+    },
+    "sdk.sharingPage.confirmation.subtitle": {
+        label: "Confirmation subtitle",
+        description: "Description below the confirmation title",
+    },
+    "sdk.sharingPage.confirmation.benefits.wallet.title": {
+        label: "Wallet benefit title",
+        description: "Title for the wallet creation benefit",
+    },
+    "sdk.sharingPage.confirmation.benefits.wallet.description": {
+        label: "Wallet benefit description",
+        description: "Description for the wallet creation benefit",
+    },
+    "sdk.sharingPage.confirmation.benefits.notify.title": {
+        label: "Notification benefit title",
+        description: "Title for the earnings notification benefit",
+    },
+    "sdk.sharingPage.confirmation.benefits.notify.description": {
+        label: "Notification benefit description",
+        description: "Description for the earnings notification benefit",
+    },
+    "sdk.sharingPage.confirmation.benefits.cashout.title": {
+        label: "Cashout benefit title",
+        description: "Title for the cashout benefit",
+    },
+    "sdk.sharingPage.confirmation.benefits.cashout.description": {
+        label: "Cashout benefit description",
+        description: "Description for the cashout benefit",
+    },
+    "sdk.sharingPage.confirmation.cta": {
+        label: "Confirmation CTA",
+        description: "Call-to-action button text on the confirmation screen",
     },
 };
 

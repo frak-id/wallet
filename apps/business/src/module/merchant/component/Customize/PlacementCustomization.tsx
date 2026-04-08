@@ -369,6 +369,9 @@ function ButtonShareFields({
                                     Embedded wallet
                                 </option>
                                 <option value="share-modal">Share modal</option>
+                                <option value="sharing-page">
+                                    Sharing page
+                                </option>
                             </select>
                         </FormControl>
                         <FormMessage />

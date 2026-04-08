@@ -13,6 +13,7 @@ const ResolvedPlacementSchema = t.Object({
                         t.Union([
                             t.Literal("embedded-wallet"),
                             t.Literal("share-modal"),
+                            t.Literal("sharing-page"),
                         ])
                     ),
                     useReward: t.Optional(t.Boolean()),

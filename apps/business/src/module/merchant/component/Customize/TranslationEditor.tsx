@@ -8,6 +8,7 @@ import {
     EMBEDDED_TRANSLATION_GROUPS,
     getNestedFieldError,
     MODAL_TRANSLATION_GROUPS,
+    SHARING_PAGE_TRANSLATION_GROUPS,
     TRANSLATION_KEY_META,
     TRANSLATION_LANG_FIELDS,
     type TranslationFormValues,
@@ -243,6 +244,17 @@ export function TranslationEditor({
 
             <TranslationGroupList
                 groups={EMBEDDED_TRANSLATION_GROUPS}
+                expandedGroups={expandedGroups}
+                onToggleGroup={handleToggleGroup}
+                form={form}
+                fieldPrefix={fieldPrefix}
+                activeField={activeField}
+                defaultValues={defaultValues}
+                lang={lang}
+            />
+
+            <TranslationGroupList
+                groups={SHARING_PAGE_TRANSLATION_GROUPS}
                 expandedGroups={expandedGroups}
                 onToggleGroup={handleToggleGroup}
                 form={form}

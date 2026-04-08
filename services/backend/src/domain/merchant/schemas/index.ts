@@ -23,7 +23,11 @@ const ButtonShareComponentSchema = t.Object({
     text: t.Optional(t.String({ maxLength: 500 })),
     noRewardText: t.Optional(t.String({ maxLength: 500 })),
     clickAction: t.Optional(
-        t.Union([t.Literal("embedded-wallet"), t.Literal("share-modal")])
+        t.Union([
+            t.Literal("embedded-wallet"),
+            t.Literal("share-modal"),
+            t.Literal("sharing-page"),
+        ])
     ),
     useReward: t.Optional(t.Boolean()),
     rawCss: t.Optional(t.String({ maxLength: 50000 })),

@@ -33,5 +33,5 @@ export type ButtonShareProps = {
      * Which UI to open on click
      * @defaultValue `"embedded-wallet"`
      */
-    clickAction?: "embedded-wallet" | "share-modal";
+    clickAction?: "embedded-wallet" | "share-modal" | "sharing-page";
 };

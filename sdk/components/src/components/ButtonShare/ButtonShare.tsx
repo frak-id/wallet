@@ -5,6 +5,7 @@ import { useLightDomStyles } from "@/hooks/useLightDomStyles";
 import { usePlacement } from "@/hooks/usePlacement";
 import { useReward } from "@/hooks/useReward";
 import { openEmbeddedWallet } from "@/utils/embeddedWallet";
+import { openSharingPage } from "@/utils/sharingPage";
 import { ErrorMessage } from "./components/ErrorMessage";
 import { useShareModal } from "./hooks/useShareModal";
 import type { ButtonShareProps } from "./types";
@@ -109,6 +110,8 @@ export function ButtonShare({
         trackEvent(window.FrakSetup.client, "share_button_clicked");
         if (resolvedClickAction === "share-modal") {
             await handleShare();
+        } else if (resolvedClickAction === "sharing-page") {
+            openSharingPage(resolvedTargetInteraction, placementId);
         } else {
             openEmbeddedWallet(resolvedTargetInteraction, placementId);
         }
