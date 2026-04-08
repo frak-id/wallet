@@ -1,5 +1,6 @@
 export { Deferred } from "@frak-labs/frame-connector";
 export { getBackendUrl } from "./backendUrl";
+export { clearAllCache, getCache, withCache } from "./cache";
 export { getClientId } from "./clientId";
 export { base64urlDecode, base64urlEncode } from "./compression/b64";
 export { compressJsonToB64 } from "./compression/compress";
@@ -22,6 +23,11 @@ export {
     createIframe,
     findIframeInOpener,
 } from "./iframeHelper";
+export {
+    isInAppBrowser,
+    isIOS,
+    redirectToExternalBrowser,
+} from "./inAppBrowser";
 export { sdkConfigStore } from "./sdkConfigStore";
 export {
     type AppSpecificSsoMetadata,

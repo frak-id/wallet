@@ -26,7 +26,6 @@ declare global {
             modalWalletConfig?: unknown;
             core?: unknown;
         };
-        frakSetupInProgress?: boolean;
     }
 }
 
@@ -58,7 +57,6 @@ beforeEach(() => {
         },
         core: {},
     };
-    window.frakSetupInProgress = false;
 });
 
 // Cleanup Preact Testing Library after each test

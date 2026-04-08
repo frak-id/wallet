@@ -75,17 +75,10 @@
   // Sharing config
   const sharingConfig = { link: window.location.href };
 
-  const modalWalletConfig = {
-    metadata: {
-      position: '{{ block.settings.wallet_button_position }}',
-    },
-  };
-
   window.FrakSetup = {
     config: frakConfig,
     modalConfig: baseModalConfig,
     modalShareConfig: sharingConfig,
-    modalWalletConfig,
   };
 
   // Store merchantId in sessionStorage for the checkout pixel fallback
@@ -158,22 +151,6 @@
         }
       ],
       "default": "default"
-    },
-    {
-      "type": "select",
-      "id": "wallet_button_position",
-      "label": "Wallet Button Position",
-      "options": [
-        {
-          "value": "left",
-          "label": "Left"
-        },
-        {
-          "value": "right",
-          "label": "Right"
-        }
-      ],
-      "default": "right"
     },
     {
       "type": "textarea",

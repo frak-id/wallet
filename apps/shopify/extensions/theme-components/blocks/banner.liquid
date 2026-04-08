@@ -1,0 +1,99 @@
+{% assign custom_class = '' %}
+{% if block.settings.banner_style == 'custom' %}
+  {% assign custom_class = 'frak-banner-custom' %}
+{% endif %}
+
+<frak-banner
+  {% if block.settings.placement != blank %}placement="{{ block.settings.placement }}"{% endif %}
+  classname="{{ custom_class }}"
+  {% if block.settings.interaction != blank %}interaction="{{ block.settings.interaction }}"{% endif %}
+></frak-banner>
+
+{% style %}
+  .frak-banner-custom.banner {
+    background-color: {{ block.settings.background_color }};
+    border-color: {{ block.settings.accent_color }};
+  }
+  .frak-banner-custom .banner__icon {
+    color: {{ block.settings.accent_color }};
+  }
+  .frak-banner-custom .banner__title {
+    color: {{ block.settings.text_color }};
+  }
+  .frak-banner-custom .banner__description {
+    color: {{ block.settings.text_color }};
+  }
+  .frak-banner-custom .banner__cta {
+    background-color: {{ block.settings.cta_color }};
+    border-color: {{ block.settings.cta_color }};
+    color: {{ block.settings.cta_text_color }};
+  }
+{% endstyle %}
+
+{% schema %}
+{
+  "name": "Frak Banner",
+  "target": "body",
+  "settings": [
+    {
+      "type": "text",
+      "id": "placement",
+      "label": "Placement ID",
+      "info": "Optional placement identifier for backend-driven customization"
+    },
+    {
+      "type": "text",
+      "id": "interaction",
+      "label": "Target interaction",
+      "info": "Filter rewards by interaction type (e.g. purchase, referral). Leave empty for best reward across all types"
+    },
+    {
+      "type": "select",
+      "id": "banner_style",
+      "label": "Banner Style",
+      "options": [
+        {
+          "value": "default",
+          "label": "Default"
+        },
+        {
+          "value": "custom",
+          "label": "Custom Colors"
+        }
+      ],
+      "default": "default"
+    },
+    {
+      "type": "color",
+      "id": "accent_color",
+      "label": "Accent color",
+      "info": "Used for the border and icon",
+      "default": "#3b82f6"
+    },
+    {
+      "type": "color",
+      "id": "cta_color",
+      "label": "Button color",
+      "default": "#eab308"
+    },
+    {
+      "type": "color",
+      "id": "cta_text_color",
+      "label": "Button text color",
+      "default": "#1e293b"
+    },
+    {
+      "type": "color",
+      "id": "background_color",
+      "label": "Background color",
+      "default": "#ffffff"
+    },
+    {
+      "type": "color",
+      "id": "text_color",
+      "label": "Text color",
+      "default": "#1e293b"
+    }
+  ]
+}
+{% endschema %}

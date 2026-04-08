@@ -308,64 +308,84 @@
 </div>
 
 <!-- ═══════════════════════════════════════════ -->
-<!-- Section 3: Backend Served Translations      -->
+<!-- Section 3: Sharing Page                     -->
 <!-- ═══════════════════════════════════════════ -->
 <div class="test-section">
-    <h2>3. Backend Served Translations</h2>
+    <h2>3. Sharing Page</h2>
     <p>
-        This modal relies on backend translations from the merchant's
-        <code>sdkConfig.translations</code> (resolved via <code>/resolve</code>).
-        Backend translations overwrite SDK <code>customizations.i18n</code> for
-        overlapping keys.
+        Programmatic <code>displaySharingPage()</code> call opens a full-page
+        sharing UI with product info, estimated rewards, sharing steps, FAQ,
+        and share/copy buttons.
     </p>
     <p class="note">
-        Requires a backend running with a merchant configured for "localhost"
-        that has translations in its sdkConfig.
+        The promise resolves on first share/copy action. The page stays visible
+        for additional interactions.
     </p>
 
     <div>
-        <button id="btn-modal-backend-translations">Open Modal (backend translations)</button>
+        <button id="btn-sharing-page">Open Sharing Page</button>
+        <button id="btn-sharing-page-product" class="variant">Sharing Page (with product)</button>
     </div>
 
-    <div class="cascade-info">
-        <div><span class="high">1. Backend placement translations</span> (highest priority)</div>
-        <div><span class="high">2. Backend global translations</span></div>
-        <div>3. Per-modal metadata.i18n</div>
-        <div>4. SDK customizations.i18n</div>
-        <div class="low">5. Built-in defaults (lowest priority)</div>
-    </div>
-
-    <div id="backend-i18n-status" class="status-box">
-        <div class="info">[Ready] Click to test backend-served translations</div>
+    <div id="sharing-page-status" class="status-box">
+        <div class="info">[Ready] Click a button to trigger the sharing page</div>
     </div>
 </div>
 
 <!-- ═══════════════════════════════════════════ -->
-<!-- Section 4: Backend vs Dev Translations      -->
+<!-- Section 4: Post-Purchase Component          -->
 <!-- ═══════════════════════════════════════════ -->
 <div class="test-section">
-    <h2>4. Backend vs Dev Translations</h2>
+    <h2>4. Post-Purchase Component</h2>
     <p>
-        Compare translation sources. The SDK config above includes
-        <code>customizations.i18n</code> with dev overrides. Open each modal
-        and observe which translation source wins.
+        The <code>&lt;frak-post-purchase&gt;</code> web component renders an
+        inline card on thank-you / order-status pages. It shows referral rewards
+        and a share CTA.
+    </p>
+    <p class="note">
+        Fetches referral status and merchant info automatically. Variant is
+        determined by the user's referral state (referrer vs referee).
     </p>
 
-    <div>
-        <button id="btn-modal-dev-i18n">Dev i18n (SDK config)</button>
-        <button id="btn-modal-permodal-i18n" class="variant">Per-modal i18n override</button>
-        <button id="btn-modal-placement-i18n" class="alt">Placement i18n (hero-share)</button>
+    <h3>Default (auto-detect variant)</h3>
+    <div class="component-row">
+        <frak-post-purchase></frak-post-purchase>
     </div>
 
-    <div class="cascade-info">
-        <div><strong>Expected behavior:</strong></div>
-        <div>&bull; "Dev i18n" &rarr; SDK translations, overwritten by backend for overlapping keys</div>
-        <div>&bull; "Per-modal" &rarr; per-call i18n wins over both SDK and backend</div>
-        <div>&bull; "Placement" &rarr; placement translations win over everything</div>
+    <h3>With sharing URL override</h3>
+    <div class="component-row">
+        <frak-post-purchase sharing-url="https://example.com/product/shoes"></frak-post-purchase>
+    </div>
+</div>
+
+<!-- ═══════════════════════════════════════════ -->
+<!-- Section 5: Banner Component                 -->
+<!-- ═══════════════════════════════════════════ -->
+<div class="test-section">
+    <h2>5. Banner Component</h2>
+    <p>
+        The <code>&lt;frak-banner&gt;</code> web component auto-detects its mode:
+        in-app browser detection (priority) or referral success banner.
+        Uses Light DOM to inherit merchant styles.
+    </p>
+    <p class="note">
+        The in-app browser banner only appears in in-app browsers (Instagram, TikTok, etc.).
+        The referral banner appears after a successful referral.
+    </p>
+
+    <h3>Default (auto-detect mode)</h3>
+    <div class="component-row">
+        <frak-banner></frak-banner>
     </div>
 
-    <div id="dev-vs-backend-status" class="status-box">
-        <div class="info">[Ready] Click to compare translation sources</div>
+    <h3>With placement</h3>
+    <div class="component-row">
+        <frak-banner placement="hero-share"></frak-banner>
+    </div>
+
+    <h3>With interaction filter (purchase only)</h3>
+    <div class="component-row">
+        <frak-banner interaction="purchase"></frak-banner>
     </div>
 </div>
 

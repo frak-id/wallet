@@ -5,8 +5,8 @@
  * Reactivity is handled via the `frak:config` CustomEvent on `window`.
  * Resolved configs are cached in localStorage (30 s TTL, stale-while-revalidate).
  *
- * Also owns merchant config fetching (resolve), promise deduplication,
- * and the `frak-merchant-id` sessionStorage compatibility key.
+ * Backend fetch responses are cached and deduplicated via `withCache`.
+ * Also owns the `frak-merchant-id` sessionStorage compatibility key.
  */
 
 import type { Language } from "../types/config";
@@ -15,6 +15,7 @@ import type {
     SdkResolvedConfig,
 } from "../types/resolvedConfig";
 import { getBackendUrl } from "./backendUrl";
+import { clearAllCache, withCache } from "./cache";
 
 const GLOBAL_KEY = "__frakSdkConfig";
 const CACHE_TTL = 30_000; // 30 seconds
@@ -118,18 +119,8 @@ function getTargetDomain(domain?: string): string {
 }
 
 // ---------------------------------------------------------------------------
-// Merchant config fetching (resolve) + dedup
+// Merchant config fetching (resolve)
 // ---------------------------------------------------------------------------
-
-const responseCache = new Map<string, MerchantConfigResponse>();
-const promiseCache = new Map<
-    string,
-    Promise<MerchantConfigResponse | undefined>
->();
-
-function resolveCacheKey(domain: string, lang?: string): string {
-    return `${domain}:${lang ?? ""}`;
-}
 
 async function fetchFromBackend(
     targetDomain: string,
@@ -151,8 +142,6 @@ async function fetchFromBackend(
         }
 
         const data = (await response.json()) as MerchantConfigResponse;
-        const key = resolveCacheKey(targetDomain, lang);
-        responseCache.set(key, data);
 
         // Write compatibility sessionStorage key
         if (isBrowser) {
@@ -210,8 +199,7 @@ export const sdkConfigStore = {
 
     clearCache(): void {
         removeCache();
-        responseCache.clear();
-        promiseCache.clear();
+        clearAllCache();
         if (isBrowser) {
             try {
                 sessionStorage.removeItem(MERCHANT_ID_KEY);
@@ -229,25 +217,23 @@ export const sdkConfigStore = {
             return Promise.resolve(undefined);
         }
 
-        const key = resolveCacheKey(targetDomain, lang);
+        const cacheKey = `sdkConfig:${targetDomain}:${lang ?? ""}`;
 
-        if (responseCache.has(key)) {
-            return Promise.resolve(responseCache.get(key));
-        }
-
-        const pending = promiseCache.get(key);
-        if (pending) {
-            return pending;
-        }
-
-        const promise = fetchFromBackend(targetDomain, walletUrl, lang).then(
-            (result) => {
-                promiseCache.delete(key);
+        return withCache(
+            async () => {
+                const result = await fetchFromBackend(
+                    targetDomain,
+                    walletUrl,
+                    lang
+                );
+                // Throw on failure so withCache doesn't cache undefined
+                if (!result) {
+                    throw new Error("Config resolution returned empty");
+                }
                 return result;
-            }
-        );
-        promiseCache.set(key, promise);
-        return promise;
+            },
+            { cacheKey, cacheTime: Number.POSITIVE_INFINITY }
+        ).catch(() => undefined);
     },
 
     getMerchantId(): string | undefined {

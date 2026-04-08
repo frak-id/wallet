@@ -5,6 +5,7 @@ import { useLightDomStyles } from "@/hooks/useLightDomStyles";
 import { usePlacement } from "@/hooks/usePlacement";
 import { useReward } from "@/hooks/useReward";
 import { openEmbeddedWallet } from "@/utils/embeddedWallet";
+import { openSharingPage } from "@/utils/sharingPage";
 import { ErrorMessage } from "./components/ErrorMessage";
 import { useShareModal } from "./hooks/useShareModal";
 import type { ButtonShareProps } from "./types";
@@ -80,8 +81,7 @@ export function ButtonShare({
         [componentConfig?.useReward, rawUseReward]
     );
     const resolvedClickAction = useMemo(
-        () =>
-            componentConfig?.clickAction ?? rawClickAction ?? "embedded-wallet",
+        () => componentConfig?.clickAction ?? rawClickAction ?? "sharing-page",
         [componentConfig?.clickAction, rawClickAction]
     );
     const { shouldRender, isHidden, isClientReady } = useClientReady();
@@ -107,10 +107,12 @@ export function ButtonShare({
 
     const onClick = useCallback(async () => {
         trackEvent(window.FrakSetup.client, "share_button_clicked");
-        if (resolvedClickAction === "share-modal") {
+        if (resolvedClickAction === "embedded-wallet") {
+            openEmbeddedWallet(resolvedTargetInteraction, placementId);
+        } else if (resolvedClickAction === "share-modal") {
             await handleShare();
         } else {
-            openEmbeddedWallet(resolvedTargetInteraction, placementId);
+            openSharingPage(resolvedTargetInteraction, placementId);
         }
     }, [
         resolvedClickAction,

@@ -23,7 +23,11 @@ const ButtonShareComponentSchema = t.Object({
     text: t.Optional(t.String({ maxLength: 500 })),
     noRewardText: t.Optional(t.String({ maxLength: 500 })),
     clickAction: t.Optional(
-        t.Union([t.Literal("embedded-wallet"), t.Literal("share-modal")])
+        t.Union([
+            t.Literal("embedded-wallet"),
+            t.Literal("share-modal"),
+            t.Literal("sharing-page"),
+        ])
     ),
     useReward: t.Optional(t.Boolean()),
     rawCss: t.Optional(t.String({ maxLength: 50000 })),
@@ -31,9 +35,7 @@ const ButtonShareComponentSchema = t.Object({
 });
 
 const ButtonWalletComponentSchema = t.Object({
-    position: t.Optional(
-        t.Union([t.Literal("bottom-right"), t.Literal("bottom-left")])
-    ),
+    position: t.Optional(t.Union([t.Literal("right"), t.Literal("left")])),
     rawCss: t.Optional(t.String({ maxLength: 50000 })),
     css: t.Optional(t.String({ maxLength: 50000 })),
 });
@@ -44,10 +46,34 @@ const OpenInAppComponentSchema = t.Object({
     css: t.Optional(t.String({ maxLength: 50000 })),
 });
 
+const PostPurchaseComponentSchema = t.Object({
+    refereeText: t.Optional(t.String({ maxLength: 500 })),
+    refereeNoRewardText: t.Optional(t.String({ maxLength: 500 })),
+    referrerText: t.Optional(t.String({ maxLength: 500 })),
+    referrerNoRewardText: t.Optional(t.String({ maxLength: 500 })),
+    ctaText: t.Optional(t.String({ maxLength: 500 })),
+    ctaNoRewardText: t.Optional(t.String({ maxLength: 500 })),
+    rawCss: t.Optional(t.String({ maxLength: 50000 })),
+    css: t.Optional(t.String({ maxLength: 50000 })),
+});
+
+const BannerComponentSchema = t.Object({
+    referralTitle: t.Optional(t.String({ maxLength: 500 })),
+    referralDescription: t.Optional(t.String({ maxLength: 500 })),
+    referralCta: t.Optional(t.String({ maxLength: 500 })),
+    inappTitle: t.Optional(t.String({ maxLength: 500 })),
+    inappDescription: t.Optional(t.String({ maxLength: 500 })),
+    inappCta: t.Optional(t.String({ maxLength: 500 })),
+    rawCss: t.Optional(t.String({ maxLength: 50000 })),
+    css: t.Optional(t.String({ maxLength: 50000 })),
+});
+
 const PlacementComponentsSchema = t.Object({
     buttonShare: t.Optional(ButtonShareComponentSchema),
     buttonWallet: t.Optional(ButtonWalletComponentSchema),
     openInApp: t.Optional(OpenInAppComponentSchema),
+    postPurchase: t.Optional(PostPurchaseComponentSchema),
+    banner: t.Optional(BannerComponentSchema),
 });
 
 export const PlacementSchema = t.Object({

@@ -23,16 +23,34 @@ export type ResolvedPlacement = {
         buttonShare?: {
             text?: string;
             noRewardText?: string;
-            clickAction?: "embedded-wallet" | "share-modal";
+            clickAction?: "embedded-wallet" | "share-modal" | "sharing-page";
             useReward?: boolean;
             css?: string;
         };
         buttonWallet?: {
-            position?: "bottom-right" | "bottom-left";
+            position?: "right" | "left";
             css?: string;
         };
         openInApp?: {
             text?: string;
+            css?: string;
+        };
+        postPurchase?: {
+            refereeText?: string;
+            refereeNoRewardText?: string;
+            referrerText?: string;
+            referrerNoRewardText?: string;
+            ctaText?: string;
+            ctaNoRewardText?: string;
+            css?: string;
+        };
+        banner?: {
+            referralTitle?: string;
+            referralDescription?: string;
+            referralCta?: string;
+            inappTitle?: string;
+            inappDescription?: string;
+            inappCta?: string;
             css?: string;
         };
     };

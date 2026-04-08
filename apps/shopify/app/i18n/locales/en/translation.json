@@ -48,11 +48,9 @@
             "description": "Please activate the <strong>Frak Listener</strong> using the switch as shown below"
         },
         "step6": {
-            "title": "Add the share or wallet button in your theme",
+            "title": "Add the share button in your theme",
             "descriptionShare": "Please add <strong>Frak Sharing Button</strong> as shown below",
-            "descriptionWallet": "Please activate <strong>Frak Wallet Button</strong> as shown below",
-            "linkShare": "Add the Frak Sharing Button to your product page",
-            "linkWallet": "Activate the Frak Wallet Button"
+            "linkShare": "Add the Frak Sharing Button to your product page"
         }
     },
     "pixel": {
@@ -352,20 +350,13 @@
         "description": "Customize the look and feel of your Frak integration across your store.",
         "tabs": {
             "customizations": "Text Customizations",
-            "shareButton": "Share Button",
-            "walletButton": "Wallet Button"
+            "shareButton": "Share Button"
         },
         "shareButton": {
             "link": "Configure button in your product page",
             "noProduct": "You need to add a product to your store to add the sharing button",
             "activated": "Share button is on your product page",
             "notActivated": "Share button is not in your product page",
-            "todo": "Please add the button as shown below"
-        },
-        "walletButton": {
-            "link": "Configure wallet button in theme editor",
-            "activated": "Wallet button is in your theme",
-            "notActivated": "Wallet button is not in your theme",
             "todo": "Please add the button as shown below"
         }
     },

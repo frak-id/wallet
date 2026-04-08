@@ -19,6 +19,9 @@ export type {
     DisplayEmbeddedWalletParamsType,
     DisplayEmbeddedWalletResultType,
     DisplayModalParamsType,
+    // RPC Sharing page
+    DisplaySharingPageParamsType,
+    DisplaySharingPageResultType,
     EmbeddedViewActionReferred,
     EmbeddedViewActionSharing,
     EstimatedReward,
@@ -68,6 +71,7 @@ export type {
     SendTransactionModalStepType,
     SendTransactionReturnType,
     SendTransactionTxType,
+    SharingPageProduct,
     SiweAuthenticateModalStepType,
     SiweAuthenticateReturnType,
     SiweAuthenticationParams,
@@ -76,8 +80,9 @@ export type {
     // Tracking
     TrackArrivalParams,
     TrackArrivalResult,
-    UtmParams,
     // Rpc
+    UserReferralStatusType,
+    UtmParams,
     WalletStatusReturnType,
 } from "./types";
 export { isV1Context, isV2Context } from "./types";
@@ -88,6 +93,7 @@ export {
     base64urlEncode,
     baseIframeProps,
     type CompressedSsoData,
+    clearAllCache,
     compressJsonToB64,
     createIframe,
     DEEP_LINK_SCHEME,
@@ -100,15 +106,20 @@ export {
     formatAmount,
     generateSsoUrl,
     getBackendUrl,
+    getCache,
     getClientId,
     getCurrencyAmountKey,
     getSupportedCurrency,
     getSupportedLocale,
     isChromiumAndroid,
     isFrakDeepLink,
+    isInAppBrowser,
+    isIOS,
+    redirectToExternalBrowser,
     sdkConfigStore,
     toAndroidIntentUrl,
     trackEvent,
     triggerDeepLinkWithFallback,
+    withCache,
 } from "./utils";
 export { computeLegacyProductId } from "./utils/computeLegacyProductId";

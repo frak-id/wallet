@@ -13,8 +13,10 @@ import {
 } from "@/module/handlers/ssoHandler";
 import { useDisplayEmbeddedWallet } from "@/module/hooks/useDisplayEmbeddedWallet";
 import { useDisplayModalListener } from "@/module/hooks/useDisplayModalListener";
+import { useDisplaySharingPageListener } from "@/module/hooks/useDisplaySharingPageListener";
 import { useListenerDataPreload } from "@/module/hooks/useListenerDataPreload";
 import { useOnGetMerchantInformation } from "@/module/hooks/useOnGetMerchantInformation";
+import { useOnGetUserReferralStatus } from "@/module/hooks/useOnGetUserReferralStatus";
 import { useSendInteractionListener } from "@/module/hooks/useSendInteractionListener";
 import { useSendPing } from "@/module/hooks/useSendPing";
 import { useWalletStatusListener } from "@/module/hooks/useWalletStatusListener";
@@ -57,6 +59,11 @@ function ListenerContent() {
     const onGetMerchantInformation = useOnGetMerchantInformation();
 
     const onSendInteraction = useSendInteractionListener();
+
+    const onGetUserReferralStatus = useOnGetUserReferralStatus();
+
+    // Hook when a sharing page display is asked
+    const onDisplaySharingPage = useDisplaySharingPageListener();
 
     // Create the RPC listener with centralized message handling
     useEffect(() => {
@@ -116,6 +123,8 @@ function ListenerContent() {
         );
         listener.handle("frak_displayEmbeddedWallet", onDisplayEmbeddedWallet);
         listener.handle("frak_sendInteraction", onSendInteraction);
+        listener.handle("frak_getUserReferralStatus", onGetUserReferralStatus);
+        listener.handle("frak_displaySharingPage", onDisplaySharingPage);
 
         // Register streaming handlers (IFrameRpcSchema)
         listener.handleStream(
@@ -134,7 +143,9 @@ function ListenerContent() {
         onWalletListenRequest,
         onDisplayModalRequest,
         onGetMerchantInformation,
+        onGetUserReferralStatus,
         onDisplayEmbeddedWallet,
+        onDisplaySharingPage,
         onSendInteraction,
     ]);
 

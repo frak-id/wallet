@@ -36,6 +36,12 @@ export type {
     ModalRpcStepsResultType,
     ModalStepTypes,
 } from "./rpc/displayModal";
+// Sharing page related
+export type {
+    DisplaySharingPageParamsType,
+    DisplaySharingPageResultType,
+    SharingPageProduct,
+} from "./rpc/displaySharingPage";
 export type {
     DisplayEmbeddedWalletParamsType,
     DisplayEmbeddedWalletResultType,
@@ -70,6 +76,7 @@ export type {
     PrepareSsoReturnType,
     SsoMetadata,
 } from "./rpc/sso";
+export type { UserReferralStatusType } from "./rpc/userReferralStatus";
 export type { WalletStatusReturnType } from "./rpc/walletStatus";
 // Tracking
 export type {

@@ -79,18 +79,9 @@ describe("stepValidations", () => {
         expect(stepValidations[6](data)).toBe(true);
     });
 
-    it("step 6: passes when themeWalletButton is present", () => {
+    it("step 6: fails when isThemeHasFrakButton is false", () => {
         const data: OnboardingStepData = {
             isThemeHasFrakButton: false,
-            themeWalletButton: "block-id",
-        };
-        expect(stepValidations[6](data)).toBe(true);
-    });
-
-    it("step 6: fails when neither button is present", () => {
-        const data: OnboardingStepData = {
-            isThemeHasFrakButton: false,
-            themeWalletButton: null,
         };
         expect(stepValidations[6](data)).toBe(false);
     });

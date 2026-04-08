@@ -1,6 +1,5 @@
 import { ButtonTab } from "app/components/Appearance/ButtonTab";
 import { CustomizationsTab } from "app/components/Appearance/CustomizationsTab";
-import { WalletButtonTab } from "app/components/Appearance/WalletButtonTab";
 import { PageHeading } from "app/components/ui/PageHeading";
 import { Tabs } from "app/components/ui/Tabs";
 import {
@@ -12,10 +11,7 @@ import {
     updateI18nCustomizations,
 } from "app/services.server/metafields";
 import { firstProductPublished } from "app/services.server/shop";
-import {
-    doesThemeHasFrakButton,
-    doesThemeHasFrakWalletButton,
-} from "app/services.server/theme";
+import { doesThemeHasFrakButton } from "app/services.server/theme";
 import { authenticate } from "app/shopify.server";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -31,13 +27,11 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
         appearanceMetafield,
         isThemeHasFrakButton,
         firstProduct,
-        themeWalletButton,
     ] = await Promise.all([
         getI18nCustomizations(context),
         getAppearanceMetafield(context),
         doesThemeHasFrakButton(context),
         firstProductPublished(context),
-        doesThemeHasFrakWalletButton(context),
     ]);
 
     return data({
@@ -45,7 +39,6 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
         appearanceMetafield,
         isThemeHasFrakButton,
         firstProduct,
-        themeWalletButton,
     });
 };
 
@@ -139,7 +132,6 @@ export default function AppearancePage() {
         appearanceMetafield,
         isThemeHasFrakButton,
         firstProduct,
-        themeWalletButton,
     } = useLoaderData<typeof loader>();
     const { t } = useTranslation();
     const [selectedTab, setSelectedTab] = useState(0);
@@ -154,11 +146,6 @@ export default function AppearancePage() {
             id: "share-button",
             content: t("appearance.tabs.shareButton"),
             panelID: "share-button-panel",
-        },
-        {
-            id: "wallet-button",
-            content: t("appearance.tabs.walletButton"),
-            panelID: "wallet-button-panel",
         },
     ];
 
@@ -177,10 +164,6 @@ export default function AppearancePage() {
                         isThemeHasFrakButton={isThemeHasFrakButton}
                         firstProduct={firstProduct}
                     />
-                );
-            case 2:
-                return (
-                    <WalletButtonTab themeWalletButton={themeWalletButton} />
                 );
             default:
                 return null;

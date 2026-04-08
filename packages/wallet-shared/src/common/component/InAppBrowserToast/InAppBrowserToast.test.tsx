@@ -51,18 +51,21 @@ vi.mock("../../hook/useSessionFlag", () => ({
     }),
 }));
 
-vi.mock("../../lib/inApp", () => ({
+vi.mock("@frak-labs/core-sdk", () => ({
     get isInAppBrowser() {
         return inAppState.isInAppBrowser;
     },
+    getBackendUrl: () => "https://backend.frak.id",
+    redirectToExternalBrowser: eventMocks.redirectToExternalBrowser,
+}));
+
+vi.mock("../../lib/inApp", () => ({
     get isInIframe() {
         return inAppState.isInIframe;
     },
     get isIPad() {
         return inAppState.isIPad;
     },
-    inAppRedirectUrl: "https://example.com/redirect",
-    redirectToExternalBrowser: eventMocks.redirectToExternalBrowser,
 }));
 
 type ToastMockProps = {

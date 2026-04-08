@@ -52,6 +52,52 @@
                     "share_referred": "🚀 Partagez a votre tour pour gagner plus!"
                 }
             }
+        },
+        "sharingPage": {
+            "dismiss": "Plus tard",
+            "reward": {
+                "title": "Partagez vite à vos proches",
+                "tagline": "Vous recevez une récompense à chaque fois qu'un proche achète via votre lien."
+            },
+            "steps": {
+                "title": "",
+                "1": "Partagez en 1 clic. Un lien personnel est généré automatiquement à chaque partage.",
+                "2": "Gagnez à chaque achat. Chaque commande réalisée grâce à vous est récompensée en cash.",
+                "3": "Encaissez vos gains dans l'app. Installez FRAK pour récupérer vos gains."
+            },
+            "faq": {
+                "title": "Questions fréquentes",
+                "q1": "Qui peut devenir \"ambassadeur\" ?",
+                "a1": "Toute personne peut devenir ambassadeur en partageant des produits via son lien unique.",
+                "q2": "Combien puis-je gagner ?",
+                "a2": "Le montant de vos gains dépend du programme de récompense de la marque et du nombre d'achats réalisés via votre lien.",
+                "q3": "Quand suis-je payé·e ?",
+                "a3": "Vos gains sont crédités dès qu'un achat est confirmé via votre lien de partage.",
+                "q4": "Est-ce que mes proches peuvent eux aussi devenir \"ambassadeur\" ?",
+                "a4": "Oui, chaque personne peut créer son propre lien de partage et devenir ambassadeur à son tour.",
+                "q5": "Pourquoi les marques utilisent-elles Frak ?",
+                "a5": "Frak permet aux marques de récompenser leur communauté pour le bouche-à-oreille, de manière transparente et décentralisée."
+            },
+            "confirmation": {
+                "title": "Merci pour votre partage !\nNe passez pas à côté de vos {{ estimatedReward }}.",
+                "subtitle": "Installez l'app Frak, partenaire officiel de {{ productName }}, et suivez vos gains en temps réel.",
+                "benefits": {
+                    "wallet": {
+                        "title": "Votre porte-monnaie sécurisé en 10 secondes",
+                        "description": "Sans email, sans mot de passe, sans formulaire. Simple, rapide et sécurisé."
+                    },
+                    "notify": {
+                        "title": "Soyez alerté dès que vous gagnez",
+                        "description": "Recevez une notification dès qu'un achat est réalisé grâce à vous."
+                    },
+                    "cashout": {
+                        "title": "Encaissez quand vous le souhaitez",
+                        "description": "Transférez vos gains directement vers votre compte bancaire en 3 clics."
+                    }
+                },
+                "cta": "Récupérer mes {{ estimatedReward }}",
+                "shareAgain": "Partager à nouveau"
+            }
         }
     }
 }

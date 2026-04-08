@@ -69,3 +69,86 @@ export const lightDomBaseCss = `
     }
 }
 `;
+
+// Light DOM base styles for Banner — :where() = specificity 0
+export const bannerBaseCss = `
+:where(frak-banner) {
+    display: block;
+}
+
+:where(frak-banner .banner) {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 16px;
+    border-top: 2px solid #3b82f6;
+    border-bottom: 2px solid #3b82f6;
+    font-family: inherit;
+    line-height: 1.4;
+}
+
+:where(frak-banner .banner__fadeIn) {
+    animation: frak-fadeIn 300ms ease-in;
+}
+
+@keyframes frak-fadeIn {
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
+}
+
+:where(frak-banner .banner__icon) {
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    color: #3b82f6;
+}
+
+:where(frak-banner .banner__icon svg) {
+    width: 100%;
+    height: 100%;
+}
+
+:where(frak-banner .banner__content) {
+    flex: 1;
+    min-width: 0;
+}
+
+:where(frak-banner .banner__title) {
+    font-weight: 700;
+    font-size: 0.875rem;
+    margin: 0 0 2px;
+}
+
+:where(frak-banner .banner__description) {
+    font-size: 0.75rem;
+    margin: 0;
+    opacity: 0.7;
+}
+
+:where(frak-banner .banner__cta) {
+    flex-shrink: 0;
+    padding: 8px 16px;
+    font-weight: 700;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    border: 2px solid #eab308;
+    border-radius: 0;
+    background: #eab308;
+    color: #1e293b;
+    cursor: pointer;
+    white-space: nowrap;
+}
+
+:where(frak-banner .banner__cta:hover) {
+    opacity: 0.9;
+}
+`;

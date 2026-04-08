@@ -4,6 +4,7 @@ import { EstimatedRewardsResultSchema } from "../../../domain/campaign/schemas";
 import { MerchantContext } from "../../../domain/merchant/context";
 import { MerchantResolveResponseSchema } from "../../schemas";
 import { exploreApi } from "./explorer";
+import { merchantReferralStatusRoute } from "./referralStatus";
 
 function normalizeDomain(domain: string): string {
     return domain
@@ -56,4 +57,5 @@ export const userMerchantApi = new Elysia({ prefix: "/merchant" })
             },
         }
     )
-    .use(exploreApi);
+    .use(exploreApi)
+    .use(merchantReferralStatusRoute);

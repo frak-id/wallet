@@ -38,11 +38,7 @@ export { useSessionFlag } from "./hook/useSessionFlag";
 // Icons
 export { LogoFrakWithName } from "./icons/LogoFrakWithName";
 // Lib
-export {
-    inAppRedirectUrl,
-    isInAppBrowser,
-    isInIframe,
-} from "./lib/inApp";
+export { isInIframe } from "./lib/inApp";
 export { ua } from "./lib/ua";
 export { isWebAuthNSupported } from "./lib/webauthn";
 

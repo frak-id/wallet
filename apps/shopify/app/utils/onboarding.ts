@@ -6,7 +6,6 @@ import {
 import {
     doesThemeHasFrakActivated,
     doesThemeHasFrakButton,
-    doesThemeHasFrakWalletButton,
     type GetMainThemeIdReturnType,
     getMainThemeId,
 } from "app/services.server/theme";
@@ -28,7 +27,6 @@ export type OnboardingStepData = {
     isThemeHasFrakButton?: boolean;
     theme?: GetMainThemeIdReturnType;
     firstProduct?: FirstProductPublishedReturnType;
-    themeWalletButton?: string | null;
     frakWebhook?: {
         setup: boolean;
     };
@@ -48,7 +46,7 @@ export const stepValidations: StepValidation = {
     3: (data) => Boolean(data?.webhooks?.length), // Webhooks must be set up
     4: (data) => Boolean(data?.frakWebhook?.setup), // Frak webhook must be set up
     5: (data) => Boolean(data?.isThemeHasFrakActivated), // Theme must have Frak activated
-    6: (data) => Boolean(data?.isThemeHasFrakButton || data?.themeWalletButton), // Theme must have Frak button or wallet button
+    6: (data) => Boolean(data?.isThemeHasFrakButton), // Theme must have Frak button
 };
 
 /**
@@ -113,13 +111,11 @@ export const stepDataFetchers = {
 
     6: async (context: AuthenticatedContext): Promise<OnboardingStepData> => {
         try {
-            const [isThemeHasFrakButton, firstProduct, themeWalletButton] =
-                await Promise.all([
-                    doesThemeHasFrakButton(context),
-                    firstProductPublished(context),
-                    doesThemeHasFrakWalletButton(context),
-                ]);
-            return { isThemeHasFrakButton, firstProduct, themeWalletButton };
+            const [isThemeHasFrakButton, firstProduct] = await Promise.all([
+                doesThemeHasFrakButton(context),
+                firstProductPublished(context),
+            ]);
+            return { isThemeHasFrakButton, firstProduct };
         } catch (error) {
             console.error("Error fetching button data:", error);
             return {};

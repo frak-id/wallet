@@ -2,8 +2,8 @@ import { describe, expect, it } from "vitest";
 import {
     detectAppBlockSupport,
     detectFrakActivated,
+    detectFrakBodyComponent,
     detectFrakButton,
-    detectWalletButton,
     extractThemeId,
     type ThemeBlockInfo,
 } from "./theme";
@@ -108,7 +108,17 @@ describe("detectFrakButton", () => {
         expect(detectFrakButton(sections)).toBe(true);
     });
 
-    it("returns false when no referral_button in block_order", () => {
+    it("returns true when main section has post_purchase in block_order", () => {
+        const sections = {
+            main: {
+                type: "main-product",
+                block_order: ["title", "frak_post_purchase_xyz789", "price"],
+            },
+        };
+        expect(detectFrakButton(sections)).toBe(true);
+    });
+
+    it("returns false when no Frak block in block_order", () => {
         const sections = {
             main: {
                 type: "main-product",
@@ -153,53 +163,57 @@ describe("detectFrakButton", () => {
 });
 
 /* ------------------------------------------------------------------ */
-/*  Wallet button detection (settings_data.json parsing)               */
+/*  Frak body component detection (settings_data.json parsing)         */
 /* ------------------------------------------------------------------ */
 
-describe("detectWalletButton", () => {
-    it("returns block ID when wallet_button is present and enabled", () => {
+describe("detectFrakBodyComponent", () => {
+    it("returns true when banner block is present and enabled", () => {
         const blocks: Record<string, ThemeBlockInfo> = {
-            xyz789: {
-                type: "shopify://apps/frak/blocks/wallet_button/abc123",
+            abc123: {
+                type: "shopify://apps/frak/blocks/banner/abcdef",
+                disabled: false,
             },
         };
-        expect(detectWalletButton(blocks)).toBe("abc123");
+        expect(detectFrakBodyComponent(blocks)).toBe(true);
     });
 
-    it("returns null when wallet_button is disabled", () => {
+    it("returns false when banner block is disabled", () => {
         const blocks: Record<string, ThemeBlockInfo> = {
-            xyz789: {
-                type: "shopify://apps/frak/blocks/wallet_button/abc123",
+            abc123: {
+                type: "shopify://apps/frak/blocks/banner/abcdef",
                 disabled: true,
             },
         };
-        expect(detectWalletButton(blocks)).toBeNull();
+        expect(detectFrakBodyComponent(blocks)).toBe(false);
     });
 
-    it("returns null when no wallet_button exists", () => {
+    it("returns false when no banner block exists", () => {
         const blocks: Record<string, ThemeBlockInfo> = {
-            xyz789: {
-                type: "shopify://apps/frak/blocks/listener/abc123",
+            abc123: {
+                type: "shopify://apps/frak/blocks/listener/xyz",
             },
         };
-        expect(detectWalletButton(blocks)).toBeNull();
+        expect(detectFrakBodyComponent(blocks)).toBe(false);
     });
 
-    it("returns null when blocks is undefined", () => {
-        expect(detectWalletButton(undefined)).toBeNull();
+    it("returns false when blocks is undefined", () => {
+        expect(detectFrakBodyComponent(undefined)).toBe(false);
     });
 
-    it("returns null when blocks is empty", () => {
-        expect(detectWalletButton({})).toBeNull();
+    it("returns false when blocks is empty", () => {
+        expect(detectFrakBodyComponent({})).toBe(false);
     });
 
-    it("extracts ID with complex suffix", () => {
+    it("finds banner among multiple blocks", () => {
         const blocks: Record<string, ThemeBlockInfo> = {
-            block1: {
-                type: "shopify://apps/frak/blocks/wallet_button/def456-xyz",
+            block1: { type: "shopify://apps/frak/blocks/listener/1" },
+            block2: {
+                type: "shopify://apps/frak/blocks/banner/abc",
+                disabled: false,
             },
+            block3: { type: "shopify://apps/other/blocks/bar/2" },
         };
-        expect(detectWalletButton(blocks)).toBe("def456-xyz");
+        expect(detectFrakBodyComponent(blocks)).toBe(true);
     });
 });
 

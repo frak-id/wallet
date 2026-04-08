@@ -6,7 +6,6 @@ import {
 import { Trans, useTranslation } from "react-i18next";
 import { useRouteLoaderData } from "react-router";
 import screenShareButton from "../../assets/share-button.png";
-import screenWalletButton from "../../assets/wallet-button.png";
 import { ExternalButton } from "../ui/ExternalLink";
 import { CollapsibleStep } from "./CollapsibleStep";
 
@@ -15,13 +14,11 @@ export function Step6({
 }: {
     onboardingData: OnboardingStepData;
 }) {
-    const { isThemeHasFrakButton, themeWalletButton, firstProduct } =
-        onboardingData;
+    const { isThemeHasFrakButton, firstProduct } = onboardingData;
     const { t } = useTranslation();
     const rootData = useRouteLoaderData<typeof rootLoader>("routes/app");
     const editorUrl = `https://${rootData?.shop?.myshopifyDomain}/admin/themes/current/editor`;
-    const isThemeWalletButtonExist = !!themeWalletButton;
-    const isCompleted = !!(isThemeHasFrakButton || themeWalletButton);
+    const isCompleted = !!isThemeHasFrakButton;
     const { failedSteps } = validateCompleteOnboarding(onboardingData);
 
     return (
@@ -44,22 +41,6 @@ export function Step6({
                                 href={`${editorUrl}?previewPath=/products/${firstProduct.handle}`}
                             >
                                 {t("stepper.step6.linkShare")}
-                            </ExternalButton>
-                        </s-stack>
-                    </div>
-                )}
-                {!isThemeWalletButtonExist && (
-                    <div>
-                        <s-stack gap="base">
-                            <s-text>
-                                <Trans i18nKey="stepper.step6.descriptionWallet" />
-                            </s-text>
-                            <img src={screenWalletButton} alt="" />
-                            <ExternalButton
-                                variant="primary"
-                                href={`${editorUrl}?context=apps`}
-                            >
-                                {t("stepper.step6.linkWallet")}
                             </ExternalButton>
                         </s-stack>
                     </div>

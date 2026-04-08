@@ -1,0 +1,47 @@
+<frak-post-purchase
+  {% if block.settings.placement != blank %}placement="{{ block.settings.placement }}"{% endif %}
+  {% if block.settings.classname != blank %}classname="{{ block.settings.classname }}"{% endif %}
+  {% if block.settings.sharing_url != blank %}sharing-url="{{ block.settings.sharing_url }}"{% endif %}
+></frak-post-purchase>
+
+<script>
+  (function() {
+    var el = document.querySelector('frak-post-purchase');
+    if (!el) return;
+
+    // On Shopify thank you / order status pages, Shopify.checkout contains order data
+    var checkout = window.Shopify && window.Shopify.checkout;
+    if (!checkout) return;
+
+    if (checkout.customer_id) el.setAttribute('customer-id', String(checkout.customer_id));
+    if (checkout.order_id) el.setAttribute('order-id', String(checkout.order_id));
+    if (checkout.token) el.setAttribute('token', String(checkout.token));
+  })();
+</script>
+
+{% schema %}
+{
+  "name": "Frak Post Purchase",
+  "target": "section",
+  "settings": [
+    {
+      "type": "text",
+      "id": "placement",
+      "label": "Placement ID",
+      "info": "Optional placement identifier for backend-driven customization"
+    },
+    {
+      "type": "text",
+      "id": "classname",
+      "label": "Custom CSS classes",
+      "info": "Additional CSS classes to apply to the component"
+    },
+    {
+      "type": "text",
+      "id": "sharing_url",
+      "label": "Sharing URL",
+      "info": "The URL users will share. Defaults to the merchant domain if empty"
+    }
+  ]
+}
+{% endschema %}
