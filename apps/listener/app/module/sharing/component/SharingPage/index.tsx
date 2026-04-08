@@ -9,7 +9,7 @@ import {
     useCopyToClipboardWithState,
 } from "@frak-labs/wallet-shared";
 import { cx } from "class-variance-authority";
-import { useCallback, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Toaster, toast } from "sonner";
 import { Copy } from "@/module/common/icons/Copy";
 import { Share } from "@/module/common/icons/Share";
@@ -24,6 +24,37 @@ import { useSafeResolvingContext } from "@/module/stores/hooks";
 
 import styles from "./index.module.css";
 
+const SHARING_CONFIRMED_KEY = "frak_sharing_confirmed";
+const CONFIRMATION_TTL_MS = 60 * 60 * 1000; // 1 hour
+
+function getSavedConfirmation(merchantId: string): boolean {
+    try {
+        const raw = sessionStorage.getItem(SHARING_CONFIRMED_KEY);
+        if (!raw) return false;
+        const saved = JSON.parse(raw) as {
+            merchantId: string;
+            timestamp: number;
+        };
+        return (
+            saved.merchantId === merchantId &&
+            Date.now() - saved.timestamp < CONFIRMATION_TTL_MS
+        );
+    } catch {
+        return false;
+    }
+}
+
+function saveConfirmation(merchantId: string) {
+    try {
+        sessionStorage.setItem(
+            SHARING_CONFIRMED_KEY,
+            JSON.stringify({ merchantId, timestamp: Date.now() })
+        );
+    } catch {
+        // sessionStorage may not be available in some iframe contexts
+    }
+}
+
 export function ListenerSharingPage() {
     const { currentRequest, clearRequest } = useSharingListenerUI();
     const { t } = useListenerTranslation();
@@ -33,15 +64,42 @@ export function ListenerSharingPage() {
     const { mutate: trackSharing } = useTrackSharing();
 
     const hasResolvedRef = useRef(false);
-    const [showConfirmation, setShowConfirmation] = useState(false);
+
+    // Compute the install URL centrally
+    const installUrl = useMemo(() => {
+        if (!(merchantId && clientId)) return null;
+        const baseUrl = window.location.origin;
+        return `${baseUrl}/install?m=${encodeURIComponent(merchantId)}&a=${encodeURIComponent(clientId)}`;
+    }, [merchantId, clientId]);
+
+    // Check sessionStorage for a recent confirmation (Approach 1)
+    const [showConfirmation, setShowConfirmation] = useState(() =>
+        merchantId ? getSavedConfirmation(merchantId) : false
+    );
+
+    // If we restore from sessionStorage, still resolve the RPC as "shared"
+    // so the SDK consumer gets the result
+    useEffect(() => {
+        if (showConfirmation && !hasResolvedRef.current) {
+            hasResolvedRef.current = true;
+            currentRequest.emitter({
+                result: {
+                    action: "shared",
+                    installUrl: installUrl ?? undefined,
+                },
+            });
+        }
+    }, [showConfirmation, currentRequest.emitter, installUrl]);
 
     const resolveAction = useCallback(
         (action: "shared" | "copied" | "dismissed") => {
             if (hasResolvedRef.current) return;
             hasResolvedRef.current = true;
-            currentRequest.emitter({ result: { action } });
+            currentRequest.emitter({
+                result: { action, installUrl: installUrl ?? undefined },
+            });
         },
-        [currentRequest.emitter]
+        [currentRequest.emitter, installUrl]
     );
 
     const handleDismiss = () => {
@@ -68,6 +126,7 @@ export function ListenerSharingPage() {
             onSuccess: (message) => {
                 if (message) toast.success(message as string);
                 resolveAction("shared");
+                if (merchantId) saveConfirmation(merchantId);
                 setShowConfirmation(true);
             },
         }
@@ -82,6 +141,7 @@ export function ListenerSharingPage() {
         trackSharing();
         toast.success(t("sharing.btn.copySuccess"));
         resolveAction("copied");
+        if (merchantId) saveConfirmation(merchantId);
         setShowConfirmation(true);
     };
 
@@ -98,7 +158,12 @@ export function ListenerSharingPage() {
     const logoUrl = currentRequest.logoUrl;
 
     if (showConfirmation) {
-        return <PostShareConfirmation onDismiss={clearRequest} />;
+        return (
+            <PostShareConfirmation
+                installUrl={installUrl}
+                onDismiss={clearRequest}
+            />
+        );
     }
 
     return (

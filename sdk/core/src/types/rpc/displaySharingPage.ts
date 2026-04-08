@@ -68,4 +68,10 @@ export type DisplaySharingPageResultType = {
      * - "dismissed": User dismissed the sharing page without acting
      */
     action: "shared" | "copied" | "dismissed";
+    /**
+     * The install URL for the Frak app
+     * Can be used as a fallback to redirect the user to the install page
+     * from the merchant's top-level page (e.g. via `window.location.href`)
+     */
+    installUrl?: string;
 };

@@ -1,34 +1,25 @@
-import { clientIdStore, LogoFrakWithName } from "@frak-labs/wallet-shared";
-import { useMemo } from "react";
+import { LogoFrakWithName } from "@frak-labs/wallet-shared";
 import {
     useListenerTranslation,
     useSharingListenerUI,
 } from "@/module/providers/ListenerUiProvider";
-import { useSafeResolvingContext } from "@/module/stores/hooks";
 
 import styles from "./index.module.css";
 
 type PostShareConfirmationProps = {
+    installUrl: string | null;
     onDismiss: () => void;
 };
 
 export function PostShareConfirmation({
+    installUrl,
     onDismiss,
 }: PostShareConfirmationProps) {
     const { currentRequest } = useSharingListenerUI();
     const { t } = useListenerTranslation();
-    const { merchantId } = useSafeResolvingContext();
-    const clientId = clientIdStore((s) => s.clientId);
 
     const appName = currentRequest.appName;
     const logoUrl = currentRequest.logoUrl;
-
-    const installUrl = useMemo(() => {
-        if (!(merchantId && clientId)) return null;
-        const baseUrl = window.location.origin;
-        return `${baseUrl}/install?m=${encodeURIComponent(merchantId)}&a=${encodeURIComponent(clientId)}`;
-    }, [merchantId, clientId]);
-
     return (
         <div className={styles.container}>
             <header className={styles.header}>
