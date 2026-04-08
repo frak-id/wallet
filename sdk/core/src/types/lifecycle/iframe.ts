@@ -29,5 +29,12 @@ type RedirectRequestEvent = {
          * Used when redirecting out of social browsers to preserve identity across contexts
          */
         mergeToken?: string;
+        /**
+         * When true, open the URL in a new tab via window.open(_blank)
+         * instead of navigating the current page.
+         * Requires the postMessage to include user activation delegation
+         * (includeUserActivation: true) so Safari allows the popup.
+         */
+        openInNewTab?: boolean;
     };
 };

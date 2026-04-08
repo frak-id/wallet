@@ -32,7 +32,7 @@ const isIOSInAppBrowser = (() => {
 /** @ignore */
 export type IframeLifecycleManager = {
     isConnected: Promise<boolean>;
-    handleEvent: (messageEvent: FrakLifecycleEvent) => Promise<void>;
+    handleEvent: (messageEvent: FrakLifecycleEvent) => void;
 };
 
 /**
@@ -100,8 +100,18 @@ function handleRedirect(
     iframe: HTMLIFrameElement,
     baseRedirectUrl: string,
     targetOrigin: string,
-    mergeToken?: string
+    mergeToken?: string,
+    openInNewTab?: boolean
 ): void {
+    // If requested, open in a new tab instead of navigating the current page.
+    // This preserves the merchant page while triggering universal links.
+    // Requires the iframe postMessage to include user activation delegation.
+    if (openInNewTab) {
+        const finalUrl = computeRedirectUrl(baseRedirectUrl, mergeToken);
+        window.open(finalUrl, "_blank", "noopener");
+        return;
+    }
+
     if (isFrakDeepLink(baseRedirectUrl)) {
         const finalUrl = computeRedirectUrl(baseRedirectUrl, mergeToken);
         triggerDeepLinkWithFallback(finalUrl, {
@@ -143,7 +153,7 @@ export function createIFrameLifecycleManager({
     const isConnectedDeferred = new Deferred<boolean>();
 
     // Build the handler itself
-    const handler = async (messageEvent: FrakLifecycleEvent) => {
+    const handler = (messageEvent: FrakLifecycleEvent) => {
         if (!("iframeLifecycle" in messageEvent)) return;
 
         const { iframeLifecycle: event, data } = messageEvent;
@@ -172,7 +182,8 @@ export function createIFrameLifecycleManager({
                     iframe,
                     data.baseRedirectUrl,
                     targetOrigin,
-                    data.mergeToken
+                    data.mergeToken,
+                    data.openInNewTab
                 );
                 break;
         }

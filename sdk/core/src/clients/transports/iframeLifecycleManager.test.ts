@@ -102,7 +102,7 @@ describe("createIFrameLifecycleManager", () => {
                 iframeLifecycle: "connected" as const,
             };
 
-            await manager.handleEvent(event);
+            manager.handleEvent(event);
 
             await expect(manager.isConnected).resolves.toBe(true);
         });
@@ -126,7 +126,7 @@ describe("createIFrameLifecycleManager", () => {
                 data: { backup },
             };
 
-            await manager.handleEvent(event);
+            manager.handleEvent(event);
 
             expect(localStorage.getItem("frak-backup-key")).toBe(backup);
         });
@@ -150,7 +150,7 @@ describe("createIFrameLifecycleManager", () => {
                 data: {},
             };
 
-            await manager.handleEvent(event);
+            manager.handleEvent(event);
 
             expect(localStorage.getItem("frak-backup-key")).toBeNull();
         });
@@ -173,7 +173,7 @@ describe("createIFrameLifecycleManager", () => {
                 iframeLifecycle: "remove-backup" as const,
             };
 
-            await manager.handleEvent(event);
+            manager.handleEvent(event);
 
             expect(localStorage.getItem("frak-backup-key")).toBeNull();
         });
@@ -198,7 +198,7 @@ describe("createIFrameLifecycleManager", () => {
                 iframeLifecycle: "show" as const,
             };
 
-            await manager.handleEvent(event);
+            manager.handleEvent(event);
 
             expect(changeIframeVisibility).toHaveBeenCalledWith({
                 iframe: mockIframe,
@@ -224,7 +224,7 @@ describe("createIFrameLifecycleManager", () => {
                 iframeLifecycle: "hide" as const,
             };
 
-            await manager.handleEvent(event);
+            manager.handleEvent(event);
 
             expect(changeIframeVisibility).toHaveBeenCalledWith({
                 iframe: mockIframe,
@@ -259,7 +259,7 @@ describe("createIFrameLifecycleManager", () => {
                 },
             };
 
-            await manager.handleEvent(event);
+            manager.handleEvent(event);
 
             expect(window.location.href).toBe(
                 "https://redirect.com/?u=https%3A%2F%2Foriginal.com"
@@ -291,7 +291,7 @@ describe("createIFrameLifecycleManager", () => {
                 },
             };
 
-            await manager.handleEvent(event);
+            manager.handleEvent(event);
 
             expect(window.location.href).toBe("https://redirect.com/path");
         });
@@ -325,7 +325,7 @@ describe("createIFrameLifecycleManager", () => {
                 },
             };
 
-            await manager.handleEvent(event);
+            manager.handleEvent(event);
 
             expect(triggerDeepLinkWithFallback).toHaveBeenCalledWith(
                 "frakwallet://wallet",
@@ -370,7 +370,7 @@ describe("createIFrameLifecycleManager", () => {
                 },
             };
 
-            await manager.handleEvent(event);
+            manager.handleEvent(event);
 
             // Extract the onFallback callback from the mock call
             const callArgs = (triggerDeepLinkWithFallback as any).mock.calls[0];
@@ -419,7 +419,7 @@ describe("createIFrameLifecycleManager", () => {
                 },
             };
 
-            await manager.handleEvent(event);
+            manager.handleEvent(event);
 
             // Should NOT call fallback detection
             expect(triggerDeepLinkWithFallback).not.toHaveBeenCalled();
@@ -445,7 +445,7 @@ describe("createIFrameLifecycleManager", () => {
             } as any;
 
             // Should not throw
-            await expect(manager.handleEvent(event)).resolves.toBeUndefined();
+            expect(manager.handleEvent(event)).toBeUndefined();
         });
 
         test("should only process events with iframeLifecycle", async () => {
@@ -463,13 +463,13 @@ describe("createIFrameLifecycleManager", () => {
             });
 
             // Event without iframeLifecycle
-            await manager.handleEvent({ randomEvent: "show" } as any);
+            manager.handleEvent({ randomEvent: "show" } as any);
 
             // changeIframeVisibility should not be called
             expect(changeIframeVisibility).not.toHaveBeenCalled();
 
             // Event with iframeLifecycle
-            await manager.handleEvent({ iframeLifecycle: "show" as const });
+            manager.handleEvent({ iframeLifecycle: "show" as const });
 
             // Now it should be called
             expect(changeIframeVisibility).toHaveBeenCalled();

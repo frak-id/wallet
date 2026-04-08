@@ -125,9 +125,9 @@ export function createIFrameFrakClient({
         ],
         // Add lifecycle handlers to process iframe lifecycle events
         lifecycleHandlers: {
-            iframeLifecycle: async (event, _context) => {
+            iframeLifecycle: (event, _context) => {
                 // Delegate to lifecycle manager  (cast for type compatibility)
-                await lifecycleManager.handleEvent(event);
+                lifecycleManager.handleEvent(event);
             },
         },
     });

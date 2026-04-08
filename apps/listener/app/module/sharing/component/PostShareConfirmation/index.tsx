@@ -1,4 +1,5 @@
-import { LogoFrakWithName } from "@frak-labs/wallet-shared";
+import { emitLifecycleEvent, LogoFrakWithName } from "@frak-labs/wallet-shared";
+import { useCallback } from "react";
 import {
     useListenerTranslation,
     useSharingListenerUI,
@@ -90,13 +91,16 @@ export function PostShareConfirmation({
 
             <footer className={styles.footer}>
                 {installUrl ? (
-                    <a
-                        href={installUrl}
-                        target="_top"
-                        className={styles.ctaButton}
-                    >
-                        {t("sdk.sharingPage.confirmation.cta")}
-                    </a>
+                    <>
+                        <a
+                            href={installUrl}
+                            target="_top"
+                            className={styles.ctaButton}
+                        >
+                            {t("sdk.sharingPage.confirmation.cta")} (_top)
+                        </a>
+                        <OpenInNewTabButton installUrl={installUrl} />
+                    </>
                 ) : (
                     <button type="button" disabled className={styles.ctaButton}>
                         {t("sdk.sharingPage.confirmation.cta")}
@@ -131,5 +135,43 @@ function BenefitItem({
                 <p className={styles.benefitDescription}>{description}</p>
             </div>
         </div>
+    );
+}
+
+/**
+ * Button that opens the install URL in a new tab via the parent SDK's
+ * lifecycle redirect flow.
+ *
+ * Uses `emitLifecycleEvent` with `includeUserActivation: true` to delegate
+ * the user's click activation to the parent window, allowing it to call
+ * `window.open(_blank)` without being blocked by the popup blocker.
+ *
+ * This preserves the merchant page (unlike target="_top") while still
+ * triggering iOS universal link interception from the top-level context.
+ */
+function OpenInNewTabButton({ installUrl }: { installUrl: string }) {
+    const { t } = useListenerTranslation();
+
+    const handleOpenInNewTab = useCallback(() => {
+        emitLifecycleEvent(
+            {
+                iframeLifecycle: "redirect",
+                data: {
+                    baseRedirectUrl: installUrl,
+                    openInNewTab: true,
+                },
+            },
+            { includeUserActivation: true }
+        );
+    }, [installUrl]);
+
+    return (
+        <button
+            type="button"
+            className={styles.ctaButton}
+            onClick={handleOpenInNewTab}
+        >
+            {t("sdk.sharingPage.confirmation.cta")} (_blank)
+        </button>
     );
 }
