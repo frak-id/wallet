@@ -24,7 +24,7 @@ const appleAppSiteAssociation = {
         details: [
             {
                 appID: iosAppId,
-                paths: ["/open/*"],
+                paths: ["/*"],
             },
         ],
     },

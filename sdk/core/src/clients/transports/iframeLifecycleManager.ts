@@ -108,7 +108,7 @@ function handleRedirect(
     // Requires the iframe postMessage to include user activation delegation.
     if (openInNewTab) {
         const finalUrl = computeRedirectUrl(baseRedirectUrl, mergeToken);
-        window.open(finalUrl, "_blank", "noopener");
+        window.open(finalUrl, "_blank");
         return;
     }
 
