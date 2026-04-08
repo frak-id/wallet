@@ -7,6 +7,12 @@
   {% if block.settings.placement != blank %}placement="{{ block.settings.placement }}"{% endif %}
   classname="{{ custom_class }}"
   {% if block.settings.interaction != blank %}interaction="{{ block.settings.interaction }}"{% endif %}
+  {% if block.settings.referral_title != blank %}referral-title="{{ block.settings.referral_title }}"{% endif %}
+  {% if block.settings.referral_description != blank %}referral-description="{{ block.settings.referral_description }}"{% endif %}
+  {% if block.settings.referral_cta != blank %}referral-cta="{{ block.settings.referral_cta }}"{% endif %}
+  {% if block.settings.inapp_title != blank %}inapp-title="{{ block.settings.inapp_title }}"{% endif %}
+  {% if block.settings.inapp_description != blank %}inapp-description="{{ block.settings.inapp_description }}"{% endif %}
+  {% if block.settings.inapp_cta != blank %}inapp-cta="{{ block.settings.inapp_cta }}"{% endif %}
 ></frak-banner>
 
 {% style %}
@@ -46,6 +52,54 @@
       "id": "interaction",
       "label": "Target interaction",
       "info": "Filter rewards by interaction type (e.g. purchase, referral). Leave empty for best reward across all types"
+    },
+    {
+      "type": "header",
+      "content": "Referral banner text"
+    },
+    {
+      "type": "text",
+      "id": "referral_title",
+      "label": "Title",
+      "info": "Override the referral banner title (e.g. \"You've been referred!\")"
+    },
+    {
+      "type": "textarea",
+      "id": "referral_description",
+      "label": "Description",
+      "info": "Override the referral banner description"
+    },
+    {
+      "type": "text",
+      "id": "referral_cta",
+      "label": "Button text",
+      "info": "Override the referral banner button text (default: \"Got it\")"
+    },
+    {
+      "type": "header",
+      "content": "In-app browser banner text"
+    },
+    {
+      "type": "text",
+      "id": "inapp_title",
+      "label": "Title",
+      "info": "Override the in-app browser banner title (e.g. \"Open in your browser\")"
+    },
+    {
+      "type": "textarea",
+      "id": "inapp_description",
+      "label": "Description",
+      "info": "Override the in-app browser banner description"
+    },
+    {
+      "type": "text",
+      "id": "inapp_cta",
+      "label": "Button text",
+      "info": "Override the in-app browser banner button text (default: \"Open browser\")"
+    },
+    {
+      "type": "header",
+      "content": "Style"
     },
     {
       "type": "select",

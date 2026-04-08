@@ -1,7 +1,17 @@
+{% assign custom_class = '' %}
+{% if block.settings.card_style == 'custom' %}
+  {% assign custom_class = 'frak-post-purchase-custom' %}
+{% endif %}
+
 <frak-post-purchase
   {% if block.settings.placement != blank %}placement="{{ block.settings.placement }}"{% endif %}
-  {% if block.settings.classname != blank %}classname="{{ block.settings.classname }}"{% endif %}
+  classname="{{ custom_class }}"
   {% if block.settings.sharing_url != blank %}sharing-url="{{ block.settings.sharing_url }}"{% endif %}
+  {% if block.settings.interaction != blank %}interaction="{{ block.settings.interaction }}"{% endif %}
+  {% if block.settings.variant != blank and block.settings.variant != 'auto' %}variant="{{ block.settings.variant }}"{% endif %}
+  {% if block.settings.referrer_text != blank %}referrer-text="{{ block.settings.referrer_text }}"{% endif %}
+  {% if block.settings.referee_text != blank %}referee-text="{{ block.settings.referee_text }}"{% endif %}
+  {% if block.settings.cta_text != blank %}cta-text="{{ block.settings.cta_text }}"{% endif %}
 ></frak-post-purchase>
 
 <script>
@@ -19,6 +29,20 @@
   })();
 </script>
 
+{% style %}
+  .frak-post-purchase-custom.post-purchase {
+    background-color: {{ block.settings.background_color }};
+  }
+  .frak-post-purchase-custom .post-purchase__message {
+    color: {{ block.settings.text_color }};
+  }
+  .frak-post-purchase-custom .post-purchase__cta {
+    background-color: {{ block.settings.cta_color }};
+    border-color: {{ block.settings.cta_color }};
+    color: {{ block.settings.cta_text_color }};
+  }
+{% endstyle %}
+
 {% schema %}
 {
   "name": "Frak Post Purchase",
@@ -32,15 +56,102 @@
     },
     {
       "type": "text",
-      "id": "classname",
-      "label": "Custom CSS classes",
-      "info": "Additional CSS classes to apply to the component"
-    },
-    {
-      "type": "text",
       "id": "sharing_url",
       "label": "Sharing URL",
       "info": "The URL users will share. Defaults to the merchant domain if empty"
+    },
+    {
+      "type": "text",
+      "id": "interaction",
+      "label": "Target interaction",
+      "info": "Filter rewards by interaction type (e.g. purchase, referral)"
+    },
+    {
+      "type": "select",
+      "id": "variant",
+      "label": "Display variant",
+      "info": "Force a specific variant or let the SDK auto-detect based on the user's referral status",
+      "options": [
+        {
+          "value": "auto",
+          "label": "Auto-detect"
+        },
+        {
+          "value": "referrer",
+          "label": "Referrer (invite to share)"
+        },
+        {
+          "value": "referee",
+          "label": "Referee (was referred)"
+        }
+      ],
+      "default": "auto"
+    },
+    {
+      "type": "header",
+      "content": "Text"
+    },
+    {
+      "type": "textarea",
+      "id": "referrer_text",
+      "label": "Referrer message",
+      "info": "Message for users who can share. Use {REWARD} for the reward amount"
+    },
+    {
+      "type": "textarea",
+      "id": "referee_text",
+      "label": "Referee message",
+      "info": "Message for users who were referred. Use {REWARD} for the reward amount"
+    },
+    {
+      "type": "text",
+      "id": "cta_text",
+      "label": "Button text",
+      "info": "CTA button text. Use {REWARD} for the reward amount"
+    },
+    {
+      "type": "header",
+      "content": "Style"
+    },
+    {
+      "type": "select",
+      "id": "card_style",
+      "label": "Card Style",
+      "options": [
+        {
+          "value": "default",
+          "label": "Default"
+        },
+        {
+          "value": "custom",
+          "label": "Custom Colors"
+        }
+      ],
+      "default": "default"
+    },
+    {
+      "type": "color",
+      "id": "background_color",
+      "label": "Background color",
+      "default": "#ffffff"
+    },
+    {
+      "type": "color",
+      "id": "text_color",
+      "label": "Text color",
+      "default": "#1e293b"
+    },
+    {
+      "type": "color",
+      "id": "cta_color",
+      "label": "Button color",
+      "default": "#eab308"
+    },
+    {
+      "type": "color",
+      "id": "cta_text_color",
+      "label": "Button text color",
+      "default": "#1e293b"
     }
   ]
 }

@@ -16,6 +16,21 @@ declare global {
     }
 }
 
-registerWebComponent(Banner, "frak-banner", ["placement", "classname"], {
-    shadow: false,
-});
+registerWebComponent(
+    Banner,
+    "frak-banner",
+    [
+        "placement",
+        "classname",
+        "interaction",
+        "referralTitle",
+        "referralDescription",
+        "referralCta",
+        "inappTitle",
+        "inappDescription",
+        "inappCta",
+    ],
+    {
+        shadow: false,
+    }
+);

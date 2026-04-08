@@ -18,4 +18,28 @@ export type BannerProps = {
      * When omitted, the best reward across all interaction types is shown.
      */
     interaction?: InteractionTypeKey;
+    /**
+     * Override the referral banner title.
+     */
+    referralTitle?: string;
+    /**
+     * Override the referral banner description.
+     */
+    referralDescription?: string;
+    /**
+     * Override the referral banner CTA button text.
+     */
+    referralCta?: string;
+    /**
+     * Override the in-app browser banner title.
+     */
+    inappTitle?: string;
+    /**
+     * Override the in-app browser banner description.
+     */
+    inappDescription?: string;
+    /**
+     * Override the in-app browser banner CTA button text.
+     */
+    inappCta?: string;
 };

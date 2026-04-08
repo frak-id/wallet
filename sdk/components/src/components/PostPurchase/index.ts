@@ -29,6 +29,9 @@ registerWebComponent(
         "placement",
         "classname",
         "variant",
+        "referrerText",
+        "refereeText",
+        "ctaText",
     ],
     {
         shadow: false,

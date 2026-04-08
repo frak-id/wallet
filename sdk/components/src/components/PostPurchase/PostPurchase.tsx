@@ -95,6 +95,9 @@ export function PostPurchase({
     placement: placementId,
     classname = "",
     variant: forcedVariant,
+    referrerText: propReferrerText,
+    refereeText: propRefereeText,
+    ctaText: propCtaText,
 }: PostPurchaseProps) {
     const { shouldRender, isHidden, isClientReady } = useClientReady();
     const placement = usePlacement(placementId);
@@ -172,27 +175,42 @@ export function PostPurchase({
             resolvedVariant === "referee"
                 ? rewardText
                     ? applyReward(
-                          postPurchaseConfig?.refereeText ??
+                          propRefereeText ??
+                              postPurchaseConfig?.refereeText ??
                               "You just earned {REWARD}! Share with friends to earn even more."
                       )
-                    : (postPurchaseConfig?.refereeNoRewardText ??
+                    : (propRefereeText ??
+                      postPurchaseConfig?.refereeNoRewardText ??
                       "You just earned a reward! Share with friends to earn even more.")
                 : rewardText
                   ? applyReward(
-                        postPurchaseConfig?.referrerText ??
+                        propReferrerText ??
+                            postPurchaseConfig?.referrerText ??
                             "Earn {REWARD} by sharing this with your friends!"
                     )
-                  : (postPurchaseConfig?.referrerNoRewardText ??
+                  : (propReferrerText ??
+                    postPurchaseConfig?.referrerNoRewardText ??
                     "Share this with your friends and earn rewards!");
 
         const cta = rewardText
             ? applyReward(
-                  postPurchaseConfig?.ctaText ?? "Share & earn {REWARD}"
+                  propCtaText ??
+                      postPurchaseConfig?.ctaText ??
+                      "Share & earn {REWARD}"
               )
-            : (postPurchaseConfig?.ctaNoRewardText ?? "Share & earn");
+            : (propCtaText ??
+              postPurchaseConfig?.ctaNoRewardText ??
+              "Share & earn");
 
         return { message, cta };
-    }, [resolvedVariant, rewardText, postPurchaseConfig]);
+    }, [
+        resolvedVariant,
+        rewardText,
+        postPurchaseConfig,
+        propReferrerText,
+        propRefereeText,
+        propCtaText,
+    ]);
 
     // Reuse shared share-modal hook (includes error tracking + debug info)
     const { handleShare } = useShareModal(

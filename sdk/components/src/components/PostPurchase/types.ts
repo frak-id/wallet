@@ -38,4 +38,19 @@ export type PostPurchaseProps = {
      * Force a display variant instead of relying on the backend evaluation.
      */
     variant?: "referrer" | "referee";
+    /**
+     * Override the message shown to referrers.
+     * Use `{REWARD}` as placeholder for the reward amount.
+     */
+    referrerText?: string;
+    /**
+     * Override the message shown to referees.
+     * Use `{REWARD}` as placeholder for the reward amount.
+     */
+    refereeText?: string;
+    /**
+     * Override the CTA button text.
+     * Use `{REWARD}` as placeholder for the reward amount.
+     */
+    ctaText?: string;
 };

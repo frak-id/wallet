@@ -87,6 +87,12 @@ export function Banner({
     placement: placementId,
     classname = "",
     interaction,
+    referralTitle: propReferralTitle,
+    referralDescription: propReferralDescription,
+    referralCta: propReferralCta,
+    inappTitle: propInappTitle,
+    inappDescription: propInappDescription,
+    inappCta: propInappCta,
 }: BannerProps) {
     const placement = usePlacement(placementId);
     const { shouldRender, isHidden, isClientReady } = useClientReady();
@@ -138,22 +144,40 @@ export function Banner({
                 : "You've been referred!";
 
             return {
-                title: bannerConfig?.referralTitle ?? defaultTitle,
+                title:
+                    propReferralTitle ??
+                    bannerConfig?.referralTitle ??
+                    defaultTitle,
                 description:
+                    propReferralDescription ??
                     bannerConfig?.referralDescription ??
                     "Earn rewards after your purchase via the Frak partner app.",
-                cta: bannerConfig?.referralCta ?? "Got it",
+                cta: propReferralCta ?? bannerConfig?.referralCta ?? "Got it",
             };
         }
 
         return {
-            title: bannerConfig?.inappTitle ?? "Open in your browser",
+            title:
+                propInappTitle ??
+                bannerConfig?.inappTitle ??
+                "Open in your browser",
             description:
+                propInappDescription ??
                 bannerConfig?.inappDescription ??
                 "For a better experience and to earn your rewards, open this page in your default browser.",
-            cta: bannerConfig?.inappCta ?? "Open browser",
+            cta: propInappCta ?? bannerConfig?.inappCta ?? "Open browser",
         };
-    }, [mode, reward, bannerConfig]);
+    }, [
+        mode,
+        reward,
+        bannerConfig,
+        propReferralTitle,
+        propReferralDescription,
+        propReferralCta,
+        propInappTitle,
+        propInappDescription,
+        propInappCta,
+    ]);
 
     if (!shouldRender || isHidden || dismissed || !mode) {
         return null;
