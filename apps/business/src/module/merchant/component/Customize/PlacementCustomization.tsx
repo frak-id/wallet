@@ -88,6 +88,7 @@ const COMPONENT_TYPES: ComponentType[] = [
     "buttonWallet",
     "openInApp",
     "postPurchase",
+    "banner",
 ];
 
 function getPostPurchaseDefaults(
@@ -104,6 +105,23 @@ function getPostPurchaseDefaults(
         ctaText: pp?.ctaText ?? "",
         ctaNoRewardText: pp?.ctaNoRewardText ?? "",
         css: pp?.rawCss ?? "",
+    };
+}
+
+function getBannerDefaults(
+    components: NonNullable<
+        NonNullable<SdkConfig["placements"]>[string]
+    >["components"]
+): PlacementSettingsFormValues["banner"] {
+    const b = components?.banner;
+    return {
+        referralTitle: b?.referralTitle ?? "",
+        referralDescription: b?.referralDescription ?? "",
+        referralCta: b?.referralCta ?? "",
+        inappTitle: b?.inappTitle ?? "",
+        inappDescription: b?.inappDescription ?? "",
+        inappCta: b?.inappCta ?? "",
+        css: b?.rawCss ?? "",
     };
 }
 
@@ -134,6 +152,7 @@ function getPlacementFormValues(
             css: oia?.rawCss ?? "",
         },
         postPurchase: getPostPurchaseDefaults(components),
+        banner: getBannerDefaults(components),
     };
 }
 
@@ -190,6 +209,15 @@ function PlacementSettingsPanel({
                 ctaNoRewardText: "",
                 css: "",
             },
+            banner: {
+                referralTitle: "",
+                referralDescription: "",
+                referralCta: "",
+                inappTitle: "",
+                inappDescription: "",
+                inappCta: "",
+                css: "",
+            },
         },
     });
 
@@ -244,6 +272,21 @@ function PlacementSettingsPanel({
                 ),
                 rawCss: valueOrUndefined(currentValues.postPurchase.css),
             };
+            const banner = {
+                referralTitle: valueOrUndefined(
+                    currentValues.banner.referralTitle
+                ),
+                referralDescription: valueOrUndefined(
+                    currentValues.banner.referralDescription
+                ),
+                referralCta: valueOrUndefined(currentValues.banner.referralCta),
+                inappTitle: valueOrUndefined(currentValues.banner.inappTitle),
+                inappDescription: valueOrUndefined(
+                    currentValues.banner.inappDescription
+                ),
+                inappCta: valueOrUndefined(currentValues.banner.inappCta),
+                rawCss: valueOrUndefined(currentValues.banner.css),
+            };
 
             editSdkConfig({
                 placements: updatePlacement(
@@ -256,6 +299,7 @@ function PlacementSettingsPanel({
                             buttonWallet,
                             openInApp,
                             postPurchase,
+                            banner,
                         },
                         targetInteraction: valueOrUndefined(
                             currentValues.targetInteraction
@@ -333,6 +377,7 @@ function PlacementSettingsPanel({
                 {selectedComponent === "postPurchase" && (
                     <PostPurchaseFields form={form} />
                 )}
+                {selectedComponent === "banner" && <BannerFields form={form} />}
 
                 <FormActions
                     isSuccess={isSuccess}
@@ -821,6 +866,220 @@ function PostPurchaseFields({
                             <textarea
                                 className={styles.customize__textarea}
                                 placeholder={".post-purchase { ... }"}
+                                rows={4}
+                                {...field}
+                            />
+                        </FormControl>
+                        <FormMessage />
+                    </FormItem>
+                )}
+            />
+        </div>
+    );
+}
+
+function BannerFields({
+    form,
+}: {
+    form: ReturnType<typeof useForm<PlacementSettingsFormValues>>;
+}) {
+    return (
+        <div className={styles.customize__settingsGrid}>
+            <FormField
+                control={form.control}
+                name="banner.referralTitle"
+                rules={{
+                    maxLength: {
+                        value: 500,
+                        message: "Maximum length is 500 characters",
+                    },
+                }}
+                render={({ field }) => (
+                    <FormItem>
+                        <FormLabel weight={"medium"}>Referral title</FormLabel>
+                        <FormDescription>
+                            Heading shown when a referral is detected
+                        </FormDescription>
+                        <FormControl>
+                            <Input
+                                length={"big"}
+                                maxLength={500}
+                                placeholder={"Earn {REWARD} on purchases"}
+                                {...field}
+                            />
+                        </FormControl>
+                        <FormMessage />
+                    </FormItem>
+                )}
+            />
+
+            <FormField
+                control={form.control}
+                name="banner.referralDescription"
+                rules={{
+                    maxLength: {
+                        value: 500,
+                        message: "Maximum length is 500 characters",
+                    },
+                }}
+                render={({ field }) => (
+                    <FormItem>
+                        <FormLabel weight={"medium"}>
+                            Referral description
+                        </FormLabel>
+                        <FormDescription>
+                            Body text below the referral title
+                        </FormDescription>
+                        <FormControl>
+                            <Input
+                                length={"big"}
+                                maxLength={500}
+                                placeholder={
+                                    "Earn rewards after your purchase via the Frak partner app."
+                                }
+                                {...field}
+                            />
+                        </FormControl>
+                        <FormMessage />
+                    </FormItem>
+                )}
+            />
+
+            <FormField
+                control={form.control}
+                name="banner.referralCta"
+                rules={{
+                    maxLength: {
+                        value: 200,
+                        message: "Maximum length is 200 characters",
+                    },
+                }}
+                render={({ field }) => (
+                    <FormItem>
+                        <FormLabel weight={"medium"}>
+                            Referral CTA button
+                        </FormLabel>
+                        <FormDescription>
+                            Dismiss button text for the referral banner
+                        </FormDescription>
+                        <FormControl>
+                            <Input
+                                length={"big"}
+                                maxLength={200}
+                                placeholder={"Got it"}
+                                {...field}
+                            />
+                        </FormControl>
+                        <FormMessage />
+                    </FormItem>
+                )}
+            />
+
+            <FormField
+                control={form.control}
+                name="banner.inappTitle"
+                rules={{
+                    maxLength: {
+                        value: 500,
+                        message: "Maximum length is 500 characters",
+                    },
+                }}
+                render={({ field }) => (
+                    <FormItem>
+                        <FormLabel weight={"medium"}>
+                            In-app browser title
+                        </FormLabel>
+                        <FormDescription>
+                            Heading shown when an in-app browser is detected
+                        </FormDescription>
+                        <FormControl>
+                            <Input
+                                length={"big"}
+                                maxLength={500}
+                                placeholder={"Open in your browser"}
+                                {...field}
+                            />
+                        </FormControl>
+                        <FormMessage />
+                    </FormItem>
+                )}
+            />
+
+            <FormField
+                control={form.control}
+                name="banner.inappDescription"
+                rules={{
+                    maxLength: {
+                        value: 500,
+                        message: "Maximum length is 500 characters",
+                    },
+                }}
+                render={({ field }) => (
+                    <FormItem>
+                        <FormLabel weight={"medium"}>
+                            In-app browser description
+                        </FormLabel>
+                        <FormDescription>
+                            Body text explaining why to open in external browser
+                        </FormDescription>
+                        <FormControl>
+                            <Input
+                                length={"big"}
+                                maxLength={500}
+                                placeholder={
+                                    "For a better experience, open this page in your default browser."
+                                }
+                                {...field}
+                            />
+                        </FormControl>
+                        <FormMessage />
+                    </FormItem>
+                )}
+            />
+
+            <FormField
+                control={form.control}
+                name="banner.inappCta"
+                rules={{
+                    maxLength: {
+                        value: 200,
+                        message: "Maximum length is 200 characters",
+                    },
+                }}
+                render={({ field }) => (
+                    <FormItem>
+                        <FormLabel weight={"medium"}>
+                            In-app browser CTA button
+                        </FormLabel>
+                        <FormDescription>
+                            Button text to redirect to external browser
+                        </FormDescription>
+                        <FormControl>
+                            <Input
+                                length={"big"}
+                                maxLength={200}
+                                placeholder={"Open browser"}
+                                {...field}
+                            />
+                        </FormControl>
+                        <FormMessage />
+                    </FormItem>
+                )}
+            />
+
+            <FormField
+                control={form.control}
+                name="banner.css"
+                render={({ field }) => (
+                    <FormItem>
+                        <FormLabel weight={"medium"}>Component CSS</FormLabel>
+                        <FormDescription>
+                            Custom styles applied to the banner component
+                        </FormDescription>
+                        <FormControl>
+                            <textarea
+                                className={styles.customize__textarea}
+                                placeholder={".frak-banner { ... }"}
                                 rows={4}
                                 {...field}
                             />

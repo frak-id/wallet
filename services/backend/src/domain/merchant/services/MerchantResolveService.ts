@@ -163,6 +163,16 @@ export class MerchantResolveService {
             };
         }
 
+        if (result.banner?.rawCss !== undefined) {
+            result.banner = {
+                ...result.banner,
+                css: processRawScopedCss(
+                    result.banner.rawCss,
+                    `frak-banner[placement="${placementId}"]`
+                ),
+            };
+        }
+
         return result;
     }
 
@@ -218,6 +228,9 @@ export class MerchantResolveService {
                             postPurchase: stripRawCss(
                                 placement.components.postPurchase
                             ),
+                        }),
+                        ...(placement.components.banner && {
+                            banner: stripRawCss(placement.components.banner),
                         }),
                     },
                 }),

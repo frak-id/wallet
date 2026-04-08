@@ -28,7 +28,7 @@ export type ResolvedPlacement = {
             css?: string;
         };
         buttonWallet?: {
-            position?: "bottom-right" | "bottom-left";
+            position?: "right" | "left";
             css?: string;
         };
         openInApp?: {

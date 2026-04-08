@@ -23,10 +23,7 @@ const ResolvedPlacementSchema = t.Object({
             buttonWallet: t.Optional(
                 t.Object({
                     position: t.Optional(
-                        t.Union([
-                            t.Literal("bottom-right"),
-                            t.Literal("bottom-left"),
-                        ])
+                        t.Union([t.Literal("right"), t.Literal("left")])
                     ),
                     css: t.Optional(t.String()),
                 })
@@ -45,6 +42,17 @@ const ResolvedPlacementSchema = t.Object({
                     referrerNoRewardText: t.Optional(t.String()),
                     ctaText: t.Optional(t.String()),
                     ctaNoRewardText: t.Optional(t.String()),
+                    css: t.Optional(t.String()),
+                })
+            ),
+            banner: t.Optional(
+                t.Object({
+                    referralTitle: t.Optional(t.String()),
+                    referralDescription: t.Optional(t.String()),
+                    referralCta: t.Optional(t.String()),
+                    inappTitle: t.Optional(t.String()),
+                    inappDescription: t.Optional(t.String()),
+                    inappCta: t.Optional(t.String()),
                     css: t.Optional(t.String()),
                 })
             ),
