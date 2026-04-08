@@ -21,12 +21,17 @@ export type CssFormValues = {
     css: string;
 };
 
-export type ComponentType = "buttonShare" | "buttonWallet" | "openInApp";
+export type ComponentType =
+    | "buttonShare"
+    | "buttonWallet"
+    | "openInApp"
+    | "postPurchase";
 
 export const COMPONENT_LABELS: Record<ComponentType, string> = {
     buttonShare: "Share Button",
     buttonWallet: "Wallet Button",
     openInApp: "Open in App",
+    postPurchase: "Post Purchase",
 };
 
 export type ButtonShareFormValues = {
@@ -47,11 +52,22 @@ export type OpenInAppFormValues = {
     css: string;
 };
 
+export type PostPurchaseFormValues = {
+    refereeText: string;
+    refereeNoRewardText: string;
+    referrerText: string;
+    referrerNoRewardText: string;
+    ctaText: string;
+    ctaNoRewardText: string;
+    css: string;
+};
+
 export type PlacementSettingsFormValues = {
     targetInteraction: string;
     buttonShare: ButtonShareFormValues;
     buttonWallet: ButtonWalletFormValues;
     openInApp: OpenInAppFormValues;
+    postPurchase: PostPurchaseFormValues;
 };
 
 /**

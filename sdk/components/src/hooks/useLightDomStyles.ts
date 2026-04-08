@@ -5,10 +5,11 @@ import { styleManager } from "@/utils/styleManager";
 export function useLightDomStyles(
     tag: string,
     placementId?: string,
-    placementCss?: string
+    placementCss?: string,
+    baseCss?: string
 ): void {
     useEffect(() => {
-        styleManager.injectBase(tag, lightDomBaseCss);
+        styleManager.injectBase(tag, baseCss ?? lightDomBaseCss);
     }, [tag]);
 
     useEffect(() => {

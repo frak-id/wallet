@@ -37,6 +37,17 @@ const ResolvedPlacementSchema = t.Object({
                     css: t.Optional(t.String()),
                 })
             ),
+            postPurchase: t.Optional(
+                t.Object({
+                    refereeText: t.Optional(t.String()),
+                    refereeNoRewardText: t.Optional(t.String()),
+                    referrerText: t.Optional(t.String()),
+                    referrerNoRewardText: t.Optional(t.String()),
+                    ctaText: t.Optional(t.String()),
+                    ctaNoRewardText: t.Optional(t.String()),
+                    css: t.Optional(t.String()),
+                })
+            ),
         })
     ),
     targetInteraction: t.Optional(t.String()),

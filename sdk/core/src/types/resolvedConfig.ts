@@ -23,7 +23,7 @@ export type ResolvedPlacement = {
         buttonShare?: {
             text?: string;
             noRewardText?: string;
-            clickAction?: "embedded-wallet" | "share-modal";
+            clickAction?: "embedded-wallet" | "share-modal" | "sharing-page";
             useReward?: boolean;
             css?: string;
         };
@@ -36,6 +36,15 @@ export type ResolvedPlacement = {
             css?: string;
         };
         postPurchase?: {
+            refereeText?: string;
+            refereeNoRewardText?: string;
+            referrerText?: string;
+            referrerNoRewardText?: string;
+            ctaText?: string;
+            ctaNoRewardText?: string;
+            css?: string;
+        };
+        banner?: {
             css?: string;
         };
     };

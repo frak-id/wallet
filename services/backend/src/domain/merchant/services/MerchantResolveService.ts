@@ -214,6 +214,11 @@ export class MerchantResolveService {
                                 placement.components.openInApp
                             ),
                         }),
+                        ...(placement.components.postPurchase && {
+                            postPurchase: stripRawCss(
+                                placement.components.postPurchase
+                            ),
+                        }),
                     },
                 }),
                 ...(placement.targetInteraction && {

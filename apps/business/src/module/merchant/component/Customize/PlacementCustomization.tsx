@@ -29,6 +29,7 @@ import {
     getPlacementTranslationsFormValues,
     getTranslationsFormValues,
     type PlacementSettingsFormValues,
+    type PostPurchaseFormValues,
     type TranslationFormValues,
     type TranslationLang,
     updatePlacement,
@@ -86,7 +87,55 @@ const COMPONENT_TYPES: ComponentType[] = [
     "buttonShare",
     "buttonWallet",
     "openInApp",
+    "postPurchase",
 ];
+
+function getPostPurchaseDefaults(
+    components: NonNullable<
+        NonNullable<SdkConfig["placements"]>[string]
+    >["components"]
+): PostPurchaseFormValues {
+    const pp = components?.postPurchase;
+    return {
+        refereeText: pp?.refereeText ?? "",
+        refereeNoRewardText: pp?.refereeNoRewardText ?? "",
+        referrerText: pp?.referrerText ?? "",
+        referrerNoRewardText: pp?.referrerNoRewardText ?? "",
+        ctaText: pp?.ctaText ?? "",
+        ctaNoRewardText: pp?.ctaNoRewardText ?? "",
+        css: pp?.rawCss ?? "",
+    };
+}
+
+function getPlacementFormValues(
+    sdkConfig: SdkConfig,
+    placementId: string
+): PlacementSettingsFormValues {
+    const placement = sdkConfig.placements?.[placementId];
+    const components = placement?.components;
+    const bs = components?.buttonShare;
+    const bw = components?.buttonWallet;
+    const oia = components?.openInApp;
+    return {
+        targetInteraction: placement?.targetInteraction ?? "",
+        buttonShare: {
+            text: bs?.text ?? "",
+            noRewardText: bs?.noRewardText ?? "",
+            clickAction: bs?.clickAction ?? "embedded-wallet",
+            useReward: bs?.useReward ?? false,
+            css: bs?.rawCss ?? "",
+        },
+        buttonWallet: {
+            position: bw?.position ?? "bottom-right",
+            css: bw?.rawCss ?? "",
+        },
+        openInApp: {
+            text: oia?.text ?? "",
+            css: oia?.rawCss ?? "",
+        },
+        postPurchase: getPostPurchaseDefaults(components),
+    };
+}
 
 function PlacementSettingsPanel({
     merchantId,
@@ -108,29 +157,10 @@ function PlacementSettingsPanel({
     const [selectedComponent, setSelectedComponent] =
         useState<ComponentType>("buttonShare");
 
-    const values = useMemo<PlacementSettingsFormValues>(() => {
-        const placement = sdkConfig.placements?.[placementId];
-        const components = placement?.components;
-        return {
-            targetInteraction: placement?.targetInteraction ?? "",
-            buttonShare: {
-                text: components?.buttonShare?.text ?? "",
-                noRewardText: components?.buttonShare?.noRewardText ?? "",
-                clickAction:
-                    components?.buttonShare?.clickAction ?? "embedded-wallet",
-                useReward: components?.buttonShare?.useReward ?? false,
-                css: components?.buttonShare?.rawCss ?? "",
-            },
-            buttonWallet: {
-                position: components?.buttonWallet?.position ?? "bottom-right",
-                css: components?.buttonWallet?.rawCss ?? "",
-            },
-            openInApp: {
-                text: components?.openInApp?.text ?? "",
-                css: components?.openInApp?.rawCss ?? "",
-            },
-        };
-    }, [sdkConfig.placements, placementId]);
+    const values = useMemo(
+        () => getPlacementFormValues(sdkConfig, placementId),
+        [sdkConfig.placements, placementId]
+    );
 
     const form = useForm<PlacementSettingsFormValues>({
         values,
@@ -149,6 +179,15 @@ function PlacementSettingsPanel({
             },
             openInApp: {
                 text: "",
+                css: "",
+            },
+            postPurchase: {
+                refereeText: "",
+                refereeNoRewardText: "",
+                referrerText: "",
+                referrerNoRewardText: "",
+                ctaText: "",
+                ctaNoRewardText: "",
                 css: "",
             },
         },
@@ -186,6 +225,25 @@ function PlacementSettingsPanel({
                 text: valueOrUndefined(currentValues.openInApp.text),
                 rawCss: valueOrUndefined(currentValues.openInApp.css),
             };
+            const postPurchase = {
+                refereeText: valueOrUndefined(
+                    currentValues.postPurchase.refereeText
+                ),
+                refereeNoRewardText: valueOrUndefined(
+                    currentValues.postPurchase.refereeNoRewardText
+                ),
+                referrerText: valueOrUndefined(
+                    currentValues.postPurchase.referrerText
+                ),
+                referrerNoRewardText: valueOrUndefined(
+                    currentValues.postPurchase.referrerNoRewardText
+                ),
+                ctaText: valueOrUndefined(currentValues.postPurchase.ctaText),
+                ctaNoRewardText: valueOrUndefined(
+                    currentValues.postPurchase.ctaNoRewardText
+                ),
+                rawCss: valueOrUndefined(currentValues.postPurchase.css),
+            };
 
             editSdkConfig({
                 placements: updatePlacement(
@@ -197,6 +255,7 @@ function PlacementSettingsPanel({
                             buttonShare,
                             buttonWallet,
                             openInApp,
+                            postPurchase,
                         },
                         targetInteraction: valueOrUndefined(
                             currentValues.targetInteraction
@@ -270,6 +329,9 @@ function PlacementSettingsPanel({
                 )}
                 {selectedComponent === "openInApp" && (
                     <OpenInAppFields form={form} />
+                )}
+                {selectedComponent === "postPurchase" && (
+                    <PostPurchaseFields form={form} />
                 )}
 
                 <FormActions
@@ -534,6 +596,231 @@ function OpenInAppFields({
                             <textarea
                                 className={styles.customize__textarea}
                                 placeholder={".frak-open-in-app { ... }"}
+                                rows={4}
+                                {...field}
+                            />
+                        </FormControl>
+                        <FormMessage />
+                    </FormItem>
+                )}
+            />
+        </div>
+    );
+}
+
+function PostPurchaseFields({
+    form,
+}: {
+    form: ReturnType<typeof useForm<PlacementSettingsFormValues>>;
+}) {
+    return (
+        <div className={styles.customize__settingsGrid}>
+            <FormField
+                control={form.control}
+                name="postPurchase.refereeText"
+                rules={{
+                    maxLength: {
+                        value: 500,
+                        message: "Maximum length is 500 characters",
+                    },
+                }}
+                render={({ field }) => (
+                    <FormItem>
+                        <FormLabel weight={"medium"}>
+                            Referee message (with reward)
+                        </FormLabel>
+                        <FormDescription>
+                            Shown to referred visitors after purchase. Use
+                            {"  {REWARD}  "} for the reward amount.
+                        </FormDescription>
+                        <FormControl>
+                            <Input
+                                length={"big"}
+                                maxLength={500}
+                                placeholder={
+                                    "You just earned {REWARD}! Share with friends to earn even more."
+                                }
+                                {...field}
+                            />
+                        </FormControl>
+                        <FormMessage />
+                    </FormItem>
+                )}
+            />
+
+            <FormField
+                control={form.control}
+                name="postPurchase.refereeNoRewardText"
+                rules={{
+                    maxLength: {
+                        value: 500,
+                        message: "Maximum length is 500 characters",
+                    },
+                }}
+                render={({ field }) => (
+                    <FormItem>
+                        <FormLabel weight={"medium"}>
+                            Referee message (no reward)
+                        </FormLabel>
+                        <FormDescription>
+                            Fallback for referred visitors when no reward is
+                            available
+                        </FormDescription>
+                        <FormControl>
+                            <Input
+                                length={"big"}
+                                maxLength={500}
+                                placeholder={
+                                    "You just earned a reward! Share with friends to earn even more."
+                                }
+                                {...field}
+                            />
+                        </FormControl>
+                        <FormMessage />
+                    </FormItem>
+                )}
+            />
+
+            <FormField
+                control={form.control}
+                name="postPurchase.referrerText"
+                rules={{
+                    maxLength: {
+                        value: 500,
+                        message: "Maximum length is 500 characters",
+                    },
+                }}
+                render={({ field }) => (
+                    <FormItem>
+                        <FormLabel weight={"medium"}>
+                            Referrer message (with reward)
+                        </FormLabel>
+                        <FormDescription>
+                            Shown to non-referred visitors after purchase. Use{" "}
+                            {"  {REWARD}  "} for the reward amount.
+                        </FormDescription>
+                        <FormControl>
+                            <Input
+                                length={"big"}
+                                maxLength={500}
+                                placeholder={
+                                    "Earn {REWARD} by sharing this with your friends!"
+                                }
+                                {...field}
+                            />
+                        </FormControl>
+                        <FormMessage />
+                    </FormItem>
+                )}
+            />
+
+            <FormField
+                control={form.control}
+                name="postPurchase.referrerNoRewardText"
+                rules={{
+                    maxLength: {
+                        value: 500,
+                        message: "Maximum length is 500 characters",
+                    },
+                }}
+                render={({ field }) => (
+                    <FormItem>
+                        <FormLabel weight={"medium"}>
+                            Referrer message (no reward)
+                        </FormLabel>
+                        <FormDescription>
+                            Fallback for non-referred visitors when no reward is
+                            available
+                        </FormDescription>
+                        <FormControl>
+                            <Input
+                                length={"big"}
+                                maxLength={500}
+                                placeholder={
+                                    "Share this with your friends and earn rewards!"
+                                }
+                                {...field}
+                            />
+                        </FormControl>
+                        <FormMessage />
+                    </FormItem>
+                )}
+            />
+
+            <FormField
+                control={form.control}
+                name="postPurchase.ctaText"
+                rules={{
+                    maxLength: {
+                        value: 200,
+                        message: "Maximum length is 200 characters",
+                    },
+                }}
+                render={({ field }) => (
+                    <FormItem>
+                        <FormLabel weight={"medium"}>
+                            CTA button (with reward)
+                        </FormLabel>
+                        <FormDescription>
+                            Share button text. Use {"  {REWARD}  "} for the
+                            reward amount.
+                        </FormDescription>
+                        <FormControl>
+                            <Input
+                                length={"big"}
+                                maxLength={200}
+                                placeholder={"Share & earn {REWARD}"}
+                                {...field}
+                            />
+                        </FormControl>
+                        <FormMessage />
+                    </FormItem>
+                )}
+            />
+
+            <FormField
+                control={form.control}
+                name="postPurchase.ctaNoRewardText"
+                rules={{
+                    maxLength: {
+                        value: 200,
+                        message: "Maximum length is 200 characters",
+                    },
+                }}
+                render={({ field }) => (
+                    <FormItem>
+                        <FormLabel weight={"medium"}>
+                            CTA button (no reward)
+                        </FormLabel>
+                        <FormDescription>
+                            Fallback button text when no reward is available
+                        </FormDescription>
+                        <FormControl>
+                            <Input
+                                length={"big"}
+                                maxLength={200}
+                                placeholder={"Share & earn"}
+                                {...field}
+                            />
+                        </FormControl>
+                        <FormMessage />
+                    </FormItem>
+                )}
+            />
+
+            <FormField
+                control={form.control}
+                name="postPurchase.css"
+                render={({ field }) => (
+                    <FormItem>
+                        <FormLabel weight={"medium"}>Component CSS</FormLabel>
+                        <FormDescription>
+                            Custom styles applied to the post-purchase card
+                        </FormDescription>
+                        <FormControl>
+                            <textarea
+                                className={styles.customize__textarea}
+                                placeholder={".post-purchase { ... }"}
                                 rows={4}
                                 {...field}
                             />

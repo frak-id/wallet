@@ -162,6 +162,38 @@ export function PostPurchase({
         return formatEstimatedReward(context.reward, currency);
     }, [context?.reward]);
 
+    const postPurchaseConfig = placement?.components?.postPurchase;
+
+    const texts = useMemo(() => {
+        const applyReward = (text: string) =>
+            rewardText ? text.replace("{REWARD}", rewardText) : text;
+
+        const message =
+            resolvedVariant === "referee"
+                ? rewardText
+                    ? applyReward(
+                          postPurchaseConfig?.refereeText ??
+                              "You just earned {REWARD}! Share with friends to earn even more."
+                      )
+                    : (postPurchaseConfig?.refereeNoRewardText ??
+                      "You just earned a reward! Share with friends to earn even more.")
+                : rewardText
+                  ? applyReward(
+                        postPurchaseConfig?.referrerText ??
+                            "Earn {REWARD} by sharing this with your friends!"
+                    )
+                  : (postPurchaseConfig?.referrerNoRewardText ??
+                    "Share this with your friends and earn rewards!");
+
+        const cta = rewardText
+            ? applyReward(
+                  postPurchaseConfig?.ctaText ?? "Share & earn {REWARD}"
+              )
+            : (postPurchaseConfig?.ctaNoRewardText ?? "Share & earn");
+
+        return { message, cta };
+    }, [resolvedVariant, rewardText, postPurchaseConfig]);
+
     // Reuse shared share-modal hook (includes error tracking + debug info)
     const { handleShare } = useShareModal(
         undefined,
@@ -178,19 +210,7 @@ export function PostPurchase({
     return (
         <div class={cardClass}>
             <div class="post-purchase__content">
-                {resolvedVariant === "referee" ? (
-                    <p class="post-purchase__message">
-                        {rewardText
-                            ? `You just earned ${rewardText}! Share with friends to earn even more.`
-                            : "You just earned a reward! Share with friends to earn even more."}
-                    </p>
-                ) : (
-                    <p class="post-purchase__message">
-                        {rewardText
-                            ? `Earn ${rewardText} by sharing this with your friends!`
-                            : "Share this with your friends and earn rewards!"}
-                    </p>
-                )}
+                <p class="post-purchase__message">{texts.message}</p>
             </div>
             <button
                 type="button"
@@ -198,7 +218,7 @@ export function PostPurchase({
                 disabled={!isClientReady}
                 onClick={handleShare}
             >
-                {rewardText ? `Share & earn ${rewardText}` : "Share & earn"}
+                {texts.cta}
             </button>
         </div>
     );

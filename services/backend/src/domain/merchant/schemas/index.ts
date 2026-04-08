@@ -48,10 +48,22 @@ const OpenInAppComponentSchema = t.Object({
     css: t.Optional(t.String({ maxLength: 50000 })),
 });
 
+const PostPurchaseComponentSchema = t.Object({
+    refereeText: t.Optional(t.String({ maxLength: 500 })),
+    refereeNoRewardText: t.Optional(t.String({ maxLength: 500 })),
+    referrerText: t.Optional(t.String({ maxLength: 500 })),
+    referrerNoRewardText: t.Optional(t.String({ maxLength: 500 })),
+    ctaText: t.Optional(t.String({ maxLength: 500 })),
+    ctaNoRewardText: t.Optional(t.String({ maxLength: 500 })),
+    rawCss: t.Optional(t.String({ maxLength: 50000 })),
+    css: t.Optional(t.String({ maxLength: 50000 })),
+});
+
 const PlacementComponentsSchema = t.Object({
     buttonShare: t.Optional(ButtonShareComponentSchema),
     buttonWallet: t.Optional(ButtonWalletComponentSchema),
     openInApp: t.Optional(OpenInAppComponentSchema),
+    postPurchase: t.Optional(PostPurchaseComponentSchema),
 });
 
 export const PlacementSchema = t.Object({
