@@ -3,7 +3,6 @@ import { setupClient, withCache } from "@frak-labs/core-sdk";
 import * as coreSdkActions from "@frak-labs/core-sdk/actions";
 import { openWalletModal } from "../components/ButtonWallet/utils";
 import { dispatchClientReadyEvent } from "./clientReady";
-import { setupReferral } from "./setup";
 
 /**
  * Initializes the Frak SDK client and sets up necessary configurations.
@@ -60,7 +59,7 @@ async function doInit(): Promise<void> {
     dispatchClientReadyEvent();
 
     // Setup the referral
-    setupReferral(client);
+    coreSdkActions.setupReferral(client);
 
     // Handle the action query param
     handleActionQueryParam();

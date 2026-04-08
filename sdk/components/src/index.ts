@@ -1,3 +1,5 @@
+export * from "./components/Banner";
+export type { BannerProps } from "./components/Banner/types";
 export * from "./components/ButtonShare";
 export type { ButtonShareProps } from "./components/ButtonShare/types";
 export * from "./components/ButtonWallet";

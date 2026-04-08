@@ -1,14 +1,13 @@
+import {
+    getBackendUrl,
+    isInAppBrowser,
+    redirectToExternalBrowser,
+} from "@frak-labs/core-sdk";
 import { useCallback, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { trackGenericEvent } from "../../analytics";
 import { useSessionFlag } from "../../hook/useSessionFlag";
-import {
-    inAppRedirectUrl,
-    isInAppBrowser,
-    isInIframe,
-    isIPad,
-    redirectToExternalBrowser,
-} from "../../lib/inApp";
+import { isInIframe, isIPad } from "../../lib/inApp";
 import { emitLifecycleEvent } from "../../utils/lifecycleEvents";
 import { Toast } from "../Toast";
 
@@ -67,7 +66,7 @@ export function InAppBrowserToast({
                 emitLifecycleEvent({
                     iframeLifecycle: "redirect",
                     data: {
-                        baseRedirectUrl: inAppRedirectUrl,
+                        baseRedirectUrl: `${process.env.BACKEND_URL ?? getBackendUrl()}/common/social?u=`,
                         mergeToken,
                     },
                 });

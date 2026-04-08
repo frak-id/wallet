@@ -45,6 +45,12 @@ export type ResolvedPlacement = {
             css?: string;
         };
         banner?: {
+            referralTitle?: string;
+            referralDescription?: string;
+            referralCta?: string;
+            inappTitle?: string;
+            inappDescription?: string;
+            inappCta?: string;
             css?: string;
         };
     };

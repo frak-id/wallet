@@ -23,6 +23,11 @@ export {
     createIframe,
     findIframeInOpener,
 } from "./iframeHelper";
+export {
+    isInAppBrowser,
+    isIOS,
+    redirectToExternalBrowser,
+} from "./inAppBrowser";
 export { sdkConfigStore } from "./sdkConfigStore";
 export {
     type AppSpecificSsoMetadata,

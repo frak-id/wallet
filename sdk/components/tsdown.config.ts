@@ -27,6 +27,7 @@ export default defineConfig([
             buttonWallet: "./src/components/ButtonWallet/index.ts",
             openInApp: "./src/components/OpenInAppButton/index.ts",
             postPurchase: "./src/components/PostPurchase/index.ts",
+            banner: "./src/components/Banner/index.ts",
         },
         format: ["esm"],
         platform: "browser",
@@ -54,6 +55,9 @@ export default defineConfig([
             moduleSideEffects: true,
         },
         define: {
+            "process.env.BACKEND_URL": JSON.stringify(
+                process.env.BACKEND_URL || "https://backend.frak.id"
+            ),
             "process.env.BUILD_TIMESTAMP": JSON.stringify(Date.now()),
             "process.env.CDN_TAG": JSON.stringify(
                 process.env.CDN_TAG || "latest"

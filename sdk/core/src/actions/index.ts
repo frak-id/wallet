@@ -10,8 +10,12 @@ export {
     type ProcessReferralOptions,
     processReferral,
 } from "./referral/processReferral";
-// Referral interaction
+// Referral
 export { referralInteraction } from "./referral/referralInteraction";
+export {
+    REFERRAL_SUCCESS_EVENT,
+    setupReferral,
+} from "./referral/setupReferral";
 export { sendInteraction } from "./sendInteraction";
 // Helper to track the purchase status
 export { trackPurchaseStatus } from "./trackPurchaseStatus";

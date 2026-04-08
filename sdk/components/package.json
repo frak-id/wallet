@@ -61,6 +61,11 @@
       "import": "./dist/postPurchase.js",
       "types": "./dist/postPurchase.d.ts"
     },
+    "./banner": {
+      "development": "./src/components/Banner/index.ts",
+      "import": "./dist/banner.js",
+      "types": "./dist/banner.d.ts"
+    },
     "./cdn": {
       "import": "./cdn/components.js"
     },

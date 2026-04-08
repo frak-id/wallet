@@ -18,6 +18,9 @@ const packageJson = JSON.parse(fs.readFileSync("./package.json", "utf8"));
 const sdkVersion = packageJson.version;
 
 const buildDefine = {
+    "process.env.BACKEND_URL": JSON.stringify(
+        process.env.BACKEND_URL || "https://backend.frak.id"
+    ),
     "process.env.OPEN_PANEL_API_URL": JSON.stringify(
         "https://op-api.gcp.frak.id"
     ),

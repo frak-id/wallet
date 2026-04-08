@@ -4,7 +4,6 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import * as buttonWalletUtils from "../components/ButtonWallet/utils";
 import * as clientReadyUtils from "./clientReady";
 import { initFrakSdk } from "./initFrakSdk";
-import * as setupUtils from "./setup";
 
 // Mock dependencies — pass through withCache/clearAllCache so the real cache works
 vi.mock("@frak-labs/core-sdk", async () => {
@@ -19,14 +18,11 @@ vi.mock("@frak-labs/core-sdk", async () => {
 
 vi.mock("@frak-labs/core-sdk/actions", () => ({
     displayModal: vi.fn(),
+    setupReferral: vi.fn(),
 }));
 
 vi.mock("./clientReady", () => ({
     dispatchClientReadyEvent: vi.fn(),
-}));
-
-vi.mock("./setup", () => ({
-    setupReferral: vi.fn(),
 }));
 
 vi.mock("../components/ButtonWallet/utils", () => ({
@@ -139,7 +135,7 @@ describe("initFrakSdk", () => {
         });
         expect(window.FrakSetup.client).toBe(mockClient);
         expect(clientReadyUtils.dispatchClientReadyEvent).toHaveBeenCalled();
-        expect(setupUtils.setupReferral).toHaveBeenCalledWith(mockClient);
+        expect(coreSdkActions.setupReferral).toHaveBeenCalledWith(mockClient);
         expect(consoleLogSpy).toHaveBeenCalledWith(
             "[Frak SDK] Starting initialization"
         );
