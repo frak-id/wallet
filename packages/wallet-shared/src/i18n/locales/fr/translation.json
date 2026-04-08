@@ -464,7 +464,9 @@
             "emptyTitle": "Prêt à gagner de l'argent ?",
             "emptyDescription": "Explore les offres et recommande tes produits coups de cœur à tes ami·e·s pour gagner de l'argent.",
             "discover": "Découvrir les offres",
-            "title": "Historique des gains"
+            "title": "Historique des gains",
+            "seeAll": "Tout afficher",
+            "viewAll": "Voir tout"
         }
     },
     "mobile-sso": {

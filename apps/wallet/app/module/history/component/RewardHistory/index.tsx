@@ -23,7 +23,9 @@ import { useGetRewardHistory } from "@/module/history/hook/useGetRewardHistory";
 import * as styles from "./index.css";
 
 export function RewardHistoryList() {
-    const { items, isLoading } = useGetRewardHistory();
+    const { t } = useTranslation();
+    const navigate = useNavigate();
+    const { items, totalCount, isLoading } = useGetRewardHistory();
 
     if (isLoading) return <Skeleton count={3} height={110} />;
 
@@ -33,7 +35,7 @@ export function RewardHistoryList() {
 
     return (
         <Card padding="none">
-            {items.map((item) => (
+            {items.slice(0, 5).map((item) => (
                 <RewardHistoryItem
                     key={
                         item.txHash ??
@@ -42,6 +44,18 @@ export function RewardHistoryList() {
                     item={item}
                 />
             ))}
+            {totalCount >= 5 && (
+                <Inline padding="m" align="center">
+                    <Button
+                        variant="ghost"
+                        size="small"
+                        width="auto"
+                        onClick={() => navigate({ to: "/history" })}
+                    >
+                        {t("reward.history.seeAll")}
+                    </Button>
+                </Inline>
+            )}
         </Card>
     );
 }
@@ -110,7 +124,7 @@ function RewardHistoryItem({ item }: { item: RewardHistoryItemType }) {
                         )}
                     </Stack>
                 </Stack>
-                <Stack space="xxs" align="right" justify="end">
+                <Stack space="xxs" align="right" justify="space-between">
                     {purchaseAmount && (
                         <Text variant="body">{purchaseAmount}</Text>
                     )}

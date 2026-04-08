@@ -396,7 +396,9 @@ interface Resources {
                 discover: "Discover offers";
                 emptyDescription: "Explore offers and recommend your favorite products to friends to earn money.";
                 emptyTitle: "Ready to earn money?";
+                seeAll: "See all";
                 title: "Earnings history";
+                viewAll: "View all";
             };
             status: {
                 cancelled: "Cancelled";

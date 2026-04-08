@@ -467,7 +467,9 @@
             "emptyTitle": "Ready to earn money?",
             "emptyDescription": "Explore offers and recommend your favorite products to friends to earn money.",
             "discover": "Discover offers",
-            "title": "Earnings history"
+            "title": "Earnings history",
+            "seeAll": "See all",
+            "viewAll": "View all"
         }
     },
     "mobile-sso": {
