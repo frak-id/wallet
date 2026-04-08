@@ -60,6 +60,7 @@ export const SHARING_PAGE_TRANSLATION_GROUPS = {
         "sdk.sharingPage.confirmation.benefits.cashout.title",
         "sdk.sharingPage.confirmation.benefits.cashout.description",
         "sdk.sharingPage.confirmation.cta",
+        "sdk.sharingPage.confirmation.shareAgain",
     ],
 } as const;
 
@@ -346,6 +347,10 @@ export const TRANSLATION_KEY_META: Record<
     "sdk.sharingPage.confirmation.cta": {
         label: "Confirmation CTA",
         description: "Call-to-action button text on the confirmation screen",
+    },
+    "sdk.sharingPage.confirmation.shareAgain": {
+        label: "Share again link",
+        description: "Secondary action to go back and share again",
     },
 };
 

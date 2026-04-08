@@ -196,7 +196,18 @@ export function detectFrakActivated(
 }
 
 /**
- * Detect if any main product section contains a referral_button block.
+ * Section-targeted Frak block types detected in template block_order arrays.
+ */
+const FRAK_SECTION_BLOCKS = ["referral_button", "post_purchase"] as const;
+
+/**
+ * Body-targeted Frak block type patterns detected in settings_data.json blocks.
+ */
+const FRAK_BODY_BLOCK_PATTERNS = ["/blocks/banner/"] as const;
+
+/**
+ * Detect if any main product section contains a Frak component block
+ * (referral_button or post_purchase).
  */
 export function detectFrakButton(
     sections: Record<string, string | { type: string; block_order?: string[] }>
@@ -208,29 +219,26 @@ export function detectFrakButton(
     );
     if (main && typeof main[1] !== "string" && main[1].block_order) {
         return main[1].block_order.some((blockId) =>
-            blockId.includes("referral_button")
+            FRAK_SECTION_BLOCKS.some((type) => blockId.includes(type))
         );
     }
     return false;
 }
 
 /**
- * Detect if a Frak wallet_button block is enabled. Returns block ID or null.
+ * Detect if settings_data.json blocks contain a body-targeted Frak component
+ * (e.g. banner). Similar to {@link detectFrakActivated} but for non-listener blocks.
  */
-export function detectWalletButton(
+export function detectFrakBodyComponent(
     blocks: Record<string, ThemeBlockInfo> | undefined
-): string | null {
-    if (!blocks) return null;
-    const typeMatch = "/blocks/wallet_button/";
-    const walletBlock = Object.entries(blocks).find(
-        ([_id, info]) => info.type.includes(typeMatch) && !info.disabled
+): boolean {
+    if (!blocks) return false;
+    return !!Object.entries(blocks).find(
+        ([_id, info]) =>
+            FRAK_BODY_BLOCK_PATTERNS.some((pattern) =>
+                info.type.includes(pattern)
+            ) && !info.disabled
     );
-    if (walletBlock) {
-        const [_, blockInfo] = walletBlock;
-        const idMatch = blockInfo.type.match(/wallet_button\/([^/]+)$/);
-        return idMatch ? idMatch[1] : null;
-    }
-    return null;
 }
 
 /**
@@ -278,53 +286,40 @@ export async function doesThemeHasFrakActivated(context: AuthenticatedContext) {
 }
 
 /**
- * Check if the current shop theme has the Frak button in product page
+ * Check if the current shop theme has any Frak component block.
+ *
+ * Checks two sources:
+ * - `templates/product.json` for section-targeted blocks (referral_button, post_purchase)
+ * - `config/settings_data.json` for body-targeted blocks (banner)
  */
 export async function doesThemeHasFrakButton(context: AuthenticatedContext) {
-    // Get the main theme id
     const mainThemeId = await getMainThemeId(context);
 
-    // Retrieve the JSON templates that we want to integrate with
+    // Fetch both template sources in a single GraphQL call
     const jsonTemplateData = await getTemplateFiles(
         context.admin.graphql,
         mainThemeId.gid,
-        ["templates/product.json"]
+        ["templates/product.json", "config/settings_data.json"]
     );
 
-    // Retrieve the body of JSON templates and find what section is set as `main`
-    // Return true if any of the main sections has a block with the frak_referral_button type
-    return jsonTemplateData.some((file: ThemeFile) =>
-        detectFrakButton(file.body.sections)
+    const productFile = jsonTemplateData.find(
+        (f: ThemeFile) => f.filename === "templates/product.json"
     );
-}
-
-/**
- * Check if the current shop theme has the Frak wallet button in body
- */
-export async function doesThemeHasFrakWalletButton(
-    context: AuthenticatedContext
-) {
-    // Get the main theme id
-    const mainThemeId = await getMainThemeId(context);
-
-    // Retrieve the JSON templates that we want to integrate with
-    const jsonTemplateData = await getTemplateFiles(
-        context.admin.graphql,
-        mainThemeId.gid,
-        ["config/settings_data.json"]
+    const settingsFile = jsonTemplateData.find(
+        (f: ThemeFile) => f.filename === "config/settings_data.json"
     );
 
-    if (
-        jsonTemplateData.length <= 0 ||
-        !jsonTemplateData?.[0]?.body?.current?.blocks
-    ) {
-        return null;
-    }
+    // Check section blocks in product template (referral_button, post_purchase)
+    const hasSectionBlock = productFile
+        ? detectFrakButton(productFile.body.sections)
+        : false;
 
-    return detectWalletButton(
-        jsonTemplateData[0].body.current.blocks as Record<
-            string,
-            ThemeBlockInfo
-        >
+    // Check body blocks in settings data (banner)
+    const hasBodyBlock = detectFrakBodyComponent(
+        settingsFile?.body?.current?.blocks as
+            | Record<string, ThemeBlockInfo>
+            | undefined
     );
+
+    return hasSectionBlock || hasBodyBlock;
 }

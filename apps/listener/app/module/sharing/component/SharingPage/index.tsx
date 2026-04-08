@@ -107,6 +107,16 @@ export function ListenerSharingPage() {
         clearRequest();
     };
 
+    const handleShareAgain = () => {
+        try {
+            sessionStorage.removeItem(SHARING_CONFIRMED_KEY);
+        } catch {
+            // sessionStorage may not be available in some iframe contexts
+        }
+        hasResolvedRef.current = false;
+        setShowConfirmation(false);
+    };
+
     const finalSharingLink = useMemo(() => {
         if (!(clientId && merchantId)) return null;
         return FrakContextManager.update({
@@ -162,6 +172,7 @@ export function ListenerSharingPage() {
             <PostShareConfirmation
                 installUrl={installUrl}
                 onDismiss={clearRequest}
+                onShareAgain={handleShareAgain}
             />
         );
     }

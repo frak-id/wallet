@@ -48,11 +48,9 @@
             "description": "Veuillez activer l'<strong>application Frak intégrée</strong> dans votre thème à l'aide de l'interrupteur comme illustré ci-dessous"
         },
         "step6": {
-            "title": "Ajouter le bouton de partage ou de porte-monnaie dans votre thème",
+            "title": "Ajouter le bouton de partage dans votre thème",
             "descriptionShare": "Veuillez ajouter le <strong>Frak Sharing Button</strong> comme illustré ci-dessous",
-            "descriptionWallet": "Veuillez activer le <strong>Frak Wallet Button</strong> comme illustré ci-dessous",
-            "linkShare": "Ajoutez le bouton Frak Sharing Button à votre page produit",
-            "linkWallet": "Activez le bouton Frak Wallet Button"
+            "linkShare": "Ajoutez le bouton Frak Sharing Button à votre page produit"
         }
     },
     "pixel": {
@@ -353,20 +351,13 @@
         "description": "Personnalisez l'apparence de votre intégration Frak dans votre boutique.",
         "tabs": {
             "customizations": "Personnalisations de texte",
-            "shareButton": "Bouton de partage",
-            "walletButton": "Bouton porte-monnaie"
+            "shareButton": "Bouton de partage"
         },
         "shareButton": {
             "link": "Configurer le bouton dans votre page produit",
             "noProduct": "Vous devez ajouter un produit à votre boutique pour ajouter le bouton de partage",
             "activated": "Le bouton de partage est dans votre page produit",
             "notActivated": "Le bouton de partage n'est pas dans votre page produit",
-            "todo": "Veuillez ajouter le bouton comme illustré ci-dessous"
-        },
-        "walletButton": {
-            "link": "Configurer le bouton porte-monnaie dans l'éditeur de thème",
-            "activated": "Le bouton porte-monnaie est dans votre thème",
-            "notActivated": "Le bouton porte-monnaie n'est pas dans votre thème",
             "todo": "Veuillez ajouter le bouton comme illustré ci-dessous"
         }
     },

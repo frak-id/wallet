@@ -156,3 +156,20 @@
     opacity: 0.5;
     cursor: not-allowed;
 }
+
+.shareAgainButton {
+    background: none;
+    border: none;
+    color: #666666;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    padding: 8px;
+    text-decoration: underline;
+    text-underline-offset: 2px;
+    transition: color 0.2s;
+}
+
+.shareAgainButton:hover {
+    color: #0052ff;
+}

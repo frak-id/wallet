@@ -95,7 +95,8 @@
                         "description": "Transférez vos gains directement vers votre compte bancaire en 3 clics."
                     }
                 },
-                "cta": "Récupérer mes {{ estimatedReward }}"
+                "cta": "Récupérer mes {{ estimatedReward }}",
+                "shareAgain": "Partager à nouveau"
             }
         }
     }

@@ -9,11 +9,13 @@ import styles from "./index.module.css";
 type PostShareConfirmationProps = {
     installUrl: string | null;
     onDismiss: () => void;
+    onShareAgain: () => void;
 };
 
 export function PostShareConfirmation({
     installUrl,
     onDismiss,
+    onShareAgain,
 }: PostShareConfirmationProps) {
     const { currentRequest } = useSharingListenerUI();
     const { t } = useListenerTranslation();
@@ -100,6 +102,13 @@ export function PostShareConfirmation({
                         {t("sdk.sharingPage.confirmation.cta")}
                     </button>
                 )}
+                <button
+                    type="button"
+                    className={styles.shareAgainButton}
+                    onClick={onShareAgain}
+                >
+                    {t("sdk.sharingPage.confirmation.shareAgain")}
+                </button>
             </footer>
         </div>
     );

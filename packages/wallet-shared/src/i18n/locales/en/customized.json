@@ -94,7 +94,8 @@
                         "description": "Transfer your earnings directly to your bank account in 3 clicks."
                     }
                 },
-                "cta": "Collect my {{ estimatedReward }}"
+                "cta": "Collect my {{ estimatedReward }}",
+                "shareAgain": "Share again"
             }
         }
     }

@@ -358,6 +358,37 @@
     </div>
 </div>
 
+<!-- ═══════════════════════════════════════════ -->
+<!-- Section 5: Banner Component                 -->
+<!-- ═══════════════════════════════════════════ -->
+<div class="test-section">
+    <h2>5. Banner Component</h2>
+    <p>
+        The <code>&lt;frak-banner&gt;</code> web component auto-detects its mode:
+        in-app browser detection (priority) or referral success banner.
+        Uses Light DOM to inherit merchant styles.
+    </p>
+    <p class="note">
+        The in-app browser banner only appears in in-app browsers (Instagram, TikTok, etc.).
+        The referral banner appears after a successful referral.
+    </p>
+
+    <h3>Default (auto-detect mode)</h3>
+    <div class="component-row">
+        <frak-banner></frak-banner>
+    </div>
+
+    <h3>With placement</h3>
+    <div class="component-row">
+        <frak-banner placement="hero-share"></frak-banner>
+    </div>
+
+    <h3>With interaction filter (purchase only)</h3>
+    <div class="component-row">
+        <frak-banner interaction="purchase"></frak-banner>
+    </div>
+</div>
+
 <!-- Merge Token Demo Section -->
 <div class="merge-demo">
     <h2>Identity Merge Demo</h2>
