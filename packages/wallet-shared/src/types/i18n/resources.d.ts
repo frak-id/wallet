@@ -397,6 +397,11 @@ interface Resources {
                 emptyDescription: "Explore offers and recommend your favorite products to friends to earn money.";
                 emptyTitle: "Ready to earn money?";
                 seeAll: "See all";
+                stats: {
+                    totalEarnings: "Total earnings";
+                    totalPurchases: "Purchases generated";
+                    totalShares: "Total shares";
+                };
                 title: "Earnings history";
                 viewAll: "View all";
             };

@@ -45,7 +45,7 @@ export function RewardHistoryList() {
                 />
             ))}
             {totalCount >= 5 && (
-                <Inline padding="m" align="center">
+                <Inline space="none" padding="m" align="center">
                     <Button
                         variant="ghost"
                         size="small"
@@ -89,7 +89,7 @@ function RewardHistoryEmpty() {
     );
 }
 
-function RewardHistoryItem({ item }: { item: RewardHistoryItemType }) {
+export function RewardHistoryItem({ item }: { item: RewardHistoryItemType }) {
     const { t, i18n } = useTranslation();
     const locale = i18n.language;
     const displayAmount = `+${formatCurrency(item.amount.eurAmount, "EUR", locale)}`;
@@ -124,7 +124,11 @@ function RewardHistoryItem({ item }: { item: RewardHistoryItemType }) {
                         )}
                     </Stack>
                 </Stack>
-                <Stack space="xxs" align="right" justify="space-between">
+                <Stack
+                    space="xxs"
+                    align="right"
+                    justify={purchaseAmount ? "space-between" : "end"}
+                >
                     {purchaseAmount && (
                         <Text variant="body">{purchaseAmount}</Text>
                     )}

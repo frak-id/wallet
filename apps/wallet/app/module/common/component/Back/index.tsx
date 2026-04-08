@@ -23,7 +23,7 @@ export function Back({
 }: PropsWithChildren<BackProps>) {
     if (href) {
         return (
-            <Box className={styles.back}>
+            <Box>
                 <Link
                     to={href}
                     aria-disabled={disabled}
@@ -50,7 +50,7 @@ export function Back({
     }
 
     return (
-        <Box className={styles.back}>
+        <Box>
             <Box
                 as="button"
                 type="button"

@@ -466,7 +466,12 @@
             "discover": "Découvrir les offres",
             "title": "Historique des gains",
             "seeAll": "Tout afficher",
-            "viewAll": "Voir tout"
+            "viewAll": "Voir tout",
+            "stats": {
+                "totalShares": "Total partages",
+                "totalPurchases": "Achats générés",
+                "totalEarnings": "Total gains générés"
+            }
         }
     },
     "mobile-sso": {

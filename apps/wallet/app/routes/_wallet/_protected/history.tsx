@@ -1,65 +1,64 @@
+import { Stack } from "@frak-labs/design-system/components/Stack";
 import { createFileRoute } from "@tanstack/react-router";
-import type { PropsWithChildren } from "react";
-import { useState } from "react";
+import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
-import { Panel } from "@/module/common/component/Panel";
-import { RewardHistoryList } from "@/module/history/component/RewardHistory";
-import * as styles from "@/module/history/page/historyPage.css";
+import { Back } from "@/module/common/component/Back";
+import { Skeleton } from "@/module/common/component/Skeleton";
+import { Title } from "@/module/common/component/Title";
+import { HistoryDayGroup } from "@/module/history/component/DayGroup";
+import { HistorySummary } from "@/module/history/component/HistorySummary";
+import { RewardHistoryItem as RewardHistoryItemComponent } from "@/module/history/component/RewardHistory";
+import { useGetRewardHistory } from "@/module/history/hook/useGetRewardHistory";
+import { computeDayTotals } from "@/module/history/utils/computeHistoryStats";
+import { groupByDay } from "@/module/history/utils/groupByDay";
 
 export const Route = createFileRoute("/_wallet/_protected/history")({
     component: HistoryPage,
 });
 
-type HistoryType = "rewards" | "notifications";
-
-/**
- * HistoryPage
- *
- * Page that displays user history with tabs for rewards and interactions
- *
- * @returns {JSX.Element} The rendered history page
- */
 function HistoryPage() {
-    const { t } = useTranslation();
-    const [type, setType] = useState<HistoryType>("rewards");
+    const { t, i18n } = useTranslation();
+    const { items, isLoading } = useGetRewardHistory();
 
-    return (
-        <div>
-            <Panel variant={"invisible"} className={styles.historyPanel}>
-                <nav className={styles.historyNav}>
-                    <ButtonType
-                        currentType={"rewards"}
-                        activeType={type}
-                        onTypeChange={setType}
-                    >
-                        {t("common.rewards")}
-                    </ButtonType>
-                </nav>
-            </Panel>
-            {type === "rewards" && <RewardHistoryList />}
-        </div>
+    const grouped = useMemo(
+        () =>
+            groupByDay(
+                items.map((item) => ({
+                    ...item,
+                    timestamp: Math.floor(item.createdAt / 1000),
+                })),
+                {
+                    locale: i18n.language,
+                    todayLabel: t("common.today"),
+                    yesterdayLabel: t("common.yesterday"),
+                }
+            ),
+        [items, i18n.language, t]
     );
-}
 
-function ButtonType({
-    currentType,
-    activeType,
-    onTypeChange,
-    children,
-}: PropsWithChildren<{
-    currentType: HistoryType;
-    activeType: HistoryType;
-    onTypeChange: (type: HistoryType) => void;
-}>) {
-    const classActive = currentType === activeType ? styles.historyActive : "";
+    const dayTotals = useMemo(() => computeDayTotals(grouped), [grouped]);
 
     return (
-        <button
-            type="button"
-            className={`${styles.historyButton} ${classActive}`}
-            onClick={() => onTypeChange(currentType)}
-        >
-            {children}
-        </button>
+        <Stack space="xs">
+            <Stack space="m">
+                <Back href="/wallet" />
+                <Title size="page">{t("reward.history.title")}</Title>
+            </Stack>
+
+            {isLoading ? (
+                <Skeleton count={3} height={110} />
+            ) : (
+                <Stack space="l">
+                    <HistorySummary items={items} />
+                    <HistoryDayGroup
+                        group={grouped}
+                        innerComponent={(item) => (
+                            <RewardHistoryItemComponent item={item} />
+                        )}
+                        dayTotals={dayTotals}
+                    />
+                </Stack>
+            )}
+        </Stack>
     );
 }

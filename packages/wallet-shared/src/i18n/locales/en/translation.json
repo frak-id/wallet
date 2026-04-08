@@ -469,7 +469,12 @@
             "discover": "Discover offers",
             "title": "Earnings history",
             "seeAll": "See all",
-            "viewAll": "View all"
+            "viewAll": "View all",
+            "stats": {
+                "totalShares": "Total shares",
+                "totalPurchases": "Purchases generated",
+                "totalEarnings": "Total earnings"
+            }
         }
     },
     "mobile-sso": {

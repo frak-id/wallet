@@ -19,6 +19,7 @@ export { HelpChatIcon } from "./HelpChatIcon";
 export { HourglassIcon } from "./HourglassIcon";
 export { ImageIcon } from "./ImageIcon";
 export { LockIcon } from "./LockIcon";
+export { PeopleIcon } from "./PeopleIcon";
 export { PersonIcon } from "./PersonIcon";
 export { ProfileIcon } from "./ProfileIcon";
 export { ShareIcon } from "./ShareIcon";

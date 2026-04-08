@@ -5,9 +5,9 @@ import * as styles from "./index.css";
 
 type ValidInlineElement = "div" | "span" | "nav" | "ul" | "ol" | "li";
 type InlineAlign = "left" | "center" | "right" | "space-between";
-type InlineAlignY = "top" | "center" | "bottom";
+type InlineAlignY = "top" | "center" | "bottom" | "baseline";
 type JustifyContent = "flex-start" | "center" | "flex-end" | "space-between";
-type AlignItems = "flex-start" | "center" | "flex-end";
+type AlignItems = "flex-start" | "center" | "flex-end" | "baseline";
 
 const alignToJustifyContent: Record<InlineAlign, JustifyContent> = {
     left: "flex-start",
@@ -20,6 +20,7 @@ const alignYToFlexAlign: Record<InlineAlignY, AlignItems> = {
     top: "flex-start",
     center: "center",
     bottom: "flex-end",
+    baseline: "baseline",
 } as const;
 
 export type InlineProps = {

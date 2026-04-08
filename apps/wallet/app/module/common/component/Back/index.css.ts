@@ -1,11 +1,6 @@
 import { alias, fontSize, transition } from "@frak-labs/design-system/tokens";
 import { style } from "@vanilla-extract/css";
 
-export const back = style({
-    marginLeft: alias.spacing.m,
-    marginBottom: `calc(-1 * ${alias.spacing.xs})`,
-});
-
 export const actionButton = style({
     all: "unset",
     cursor: "pointer",
