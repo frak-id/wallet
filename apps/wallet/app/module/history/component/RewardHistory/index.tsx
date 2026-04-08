@@ -48,7 +48,8 @@ export function RewardHistoryList() {
                 <Inline space="none" padding="m" align="center">
                     <Button
                         variant="ghost"
-                        size="small"
+                        size="none"
+                        fontSize="m"
                         width="auto"
                         onClick={() => navigate({ to: "/history" })}
                     >

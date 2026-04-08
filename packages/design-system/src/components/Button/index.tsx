@@ -15,6 +15,7 @@ type ButtonProps = ButtonHTMLAttributes<HTMLButtonElement> &
 export function Button({
     variant,
     size,
+    fontSize,
     width,
     children,
     icon,
@@ -28,7 +29,7 @@ export function Button({
         <Box
             as="button"
             type="button"
-            className={`${button({ variant, size, width })}${className ? ` ${className}` : ""}`}
+            className={`${button({ variant, size, width, fontSize })}${className ? ` ${className}` : ""}`}
             disabled={disabled || loading}
             {...rest}
         >

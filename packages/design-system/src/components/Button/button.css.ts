@@ -88,10 +88,22 @@ export const button = recipe({
                 fontSize: fontSize.m,
                 fontWeight: 600,
             },
+            none: {
+                padding: 0,
+                fontSize: fontSize.s,
+                fontWeight: 600,
+            },
         },
         width: {
             full: { width: "100%" },
             auto: { width: "auto" },
+        },
+        fontSize: {
+            xs: { fontSize: fontSize.xs },
+            s: { fontSize: fontSize.s },
+            m: { fontSize: fontSize.m },
+            l: { fontSize: fontSize.l },
+            xl: { fontSize: fontSize.xl },
         },
     },
     defaultVariants: {
