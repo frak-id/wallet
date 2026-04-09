@@ -45,6 +45,7 @@
     "ox": "^0.9.17",
     "permissionless": "^0.2.57",
     "radash": "^12.1.1",
+    "sonner": "^2.0.7",
     "react": "catalog:",
     "react-dom": "catalog:",
     "react-i18next": "^16.5.8",

@@ -1,4 +1,4 @@
-api_version = "2025-10"
+api_version = "2026-04"
 uid = "6a386c9f-1650-0932-cc95-5da6a42ace695f4c002e"
 
 [[extensions]]
@@ -16,25 +16,55 @@ module = "./src/ThankYou.tsx"
 target = "customer-account.order-status.block.render"
 module = "./src/OrderStatus.tsx"
 
-[extensions.capabilities]
-network_access = true
+# Shop metafields auto-populated by the Frak app during onboarding.
+# These provide merchantId, walletUrl, and logoUrl without manual settings.
+[[extensions.metafields]]
+namespace = "frak"
+key = "merchant_id"
 
+[[extensions.metafields]]
+namespace = "frak"
+key = "wallet_url"
+
+[[extensions.metafields]]
+namespace = "frak"
+key = "appearance"
+
+# Merchant-configurable text settings
 [extensions.settings]
 
 [[extensions.settings.fields]]
 key = "sharing_url"
 type = "single_line_text_field"
 name = "Sharing URL"
-description = "The URL users will be directed to for sharing. When empty, a preview placeholder is shown in the editor."
+description = "The URL shared with customers. Falls back to the store's base URL when empty."
 
 [[extensions.settings.fields]]
 key = "message"
 type = "single_line_text_field"
-name = "Message"
-description = "The message displayed to customers. Defaults to 'Share with your friends and earn rewards!'"
+name = "Heading"
+description = "The main heading displayed to customers. Defaults to 'Earn rewards through sharing'"
+
+[[extensions.settings.fields]]
+key = "subtitle"
+type = "single_line_text_field"
+name = "Subtitle"
+description = "The bold subtitle below the heading. Defaults to 'Recommend this product to your friends'"
+
+[[extensions.settings.fields]]
+key = "description"
+type = "single_line_text_field"
+name = "Description"
+description = "The description text below the subtitle. Defaults to 'If they buy, they earn... and so do you!'"
 
 [[extensions.settings.fields]]
 key = "cta_text"
 type = "single_line_text_field"
 name = "CTA Text"
 description = "Text for the call-to-action button. Defaults to 'Share & earn'"
+
+[[extensions.settings.fields]]
+key = "badge_text"
+type = "single_line_text_field"
+name = "Badge Text"
+description = "The badge label shown above the heading. Defaults to 'New'"

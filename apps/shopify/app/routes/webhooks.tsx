@@ -32,7 +32,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
         https://shopify.dev/docs/apps/build/privacy-law-compliance#subscribe-to-compliance-webhooks
 
         Hooks can be tested using the Shopify CLI:
-        shopify app webhook trigger --topic=customers/data_request --address=$SHOPIFY_URL/webhooks/app/compliance --api-version=2025-01
+        shopify app webhook trigger --topic=customers/data_request --address=$SHOPIFY_URL/webhooks/app/compliance --api-version=2026-04
         */
 
         case "APP_PURCHASES_ONE_TIME_UPDATE":
