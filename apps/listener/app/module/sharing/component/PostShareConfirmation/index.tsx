@@ -91,16 +91,7 @@ export function PostShareConfirmation({
 
             <footer className={styles.footer}>
                 {installUrl ? (
-                    <>
-                        <a
-                            href={installUrl}
-                            target="_top"
-                            className={styles.ctaButton}
-                        >
-                            {t("sdk.sharingPage.confirmation.cta")} (_top)
-                        </a>
-                        <OpenInNewTabButton installUrl={installUrl} />
-                    </>
+                    <OpenInNewTabButton installUrl={installUrl} />
                 ) : (
                     <button type="button" disabled className={styles.ctaButton}>
                         {t("sdk.sharingPage.confirmation.cta")}
@@ -148,6 +139,12 @@ function BenefitItem({
  *
  * This preserves the merchant page (unlike target="_top") while still
  * triggering iOS universal link interception from the top-level context.
+ *
+ * Alternative: If `_blank` doesn't work on a specific platform, a plain
+ * `<a href={installUrl} target="_top">` can be used as a fallback.
+ * It navigates the merchant page directly but guarantees universal link
+ * interception. The tradeoff is the user fully leaves the merchant site
+ * with no back navigation.
  */
 function OpenInNewTabButton({ installUrl }: { installUrl: string }) {
     const { t } = useListenerTranslation();
@@ -171,7 +168,7 @@ function OpenInNewTabButton({ installUrl }: { installUrl: string }) {
             className={styles.ctaButton}
             onClick={handleOpenInNewTab}
         >
-            {t("sdk.sharingPage.confirmation.cta")} (_blank)
+            {t("sdk.sharingPage.confirmation.cta")}
         </button>
     );
 }
