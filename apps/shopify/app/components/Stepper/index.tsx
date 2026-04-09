@@ -16,9 +16,11 @@ import { Step3 } from "./Step3";
 import { Step4 } from "./Step4";
 import { Step5 } from "./Step5";
 import { Step6 } from "./Step6";
+import { Step7 } from "./Step7";
+import { Step8 } from "./Step8";
 import { UncheckedIcon } from "./UncheckedIcon";
 
-const MAX_STEP = 6;
+const MAX_STEP = 8;
 
 export function Stepper({ redirectToApp }: { redirectToApp: boolean }) {
     const refresh = useRefreshData();
@@ -116,6 +118,8 @@ function Steps({ onboardingData }: { onboardingData: OnboardingStepData }) {
                 <Step4 onboardingData={onboardingData} />
                 <Step5 onboardingData={onboardingData} />
                 <Step6 onboardingData={onboardingData} />
+                <Step7 onboardingData={onboardingData} />
+                <Step8 onboardingData={onboardingData} />
             </s-stack>
         </s-box>
     );

@@ -23,7 +23,7 @@ type SharingSearch = {
     link?: string;
     appName?: string;
     logoUrl?: string;
-    products?: string;
+    products?: SharingPageProduct[];
     /** Shopify order ID - used by backend bridge to resolve clientId when cart attributes fail */
     orderId?: string;
     /** Shopify checkout token - correlates with web pixel purchase data */
@@ -37,14 +37,16 @@ export const Route = createFileRoute("/sharing")({
                 ? search.merchantId
                 : undefined,
         clientId:
-            typeof search.clientId === "string" ? search.clientId : undefined,
+            typeof search.clientId === "string"
+                ? search.clientId
+                : undefined,
         link: typeof search.link === "string" ? search.link : undefined,
         appName:
             typeof search.appName === "string" ? search.appName : undefined,
         logoUrl:
             typeof search.logoUrl === "string" ? search.logoUrl : undefined,
         products:
-            typeof search.products === "string" ? search.products : undefined,
+            typeof search.products === "object" ? search.products as SharingPageProduct[] : undefined,
         orderId:
             typeof search.orderId === "string" ? search.orderId : undefined,
         checkoutToken:
@@ -62,51 +64,13 @@ function WalletSharingPage() {
         link,
         appName,
         logoUrl,
-        products: productsJson,
-        orderId,
-        checkoutToken,
+        products,
     } = Route.useSearch();
     const { t } = useTranslation();
     const navigate = useNavigate();
     const storeClientId = clientIdStore((s) => s.clientId);
+    const clientId = paramClientId ?? storeClientId;
     const { copy } = useCopyToClipboardWithState();
-
-    // Immediate clientId from params or store
-    const immediateClientId = paramClientId ?? storeClientId;
-
-    // Fetch clientId from backend when not available directly but we have order info
-    const { data: resolvedClientId } = useQuery({
-        queryKey: ["order-client", merchantId, orderId, checkoutToken],
-        queryFn: async () => {
-            const { data, error } = await authenticatedBackendApi.user.identity[
-                "order-client"
-            ].get({
-                query: {
-                    merchantId: merchantId!,
-                    orderId,
-                    checkoutToken,
-                },
-            });
-            if (error) return null;
-            return data.clientId;
-        },
-        enabled:
-            !immediateClientId &&
-            !!merchantId &&
-            (!!orderId || !!checkoutToken),
-    });
-
-    const clientId = immediateClientId ?? resolvedClientId ?? undefined;
-
-    // Parse products from JSON search param
-    const products = useMemo<SharingPageProduct[]>(() => {
-        if (!productsJson) return [];
-        try {
-            return JSON.parse(productsJson) as SharingPageProduct[];
-        } catch {
-            return [];
-        }
-    }, [productsJson]);
 
     // Compute the install URL pointing to the /install route
     const installUrl = useMemo(() => {
@@ -181,10 +145,7 @@ function WalletSharingPage() {
 
     const handleInstall = useCallback(() => {
         if (!installUrl) return;
-        navigate({
-            to: "/install",
-            search: { m: merchantId, a: clientId ?? undefined },
-        });
+        navigate({ to: "/install", search: { m: merchantId, a: clientId ?? undefined } });
     }, [installUrl, merchantId, clientId, navigate]);
 
     return (

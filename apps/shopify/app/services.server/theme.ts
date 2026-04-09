@@ -206,23 +206,35 @@ const FRAK_SECTION_BLOCKS = ["referral_button"] as const;
 const FRAK_BODY_BLOCK_PATTERNS = ["/blocks/banner/"] as const;
 
 /**
- * Detect if any main product section contains a Frak component block
- * (referral_button).
+ * Detect if any section in the product template contains a Frak component
+ * block (referral_button).
+ *
+ * Shopify places app blocks in a dedicated `"apps"` section (not inside
+ * the `"main"` product section), so we scan the `blocks` map of every
+ * section.
  */
 export function detectFrakButton(
-    sections: Record<string, string | { type: string; block_order?: string[] }>
+    sections: Record<
+        string,
+        | string
+        | {
+              type: string;
+              block_order?: string[];
+              blocks?: Record<string, ThemeBlockInfo>;
+          }
+    >
 ): boolean {
-    const main = Object.entries(sections).find(([id, section]) =>
-        typeof section !== "string"
-            ? id === "main" || section.type.startsWith("main-")
-            : false
+    return Object.values(sections).some(
+        (section) =>
+            typeof section !== "string" &&
+            section.blocks &&
+            Object.values(section.blocks).some(
+                (block) =>
+                    FRAK_SECTION_BLOCKS.some((pattern) =>
+                        block.type.includes(pattern)
+                    ) && !block.disabled
+            )
     );
-    if (main && typeof main[1] !== "string" && main[1].block_order) {
-        return main[1].block_order.some((blockId) =>
-            FRAK_SECTION_BLOCKS.some((type) => blockId.includes(type))
-        );
-    }
-    return false;
 }
 
 /**
@@ -286,40 +298,78 @@ export async function doesThemeHasFrakActivated(context: AuthenticatedContext) {
 }
 
 /**
- * Check if the current shop theme has any Frak component block.
- *
- * Checks two sources:
- * - `templates/product.json` for section-targeted blocks (referral_button)
- * - `config/settings_data.json` for body-targeted blocks (banner)
+ * Check if the current shop theme has the Frak share button (referral_button)
+ * in the product template.
  */
 export async function doesThemeHasFrakButton(context: AuthenticatedContext) {
     const mainThemeId = await getMainThemeId(context);
 
-    // Fetch both template sources in a single GraphQL call
     const jsonTemplateData = await getTemplateFiles(
         context.admin.graphql,
         mainThemeId.gid,
-        ["templates/product.json", "config/settings_data.json"]
+        ["templates/product.json"]
     );
 
     const productFile = jsonTemplateData.find(
         (f: ThemeFile) => f.filename === "templates/product.json"
     );
+
+    return productFile ? detectFrakButton(productFile.body.sections) : false;
+}
+
+/**
+ * Check if the current shop theme has the Frak banner block
+ * in settings_data.json.
+ */
+export async function doesThemeHasFrakBanner(context: AuthenticatedContext) {
+    const mainThemeId = await getMainThemeId(context);
+
+    const jsonTemplateData = await getTemplateFiles(
+        context.admin.graphql,
+        mainThemeId.gid,
+        ["config/settings_data.json"]
+    );
+
     const settingsFile = jsonTemplateData.find(
         (f: ThemeFile) => f.filename === "config/settings_data.json"
     );
 
-    // Check section blocks in product template (referral_button)
-    const hasSectionBlock = productFile
-        ? detectFrakButton(productFile.body.sections)
-        : false;
-
-    // Check body blocks in settings data (banner)
-    const hasBodyBlock = detectFrakBodyComponent(
+    return detectFrakBodyComponent(
         settingsFile?.body?.current?.blocks as
             | Record<string, ThemeBlockInfo>
             | undefined
     );
+}
 
-    return hasSectionBlock || hasBodyBlock;
+/**
+ * Check if the checkout Thank You / Order Status pages have extensibility
+ * active via the published checkout profile.
+ *
+ * Uses the `typOspPagesActive` field on `CheckoutProfile` which indicates
+ * whether the TY & OS pages are actively using checkout UI extensions.
+ */
+export async function isCheckoutExtensionActive(
+    context: AuthenticatedContext
+): Promise<boolean> {
+    try {
+        const response = await context.admin.graphql(`
+query getCheckoutProfile {
+  checkoutProfiles(first: 1, query: "is_published:true") {
+    nodes {
+      id
+      isPublished
+      typOspPagesActive
+    }
+  }
+}`);
+        const {
+            data: { checkoutProfiles },
+        } = await response.json();
+
+        const profile = checkoutProfiles?.nodes?.[0];
+        return !!profile?.typOspPagesActive;
+    } catch (error) {
+        console.error("Error checking checkout extension status:", error);
+        return false;
+    }
 }
