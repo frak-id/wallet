@@ -29,11 +29,13 @@ export const orderClientRoute = new Elysia().get(
 
         // Find the purchase
         const purchase =
-            await PurchasesContext.repositories.purchase.findByMerchantAndOrder({
-                webhookId: webhook.id,
-                orderId,
-                checkoutToken,
-            });
+            await PurchasesContext.repositories.purchase.findByMerchantAndOrder(
+                {
+                    webhookId: webhook.id,
+                    orderId,
+                    checkoutToken,
+                }
+            );
         if (!purchase?.identityGroupId) {
             return status(404, "Purchase not found");
         }

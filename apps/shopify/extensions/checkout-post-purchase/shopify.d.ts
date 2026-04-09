@@ -13,7 +13,7 @@ declare module './src/OrderStatus.tsx' {
 }
 
 //@ts-ignore
-declare module './src/PostPurchaseCard.tsx' {
+declare module './src/frakMetafields.ts' {
   const shopify:
     | import('@shopify/ui-extensions/purchase.thank-you.block.render').Api
     | import('@shopify/ui-extensions/customer-account.order-status.block.render').Api;
@@ -21,7 +21,7 @@ declare module './src/PostPurchaseCard.tsx' {
 }
 
 //@ts-ignore
-declare module './src/frakMetafields.ts' {
+declare module './src/PostPurchaseCard.tsx' {
   const shopify:
     | import('@shopify/ui-extensions/purchase.thank-you.block.render').Api
     | import('@shopify/ui-extensions/customer-account.order-status.block.render').Api;

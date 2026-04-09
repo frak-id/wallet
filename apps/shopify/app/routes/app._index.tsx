@@ -33,6 +33,7 @@ export default function Index() {
     const rootData = useRouteLoaderData<typeof appLoader>("routes/app");
     const isThemeSupportedPromise = rootData?.isThemeSupportedPromise;
     const onboardingDataPromise = rootData?.onboardingDataPromise;
+    const businessUrl = rootData?.businessUrl ?? "";
     const { t } = useTranslation();
 
     return (
@@ -45,10 +46,7 @@ export default function Index() {
                 }}
             >
                 <PageHeading>{t("common.title")}</PageHeading>
-                <ExternalButton
-                    variant="primary"
-                    href={process.env.BUSINESS_URL ?? ""}
-                >
+                <ExternalButton variant="primary" href={businessUrl}>
                     {t("common.goToDashboard")}
                 </ExternalButton>
             </div>

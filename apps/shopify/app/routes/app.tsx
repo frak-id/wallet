@@ -45,6 +45,8 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 
     return {
         apiKey: process.env.SHOPIFY_API_KEY || "",
+        businessUrl: process.env.BUSINESS_URL || "https://business.frak.id",
+        walletUrl: process.env.FRAK_WALLET_URL || "https://wallet.frak.id",
         isThemeSupportedPromise: doesThemeSupportBlock(context),
         shop,
         merchantId,

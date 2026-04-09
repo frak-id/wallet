@@ -9,7 +9,7 @@
  * All values are stored via JSON.stringify(), so we JSON.parse() on read.
  */
 
-import { AppMetafieldEntry } from "@shopify/ui-extensions/checkout";
+import type { AppMetafieldEntry } from "@shopify/ui-extensions/checkout";
 
 type MetafieldEntry = {
     metafield: {
