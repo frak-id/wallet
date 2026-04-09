@@ -198,7 +198,7 @@ export function detectFrakActivated(
 /**
  * Section-targeted Frak block types detected in template block_order arrays.
  */
-const FRAK_SECTION_BLOCKS = ["referral_button", "post_purchase"] as const;
+const FRAK_SECTION_BLOCKS = ["referral_button"] as const;
 
 /**
  * Body-targeted Frak block type patterns detected in settings_data.json blocks.
@@ -207,7 +207,7 @@ const FRAK_BODY_BLOCK_PATTERNS = ["/blocks/banner/"] as const;
 
 /**
  * Detect if any main product section contains a Frak component block
- * (referral_button or post_purchase).
+ * (referral_button).
  */
 export function detectFrakButton(
     sections: Record<string, string | { type: string; block_order?: string[] }>
@@ -289,7 +289,7 @@ export async function doesThemeHasFrakActivated(context: AuthenticatedContext) {
  * Check if the current shop theme has any Frak component block.
  *
  * Checks two sources:
- * - `templates/product.json` for section-targeted blocks (referral_button, post_purchase)
+ * - `templates/product.json` for section-targeted blocks (referral_button)
  * - `config/settings_data.json` for body-targeted blocks (banner)
  */
 export async function doesThemeHasFrakButton(context: AuthenticatedContext) {
@@ -309,7 +309,7 @@ export async function doesThemeHasFrakButton(context: AuthenticatedContext) {
         (f: ThemeFile) => f.filename === "config/settings_data.json"
     );
 
-    // Check section blocks in product template (referral_button, post_purchase)
+    // Check section blocks in product template (referral_button)
     const hasSectionBlock = productFile
         ? detectFrakButton(productFile.body.sections)
         : false;
