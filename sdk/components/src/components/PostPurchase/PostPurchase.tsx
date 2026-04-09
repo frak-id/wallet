@@ -16,6 +16,7 @@ import { usePlacement } from "@/hooks/usePlacement";
 import { formatEstimatedReward } from "@/utils/formatReward";
 import { useShareModal } from "../ButtonShare/hooks/useShareModal";
 import type { PostPurchaseProps } from "./types";
+import { card, content, cssSource, cta, message } from "./PostPurchase.css";
 
 /**
  * Resolved context computed locally from referral status + merchant info.
@@ -105,7 +106,8 @@ export function PostPurchase({
     useLightDomStyles(
         "frak-post-purchase",
         placementId,
-        placement?.components?.postPurchase?.css
+        placement?.components?.postPurchase?.css,
+        cssSource,
     );
 
     const [context, setContext] = useState<ResolvedPostPurchaseContext | null>(
@@ -223,16 +225,16 @@ export function PostPurchase({
     if (!shouldRender || isHidden) return null;
     if (!context || !resolvedVariant) return null;
 
-    const cardClass = ["post-purchase", classname].filter(Boolean).join(" ");
+    const cardClass = [card, classname].filter(Boolean).join(" ");
 
     return (
         <div class={cardClass}>
-            <div class="post-purchase__content">
-                <p class="post-purchase__message">{texts.message}</p>
+            <div class={content}>
+                <p class={message}>{texts.message}</p>
             </div>
             <button
                 type="button"
-                class="post-purchase__cta button"
+                class={`${cta} button`}
                 disabled={!isClientReady}
                 onClick={handleShare}
             >
