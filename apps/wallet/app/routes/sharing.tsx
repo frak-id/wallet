@@ -22,6 +22,10 @@ type SharingSearch = {
     appName?: string;
     logoUrl?: string;
     products?: string;
+    /** Shopify order ID - used by backend bridge to resolve clientId when cart attributes fail */
+    orderId?: string;
+    /** Shopify checkout token - correlates with web pixel purchase data */
+    checkoutToken?: string;
 };
 
 export const Route = createFileRoute("/sharing")({
@@ -41,6 +45,12 @@ export const Route = createFileRoute("/sharing")({
             typeof search.logoUrl === "string" ? search.logoUrl : undefined,
         products:
             typeof search.products === "string" ? search.products : undefined,
+        orderId:
+            typeof search.orderId === "string" ? search.orderId : undefined,
+        checkoutToken:
+            typeof search.checkoutToken === "string"
+                ? search.checkoutToken
+                : undefined,
     }),
     component: WalletSharingPage,
 });
