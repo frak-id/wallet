@@ -7,13 +7,9 @@ import { ExternalLink } from "../ui/ExternalLink";
 
 interface BannerTabProps {
     isThemeHasFrakBanner: boolean;
-    themeId?: string;
 }
 
-export function BannerTab({
-    isThemeHasFrakBanner,
-    themeId,
-}: BannerTabProps) {
+export function BannerTab({ isThemeHasFrakBanner }: BannerTabProps) {
     const rootData = useRouteLoaderData<typeof rootLoader>("routes/app");
     const editorUrl = `https://${rootData?.shop?.myshopifyDomain}/admin/themes/current/editor`;
     const { t } = useTranslation();
@@ -25,22 +21,20 @@ export function BannerTab({
                     <>
                         <Activated text={t("appearance.banner.activated")} />
                         <s-box paddingBlockStart="small">
-                            <ExternalLink
-                                href={`${editorUrl}?context=apps&appEmbed=${themeId}/banner`}
-                            >
+                            <ExternalLink href={`${editorUrl}?context=apps`}>
                                 {t("appearance.banner.link")}
                             </ExternalLink>
                         </s-box>
                     </>
                 ) : (
-                    <BannerNotActivated themeId={themeId} />
+                    <BannerNotActivated />
                 )}
             </s-box>
         </s-section>
     );
 }
 
-function BannerNotActivated({ themeId }: { themeId?: string }) {
+function BannerNotActivated() {
     const { t } = useTranslation();
     const rootData = useRouteLoaderData<typeof rootLoader>("routes/app");
     const editorUrl = `https://${rootData?.shop?.myshopifyDomain}/admin/themes/current/editor`;
@@ -51,9 +45,7 @@ function BannerNotActivated({ themeId }: { themeId?: string }) {
             todoText={t("appearance.banner.todo")}
             image=""
         >
-            <ExternalLink
-                href={`${editorUrl}?context=apps&appEmbed=${themeId}/banner`}
-            >
+            <ExternalLink href={`${editorUrl}?context=apps`}>
                 {t("appearance.banner.link")}
             </ExternalLink>
         </Instructions>

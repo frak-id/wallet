@@ -1,7 +1,6 @@
 import type { SharingPageProduct } from "@frak-labs/core-sdk";
 import { FrakContextManager } from "@frak-labs/core-sdk";
 import {
-    authenticatedBackendApi,
     clearConfirmation,
     clientIdStore,
     getSavedConfirmation,
@@ -11,7 +10,6 @@ import {
     useCopyToClipboardWithState,
     useShareLink,
 } from "@frak-labs/wallet-shared";
-import { useQuery } from "@tanstack/react-query";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useCallback, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -37,16 +35,16 @@ export const Route = createFileRoute("/sharing")({
                 ? search.merchantId
                 : undefined,
         clientId:
-            typeof search.clientId === "string"
-                ? search.clientId
-                : undefined,
+            typeof search.clientId === "string" ? search.clientId : undefined,
         link: typeof search.link === "string" ? search.link : undefined,
         appName:
             typeof search.appName === "string" ? search.appName : undefined,
         logoUrl:
             typeof search.logoUrl === "string" ? search.logoUrl : undefined,
         products:
-            typeof search.products === "object" ? search.products as SharingPageProduct[] : undefined,
+            typeof search.products === "object"
+                ? (search.products as SharingPageProduct[])
+                : undefined,
         orderId:
             typeof search.orderId === "string" ? search.orderId : undefined,
         checkoutToken:
@@ -145,7 +143,10 @@ function WalletSharingPage() {
 
     const handleInstall = useCallback(() => {
         if (!installUrl) return;
-        navigate({ to: "/install", search: { m: merchantId, a: clientId ?? undefined } });
+        navigate({
+            to: "/install",
+            search: { m: merchantId, a: clientId ?? undefined },
+        });
     }, [installUrl, merchantId, clientId, navigate]);
 
     return (

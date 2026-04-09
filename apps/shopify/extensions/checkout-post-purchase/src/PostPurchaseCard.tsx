@@ -127,10 +127,7 @@ export function PostPurchaseCard({
             border="base"
             padding="base"
         >
-            <s-grid
-                gridTemplateColumns="1fr 80px"
-                gap="base"
-            >
+            <s-grid gridTemplateColumns="1fr 80px" gap="base">
                 {/* Left column — text content & CTA */}
                 <s-stack direction="block" gap="small">
                     <s-heading>{message}</s-heading>
@@ -147,7 +144,13 @@ export function PostPurchaseCard({
                 </s-stack>
 
                 {/* Right column — gift icon + frak branding */}
-                <s-stack direction="block" gap="small" alignItems="end" justifyContent="spaceBetween" blockSize="fill">
+                <s-stack
+                    direction="block"
+                    gap="small"
+                    alignItems="end"
+                    justifyContent="spaceBetween"
+                    blockSize="fill"
+                >
                     <s-grid gridTemplateColumns="80px">
                         <s-image
                             src={GIFT_SVG_DATA_URI}

@@ -145,7 +145,6 @@ export default function AppearancePage() {
         isThemeHasFrakButton,
         isThemeHasFrakBanner,
         firstProduct,
-        themeId,
     } = useLoaderData<typeof loader>();
     const { t } = useTranslation();
     const [selectedTab, setSelectedTab] = useState(0);
@@ -187,10 +186,7 @@ export default function AppearancePage() {
                 );
             case 2:
                 return (
-                    <BannerTab
-                        isThemeHasFrakBanner={isThemeHasFrakBanner}
-                        themeId={themeId}
-                    />
+                    <BannerTab isThemeHasFrakBanner={isThemeHasFrakBanner} />
                 );
             case 3:
                 return <CheckoutExtensionTab />;

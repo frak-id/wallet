@@ -11,13 +11,6 @@
 
 import type { AppMetafieldEntry } from "@shopify/ui-extensions/checkout";
 
-type MetafieldEntry = {
-    metafield: {
-        key: string;
-        value: string;
-    };
-};
-
 type FrakConfig = {
     merchantId?: string;
     walletUrl?: string;

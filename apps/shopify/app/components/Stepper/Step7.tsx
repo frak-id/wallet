@@ -13,7 +13,7 @@ export function Step7({
 }: {
     onboardingData: OnboardingStepData;
 }) {
-    const { isThemeHasFrakBanner, theme } = onboardingData;
+    const { isThemeHasFrakBanner } = onboardingData;
     const { t } = useTranslation();
     const rootData = useRouteLoaderData<typeof rootLoader>("routes/app");
     const editorUrl = `https://${rootData?.shop?.myshopifyDomain}/admin/themes/current/editor`;
@@ -32,7 +32,7 @@ export function Step7({
             </s-text>
             <ExternalButton
                 variant="primary"
-                href={`${editorUrl}?context=apps&appEmbed=${theme?.id}/banner`}
+                href={`${editorUrl}?context=apps`}
             >
                 {t("stepper.step7.link")}
             </ExternalButton>

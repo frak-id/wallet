@@ -198,12 +198,7 @@ export function detectFrakActivated(
 /**
  * Section-targeted Frak block types detected in template block_order arrays.
  */
-const FRAK_SECTION_BLOCKS = ["referral_button"] as const;
-
-/**
- * Body-targeted Frak block type patterns detected in settings_data.json blocks.
- */
-const FRAK_BODY_BLOCK_PATTERNS = ["/blocks/banner/"] as const;
+const FRAK_SECTION_BLOCKS = ["referral_button", "banner"] as const;
 
 /**
  * Detect if any section in the product template contains a Frak component
@@ -238,18 +233,34 @@ export function detectFrakButton(
 }
 
 /**
- * Detect if settings_data.json blocks contain a body-targeted Frak component
- * (e.g. banner). Similar to {@link detectFrakActivated} but for non-listener blocks.
+ * Detect if any section in settings_data.json contains a Frak banner block.
+ *
+ * When a merchant adds the banner app block to a theme-wide section (e.g.
+ * header/footer), it appears under `current.sections[sectionId].blocks`
+ * in `config/settings_data.json`.
  */
-export function detectFrakBodyComponent(
-    blocks: Record<string, ThemeBlockInfo> | undefined
+export function detectFrakBannerInSections(
+    sections:
+        | Record<
+              string,
+              | string
+              | {
+                    type: string;
+                    block_order?: string[];
+                    blocks?: Record<string, ThemeBlockInfo>;
+                }
+          >
+        | undefined
 ): boolean {
-    if (!blocks) return false;
-    return !!Object.entries(blocks).find(
-        ([_id, info]) =>
-            FRAK_BODY_BLOCK_PATTERNS.some((pattern) =>
-                info.type.includes(pattern)
-            ) && !info.disabled
+    if (!sections) return false;
+    return Object.values(sections).some(
+        (section) =>
+            typeof section !== "string" &&
+            section.blocks &&
+            Object.values(section.blocks).some(
+                (block) =>
+                    block.type.includes("/blocks/banner/") && !block.disabled
+            )
     );
 }
 
@@ -334,9 +345,17 @@ export async function doesThemeHasFrakBanner(context: AuthenticatedContext) {
         (f: ThemeFile) => f.filename === "config/settings_data.json"
     );
 
-    return detectFrakBodyComponent(
-        settingsFile?.body?.current?.blocks as
-            | Record<string, ThemeBlockInfo>
+    return detectFrakBannerInSections(
+        settingsFile?.body?.current?.sections as
+            | Record<
+                  string,
+                  | string
+                  | {
+                        type: string;
+                        block_order?: string[];
+                        blocks?: Record<string, ThemeBlockInfo>;
+                    }
+              >
             | undefined
     );
 }

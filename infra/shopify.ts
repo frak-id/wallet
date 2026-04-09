@@ -1,5 +1,4 @@
 import {
-    backendUrl,
     businessUrl,
     componentsUrl,
     nexusRpcSecret,

@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
     detectAppBlockSupport,
     detectFrakActivated,
-    detectFrakBodyComponent,
+    detectFrakBannerInSections,
     detectFrakButton,
     extractThemeId,
     type ThemeBlockInfo,
@@ -163,57 +163,105 @@ describe("detectFrakButton", () => {
 });
 
 /* ------------------------------------------------------------------ */
-/*  Frak body component detection (settings_data.json parsing)         */
+/*  Frak banner detection in settings_data sections                    */
 /* ------------------------------------------------------------------ */
 
-describe("detectFrakBodyComponent", () => {
-    it("returns true when banner block is present and enabled", () => {
-        const blocks: Record<string, ThemeBlockInfo> = {
-            abc123: {
-                type: "shopify://apps/frak/blocks/banner/abcdef",
-                disabled: false,
+describe("detectFrakBannerInSections", () => {
+    it("returns true when a section has a banner block enabled", () => {
+        const sections = {
+            header: {
+                type: "header",
+                blocks: {
+                    abc123: {
+                        type: "shopify://apps/frak/blocks/banner/abcdef",
+                        disabled: false,
+                    },
+                } as Record<string, ThemeBlockInfo>,
             },
         };
-        expect(detectFrakBodyComponent(blocks)).toBe(true);
+        expect(detectFrakBannerInSections(sections)).toBe(true);
     });
 
     it("returns false when banner block is disabled", () => {
-        const blocks: Record<string, ThemeBlockInfo> = {
-            abc123: {
-                type: "shopify://apps/frak/blocks/banner/abcdef",
-                disabled: true,
+        const sections = {
+            header: {
+                type: "header",
+                blocks: {
+                    abc123: {
+                        type: "shopify://apps/frak/blocks/banner/abcdef",
+                        disabled: true,
+                    },
+                } as Record<string, ThemeBlockInfo>,
             },
         };
-        expect(detectFrakBodyComponent(blocks)).toBe(false);
+        expect(detectFrakBannerInSections(sections)).toBe(false);
     });
 
-    it("returns false when no banner block exists", () => {
-        const blocks: Record<string, ThemeBlockInfo> = {
-            abc123: {
-                type: "shopify://apps/frak/blocks/listener/xyz",
+    it("returns false when no banner block exists in any section", () => {
+        const sections = {
+            header: {
+                type: "header",
+                blocks: {
+                    abc123: {
+                        type: "shopify://apps/frak/blocks/listener/xyz",
+                    },
+                } as Record<string, ThemeBlockInfo>,
             },
         };
-        expect(detectFrakBodyComponent(blocks)).toBe(false);
+        expect(detectFrakBannerInSections(sections)).toBe(false);
     });
 
-    it("returns false when blocks is undefined", () => {
-        expect(detectFrakBodyComponent(undefined)).toBe(false);
+    it("returns false when sections is undefined", () => {
+        expect(detectFrakBannerInSections(undefined)).toBe(false);
     });
 
-    it("returns false when blocks is empty", () => {
-        expect(detectFrakBodyComponent({})).toBe(false);
+    it("returns false when sections is empty", () => {
+        expect(detectFrakBannerInSections({})).toBe(false);
     });
 
-    it("finds banner among multiple blocks", () => {
-        const blocks: Record<string, ThemeBlockInfo> = {
-            block1: { type: "shopify://apps/frak/blocks/listener/1" },
-            block2: {
-                type: "shopify://apps/frak/blocks/banner/abc",
-                disabled: false,
+    it("finds banner among multiple sections and blocks", () => {
+        const sections = {
+            header: {
+                type: "header",
+                blocks: {
+                    block1: {
+                        type: "shopify://apps/frak/blocks/listener/1",
+                    },
+                } as Record<string, ThemeBlockInfo>,
             },
-            block3: { type: "shopify://apps/other/blocks/bar/2" },
+            footer: {
+                type: "footer",
+                blocks: {
+                    block2: {
+                        type: "shopify://apps/frak/blocks/banner/abc",
+                        disabled: false,
+                    },
+                    block3: {
+                        type: "shopify://apps/other/blocks/bar/2",
+                    },
+                } as Record<string, ThemeBlockInfo>,
+            },
         };
-        expect(detectFrakBodyComponent(blocks)).toBe(true);
+        expect(detectFrakBannerInSections(sections)).toBe(true);
+    });
+
+    it("ignores string sections", () => {
+        const sections = {
+            header: "some-string-value" as unknown as {
+                type: string;
+                blocks?: Record<string, ThemeBlockInfo>;
+            },
+        };
+        expect(detectFrakBannerInSections(sections)).toBe(false);
+    });
+
+    it("returns false when sections have no blocks property", () => {
+        const sections = {
+            header: {
+                type: "header",
+            },
+        };
+        expect(detectFrakBannerInSections(sections)).toBe(false);
     });
 });
 

@@ -16,13 +16,6 @@
 ></frak-banner>
 
 {% style %}
-  frak-banner {
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    z-index: 999999;
-  }
   frak-banner .banner {
     background: #ffffff;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
@@ -53,7 +46,7 @@
 {% schema %}
 {
   "name": "Frak Banner",
-  "target": "body",
+  "target": "section",
   "settings": [
     {
       "type": "select",
