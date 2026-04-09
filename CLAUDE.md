@@ -326,3 +326,4 @@ All SDK packages use tsdown (powered by Rolldown) for building both NPM and CDN 
 | Date | Change | Target | Reason |
 |------|--------|--------|--------|
 | 2026-04-09 | Initial build | All | Harness setup with 6 agents + 2 skills |
+| 2026-04-09 | Add Shopify & Magento agents | agents/shopify-developer, agents/magento-developer | Cover e-commerce plugin domains |

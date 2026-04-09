@@ -16,6 +16,8 @@ Routes development tasks to the right specialist agent(s) in the Frak Wallet mon
 | react-performance-expert | Frontend apps (wallet, business, listener) | React components, hooks, state management, CSS Modules, performance, iframe/postMessage |
 | sdk-architect | SDK packages (sdk/core, react, components, legacy) | SDK features, API design, framework abstractions, package exports |
 | backend-architect | Backend (services/backend/) | API endpoints, Drizzle schemas, domain services, database queries |
+| shopify-developer | Shopify app (apps/shopify/) | Routes, extensions (post-purchase, web pixel, theme), Shopify GraphQL API, metafields, App Bridge |
+| magento-developer | Magento plugin (plugins/magento/) | PHP Blocks, Observers, Models, XML config, .phtml templates, webhook HMAC signing |
 | infra-engineer | Infrastructure (infra/) | SST v3, Pulumi, deployments, environment config |
 | codebase-analyzer | Cross-cutting analysis | Architecture review, pattern analysis, onboarding docs |
 | feature-plan-analyzer | Plan tracking | Compare implementation against spec, identify remaining work |
@@ -36,6 +38,8 @@ Analyze the user's request to determine:
 
 1. **Scope** — which parts of the codebase are affected?
    - `apps/wallet/`, `apps/business/`, `apps/listener/` → frontend
+   - `apps/shopify/` → Shopify app
+   - `plugins/magento/` → Magento plugin
    - `packages/wallet-shared/` → shared wallet/listener code
    - `packages/ui/` → UI components
    - `sdk/` → SDK packages
@@ -89,6 +93,10 @@ Wait for all agents to complete, then integrate results.
 | "Add API endpoint for Y" | backend-architect | No |
 | "Add feature with new API + frontend" | backend-architect + react-performance-expert | Yes |
 | "Update SDK to support Z" | sdk-architect | No |
+| "Add Shopify extension / route / metafield" | shopify-developer | No |
+| "Shopify feature with new backend webhook" | shopify-developer + backend-architect | Yes |
+| "Update Magento module / observer / block" | magento-developer | No |
+| "Magento webhook change" | magento-developer + backend-architect | Yes |
 | "Review architecture of module X" | codebase-analyzer | No |
 | "Check progress on plan X" | feature-plan-analyzer | No |
 | "Deploy to production" | infra-engineer | No |
