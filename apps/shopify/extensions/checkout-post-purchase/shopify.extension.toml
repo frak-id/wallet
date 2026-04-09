@@ -1,4 +1,4 @@
-api_version = "2025-10"
+api_version = "2026-04"
 uid = "6a386c9f-1650-0932-cc95-5da6a42ace695f4c002e"
 
 [[extensions]]
@@ -38,3 +38,15 @@ key = "cta_text"
 type = "single_line_text_field"
 name = "CTA Text"
 description = "Text for the call-to-action button. Defaults to 'Share & earn'"
+
+[[extensions.settings.fields]]
+key = "merchant_id"
+type = "single_line_text_field"
+name = "Merchant ID"
+description = "The Frak merchant UUID for purchase attribution and reward lookup."
+
+[[extensions.settings.fields]]
+key = "backend_url"
+type = "single_line_text_field"
+name = "Backend URL"
+description = "The Frak backend API endpoint. Defaults to https://backend.frak.id"
