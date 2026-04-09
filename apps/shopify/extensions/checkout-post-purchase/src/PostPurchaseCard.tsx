@@ -27,8 +27,10 @@ type PostPurchaseSettings = {
  */
 export function PostPurchaseCard({
     settings,
+    clientId,
 }: {
     settings: Partial<PostPurchaseSettings>;
+    clientId?: string;
 }) {
     const sharingUrl = settings.sharing_url;
     const merchantId = settings.merchant_id;
@@ -44,8 +46,11 @@ export function PostPurchaseCard({
         const url = new URL(`${walletUrl}/share`);
         url.searchParams.set("m", merchantId);
         url.searchParams.set("url", sharingUrl);
+        if (clientId) {
+            url.searchParams.set("c", clientId);
+        }
         return url.toString();
-    }, [walletUrl, merchantId, sharingUrl]);
+    }, [walletUrl, merchantId, sharingUrl, clientId]);
 
     return (
         <s-card padding="base">
