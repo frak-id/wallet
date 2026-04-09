@@ -1,6 +1,7 @@
 import { DetailOverlay } from "@/module/common/component/DetailOverlay";
 import { SuccessOverlay } from "@/module/common/component/SuccessOverlay";
 import { ExplorerDetail } from "@/module/explorer/component/ExplorerDetail";
+import { RewardDetailModal } from "@/module/history/component/RewardDetailModal";
 import { MoneriumBankFlow } from "@/module/monerium/component/MoneriumBankFlow";
 import { Keypass } from "@/module/onboarding/component/Keypass";
 import { RecoveryCodeSuccessModal } from "@/module/recovery-code/component/RecoveryCodeSuccessModal";
@@ -77,6 +78,17 @@ export function ModalOutlet() {
                 <DetailOverlay onClose={closeModal}>
                     {({ handleClose }) => (
                         <MoneriumBankFlow onClose={handleClose} />
+                    )}
+                </DetailOverlay>
+            );
+        case "rewardDetail":
+            return (
+                <DetailOverlay onClose={closeModal}>
+                    {({ handleClose }) => (
+                        <RewardDetailModal
+                            item={modal.item}
+                            onClose={handleClose}
+                        />
                     )}
                 </DetailOverlay>
             );

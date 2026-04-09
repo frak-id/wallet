@@ -472,6 +472,21 @@
                 "totalPurchases": "Achats générés",
                 "totalEarnings": "Total gains générés"
             }
+        },
+        "detail": {
+            "title": "Détail de la récompense",
+            "description": "Détail de la récompense",
+            "updatedAt": "Mis à jour le {{date}} · {{time}}",
+            "purchaseMadeOn": "Achat effectué le {{date}} à {{time}}",
+            "purchaseDate": "Achat effectué le",
+            "rewardGenerated": "Gain généré",
+            "toCollect": "À collecter",
+            "creditedOn": "Crédité le",
+            "generatedDate": "Achat généré le",
+            "generatedOn": "Achat généré le {{date}} · {{time}}",
+            "pendingValidation": "En attente de validation par la marque",
+            "estimatedValidation": "Validation estimée le",
+            "pendingDisclaimer": "Ce gain sera disponible une fois l'achat confirmé par la marque."
         }
     },
     "mobile-sso": {

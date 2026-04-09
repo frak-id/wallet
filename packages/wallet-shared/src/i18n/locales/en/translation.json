@@ -475,6 +475,21 @@
                 "totalPurchases": "Purchases generated",
                 "totalEarnings": "Total earnings"
             }
+        },
+        "detail": {
+            "title": "Reward detail",
+            "description": "Reward detail",
+            "updatedAt": "Updated on {{date}} · {{time}}",
+            "purchaseMadeOn": "Purchase made on {{date}} at {{time}}",
+            "purchaseDate": "Purchase date",
+            "rewardGenerated": "Reward generated",
+            "toCollect": "To collect",
+            "creditedOn": "Credited on",
+            "generatedDate": "Purchase generated on",
+            "generatedOn": "Generated on {{date}} · {{time}}",
+            "pendingValidation": "Pending brand validation",
+            "estimatedValidation": "Estimated validation",
+            "pendingDisclaimer": "This reward will be available once the purchase is confirmed by the brand."
         }
     },
     "mobile-sso": {

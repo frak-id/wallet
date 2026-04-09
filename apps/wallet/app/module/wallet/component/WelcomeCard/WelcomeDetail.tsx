@@ -53,7 +53,7 @@ export function WelcomeDetail({ onClose }: WelcomeDetailProps) {
                 <DetailSheetActions>
                     <GlassButton
                         as="button"
-                        icon={<CloseIcon width={20} height={20} />}
+                        icon={<CloseIcon />}
                         onClick={onClose}
                         aria-label={t("common.close")}
                     />

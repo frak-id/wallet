@@ -11,15 +11,14 @@ import {
     LockIcon,
 } from "@frak-labs/design-system/icons";
 import { vars } from "@frak-labs/design-system/theme";
-import type {
-    MerchantInfo,
-    RewardHistoryItem as RewardHistoryItemType,
-} from "@frak-labs/wallet-shared";
+import type { RewardHistoryItem as RewardHistoryItemType } from "@frak-labs/wallet-shared";
 import { useNavigate } from "@tanstack/react-router";
 import type { TFunction } from "i18next";
 import { useTranslation } from "react-i18next";
 import { Skeleton } from "@/module/common/component/Skeleton";
+import { MerchantLogo } from "@/module/history/component/MerchantLogo";
 import { useGetRewardHistory } from "@/module/history/hook/useGetRewardHistory";
+import { modalStore } from "@/module/stores/modalStore";
 import * as styles from "./index.css";
 
 export function RewardHistoryList() {
@@ -99,70 +98,71 @@ export function RewardHistoryItem({ item }: { item: RewardHistoryItemType }) {
         : undefined;
 
     return (
-        <Inline space="m" padding="m" fill>
-            <MerchantLogo merchant={item.merchant} status={item.status} />
-            <Inline space="m" align="space-between" fill>
-                <Stack space="xxs" className={styles.itemInfo}>
-                    <Text variant="body" weight="medium">
-                        {item.merchant.name}
-                    </Text>
-                    <Stack space="none">
-                        <Text variant="bodySmall" color="secondary">
-                            {formatRewardDate(item.createdAt, locale, t)}
+        <button
+            type="button"
+            className={styles.itemButton}
+            onClick={() =>
+                modalStore.getState().openModal({ id: "rewardDetail", item })
+            }
+        >
+            <Inline space="m" padding="m" fill>
+                <MerchantLogoWithBadge
+                    merchant={item.merchant}
+                    status={item.status}
+                />
+                <Inline space="m" align="space-between" fill>
+                    <Stack space="xxs" className={styles.itemInfo}>
+                        <Text variant="body" weight="medium">
+                            {item.merchant.name}
                         </Text>
-                        {item.status !== "consumed" && (
-                            <Text
-                                variant="bodySmall"
-                                color={
-                                    item.status === "pending"
-                                        ? "warning"
-                                        : "secondary"
-                                }
-                                className={styles.statusText}
-                            >
-                                {t(`reward.status.${item.status}`)}
+                        <Stack space="none">
+                            <Text variant="bodySmall" color="secondary">
+                                {formatRewardDate(item.createdAt, locale, t)}
                             </Text>
-                        )}
+                            {item.status !== "consumed" && (
+                                <Text
+                                    variant="bodySmall"
+                                    color={
+                                        item.status === "pending"
+                                            ? "warning"
+                                            : "secondary"
+                                    }
+                                    className={styles.statusText}
+                                >
+                                    {t(`reward.status.${item.status}`)}
+                                </Text>
+                            )}
+                        </Stack>
                     </Stack>
-                </Stack>
-                <Stack
-                    space="xxs"
-                    align="right"
-                    justify={purchaseAmount ? "space-between" : "end"}
-                >
-                    {purchaseAmount && (
-                        <Text variant="body">{purchaseAmount}</Text>
-                    )}
-                    <DisplayAmount
-                        amount={displayAmount}
-                        status={item.status}
-                    />
-                </Stack>
+                    <Stack
+                        space="xxs"
+                        align="right"
+                        justify={purchaseAmount ? "space-between" : "end"}
+                    >
+                        {purchaseAmount && (
+                            <Text variant="body">{purchaseAmount}</Text>
+                        )}
+                        <DisplayAmount
+                            amount={displayAmount}
+                            status={item.status}
+                        />
+                    </Stack>
+                </Inline>
             </Inline>
-        </Inline>
+        </button>
     );
 }
 
-function MerchantLogo({
+function MerchantLogoWithBadge({
     merchant,
     status,
 }: {
-    merchant: MerchantInfo;
+    merchant: RewardHistoryItemType["merchant"];
     status: RewardHistoryItemType["status"];
 }) {
     return (
-        <div className={styles.merchantLogo}>
-            {merchant.logoUrl ? (
-                <img
-                    src={merchant.logoUrl}
-                    alt={merchant.name}
-                    className={styles.merchantLogoImg}
-                />
-            ) : (
-                <span className={styles.merchantLogoFallback}>
-                    {merchant.name.charAt(0).toUpperCase()}.
-                </span>
-            )}
+        <div className={styles.merchantLogoWrapper}>
+            <MerchantLogo merchant={merchant} />
             <Badge status={status} />
         </div>
     );

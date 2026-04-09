@@ -392,6 +392,21 @@ interface Resources {
             validate: "Validate the code";
         };
         reward: {
+            detail: {
+                creditedOn: "Credited on";
+                description: "Reward detail";
+                estimatedValidation: "Estimated validation";
+                generatedDate: "Purchase generated on";
+                generatedOn: "Generated on {{date}} · {{time}}";
+                pendingDisclaimer: "This reward will be available once the purchase is confirmed by the brand.";
+                pendingValidation: "Pending brand validation";
+                purchaseDate: "Purchase date";
+                purchaseMadeOn: "Purchase made on {{date}} at {{time}}";
+                rewardGenerated: "Reward generated";
+                title: "Reward detail";
+                toCollect: "To collect";
+                updatedAt: "Updated on {{date}} · {{time}}";
+            };
             history: {
                 discover: "Discover offers";
                 emptyDescription: "Explore offers and recommend your favorite products to friends to earn money.";

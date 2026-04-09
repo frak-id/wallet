@@ -10,34 +10,12 @@ export const emptyLayout = style({
     gap: alias.spacing.m,
 });
 
-export const merchantLogo = style({
+export const merchantLogoWrapper = style({
     position: "relative",
     marginTop: 2,
     marginRight: 5,
-    width: 40,
-    height: 40,
-    borderRadius: alias.cornerRadius.full,
-    border: `1px solid ${vars.border.default}`,
     flexShrink: 0,
-});
-
-export const merchantLogoImg = style({
-    width: "100%",
-    height: "100%",
-    borderRadius: "inherit",
-    objectFit: "cover",
-});
-
-export const merchantLogoFallback = style({
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    width: "100%",
-    height: "100%",
-    fontSize: 23,
-    letterSpacing: "-0.15em",
-    fontWeight: 600,
-    color: vars.text.primary,
+    height: "fit-content",
 });
 
 export const statusText = style({
@@ -73,4 +51,19 @@ const badgeInnerBase = style({
 export const badgeInner = styleVariants({
     pending: [badgeInnerBase, { background: vars.icon.warning }],
     settled: [badgeInnerBase, { background: vars.icon.secondary }],
+});
+
+export const itemButton = style({
+    appearance: "none",
+    border: "none",
+    background: "transparent",
+    width: "100%",
+    cursor: "pointer",
+    textAlign: "left",
+    padding: 0,
+    selectors: {
+        "&:active": {
+            background: vars.surface.disabled,
+        },
+    },
 });

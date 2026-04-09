@@ -10,6 +10,7 @@
  * forwards it to the correct component.
  */
 
+import type { RewardHistoryItem } from "@frak-labs/wallet-shared";
 import { create } from "zustand";
 import type { ExplorerMerchantItem } from "@/module/explorer/component/ExplorerCard/types";
 
@@ -31,7 +32,8 @@ export type ModalState =
           id: "recoveryCodeSuccess";
           merchant?: { name: string; domain: string };
       }
-    | { id: "moneriumBankFlow" };
+    | { id: "moneriumBankFlow" }
+    | { id: "rewardDetail"; item: RewardHistoryItem };
 
 type ModalStore = {
     modal: ModalState | null;

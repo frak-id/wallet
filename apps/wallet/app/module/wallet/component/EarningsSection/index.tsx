@@ -12,7 +12,7 @@ export function EarningsSection() {
 
     return (
         <Box display="flex" flexDirection="column" gap="xs">
-            <Inline align="space-between" alignY="center">
+            <Inline space="none" align="space-between" alignY="center">
                 <Text
                     variant="bodySmall"
                     weight="medium"

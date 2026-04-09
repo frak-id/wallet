@@ -30,6 +30,7 @@ export function InfoRow({
     label,
     labelColor,
     labelVariant = "body",
+    labelWeight = "medium",
     href,
     action,
     align = "center",
@@ -38,6 +39,7 @@ export function InfoRow({
     label: string;
     labelColor?: "primary" | "secondary";
     labelVariant?: "body" | "bodySmall";
+    labelWeight?: "regular" | "medium" | "semiBold" | "bold";
     href?: string;
     action?: ReactNode;
     align?: "center" | "top";
@@ -54,7 +56,7 @@ export function InfoRow({
             <Text
                 as="span"
                 variant={labelVariant}
-                weight="medium"
+                weight={labelWeight}
                 color={labelColor}
             >
                 {label}
