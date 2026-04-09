@@ -1,6 +1,7 @@
 import type { SharingPageProduct } from "@frak-labs/core-sdk";
 import { FrakContextManager } from "@frak-labs/core-sdk";
 import {
+    authenticatedBackendApi,
     clearConfirmation,
     clientIdStore,
     getSavedConfirmation,
@@ -10,6 +11,7 @@ import {
     useCopyToClipboardWithState,
     useShareLink,
 } from "@frak-labs/wallet-shared";
+import { useQuery } from "@tanstack/react-query";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useCallback, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -63,12 +65,46 @@ function WalletSharingPage() {
         appName,
         logoUrl,
         products: productsJson,
+        orderId,
+        checkoutToken,
     } = Route.useSearch();
     const { t } = useTranslation();
     const navigate = useNavigate();
     const storeClientId = clientIdStore((s) => s.clientId);
-    const clientId = paramClientId ?? storeClientId;
     const { copy } = useCopyToClipboardWithState();
+
+    // Immediate clientId from params or store
+    const immediateClientId = paramClientId ?? storeClientId;
+
+    // Fetch clientId from backend when not available directly but we have order info
+    const { data: resolvedClientId } = useQuery({
+        queryKey: [
+            "order-client",
+            merchantId,
+            orderId,
+            checkoutToken,
+        ],
+        queryFn: async () => {
+            const { data, error } =
+                await authenticatedBackendApi.user.identity[
+                    "order-client"
+                ].get({
+                    query: {
+                        merchantId: merchantId!,
+                        orderId,
+                        checkoutToken,
+                    },
+                });
+            if (error) return null;
+            return data.clientId;
+        },
+        enabled:
+            !immediateClientId &&
+            !!merchantId &&
+            (!!orderId || !!checkoutToken),
+    });
+
+    const clientId = immediateClientId ?? resolvedClientId ?? undefined;
 
     // Parse products from JSON search param
     const products = useMemo<SharingPageProduct[]>(() => {

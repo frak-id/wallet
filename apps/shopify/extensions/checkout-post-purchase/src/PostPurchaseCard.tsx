@@ -64,10 +64,6 @@ export function PostPurchaseCard({
     merchantId?: string;
     /** From frak.wallet_url shop metafield */
     walletUrl?: string;
-    /** Shopify order ID (numeric, available on OrderStatus surface) */
-    orderId?: string;
-    /** Checkout token (available on ThankYou surface, correlates with web pixel data) */
-    checkoutToken?: string;
     /** From frak.appearance shop metafield */
     logoUrl?: string;
     /** Shopify order ID (numeric, available on OrderStatus surface) */
