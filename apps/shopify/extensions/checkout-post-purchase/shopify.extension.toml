@@ -16,9 +16,6 @@ module = "./src/ThankYou.tsx"
 target = "customer-account.order-status.block.render"
 module = "./src/OrderStatus.tsx"
 
-[extensions.capabilities]
-network_access = true
-
 [extensions.settings]
 
 [[extensions.settings.fields]]
@@ -46,7 +43,7 @@ name = "Merchant ID"
 description = "The Frak merchant UUID for purchase attribution and reward lookup."
 
 [[extensions.settings.fields]]
-key = "backend_url"
+key = "wallet_url"
 type = "single_line_text_field"
-name = "Backend URL"
-description = "The Frak backend API endpoint. Defaults to https://backend.frak.id"
+name = "Wallet URL"
+description = "The Frak wallet base URL for the sharing page. Defaults to https://wallet.frak.id"
