@@ -56,17 +56,15 @@ function vanillaExtractInlinePlugin(): Plugin {
             // We rewrite to: import { cssSource as css_N } from 'file.vanilla.css?source=...'
             let counter = 0;
             const cssImportNames: string[] = [];
-            const rewritten = output.replace(
-                    /export (?:const|var|let) cssSource[^;]*;/g,
-                    "",
-                )
+            const rewritten = output
+                .replace(/export (?:const|var|let) cssSource[^;]*;/g, "")
                 .replace(
                     /import ['"]([^'"]+\.vanilla\.css[^'"]*)['"];?/g,
                     (_match, specifier) => {
                         const name = `__veCss${counter++}`;
                         cssImportNames.push(name);
                         return `import { cssSource as ${name} } from "${specifier}";`;
-                    },
+                    }
                 );
 
             // Concatenate all CSS chunks and export as cssSource
@@ -135,6 +133,18 @@ function emptyLoaderCssPlugin() {
     };
 }
 
+const preactJsxRuntime = new URL(
+    import.meta.resolve("preact/jsx-runtime")
+).pathname;
+
+const preactCompatAlias: Record<string, string> = {
+    react: "preact/compat",
+    "react-dom": "preact/compat",
+    "react/jsx-runtime": "preact/jsx-runtime",
+    "react/jsx-dev-runtime": "preact/jsx-runtime",
+    "preact/jsx-runtime": preactJsxRuntime,
+};
+
 export default defineConfig([
     {
         entry: {
@@ -150,6 +160,8 @@ export default defineConfig([
         clean: true,
         dts: true,
         outDir: "./dist",
+        alias: preactCompatAlias,
+        deps: { alwaysBundle: [/design-system/] },
         plugins: [vanillaExtractInlinePlugin(), nodePolyfills()],
     },
     {
@@ -164,8 +176,8 @@ export default defineConfig([
         minify: true,
         dts: false,
         outDir: "./cdn",
-        noExternal: [/.*/],
-        inlineOnly: false,
+        deps: { alwaysBundle: [/.*/] },
+        alias: preactCompatAlias,
         treeshake: {
             moduleSideEffects: true,
         },

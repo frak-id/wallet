@@ -8,6 +8,8 @@ import {
     getUserReferralStatus,
     trackPurchaseStatus,
 } from "@frak-labs/core-sdk/actions";
+import { Box } from "@frak-labs/design-system/components/Box";
+import { Stack } from "@frak-labs/design-system/components/Stack";
 import { FrakRpcError, RpcErrorCodes } from "@frak-labs/frame-connector";
 import { useEffect, useMemo, useState } from "preact/hooks";
 import { useClientReady } from "@/hooks/useClientReady";
@@ -15,8 +17,8 @@ import { useLightDomStyles } from "@/hooks/useLightDomStyles";
 import { usePlacement } from "@/hooks/usePlacement";
 import { formatEstimatedReward } from "@/utils/formatReward";
 import { useShareModal } from "../ButtonShare/hooks/useShareModal";
+import { card, cssSource, cta, message } from "./PostPurchase.css";
 import type { PostPurchaseProps } from "./types";
-import { card, content, cssSource, cta, message } from "./PostPurchase.css";
 
 /**
  * Resolved context computed locally from referral status + merchant info.
@@ -86,6 +88,7 @@ function resolvePostPurchaseContext(
  *   sharing-url="https://merchant.com/product/shoes"
  * ></frak-post-purchase>
  * ```
+ *
  */
 export function PostPurchase({
     customerId,
@@ -107,7 +110,7 @@ export function PostPurchase({
         "frak-post-purchase",
         placementId,
         placement?.components?.postPurchase?.css,
-        cssSource,
+        cssSource
     );
 
     const [context, setContext] = useState<ResolvedPostPurchaseContext | null>(
@@ -228,18 +231,19 @@ export function PostPurchase({
     const cardClass = [card, classname].filter(Boolean).join(" ");
 
     return (
-        <div class={cardClass}>
-            <div class={content}>
+        <Stack space="s" padding="m" className={cardClass}>
+            <Stack space="xs">
                 <p class={message}>{texts.message}</p>
-            </div>
-            <button
+            </Stack>
+            <Box
+                as="button"
                 type="button"
-                class={`${cta} button`}
+                className={`${cta} button`}
                 disabled={!isClientReady}
                 onClick={handleShare}
             >
                 {texts.cta}
-            </button>
-        </div>
+            </Box>
+        </Stack>
     );
 }

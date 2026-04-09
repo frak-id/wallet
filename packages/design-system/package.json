@@ -14,6 +14,7 @@
     "./global": "./src/global.ts",
     "./theme": "./src/theme.css.ts",
     "./tokens": "./src/tokens.css.ts",
+    "./sprinkles": "./src/sprinkles.css.ts",
     "./utils": "./src/reset.css.ts"
   },
   "dependencies": {

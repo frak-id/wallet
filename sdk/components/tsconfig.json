@@ -57,7 +57,10 @@
     "jsxImportSource": "preact",
 
     "paths": {
-      "@/*": ["./src/*"]
+      "@/*": ["./src/*"],
+      "react": ["./node_modules/preact/compat"],
+      "react-dom": ["./node_modules/preact/compat"],
+      "preact/jsx-runtime": ["./node_modules/preact/jsx-runtime"]
     }
   },
   "tsc-alias": {

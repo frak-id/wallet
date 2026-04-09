@@ -1,19 +1,11 @@
+import "@frak-labs/design-system/sprinkles";
+import "@frak-labs/design-system/utils";
 import { vars } from "@frak-labs/design-system/theme";
 import { alias } from "@frak-labs/design-system/tokens";
 import { style } from "@vanilla-extract/css";
 
 export const card = style({
-    display: "flex",
-    flexDirection: "column",
-    gap: alias.spacing.s,
-    padding: alias.spacing.m,
     borderRadius: alias.cornerRadius.m,
-});
-
-export const content = style({
-    display: "flex",
-    flexDirection: "column",
-    gap: alias.spacing.xs,
 });
 
 export const message = style({
@@ -29,7 +21,6 @@ export const cta = style({
     justifyContent: "center",
     gap: alias.spacing.xs,
     padding: `${alias.spacing.xs} ${alias.spacing.m}`,
-    border: "none",
     borderRadius: alias.cornerRadius.s,
     backgroundColor: vars.surface.primary,
     color: vars.text.onAction,
