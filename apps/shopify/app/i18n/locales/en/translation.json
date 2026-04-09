@@ -269,75 +269,79 @@
             }
         },
         "sharing": {
-            "title": "Sharing Customization",
-            "description": "Customize the text displayed when sharing your store."
+            "title": "Social Sharing Customization",
+            "description": "Customize the text that appears when your content is shared on social media or messaging apps."
         },
-        "modal": {
-            "title": "Frak Modal Customization",
-            "description": "Customize the text displayed in Frak modals for different languages. The text fields support markdown formatting and special variables.",
-            "logo": {
-                "title": "Wallet Logo",
-                "description": "Personalize the wallet modal with your own logo."
-            },
+        "logo": {
+            "title": "Brand Logo",
+            "description": "Add your logo to personalize the sharing page shown to visitors."
+        },
+        "sharingPage": {
+            "title": "Sharing Page Customization",
+            "description": "Customize the text displayed on the sharing page. The sharing page is shown to visitors when they click the share button on your store.",
             "formatting": {
-                "title": "Text Formatting Guide",
-                "description": "You can use the following formatting options to enhance your text:",
-                "bold": "Use **text** to make text bold (e.g., **Get rewards** displays as bold text)",
-                "italic": "Use *text* to make text italic (e.g., *amazing offer* displays as italic text)",
-                "variable": "Use {{ estimatedReward }} to show the potential reward amount that users can earn (automatically calculated based on your campaign settings)",
-                "preview": "Note: The preview below shows $42.00 as an example amount. Your customers will see actual reward amounts based on your campaign settings."
+                "title": "Text Variables",
+                "description": "You can use the following variables in your text:",
+                "variable": "Use {{ estimatedReward }} to show the potential reward amount (automatically calculated based on your campaign settings)",
+                "productName": "Use {{ productName }} to display your store name",
+                "preview": "Note: Your customers will see actual values based on your store and campaign settings."
             }
         },
         "fields": {
             "logoUrl": {
-                "label": "Wallet Logo URL",
-                "description": "The URL of the logo that will be displayed in the wallet modal. This will override the default logo.",
+                "label": "Logo URL",
+                "description": "The URL of the logo displayed on the sharing page. Overrides the default logo.",
                 "placeholder": "Example: 'https://example.com/logo.png'"
             },
             "sharing.title": {
-                "label": "Sharing Modal Title",
+                "label": "Social Sharing Title",
                 "description": "The title that appears when users share your content on social media or messaging apps",
                 "placeholder": "Example: 'Share this amazing product with your friends!'"
             },
             "sharing.text": {
-                "label": "Sharing Message Text",
+                "label": "Social Sharing Message",
                 "description": "The default message that will be shared along with your product link",
                 "placeholder": "Example: 'Check out this amazing product I found!'"
             },
-            "sdk.wallet.login.primaryAction": {
-                "label": "Wallet Login Button Text",
-                "description": "The text displayed on the main action button in the wallet login modal",
-                "placeholder": "Example: 'Create your wallet in 2 seconds!'"
+            "sdk.sharingPage.reward.title": {
+                "label": "Sharing Page Heading",
+                "description": "The main heading displayed at the top of the sharing page",
+                "placeholder": "Example: 'Share with your friends'"
             },
-            "sdk.wallet.login.text_sharing": {
-                "label": "Login Text for Sharing",
-                "description": "Message shown to users when they need to login to share content and earn rewards. You can use **bold text**, *italic text*, and {{ estimatedReward }} to show the reward amount.",
-                "placeholder": "Example: 'Share, Refer, Earn up to **{{ estimatedReward }}** per successful referral'"
+            "sdk.sharingPage.reward.tagline": {
+                "label": "Sharing Page Description",
+                "description": "The description displayed below the heading, explaining how the reward works",
+                "placeholder": "Example: 'You earn a reward every time a friend makes a purchase through your link.'"
             },
-            "sdk.wallet.login.text_referred": {
-                "label": "Welcome Text for Referred Users",
-                "description": "Message shown to users who clicked on a shared link. You can use **bold text**, *italic text*, and {{ estimatedReward }} to show the reward amount.",
-                "placeholder": "Example: 'Welcome! Receive **{{ estimatedReward }}** when you make a purchase'"
+            "sdk.sharingPage.confirmation.title": {
+                "label": "Post-Share Message",
+                "description": "The message shown after a user shares your content. You can use {{ estimatedReward }} to display the reward amount.",
+                "placeholder": "Example: 'Thank you for sharing! Don't miss out on your {{ estimatedReward }}.'"
+            },
+            "sdk.sharingPage.confirmation.cta": {
+                "label": "Post-Share Button Text",
+                "description": "The call-to-action button text shown after sharing. You can use {{ estimatedReward }} to display the reward amount.",
+                "placeholder": "Example: 'Collect my {{ estimatedReward }}'"
             }
         },
         "preview": {
-            "sharing": {
-                "title": "Preview sharing modal",
-                "description": "Preview the text displayed in Frak modals.",
-                "placeholder": "Share, Refer, Earn up to **{{ estimatedReward }}** per successful referral",
-                "button": "Create your wallet in 2 seconds!"
-            },
-            "referred": {
-                "title": "Preview referred modal",
-                "description": "Preview the text displayed in Frak modals.",
-                "placeholder": "Welcome! Receive **{{ estimatedReward }}** when you make a purchase",
-                "button": "Create your wallet in 2 seconds!"
-            },
             "social": {
                 "title": "Preview social sharing",
                 "description": "Preview the text displayed in social sharing.",
-                "sharingTitle": "Do you know the Example site ? 😊",
-                "sharingText": "I have an amazing product to share with you ! 😉"
+                "sharingTitle": "Do you know the Example site ? \ud83d\ude0a",
+                "sharingText": "I have an amazing product to share with you ! \ud83d\ude09"
+            },
+            "sharingPage": {
+                "title": "Preview sharing page",
+                "description": "Preview the sharing page shown to visitors.",
+                "rewardTitle": "Share with your friends",
+                "rewardTagline": "Earn rewards for every friend who makes a purchase."
+            },
+            "confirmation": {
+                "title": "Preview confirmation",
+                "description": "Preview the screen shown after sharing.",
+                "confirmationTitle": "Thanks for sharing! Don't miss out on your rewards.",
+                "confirmationCta": "Collect my reward"
             }
         }
     },

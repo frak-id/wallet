@@ -69,6 +69,7 @@
     "@shopify/app-bridge-types": "^0.7.0",
     "@shopify/polaris-types": "^1.0.1",
     "@shopify/web-pixels-extension": "^2.18.0",
+    "@shopify/ui-extensions": "~2025.10.0",
     "@types/node": "catalog:",
     "@types/react": "catalog:",
     "@types/react-dom": "catalog:",

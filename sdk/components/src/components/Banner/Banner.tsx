@@ -93,7 +93,12 @@ export function Banner({
     inappTitle: propInappTitle,
     inappDescription: propInappDescription,
     inappCta: propInappCta,
+    preview,
+    previewMode,
 }: BannerProps) {
+    const isPreview = !!preview;
+    const resolvedPreviewMode: BannerMode =
+        previewMode === "inapp" ? "inapp" : "referral";
     const placement = usePlacement(placementId);
     const { shouldRender, isHidden, isClientReady } = useClientReady();
 
@@ -105,9 +110,17 @@ export function Banner({
     );
 
     const [dismissed, setDismissed] = useState(false);
-    const [mode, setMode] = useState<BannerMode | null>(() =>
-        isInAppBrowser ? "inapp" : null
-    );
+    const [mode, setMode] = useState<BannerMode | null>(() => {
+        if (isPreview) return resolvedPreviewMode;
+        return isInAppBrowser ? "inapp" : null;
+    });
+
+    // Sync preview mode changes from theme editor
+    useEffect(() => {
+        if (isPreview) {
+            setMode(resolvedPreviewMode);
+        }
+    }, [isPreview, resolvedPreviewMode]);
 
     // Fetch reward text the same way ButtonShare does
     const { reward } = useReward(
@@ -115,24 +128,25 @@ export function Banner({
         interaction
     );
 
-    // Listen for the referral success event (only when not in in-app browser mode)
+    // Listen for the referral success event (only when not in preview or in-app browser mode)
     useEffect(() => {
-        if (mode === "inapp") return;
+        if (isPreview || mode === "inapp") return;
 
         const handler = () => setMode("referral");
 
         window.addEventListener(REFERRAL_SUCCESS_EVENT, handler);
         return () =>
             window.removeEventListener(REFERRAL_SUCCESS_EVENT, handler);
-    }, [mode]);
+    }, [isPreview, mode]);
 
     const handleAction = useCallback(() => {
+        if (isPreview) return;
         if (mode === "referral") {
             setDismissed(true);
         } else {
             redirectToExternalBrowser(window.location.href);
         }
-    }, [mode]);
+    }, [isPreview, mode]);
 
     const bannerConfig = placement?.components?.banner;
 
@@ -179,7 +193,7 @@ export function Banner({
         propInappCta,
     ]);
 
-    if (!shouldRender || isHidden || dismissed || !mode) {
+    if (!isPreview && (!shouldRender || isHidden || dismissed || !mode)) {
         return null;
     }
 

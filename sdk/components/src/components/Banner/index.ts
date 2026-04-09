@@ -29,6 +29,8 @@ registerWebComponent(
         "inappTitle",
         "inappDescription",
         "inappCta",
+        "preview",
+        "previewMode",
     ],
     {
         shadow: false,

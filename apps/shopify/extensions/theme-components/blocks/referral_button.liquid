@@ -20,7 +20,6 @@
 <frak-button-share
   text="{{ button_text }}"
   classname="button {{ button_class }} {{ full_width_class }} {{ custom_class }}"
-  click-action="{{ block.settings.click_action }}"
   {% if block.settings.use_reward %}use-reward{% endif %}
   {% if block.settings.no_reward_text != blank %}no-reward-text="{{ block.settings.no_reward_text }}"{% endif %}
   {% if block.settings.target_interaction != blank %}target-interaction="{{ block.settings.target_interaction }}"{% endif %}
@@ -42,23 +41,6 @@
       "type": "text",
       "id": "text",
       "label": "Button text"
-    },
-    {
-      "type": "select",
-      "id": "click_action",
-      "label": "Click action",
-      "info": "What happens when the user clicks the button",
-      "options": [
-        {
-          "value": "embedded-wallet",
-          "label": "Open embedded wallet"
-        },
-        {
-          "value": "share-modal",
-          "label": "Open share modal"
-        }
-      ],
-      "default": "embedded-wallet"
     },
     {
       "type": "checkbox",

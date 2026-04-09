@@ -4,15 +4,15 @@
 {% endif %}
 
 <frak-banner
-  {% if block.settings.placement != blank %}placement="{{ block.settings.placement }}"{% endif %}
   classname="{{ custom_class }}"
-  {% if block.settings.interaction != blank %}interaction="{{ block.settings.interaction }}"{% endif %}
+  {% if block.settings.interaction != 'default' and block.settings.interaction != blank %}interaction="{{ block.settings.interaction }}"{% endif %}
   {% if block.settings.referral_title != blank %}referral-title="{{ block.settings.referral_title }}"{% endif %}
   {% if block.settings.referral_description != blank %}referral-description="{{ block.settings.referral_description }}"{% endif %}
   {% if block.settings.referral_cta != blank %}referral-cta="{{ block.settings.referral_cta }}"{% endif %}
   {% if block.settings.inapp_title != blank %}inapp-title="{{ block.settings.inapp_title }}"{% endif %}
   {% if block.settings.inapp_description != blank %}inapp-description="{{ block.settings.inapp_description }}"{% endif %}
   {% if block.settings.inapp_cta != blank %}inapp-cta="{{ block.settings.inapp_cta }}"{% endif %}
+  {% if request.design_mode %}preview="true" preview-mode="{{ block.settings.preview_mode }}"{% endif %}
 ></frak-banner>
 
 {% style %}
@@ -42,16 +42,25 @@
   "target": "body",
   "settings": [
     {
-      "type": "text",
-      "id": "placement",
-      "label": "Placement ID",
-      "info": "Optional placement identifier for backend-driven customization"
-    },
-    {
-      "type": "text",
+      "type": "select",
       "id": "interaction",
       "label": "Target interaction",
-      "info": "Filter rewards by interaction type (e.g. purchase, referral). Leave empty for best reward across all types"
+      "info": "Filter rewards by interaction type. Default shows the best reward across all types",
+      "options": [
+        {
+          "value": "default",
+          "label": "Default (best reward)"
+        },
+        {
+          "value": "referral",
+          "label": "Referral"
+        },
+        {
+          "value": "purchase",
+          "label": "Purchase"
+        }
+      ],
+      "default": "default"
     },
     {
       "type": "header",
@@ -96,6 +105,27 @@
       "id": "inapp_cta",
       "label": "Button text",
       "info": "Override the in-app browser banner button text (default: \"Open browser\")"
+    },
+    {
+      "type": "header",
+      "content": "Theme editor preview"
+    },
+    {
+      "type": "select",
+      "id": "preview_mode",
+      "label": "Preview mode",
+      "info": "Choose which banner variant to preview in the theme editor",
+      "options": [
+        {
+          "value": "referral",
+          "label": "Referral"
+        },
+        {
+          "value": "inapp",
+          "label": "In-app browser"
+        }
+      ],
+      "default": "referral"
     },
     {
       "type": "header",

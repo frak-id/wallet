@@ -3,7 +3,6 @@ import type {
     AppearanceMetafieldValue,
     I18nCustomizations,
     MultiLanguageI18nCustomizations,
-    SingleLanguageI18nCustomizations,
 } from "app/services.server/metafields";
 import { type FormEvent, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -62,16 +61,8 @@ export function CustomizationsTab({
     const handleSingleLanguageUpdate = (key: string, value: string) => {
         setCustomizations((prev) => {
             const newCustomizations = { ...prev };
-
-            // For single mode, store in 'en' and clear 'fr'
             if (!newCustomizations.en) newCustomizations.en = {};
             newCustomizations.en[key] = value;
-
-            // Sync sdk.wallet.login.text with sdk.wallet.login.text_sharing
-            if (key === "sdk.wallet.login.text_sharing") {
-                newCustomizations.en["sdk.wallet.login.text"] = value;
-            }
-
             return newCustomizations;
         });
     };
@@ -87,10 +78,6 @@ export function CustomizationsTab({
             [language]: {
                 ...(prev[language] as Record<string, string>),
                 [key]: value,
-                // Sync sdk.wallet.login.text with sdk.wallet.login.text_sharing
-                ...(key === "sdk.wallet.login.text_sharing"
-                    ? { "sdk.wallet.login.text": value }
-                    : {}),
             },
         }));
     };
@@ -122,10 +109,12 @@ export function CustomizationsTab({
                 <s-stack gap="base">
                     <s-box paddingBlockStart="small" paddingBlockEnd="small">
                         <s-badge tone="info">
-                            {t("customizations.modal.title")}
+                            {t("customizations.sharingPage.title")}
                         </s-badge>
                     </s-box>
-                    <s-text>{t("customizations.modal.description")}</s-text>
+                    <s-text>
+                        {t("customizations.sharingPage.description")}
+                    </s-text>
                 </s-stack>
             </s-section>
 
@@ -161,17 +150,15 @@ export function CustomizationsTab({
                     {languageMode === "single" ? (
                         <SingleLanguageFields
                             customizations={
-                                customizations as SingleLanguageI18nCustomizations
+                                customizations as I18nCustomizations
                             }
                             onUpdate={handleSingleLanguageUpdate}
-                            logoUrl={appearanceMetafield.logoUrl}
                         />
                     ) : (
                         <MultiLanguageFields
                             customizations={
                                 customizations as MultiLanguageI18nCustomizations
                             }
-                            logoUrl={appearanceMetafield.logoUrl}
                             onUpdate={handleMultiLanguageUpdate}
                         />
                     )}

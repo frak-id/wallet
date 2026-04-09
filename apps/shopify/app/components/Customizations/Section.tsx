@@ -1,13 +1,14 @@
 import { useTranslation } from "react-i18next";
-import { ModalPreview } from "../ModalPreview";
+import { ConfirmationPreview, SharingPreview } from "../SharingPagePreview";
 import { SocialPreview } from "../SocialPreview";
 
 const SHARING_FIELD_KEYS = ["sharing.title", "sharing.text"];
 
-const MODAL_FIELD_KEYS = [
-    "sdk.wallet.login.text_sharing",
-    "sdk.wallet.login.text_referred",
-    "sdk.wallet.login.primaryAction",
+const SHARING_PAGE_FIELD_KEYS = [
+    "sdk.sharingPage.reward.title",
+    "sdk.sharingPage.reward.tagline",
+    "sdk.sharingPage.confirmation.title",
+    "sdk.sharingPage.confirmation.cta",
 ];
 
 // Sharing Section Component
@@ -76,16 +77,14 @@ export function SharingSection({
     );
 }
 
-// Modal Section Component
-export function ModalSection({
+// Sharing Page Section Component
+export function SharingPageSection({
     values,
     onUpdate,
-    logoUrl,
     language,
 }: {
     values: Record<string, string>;
     onUpdate: (key: string, value: string) => void;
-    logoUrl?: string;
     language: string;
 }) {
     const { t } = useTranslation();
@@ -95,32 +94,37 @@ export function ModalSection({
                 <s-stack gap="small">
                     <div>
                         <s-heading>
-                            {t("customizations.modal.formatting.title")}
+                            {t("customizations.sharingPage.formatting.title")}
                         </s-heading>
                         <s-text tone="neutral">
-                            {t("customizations.modal.formatting.description")}
+                            {t(
+                                "customizations.sharingPage.formatting.description"
+                            )}
                         </s-text>
                     </div>
                     <s-stack gap="small">
                         <div>
                             <s-text>
-                                • {t("customizations.modal.formatting.bold")}
-                            </s-text>
-                        </div>
-                        <div>
-                            <s-text>
-                                • {t("customizations.modal.formatting.italic")}
+                                •{" "}
+                                {t(
+                                    "customizations.sharingPage.formatting.variable"
+                                )}
                             </s-text>
                         </div>
                         <div>
                             <s-text>
                                 •{" "}
-                                {t("customizations.modal.formatting.variable")}
+                                {t(
+                                    "customizations.sharingPage.formatting.productName"
+                                )}
                             </s-text>
                         </div>
                         <div>
                             <s-text tone="neutral">
-                                • {t("customizations.modal.formatting.preview")}
+                                •{" "}
+                                {t(
+                                    "customizations.sharingPage.formatting.preview"
+                                )}
                             </s-text>
                         </div>
                     </s-stack>
@@ -129,12 +133,14 @@ export function ModalSection({
             <s-section>
                 <s-stack gap="base">
                     <div>
-                        <s-heading>{t("customizations.modal.title")}</s-heading>
+                        <s-heading>
+                            {t("customizations.sharingPage.title")}
+                        </s-heading>
                         <s-text tone="neutral">
-                            {t("customizations.modal.description")}
+                            {t("customizations.sharingPage.description")}
                         </s-text>
                     </div>
-                    {MODAL_FIELD_KEYS.map((key) => (
+                    {SHARING_PAGE_FIELD_KEYS.map((key) => (
                         <s-text-area
                             key={`${language}-${key}`}
                             label={t(`customizations.fields.${key}.label`)}
@@ -157,66 +163,38 @@ export function ModalSection({
                     gap: "1rem",
                 }}
             >
-                <ModalPreviewSection
-                    title={t("customizations.preview.sharing.title")}
+                <SharingPreviewSection
+                    title={t("customizations.preview.sharingPage.title")}
                     description={t(
-                        "customizations.preview.sharing.description"
+                        "customizations.preview.sharingPage.description"
                     )}
-                    text={handleValue(
-                        values["sdk.wallet.login.text_sharing"],
-                        t("customizations.preview.sharing.placeholder")
+                    rewardTitle={handleValue(
+                        values["sdk.sharingPage.reward.title"],
+                        t("customizations.preview.sharingPage.rewardTitle")
                     )}
-                    button={handleValue(
-                        values["sdk.wallet.login.primaryAction"],
-                        t("customizations.preview.sharing.button")
+                    rewardTagline={handleValue(
+                        values["sdk.sharingPage.reward.tagline"],
+                        t("customizations.preview.sharingPage.rewardTagline")
                     )}
-                    logoUrl={logoUrl}
                 />
-                <ModalPreviewSection
-                    title={t("customizations.preview.referred.title")}
+                <SharingPreviewSection
+                    title={t("customizations.preview.confirmation.title")}
                     description={t(
-                        "customizations.preview.referred.description"
+                        "customizations.preview.confirmation.description"
                     )}
-                    text={handleValue(
-                        values["sdk.wallet.login.text_referred"],
-                        t("customizations.preview.referred.placeholder")
+                    confirmationTitle={handleValue(
+                        values["sdk.sharingPage.confirmation.title"],
+                        t(
+                            "customizations.preview.confirmation.confirmationTitle"
+                        )
                     )}
-                    button={handleValue(
-                        values["sdk.wallet.login.primaryAction"],
-                        t("customizations.preview.referred.button")
+                    confirmationCta={handleValue(
+                        values["sdk.sharingPage.confirmation.cta"],
+                        t("customizations.preview.confirmation.confirmationCta")
                     )}
-                    logoUrl={logoUrl}
                 />
             </div>
         </>
-    );
-}
-
-type ModalPreviewSectionProps = {
-    title?: string;
-    description?: string;
-    text?: string;
-    button?: string;
-    logoUrl?: string;
-};
-
-export function ModalPreviewSection({
-    title,
-    description,
-    text,
-    button,
-    logoUrl,
-}: ModalPreviewSectionProps) {
-    return (
-        <s-section>
-            <s-stack gap="base">
-                <div>
-                    <s-heading>{title}</s-heading>
-                    <s-text tone="neutral">{description}</s-text>
-                </div>
-                <ModalPreview text={text} button={button} logoUrl={logoUrl} />
-            </s-stack>
-        </s-section>
     );
 }
 
@@ -252,6 +230,48 @@ export function SocialPreviewSection({
                         t("customizations.preview.social.description")
                     )}
                 />
+            </s-stack>
+        </s-section>
+    );
+}
+
+type SharingPreviewSectionProps =
+    | {
+          title: string;
+          description: string;
+          rewardTitle: string;
+          rewardTagline: string;
+          confirmationTitle?: undefined;
+          confirmationCta?: undefined;
+      }
+    | {
+          title: string;
+          description: string;
+          rewardTitle?: undefined;
+          rewardTagline?: undefined;
+          confirmationTitle: string;
+          confirmationCta: string;
+      };
+
+function SharingPreviewSection(props: SharingPreviewSectionProps) {
+    return (
+        <s-section>
+            <s-stack gap="base">
+                <div>
+                    <s-heading>{props.title}</s-heading>
+                    <s-text tone="neutral">{props.description}</s-text>
+                </div>
+                {props.rewardTitle !== undefined ? (
+                    <SharingPreview
+                        rewardTitle={props.rewardTitle}
+                        rewardTagline={props.rewardTagline}
+                    />
+                ) : (
+                    <ConfirmationPreview
+                        confirmationTitle={props.confirmationTitle}
+                        confirmationCta={props.confirmationCta}
+                    />
+                )}
             </s-stack>
         </s-section>
     );

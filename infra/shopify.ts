@@ -19,7 +19,7 @@ const shopifyEnv = {
     STAGE: normalizedStageName,
     FRAK_WALLET_URL: walletUrl,
     BUSINESS_URL: businessUrl,
-    BACKEND_URL: backendUrl,
+    BACKEND_URL: isLocal ? "http://localhost:3031" : backendUrl,
     FRAK_COMPONENTS_URL: componentsUrl,
     POSTGRES_SHOPIFY_DB: isProd ? "shopify_prod" : "shopify_dev",
     POSTGRES_USER: isProd ? "shopify-prod" : "shopify-dev",

@@ -1,0 +1,40 @@
+api_version = "2025-10"
+uid = "6a386c9f-1650-0932-cc95-5da6a42ace695f4c002e"
+
+[[extensions]]
+type = "ui_extension"
+name = "Frak Post Purchase"
+handle = "checkout-post-purchase"
+
+# Thank You page — shown immediately after checkout completes
+[[extensions.targeting]]
+target = "purchase.thank-you.block.render"
+module = "./src/ThankYou.tsx"
+
+# Order Status page — shown when customer revisits their order
+[[extensions.targeting]]
+target = "customer-account.order-status.block.render"
+module = "./src/OrderStatus.tsx"
+
+[extensions.capabilities]
+network_access = true
+
+[extensions.settings]
+
+[[extensions.settings.fields]]
+key = "sharing_url"
+type = "single_line_text_field"
+name = "Sharing URL"
+description = "The URL users will be directed to for sharing. When empty, a preview placeholder is shown in the editor."
+
+[[extensions.settings.fields]]
+key = "message"
+type = "single_line_text_field"
+name = "Message"
+description = "The message displayed to customers. Defaults to 'Share with your friends and earn rewards!'"
+
+[[extensions.settings.fields]]
+key = "cta_text"
+type = "single_line_text_field"
+name = "CTA Text"
+description = "Text for the call-to-action button. Defaults to 'Share & earn'"

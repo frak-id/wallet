@@ -42,4 +42,14 @@ export type BannerProps = {
      * Override the in-app browser banner CTA button text.
      */
     inappCta?: string;
+    /**
+     * When set, forces the banner to render in preview mode (e.g. in Shopify theme editor).
+     * Bypasses normal event/browser detection and shows static content.
+     */
+    preview?: string;
+    /**
+     * Which banner variant to preview: "referral" or "inapp".
+     * Only used when {@link preview} is set. Defaults to "referral".
+     */
+    previewMode?: "referral" | "inapp";
 };

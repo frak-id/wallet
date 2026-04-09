@@ -270,75 +270,79 @@
             }
         },
         "sharing": {
-            "title": "Personnalisation du partage",
-            "description": "Personnalisez le texte affiché lors du partage de votre boutique."
+            "title": "Personnalisation du partage social",
+            "description": "Personnalisez le texte qui apparaît lorsque votre contenu est partagé sur les réseaux sociaux ou les messageries."
         },
-        "modal": {
-            "title": "Personnalisation des modales Frak",
-            "description": "Personnalisez les textes affichés dans les modales Frak pour différentes langues. Les champs de texte supportent le formatage markdown et des variables spéciales.",
-            "logo": {
-                "title": "Logo du portefeuille",
-                "description": "Personnalisez la modale de connexion au portefeuille avec votre propre logo."
-            },
+        "logo": {
+            "title": "Logo de la marque",
+            "description": "Ajoutez votre logo pour personnaliser la page de partage affichée aux visiteurs."
+        },
+        "sharingPage": {
+            "title": "Personnalisation de la page de partage",
+            "description": "Personnalisez les textes affichés sur la page de partage. La page de partage est affichée aux visiteurs lorsqu'ils cliquent sur le bouton de partage de votre boutique.",
             "formatting": {
-                "title": "Guide de formatage du texte",
-                "description": "Vous pouvez utiliser les options de formatage suivantes pour améliorer votre texte :",
-                "bold": "Utilisez **texte** pour mettre le texte en gras (ex: **Obtenez des récompenses** s'affiche en gras)",
-                "italic": "Utilisez *texte* pour mettre le texte en italique (ex: *offre incroyable* s'affiche en italique)",
-                "variable": "Utilisez {{ estimatedReward }} pour afficher le montant de récompense potentiel que les utilisateurs peuvent gagner (calculé automatiquement selon vos paramètres de campagne)",
-                "preview": "Note : L'aperçu ci-dessous affiche 42,00 € comme montant d'exemple. Vos clients verront les montants de récompense réels basés sur vos paramètres de campagne."
+                "title": "Variables de texte",
+                "description": "Vous pouvez utiliser les variables suivantes dans vos textes :",
+                "variable": "Utilisez {{ estimatedReward }} pour afficher le montant de récompense potentiel (calculé automatiquement selon vos paramètres de campagne)",
+                "productName": "Utilisez {{ productName }} pour afficher le nom de votre boutique",
+                "preview": "Note : Vos clients verront les valeurs réelles basées sur les paramètres de votre boutique et de vos campagnes."
             }
         },
         "fields": {
             "logoUrl": {
-                "label": "URL de l'image de logo du portefeuille",
-                "description": "L'URL de l'image de logo qui sera affichée dans la modale de connexion au portefeuille. Cela remplacera l'image par défaut.",
+                "label": "URL du logo",
+                "description": "L'URL du logo affiché sur la page de partage. Remplace le logo par défaut.",
                 "placeholder": "Exemple : 'https://example.com/logo.png'"
             },
             "sharing.title": {
-                "label": "Titre de la modale de partage",
-                "description": "Le titre qui apparaît lorsque les utilisateurs partagent votre contenu sur les réseaux sociaux ou les applications de messagerie",
+                "label": "Titre du partage social",
+                "description": "Le titre qui apparaît lorsque les utilisateurs partagent votre contenu sur les réseaux sociaux ou les messageries",
                 "placeholder": "Exemple : 'Partagez ce produit incroyable avec vos amis !'"
             },
             "sharing.text": {
-                "label": "Texte du message de partage",
+                "label": "Message de partage social",
                 "description": "Le message par défaut qui sera partagé avec le lien de votre produit",
                 "placeholder": "Exemple : 'Découvrez ce produit incroyable que j'ai trouvé !'"
             },
-            "sdk.wallet.login.primaryAction": {
-                "label": "Texte du bouton de connexion au portefeuille",
-                "description": "Le texte affiché sur le bouton d'action principal dans la modale de connexion au portefeuille",
-                "placeholder": "Exemple : 'Créez votre portefeuille en 2 secondes !'"
+            "sdk.sharingPage.reward.title": {
+                "label": "Titre de la page de partage",
+                "description": "Le titre principal affiché en haut de la page de partage",
+                "placeholder": "Exemple : 'Partagez avec vos amis'"
             },
-            "sdk.wallet.login.text_sharing": {
-                "label": "Texte de bienvenue pour le parrain/marraine",
-                "description": "Message affiché aux utilisateurs lorsqu'ils ont cliqué sur un bouton de partage. Vous pouvez utiliser **texte en gras**, *texte en italique*, et {{ estimatedReward }} pour afficher le montant de la récompense.",
-                "placeholder": "Exemple : 'Partagez, Parrainez, Gagnez jusqu'à **{{ estimatedReward }}** par parrainage réussi'"
+            "sdk.sharingPage.reward.tagline": {
+                "label": "Description de la page de partage",
+                "description": "La description affichée sous le titre, expliquant le fonctionnement des récompenses",
+                "placeholder": "Exemple : 'Vous gagnez une récompense chaque fois qu'un ami effectue un achat via votre lien.'"
             },
-            "sdk.wallet.login.text_referred": {
-                "label": "Texte de bienvenue pour le-a filleul-e",
-                "description": "Message affiché aux utilisateurs qui ont cliqué sur un lien partagé. Vous pouvez utiliser **texte en gras**, *texte en italique*, et {{ estimatedReward }} pour afficher le montant de la récompense.",
-                "placeholder": "Exemple : 'Bienvenue ! Recevez **{{ estimatedReward }}** lors de votre achat'"
+            "sdk.sharingPage.confirmation.title": {
+                "label": "Message après partage",
+                "description": "Le message affiché après qu'un utilisateur a partagé votre contenu. Vous pouvez utiliser {{ estimatedReward }} pour afficher le montant de la récompense.",
+                "placeholder": "Exemple : 'Merci pour votre partage ! Ne manquez pas vos {{ estimatedReward }}.'"
+            },
+            "sdk.sharingPage.confirmation.cta": {
+                "label": "Texte du bouton après partage",
+                "description": "Le texte du bouton d'action affiché après le partage. Vous pouvez utiliser {{ estimatedReward }} pour afficher le montant de la récompense.",
+                "placeholder": "Exemple : 'Récupérer mes {{ estimatedReward }}'"
             }
         },
         "preview": {
-            "sharing": {
-                "title": "Aperçu parrain/marraine",
-                "description": "Aperçu du texte affiché dans les modales Frak.",
-                "placeholder": "Partagez, Parrainez, Gagnez jusqu'à **{{ estimatedReward }}** par parrainage réussi",
-                "button": "Créer votre portefeuille en 2 secondes !"
-            },
-            "referred": {
-                "title": "Aperçu filleul/filleul",
-                "description": "Aperçu du texte affiché dans les modales Frak.",
-                "placeholder": "Bienvenue ! Recevez **{{ estimatedReward }}** lors de votre achat",
-                "button": "Créer votre portefeuille en 2 secondes !"
-            },
             "social": {
                 "title": "Aperçu du partage social",
                 "description": "Aperçu du texte affiché lors du partage social.",
-                "sharingTitle": "Tu connais le site Example ? 😊",
-                "sharingText": "J'ai un produit incroyable à te partager ! 😉"
+                "sharingTitle": "Tu connais le site Example ? \ud83d\ude0a",
+                "sharingText": "J'ai un produit incroyable à te partager ! \ud83d\ude09"
+            },
+            "sharingPage": {
+                "title": "Aperçu de la page de partage",
+                "description": "Aperçu de la page de partage affichée aux visiteurs.",
+                "rewardTitle": "Partagez avec vos amis",
+                "rewardTagline": "Gagnez des récompenses pour chaque ami qui effectue un achat."
+            },
+            "confirmation": {
+                "title": "Aperçu de la confirmation",
+                "description": "Aperçu de l'écran affiché après le partage.",
+                "confirmationTitle": "Merci pour votre partage ! Ne manquez pas vos récompenses.",
+                "confirmationCta": "Récupérer ma récompense"
             }
         }
     },

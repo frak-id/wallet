@@ -1,0 +1,10 @@
+{
+    "name": "@frak-labs-shopify/checkout-post-purchase",
+    "version": "1.0.0",
+    "private": true,
+    "license": "UNLICENSED",
+    "dependencies": {
+        "@shopify/ui-extensions": "2025.10.1",
+        "preact": "^10.25.0"
+    }
+}
