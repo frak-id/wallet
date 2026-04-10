@@ -76,7 +76,7 @@ export const bannerBaseCss = `
     display: block;
 }
 
-:where(frak-banner .banner) {
+:where(frak-banner .frak-banner) {
     display: flex;
     align-items: center;
     gap: 12px;
@@ -87,7 +87,7 @@ export const bannerBaseCss = `
     line-height: 1.4;
 }
 
-:where(frak-banner .banner__fadeIn) {
+:where(frak-banner .frak-banner__fadeIn) {
     animation: frak-fadeIn 300ms ease-in;
 }
 
@@ -101,7 +101,7 @@ export const bannerBaseCss = `
     }
 }
 
-:where(frak-banner .banner__icon) {
+:where(frak-banner .frak-banner__icon) {
     flex-shrink: 0;
     display: flex;
     align-items: center;
@@ -111,29 +111,29 @@ export const bannerBaseCss = `
     color: #3b82f6;
 }
 
-:where(frak-banner .banner__icon svg) {
+:where(frak-banner .frak-banner__icon svg) {
     width: 100%;
     height: 100%;
 }
 
-:where(frak-banner .banner__content) {
+:where(frak-banner .frak-banner__content) {
     flex: 1;
     min-width: 0;
 }
 
-:where(frak-banner .banner__title) {
+:where(frak-banner .frak-banner__title) {
     font-weight: 700;
     font-size: 0.875rem;
     margin: 0 0 2px;
 }
 
-:where(frak-banner .banner__description) {
+:where(frak-banner .frak-banner__description) {
     font-size: 0.75rem;
     margin: 0;
     opacity: 0.7;
 }
 
-:where(frak-banner .banner__cta) {
+:where(frak-banner .frak-banner__cta) {
     flex-shrink: 0;
     padding: 8px 16px;
     font-weight: 700;
@@ -148,7 +148,7 @@ export const bannerBaseCss = `
     white-space: nowrap;
 }
 
-:where(frak-banner .banner__cta:hover) {
+:where(frak-banner .frak-banner__cta:hover) {
     opacity: 0.9;
 }
 `;

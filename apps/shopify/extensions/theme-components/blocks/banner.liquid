@@ -16,27 +16,27 @@
 ></frak-banner>
 
 {% style %}
-  frak-banner .banner {
+  frak-banner .frak-banner {
     background: #ffffff;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
   }
-  frak-banner .banner__content {
+  frak-banner .frak-banner__content {
     padding: 0;
   }
-  .frak-banner-custom.banner {
+  .frak-banner-custom.frak-banner {
     background-color: {{ block.settings.background_color }};
     border-color: {{ block.settings.accent_color }};
   }
-  .frak-banner-custom .banner__icon {
+  .frak-banner-custom .frak-banner__icon {
     color: {{ block.settings.accent_color }};
   }
-  .frak-banner-custom .banner__title {
+  .frak-banner-custom .frak-banner__title {
     color: {{ block.settings.text_color }};
   }
-  .frak-banner-custom .banner__description {
+  .frak-banner-custom .frak-banner__description {
     color: {{ block.settings.text_color }};
   }
-  .frak-banner-custom .banner__cta {
+  .frak-banner-custom .frak-banner__cta {
     background-color: {{ block.settings.cta_color }};
     border-color: {{ block.settings.cta_color }};
     color: {{ block.settings.cta_text_color }};
