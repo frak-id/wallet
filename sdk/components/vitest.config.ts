@@ -1,11 +1,12 @@
 import sharedConfig from "@frak-labs/test-foundation/vitest.shared";
 import preact from "@preact/preset-vite";
+import { vanillaExtractPlugin } from "@vanilla-extract/vite-plugin";
 import { defineConfig, mergeConfig } from "vitest/config";
 
 export default mergeConfig(
     sharedConfig,
     defineConfig({
-        plugins: [preact()],
+        plugins: [preact(), vanillaExtractPlugin()],
         resolve: {
             tsconfigPaths: true,
         },

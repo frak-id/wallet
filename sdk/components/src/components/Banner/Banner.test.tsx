@@ -140,7 +140,7 @@ describe.sequential("Banner", () => {
         ).toBe("Custom title");
         expect(
             container.querySelector(".frak-banner__description")?.textContent
-        ).toBe("Custom desc");
+        ).toContain("Custom desc");
         expect(container.querySelector(".frak-banner__cta")?.textContent).toBe(
             "Custom CTA"
         );

@@ -5,69 +5,46 @@ import { useClientReady } from "@/hooks/useClientReady";
 import { useLightDomStyles } from "@/hooks/useLightDomStyles";
 import { usePlacement } from "@/hooks/usePlacement";
 import { useReward } from "@/hooks/useReward";
-import { bannerBaseCss } from "@/utils/sharedCss";
+import { CloseIcon } from "../icons/CloseIcon";
+import { ExternalLinkIcon } from "../icons/ExternalLinkIcon";
+import { GiftIcon } from "../icons/GiftIcon";
+import { WarningIcon } from "../icons/WarningIcon";
+import {
+    cssSource,
+    iconSvg,
+    inapp,
+    inappClose,
+    inappCta,
+    inappDescription,
+    inappHeader,
+    inappIconWrapper,
+    inappTitle,
+    referral,
+    referralBody,
+    referralCta,
+    referralDescription,
+    referralIconWrapper,
+    referralTitle,
+} from "./Banner.css";
 import type { BannerProps } from "./types";
 
 type BannerMode = "referral" | "inapp";
 
 /**
- * Reward/gift icon for referral mode.
- */
-function RewardIcon() {
-    return (
-        <svg
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="1.5"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            aria-hidden="true"
-        >
-            <rect x="3" y="11" width="18" height="11" rx="1" />
-            <path d="M12 11v11" />
-            <rect x="5" y="7" width="14" height="4" rx="1" />
-            <path d="M12 7c0 0-1.5-4-4.5-4S5 5 7.5 7" />
-            <path d="M12 7c0 0 1.5-4 4.5-4S19 5 16.5 7" />
-        </svg>
-    );
-}
-
-/**
- * External link icon for in-app browser mode.
- */
-function BrowserIcon() {
-    return (
-        <svg
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="1.5"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            aria-hidden="true"
-        >
-            <path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6" />
-            <polyline points="15 3 21 3 21 9" />
-            <line x1="10" y1="14" x2="21" y2="3" />
-        </svg>
-    );
-}
-
-/**
  * Auto-detecting notification banner component.
  *
- * Renders an inline banner on the merchant page that auto-detects which
- * message to display:
+ * Renders an inline banner on the merchant page with one of two distinct
+ * visual styles depending on the detected mode:
  *
- * - **Referral mode**: Shown after successful referral link processing.
- *   Displays reward info and a dismiss button ("Got it").
- * - **In-app browser mode**: Shown when the page is opened inside a social
- *   media in-app browser (Instagram, Facebook). Offers a redirect to the
- *   default browser.
+ * - **Referral mode** (white): Shown after a successful referral link
+ *   processing. Displays a gift icon, reward copy, and a "Got it" CTA.
+ * - **In-app browser mode** (dark transparent): Shown when the page is
+ *   opened inside a social media in-app browser (Instagram, Facebook).
+ *   Offers an inline link to redirect to the default browser plus a
+ *   close button to dismiss.
  *
  * In-app browser mode takes priority over referral mode.
- * Uses Light DOM to inherit merchant page styles.
+ * Uses Light DOM + vanilla-extract styles from `@frak-labs/design-system`.
  *
  * @group components
  *
@@ -106,7 +83,7 @@ export function Banner({
         "frak-banner",
         placementId,
         placement?.components?.banner?.css,
-        bannerBaseCss
+        cssSource
     );
 
     const [dismissed, setDismissed] = useState(false);
@@ -147,6 +124,11 @@ export function Banner({
             redirectToExternalBrowser(window.location.href);
         }
     }, [isPreview, mode]);
+
+    const handleDismiss = useCallback(() => {
+        if (isPreview) return;
+        setDismissed(true);
+    }, [isPreview]);
 
     const bannerConfig = placement?.components?.banner;
 
@@ -197,26 +179,83 @@ export function Banner({
         return null;
     }
 
-    const bannerClass = ["frak-banner", "frak-banner__fadeIn", classname]
+    // Keep literal BEM classes alongside vanilla-extract hashed classes so
+    // external tests / merchant selectors targeting `.frak-banner*` keep
+    // working while the visual styling is driven by the design system.
+
+    if (mode === "inapp") {
+        const bannerClass = [
+            inapp,
+            "frak-banner",
+            "frak-banner--inapp",
+            classname,
+        ]
+            .filter(Boolean)
+            .join(" ");
+
+        return (
+            <div class={bannerClass} role="alert">
+                <div class={inappHeader}>
+                    <span class={`${inappIconWrapper} frak-banner__icon`}>
+                        <WarningIcon />
+                    </span>
+                    <p class={`${inappTitle} frak-banner__title`}>
+                        {texts.title}
+                    </p>
+                </div>
+                <p class={`${inappDescription} frak-banner__description`}>
+                    {texts.description}{" "}
+                    <button
+                        type="button"
+                        class={`${inappCta} frak-banner__cta`}
+                        onClick={handleAction}
+                    >
+                        {texts.cta}
+                        <ExternalLinkIcon />
+                    </button>
+                </p>
+                <button
+                    type="button"
+                    class={`${inappClose} frak-banner__close`}
+                    onClick={handleDismiss}
+                    aria-label="Dismiss"
+                >
+                    <CloseIcon />
+                </button>
+            </div>
+        );
+    }
+
+    // Referral variant
+    const bannerClass = [
+        referral,
+        "frak-banner",
+        "frak-banner--referral",
+        classname,
+    ]
         .filter(Boolean)
         .join(" ");
 
     return (
         <div class={bannerClass} role="alert">
-            <div class="frak-banner__icon">
-                {mode === "referral" ? <RewardIcon /> : <BrowserIcon />}
+            <div class={`${referralIconWrapper} frak-banner__icon`}>
+                <GiftIcon class={iconSvg} />
             </div>
-            <div class="frak-banner__content">
-                <p class="frak-banner__title">{texts.title}</p>
-                <p class="frak-banner__description">{texts.description}</p>
+            <div class={`${referralBody} frak-banner__text`}>
+                <p class={`${referralTitle} frak-banner__title`}>
+                    {texts.title}
+                </p>
+                <p class={`${referralDescription} frak-banner__description`}>
+                    {texts.description}
+                </p>
+                <button
+                    type="button"
+                    class={`${referralCta} frak-banner__cta`}
+                    onClick={handleAction}
+                >
+                    {texts.cta}
+                </button>
             </div>
-            <button
-                type="button"
-                class="frak-banner__cta"
-                onClick={handleAction}
-            >
-                {texts.cta}
-            </button>
         </div>
     );
 }
