@@ -1,13 +1,11 @@
 import { Box } from "@frak-labs/design-system/components/Box";
 import { Button } from "@frak-labs/design-system/components/Button";
-import { Text } from "@frak-labs/design-system/components/Text";
 import { isUserCancellation } from "@frak-labs/wallet-shared";
 import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { useRegister } from "@/module/authentication/hook/useRegister";
 import { isAuthenticatorAlreadyRegistered } from "@/module/authentication/lib/isAuthenticatorAlreadyRegistered";
 import { Notice } from "@/module/common/component/Notice";
-import * as styles from "./index.css";
 
 /**
  * The register component
@@ -60,35 +58,14 @@ export function SsoRegisterComponent({
         t,
     ]);
 
-    if (isPrimary) {
-        return (
-            <Box className={styles.sso__primaryButtonWrapper}>
-                <Button
-                    onClick={() => {
-                        // Reset the error
-                        onError(null);
-
-                        register({ merchantId });
-                    }}
-                    disabled={
-                        isRegisterInProgress ||
-                        isPreviouslyUsedAuthenticatorError
-                    }
-                >
-                    <Text as="span" variant="bodySmall">
-                        {t("authent.sso.btn.new.create")}
-                    </Text>
-                </Button>
-                {statusComponent}
-            </Box>
-        );
-    }
+    const label = isPrimary
+        ? t("authent.sso.btn.new.create")
+        : t("authent.sso.btn.existing.create");
 
     return (
-        <Box className={styles.sso__secondaryButtonWrapper}>
-            <Box
-                as="button"
-                className={styles.sso__buttonLink}
+        <Box>
+            <Button
+                variant={isPrimary ? "primary" : "ghost"}
                 disabled={
                     isRegisterInProgress || isPreviouslyUsedAuthenticatorError
                 }
@@ -98,10 +75,9 @@ export function SsoRegisterComponent({
 
                     register({ merchantId });
                 }}
-                type={"button"}
             >
-                {t("authent.sso.btn.existing.create")}
-            </Box>
+                {label}
+            </Button>
             {statusComponent}
         </Box>
     );

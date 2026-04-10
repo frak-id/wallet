@@ -1,13 +1,11 @@
 import { Box } from "@frak-labs/design-system/components/Box";
 import { Button } from "@frak-labs/design-system/components/Button";
-import { Text } from "@frak-labs/design-system/components/Text";
 import type { PreviousAuthenticatorModel } from "@frak-labs/wallet-shared";
 import { useLogin } from "@frak-labs/wallet-shared";
 import { useTranslation } from "react-i18next";
-import * as styles from "./index.css";
 
 /**
- * The register component
+ * The login component
  * @constructor
  */
 export function SsoLoginComponent({
@@ -29,31 +27,14 @@ export function SsoLoginComponent({
         onError: (error: Error) => onError(error),
     });
 
-    if (isPrimary) {
-        return (
-            <Box className={styles.sso__primaryButtonWrapper}>
-                <Button
-                    onClick={() => {
-                        // Reset the error
-                        onError(null);
-
-                        login({ lastAuthentication, merchantId });
-                    }}
-                    disabled={isLoading}
-                >
-                    <Text as="span" variant="bodySmall">
-                        {t("authent.sso.btn.existing.login")}
-                    </Text>
-                </Button>
-            </Box>
-        );
-    }
+    const label = isPrimary
+        ? t("authent.sso.btn.existing.login")
+        : t("authent.sso.btn.new.login");
 
     return (
-        <Box className={styles.sso__secondaryButtonWrapper}>
-            <Box
-                as="button"
-                className={styles.sso__buttonLink}
+        <Box>
+            <Button
+                variant={isPrimary ? "primary" : "ghost"}
                 disabled={isLoading}
                 onClick={() => {
                     // Reset the error
@@ -61,10 +42,9 @@ export function SsoLoginComponent({
 
                     login({ lastAuthentication, merchantId });
                 }}
-                type={"button"}
             >
-                {t("authent.sso.btn.new.login")}
-            </Box>
+                {label}
+            </Button>
         </Box>
     );
 }
