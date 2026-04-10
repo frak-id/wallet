@@ -37,9 +37,7 @@ export const Route = createFileRoute("/sharing")({
                 ? search.merchantId
                 : undefined,
         clientId:
-            typeof search.clientId === "string"
-                ? search.clientId
-                : undefined,
+            typeof search.clientId === "string" ? search.clientId : undefined,
         link: typeof search.link === "string" ? search.link : undefined,
         appName:
             typeof search.appName === "string" ? search.appName : undefined,
@@ -78,23 +76,17 @@ function WalletSharingPage() {
 
     // Fetch clientId from backend when not available directly but we have order info
     const { data: resolvedClientId } = useQuery({
-        queryKey: [
-            "order-client",
-            merchantId,
-            orderId,
-            checkoutToken,
-        ],
+        queryKey: ["order-client", merchantId, orderId, checkoutToken],
         queryFn: async () => {
-            const { data, error } =
-                await authenticatedBackendApi.user.identity[
-                    "order-client"
-                ].get({
-                    query: {
-                        merchantId: merchantId!,
-                        orderId,
-                        checkoutToken,
-                    },
-                });
+            const { data, error } = await authenticatedBackendApi.user.identity[
+                "order-client"
+            ].get({
+                query: {
+                    merchantId: merchantId!,
+                    orderId,
+                    checkoutToken,
+                },
+            });
             if (error) return null;
             return data.clientId;
         },
@@ -189,7 +181,10 @@ function WalletSharingPage() {
 
     const handleInstall = useCallback(() => {
         if (!installUrl) return;
-        navigate({ to: "/install", search: { m: merchantId, a: clientId ?? undefined } });
+        navigate({
+            to: "/install",
+            search: { m: merchantId, a: clientId ?? undefined },
+        });
     }, [installUrl, merchantId, clientId, navigate]);
 
     return (

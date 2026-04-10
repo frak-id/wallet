@@ -133,9 +133,8 @@ function emptyLoaderCssPlugin() {
     };
 }
 
-const preactJsxRuntime = new URL(
-    import.meta.resolve("preact/jsx-runtime")
-).pathname;
+const preactJsxRuntime = new URL(import.meta.resolve("preact/jsx-runtime"))
+    .pathname;
 
 const preactCompatAlias: Record<string, string> = {
     react: "preact/compat",

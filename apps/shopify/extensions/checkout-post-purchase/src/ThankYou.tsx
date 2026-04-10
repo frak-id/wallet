@@ -8,8 +8,8 @@ import {
 } from "@shopify/ui-extensions/checkout/preact";
 import { render } from "preact";
 import { useMemo } from "preact/hooks";
-import { PostPurchaseCard } from "./PostPurchaseCard";
 import { extractFrakConfig } from "./frakMetafields";
+import { PostPurchaseCard } from "./PostPurchaseCard";
 
 function ThankYouExtension() {
     const settings = useSettings();
