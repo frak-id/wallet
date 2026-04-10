@@ -2,6 +2,7 @@ import {
     useAppMetafields,
     useAttributeValues,
     useCartLines,
+    useExtensionEditor,
     useOrder,
     useSettings,
     useShop,
@@ -17,6 +18,7 @@ function OrderStatusExtension() {
     const shop = useShop();
     const cartLines = useCartLines();
     const order = useOrder();
+    const editor = useExtensionEditor();
 
     // Read merchantId, walletUrl, logoUrl from shop metafields
     const frakMetafields = useAppMetafields({ namespace: "frak" });
@@ -52,6 +54,7 @@ function OrderStatusExtension() {
             walletUrl={frakConfig.walletUrl}
             logoUrl={frakConfig.logoUrl}
             orderId={orderId}
+            isEditor={Boolean(editor)}
         />
     );
 }

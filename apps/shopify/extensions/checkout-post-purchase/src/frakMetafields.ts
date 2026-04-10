@@ -21,8 +21,7 @@ function parseJsonValue<T>(raw: string): T | undefined {
     try {
         return JSON.parse(raw) as T;
     } catch {
-        // If JSON parse fails, return the raw string for string-type values
-        return raw as unknown as T;
+        return undefined;
     }
 }
 

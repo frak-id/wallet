@@ -2,6 +2,7 @@ import { ProgressBar } from "app/components/ui/ProgressBar";
 import { useVisibilityChange } from "app/hooks/useVisibilityChange";
 import type { loader as appLoader } from "app/routes/app";
 import {
+    MAX_STEP,
     type OnboardingStepData,
     validateCompleteOnboarding,
 } from "app/utils/onboarding";
@@ -19,8 +20,6 @@ import { Step6 } from "./Step6";
 import { Step7 } from "./Step7";
 import { Step8 } from "./Step8";
 import { UncheckedIcon } from "./UncheckedIcon";
-
-const MAX_STEP = 8;
 
 export function Stepper({ redirectToApp }: { redirectToApp: boolean }) {
     const refresh = useRefreshData();

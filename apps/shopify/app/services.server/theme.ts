@@ -32,6 +32,32 @@ query getFiles($filenames: [String!]!, $themeId: ID!) {
 }
 `;
 
+/**
+ * Paginated variant of `getFilesQuery` that supports wildcard patterns and
+ * cursor-based pagination. Used to enumerate every file matching a set of
+ * patterns (e.g. `sections/*.json`) because Shopify may truncate responses
+ * below the requested page size to stay within payload limits.
+ */
+const getFilesPaginatedQuery = `
+query getFilesPaginated($filenames: [String!]!, $themeId: ID!, $cursor: String) {
+  theme(id: $themeId) {
+    files(first: 50, after: $cursor, filenames: $filenames) {
+      nodes {
+        filename
+        body {
+          ... on OnlineStoreThemeFileBodyText { content }
+          ... on OnlineStoreThemeFileBodyBase64 { contentBase64 }
+        }
+      }
+      pageInfo {
+        hasNextPage
+        endCursor
+      }
+    }
+  }
+}
+`;
+
 export type GetMainThemeIdReturnType = {
     gid: string;
     id: string;
@@ -106,6 +132,60 @@ async function getTemplateFiles(
     });
 
     return jsonTemplateData;
+}
+
+/**
+ * Enumerate every theme file whose filename matches one of the given wildcard
+ * patterns (e.g. `sections/*.json`). Handles cursor pagination internally —
+ * Shopify may return fewer files than requested per page to respect payload
+ * limits, so we loop until `hasNextPage` is false.
+ */
+async function getTemplateFilesMatching(
+    graphql: AuthenticatedContext["admin"]["graphql"],
+    gid: string,
+    patterns: string[]
+) {
+    const results: Array<{ filename: string; body: unknown }> = [];
+    let cursor: string | null = null;
+    let hasNextPage = true;
+
+    while (hasNextPage) {
+        const response = await graphql(getFilesPaginatedQuery, {
+            variables: {
+                themeId: gid,
+                filenames: patterns,
+                cursor,
+            },
+        });
+        const json = (await response.json()) as {
+            data?: {
+                theme?: {
+                    files?: {
+                        nodes?: ThemeFile[];
+                        pageInfo?: {
+                            hasNextPage: boolean;
+                            endCursor: string | null;
+                        };
+                    };
+                };
+            };
+        };
+        const theme = json?.data?.theme;
+        const nodes = theme?.files?.nodes ?? [];
+        const pageInfo = theme?.files?.pageInfo;
+
+        for (const file of nodes) {
+            results.push({
+                filename: file.filename,
+                body: jsonc_parse(file.body?.content ?? ""),
+            });
+        }
+
+        hasNextPage = Boolean(pageInfo?.hasNextPage);
+        cursor = pageInfo?.endCursor ?? null;
+    }
+
+    return results;
 }
 
 /**
@@ -196,13 +276,14 @@ export function detectFrakActivated(
 }
 
 /**
- * Section-targeted Frak block types detected in template block_order arrays.
+ * Block type pattern for the Frak share button.
+ * Matches `block.type` strings like `shopify://apps/frak/blocks/referral_button/<uuid>`.
  */
-const FRAK_SECTION_BLOCKS = ["referral_button", "banner"] as const;
+const FRAK_BUTTON_BLOCK_PATTERN = "/blocks/referral_button/";
 
 /**
- * Detect if any section in the product template contains a Frak component
- * block (referral_button).
+ * Detect if any section in the product template contains a Frak referral button
+ * block.
  *
  * Shopify places app blocks in a dedicated `"apps"` section (not inside
  * the `"main"` product section), so we scan the `blocks` map of every
@@ -225,9 +306,8 @@ export function detectFrakButton(
             section.blocks &&
             Object.values(section.blocks).some(
                 (block) =>
-                    FRAK_SECTION_BLOCKS.some((pattern) =>
-                        block.type.includes(pattern)
-                    ) && !block.disabled
+                    block.type.includes(FRAK_BUTTON_BLOCK_PATTERN) &&
+                    !block.disabled
             )
     );
 }
@@ -329,35 +409,51 @@ export async function doesThemeHasFrakButton(context: AuthenticatedContext) {
 }
 
 /**
- * Check if the current shop theme has the Frak banner block
- * in settings_data.json.
+ * Check if the current shop theme has the Frak banner block enabled anywhere.
+ *
+ * Enumerates every section group (`sections/*.json`), every template
+ * (`templates/*.json`), and `config/settings_data.json` via the Shopify Admin
+ * GraphQL API, then scans each file for an enabled Frak banner app block.
+ * This catches banners placed in the header, footer, any custom section group,
+ * or directly on a page template.
  */
 export async function doesThemeHasFrakBanner(context: AuthenticatedContext) {
     const mainThemeId = await getMainThemeId(context);
 
-    const jsonTemplateData = await getTemplateFiles(
+    const files = await getTemplateFilesMatching(
         context.admin.graphql,
         mainThemeId.gid,
-        ["config/settings_data.json"]
+        ["sections/*.json", "templates/*.json", "config/settings_data.json"]
     );
 
-    const settingsFile = jsonTemplateData.find(
-        (f: ThemeFile) => f.filename === "config/settings_data.json"
-    );
+    return files.some((file) => {
+        const body = file.body as
+            | {
+                  sections?: unknown;
+                  current?: { sections?: unknown };
+              }
+            | undefined;
+        // settings_data.json stores sections under body.current.sections,
+        // section groups and templates store them directly under body.sections.
+        const sections =
+            file.filename === "config/settings_data.json"
+                ? body?.current?.sections
+                : body?.sections;
 
-    return detectFrakBannerInSections(
-        settingsFile?.body?.current?.sections as
-            | Record<
-                  string,
-                  | string
-                  | {
-                        type: string;
-                        block_order?: string[];
-                        blocks?: Record<string, ThemeBlockInfo>;
-                    }
-              >
-            | undefined
-    );
+        return detectFrakBannerInSections(
+            sections as
+                | Record<
+                      string,
+                      | string
+                      | {
+                            type: string;
+                            block_order?: string[];
+                            blocks?: Record<string, ThemeBlockInfo>;
+                        }
+                  >
+                | undefined
+        );
+    });
 }
 
 /**

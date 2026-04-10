@@ -27,17 +27,15 @@ export function BannerTab({ isThemeHasFrakBanner }: BannerTabProps) {
                         </s-box>
                     </>
                 ) : (
-                    <BannerNotActivated />
+                    <BannerNotActivated editorUrl={editorUrl} />
                 )}
             </s-box>
         </s-section>
     );
 }
 
-function BannerNotActivated() {
+function BannerNotActivated({ editorUrl }: { editorUrl: string }) {
     const { t } = useTranslation();
-    const rootData = useRouteLoaderData<typeof rootLoader>("routes/app");
-    const editorUrl = `https://${rootData?.shop?.myshopifyDomain}/admin/themes/current/editor`;
 
     return (
         <Instructions

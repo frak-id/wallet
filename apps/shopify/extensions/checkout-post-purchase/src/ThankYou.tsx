@@ -3,6 +3,7 @@ import {
     useAttributeValues,
     useCartLines,
     useCheckoutToken,
+    useExtensionEditor,
     useSettings,
     useShop,
 } from "@shopify/ui-extensions/checkout/preact";
@@ -17,6 +18,7 @@ function ThankYouExtension() {
     const shop = useShop();
     const cartLines = useCartLines();
     const checkoutToken = useCheckoutToken();
+    const editor = useExtensionEditor();
 
     // Read merchantId, walletUrl, logoUrl from shop metafields
     const frakMetafields = useAppMetafields({ namespace: "frak" });
@@ -46,6 +48,7 @@ function ThankYouExtension() {
             walletUrl={frakConfig.walletUrl}
             logoUrl={frakConfig.logoUrl}
             checkoutToken={checkoutToken ?? undefined}
+            isEditor={Boolean(editor)}
         />
     );
 }

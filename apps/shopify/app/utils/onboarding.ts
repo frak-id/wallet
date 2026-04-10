@@ -56,6 +56,12 @@ export const stepValidations: StepValidation = {
 };
 
 /**
+ * Total number of onboarding steps — derived from `stepValidations`
+ * so adding a step only requires updating `stepValidations` + `stepDataFetchers`.
+ */
+export const MAX_STEP = Object.keys(stepValidations).length;
+
+/**
  * Data fetchers for each onboarding step
  */
 export const stepDataFetchers = {
@@ -230,15 +236,13 @@ export function validateCompleteOnboarding(data: OnboardingStepData): {
     const failedSteps: number[] = [];
     const completedSteps: number[] = [];
 
-    // Check steps 1-8
-    for (let step = 1; step <= 8; step++) {
-        const validator = stepValidations[step];
-        if (validator) {
-            if (validator(data)) {
-                completedSteps.push(step);
-            } else {
-                failedSteps.push(step);
-            }
+    // Check all configured steps
+    for (const [stepKey, validator] of Object.entries(stepValidations)) {
+        const step = Number(stepKey);
+        if (validator(data)) {
+            completedSteps.push(step);
+        } else {
+            failedSteps.push(step);
         }
     }
 

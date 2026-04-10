@@ -43,8 +43,9 @@ type ProductInfo = {
  *  - sharing_url → extension setting (merchant configures in Checkout Editor)
  *  - text fields → extension settings with sensible defaults
  *
- * When required data is missing, renders a preview placeholder
- * so merchants can see the card in the editor.
+ * Renders `null` in production when required data (merchantId or sharingUrl) is
+ * missing, so the card never shows a broken CTA. In the Checkout Editor, falls
+ * back to a disabled preview card so merchants can customize text settings.
  */
 export function PostPurchaseCard({
     settings,
@@ -57,6 +58,7 @@ export function PostPurchaseCard({
     logoUrl,
     orderId,
     checkoutToken,
+    isEditor,
 }: {
     settings: Partial<PostPurchaseSettings>;
     clientId?: string;
@@ -74,6 +76,8 @@ export function PostPurchaseCard({
     orderId?: string;
     /** Checkout token (available on ThankYou surface, correlates with web pixel data) */
     checkoutToken?: string;
+    /** True when rendering inside the Shopify Checkout/Customer Account editor */
+    isEditor?: boolean;
 }) {
     const sharingUrl = settings.sharing_url || storefrontUrl;
     const resolvedWalletUrl = walletUrl || DEFAULT_WALLET_URL;
@@ -81,10 +85,9 @@ export function PostPurchaseCard({
     const description = settings.description || DEFAULT_DESCRIPTION;
     const ctaText = settings.cta_text || DEFAULT_CTA;
 
-    const isPreview = !merchantId;
-
     // Build external sharing page URL with all params
     const sharingPageUrl = useMemo(() => {
+        if (isEditor) return "#";
         if (!sharingUrl || !merchantId) return null;
         const url = new URL(`${resolvedWalletUrl}/sharing`);
         url.searchParams.set("merchantId", merchantId);
@@ -120,6 +123,11 @@ export function PostPurchaseCard({
         checkoutToken,
     ]);
 
+    // In production, hide the card when required data is missing to avoid a
+    // broken CTA. In the editor, keep rendering so merchants can preview and
+    // customize their text settings — the button is disabled in that case.
+    if (!sharingPageUrl) return null;
+
     return (
         <s-box
             background="base"
@@ -134,9 +142,8 @@ export function PostPurchaseCard({
                     <s-text color="subdued">{description}</s-text>
                     <s-button
                         variant="primary"
-                        href={sharingPageUrl ?? "#"}
-                        target="_blank"
-                        disabled={isPreview}
+                        href= {sharingPageUrl}
+                        target= "_blank"
                         inlineSize="fit-content"
                     >
                         {ctaText}

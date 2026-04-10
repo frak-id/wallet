@@ -113,7 +113,7 @@ describe("detectFrakButton", () => {
         expect(detectFrakButton(sections)).toBe(true);
     });
 
-    it("returns true when a section contains a banner block", () => {
+    it("returns false when only a banner block is present (banner is tracked separately)", () => {
         const sections = {
             main: {
                 type: "main-product",
@@ -125,7 +125,7 @@ describe("detectFrakButton", () => {
                 } as Record<string, ThemeBlockInfo>,
             },
         };
-        expect(detectFrakButton(sections)).toBe(true);
+        expect(detectFrakButton(sections)).toBe(false);
     });
 
     it("detects Frak blocks in a non-main section (e.g. header)", () => {
