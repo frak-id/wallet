@@ -7,6 +7,13 @@ export const containerStyle = style({
     flexDirection: "column",
     minHeight: "100dvh",
     paddingTop: "var(--safe-area-inset-top, env(safe-area-inset-top, 0px))",
+    "@media": {
+        "screen and (min-width: 1024px)": {
+            minHeight: "auto",
+            paddingTop: 0,
+            backgroundColor: vars.surface.background,
+        },
+    },
 });
 
 export const heroStyle = style({
@@ -28,6 +35,12 @@ export const actionsStyle = style({
     display: "flex",
     justifyContent: "space-between",
     alignItems: "center",
+    "@media": {
+        "screen and (min-width: 1024px)": {
+            position: "absolute",
+            paddingTop: alias.spacing.m,
+        },
+    },
 });
 
 export const bodyStyle = style({
