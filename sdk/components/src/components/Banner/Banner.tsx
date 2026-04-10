@@ -175,24 +175,23 @@ export function Banner({
         propInappCta,
     ]);
 
-    if (!isPreview && (!shouldRender || isHidden || dismissed || !mode)) {
+    if (!mode || (!isPreview && (!shouldRender || isHidden || dismissed))) {
         return null;
     }
 
     // Keep literal BEM classes alongside vanilla-extract hashed classes so
     // external tests / merchant selectors targeting `.frak-banner*` keep
     // working while the visual styling is driven by the design system.
+    const bannerClass = [
+        mode === "inapp" ? inapp : referral,
+        "frak-banner",
+        `frak-banner--${mode}`,
+        classname,
+    ]
+        .filter(Boolean)
+        .join(" ");
 
     if (mode === "inapp") {
-        const bannerClass = [
-            inapp,
-            "frak-banner",
-            "frak-banner--inapp",
-            classname,
-        ]
-            .filter(Boolean)
-            .join(" ");
-
         return (
             <div class={bannerClass} role="alert">
                 <div class={inappHeader}>
@@ -225,16 +224,6 @@ export function Banner({
             </div>
         );
     }
-
-    // Referral variant
-    const bannerClass = [
-        referral,
-        "frak-banner",
-        "frak-banner--referral",
-        classname,
-    ]
-        .filter(Boolean)
-        .join(" ");
 
     return (
         <div class={bannerClass} role="alert">
