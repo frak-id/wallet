@@ -1,4 +1,3 @@
-import "@frak-labs/design-system/utils";
 import "@frak-labs/design-system/sprinkles";
 import { vars } from "@frak-labs/design-system/theme";
 import { alias } from "@frak-labs/design-system/tokens";

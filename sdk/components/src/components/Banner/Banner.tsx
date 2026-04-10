@@ -204,16 +204,16 @@ export function Banner({
                     </p>
                 </div>
                 <p class={`${inappDescription} frak-banner__description`}>
-                    {texts.description}{" "}
-                    <button
-                        type="button"
-                        class={`${inappCta} frak-banner__cta`}
-                        onClick={handleAction}
-                    >
-                        {texts.cta}
-                        <ExternalLinkIcon />
-                    </button>
+                    {texts.description}
                 </p>
+                <button
+                    type="button"
+                    class={`${inappCta} frak-banner__cta`}
+                    onClick={handleAction}
+                >
+                    {texts.cta}
+                    <ExternalLinkIcon />
+                </button>
                 <button
                     type="button"
                     class={`${inappClose} frak-banner__close`}

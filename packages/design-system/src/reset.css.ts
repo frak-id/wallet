@@ -1,31 +1,4 @@
-import { globalStyle, style } from "@vanilla-extract/css";
-
-/**
- * Global reset — applied to html, body, and universal selectors.
- */
-globalStyle("*, *::after, *::before", {
-    margin: 0,
-    boxSizing: "border-box",
-});
-
-globalStyle("html", {
-    height: "100vh",
-    scrollBehavior: "smooth",
-});
-
-globalStyle("ul", {
-    margin: 0,
-    padding: 0,
-    listStyle: "none",
-});
-
-globalStyle("sub, sup", {
-    fontSize: "100%",
-});
-
-globalStyle("sup", {
-    top: "-0.15em",
-});
+import { style } from "@vanilla-extract/css";
 
 /**
  * Per-element CSS reset — scoped classes applied by Box.
@@ -33,6 +6,11 @@ globalStyle("sup", {
  * Resets are scoped vanilla-extract classes, not global stylesheets.
  * Box auto-applies `base` to every element and composes element-specific
  * resets from the `element` map.
+ *
+ * Global page-level resets (`* { margin: 0 }`, `html`, `ul`, …) live in
+ * `reset-globals.css.ts` and are injected by `global.ts` (wallet app only).
+ * They must NOT be pulled into SDK bundles because those bundles ship into
+ * merchant pages, where resetting universal selectors would break layouts.
  *
  * Import order matters: reset.css must be imported BEFORE sprinkles.css
  * so that sprinkles properties (e.g. padding) override reset defaults.

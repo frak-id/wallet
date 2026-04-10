@@ -122,6 +122,20 @@ describe.sequential("Banner", () => {
         );
     });
 
+    it("should dismiss on in-app close button click", async () => {
+        coreSdkMock.isInAppBrowser = true;
+
+        const { container } = render(<Banner />);
+        expect(container.querySelector(".frak-banner")).toBeInTheDocument();
+
+        const closeBtn = container.querySelector(".frak-banner__close");
+        if (closeBtn) fireEvent.click(closeBtn);
+
+        await waitFor(() => {
+            expect(container.querySelector(".frak-banner")).toBeNull();
+        });
+    });
+
     it("should show placement-configured in-app text when available", () => {
         coreSdkMock.isInAppBrowser = true;
         vi.mocked(usePlacementHook.usePlacement).mockReturnValue({
@@ -140,7 +154,7 @@ describe.sequential("Banner", () => {
         ).toBe("Custom title");
         expect(
             container.querySelector(".frak-banner__description")?.textContent
-        ).toContain("Custom desc");
+        ).toBe("Custom desc");
         expect(container.querySelector(".frak-banner__cta")?.textContent).toBe(
             "Custom CTA"
         );
