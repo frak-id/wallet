@@ -1,31 +1,46 @@
-import "@frak-labs/design-system/sprinkles";
 import "@frak-labs/design-system/utils";
+import "@frak-labs/design-system/sprinkles";
 import { vars } from "@frak-labs/design-system/theme";
 import { alias } from "@frak-labs/design-system/tokens";
 import { style } from "@vanilla-extract/css";
 
 export const card = style({
     borderRadius: alias.cornerRadius.m,
+    backgroundColor: vars.surface.background,
+    border: `1px solid ${vars.border.default}`,
+});
+
+export const badge = style({
+    alignSelf: "flex-start",
+    backgroundColor: "#FFF534",
+    borderRadius: "4px",
+    padding: "4px 8px",
+    fontSize: "12px",
+    fontWeight: 600,
+    lineHeight: "12px",
+    color: vars.text.primary,
 });
 
 export const message = style({
     margin: 0,
-    fontSize: "14px",
-    lineHeight: 1.5,
-    color: vars.text.secondary,
+    fontSize: "16px",
+    lineHeight: "22px",
+    color: vars.text.primary,
+    fontWeight: 600,
 });
 
 export const cta = style({
     display: "inline-flex",
     alignItems: "center",
     justifyContent: "center",
-    gap: alias.spacing.xs,
-    padding: `${alias.spacing.xs} ${alias.spacing.m}`,
-    borderRadius: alias.cornerRadius.s,
-    backgroundColor: vars.surface.primary,
+    gap: alias.spacing.xxs,
+    padding: `${alias.spacing.s} ${alias.spacing.m}`,
+    borderRadius: alias.cornerRadius.full,
+    backgroundColor: vars.text.primary,
     color: vars.text.onAction,
-    fontSize: "14px",
-    fontWeight: 600,
+    fontSize: "12px",
+    fontWeight: "bold",
+    textTransform: "uppercase",
     cursor: "pointer",
     selectors: {
         "&:disabled": {
@@ -33,6 +48,15 @@ export const cta = style({
             cursor: "default",
         },
     },
+});
+
+export const icon = style({
+    margin: "-2px 0",
+});
+
+export const giftIcon = style({
+    display: "block",
+    flexShrink: 0,
 });
 
 // Injected at build time by vanillaExtractInlinePlugin with the

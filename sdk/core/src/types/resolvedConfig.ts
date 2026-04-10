@@ -36,6 +36,7 @@ export type ResolvedPlacement = {
             css?: string;
         };
         postPurchase?: {
+            badgeText?: string;
             refereeText?: string;
             refereeNoRewardText?: string;
             referrerText?: string;

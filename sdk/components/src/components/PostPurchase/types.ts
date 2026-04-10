@@ -39,6 +39,11 @@ export type PostPurchaseProps = {
      */
     variant?: "referrer" | "referee";
     /**
+     * Label for the pill badge displayed above the message.
+     * When omitted (and no placement config provides one), the badge is hidden.
+     */
+    badgeText?: string;
+    /**
      * Override the message shown to referrers.
      * Use `{REWARD}` as placeholder for the reward amount.
      */

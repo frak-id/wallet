@@ -29,6 +29,7 @@ registerWebComponent(
         "placement",
         "classname",
         "variant",
+        "badgeText",
         "referrerText",
         "refereeText",
         "ctaText",
