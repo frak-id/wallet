@@ -24,7 +24,9 @@ vi.mock("@/hooks/useReward", () => ({
     useReward: vi.fn(() => ({ reward: undefined })),
 }));
 
-describe("ButtonWallet", () => {
+// Sequential: tests mutate vi.mock state for shared hooks and window globals,
+// incompatible with the workspace default of `sequence.concurrent: true`.
+describe.sequential("ButtonWallet", () => {
     beforeEach(() => {
         vi.clearAllMocks();
         vi.mocked(useClientReadyHook.useClientReady).mockReturnValue({

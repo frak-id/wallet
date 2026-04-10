@@ -4,6 +4,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import * as useClientReadyHook from "@/hooks/useClientReady";
 import * as useRewardHook from "@/hooks/useReward";
 import * as embeddedWalletUtils from "@/utils/embeddedWallet";
+import * as sharingPageUtils from "@/utils/sharingPage";
 import { ButtonShare } from "./ButtonShare";
 import * as useShareModalHook from "./hooks/useShareModal";
 
@@ -32,7 +33,13 @@ vi.mock("@/utils/embeddedWallet", () => ({
     openEmbeddedWallet: vi.fn(),
 }));
 
-describe("ButtonShare", () => {
+vi.mock("@/utils/sharingPage", () => ({
+    openSharingPage: vi.fn(),
+}));
+
+// Sequential: tests mutate vi.mock state for shared hooks and window globals,
+// incompatible with the workspace default of `sequence.concurrent: true`.
+describe.sequential("ButtonShare", () => {
     beforeEach(() => {
         vi.clearAllMocks();
         // Reset mocks to default state
@@ -127,8 +134,22 @@ describe("ButtonShare", () => {
         expect(button).toHaveTextContent("Share and earn! 10 eur");
     });
 
-    it("should call openEmbeddedWallet on click by default", async () => {
+    it("should call openSharingPage on click by default", async () => {
         render(<ButtonShare />);
+        const button = screen.getByRole("button");
+
+        fireEvent.click(button);
+
+        await waitFor(() => {
+            expect(sharingPageUtils.openSharingPage).toHaveBeenCalledWith(
+                undefined,
+                undefined
+            );
+        });
+    });
+
+    it("should call openEmbeddedWallet when clickAction is embedded-wallet", async () => {
+        render(<ButtonShare clickAction="embedded-wallet" />);
         const button = screen.getByRole("button");
 
         fireEvent.click(button);

@@ -2,7 +2,9 @@ import { renderHook, waitFor } from "@testing-library/preact";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { useCopyToClipboard } from "./useCopyToClipboard";
 
-describe("useCopyToClipboard", () => {
+// Sequential: tests mutate shared browser globals (navigator.clipboard, etc.),
+// incompatible with the workspace default of `sequence.concurrent: true`.
+describe.sequential("useCopyToClipboard", () => {
     beforeEach(() => {
         vi.clearAllMocks();
         // Mock navigator.clipboard

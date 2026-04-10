@@ -36,7 +36,10 @@ import * as useClientReadyHook from "@/hooks/useClientReady";
 import * as usePlacementHook from "@/hooks/usePlacement";
 import * as useRewardHook from "@/hooks/useReward";
 
-describe("Banner", () => {
+// Sequential: tests mutate window event listeners and vi.mock state for
+// shared hooks, incompatible with the workspace default of
+// `sequence.concurrent: true`.
+describe.sequential("Banner", () => {
     beforeEach(() => {
         cleanup();
         vi.clearAllMocks();

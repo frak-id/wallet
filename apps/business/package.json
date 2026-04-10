@@ -24,6 +24,7 @@
         "@frak-labs/backend-elysia": "workspace:*",
         "@frak-labs/client": "workspace:*",
         "@frak-labs/core-sdk": "workspace:*",
+        "@frak-labs/frame-connector": "workspace:*",
         "@frak-labs/react-sdk": "workspace:*",
         "@frak-labs/ui": "workspace:*",
         "@lucasmogari/react-pagination": "^2.1.0",

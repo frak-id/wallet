@@ -29,7 +29,9 @@ vi.mock("../components/ButtonWallet/utils", () => ({
     openWalletModal: vi.fn(),
 }));
 
-describe("initFrakSdk", () => {
+// Sequential: tests mutate window.FrakSetup and vi.mock module state,
+// incompatible with the workspace default of `sequence.concurrent: true`.
+describe.sequential("initFrakSdk", () => {
     beforeEach(async () => {
         vi.clearAllMocks();
         // Clear withCache global state between tests

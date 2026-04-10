@@ -5,7 +5,9 @@ import { renderHook, waitFor } from "@testing-library/preact";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { useShareModal } from "./useShareModal";
 
-describe("useShareModal", () => {
+// Sequential: tests mutate vi.mock state for shared modules and
+// window.FrakSetup.client, incompatible with concurrent execution.
+describe.sequential("useShareModal", () => {
     beforeEach(() => {
         vi.clearAllMocks();
         // Setup default modalBuilder mock

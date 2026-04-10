@@ -4,7 +4,9 @@ import { renderHook, waitFor } from "@testing-library/preact";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { useReward } from "./useReward";
 
-describe("useReward", () => {
+// Sequential: tests share vi.mock state (getMerchantInformation) and
+// window.FrakSetup.client, incompatible with concurrent execution.
+describe.sequential("useReward", () => {
     beforeEach(() => {
         vi.clearAllMocks();
     });

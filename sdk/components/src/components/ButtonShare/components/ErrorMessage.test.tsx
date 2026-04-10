@@ -11,7 +11,9 @@ vi.mock("@/hooks/useCopyToClipboard", () => ({
     })),
 }));
 
-describe("ErrorMessage", () => {
+// Sequential: tests mutate vi.mock state for shared copy-to-clipboard utility,
+// incompatible with concurrent execution.
+describe.sequential("ErrorMessage", () => {
     beforeEach(() => {
         vi.clearAllMocks();
     });
