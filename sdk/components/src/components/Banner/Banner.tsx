@@ -197,20 +197,24 @@ export function Banner({
         return null;
     }
 
-    const bannerClass = ["banner", "banner__fadeIn", classname]
+    const bannerClass = ["frak-banner", "frak-banner__fadeIn", classname]
         .filter(Boolean)
         .join(" ");
 
     return (
         <div class={bannerClass} role="alert">
-            <div class="banner__icon">
+            <div class="frak-banner__icon">
                 {mode === "referral" ? <RewardIcon /> : <BrowserIcon />}
             </div>
-            <div class="banner__content">
-                <p class="banner__title">{texts.title}</p>
-                <p class="banner__description">{texts.description}</p>
+            <div class="frak-banner__content">
+                <p class="frak-banner__title">{texts.title}</p>
+                <p class="frak-banner__description">{texts.description}</p>
             </div>
-            <button type="button" class="banner__cta" onClick={handleAction}>
+            <button
+                type="button"
+                class="frak-banner__cta"
+                onClick={handleAction}
+            >
                 {texts.cta}
             </button>
         </div>

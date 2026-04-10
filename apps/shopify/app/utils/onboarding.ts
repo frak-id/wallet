@@ -5,9 +5,11 @@ import {
 } from "app/services.server/shop";
 import {
     doesThemeHasFrakActivated,
+    doesThemeHasFrakBanner,
     doesThemeHasFrakButton,
     type GetMainThemeIdReturnType,
     getMainThemeId,
+    isCheckoutExtensionActive,
 } from "app/services.server/theme";
 import {
     type GetWebhooksSubscriptionsReturnType,
@@ -25,6 +27,8 @@ export type OnboardingStepData = {
     webhooks?: GetWebhooksSubscriptionsReturnType["edges"];
     isThemeHasFrakActivated?: boolean;
     isThemeHasFrakButton?: boolean;
+    isThemeHasFrakBanner?: boolean;
+    isCheckoutExtensionActive?: boolean;
     theme?: GetMainThemeIdReturnType;
     firstProduct?: FirstProductPublishedReturnType;
     frakWebhook?: {
@@ -47,6 +51,8 @@ export const stepValidations: StepValidation = {
     4: (data) => Boolean(data?.frakWebhook?.setup), // Frak webhook must be set up
     5: (data) => Boolean(data?.isThemeHasFrakActivated), // Theme must have Frak activated
     6: (data) => Boolean(data?.isThemeHasFrakButton), // Theme must have Frak button
+    7: (data) => Boolean(data?.isThemeHasFrakBanner), // Theme must have Frak banner
+    8: (data) => Boolean(data?.isCheckoutExtensionActive), // Checkout extensibility active on TY/OS pages
 };
 
 /**
@@ -121,6 +127,26 @@ export const stepDataFetchers = {
             return {};
         }
     },
+
+    7: async (context: AuthenticatedContext): Promise<OnboardingStepData> => {
+        try {
+            const isThemeHasFrakBanner = await doesThemeHasFrakBanner(context);
+            return { isThemeHasFrakBanner };
+        } catch (error) {
+            console.error("Error fetching banner data:", error);
+            return {};
+        }
+    },
+
+    8: async (context: AuthenticatedContext): Promise<OnboardingStepData> => {
+        try {
+            const active = await isCheckoutExtensionActive(context);
+            return { isCheckoutExtensionActive: active };
+        } catch (error) {
+            console.error("Error fetching checkout extension status:", error);
+            return {};
+        }
+    },
 };
 
 /**
@@ -152,6 +178,8 @@ export async function fetchAllOnboardingData(
             frakWebhookData,
             themeData,
             buttonData,
+            bannerData,
+            checkoutData,
         ] = await Promise.all([
             stepDataFetchers[1](context),
             stepDataFetchers[2](context),
@@ -159,6 +187,8 @@ export async function fetchAllOnboardingData(
             stepDataFetchers[4](context, request),
             stepDataFetchers[5](context),
             stepDataFetchers[6](context),
+            stepDataFetchers[7](context),
+            stepDataFetchers[8](context),
         ]);
         // Merge all data
         return {
@@ -168,6 +198,8 @@ export async function fetchAllOnboardingData(
             ...frakWebhookData,
             ...themeData,
             ...buttonData,
+            ...bannerData,
+            ...checkoutData,
         };
     } catch (error) {
         console.error("Error fetching complete onboarding data:", error);
@@ -198,8 +230,8 @@ export function validateCompleteOnboarding(data: OnboardingStepData): {
     const failedSteps: number[] = [];
     const completedSteps: number[] = [];
 
-    // Check steps 1-6
-    for (let step = 1; step <= 6; step++) {
+    // Check steps 1-8
+    for (let step = 1; step <= 8; step++) {
         const validator = stepValidations[step];
         if (validator) {
             if (validator(data)) {
@@ -243,7 +275,9 @@ export function getOnboardingStatusMessage(validationResult: {
         3: "Shopify Webhooks",
         4: "Frak Webhook",
         5: "Theme Activation",
-        6: "Frak Buttons",
+        6: "Share Button",
+        7: "Banner",
+        8: "Checkout Extension",
     };
 
     const failedStepNames = validationResult.failedSteps

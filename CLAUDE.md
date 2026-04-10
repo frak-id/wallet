@@ -315,3 +315,15 @@ All SDK packages use tsdown (powered by Rolldown) for building both NPM and CDN 
 - **WebAuthn + ERC-4337**: Core authentication flow combines WebAuthn passkeys with Account Abstraction smart wallets
 - **Multi-chain Support**: Viem abstractions enable seamless blockchain interactions across multiple networks
 - Vite aliased to `rolldown-vite` (`npm:rolldown-vite@^7.3.1`) — faster Rust-based bundler
+
+## Harness: Frak Dev
+
+**Goal:** Route development tasks to the right specialist agent(s) for efficient implementation across the monorepo.
+
+**Trigger:** For complex development tasks (feature implementation, cross-cutting changes, bug fixes spanning multiple areas, architecture reviews), use the `frak-orchestrator` skill. For code quality checks, use the `code-quality` skill. Simple questions can be answered directly.
+
+**Change Log:**
+| Date | Change | Target | Reason |
+|------|--------|--------|--------|
+| 2026-04-09 | Initial build | All | Harness setup with 6 agents + 2 skills |
+| 2026-04-09 | Add Shopify & Magento agents | agents/shopify-developer, agents/magento-developer | Cover e-commerce plugin domains |

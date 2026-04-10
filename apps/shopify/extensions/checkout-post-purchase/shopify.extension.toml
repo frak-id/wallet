@@ -46,12 +46,6 @@ name = "Heading"
 description = "The main heading displayed to customers. Defaults to 'Earn rewards through sharing'"
 
 [[extensions.settings.fields]]
-key = "subtitle"
-type = "single_line_text_field"
-name = "Subtitle"
-description = "The bold subtitle below the heading. Defaults to 'Recommend this product to your friends'"
-
-[[extensions.settings.fields]]
 key = "description"
 type = "single_line_text_field"
 name = "Description"
@@ -63,8 +57,3 @@ type = "single_line_text_field"
 name = "CTA Text"
 description = "Text for the call-to-action button. Defaults to 'Share & earn'"
 
-[[extensions.settings.fields]]
-key = "badge_text"
-type = "single_line_text_field"
-name = "Badge Text"
-description = "The badge label shown above the heading. Defaults to 'New'"

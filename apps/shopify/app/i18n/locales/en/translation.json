@@ -51,6 +51,16 @@
             "title": "Add the share button in your theme",
             "descriptionShare": "Please add <strong>Frak Sharing Button</strong> as shown below",
             "linkShare": "Add the Frak Sharing Button to your product page"
+        },
+        "step7": {
+            "title": "Add the banner in your theme",
+            "description": "Add the <strong>Frak Banner</strong> to display referral promotions across your store",
+            "link": "Add the Frak Banner to your theme"
+        },
+        "step8": {
+            "title": "Setup the post-purchase checkout extension",
+            "description": "Add the <strong>Frak Post Purchase</strong> extension to your checkout thank-you page to encourage sharing after purchase",
+            "link": "Configure in checkout editor"
         }
     },
     "pixel": {
@@ -354,7 +364,9 @@
         "description": "Customize the look and feel of your Frak integration across your store.",
         "tabs": {
             "customizations": "Text Customizations",
-            "shareButton": "Share Button"
+            "shareButton": "Share Button",
+            "banner": "Banner",
+            "checkoutExtension": "Checkout Extension"
         },
         "shareButton": {
             "link": "Configure button in your product page",
@@ -362,6 +374,16 @@
             "activated": "Share button is on your product page",
             "notActivated": "Share button is not in your product page",
             "todo": "Please add the button as shown below"
+        },
+        "banner": {
+            "link": "Configure banner in your theme",
+            "activated": "Banner is active in your theme",
+            "notActivated": "Banner is not active in your theme",
+            "todo": "Please add the Frak Banner to your theme to display referral promotions"
+        },
+        "checkoutExtension": {
+            "description": "The Frak Post Purchase extension displays a sharing card on the checkout thank-you page and order status page, encouraging customers to share after purchasing.",
+            "link": "Configure in checkout editor"
         }
     },
     "funding": {

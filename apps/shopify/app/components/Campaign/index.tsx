@@ -179,6 +179,7 @@ function CampaignTableRow({
 }) {
     const fetcher = useFetcher<typeof action>();
     const { t } = useTranslation();
+    const rootData = useRouteLoaderData<typeof rootLoader>("routes/app");
 
     const isSubmitting = fetcher.state !== "idle";
     const submittingIntent = fetcher.formData?.get("intent");
@@ -277,7 +278,7 @@ function CampaignTableRow({
                         variant="tertiary"
                         onClick={() =>
                             window.open(
-                                `${process.env.BUSINESS_URL}/campaigns/${campaign.id}`,
+                                `${rootData?.businessUrl ?? ""}/campaigns/${campaign.id}`,
                                 "_blank"
                             )
                         }

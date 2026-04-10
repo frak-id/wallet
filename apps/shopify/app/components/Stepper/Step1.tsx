@@ -55,7 +55,7 @@ export function Step1({
             const setupCode: string = await response.json();
 
             const mintUrl = new URL(
-                process.env.BUSINESS_URL ?? "https://business.frak.id"
+                rootData?.businessUrl ?? "https://business.frak.id"
             );
             mintUrl.pathname = "/embedded/mint";
             mintUrl.searchParams.append("sc", setupCode);

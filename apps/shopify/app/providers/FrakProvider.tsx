@@ -10,7 +10,7 @@ export function FrakProvider({ children }: PropsWithChildren) {
     const rootData = useRouteLoaderData<typeof appLoader>("routes/app");
 
     const frakWalletSdkConfig = {
-        walletUrl: process.env.FRAK_WALLET_URL ?? "https://wallet.frak.id",
+        walletUrl: rootData?.walletUrl ?? "https://wallet.frak.id",
         metadata: {
             name: "Shopify App",
             ...(rootData?.merchantId && {

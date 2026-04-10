@@ -51,6 +51,16 @@
             "title": "Ajouter le bouton de partage dans votre thème",
             "descriptionShare": "Veuillez ajouter le <strong>Frak Sharing Button</strong> comme illustré ci-dessous",
             "linkShare": "Ajoutez le bouton Frak Sharing Button à votre page produit"
+        },
+        "step7": {
+            "title": "Ajouter la bannière dans votre thème",
+            "description": "Ajoutez la <strong>bannière Frak</strong> pour afficher les promotions de parrainage sur votre boutique",
+            "link": "Ajouter la bannière Frak à votre thème"
+        },
+        "step8": {
+            "title": "Configurer l'extension post-achat",
+            "description": "Ajoutez l'extension <strong>Frak Post Purchase</strong> à votre page de remerciement pour encourager le partage après l'achat",
+            "link": "Configurer dans l'éditeur de checkout"
         }
     },
     "pixel": {
@@ -355,7 +365,9 @@
         "description": "Personnalisez l'apparence de votre intégration Frak dans votre boutique.",
         "tabs": {
             "customizations": "Personnalisations de texte",
-            "shareButton": "Bouton de partage"
+            "shareButton": "Bouton de partage",
+            "banner": "Bannière",
+            "checkoutExtension": "Extension de checkout"
         },
         "shareButton": {
             "link": "Configurer le bouton dans votre page produit",
@@ -363,6 +375,16 @@
             "activated": "Le bouton de partage est dans votre page produit",
             "notActivated": "Le bouton de partage n'est pas dans votre page produit",
             "todo": "Veuillez ajouter le bouton comme illustré ci-dessous"
+        },
+        "banner": {
+            "link": "Configurer la bannière dans votre thème",
+            "activated": "La bannière est active dans votre thème",
+            "notActivated": "La bannière n'est pas active dans votre thème",
+            "todo": "Veuillez ajouter la bannière Frak à votre thème pour afficher les promotions de parrainage"
+        },
+        "checkoutExtension": {
+            "description": "L'extension Frak Post Purchase affiche une carte de partage sur la page de remerciement et la page de suivi de commande, encourageant les clients à partager après leur achat.",
+            "link": "Configurer dans l'éditeur de checkout"
         }
     },
     "funding": {

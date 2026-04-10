@@ -71,7 +71,7 @@ describe.sequential("Banner", () => {
         });
 
         const { container } = render(<Banner />);
-        expect(container.querySelector(".banner")).toBeNull();
+        expect(container.querySelector(".frak-banner")).toBeNull();
     });
 
     it("should not render when isHidden is true", () => {
@@ -82,12 +82,12 @@ describe.sequential("Banner", () => {
         });
 
         const { container } = render(<Banner />);
-        expect(container.querySelector(".banner")).toBeNull();
+        expect(container.querySelector(".frak-banner")).toBeNull();
     });
 
     it("should not render when no mode is detected", () => {
         const { container } = render(<Banner />);
-        expect(container.querySelector(".banner")).toBeNull();
+        expect(container.querySelector(".frak-banner")).toBeNull();
     });
 
     // ─── In-app browser mode ───
@@ -96,7 +96,7 @@ describe.sequential("Banner", () => {
         coreSdkMock.isInAppBrowser = true;
 
         const { container } = render(<Banner />);
-        const banner = container.querySelector(".banner");
+        const banner = container.querySelector(".frak-banner");
         expect(banner).toBeInTheDocument();
     });
 
@@ -104,8 +104,8 @@ describe.sequential("Banner", () => {
         coreSdkMock.isInAppBrowser = true;
 
         const { container } = render(<Banner />);
-        const title = container.querySelector(".banner__title");
-        const cta = container.querySelector(".banner__cta");
+        const title = container.querySelector(".frak-banner__title");
+        const cta = container.querySelector(".frak-banner__cta");
         expect(title?.textContent).toBe("Open in your browser");
         expect(cta?.textContent).toBe("Open browser");
     });
@@ -114,7 +114,7 @@ describe.sequential("Banner", () => {
         coreSdkMock.isInAppBrowser = true;
 
         const { container } = render(<Banner />);
-        const cta = container.querySelector(".banner__cta");
+        const cta = container.querySelector(".frak-banner__cta");
         if (cta) fireEvent.click(cta);
 
         expect(coreSdkMock.redirectToExternalBrowser).toHaveBeenCalledWith(
@@ -135,13 +135,13 @@ describe.sequential("Banner", () => {
         } as any);
 
         const { container } = render(<Banner />);
-        expect(container.querySelector(".banner__title")?.textContent).toBe(
-            "Custom title"
-        );
         expect(
-            container.querySelector(".banner__description")?.textContent
+            container.querySelector(".frak-banner__title")?.textContent
+        ).toBe("Custom title");
+        expect(
+            container.querySelector(".frak-banner__description")?.textContent
         ).toBe("Custom desc");
-        expect(container.querySelector(".banner__cta")?.textContent).toBe(
+        expect(container.querySelector(".frak-banner__cta")?.textContent).toBe(
             "Custom CTA"
         );
     });
@@ -152,12 +152,12 @@ describe.sequential("Banner", () => {
         const { container } = render(<Banner />);
 
         // Initially not rendered
-        expect(container.querySelector(".banner")).toBeNull();
+        expect(container.querySelector(".frak-banner")).toBeNull();
 
         window.dispatchEvent(new Event(REFERRAL_SUCCESS_EVENT));
 
         await waitFor(() => {
-            expect(container.querySelector(".banner")).toBeInTheDocument();
+            expect(container.querySelector(".frak-banner")).toBeInTheDocument();
         });
     });
 
@@ -170,7 +170,7 @@ describe.sequential("Banner", () => {
         window.dispatchEvent(new Event(REFERRAL_SUCCESS_EVENT));
 
         await waitFor(() => {
-            const title = container.querySelector(".banner__title");
+            const title = container.querySelector(".frak-banner__title");
             expect(title?.textContent).toContain("10 \u20ac");
         });
     });
@@ -181,7 +181,7 @@ describe.sequential("Banner", () => {
         window.dispatchEvent(new Event(REFERRAL_SUCCESS_EVENT));
 
         await waitFor(() => {
-            const title = container.querySelector(".banner__title");
+            const title = container.querySelector(".frak-banner__title");
             expect(title?.textContent).toBe("You've been referred!");
         });
     });
@@ -192,14 +192,14 @@ describe.sequential("Banner", () => {
         window.dispatchEvent(new Event(REFERRAL_SUCCESS_EVENT));
 
         await waitFor(() => {
-            expect(container.querySelector(".banner")).toBeInTheDocument();
+            expect(container.querySelector(".frak-banner")).toBeInTheDocument();
         });
 
-        const cta = container.querySelector(".banner__cta");
+        const cta = container.querySelector(".frak-banner__cta");
         if (cta) fireEvent.click(cta);
 
         await waitFor(() => {
-            expect(container.querySelector(".banner")).toBeNull();
+            expect(container.querySelector(".frak-banner")).toBeNull();
         });
     });
 
@@ -219,15 +219,16 @@ describe.sequential("Banner", () => {
         window.dispatchEvent(new Event(REFERRAL_SUCCESS_EVENT));
 
         await waitFor(() => {
-            expect(container.querySelector(".banner__title")?.textContent).toBe(
-                "Custom referral title"
-            );
             expect(
-                container.querySelector(".banner__description")?.textContent
+                container.querySelector(".frak-banner__title")?.textContent
+            ).toBe("Custom referral title");
+            expect(
+                container.querySelector(".frak-banner__description")
+                    ?.textContent
             ).toBe("Custom referral desc");
-            expect(container.querySelector(".banner__cta")?.textContent).toBe(
-                "Custom OK"
-            );
+            expect(
+                container.querySelector(".frak-banner__cta")?.textContent
+            ).toBe("Custom OK");
         });
     });
 
@@ -239,19 +240,19 @@ describe.sequential("Banner", () => {
         const { container } = render(<Banner />);
 
         // Banner is already visible in in-app mode
-        expect(container.querySelector(".banner")).toBeInTheDocument();
-        expect(container.querySelector(".banner__title")?.textContent).toBe(
-            "Open in your browser"
-        );
+        expect(container.querySelector(".frak-banner")).toBeInTheDocument();
+        expect(
+            container.querySelector(".frak-banner__title")?.textContent
+        ).toBe("Open in your browser");
 
         // Fire referral event — should be ignored
         window.dispatchEvent(new Event(REFERRAL_SUCCESS_EVENT));
 
         // Still in-app mode
         await waitFor(() => {
-            expect(container.querySelector(".banner__title")?.textContent).toBe(
-                "Open in your browser"
-            );
+            expect(
+                container.querySelector(".frak-banner__title")?.textContent
+            ).toBe("Open in your browser");
         });
     });
 
@@ -261,7 +262,7 @@ describe.sequential("Banner", () => {
         coreSdkMock.isInAppBrowser = true;
 
         const { container } = render(<Banner classname="custom-class" />);
-        const banner = container.querySelector(".banner");
+        const banner = container.querySelector(".frak-banner");
         expect(banner).toHaveClass("custom-class");
     });
 
@@ -281,7 +282,7 @@ describe.sequential("Banner", () => {
         window.dispatchEvent(new Event(REFERRAL_SUCCESS_EVENT));
 
         await waitFor(() => {
-            expect(container.querySelector(".banner")).toBeInTheDocument();
+            expect(container.querySelector(".frak-banner")).toBeInTheDocument();
         });
 
         expect(useRewardHook.useReward).toHaveBeenCalledWith(true, "referral");
@@ -293,7 +294,7 @@ describe.sequential("Banner", () => {
         window.dispatchEvent(new Event(REFERRAL_SUCCESS_EVENT));
 
         await waitFor(() => {
-            expect(container.querySelector(".banner")).toBeInTheDocument();
+            expect(container.querySelector(".frak-banner")).toBeInTheDocument();
         });
 
         expect(useRewardHook.useReward).toHaveBeenCalledWith(true, undefined);

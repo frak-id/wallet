@@ -42,6 +42,9 @@ if (host === "localhost") {
 export default defineConfig(() => {
     return {
         define: {
+            // Non-secret env vars — safe to bake at build time.
+            // Secrets (DB password, API secret, salts) are read via
+            // process.env at runtime in server code and NOT defined here.
             "process.env.STAGE": JSON.stringify(process.env.STAGE),
             "process.env.FRAK_WALLET_URL": JSON.stringify(
                 process.env.FRAK_WALLET_URL
@@ -52,37 +55,12 @@ export default defineConfig(() => {
             "process.env.BUSINESS_URL": JSON.stringify(
                 process.env.BUSINESS_URL
             ),
-            "process.env.BACKEND_URL": JSON.stringify(
-                process.env.BACKEND_URL?.startsWith("http://localhost")
-                    ? "https://backend-dev.frak.id"
-                    : process.env.BACKEND_URL
-            ),
-            "process.env.POSTGRES_USER": JSON.stringify(
-                process.env.POSTGRES_USER
-            ),
-            "process.env.POSTGRES_SHOPIFY_DB": JSON.stringify(
-                process.env.POSTGRES_SHOPIFY_DB
-            ),
-            "process.env.SHOPIFY_POSTGRES_HOST": JSON.stringify(
-                process.env.SHOPIFY_POSTGRES_HOST
-            ),
-            "process.env.SHOPIFY_POSTGRES_PASSWORD": JSON.stringify(
-                process.env.SHOPIFY_POSTGRES_PASSWORD
-            ),
+            "process.env.BACKEND_URL": JSON.stringify(process.env.BACKEND_URL),
             "process.env.SHOPIFY_API_KEY": JSON.stringify(
                 process.env.SHOPIFY_API_KEY
             ),
             "process.env.SHOPIFY_APP_URL": JSON.stringify(
                 process.env.SHOPIFY_APP_URL
-            ),
-            "process.env.SHOPIFY_API_SECRET": JSON.stringify(
-                process.env.SHOPIFY_API_SECRET
-            ),
-            "process.env.PRODUCT_SETUP_CODE_SALT": JSON.stringify(
-                process.env.PRODUCT_SETUP_CODE_SALT
-            ),
-            "process.env.NEXUS_RPC_SECRET": JSON.stringify(
-                process.env.NEXUS_RPC_SECRET
             ),
         },
         server: {

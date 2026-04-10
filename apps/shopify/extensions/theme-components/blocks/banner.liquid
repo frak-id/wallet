@@ -12,24 +12,31 @@
   {% if block.settings.inapp_title != blank %}inapp-title="{{ block.settings.inapp_title }}"{% endif %}
   {% if block.settings.inapp_description != blank %}inapp-description="{{ block.settings.inapp_description }}"{% endif %}
   {% if block.settings.inapp_cta != blank %}inapp-cta="{{ block.settings.inapp_cta }}"{% endif %}
-  {% if request.design_mode %}preview="true" preview-mode="{{ block.settings.preview_mode }}"{% endif %}
+  {% if request.design_mode and block.settings.enable_preview %}preview="true" preview-mode="{{ block.settings.preview_mode }}"{% endif %}
 ></frak-banner>
 
 {% style %}
-  .frak-banner-custom.banner {
+  frak-banner .frak-banner {
+    background: #ffffff;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  }
+  frak-banner .frak-banner__content {
+    padding: 0;
+  }
+  .frak-banner-custom.frak-banner {
     background-color: {{ block.settings.background_color }};
     border-color: {{ block.settings.accent_color }};
   }
-  .frak-banner-custom .banner__icon {
+  .frak-banner-custom .frak-banner__icon {
     color: {{ block.settings.accent_color }};
   }
-  .frak-banner-custom .banner__title {
+  .frak-banner-custom .frak-banner__title {
     color: {{ block.settings.text_color }};
   }
-  .frak-banner-custom .banner__description {
+  .frak-banner-custom .frak-banner__description {
     color: {{ block.settings.text_color }};
   }
-  .frak-banner-custom .banner__cta {
+  .frak-banner-custom .frak-banner__cta {
     background-color: {{ block.settings.cta_color }};
     border-color: {{ block.settings.cta_color }};
     color: {{ block.settings.cta_text_color }};
@@ -39,7 +46,7 @@
 {% schema %}
 {
   "name": "Frak Banner",
-  "target": "body",
+  "target": "section",
   "settings": [
     {
       "type": "select",
@@ -111,9 +118,16 @@
       "content": "Theme editor preview"
     },
     {
+      "type": "checkbox",
+      "id": "enable_preview",
+      "label": "Show preview in editor",
+      "info": "Display a banner preview while customizing the theme",
+      "default": false
+    },
+    {
       "type": "select",
       "id": "preview_mode",
-      "label": "Preview mode",
+      "label": "Preview variant",
       "info": "Choose which banner variant to preview in the theme editor",
       "options": [
         {
