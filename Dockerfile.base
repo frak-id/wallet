@@ -43,6 +43,10 @@ COPY packages/dev-tooling ./packages/dev-tooling
 # Needed since it's this package exporting the global window with Frak info
 COPY packages/ui ./packages/ui
 
+# Needed since sdk/components bundles design-system CSS entries
+# (theme/tokens/sprinkles/utils) via vanilla-extract at build time.
+COPY packages/design-system ./packages/design-system
+
 # Install dependencies
 RUN bun install --frozen-lockfile
 
