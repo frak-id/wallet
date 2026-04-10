@@ -98,53 +98,87 @@ describe("detectFrakActivated", () => {
 /* ------------------------------------------------------------------ */
 
 describe("detectFrakButton", () => {
-    it("returns true when main section has referral_button in block_order", () => {
+    it("returns true when a section contains a referral_button block", () => {
         const sections = {
             main: {
                 type: "main-product",
-                block_order: ["title", "frak_referral_button_abc123", "price"],
+                blocks: {
+                    abc123: {
+                        type: "shopify://apps/frak/blocks/referral_button/abc",
+                        disabled: false,
+                    },
+                } as Record<string, ThemeBlockInfo>,
             },
         };
         expect(detectFrakButton(sections)).toBe(true);
     });
 
-    it("returns true when main section has post_purchase in block_order", () => {
+    it("returns true when a section contains a banner block", () => {
         const sections = {
             main: {
                 type: "main-product",
-                block_order: ["title", "frak_post_purchase_xyz789", "price"],
+                blocks: {
+                    abc123: {
+                        type: "shopify://apps/frak/blocks/banner/xyz",
+                        disabled: false,
+                    },
+                } as Record<string, ThemeBlockInfo>,
             },
         };
         expect(detectFrakButton(sections)).toBe(true);
     });
 
-    it("returns false when no Frak block in block_order", () => {
+    it("detects Frak blocks in a non-main section (e.g. header)", () => {
+        const sections = {
+            header: {
+                type: "header",
+                blocks: {
+                    abc123: {
+                        type: "shopify://apps/frak/blocks/referral_button/abc",
+                        disabled: false,
+                    },
+                } as Record<string, ThemeBlockInfo>,
+            },
+        };
+        expect(detectFrakButton(sections)).toBe(true);
+    });
+
+    it("returns false when no Frak block is present in any section", () => {
         const sections = {
             main: {
                 type: "main-product",
-                block_order: ["title", "price", "description"],
+                blocks: {
+                    abc123: {
+                        type: "shopify://apps/other/blocks/foo/bar",
+                    },
+                } as Record<string, ThemeBlockInfo>,
             },
         };
         expect(detectFrakButton(sections)).toBe(false);
     });
 
-    it("returns false when main section has no block_order", () => {
+    it("returns false when the Frak block is disabled", () => {
+        const sections = {
+            main: {
+                type: "main-product",
+                blocks: {
+                    abc123: {
+                        type: "shopify://apps/frak/blocks/referral_button/abc",
+                        disabled: true,
+                    },
+                } as Record<string, ThemeBlockInfo>,
+            },
+        };
+        expect(detectFrakButton(sections)).toBe(false);
+    });
+
+    it("returns false when sections have no blocks property", () => {
         const sections = {
             main: {
                 type: "main-product",
             },
         };
         expect(detectFrakButton(sections)).toBe(false);
-    });
-
-    it("detects main section by type prefix main-", () => {
-        const sections = {
-            "custom-id": {
-                type: "main-product-custom",
-                block_order: ["referral_button_xyz"],
-            },
-        };
-        expect(detectFrakButton(sections)).toBe(true);
     });
 
     it("returns false for empty sections", () => {
@@ -156,6 +190,7 @@ describe("detectFrakButton", () => {
             main: "some-string-value" as unknown as {
                 type: string;
                 block_order?: string[];
+                blocks?: Record<string, ThemeBlockInfo>;
             },
         };
         expect(detectFrakButton(sections)).toBe(false);
