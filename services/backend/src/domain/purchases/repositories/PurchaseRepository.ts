@@ -87,31 +87,18 @@ export class PurchaseRepository {
         return result ?? null;
     }
 
-    async findByMerchantAndOrder(params: {
+    async findByMerchantAndCheckoutToken(params: {
         webhookId: number;
-        orderId?: string;
-        checkoutToken?: string;
+        checkoutToken: string;
     }): Promise<PurchaseSelect | null> {
-        const { webhookId, orderId, checkoutToken } = params;
-        if (orderId) {
-            const result = await db.query.purchasesTable.findFirst({
-                where: and(
-                    eq(purchasesTable.externalId, orderId),
-                    eq(purchasesTable.webhookId, webhookId)
-                ),
-            });
-            return result ?? null;
-        }
-        if (checkoutToken) {
-            const result = await db.query.purchasesTable.findFirst({
-                where: and(
-                    eq(purchasesTable.purchaseToken, checkoutToken),
-                    eq(purchasesTable.webhookId, webhookId)
-                ),
-            });
-            return result ?? null;
-        }
-        return null;
+        const { webhookId, checkoutToken } = params;
+        const result = await db.query.purchasesTable.findFirst({
+            where: and(
+                eq(purchasesTable.purchaseToken, checkoutToken),
+                eq(purchasesTable.webhookId, webhookId)
+            ),
+        });
+        return result ?? null;
     }
 
     async findByIds(ids: string[]): Promise<PurchaseSelect[]> {

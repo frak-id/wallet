@@ -17,11 +17,11 @@ type FrakConfig = {
     logoUrl?: string;
 };
 
-function parseJsonValue<T>(raw: string): T | undefined {
+function parseJsonValue<T>(raw: string): T | string {
     try {
         return JSON.parse(raw) as T;
     } catch {
-        return undefined;
+        return raw;
     }
 }
 
@@ -32,27 +32,22 @@ function parseJsonValue<T>(raw: string): T | undefined {
  * shape is compatible with AppMetafieldEntry from either import path.
  */
 export function extractFrakConfig(entries: AppMetafieldEntry[]): FrakConfig {
-    const merchantIdEntry = entries.find(
-        (e) => e.metafield.key === "merchant_id"
-    );
-    const walletUrlEntry = entries.find(
-        (e) => e.metafield.key === "wallet_url"
-    );
-    const appearanceEntry = entries.find(
-        (e) => e.metafield.key === "appearance"
-    );
-
-    return {
-        merchantId: merchantIdEntry
-            ? parseJsonValue<string>(merchantIdEntry.metafield.value)
-            : undefined,
-        walletUrl: walletUrlEntry
-            ? parseJsonValue<string>(walletUrlEntry.metafield.value)
-            : undefined,
-        logoUrl: appearanceEntry
-            ? parseJsonValue<{ logoUrl?: string }>(
-                  appearanceEntry.metafield.value
-              )?.logoUrl
-            : undefined,
-    };
+    return entries.reduce<FrakConfig>((config, entry) => {
+        const { key, value } = entry.metafield;
+        switch (key) {
+            case "merchant_id":
+                config.merchantId = parseJsonValue<string>(value);
+                break;
+            case "wallet_url":
+                config.walletUrl = parseJsonValue<string>(value);
+                break;
+            case "appearance": {
+                const parsed = parseJsonValue<{ logoUrl?: string }>(value);
+                config.logoUrl =
+                    typeof parsed === "object" ? parsed.logoUrl : undefined;
+                break;
+            }
+        }
+        return config;
+    }, {});
 }

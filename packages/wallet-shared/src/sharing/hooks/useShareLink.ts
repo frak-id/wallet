@@ -13,7 +13,10 @@ export function useShareLink(
     shareData: { title: string; text: string },
     options?: MutationOptions
 ) {
-    return useMutation({
+    const canShare =
+        typeof navigator !== "undefined" &&
+        typeof navigator.share === "function";
+    const mutation = useMutation({
         ...options,
         mutationKey: ["sharing", "trigger", link ?? "no-link"],
         mutationFn: async () => {
@@ -26,11 +29,7 @@ export function useShareLink(
             };
 
             // If we can't share, early exit
-            if (
-                typeof navigator === "undefined" ||
-                typeof navigator.share !== "function"
-            )
-                return;
+            if (!canShare) return;
             if (!navigator.canShare(data)) return;
 
             // Try to share the link
@@ -42,4 +41,5 @@ export function useShareLink(
             }
         },
     });
+    return { ...mutation, canShare };
 }

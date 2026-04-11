@@ -1,11 +1,12 @@
 import {
+    useApi,
     useAppMetafields,
     useAttributeValues,
     useCartLines,
     useExtensionEditor,
-    useOrder,
     useSettings,
     useShop,
+    useSubscription,
 } from "@shopify/ui-extensions/customer-account/preact";
 import { render } from "preact";
 import { useMemo } from "preact/hooks";
@@ -17,8 +18,11 @@ function OrderStatusExtension() {
     const [clientId] = useAttributeValues(["_frak-client-id"]);
     const shop = useShop();
     const cartLines = useCartLines();
-    const order = useOrder();
     const editor = useExtensionEditor();
+    // Subscribe to the checkout token — correlates with the web pixel payload
+    // and gives the backend an identifier for the purchase.
+    const api = useApi<"customer-account.order-status.block.render">();
+    const checkoutToken = useSubscription(api.checkoutToken);
 
     // Read merchantId, walletUrl, logoUrl from shop metafields
     const frakMetafields = useAppMetafields({ namespace: "frak" });
@@ -37,12 +41,6 @@ function OrderStatusExtension() {
         [cartLines]
     );
 
-    // Extract numeric order ID from Shopify GID (e.g. "gid://shopify/Order/123" → "123")
-    const orderId = useMemo(() => {
-        if (!order?.id) return undefined;
-        return order.id.replace(/^gid:\/\/shopify\/Order\//, "");
-    }, [order?.id]);
-
     return (
         <PostPurchaseCard
             settings={settings}
@@ -53,7 +51,8 @@ function OrderStatusExtension() {
             merchantId={frakConfig.merchantId}
             walletUrl={frakConfig.walletUrl}
             logoUrl={frakConfig.logoUrl}
-            orderId={orderId}
+            checkoutToken={checkoutToken ?? undefined}
+            redirectUrl={shop.storefrontUrl}
             isEditor={Boolean(editor)}
         />
     );

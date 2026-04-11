@@ -1,3 +1,4 @@
+import { isTauri } from "@frak-labs/app-essentials/utils/platform";
 import type { SharingPageProduct } from "@frak-labs/core-sdk";
 import { FrakContextManager } from "@frak-labs/core-sdk";
 import {
@@ -24,10 +25,10 @@ type SharingSearch = {
     appName?: string;
     logoUrl?: string;
     products?: SharingPageProduct[];
-    /** Shopify order ID - used by backend bridge to resolve clientId when cart attributes fail */
-    orderId?: string;
-    /** Shopify checkout token - correlates with web pixel purchase data */
+    /** Shopify checkout token — fallback to resolve clientId when the `_frak-client-id` cart attribute is missing */
     checkoutToken?: string;
+    /** Redirect URL for post-dismiss navigation (e.g. Shopify storefront) */
+    redirectUrl?: string;
 };
 
 export const Route = createFileRoute("/sharing")({
@@ -47,11 +48,13 @@ export const Route = createFileRoute("/sharing")({
             typeof search.products === "object"
                 ? (search.products as SharingPageProduct[])
                 : undefined,
-        orderId:
-            typeof search.orderId === "string" ? search.orderId : undefined,
         checkoutToken:
             typeof search.checkoutToken === "string"
                 ? search.checkoutToken
+                : undefined,
+        redirectUrl:
+            typeof search.redirectUrl === "string"
+                ? search.redirectUrl
                 : undefined,
     }),
     component: WalletSharingPage,
@@ -65,8 +68,8 @@ function WalletSharingPage() {
         appName,
         logoUrl,
         products,
-        orderId,
         checkoutToken,
+        redirectUrl,
     } = Route.useSearch();
     const { t } = useTranslation();
     const navigate = useNavigate();
@@ -76,27 +79,25 @@ function WalletSharingPage() {
     // Immediate clientId from params or store
     const immediateClientId = paramClientId ?? storeClientId;
 
-    // Fetch clientId from backend when not available directly but we have order info
+    // Fallback: resolve clientId from the backend via checkout token when not directly provided
     const { data: resolvedClientId } = useQuery({
-        queryKey: ["order-client", merchantId, orderId, checkoutToken],
+        queryKey: ["order-client", merchantId, checkoutToken],
         queryFn: async () => {
-            if (!merchantId) return null;
+            if (!merchantId || !checkoutToken) return null;
             const { data, error } = await authenticatedBackendApi.user.identity[
                 "order-client"
             ].get({
                 query: {
                     merchantId,
-                    orderId,
                     checkoutToken,
                 },
             });
-            if (error) return null;
+            if (error) throw error;
             return data.clientId;
         },
-        enabled:
-            !immediateClientId &&
-            !!merchantId &&
-            (!!orderId || !!checkoutToken),
+        enabled: !immediateClientId && !!merchantId && !!checkoutToken,
+        retry: 5,
+        retryDelay: 300,
     });
 
     const clientId = immediateClientId ?? resolvedClientId ?? undefined;
@@ -127,7 +128,11 @@ function WalletSharingPage() {
     }, [clientId, merchantId, link]);
 
     // Share mutation using the shared hook
-    const { mutate: triggerSharing, isPending: isSharing } = useShareLink(
+    const {
+        mutate: triggerSharing,
+        isPending: isSharing,
+        canShare,
+    } = useShareLink(
         finalSharingLink,
         {
             title: t("sharing.title"),
@@ -162,7 +167,21 @@ function WalletSharingPage() {
         setShowConfirmation(true);
     };
 
-    const handleDismiss = () => {
+    const handleDismiss = async () => {
+        if (redirectUrl) {
+            if (isTauri()) {
+                // In Tauri, open the redirect URL in the external browser
+                // and navigate back to the wallet home.
+                const { openUrl } = await import(
+                    "@tauri-apps/plugin-opener"
+                );
+                await openUrl(redirectUrl);
+                navigate({ to: "/wallet" });
+                return;
+            }
+            window.location.assign(redirectUrl);
+            return;
+        }
         // Navigate back or close — on wallet this just goes to the home page
         navigate({ to: "/wallet" });
     };
@@ -189,6 +208,7 @@ function WalletSharingPage() {
             installUrl={installUrl}
             t={t}
             isSharing={isSharing}
+            canShare={canShare}
             showConfirmation={showConfirmation}
             onShare={handleShare}
             onCopy={handleCopy}

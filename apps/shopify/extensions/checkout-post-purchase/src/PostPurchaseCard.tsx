@@ -56,8 +56,8 @@ export function PostPurchaseCard({
     merchantId,
     walletUrl,
     logoUrl,
-    orderId,
     checkoutToken,
+    redirectUrl,
     isEditor,
 }: {
     settings: Partial<PostPurchaseSettings>;
@@ -72,10 +72,10 @@ export function PostPurchaseCard({
     walletUrl?: string;
     /** From frak.appearance shop metafield */
     logoUrl?: string;
-    /** Shopify order ID (numeric, available on OrderStatus surface) */
-    orderId?: string;
     /** Checkout token (available on ThankYou surface, correlates with web pixel data) */
     checkoutToken?: string;
+    /** URL to redirect the user back to after sharing (e.g. storefront) */
+    redirectUrl?: string;
     /** True when rendering inside the Shopify Checkout/Customer Account editor */
     isEditor?: boolean;
 }) {
@@ -104,11 +104,11 @@ export function PostPurchaseCard({
         if (products && products.length > 0) {
             url.searchParams.set("products", JSON.stringify(products));
         }
-        if (orderId) {
-            url.searchParams.set("orderId", orderId);
-        }
         if (checkoutToken) {
             url.searchParams.set("checkoutToken", checkoutToken);
+        }
+        if (redirectUrl) {
+            url.searchParams.set("redirectUrl", redirectUrl);
         }
         return url.toString();
     }, [
@@ -119,8 +119,8 @@ export function PostPurchaseCard({
         shopName,
         logoUrl,
         products,
-        orderId,
         checkoutToken,
+        redirectUrl,
     ]);
 
     // In production, hide the card when required data is missing to avoid a

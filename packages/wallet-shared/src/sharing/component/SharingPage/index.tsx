@@ -42,6 +42,11 @@ export type SharingPageProps = {
      */
     isSharing: boolean;
     /**
+     * Whether the Web Share API is available in the current browser.
+     * When false, the share button is hidden and copy is the only option.
+     */
+    canShare?: boolean;
+    /**
      * Whether to show the post-share confirmation screen.
      */
     showConfirmation: boolean;
@@ -81,6 +86,7 @@ export function SharingPage({
     installUrl,
     t,
     isSharing,
+    canShare = true,
     showConfirmation,
     onShare,
     onCopy,
@@ -218,15 +224,17 @@ export function SharingPage({
             </main>
 
             <footer className={styles.footer}>
-                <button
-                    type="button"
-                    className={cx(styles.actionButton, styles.shareButton)}
-                    onClick={onShare}
-                    disabled={isSharing || !sharingLink}
-                >
-                    <Share />
-                    <span>{t("sharing.btn.share")}</span>
-                </button>
+                {canShare && (
+                    <button
+                        type="button"
+                        className={cx(styles.actionButton, styles.shareButton)}
+                        onClick={onShare}
+                        disabled={isSharing || !sharingLink}
+                    >
+                        <Share />
+                        <span>{t("sharing.btn.share")}</span>
+                    </button>
+                )}
                 <button
                     type="button"
                     className={cx(styles.actionButton, styles.copyButton)}

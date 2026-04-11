@@ -48,6 +48,7 @@ function ThankYouExtension() {
             walletUrl={frakConfig.walletUrl}
             logoUrl={frakConfig.logoUrl}
             checkoutToken={checkoutToken ?? undefined}
+            redirectUrl={shop.storefrontUrl}
             isEditor={Boolean(editor)}
         />
     );
