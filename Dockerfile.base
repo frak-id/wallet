@@ -25,9 +25,6 @@ RUN apt-get update \
 # Copy root package files
 COPY package.json bun.lock tsconfig.json ./
 
-# Copy stubs
-COPY .stubs/ ./.stubs/
-
 # Copy only package.json files from workspace packages (for dependency resolution)
 # Apps
 COPY apps/business/package.json ./apps/business/
