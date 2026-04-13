@@ -29,7 +29,8 @@
             "!**/src-tauri/gen",
             "!**/src-tauri/target",
             "!**/src-tauri/plugins/**/schema.json",
-            "!plugins"
+            "!plugins",
+            "!apps/shopify/**/shopify.d.ts"
         ]
     },
     "assist": {

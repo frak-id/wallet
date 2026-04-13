@@ -524,3 +524,102 @@ export async function getFrakWebookStatus(
         };
     }
 }
+
+export type ExplorerSettings = {
+    enabled: boolean;
+    heroImageUrl: string;
+    logoUrl: string;
+    description: string;
+};
+
+/**
+ * Fetch explorer settings for the current merchant from the Frak backend.
+ */
+export async function getMerchantExplorerSettings(
+    context: AuthenticatedContext,
+    request: Request
+): Promise<ExplorerSettings | null> {
+    const merchantId = await resolveMerchantId(context);
+    if (!merchantId) {
+        return null;
+    }
+
+    try {
+        const { data, error } = await backendApi.business
+            .merchant({ merchantId })
+            .get({
+                headers: buildBackendHeaders(request),
+            });
+        if (error) {
+            console.error(
+                `[backendMerchant] merchant detail fetch failed for ${merchantId}`
+            );
+            return null;
+        }
+
+        return {
+            enabled: data.explorerEnabledAt !== null,
+            heroImageUrl: data.explorerConfig?.heroImageUrl ?? "",
+            logoUrl: data.explorerConfig?.logoUrl ?? "",
+            description: data.explorerConfig?.description ?? "",
+        };
+    } catch (error) {
+        console.error(
+            `[backendMerchant] merchant detail fetch error for ${merchantId}:`,
+            error
+        );
+        return null;
+    }
+}
+
+/**
+ * Update explorer settings for the current merchant on the Frak backend.
+ */
+export async function updateMerchantExplorerSettings(
+    context: AuthenticatedContext,
+    request: Request,
+    settings: ExplorerSettings
+): Promise<{ success: boolean; message: string }> {
+    const merchantId = await resolveMerchantId(context);
+    if (!merchantId) {
+        return { success: false, message: "Merchant not found" };
+    }
+
+    const config =
+        settings.heroImageUrl || settings.logoUrl || settings.description
+            ? {
+                  heroImageUrl: settings.heroImageUrl || undefined,
+                  logoUrl: settings.logoUrl || undefined,
+                  description: settings.description || undefined,
+              }
+            : undefined;
+
+    try {
+        const { error } = await backendApi.business
+            .merchant({ merchantId })
+            .explorer.put(
+                { enabled: settings.enabled, config },
+                { headers: buildBackendHeaders(request) }
+            );
+        if (error) {
+            console.error(
+                `[backendMerchant] explorer update failed for ${merchantId}`
+            );
+            return {
+                success: false,
+                message: "Failed to update explorer settings",
+            };
+        }
+
+        return { success: true, message: "Explorer settings saved" };
+    } catch (error) {
+        console.error(
+            `[backendMerchant] explorer update error for ${merchantId}:`,
+            error
+        );
+        return {
+            success: false,
+            message: "Failed to update explorer settings",
+        };
+    }
+}

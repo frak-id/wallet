@@ -24,8 +24,13 @@ export const merchantRoutes = new Elysia({ prefix: "/merchant" })
     .use(businessSessionContext)
     .get(
         "/:merchantId",
-        async ({ params: { merchantId }, businessSession }) => {
-            if (!businessSession) {
+        async ({
+            params: { merchantId },
+            businessSession,
+            shopifySession,
+            hasMerchantAccess,
+        }) => {
+            if (!businessSession && !shopifySession) {
                 return status(401, "Authentication required");
             }
 
@@ -37,13 +42,21 @@ export const merchantRoutes = new Elysia({ prefix: "/merchant" })
                 return status(404, "Merchant not found");
             }
 
-            const access =
-                await MerchantContext.services.authorization.checkAccess(
-                    merchantId,
-                    businessSession.wallet
-                );
-            if (!access.hasAccess) {
+            const hasAccess = await hasMerchantAccess(merchantId);
+            if (!hasAccess) {
                 return status(403, "Access denied");
+            }
+
+            // Determine role: check wallet-based access for business sessions,
+            // default to "admin" for Shopify sessions (shop owner)
+            let role: "owner" | "admin" | "none" = "admin";
+            if (businessSession) {
+                const access =
+                    await MerchantContext.services.authorization.checkAccess(
+                        merchantId,
+                        businessSession.wallet
+                    );
+                role = access.role;
             }
 
             return {
@@ -58,7 +71,7 @@ export const merchantRoutes = new Elysia({ prefix: "/merchant" })
                     merchant.explorerEnabledAt?.toISOString() ?? null,
                 verifiedAt: merchant.verifiedAt?.toISOString() ?? null,
                 createdAt: merchant.createdAt?.toISOString() ?? null,
-                role: access.role,
+                role,
             };
         },
         {

@@ -366,7 +366,8 @@
             "customizations": "Text Customizations",
             "shareButton": "Share Button",
             "banner": "Banner",
-            "checkoutExtension": "Checkout Extension"
+            "checkoutExtension": "Checkout Extension",
+            "explorer": "Explorer"
         },
         "shareButton": {
             "link": "Configure button in your product page",
@@ -384,6 +385,20 @@
         "checkoutExtension": {
             "description": "The Frak Post Purchase extension displays a sharing card on the checkout thank-you page and order status page, encouraging customers to share after purchasing.",
             "link": "Configure in checkout editor"
+        },
+        "explorer": {
+            "badge": "Explorer Listing",
+            "description": "Configure how your store appears in the Frak Explorer. Enable your listing and customize your logo, hero image, and description to attract more customers.",
+            "preFilled": "Some fields have been pre-filled from your Shopify store settings. Review and save to apply.",
+            "enabledLabel": "Listed in Frak Explorer",
+            "logoTitle": "Logo",
+            "logoLabel": "Logo URL",
+            "heroTitle": "Hero Image",
+            "heroLabel": "Hero image URL",
+            "descriptionTitle": "Description",
+            "descriptionLabel": "Store description",
+            "descriptionPlaceholder": "Describe your store for the Frak Explorer...",
+            "save": "Save Explorer Settings"
         }
     },
     "funding": {

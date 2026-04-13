@@ -135,3 +135,65 @@ export async function firstProductPublished({
 
     return products.edges?.[0]?.node;
 }
+
+export type ShopBrandInfo = {
+    description: string | null;
+    logoUrl: string | null;
+    coverImageUrl: string | null;
+};
+
+const shopBrandCache = new LRUCache<string, ShopBrandInfo>({
+    max: 512,
+    ttl: 60_000,
+});
+
+/**
+ * Get the shop brand info (logo, cover image, description) for pre-filling explorer settings.
+ */
+export async function shopBrandInfo({
+    admin: { graphql },
+    session: { shop: sessionShop },
+}: AuthenticatedContext): Promise<ShopBrandInfo> {
+    const cached = shopBrandCache.get(sessionShop);
+    if (cached) {
+        return cached;
+    }
+
+    try {
+        const response = await graphql(`
+            #graphql
+            query shopBrandInfo {
+                shop {
+                    description
+                    brand {
+                        squareLogo {
+                            image {
+                                url
+                            }
+                        }
+                        coverImage {
+                            image {
+                                url
+                            }
+                        }
+                    }
+                }
+            }
+        `);
+        const {
+            data: { shop },
+        } = await response.json();
+
+        const brandInfo: ShopBrandInfo = {
+            description: shop.description || null,
+            logoUrl: shop.brand?.squareLogo?.image?.url || null,
+            coverImageUrl: shop.brand?.coverImage?.image?.url || null,
+        };
+
+        shopBrandCache.set(sessionShop, brandInfo);
+        return brandInfo;
+    } catch (error) {
+        console.error("[shopBrandInfo] query failed:", error);
+        return { description: null, logoUrl: null, coverImageUrl: null };
+    }
+}

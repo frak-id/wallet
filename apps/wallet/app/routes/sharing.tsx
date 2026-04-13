@@ -172,9 +172,7 @@ function WalletSharingPage() {
             if (isTauri()) {
                 // In Tauri, open the redirect URL in the external browser
                 // and navigate back to the wallet home.
-                const { openUrl } = await import(
-                    "@tauri-apps/plugin-opener"
-                );
+                const { openUrl } = await import("@tauri-apps/plugin-opener");
                 await openUrl(redirectUrl);
                 navigate({ to: "/wallet" });
                 return;

@@ -278,11 +278,7 @@ export function PostPurchase({
                     </Stack>
                 </Column>
                 <Column width="content">
-                    <GiftIcon
-                        className={giftIcon}
-                        width={80}
-                        height={80}
-                    />
+                    <GiftIcon className={giftIcon} width={80} height={80} />
                 </Column>
             </Columns>
         </Box>

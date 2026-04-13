@@ -142,8 +142,8 @@ export function PostPurchaseCard({
                     <s-text color="subdued">{description}</s-text>
                     <s-button
                         variant="primary"
-                        href= {sharingPageUrl}
-                        target= "_blank"
+                        href={sharingPageUrl}
+                        target="_blank"
                         inlineSize="fit-content"
                     >
                         {ctaText}

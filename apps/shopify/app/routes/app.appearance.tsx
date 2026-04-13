@@ -2,8 +2,14 @@ import { BannerTab } from "app/components/Appearance/BannerTab";
 import { ButtonTab } from "app/components/Appearance/ButtonTab";
 import { CheckoutExtensionTab } from "app/components/Appearance/CheckoutExtensionTab";
 import { CustomizationsTab } from "app/components/Appearance/CustomizationsTab";
+import { ExplorerTab } from "app/components/Appearance/ExplorerTab";
 import { PageHeading } from "app/components/ui/PageHeading";
 import { Tabs } from "app/components/ui/Tabs";
+import {
+    type ExplorerSettings,
+    getMerchantExplorerSettings,
+    updateMerchantExplorerSettings,
+} from "app/services.server/backendMerchant";
 import {
     type AppearanceMetafieldValue,
     getAppearanceMetafield,
@@ -12,7 +18,7 @@ import {
     updateAppearanceMetafield,
     updateI18nCustomizations,
 } from "app/services.server/metafields";
-import { firstProductPublished } from "app/services.server/shop";
+import { firstProductPublished, shopBrandInfo } from "app/services.server/shop";
 import {
     doesThemeHasFrakBanner,
     doesThemeHasFrakButton,
@@ -35,6 +41,8 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
         isThemeHasFrakBanner,
         firstProduct,
         theme,
+        explorerSettings,
+        shopBrand,
     ] = await Promise.all([
         getI18nCustomizations(context),
         getAppearanceMetafield(context),
@@ -42,6 +50,8 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
         doesThemeHasFrakBanner(context),
         firstProductPublished(context),
         getMainThemeId(context),
+        getMerchantExplorerSettings(context, request),
+        shopBrandInfo(context),
     ]);
 
     return data({
@@ -51,6 +61,8 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
         isThemeHasFrakBanner,
         firstProduct,
         themeId: theme.id,
+        explorerSettings,
+        shopBrand,
     });
 };
 
@@ -58,6 +70,37 @@ export async function action({ request }: ActionFunctionArgs) {
     const context = await authenticate.admin(request);
     const formData = await request.formData();
     const intent = formData.get("intent");
+
+    if (intent === "saveExplorer") {
+        const explorerSettingsData = formData.get("explorerSettings");
+        if (!explorerSettingsData) {
+            return data(
+                { success: false, message: "No explorer data provided" },
+                { status: 400 }
+            );
+        }
+
+        try {
+            const settings: ExplorerSettings = JSON.parse(
+                explorerSettingsData as string
+            );
+            const result = await updateMerchantExplorerSettings(
+                context,
+                request,
+                settings
+            );
+            return data(result, { status: result.success ? 200 : 400 });
+        } catch (error) {
+            console.error("Error saving explorer settings:", error);
+            return data(
+                {
+                    success: false,
+                    message: "Failed to save explorer settings",
+                },
+                { status: 500 }
+            );
+        }
+    }
 
     if (intent !== "save") {
         return data(
@@ -145,6 +188,8 @@ export default function AppearancePage() {
         isThemeHasFrakButton,
         isThemeHasFrakBanner,
         firstProduct,
+        explorerSettings,
+        shopBrand,
     } = useLoaderData<typeof loader>();
     const { t } = useTranslation();
     const [selectedTab, setSelectedTab] = useState(0);
@@ -153,6 +198,10 @@ export default function AppearancePage() {
         {
             id: "customizations",
             content: t("appearance.tabs.customizations"),
+        },
+        {
+            id: "explorer",
+            content: t("appearance.tabs.explorer"),
         },
         {
             id: "share-button",
@@ -179,16 +228,24 @@ export default function AppearancePage() {
                 );
             case 1:
                 return (
+                    <ExplorerTab
+                        initialExplorerSettings={explorerSettings}
+                        shopBrand={shopBrand}
+                        sdkLogoUrl={appearanceMetafield.logoUrl || ""}
+                    />
+                );
+            case 2:
+                return (
                     <ButtonTab
                         isThemeHasFrakButton={isThemeHasFrakButton}
                         firstProduct={firstProduct}
                     />
                 );
-            case 2:
+            case 3:
                 return (
                     <BannerTab isThemeHasFrakBanner={isThemeHasFrakBanner} />
                 );
-            case 3:
+            case 4:
                 return <CheckoutExtensionTab />;
             default:
                 return null;
