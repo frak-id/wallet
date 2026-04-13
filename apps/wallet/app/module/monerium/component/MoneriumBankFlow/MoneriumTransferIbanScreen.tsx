@@ -205,7 +205,8 @@ export function MoneriumTransferIbanScreen() {
                     <Button
                         variant="primary"
                         width="full"
-                        size="medium"
+                        size="large"
+                        fontSize="s"
                         onClick={handleSave}
                         disabled={!canSave}
                     >

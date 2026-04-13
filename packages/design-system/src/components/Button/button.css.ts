@@ -79,7 +79,7 @@ export const button = recipe({
                 fontWeight: 600,
             },
             medium: {
-                padding: alias.spacing.m,
+                padding: alias.spacing.s,
                 fontSize: fontSize.s,
                 fontWeight: 600,
             },

@@ -59,6 +59,12 @@
                 "title": "Partagez vite à vos proches",
                 "tagline": "Vous recevez une récompense à chaque fois qu'un proche achète via votre lien."
             },
+            "card": {
+                "amount": "{{ estimatedReward }}",
+                "label": "Crédité sur votre compte",
+                "tagline1": "Gagnez {{ estimatedReward }},",
+                "tagline2": "à chaque achat réalisé !"
+            },
             "steps": {
                 "title": "",
                 "1": "Partagez en 1 clic. Un lien personnel est généré automatiquement à chaque partage.",

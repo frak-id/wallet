@@ -1,5 +1,6 @@
 import { keyframes, style } from "@vanilla-extract/css";
 import { vars } from "../../theme.css";
+import { alias, fontSize as fs } from "../../tokens.css";
 
 const easing = "cubic-bezier(0.87, 0, 0.13, 1)";
 
@@ -20,7 +21,7 @@ export const accordionStyles = {
     }),
     header: style({
         display: "flex",
-        fontSize: "16px",
+        fontSize: fs.m,
         fontWeight: 500,
     }),
     trigger: style({
@@ -28,6 +29,7 @@ export const accordionStyles = {
         flex: 1,
         alignItems: "center",
         justifyContent: "space-between",
+        gap: alias.spacing.s,
         border: "none",
         background: "none",
         padding: 0,

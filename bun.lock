@@ -524,6 +524,7 @@
         "@radix-ui/react-alert-dialog": "^1.1.15",
         "@simplewebauthn/types": "^12.0.0",
         "@tanstack/react-query": "catalog:",
+        "@vanilla-extract/css": "^1.19.1",
         "@wagmi/core": "catalog:",
         "class-variance-authority": "^0.7.1",
         "clsx": "^2.1.1",

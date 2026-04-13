@@ -29,6 +29,7 @@
     "@frak-labs/core-sdk": "workspace:*",
     "@frak-labs/frame-connector": "workspace:*",
     "@frak-labs/design-system": "workspace:*",
+    "@vanilla-extract/css": "^1.19.1",
     "@openpanel/web": "^1.2.0",
     "@radix-ui/react-alert-dialog": "^1.1.15",
     "@simplewebauthn/types": "^12.0.0",

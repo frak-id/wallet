@@ -218,7 +218,8 @@ export function ExplorerDetail({ merchant, onClose }: ExplorerDetailProps) {
                     variant="primary"
                     width="full"
                     onClick={handleShare}
-                    size="medium"
+                    size="large"
+                    fontSize="s"
                 >
                     {t("explorer.detail.shareAndEarn")}
                     <CoinsIcon width={16} height={16} />

@@ -58,6 +58,12 @@
                 "title": "Share with your friends",
                 "tagline": "You earn a reward every time a friend makes a purchase through your link."
             },
+            "card": {
+                "amount": "{{ estimatedReward }}",
+                "label": "Credited to your account",
+                "tagline1": "Earn {{ estimatedReward }},",
+                "tagline2": "on every purchase!"
+            },
             "steps": {
                 "title": "",
                 "1": "Share in 1 click. A personal link is automatically generated with each share.",

@@ -99,7 +99,8 @@ export function WelcomeDetail({ onClose }: WelcomeDetailProps) {
                     variant="primary"
                     width="full"
                     onClick={handleDiscover}
-                    size="medium"
+                    size="large"
+                    fontSize="s"
                 >
                     {t("wallet.welcome.detail.discoverOffers")}
                 </Button>

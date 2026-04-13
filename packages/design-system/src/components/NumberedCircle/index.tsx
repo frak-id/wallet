@@ -6,7 +6,7 @@ import { colorVariants, sizeVariants } from "./numberedCircle.css";
 type NumberedCircleProps = {
     number: number;
     size?: "sm" | "md" | "lg";
-    color?: "primary" | "secondary" | "action";
+    color?: "primary" | "secondary" | "action" | "filled";
     className?: string;
 };
 

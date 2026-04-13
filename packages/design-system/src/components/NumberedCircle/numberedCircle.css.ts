@@ -56,4 +56,9 @@ export const colorVariants = styleVariants({
         borderColor: vars.text.action,
         color: vars.text.action,
     },
+    filled: {
+        backgroundColor: vars.text.primary,
+        color: vars.text.onAction,
+        borderColor: "transparent",
+    },
 });

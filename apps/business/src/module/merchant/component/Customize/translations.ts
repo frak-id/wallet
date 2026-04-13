@@ -30,9 +30,12 @@ export const SHARING_PAGE_TRANSLATION_GROUPS = {
         "sdk.sharingPage.dismiss",
         "sdk.sharingPage.reward.title",
         "sdk.sharingPage.reward.tagline",
+        "sdk.sharingPage.card.amount",
+        "sdk.sharingPage.card.label",
+        "sdk.sharingPage.card.tagline1",
+        "sdk.sharingPage.card.tagline2",
     ],
     "Sharing Steps": [
-        "sdk.sharingPage.steps.title",
         "sdk.sharingPage.steps.1",
         "sdk.sharingPage.steps.2",
         "sdk.sharingPage.steps.3",
@@ -252,9 +255,25 @@ export const TRANSLATION_KEY_META: Record<
         description:
             "Description below the reward title explaining the sharing incentive",
     },
-    "sdk.sharingPage.steps.title": {
-        label: "Steps title",
-        description: "Heading above the step-by-step instructions",
+    "sdk.sharingPage.card.amount": {
+        label: "Card amount",
+        description:
+            "Large reward amount displayed on the card (uses {{ estimatedReward }} variable)",
+    },
+    "sdk.sharingPage.card.label": {
+        label: "Card label",
+        description:
+            "Label below the reward amount on the card (e.g. 'Credited to your account')",
+    },
+    "sdk.sharingPage.card.tagline1": {
+        label: "Card tagline line 1",
+        description:
+            "First line of italic text at the bottom of the card (e.g. 'Earn 5€,')",
+    },
+    "sdk.sharingPage.card.tagline2": {
+        label: "Card tagline line 2",
+        description:
+            "Second line of italic text at the bottom of the card (e.g. 'on every purchase!')",
     },
     "sdk.sharingPage.steps.1": {
         label: "Step 1",

@@ -87,7 +87,8 @@ export function MoneriumScreen({
                     <Button
                         variant="primary"
                         width="full"
-                        size="medium"
+                        size="large"
+                        fontSize="s"
                         onClick={ctaOnClick}
                         loading={ctaLoading}
                         disabled={ctaDisabled}
