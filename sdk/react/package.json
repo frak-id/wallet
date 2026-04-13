@@ -77,7 +77,6 @@
   },
   "devDependencies": {
     "@arethetypeswrong/cli": "^0.18.2",
-    "@frak-labs/dev-tooling": "workspace:*",
     "@frak-labs/test-foundation": "workspace:*",
     "@frak-labs/wallet-shared": "workspace:*",
     "@tanstack/react-query": "catalog:",

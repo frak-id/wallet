@@ -67,7 +67,6 @@
     },
     "devDependencies": {
         "@arethetypeswrong/cli": "^0.18.2",
-        "@frak-labs/dev-tooling": "workspace:*",
         "@rolldown/plugin-node-polyfills": "^1.0.3",
         "@types/node": "catalog:",
         "tsdown": "^0.21.8",

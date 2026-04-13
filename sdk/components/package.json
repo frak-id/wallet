@@ -93,7 +93,6 @@
     "@frak-labs/design-system": "workspace:*"
   },
   "devDependencies": {
-    "@frak-labs/dev-tooling": "workspace:*",
     "@frak-labs/test-foundation": "workspace:*",
     "@preact/preset-vite": "^2.10.4",
     "@rolldown/plugin-node-polyfills": "^1.0.3",
