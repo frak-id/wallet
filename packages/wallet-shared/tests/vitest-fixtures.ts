@@ -76,10 +76,10 @@ export type BaseTestFixtures = {
     };
 
     /**
-     * Mock Wagmi hooks (useAccount, useSendTransaction, etc.)
+     * Mock Wagmi hooks (useConnection, useSendTransaction, etc.)
      */
     mockWagmiHooks: {
-        useAccount: ReturnType<typeof import("vitest").vi.fn>;
+        useConnection: ReturnType<typeof import("vitest").vi.fn>;
         useSendTransaction: ReturnType<typeof import("vitest").vi.fn>;
         useWriteContract: ReturnType<typeof import("vitest").vi.fn>;
         useWaitForTransactionReceipt: ReturnType<typeof import("vitest").vi.fn>;
@@ -267,13 +267,15 @@ export const test = baseTest.extend<BaseTestFixtures>({
     mockWagmiHooks: async ({ mockAddress }, use) => {
         const { vi } = await import("vitest");
         const mocks = {
-            useAccount: vi.fn().mockReturnValue({
+            useConnection: vi.fn().mockReturnValue({
                 address: mockAddress,
                 isConnected: true,
                 isConnecting: false,
                 isDisconnected: false,
             }),
             useSendTransaction: vi.fn().mockReturnValue({
+                mutateAsync: vi.fn().mockResolvedValue("0xtxhash"),
+                mutate: vi.fn(),
                 sendTransactionAsync: vi.fn().mockResolvedValue("0xtxhash"),
                 sendTransaction: vi.fn(),
                 isPending: false,
@@ -281,6 +283,10 @@ export const test = baseTest.extend<BaseTestFixtures>({
                 isError: false,
             }),
             useWriteContract: vi.fn().mockReturnValue({
+                mutateAsync: vi
+                    .fn()
+                    .mockResolvedValue("0xtxhash" as `0x${string}`),
+                mutate: vi.fn(),
                 writeContractAsync: vi
                     .fn()
                     .mockResolvedValue("0xtxhash" as `0x${string}`),

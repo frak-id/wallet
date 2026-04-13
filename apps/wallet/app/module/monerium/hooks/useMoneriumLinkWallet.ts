@@ -1,8 +1,8 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { isSmartAccountDeployed } from "permissionless";
 import {
-    useAccount,
     useClient,
+    useConnection,
     useSendTransaction,
     useSignMessage,
 } from "wagmi";
@@ -14,10 +14,10 @@ import {
 } from "@/module/monerium/utils/moneriumConfig";
 
 export function useMoneriumLinkWallet() {
-    const { address } = useAccount();
+    const { address } = useConnection();
     const client = useClient();
-    const { signMessageAsync } = useSignMessage();
-    const { sendTransactionAsync } = useSendTransaction();
+    const { mutateAsync: signMessageAsync } = useSignMessage();
+    const { mutateAsync: sendTransactionAsync } = useSendTransaction();
     const queryClient = useQueryClient();
 
     const { mutate, mutateAsync, ...mutationRest } = useMutation({

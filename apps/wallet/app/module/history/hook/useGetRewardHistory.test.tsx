@@ -5,7 +5,7 @@ import { useGetRewardHistory } from "@/module/history/hook/useGetRewardHistory";
 import { beforeEach, describe, expect, test } from "@/tests/vitest-fixtures";
 
 vi.mock("wagmi", () => ({
-    useAccount: vi.fn(),
+    useConnection: vi.fn(),
 }));
 
 vi.mock("@frak-labs/wallet-shared/common/api/backendClient", () => ({
@@ -60,9 +60,9 @@ describe("useGetRewardHistory", () => {
         queryWrapper,
         mockWagmiHooks,
     }) => {
-        const { useAccount } = await import("wagmi");
-        vi.mocked(useAccount).mockImplementation(
-            mockWagmiHooks.useAccount as any
+        const { useConnection } = await import("wagmi");
+        vi.mocked(useConnection).mockImplementation(
+            mockWagmiHooks.useConnection as any
         );
 
         const { authenticatedWalletApi } = await import(
@@ -84,9 +84,9 @@ describe("useGetRewardHistory", () => {
         queryWrapper,
         mockWagmiHooks,
     }) => {
-        const { useAccount } = await import("wagmi");
-        vi.mocked(useAccount).mockImplementation(
-            mockWagmiHooks.useAccount as any
+        const { useConnection } = await import("wagmi");
+        vi.mocked(useConnection).mockImplementation(
+            mockWagmiHooks.useConnection as any
         );
 
         const { authenticatedWalletApi } = await import(
@@ -114,8 +114,8 @@ describe("useGetRewardHistory", () => {
     test("should not fetch when address is missing", async ({
         queryWrapper,
     }) => {
-        const { useAccount } = await import("wagmi");
-        vi.mocked(useAccount).mockReturnValue({
+        const { useConnection } = await import("wagmi");
+        vi.mocked(useConnection).mockReturnValue({
             address: undefined,
             isConnected: false,
             isConnecting: false,
@@ -140,9 +140,9 @@ describe("useGetRewardHistory", () => {
         queryWrapper,
         mockWagmiHooks,
     }) => {
-        const { useAccount } = await import("wagmi");
-        vi.mocked(useAccount).mockImplementation(
-            mockWagmiHooks.useAccount as any
+        const { useConnection } = await import("wagmi");
+        vi.mocked(useConnection).mockImplementation(
+            mockWagmiHooks.useConnection as any
         );
 
         const { authenticatedWalletApi } = await import(
@@ -176,9 +176,9 @@ describe("useGetRewardHistory", () => {
         queryWrapper,
         mockWagmiHooks,
     }) => {
-        const { useAccount } = await import("wagmi");
-        vi.mocked(useAccount).mockImplementation(
-            mockWagmiHooks.useAccount as any
+        const { useConnection } = await import("wagmi");
+        vi.mocked(useConnection).mockImplementation(
+            mockWagmiHooks.useConnection as any
         );
 
         const { authenticatedWalletApi } = await import(

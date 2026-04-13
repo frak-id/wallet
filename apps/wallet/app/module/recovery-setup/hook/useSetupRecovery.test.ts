@@ -12,7 +12,7 @@ import {
 import { useSetupRecovery } from "./useSetupRecovery";
 
 vi.mock("wagmi", () => ({
-    useAccount: vi.fn(),
+    useConnection: vi.fn(),
     useSendTransaction: vi.fn(),
 }));
 
@@ -33,9 +33,11 @@ describe("useSetupRecovery", () => {
     test("should initialize with correct default state", async ({
         queryWrapper,
     }) => {
-        const { useAccount, useSendTransaction } = await import("wagmi");
+        const { useConnection, useSendTransaction } = await import("wagmi");
 
-        vi.mocked(useAccount).mockReturnValue({ address: mockAddress } as any);
+        vi.mocked(useConnection).mockReturnValue({
+            address: mockAddress,
+        } as any);
         vi.mocked(useSendTransaction).mockReturnValue({
             sendTransactionAsync: vi.fn(),
         } as any);
@@ -52,11 +54,13 @@ describe("useSetupRecovery", () => {
     });
 
     test("should setup recovery successfully", async ({ queryWrapper }) => {
-        const { useAccount, useSendTransaction } = await import("wagmi");
+        const { useConnection, useSendTransaction } = await import("wagmi");
 
         const sendTransactionAsync = vi.fn().mockResolvedValue(mockTxHash);
 
-        vi.mocked(useAccount).mockReturnValue({ address: mockAddress } as any);
+        vi.mocked(useConnection).mockReturnValue({
+            address: mockAddress,
+        } as any);
         vi.mocked(useSendTransaction).mockReturnValue({
             sendTransactionAsync,
         } as any);
@@ -83,9 +87,9 @@ describe("useSetupRecovery", () => {
     test("should return null when no address is available", async ({
         queryWrapper,
     }) => {
-        const { useAccount, useSendTransaction } = await import("wagmi");
+        const { useConnection, useSendTransaction } = await import("wagmi");
 
-        vi.mocked(useAccount).mockReturnValue({ address: undefined } as any);
+        vi.mocked(useConnection).mockReturnValue({ address: undefined } as any);
         vi.mocked(useSendTransaction).mockReturnValue({
             sendTransactionAsync: vi.fn(),
         } as any);
@@ -104,11 +108,13 @@ describe("useSetupRecovery", () => {
     test("should invalidate recovery status queries after setup", async ({
         queryWrapper,
     }) => {
-        const { useAccount, useSendTransaction } = await import("wagmi");
+        const { useConnection, useSendTransaction } = await import("wagmi");
 
         const sendTransactionAsync = vi.fn().mockResolvedValue(mockTxHash);
 
-        vi.mocked(useAccount).mockReturnValue({ address: mockAddress } as any);
+        vi.mocked(useConnection).mockReturnValue({
+            address: mockAddress,
+        } as any);
         vi.mocked(useSendTransaction).mockReturnValue({
             sendTransactionAsync,
         } as any);
@@ -134,13 +140,15 @@ describe("useSetupRecovery", () => {
     });
 
     test("should handle transaction failure", async ({ queryWrapper }) => {
-        const { useAccount, useSendTransaction } = await import("wagmi");
+        const { useConnection, useSendTransaction } = await import("wagmi");
 
         const sendTransactionAsync = vi
             .fn()
             .mockRejectedValue(new Error("Transaction failed"));
 
-        vi.mocked(useAccount).mockReturnValue({ address: mockAddress } as any);
+        vi.mocked(useConnection).mockReturnValue({
+            address: mockAddress,
+        } as any);
         vi.mocked(useSendTransaction).mockReturnValue({
             sendTransactionAsync,
         } as any);
@@ -159,11 +167,13 @@ describe("useSetupRecovery", () => {
     });
 
     test("should accept custom mutation options", async ({ queryWrapper }) => {
-        const { useAccount, useSendTransaction } = await import("wagmi");
+        const { useConnection, useSendTransaction } = await import("wagmi");
 
         const sendTransactionAsync = vi.fn().mockResolvedValue(mockTxHash);
 
-        vi.mocked(useAccount).mockReturnValue({ address: mockAddress } as any);
+        vi.mocked(useConnection).mockReturnValue({
+            address: mockAddress,
+        } as any);
         vi.mocked(useSendTransaction).mockReturnValue({
             sendTransactionAsync,
         } as any);

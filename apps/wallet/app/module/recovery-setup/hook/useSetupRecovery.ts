@@ -5,7 +5,7 @@ import {
     useQueryClient,
 } from "@tanstack/react-query";
 import type { Hex } from "viem";
-import { useAccount, useSendTransaction } from "wagmi";
+import { useConnection, useSendTransaction } from "wagmi";
 import { recoverySetupKey } from "@/module/recovery-setup/queryKeys/recovery-setup";
 
 type MutationParams = {
@@ -17,8 +17,8 @@ type MutationParams = {
 export function useSetupRecovery(
     options?: UseMutationOptions<Hex | null, DefaultError, MutationParams>
 ) {
-    const { address } = useAccount();
-    const { sendTransactionAsync } = useSendTransaction();
+    const { address } = useConnection();
+    const { mutateAsync: sendTransactionAsync } = useSendTransaction();
     const queryClient = useQueryClient();
 
     /**

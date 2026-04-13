@@ -5,7 +5,7 @@ import { PersonIcon } from "@frak-labs/design-system/icons";
 import { Landmark, ShieldCheck } from "lucide-react";
 import type { ReactNode } from "react";
 import { useTranslation } from "react-i18next";
-import { useAccount } from "wagmi";
+import { useConnection } from "wagmi";
 import { useMoneriumAuth } from "@/module/monerium/hooks/useMoneriumAuth";
 import { FeatureRow } from "./FeatureRow";
 import { MoneriumScreen } from "./MoneriumScreen";
@@ -78,7 +78,7 @@ export function MoneriumConnectScreen({
     variant,
 }: MoneriumConnectScreenProps) {
     const { t } = useTranslation();
-    const { address } = useAccount();
+    const { address } = useConnection();
     const { connect, isConnecting } = useMoneriumAuth();
     const config = variantConfig[variant];
 

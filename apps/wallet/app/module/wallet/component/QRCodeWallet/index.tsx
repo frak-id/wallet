@@ -3,14 +3,14 @@ import { useCopyToClipboardWithState } from "@frak-labs/wallet-shared";
 import { Cuer } from "cuer";
 import { ArrowDownToLine, Copy } from "lucide-react";
 import { Trans, useTranslation } from "react-i18next";
-import { useAccount } from "wagmi";
+import { useConnection } from "wagmi";
 import { Panel } from "@/module/common/component/Panel";
 import { Title } from "@/module/common/component/Title";
 import * as styles from "./index.css";
 
 export function QRCodeWallet() {
     const { t } = useTranslation();
-    const { address } = useAccount();
+    const { address } = useConnection();
     const { copied, copy } = useCopyToClipboardWithState();
 
     return (

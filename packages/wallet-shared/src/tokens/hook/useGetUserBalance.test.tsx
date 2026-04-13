@@ -11,7 +11,7 @@ import { authenticatedWalletApi } from "../../common/api/backendClient";
 import { useGetUserBalance } from "./useGetUserBalance";
 
 vi.mock("wagmi", () => ({
-    useAccount: vi.fn(),
+    useConnection: vi.fn(),
 }));
 
 vi.mock("../../common/api/backendClient", () => ({
@@ -35,8 +35,8 @@ describe("useGetUserBalance", () => {
     test("should return null balance when no address is provided", async ({
         queryWrapper,
     }) => {
-        const { useAccount } = await import("wagmi");
-        vi.mocked(useAccount).mockReturnValue({
+        const { useConnection } = await import("wagmi");
+        vi.mocked(useConnection).mockReturnValue({
             address: undefined,
         } as any);
 
@@ -59,8 +59,8 @@ describe("useGetUserBalance", () => {
             formatted: "1.0",
         };
 
-        const { useAccount } = await import("wagmi");
-        vi.mocked(useAccount).mockReturnValue({
+        const { useConnection } = await import("wagmi");
+        vi.mocked(useConnection).mockReturnValue({
             address: mockAddress,
         } as any);
 
@@ -85,8 +85,8 @@ describe("useGetUserBalance", () => {
         const mockAddress = "0x1234567890123456789012345678901234567890";
         const mockError = new Error("API Error");
 
-        const { useAccount } = await import("wagmi");
-        vi.mocked(useAccount).mockReturnValue({
+        const { useConnection } = await import("wagmi");
+        vi.mocked(useConnection).mockReturnValue({
             address: mockAddress,
         } as any);
 
@@ -111,8 +111,8 @@ describe("useGetUserBalance", () => {
         const mockBalance1 = { balance: "1000", formatted: "0.001" };
         const mockBalance2 = { balance: "2000", formatted: "0.002" };
 
-        const { useAccount } = await import("wagmi");
-        vi.mocked(useAccount).mockReturnValue({
+        const { useConnection } = await import("wagmi");
+        vi.mocked(useConnection).mockReturnValue({
             address: mockAddress,
         } as any);
 
@@ -144,8 +144,8 @@ describe("useGetUserBalance", () => {
     });
 
     test("should not fetch when address is null", async ({ queryWrapper }) => {
-        const { useAccount } = await import("wagmi");
-        vi.mocked(useAccount).mockReturnValue({
+        const { useConnection } = await import("wagmi");
+        vi.mocked(useConnection).mockReturnValue({
             address: null,
         } as any);
 
@@ -163,14 +163,14 @@ describe("useGetUserBalance", () => {
     }) => {
         const mockAddress = "0x1234567890123456789012345678901234567890";
 
-        const { useAccount } = await import("wagmi");
-        vi.mocked(useAccount).mockReturnValue({
+        const { useConnection } = await import("wagmi");
+        vi.mocked(useConnection).mockReturnValue({
             address: mockAddress,
         } as any);
 
         vi.mocked(authenticatedWalletApi.balance.get).mockImplementation(
             async () => {
-                vi.mocked(useAccount).mockReturnValue({
+                vi.mocked(useConnection).mockReturnValue({
                     address: undefined,
                 } as any);
                 return { data: null, error: null } as any;

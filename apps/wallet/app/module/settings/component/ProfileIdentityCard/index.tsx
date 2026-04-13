@@ -11,7 +11,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useHydrated } from "remix-utils/use-hydrated";
 import { type Hex, slice, toHex } from "viem";
-import { useAccount } from "wagmi";
+import { useConnection } from "wagmi";
 import * as styles from "./index.css";
 
 function formatHash({
@@ -101,7 +101,7 @@ function IdentityRow({
 export function ProfileIdentityCard() {
     const { t } = useTranslation();
     const isHydrated = useHydrated();
-    const { address } = useAccount();
+    const { address } = useConnection();
     const webauthnWallet = sessionStore(selectWebauthnSession);
     const ecdsaWallet = sessionStore(selectEcdsaSession);
 

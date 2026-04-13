@@ -1,5 +1,5 @@
 import { useMutation } from "@tanstack/react-query";
-import { useAccount, useSignMessage } from "wagmi";
+import { useConnection, useSignMessage } from "wagmi";
 import { moneriumStore } from "@/module/monerium/store/moneriumStore";
 import { shortenIban } from "@/module/monerium/utils/maskIban";
 import { placeOrder } from "@/module/monerium/utils/moneriumApi";
@@ -68,8 +68,8 @@ function extractErrorMessage(error: unknown): string {
 }
 
 export function useMoneriumOfframp() {
-    const { signMessageAsync } = useSignMessage();
-    const { address: walletAddress } = useAccount();
+    const { mutateAsync: signMessageAsync } = useSignMessage();
+    const { address: walletAddress } = useConnection();
     const accessToken = moneriumStore((s) => s.accessToken);
     const { isReady } = useMoneriumTokenRefresh();
 

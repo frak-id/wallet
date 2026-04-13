@@ -8,10 +8,10 @@ import { useQuery } from "@tanstack/react-query";
 import { useMemo } from "react";
 import { erc20Abi, formatUnits } from "viem";
 import { multicall } from "viem/actions";
-import { useAccount } from "wagmi";
+import { useConnection } from "wagmi";
 
 export function useGetPendingRewards() {
-    const { address } = useAccount();
+    const { address } = useConnection();
 
     // Fetch claimable amounts + decimals for all known stablecoins via on-chain multicall
     const { data: pendingRewards, ...queryData } = useQuery({

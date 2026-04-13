@@ -127,11 +127,6 @@ export default defineConfig(
                         ? ["production", "default"]
                         : ["development"],
                 alias: {
-                    // Enforce stub for @wagmi/connectors to avoid heavy dependencies (MetaMask SDK, etc.)
-                    "@wagmi/connectors": new URL(
-                        "../../.stubs/wagmi-connectors-stub/index.js",
-                        import.meta.url
-                    ).pathname,
                     ...(command === "build"
                         ? {
                               "react-dom/server": "react-dom/server.node",

@@ -8,7 +8,7 @@ import {
     useMountedTimeout,
 } from "@frak-labs/wallet-shared";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { useAccount, useSendTransaction } from "wagmi";
+import { useConnection, useSendTransaction } from "wagmi";
 import { useStore } from "zustand";
 import { ButtonAuth } from "@/module/component/ButtonAuth";
 import { useDeepLinkFallback } from "@/module/hooks/useDeepLinkFallback";
@@ -28,7 +28,12 @@ export function TransactionModalStep({
     params: SendTransactionModalStepType["params"];
     onFinish: (result: SendTransactionModalStepType["returns"]) => void;
 }) {
-    const { sendTransaction, isPending, isError, error } = useSendTransaction({
+    const {
+        mutate: sendTransaction,
+        isPending,
+        isError,
+        error,
+    } = useSendTransaction({
         mutation: {
             onSuccess: (hash) => {
                 onFinish({ hash });
@@ -232,7 +237,7 @@ function useMappedTx({
 }: {
     tx: SendTransactionModalStepType["params"]["tx"];
 }) {
-    const { address } = useAccount();
+    const { address } = useConnection();
 
     return useMemo(() => {
         if (!tx || !address) {

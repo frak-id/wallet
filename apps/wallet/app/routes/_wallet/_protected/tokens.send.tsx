@@ -203,7 +203,7 @@ function TokensSendPage() {
     >();
 
     const {
-        writeContractAsync,
+        mutateAsync: writeContractAsync,
         data: hash,
         error,
         isPending,

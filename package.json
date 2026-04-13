@@ -78,8 +78,8 @@
     "@types/node": "^24.10.13",
     "typescript": "^5.9.3",
     "zustand": "^5.0.11",
-    "wagmi": "^2.19.4",
-    "@wagmi/core": "^2.22.1",
+    "wagmi": "^3.6.1",
+    "@wagmi/core": "^3.4.2",
     "@tanstack/react-query": "^5.90.20",
     "@tanstack/react-query-devtools": "^5.91.3",
     "@tanstack/react-query-persist-client": "^5.90.22",
@@ -94,7 +94,6 @@
     "vite": "^8.0.3"
   },
   "resolutions": {
-    "@wagmi/connectors": "file:.stubs/wagmi-connectors-stub",
     "caniuse-lite": "^1.0.30001779",
     "parse5": "^7.3.0"
   },

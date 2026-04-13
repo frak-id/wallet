@@ -34,7 +34,7 @@ export function useEnforceWagmiConnection() {
     /**
      * Connect to the frak connector
      */
-    const { connect, isPending } = useConnect();
+    const { mutate: connect, isPending } = useConnect();
 
     useEffect(() => {
         // If we are not disconnected, early exit

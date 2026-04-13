@@ -8,7 +8,7 @@ import { QueryClient } from "@tanstack/react-query";
 import type { PersistQueryClientProviderProps } from "@tanstack/react-query-persist-client";
 import { PersistQueryClientProvider } from "@tanstack/react-query-persist-client";
 import { lazy, type PropsWithChildren, useEffect } from "react";
-import { useAccount } from "wagmi";
+import { useConnection } from "wagmi";
 import { PwaInstallProvider } from "@/module/common/context/PwaInstallContext";
 import { useEnforceWagmiConnection } from "@/module/common/hook/useEnforceWagmiConnection";
 
@@ -91,7 +91,7 @@ function SessionStateManager() {
     usePersistentPairingClient();
 
     // Set the open panel profile id with the wagmi address
-    const { address } = useAccount();
+    const { address } = useConnection();
     useEffect(() => {
         setProfileId(address);
     }, [address]);

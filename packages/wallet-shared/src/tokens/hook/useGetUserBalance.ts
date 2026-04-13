@@ -1,10 +1,10 @@
 import { useQuery } from "@tanstack/react-query";
-import { useAccount } from "wagmi";
+import { useConnection } from "wagmi";
 import { authenticatedWalletApi } from "../../common/api/backendClient";
 import { balanceKey } from "../../common/queryKeys/balance";
 
 export function useGetUserBalance() {
-    const { address } = useAccount();
+    const { address } = useConnection();
 
     const { data, error, isLoading, refetch } = useQuery({
         queryKey: balanceKey.byAddress(address),

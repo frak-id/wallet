@@ -16,7 +16,7 @@ import { useMutation } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 import { encodeFunctionData } from "viem";
 import { waitForTransactionReceipt } from "viem/actions";
-import { useAccount, useSendTransaction } from "wagmi";
+import { useConnection, useSendTransaction } from "wagmi";
 import { CloseButton } from "@/module/common/component/CloseButton";
 import { modalStore } from "@/module/stores/modalStore";
 import { useGetPendingRewards } from "../../hooks/useGetPendingRewards";
@@ -28,8 +28,8 @@ type PendingGainsModalProps = {
 
 export function PendingGainsModal({ onClose }: PendingGainsModalProps) {
     const { t } = useTranslation();
-    const { address } = useAccount();
-    const { sendTransactionAsync } = useSendTransaction();
+    const { address } = useConnection();
+    const { mutateAsync: sendTransactionAsync } = useSendTransaction();
     const { totalClaimable, pendingRewards } = useGetPendingRewards();
 
     // Claim mutation
