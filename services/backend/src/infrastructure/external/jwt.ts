@@ -117,7 +117,7 @@ function buildJwtContext<const Schema extends TSchema | undefined = undefined>({
     // Get the validator for the given schema
     const validator = schema
         ? getSchemaValidator(
-              t.Intersect([
+              t.Composite([
                   schema,
                   t.Partial(
                       t.Object({
