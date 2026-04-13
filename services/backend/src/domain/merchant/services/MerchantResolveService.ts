@@ -104,6 +104,31 @@ export class MerchantResolveService {
         return response;
     }
 
+    async resolveById(
+        merchantId: string
+    ): Promise<MerchantResolveResponse | null> {
+        const cached = this.responseCache.get(merchantId);
+        if (cached) return cached.value;
+
+        const merchant =
+            await this.merchantRepository.findById(merchantId);
+        if (!merchant) return null;
+
+        const productId =
+            merchant.productId ?? keccak256(toHex(merchant.domain));
+
+        const response: MerchantResolveResponse = {
+            merchantId: merchant.id,
+            productId,
+            name: merchant.name,
+            domain: merchant.domain,
+            allowedDomains: [merchant.domain],
+        };
+
+        this.responseCache.set(merchantId, { value: response });
+        return response;
+    }
+
     invalidateForDomain(domain: string): void {
         this.responseCache.delete(`${domain}:`);
         this.responseCache.delete(`${domain}:fr`);

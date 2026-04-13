@@ -7,6 +7,7 @@ import { useNotificationStatus } from "@/module/notification/hook/useNotificatio
 import { useSubscribeToPushNotification } from "@/module/notification/hook/useSubscribeToPushNotification";
 import { NotificationOptIn } from "@/module/onboarding/component/NotificationOptIn";
 import { Onboarding } from "@/module/onboarding/component/Onboarding";
+import { useInstallReferrer } from "@/module/onboarding/hook/useInstallReferrer";
 import {
     onboardingSlides,
     Slide,
@@ -45,6 +46,19 @@ function RegisterPage() {
     const closeModal = modalStore((s) => s.closeModal);
 
     const { executePendingActions } = useExecutePendingActions();
+
+    // On Tauri+Android: read Play Store referrer, resolve merchant, store ensure action
+    const { data: referrerData } = useInstallReferrer();
+
+    // Show merchant popup once referrer is resolved
+    useEffect(() => {
+        if (referrerData?.merchant) {
+            openModal({
+                id: "recoveryCodeSuccess",
+                merchant: referrerData.merchant,
+            });
+        }
+    }, [referrerData, openModal]);
 
     const advanceToNotification = useCallback(() => {
         closeModal();

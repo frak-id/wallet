@@ -18,7 +18,24 @@ function normalizeDomain(domain: string): string {
 export const userMerchantApi = new Elysia({ prefix: "/merchant" })
     .get(
         "/resolve",
-        async ({ query: { domain, lang } }) => {
+        async ({ query: { domain, merchantId, lang } }) => {
+            // Resolve by merchantId when provided (e.g. install referrer flow)
+            if (merchantId) {
+                const result =
+                    await MerchantContext.services.resolve.resolveById(
+                        merchantId
+                    );
+                if (!result) {
+                    return status(404, "Merchant not found");
+                }
+                return result;
+            }
+
+            // Resolve by domain (existing flow)
+            if (!domain) {
+                return status(404, "Merchant not found");
+            }
+
             const result = await MerchantContext.services.resolve.resolve(
                 normalizeDomain(domain),
                 lang
@@ -32,7 +49,8 @@ export const userMerchantApi = new Elysia({ prefix: "/merchant" })
         },
         {
             query: t.Object({
-                domain: t.String({ minLength: 1 }),
+                domain: t.Optional(t.String({ minLength: 1 })),
+                merchantId: t.Optional(t.String({ format: "uuid" })),
                 lang: t.Optional(t.String()),
             }),
             response: {
