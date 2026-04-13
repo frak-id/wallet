@@ -514,7 +514,7 @@ export async function getFrakWebookStatus(
         }
         return {
             userErrors: [],
-            setup: Array.isArray(data) ? data.length > 0 : Boolean(data),
+            setup: data.setup === true,
         };
     } catch (error) {
         console.error(error);
