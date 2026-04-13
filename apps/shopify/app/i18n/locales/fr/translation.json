@@ -388,18 +388,13 @@
             "link": "Configurer dans l'éditeur de checkout"
         },
         "explorer": {
-            "badge": "Référencement Explorer",
-            "description": "Configurez l'apparence de votre boutique dans le Frak Explorer. Activez votre référencement et personnalisez votre logo, image de couverture et description pour attirer plus de clients.",
-            "preFilled": "Certains champs ont été pré-remplis à partir des paramètres de votre boutique Shopify. Vérifiez et enregistrez pour appliquer.",
+            "description": "Une fois activée, votre boutique sera affichée dans l'application Frak, permettant aux utilisateurs de découvrir vos campagnes de parrainage.",
             "enabledLabel": "Référencé dans le Frak Explorer",
-            "logoTitle": "Logo",
             "logoLabel": "URL du logo",
-            "heroTitle": "Image de couverture",
             "heroLabel": "URL de l'image de couverture",
-            "descriptionTitle": "Description",
             "descriptionLabel": "Description de la boutique",
             "descriptionPlaceholder": "Décrivez votre boutique pour le Frak Explorer...",
-            "save": "Enregistrer les paramètres Explorer"
+            "save": "Enregistrer"
         }
     },
     "funding": {

@@ -387,18 +387,13 @@
             "link": "Configure in checkout editor"
         },
         "explorer": {
-            "badge": "Explorer Listing",
-            "description": "Configure how your store appears in the Frak Explorer. Enable your listing and customize your logo, hero image, and description to attract more customers.",
-            "preFilled": "Some fields have been pre-filled from your Shopify store settings. Review and save to apply.",
+            "description": "Once enabled, your store will be displayed in the Frak app, helping users discover your referral campaigns.",
             "enabledLabel": "Listed in Frak Explorer",
-            "logoTitle": "Logo",
             "logoLabel": "Logo URL",
-            "heroTitle": "Hero Image",
             "heroLabel": "Hero image URL",
-            "descriptionTitle": "Description",
             "descriptionLabel": "Store description",
             "descriptionPlaceholder": "Describe your store for the Frak Explorer...",
-            "save": "Save Explorer Settings"
+            "save": "Save"
         }
     },
     "funding": {

@@ -56,16 +56,6 @@ export function ExplorerTab({
         [enabled, logoUrl, heroImageUrl, description, defaults]
     );
 
-    const isPreFilled = useMemo(
-        () =>
-            !initialExplorerSettings &&
-            (shopBrand.logoUrl ||
-                shopBrand.coverImageUrl ||
-                shopBrand.description ||
-                sdkLogoUrl),
-        [initialExplorerSettings, shopBrand, sdkLogoUrl]
-    );
-
     useEffect(() => {
         if (!fetcher.data?.success) return;
         shopify.toast.show(fetcher.data.message);
@@ -81,101 +71,72 @@ export function ExplorerTab({
     };
 
     return (
-        <s-stack gap="large">
+        <Form onSubmit={handleSubmit}>
+            <input type="hidden" name="intent" value="saveExplorer" />
+            <input
+                type="hidden"
+                name="explorerSettings"
+                value={JSON.stringify({
+                    enabled,
+                    logoUrl,
+                    heroImageUrl,
+                    description,
+                })}
+            />
+
             <s-section>
-                <s-stack gap="base">
-                    <s-box paddingBlockStart="small" paddingBlockEnd="small">
-                        <s-badge tone="info">
-                            {t("appearance.explorer.badge")}
-                        </s-badge>
-                    </s-box>
+                <s-stack gap="large">
                     <s-text>{t("appearance.explorer.description")}</s-text>
+
+                    <s-checkbox
+                        label={t("appearance.explorer.enabledLabel")}
+                        checked={enabled || undefined}
+                        onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                            setEnabled(e.currentTarget.checked)
+                        }
+                    />
+
+                    <s-text-field
+                        label={t("appearance.explorer.logoLabel")}
+                        placeholder="https://..."
+                        value={logoUrl}
+                        onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                            setLogoUrl(e.currentTarget.value)
+                        }
+                        autocomplete="off"
+                    />
+
+                    <s-text-field
+                        label={t("appearance.explorer.heroLabel")}
+                        placeholder="https://..."
+                        value={heroImageUrl}
+                        onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                            setHeroImageUrl(e.currentTarget.value)
+                        }
+                        autocomplete="off"
+                    />
+
+                    <s-text-area
+                        label={t("appearance.explorer.descriptionLabel")}
+                        placeholder={t(
+                            "appearance.explorer.descriptionPlaceholder"
+                        )}
+                        value={description}
+                        onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) =>
+                            setDescription(e.currentTarget.value)
+                        }
+                        autocomplete="off"
+                    />
+
+                    <s-button
+                        type="submit"
+                        loading={isLoading || undefined}
+                        disabled={!hasChanges || undefined}
+                    >
+                        {t("appearance.explorer.save")}
+                    </s-button>
                 </s-stack>
             </s-section>
-
-            {isPreFilled ? (
-                <s-section>
-                    <s-box paddingBlockStart="small" paddingBlockEnd="small">
-                        <s-badge tone="info">
-                            {t("appearance.explorer.preFilled")}
-                        </s-badge>
-                    </s-box>
-                </s-section>
-            ) : null}
-
-            <Form onSubmit={handleSubmit}>
-                <input type="hidden" name="intent" value="saveExplorer" />
-                <input
-                    type="hidden"
-                    name="explorerSettings"
-                    value={JSON.stringify({
-                        enabled,
-                        logoUrl,
-                        heroImageUrl,
-                        description,
-                    })}
-                />
-
-                <s-stack gap="base">
-                    <s-section>
-                        <s-stack gap="large">
-                            <s-checkbox
-                                label={t("appearance.explorer.enabledLabel")}
-                                checked={enabled || undefined}
-                                onChange={(
-                                    e: React.ChangeEvent<HTMLInputElement>
-                                ) => setEnabled(e.currentTarget.checked)}
-                            />
-
-                            <s-text-field
-                                label={t("appearance.explorer.logoLabel")}
-                                placeholder="https://..."
-                                value={logoUrl}
-                                onChange={(
-                                    e: React.ChangeEvent<HTMLInputElement>
-                                ) => setLogoUrl(e.currentTarget.value)}
-                                autocomplete="off"
-                            />
-
-                            <s-text-field
-                                label={t("appearance.explorer.heroLabel")}
-                                placeholder="https://..."
-                                value={heroImageUrl}
-                                onChange={(
-                                    e: React.ChangeEvent<HTMLInputElement>
-                                ) => setHeroImageUrl(e.currentTarget.value)}
-                                autocomplete="off"
-                            />
-
-                            <s-text-area
-                                label={t(
-                                    "appearance.explorer.descriptionLabel"
-                                )}
-                                placeholder={t(
-                                    "appearance.explorer.descriptionPlaceholder"
-                                )}
-                                value={description}
-                                onChange={(
-                                    e: React.ChangeEvent<HTMLTextAreaElement>
-                                ) => setDescription(e.currentTarget.value)}
-                                autocomplete="off"
-                            />
-                        </s-stack>
-                    </s-section>
-
-                    <s-box paddingBlockEnd="base">
-                        <s-button
-                            type="submit"
-                            loading={isLoading || undefined}
-                            disabled={
-                                (!hasChanges && !isPreFilled) || undefined
-                            }
-                        >
-                            {t("appearance.explorer.save")}
-                        </s-button>
-                    </s-box>
-                </s-stack>
-            </Form>
-        </s-stack>
+        </Form>
     );
 }

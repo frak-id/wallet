@@ -28,6 +28,51 @@ type ProductInfo = {
     imageUrl?: string;
 };
 
+function constructSharingUrl({
+    walletUrl,
+    merchantId,
+    sharingUrl,
+    clientId,
+    shopName,
+    logoUrl,
+    products,
+    checkoutToken,
+    redirectUrl,
+}: {
+    walletUrl: string;
+    merchantId: string;
+    sharingUrl: string;
+    clientId?: string;
+    shopName?: string;
+    logoUrl?: string;
+    products?: ProductInfo[];
+    checkoutToken?: string;
+    redirectUrl?: string;
+}) {
+    const url = new URL(`${walletUrl}/sharing`);
+    url.searchParams.set("merchantId", merchantId);
+    url.searchParams.set("link", sharingUrl);
+    if (clientId) {
+        url.searchParams.set("clientId", clientId);
+    }
+    if (shopName) {
+        url.searchParams.set("appName", shopName);
+    }
+    if (logoUrl) {
+        url.searchParams.set("logoUrl", logoUrl);
+    }
+    if (products && products.length > 0) {
+        url.searchParams.set("products", JSON.stringify(products));
+    }
+    if (checkoutToken) {
+        url.searchParams.set("checkoutToken", checkoutToken);
+    }
+    if (redirectUrl) {
+        url.searchParams.set("redirectUrl", redirectUrl);
+    }
+    return url.toString();
+}
+
 /**
  * Post-purchase sharing card component.
  *
@@ -89,28 +134,18 @@ export function PostPurchaseCard({
     const sharingPageUrl = useMemo(() => {
         if (isEditor) return "#";
         if (!sharingUrl || !merchantId) return null;
-        const url = new URL(`${resolvedWalletUrl}/sharing`);
-        url.searchParams.set("merchantId", merchantId);
-        url.searchParams.set("link", sharingUrl);
-        if (clientId) {
-            url.searchParams.set("clientId", clientId);
-        }
-        if (shopName) {
-            url.searchParams.set("appName", shopName);
-        }
-        if (logoUrl) {
-            url.searchParams.set("logoUrl", logoUrl);
-        }
-        if (products && products.length > 0) {
-            url.searchParams.set("products", JSON.stringify(products));
-        }
-        if (checkoutToken) {
-            url.searchParams.set("checkoutToken", checkoutToken);
-        }
-        if (redirectUrl) {
-            url.searchParams.set("redirectUrl", redirectUrl);
-        }
-        return url.toString();
+
+        return constructSharingUrl({
+            walletUrl: resolvedWalletUrl,
+            merchantId,
+            sharingUrl,
+            clientId,
+            shopName,
+            logoUrl,
+            products,
+            checkoutToken,
+            redirectUrl,
+        });
     }, [
         resolvedWalletUrl,
         merchantId,
