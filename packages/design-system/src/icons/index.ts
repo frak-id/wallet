@@ -24,6 +24,7 @@ export { PeopleIcon } from "./PeopleIcon";
 export { PersonIcon } from "./PersonIcon";
 export { ProfileIcon } from "./ProfileIcon";
 export { ShareIcon } from "./ShareIcon";
+export { ShieldIcon } from "./ShieldIcon";
 export { StarIcon } from "./StarIcon";
 export { TransferIcon } from "./TransferIcon";
 export { WalletIcon } from "./WalletIcon";

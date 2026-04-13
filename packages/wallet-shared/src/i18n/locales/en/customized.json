@@ -86,6 +86,8 @@
             "confirmation": {
                 "title": "Thank you for sharing!\nDon't miss out on your {{ estimatedReward }}.",
                 "subtitle": "Install the Frak app, official partner of {{ productName }}, and track your earnings in real time.",
+                "cardPopupTitle": "You just won {{ estimatedReward }}! 🎉",
+                "cardPopupDescription": "A purchase was made through your link. {{ estimatedReward }} has been transferred to your wallet.",
                 "benefits": {
                     "wallet": {
                         "title": "Your wallet secured in 10 seconds",
