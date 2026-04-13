@@ -65,13 +65,13 @@
     "@types/react-dom": "catalog:",
     "@vitejs/plugin-react": "catalog:",
     "@vanilla-extract/vite-plugin": "^5.2.0",
-    "@vitest/coverage-v8": "^4.1.0",
-    "@vitest/ui": "^4.1.0",
+    "@vitest/coverage-v8": "^4.1.4",
+    "@vitest/ui": "^4.1.4",
     "bun-types": "latest",
     "i18next-resources-for-ts": "^2.0.2",
     "jsdom": "^29.0.0",
     "msw": "^2.12.11",
     "typescript": "catalog:",
-    "vitest": "^4.1.0"
+    "vitest": "^4.1.4"
   }
 }

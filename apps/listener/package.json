@@ -54,15 +54,15 @@
     "@types/react-dom": "catalog:",
     "@vitejs/plugin-react": "catalog:",
     "@vanilla-extract/vite-plugin": "^5.2.0",
-    "@vitest/coverage-v8": "^4.1.0",
-    "@vitest/ui": "^4.1.0",
+    "@vitest/coverage-v8": "^4.1.4",
+    "@vitest/ui": "^4.1.4",
     "bun-types": "latest",
     "jsdom": "^29.0.0",
     "sst": "3.18.9",
-    "typescript": "^5.9.3",
+    "typescript": "^6.0.2",
     "vite": "catalog:",
     "vite-plugin-mkcert": "^1.17.10",
     "vite-plugin-remove-console": "^2.2.0",
-    "vitest": "^4.1.0"
+    "vitest": "^4.1.4"
   }
 }

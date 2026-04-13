@@ -53,7 +53,7 @@
   "devDependencies": {
     "@frak-labs/dev-tooling": "workspace:*",
     "@rolldown/plugin-node-polyfills": "^1.0.3",
-    "tsdown": "^0.20.3",
+    "tsdown": "^0.21.8",
     "typescript": "catalog:"
   }
 }

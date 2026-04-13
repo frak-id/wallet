@@ -7,8 +7,8 @@ import type {
     RecipientType,
 } from "../schemas";
 
-export type { AssetStatus, AssetType, InteractionType, RecipientType };
 export { InteractionTypeSchema } from "../schemas";
+export type { AssetStatus, AssetType, InteractionType, RecipientType };
 
 // =============================================================================
 // DETAILED ASSET LOG (joined view for reward history)

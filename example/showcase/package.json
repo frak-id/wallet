@@ -39,12 +39,12 @@
         "@types/react": "catalog:",
         "@types/react-dom": "catalog:",
         "@vitejs/plugin-react": "catalog:",
-        "@vitest/coverage-v8": "^4.1.0",
-        "@vitest/ui": "^4.1.0",
+        "@vitest/coverage-v8": "^4.1.4",
+        "@vitest/ui": "^4.1.4",
         "jsdom": "^29.0.0",
         "typescript": "catalog:",
         "vite": "catalog:",
         "vite-plugin-html": "^3.2.2",
-        "vitest": "^4.1.0"
+        "vitest": "^4.1.4"
     }
 }

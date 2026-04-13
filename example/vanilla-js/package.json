@@ -17,7 +17,7 @@
     "@frak-labs/app-essentials": "workspace:*",
     "@frak-labs/components": "workspace:*",
     "@frak-labs/core-sdk": "workspace:*",
-    "typescript": "^5.9.3",
+    "typescript": "^6.0.2",
     "vite": "catalog:",
     "vite-plugin-html": "^3.2.2"
   }

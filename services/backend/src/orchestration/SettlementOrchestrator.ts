@@ -231,7 +231,7 @@ export class SettlementOrchestrator {
         }
 
         const bankState = bankStates.get(bankAddress);
-        if (!bankState || !bankState.isOpen) {
+        if (!bankState?.isOpen) {
             return false;
         }
 

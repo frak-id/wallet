@@ -69,4 +69,4 @@ const t = Object.assign(elysiaTypes, {
 /**
  * Export our new type system
  */
-export { t, type TokenAmount, type ErrorResponse };
+export { type ErrorResponse, type TokenAmount, t };

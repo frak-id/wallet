@@ -51,4 +51,4 @@ export const unauthenticatedSessionStoreValue: SessionStoreState = {
     version: 0,
 };
 
-export { mockAddress, type MockSession };
+export { type MockSession, mockAddress };

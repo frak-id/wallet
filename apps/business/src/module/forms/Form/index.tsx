@@ -260,12 +260,12 @@ FormValidMessage.displayName = "FormValidMessage";
 
 export {
     Form,
-    FormLayout,
-    FormItem,
-    FormLabel,
     FormControl,
     FormDescription,
+    FormField,
+    FormItem,
+    FormLabel,
+    FormLayout,
     FormMessage,
     FormValidMessage,
-    FormField,
 };

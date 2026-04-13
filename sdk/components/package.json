@@ -110,8 +110,8 @@
     "@vitest/coverage-v8": "^4.1.0",
     "@vitest/ui": "^4.1.0",
     "jsdom": "^29.0.0",
-    "tsdown": "^0.21.7",
-    "typescript": "^5.9.3",
-    "vitest": "^4.1.0"
+    "tsdown": "^0.21.8",
+    "typescript": "^6.0.2",
+    "vitest": "^4.1.4"
   }
 }
