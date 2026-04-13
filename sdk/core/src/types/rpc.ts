@@ -184,4 +184,16 @@ export type IFrameRpcSchema = [
         ];
         ReturnType: DisplaySharingPageResultType;
     },
+    /**
+     * Method to get a merge token for the current anonymous identity.
+     * Used by in-app browser redirect flows to preserve identity
+     * when switching from a WebView to the system browser.
+     * Returns the merge token string, or null if unavailable.
+     * This is a one-shot request.
+     */
+    {
+        Method: "frak_getMergeToken";
+        Parameters?: undefined;
+        ReturnType: string | null;
+    },
 ];

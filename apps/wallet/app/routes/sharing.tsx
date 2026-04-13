@@ -86,10 +86,9 @@ function WalletSharingPage() {
         queryKey: ["estimated-rewards", merchantId],
         queryFn: async () => {
             if (!merchantId) return undefined;
-            const { data, error } =
-                await authenticatedBackendApi.user.merchant[
-                    "estimated-rewards"
-                ].get({ query: { merchantId } });
+            const { data, error } = await authenticatedBackendApi.user.merchant[
+                "estimated-rewards"
+            ].get({ query: { merchantId } });
             if (error || !data?.rewards?.length) return undefined;
 
             const currency = getSupportedCurrency();
@@ -289,10 +288,7 @@ function formatEstimatedReward(
 ): string {
     switch (reward.payoutType) {
         case "fixed":
-            return formatAmount(
-                Math.round(reward.amount[amountKey]),
-                currency
-            );
+            return formatAmount(Math.round(reward.amount[amountKey]), currency);
         case "percentage":
             return `${reward.percent} %`;
         case "tiered": {

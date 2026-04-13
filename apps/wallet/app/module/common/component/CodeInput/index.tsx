@@ -1,5 +1,5 @@
-import { Button } from "@frak-labs/design-system/components/Button";
 import { isTauri } from "@frak-labs/app-essentials/utils/platform";
+import { Button } from "@frak-labs/design-system/components/Button";
 import {
     type ChangeEvent,
     type ClipboardEvent,

@@ -589,7 +589,12 @@ describe("getFrakWebookStatus", () => {
 
     it("should return setup:true when API returns setup:true", async () => {
         const mockGet = vi.fn().mockResolvedValue({
-            data: { setup: true, platform: "shopify", webhookSigninKey: "key", stats: {} },
+            data: {
+                setup: true,
+                platform: "shopify",
+                webhookSigninKey: "key",
+                stats: {},
+            },
             error: null,
         });
         vi.mocked(resolveMerchantId).mockResolvedValue("merchant-wh");

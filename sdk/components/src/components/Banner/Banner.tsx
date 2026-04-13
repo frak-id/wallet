@@ -1,5 +1,8 @@
 import { isInAppBrowser, redirectToExternalBrowser } from "@frak-labs/core-sdk";
-import { REFERRAL_SUCCESS_EVENT } from "@frak-labs/core-sdk/actions";
+import {
+    getMergeToken,
+    REFERRAL_SUCCESS_EVENT,
+} from "@frak-labs/core-sdk/actions";
 import { useCallback, useEffect, useMemo, useState } from "preact/hooks";
 import { useClientReady } from "@/hooks/useClientReady";
 import { useLightDomStyles } from "@/hooks/useLightDomStyles";
@@ -105,6 +108,19 @@ export function Banner({
         interaction
     );
 
+    // Pre-fetch merge token when in inapp mode so the click is instant
+    const [prefetchedMergeToken, setPrefetchedMergeToken] = useState<
+        string | null
+    >(null);
+    useEffect(() => {
+        const client = window.FrakSetup?.client;
+        if (mode !== "inapp" || isPreview || !isClientReady || !client) return;
+
+        getMergeToken(client)
+            .then((token) => setPrefetchedMergeToken(token))
+            .catch(() => {});
+    }, [mode, isPreview, isClientReady]);
+
     // Listen for the referral success event (only when not in preview or in-app browser mode)
     useEffect(() => {
         if (isPreview || mode === "inapp") return;
@@ -116,14 +132,31 @@ export function Banner({
             window.removeEventListener(REFERRAL_SUCCESS_EVENT, handler);
     }, [isPreview, mode]);
 
-    const handleAction = useCallback(() => {
+    const handleAction = useCallback(async () => {
         if (isPreview) return;
         if (mode === "referral") {
             setDismissed(true);
-        } else {
-            redirectToExternalBrowser(window.location.href);
+            return;
         }
-    }, [isPreview, mode]);
+
+        let mergeToken = prefetchedMergeToken;
+        if (!mergeToken && window.FrakSetup?.client) {
+            try {
+                mergeToken = await getMergeToken(window.FrakSetup?.client);
+            } catch {
+                // Client not ready or request failed — redirect without token
+            }
+        }
+
+        let targetUrl = window.location.href;
+        if (mergeToken) {
+            const url = new URL(targetUrl);
+            url.searchParams.set("fmt", mergeToken);
+            targetUrl = url.toString();
+        }
+
+        redirectToExternalBrowser(targetUrl);
+    }, [isPreview, mode, prefetchedMergeToken]);
 
     const handleDismiss = useCallback(() => {
         if (isPreview) return;

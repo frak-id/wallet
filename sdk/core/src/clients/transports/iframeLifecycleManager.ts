@@ -59,12 +59,12 @@ function computeRedirectUrl(
             return baseRedirectUrl;
         }
 
-        redirectUrl.searchParams.delete("u");
-        redirectUrl.searchParams.append("u", window.location.href);
+        // Append merge token to the page URL so it survives
+        // the backend /common/social redirect chain
+        const finalPageUrl = appendMergeToken(window.location.href, mergeToken);
 
-        if (mergeToken) {
-            redirectUrl.searchParams.append("fmt", mergeToken);
-        }
+        redirectUrl.searchParams.delete("u");
+        redirectUrl.searchParams.append("u", finalPageUrl);
 
         return redirectUrl.toString();
     } catch {
@@ -91,6 +91,21 @@ function redirectToSafari(mergeToken?: string) {
  */
 function isSocialRedirect(url: string): boolean {
     return url.includes("/common/social");
+}
+
+/**
+ * Append merge token to a URL as the `fmt` query parameter.
+ */
+function appendMergeToken(urlString: string, mergeToken?: string): string {
+    if (!mergeToken) return urlString;
+    try {
+        const url = new URL(urlString);
+        url.searchParams.set("fmt", mergeToken);
+        return url.toString();
+    } catch {
+        const sep = urlString.includes("?") ? "&" : "?";
+        return `${urlString}${sep}fmt=${encodeURIComponent(mergeToken)}`;
+    }
 }
 
 /**

@@ -16,6 +16,7 @@ import { useDisplayModalListener } from "@/module/hooks/useDisplayModalListener"
 import { useDisplaySharingPageListener } from "@/module/hooks/useDisplaySharingPageListener";
 import { useListenerDataPreload } from "@/module/hooks/useListenerDataPreload";
 import { useOnGetMerchantInformation } from "@/module/hooks/useOnGetMerchantInformation";
+import { useOnGetMergeToken } from "@/module/hooks/useOnGetMergeToken";
 import { useOnGetUserReferralStatus } from "@/module/hooks/useOnGetUserReferralStatus";
 import { useSendInteractionListener } from "@/module/hooks/useSendInteractionListener";
 import { useSendPing } from "@/module/hooks/useSendPing";
@@ -61,6 +62,8 @@ function ListenerContent() {
     const onSendInteraction = useSendInteractionListener();
 
     const onGetUserReferralStatus = useOnGetUserReferralStatus();
+
+    const onGetMergeToken = useOnGetMergeToken();
 
     // Hook when a sharing page display is asked
     const onDisplaySharingPage = useDisplaySharingPageListener();
@@ -125,6 +128,7 @@ function ListenerContent() {
         listener.handle("frak_sendInteraction", onSendInteraction);
         listener.handle("frak_getUserReferralStatus", onGetUserReferralStatus);
         listener.handle("frak_displaySharingPage", onDisplaySharingPage);
+        listener.handle("frak_getMergeToken", onGetMergeToken);
 
         // Register streaming handlers (IFrameRpcSchema)
         listener.handleStream(
@@ -144,6 +148,7 @@ function ListenerContent() {
         onDisplayModalRequest,
         onGetMerchantInformation,
         onGetUserReferralStatus,
+        onGetMergeToken,
         onDisplayEmbeddedWallet,
         onDisplaySharingPage,
         onSendInteraction,
