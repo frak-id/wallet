@@ -77,10 +77,7 @@ export class RewardHistoryService {
         };
     }
 
-    private buildTokenAmount(
-        rawAmount: string,
-        price: TokenPrice | undefined
-    ) {
+    private buildTokenAmount(rawAmount: string, price: TokenPrice | undefined) {
         const amount = Number.parseFloat(rawAmount);
         return {
             amount,

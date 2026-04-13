@@ -34,7 +34,7 @@ export class PricingRepository {
     constructor() {
         // Build our ky client
         this.client = ky.create({
-            prefixUrl: "https://api.coingecko.com/api/v3/",
+            prefix: "https://api.coingecko.com/api/v3/",
             headers: {
                 "Content-Type": "application/json",
                 accept: "application/json",

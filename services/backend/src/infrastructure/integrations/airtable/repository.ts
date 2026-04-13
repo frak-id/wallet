@@ -44,7 +44,7 @@ export class AirtableRepository {
 
         // Rate limit: 5 req/sec per base, retry on 429 and 503
         this.airtableApi = ky.create({
-            prefixUrl: "https://api.airtable.com/v0",
+            prefix: "https://api.airtable.com/v0",
             headers: { Authorization: `Bearer ${apiKey}` },
             retry: {
                 limit: 3,
@@ -57,7 +57,7 @@ export class AirtableRepository {
         const slackToken = process.env.SLACK_BOT_TOKEN;
         if (slackToken) {
             this.slackApi = ky.create({
-                prefixUrl: "https://slack.com/api",
+                prefix: "https://slack.com/api",
                 headers: { Authorization: `Bearer ${slackToken}` },
             });
         }

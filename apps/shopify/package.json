@@ -27,7 +27,7 @@
     "vite": "vite"
   },
   "dependencies": {
-    "@elysiajs/eden": "^1.4.8",
+    "@elysiajs/eden": "^1.4.9",
     "@frak-labs/app-essentials": "workspace:*",
     "@frak-labs/backend-elysia": "workspace:*",
     "@frak-labs/core-sdk": "workspace:*",
@@ -41,7 +41,7 @@
     "@tanstack/query-sync-storage-persister": "^5.90.24",
     "@tanstack/react-query": "catalog:",
     "@tanstack/react-query-persist-client": "catalog:",
-    "drizzle-orm": "^0.45.1",
+    "drizzle-orm": "^0.45.2",
     "i18next": "^26.0.3",
     "i18next-browser-languagedetector": "^8.2.1",
     "i18next-fs-backend": "^2.6.1",
@@ -74,7 +74,7 @@
     "@types/react": "catalog:",
     "@types/react-dom": "catalog:",
     "bun-types": "latest",
-    "drizzle-kit": "^0.31.9",
+    "drizzle-kit": "^0.31.10",
     "preact": "^10.29.0",
     "sst": "3.18.9",
     "typescript": "catalog:",
