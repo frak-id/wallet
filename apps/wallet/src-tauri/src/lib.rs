@@ -13,6 +13,7 @@ pub fn run() {
             .plugin(tauri_plugin_app_settings::init())
             .plugin(tauri_plugin_install_referrer::init())
             .plugin(tauri_plugin_frak_webauthn::init());
+            .plugin(tauri_plugin_clipboard_manager::init());
     }
 
     #[cfg(target_os = "android")]

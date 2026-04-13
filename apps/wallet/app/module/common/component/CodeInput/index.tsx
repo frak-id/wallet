@@ -1,4 +1,5 @@
 import { Button } from "@frak-labs/design-system/components/Button";
+import { isTauri } from "@frak-labs/app-essentials/utils/platform";
 import {
     type ChangeEvent,
     type ClipboardEvent,
@@ -92,14 +93,19 @@ export function CodeInput({
             const value = sanitize(e.target.value);
             if (!value) return;
 
-            const digit = value.slice(-1);
-            setDigit(index, digit);
+            // Multi-character input (paste, autofill) → distribute across inputs
+            if (value.length > 1) {
+                fillDigits(value);
+                return;
+            }
+
+            setDigit(index, value);
 
             if (index < length - 1) {
                 inputRefs.current[index + 1]?.focus();
             }
         },
-        [length, setDigit, sanitize]
+        [length, setDigit, sanitize, fillDigits]
     );
 
     const handleKeyDown = useCallback(
@@ -126,10 +132,19 @@ export function CodeInput({
 
     const handlePasteFromClipboard = useCallback(async () => {
         try {
-            const text = await navigator.clipboard.readText();
+            let text: string;
+            if (isTauri()) {
+                const { readText } = await import(
+                    "@tauri-apps/plugin-clipboard-manager"
+                );
+                text = await readText();
+            } else {
+                text = await navigator.clipboard.readText();
+            }
             fillDigits(text);
         } catch {
-            // Clipboard API not available or denied
+            // Clipboard API unavailable or denied — focus first input for manual paste
+            inputRefs.current[0]?.focus();
         }
     }, [fillDigits]);
 
@@ -148,13 +163,14 @@ export function CodeInput({
                         autoCapitalize={
                             mode === "alphanumeric" ? "characters" : undefined
                         }
-                        maxLength={1}
+                        maxLength={length}
                         value={digit}
                         placeholder={mode === "numeric" ? "0" : "A"}
                         className={`${styles.digitInput}${error ? ` ${styles.digitInputError}` : ""}`}
                         onChange={(e) => handleChange(index, e)}
                         onKeyDown={(e) => handleKeyDown(index, e)}
                         onPaste={handlePaste}
+                        onFocus={(e) => e.target.select()}
                         aria-label={
                             digitLabel?.(index + 1) ?? `Digit ${index + 1}`
                         }
