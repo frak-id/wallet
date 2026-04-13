@@ -63,6 +63,7 @@
         "countries-list": "^3.3.0",
         "date-fns": "^4.1.0",
         "lucide-react": "^0.577.0",
+        "normalize.css": "^8.0.1",
         "nprogress": "^0.2.0",
         "radash": "^12.1.1",
         "react": "catalog:",
@@ -105,6 +106,7 @@
         "@frak-labs/core-sdk": "workspace:*",
         "@frak-labs/design-system": "workspace:*",
         "@frak-labs/frame-connector": "workspace:*",
+        "@frak-labs/ui": "workspace:*",
         "@frak-labs/wallet-shared": "workspace:*",
         "@tanstack/query-async-storage-persister": "catalog:",
         "@tanstack/react-query": "catalog:",
@@ -113,6 +115,7 @@
         "i18next": "^26.0.3",
         "i18next-browser-languagedetector": "^8.2.1",
         "lucide-react": "^0.577.0",
+        "normalize.css": "^8.0.1",
         "react": "catalog:",
         "react-dom": "catalog:",
         "react-i18next": "^16.5.8",
@@ -3052,6 +3055,8 @@
     "normalize-path": ["normalize-path@3.0.0", "", {}, "sha512-6eZs5Ls3WtCisHWp9S2GUy8dqkpGi4BVSz3GaqiE6ezub0512ESztXUwUB6C6IKbQkY2Pnb/mD4WYojCRwcwLA=="],
 
     "normalize-url": ["normalize-url@6.1.0", "", {}, "sha512-DlL+XwOy3NxAQ8xuC0okPgK46iuVNAK01YN7RueYBqqFeGsBjV9XmCAzAdgt+667bCl5kPh9EqKKDwnaPG1I7A=="],
+
+    "normalize.css": ["normalize.css@8.0.1", "", {}, "sha512-qizSNPO93t1YUuUhP22btGOo3chcvDFqFaj2TRybP0DMxkHOCTYwp3n34fel4a31ORXy4m1Xq0Gyqpb5m33qIg=="],
 
     "npm-bundled": ["npm-bundled@5.0.0", "", { "dependencies": { "npm-normalize-package-bin": "^5.0.0" } }, "sha512-JLSpbzh6UUXIEoqPsYBvVNVmyrjVZ1fzEFbqxKkTJQkWBO3xFzFT+KDnSKQWwOQNbuWRwt5LSD6HOTLGIWzfrw=="],
 
