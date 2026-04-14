@@ -157,6 +157,7 @@ describe.sequential("initFrakSdk", () => {
     });
 
     it("should allow re-initialization after failure", async () => {
+        vi.useFakeTimers();
         const mockClient = {
             config: { domain: "example.com" },
         } as any;
@@ -171,12 +172,16 @@ describe.sequential("initFrakSdk", () => {
         await initFrakSdk();
         expect(window.FrakSetup.client).toBeUndefined();
 
+        // Advance past the negative cache backoff (1s)
+        vi.advanceTimersByTime(1_001);
+
         // Second call succeeds (withCache didn't cache the failure)
         vi.mocked(coreSdkIndex.setupClient).mockResolvedValueOnce(mockClient);
         await initFrakSdk();
         expect(window.FrakSetup.client).toBe(mockClient);
 
         consoleLogSpy.mockRestore();
+        vi.useRealTimers();
     });
 
     it("should open wallet modal when frakAction=share query param is present", async () => {

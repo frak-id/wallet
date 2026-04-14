@@ -129,6 +129,7 @@ describe("withCache", () => {
         });
 
         it("should not cache errors — subsequent call retries", async () => {
+            vi.useFakeTimers();
             const fn = vi
                 .fn()
                 .mockRejectedValueOnce(new Error("fail"))
@@ -138,9 +139,14 @@ describe("withCache", () => {
                 withCache(fn, { cacheKey: "retry-key" })
             ).rejects.toThrow("fail");
 
+            // Advance past the negative cache backoff (1s)
+            vi.advanceTimersByTime(1_001);
+
             const result = await withCache(fn, { cacheKey: "retry-key" });
             expect(result).toBe("recovered");
             expect(fn).toHaveBeenCalledTimes(2);
+
+            vi.useRealTimers();
         });
     });
 

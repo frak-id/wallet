@@ -7,6 +7,9 @@ import { Banner } from "./Banner";
 const coreSdkMock = vi.hoisted(() => ({
     isInAppBrowser: false,
     redirectToExternalBrowser: vi.fn(),
+    sdkConfigStore: {
+        getConfig: () => ({ components: undefined }),
+    },
 }));
 
 vi.mock("@frak-labs/core-sdk", () => coreSdkMock);
