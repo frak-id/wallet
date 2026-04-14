@@ -20,7 +20,9 @@ import * as styles from "./index.css";
 export function Balance() {
     const { t } = useTranslation();
     const { userBalance } = useGetUserBalance();
-    const [isHidden, setIsHidden] = useState(() => localStorage.getItem("frak_balance_hidden") === "true");
+    const [isHidden, setIsHidden] = useState(
+        () => localStorage.getItem("frak_balance_hidden") === "true"
+    );
 
     const openModal = modalStore((s) => s.openModal);
 
