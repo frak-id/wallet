@@ -29,7 +29,8 @@ const router = createRouter({
     // Preload routes when links render for instant navigation
     defaultPreload: "render",
     defaultPendingMinMs: 500,
-    defaultScrollRestoration: true,
+    scrollRestoration: true,
+    scrollToTopSelectors: ["main"],
 });
 
 // Subscribe to navigation events to manage root element attributes
