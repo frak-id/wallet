@@ -1,23 +1,22 @@
-// Sharing page previews
-export { SharingPreview, ConfirmationPreview } from "./sharing-page";
-export type {
-    SharingPreviewProps,
-    ConfirmationPreviewProps,
-} from "./sharing-page";
+// Sharing page preview (header, card, reward, stepper, footer)
 
-// Social preview
-export { SocialPreview } from "./social";
-
-// Modal preview
-export { ModalPreview } from "./modal";
-
-// Utilities
-export { replaceVariables, parseMarkdown } from "./utils/variables";
-
-// SDK component previews
-export { BannerPreview, PostPurchasePreview, ShareButtonPreview } from "./sdk-components";
 export type {
     BannerPreviewProps,
     PostPurchasePreviewProps,
     ShareButtonPreviewProps,
 } from "./sdk-components";
+// SDK component previews
+export {
+    BannerPreview,
+    PostPurchasePreview,
+    ShareButtonPreview,
+} from "./sdk-components";
+export type { SharingPreviewProps } from "./sharing-page";
+export { SharingPreview } from "./sharing-page";
+export type { SharingSuccessPreviewProps } from "./sharing-success";
+// Sharing success preview (post-share confirmation)
+export { SharingSuccessPreview } from "./sharing-success";
+// Social preview
+export { SocialPreview } from "./social";
+// Utilities
+export { parseMarkdown, replaceVariables } from "./utils/variables";

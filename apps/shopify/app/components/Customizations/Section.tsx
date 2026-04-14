@@ -1,7 +1,7 @@
 import type { Currency } from "@frak-labs/core-sdk";
 import {
-    ConfirmationPreview,
     SharingPreview,
+    SharingSuccessPreview,
     SocialPreview,
 } from "@frak-labs/ui-preview";
 import type { loader as rootLoader } from "app/routes/app";
@@ -18,6 +18,56 @@ const SHARING_PAGE_FIELD_KEYS = [
 ];
 
 /**
+ * Default English translations for the preview, sourced from wallet-shared i18n.
+ */
+const PREVIEW_DEFAULTS: Record<string, string> = {
+    "sdk.sharingPage.dismiss": "Later",
+    "sdk.sharingPage.reward.title": "Share with your friends",
+    "sdk.sharingPage.reward.tagline":
+        "You earn a reward every time a friend makes a purchase through your link.",
+    "sdk.sharingPage.card.amount": "{{ estimatedReward }}",
+    "sdk.sharingPage.card.label": "Credited to your account",
+    "sdk.sharingPage.card.tagline1": "Earn {{ estimatedReward }},",
+    "sdk.sharingPage.card.tagline2": "on every purchase!",
+    "sdk.sharingPage.steps.1":
+        "Share in 1 click. A personal link is automatically generated with each share.",
+    "sdk.sharingPage.steps.2":
+        "Earn on every purchase. Every order placed through your link earns you cash.",
+    "sdk.sharingPage.steps.3":
+        "Collect your earnings in the app. Install FRAK to collect your earnings.",
+    "sharing.btn.share": "Share",
+    "sharing.btn.copy": "Copy link",
+    "sdk.sharingPage.confirmation.title":
+        "Thank you for sharing!\nDon't miss out on your {{ estimatedReward }}.",
+    "sdk.sharingPage.confirmation.subtitle":
+        "Install the Frak app, official partner of {{ productName }}, and track your earnings in real time.",
+    "sdk.sharingPage.confirmation.cardPopupTitle":
+        "You just won {{ estimatedReward }}! 🎉",
+    "sdk.sharingPage.confirmation.cardPopupDescription":
+        "A purchase was made through your link. {{ estimatedReward }} has been transferred to your wallet.",
+    "sdk.sharingPage.confirmation.benefits.wallet.title":
+        "Your wallet secured in 10 seconds",
+    "sdk.sharingPage.confirmation.benefits.wallet.description":
+        "No email, no password, no form. Simple, fast and secure.",
+    "sdk.sharingPage.confirmation.benefits.notify.title":
+        "Get notified as soon as you earn",
+    "sdk.sharingPage.confirmation.benefits.notify.description":
+        "Receive a notification when a purchase is made thanks to you.",
+    "sdk.sharingPage.confirmation.benefits.cashout.title":
+        "Cash out whenever you want",
+    "sdk.sharingPage.confirmation.benefits.cashout.description":
+        "Transfer your earnings directly to your bank account in 3 clicks.",
+    "sdk.sharingPage.confirmation.cta": "Collect my {{ estimatedReward }}",
+    "sdk.sharingPage.confirmation.shareAgain": "Share again",
+};
+
+const CURRENCY_SYMBOLS: Record<string, string> = {
+    usd: "$",
+    eur: "€",
+    gbp: "£",
+};
+
+/**
  * Get preview context (currency + shop name) from root loader
  */
 function usePreviewContext() {
@@ -25,6 +75,26 @@ function usePreviewContext() {
     const currency = (rootData?.shop?.preferredCurrency ?? "usd") as Currency;
     const shopName = rootData?.shop?.name ?? "My Store";
     return { currency, shopName };
+}
+
+/**
+ * Build a translation function that resolves from custom values → defaults,
+ * then substitutes {{ estimatedReward }} and {{ productName }}.
+ */
+function makePreviewT(
+    values: Record<string, string>,
+    currency: Currency,
+    shopName: string
+) {
+    const symbol = CURRENCY_SYMBOLS[currency] ?? "$";
+    const estimatedReward = `5,00 ${symbol}`;
+
+    return (key: string) => {
+        const raw = values[key] || PREVIEW_DEFAULTS[key] || key;
+        return raw
+            .replace(/\{\{\s*estimatedReward\s*\}\}/g, estimatedReward)
+            .replace(/\{\{\s*productName\s*\}\}/g, shopName);
+    };
 }
 
 // Sharing Section Component
@@ -104,6 +174,9 @@ export function SharingPageSection({
     language: string;
 }) {
     const { t } = useTranslation();
+    const { currency, shopName } = usePreviewContext();
+    const previewT = makePreviewT(values, currency, shopName);
+
     return (
         <>
             <s-section>
@@ -179,36 +252,36 @@ export function SharingPageSection({
                     gap: "1rem",
                 }}
             >
-                <SharingPreviewSection
-                    title={t("customizations.preview.sharingPage.title")}
-                    description={t(
-                        "customizations.preview.sharingPage.description"
-                    )}
-                    rewardTitle={handleValue(
-                        values["sdk.sharingPage.reward.title"],
-                        t("customizations.preview.sharingPage.rewardTitle")
-                    )}
-                    rewardTagline={handleValue(
-                        values["sdk.sharingPage.reward.tagline"],
-                        t("customizations.preview.sharingPage.rewardTagline")
-                    )}
-                />
-                <SharingPreviewSection
-                    title={t("customizations.preview.confirmation.title")}
-                    description={t(
-                        "customizations.preview.confirmation.description"
-                    )}
-                    confirmationTitle={handleValue(
-                        values["sdk.sharingPage.confirmation.title"],
-                        t(
-                            "customizations.preview.confirmation.confirmationTitle"
-                        )
-                    )}
-                    confirmationCta={handleValue(
-                        values["sdk.sharingPage.confirmation.cta"],
-                        t("customizations.preview.confirmation.confirmationCta")
-                    )}
-                />
+                <s-section>
+                    <s-stack gap="base">
+                        <div>
+                            <s-heading>
+                                {t("customizations.preview.sharingPage.title")}
+                            </s-heading>
+                            <s-text tone="neutral">
+                                {t(
+                                    "customizations.preview.sharingPage.description"
+                                )}
+                            </s-text>
+                        </div>
+                        <SharingPreview t={previewT} />
+                    </s-stack>
+                </s-section>
+                <s-section>
+                    <s-stack gap="base">
+                        <div>
+                            <s-heading>
+                                {t("customizations.preview.confirmation.title")}
+                            </s-heading>
+                            <s-text tone="neutral">
+                                {t(
+                                    "customizations.preview.confirmation.description"
+                                )}
+                            </s-text>
+                        </div>
+                        <SharingSuccessPreview t={previewT} />
+                    </s-stack>
+                </s-section>
             </div>
         </>
     );
@@ -251,61 +324,10 @@ export function SocialPreviewSection({
     );
 }
 
-type SharingPreviewSectionProps =
-    | {
-          title: string;
-          description: string;
-          rewardTitle: string;
-          rewardTagline: string;
-          confirmationTitle?: undefined;
-          confirmationCta?: undefined;
-      }
-    | {
-          title: string;
-          description: string;
-          rewardTitle?: undefined;
-          rewardTagline?: undefined;
-          confirmationTitle: string;
-          confirmationCta: string;
-      };
-
-function SharingPreviewSection(props: SharingPreviewSectionProps) {
-    const { currency, shopName } = usePreviewContext();
-
-    return (
-        <s-section>
-            <s-stack gap="base">
-                <div>
-                    <s-heading>{props.title}</s-heading>
-                    <s-text tone="neutral">{props.description}</s-text>
-                </div>
-                {props.rewardTitle !== undefined ? (
-                    <SharingPreview
-                        rewardTitle={props.rewardTitle}
-                        rewardTagline={props.rewardTagline}
-                        currency={currency}
-                        shopName={shopName}
-                    />
-                ) : (
-                    <ConfirmationPreview
-                        confirmationTitle={props.confirmationTitle}
-                        confirmationCta={props.confirmationCta}
-                        currency={currency}
-                        shopName={shopName}
-                    />
-                )}
-            </s-stack>
-        </s-section>
-    );
-}
-
 /**
  * Handle the value of the field.
  * If the value is not empty, return the value.
  * If the value is empty, return the default value.
- * @param value - The value of the field.
- * @param defaultValue - The default value of the field.
- * @returns The value of the field.
  */
 function handleValue(value: string, defaultValue: string) {
     if (value && value !== "") {

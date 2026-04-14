@@ -2,7 +2,6 @@ import type { SdkConfig } from "@frak-labs/backend-elysia/domain/merchant";
 import type { TranslationFormValues } from "./types";
 
 export { TRANSLATION_LANG_FIELDS } from "./translations";
-// Re-exports for backward compatibility (ModalPreview.tsx imports from ./utils)
 export type { TranslationFormValues, TranslationLang } from "./types";
 
 export function valueOrNull(value: string): string | null {

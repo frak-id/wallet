@@ -1,7 +1,7 @@
 import process from "node:process";
 import { tanstackRouter } from "@tanstack/router-plugin/vite";
-import viteReact from "@vitejs/plugin-react";
 import { vanillaExtractPlugin } from "@vanilla-extract/vite-plugin";
+import viteReact from "@vitejs/plugin-react";
 import { defineConfig, type UserConfig } from "vite";
 import {
     getSandboxEnv,

@@ -6,7 +6,7 @@ import { Form } from "@/module/forms/Form";
 import { FormActions } from "@/module/forms/FormActions";
 import { useMerchantUpdate } from "@/module/merchant/hook/useMerchantUpdate";
 import styles from "./index.module.css";
-import { LoginPreview } from "./ModalPreview";
+import { SharingPagePreview } from "./ModalPreview";
 import { CssEditor, TranslationEditor } from "./TranslationEditor";
 import type {
     CssFormValues,
@@ -156,10 +156,9 @@ function GlobalTranslationsPanel({
                     Translations applied to all SDK components across every
                     placement.
                 </p>
-                <LoginPreview
+                <SharingPagePreview
                     form={form}
                     logoUrl={sdkConfig.logoUrl ?? undefined}
-                    currency={sdkConfig.currency ?? undefined}
                     lang={lang}
                 />
                 <TranslationEditor
