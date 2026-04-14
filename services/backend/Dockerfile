@@ -31,8 +31,8 @@ WORKDIR /app
 COPY --from=builder --chown=bun:bun /app/services/backend/package.json .
 COPY --from=builder --chown=bun:bun /app/services/backend/dist ./dist
 
-# Native modules (libvips / lightningcss bindings) — can't be bundled, install directly in runtime
-RUN cd /tmp && bun add sharp lightningcss && cp -rL node_modules /app/node_modules && rm -rf /tmp/node_modules /tmp/package.json /tmp/bun.lock
+# Native modules with platform-specific binaries — can't be bundled, install directly in runtime
+RUN cd /tmp && bun add sharp lightningcss @libsql/client && cp -rL node_modules /app/node_modules && rm -rf /tmp/node_modules /tmp/package.json /tmp/bun.lock
 
 USER bun
 
