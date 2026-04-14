@@ -41,6 +41,7 @@ COPY packages/app-essentials/package.json ./packages/app-essentials/
 COPY packages/client/package.json ./packages/client/
 COPY packages/design-system/package.json ./packages/design-system/
 COPY packages/dev-tooling/package.json ./packages/dev-tooling/
+COPY packages/ui-preview/package.json ./packages/ui-preview/
 COPY packages/ui/package.json ./packages/ui/
 COPY packages/wallet-shared/package.json ./packages/wallet-shared/
 COPY packages/test-foundation/package.json ./packages/test-foundation/
