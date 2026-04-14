@@ -18,6 +18,8 @@ type CodeInputProps = {
     length?: number;
     /** Input mode: "numeric" for digits only, "alphanumeric" for letters + digits (default: "numeric") */
     mode?: CodeInputMode;
+    /** Pre-filled value — when set the inputs become read-only display boxes */
+    value?: string;
     /** Called whenever the code value changes */
     onChange?: (code: string) => void;
     /** Accessible label for each input cell (receives 1-based index) */
@@ -37,13 +39,17 @@ type CodeInputProps = {
 export function CodeInput({
     length = 6,
     mode = "numeric",
+    value,
     onChange,
     digitLabel,
     pasteLabel,
     error,
 }: CodeInputProps) {
+    const readOnly = value !== undefined;
     const [digits, setDigits] = useState<string[]>(() =>
-        Array.from({ length }, () => "")
+        readOnly
+            ? Array.from({ length }, (_, i) => value[i] ?? "")
+            : Array.from({ length }, () => "")
     );
     const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
     const onChangeRef = useRef(onChange);
@@ -53,6 +59,13 @@ export function CodeInput({
     useEffect(() => {
         onChangeRef.current?.(digits.join(""));
     }, [digits]);
+
+    // Sync digits when external value changes
+    useEffect(() => {
+        if (value !== undefined) {
+            setDigits(Array.from({ length }, (_, i) => value[i] ?? ""));
+        }
+    }, [value, length]);
 
     const sanitize = useCallback(
         (raw: string) =>
@@ -148,6 +161,14 @@ export function CodeInput({
         }
     }, [fillDigits]);
 
+    const inputMode = readOnly
+        ? undefined
+        : mode === "numeric"
+          ? "numeric"
+          : "text";
+    const placeholder = readOnly ? undefined : mode === "numeric" ? "0" : "A";
+    const digitClassName = `${styles.digitInput}${error ? ` ${styles.digitInputError}` : ""}${readOnly ? ` ${styles.digitInputReadOnly}` : ""}`;
+
     return (
         <>
             <div className={styles.container}>
@@ -158,19 +179,29 @@ export function CodeInput({
                             inputRefs.current[index] = el;
                         }}
                         type="text"
-                        inputMode={mode === "numeric" ? "numeric" : "text"}
+                        inputMode={inputMode}
                         pattern={mode === "numeric" ? "[0-9]*" : undefined}
                         autoCapitalize={
                             mode === "alphanumeric" ? "characters" : undefined
                         }
                         maxLength={length}
                         value={digit}
-                        placeholder={mode === "numeric" ? "0" : "A"}
-                        className={`${styles.digitInput}${error ? ` ${styles.digitInputError}` : ""}`}
-                        onChange={(e) => handleChange(index, e)}
-                        onKeyDown={(e) => handleKeyDown(index, e)}
-                        onPaste={handlePaste}
-                        onFocus={(e) => e.target.select()}
+                        readOnly={readOnly}
+                        tabIndex={readOnly ? -1 : undefined}
+                        placeholder={placeholder}
+                        className={digitClassName}
+                        onChange={
+                            readOnly ? undefined : (e) => handleChange(index, e)
+                        }
+                        onKeyDown={
+                            readOnly
+                                ? undefined
+                                : (e) => handleKeyDown(index, e)
+                        }
+                        onPaste={readOnly ? undefined : handlePaste}
+                        onFocus={
+                            readOnly ? undefined : (e) => e.target.select()
+                        }
                         aria-label={
                             digitLabel?.(index + 1) ?? `Digit ${index + 1}`
                         }
@@ -178,7 +209,7 @@ export function CodeInput({
                 ))}
             </div>
             {error && <p className={styles.errorMessage}>{error}</p>}
-            {pasteLabel && (
+            {!readOnly && pasteLabel && (
                 <Button
                     variant="secondary"
                     size="small"

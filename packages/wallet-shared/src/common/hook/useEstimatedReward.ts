@@ -9,10 +9,9 @@ import {
     getCurrencyAmountKey,
     getSupportedCurrency,
 } from "@frak-labs/core-sdk";
-import { authenticatedBackendApi } from "@frak-labs/wallet-shared";
 import { queryOptions, useQuery } from "@tanstack/react-query";
 import type { Address } from "viem";
-import { listenerMerchantKey } from "@/module/queryKeys/merchant";
+import { authenticatedBackendApi } from "../api/backendClient";
 
 type EstimatedRewardItem = {
     token?: Address;
@@ -24,7 +23,11 @@ type EstimatedRewardItem = {
 
 export function estimatedRewardsQueryOptions(merchantId?: string) {
     return queryOptions({
-        queryKey: listenerMerchantKey.estimatedRewards.byMerchant(merchantId),
+        queryKey: [
+            "merchant",
+            "estimatedRewards",
+            merchantId ?? "no-merchant-id",
+        ],
         queryFn: async (): Promise<EstimatedRewardItem[]> => {
             if (!merchantId) return [];
 

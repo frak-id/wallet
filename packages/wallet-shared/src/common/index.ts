@@ -32,6 +32,11 @@ export { Warning } from "./component/Warning";
 // Hooks
 export { useAddToHomeScreenPrompt } from "./hook/useAddToHomeScreenPrompt";
 export { useCopyToClipboardWithState } from "./hook/useCopyToClipboardWithState";
+export {
+    estimatedRewardsQueryOptions,
+    selectFormattedReward,
+    useFormattedEstimatedReward,
+} from "./hook/useEstimatedReward";
 export { useGetSafeSdkSession } from "./hook/useGetSafeSdkSession";
 export { useMountedTimeout } from "./hook/useMountedTimeout";
 export { useSessionFlag } from "./hook/useSessionFlag";

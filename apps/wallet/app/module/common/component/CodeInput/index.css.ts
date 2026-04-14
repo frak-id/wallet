@@ -39,6 +39,11 @@ export const digitInputError = style({
     background: vars.surface.error,
 });
 
+export const digitInputReadOnly = style({
+    cursor: "default",
+    pointerEvents: "none",
+});
+
 export const errorMessage = style({
     color: vars.text.error,
     fontSize: fontSize.s,

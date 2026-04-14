@@ -1,21 +1,25 @@
 import { isTauri } from "@frak-labs/app-essentials/utils/platform";
-import { Box } from "@frak-labs/design-system/components/Box";
+import { Button } from "@frak-labs/design-system/components/Button";
 import { Card } from "@frak-labs/design-system/components/Card";
 import { Inline } from "@frak-labs/design-system/components/Inline";
 import { Spinner } from "@frak-labs/design-system/components/Spinner";
 import { Stack } from "@frak-labs/design-system/components/Stack";
 import { Text } from "@frak-labs/design-system/components/Text";
-import { getSafeSession } from "@frak-labs/wallet-shared";
+import { CloseIcon, CopyIcon } from "@frak-labs/design-system/icons";
+import {
+    getSafeSession,
+    useFormattedEstimatedReward,
+} from "@frak-labs/wallet-shared";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { Info } from "lucide-react";
-import { useEffect, useMemo } from "react";
-import { useTranslation } from "react-i18next";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { Trans, useTranslation } from "react-i18next";
+import { CodeInput } from "@/module/common/component/CodeInput";
 import { PageLayout } from "@/module/common/component/PageLayout";
-import { Title } from "@/module/common/component/Title";
 import { useExecutePendingActions } from "@/module/pending-actions/hook/useExecutePendingActions";
 import { pendingActionsStore } from "@/module/pending-actions/stores/pendingActionsStore";
-import { CodeDisplay } from "@/module/recovery-code/component/CodeDisplay";
 import { useGenerateInstallCode } from "@/module/recovery-code/hook/useGenerateInstallCode";
+import * as styles from "./install.css";
 
 type InstallSearch = {
     m?: string;
@@ -127,7 +131,19 @@ const playStoreUrl =
     "https://play.google.com/store/apps/details?id=id.frak.wallet";
 
 function InstallCodeView({ m: merchantId, a: anonymousId }: InstallSearch) {
-    const { t } = useTranslation();
+    const { t: rawT } = useTranslation();
+    const [copied, setCopied] = useState(false);
+
+    const { data: estimatedReward } = useFormattedEstimatedReward({
+        merchantId,
+    });
+
+    // Wrap t to inject estimatedReward into i18n interpolation
+    const t = useCallback(
+        (key: string, options?: Record<string, unknown>) =>
+            rawT(key, { ...options, estimatedReward: estimatedReward ?? "" }),
+        [rawT, estimatedReward]
+    );
 
     const { data, isLoading, error } = useGenerateInstallCode({
         merchantId,
@@ -143,38 +159,37 @@ function InstallCodeView({ m: merchantId, a: anonymousId }: InstallSearch) {
         return `${playStoreUrl}&referrer=${encodeURIComponent(referrerData)}`;
     }, [merchantId, anonymousId]);
 
+    const handleCopy = useCallback(async () => {
+        if (!data?.code) return;
+        await navigator.clipboard.writeText(data.code);
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
+    }, [data?.code]);
+
     return (
-        <PageLayout
-            footer={
-                <Box
-                    as="a"
-                    href={downloadUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    display={"flex"}
-                    alignItems={"center"}
-                    justifyContent={"center"}
-                    padding={"m"}
-                    borderRadius={"full"}
-                    backgroundColor={"primary"}
-                    color={"onAction"}
-                    fontWeight={"semiBold"}
-                    fontSize={"m"}
+        <div className={styles.container}>
+            <header className={styles.header}>
+                <button
+                    type="button"
+                    className={styles.dismissButton}
+                    onClick={() => window.close()}
                 >
-                    {t("installCode.download")}
-                </Box>
-            }
-        >
-            <Stack space={"l"} align={"center"}>
-                <Stack space={"m"} align={"center"}>
-                    <Title size="page">{t("installCode.title")}</Title>
-                    <Text variant="body" color="secondary" align="center">
+                    <CloseIcon width={24} height={24} />
+                </button>
+            </header>
+
+            <main className={styles.main}>
+                <section className={styles.heroSection}>
+                    <Text as="h1" variant="heading2" className={styles.title}>
+                        {t("installCode.title")}
+                    </Text>
+                    <Text variant="bodySmall" color="secondary">
                         {t("installCode.description")}
                     </Text>
-                </Stack>
+                </section>
 
                 {isLoading && (
-                    <Stack space={"m"} align={"center"}>
+                    <Stack space="m" align="center">
                         <Spinner />
                         <Text variant="bodySmall" color="secondary">
                             {t("installCode.loading")}
@@ -183,27 +198,70 @@ function InstallCodeView({ m: merchantId, a: anonymousId }: InstallSearch) {
                 )}
 
                 {error && (
-                    <Text variant="bodySmall" color="error">
+                    <Text variant="bodySmall" color="error" align="center">
                         {t("installCode.error")}
                     </Text>
                 )}
 
-                {data?.code && <CodeDisplay code={data.code} />}
+                {data?.code && (
+                    <Stack space="m" align="center">
+                        <CodeInput value={data.code} mode="alphanumeric" />
+                        <Button
+                            size="large"
+                            fontSize="s"
+                            width="full"
+                            className={styles.copyButton}
+                            onClick={handleCopy}
+                        >
+                            {copied
+                                ? t("installCode.codeCopied")
+                                : t("installCode.copyCode")}
+                            <CopyIcon />
+                        </Button>
+                    </Stack>
+                )}
+            </main>
 
-                <Card variant={"muted"} padding={"compact"}>
-                    <Inline space={"s"} alignY={"center"}>
-                        <Info size={18} />
-                        <Stack space={"xxs"}>
-                            <Text variant="bodySmall" weight="semiBold">
-                                {t("installCode.infoTitle")}
-                            </Text>
-                            <Text variant="caption" color="secondary">
-                                {t("installCode.infoDescription")}
-                            </Text>
-                        </Stack>
-                    </Inline>
-                </Card>
-            </Stack>
-        </PageLayout>
+            <Card
+                variant="secondary"
+                padding="compact"
+                className={styles.infoCard}
+            >
+                <Inline space="s" alignY="top" wrap={false}>
+                    <Info size={18} style={{ flexShrink: 0, marginTop: 2 }} />
+                    <Stack space="xxs">
+                        <Text variant="heading4" weight="medium">
+                            {t("installCode.infoTitle")}
+                        </Text>
+                        <Text variant="bodySmall" color="secondary">
+                            <Trans
+                                i18nKey="installCode.infoDescription"
+                                components={{
+                                    1: (
+                                        <Text
+                                            as="span"
+                                            variant="bodySmall"
+                                            weight="medium"
+                                            color="action"
+                                        />
+                                    ),
+                                }}
+                            />
+                        </Text>
+                    </Stack>
+                </Inline>
+            </Card>
+
+            <footer className={styles.footer}>
+                <a
+                    href={downloadUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className={styles.downloadButton}
+                >
+                    {t("installCode.download")}
+                </a>
+            </footer>
+        </div>
     );
 }

@@ -387,14 +387,14 @@
         }
     },
     "installCode": {
-        "title": "Copy this code",
+        "title": "Don't lose your {{ estimatedReward }}!\nCopy this code",
         "description": "Paste it when opening the app. It will let you claim your rewards once logged in.",
         "copyCode": "Copy the code",
         "codeCopied": "Code copied!",
         "loading": "Generating your code...",
         "error": "Failed to generate code. Please refresh.",
         "infoTitle": "Code valid for 3 days",
-        "infoDescription": "When opening the app, tap 'I have a recovery code'.",
+        "infoDescription": "When opening the app, tap <1>\"I have a recovery code\"</1>.",
         "download": "Download the app",
         "processing": "Setting up your wallet..."
     },

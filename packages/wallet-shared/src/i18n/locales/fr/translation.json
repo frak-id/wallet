@@ -385,16 +385,16 @@
         }
     },
     "installCode": {
-        "title": "Copiez ce code",
-        "description": "Collez-le à l'ouverture de l'app. Il vous permettra de récupérer vos gains une fois connecté·e.",
+        "title": "Ne perds pas tes {{ estimatedReward }} !\nCopie ce code",
+        "description": "Colle-le à l'ouverture de l'app. Il te permettra de récupérer tes gains une fois connecté·e.",
         "copyCode": "Copier le code",
         "codeCopied": "Code copié !",
         "loading": "Génération de ton code...",
         "error": "Échec de la génération du code. Rafraîchis la page.",
         "infoTitle": "Code valable 3 jours",
-        "infoDescription": "À l'ouverture de l'app, appuyez sur 'J'ai un code de récupération'.",
+        "infoDescription": "À l'ouverture de l'app, appuie sur <1>\"J'ai un code de récupération\"</1>.",
         "download": "Télécharger l'app",
-        "processing": "Configuration de votre portefeuille..."
+        "processing": "Configuration de ton portefeuille..."
     },
     "onboarding": {
         "start": "Commencer",

@@ -25,6 +25,7 @@ import {
  */
 type TranslationOptions = Omit<TOptions, "context"> & { context?: string };
 
+import { useFormattedEstimatedReward } from "@frak-labs/wallet-shared";
 import {
     createContext,
     type PropsWithChildren,
@@ -36,7 +37,6 @@ import {
     useState,
 } from "react";
 import { useTranslation } from "react-i18next";
-import { useFormattedEstimatedReward } from "@/module/hooks/useEstimatedRewards";
 import { resolvingContextStore } from "@/module/stores/resolvingContextStore";
 import type { ResolvedSdkConfig } from "@/module/stores/types";
 import { mapDeprecatedModalMetadata } from "../utils/deprecatedModalMetadataMapper";
