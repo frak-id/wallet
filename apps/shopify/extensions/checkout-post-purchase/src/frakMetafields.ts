@@ -9,19 +9,18 @@
  * All values are stored via JSON.stringify(), so we JSON.parse() on read.
  */
 
-import type { AppMetafieldEntry } from "@shopify/ui-extensions/checkout";
-
 type FrakConfig = {
     merchantId?: string;
     walletUrl?: string;
     logoUrl?: string;
 };
 
-function parseJsonValue<T>(raw: string): T | string {
+function parseJsonValue<T>(raw: string | number | boolean): T | string {
+    const str = String(raw);
     try {
-        return JSON.parse(raw) as T;
+        return JSON.parse(str) as T;
     } catch {
-        return raw;
+        return str;
     }
 }
 
@@ -31,7 +30,9 @@ function parseJsonValue<T>(raw: string): T | string {
  * Works with both checkout and customer-account surfaces — the MetafieldEntry
  * shape is compatible with AppMetafieldEntry from either import path.
  */
-export function extractFrakConfig(entries: AppMetafieldEntry[]): FrakConfig {
+export function extractFrakConfig(
+    entries: { metafield: { key: string; value: string | number | boolean } }[]
+): FrakConfig {
     return entries.reduce<FrakConfig>((config, entry) => {
         const { key, value } = entry.metafield;
         switch (key) {

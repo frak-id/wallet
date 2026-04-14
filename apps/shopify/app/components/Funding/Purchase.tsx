@@ -149,7 +149,7 @@ function CreatePurchase({ bankAddress }: { bankAddress: string }) {
                 <s-number-field
                     label={t("status.purchase.amountToFund")}
                     value={amount}
-                    onChange={(e) => setAmount(e.currentTarget.value)}
+                    onChange={(e) => setAmount(e.currentTarget.value ?? "")}
                     autocomplete="off"
                     min={0}
                     step={0.5}

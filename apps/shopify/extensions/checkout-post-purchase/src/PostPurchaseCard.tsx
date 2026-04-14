@@ -174,7 +174,7 @@ export function PostPurchaseCard({
             <s-grid gridTemplateColumns="1fr 80px" gap="base" alignItems="end">
                 {/* Left column — text content & CTA */}
                 <s-stack direction="block" gap="small">
-                    {badgeText && <s-badge size="small">{badgeText}</s-badge>}
+                    {badgeText && <s-badge size="base">{badgeText}</s-badge>}
                     <s-heading>{message}</s-heading>
                     <s-text color="subdued">{description}</s-text>
                     <s-button

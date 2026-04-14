@@ -97,7 +97,7 @@ export function LogoField({
                     label={t("customizations.fields.logoUrl.label")}
                     placeholder={t("customizations.fields.logoUrl.placeholder")}
                     value={logoUrl || ""}
-                    onChange={(e) => onUpdate(e.currentTarget.value)}
+                    onChange={(e) => onUpdate(e.currentTarget.value ?? "")}
                     autocomplete="off"
                 />
             </s-stack>

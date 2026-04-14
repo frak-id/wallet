@@ -91,8 +91,8 @@ export function ExplorerTab({
                     <s-checkbox
                         label={t("appearance.explorer.enabledLabel")}
                         checked={enabled || undefined}
-                        onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                            setEnabled(e.currentTarget.checked)
+                        onChange={(e) =>
+                            setEnabled(e.currentTarget.checked ?? false)
                         }
                     />
 
@@ -100,8 +100,8 @@ export function ExplorerTab({
                         label={t("appearance.explorer.logoLabel")}
                         placeholder="https://..."
                         value={logoUrl}
-                        onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                            setLogoUrl(e.currentTarget.value)
+                        onChange={(e) =>
+                            setLogoUrl(e.currentTarget.value ?? "")
                         }
                         autocomplete="off"
                     />
@@ -110,8 +110,8 @@ export function ExplorerTab({
                         label={t("appearance.explorer.heroLabel")}
                         placeholder="https://..."
                         value={heroImageUrl}
-                        onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                            setHeroImageUrl(e.currentTarget.value)
+                        onChange={(e) =>
+                            setHeroImageUrl(e.currentTarget.value ?? "")
                         }
                         autocomplete="off"
                     />
@@ -122,8 +122,8 @@ export function ExplorerTab({
                             "appearance.explorer.descriptionPlaceholder"
                         )}
                         value={description}
-                        onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) =>
-                            setDescription(e.currentTarget.value)
+                        onChange={(e) =>
+                            setDescription(e.currentTarget.value ?? "")
                         }
                         autocomplete="off"
                     />

@@ -553,7 +553,7 @@ function CampaignCreation({
                     <s-text-field
                         label={t("status.campaign.nameInput")}
                         value={name}
-                        onChange={(e) => setName(e.currentTarget.value)}
+                        onChange={(e) => setName(e.currentTarget.value ?? "")}
                         autocomplete="off"
                     />
                 </s-grid-item>
@@ -572,7 +572,7 @@ function CampaignCreation({
                             label={t("status.campaign.budget")}
                             value={globalBudget}
                             onChange={(e) =>
-                                setGlobalBudget(e.currentTarget.value)
+                                setGlobalBudget(e.currentTarget.value ?? "")
                             }
                             inputMode="decimal"
                             min={0}
@@ -587,7 +587,9 @@ function CampaignCreation({
                         <s-number-field
                             label={t("status.campaign.rawCAC")}
                             value={rawCAC}
-                            onChange={(e) => setRawCAC(e.currentTarget.value)}
+                            onChange={(e) =>
+                                setRawCAC(e.currentTarget.value ?? "")
+                            }
                             inputMode="decimal"
                             min={0}
                             step={0.01}

@@ -39,7 +39,7 @@ describe("useSetupRecovery", () => {
             address: mockAddress,
         } as any);
         vi.mocked(useSendTransaction).mockReturnValue({
-            sendTransactionAsync: vi.fn(),
+            mutateAsync: vi.fn(),
         } as any);
 
         const { result } = renderHook(() => useSetupRecovery(), {
@@ -62,7 +62,7 @@ describe("useSetupRecovery", () => {
             address: mockAddress,
         } as any);
         vi.mocked(useSendTransaction).mockReturnValue({
-            sendTransactionAsync,
+            mutateAsync: sendTransactionAsync,
         } as any);
 
         const { result } = renderHook(() => useSetupRecovery(), {
@@ -91,7 +91,7 @@ describe("useSetupRecovery", () => {
 
         vi.mocked(useConnection).mockReturnValue({ address: undefined } as any);
         vi.mocked(useSendTransaction).mockReturnValue({
-            sendTransactionAsync: vi.fn(),
+            mutateAsync: vi.fn(),
         } as any);
 
         const { result } = renderHook(() => useSetupRecovery(), {
@@ -116,7 +116,7 @@ describe("useSetupRecovery", () => {
             address: mockAddress,
         } as any);
         vi.mocked(useSendTransaction).mockReturnValue({
-            sendTransactionAsync,
+            mutateAsync: sendTransactionAsync,
         } as any);
 
         const invalidateQueries = vi.spyOn(
@@ -150,7 +150,7 @@ describe("useSetupRecovery", () => {
             address: mockAddress,
         } as any);
         vi.mocked(useSendTransaction).mockReturnValue({
-            sendTransactionAsync,
+            mutateAsync: sendTransactionAsync,
         } as any);
 
         const { result } = renderHook(() => useSetupRecovery(), {
@@ -175,7 +175,7 @@ describe("useSetupRecovery", () => {
             address: mockAddress,
         } as any);
         vi.mocked(useSendTransaction).mockReturnValue({
-            sendTransactionAsync,
+            mutateAsync: sendTransactionAsync,
         } as any);
 
         const onSuccess = vi.fn();

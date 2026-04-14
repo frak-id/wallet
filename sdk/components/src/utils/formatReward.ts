@@ -55,5 +55,7 @@ export function applyRewardPlaceholder(
     text: string,
     reward: string | undefined
 ): string {
-    return reward ? text.replace("{REWARD}", reward) : text.replace("{REWARD}", "");
+    return reward
+        ? text.replace("{REWARD}", reward)
+        : text.replace("{REWARD}", "");
 }

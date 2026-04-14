@@ -21,9 +21,10 @@ export function LanguageModeSelector({
                     name="languageMode"
                     label={t("customizations.languageMode.title")}
                     values={[mode]}
-                    onChange={(e) =>
-                        onModeChange(e.currentTarget.values[0] as LanguageMode)
-                    }
+                    onChange={(e) => {
+                        const values = e.currentTarget.values;
+                        if (values) onModeChange(values[0] as LanguageMode);
+                    }}
                 >
                     <s-choice value="single">
                         {t("customizations.languageMode.single.label")}

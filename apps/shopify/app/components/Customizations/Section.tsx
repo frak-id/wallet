@@ -46,7 +46,7 @@ export function SharingSection({
                                 )}
                                 value={values[key] || ""}
                                 onChange={(e) =>
-                                    onUpdate(key, e.currentTarget.value)
+                                    onUpdate(key, e.currentTarget.value ?? "")
                                 }
                                 autocomplete="off"
                             />
@@ -59,7 +59,7 @@ export function SharingSection({
                                 )}
                                 value={values[key] || ""}
                                 onChange={(e) =>
-                                    onUpdate(key, e.currentTarget.value)
+                                    onUpdate(key, e.currentTarget.value ?? "")
                                 }
                                 autocomplete="off"
                             />
@@ -149,7 +149,7 @@ export function SharingPageSection({
                             )}
                             value={values[key] || ""}
                             onChange={(e) =>
-                                onUpdate(key, e.currentTarget.value)
+                                onUpdate(key, e.currentTarget.value ?? "")
                             }
                             autocomplete="off"
                         />

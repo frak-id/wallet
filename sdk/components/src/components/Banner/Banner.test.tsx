@@ -110,16 +110,18 @@ describe.sequential("Banner", () => {
         expect(cta?.textContent).toBe("Open browser");
     });
 
-    it("should call redirectToExternalBrowser on in-app CTA click", () => {
+    it("should call redirectToExternalBrowser on in-app CTA click", async () => {
         coreSdkMock.isInAppBrowser = true;
 
         const { container } = render(<Banner />);
         const cta = container.querySelector(".frak-banner__cta");
         if (cta) fireEvent.click(cta);
 
-        expect(coreSdkMock.redirectToExternalBrowser).toHaveBeenCalledWith(
-            window.location.href
-        );
+        await waitFor(() => {
+            expect(coreSdkMock.redirectToExternalBrowser).toHaveBeenCalledWith(
+                window.location.href
+            );
+        });
     });
 
     it("should dismiss on in-app close button click", async () => {
