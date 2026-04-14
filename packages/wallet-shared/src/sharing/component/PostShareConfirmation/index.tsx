@@ -1,3 +1,4 @@
+import iphoneBgUrl from "@frak-labs/design-system/assets/iphone.png";
 import { Box } from "@frak-labs/design-system/components/Box";
 import { Button } from "@frak-labs/design-system/components/Button";
 import { Stack } from "@frak-labs/design-system/components/Stack";
@@ -9,7 +10,6 @@ import {
     ShieldIcon,
     WalletIcon,
 } from "@frak-labs/design-system/icons";
-import iphoneBgUrl from "@frak-labs/design-system/assets/iphone.png";
 import * as styles from "./postShareConfirmation.css";
 export type PostShareConfirmationProps = {
     installUrl: string | null;

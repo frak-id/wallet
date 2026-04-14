@@ -16,7 +16,7 @@
     "./tokens": "./src/tokens.css.ts",
     "./sprinkles": "./src/sprinkles.css.ts",
     "./utils": "./src/reset.css.ts",
-    "./styles/inAppBanner": "./src/styles/inAppBanner.css.ts"
+    "./styles/inAppBanner": "./src/styles/inAppBanner.css.ts",
     "./assets/iphone.png": "./src/assets/iphone.png"
   },
   "dependencies": {

@@ -1,3 +1,4 @@
+import iphoneBgUrl from "@frak-labs/design-system/assets/iphone.png";
 import { Box } from "@frak-labs/design-system/components/Box";
 import { Stack } from "@frak-labs/design-system/components/Stack";
 import { Text } from "@frak-labs/design-system/components/Text";
@@ -8,7 +9,6 @@ import {
     ShieldIcon,
     WalletIcon,
 } from "@frak-labs/design-system/icons";
-import iphoneBgUrl from "@frak-labs/design-system/assets/iphone.png";
 import * as styles from "./styles.css";
 
 export type SharingSuccessPreviewProps = {

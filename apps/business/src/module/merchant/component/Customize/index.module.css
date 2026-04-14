@@ -129,6 +129,12 @@
     flex-wrap: wrap;
 }
 
+.customize__previewWrapper {
+    margin: 12px 0 16px;
+    display: flex;
+    justify-content: center;
+}
+
 .customize__settingsGrid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));

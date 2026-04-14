@@ -1,7 +1,13 @@
 import type { SdkConfig } from "@frak-labs/backend-elysia/domain/merchant";
+import type { Currency } from "@frak-labs/core-sdk";
 import { Input } from "@frak-labs/ui/component/forms/Input";
+import {
+    BannerPreview,
+    PostPurchasePreview,
+    ShareButtonPreview,
+} from "@frak-labs/ui-preview";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { useForm } from "react-hook-form";
+import { type UseFormReturn, useForm } from "react-hook-form";
 import { Panel } from "@/module/common/component/Panel";
 import {
     Form,
@@ -296,6 +302,15 @@ function PlacementSettingsPanel({
                     ))}
                 </div>
 
+                <div className={styles.customize__previewWrapper}>
+                    <PlacementPreview
+                        selectedComponent={selectedComponent}
+                        form={form}
+                        currency={(sdkConfig.currency ?? "eur") as Currency}
+                        shopName={sdkConfig.name ?? "My Store"}
+                    />
+                </div>
+
                 {selectedComponent === "buttonShare" && (
                     <ButtonShareFields form={form} />
                 )}
@@ -314,4 +329,59 @@ function PlacementSettingsPanel({
             </Panel>
         </Form>
     );
+}
+
+function PlacementPreview({
+    selectedComponent,
+    form,
+    currency,
+    shopName,
+}: {
+    selectedComponent: ComponentType;
+    form: UseFormReturn<PlacementSettingsFormValues>;
+    currency: Currency;
+    shopName: string;
+}) {
+    const values = form.watch();
+
+    switch (selectedComponent) {
+        case "buttonShare":
+            return (
+                <ShareButtonPreview
+                    text={values.buttonShare.text || "Share and earn!"}
+                    currency={currency}
+                    shopName={shopName}
+                />
+            );
+        case "postPurchase":
+            return (
+                <PostPurchasePreview
+                    messageText={
+                        values.postPurchase.refereeText ||
+                        "You just earned {REWARD}! Share with friends to earn even more."
+                    }
+                    ctaText={
+                        values.postPurchase.ctaText || "Share & earn {REWARD}"
+                    }
+                    currency={currency}
+                    shopName={shopName}
+                />
+            );
+        case "banner":
+            return (
+                <BannerPreview
+                    title={
+                        values.banner.referralTitle ||
+                        "Earn {REWARD} on purchases"
+                    }
+                    description={
+                        values.banner.referralDescription ||
+                        "Earn rewards after your purchase via the Frak partner app."
+                    }
+                    ctaText={values.banner.referralCta || "Got it"}
+                    currency={currency}
+                    shopName={shopName}
+                />
+            );
+    }
 }

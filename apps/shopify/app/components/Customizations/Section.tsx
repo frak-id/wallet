@@ -174,7 +174,7 @@ export function SharingPageSection({
     onUpdate: (key: string, value: string) => void;
     language: string;
     logoUrl?: string;
-}){
+}) {
     const { t } = useTranslation();
     const { currency, shopName } = usePreviewContext();
     const previewT = makePreviewT(values, currency, shopName);

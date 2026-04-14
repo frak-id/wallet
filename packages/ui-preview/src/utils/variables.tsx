@@ -10,11 +10,12 @@ export function replaceVariables(
     shopName: string
 ): string {
     if (!text) return "";
+    const formattedAmount = formatAmount(42, currency);
     return text
-        .replace(/\{\{\s*estimatedReward\s*\}\}/g, formatAmount(42, currency))
+        .replace(/\{\{\s*estimatedReward\s*\}\}/g, formattedAmount)
+        .replace(/\{REWARD\}/g, formattedAmount)
         .replace(/\{\{\s*productName\s*\}\}/g, shopName);
 }
-
 /**
  * Parse markdown text (bold/italic) and replace {{ estimatedReward }} with formatted amount
  */
