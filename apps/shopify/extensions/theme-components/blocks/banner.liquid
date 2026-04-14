@@ -16,11 +16,36 @@
 ></frak-banner>
 
 {% style %}
-  frak-banner .frak-banner {
+  frak-banner .frak-banner--referral {
     background: #ffffff;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
   }
-  frak-banner .frak-banner__content {
+  frak-banner .frak-banner--inapp {
+    margin: 8px 12px;
+    display: block;
+  }
+  frak-banner .frak-banner--inapp p {
+    margin: 0;
+    padding: 0;
+    display: inline;
+  }
+  frak-banner .frak-banner--inapp .frak-banner__cta {
+    display: inline-flex;
+    margin: 0;
+    padding: 0;
+    background: none;
+    border: none;
+    font: inherit;
+    cursor: pointer;
+  }
+  frak-banner .frak-banner--inapp .frak-banner__close {
+    margin: 0;
+    padding: 0;
+    background: none;
+    border: none;
+    cursor: pointer;
+  }
+  frak-banner .frak-banner__text {
     padding: 0;
   }
   .frak-banner-custom.frak-banner {
