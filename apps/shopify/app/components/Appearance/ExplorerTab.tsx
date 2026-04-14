@@ -1,9 +1,16 @@
 import type { action } from "app/routes/app.appearance";
 import type { ExplorerSettings } from "app/services.server/backendMerchant";
 import type { ShopBrandInfo } from "app/services.server/shop";
-import { type FormEvent, useEffect, useMemo, useState } from "react";
+import {
+    type FormEvent,
+    useCallback,
+    useEffect,
+    useMemo,
+    useState,
+} from "react";
 import { useTranslation } from "react-i18next";
 import { Form, useFetcher, useNavigation } from "react-router";
+import { ImageUploadField } from "./ImageUploadField";
 
 type ExplorerTabProps = {
     initialExplorerSettings: ExplorerSettings | null;
@@ -58,7 +65,12 @@ export function ExplorerTab({
 
     useEffect(() => {
         if (!fetcher.data?.success) return;
-        shopify.toast.show(fetcher.data.message);
+        if (
+            "message" in fetcher.data &&
+            typeof fetcher.data.message === "string"
+        ) {
+            shopify.toast.show(fetcher.data.message);
+        }
     }, [fetcher.data]);
 
     const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
@@ -69,6 +81,43 @@ export function ExplorerTab({
             action: "/app/appearance",
         });
     };
+
+    // Auto-save explorer settings with an override for the changed field
+    const autoSave = useCallback(
+        (overrides: Partial<ExplorerSettings>) => {
+            const settings: ExplorerSettings = {
+                enabled,
+                logoUrl,
+                heroImageUrl,
+                description,
+                ...overrides,
+            };
+            fetcher.submit(
+                {
+                    intent: "saveExplorer",
+                    explorerSettings: JSON.stringify(settings),
+                },
+                { method: "post", action: "/app/appearance" }
+            );
+        },
+        [enabled, logoUrl, heroImageUrl, description, fetcher]
+    );
+
+    const handleLogoUploadSuccess = useCallback(
+        (url: string) => {
+            setLogoUrl(url);
+            autoSave({ logoUrl: url });
+        },
+        [autoSave]
+    );
+
+    const handleHeroUploadSuccess = useCallback(
+        (url: string) => {
+            setHeroImageUrl(url);
+            autoSave({ heroImageUrl: url });
+        },
+        [autoSave]
+    );
 
     return (
         <Form onSubmit={handleSubmit}>
@@ -96,24 +145,20 @@ export function ExplorerTab({
                         }
                     />
 
-                    <s-text-field
-                        label={t("appearance.explorer.logoLabel")}
-                        placeholder="https://..."
+                    <ImageUploadField
+                        type="logo"
                         value={logoUrl}
-                        onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                            setLogoUrl(e.currentTarget.value)
-                        }
-                        autocomplete="off"
+                        onChange={setLogoUrl}
+                        onUploadSuccess={handleLogoUploadSuccess}
+                        label={t("appearance.explorer.logoLabel")}
                     />
 
-                    <s-text-field
-                        label={t("appearance.explorer.heroLabel")}
-                        placeholder="https://..."
+                    <ImageUploadField
+                        type="hero"
                         value={heroImageUrl}
-                        onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                            setHeroImageUrl(e.currentTarget.value)
-                        }
-                        autocomplete="off"
+                        onChange={setHeroImageUrl}
+                        onUploadSuccess={handleHeroUploadSuccess}
+                        label={t("appearance.explorer.heroLabel")}
                     />
 
                     <s-text-area

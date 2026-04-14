@@ -1,5 +1,6 @@
 import { useTranslation } from "react-i18next";
 import type { I18nCustomizations } from "../../services.server/metafields";
+import { ImageUploadField } from "../Appearance/ImageUploadField";
 import { SharingPageSection, SharingSection } from "./Section";
 
 // Single Language Fields Component
@@ -83,9 +84,11 @@ export function MultiLanguageFields({
 export function LogoField({
     logoUrl,
     onUpdate,
+    onUploadSuccess,
 }: {
     logoUrl: string;
     onUpdate: (logoUrl: string) => void;
+    onUploadSuccess: (url: string) => void;
 }) {
     const { t } = useTranslation();
     return (
@@ -93,12 +96,13 @@ export function LogoField({
             <s-stack gap="base">
                 <s-heading>{t("customizations.logo.title")}</s-heading>
                 <s-text>{t("customizations.logo.description")}</s-text>
-                <s-text-area
+                <ImageUploadField
+                    type="logo"
+                    value={logoUrl || ""}
+                    onChange={onUpdate}
+                    onUploadSuccess={onUploadSuccess}
                     label={t("customizations.fields.logoUrl.label")}
                     placeholder={t("customizations.fields.logoUrl.placeholder")}
-                    value={logoUrl || ""}
-                    onChange={(e) => onUpdate(e.currentTarget.value)}
-                    autocomplete="off"
                 />
             </s-stack>
         </s-section>

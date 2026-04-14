@@ -17,7 +17,10 @@ import { useEffect, useMemo, useState } from "preact/hooks";
 import { useClientReady } from "@/hooks/useClientReady";
 import { useLightDomStyles } from "@/hooks/useLightDomStyles";
 import { usePlacement } from "@/hooks/usePlacement";
-import { applyRewardPlaceholder, formatEstimatedReward } from "@/utils/formatReward";
+import {
+    applyRewardPlaceholder,
+    formatEstimatedReward,
+} from "@/utils/formatReward";
 import { useShareModal } from "../ButtonShare/hooks/useShareModal";
 import { GiftIcon } from "../icons/GiftIcon";
 import {

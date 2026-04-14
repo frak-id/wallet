@@ -4,7 +4,7 @@ import type {
     I18nCustomizations,
     MultiLanguageI18nCustomizations,
 } from "app/services.server/metafields";
-import { type FormEvent, useEffect, useState } from "react";
+import { type FormEvent, useCallback, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Form, useFetcher, useNavigation } from "react-router";
 import {
@@ -54,7 +54,12 @@ export function CustomizationsTab({
 
     useEffect(() => {
         if (!fetcher.data?.success) return;
-        shopify.toast.show(fetcher.data.message);
+        if (
+            "message" in fetcher.data &&
+            typeof fetcher.data.message === "string"
+        ) {
+            shopify.toast.show(fetcher.data.message);
+        }
     }, [fetcher.data]);
 
     // Handle single language updates
@@ -103,6 +108,23 @@ export function CustomizationsTab({
         });
     };
 
+    // Auto-save when a logo is uploaded or cleared
+    const handleLogoUploadSuccess = useCallback(
+        (url: string) => {
+            const newAppearance = { ...appearanceMetafield, logoUrl: url };
+            setAppearanceMetafield(newAppearance);
+            fetcher.submit(
+                {
+                    intent: "save",
+                    appearanceMetafield: JSON.stringify(newAppearance),
+                    customizations: JSON.stringify(customizations),
+                },
+                { method: "post", action: "/app/appearance" }
+            );
+        },
+        [appearanceMetafield, customizations, fetcher]
+    );
+
     return (
         <s-stack gap="large">
             <s-section>
@@ -145,6 +167,7 @@ export function CustomizationsTab({
                                 logoUrl: value,
                             })
                         }
+                        onUploadSuccess={handleLogoUploadSuccess}
                     />
 
                     {languageMode === "single" ? (

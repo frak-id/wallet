@@ -7,6 +7,7 @@ import {
     S3Client,
 } from "@aws-sdk/client-s3";
 import { log } from "@backend-infrastructure";
+import { isRunningLocally } from "@frak-labs/app-essentials";
 
 /**
  * Image type determining the storage key
@@ -33,7 +34,7 @@ export class MediaStorageRepository {
             },
         });
 
-        const stage = process.env.STAGE ?? "dev";
+        const stage = isRunningLocally ? "local" : (process.env.STAGE ?? "dev");
         this.bucketName = `images-${stage}`;
         this.cdnBaseUrl = process.env.RUSTFS_CDN_BASE_URL;
     }
