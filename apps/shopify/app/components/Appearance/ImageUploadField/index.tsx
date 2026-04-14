@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect } from "react";
 import { useDropzone } from "react-dropzone";
 import { useFetcher } from "react-router";
 import styles from "./index.module.css";
@@ -34,7 +34,6 @@ export function ImageUploadField({
     placeholder = "https://...",
 }: ImageUploadFieldProps) {
     const mediaFetcher = useFetcher();
-    const [imgError, setImgError] = useState(false);
 
     const isPending = mediaFetcher.state !== "idle";
 
@@ -58,7 +57,6 @@ export function ImageUploadField({
             const file = files[0];
             if (!file) return;
 
-            setImgError(false);
             const formData = new FormData();
             formData.set("intent", "uploadMedia");
             formData.set("type", type);
@@ -74,7 +72,6 @@ export function ImageUploadField({
     );
 
     const handleClear = useCallback(() => {
-        setImgError(false);
         const formData = new FormData();
         formData.set("intent", "deleteMedia");
         formData.set("type", type);
@@ -93,7 +90,6 @@ export function ImageUploadField({
     });
 
     const errorMessage = getUploadErrorMessage(mediaFetcher.data);
-    const showPreview = value && !imgError;
     const isUploadSuccess =
         mediaFetcher.data &&
         (mediaFetcher.data as { success: boolean }).success &&
@@ -108,10 +104,9 @@ export function ImageUploadField({
                             label={label}
                             placeholder={placeholder}
                             value={value}
-                            onChange={(e) => {
-                                onChange(e.currentTarget.value ?? "");
-                                setImgError(false);
-                            }}
+                            onChange={(e) =>
+                                onChange(e.currentTarget.value ?? "")
+                            }
                             autocomplete="off"
                         />
                     </div>
@@ -146,18 +141,6 @@ export function ImageUploadField({
                     <p className={styles.success}>Image uploaded</p>
                 )}
             </div>
-            {showPreview && (
-                <img
-                    src={value}
-                    alt={`${type} preview`}
-                    className={
-                        type === "hero"
-                            ? styles.previewHero
-                            : styles.previewLogo
-                    }
-                    onError={() => setImgError(true)}
-                />
-            )}
         </div>
     );
 }

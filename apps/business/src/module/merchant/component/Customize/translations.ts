@@ -27,10 +27,9 @@ export const EMBEDDED_TRANSLATION_GROUPS = {
  */
 export const SHARING_PAGE_TRANSLATION_GROUPS = {
     "Sharing Page": [
-        "sdk.sharingPage.dismiss",
         "sdk.sharingPage.reward.title",
         "sdk.sharingPage.reward.tagline",
-        "sdk.sharingPage.card.amount",
+        "sdk.sharingPage.dismiss",
         "sdk.sharingPage.card.label",
         "sdk.sharingPage.card.tagline1",
         "sdk.sharingPage.card.tagline2",
@@ -40,28 +39,9 @@ export const SHARING_PAGE_TRANSLATION_GROUPS = {
         "sdk.sharingPage.steps.2",
         "sdk.sharingPage.steps.3",
     ],
-    "Sharing FAQ": [
-        "sdk.sharingPage.faq.title",
-        "sdk.sharingPage.faq.q1",
-        "sdk.sharingPage.faq.a1",
-        "sdk.sharingPage.faq.q2",
-        "sdk.sharingPage.faq.a2",
-        "sdk.sharingPage.faq.q3",
-        "sdk.sharingPage.faq.a3",
-        "sdk.sharingPage.faq.q4",
-        "sdk.sharingPage.faq.a4",
-        "sdk.sharingPage.faq.q5",
-        "sdk.sharingPage.faq.a5",
-    ],
     "Post-Share Confirmation": [
         "sdk.sharingPage.confirmation.title",
         "sdk.sharingPage.confirmation.subtitle",
-        "sdk.sharingPage.confirmation.benefits.wallet.title",
-        "sdk.sharingPage.confirmation.benefits.wallet.description",
-        "sdk.sharingPage.confirmation.benefits.notify.title",
-        "sdk.sharingPage.confirmation.benefits.notify.description",
-        "sdk.sharingPage.confirmation.benefits.cashout.title",
-        "sdk.sharingPage.confirmation.benefits.cashout.description",
         "sdk.sharingPage.confirmation.cta",
         "sdk.sharingPage.confirmation.shareAgain",
     ],
@@ -255,11 +235,6 @@ export const TRANSLATION_KEY_META: Record<
         description:
             "Description below the reward title explaining the sharing incentive",
     },
-    "sdk.sharingPage.card.amount": {
-        label: "Card amount",
-        description:
-            "Large reward amount displayed on the card (uses {{ estimatedReward }} variable)",
-    },
     "sdk.sharingPage.card.label": {
         label: "Card label",
         description:
@@ -287,50 +262,6 @@ export const TRANSLATION_KEY_META: Record<
         label: "Step 3",
         description: "Third step instruction (collect earnings)",
     },
-    "sdk.sharingPage.faq.title": {
-        label: "FAQ title",
-        description: "Heading above the FAQ section",
-    },
-    "sdk.sharingPage.faq.q1": {
-        label: "FAQ question 1",
-        description: "First frequently asked question",
-    },
-    "sdk.sharingPage.faq.a1": {
-        label: "FAQ answer 1",
-        description: "Answer to the first question",
-    },
-    "sdk.sharingPage.faq.q2": {
-        label: "FAQ question 2",
-        description: "Second frequently asked question",
-    },
-    "sdk.sharingPage.faq.a2": {
-        label: "FAQ answer 2",
-        description: "Answer to the second question",
-    },
-    "sdk.sharingPage.faq.q3": {
-        label: "FAQ question 3",
-        description: "Third frequently asked question",
-    },
-    "sdk.sharingPage.faq.a3": {
-        label: "FAQ answer 3",
-        description: "Answer to the third question",
-    },
-    "sdk.sharingPage.faq.q4": {
-        label: "FAQ question 4",
-        description: "Fourth frequently asked question",
-    },
-    "sdk.sharingPage.faq.a4": {
-        label: "FAQ answer 4",
-        description: "Answer to the fourth question",
-    },
-    "sdk.sharingPage.faq.q5": {
-        label: "FAQ question 5",
-        description: "Fifth frequently asked question",
-    },
-    "sdk.sharingPage.faq.a5": {
-        label: "FAQ answer 5",
-        description: "Answer to the fifth question",
-    },
     "sdk.sharingPage.confirmation.title": {
         label: "Confirmation title",
         description: "Heading shown after a successful share",
@@ -338,30 +269,6 @@ export const TRANSLATION_KEY_META: Record<
     "sdk.sharingPage.confirmation.subtitle": {
         label: "Confirmation subtitle",
         description: "Description below the confirmation title",
-    },
-    "sdk.sharingPage.confirmation.benefits.wallet.title": {
-        label: "Wallet benefit title",
-        description: "Title for the wallet creation benefit",
-    },
-    "sdk.sharingPage.confirmation.benefits.wallet.description": {
-        label: "Wallet benefit description",
-        description: "Description for the wallet creation benefit",
-    },
-    "sdk.sharingPage.confirmation.benefits.notify.title": {
-        label: "Notification benefit title",
-        description: "Title for the earnings notification benefit",
-    },
-    "sdk.sharingPage.confirmation.benefits.notify.description": {
-        label: "Notification benefit description",
-        description: "Description for the earnings notification benefit",
-    },
-    "sdk.sharingPage.confirmation.benefits.cashout.title": {
-        label: "Cashout benefit title",
-        description: "Title for the cashout benefit",
-    },
-    "sdk.sharingPage.confirmation.benefits.cashout.description": {
-        label: "Cashout benefit description",
-        description: "Description for the cashout benefit",
     },
     "sdk.sharingPage.confirmation.cta": {
         label: "Confirmation CTA",

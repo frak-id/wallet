@@ -11,7 +11,7 @@ import {
 } from "@/module/forms/Form";
 import styles from "../index.module.css";
 import type {
-    PlacementSettingsFormValues,
+    ComponentSettingsFormValues,
     PostPurchaseFormValues,
 } from "../types";
 
@@ -35,7 +35,7 @@ export function getPostPurchaseDefaults(
 export function PostPurchaseFields({
     form,
 }: {
-    form: UseFormReturn<PlacementSettingsFormValues>;
+    form: UseFormReturn<ComponentSettingsFormValues>;
 }) {
     return (
         <div className={styles.customize__settingsGrid}>

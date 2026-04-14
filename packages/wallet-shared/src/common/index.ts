@@ -1,4 +1,7 @@
 // Analytics
+
+// Icons
+export { LogoFrakWithName } from "@frak-labs/design-system/icons";
 export {
     openPanel,
     setProfileId,
@@ -8,13 +11,11 @@ export {
     trackGenericEvent,
     updateGlobalProperties,
 } from "./analytics";
-
 // API
 export {
     authenticatedBackendApi,
     authenticatedWalletApi,
 } from "./api/backendClient";
-
 // Components
 export {
     Drawer,
@@ -40,8 +41,6 @@ export {
 export { useGetSafeSdkSession } from "./hook/useGetSafeSdkSession";
 export { useMountedTimeout } from "./hook/useMountedTimeout";
 export { useSessionFlag } from "./hook/useSessionFlag";
-// Icons
-export { LogoFrakWithName } from "./icons/LogoFrakWithName";
 // Lib
 export { isInIframe } from "./lib/inApp";
 export { ua } from "./lib/ua";

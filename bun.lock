@@ -46,6 +46,7 @@
         "@frak-labs/core-sdk": "workspace:*",
         "@frak-labs/react-sdk": "workspace:*",
         "@frak-labs/ui": "workspace:*",
+        "@frak-labs/ui-preview": "workspace:*",
         "@lucasmogari/react-pagination": "^2.1.0",
         "@openpanel/web": "^1.2.0",
         "@radix-ui/react-collapsible": "^1.1.12",
@@ -88,6 +89,7 @@
         "@types/node": "catalog:",
         "@types/react": "catalog:",
         "@types/react-dom": "catalog:",
+        "@vanilla-extract/vite-plugin": "^5.2.0",
         "@vitejs/plugin-react": "catalog:",
         "@vitest/coverage-v8": "^4.1.0",
         "@vitest/ui": "^4.1.0",
@@ -155,6 +157,7 @@
         "@frak-labs/backend-elysia": "workspace:*",
         "@frak-labs/core-sdk": "workspace:*",
         "@frak-labs/react-sdk": "workspace:*",
+        "@frak-labs/ui-preview": "workspace:*",
         "@react-router/node": "^7.13.1",
         "@react-router/serve": "^7.13.1",
         "@shopify/shopify-api": "^13.0.0",
@@ -195,6 +198,7 @@
         "@types/node": "catalog:",
         "@types/react": "catalog:",
         "@types/react-dom": "catalog:",
+        "@vanilla-extract/vite-plugin": "^5.2.0",
         "bun-types": "latest",
         "drizzle-kit": "^0.31.10",
         "preact": "^10.29.0",
@@ -487,6 +491,24 @@
         "react-dom": "catalog:",
         "typescript": "^6.0.2",
         "vitest": "^4.1.4",
+      },
+    },
+    "packages/ui-preview": {
+      "name": "@frak-labs/ui-preview",
+      "version": "0.0.0",
+      "dependencies": {
+        "@frak-labs/core-sdk": "workspace:*",
+        "@frak-labs/design-system": "workspace:*",
+        "@vanilla-extract/css": "^1.19.1",
+      },
+      "devDependencies": {
+        "@types/react": "catalog:",
+        "@types/react-dom": "catalog:",
+        "typescript": "catalog:",
+      },
+      "peerDependencies": {
+        "react": ">=19.0.0",
+        "react-dom": ">=19.0.0",
       },
     },
     "packages/wallet-shared": {
@@ -1095,6 +1117,8 @@
     "@frak-labs/test-foundation": ["@frak-labs/test-foundation@workspace:packages/test-foundation"],
 
     "@frak-labs/ui": ["@frak-labs/ui@workspace:packages/ui"],
+
+    "@frak-labs/ui-preview": ["@frak-labs/ui-preview@workspace:packages/ui-preview"],
 
     "@frak-labs/wallet-shared": ["@frak-labs/wallet-shared@workspace:packages/wallet-shared"],
 

@@ -1,6 +1,8 @@
+import { ExplorerCardPreview } from "@frak-labs/ui-preview";
 import { useCallback, useEffect, useMemo } from "react";
 import { useForm } from "react-hook-form";
 import { Panel } from "@/module/common/component/Panel";
+import { PreviewWrapper } from "@/module/common/component/PreviewWrapper";
 import { Row } from "@/module/common/component/Row";
 import {
     Form,
@@ -178,6 +180,20 @@ export function ExplorerSettings({ merchantId }: { merchantId: string }) {
                     onDiscard={() => form.reset(formValues)}
                     onSubmit={() => form.handleSubmit(onSubmit)()}
                 />
+                {(form.watch("logoUrl") ||
+                    form.watch("heroImageUrl") ||
+                    form.watch("description")) && (
+                    <PreviewWrapper label="How your brand appears in the explorer">
+                        <ExplorerCardPreview
+                            name={merchant.name}
+                            heroImageUrl={
+                                form.watch("heroImageUrl") || undefined
+                            }
+                            logoUrl={form.watch("logoUrl") || undefined}
+                            description={form.watch("description") || undefined}
+                        />
+                    </PreviewWrapper>
+                )}
             </Panel>
         </Form>
     );

@@ -41,26 +41,6 @@
     background-color: #fff5f6;
 }
 
-.previewLogo {
-    width: 64px;
-    height: 64px;
-    object-fit: contain;
-    border-radius: 6px;
-    border: var(--frak-input-border-width) solid var(--frak-input-border-color);
-    background-color: var(--frak-input-background-color);
-    flex-shrink: 0;
-}
-
-.previewHero {
-    max-width: 160px;
-    max-height: 100px;
-    object-fit: contain;
-    border-radius: 6px;
-    border: var(--frak-input-border-width) solid var(--frak-input-border-color);
-    background-color: var(--frak-input-background-color);
-    flex-shrink: 0;
-}
-
 .dropzone {
     display: flex;
     align-items: center;

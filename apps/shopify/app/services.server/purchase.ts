@@ -35,7 +35,7 @@ export async function startupPurchase(
     }
 
     // Start the one time purchase
-    const generatedName = `Frak bank - ${amount.toFixed(2)}usd - ${new Date().toISOString()}`;
+    const generatedName = `Frak bank - ${amount.toFixed(2)}${info.preferredCurrency ?? "eur"} - ${new Date().toISOString()}`;
     const response = await ctx.admin.graphql(
         `#graphql
         mutation AppPurchaseOneTimeCreate($name: String!, $price: MoneyInput!, $returnUrl: URL!, $test: Boolean!) {
@@ -58,7 +58,7 @@ export async function startupPurchase(
                 price: {
                     amount: amount,
                     currencyCode:
-                        info.preferredCurrency?.toUpperCase() ?? "USD",
+                        info.preferredCurrency?.toUpperCase() ?? "EUR",
                 },
                 test: process.env.STAGE !== "prod",
             },
@@ -96,7 +96,7 @@ export async function startupPurchase(
         confirmationUrl: purchaseData.confirmationUrl,
         shop: info.domain,
         amount: amount.toString(),
-        currency: "usd",
+        currency: info.preferredCurrency ?? "eur",
         status: "pending",
         bank,
     });

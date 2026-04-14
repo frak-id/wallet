@@ -7,9 +7,11 @@ import { SharingPageSection, SharingSection } from "./Section";
 export function SingleLanguageFields({
     customizations,
     onUpdate,
+    logoUrl,
 }: {
     customizations: I18nCustomizations;
     onUpdate: (key: string, value: string) => void;
+    logoUrl?: string;
 }) {
     // Use 'en' as the default language for single mode and merge logoUrl if provided
     const currentValues = customizations.en || {};
@@ -20,6 +22,7 @@ export function SingleLanguageFields({
                 values={currentValues}
                 onUpdate={onUpdate}
                 language="single"
+                logoUrl={logoUrl}
             />
             <SharingSection
                 values={currentValues}
@@ -33,9 +36,11 @@ export function SingleLanguageFields({
 export function MultiLanguageFields({
     customizations,
     onUpdate,
+    logoUrl,
 }: {
     customizations: I18nCustomizations;
     onUpdate: (language: "fr" | "en", key: string, value: string) => void;
+    logoUrl?: string;
 }) {
     // Merge logoUrl into per-language values so the preview can access it
     const frValues = customizations.fr || {};
@@ -51,6 +56,7 @@ export function MultiLanguageFields({
                         values={frValues}
                         onUpdate={(key, value) => onUpdate("fr", key, value)}
                         language="fr"
+                        logoUrl={logoUrl}
                     />
                     <SharingSection
                         values={frValues}
@@ -68,6 +74,7 @@ export function MultiLanguageFields({
                         values={enValues}
                         onUpdate={(key, value) => onUpdate("en", key, value)}
                         language="en"
+                        logoUrl={logoUrl}
                     />
                     <SharingSection
                         values={enValues}

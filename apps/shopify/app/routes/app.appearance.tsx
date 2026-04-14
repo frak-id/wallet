@@ -30,7 +30,8 @@ import { authenticate } from "app/shopify.server";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import type { ActionFunctionArgs, LoaderFunctionArgs } from "react-router";
-import { data, useLoaderData } from "react-router";
+import { data, useLoaderData, useRouteLoaderData } from "react-router";
+import type { loader as appLoader } from "./app";
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
     const context = await authenticate.admin(request);
@@ -245,6 +246,8 @@ export default function AppearancePage() {
         explorerSettings,
         shopBrand,
     } = useLoaderData<typeof loader>();
+    const rootData = useRouteLoaderData<typeof appLoader>("routes/app");
+    const shopName = rootData?.shop?.name ?? "My Store";
     const { t } = useTranslation();
     const [selectedTab, setSelectedTab] = useState(0);
 
@@ -286,6 +289,7 @@ export default function AppearancePage() {
                         initialExplorerSettings={explorerSettings}
                         shopBrand={shopBrand}
                         sdkLogoUrl={appearanceMetafield.logoUrl || ""}
+                        shopName={shopName}
                     />
                 );
             case 2:

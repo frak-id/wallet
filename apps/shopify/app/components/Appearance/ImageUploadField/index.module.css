@@ -99,23 +99,3 @@
     font-size: 13px;
     color: #008060;
 }
-
-.previewLogo {
-    width: 64px;
-    height: 64px;
-    object-fit: contain;
-    border-radius: 6px;
-    border: 1px solid #c9cccf;
-    background: #f6f6f7;
-    flex-shrink: 0;
-}
-
-.previewHero {
-    max-width: 160px;
-    max-height: 100px;
-    object-fit: contain;
-    border-radius: 6px;
-    border: 1px solid #c9cccf;
-    background: #f6f6f7;
-    flex-shrink: 0;
-}

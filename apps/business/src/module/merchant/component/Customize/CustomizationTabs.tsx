@@ -32,6 +32,12 @@ export function CustomizationTabs({
 
     return (
         <Panel title={"SDK Customization"}>
+            <p className={styles.customize__fieldDescription}>
+                Global defaults apply to every SDK component.
+                Placements are variants you can use on the same website to
+                display your products in different ways — each with its own
+                text, styles, and behavior.
+            </p>
             <div className={styles.customize__tabs}>
                 <button
                     type="button"

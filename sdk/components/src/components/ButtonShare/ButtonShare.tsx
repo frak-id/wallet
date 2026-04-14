@@ -1,6 +1,7 @@
 import { type InteractionTypeKey, trackEvent } from "@frak-labs/core-sdk";
 import { useCallback, useMemo } from "preact/hooks";
 import { useClientReady } from "@/hooks/useClientReady";
+import { useGlobalComponents } from "@/hooks/useGlobalComponents";
 import { useLightDomStyles } from "@/hooks/useLightDomStyles";
 import { usePlacement } from "@/hooks/usePlacement";
 import { useReward } from "@/hooks/useReward";
@@ -62,7 +63,9 @@ export function ButtonShare({
     clickAction: rawClickAction,
 }: ButtonShareProps) {
     const placement = usePlacement(placementId);
-    const componentConfig = placement?.components?.buttonShare;
+    const globalComponents = useGlobalComponents();
+    const componentConfig =
+        placement?.components?.buttonShare ?? globalComponents?.buttonShare;
 
     useLightDomStyles("frak-button-share", placementId, componentConfig?.css);
 

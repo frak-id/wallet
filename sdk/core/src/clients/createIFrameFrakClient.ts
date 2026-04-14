@@ -318,6 +318,7 @@ async function postConnectionSetup({
                       css: raw.css,
                       translations: raw.translations,
                       placements: raw.placements,
+                      components: raw.components,
                   }
                 : {
                       isResolved: true,

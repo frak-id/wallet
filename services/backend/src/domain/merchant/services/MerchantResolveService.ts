@@ -60,6 +60,12 @@ export class MerchantResolveService {
             result.placements = processedPlacements;
         }
 
+        if (result.components) {
+            result.components = this.processGlobalComponentsCss(
+                result.components
+            );
+        }
+
         return result;
     }
 
@@ -282,6 +288,67 @@ export class MerchantResolveService {
             css: sdkConfig.css ?? undefined,
             ...(mergedTranslations && { translations: mergedTranslations }),
             ...(resolvedPlacements && { placements: resolvedPlacements }),
+            ...(sdkConfig.components && {
+                components: this.buildResolvedComponents(sdkConfig.components),
+            }),
+        };
+    }
+
+    private processGlobalComponentsCss(
+        components: NonNullable<SdkConfig["components"]>
+    ): NonNullable<SdkConfig["components"]> {
+        const result = { ...components };
+
+        if (result.buttonShare?.rawCss !== undefined) {
+            result.buttonShare = {
+                ...result.buttonShare,
+                css: processRawCss(result.buttonShare.rawCss),
+            };
+        }
+
+        if (result.buttonWallet?.rawCss !== undefined) {
+            result.buttonWallet = {
+                ...result.buttonWallet,
+                css: processRawCss(result.buttonWallet.rawCss),
+            };
+        }
+
+        if (result.openInApp?.rawCss !== undefined) {
+            result.openInApp = {
+                ...result.openInApp,
+                css: processRawCss(result.openInApp.rawCss),
+            };
+        }
+
+        if (result.banner?.rawCss !== undefined) {
+            result.banner = {
+                ...result.banner,
+                css: processRawCss(result.banner.rawCss),
+            };
+        }
+
+        return result;
+    }
+
+    private buildResolvedComponents(
+        components: NonNullable<SdkConfig["components"]>
+    ): ResolvedPlacement["components"] {
+        return {
+            ...(components.buttonShare && {
+                buttonShare: stripRawCss(components.buttonShare),
+            }),
+            ...(components.buttonWallet && {
+                buttonWallet: stripRawCss(components.buttonWallet),
+            }),
+            ...(components.openInApp && {
+                openInApp: stripRawCss(components.openInApp),
+            }),
+            ...(components.postPurchase && {
+                postPurchase: stripRawCss(components.postPurchase),
+            }),
+            ...(components.banner && {
+                banner: stripRawCss(components.banner),
+            }),
         };
     }
 }

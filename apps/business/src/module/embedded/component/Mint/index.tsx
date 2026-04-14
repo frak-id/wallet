@@ -26,7 +26,7 @@ export function EmbeddedMint() {
             name: name ?? undefined,
             domain,
             setupCode,
-            currency: currency ?? ("usde" as Stablecoin),
+            currency: currency ?? ("eure" as Stablecoin),
         };
     }, [search]);
 

@@ -10,12 +10,12 @@ import {
 } from "@/module/forms/Form";
 import { Switch } from "@/module/forms/Switch";
 import styles from "../index.module.css";
-import type { PlacementSettingsFormValues } from "../types";
+import type { ComponentSettingsFormValues } from "../types";
 
 export function ButtonShareFields({
     form,
 }: {
-    form: UseFormReturn<PlacementSettingsFormValues>;
+    form: UseFormReturn<ComponentSettingsFormValues>;
 }) {
     return (
         <div className={styles.customize__settingsGrid}>

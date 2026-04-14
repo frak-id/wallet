@@ -1,8 +1,15 @@
 import type { SdkConfig } from "@frak-labs/backend-elysia/domain/merchant";
+import type { Currency } from "@frak-labs/core-sdk";
 import { Input } from "@frak-labs/ui/component/forms/Input";
+import {
+    BannerPreview,
+    PostPurchasePreview,
+    ShareButtonPreview,
+} from "@frak-labs/ui-preview";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { useForm } from "react-hook-form";
+import { type UseFormReturn, useForm } from "react-hook-form";
 import { Panel } from "@/module/common/component/Panel";
+import { PreviewWrapper } from "@/module/common/component/PreviewWrapper";
 import {
     Form,
     FormControl,
@@ -27,7 +34,8 @@ import {
     PlacementTranslationsPanel,
 } from "./PlacementPanels";
 import { COMPONENT_LABELS } from "./translations";
-import type { ComponentType, PlacementSettingsFormValues } from "./types";
+import type { ComponentSettingsFormValues, ComponentType } from "./types";
+import { COMPONENT_TYPES } from "./types";
 import { updatePlacement, valueOrUndefined } from "./utils";
 
 export function PlacementCustomization({
@@ -77,16 +85,10 @@ export function PlacementCustomization({
     );
 }
 
-const COMPONENT_TYPES: ComponentType[] = [
-    "buttonShare",
-    "postPurchase",
-    "banner",
-];
-
 function getPlacementFormValues(
     sdkConfig: SdkConfig,
     placementId: string
-): PlacementSettingsFormValues {
+): ComponentSettingsFormValues {
     const placement = sdkConfig.placements?.[placementId];
     const components = placement?.components;
     const bs = components?.buttonShare;
@@ -129,7 +131,7 @@ function PlacementSettingsPanel({
         [sdkConfig.placements, placementId]
     );
 
-    const form = useForm<PlacementSettingsFormValues>({
+    const form = useForm<ComponentSettingsFormValues>({
         values,
         defaultValues: {
             targetInteraction: "",
@@ -175,7 +177,7 @@ function PlacementSettingsPanel({
     }, [isSuccess, form.reset, form.getValues, form]);
 
     const onSubmit = useCallback(
-        (currentValues: PlacementSettingsFormValues) => {
+        (currentValues: ComponentSettingsFormValues) => {
             const buttonShare = {
                 text: valueOrUndefined(currentValues.buttonShare.text),
                 noRewardText: valueOrUndefined(
@@ -296,6 +298,15 @@ function PlacementSettingsPanel({
                     ))}
                 </div>
 
+                <PreviewWrapper>
+                    <ComponentPreview
+                        selectedComponent={selectedComponent}
+                        form={form}
+                        currency={(sdkConfig.currency ?? "eur") as Currency}
+                        shopName={sdkConfig.name ?? "My Store"}
+                    />
+                </PreviewWrapper>
+
                 {selectedComponent === "buttonShare" && (
                     <ButtonShareFields form={form} />
                 )}
@@ -314,4 +325,59 @@ function PlacementSettingsPanel({
             </Panel>
         </Form>
     );
+}
+
+export function ComponentPreview({
+    selectedComponent,
+    form,
+    currency,
+    shopName,
+}: {
+    selectedComponent: ComponentType;
+    form: UseFormReturn<ComponentSettingsFormValues>;
+    currency: Currency;
+    shopName: string;
+}) {
+    const values = form.watch();
+
+    switch (selectedComponent) {
+        case "buttonShare":
+            return (
+                <ShareButtonPreview
+                    text={values.buttonShare.text || "Share and earn!"}
+                    currency={currency}
+                    shopName={shopName}
+                />
+            );
+        case "postPurchase":
+            return (
+                <PostPurchasePreview
+                    messageText={
+                        values.postPurchase.refereeText ||
+                        "You just earned {REWARD}! Share with friends to earn even more."
+                    }
+                    ctaText={
+                        values.postPurchase.ctaText || "Share & earn {REWARD}"
+                    }
+                    currency={currency}
+                    shopName={shopName}
+                />
+            );
+        case "banner":
+            return (
+                <BannerPreview
+                    title={
+                        values.banner.referralTitle ||
+                        "Earn {REWARD} on purchases"
+                    }
+                    description={
+                        values.banner.referralDescription ||
+                        "Earn rewards after your purchase via the Frak partner app."
+                    }
+                    ctaText={values.banner.referralCta || "Got it"}
+                    currency={currency}
+                    shopName={shopName}
+                />
+            );
+    }
 }

@@ -78,6 +78,8 @@ export type ResolvedSdkConfig = {
     css?: string;
     translations?: Record<string, string>;
     placements?: Record<string, ResolvedPlacement>;
+    /** Global component defaults (used when no placement override exists) */
+    components?: ResolvedPlacement["components"];
 };
 
 /**
@@ -120,4 +122,7 @@ export type SdkResolvedConfig = {
 
     /** Named placements (keyed by placement ID) */
     placements?: Record<string, ResolvedPlacement>;
+
+    /** Global component defaults (fallback for placement-level overrides) */
+    components?: ResolvedPlacement["components"];
 };

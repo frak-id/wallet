@@ -1,12 +1,8 @@
 import type { SVGProps } from "react";
 
-export const LogoFrakWithName = (
-    props: SVGProps<SVGSVGElement> & {
-        height?: number;
-        width?: number;
-        color?: string;
-    }
-) => {
+export function LogoFrakWithName(
+    props: SVGProps<SVGSVGElement> & { color?: string }
+) {
     return (
         <svg
             xmlns="http://www.w3.org/2000/svg"
@@ -46,4 +42,4 @@ export const LogoFrakWithName = (
             </g>
         </svg>
     );
-};
+}

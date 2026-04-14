@@ -9,7 +9,7 @@ import { Form } from "@/module/forms/Form";
 import { FormActions } from "@/module/forms/FormActions";
 import { useMerchantUpdate } from "@/module/merchant/hook/useMerchantUpdate";
 import styles from "./index.module.css";
-import { LoginPreview } from "./ModalPreview";
+import { SharingPagePreview } from "./ModalPreview";
 import { CssEditor, TranslationEditor } from "./TranslationEditor";
 import type {
     CssFormValues,
@@ -168,7 +168,7 @@ export function PlacementTranslationsPanel({
     return (
         <Form {...form}>
             <Panel title={`Placement translations · ${placementId}`}>
-                <LoginPreview
+                <SharingPagePreview
                     form={form}
                     logoUrl={sdkConfig.logoUrl ?? undefined}
                     currency={sdkConfig.currency ?? undefined}

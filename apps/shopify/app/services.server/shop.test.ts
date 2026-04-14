@@ -58,15 +58,15 @@ describe("currency normalization", () => {
         expect(normalizePreferredCurrency("GBP")).toBe("gbp");
     });
 
-    it("falls back to usd for unsupported currency", () => {
-        expect(normalizePreferredCurrency("CAD")).toBe("usd");
+    it("falls back to eur for unsupported currency", () => {
+        expect(normalizePreferredCurrency("CAD")).toBe("eur");
     });
 
-    it("falls back to usd when undefined", () => {
-        expect(normalizePreferredCurrency(undefined)).toBe("usd");
+    it("falls back to eur when undefined", () => {
+        expect(normalizePreferredCurrency(undefined)).toBe("eur");
     });
 
-    it("falls back to usd for JPY", () => {
-        expect(normalizePreferredCurrency("JPY")).toBe("usd");
+    it("falls back to eur for JPY", () => {
+        expect(normalizePreferredCurrency("JPY")).toBe("eur");
     });
 });

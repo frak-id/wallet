@@ -1,10 +1,13 @@
-import styles from "./index.module.css";
+import * as styles from "./styles.css";
 
 type SocialPreviewProps = {
     title: string;
     text: string;
 };
 
+/**
+ * Preview of how a referral link looks when shared on social media / messaging apps
+ */
 export function SocialPreview({ title, text }: SocialPreviewProps) {
     return (
         <div className={styles.socialPreview}>
@@ -44,7 +47,8 @@ function SocialPreviewInput() {
             <input
                 type="text"
                 className={styles.messageInput}
-                placeholder="Tapez un message"
+                placeholder="Type a message"
+                readOnly
             />
             <button type="button" className={styles.emojiButton}>
                 😊

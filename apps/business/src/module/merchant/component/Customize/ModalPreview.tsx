@@ -1,122 +1,55 @@
-import { type Currency, formatAmount } from "@frak-labs/core-sdk";
-import { Fragment } from "react";
+import { SharingPreview, SharingSuccessPreview } from "@frak-labs/ui-preview";
 import type { UseFormReturn } from "react-hook-form";
 import styles from "./ModalPreview.module.css";
+import { PreviewWrapper } from "@/module/common/component/PreviewWrapper";
 import {
     TRANSLATION_LANG_FIELDS,
     type TranslationFormValues,
     type TranslationLang,
 } from "./utils";
 
-type PreviewCardProps = {
-    title: string;
-    description: string;
-    text?: string;
-    button?: string;
-    logoUrl?: string;
-    currency?: string;
-};
-
 /**
- * Parse markdown text and replace {{ estimatedReward }} with formatted amount
- * @param text - The text to parse
- * @param currency - The currency to format the amount in
- * @returns The parsed text with formatted amounts
+ * Default translations used when no custom value is set.
+ * Sourced from wallet-shared/src/i18n/locales/en/customized.json + translation.json.
  */
-function parseMarkdown(text: string, currency: Currency): React.ReactNode[] {
-    if (!text) return [];
-
-    const parts: React.ReactNode[] = [];
-    let currentIndex = 0;
-    let keyCounter = 0;
-
-    // First replace {{ estimatedReward }} with formatted amount
-    const processedText = text.replace(
-        /\{\{\s*estimatedReward\s*\}\}/g,
-        formatAmount(42, currency)
-    );
-
-    // Regular expression to match **bold** and *italic* text
-    const markdownRegex = /(\*\*([^*]+)\*\*|\*([^*]+)\*)/g;
-    const matches = Array.from(processedText.matchAll(markdownRegex));
-
-    for (const match of matches) {
-        // Add text before the match
-        if (match.index !== undefined && match.index > currentIndex) {
-            parts.push(
-                <Fragment key={`text-${keyCounter++}`}>
-                    {processedText.slice(currentIndex, match.index)}
-                </Fragment>
-            );
-        }
-
-        // Add the formatted text
-        if (match[0].startsWith("**")) {
-            // Bold text
-            parts.push(
-                <strong key={`bold-${keyCounter++}`}>{match[2]}</strong>
-            );
-        } else if (match[0].startsWith("*")) {
-            // Italic text
-            parts.push(<em key={`italic-${keyCounter++}`}>{match[3]}</em>);
-        }
-
-        currentIndex = (match.index || 0) + match[0].length;
-    }
-
-    // Add remaining text
-    if (currentIndex < processedText.length) {
-        parts.push(
-            <Fragment key={`text-${keyCounter++}`}>
-                {processedText.slice(currentIndex)}
-            </Fragment>
-        );
-    }
-
-    return parts;
-}
-
-function PreviewCard({
-    title,
-    description,
-    text,
-    button,
-    logoUrl,
-    currency = "usd",
-}: PreviewCardProps) {
-    const parsedText = text ? parseMarkdown(text, currency as Currency) : null;
-
-    return (
-        <div className={styles.previewColumn}>
-            <div>
-                <h4 className={styles.previewTitle}>{title}</h4>
-                <p className={styles.previewDescription}>{description}</p>
-            </div>
-            <div className={styles.modalPreview}>
-                <div className={styles.header}>
-                    {logoUrl ? (
-                        <img src={logoUrl} alt="Logo" className={styles.logo} />
-                    ) : (
-                        <span className={styles.headerText}>Logo</span>
-                    )}
-                </div>
-                <p className={styles.text}>
-                    {parsedText && parsedText.length > 0 ? parsedText : text}
-                </p>
-                <button type="button" className={styles.button}>
-                    {button}
-                </button>
-            </div>
-        </div>
-    );
-}
-
-type LoginPreviewProps = {
-    form: UseFormReturn<TranslationFormValues>;
-    logoUrl?: string;
-    currency?: string;
-    lang: TranslationLang;
-    defaultValues?: TranslationFormValues;
+const DEFAULTS: Record<string, string> = {
+    "sdk.sharingPage.dismiss": "Later",
+    "sdk.sharingPage.reward.title": "Share with your friends",
+    "sdk.sharingPage.reward.tagline":
+        "You earn a reward every time a friend makes a purchase through your link.",
+    "sdk.sharingPage.card.amount": "5,00 €",
+    "sdk.sharingPage.card.label": "Credited to your account",
+    "sdk.sharingPage.card.tagline1": "Earn 5€,",
+    "sdk.sharingPage.card.tagline2": "on every purchase!",
+    "sdk.sharingPage.steps.1":
+        "Share in 1 click. A personal link is automatically generated with each share.",
+    "sdk.sharingPage.steps.2":
+        "Earn on every purchase. Every order placed through your link earns you cash.",
+    "sdk.sharingPage.steps.3":
+        "Collect your earnings in the app. Install FRAK to collect your earnings.",
+    "sharing.btn.share": "Share",
+    "sharing.btn.copy": "Copy link",
+    "sdk.sharingPage.confirmation.title":
+        "Thank you for sharing!\nDon't miss out on your reward.",
+    "sdk.sharingPage.confirmation.subtitle":
+        "Install the Frak app and track your earnings in real time.",
+    "sdk.sharingPage.confirmation.cardPopupTitle": "You just won! 🎉",
+    "sdk.sharingPage.confirmation.cardPopupDescription":
+        "A purchase was made through your link.",
+    "sdk.sharingPage.confirmation.benefits.wallet.title":
+        "Your wallet secured in 10 seconds",
+    "sdk.sharingPage.confirmation.benefits.wallet.description":
+        "No email, no password, no form. Simple, fast and secure.",
+    "sdk.sharingPage.confirmation.benefits.notify.title":
+        "Get notified as soon as you earn",
+    "sdk.sharingPage.confirmation.benefits.notify.description":
+        "Receive a notification when a purchase is made thanks to you.",
+    "sdk.sharingPage.confirmation.benefits.cashout.title":
+        "Cash out whenever you want",
+    "sdk.sharingPage.confirmation.benefits.cashout.description":
+        "Transfer your earnings directly to your bank account in 3 clicks.",
+    "sdk.sharingPage.confirmation.cta": "Collect my reward",
+    "sdk.sharingPage.confirmation.shareAgain": "Share again",
 };
 
 function getNestedValue(obj: unknown, path: string[]): string | undefined {
@@ -159,44 +92,63 @@ function resolveTranslation(
     return undefined;
 }
 
-export function LoginPreview({
+const CURRENCY_SYMBOLS: Record<string, string> = {
+    eur: "€",
+    usd: "$",
+    gbp: "£",
+};
+
+type SharingPagePreviewProps = {
+    form: UseFormReturn<TranslationFormValues>;
+    logoUrl?: string;
+    currency?: string;
+    lang: TranslationLang;
+    defaultValues?: TranslationFormValues;
+};
+
+export function SharingPagePreview({
     form,
     logoUrl,
     currency,
     lang,
     defaultValues,
-}: LoginPreviewProps) {
+}: SharingPagePreviewProps) {
     const watchedValues = form.watch();
+    const symbol = CURRENCY_SYMBOLS[currency ?? "eur"] ?? "€";
+    const estimatedReward = `5,00 ${symbol}`;
 
-    const getValue = (key: string) =>
-        resolveTranslation(key, lang, watchedValues, defaultValues);
-
-    const standardText =
-        getValue("sdk.wallet.login.text") || "Connect your wallet to continue";
-    const referredText =
-        getValue("sdk.wallet.login.text_referred") ||
-        "Connect your wallet to claim your {{ estimatedReward }} reward";
-    const buttonText =
-        getValue("sdk.wallet.login.primaryAction") || "Connect Wallet";
+    const t = (key: string) => {
+        const raw =
+            resolveTranslation(key, lang, watchedValues, defaultValues) ??
+            DEFAULTS[key] ??
+            key;
+        return raw
+            .replace(/\{\{\s*estimatedReward\s*\}\}/g, estimatedReward)
+            .replace(/\{\{\s*productName\s*\}\}/g, "My Store");
+    };
 
     return (
-        <div className={styles.previewContainer}>
-            <PreviewCard
-                title="Standard visitor"
-                description="Shown to users who visit your site directly"
-                text={standardText}
-                button={buttonText}
-                logoUrl={logoUrl}
-                currency={currency}
-            />
-            <PreviewCard
-                title="Referred visitor"
-                description="Shown to users who arrive via a referral link"
-                text={referredText}
-                button={buttonText}
-                logoUrl={logoUrl}
-                currency={currency}
-            />
-        </div>
+        <PreviewWrapper>
+            <div className={styles.previewContainer}>
+                <div className={styles.previewColumn}>
+                    <div>
+                        <h4 className={styles.previewTitle}>Sharing page</h4>
+                        <p className={styles.previewDescription}>
+                            Shown when a visitor clicks the share button
+                        </p>
+                    </div>
+                    <SharingPreview t={t} logoUrl={logoUrl} />
+                </div>
+                <div className={styles.previewColumn}>
+                    <div>
+                    <h4 className={styles.previewTitle}>Post-share success</h4>
+                        <p className={styles.previewDescription}>
+                            Shown after a successful share action
+                        </p>
+                    </div>
+                    <SharingSuccessPreview t={t} logoUrl={logoUrl} />
+                </div>
+            </div>
+        </PreviewWrapper>
     );
 }
