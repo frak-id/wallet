@@ -1,4 +1,5 @@
 import { isTauri } from "@frak-labs/app-essentials/utils/platform";
+import { Box } from "@frak-labs/design-system/components/Box";
 import { Button } from "@frak-labs/design-system/components/Button";
 import { Card } from "@frak-labs/design-system/components/Card";
 import { Inline } from "@frak-labs/design-system/components/Inline";
@@ -7,9 +8,12 @@ import { Stack } from "@frak-labs/design-system/components/Stack";
 import { Text } from "@frak-labs/design-system/components/Text";
 import { CloseIcon, CopyIcon } from "@frak-labs/design-system/icons";
 import {
+    authenticatedBackendApi,
     getSafeSession,
+    LogoFrakWithName,
     useFormattedEstimatedReward,
 } from "@frak-labs/wallet-shared";
+import { queryOptions, useQuery } from "@tanstack/react-query";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { Info } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
@@ -130,9 +134,33 @@ const appStoreUrl = "https://apps.apple.com/app/frak-wallet/id6740261164";
 const playStoreUrl =
     "https://play.google.com/store/apps/details?id=id.frak.wallet";
 
+function merchantInfoQueryOptions(merchantId?: string) {
+    return queryOptions({
+        queryKey: ["merchant", "info", merchantId ?? "none"],
+        queryFn: async () => {
+            if (!merchantId) return null;
+            const { data } =
+                await authenticatedBackendApi.user.merchant.resolve.get({
+                    query: { merchantId },
+                });
+            if (!data) return null;
+            return {
+                name: data.name,
+                logoUrl: data.sdkConfig?.logoUrl,
+            };
+        },
+        enabled: !!merchantId,
+        staleTime: 5 * 60 * 1000,
+    });
+}
+
 function InstallCodeView({ m: merchantId, a: anonymousId }: InstallSearch) {
     const { t: rawT } = useTranslation();
     const [copied, setCopied] = useState(false);
+
+    const { data: merchantInfo } = useQuery(
+        merchantInfoQueryOptions(merchantId)
+    );
 
     const { data: estimatedReward } = useFormattedEstimatedReward({
         merchantId,
@@ -169,6 +197,16 @@ function InstallCodeView({ m: merchantId, a: anonymousId }: InstallSearch) {
     return (
         <div className={styles.container}>
             <header className={styles.header}>
+                <Box display="flex" alignItems="center" gap="m">
+                    {merchantInfo?.logoUrl && (
+                        <img
+                            src={merchantInfo.logoUrl}
+                            alt={merchantInfo.name}
+                            className={styles.merchantLogo}
+                        />
+                    )}
+                    <LogoFrakWithName className={styles.logo} color="#000" />
+                </Box>
                 <button
                     type="button"
                     className={styles.dismissButton}

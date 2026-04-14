@@ -116,6 +116,11 @@ export class MerchantResolveService {
 
         const productId =
             merchant.productId ?? keccak256(toHex(merchant.domain));
+        const resolvedLang = this.resolveLanguage(merchant.sdkConfig, undefined);
+        const resolvedSdkConfig = this.buildResolvedSdkConfig(
+            merchant.sdkConfig,
+            resolvedLang
+        );
 
         const response: MerchantResolveResponse = {
             merchantId: merchant.id,
@@ -123,6 +128,7 @@ export class MerchantResolveService {
             name: merchant.name,
             domain: merchant.domain,
             allowedDomains: [merchant.domain],
+            ...(resolvedSdkConfig && { sdkConfig: resolvedSdkConfig }),
         };
 
         this.responseCache.set(merchantId, { value: response });

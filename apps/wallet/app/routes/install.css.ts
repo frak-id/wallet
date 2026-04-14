@@ -14,7 +14,7 @@ export const container = style({
 
 export const header = style({
     display: "flex",
-    justifyContent: "flex-end",
+    justifyContent: "space-between",
     alignItems: "center",
     padding: `${alias.spacing.xs} ${alias.spacing.m}`,
     backgroundColor: vars.surface.background,
@@ -32,6 +32,18 @@ export const dismissButton = style({
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
+});
+
+export const logo = style({
+    height: "24px",
+    width: "auto",
+});
+
+export const merchantLogo = style({
+    height: "24px",
+    width: "auto",
+    borderRadius: alias.cornerRadius.xs,
+    objectFit: "contain",
 });
 
 export const main = style({
