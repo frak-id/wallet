@@ -150,6 +150,7 @@ function StatCardsRow() {
                     amount={`${totalEur.toFixed(0)}€`}
                     label={t("wallet.stats.lifetime")}
                     icon={<BarChartIcon width={14} height={14} />}
+                    highlighted={totalEur > 0}
                 />
             </Box>
         </Box>
