@@ -102,6 +102,20 @@ export const ctaButton = style({
     color: vars.text.onAction,
     textTransform: "uppercase",
     letterSpacing: "0.5px",
+    selectors: {
+        "&:not(:disabled):active": {
+            backgroundColor: vars.text.primary,
+        },
+    },
+    "@media": {
+        "(hover: hover)": {
+            selectors: {
+                "&:not(:disabled):hover": {
+                    backgroundColor: vars.text.primary,
+                },
+            },
+        },
+    },
 });
 
 export const shareAgainButton = style({

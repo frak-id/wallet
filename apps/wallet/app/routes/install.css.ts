@@ -122,4 +122,13 @@ export const downloadButton = style({
     textDecoration: "none",
     cursor: "pointer",
     border: "none",
+    ":hover": {
+        color: vars.text.onAction,
+    },
+    ":active": {
+        color: vars.text.onAction,
+    },
+    ":visited": {
+        color: vars.text.onAction,
+    },
 });

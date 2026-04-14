@@ -320,6 +320,20 @@ export const shareButton = style({
     backgroundColor: vars.text.primary,
     color: vars.text.onAction,
     textTransform: "uppercase",
+    selectors: {
+        "&:not(:disabled):active": {
+            backgroundColor: vars.text.primary,
+        },
+    },
+    "@media": {
+        "(hover: hover)": {
+            selectors: {
+                "&:not(:disabled):hover": {
+                    backgroundColor: vars.text.primary,
+                },
+            },
+        },
+    },
 });
 
 export const copyButton = style({
@@ -327,4 +341,18 @@ export const copyButton = style({
     color: vars.text.primary,
     border: `1.5px solid ${vars.text.primary}`,
     textTransform: "uppercase",
+    selectors: {
+        "&:not(:disabled):active": {
+            backgroundColor: vars.surface.background,
+        },
+    },
+    "@media": {
+        "(hover: hover)": {
+            selectors: {
+                "&:not(:disabled):hover": {
+                    backgroundColor: vars.surface.background,
+                },
+            },
+        },
+    },
 });
