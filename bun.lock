@@ -204,7 +204,7 @@
     },
     "apps/wallet": {
       "name": "@frak-labs/nexus-wallet",
-      "version": "1.0.25",
+      "version": "1.0.26",
       "dependencies": {
         "@frak-labs/app-essentials": "workspace:*",
         "@frak-labs/core-sdk": "workspace:*",
@@ -333,6 +333,7 @@
         "@tanstack/react-query-persist-client": "catalog:",
         "@tanstack/react-router": "^1.167.3",
         "lucide-react": "^0.577.0",
+        "normalize.css": "^8.0.1",
         "react": "catalog:",
         "react-dom": "catalog:",
         "viem": "catalog:",
