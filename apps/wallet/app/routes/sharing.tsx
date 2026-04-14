@@ -19,6 +19,20 @@ import { useCallback, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 
+/**
+ * Sanitize a redirect URL from search params to prevent open redirects.
+ * Only allows valid https:// URLs, strips hash and query params.
+ */
+function sanitizeRedirectUrl(value: unknown): string | undefined {
+    if (typeof value !== "string") return undefined;
+    try {
+        const url = new URL(value);
+        if (url.protocol !== "https:") return undefined;
+        return url.origin + url.pathname;
+    } catch {
+        return undefined;
+    }
+}
 type SharingSearch = {
     merchantId?: string;
     clientId?: string;
@@ -53,10 +67,7 @@ export const Route = createFileRoute("/sharing")({
             typeof search.checkoutToken === "string"
                 ? search.checkoutToken
                 : undefined,
-        redirectUrl:
-            typeof search.redirectUrl === "string"
-                ? search.redirectUrl
-                : undefined,
+        redirectUrl: sanitizeRedirectUrl(search.redirectUrl),
     }),
     component: WalletSharingPage,
 });

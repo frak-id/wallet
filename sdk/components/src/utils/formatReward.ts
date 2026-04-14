@@ -46,3 +46,14 @@ export function formatEstimatedReward(
         }
     }
 }
+
+/**
+ * Replace the `{REWARD}` placeholder in a text string with a reward value.
+ * If no reward is provided, returns the text with `{REWARD}` stripped.
+ */
+export function applyRewardPlaceholder(
+    text: string,
+    reward: string | undefined
+): string {
+    return reward ? text.replace("{REWARD}", reward) : text.replace("{REWARD}", "");
+}

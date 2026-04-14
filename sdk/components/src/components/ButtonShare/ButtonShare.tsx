@@ -6,6 +6,7 @@ import { usePlacement } from "@/hooks/usePlacement";
 import { useReward } from "@/hooks/useReward";
 import { openEmbeddedWallet } from "@/utils/embeddedWallet";
 import { openSharingPage } from "@/utils/sharingPage";
+import { applyRewardPlaceholder } from "@/utils/formatReward";
 import { ErrorMessage } from "./components/ErrorMessage";
 import { useShareModal } from "./hooks/useShareModal";
 import type { ButtonShareProps } from "./types";
@@ -97,11 +98,11 @@ export function ButtonShare({
     const btnText = useMemo(() => {
         if (!shouldUseReward) return resolvedText;
         if (!reward) {
-            return resolvedNoRewardText ?? resolvedText.replace("{REWARD}", "");
+            return resolvedNoRewardText ?? applyRewardPlaceholder(resolvedText, undefined);
         }
 
         return resolvedText.includes("{REWARD}")
-            ? resolvedText.replace("{REWARD}", reward)
+            ? applyRewardPlaceholder(resolvedText, reward)
             : `${resolvedText} ${reward}`;
     }, [shouldUseReward, resolvedText, resolvedNoRewardText, reward]);
 

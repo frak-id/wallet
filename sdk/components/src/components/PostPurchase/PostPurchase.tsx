@@ -17,7 +17,7 @@ import { useEffect, useMemo, useState } from "preact/hooks";
 import { useClientReady } from "@/hooks/useClientReady";
 import { useLightDomStyles } from "@/hooks/useLightDomStyles";
 import { usePlacement } from "@/hooks/usePlacement";
-import { formatEstimatedReward } from "@/utils/formatReward";
+import { applyRewardPlaceholder, formatEstimatedReward } from "@/utils/formatReward";
 import { useShareModal } from "../ButtonShare/hooks/useShareModal";
 import { GiftIcon } from "../icons/GiftIcon";
 import {
@@ -148,25 +148,26 @@ export function PostPurchase({
         const client = window.FrakSetup?.client;
         if (!client) return;
 
-        setHasFetched(true);
-
         Promise.all([
             getUserReferralStatus(client),
             getMerchantInformation(client),
         ])
             .then(([referralStatus, merchantInfo]) => {
+                setHasFetched(true);
                 setContext(
                     resolvePostPurchaseContext(referralStatus, merchantInfo)
                 );
             })
             .catch((e: unknown) => {
-                // Silently swallow RPC errors — component stays hidden
+                // Config errors are expected when SDK is not configured — stay hidden
                 if (
                     e instanceof FrakRpcError &&
                     e.code === RpcErrorCodes.configError
                 ) {
+                    setHasFetched(true);
                     return;
                 }
+                // Transient errors: allow retry on next render
                 console.warn("[Frak] Post-purchase context error", e);
             });
     }, [isClientReady, hasFetched]);
@@ -187,35 +188,35 @@ export function PostPurchase({
     const resolvedBadgeText = propBadgeText ?? postPurchaseConfig?.badgeText;
 
     const texts = useMemo(() => {
-        const applyReward = (text: string) =>
-            rewardText ? text.replace("{REWARD}", rewardText) : text;
-
         const message =
             resolvedVariant === "referee"
                 ? rewardText
-                    ? applyReward(
+                    ? applyRewardPlaceholder(
                           propRefereeText ??
                               postPurchaseConfig?.refereeText ??
-                              "You just earned {REWARD}! Share with friends to earn even more."
+                              "You just earned {REWARD}! Share with friends to earn even more.",
+                          rewardText
                       )
                     : (propRefereeText ??
                       postPurchaseConfig?.refereeNoRewardText ??
                       "You just earned a reward! Share with friends to earn even more.")
                 : rewardText
-                  ? applyReward(
+                  ? applyRewardPlaceholder(
                         propReferrerText ??
                             postPurchaseConfig?.referrerText ??
-                            "Earn {REWARD} by sharing this with your friends!"
+                            "Earn {REWARD} by sharing this with your friends!",
+                        rewardText
                     )
                   : (propReferrerText ??
                     postPurchaseConfig?.referrerNoRewardText ??
                     "Share this with your friends and earn rewards!");
 
         const cta = rewardText
-            ? applyReward(
+            ? applyRewardPlaceholder(
                   propCtaText ??
                       postPurchaseConfig?.ctaText ??
-                      "Share & earn {REWARD}"
+                      "Share & earn {REWARD}",
+                  rewardText
               )
             : (propCtaText ??
               postPurchaseConfig?.ctaNoRewardText ??
