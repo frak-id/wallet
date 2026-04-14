@@ -7,12 +7,12 @@ import { useNotificationStatus } from "@/module/notification/hook/useNotificatio
 import { useSubscribeToPushNotification } from "@/module/notification/hook/useSubscribeToPushNotification";
 import { NotificationOptIn } from "@/module/onboarding/component/NotificationOptIn";
 import { Onboarding } from "@/module/onboarding/component/Onboarding";
-import { useInstallReferrer } from "@/module/onboarding/hook/useInstallReferrer";
 import {
     onboardingSlides,
     Slide,
 } from "@/module/onboarding/component/slides/OnboardingSlides";
 import { Welcome } from "@/module/onboarding/component/Welcome";
+import { useInstallReferrer } from "@/module/onboarding/hook/useInstallReferrer";
 import { PairingInProgress } from "@/module/pairing/component/PairingInProgress";
 import { useExecutePendingActions } from "@/module/pending-actions/hook/useExecutePendingActions";
 import { modalStore } from "@/module/stores/modalStore";

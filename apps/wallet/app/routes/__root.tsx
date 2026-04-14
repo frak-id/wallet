@@ -9,6 +9,7 @@ import { DetectPWA } from "@/module/wallet/component/DetectPWA";
 import "@frak-labs/wallet-shared";
 // Import global styles
 import "@frak-labs/design-system/global";
+import { useHardwareBack } from "@/module/common/hook/useHardwareBack";
 
 export const Route = createRootRoute({
     component: RootComponent,
@@ -22,6 +23,8 @@ export const Route = createRootRoute({
  * This component wraps the entire application with providers and global components.
  */
 function RootComponent() {
+    useHardwareBack();
+
     return (
         <RootProvider>
             {/* Only show PWA features in web mode — tree-shaken in Tauri builds */}

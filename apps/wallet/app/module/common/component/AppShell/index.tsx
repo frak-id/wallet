@@ -82,7 +82,13 @@ export function AppShell({
                         tabs={tabs}
                         activeKey={activeKey}
                         onTabChange={(key) => {
-                            navigate({ to: key });
+                            if (key === "/wallet") {
+                                // If we're going to wallet, replace history so we don't build up a huge stack
+                                navigate({ to: key, replace: true });
+                            } else {
+                                // If going to another tab, push it so we can go back to it
+                                navigate({ to: key });
+                            }
                         }}
                     />
                 </Box>
