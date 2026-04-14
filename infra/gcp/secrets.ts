@@ -8,6 +8,8 @@ import {
     nexusRpcSecret,
     pimlicoApiKey,
     productSetupCodeSalt,
+    rustfsCdnBaseUrl,
+    rustfsEndpoint,
     shopifyApiSecret,
     shopifyClientId,
     sqldUrl,
@@ -32,6 +34,18 @@ const dbPassword = $output(
 const masterPkey = $output(
     gcp.secretmanager.getSecretVersion({
         secret: `master-pkey-${isProd ? "prod" : "dev"}`,
+    })
+).apply((secret) => secret.secretData);
+
+// RustFS credentials (shared prod pod, stored in GCP Secret Manager by infra-core)
+const rustfsAccessKey = $output(
+    gcp.secretmanager.getSecretVersion({
+        secret: "rustfs-access-key-production",
+    })
+).apply((secret) => secret.secretData);
+const rustfsSecretKey = $output(
+    gcp.secretmanager.getSecretVersion({
+        secret: "rustfs-secret-key-production",
     })
 ).apply((secret) => secret.secretData);
 
@@ -85,4 +99,10 @@ export const elysiaEnv = {
 
     // FCM
     FCM_SERVICE_ACCOUNT_JSON: fcmServiceAccount.value,
+
+    // RustFS (object storage for media uploads)
+    RUSTFS_ENDPOINT: rustfsEndpoint,
+    RUSTFS_ACCESS_KEY: rustfsAccessKey,
+    RUSTFS_SECRET_KEY: rustfsSecretKey,
+    RUSTFS_CDN_BASE_URL: rustfsCdnBaseUrl,
 };

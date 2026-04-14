@@ -6,9 +6,11 @@ import { ExplorerTab } from "app/components/Appearance/ExplorerTab";
 import { PageHeading } from "app/components/ui/PageHeading";
 import { Tabs } from "app/components/ui/Tabs";
 import {
+    deleteMerchantMedia,
     type ExplorerSettings,
     getMerchantExplorerSettings,
     updateMerchantExplorerSettings,
+    uploadMerchantMedia,
 } from "app/services.server/backendMerchant";
 import {
     type AppearanceMetafieldValue,
@@ -66,40 +68,92 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     });
 };
 
+async function handleMediaUpload(
+    context: Awaited<ReturnType<typeof authenticate.admin>>,
+    request: Request,
+    formData: FormData
+) {
+    const type = formData.get("type") as string;
+    const image = formData.get("image") as File;
+    if (!type || !image) {
+        return data(
+            {
+                success: false,
+                error: "Missing image or type",
+                code: "missing_fields",
+            },
+            { status: 400 }
+        );
+    }
+    const result = await uploadMerchantMedia(context, request, image, type);
+    return data(result, { status: result.success ? 200 : 400 });
+}
+
+async function handleMediaDelete(
+    context: Awaited<ReturnType<typeof authenticate.admin>>,
+    request: Request,
+    formData: FormData
+) {
+    const type = formData.get("type") as string;
+    if (!type) {
+        return data(
+            { success: false, message: "Missing type" },
+            { status: 400 }
+        );
+    }
+    const result = await deleteMerchantMedia(context, request, type);
+    return data(result, { status: result.success ? 200 : 400 });
+}
+
+async function handleSaveExplorer(
+    context: Awaited<ReturnType<typeof authenticate.admin>>,
+    request: Request,
+    formData: FormData
+) {
+    const explorerSettingsData = formData.get("explorerSettings");
+    if (!explorerSettingsData) {
+        return data(
+            { success: false, message: "No explorer data provided" },
+            { status: 400 }
+        );
+    }
+
+    try {
+        const settings: ExplorerSettings = JSON.parse(
+            explorerSettingsData as string
+        );
+        const result = await updateMerchantExplorerSettings(
+            context,
+            request,
+            settings
+        );
+        return data(result, { status: result.success ? 200 : 400 });
+    } catch (error) {
+        console.error("Error saving explorer settings:", error);
+        return data(
+            {
+                success: false,
+                message: "Failed to save explorer settings",
+            },
+            { status: 500 }
+        );
+    }
+}
+
 export async function action({ request }: ActionFunctionArgs) {
     const context = await authenticate.admin(request);
     const formData = await request.formData();
     const intent = formData.get("intent");
 
-    if (intent === "saveExplorer") {
-        const explorerSettingsData = formData.get("explorerSettings");
-        if (!explorerSettingsData) {
-            return data(
-                { success: false, message: "No explorer data provided" },
-                { status: 400 }
-            );
-        }
+    if (intent === "uploadMedia") {
+        return handleMediaUpload(context, request, formData);
+    }
 
-        try {
-            const settings: ExplorerSettings = JSON.parse(
-                explorerSettingsData as string
-            );
-            const result = await updateMerchantExplorerSettings(
-                context,
-                request,
-                settings
-            );
-            return data(result, { status: result.success ? 200 : 400 });
-        } catch (error) {
-            console.error("Error saving explorer settings:", error);
-            return data(
-                {
-                    success: false,
-                    message: "Failed to save explorer settings",
-                },
-                { status: 500 }
-            );
-        }
+    if (intent === "deleteMedia") {
+        return handleMediaDelete(context, request, formData);
+    }
+    if (intent === "saveExplorer") {
+        return handleSaveExplorer(context, request, formData);
     }
 
     if (intent !== "save") {

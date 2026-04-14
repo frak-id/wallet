@@ -14,6 +14,7 @@ import {
 } from "@/module/forms/Form";
 import { FormActions } from "@/module/forms/FormActions";
 import { Switch } from "@/module/forms/Switch";
+import { ImageUploadField } from "@/module/merchant/component/ImageUploadField";
 import { useMerchantUpdate } from "@/module/merchant/hook/useMerchantUpdate";
 import styles from "./index.module.css";
 import type { SdkIdentityFormValues } from "./types";
@@ -82,6 +83,14 @@ export function SdkIdentityPanel({
         [editSdkConfig]
     );
 
+    const handleLogoUploadSuccess = useCallback(
+        (url: string) => {
+            form.setValue("logoUrl", url, { shouldDirty: true });
+            form.handleSubmit(onSubmit)();
+        },
+        [form, onSubmit]
+    );
+
     return (
         <Form {...form}>
             <Panel title={"SDK Identity"}>
@@ -111,16 +120,18 @@ export function SdkIdentityPanel({
                     name="logoUrl"
                     render={({ field }) => (
                         <FormItem>
-                            <FormLabel weight={"medium"}>Logo URL</FormLabel>
+                            <FormLabel weight={"medium"}>Logo</FormLabel>
                             <FormDescription>
-                                URL to your logo image, displayed alongside your
-                                name in SDK components
+                                Your logo image, displayed alongside your name
+                                in SDK components
                             </FormDescription>
                             <FormControl>
-                                <Input
-                                    length={"medium"}
-                                    placeholder={"https://..."}
-                                    {...field}
+                                <ImageUploadField
+                                    merchantId={merchantId}
+                                    type="logo"
+                                    value={field.value}
+                                    onChange={field.onChange}
+                                    onUploadSuccess={handleLogoUploadSuccess}
                                 />
                             </FormControl>
                             <FormMessage />

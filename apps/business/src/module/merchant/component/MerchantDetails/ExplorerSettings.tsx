@@ -1,5 +1,4 @@
-import { Input } from "@frak-labs/ui/component/forms/Input";
-import { useEffect, useMemo } from "react";
+import { useCallback, useEffect, useMemo } from "react";
 import { useForm } from "react-hook-form";
 import { Panel } from "@/module/common/component/Panel";
 import { Row } from "@/module/common/component/Row";
@@ -13,6 +12,7 @@ import {
 } from "@/module/forms/Form";
 import { FormActions } from "@/module/forms/FormActions";
 import { Switch } from "@/module/forms/Switch";
+import { ImageUploadField } from "@/module/merchant/component/ImageUploadField";
 import { useMerchant } from "@/module/merchant/hook/useMerchant";
 import { useMerchantUpdate } from "@/module/merchant/hook/useMerchantUpdate";
 import styles from "./index.module.css";
@@ -60,21 +60,32 @@ export function ExplorerSettings({ merchantId }: { merchantId: string }) {
         form.reset(form.getValues());
     }, [editExplorerSuccess, form.reset, form.getValues, form]);
 
-    function onSubmit(values: ExplorerFormValues) {
-        const config =
-            values.heroImageUrl || values.logoUrl || values.description
-                ? {
-                      heroImageUrl: values.heroImageUrl,
-                      logoUrl: values.logoUrl,
-                      description: values.description,
-                  }
-                : undefined;
+    const onSubmit = useCallback(
+        (values: ExplorerFormValues) => {
+            const config =
+                values.heroImageUrl || values.logoUrl || values.description
+                    ? {
+                          heroImageUrl: values.heroImageUrl,
+                          logoUrl: values.logoUrl,
+                          description: values.description,
+                      }
+                    : undefined;
 
-        editExplorer({
-            enabled: values.enabled,
-            config,
-        });
-    }
+            editExplorer({
+                enabled: values.enabled,
+                config,
+            });
+        },
+        [editExplorer]
+    );
+
+    const handleUploadSuccess = useCallback(
+        (field: "heroImageUrl" | "logoUrl") => (url: string) => {
+            form.setValue(field, url, { shouldDirty: true });
+            form.handleSubmit(onSubmit)();
+        },
+        [form, onSubmit]
+    );
 
     if (!merchant) return null;
 
@@ -106,14 +117,16 @@ export function ExplorerSettings({ merchantId }: { merchantId: string }) {
                     name="heroImageUrl"
                     render={({ field }) => (
                         <FormItem>
-                            <FormLabel weight={"medium"}>
-                                Hero image URL
-                            </FormLabel>
+                            <FormLabel weight={"medium"}>Hero image</FormLabel>
                             <FormControl>
-                                <Input
-                                    length={"medium"}
-                                    placeholder={"https://..."}
-                                    {...field}
+                                <ImageUploadField
+                                    merchantId={merchantId}
+                                    type="hero"
+                                    value={field.value ?? ""}
+                                    onChange={field.onChange}
+                                    onUploadSuccess={handleUploadSuccess(
+                                        "heroImageUrl"
+                                    )}
                                 />
                             </FormControl>
                             <FormMessage />
@@ -125,12 +138,16 @@ export function ExplorerSettings({ merchantId }: { merchantId: string }) {
                     name="logoUrl"
                     render={({ field }) => (
                         <FormItem>
-                            <FormLabel weight={"medium"}>Logo URL</FormLabel>
+                            <FormLabel weight={"medium"}>Logo</FormLabel>
                             <FormControl>
-                                <Input
-                                    length={"medium"}
-                                    placeholder={"https://..."}
-                                    {...field}
+                                <ImageUploadField
+                                    merchantId={merchantId}
+                                    type="logo"
+                                    value={field.value ?? ""}
+                                    onChange={field.onChange}
+                                    onUploadSuccess={handleUploadSuccess(
+                                        "logoUrl"
+                                    )}
                                 />
                             </FormControl>
                             <FormMessage />

@@ -30,6 +30,7 @@
     "db:migrate:libsql": "drizzle-kit migrate --config drizzle-libsql.config.ts"
   },
   "dependencies": {
+    "@aws-sdk/client-s3": "^3.1030.0",
     "@bogeychan/elysia-logger": "^0.1.10",
     "@elysiajs/cors": "^1.4.1",
     "@frak-labs/app-essentials": "workspace:*",
@@ -48,6 +49,7 @@
     "ox": "^0.14.15",
     "permissionless": "^0.3.5",
     "postgres": "^3.4.9",
+    "sharp": "^0.34.5",
     "ua-parser-js": "^2.0.9",
     "viem": "catalog:",
     "web-push": "^3.6.7"

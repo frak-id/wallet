@@ -58,6 +58,11 @@ export const openPanelApiUrl = "https://op-api.gcp.frak.id";
 export const sqldUrl =
     "http://sqld-production-service.db-production.svc.cluster.local:8080";
 
+// RustFS endpoint (single prod pod shared by all stages)
+export const rustfsEndpoint =
+    "http://rustfs-production-service.db-production.svc.cluster.local:9000";
+export const rustfsCdnBaseUrl = "https://cdn.gcp.frak.id";
+
 // Some secrets
 export const drpcApiKey = new sst.Secret("DRPC_API_KEY");
 export const pimlicoApiKey = new sst.Secret("PIMLICO_API_KEY");

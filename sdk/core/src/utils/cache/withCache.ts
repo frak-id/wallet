@@ -14,6 +14,12 @@ const responseCache = new LruMap<CacheEntry<unknown>>(1024);
 /** Default cache time: 30 seconds */
 export const DEFAULT_CACHE_TIME = 30_000;
 
+/** Short negative cache to avoid flooding on transient failures */
+const NEGATIVE_CACHE_TIME = 1_000;
+
+/** Tracks recently failed keys to avoid request floods */
+const failureCache = new LruMap<number>(1024);
+
 type WithCacheOptions = {
     /** The key to cache the data against */
     cacheKey: string;
@@ -52,6 +58,12 @@ export async function withCache<TData>(
         }
     }
 
+    // Check if this key recently failed — back off briefly
+    const lastFailure = failureCache.get(cacheKey);
+    if (lastFailure && Date.now() - lastFailure < NEGATIVE_CACHE_TIME) {
+        throw new Error(`Cache: ${cacheKey} recently failed, backing off`);
+    }
+
     // Check if there's already a pending promise (dedup concurrent calls)
     let promise = promiseCache.get(cacheKey) as Promise<TData> | undefined;
     if (!promise) {
@@ -63,7 +75,13 @@ export async function withCache<TData>(
         const data = await promise;
         // Store the response with a timestamp
         responseCache.set(cacheKey, { data, created: Date.now() });
+        // Clear any previous failure
+        failureCache.delete(cacheKey);
         return data;
+    } catch (error) {
+        // Record the failure timestamp
+        failureCache.set(cacheKey, Date.now());
+        throw error;
     } finally {
         // Clear the promise cache so subsequent calls can re-fetch after TTL
         promiseCache.delete(cacheKey);
@@ -102,4 +120,5 @@ export function getCache(cacheKey: string) {
 export function clearAllCache() {
     promiseCache.clear();
     responseCache.clear();
+    failureCache.clear();
 }

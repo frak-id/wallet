@@ -15,6 +15,11 @@ declare global {
             // Shopify
             SHOPIFY_API_SECRET: string;
             SHOPIFY_CLIENT_ID: string;
+            // RustFS (object storage)
+            RUSTFS_ENDPOINT: string;
+            RUSTFS_ACCESS_KEY: string;
+            RUSTFS_SECRET_KEY: string;
+            RUSTFS_CDN_BASE_URL: string;
         }
     }
 }
