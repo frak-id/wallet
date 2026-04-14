@@ -18,7 +18,6 @@ import { encodeFunctionData } from "viem";
 import { waitForTransactionReceipt } from "viem/actions";
 import { useConnection, useSendTransaction } from "wagmi";
 import { CloseButton } from "@/module/common/component/CloseButton";
-import { modalStore } from "@/module/stores/modalStore";
 import { useGetPendingRewards } from "../../hooks/useGetPendingRewards";
 import * as styles from "./index.css";
 
@@ -71,7 +70,7 @@ export function PendingGainsModal({ onClose }: PendingGainsModalProps) {
             return txHash;
         },
         onSuccess: () => {
-            modalStore.getState().openModal({ id: "successOverlay" });
+            onClose();
         },
     });
 

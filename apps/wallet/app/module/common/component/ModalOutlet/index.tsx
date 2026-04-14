@@ -1,5 +1,4 @@
 import { DetailOverlay } from "@/module/common/component/DetailOverlay";
-import { SuccessOverlay } from "@/module/common/component/SuccessOverlay";
 import { ExplorerDetail } from "@/module/explorer/component/ExplorerDetail";
 import { RewardDetailModal } from "@/module/history/component/RewardDetailModal";
 import { MoneriumBankFlow } from "@/module/monerium/component/MoneriumBankFlow";
@@ -38,8 +37,6 @@ export function ModalOutlet() {
             return <EmptyTransferredGainsModal onClose={closeModal} />;
         case "transfer":
             return <TransferModal onClose={closeModal} />;
-        case "successOverlay":
-            return <SuccessOverlay visible={true} onDone={closeModal} />;
         case "keypass":
             return (
                 <Keypass

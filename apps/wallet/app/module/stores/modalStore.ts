@@ -27,7 +27,6 @@ export type ModalState =
     | { id: "pendingGains" }
     | { id: "emptyTransferredGains" }
     | { id: "transfer" }
-    | { id: "successOverlay" }
     | { id: "explorerDetail"; merchant: ExplorerMerchantItem }
     | { id: "welcomeDetail" }
     | { id: "keypass"; onAuthSuccess: () => void }
