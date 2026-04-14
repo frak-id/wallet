@@ -1,6 +1,12 @@
+import type { Currency } from "@frak-labs/core-sdk";
+import {
+    ConfirmationPreview,
+    SharingPreview,
+    SocialPreview,
+} from "@frak-labs/ui-preview";
+import type { loader as rootLoader } from "app/routes/app";
 import { useTranslation } from "react-i18next";
-import { ConfirmationPreview, SharingPreview } from "../SharingPagePreview";
-import { SocialPreview } from "../SocialPreview";
+import { useRouteLoaderData } from "react-router";
 
 const SHARING_FIELD_KEYS = ["sharing.title", "sharing.text"];
 
@@ -10,6 +16,16 @@ const SHARING_PAGE_FIELD_KEYS = [
     "sdk.sharingPage.confirmation.title",
     "sdk.sharingPage.confirmation.cta",
 ];
+
+/**
+ * Get preview context (currency + shop name) from root loader
+ */
+function usePreviewContext() {
+    const rootData = useRouteLoaderData<typeof rootLoader>("routes/app");
+    const currency = (rootData?.shop?.preferredCurrency ?? "usd") as Currency;
+    const shopName = rootData?.shop?.name ?? "My Store";
+    return { currency, shopName };
+}
 
 // Sharing Section Component
 export function SharingSection({
@@ -254,6 +270,8 @@ type SharingPreviewSectionProps =
       };
 
 function SharingPreviewSection(props: SharingPreviewSectionProps) {
+    const { currency, shopName } = usePreviewContext();
+
     return (
         <s-section>
             <s-stack gap="base">
@@ -265,11 +283,15 @@ function SharingPreviewSection(props: SharingPreviewSectionProps) {
                     <SharingPreview
                         rewardTitle={props.rewardTitle}
                         rewardTagline={props.rewardTagline}
+                        currency={currency}
+                        shopName={shopName}
                     />
                 ) : (
                     <ConfirmationPreview
                         confirmationTitle={props.confirmationTitle}
                         confirmationCta={props.confirmationCta}
+                        currency={currency}
+                        shopName={shopName}
                     />
                 )}
             </s-stack>

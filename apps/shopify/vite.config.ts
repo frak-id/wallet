@@ -1,5 +1,6 @@
 import process from "node:process";
 import { reactRouter } from "@react-router/dev/vite";
+import { vanillaExtractPlugin } from "@vanilla-extract/vite-plugin";
 import { defineConfig, type UserConfig } from "vite";
 
 // Related: https://github.com/remix-run/remix/issues/2835#issuecomment-1144102176
@@ -72,7 +73,7 @@ export default defineConfig(() => {
             },
             allowedHosts: true,
         },
-        plugins: [reactRouter()],
+        plugins: [reactRouter(), vanillaExtractPlugin()],
         resolve: {
             tsconfigPaths: true,
         },

@@ -1,35 +1,12 @@
-import { type Currency, formatAmount } from "@frak-labs/core-sdk";
-import type { loader as rootLoader } from "app/routes/app";
-import { useRouteLoaderData } from "react-router";
-import styles from "./index.module.css";
+import type { Currency } from "@frak-labs/core-sdk";
+import { replaceVariables } from "../utils/variables";
+import * as styles from "./styles.css";
 
-/**
- * Replace {{ estimatedReward }} and {{ productName }} with mock values for preview
- */
-function replaceVariables(
-    text: string,
-    currency: Currency,
-    shopName: string
-): string {
-    if (!text) return "";
-    return text
-        .replace(/\{\{\s*estimatedReward\s*\}\}/g, formatAmount(42, currency))
-        .replace(/\{\{\s*productName\s*\}\}/g, shopName);
-}
-
-/**
- * Hook to get preview context (currency + shop name) from root loader
- */
-function usePreviewContext() {
-    const rootData = useRouteLoaderData<typeof rootLoader>("routes/app");
-    const currency = (rootData?.shop?.preferredCurrency ?? "usd") as Currency;
-    const shopName = rootData?.shop?.name ?? "My Store";
-    return { currency, shopName };
-}
-
-type SharingPreviewProps = {
+export type SharingPreviewProps = {
     rewardTitle: string;
     rewardTagline: string;
+    currency: Currency;
+    shopName: string;
 };
 
 /**
@@ -38,9 +15,9 @@ type SharingPreviewProps = {
 export function SharingPreview({
     rewardTitle,
     rewardTagline,
+    currency,
+    shopName,
 }: SharingPreviewProps) {
-    const { currency, shopName } = usePreviewContext();
-
     return (
         <div className={styles.previewContainer}>
             <div className={styles.header}>
@@ -69,9 +46,11 @@ export function SharingPreview({
     );
 }
 
-type ConfirmationPreviewProps = {
+export type ConfirmationPreviewProps = {
     confirmationTitle: string;
     confirmationCta: string;
+    currency: Currency;
+    shopName: string;
 };
 
 /**
@@ -80,9 +59,9 @@ type ConfirmationPreviewProps = {
 export function ConfirmationPreview({
     confirmationTitle,
     confirmationCta,
+    currency,
+    shopName,
 }: ConfirmationPreviewProps) {
-    const { currency, shopName } = usePreviewContext();
-
     return (
         <div className={styles.previewContainer}>
             <div className={styles.header}>
