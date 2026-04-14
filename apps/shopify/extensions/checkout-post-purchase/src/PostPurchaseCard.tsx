@@ -129,6 +129,7 @@ export function PostPurchaseCard({
     const message = settings.message || DEFAULT_MESSAGE;
     const description = settings.description || DEFAULT_DESCRIPTION;
     const ctaText = settings.cta_text || DEFAULT_CTA;
+    const badgeText = settings.badge_text;
 
     // Build external sharing page URL with all params
     const sharingPageUrl = useMemo(() => {
@@ -168,31 +169,25 @@ export function PostPurchaseCard({
             background="base"
             borderRadius="base"
             border="base"
-            padding="base"
+            padding="large"
         >
-            <s-grid gridTemplateColumns="1fr 80px" gap="base">
+            <s-grid gridTemplateColumns="1fr 80px" gap="base" alignItems="end">
                 {/* Left column — text content & CTA */}
                 <s-stack direction="block" gap="small">
+                    {badgeText && <s-badge size="small">{badgeText}</s-badge>}
                     <s-heading>{message}</s-heading>
                     <s-text color="subdued">{description}</s-text>
                     <s-button
                         variant="primary"
                         href={sharingPageUrl}
                         target="_blank"
-                        inlineSize="fit-content"
                     >
                         {ctaText}
                     </s-button>
                 </s-stack>
 
                 {/* Right column — gift icon + frak branding */}
-                <s-stack
-                    direction="block"
-                    gap="small"
-                    alignItems="end"
-                    justifyContent="spaceBetween"
-                    blockSize="fill"
-                >
+                <s-stack direction="block" alignItems="end">
                     <s-grid gridTemplateColumns="80px">
                         <s-image
                             src={GIFT_SVG_DATA_URI}

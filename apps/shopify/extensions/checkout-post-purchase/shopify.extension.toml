@@ -57,3 +57,8 @@ type = "single_line_text_field"
 name = "CTA Text"
 description = "Text for the call-to-action button. Defaults to 'Share & earn'"
 
+[[extensions.settings.fields]]
+key = "badge_text"
+type = "single_line_text_field"
+name = "Badge Text"
+description = "Optional pill label above the heading (e.g. 'New'). Leave empty to hide the badge."
