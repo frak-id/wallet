@@ -3,6 +3,7 @@ import type { Currency } from "@frak-labs/core-sdk";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import { Panel } from "@/module/common/component/Panel";
+import { PreviewWrapper } from "@/module/common/component/PreviewWrapper";
 import { Form } from "@/module/forms/Form";
 import { FormActions } from "@/module/forms/FormActions";
 import { useMerchantUpdate } from "@/module/merchant/hook/useMerchantUpdate";
@@ -39,17 +40,17 @@ export function DefaultCustomization({
 }) {
     return (
         <>
-            <GlobalCssPanel
-                merchantId={merchantId}
-                sdkConfig={sdkConfig}
-                onDirtyChange={onDirtyChange}
-            />
             <GlobalComponentsPanel
                 merchantId={merchantId}
                 sdkConfig={sdkConfig}
                 onDirtyChange={onDirtyChange}
             />
             <GlobalTranslationsPanel
+                merchantId={merchantId}
+                sdkConfig={sdkConfig}
+                onDirtyChange={onDirtyChange}
+            />
+            <GlobalCssPanel
                 merchantId={merchantId}
                 sdkConfig={sdkConfig}
                 onDirtyChange={onDirtyChange}
@@ -67,6 +68,7 @@ function GlobalCssPanel({
     sdkConfig: SdkConfig;
     onDirtyChange: (key: string, isDirty: boolean) => void;
 }) {
+    const [isOpen, setIsOpen] = useState(false);
     const {
         mutate: editSdkConfig,
         isPending,
@@ -100,25 +102,40 @@ function GlobalCssPanel({
     return (
         <Panel title={"Global CSS"}>
             <p className={styles.customize__fieldDescription}>
-                CSS styles applied to all SDK components across every placement.
-                Placement-level CSS can override these defaults.
+                CSS styles applied to all SDK components across every
+                placement. Placement-level CSS can override these defaults.
             </p>
-            <CssEditor
-                value={form.watch("css")}
-                onChange={(value) => {
-                    form.setValue("css", value, { shouldDirty: true });
-                }}
-                placeholder={".frak-modal { ... }"}
-                isPending={isPending}
-                isSuccess={isSuccess}
-                isDirty={form.formState.isDirty}
-                onDiscard={() => form.reset(values)}
-                onSave={() =>
-                    editSdkConfig({
+            <div className={styles.customize__advancedSection}>
+                <button
+                    type="button"
+                    className={styles.customize__advancedToggle}
+                    onClick={() => setIsOpen(!isOpen)}
+                >
+                    {isOpen ? "▾" : "▸"} Custom CSS
+                </button>
+                {isOpen && (
+                    <div className={styles.customize__advancedBody}>
+                        <CssEditor
+                            value={form.watch("css")}
+                            onChange={(value) => {
+                                form.setValue("css", value, {
+                                    shouldDirty: true,
+                                });
+                            }}
+                            placeholder={".frak-modal { ... }"}
+                            isPending={isPending}
+                            isSuccess={isSuccess}
+                            isDirty={form.formState.isDirty}
+                            onDiscard={() => form.reset(values)}
+                            onSave={() =>
+                                editSdkConfig({
                         rawCss: valueOrNull(form.getValues("css")),
-                    })
-                }
-            />
+                                })
+                            }
+                        />
+                    </div>
+                )}
+            </div>
         </Panel>
     );
 }
@@ -337,14 +354,14 @@ function GlobalComponentsPanel({
                     ))}
                 </div>
 
-                <div className={styles.customize__previewWrapper}>
+                <PreviewWrapper>
                     <ComponentPreview
                         selectedComponent={selectedComponent}
                         form={form}
                         currency={(sdkConfig.currency ?? "eur") as Currency}
                         shopName={sdkConfig.name ?? "My Store"}
                     />
-                </div>
+                </PreviewWrapper>
 
                 {selectedComponent === "buttonShare" && (
                     <ButtonShareFields form={form} />

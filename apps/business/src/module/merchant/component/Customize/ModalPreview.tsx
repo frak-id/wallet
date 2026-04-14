@@ -1,6 +1,7 @@
 import { SharingPreview, SharingSuccessPreview } from "@frak-labs/ui-preview";
 import type { UseFormReturn } from "react-hook-form";
 import styles from "./ModalPreview.module.css";
+import { PreviewWrapper } from "@/module/common/component/PreviewWrapper";
 import {
     TRANSLATION_LANG_FIELDS,
     type TranslationFormValues,
@@ -127,25 +128,27 @@ export function SharingPagePreview({
     };
 
     return (
-        <div className={styles.previewContainer}>
-            <div className={styles.previewColumn}>
-                <div>
-                    <h4 className={styles.previewTitle}>Sharing page</h4>
-                    <p className={styles.previewDescription}>
-                        Shown when a visitor clicks the share button
-                    </p>
+        <PreviewWrapper>
+            <div className={styles.previewContainer}>
+                <div className={styles.previewColumn}>
+                    <div>
+                        <h4 className={styles.previewTitle}>Sharing page</h4>
+                        <p className={styles.previewDescription}>
+                            Shown when a visitor clicks the share button
+                        </p>
+                    </div>
+                    <SharingPreview t={t} logoUrl={logoUrl} />
                 </div>
-                <SharingPreview t={t} logoUrl={logoUrl} />
-            </div>
-            <div className={styles.previewColumn}>
-                <div>
+                <div className={styles.previewColumn}>
+                    <div>
                     <h4 className={styles.previewTitle}>Post-share success</h4>
-                    <p className={styles.previewDescription}>
-                        Shown after a successful share action
-                    </p>
+                        <p className={styles.previewDescription}>
+                            Shown after a successful share action
+                        </p>
+                    </div>
+                    <SharingSuccessPreview t={t} logoUrl={logoUrl} />
                 </div>
-                <SharingSuccessPreview t={t} logoUrl={logoUrl} />
             </div>
-        </div>
+        </PreviewWrapper>
     );
 }

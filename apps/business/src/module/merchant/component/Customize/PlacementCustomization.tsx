@@ -9,6 +9,7 @@ import {
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { type UseFormReturn, useForm } from "react-hook-form";
 import { Panel } from "@/module/common/component/Panel";
+import { PreviewWrapper } from "@/module/common/component/PreviewWrapper";
 import {
     Form,
     FormControl,
@@ -297,14 +298,14 @@ function PlacementSettingsPanel({
                     ))}
                 </div>
 
-                <div className={styles.customize__previewWrapper}>
+                <PreviewWrapper>
                     <ComponentPreview
                         selectedComponent={selectedComponent}
                         form={form}
                         currency={(sdkConfig.currency ?? "eur") as Currency}
                         shopName={sdkConfig.name ?? "My Store"}
                     />
-                </div>
+                </PreviewWrapper>
 
                 {selectedComponent === "buttonShare" && (
                     <ButtonShareFields form={form} />
