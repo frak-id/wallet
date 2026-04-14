@@ -120,4 +120,40 @@ export const merchantMediaRoutes = new Elysia({
                 404: t.String(),
             },
         }
+    )
+    .delete(
+        "/:type",
+        async ({
+            params: { merchantId, type },
+            businessSession,
+            shopifySession,
+            hasMerchantAccess,
+        }) => {
+            if (!businessSession && !shopifySession) {
+                return status(401, "Authentication required");
+            }
+
+            const hasAccess = await hasMerchantAccess(merchantId);
+            if (!hasAccess) {
+                return status(403, "Access denied");
+            }
+
+            await MediaContext.repositories.mediaStorage.delete({
+                merchantId,
+                type: type as ImageType,
+            });
+
+            return { success: true };
+        },
+        {
+            params: t.Object({
+                merchantId: t.String(),
+                type: t.Union(imageTypes.map((v) => t.Literal(v))),
+            }),
+            response: {
+                200: t.Object({ success: t.Literal(true) }),
+                401: t.String(),
+                403: t.String(),
+            },
+        }
     );

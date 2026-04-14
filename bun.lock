@@ -69,6 +69,7 @@
         "react": "catalog:",
         "react-day-picker": "^9.14.0",
         "react-dom": "catalog:",
+        "react-dropzone": "^15.0.0",
         "react-hook-form": "^7.71.2",
         "viem": "catalog:",
         "zustand": "catalog:",
@@ -204,7 +205,7 @@
     },
     "apps/wallet": {
       "name": "@frak-labs/nexus-wallet",
-      "version": "1.0.26",
+      "version": "1.0.27",
       "dependencies": {
         "@frak-labs/app-essentials": "workspace:*",
         "@frak-labs/core-sdk": "workspace:*",

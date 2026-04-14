@@ -1,5 +1,6 @@
 import {
     CreateBucketCommand,
+    DeleteObjectCommand,
     HeadBucketCommand,
     PutBucketPolicyCommand,
     PutObjectCommand,
@@ -113,5 +114,30 @@ export class MediaStorageRepository {
         );
 
         return `${this.cdnBaseUrl}/${this.bucketName}/${key}`;
+    }
+
+    /**
+     * Delete all image variants for a given merchant + type
+     */
+    async delete({
+        merchantId,
+        type,
+    }: {
+        merchantId: string;
+        type: ImageType;
+    }): Promise<void> {
+        await this.ensureBucket();
+
+        // Delete both possible extensions (webp + svg)
+        await Promise.all(
+            ["webp", "svg"].map((ext) =>
+                this.client.send(
+                    new DeleteObjectCommand({
+                        Bucket: this.bucketName,
+                        Key: `${merchantId}/${type}.${ext}`,
+                    })
+                )
+            )
+        );
     }
 }
