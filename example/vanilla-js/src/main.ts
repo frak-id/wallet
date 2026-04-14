@@ -121,6 +121,19 @@ async function handleSharingPage(withProduct: boolean) {
                               title: "Babies camel cuir velours bout carré",
                               imageUrl:
                                   "https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=200",
+                              link: "https://example.com/product-1",
+                          },
+                          {
+                              title: "Sneakers blanches classiques",
+                              imageUrl:
+                                  "https://images.unsplash.com/photo-1549298916-b41d501d3772?w=200",
+                              link: "https://example.com/product-2",
+                          },
+                          {
+                              title: "Boots en cuir noir",
+                              imageUrl:
+                                  "https://images.unsplash.com/photo-1608256246200-53e635b5b65f?w=200",
+                              link: "https://example.com/product-3",
                           },
                       ],
                   }

@@ -142,6 +142,8 @@ export const productCard = style({
     backgroundColor: "#fff",
     border: "1px solid #F1EFEE",
     borderRadius: alias.cornerRadius.l,
+    cursor: "pointer",
+    textAlign: "left",
 });
 
 export const productImage = style({
@@ -154,18 +156,32 @@ export const productImage = style({
     boxShadow: "0px 2px 16px 0px #00000026",
 });
 
-export const checkIcon = style({
+const checkIconBase = style({
     width: "24px",
     height: "24px",
     borderRadius: alias.cornerRadius.s,
-    backgroundColor: vars.text.primary,
-    color: vars.text.onAction,
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
-    fontSize: fontSize.xs,
     flexShrink: 0,
 });
+
+export const checkIcon = style([
+    checkIconBase,
+    {
+        backgroundColor: vars.text.primary,
+        color: vars.text.onAction,
+        fontSize: fontSize.xs,
+    },
+]);
+
+export const checkIconUnselected = style([
+    checkIconBase,
+    {
+        backgroundColor: vars.surface.muted,
+        border: `1px solid ${vars.border.default}`,
+    },
+]);
 
 /**
  * Stepper — numbered steps with a vertical connecting line.

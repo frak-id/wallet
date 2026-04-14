@@ -80,11 +80,25 @@ export function ListenerSharingPage() {
         setShowConfirmation(false);
     };
 
+    const products = useMemo(
+        () => (currentRequest.params.products as SharingPageProduct[]) ?? [],
+        [currentRequest.params.products]
+    );
+
+    // Product selection state — default to first product
+    const [selectedProductIndex, setSelectedProductIndex] = useState(0);
+
     // Build the final sharing link with Frak context
+    // Use the selected product's link if available, otherwise fall back to default
     const finalSharingLink = useMemo(() => {
         if (!(clientId && merchantId)) return null;
+
+        const selectedProduct = products[selectedProductIndex];
+        const baseLink =
+            selectedProduct?.link ?? currentRequest.params.link ?? sourceUrl;
+
         return FrakContextManager.update({
-            url: currentRequest.params.link ?? sourceUrl,
+            url: baseLink,
             context: {
                 v: 2,
                 c: clientId,
@@ -92,7 +106,14 @@ export function ListenerSharingPage() {
                 t: Math.floor(Date.now() / 1000),
             },
         });
-    }, [clientId, merchantId, currentRequest.params.link, sourceUrl]);
+    }, [
+        clientId,
+        merchantId,
+        currentRequest.params.link,
+        sourceUrl,
+        products,
+        selectedProductIndex,
+    ]);
 
     // Share mutation using the shared hook
     const { mutate: triggerSharing, isPending: isSharing } = useShareLink(
@@ -148,14 +169,13 @@ export function ListenerSharingPage() {
         );
     }, [installUrl]);
 
-    const products =
-        (currentRequest.params.products as SharingPageProduct[]) ?? [];
-
     return (
         <SharingPage
             appName={currentRequest.appName}
             logoUrl={currentRequest.logoUrl}
             products={products}
+            selectedProductIndex={selectedProductIndex}
+            onProductSelect={setSelectedProductIndex}
             sharingLink={finalSharingLink}
             installUrl={installUrl}
             t={t}

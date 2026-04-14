@@ -88,6 +88,9 @@ function WalletSharingPage() {
     const storeClientId = clientIdStore((s) => s.clientId);
     const { copy } = useCopyToClipboardWithState();
 
+    // Product selection state — default to first product
+    const [selectedProductIndex, setSelectedProductIndex] = useState(0);
+
     const { data: estimatedReward } = useFormattedEstimatedReward({
         merchantId,
     });
@@ -141,10 +144,17 @@ function WalletSharingPage() {
     );
 
     // Build the final sharing link with Frak context
+    // Use the selected product's link if available, otherwise fall back to default
     const finalSharingLink = useMemo(() => {
-        if (!(clientId && merchantId && link)) return null;
+        if (!(clientId && merchantId)) return null;
+
+        const safeProducts = products ?? [];
+        const selectedProduct = safeProducts[selectedProductIndex];
+        const baseLink = selectedProduct?.link ?? link;
+        if (!baseLink) return null;
+
         return FrakContextManager.update({
-            url: link,
+            url: baseLink,
             context: {
                 v: 2,
                 c: clientId,
@@ -152,7 +162,7 @@ function WalletSharingPage() {
                 t: Math.floor(Date.now() / 1000),
             },
         });
-    }, [clientId, merchantId, link]);
+    }, [clientId, merchantId, link, products, selectedProductIndex]);
 
     // Share mutation using the shared hook
     const {
@@ -229,6 +239,8 @@ function WalletSharingPage() {
             appName={appName ?? ""}
             logoUrl={logoUrl}
             products={products ?? []}
+            selectedProductIndex={selectedProductIndex}
+            onProductSelect={setSelectedProductIndex}
             sharingLink={finalSharingLink}
             installUrl={installUrl}
             t={t}

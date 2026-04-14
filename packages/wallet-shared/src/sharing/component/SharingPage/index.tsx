@@ -86,12 +86,23 @@ export type SharingPageProps = {
      * Called when the user dismisses the confirmation screen.
      */
     onConfirmationDismiss: () => void;
+    /**
+     * Index of the currently selected product.
+     * Defaults to 0 (first product) when products are present.
+     */
+    selectedProductIndex?: number;
+    /**
+     * Called when the user selects a different product.
+     */
+    onProductSelect?: (index: number) => void;
 };
 
 export function SharingPage({
     appName,
     logoUrl,
     products,
+    selectedProductIndex,
+    onProductSelect,
     sharingLink,
     installUrl,
     t,
@@ -105,6 +116,8 @@ export function SharingPage({
     onInstall,
     onConfirmationDismiss,
 }: SharingPageProps) {
+    const effectiveSelectedIndex =
+        products.length > 0 ? (selectedProductIndex ?? 0) : undefined;
     if (showConfirmation) {
         return (
             <PostShareConfirmation
@@ -221,21 +234,12 @@ export function SharingPage({
                     <Stack as="section" space="s">
                         {products.map(
                             (product: SharingPageProduct, index: number) => (
-                                <div key={index} className={styles.productCard}>
-                                    <span className={styles.checkIcon}>
-                                        <CheckIcon width={20} height={20} />
-                                    </span>
-                                    {product.imageUrl && (
-                                        <img
-                                            src={product.imageUrl}
-                                            alt={product.title}
-                                            className={styles.productImage}
-                                        />
-                                    )}
-                                    <Text variant="bodySmall" weight="medium">
-                                        {product.title}
-                                    </Text>
-                                </div>
+                                <ProductCard
+                                    key={index}
+                                    product={product}
+                                    selected={effectiveSelectedIndex === index}
+                                    onSelect={() => onProductSelect?.(index)}
+                                />
                             )
                         )}
                     </Stack>
@@ -415,5 +419,37 @@ export function SharingPage({
                 </Button>
             </footer>
         </div>
+    );
+}
+
+function ProductCard({
+    product,
+    selected,
+    onSelect,
+}: {
+    product: SharingPageProduct;
+    selected: boolean;
+    onSelect: () => void;
+}) {
+    return (
+        <button type="button" className={styles.productCard} onClick={onSelect}>
+            <span
+                className={
+                    selected ? styles.checkIcon : styles.checkIconUnselected
+                }
+            >
+                {selected && <CheckIcon width={20} height={20} />}
+            </span>
+            {product.imageUrl && (
+                <img
+                    src={product.imageUrl}
+                    alt={product.title}
+                    className={styles.productImage}
+                />
+            )}
+            <Text variant="bodySmall" weight="medium">
+                {product.title}
+            </Text>
+        </button>
     );
 }

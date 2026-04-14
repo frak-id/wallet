@@ -14,6 +14,11 @@ export type SharingPageProduct = {
      * Optional product image URL
      */
     imageUrl?: string;
+    /**
+     * Optional product-specific sharing link
+     * When provided and the product is selected, this link is used instead of the default sharing link
+     */
+    link?: string;
 };
 
 /**
