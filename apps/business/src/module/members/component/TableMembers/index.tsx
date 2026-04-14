@@ -1,5 +1,5 @@
-import { Button } from "@frak-labs/ui/component/Button";
 import { formatAmount } from "@frak-labs/core-sdk";
+import { Button } from "@frak-labs/ui/component/Button";
 import { Checkbox } from "@frak-labs/ui/component/forms/Checkbox";
 import { WalletAddress } from "@frak-labs/ui/component/HashDisplay";
 import { Skeleton } from "@frak-labs/ui/component/Skeleton";

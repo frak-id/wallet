@@ -6,6 +6,7 @@ import {
 import { InAppBanner } from "@frak-labs/design-system/components/InAppBanner";
 import { useCallback, useEffect, useMemo, useState } from "preact/hooks";
 import { useClientReady } from "@/hooks/useClientReady";
+import { useGlobalComponents } from "@/hooks/useGlobalComponents";
 import { useLightDomStyles } from "@/hooks/useLightDomStyles";
 import { usePlacement } from "@/hooks/usePlacement";
 import { useReward } from "@/hooks/useReward";
@@ -154,7 +155,9 @@ export function Banner({
         setDismissed(true);
     }, [isPreview]);
 
-    const bannerConfig = placement?.components?.banner;
+    const globalComponents = useGlobalComponents();
+    const bannerConfig =
+        placement?.components?.banner ?? globalComponents?.banner;
 
     // Resolve texts from placement config with hardcoded defaults
     const texts = useMemo(() => {

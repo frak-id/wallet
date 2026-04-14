@@ -10,7 +10,7 @@ import {
     FormMessage,
 } from "@/module/forms/Form";
 import styles from "../index.module.css";
-import type { BannerFormValues, PlacementSettingsFormValues } from "../types";
+import type { BannerFormValues, ComponentSettingsFormValues } from "../types";
 
 export function getBannerDefaults(
     components: NonNullable<
@@ -32,7 +32,7 @@ export function getBannerDefaults(
 export function BannerFields({
     form,
 }: {
-    form: UseFormReturn<PlacementSettingsFormValues>;
+    form: UseFormReturn<ComponentSettingsFormValues>;
 }) {
     return (
         <div className={styles.customize__settingsGrid}>

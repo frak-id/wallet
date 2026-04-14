@@ -15,6 +15,7 @@ import { Stack } from "@frak-labs/design-system/components/Stack";
 import { FrakRpcError, RpcErrorCodes } from "@frak-labs/frame-connector";
 import { useEffect, useMemo, useState } from "preact/hooks";
 import { useClientReady } from "@/hooks/useClientReady";
+import { useGlobalComponents } from "@/hooks/useGlobalComponents";
 import { useLightDomStyles } from "@/hooks/useLightDomStyles";
 import { usePlacement } from "@/hooks/usePlacement";
 import {
@@ -185,7 +186,9 @@ export function PostPurchase({
         return formatEstimatedReward(context.reward, currency);
     }, [context?.reward]);
 
-    const postPurchaseConfig = placement?.components?.postPurchase;
+    const globalComponents = useGlobalComponents();
+    const postPurchaseConfig =
+        placement?.components?.postPurchase ?? globalComponents?.postPurchase;
 
     // Badge renders only when text is provided via prop or placement config.
     const resolvedBadgeText = propBadgeText ?? postPurchaseConfig?.badgeText;

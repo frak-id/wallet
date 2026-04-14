@@ -107,6 +107,7 @@ export const SdkConfigSchema = t.Object({
     rawCss: t.Optional(t.Union([t.String({ maxLength: 50000 }), t.Null()])),
     css: t.Optional(t.Union([t.String({ maxLength: 50000 }), t.Null()])),
     translations: t.Optional(t.Union([TranslationTieredSchema, t.Null()])),
+    components: t.Optional(t.Union([PlacementComponentsSchema, t.Null()])),
     placements: t.Optional(
         t.Union([
             t.Record(PlacementIdSchema, PlacementSchema, { maxProperties: 10 }),

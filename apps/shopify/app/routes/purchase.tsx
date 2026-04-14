@@ -1,5 +1,5 @@
-import { AppProvider } from "@shopify/shopify-app-react-router/react";
 import { type Currency, formatAmount } from "@frak-labs/core-sdk";
+import { AppProvider } from "@shopify/shopify-app-react-router/react";
 import { useCallback } from "react";
 import type { LoaderFunctionArgs } from "react-router";
 import { data, useLoaderData } from "react-router";
@@ -64,7 +64,11 @@ function PurchasePresent({
             <div style={{ textAlign: "center" }}>
                 <s-heading>
                     Thank's for your purchase of{" "}
-                    {formatAmount(Number(purchase.amount), (purchase.currency ?? "eur") as Currency)}!
+                    {formatAmount(
+                        Number(purchase.amount),
+                        (purchase.currency ?? "eur") as Currency
+                    )}
+                    !
                 </s-heading>
             </div>
             <div style={{ textAlign: "center" }}>
@@ -93,7 +97,10 @@ function PurchasePresent({
                     items={[
                         {
                             term: "Amount",
-                            description: formatAmount(Number(purchase.amount), (purchase.currency ?? "eur") as Currency),
+                            description: formatAmount(
+                                Number(purchase.amount),
+                                (purchase.currency ?? "eur") as Currency
+                            ),
                         },
                         {
                             term: "Shopify status",
