@@ -393,7 +393,9 @@
             "heroLabel": "Hero image URL",
             "descriptionLabel": "Store description",
             "descriptionPlaceholder": "Describe your store for the Frak Explorer...",
-            "save": "Save"
+            "save": "Save",
+            "previewTitle": "Preview",
+            "previewDescription": "This is how your store will appear to users in the Frak Explorer."
         }
     },
     "funding": {

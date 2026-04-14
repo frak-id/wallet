@@ -1,3 +1,4 @@
+import { ExplorerCardPreview } from "@frak-labs/ui-preview";
 import type { action } from "app/routes/app.appearance";
 import type { ExplorerSettings } from "app/services.server/backendMerchant";
 import type { ShopBrandInfo } from "app/services.server/shop";
@@ -16,12 +17,14 @@ type ExplorerTabProps = {
     initialExplorerSettings: ExplorerSettings | null;
     shopBrand: ShopBrandInfo;
     sdkLogoUrl: string;
+    shopName: string;
 };
 
 export function ExplorerTab({
     initialExplorerSettings,
     shopBrand,
     sdkLogoUrl,
+    shopName,
 }: ExplorerTabProps) {
     const fetcher = useFetcher<typeof action>();
     const navigation = useNavigation();
@@ -182,6 +185,25 @@ export function ExplorerTab({
                     </s-button>
                 </s-stack>
             </s-section>
+
+            {(logoUrl || heroImageUrl || description) && (
+                <s-section>
+                    <s-stack gap="base">
+                        <s-text font-weight="semibold">
+                            {t("appearance.explorer.previewTitle")}
+                        </s-text>
+                        <s-text tone="subdued">
+                            {t("appearance.explorer.previewDescription")}
+                        </s-text>
+                        <ExplorerCardPreview
+                            name={shopName}
+                            heroImageUrl={heroImageUrl || undefined}
+                            logoUrl={logoUrl || undefined}
+                            description={description || undefined}
+                        />
+                    </s-stack>
+                </s-section>
+            )}
         </Form>
     );
 }

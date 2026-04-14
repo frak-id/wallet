@@ -88,3 +88,16 @@
     gap: 4px;
     margin-bottom: 12px;
 }
+
+.separator {
+    border: none;
+    border-top: 1px solid var(--frak-panel-border-color);
+    margin: 8px 0 0;
+}
+
+.previewLabel {
+    margin: 0;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--frak-input-placeholder-color);
+}

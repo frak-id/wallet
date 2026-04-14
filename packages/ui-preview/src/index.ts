@@ -1,5 +1,8 @@
 // Sharing page preview (header, card, reward, stepper, footer)
 
+// Explorer card preview
+export type { ExplorerCardPreviewProps } from "./explorer-card";
+export { ExplorerCardPreview } from "./explorer-card";
 export type {
     BannerPreviewProps,
     PostPurchasePreviewProps,

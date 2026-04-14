@@ -1,5 +1,5 @@
 import { Input } from "@frak-labs/ui/component/forms/Input";
-import { useCallback, useState } from "react";
+import { useCallback } from "react";
 import { useDropzone } from "react-dropzone";
 import {
     useMediaDelete,
@@ -46,15 +46,12 @@ export function ImageUploadField({
 
     const isPending = isUploading || isDeleting;
 
-    const [imgError, setImgError] = useState(false);
-
     const onDrop = useCallback(
         (files: File[]) => {
             const file = files[0];
             if (!file) return;
 
             resetUpload();
-            setImgError(false);
             upload(
                 { merchantId, image: file, type },
                 { onSuccess: (data) => onUploadSuccess(data.url) }
@@ -65,7 +62,6 @@ export function ImageUploadField({
 
     const handleClear = useCallback(() => {
         resetUpload();
-        setImgError(false);
         // Delete from bucket, then clear the field and auto-save
         deleteMedia(
             { merchantId, type },
@@ -81,7 +77,6 @@ export function ImageUploadField({
     });
 
     const errorMessage = getUploadErrorMessage(uploadError);
-    const showPreview = value && !imgError;
 
     return (
         <div className={styles.imageUploadField}>
@@ -91,10 +86,7 @@ export function ImageUploadField({
                         length={"medium"}
                         placeholder={"https://..."}
                         value={value}
-                        onChange={(e) => {
-                            onChange(e.target.value);
-                            setImgError(false);
-                        }}
+                        onChange={(e) => onChange(e.target.value)}
                     />
                     {value && (
                         <button
@@ -125,18 +117,6 @@ export function ImageUploadField({
                 {errorMessage && <p className={styles.error}>{errorMessage}</p>}
                 {isSuccess && <p className={styles.success}>Image uploaded</p>}
             </div>
-            {showPreview && (
-                <img
-                    src={value}
-                    alt={`${type} preview`}
-                    className={
-                        type === "hero"
-                            ? styles.previewHero
-                            : styles.previewLogo
-                    }
-                    onError={() => setImgError(true)}
-                />
-            )}
         </div>
     );
 }

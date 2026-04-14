@@ -203,9 +203,9 @@ function GlobalTranslationsPanel({
     );
 }
 
-// biome-ignore lint/complexity/noExcessiveCognitiveComplexity: Just fallback values
 const getGlobalComponentsValues = ({
     components: c,
+    // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: Just fallback values
 }: SdkConfig): ComponentSettingsFormValues => ({
     targetInteraction: "",
     buttonShare: {

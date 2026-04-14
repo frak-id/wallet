@@ -394,7 +394,9 @@
             "heroLabel": "URL de l'image de couverture",
             "descriptionLabel": "Description de la boutique",
             "descriptionPlaceholder": "Décrivez votre boutique pour le Frak Explorer...",
-            "save": "Enregistrer"
+            "save": "Enregistrer",
+            "previewTitle": "Aperçu",
+            "previewDescription": "Voici comment votre boutique apparaîtra aux utilisateurs dans le Frak Explorer."
         }
     },
     "funding": {
