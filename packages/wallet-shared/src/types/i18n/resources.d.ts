@@ -450,6 +450,9 @@ interface Resources {
             activateNotifications: "<strong>Enable notifications</strong> <br /> to be notified when your gains are paid";
             activateNotificationsRationale: "<strong>Enable notifications</strong> <br /> We need your permission to notify you when gains are paid";
             inAppBrowser: {
+                title: "Open in your browser";
+                description: "For a better experience, open this page in your default browser.";
+                cta: "Open browser";
                 clickToOpen: "Tap to open in your browser.";
                 clipboardAlert: "This browser doesn't support all features needed.\n\nThe link has been copied to your clipboard.\n\nTo continue:\n1. Open Safari\n2. Tap the address bar\n3. Paste and go";
                 clipboardManualAlert: "This browser doesn't support all features needed.\n\nAutomatic copy failed.\n\nCopy this link manually:\n{{url}}\n\nThen:\n1. Open Safari\n2. Tap the address bar\n3. Paste and go";

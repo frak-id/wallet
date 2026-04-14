@@ -1,6 +1,6 @@
-import type { JSX } from "preact";
+import type { SVGProps } from "react";
 
-export function CloseIcon(props: JSX.SVGAttributes<SVGSVGElement>) {
+export function CloseCircleIcon(props: SVGProps<SVGSVGElement>) {
     return (
         <svg
             width="15"

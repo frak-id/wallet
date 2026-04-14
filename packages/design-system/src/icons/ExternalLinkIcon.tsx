@@ -1,6 +1,6 @@
-import type { JSX } from "preact";
+import type { SVGProps } from "react";
 
-export function ExternalLinkIcon(props: JSX.SVGAttributes<SVGSVGElement>) {
+export function ExternalLinkIcon(props: SVGProps<SVGSVGElement>) {
     return (
         <svg
             width="12"

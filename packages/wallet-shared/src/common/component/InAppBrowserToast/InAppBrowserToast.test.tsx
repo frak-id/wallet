@@ -68,30 +68,6 @@ vi.mock("../../lib/inApp", () => ({
     },
 }));
 
-type ToastMockProps = {
-    text: string;
-    onClick?: () => void;
-    onDismiss?: (event: React.MouseEvent<HTMLButtonElement>) => void;
-};
-
-vi.mock("../Toast", () => ({
-    Toast: ({ text, onClick, onDismiss }: ToastMockProps) => (
-        <div data-testid="toast">
-            <span>{text}</span>
-            {onClick && (
-                <button type="button" onClick={onClick}>
-                    Click
-                </button>
-            )}
-            {onDismiss && (
-                <button type="button" onClick={onDismiss}>
-                    Dismiss
-                </button>
-            )}
-        </div>
-    ),
-}));
-
 describe("InAppBrowserToast", () => {
     beforeEach(() => {
         vi.clearAllMocks();
@@ -137,7 +113,7 @@ describe("InAppBrowserToast", () => {
         render(<InAppBrowserToast />);
 
         await waitFor(() => {
-            expect(screen.getByTestId("toast")).toBeInTheDocument();
+            expect(screen.getByRole("alert")).toBeInTheDocument();
         });
     });
 
@@ -156,7 +132,7 @@ describe("InAppBrowserToast", () => {
             />
         );
 
-        fireEvent.click(screen.getByRole("button", { name: "Click" }));
+        fireEvent.click(screen.getByText("wallet.inAppBrowser.cta"));
 
         await waitFor(() => {
             expect(writeText).toHaveBeenCalledWith(
@@ -183,7 +159,7 @@ describe("InAppBrowserToast", () => {
 
         render(<InAppBrowserToast />);
 
-        fireEvent.click(screen.getByRole("button", { name: "Click" }));
+        fireEvent.click(screen.getByText("wallet.inAppBrowser.cta"));
 
         await waitFor(() => {
             expect(writeText).toHaveBeenCalledWith(window.location.href);
@@ -216,7 +192,7 @@ describe("InAppBrowserToast", () => {
             <InAppBrowserToast parentUrl="https://shop.example.com/products/abc" />
         );
 
-        fireEvent.click(screen.getByRole("button", { name: "Click" }));
+        fireEvent.click(screen.getByText("wallet.inAppBrowser.cta"));
 
         await waitFor(() => {
             expect(window.alert).toHaveBeenCalledWith(

@@ -326,6 +326,9 @@
             }
         },
         "inAppBrowser": {
+            "title": "Ouvrir dans votre navigateur",
+            "description": "Pour une meilleure expérience, ouvrez cette page dans votre navigateur par défaut.",
+            "cta": "Ouvrir le navigateur",
             "warning": "Vous utilisez un navigateur intégré. Votre expérience pourrait être dégradée. Appuyez pour ouvrir dans votre navigateur.",
             "clickToOpen": "Appuyez pour ouvrir dans votre navigateur",
             "dismiss": "Masquer le message",

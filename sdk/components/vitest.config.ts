@@ -9,6 +9,7 @@ export default mergeConfig(
         plugins: [preact(), vanillaExtractPlugin()],
         resolve: {
             tsconfigPaths: true,
+            dedupe: ["preact"],
         },
         test: {
             name: "components-sdk-unit",

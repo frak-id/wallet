@@ -1,6 +1,6 @@
-import type { JSX } from "preact";
+import type { SVGProps } from "react";
 
-export function WarningIcon(props: JSX.SVGAttributes<SVGSVGElement>) {
+export function WarningIcon(props: SVGProps<SVGSVGElement>) {
     return (
         <svg
             width="16"

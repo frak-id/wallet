@@ -3,13 +3,13 @@ import {
     isInAppBrowser,
     redirectToExternalBrowser,
 } from "@frak-labs/core-sdk";
+import { InAppBanner } from "@frak-labs/design-system/components/InAppBanner";
 import { useCallback, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { trackGenericEvent } from "../../analytics";
 import { useSessionFlag } from "../../hook/useSessionFlag";
 import { isInIframe, isIPad } from "../../lib/inApp";
 import { emitLifecycleEvent } from "../../utils/lifecycleEvents";
-import { Toast } from "../Toast";
 
 type InAppBrowserToastProps = {
     getMergeToken?: () => Promise<string | undefined>;
@@ -89,13 +89,9 @@ export function InAppBrowserToast({
         handleRedirect();
     }, [hasAttemptedRedirect, setHasAttemptedRedirect, handleRedirect]);
 
-    const handleDismiss = useCallback(
-        (e: React.MouseEvent) => {
-            e.stopPropagation(); // Prevent toast click when clicking dismiss
-            setIsDismissed(true);
-        },
-        [setIsDismissed]
-    );
+    const handleDismiss = useCallback(() => {
+        setIsDismissed(true);
+    }, [setIsDismissed]);
 
     // Don't show if not in app browser or already dismissed
     if (!isInAppBrowser || isDismissed) {
@@ -103,11 +99,12 @@ export function InAppBrowserToast({
     }
 
     return (
-        <Toast
-            text={t("wallet.inAppBrowser.warning")}
-            ariaLabel={t("wallet.inAppBrowser.clickToOpen")}
-            ariaDismissLabel={t("wallet.inAppBrowser.dismiss")}
-            onClick={handleRedirect}
+        <InAppBanner
+            title={t("wallet.inAppBrowser.title")}
+            description={t("wallet.inAppBrowser.description")}
+            cta={t("wallet.inAppBrowser.cta")}
+            dismissLabel={t("wallet.inAppBrowser.dismiss")}
+            onAction={handleRedirect}
             onDismiss={handleDismiss}
         />
     );

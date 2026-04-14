@@ -3,25 +3,16 @@ import {
     getMergeToken,
     REFERRAL_SUCCESS_EVENT,
 } from "@frak-labs/core-sdk/actions";
+import { InAppBanner } from "@frak-labs/design-system/components/InAppBanner";
 import { useCallback, useEffect, useMemo, useState } from "preact/hooks";
 import { useClientReady } from "@/hooks/useClientReady";
 import { useLightDomStyles } from "@/hooks/useLightDomStyles";
 import { usePlacement } from "@/hooks/usePlacement";
 import { useReward } from "@/hooks/useReward";
-import { CloseIcon } from "../icons/CloseIcon";
-import { ExternalLinkIcon } from "../icons/ExternalLinkIcon";
 import { GiftIcon } from "../icons/GiftIcon";
-import { WarningIcon } from "../icons/WarningIcon";
 import {
     cssSource,
     iconSvg,
-    inapp,
-    inappClose,
-    inappCta,
-    inappDescription,
-    inappHeader,
-    inappIconWrapper,
-    inappTitle,
     referral,
     referralBody,
     referralCta,
@@ -216,7 +207,7 @@ export function Banner({
     // external tests / merchant selectors targeting `.frak-banner*` keep
     // working while the visual styling is driven by the design system.
     const bannerClass = [
-        mode === "inapp" ? inapp : referral,
+        referral,
         "frak-banner",
         `frak-banner--${mode}`,
         classname,
@@ -226,35 +217,24 @@ export function Banner({
 
     if (mode === "inapp") {
         return (
-            <div class={bannerClass} role="alert">
-                <div class={inappHeader}>
-                    <span class={`${inappIconWrapper} frak-banner__icon`}>
-                        <WarningIcon />
-                    </span>
-                    <p class={`${inappTitle} frak-banner__title`}>
-                        {texts.title}
-                    </p>
-                </div>
-                <p class={`${inappDescription} frak-banner__description`}>
-                    {texts.description}
-                </p>
-                <button
-                    type="button"
-                    class={`${inappCta} frak-banner__cta`}
-                    onClick={handleAction}
-                >
-                    {texts.cta}
-                    <ExternalLinkIcon />
-                </button>
-                <button
-                    type="button"
-                    class={`${inappClose} frak-banner__close`}
-                    onClick={handleDismiss}
-                    aria-label="Dismiss"
-                >
-                    <CloseIcon />
-                </button>
-            </div>
+            <InAppBanner
+                title={texts.title}
+                description={texts.description}
+                cta={texts.cta}
+                dismissLabel="Dismiss"
+                onAction={handleAction}
+                onDismiss={handleDismiss}
+                className={["frak-banner", "frak-banner--inapp", classname]
+                    .filter(Boolean)
+                    .join(" ")}
+                classNames={{
+                    icon: "frak-banner__icon",
+                    title: "frak-banner__title",
+                    description: "frak-banner__description",
+                    cta: "frak-banner__cta",
+                    close: "frak-banner__close",
+                }}
+            />
         );
     }
 
