@@ -20,7 +20,7 @@ import * as styles from "./index.css";
 export function Balance() {
     const { t } = useTranslation();
     const { userBalance } = useGetUserBalance();
-    const [isHidden, setIsHidden] = useState(false);
+    const [isHidden, setIsHidden] = useState(() => localStorage.getItem("frak_balance_hidden") === "true");
 
     const openModal = modalStore((s) => s.openModal);
 
@@ -37,7 +37,11 @@ export function Balance() {
     };
 
     const toggleHidden = () => {
-        setIsHidden((prev) => !prev);
+        setIsHidden((prev) => {
+            const next = !prev;
+            localStorage.setItem("frak_balance_hidden", String(next));
+            return next;
+        });
     };
 
     return (
