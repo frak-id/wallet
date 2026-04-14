@@ -282,6 +282,7 @@
         "i18next": "^26.0.3",
         "i18next-browser-languagedetector": "^8.2.1",
         "lucide-react": "^0.577.0",
+        "normalize.css": "^8.0.1",
         "react": "catalog:",
         "react-dom": "catalog:",
         "react-hook-form": "^7.71.2",
