@@ -171,6 +171,7 @@ export function PlacementTranslationsPanel({
                 <SharingPagePreview
                     form={form}
                     logoUrl={sdkConfig.logoUrl ?? undefined}
+                    currency={sdkConfig.currency ?? undefined}
                     lang={lang}
                     defaultValues={inheritedValues}
                 />

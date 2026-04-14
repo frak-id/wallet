@@ -5,12 +5,11 @@ import { Text } from "@frak-labs/design-system/components/Text";
 import {
     BellIcon,
     CloseIcon,
+    LogoFrakWithName,
     ShieldIcon,
     WalletIcon,
 } from "@frak-labs/design-system/icons";
-import type { ReactNode } from "react";
-import { LogoFrakWithName } from "../../../common/icons/LogoFrakWithName";
-import iphoneBgUrl from "../../assets/iphone.png";
+import iphoneBgUrl from "@frak-labs/design-system/assets/iphone.png";
 import * as styles from "./postShareConfirmation.css";
 export type PostShareConfirmationProps = {
     installUrl: string | null;

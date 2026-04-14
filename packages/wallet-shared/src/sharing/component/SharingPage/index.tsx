@@ -10,11 +10,13 @@ import { Button } from "@frak-labs/design-system/components/Button";
 import { NumberedCircle } from "@frak-labs/design-system/components/NumberedCircle";
 import { Stack } from "@frak-labs/design-system/components/Stack";
 import { Text } from "@frak-labs/design-system/components/Text";
-import { CheckIcon, CopyIcon, ShareIcon } from "@frak-labs/design-system/icons";
-import { Minus, Plus } from "lucide-react";
-import { Toaster } from "sonner";
-import { LogoFrakWithName } from "../../../common/icons/LogoFrakWithName";
-import { CardBackground } from "../../icons/CardBackground";
+import {
+    CardBackground,
+    CheckIcon,
+    CopyIcon,
+    LogoFrakWithName,
+    ShareIcon,
+} from "@frak-labs/design-system/icons";
 import { PostShareConfirmation } from "../PostShareConfirmation";
 import * as styles from "./sharingPage.css";
 

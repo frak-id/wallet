@@ -159,6 +159,7 @@ function GlobalTranslationsPanel({
                 <SharingPagePreview
                     form={form}
                     logoUrl={sdkConfig.logoUrl ?? undefined}
+                    currency={sdkConfig.currency ?? undefined}
                     lang={lang}
                 />
                 <TranslationEditor

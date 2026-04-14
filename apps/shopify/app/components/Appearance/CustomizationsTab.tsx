@@ -176,6 +176,7 @@ export function CustomizationsTab({
                                 customizations as I18nCustomizations
                             }
                             onUpdate={handleSingleLanguageUpdate}
+                            logoUrl={appearanceMetafield.logoUrl}
                         />
                     ) : (
                         <MultiLanguageFields
@@ -183,6 +184,7 @@ export function CustomizationsTab({
                                 customizations as MultiLanguageI18nCustomizations
                             }
                             onUpdate={handleMultiLanguageUpdate}
+                            logoUrl={appearanceMetafield.logoUrl}
                         />
                     )}
                     <s-box paddingBlockEnd="base">

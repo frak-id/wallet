@@ -41,7 +41,7 @@ export { useGetSafeSdkSession } from "./hook/useGetSafeSdkSession";
 export { useMountedTimeout } from "./hook/useMountedTimeout";
 export { useSessionFlag } from "./hook/useSessionFlag";
 // Icons
-export { LogoFrakWithName } from "./icons/LogoFrakWithName";
+export { LogoFrakWithName } from "@frak-labs/design-system/icons";
 // Lib
 export { isInIframe } from "./lib/inApp";
 export { ua } from "./lib/ua";

@@ -91,9 +91,16 @@ function resolveTranslation(
     return undefined;
 }
 
+const CURRENCY_SYMBOLS: Record<string, string> = {
+    eur: "€",
+    usd: "$",
+    gbp: "£",
+};
+
 type SharingPagePreviewProps = {
     form: UseFormReturn<TranslationFormValues>;
     logoUrl?: string;
+    currency?: string;
     lang: TranslationLang;
     defaultValues?: TranslationFormValues;
 };
@@ -101,15 +108,23 @@ type SharingPagePreviewProps = {
 export function SharingPagePreview({
     form,
     logoUrl,
+    currency,
     lang,
     defaultValues,
 }: SharingPagePreviewProps) {
     const watchedValues = form.watch();
+    const symbol = CURRENCY_SYMBOLS[currency ?? "eur"] ?? "€";
+    const estimatedReward = `5,00 ${symbol}`;
 
-    const t = (key: string) =>
-        resolveTranslation(key, lang, watchedValues, defaultValues) ??
-        DEFAULTS[key] ??
-        key;
+    const t = (key: string) => {
+        const raw =
+            resolveTranslation(key, lang, watchedValues, defaultValues) ??
+            DEFAULTS[key] ??
+            key;
+        return raw
+            .replace(/\{\{\s*estimatedReward\s*\}\}/g, estimatedReward)
+            .replace(/\{\{\s*productName\s*\}\}/g, "My Store");
+    };
 
     return (
         <div className={styles.previewContainer}>

@@ -168,11 +168,13 @@ export function SharingPageSection({
     values,
     onUpdate,
     language,
+    logoUrl,
 }: {
     values: Record<string, string>;
     onUpdate: (key: string, value: string) => void;
     language: string;
-}) {
+    logoUrl?: string;
+}){
     const { t } = useTranslation();
     const { currency, shopName } = usePreviewContext();
     const previewT = makePreviewT(values, currency, shopName);
@@ -264,7 +266,7 @@ export function SharingPageSection({
                                 )}
                             </s-text>
                         </div>
-                        <SharingPreview t={previewT} />
+                        <SharingPreview t={previewT} logoUrl={logoUrl} />
                     </s-stack>
                 </s-section>
                 <s-section>
@@ -279,7 +281,7 @@ export function SharingPageSection({
                                 )}
                             </s-text>
                         </div>
-                        <SharingSuccessPreview t={previewT} />
+                        <SharingSuccessPreview t={previewT} logoUrl={logoUrl} />
                     </s-stack>
                 </s-section>
             </div>

@@ -4,12 +4,11 @@ import { Text } from "@frak-labs/design-system/components/Text";
 import {
     BellIcon,
     CloseIcon,
+    LogoFrakWithName,
     ShieldIcon,
     WalletIcon,
 } from "@frak-labs/design-system/icons";
-import type { ReactNode } from "react";
-import iphoneBgUrl from "../assets/iphone.png";
-import { LogoFrakWithName } from "../icons/LogoFrakWithName";
+import iphoneBgUrl from "@frak-labs/design-system/assets/iphone.png";
 import * as styles from "./styles.css";
 
 export type SharingSuccessPreviewProps = {

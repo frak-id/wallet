@@ -2,9 +2,12 @@ import { Box } from "@frak-labs/design-system/components/Box";
 import { NumberedCircle } from "@frak-labs/design-system/components/NumberedCircle";
 import { Stack } from "@frak-labs/design-system/components/Stack";
 import { Text } from "@frak-labs/design-system/components/Text";
-import { CheckIcon, CopyIcon, ShareIcon } from "@frak-labs/design-system/icons";
-import { CardBackground } from "../icons/CardBackground";
-import { LogoFrakWithName } from "../icons/LogoFrakWithName";
+import {
+    CardBackground,
+    CopyIcon,
+    LogoFrakWithName,
+    ShareIcon,
+} from "@frak-labs/design-system/icons";
 import * as styles from "./styles.css";
 
 export type SharingPreviewProps = {
