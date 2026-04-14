@@ -64,9 +64,11 @@ export function RecoveryCodePage() {
                 </Button>
             }
         >
-            <Back
-                onClick={() => navigate({ to: "/register", replace: true })}
-            />
+            <Box paddingLeft="m">
+                <Back
+                    onClick={() => navigate({ to: "/register", replace: true })}
+                />
+            </Box>
             <div className={styles.wrapper}>
                 <Box display={"flex"} flexDirection={"column"} gap={"m"}>
                     <Title size="page">{t("recoveryCode.title")}</Title>
