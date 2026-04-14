@@ -112,6 +112,26 @@ export const brandInfo = style({
     minWidth: 0,
 });
 
+export const brandLink = style({
+    color: "inherit",
+    textDecoration: "none",
+    selectors: {
+        "&:hover, &:active": {
+            color: "inherit",
+            opacity: 0.7,
+        },
+        "&:visited": {
+            color: "inherit",
+        },
+    },
+});
+
+export const brandLinkIcon = style({
+    display: "inline-block",
+    verticalAlign: ".05em",
+    marginLeft: 4,
+});
+
 /**
  * Brand logo — circular image.
  */

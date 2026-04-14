@@ -14,6 +14,7 @@ import {
     ClockIcon,
     CloseIcon,
     CoinsIcon,
+    ExternalLinkIcon,
     ImageIcon,
     ShareIcon,
 } from "@frak-labs/design-system/icons";
@@ -142,7 +143,17 @@ export function ExplorerDetail({ merchant, onClose }: ExplorerDetailProps) {
                 <div className={styles.brandHeader}>
                     <div className={styles.brandInfo}>
                         <Text as="h1" variant="heading1">
-                            {merchant.name}
+                            <a
+                                href={`https://${merchant.domain}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className={styles.brandLink}
+                            >
+                                {merchant.name}{" "}
+                                <span className={styles.brandLinkIcon}>
+                                    <ExternalLinkIcon width={14} height={14} />
+                                </span>
+                            </a>
                         </Text>
                         {merchant.maxRewardEur != null && (
                             <Text variant="body" weight="medium">
