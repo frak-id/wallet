@@ -31,12 +31,8 @@ WORKDIR /app
 COPY --from=builder --chown=bun:bun /app/services/backend/package.json .
 COPY --from=builder --chown=bun:bun /app/services/backend/dist ./dist
 
-# Sharp is a native module (libvips bindings) — can't be bundled, needs node_modules at runtime
-COPY --from=builder --chown=bun:bun /app/node_modules/sharp ./node_modules/sharp
-COPY --from=builder --chown=bun:bun /app/node_modules/@img ./node_modules/@img
-
-# Verify sharp loads correctly (catches arch/platform mismatches at build time)
-RUN bun -e "require('sharp')"
+# Sharp is a native module (libvips bindings) — can't be bundled, install directly in runtime
+RUN cd /tmp && bun add sharp && cp -rL node_modules /app/node_modules && rm -rf /tmp/node_modules /tmp/package.json /tmp/bun.lock
 
 USER bun
 
