@@ -2,6 +2,7 @@ import { dbInstance, elysiaEnv, postgresEnv } from "./secrets";
 
 const localPort = "8888";
 const sqldLocalPort = "8089";
+const rustfsLocalPort = "9100";
 
 new sst.x.DevCommand("db-tunnel", {
     dev: {
@@ -19,6 +20,7 @@ new sst.x.DevCommand("db-tunnel", {
         SQLD_NAMESPACE: "db-production",
         SQLD_SERVICE: "sqld-production-service",
         SQLD_REMOTE_PORT: "8080",
+        RUSTFS_LOCAL_PORT: rustfsLocalPort,
     },
 });
 
@@ -45,6 +47,8 @@ new sst.x.DevCommand("backend", {
         LIBSQL_URL: libsqlUrl,
         DOMAIN_NAME: "",
         STAGE: $app.stage,
+        // Override RustFS endpoint for local dev (tunnel)
+        RUSTFS_ENDPOINT: `http://localhost:${rustfsLocalPort}`,
     },
 });
 

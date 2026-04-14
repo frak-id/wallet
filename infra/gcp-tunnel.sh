@@ -44,7 +44,27 @@ function launch_sqld_tunnel() {
     fi
 }
 
+# --- RustFS tunnel (kubectl port-forward to RustFS pod) ---
+rustfsLocalPort=${RUSTFS_LOCAL_PORT:-9100}
+rustfsNamespace="db-production"
+rustfsService="rustfs-production-service"
+rustfsRemotePort=9000
+
+echo "[rustfs] Forwarding localhost:${rustfsLocalPort} -> ${rustfsService}.${rustfsNamespace}:${rustfsRemotePort}"
+
+function launch_rustfs_tunnel() {
+    kubectl port-forward -n "${rustfsNamespace}" "svc/${rustfsService}" "${rustfsLocalPort}:${rustfsRemotePort}"
+    local exit_code=$?
+
+    if [ $exit_code -ne 0 ]; then
+        echo "[rustfs] Port-forward failed (exit code: ${exit_code}). Retrying in 3s..."
+        sleep 3
+        launch_rustfs_tunnel
+    fi
+}
+
 # Run both tunnels in parallel, exit if either dies
 launch_pg_tunnel &
 launch_sqld_tunnel &
+launch_rustfs_tunnel &
 wait
