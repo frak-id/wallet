@@ -70,21 +70,31 @@ export class MerchantResolveService {
         return undefined;
     }
 
-    async resolve(
-        normalizedDomain: string,
-        lang: string | undefined
-    ): Promise<MerchantResolveResponse | null> {
+    async resolve({
+        id,
+        domain,
+        lang,
+    }: {
+        id?: string;
+        domain?: string;
+        lang?: string;
+    }): Promise<MerchantResolveResponse | null> {
         const safeLang = this.normalizeQueryLang(lang);
-        const cacheKey = `${normalizedDomain}:${safeLang ?? ""}`;
+        const cacheKey = id
+            ? `${id}:${safeLang ?? ""}`
+            : `${domain}:${safeLang ?? ""}`;
         const cached = this.responseCache.get(cacheKey);
         if (cached) return cached.value;
 
-        const merchant =
-            await this.merchantRepository.findByDomain(normalizedDomain);
+        const merchant = id
+            ? await this.merchantRepository.findById(id)
+            : domain
+              ? await this.merchantRepository.findByDomain(domain)
+              : null;
         if (!merchant) return null;
 
         const productId =
-            merchant.productId ?? keccak256(toHex(normalizedDomain));
+            merchant.productId ?? keccak256(toHex(domain ?? merchant.domain));
         const resolvedLang = this.resolveLanguage(merchant.sdkConfig, safeLang);
         const resolvedSdkConfig = this.buildResolvedSdkConfig(
             merchant.sdkConfig,
@@ -101,37 +111,6 @@ export class MerchantResolveService {
         };
 
         this.responseCache.set(cacheKey, { value: response });
-        return response;
-    }
-
-    async resolveById(
-        merchantId: string
-    ): Promise<MerchantResolveResponse | null> {
-        const cached = this.responseCache.get(merchantId);
-        if (cached) return cached.value;
-
-        const merchant =
-            await this.merchantRepository.findById(merchantId);
-        if (!merchant) return null;
-
-        const productId =
-            merchant.productId ?? keccak256(toHex(merchant.domain));
-        const resolvedLang = this.resolveLanguage(merchant.sdkConfig, undefined);
-        const resolvedSdkConfig = this.buildResolvedSdkConfig(
-            merchant.sdkConfig,
-            resolvedLang
-        );
-
-        const response: MerchantResolveResponse = {
-            merchantId: merchant.id,
-            productId,
-            name: merchant.name,
-            domain: merchant.domain,
-            allowedDomains: [merchant.domain],
-            ...(resolvedSdkConfig && { sdkConfig: resolvedSdkConfig }),
-        };
-
-        this.responseCache.set(merchantId, { value: response });
         return response;
     }
 
