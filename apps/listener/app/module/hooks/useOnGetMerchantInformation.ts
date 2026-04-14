@@ -46,7 +46,7 @@ export function useOnGetMerchantInformation(): OnGetMerchantInformation {
                     name: backendConfig?.name ?? "",
                     domain,
                 },
-                rewards,
+                rewards: rewards as GetMerchantInformationReturnType["rewards"],
             } satisfies GetMerchantInformationReturnType;
         },
         [queryClient, backendConfig]

@@ -10,7 +10,9 @@ import {
     ShieldIcon,
     WalletIcon,
 } from "@frak-labs/design-system/icons";
+import type { ReactNode } from "react";
 import * as styles from "./postShareConfirmation.css";
+
 export type PostShareConfirmationProps = {
     installUrl: string | null;
     appName: string;

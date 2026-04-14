@@ -31,7 +31,7 @@ export const badge = style({
     display: "inline-flex",
     alignItems: "center",
     gap: alias.spacing.xxs,
-    padding: "6px 8px",
+    padding: "4px 8px",
     borderRadius: alias.cornerRadius.full,
     backgroundColor: "rgba(255, 255, 255, 0.7)",
     backdropFilter: "blur(16px)",

@@ -158,7 +158,7 @@ export const description = style({
  */
 export const descriptionText = style({
     display: "-webkit-box",
-    WebkitLineClamp: 4,
+    WebkitLineClamp: 5,
     WebkitBoxOrient: "vertical",
     overflow: "hidden",
 });

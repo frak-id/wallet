@@ -1,7 +1,7 @@
 import { SharingPreview, SharingSuccessPreview } from "@frak-labs/ui-preview";
 import type { UseFormReturn } from "react-hook-form";
-import styles from "./ModalPreview.module.css";
 import { PreviewWrapper } from "@/module/common/component/PreviewWrapper";
+import styles from "./ModalPreview.module.css";
 import {
     TRANSLATION_LANG_FIELDS,
     type TranslationFormValues,
@@ -141,7 +141,9 @@ export function SharingPagePreview({
                 </div>
                 <div className={styles.previewColumn}>
                     <div>
-                    <h4 className={styles.previewTitle}>Post-share success</h4>
+                        <h4 className={styles.previewTitle}>
+                            Post-share success
+                        </h4>
                         <p className={styles.previewDescription}>
                             Shown after a successful share action
                         </p>

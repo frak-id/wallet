@@ -634,13 +634,14 @@
             "description": "New offers are coming soon. Check back later!"
         },
         "card": {
-            "badge": "Up to {{amount}}€"
+            "badge": "Up to {{amount}}",
+            "until": "Until {{date}}"
         },
         "detail": {
             "close": "Close",
             "share": "Share",
             "endDateBadge": "Ends {{date}} ({{days}}d)",
-            "rewardPerReferral": "{{amount}}€ per referral",
+            "rewardPerReferral": "{{amount}} per referral",
             "readMore": "Read more",
             "legal": "<termsLink>{{merchantName}}'s terms and conditions</termsLink> and <termsLink>FRAK's terms and conditions</termsLink> apply.",
             "shareAndEarn": "Share and earn",
@@ -650,10 +651,12 @@
             "refereeReward": "Reward as referee",
             "earningsAvailability": "Earnings availability",
             "immediate": "Immediate",
+            "pendingDays": "{{count}} day",
+            "pendingDays_other": "{{count}} days",
             "instructions": "Instructions",
             "step1Title": "Share a product with your friends",
             "step1Description": "A personal link is automatically generated with each share.",
-            "step2Title": "Earn {{amount}}€ for every purchase you help generate",
+            "step2Title": "Earn {{amount}} for every purchase you help generate",
             "step2Description": "Every order made through your link on {{name}} earns you cash directly in your wallet.",
             "step3Title": "Collect your earnings in your wallet",
             "step3Description": "In one click, transfer your earnings to your bank account."

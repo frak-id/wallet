@@ -243,6 +243,7 @@ const EstimatedRewardItemSchema = t.Object({
     pendingRewardExpirationDays: t.Optional(t.Number()),
     maxRewardsPerUser: t.Optional(t.Number()),
     merchantMaxRewardsPerUser: t.Optional(t.Number()),
+    expiresAt: t.Optional(t.Union([t.String(), t.Null()])),
 });
 export type EstimatedRewardItem = Omit<
     Static<typeof EstimatedRewardItemSchema>,

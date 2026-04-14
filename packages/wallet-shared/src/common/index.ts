@@ -1,5 +1,3 @@
-// Analytics
-
 // Icons
 export { LogoFrakWithName } from "@frak-labs/design-system/icons";
 export {
@@ -35,6 +33,7 @@ export { useAddToHomeScreenPrompt } from "./hook/useAddToHomeScreenPrompt";
 export { useCopyToClipboardWithState } from "./hook/useCopyToClipboardWithState";
 export {
     estimatedRewardsQueryOptions,
+    formatEstimatedReward,
     selectFormattedReward,
     useFormattedEstimatedReward,
 } from "./hook/useEstimatedReward";

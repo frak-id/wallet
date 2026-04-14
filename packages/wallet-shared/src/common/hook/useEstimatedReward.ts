@@ -1,3 +1,4 @@
+import type { EstimatedRewardItem } from "@frak-labs/backend-elysia/domain/campaign";
 import type {
     Currency,
     EstimatedReward,
@@ -10,16 +11,7 @@ import {
     getSupportedCurrency,
 } from "@frak-labs/core-sdk";
 import { queryOptions, useQuery } from "@tanstack/react-query";
-import type { Address } from "viem";
 import { authenticatedBackendApi } from "../api/backendClient";
-
-type EstimatedRewardItem = {
-    token?: Address;
-    campaignId: string;
-    interactionTypeKey: InteractionTypeKey;
-    referrer?: EstimatedReward;
-    referee?: EstimatedReward;
-};
 
 export function estimatedRewardsQueryOptions(merchantId?: string) {
     return queryOptions({
@@ -39,14 +31,7 @@ export function estimatedRewardsQueryOptions(merchantId?: string) {
 
             if (error || !data) return [];
 
-            return data.rewards.map((reward) => ({
-                token: reward.token as Address | undefined,
-                campaignId: reward.campaignId,
-                interactionTypeKey:
-                    reward.interactionTypeKey as InteractionTypeKey,
-                referrer: reward.referrer as EstimatedReward | undefined,
-                referee: reward.referee as EstimatedReward | undefined,
-            }));
+            return data.rewards as EstimatedRewardItem[];
         },
         enabled: !!merchantId,
         staleTime: 5 * 60 * 1000,
@@ -60,7 +45,7 @@ export function estimatedRewardsQueryOptions(merchantId?: string) {
  *  - percentage: "15 %"
  *  - tiered: "50 €" (max tier amount)
  */
-function formatEstimatedReward(
+export function formatEstimatedReward(
     reward: EstimatedReward,
     currency?: Currency
 ): string {

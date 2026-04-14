@@ -9,6 +9,7 @@ import {
     ShieldIcon,
     WalletIcon,
 } from "@frak-labs/design-system/icons";
+import type { ReactNode } from "react";
 import * as styles from "./styles.css";
 
 export type SharingSuccessPreviewProps = {

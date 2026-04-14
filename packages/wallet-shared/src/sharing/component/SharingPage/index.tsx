@@ -17,6 +17,8 @@ import {
     LogoFrakWithName,
     ShareIcon,
 } from "@frak-labs/design-system/icons";
+import { Minus, Plus } from "lucide-react";
+import { Toaster } from "sonner";
 import { PostShareConfirmation } from "../PostShareConfirmation";
 import * as styles from "./sharingPage.css";
 

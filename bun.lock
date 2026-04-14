@@ -251,6 +251,7 @@
         "zustand": "catalog:",
       },
       "devDependencies": {
+        "@frak-labs/backend-elysia": "workspace:*",
         "@frak-labs/test-foundation": "workspace:*",
         "@noble/curves": "^2.0.1",
         "@playwright/test": "^1.58.2",
@@ -466,6 +467,7 @@
         "@radix-ui/react-switch": "^1.2.6",
         "@radix-ui/react-tooltip": "^1.2.8",
         "@tanstack/react-query": "catalog:",
+        "@types/nprogress": "^0.2.3",
         "@uidotdev/usehooks": "^2.4.1",
         "class-variance-authority": "^0.7.1",
         "lucide-react": "^0.577.0",
@@ -2167,6 +2169,8 @@
     "@types/ms": ["@types/ms@2.1.0", "", {}, "sha512-GsCCIZDE/p3i96vtEqx+7dBUGXrc7zeSK3wwPHIaRThS+9OhWIXRqzs4d6k1SVU8g91DrNRWxWUGhp5KXQb2VA=="],
 
     "@types/node": ["@types/node@25.6.0", "", { "dependencies": { "undici-types": "~7.19.0" } }, "sha512-+qIYRKdNYJwY3vRCZMdJbPLJAtGjQBudzZzdzwQYkEPQd+PJGixUL5QfvCLDaULoLv+RhT3LDkwEfKaAkgSmNQ=="],
+
+    "@types/nprogress": ["@types/nprogress@0.2.3", "", {}, "sha512-k7kRA033QNtC+gLc4VPlfnue58CM1iQLgn1IMAU8VPHGOj7oIHPp9UlhedEnD/Gl8evoCjwkZjlBORtZ3JByUA=="],
 
     "@types/preact-custom-element": ["@types/preact-custom-element@4.0.4", "", { "dependencies": { "preact": "^10.0.0" } }, "sha512-CkdXbHUnnJAluudh/3Y3hj4gx+mzl+GnqJuWUdEWKvppVQu7SqvvRlgkJVS73lRteC+BOnQ2TdLwZFZKHxNNnQ=="],
 

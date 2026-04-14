@@ -102,8 +102,8 @@ function GlobalCssPanel({
     return (
         <Panel title={"Global CSS"}>
             <p className={styles.customize__fieldDescription}>
-                CSS styles applied to all SDK components across every
-                placement. Placement-level CSS can override these defaults.
+                CSS styles applied to all SDK components across every placement.
+                Placement-level CSS can override these defaults.
             </p>
             <div className={styles.customize__advancedSection}>
                 <button
@@ -129,7 +129,7 @@ function GlobalCssPanel({
                             onDiscard={() => form.reset(values)}
                             onSave={() =>
                                 editSdkConfig({
-                        rawCss: valueOrNull(form.getValues("css")),
+                                    rawCss: valueOrNull(form.getValues("css")),
                                 })
                             }
                         />

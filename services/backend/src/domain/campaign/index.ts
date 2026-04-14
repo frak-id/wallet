@@ -10,6 +10,8 @@ export type {
     CampaignGoal,
     CampaignResponse,
     CampaignStatus,
+    EstimatedRewardItem,
+    EstimatedRewardsResult,
     RuleConditions,
     SpecialCategory,
 } from "./schemas";

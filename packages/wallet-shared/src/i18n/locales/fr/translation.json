@@ -631,13 +631,14 @@
             "description": "De nouvelles offres arrivent bientôt. Revenez plus tard !"
         },
         "card": {
-            "badge": "Jusqu'à {{amount}}€"
+            "badge": "Jusqu'à {{amount}}",
+            "until": "Jusqu'au {{date}}"
         },
         "detail": {
             "close": "Fermer",
             "share": "Partager",
             "endDateBadge": "Se termine {{date}} ({{days}} j)",
-            "rewardPerReferral": "{{amount}}€ par parrainage",
+            "rewardPerReferral": "{{amount}} par parrainage",
             "readMore": "Lire la suite",
             "legal": "Les <termsLink>conditions générales de {{merchantName}}</termsLink> et les <termsLink>conditions générales de FRAK</termsLink> s'appliquent.",
             "shareAndEarn": "Partager et gagner",
@@ -647,10 +648,12 @@
             "refereeReward": "Récompense en tant que filleul",
             "earningsAvailability": "Disponibilité des gains",
             "immediate": "Immédiate",
+            "pendingDays": "{{count}} jour",
+            "pendingDays_other": "{{count}} jours",
             "instructions": "Instructions",
             "step1Title": "Partage un article à tes ami·e·s",
             "step1Description": "Un lien personnel est généré automatiquement à chaque partage.",
-            "step2Title": "Gagne {{amount}}€ à chaque achat réalisé grâce à toi",
+            "step2Title": "Gagne {{amount}} à chaque achat réalisé grâce à toi",
             "step2Description": "Chaque commande réalisée grâce à toi sur {{name}} te rapporte du cash directement dans ton porte-monnaie.",
             "step3Title": "Récupère tes gains dans ton porte-monnaie",
             "step3Description": "En un clic, transfère tes gains vers ton compte bancaire."
