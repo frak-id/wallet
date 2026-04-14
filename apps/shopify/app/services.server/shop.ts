@@ -23,12 +23,12 @@ export function normalizeDomain(
 
 /**
  * Normalize a currency code to a supported lowercase value.
- * Falls back to "usd" for unsupported currencies.
+ * Falls back to "eur" for unsupported currencies.
  */
 export function normalizePreferredCurrency(
     currencyCode: string | undefined
 ): "usd" | "eur" | "gbp" {
-    return CURRENCY_MAP[currencyCode ?? "USD"] ?? "usd";
+    return CURRENCY_MAP[currencyCode ?? "EUR"] ?? "eur";
 }
 
 type ShopInfoReturnType = {

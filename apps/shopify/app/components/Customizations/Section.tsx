@@ -72,7 +72,7 @@ const CURRENCY_SYMBOLS: Record<string, string> = {
  */
 function usePreviewContext() {
     const rootData = useRouteLoaderData<typeof rootLoader>("routes/app");
-    const currency = (rootData?.shop?.preferredCurrency ?? "usd") as Currency;
+    const currency = (rootData?.shop?.preferredCurrency ?? "eur") as Currency;
     const shopName = rootData?.shop?.name ?? "My Store";
     return { currency, shopName };
 }

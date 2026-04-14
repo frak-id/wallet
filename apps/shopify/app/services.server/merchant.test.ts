@@ -37,7 +37,7 @@ const mockContext = {} as AuthenticatedContext;
 const mockShop = {
     normalizedDomain: "test-shop.myshopify.com",
     name: "Test Shop",
-    currency: "usd",
+    currency: "eur",
     productId: "gid://shopify/Product/123",
 };
 

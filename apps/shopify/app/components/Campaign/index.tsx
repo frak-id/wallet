@@ -62,7 +62,7 @@ function CampaignTable({ campaigns }: { campaigns: CampaignResponse[] }) {
     const { t } = useTranslation();
     const rootData = useRouteLoaderData<typeof rootLoader>("routes/app");
     const currencySymbol = (rootData?.shop.preferredCurrency ??
-        "usd") as Currency;
+        "eur") as Currency;
 
     if (campaigns.length === 0) {
         return (
@@ -520,7 +520,7 @@ function CampaignCreation({
     }, [rawCAC, ratio, globalBudget]);
 
     const currencySymbol = (rootData?.shop.preferredCurrency ??
-        "usd") as Currency;
+        "eur") as Currency;
 
     const handleCreate = useCallback(() => {
         fetcher.submit(
