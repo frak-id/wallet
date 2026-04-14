@@ -12,6 +12,7 @@ import { Box } from "@frak-labs/design-system/components/Box";
 import { Column } from "@frak-labs/design-system/components/Column";
 import { Columns } from "@frak-labs/design-system/components/Columns";
 import { Stack } from "@frak-labs/design-system/components/Stack";
+import { LogoFrak } from "@frak-labs/design-system/icons";
 import { FrakRpcError, RpcErrorCodes } from "@frak-labs/frame-connector";
 import { useEffect, useMemo, useState } from "preact/hooks";
 import { useClientReady } from "@/hooks/useClientReady";
@@ -28,6 +29,7 @@ import {
     card,
     cssSource,
     cta,
+    frakLogo,
     giftIcon,
     icon,
     message,
@@ -282,7 +284,10 @@ export function PostPurchase({
                     </Stack>
                 </Column>
                 <Column width="content">
-                    <GiftIcon className={giftIcon} width={80} height={80} />
+                    <Stack space="xs" align="right">
+                        <GiftIcon className={giftIcon} width={80} height={80} />
+                        <LogoFrak className={frakLogo} width={14} height={14} />
+                    </Stack>
                 </Column>
             </Columns>
         </Box>

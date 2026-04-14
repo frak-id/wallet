@@ -58,6 +58,12 @@ export const giftIcon = style({
     flexShrink: 0,
 });
 
+export const frakLogo = style({
+    display: "block",
+    marginLeft: "auto",
+    color: vars.surface.primary,
+});
+
 // Injected at build time by vanillaExtractInlinePlugin with the
 // compiled CSS string. Placeholder satisfies TypeScript.
 export const cssSource: string = "";
