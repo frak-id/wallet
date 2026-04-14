@@ -14,7 +14,7 @@ const bunResult = await build({
     minify: false,
     splitting: false,
     target: "bun",
-    external: ["sharp"],
+    external: ["sharp", "lightningcss"],
     define: {
         "process.env.STAGE": JSON.stringify(stage),
         "process.env.NODE_ENV": JSON.stringify("production"),
