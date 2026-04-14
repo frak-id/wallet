@@ -26,7 +26,7 @@ import {
     formatEstimatedReward,
 } from "@frak-labs/wallet-shared";
 import { useQuery } from "@tanstack/react-query";
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Trans, useTranslation } from "react-i18next";
 import { GlassButton } from "@/module/common/component/GlassButton";
 import { InfoCard, InfoRow } from "@/module/common/component/InfoCard";
@@ -41,6 +41,8 @@ type ExplorerDetailProps = {
 
 export function ExplorerDetail({ merchant, onClose }: ExplorerDetailProps) {
     const [isDescriptionExpanded, setIsDescriptionExpanded] = useState(false);
+    const [needsReadMore, setNeedsReadMore] = useState(false);
+    const descriptionRef = useRef<HTMLElement>(null);
     const { t, i18n } = useTranslation();
 
     const { data: rewards } = useQuery(
@@ -63,6 +65,12 @@ export function ExplorerDetail({ merchant, onClose }: ExplorerDetailProps) {
 
     const logoUrl = merchant.explorerConfig?.logoUrl;
     const description = merchant.explorerConfig?.description;
+
+    useEffect(() => {
+        const el = descriptionRef.current;
+        if (!el || isDescriptionExpanded) return;
+        setNeedsReadMore(el.scrollHeight > el.clientHeight);
+    }, [description, isDescriptionExpanded]);
 
     const handleShare = useCallback(async () => {
         if (!navigator.share) return;
@@ -179,6 +187,7 @@ export function ExplorerDetail({ merchant, onClose }: ExplorerDetailProps) {
                 {description && (
                     <Card className={styles.description}>
                         <Text
+                            ref={descriptionRef}
                             variant="bodySmall"
                             color="secondary"
                             className={
@@ -189,7 +198,7 @@ export function ExplorerDetail({ merchant, onClose }: ExplorerDetailProps) {
                         >
                             {description}
                         </Text>
-                        {!isDescriptionExpanded && (
+                        {needsReadMore && !isDescriptionExpanded && (
                             <Text
                                 as="button"
                                 variant="bodySmall"

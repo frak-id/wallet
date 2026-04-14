@@ -1,5 +1,5 @@
 import clsx from "clsx";
-import type { ReactNode } from "react";
+import type { ReactNode, Ref } from "react";
 import type { Sprinkles } from "../../sprinkles.css";
 import { Box } from "../Box";
 import { textStyles } from "./text.css";
@@ -77,6 +77,7 @@ type TextProps = {
     className?: string;
     title?: string;
     onClick?: () => void;
+    ref?: Ref<HTMLElement>;
 };
 
 export function Text({
@@ -89,6 +90,7 @@ export function Text({
     className,
     title,
     onClick,
+    ref,
 }: TextProps) {
     const resolvedVariant = variant ?? (as && tagToVariant[as]) ?? "body";
     const tag = (as ?? defaultTagMap[resolvedVariant]) as
@@ -112,6 +114,7 @@ export function Text({
             textAlign={align}
             className={clsx(variantClass, className) || undefined}
             onClick={onClick}
+            ref={ref}
             title={title}
         >
             {children}
