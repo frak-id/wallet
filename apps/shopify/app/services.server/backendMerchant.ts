@@ -713,3 +713,39 @@ export async function deleteMerchantMedia(
         return { success: false, message: "Failed to delete media" };
     }
 }
+
+export type MediaFile = { type: "logo" | "hero"; url: string };
+
+/**
+ * List existing media files (logo/hero) for the current merchant.
+ */
+export async function listMerchantMedia(
+    context: AuthenticatedContext,
+    request: Request
+): Promise<MediaFile[]> {
+    const merchantId = await resolveMerchantId(context);
+    if (!merchantId) {
+        return [];
+    }
+
+    try {
+        const { data, error } = await backendApi.business
+            .merchant({ merchantId })
+            .media.list.get({
+                headers: buildBackendHeaders(request),
+            });
+        if (error) {
+            console.error(
+                `[backendMerchant] media list failed for ${merchantId}`
+            );
+            return [];
+        }
+        return data.files as MediaFile[];
+    } catch (error) {
+        console.error(
+            `[backendMerchant] media list error for ${merchantId}:`,
+            error
+        );
+        return [];
+    }
+}

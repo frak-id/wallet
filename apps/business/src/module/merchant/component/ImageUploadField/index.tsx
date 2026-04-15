@@ -1,8 +1,9 @@
 import { Input } from "@frak-labs/ui/component/forms/Input";
-import { useCallback } from "react";
+import { useCallback, useMemo } from "react";
 import { useDropzone } from "react-dropzone";
 import {
     useMediaDelete,
+    useMediaList,
     useMediaUpload,
 } from "@/module/merchant/hook/useMediaUpload";
 import styles from "./index.module.css";
@@ -116,6 +117,15 @@ export function ImageUploadField({
                 <p className={styles.restrictions}>{restrictionsText[type]}</p>
                 {errorMessage && <p className={styles.error}>{errorMessage}</p>}
                 {isSuccess && <p className={styles.success}>Image uploaded</p>}
+                <ExistingFilePicker
+                    merchantId={merchantId}
+                    type={type}
+                    currentValue={value}
+                    onPick={(url) => {
+                        onChange(url);
+                        onUploadSuccess(url);
+                    }}
+                />
             </div>
         </div>
     );
@@ -135,4 +145,46 @@ function getUploadErrorMessage(error: unknown): string | null {
     }
     if (error instanceof Error) return error.message;
     return "Upload failed";
+}
+
+function ExistingFilePicker({
+    merchantId,
+    type,
+    currentValue,
+    onPick,
+}: {
+    merchantId: string;
+    type: "logo" | "hero";
+    currentValue: string;
+    onPick: (url: string) => void;
+}) {
+    const { data: files } = useMediaList(merchantId);
+
+    // Show files of the *other* type that could be reused,
+    // plus files of the same type if the current value doesn't match any
+    const pickableFiles = useMemo(() => {
+        if (!files?.length) return [];
+        return files.filter((f) => f.type !== type && f.url !== currentValue);
+    }, [files, type, currentValue]);
+
+    if (!pickableFiles.length) return null;
+
+    return (
+        <div className={styles.existingFiles}>
+            <p className={styles.existingFilesLabel}>Use an existing image:</p>
+            <div className={styles.existingFilesList}>
+                {pickableFiles.map((file) => (
+                    <button
+                        key={file.url}
+                        type="button"
+                        className={styles.existingFileButton}
+                        onClick={() => onPick(file.url)}
+                        title={`Use ${file.type} image`}
+                    >
+                        <img src={file.url} alt={file.type} loading="lazy" />
+                    </button>
+                ))}
+            </div>
+        </div>
+    );
 }

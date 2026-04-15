@@ -1,4 +1,5 @@
 import type { action } from "app/routes/app.appearance";
+import type { MediaFile } from "app/services.server/backendMerchant";
 import type {
     AppearanceMetafieldValue,
     I18nCustomizations,
@@ -19,11 +20,13 @@ type LanguageMode = "single" | "multi";
 interface CustomizationsTabProps {
     initialCustomizations: I18nCustomizations;
     initialAppearanceMetafield: AppearanceMetafieldValue;
+    mediaFiles?: MediaFile[];
 }
 
 export function CustomizationsTab({
     initialCustomizations,
     initialAppearanceMetafield,
+    mediaFiles,
 }: CustomizationsTabProps) {
     const fetcher = useFetcher<typeof action>();
     const navigation = useNavigation();
@@ -168,6 +171,7 @@ export function CustomizationsTab({
                             })
                         }
                         onUploadSuccess={handleLogoUploadSuccess}
+                        mediaFiles={mediaFiles}
                     />
 
                     {languageMode === "single" ? (

@@ -156,4 +156,48 @@ export const merchantMediaRoutes = new Elysia({
                 403: t.String(),
             },
         }
+    )
+    .get(
+        "/list",
+        async ({
+            params: { merchantId },
+            businessSession,
+            shopifySession,
+            hasMerchantAccess,
+        }) => {
+            if (!businessSession && !shopifySession) {
+                return status(401, "Authentication required");
+            }
+
+            const hasAccess = await hasMerchantAccess(merchantId);
+            if (!hasAccess) {
+                return status(403, "Access denied");
+            }
+
+            const files = await MediaContext.repositories.mediaStorage.list({
+                merchantId,
+            });
+
+            return { files };
+        },
+        {
+            params: t.Object({
+                merchantId: t.String(),
+            }),
+            response: {
+                200: t.Object({
+                    files: t.Array(
+                        t.Object({
+                            type: t.Union([
+                                t.Literal("logo"),
+                                t.Literal("hero"),
+                            ]),
+                            url: t.String(),
+                        })
+                    ),
+                }),
+                401: t.String(),
+                403: t.String(),
+            },
+        }
     );

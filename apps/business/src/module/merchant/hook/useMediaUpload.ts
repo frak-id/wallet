@@ -1,4 +1,4 @@
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { authenticatedBackendApi } from "@/api/backendClient";
 
 type MediaUploadInput = {
@@ -45,6 +45,23 @@ export function useMediaDelete() {
             if (error) {
                 throw error;
             }
+        },
+    });
+}
+
+export function useMediaList(merchantId: string) {
+    return useQuery({
+        queryKey: ["media", "list", merchantId],
+        queryFn: async () => {
+            const { data, error } = await authenticatedBackendApi
+                .merchant({ merchantId })
+                .media.list.get();
+
+            if (error) {
+                throw error;
+            }
+
+            return data.files;
         },
     });
 }

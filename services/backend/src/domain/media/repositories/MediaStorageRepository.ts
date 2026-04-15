@@ -2,6 +2,7 @@ import {
     CreateBucketCommand,
     DeleteObjectCommand,
     HeadBucketCommand,
+    ListObjectsV2Command,
     PutBucketPolicyCommand,
     PutObjectCommand,
     S3Client,
@@ -140,5 +141,41 @@ export class MediaStorageRepository {
                 )
             )
         );
+    }
+
+    /**
+     * List all media files for a given merchant
+     */
+    async list({
+        merchantId,
+    }: {
+        merchantId: string;
+    }): Promise<{ type: ImageType; url: string }[]> {
+        await this.ensureBucket();
+
+        const result = await this.client.send(
+            new ListObjectsV2Command({
+                Bucket: this.bucketName,
+                Prefix: `${merchantId}/`,
+            })
+        );
+
+        if (!result.Contents) return [];
+
+        const files: { type: ImageType; url: string }[] = [];
+        for (const obj of result.Contents) {
+            if (!obj.Key) continue;
+            const match = obj.Key.match(/^[^/]+\/(logo|hero)\.(webp|svg)$/);
+            if (!match) continue;
+            const type = match[1] as ImageType;
+            // Deduplicate: keep only the first extension found per type
+            if (files.some((f) => f.type === type)) continue;
+            files.push({
+                type,
+                url: `${this.cdnBaseUrl}/${this.bucketName}/${obj.Key}`,
+            });
+        }
+
+        return files;
     }
 }

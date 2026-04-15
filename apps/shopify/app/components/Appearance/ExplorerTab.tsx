@@ -1,6 +1,9 @@
 import { ExplorerCardPreview } from "@frak-labs/ui-preview";
 import type { action } from "app/routes/app.appearance";
-import type { ExplorerSettings } from "app/services.server/backendMerchant";
+import type {
+    ExplorerSettings,
+    MediaFile,
+} from "app/services.server/backendMerchant";
 import type { ShopBrandInfo } from "app/services.server/shop";
 import {
     type FormEvent,
@@ -18,6 +21,7 @@ type ExplorerTabProps = {
     shopBrand: ShopBrandInfo;
     sdkLogoUrl: string;
     shopName: string;
+    mediaFiles?: MediaFile[];
 };
 
 export function ExplorerTab({
@@ -25,6 +29,7 @@ export function ExplorerTab({
     shopBrand,
     sdkLogoUrl,
     shopName,
+    mediaFiles,
 }: ExplorerTabProps) {
     const fetcher = useFetcher<typeof action>();
     const navigation = useNavigation();
@@ -154,6 +159,7 @@ export function ExplorerTab({
                         onChange={setLogoUrl}
                         onUploadSuccess={handleLogoUploadSuccess}
                         label={t("appearance.explorer.logoLabel")}
+                        mediaFiles={mediaFiles}
                     />
 
                     <ImageUploadField
@@ -162,6 +168,7 @@ export function ExplorerTab({
                         onChange={setHeroImageUrl}
                         onUploadSuccess={handleHeroUploadSuccess}
                         label={t("appearance.explorer.heroLabel")}
+                        mediaFiles={mediaFiles}
                     />
 
                     <s-text-area

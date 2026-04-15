@@ -92,10 +92,12 @@ export function LogoField({
     logoUrl,
     onUpdate,
     onUploadSuccess,
+    mediaFiles,
 }: {
     logoUrl: string;
     onUpdate: (logoUrl: string) => void;
     onUploadSuccess: (url: string) => void;
+    mediaFiles?: { type: "logo" | "hero"; url: string }[];
 }) {
     const { t } = useTranslation();
     return (
@@ -110,6 +112,7 @@ export function LogoField({
                     onUploadSuccess={onUploadSuccess}
                     label={t("customizations.fields.logoUrl.label")}
                     placeholder={t("customizations.fields.logoUrl.placeholder")}
+                    mediaFiles={mediaFiles}
                 />
             </s-stack>
         </s-section>
