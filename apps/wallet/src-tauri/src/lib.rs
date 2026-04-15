@@ -10,15 +10,15 @@ pub fn run() {
         builder = builder
             .plugin(tauri_plugin_biometric::init())
             .plugin(tauri_plugin_fcm::init())
-            .plugin(tauri_plugin_app_settings::init());
+            .plugin(tauri_plugin_app_settings::init())
+            .plugin(tauri_plugin_install_referrer::init())
+            .plugin(tauri_plugin_frak_webauthn::init())
+            .plugin(tauri_plugin_clipboard_manager::init());
     }
 
-    // Android-only plugins: WebAuthn, Share, FS
-    // (iOS uses native WKWebView WebAuthn and Web Share API works natively)
     #[cfg(target_os = "android")]
     {
         builder = builder
-            .plugin(tauri_plugin_webauthn::init())
             .plugin(tauri_plugin_share::init())
             .plugin(tauri_plugin_fs::init());
     }

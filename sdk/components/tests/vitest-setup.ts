@@ -24,11 +24,8 @@ declare global {
             client?: unknown;
             config?: unknown;
             modalWalletConfig?: unknown;
-            modalShareConfig?: unknown;
             core?: unknown;
         };
-        frakSetupInProgress?: boolean;
-        modalBuilderSteps?: unknown;
     }
 }
 
@@ -58,11 +55,8 @@ beforeEach(() => {
                 position: "right",
             },
         },
-        modalShareConfig: {},
         core: {},
     };
-    window.frakSetupInProgress = false;
-    window.modalBuilderSteps = undefined;
 });
 
 // Cleanup Preact Testing Library after each test
@@ -125,6 +119,7 @@ vi.mock("@frak-labs/core-sdk/actions", async () => {
         getMerchantInformation: vi.fn().mockResolvedValue({
             rewards: [],
         }),
+        modalBuilder: vi.fn(),
         openSso: vi.fn(),
         prepareSso: vi.fn(),
         trackPurchaseStatus: vi.fn(),

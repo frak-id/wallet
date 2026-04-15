@@ -1,0 +1,11 @@
+parameters:
+    level: 5
+    paths:
+        - Block
+        - Model
+        - Observer
+        - Api
+    excludePaths:
+        - Test
+    magento:
+        magentoRoot: vendor

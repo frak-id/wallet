@@ -92,6 +92,20 @@
             "when": 1774254961196,
             "tag": "0012_brainy_sebastian_shaw",
             "breakpoints": true
+        },
+        {
+            "idx": 13,
+            "version": "7",
+            "when": 1775043696135,
+            "tag": "0013_quick_dexter_bennett",
+            "breakpoints": true
+        },
+        {
+            "idx": 14,
+            "version": "7",
+            "when": 1776252267449,
+            "tag": "0014_fearless_yellow_claw",
+            "breakpoints": true
         }
     ]
 }

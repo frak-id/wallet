@@ -15,7 +15,7 @@ vi.mock("react-i18next", () => ({
 }));
 
 // Mock UI components
-vi.mock("@frak-labs/ui/component/Spinner", () => ({
+vi.mock("@frak-labs/design-system/components/Spinner", () => ({
     Spinner: () => <div data-testid="spinner">Loading</div>,
 }));
 
@@ -151,7 +151,7 @@ describe("LaunchPairing", () => {
 
             const qrCode = screen.getByTestId("qr-code");
             expect(qrCode.getAttribute("data-value")).toContain(
-                "/pair?id=pairing-456"
+                "/pairing?id=pairing-456"
             );
         });
 

@@ -19,6 +19,20 @@
                         lang: "fr",
                         currency: "eur",
                     },
+                    customizations: {
+                        i18n: {
+                            fr: {
+                                "sharing.modal.title": "Partager (SDK dev override FR)",
+                                "sharing.modal.description": "Traduction côté SDK (FR) - si ce texte apparaît, le backend n'a pas de traduction pour cette clé",
+                                "wallet.modal.title": "Portefeuille (SDK dev override FR)",
+                            },
+                            en: {
+                                "sharing.modal.title": "Share (SDK dev override EN)",
+                                "sharing.modal.description": "SDK-side translation (EN) - if you see this, backend has no translation for this key",
+                                "wallet.modal.title": "Wallet (SDK dev override EN)",
+                            },
+                        },
+                    },
                 },
                 modalWalletConfig: {
                     metadata: {
@@ -46,12 +60,8 @@
             min-height: 100vh;
             background-color: #3a3f47;
         }
-        h1, h2 {
+        .page-title {
             color: #fff;
-        }
-        h2 {
-            font-size: 1.2rem;
-            margin-top: 2rem;
         }
         frak-button-share .override {
             background-color: black;
@@ -74,16 +84,17 @@
             max-width: 600px;
             width: 100%;
         }
-        .merge-demo h2 {
+        .merge-demo .merge-demo__title {
             margin-top: 0;
             color: #4CAF50;
+            font-size: 1.2rem;
         }
-        .merge-demo p {
+        .merge-demo .merge-demo__text {
             color: #aaa;
             font-size: 0.9rem;
             line-height: 1.5;
         }
-        .merge-demo button {
+        .merge-demo .merge-demo__button {
             background: #4CAF50;
             color: white;
             border: none;
@@ -93,17 +104,17 @@
             margin: 5px;
             font-size: 0.9rem;
         }
-        .merge-demo button:hover {
+        .merge-demo .merge-demo__button:hover {
             background: #45a049;
         }
-        .merge-demo button:disabled {
+        .merge-demo .merge-demo__button:disabled {
             background: #666;
             cursor: not-allowed;
         }
-        .merge-demo .secondary {
+        .merge-demo .merge-demo__button--secondary {
             background: #666;
         }
-        .merge-demo .secondary:hover {
+        .merge-demo .merge-demo__button--secondary:hover {
             background: #777;
         }
         .status-box {
@@ -138,33 +149,260 @@
             font-family: monospace;
             font-size: 0.85rem;
         }
+
+        /* Test Section Styles */
+        .test-section {
+            background: #2d3139;
+            border-radius: 12px;
+            padding: 20px;
+            margin-top: 30px;
+            max-width: 600px;
+            width: 100%;
+        }
+        .test-section .test-section__title {
+            margin-top: 0;
+            color: #2196F3;
+            font-size: 1.2rem;
+        }
+        .test-section .test-section__subtitle {
+            color: #ccc;
+            font-size: 1rem;
+            margin: 15px 0 8px;
+        }
+        .test-section .test-section__text {
+            color: #aaa;
+            font-size: 0.9rem;
+            line-height: 1.5;
+        }
+        .test-section .test-section__note {
+            color: #fa0;
+            font-size: 0.8rem;
+            font-style: italic;
+        }
+        .test-section .test-section__button {
+            background: #2196F3;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            margin: 5px;
+            font-size: 0.9rem;
+        }
+        .test-section .test-section__button:hover {
+            background: #1976D2;
+        }
+        .test-section .test-section__button:disabled {
+            background: #666;
+            cursor: not-allowed;
+        }
+        .test-section .test-section__button--variant {
+            background: #7B1FA2;
+        }
+        .test-section .test-section__button--variant:hover {
+            background: #6A1B9A;
+        }
+        .test-section .test-section__button--alt {
+            background: #E65100;
+        }
+        .test-section .test-section__button--alt:hover {
+            background: #BF360C;
+        }
+        .component-row {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            align-items: center;
+            margin: 10px 0;
+        }
+        .component-row .component-row__label {
+            color: #888;
+            font-size: 0.8rem;
+            min-width: 120px;
+        }
+        .cascade-info {
+            background: #1e2127;
+            border-radius: 8px;
+            padding: 12px;
+            margin-top: 10px;
+            font-family: monospace;
+            font-size: 0.8rem;
+            color: #888;
+            line-height: 1.6;
+        }
+        .cascade-info .high { color: #4CAF50; }
+        .cascade-info .low { color: #666; }
     </style>
 </head>
 <body>
-<h1>Welcome to example Vanilla JS</h1>
-<frak-button-share classname="button" show-wallet></frak-button-share>
+<h1 class="page-title">Welcome to example Vanilla JS</h1>
+<frak-button-share classname="button"></frak-button-share>
 <br />
 <frak-button-share classname="button" use-reward text="Share! You will earn {REWARD}" no-reward-text="Share and earn!"></frak-button-share>
 <br />
 <frak-open-in-app></frak-open-in-app>
 <frak-button-wallet use-reward></frak-button-wallet>
 
+<!-- ═══════════════════════════════════════════ -->
+<!-- Section 1: Placement on Components         -->
+<!-- ═══════════════════════════════════════════ -->
+<div class="test-section">
+    <h2 class="test-section__title">1. Placement on Components</h2>
+    <p class="test-section__text">
+        Components with a <code>placement</code> attribute read trigger config
+        (text, position, clickAction) from the backend-resolved placement.
+        Configure placements via the business dashboard's merchant sdkConfig.
+    </p>
+    <p class="test-section__note">
+        Placement IDs must match entries in the merchant's sdkConfig.placements.
+        If no match, components fall back to HTML attributes / defaults.
+    </p>
+
+    <h3 class="test-section__subtitle">No placement (default)</h3>
+    <div class="component-row">
+        <label class="component-row__label">Share button:</label>
+        <frak-button-share className="test-section__button"></frak-button-share>
+    </div>
+
+    <h3 class="test-section__subtitle">placement="hero-share"</h3>
+    <div class="component-row">
+        <label class="component-row__label">Share button:</label>
+        <frak-button-share placement="hero-share" className="test-section__button"></frak-button-share>
+    </div>
+
+    <h3 class="test-section__subtitle">placement="sidebar-promo"</h3>
+    <div class="component-row">
+        <label class="component-row__label">Share button:</label>
+        <frak-button-share placement="sidebar-promo" className="test-section__button"></frak-button-share>
+    </div>
+
+    <h3 class="test-section__subtitle">placement="footer-cta"</h3>
+    <div class="component-row">
+        <label class="component-row__label">Share (with fallback text):</label>
+        <frak-button-share placement="footer-cta" text="Fallback share text" className="test-section__button"></frak-button-share>
+    </div>
+</div>
+
+<!-- ═══════════════════════════════════════════ -->
+<!-- Section 2: Placement on Modals             -->
+<!-- ═══════════════════════════════════════════ -->
+<div class="test-section">
+    <h2 class="test-section__title">2. Placement on Modals</h2>
+    <p class="test-section__text">
+        Programmatic <code>displayModal()</code> calls with an optional placement
+        parameter. The listener applies placement-scoped translations and CSS
+        on top of global config.
+    </p>
+
+    <div>
+        <button id="btn-modal-no-placement" class="test-section__button">Modal (no placement)</button>
+        <button id="btn-modal-hero" class="test-section__button test-section__button--variant">Modal (hero-share)</button>
+        <button id="btn-modal-sidebar" class="test-section__button test-section__button--alt">Modal (sidebar-promo)</button>
+    </div>
+
+    <div id="modal-placement-status" class="status-box">
+        <div class="info">[Ready] Click a button to trigger a modal</div>
+    </div>
+</div>
+
+<!-- ═══════════════════════════════════════════ -->
+<!-- Section 3: Sharing Page                     -->
+<!-- ═══════════════════════════════════════════ -->
+<div class="test-section">
+    <h2 class="test-section__title">3. Sharing Page</h2>
+    <p class="test-section__text">
+        Programmatic <code>displaySharingPage()</code> call opens a full-page
+        sharing UI with product info, estimated rewards, sharing steps, FAQ,
+        and share/copy buttons.
+    </p>
+    <p class="test-section__note">
+        The promise resolves on first share/copy action. The page stays visible
+        for additional interactions.
+    </p>
+
+    <div>
+        <button id="btn-sharing-page" class="test-section__button">Open Sharing Page</button>
+        <button id="btn-sharing-page-product" class="test-section__button test-section__button--variant">Sharing Page (with product)</button>
+    </div>
+
+    <div id="sharing-page-status" class="status-box">
+        <div class="info">[Ready] Click a button to trigger the sharing page</div>
+    </div>
+</div>
+
+<!-- ═══════════════════════════════════════════ -->
+<!-- Section 4: Post-Purchase Component          -->
+<!-- ═══════════════════════════════════════════ -->
+<div class="test-section">
+    <h2 class="test-section__title">4. Post-Purchase Component</h2>
+    <p class="test-section__text">
+        The <code>&lt;frak-post-purchase&gt;</code> web component renders an
+        inline card on thank-you / order-status pages. It shows referral rewards
+        and a share CTA.
+    </p>
+    <p class="test-section__note">
+        Fetches referral status and merchant info automatically. Variant is
+        determined by the user's referral state (referrer vs referee).
+    </p>
+
+    <h3 class="test-section__subtitle">Default (auto-detect variant)</h3>
+    <div class="component-row">
+        <frak-post-purchase></frak-post-purchase>
+    </div>
+
+    <h3 class="test-section__subtitle">With sharing URL override</h3>
+    <div class="component-row">
+        <frak-post-purchase sharing-url="https://example.com/product/shoes"></frak-post-purchase>
+    </div>
+</div>
+
+<!-- ═══════════════════════════════════════════ -->
+<!-- Section 5: Banner Component                 -->
+<!-- ═══════════════════════════════════════════ -->
+<div class="test-section">
+    <h2 class="test-section__title">5. Banner Component</h2>
+    <p class="test-section__text">
+        The <code>&lt;frak-banner&gt;</code> web component auto-detects its mode:
+        in-app browser detection (priority) or referral success banner.
+        Uses Light DOM to inherit merchant styles.
+    </p>
+    <p class="test-section__note">
+        The in-app browser banner only appears in in-app browsers (Instagram, TikTok, etc.).
+        The referral banner appears after a successful referral.
+    </p>
+
+    <h3 class="test-section__subtitle">Default (auto-detect mode)</h3>
+    <div class="component-row">
+        <frak-banner></frak-banner>
+    </div>
+
+    <h3 class="test-section__subtitle">With placement</h3>
+    <div class="component-row">
+        <frak-banner placement="hero-share"></frak-banner>
+    </div>
+
+    <h3 class="test-section__subtitle">With interaction filter (purchase only)</h3>
+    <div class="component-row">
+        <frak-banner interaction="purchase"></frak-banner>
+    </div>
+</div>
+
 <!-- Merge Token Demo Section -->
 <div class="merge-demo">
-    <h2>Identity Merge Demo</h2>
-    <p>
+    <h2 class="merge-demo__title">Identity Merge Demo</h2>
+    <p class="merge-demo__text">
         This demonstrates cross-browser identity linking. Useful when users navigate from
         social app browsers (Instagram, TikTok) to external browsers via SSO/OAuth flows.
     </p>
 
-    <p><strong>Note:</strong> Token generation requires backend running with a merchant configured for "localhost".</p>
+    <p class="merge-demo__text"><strong>Note:</strong> Token generation requires backend running with a merchant configured for "localhost".</p>
 
-    <p><strong>Your anonymousId:</strong> <span id="current-client-id" class="current-id">Loading...</span></p>
+    <p class="merge-demo__text"><strong>Your anonymousId:</strong> <span id="current-client-id" class="current-id">Loading...</span></p>
 
     <div>
-        <button id="btn-generate-token">Generate Merge Token</button>
-        <button id="btn-simulate-redirect" class="secondary">Simulate Redirect</button>
-        <button id="btn-clear-id" class="secondary">Clear ID (New Identity)</button>
+        <button id="btn-generate-token" class="merge-demo__button">Generate Merge Token</button>
+        <button id="btn-simulate-redirect" class="merge-demo__button merge-demo__button--secondary">Simulate Redirect</button>
+        <button id="btn-clear-id" class="merge-demo__button merge-demo__button--secondary">Clear ID (New Identity)</button>
     </div>
 
     <div id="token-display" class="token-display" style="display: none;"></div>

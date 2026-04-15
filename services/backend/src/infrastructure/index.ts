@@ -22,7 +22,7 @@ export { sessionContext } from "./macro";
 // Events
 export { eventEmitter } from "./messaging/events";
 // Database
-export { getMongoDb } from "./persistence/mongodb";
+export { getLibsqlClient, getLibsqlDb } from "./persistence/libsql";
 export { db } from "./persistence/postgres";
 export {
     PricingRepository,

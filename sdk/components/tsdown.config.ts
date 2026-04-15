@@ -1,97 +1,156 @@
-import { Buffer } from "node:buffer";
-import { injectCssPlugin } from "@bosh-code/tsdown-plugin-inject-css";
+import { fileURLToPath } from "node:url";
 import nodePolyfills from "@rolldown/plugin-node-polyfills";
+import {
+    compile,
+    cssFileFilter,
+    getSourceFromVirtualCssFile,
+    processVanillaFile,
+    virtualCssFileFilter,
+} from "@vanilla-extract/integration";
+import type { Plugin } from "rolldown";
 import { defineConfig } from "tsdown";
-import LightningCSS from "unplugin-lightningcss/rolldown";
 
 /**
- * tsdown configuration for NPM and CDN distribution
+ * Vanilla Extract inline plugin for Web Components.
  *
- * NPM Build (./dist/):
- * - Separate entry points for each component with CSS modules support
- * - buttonWallet → dist/buttonWallet.js + buttonWallet.css
- * - buttonShare → dist/buttonShare.js + buttonShare.css
- * - injectCssPlugin: Attempts to embed CSS (currently generates separate files)
- *
- * CDN Build (./cdn/):
- * - ESM format with code splitting for optimal loading performance
- * - Multiple entry points (components.ts, loader.ts) share dependencies via chunks
- * - Dynamic chunk naming with hashes for cache-friendly CDN deployment
- * - Preact JSX transformation for web components
- * - CSS: Generated separately with hashes, bundled into loader.css by a custom tsdown plugin
- *
- * Plugins:
- * - unplugin-lightningcss: Handles CSS modules transformation with hashed class names
- *   Uses default pattern to generate: [hash]_[local] (e.g., OW7D8W_button)
- * - injectCssPlugin: Inlines CSS in the NPM build artifacts for easier consumption
- * - combineCssPlugin: Merges hashed CSS assets into a single loader.css during the CDN build
- *
- * CSS Handling:
- * - Lightning CSS generates component-specific CSS files with hashes (ButtonWallet-xyz.css)
- * - Custom combineCssPlugin merges component CSS into loader.css during bundling
- * - loader.ts dynamically loads loader.css before initializing components
+ * Compiles .css.ts files and resolves .vanilla.css virtual imports
+ * as JS modules exporting the CSS as a `cssSource` string.
+ * Components inject this string at runtime via styleManager.
  */
-
-/**
- * Custom Rolldown plugin to combine all CSS files into a single loader.css
- * This runs during the generateBundle phase and merges all CSS assets
- */
-function combineCssPlugin(fileName = "loader.css") {
-    type BundleAsset = {
-        type: "asset";
-        source: string | Uint8Array;
-        [key: string]: unknown;
-    };
-
-    type Bundle = Record<
-        string,
-        BundleAsset | { type?: string; [key: string]: unknown }
-    >;
+function vanillaExtractInlinePlugin(): Plugin {
+    const cwd = process.cwd();
+    const isProduction = process.env.NODE_ENV === "production";
+    const identOption = isProduction ? "short" : "debug";
+    const cssMap = new Map<string, string>();
 
     return {
-        name: "frak-combine-css",
-        generateBundle(
-            this: {
-                emitFile: (file: {
-                    type: "asset";
-                    fileName: string;
-                    source: string;
-                }) => void;
-            },
-            _options: unknown,
-            bundle: Bundle
-        ) {
-            const cssChunks: string[] = [];
+        name: "vanilla-extract-inline",
 
-            for (const [assetName, asset] of Object.entries(bundle)) {
-                if (asset.type !== "asset" || !assetName.endsWith(".css")) {
-                    continue;
-                }
+        buildStart() {
+            cssMap.clear();
+        },
 
-                const sourceValue = (asset as BundleAsset).source;
-                const source =
-                    typeof sourceValue === "string"
-                        ? sourceValue
-                        : sourceValue instanceof Uint8Array
-                          ? Buffer.from(sourceValue).toString("utf-8")
-                          : "";
-
-                cssChunks.push(`/* ${assetName} */\n${source}`);
-                delete bundle[assetName];
+        async transform(_code, id) {
+            if (!cssFileFilter.test(id)) {
+                return null;
             }
 
-            if (cssChunks.length === 0) {
-                return;
+            const [filePath] = id.split("?");
+            const { source, watchFiles } = await compile({
+                filePath,
+                cwd,
+                identOption,
+            });
+
+            for (const file of watchFiles) {
+                this.addWatchFile(file);
             }
 
+            const output = await processVanillaFile({
+                source,
+                filePath,
+                identOption,
+            });
+
+            // Rewrite ALL side-effect .vanilla.css imports into named imports
+            // VE generates: import 'file.vanilla.css?source=...'
+            // We rewrite to: import { cssSource as css_N } from 'file.vanilla.css?source=...'
+            let counter = 0;
+            const cssImportNames: string[] = [];
+            const rewritten = output
+                .replace(/export (?:const|var|let) cssSource[^;]*;/g, "")
+                .replace(
+                    /import ['"]([^'"]+\.vanilla\.css[^'"]*)['"];?/g,
+                    (_match, specifier) => {
+                        const name = `__veCss${counter++}`;
+                        cssImportNames.push(name);
+                        return `import { cssSource as ${name} } from "${specifier}";`;
+                    }
+                );
+
+            // Concatenate all CSS chunks and export as cssSource
+            const cssExport =
+                cssImportNames.length > 0
+                    ? `\nexport const cssSource = ${cssImportNames.join(" + ")};`
+                    : "";
+
+            return {
+                code: rewritten + cssExport,
+                map: { mappings: "" },
+            };
+        },
+
+        async resolveId(id) {
+            if (!virtualCssFileFilter.test(id)) {
+                return null;
+            }
+
+            const { fileName, source } = await getSourceFromVirtualCssFile(id);
+
+            const virtualId = `\0ve-inline:${fileName.replace(/\.css$/, ".js")}`;
+            cssMap.set(virtualId, source);
+            return virtualId;
+        },
+
+        load(id) {
+            if (!id.startsWith("\0ve-inline:")) {
+                return null;
+            }
+
+            const css = cssMap.get(id);
+            if (css === undefined) {
+                return null;
+            }
+
+            const escaped = css
+                .replace(/\\/g, "\\\\")
+                .replace(/`/g, "\\`")
+                .replace(/\$/g, "\\$");
+
+            return {
+                code: `export const cssSource = \`${escaped}\`;`,
+                map: { mappings: "" },
+            };
+        },
+    };
+}
+
+function emptyLoaderCssPlugin() {
+    return {
+        name: "empty-loader-css",
+        generateBundle(this: {
+            emitFile: (file: {
+                type: "asset";
+                fileName: string;
+                source: string;
+            }) => void;
+        }) {
             this.emitFile({
                 type: "asset",
-                fileName,
-                source: cssChunks.join("\n\n"),
+                fileName: "loader.css",
+                source: "",
             });
         },
     };
 }
+
+const preactJsxRuntime = new URL(import.meta.resolve("preact/jsx-runtime"))
+    .pathname;
+
+const preactCompatAlias: Record<string, string> = {
+    react: "preact/compat",
+    "react-dom": "preact/compat",
+    "react/jsx-runtime": "preact/jsx-runtime",
+    "react/jsx-dev-runtime": "preact/jsx-runtime",
+    "preact/jsx-runtime": preactJsxRuntime,
+};
+
+// Stub rrweb to avoid bundling it — @openpanel/web statically imports `record`
+// from rrweb even when session replay is disabled.
+// See: https://github.com/Openpanel-dev/openpanel/issues/336
+const rrwebStub = fileURLToPath(
+    new URL("../core/src/stubs/rrweb.ts", import.meta.url)
+);
 
 export default defineConfig([
     {
@@ -99,6 +158,8 @@ export default defineConfig([
             buttonShare: "./src/components/ButtonShare/index.ts",
             buttonWallet: "./src/components/ButtonWallet/index.ts",
             openInApp: "./src/components/OpenInAppButton/index.ts",
+            postPurchase: "./src/components/PostPurchase/index.ts",
+            banner: "./src/components/Banner/index.ts",
         },
         format: ["esm"],
         platform: "browser",
@@ -106,11 +167,9 @@ export default defineConfig([
         clean: true,
         dts: true,
         outDir: "./dist",
-        plugins: [
-            nodePolyfills(),
-            LightningCSS({ options: { minify: true } }),
-            injectCssPlugin(),
-        ],
+        alias: { ...preactCompatAlias, rrweb: rrwebStub },
+        deps: { alwaysBundle: [/design-system/] },
+        plugins: [vanillaExtractInlinePlugin(), nodePolyfills()],
     },
     {
         entry: {
@@ -124,12 +183,15 @@ export default defineConfig([
         minify: true,
         dts: false,
         outDir: "./cdn",
-        noExternal: [/.*/],
-        inlineOnly: false,
+        deps: { alwaysBundle: [/.*/] },
+        alias: { ...preactCompatAlias, rrweb: rrwebStub },
         treeshake: {
             moduleSideEffects: true,
         },
         define: {
+            "process.env.BACKEND_URL": JSON.stringify(
+                process.env.BACKEND_URL || "https://backend.frak.id"
+            ),
             "process.env.BUILD_TIMESTAMP": JSON.stringify(Date.now()),
             "process.env.CDN_TAG": JSON.stringify(
                 process.env.CDN_TAG || "latest"
@@ -143,9 +205,9 @@ export default defineConfig([
             };
         },
         plugins: [
+            vanillaExtractInlinePlugin(),
             nodePolyfills(),
-            LightningCSS({ options: { minify: true } }),
-            combineCssPlugin(),
+            emptyLoaderCssPlugin(),
         ],
     },
 ]);

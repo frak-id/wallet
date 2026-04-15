@@ -1,3 +1,4 @@
+import { formatAmount } from "@frak-labs/core-sdk";
 import { Button } from "@frak-labs/ui/component/Button";
 import { Checkbox } from "@frak-labs/ui/component/forms/Checkbox";
 import { WalletAddress } from "@frak-labs/ui/component/HashDisplay";
@@ -145,7 +146,7 @@ export function TableMembers() {
                 columnHelper.accessor("totalRewardsUsd", {
                     enableSorting: true,
                     header: () => "Rewards (USD)",
-                    cell: ({ getValue }) => `$${getValue().toFixed(2)}`,
+                    cell: ({ getValue }) => formatAmount(getValue(), "usd"),
                 }),
             ] as ColumnDef<GetMembersPageItem>[],
         [selectedMembers, addSelectedMember, removeSelectedMember, isDemoMode]

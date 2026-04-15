@@ -1,6 +1,6 @@
 import { HttpResponse, http } from "msw";
 
-const BACKEND_URL = process.env.BACKEND_URL || "http://localhost:3030";
+const BACKEND_URL = process.env.BACKEND_URL || "https://localhost:3030";
 
 /**
  * MSW request handlers for wallet backend API

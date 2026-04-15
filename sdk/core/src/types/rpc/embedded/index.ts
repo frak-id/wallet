@@ -9,10 +9,10 @@ import type {
 import type { LoggedOutEmbeddedView } from "./loggedOut";
 
 export type {
+    EmbeddedViewActionReferred,
     EmbeddedViewActionSharing,
     LoggedInEmbeddedView,
     LoggedOutEmbeddedView,
-    EmbeddedViewActionReferred,
 };
 
 /**

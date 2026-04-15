@@ -57,7 +57,6 @@ export type BaseTestFixtures = {
      * Fresh Zustand stores that auto-reset before/after each test
      */
     freshSessionStore: typeof import("@frak-labs/wallet-shared").sessionStore;
-    freshUserStore: typeof import("@frak-labs/wallet-shared").userStore;
     freshAuthenticationStore: typeof import("@frak-labs/wallet-shared").authenticationStore;
 
     /**
@@ -74,17 +73,13 @@ export type BaseTestFixtures = {
             setLastAuthenticator: ReturnType<typeof import("vitest").vi.fn>;
             clearAuthentication: ReturnType<typeof import("vitest").vi.fn>;
         };
-        user: {
-            setUser: ReturnType<typeof import("vitest").vi.fn>;
-            clearUser: ReturnType<typeof import("vitest").vi.fn>;
-        };
     };
 
     /**
-     * Mock Wagmi hooks (useAccount, useSendTransaction, etc.)
+     * Mock Wagmi hooks (useConnection, useSendTransaction, etc.)
      */
     mockWagmiHooks: {
-        useAccount: ReturnType<typeof import("vitest").vi.fn>;
+        useConnection: ReturnType<typeof import("vitest").vi.fn>;
         useSendTransaction: ReturnType<typeof import("vitest").vi.fn>;
         useWriteContract: ReturnType<typeof import("vitest").vi.fn>;
         useWaitForTransactionReceipt: ReturnType<typeof import("vitest").vi.fn>;
@@ -233,17 +228,6 @@ export const test = baseTest.extend<BaseTestFixtures>({
     },
 
     /**
-     * Provides fresh userStore that auto-resets after each test
-     * Note: Only resets after use to avoid redundant overhead
-     */
-    // biome-ignore lint/correctness/noEmptyPattern: Vitest requires object destructuring
-    freshUserStore: async ({}, use) => {
-        const { userStore } = await import("@frak-labs/wallet-shared");
-        await use(userStore);
-        userStore.getState().clearUser();
-    },
-
-    /**
      * Provides fresh authenticationStore that auto-resets after each test
      * Note: Only resets after use to avoid redundant overhead
      */
@@ -273,10 +257,6 @@ export const test = baseTest.extend<BaseTestFixtures>({
                 setLastAuthenticator: vi.fn(),
                 clearAuthentication: vi.fn(),
             },
-            user: {
-                setUser: vi.fn(),
-                clearUser: vi.fn(),
-            },
         };
         await use(actions);
     },
@@ -287,13 +267,15 @@ export const test = baseTest.extend<BaseTestFixtures>({
     mockWagmiHooks: async ({ mockAddress }, use) => {
         const { vi } = await import("vitest");
         const mocks = {
-            useAccount: vi.fn().mockReturnValue({
+            useConnection: vi.fn().mockReturnValue({
                 address: mockAddress,
                 isConnected: true,
                 isConnecting: false,
                 isDisconnected: false,
             }),
             useSendTransaction: vi.fn().mockReturnValue({
+                mutateAsync: vi.fn().mockResolvedValue("0xtxhash"),
+                mutate: vi.fn(),
                 sendTransactionAsync: vi.fn().mockResolvedValue("0xtxhash"),
                 sendTransaction: vi.fn(),
                 isPending: false,
@@ -301,6 +283,10 @@ export const test = baseTest.extend<BaseTestFixtures>({
                 isError: false,
             }),
             useWriteContract: vi.fn().mockReturnValue({
+                mutateAsync: vi
+                    .fn()
+                    .mockResolvedValue("0xtxhash" as `0x${string}`),
+                mutate: vi.fn(),
                 writeContractAsync: vi
                     .fn()
                     .mockResolvedValue("0xtxhash" as `0x${string}`),

@@ -1,0 +1,12 @@
+<?xml version="1.0"?>
+<page xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+      xsi:noNamespaceSchemaLocation="urn:magento:framework:View/Layout/etc/page_configuration.xsd">
+    <body>
+        <referenceContainer name="content">
+            <block class="FrakLabs\Sdk\Block\PurchaseTracker"
+                   name="fraklabs_sdk_purchase_tracker"
+                   template="FrakLabs_Sdk::purchase_tracker.phtml"
+                   after="-"/>
+        </referenceContainer>
+    </body>
+</page>

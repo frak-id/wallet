@@ -1,4 +1,5 @@
 import * as process from "node:process";
+import { vanillaExtractPlugin } from "@vanilla-extract/vite-plugin";
 import react from "@vitejs/plugin-react";
 import type { UserConfig } from "vite";
 import { defineConfig } from "vite";
@@ -65,9 +66,13 @@ export default defineConfig(async () => {
             "process.env.ANDROID_SHA256_FINGERPRINT": JSON.stringify(
                 getSstResource("ANDROID_SHA256_FINGERPRINT")
             ),
+            "process.env.IS_APP_AVAILABLE": JSON.stringify(
+                process.env.IS_APP_AVAILABLE ?? "true"
+            ),
         },
         plugins: [
             react(),
+            vanillaExtractPlugin(),
             ...(isSandbox ? [] : [mkcert()]),
             ...(isProd ? [removeConsole()] : []),
         ],
@@ -91,7 +96,7 @@ export default defineConfig(async () => {
                     inlineConst: { mode: "all", pass: 3 },
                 },
                 output: {
-                    advancedChunks: {
+                    codeSplitting: {
                         // Only chunk stuff shared by at least 2 modules
                         minShareCount: 2,
                         groups: [

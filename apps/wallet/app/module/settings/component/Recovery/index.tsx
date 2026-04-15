@@ -5,6 +5,7 @@ import { useTranslation } from "react-i18next";
 import { Panel } from "@/module/common/component/Panel";
 import { Title } from "@/module/common/component/Title";
 import { CurrentRecoverySetupStatus } from "@/module/recovery-setup/component/CurrentSetupStatus";
+import * as styles from "./index.css";
 
 /**
  * Component for the settings with the recovery link
@@ -24,7 +25,7 @@ export function RecoveryLink() {
                 {t("wallet.recoverySetup.title")}
             </Title>
             <CurrentRecoverySetupStatus />
-            <Link to="/settings/recovery" viewTransition>
+            <Link to="/profile/recovery" viewTransition className={styles.link}>
                 {t("wallet.recoverySetup.setupNew")}
             </Link>
         </Panel>

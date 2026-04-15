@@ -16,10 +16,10 @@ export default $config({
                 },
             },
             providers: {
-                kubernetes: "4.25.0",
+                kubernetes: "4.28.0",
                 "docker-build": "0.0.15",
                 gcp: {
-                    version: "9.10.0",
+                    version: "9.18.0",
                     project: "frak-main-v1",
                     region: "europe-west1",
                 },
@@ -38,6 +38,7 @@ export default $config({
         const isGcp = $app?.stage?.startsWith("gcp");
         if (isGcp) {
             await import("./infra/gcp/backend.ts");
+            await import("./infra/gcp/credential-sync.ts");
             await import("./infra/gcp/wallet.ts");
             await import("./infra/gcp/business.ts");
             return;

@@ -96,17 +96,16 @@
   },
   "devDependencies": {
     "@arethetypeswrong/cli": "^0.18.2",
-    "@frak-labs/dev-tooling": "workspace:*",
     "@frak-labs/test-foundation": "workspace:*",
     "@rolldown/plugin-node-polyfills": "^1.0.3",
     "@types/jsdom": "^28.0.0",
     "@types/node": "catalog:",
-    "@vitest/coverage-v8": "^4.1.0",
-    "@vitest/ui": "^4.1.0",
+    "@vitest/coverage-v8": "^4.1.4",
+    "@vitest/ui": "^4.1.4",
     "jsdom": "^29.0.0",
-    "tsdown": "^0.20.3",
+    "tsdown": "^0.21.8",
     "typescript": "catalog:",
     "viem": "catalog:",
-    "vitest": "^4.1.0"
+    "vitest": "^4.1.4"
   }
 }

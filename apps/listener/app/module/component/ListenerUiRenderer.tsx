@@ -20,6 +20,15 @@ const walletImport = () =>
 const ListenerWallet = lazy(walletImport);
 
 /**
+ * Lazy import of the sharing page UI
+ */
+const sharingImport = () =>
+    import("@/module/sharing/component/SharingPage").then((module) => ({
+        default: module.ListenerSharingPage,
+    }));
+const ListenerSharingPage = lazy(sharingImport);
+
+/**
  * Render the listener UI if needed
  */
 export function ListenerUiRenderer() {
@@ -32,6 +41,7 @@ export function ListenerUiRenderer() {
         const handleIdleCallback = async () => {
             await modalImport();
             await walletImport();
+            await sharingImport();
         };
 
         if ("requestIdleCallback" in window) {
@@ -55,6 +65,13 @@ export function ListenerUiRenderer() {
      */
     if (currentRequest.type === "embedded") {
         return <ListenerWallet />;
+    }
+
+    /**
+     * If the request is a sharing page, display it
+     */
+    if (currentRequest.type === "sharing") {
+        return <ListenerSharingPage />;
     }
 
     /**

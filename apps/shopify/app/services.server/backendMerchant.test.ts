@@ -587,9 +587,14 @@ describe("getFrakWebookStatus", () => {
         expect(backendApi.business.merchant).not.toHaveBeenCalled();
     });
 
-    it("should return setup:true when API returns non-empty array", async () => {
+    it("should return setup:true when API returns setup:true", async () => {
         const mockGet = vi.fn().mockResolvedValue({
-            data: [{ id: "wh1" }, { id: "wh2" }],
+            data: {
+                setup: true,
+                platform: "shopify",
+                webhookSigninKey: "key",
+                stats: {},
+            },
             error: null,
         });
         vi.mocked(resolveMerchantId).mockResolvedValue("merchant-wh");
@@ -610,9 +615,9 @@ describe("getFrakWebookStatus", () => {
         });
     });
 
-    it("should return setup:false when API returns empty array", async () => {
+    it("should return setup:false when API returns setup:false", async () => {
         const mockGet = vi.fn().mockResolvedValue({
-            data: [],
+            data: { setup: false },
             error: null,
         });
         vi.mocked(resolveMerchantId).mockResolvedValue("merchant-wh");
@@ -626,24 +631,6 @@ describe("getFrakWebookStatus", () => {
         );
 
         expect(result).toEqual({ userErrors: [], setup: false });
-    });
-
-    it("should return setup:true when API returns truthy non-array data", async () => {
-        const mockGet = vi.fn().mockResolvedValue({
-            data: { id: "wh1", active: true },
-            error: null,
-        });
-        vi.mocked(resolveMerchantId).mockResolvedValue("merchant-wh");
-        vi.mocked(backendApi.business.merchant).mockReturnValue({
-            webhooks: { get: mockGet },
-        } as any);
-
-        const result = await getFrakWebookStatus(
-            mockContext,
-            makeRequest("https://test.myshopify.com/app")
-        );
-
-        expect(result).toEqual({ userErrors: [], setup: true });
     });
 
     it("should return setup:false with userErrors when API returns error", async () => {

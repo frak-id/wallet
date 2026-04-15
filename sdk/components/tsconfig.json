@@ -1,7 +1,7 @@
 {
   // This tsconfig file contains the shared config for the build (tsconfig.build.json) and type checking (tsconfig.json) config.
-  "include": ["./src", "./tests/**/*.d.ts", "../../packages/ui/types/**/*.d.ts", "../../packages/ui/utils/**/*.ts"],
-  "exclude": ["../../packages/ui/utils/**/*.test.ts", "../../packages/ui/utils/**/*.spec.ts", "**/*.test.ts", "**/*.spec.ts"],
+  "include": ["./src", "./tests/**/*.d.ts"],
+  "exclude": ["**/*.test.ts", "**/*.spec.ts"],
   "compilerOptions": {
     // Output directory
     "outDir": "./dist",
@@ -58,7 +58,9 @@
 
     "paths": {
       "@/*": ["./src/*"],
-      "@frak-labs/ui/types/*": ["../../packages/ui/types/*"]
+      "react": ["./node_modules/preact/compat"],
+      "react-dom": ["./node_modules/preact/compat"],
+      "preact/jsx-runtime": ["./node_modules/preact/jsx-runtime"]
     }
   },
   "tsc-alias": {

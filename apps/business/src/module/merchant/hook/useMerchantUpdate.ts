@@ -1,3 +1,4 @@
+import type { SdkConfig } from "@frak-labs/backend-elysia/domain/merchant";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import type { Address } from "viem";
 import { authenticatedBackendApi } from "@/api/backendClient";
@@ -16,14 +17,14 @@ type EditExplorerInput = {
     };
 };
 
-type MerchantUpdateInput = EditMerchantInput | EditExplorerInput;
+type MerchantUpdateInput = EditMerchantInput | EditExplorerInput | SdkConfig;
 
 export function useMerchantUpdate({
     merchantId,
     target,
 }: {
     merchantId: string;
-    target: "base" | "explorer";
+    target: "base" | "explorer" | "sdk-config";
 }) {
     const queryClient = useQueryClient();
 
@@ -45,6 +46,14 @@ export function useMerchantUpdate({
 
                 if (error) {
                     throw new Error("Failed to update explorer settings");
+                }
+            } else if (target === "sdk-config") {
+                const { error } = await authenticatedBackendApi
+                    .merchant({ merchantId })
+                    ["sdk-config"].put(input as SdkConfig);
+
+                if (error) {
+                    throw new Error("Failed to update SDK settings");
                 }
             }
 

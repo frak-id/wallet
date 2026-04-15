@@ -22,7 +22,7 @@
 
 .column + .column {
     display: flex;
-    gap: 8px;
+    gap: var(--frak-spacing-s);
 }
 
 .column + .column.column--justify-start {

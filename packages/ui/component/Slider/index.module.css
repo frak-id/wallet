@@ -12,14 +12,14 @@
     background-color: var(--frak-slider-track-background-color);
     position: relative;
     flex-grow: 1;
-    border-radius: 9999px;
+    border-radius: var(--frak-radius-full);
     height: 3px;
 }
 
 .slider__range {
     position: absolute;
     background-color: var(--frak-slider-range-background-color);
-    border-radius: 9999px;
+    border-radius: var(--frak-radius-full);
     height: 100%;
 }
 

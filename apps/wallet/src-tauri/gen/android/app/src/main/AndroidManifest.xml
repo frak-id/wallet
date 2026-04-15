@@ -19,12 +19,13 @@
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
-            <!-- Digital Asset Links for WebAuthn (dev) -->
+            <!-- App Links — catch-all for both domains (WebAuthn DAL + deep links) -->
             <intent-filter android:autoVerify="true">
                 <action android:name="android.intent.action.VIEW" />
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.BROWSABLE" />
-                <data android:scheme="https" android:host="wallet-dev.frak.id" android:pathPrefix="/open" />
+                <data android:scheme="https" android:host="wallet.frak.id" />
+                <data android:scheme="https" android:host="wallet-dev.frak.id" />
             </intent-filter>
             <!-- Custom URL Scheme for Deep Linking -->
             <intent-filter>
@@ -32,31 +33,6 @@
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.BROWSABLE" />
                 <data android:scheme="frakwallet" />
-            </intent-filter>
-            <!-- Universal Links (App Links) for Deep Linking -->
-            <intent-filter android:autoVerify="true">
-                <action android:name="android.intent.action.VIEW" />
-                <category android:name="android.intent.category.DEFAULT" />
-                <category android:name="android.intent.category.BROWSABLE" />
-                <data android:scheme="https" android:host="wallet.frak.id" android:pathPrefix="/open" />
-            </intent-filter>
-            <intent-filter android:autoVerify="true">
-                <action android:name="android.intent.action.VIEW" />
-                <category android:name="android.intent.category.DEFAULT" />
-                <category android:name="android.intent.category.BROWSABLE" />
-                <data android:scheme="https" android:host="wallet-dev.frak.id" android:pathPrefix="/open" />
-            </intent-filter>
-            <intent-filter android:autoVerify="true">
-                <action android:name="android.intent.action.VIEW" />
-                <category android:name="android.intent.category.DEFAULT" />
-                <category android:name="android.intent.category.BROWSABLE" />
-                <data android:scheme="https" android:host="wallet.frak.id" android:pathPrefix="/monerium" />
-            </intent-filter>
-            <intent-filter android:autoVerify="true">
-                <action android:name="android.intent.action.VIEW" />
-                <category android:name="android.intent.category.DEFAULT" />
-                <category android:name="android.intent.category.BROWSABLE" />
-                <data android:scheme="https" android:host="wallet-dev.frak.id" android:pathPrefix="/monerium" />
             </intent-filter>
         </activity>
 

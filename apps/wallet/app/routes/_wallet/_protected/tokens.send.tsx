@@ -1,8 +1,10 @@
-import { Button } from "@frak-labs/ui/component/Button";
-import { Input } from "@frak-labs/ui/component/forms/Input";
+import { Box } from "@frak-labs/design-system/components/Box";
+import { Button } from "@frak-labs/design-system/components/Button";
+import { Input } from "@frak-labs/design-system/components/Input";
+import { Text } from "@frak-labs/design-system/components/Text";
 import type { BalanceItem } from "@frak-labs/wallet-shared";
 import { useGetUserBalance } from "@frak-labs/wallet-shared";
-import { createFileRoute, redirect } from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-router";
 import { memo, useCallback, useEffect, useState } from "react";
 import type {
     FieldErrors,
@@ -18,13 +20,10 @@ import { erc20Abi, parseUnits } from "viem";
 import { useWriteContract } from "wagmi";
 import { useBiometricConfirm } from "@/module/biometrics";
 import { Back } from "@/module/common/component/Back";
-import { Grid } from "@/module/common/component/Grid";
-import { isCryptoMode } from "@/module/common/utils/walletMode";
 import { TokenMax } from "@/module/tokens/component/TokenMax";
 import { TokenModalList } from "@/module/tokens/component/TokenModalList";
 import { TransactionError } from "@/module/tokens/component/TransactionError";
 import { TransactionSuccess } from "@/module/tokens/component/TransactionSuccess";
-import styles from "@/module/tokens/page/TokensSendPage.module.css";
 import { getUpdatedToken } from "@/module/tokens/utils/getUpdatedToken";
 import { validateAmount } from "@/module/tokens/utils/validateAmount";
 
@@ -33,11 +32,6 @@ type SendSearchParams = {
 };
 
 export const Route = createFileRoute("/_wallet/_protected/tokens/send")({
-    beforeLoad: () => {
-        if (!isCryptoMode) {
-            throw redirect({ to: "/wallet" });
-        }
-    },
     component: TokensSendPage,
     validateSearch: (search: Record<string, unknown>): SendSearchParams => ({
         to: typeof search.to === "string" ? search.to : undefined,
@@ -59,10 +53,10 @@ const AddressInput = function AddressInput({
     const { t } = useTranslation();
 
     return (
-        <p className={styles.tokensSend__inputWrapper}>
-            <label htmlFor="toAddress" className={styles.tokensSend__label}>
+        <Box display={"flex"} flexDirection={"column"} gap={"xs"}>
+            <Text variant="label" color="secondary">
                 {t("common.to")}
-            </label>
+            </Text>
             <Input
                 type={"text"}
                 id={"toAddress"}
@@ -78,9 +72,11 @@ const AddressInput = function AddressInput({
                 })}
             />
             {errors.toAddress && (
-                <span className={"error"}>{errors.toAddress.message}</span>
+                <Text variant="caption" color="error">
+                    {errors.toAddress.message}
+                </Text>
             )}
-        </p>
+        </Box>
     );
 };
 
@@ -116,11 +112,17 @@ const AmountInput = function AmountInput({
     );
 
     return (
-        <p className={styles.tokensSend__inputWrapper}>
-            <label htmlFor="amount" className={styles.tokensSend__label}>
-                {t("common.balance")}: {selectedToken.amount}
+        <Box display={"flex"} flexDirection={"column"} gap={"xs"}>
+            <Box
+                display={"flex"}
+                alignItems={"center"}
+                justifyContent={"space-between"}
+            >
+                <Text variant="label" color="secondary">
+                    {t("common.balance")}: {selectedToken.amount}
+                </Text>
                 <TokenMax onClick={handleMaxClick} />
-            </label>
+            </Box>
             <Input
                 leftSection={
                     <TokenModalList
@@ -141,9 +143,11 @@ const AmountInput = function AmountInput({
                 aria-invalid={errors.amount ? "true" : "false"}
             />
             {errors.amount && (
-                <span className={"error"}>{errors.amount.message}</span>
+                <Text variant="caption" color="error">
+                    {errors.amount.message}
+                </Text>
             )}
-        </p>
+        </Box>
     );
 };
 
@@ -199,7 +203,7 @@ function TokensSendPage() {
     >();
 
     const {
-        writeContractAsync,
+        mutateAsync: writeContractAsync,
         data: hash,
         error,
         isPending,
@@ -254,8 +258,13 @@ function TokensSendPage() {
     return (
         <>
             <Back href={"/wallet"}>{t("wallet.tokens.backToWallet")}</Back>
-            <Grid>
-                <form onSubmit={handleSubmit(onSubmit)}>
+            <form onSubmit={handleSubmit(onSubmit)}>
+                <Box
+                    display={"flex"}
+                    flexDirection={"column"}
+                    gap={"l"}
+                    paddingTop={"m"}
+                >
                     <AddressInput register={register} errors={errors} />
 
                     {selectedToken && (
@@ -269,29 +278,23 @@ function TokensSendPage() {
                                 resetField={resetField}
                             />
 
-                            <p>
-                                <Button
-                                    type={"submit"}
-                                    width={"full"}
-                                    disabled={isPending || isConfirming}
-                                    isLoading={isPending || isConfirming}
-                                >
-                                    {t("common.send")}
-                                </Button>
-                            </p>
+                            <Button
+                                type={"submit"}
+                                disabled={isPending || isConfirming}
+                            >
+                                {t("common.send")}
+                            </Button>
 
-                            <p className={styles.tokensSend__bottom}>
-                                <TransactionStatus
-                                    isSuccess={isSuccess}
-                                    isError={isError}
-                                    hash={hash}
-                                    error={error}
-                                />
-                            </p>
+                            <TransactionStatus
+                                isSuccess={isSuccess}
+                                isError={isError}
+                                hash={hash}
+                                error={error}
+                            />
                         </>
                     )}
-                </form>
-            </Grid>
+                </Box>
+            </form>
         </>
     );
 }

@@ -5,6 +5,10 @@ import type {
     ModalRpcStepsResultType,
 } from "./rpc/displayModal";
 import type {
+    DisplaySharingPageParamsType,
+    DisplaySharingPageResultType,
+} from "./rpc/displaySharingPage";
+import type {
     DisplayEmbeddedWalletParamsType,
     DisplayEmbeddedWalletResultType,
 } from "./rpc/embedded";
@@ -16,6 +20,7 @@ import type {
     PrepareSsoParamsType,
     PrepareSsoReturnType,
 } from "./rpc/sso";
+import type { UserReferralStatusType } from "./rpc/userReferralStatus";
 import type { WalletStatusReturnType } from "./rpc/walletStatus";
 
 /**
@@ -38,7 +43,7 @@ import type { WalletStatusReturnType } from "./rpc/walletStatus";
  *  - Response Type: stream (emits updates when wallet status changes)
  *
  * #### frak_displayModal
- * - Params: [requests: {@link ModalRpcStepsInput}, metadata?: {@link ModalRpcMetadata}, configMetadata: {@link FrakWalletSdkConfig}["metadata"]]
+ * - Params: [requests: {@link ModalRpcStepsInput}, metadata?: {@link ModalRpcMetadata}, configMetadata: {@link FrakWalletSdkConfig}["metadata"], placement?: string]
  * - Returns: {@link ModalRpcStepsResultType}
  * - Response Type: promise (one-shot)
  *
@@ -53,8 +58,13 @@ import type { WalletStatusReturnType } from "./rpc/walletStatus";
  *  - Response Type: promise (one-shot)
  *
  * #### frak_displayEmbeddedWallet
- * - Params: [request: {@link DisplayEmbeddedWalletParamsType}, metadata: {@link FrakWalletSdkConfig}["metadata"]]
+ * - Params: [request: {@link DisplayEmbeddedWalletParamsType}, metadata: {@link FrakWalletSdkConfig}["metadata"], placement?: string]
  * - Returns: {@link DisplayEmbeddedWalletResultType}
+ * - Response Type: promise (one-shot)
+ *
+ * #### frak_displaySharingPage
+ * - Params: [request: {@link DisplaySharingPageParamsType}, configMetadata: {@link FrakWalletSdkConfig}["metadata"], placement?: string]
+ * - Returns: {@link DisplaySharingPageResultType}
  * - Response Type: promise (one-shot)
  */
 export type IFrameRpcSchema = [
@@ -77,6 +87,7 @@ export type IFrameRpcSchema = [
             requests: ModalRpcStepsInput,
             metadata: ModalRpcMetadata | undefined,
             configMetadata: FrakWalletSdkConfig["metadata"],
+            placement?: string,
         ];
         ReturnType: ModalRpcStepsResultType;
     },
@@ -89,7 +100,7 @@ export type IFrameRpcSchema = [
         Method: "frak_prepareSso";
         Parameters: [
             params: PrepareSsoParamsType,
-            name: string,
+            name?: string,
             customCss?: string,
         ];
         ReturnType: PrepareSsoReturnType;
@@ -104,7 +115,7 @@ export type IFrameRpcSchema = [
         Method: "frak_openSso";
         Parameters: [
             params: OpenSsoParamsType,
-            name: string,
+            name?: string,
             customCss?: string,
         ];
         ReturnType: OpenSsoReturnType;
@@ -130,6 +141,7 @@ export type IFrameRpcSchema = [
         Parameters: [
             request: DisplayEmbeddedWalletParamsType,
             metadata: FrakWalletSdkConfig["metadata"],
+            placement?: string,
         ];
         ReturnType: DisplayEmbeddedWalletResultType;
     },
@@ -137,7 +149,7 @@ export type IFrameRpcSchema = [
      * Method to send interactions (arrival, sharing, custom events)
      * Fire-and-forget method - no return value expected
      * merchantId is resolved from context
-     * clientId is passed via metadata as safeguard against handshake race condition
+     * clientId is passed via metadata as safeguard against race conditions
      */
     {
         Method: "frak_sendInteraction";
@@ -146,5 +158,42 @@ export type IFrameRpcSchema = [
             metadata?: { clientId?: string },
         ];
         ReturnType: undefined;
+    },
+    /**
+     * Method to get the current user's referral status on this merchant.
+     * Returns whether the user was referred (has a referral link as referee).
+     * Returns null when the user's identity cannot be resolved.
+     * This is a one-shot request.
+     */
+    {
+        Method: "frak_getUserReferralStatus";
+        Parameters?: undefined;
+        ReturnType: UserReferralStatusType | null;
+    },
+    /**
+     * Method to display a sharing page with product info and sharing buttons
+     * Resolves on first user action (share/copy) but the page stays visible
+     * This is a one-shot request
+     */
+    {
+        Method: "frak_displaySharingPage";
+        Parameters: [
+            request: DisplaySharingPageParamsType,
+            configMetadata: FrakWalletSdkConfig["metadata"],
+            placement?: string,
+        ];
+        ReturnType: DisplaySharingPageResultType;
+    },
+    /**
+     * Method to get a merge token for the current anonymous identity.
+     * Used by in-app browser redirect flows to preserve identity
+     * when switching from a WebView to the system browser.
+     * Returns the merge token string, or null if unavailable.
+     * This is a one-shot request.
+     */
+    {
+        Method: "frak_getMergeToken";
+        Parameters?: undefined;
+        ReturnType: string | null;
     },
 ];

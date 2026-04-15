@@ -1,3 +1,4 @@
+import { Text } from "@frak-labs/design-system/components/Text";
 import { Link } from "@tanstack/react-router";
 import { Trans, useTranslation } from "react-i18next";
 import { AccordionRecoveryItem } from "@/module/common/component/AccordionRecoveryItem";
@@ -11,14 +12,14 @@ export function Step6() {
             actualStep={ACTUAL_STEP}
             title={t("wallet.recovery.step6")}
         >
-            <p>
+            <Text>
                 <Trans
                     i18nKey={"wallet.recovery.successful"}
                     components={{
                         pLink: <Link to={"/login"} viewTransition />,
                     }}
                 />
-            </p>
+            </Text>
         </AccordionRecoveryItem>
     );
 }

@@ -6,7 +6,6 @@ import {
     verifyRegistrationResponse,
 } from "@simplewebauthn/server";
 import { Elysia, status } from "elysia";
-import { Binary } from "mongodb";
 import type { PublicKeyCredential } from "ox/WebAuthnP256";
 import {
     AuthContext,
@@ -72,7 +71,9 @@ export const registerRoutes = new Elysia()
                 _id: id,
                 smartWalletAddress: walletAddress,
                 userAgent,
-                credentialPublicKey: new Binary(credential.publicKey),
+                credentialPublicKey: Buffer.from(credential.publicKey).toString(
+                    "base64"
+                ),
                 counter: credential.counter,
                 credentialDeviceType,
                 credentialBackedUp,

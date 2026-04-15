@@ -1,3 +1,4 @@
+import { type Currency, formatAmount } from "@frak-labs/core-sdk";
 import { useMutation } from "@tanstack/react-query";
 import type { loader as rootLoader } from "app/routes/app";
 import type { BankStatus } from "app/services.server/backendMerchant";
@@ -71,7 +72,12 @@ function ActivePurchases({
                         const { status, variant } = mapStatus(purchase, t);
                         return (
                             <s-table-row key={purchase.id}>
-                                <s-table-cell>{`$${purchase.amount}`}</s-table-cell>
+                                <s-table-cell>
+                                    {formatAmount(
+                                        Number(purchase.amount),
+                                        (purchase.currency ?? "eur") as Currency
+                                    )}
+                                </s-table-cell>
                                 <s-table-cell>
                                     <s-badge tone={variant}>{status}</s-badge>
                                 </s-table-cell>
@@ -149,12 +155,12 @@ function CreatePurchase({ bankAddress }: { bankAddress: string }) {
                 <s-number-field
                     label={t("status.purchase.amountToFund")}
                     value={amount}
-                    onChange={(e) => setAmount(e.currentTarget.value)}
+                    onChange={(e) => setAmount(e.currentTarget.value ?? "")}
                     autocomplete="off"
                     min={0}
                     step={0.5}
                     disabled={isLoading || !!confirmationUrl}
-                    suffix={rootData?.shop.preferredCurrency ?? "USD"}
+                    suffix={rootData?.shop.preferredCurrency ?? "EUR"}
                 />
                 <s-button
                     onClick={() => handleSubmit()}

@@ -4,11 +4,26 @@ FROM oven/bun:1.3.9 AS sdk-builder
 
 WORKDIR /app
 
+# Install a real Node.js runtime.
+#
+# tsdown/rolldown plugins are invoked through a `#!/usr/bin/env node` shebang.
+# The oven/bun image ships a "node" shim (/usr/local/bun-node-fallback-bin/node
+# -> /usr/local/bin/bun) which causes plugins to run under Bun instead of Node.
+#
+# @vanilla-extract/integration's `compile()` relies on `vm.Script` +
+# `Module._load` via the `eval` package. Bun's Node compat layer currently
+# returns `null` for `require('@vanilla-extract/css/adapter')` inside a VM
+# sandbox, breaking the build with:
+#   "Cannot destructure property 'setAdapter' from null or undefined value"
+#
+# Installing the real Node.js binary to /usr/bin/node (earlier in PATH than the
+# fallback) makes the vanilla-extract-inline plugin in sdk/components work.
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends nodejs \
+    && rm -rf /var/lib/apt/lists/*
+
 # Copy root package files
 COPY package.json bun.lock tsconfig.json ./
-
-# Copy stubs
-COPY .stubs/ ./.stubs/
 
 # Copy only package.json files from workspace packages (for dependency resolution)
 # Apps
@@ -19,11 +34,14 @@ COPY apps/shopify/package.json ./apps/shopify/
 
 # Services
 COPY services/backend/package.json ./services/backend/
+COPY services/credential-sync/package.json ./services/credential-sync/
 
 # Packages (only package.json)
 COPY packages/app-essentials/package.json ./packages/app-essentials/
 COPY packages/client/package.json ./packages/client/
+COPY packages/design-system/package.json ./packages/design-system/
 COPY packages/dev-tooling/package.json ./packages/dev-tooling/
+COPY packages/ui-preview/package.json ./packages/ui-preview/
 COPY packages/ui/package.json ./packages/ui/
 COPY packages/wallet-shared/package.json ./packages/wallet-shared/
 COPY packages/test-foundation/package.json ./packages/test-foundation/
@@ -40,6 +58,10 @@ COPY packages/dev-tooling ./packages/dev-tooling
 
 # Needed since it's this package exporting the global window with Frak info
 COPY packages/ui ./packages/ui
+
+# Needed since sdk/components bundles design-system CSS entries
+# (theme/tokens/sprinkles/utils) via vanilla-extract at build time.
+COPY packages/design-system ./packages/design-system
 
 # Install dependencies
 RUN bun install --frozen-lockfile

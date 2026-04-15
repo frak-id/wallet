@@ -1,14 +1,15 @@
 import { createRootRoute, Outlet } from "@tanstack/react-router";
 import { TanStackRouterDevtools } from "@tanstack/react-router-devtools";
 import { BiometricLock } from "@/module/biometrics";
+import { ModalOutlet } from "@/module/common/component/ModalOutlet";
 import { PwaInstall } from "@/module/common/component/PwaInstall";
 import { RootProvider } from "@/module/common/provider/RootProvider";
 import { DetectPWA } from "@/module/wallet/component/DetectPWA";
 // Import open panel to ensure it's initialized
 import "@frak-labs/wallet-shared";
 // Import global styles
-import "@/styles/all.css";
-import "nprogress/nprogress.css";
+import "@frak-labs/design-system/global";
+import { useHardwareBack } from "@/module/common/hook/useHardwareBack";
 
 export const Route = createRootRoute({
     component: RootComponent,
@@ -22,6 +23,8 @@ export const Route = createRootRoute({
  * This component wraps the entire application with providers and global components.
  */
 function RootComponent() {
+    useHardwareBack();
+
     return (
         <RootProvider>
             {/* Only show PWA features in web mode — tree-shaken in Tauri builds */}
@@ -33,6 +36,7 @@ function RootComponent() {
             )}
             {process.env.IS_TAURI && <BiometricLock />}
             <Outlet />
+            <ModalOutlet />
             {import.meta.env.DEV && (
                 <TanStackRouterDevtools position="bottom-right" />
             )}

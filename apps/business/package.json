@@ -19,11 +19,12 @@
         "test:coverage": "vitest --coverage"
     },
     "dependencies": {
-        "@elysiajs/eden": "^1.4.8",
+        "@elysiajs/eden": "^1.4.9",
         "@frak-labs/app-essentials": "workspace:*",
         "@frak-labs/backend-elysia": "workspace:*",
         "@frak-labs/client": "workspace:*",
         "@frak-labs/core-sdk": "workspace:*",
+        "@frak-labs/ui-preview": "workspace:*",
         "@frak-labs/react-sdk": "workspace:*",
         "@frak-labs/ui": "workspace:*",
         "@lucasmogari/react-pagination": "^2.1.0",
@@ -42,7 +43,6 @@
         "cmdk": "^1.1.1",
         "countries-list": "^3.3.0",
         "date-fns": "^4.1.0",
-        "lru-cache": "^11.2.7",
         "lucide-react": "^0.577.0",
         "normalize.css": "^8.0.1",
         "nprogress": "^0.2.0",
@@ -50,6 +50,7 @@
         "react": "catalog:",
         "react-day-picker": "^9.14.0",
         "react-dom": "catalog:",
+        "react-dropzone": "^15.0.0",
         "react-hook-form": "^7.71.2",
         "viem": "catalog:",
         "zustand": "catalog:"
@@ -69,13 +70,14 @@
         "@types/react": "catalog:",
         "@types/react-dom": "catalog:",
         "@vitejs/plugin-react": "catalog:",
+        "@vanilla-extract/vite-plugin": "^5.2.0",
         "@vitest/coverage-v8": "^4.1.0",
         "@vitest/ui": "^4.1.0",
         "bun-types": "latest",
         "jsdom": "^29.0.0",
         "sst": "3.18.9",
-        "typescript": "^5.9.3",
+        "typescript": "^6.0.2",
         "vite": "catalog:",
-        "vitest": "^4.1.0"
+        "vitest": "^4.1.4"
     }
 }

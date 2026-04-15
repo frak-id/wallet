@@ -23,7 +23,7 @@
     background-color: #fff;
     z-index: 1000;
     color: #000;
-    border-radius: 16px;
+    border-radius: var(--frak-radius-l);
     display: flex;
     flex-direction: column;
     align-items: center;

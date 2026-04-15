@@ -1,4 +1,5 @@
-// Analytics
+// Icons
+export { LogoFrakWithName } from "@frak-labs/design-system/icons";
 export {
     openPanel,
     setProfileId,
@@ -8,13 +9,11 @@ export {
     trackGenericEvent,
     updateGlobalProperties,
 } from "./analytics";
-
 // API
 export {
     authenticatedBackendApi,
     authenticatedWalletApi,
 } from "./api/backendClient";
-
 // Components
 export {
     Drawer,
@@ -29,18 +28,20 @@ export { TextData } from "./component/TextData";
 export { Toast } from "./component/Toast";
 export { WalletModal } from "./component/WalletModal";
 export { Warning } from "./component/Warning";
-
 // Hooks
 export { useAddToHomeScreenPrompt } from "./hook/useAddToHomeScreenPrompt";
+export { useCopyToClipboardWithState } from "./hook/useCopyToClipboardWithState";
+export {
+    estimatedRewardsQueryOptions,
+    formatEstimatedReward,
+    selectFormattedReward,
+    useFormattedEstimatedReward,
+} from "./hook/useEstimatedReward";
 export { useGetSafeSdkSession } from "./hook/useGetSafeSdkSession";
 export { useMountedTimeout } from "./hook/useMountedTimeout";
 export { useSessionFlag } from "./hook/useSessionFlag";
 // Lib
-export {
-    inAppRedirectUrl,
-    isInAppBrowser,
-    isInIframe,
-} from "./lib/inApp";
+export { isInIframe } from "./lib/inApp";
 export { ua } from "./lib/ua";
 export { isWebAuthNSupported } from "./lib/webauthn";
 
@@ -52,7 +53,8 @@ export { sdkKey } from "./queryKeys/sdk";
 // Storage
 export { authenticatorStorage } from "./storage/authenticators";
 export type { PreviousAuthenticatorModel } from "./storage/PreviousAuthenticatorModel";
-
+export { emitLifecycleEvent } from "./utils/lifecycleEvents";
+export { prefixModalCss } from "./utils/prefixModalCss";
 // Utils
 export {
     getFromLocalStorage,

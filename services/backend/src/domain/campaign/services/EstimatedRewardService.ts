@@ -93,6 +93,7 @@ export class EstimatedRewardService {
             pendingRewardExpirationDays:
                 campaign.rule.pendingRewardExpirationDays,
             maxRewardsPerUser: campaign.rule.maxRewardsPerUser,
+            expiresAt: campaign.expiresAt?.toISOString() ?? null,
         };
     }
 

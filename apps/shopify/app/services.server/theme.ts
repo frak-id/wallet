@@ -32,6 +32,32 @@ query getFiles($filenames: [String!]!, $themeId: ID!) {
 }
 `;
 
+/**
+ * Paginated variant of `getFilesQuery` that supports wildcard patterns and
+ * cursor-based pagination. Used to enumerate every file matching a set of
+ * patterns (e.g. `sections/*.json`) because Shopify may truncate responses
+ * below the requested page size to stay within payload limits.
+ */
+const getFilesPaginatedQuery = `
+query getFilesPaginated($filenames: [String!]!, $themeId: ID!, $cursor: String) {
+  theme(id: $themeId) {
+    files(first: 50, after: $cursor, filenames: $filenames) {
+      nodes {
+        filename
+        body {
+          ... on OnlineStoreThemeFileBodyText { content }
+          ... on OnlineStoreThemeFileBodyBase64 { contentBase64 }
+        }
+      }
+      pageInfo {
+        hasNextPage
+        endCursor
+      }
+    }
+  }
+}
+`;
+
 export type GetMainThemeIdReturnType = {
     gid: string;
     id: string;
@@ -106,6 +132,60 @@ async function getTemplateFiles(
     });
 
     return jsonTemplateData;
+}
+
+/**
+ * Enumerate every theme file whose filename matches one of the given wildcard
+ * patterns (e.g. `sections/*.json`). Handles cursor pagination internally —
+ * Shopify may return fewer files than requested per page to respect payload
+ * limits, so we loop until `hasNextPage` is false.
+ */
+async function getTemplateFilesMatching(
+    graphql: AuthenticatedContext["admin"]["graphql"],
+    gid: string,
+    patterns: string[]
+) {
+    const results: Array<{ filename: string; body: unknown }> = [];
+    let cursor: string | null = null;
+    let hasNextPage = true;
+
+    while (hasNextPage) {
+        const response = await graphql(getFilesPaginatedQuery, {
+            variables: {
+                themeId: gid,
+                filenames: patterns,
+                cursor,
+            },
+        });
+        const json = (await response.json()) as {
+            data?: {
+                theme?: {
+                    files?: {
+                        nodes?: ThemeFile[];
+                        pageInfo?: {
+                            hasNextPage: boolean;
+                            endCursor: string | null;
+                        };
+                    };
+                };
+            };
+        };
+        const theme = json?.data?.theme;
+        const nodes = theme?.files?.nodes ?? [];
+        const pageInfo = theme?.files?.pageInfo;
+
+        for (const file of nodes) {
+            results.push({
+                filename: file.filename,
+                body: jsonc_parse(file.body?.content ?? ""),
+            });
+        }
+
+        hasNextPage = Boolean(pageInfo?.hasNextPage);
+        cursor = pageInfo?.endCursor ?? null;
+    }
+
+    return results;
 }
 
 /**
@@ -196,41 +276,72 @@ export function detectFrakActivated(
 }
 
 /**
- * Detect if any main product section contains a referral_button block.
+ * Block type pattern for the Frak share button.
+ * Matches `block.type` strings like `shopify://apps/frak/blocks/referral_button/<uuid>`.
+ */
+const FRAK_BUTTON_BLOCK_PATTERN = "/blocks/referral_button/";
+
+/**
+ * Detect if any section in the product template contains a Frak referral button
+ * block.
+ *
+ * Shopify places app blocks in a dedicated `"apps"` section (not inside
+ * the `"main"` product section), so we scan the `blocks` map of every
+ * section.
  */
 export function detectFrakButton(
-    sections: Record<string, string | { type: string; block_order?: string[] }>
+    sections: Record<
+        string,
+        | string
+        | {
+              type: string;
+              block_order?: string[];
+              blocks?: Record<string, ThemeBlockInfo>;
+          }
+    >
 ): boolean {
-    const main = Object.entries(sections).find(([id, section]) =>
-        typeof section !== "string"
-            ? id === "main" || section.type.startsWith("main-")
-            : false
+    return Object.values(sections).some(
+        (section) =>
+            typeof section !== "string" &&
+            section.blocks &&
+            Object.values(section.blocks).some(
+                (block) =>
+                    block.type.includes(FRAK_BUTTON_BLOCK_PATTERN) &&
+                    !block.disabled
+            )
     );
-    if (main && typeof main[1] !== "string" && main[1].block_order) {
-        return main[1].block_order.some((blockId) =>
-            blockId.includes("referral_button")
-        );
-    }
-    return false;
 }
 
 /**
- * Detect if a Frak wallet_button block is enabled. Returns block ID or null.
+ * Detect if any section in settings_data.json contains a Frak banner block.
+ *
+ * When a merchant adds the banner app block to a theme-wide section (e.g.
+ * header/footer), it appears under `current.sections[sectionId].blocks`
+ * in `config/settings_data.json`.
  */
-export function detectWalletButton(
-    blocks: Record<string, ThemeBlockInfo> | undefined
-): string | null {
-    if (!blocks) return null;
-    const typeMatch = "/blocks/wallet_button/";
-    const walletBlock = Object.entries(blocks).find(
-        ([_id, info]) => info.type.includes(typeMatch) && !info.disabled
+export function detectFrakBannerInSections(
+    sections:
+        | Record<
+              string,
+              | string
+              | {
+                    type: string;
+                    block_order?: string[];
+                    blocks?: Record<string, ThemeBlockInfo>;
+                }
+          >
+        | undefined
+): boolean {
+    if (!sections) return false;
+    return Object.values(sections).some(
+        (section) =>
+            typeof section !== "string" &&
+            section.blocks &&
+            Object.values(section.blocks).some(
+                (block) =>
+                    block.type.includes("/blocks/banner/") && !block.disabled
+            )
     );
-    if (walletBlock) {
-        const [_, blockInfo] = walletBlock;
-        const idMatch = blockInfo.type.match(/wallet_button\/([^/]+)$/);
-        return idMatch ? idMatch[1] : null;
-    }
-    return null;
 }
 
 /**
@@ -278,53 +389,102 @@ export async function doesThemeHasFrakActivated(context: AuthenticatedContext) {
 }
 
 /**
- * Check if the current shop theme has the Frak button in product page
+ * Check if the current shop theme has the Frak share button (referral_button)
+ * in the product template.
  */
 export async function doesThemeHasFrakButton(context: AuthenticatedContext) {
-    // Get the main theme id
     const mainThemeId = await getMainThemeId(context);
 
-    // Retrieve the JSON templates that we want to integrate with
     const jsonTemplateData = await getTemplateFiles(
         context.admin.graphql,
         mainThemeId.gid,
         ["templates/product.json"]
     );
 
-    // Retrieve the body of JSON templates and find what section is set as `main`
-    // Return true if any of the main sections has a block with the frak_referral_button type
-    return jsonTemplateData.some((file: ThemeFile) =>
-        detectFrakButton(file.body.sections)
+    const productFile = jsonTemplateData.find(
+        (f: ThemeFile) => f.filename === "templates/product.json"
     );
+
+    return productFile ? detectFrakButton(productFile.body.sections) : false;
 }
 
 /**
- * Check if the current shop theme has the Frak wallet button in body
+ * Check if the current shop theme has the Frak banner block enabled anywhere.
+ *
+ * Enumerates every section group (`sections/*.json`), every template
+ * (`templates/*.json`), and `config/settings_data.json` via the Shopify Admin
+ * GraphQL API, then scans each file for an enabled Frak banner app block.
+ * This catches banners placed in the header, footer, any custom section group,
+ * or directly on a page template.
  */
-export async function doesThemeHasFrakWalletButton(
-    context: AuthenticatedContext
-) {
-    // Get the main theme id
+export async function doesThemeHasFrakBanner(context: AuthenticatedContext) {
     const mainThemeId = await getMainThemeId(context);
 
-    // Retrieve the JSON templates that we want to integrate with
-    const jsonTemplateData = await getTemplateFiles(
+    const files = await getTemplateFilesMatching(
         context.admin.graphql,
         mainThemeId.gid,
-        ["config/settings_data.json"]
+        ["sections/*.json", "templates/*.json", "config/settings_data.json"]
     );
 
-    if (
-        jsonTemplateData.length <= 0 ||
-        !jsonTemplateData?.[0]?.body?.current?.blocks
-    ) {
-        return null;
+    return files.some((file) => {
+        const body = file.body as
+            | {
+                  sections?: unknown;
+                  current?: { sections?: unknown };
+              }
+            | undefined;
+        // settings_data.json stores sections under body.current.sections,
+        // section groups and templates store them directly under body.sections.
+        const sections =
+            file.filename === "config/settings_data.json"
+                ? body?.current?.sections
+                : body?.sections;
+
+        return detectFrakBannerInSections(
+            sections as
+                | Record<
+                      string,
+                      | string
+                      | {
+                            type: string;
+                            block_order?: string[];
+                            blocks?: Record<string, ThemeBlockInfo>;
+                        }
+                  >
+                | undefined
+        );
+    });
+}
+
+/**
+ * Check if the checkout Thank You / Order Status pages have extensibility
+ * active via the published checkout profile.
+ *
+ * Uses the `typOspPagesActive` field on `CheckoutProfile` which indicates
+ * whether the TY & OS pages are actively using checkout UI extensions.
+ */
+export async function isCheckoutExtensionActive(
+    context: AuthenticatedContext
+): Promise<boolean> {
+    try {
+        const response = await context.admin.graphql(`
+query getCheckoutProfile {
+  checkoutProfiles(first: 1, query: "is_published:true") {
+    nodes {
+      id
+      isPublished
+      typOspPagesActive
     }
+  }
+}`);
+        const {
+            data: { checkoutProfiles },
+        } = await response.json();
 
-    return detectWalletButton(
-        jsonTemplateData[0].body.current.blocks as Record<
-            string,
-            ThemeBlockInfo
-        >
-    );
+        const profile = checkoutProfiles?.nodes?.[0];
+        return !!profile?.typOspPagesActive;
+    } catch (error) {
+        console.error("Error checking checkout extension status:", error);
+        return false;
+    }
 }

@@ -1,4 +1,5 @@
-import { Spinner } from "@frak-labs/ui/component/Spinner";
+import { Spinner } from "@frak-labs/design-system/components/Spinner";
+import type { TFunction } from "i18next";
 import { Check } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import type { BasePairingState } from "../../types";
@@ -9,14 +10,13 @@ export function PairingStatus({
 }: {
     status: BasePairingState["status"];
 }) {
-    const statusDetails = getStatusDetails(status);
+    const { t } = useTranslation();
+    const statusDetails = getStatusDetails(t, status);
 
     return <span className={styles.pairingStatus}>{statusDetails}</span>;
 }
 
-function getStatusDetails(status: BasePairingState["status"]) {
-    const { t } = useTranslation();
-
+function getStatusDetails(t: TFunction, status: BasePairingState["status"]) {
     switch (status) {
         case "idle":
             return t("wallet.pairing.status.idle");

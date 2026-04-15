@@ -1,5 +1,7 @@
+import { Box } from "@frak-labs/design-system/components/Box";
 import { useEffect } from "react";
 import { usePwaInstallRef } from "@/module/common/context/PwaInstallContext";
+import * as styles from "./index.css";
 
 /**
  * @description Register the pwa-install element.
@@ -23,11 +25,14 @@ export function PwaInstall() {
     }, [pwaInstallRef]);
 
     return (
-        <pwa-install
-            ref={pwaInstallRef}
-            manifest-url="/manifest.json"
-            manual-apple="true"
-            manual-chrome="true"
-        />
+        <Box className={styles.root}>
+            <pwa-install
+                ref={pwaInstallRef}
+                className={styles.element}
+                manifest-url="/manifest.json"
+                manual-apple="true"
+                manual-chrome="true"
+            />
+        </Box>
     );
 }

@@ -62,6 +62,19 @@ export class RuleEngineService {
             };
         }
 
+        // Pre-compute merchant-wide reward count if any campaign uses merchant cap
+        const hasMerchantCap = activeCampaigns.some(
+            (c) => c.rule.merchantMaxRewardsPerUser !== undefined
+        );
+        let merchantRewardCount: number | undefined;
+        if (hasMerchantCap) {
+            merchantRewardCount =
+                await this.assetLogRepository.countByMerchantAndUserAsReferee(
+                    params.merchantId,
+                    fullContext.user.identityGroupId
+                );
+        }
+
         const allRewards: CalculatedReward[] = [];
         const skippedCampaigns: string[] = [];
         const errors: { campaignRuleId: string; error: string }[] = [];
@@ -72,6 +85,7 @@ export class RuleEngineService {
                 campaign,
                 fullContext,
                 params.merchantId,
+                merchantRewardCount,
                 fetchReferralChain
             );
 
@@ -104,6 +118,7 @@ export class RuleEngineService {
         campaign: CampaignRuleSelect,
         context: RuleContext,
         merchantId: string,
+        merchantRewardCount: number | undefined,
         fetchReferralChain?: ReferralChainFetcher
     ): Promise<{
         matched: boolean;
@@ -125,23 +140,21 @@ export class RuleEngineService {
             };
         }
 
-        // Check per-user reward cap (defaults to 1 per referee)
-        const maxPerUser = campaign.rule.maxRewardsPerUser ?? 1;
-        const userRewardCount =
-            await this.assetLogRepository.countByCampaignAndUserAsReferee(
-                campaign.id,
-                context.user.identityGroupId
-            );
-
-        if (userRewardCount >= maxPerUser) {
+        // Check merchant-wide per-user cap (across all campaigns for this merchant)
+        if (
+            campaign.rule.merchantMaxRewardsPerUser !== undefined &&
+            merchantRewardCount !== undefined &&
+            merchantRewardCount >= campaign.rule.merchantMaxRewardsPerUser
+        ) {
             log.debug(
                 {
                     campaignId: campaign.id,
                     identityGroupId: context.user.identityGroupId,
-                    userRewardCount,
-                    maxPerUser,
+                    merchantRewardCount,
+                    merchantMaxRewardsPerUser:
+                        campaign.rule.merchantMaxRewardsPerUser,
                 },
-                "Per-user reward cap reached"
+                "Merchant-wide per-user reward cap reached"
             );
             return {
                 matched: true,
@@ -149,6 +162,33 @@ export class RuleEngineService {
                 budgetExceeded: false,
                 errors: [],
             };
+        }
+
+        // Check per-campaign per-user cap (only if explicitly set)
+        if (campaign.rule.maxRewardsPerUser !== undefined) {
+            const userRewardCount =
+                await this.assetLogRepository.countByCampaignAndUserAsReferee(
+                    campaign.id,
+                    context.user.identityGroupId
+                );
+
+            if (userRewardCount >= campaign.rule.maxRewardsPerUser) {
+                log.debug(
+                    {
+                        campaignId: campaign.id,
+                        identityGroupId: context.user.identityGroupId,
+                        userRewardCount,
+                        maxPerUser: campaign.rule.maxRewardsPerUser,
+                    },
+                    "Per-campaign per-user reward cap reached"
+                );
+                return {
+                    matched: true,
+                    rewards: [],
+                    budgetExceeded: false,
+                    errors: [],
+                };
+            }
         }
 
         const hasChainedReward = campaign.rule.rewards.some(

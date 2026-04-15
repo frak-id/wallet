@@ -11,6 +11,9 @@
         "fcm:default",
         "deep-link:default",
         "opener:default",
-        "app-settings:allow-open-notification-settings"
+        "app-settings:allow-open-notification-settings",
+        "install-referrer:allow-get-install-referrer",
+        "frak-webauthn:default",
+        "clipboard-manager:allow-read-text"
     ]
 }

@@ -6,7 +6,7 @@ import {
 } from "@frak-labs/wallet-shared";
 import { decodeJwt } from "jose";
 import { Panel } from "@/module/common/component/Panel";
-import styles from "./index.module.css";
+import * as styles from "./index.css";
 
 export function DemoAccount() {
     const demoPkey = sessionStore(selectDemoPrivateKey);
@@ -29,8 +29,8 @@ export function DemoAccount() {
     return (
         <Panel variant={"invisible"} size={"none"}>
             <div className={styles.demoAccount}>
-                <p>
-                    <span className={styles.demoAccount__warning}>&#9888;</span>{" "}
+                <p className={styles.demoAccountParagraph}>
+                    <span className={styles.demoAccountWarning}>&#9888;</span>{" "}
                     Demo Account
                 </p>
             </div>

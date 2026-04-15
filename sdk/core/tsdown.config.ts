@@ -1,4 +1,5 @@
 import fs from "node:fs";
+import { fileURLToPath } from "node:url";
 import nodePolyfills from "@rolldown/plugin-node-polyfills";
 import { defineConfig } from "tsdown";
 
@@ -18,12 +19,22 @@ const packageJson = JSON.parse(fs.readFileSync("./package.json", "utf8"));
 const sdkVersion = packageJson.version;
 
 const buildDefine = {
+    "process.env.BACKEND_URL": JSON.stringify(
+        process.env.BACKEND_URL || "https://backend.frak.id"
+    ),
     "process.env.OPEN_PANEL_API_URL": JSON.stringify(
         "https://op-api.gcp.frak.id"
     ),
     "process.env.OPEN_PANEL_SDK_CLIENT_ID": JSON.stringify(opClientId),
     "process.env.SDK_VERSION": JSON.stringify(sdkVersion),
 };
+
+// Stub rrweb to avoid bundling it — @openpanel/web statically imports `record`
+// from rrweb even when session replay is disabled.
+// See: https://github.com/Openpanel-dev/openpanel/issues/336
+const rrwebStub = fileURLToPath(
+    new URL("./src/stubs/rrweb.ts", import.meta.url)
+);
 
 export default defineConfig([
     // NPM distribution (ESM + CJS)
@@ -44,6 +55,7 @@ export default defineConfig([
             moduleSideEffects: false,
         },
         define: buildDefine,
+        alias: { rrweb: rrwebStub },
         plugins: [nodePolyfills()],
     },
     // CDN distribution (IIFE)
@@ -71,6 +83,7 @@ export default defineConfig([
             };
         },
         define: buildDefine,
+        alias: { rrweb: rrwebStub },
         plugins: [nodePolyfills()],
     },
 ]);

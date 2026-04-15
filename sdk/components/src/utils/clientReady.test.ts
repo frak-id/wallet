@@ -18,7 +18,7 @@ describe("clientReady", () => {
 
             expect(dispatchSpy).toHaveBeenCalledWith(
                 expect.objectContaining({
-                    type: "frakClientReady",
+                    type: "frak:client",
                 })
             );
         });
@@ -49,7 +49,7 @@ describe("clientReady", () => {
 
             expect(callback).not.toHaveBeenCalled();
             expect(addEventListenerSpy).toHaveBeenCalledWith(
-                "frakClientReady",
+                "frak:client",
                 callback,
                 false
             );
@@ -65,7 +65,7 @@ describe("clientReady", () => {
             onClientReady("remove", callback);
 
             expect(removeEventListenerSpy).toHaveBeenCalledWith(
-                "frakClientReady",
+                "frak:client",
                 callback,
                 false
             );

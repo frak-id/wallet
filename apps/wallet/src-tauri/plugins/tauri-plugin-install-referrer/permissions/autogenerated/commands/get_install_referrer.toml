@@ -1,0 +1,13 @@
+# Automatically generated - DO NOT EDIT!
+
+"$schema" = "../../schemas/schema.json"
+
+[[permission]]
+identifier = "allow-get-install-referrer"
+description = "Enables the get_install_referrer command without any pre-configured scope."
+commands.allow = ["get_install_referrer"]
+
+[[permission]]
+identifier = "deny-get-install-referrer"
+description = "Denies the get_install_referrer command without any pre-configured scope."
+commands.deny = ["get_install_referrer"]

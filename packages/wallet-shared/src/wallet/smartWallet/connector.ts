@@ -35,7 +35,6 @@ export function smartAccountConnector() {
         id: "frak-wallet-connector",
         name: "Frak Smart Account",
         type: smartAccountConnector.type,
-        supportsSimulation: true,
 
         /**
          * On setup, create the account for the first chain in the config
@@ -69,7 +68,7 @@ export function smartAccountConnector() {
                             : [address]
                         : [],
                     chainId: currentChain.id,
-                    // biome-ignore lint/suspicious/noExplicitAny: Waiting for wagmi v3 to have standard type
+                    // biome-ignore lint/suspicious/noExplicitAny: Generic conditional type can't be narrowed from runtime conditional
                 } as any;
             }
 
@@ -83,7 +82,7 @@ export function smartAccountConnector() {
                         : [address]
                     : [],
                 chainId: currentChain.id,
-                // biome-ignore lint/suspicious/noExplicitAny: Waiting for wagmi v3 to have standard type
+                // biome-ignore lint/suspicious/noExplicitAny: Generic conditional type can't be narrowed from runtime conditional
             } as any;
         },
 

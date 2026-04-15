@@ -27,7 +27,7 @@ vi.mock("react-i18next", () => ({
     }),
 }));
 
-vi.mock("../../../sdk/utils/lifecycleEvents", () => ({
+vi.mock("../../utils/lifecycleEvents", () => ({
     emitLifecycleEvent: eventMocks.emitLifecycleEvent,
 }));
 
@@ -51,42 +51,21 @@ vi.mock("../../hook/useSessionFlag", () => ({
     }),
 }));
 
-vi.mock("../../lib/inApp", () => ({
+vi.mock("@frak-labs/core-sdk", () => ({
     get isInAppBrowser() {
         return inAppState.isInAppBrowser;
     },
+    getBackendUrl: () => "https://backend.frak.id",
+    redirectToExternalBrowser: eventMocks.redirectToExternalBrowser,
+}));
+
+vi.mock("../../lib/inApp", () => ({
     get isInIframe() {
         return inAppState.isInIframe;
     },
     get isIPad() {
         return inAppState.isIPad;
     },
-    inAppRedirectUrl: "https://example.com/redirect",
-    redirectToExternalBrowser: eventMocks.redirectToExternalBrowser,
-}));
-
-type ToastMockProps = {
-    text: string;
-    onClick?: () => void;
-    onDismiss?: (event: React.MouseEvent<HTMLButtonElement>) => void;
-};
-
-vi.mock("../Toast", () => ({
-    Toast: ({ text, onClick, onDismiss }: ToastMockProps) => (
-        <div data-testid="toast">
-            <span>{text}</span>
-            {onClick && (
-                <button type="button" onClick={onClick}>
-                    Click
-                </button>
-            )}
-            {onDismiss && (
-                <button type="button" onClick={onDismiss}>
-                    Dismiss
-                </button>
-            )}
-        </div>
-    ),
 }));
 
 describe("InAppBrowserToast", () => {
@@ -134,7 +113,7 @@ describe("InAppBrowserToast", () => {
         render(<InAppBrowserToast />);
 
         await waitFor(() => {
-            expect(screen.getByTestId("toast")).toBeInTheDocument();
+            expect(screen.getByRole("alert")).toBeInTheDocument();
         });
     });
 
@@ -153,7 +132,7 @@ describe("InAppBrowserToast", () => {
             />
         );
 
-        fireEvent.click(screen.getByRole("button", { name: "Click" }));
+        fireEvent.click(screen.getByText("wallet.inAppBrowser.cta"));
 
         await waitFor(() => {
             expect(writeText).toHaveBeenCalledWith(
@@ -180,7 +159,7 @@ describe("InAppBrowserToast", () => {
 
         render(<InAppBrowserToast />);
 
-        fireEvent.click(screen.getByRole("button", { name: "Click" }));
+        fireEvent.click(screen.getByText("wallet.inAppBrowser.cta"));
 
         await waitFor(() => {
             expect(writeText).toHaveBeenCalledWith(window.location.href);
@@ -213,7 +192,7 @@ describe("InAppBrowserToast", () => {
             <InAppBrowserToast parentUrl="https://shop.example.com/products/abc" />
         );
 
-        fireEvent.click(screen.getByRole("button", { name: "Click" }));
+        fireEvent.click(screen.getByText("wallet.inAppBrowser.cta"));
 
         await waitFor(() => {
             expect(window.alert).toHaveBeenCalledWith(

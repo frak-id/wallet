@@ -3,13 +3,17 @@
 // Hooks export
 export {
     useDisplayModal,
+    useDisplaySharingPage,
     useFrakClient,
     useFrakConfig,
     useGetMerchantInformation,
+    useGetMergeToken,
+    useGetUserReferralStatus,
     useOpenSso,
     usePrepareSso,
     useReferralInteraction,
     useSendTransactionAction,
+    useSetupReferral,
     useSiweAuthenticate,
     useWalletStatus,
 } from "./hook";

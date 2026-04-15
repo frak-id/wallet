@@ -41,8 +41,7 @@ The Core SDK exports 111 functions, types, and utilities organized into four cat
 
 | Export | Purpose |
 |--------|---------|
-| `fetchMerchantId` | Retrieve merchant ID from backend |
-| `resolveMerchantId` | Resolve and cache merchant ID |
+| `sdkConfigStore` | Reactive config singleton — resolve, cache, and subscribe to merchant config |
 | `computeLegacyProductId` | Convert product ID to legacy format |
 | `triggerDeepLinkWithFallback` | Open deep link with mobile fallback |
 | `base64urlEncode` / `base64urlDecode` | URL-safe base64 encoding/decoding |

@@ -2,30 +2,69 @@
 
 # We are doing that just because sst dev command fck up with the ssh flag param
 
-# Get params from the environment
+trap 'kill $(jobs -p) 2>/dev/null; exit' INT TERM EXIT
+
+# --- Postgres tunnel (gcloud SSH through bastion) ---
 bastionHost=$BASTION_HOST
 bastionZone=$BASTION_ZONE
 localPort=$LOCAL_PORT
 dbHost=$DB_HOST
 dbPort=$DB_PORT
 
-echo "Launching tunnel to ${bastionHost} in zone ${bastionZone} on port ${localPort} to ${dbHost}:${dbPort}"
+echo "[postgres] Launching tunnel to ${bastionHost} in zone ${bastionZone} on port ${localPort} to ${dbHost}:${dbPort}"
 
-# Print the cmd that will be run
-echo "gcloud compute ssh ${bastionHost} --zone=${bastionZone} --tunnel-through-iap --ssh-flag=\"-4 -L${localPort}:${dbHost}:${dbPort} -N -q\""
-
-# Launch the tunnel command
-function launch_tunnel() {
+function launch_pg_tunnel() {
     gcloud compute ssh ${bastionHost} --zone=${bastionZone} --tunnel-through-iap --ssh-flag="-4 -L${localPort}:${dbHost}:${dbPort} -N -q"
     local exit_code=$?
-    
+
     if [ $exit_code -ne 0 ]; then
-        echo "Tunnel creation failed. Attempting to re-authenticate..."
+        echo "[postgres] Tunnel creation failed. Attempting to re-authenticate..."
         gcloud auth application-default login
-        
-        echo "Retrying tunnel creation..."
-        launch_tunnel
+        echo "[postgres] Retrying tunnel creation..."
+        launch_pg_tunnel
     fi
 }
 
-launch_tunnel
+# --- sqld tunnel (kubectl port-forward to K8s pod) ---
+sqldLocalPort=$SQLD_LOCAL_PORT
+sqldNamespace=$SQLD_NAMESPACE
+sqldService=$SQLD_SERVICE
+sqldRemotePort=$SQLD_REMOTE_PORT
+
+echo "[sqld] Forwarding localhost:${sqldLocalPort} -> ${sqldService}.${sqldNamespace}:${sqldRemotePort}"
+
+function launch_sqld_tunnel() {
+    kubectl port-forward -n "${sqldNamespace}" "svc/${sqldService}" "${sqldLocalPort}:${sqldRemotePort}"
+    local exit_code=$?
+
+    if [ $exit_code -ne 0 ]; then
+        echo "[sqld] Port-forward failed (exit code: ${exit_code}). Retrying in 3s..."
+        sleep 3
+        launch_sqld_tunnel
+    fi
+}
+
+# --- RustFS tunnel (kubectl port-forward to RustFS pod) ---
+rustfsLocalPort=${RUSTFS_LOCAL_PORT:-9100}
+rustfsNamespace="db-production"
+rustfsService="rustfs-production-service"
+rustfsRemotePort=9000
+
+echo "[rustfs] Forwarding localhost:${rustfsLocalPort} -> ${rustfsService}.${rustfsNamespace}:${rustfsRemotePort}"
+
+function launch_rustfs_tunnel() {
+    kubectl port-forward -n "${rustfsNamespace}" "svc/${rustfsService}" "${rustfsLocalPort}:${rustfsRemotePort}"
+    local exit_code=$?
+
+    if [ $exit_code -ne 0 ]; then
+        echo "[rustfs] Port-forward failed (exit code: ${exit_code}). Retrying in 3s..."
+        sleep 3
+        launch_rustfs_tunnel
+    fi
+}
+
+# Run both tunnels in parallel, exit if either dies
+launch_pg_tunnel &
+launch_sqld_tunnel &
+launch_rustfs_tunnel &
+wait

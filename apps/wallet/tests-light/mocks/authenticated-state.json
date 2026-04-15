@@ -7,10 +7,6 @@
                 {
                     "name": "frak_session_store",
                     "value": "{\"state\":{\"session\":{\"token\":\"mock-jwt-token-for-light-playwright\",\"type\":\"webauthn\",\"address\":\"0x1234567890abcdef1234567890abcdef12345678\",\"publicKey\":{\"x\":\"0x0000000000000000000000000000000000000000000000000000000000000001\",\"y\":\"0x0000000000000000000000000000000000000000000000000000000000000002\"},\"authenticatorId\":\"mock-authenticator-light\",\"transports\":[\"internal\"]},\"sdkSession\":null,\"demoPrivateKey\":null},\"version\":0}"
-                },
-                {
-                    "name": "frak_user_store",
-                    "value": "{\"state\":{\"user\":null,\"userSetupLater\":null},\"version\":0}"
                 }
             ]
         },
@@ -20,10 +16,6 @@
                 {
                     "name": "frak_session_store",
                     "value": "{\"state\":{\"session\":{\"token\":\"mock-jwt-token-for-light-playwright\",\"type\":\"webauthn\",\"address\":\"0x1234567890abcdef1234567890abcdef12345678\",\"publicKey\":{\"x\":\"0x0000000000000000000000000000000000000000000000000000000000000001\",\"y\":\"0x0000000000000000000000000000000000000000000000000000000000000002\"},\"authenticatorId\":\"mock-authenticator-light\",\"transports\":[\"internal\"]},\"sdkSession\":null,\"demoPrivateKey\":null},\"version\":0}"
-                },
-                {
-                    "name": "frak_user_store",
-                    "value": "{\"state\":{\"user\":null,\"userSetupLater\":null},\"version\":0}"
                 }
             ]
         }

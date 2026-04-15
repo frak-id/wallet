@@ -2,7 +2,7 @@
 name: codebase-analyzer
 description: Use this agent when the user needs a comprehensive analysis of their codebase architecture, coding patterns, and best practices. Trigger this agent when:\n\n<example>\nContext: User wants to understand the current state of their codebase before making architectural changes.\nuser: "Can you analyze the current codebase structure and tell me what patterns we're using?"\nassistant: "I'll use the codebase-analyzer agent to perform a comprehensive analysis of your project architecture and coding practices."\n<uses Task tool to launch codebase-analyzer agent>\n</example>\n\n<example>\nContext: User is onboarding a new team member and wants documentation of current practices.\nuser: "I need to understand how our code is organized and what conventions we follow"\nassistant: "Let me launch the codebase-analyzer agent to examine your file structure, coding patterns, and established conventions."\n<uses Task tool to launch codebase-analyzer agent>\n</example>\n\n<example>\nContext: User wants to ensure consistency before adding new features.\nuser: "Before I add this new feature, what are the formatting and architectural patterns I should follow?"\nassistant: "I'll use the codebase-analyzer agent to analyze your existing codebase and identify the patterns and practices you should follow."\n<uses Task tool to launch codebase-analyzer agent>\n</example>
 tools: Glob, Grep, Read, WebFetch, TodoWrite, WebSearch, BashOutput, KillShell
-model: sonnet
+model: opus
 color: green
 ---
 

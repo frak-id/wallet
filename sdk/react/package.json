@@ -77,7 +77,6 @@
   },
   "devDependencies": {
     "@arethetypeswrong/cli": "^0.18.2",
-    "@frak-labs/dev-tooling": "workspace:*",
     "@frak-labs/test-foundation": "workspace:*",
     "@frak-labs/wallet-shared": "workspace:*",
     "@tanstack/react-query": "catalog:",
@@ -92,9 +91,9 @@
     "@vitest/ui": "^4.1.0",
     "jsdom": "^29.0.0",
     "react": "catalog:",
-    "tsdown": "^0.20.3",
-    "typescript": "^5.9.3",
+    "tsdown": "^0.21.8",
+    "typescript": "^6.0.2",
     "viem": "catalog:",
-    "vitest": "^4.1.0"
+    "vitest": "^4.1.4"
   }
 }

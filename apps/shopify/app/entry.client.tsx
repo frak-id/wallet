@@ -25,7 +25,7 @@ async function hydrate() {
             defaultNS,
             resources,
             interpolation,
-            showSupportNotice: false,
+
             ns: getInitialNamespaces(),
             backend: {
                 loadPath: "/i18n/locales/{{lng}}/{{ns}}.json",

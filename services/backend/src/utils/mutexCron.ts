@@ -62,7 +62,6 @@ export class MutexCron {
                 this.logger.warn({ error }, "[Cron] error while processing");
             } finally {
                 this.isRunning = false;
-                Bun.gc(false);
             }
 
             if (coolDownInMs) {

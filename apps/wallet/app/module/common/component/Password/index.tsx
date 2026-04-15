@@ -1,8 +1,12 @@
-import { Button } from "@frak-labs/ui/component/Button";
-import { Input } from "@frak-labs/ui/component/forms/Input";
+import { Box } from "@frak-labs/design-system/components/Box";
+import { Button } from "@frak-labs/design-system/components/Button";
+import { Input } from "@frak-labs/design-system/components/Input";
+import { Text } from "@frak-labs/design-system/components/Text";
+import { Eye, EyeOff } from "lucide-react";
+import { useState } from "react";
 import { type SubmitHandler, useForm } from "react-hook-form";
 import { useTranslation } from "react-i18next";
-import styles from "./index.module.css";
+import * as styles from "./index.css";
 
 type FormInput = {
     password: string;
@@ -10,6 +14,7 @@ type FormInput = {
 
 export function Password({ onSubmit }: { onSubmit: SubmitHandler<FormInput> }) {
     const { t } = useTranslation();
+    const [isVisible, setIsVisible] = useState(false);
     // Form control and validation
     const {
         register,
@@ -19,17 +24,35 @@ export function Password({ onSubmit }: { onSubmit: SubmitHandler<FormInput> }) {
 
     return (
         <form onSubmit={handleSubmit(onSubmit)}>
-            <p>
-                <label htmlFor="password">
-                    {t("wallet.password.pleaseEnter")}
-                </label>
+            <Box as="p" className={styles.formBlock}>
+                <Box as="label" htmlFor="password">
+                    <Text as="span" variant="label">
+                        {t("wallet.password.pleaseEnter")}
+                    </Text>
+                </Box>
                 <Input
-                    type={"password"}
-                    id={"password"}
+                    type={isVisible ? "text" : "password"}
+                    id="password"
                     aria-label={t("wallet.password.enter")}
                     placeholder={t("wallet.password.enter")}
-                    classNameWrapper={styles.password__input}
+                    className={styles.input}
                     aria-invalid={errors.password ? "true" : "false"}
+                    error={Boolean(errors.password)}
+                    rightSection={
+                        <Box
+                            as="button"
+                            type="button"
+                            className={styles.toggleButton}
+                            onClick={() => setIsVisible((prev) => !prev)}
+                            aria-label="Toggle password visibility"
+                        >
+                            {isVisible ? (
+                                <EyeOff size={16} />
+                            ) : (
+                                <Eye size={16} />
+                            )}
+                        </Box>
+                    }
                     {...register("password", {
                         required: t("wallet.password.required"),
                         minLength: {
@@ -39,14 +62,12 @@ export function Password({ onSubmit }: { onSubmit: SubmitHandler<FormInput> }) {
                     })}
                 />
                 {errors.password && (
-                    <span className={styles.password__error}>
+                    <Text as="span" className={styles.errorText}>
                         {errors.password.message}
-                    </span>
+                    </Text>
                 )}
-                <Button type={"submit"} width={"full"}>
-                    {t("common.submit")}
-                </Button>
-            </p>
+                <Button type="submit">{t("common.submit")}</Button>
+            </Box>
         </form>
     );
 }

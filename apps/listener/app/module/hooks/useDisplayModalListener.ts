@@ -16,8 +16,11 @@ import { sessionStore, trackGenericEvent } from "@frak-labs/wallet-shared";
 import { useCallback, useRef } from "react";
 import { useListenerUI } from "@/module/providers/ListenerUiProvider";
 import { modalStore, selectShouldFinish } from "@/module/stores/modalStore";
+import { resolvingContextStore } from "@/module/stores/resolvingContextStore";
 import type { DisplayedModalStep } from "@/module/stores/types";
 import type { WalletRpcContext } from "@/module/types/context";
+import { normalizeTargetInteraction } from "@/module/utils/normalizeTargetInteraction";
+import { resolveBackendMetadata } from "@/module/utils/resolveBackendMetadata";
 
 type OnDisplayModalRequest = RpcPromiseHandler<
     IFrameRpcSchema,
@@ -32,8 +35,8 @@ type OnDisplayModalRequest = RpcPromiseHandler<
  * No need to read from Zustand store.
  */
 export function useDisplayModalListener(): OnDisplayModalRequest {
-    // Hook used to set the requested listener UI
     const { setRequest } = useListenerUI();
+    const backendConfig = resolvingContextStore((s) => s.backendSdkConfig);
 
     // Store the current unsubscribe function for cleanup
     const unsubscribeRef = useRef<(() => void) | null>(null);
@@ -111,6 +114,14 @@ export function useDisplayModalListener(): OnDisplayModalRequest {
 
             const metadata = params[1] ?? {};
             const configMetadata = params[2] ?? {};
+            const placementFromParams = params.at(3);
+            const placementId =
+                typeof placementFromParams === "string"
+                    ? placementFromParams
+                    : undefined;
+            const placement = placementId
+                ? backendConfig?.placements?.[placementId]
+                : undefined;
 
             // Create emitter that resolves the deferred
             // This maintains backward compatibility with any legacy code
@@ -132,19 +143,24 @@ export function useDisplayModalListener(): OnDisplayModalRequest {
                 }
             };
 
-            // Save it on the listener UI provider
+            const resolved = resolveBackendMetadata(
+                configMetadata,
+                backendConfig
+            );
+
             setRequest({
-                // Modal ui specific
                 type: "modal",
                 metadata,
                 steps,
                 emitter,
-                // Generic ui
-                appName: configMetadata?.name,
-                logoUrl: metadata?.header?.icon ?? configMetadata?.logoUrl,
-                homepageLink: configMetadata?.homepageLink,
-                targetInteraction: params[1]?.targetInteraction,
+                appName: resolved.appName,
+                logoUrl: metadata?.header?.icon ?? resolved.logoUrl,
+                homepageLink: resolved.homepageLink,
+                targetInteraction: normalizeTargetInteraction(
+                    placement?.targetInteraction ?? params[1]?.targetInteraction
+                ),
                 configMetadata,
+                placement: placementId,
                 i18n: {
                     lang: configMetadata?.lang,
                     context: steps?.final?.action?.key,
@@ -157,7 +173,7 @@ export function useDisplayModalListener(): OnDisplayModalRequest {
             // This will either resolve when all steps complete or reject on dismissal
             return await deferred.promise;
         },
-        [setRequest]
+        [setRequest, backendConfig]
     );
 }
 

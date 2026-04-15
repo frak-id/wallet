@@ -1,4 +1,4 @@
-import { loadScript } from "@frak-labs/ui/utils/loadScript";
+import { loadScript } from "../utils/loadScript";
 import { gapianne } from "./gapianne";
 
 const WEBSITE_OVERRIDES: Record<string, () => void> = {

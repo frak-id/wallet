@@ -20,7 +20,9 @@
 <frak-button-share
   text="{{ button_text }}"
   classname="button {{ button_class }} {{ full_width_class }} {{ custom_class }}"
-  show-wallet
+  {% if block.settings.use_reward %}use-reward{% endif %}
+  {% if block.settings.no_reward_text != blank %}no-reward-text="{{ block.settings.no_reward_text }}"{% endif %}
+  {% if block.settings.target_interaction != blank %}target-interaction="{{ block.settings.target_interaction }}"{% endif %}
 ></frak-button-share>
 
 {% style %}
@@ -39,6 +41,25 @@
       "type": "text",
       "id": "text",
       "label": "Button text"
+    },
+    {
+      "type": "checkbox",
+      "id": "use_reward",
+      "label": "Show reward amount",
+      "info": "Display the estimated reward in the button text. Use {REWARD} in button text to place the amount.",
+      "default": false
+    },
+    {
+      "type": "text",
+      "id": "no_reward_text",
+      "label": "Fallback text (no reward)",
+      "info": "Text to show when reward is enabled but no reward is available"
+    },
+    {
+      "type": "text",
+      "id": "target_interaction",
+      "label": "Target interaction",
+      "info": "Specific interaction type for reward calculation (e.g. custom.customerMeeting)"
     },
     {
       "type": "select",

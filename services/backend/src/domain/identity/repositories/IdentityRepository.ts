@@ -127,6 +127,20 @@ export class IdentityRepository {
         return wallet;
     }
 
+    async findAnonymousFingerprint(params: {
+        groupId: string;
+        merchantId: string;
+    }): Promise<string | null> {
+        const node = await db.query.identityNodesTable.findFirst({
+            where: and(
+                eq(identityNodesTable.groupId, params.groupId),
+                eq(identityNodesTable.identityType, "anonymous_fingerprint"),
+                eq(identityNodesTable.merchantId, params.merchantId)
+            ),
+        });
+        return node?.identityValue ?? null;
+    }
+
     async createGroup(): Promise<IdentityGroupSelect> {
         const [result] = await db
             .insert(identityGroupsTable)

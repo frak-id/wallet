@@ -11,12 +11,14 @@ vi.mock("../utils/clientId", () => ({
     getClientId: vi.fn().mockReturnValue("test-client-id"),
 }));
 
-vi.mock("../utils/merchantId", () => ({
-    fetchMerchantId: vi.fn().mockResolvedValue(undefined),
+vi.mock("../utils/sdkConfigStore", () => ({
+    sdkConfigStore: {
+        resolveMerchantId: vi.fn().mockResolvedValue(undefined),
+    },
 }));
 
 import { getClientId } from "../utils/clientId";
-import { fetchMerchantId } from "../utils/merchantId";
+import { sdkConfigStore } from "../utils/sdkConfigStore";
 import { trackPurchaseStatus } from "./trackPurchaseStatus";
 
 describe.sequential("trackPurchaseStatus", () => {
@@ -100,7 +102,9 @@ describe.sequential("trackPurchaseStatus", () => {
         });
 
         vi.mocked(getClientId).mockReturnValue("test-client-id");
-        vi.mocked(fetchMerchantId).mockResolvedValue(undefined);
+        vi.mocked(sdkConfigStore.resolveMerchantId).mockResolvedValue(
+            undefined
+        );
 
         fetchSpy = vi.fn().mockResolvedValue({
             ok: true,
@@ -228,12 +232,15 @@ describe.sequential("trackPurchaseStatus", () => {
         test("should resolve merchantId from explicit param first", async () => {
             setupStorage({
                 interactionToken: "token-123",
-                merchantId: "session-merchant-id",
+                merchantId: null,
                 clientId: "test-client-id",
             });
-            vi.mocked(fetchMerchantId).mockResolvedValue("fetched-merchant-id");
-            const merchantLookupCallsBefore =
-                vi.mocked(fetchMerchantId).mock.calls.length;
+            vi.mocked(sdkConfigStore.resolveMerchantId).mockResolvedValue(
+                "fetched-merchant-id"
+            );
+            const merchantLookupCallsBefore = vi.mocked(
+                sdkConfigStore.resolveMerchantId
+            ).mock.calls.length;
 
             await trackPurchaseStatus({
                 customerId: "cust-1",
@@ -253,19 +260,20 @@ describe.sequential("trackPurchaseStatus", () => {
                     merchantId: "explicit-merchant-id",
                 })
             );
-            expect(vi.mocked(fetchMerchantId).mock.calls.length).toBe(
-                merchantLookupCallsBefore
-            );
+            expect(
+                vi.mocked(sdkConfigStore.resolveMerchantId).mock.calls.length
+            ).toBe(merchantLookupCallsBefore);
         });
 
         test("should fall back to sessionStorage for merchantId", async () => {
+            vi.mocked(sdkConfigStore.resolveMerchantId).mockResolvedValue(
+                "session-merchant-id"
+            );
             setupStorage({
                 interactionToken: "token-123",
-                merchantId: "session-merchant-id",
+                merchantId: null,
                 clientId: "test-client-id",
             });
-            const merchantLookupCallsBefore =
-                vi.mocked(fetchMerchantId).mock.calls.length;
 
             await trackPurchaseStatus({
                 customerId: "cust-1",
@@ -284,18 +292,20 @@ describe.sequential("trackPurchaseStatus", () => {
                     merchantId: "session-merchant-id",
                 })
             );
-            expect(vi.mocked(fetchMerchantId).mock.calls.length).toBe(
-                merchantLookupCallsBefore
-            );
+            expect(
+                vi.mocked(sdkConfigStore.resolveMerchantId)
+            ).toHaveBeenCalled();
         });
 
-        test("should fall back to fetchMerchantId when no explicit or sessionStorage", async () => {
+        test("should fall back to resolveMerchantId when no explicit merchantId", async () => {
             setupStorage({
                 interactionToken: "token-123",
                 merchantId: null,
                 clientId: "test-client-id",
             });
-            vi.mocked(fetchMerchantId).mockResolvedValue("fetched-merchant-id");
+            vi.mocked(sdkConfigStore.resolveMerchantId).mockResolvedValue(
+                "fetched-merchant-id"
+            );
 
             await trackPurchaseStatus({
                 customerId: "cust-1",
@@ -322,7 +332,9 @@ describe.sequential("trackPurchaseStatus", () => {
                 merchantId: null,
                 clientId: "test-client-id",
             });
-            vi.mocked(fetchMerchantId).mockResolvedValue(undefined);
+            vi.mocked(sdkConfigStore.resolveMerchantId).mockResolvedValue(
+                undefined
+            );
             const callCountBefore = getTrackingRequests().length;
 
             await trackPurchaseStatus({

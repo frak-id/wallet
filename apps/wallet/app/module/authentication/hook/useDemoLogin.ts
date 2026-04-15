@@ -1,6 +1,7 @@
 import type { Session } from "@frak-labs/wallet-shared";
 import {
     authenticatedWalletApi,
+    authenticationStore,
     authKey,
     sessionStore,
     trackAuthCompleted,
@@ -50,6 +51,8 @@ export function useDemoLogin() {
             // Extract a few data
             const { token, sdkJwt, ...authentication } = data;
             const session = { ...authentication, token } as Session;
+
+            authenticationStore.getState().setLastAuthenticationAt(Date.now());
 
             // Store the session
             sessionStore.getState().setSession(session);

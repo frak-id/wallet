@@ -140,6 +140,15 @@ function PlatformSelector({
                 WooCommerce
             </Badge>
             <Badge
+                onClick={() => handlePlatformChange("magento")}
+                variant={
+                    currentPlatform === "magento" ? "success" : "secondary"
+                }
+                style={{ cursor: "pointer" }}
+            >
+                Magento
+            </Badge>
+            <Badge
                 onClick={() => handlePlatformChange("custom")}
                 variant={currentPlatform === "custom" ? "success" : "secondary"}
                 style={{ cursor: "pointer" }}
@@ -172,6 +181,16 @@ function PlatformRegistration({
     if (platform === "woocommerce") {
         return (
             <WooCommerceRegistrationForm
+                merchantId={merchantId}
+                webhookUrl={webhookUrl}
+                currentSigninKey={currentSigninKey}
+            />
+        );
+    }
+
+    if (platform === "magento") {
+        return (
+            <MagentoRegistrationForm
                 merchantId={merchantId}
                 webhookUrl={webhookUrl}
                 currentSigninKey={currentSigninKey}
@@ -310,6 +329,73 @@ function WooCommerceRegistrationForm({
                     setupWebhook({
                         webhookKey: signinKey,
                         platform: "woocommerce",
+                    });
+                }}
+            >
+                {currentSigninKey ? "Update Webhook" : "Register webhook"}
+            </Button>
+        </>
+    );
+}
+
+function MagentoRegistrationForm({
+    merchantId,
+    webhookUrl,
+    currentSigninKey,
+}: {
+    merchantId: string;
+    webhookUrl: string;
+    currentSigninKey?: string;
+}) {
+    const { mutate: setupWebhook, isPending } = useWebhookSetup({
+        merchantId,
+    });
+
+    const signinKey = useMemo(() => {
+        if (currentSigninKey) {
+            return currentSigninKey;
+        }
+
+        return generatePrivateKey();
+    }, [currentSigninKey]);
+
+    return (
+        <>
+            <p>
+                To register the webhook on Adobe Commerce (Magento 2), install
+                the{" "}
+                <a
+                    href={
+                        "https://packagist.org/packages/frak-labs/magento2-module"
+                    }
+                    target={"_blank"}
+                    rel="noopener noreferrer"
+                >
+                    frak-labs/magento2-module
+                </a>{" "}
+                Composer package, then go to your Magento admin console:
+                <br />
+                <i>
+                    Stores {">"} Configuration {">"} Frak {">"} Webhook Secret
+                </i>
+                <br />
+                Paste the secret below into the Webhook Secret field.
+            </p>
+            <TextWithCopy text={webhookUrl} style={{ width: "100%" }}>
+                URL: <pre>{webhookUrl}</pre>
+            </TextWithCopy>
+            <TextWithCopy text={signinKey} style={{ width: "100%" }}>
+                Secret: <pre>{signinKey}</pre>
+            </TextWithCopy>
+            <p>And finally Register it on Frak via this button</p>
+            <Button
+                type="button"
+                variant="information"
+                disabled={isPending}
+                onClick={() => {
+                    setupWebhook({
+                        webhookKey: signinKey,
+                        platform: "magento",
                     });
                 }}
             >

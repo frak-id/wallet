@@ -2,8 +2,8 @@ import { describe, expect, it } from "vitest";
 import {
     detectAppBlockSupport,
     detectFrakActivated,
+    detectFrakBannerInSections,
     detectFrakButton,
-    detectWalletButton,
     extractThemeId,
     type ThemeBlockInfo,
 } from "./theme";
@@ -98,43 +98,87 @@ describe("detectFrakActivated", () => {
 /* ------------------------------------------------------------------ */
 
 describe("detectFrakButton", () => {
-    it("returns true when main section has referral_button in block_order", () => {
+    it("returns true when a section contains a referral_button block", () => {
         const sections = {
             main: {
                 type: "main-product",
-                block_order: ["title", "frak_referral_button_abc123", "price"],
+                blocks: {
+                    abc123: {
+                        type: "shopify://apps/frak/blocks/referral_button/abc",
+                        disabled: false,
+                    },
+                } as Record<string, ThemeBlockInfo>,
             },
         };
         expect(detectFrakButton(sections)).toBe(true);
     });
 
-    it("returns false when no referral_button in block_order", () => {
+    it("returns false when only a banner block is present (banner is tracked separately)", () => {
         const sections = {
             main: {
                 type: "main-product",
-                block_order: ["title", "price", "description"],
+                blocks: {
+                    abc123: {
+                        type: "shopify://apps/frak/blocks/banner/xyz",
+                        disabled: false,
+                    },
+                } as Record<string, ThemeBlockInfo>,
             },
         };
         expect(detectFrakButton(sections)).toBe(false);
     });
 
-    it("returns false when main section has no block_order", () => {
+    it("detects Frak blocks in a non-main section (e.g. header)", () => {
         const sections = {
-            main: {
-                type: "main-product",
-            },
-        };
-        expect(detectFrakButton(sections)).toBe(false);
-    });
-
-    it("detects main section by type prefix main-", () => {
-        const sections = {
-            "custom-id": {
-                type: "main-product-custom",
-                block_order: ["referral_button_xyz"],
+            header: {
+                type: "header",
+                blocks: {
+                    abc123: {
+                        type: "shopify://apps/frak/blocks/referral_button/abc",
+                        disabled: false,
+                    },
+                } as Record<string, ThemeBlockInfo>,
             },
         };
         expect(detectFrakButton(sections)).toBe(true);
+    });
+
+    it("returns false when no Frak block is present in any section", () => {
+        const sections = {
+            main: {
+                type: "main-product",
+                blocks: {
+                    abc123: {
+                        type: "shopify://apps/other/blocks/foo/bar",
+                    },
+                } as Record<string, ThemeBlockInfo>,
+            },
+        };
+        expect(detectFrakButton(sections)).toBe(false);
+    });
+
+    it("returns false when the Frak block is disabled", () => {
+        const sections = {
+            main: {
+                type: "main-product",
+                blocks: {
+                    abc123: {
+                        type: "shopify://apps/frak/blocks/referral_button/abc",
+                        disabled: true,
+                    },
+                } as Record<string, ThemeBlockInfo>,
+            },
+        };
+        expect(detectFrakButton(sections)).toBe(false);
+    });
+
+    it("returns false when sections have no blocks property", () => {
+        const sections = {
+            main: {
+                type: "main-product",
+            },
+        };
+        expect(detectFrakButton(sections)).toBe(false);
     });
 
     it("returns false for empty sections", () => {
@@ -146,6 +190,7 @@ describe("detectFrakButton", () => {
             main: "some-string-value" as unknown as {
                 type: string;
                 block_order?: string[];
+                blocks?: Record<string, ThemeBlockInfo>;
             },
         };
         expect(detectFrakButton(sections)).toBe(false);
@@ -153,53 +198,105 @@ describe("detectFrakButton", () => {
 });
 
 /* ------------------------------------------------------------------ */
-/*  Wallet button detection (settings_data.json parsing)               */
+/*  Frak banner detection in settings_data sections                    */
 /* ------------------------------------------------------------------ */
 
-describe("detectWalletButton", () => {
-    it("returns block ID when wallet_button is present and enabled", () => {
-        const blocks: Record<string, ThemeBlockInfo> = {
-            xyz789: {
-                type: "shopify://apps/frak/blocks/wallet_button/abc123",
+describe("detectFrakBannerInSections", () => {
+    it("returns true when a section has a banner block enabled", () => {
+        const sections = {
+            header: {
+                type: "header",
+                blocks: {
+                    abc123: {
+                        type: "shopify://apps/frak/blocks/banner/abcdef",
+                        disabled: false,
+                    },
+                } as Record<string, ThemeBlockInfo>,
             },
         };
-        expect(detectWalletButton(blocks)).toBe("abc123");
+        expect(detectFrakBannerInSections(sections)).toBe(true);
     });
 
-    it("returns null when wallet_button is disabled", () => {
-        const blocks: Record<string, ThemeBlockInfo> = {
-            xyz789: {
-                type: "shopify://apps/frak/blocks/wallet_button/abc123",
-                disabled: true,
+    it("returns false when banner block is disabled", () => {
+        const sections = {
+            header: {
+                type: "header",
+                blocks: {
+                    abc123: {
+                        type: "shopify://apps/frak/blocks/banner/abcdef",
+                        disabled: true,
+                    },
+                } as Record<string, ThemeBlockInfo>,
             },
         };
-        expect(detectWalletButton(blocks)).toBeNull();
+        expect(detectFrakBannerInSections(sections)).toBe(false);
     });
 
-    it("returns null when no wallet_button exists", () => {
-        const blocks: Record<string, ThemeBlockInfo> = {
-            xyz789: {
-                type: "shopify://apps/frak/blocks/listener/abc123",
+    it("returns false when no banner block exists in any section", () => {
+        const sections = {
+            header: {
+                type: "header",
+                blocks: {
+                    abc123: {
+                        type: "shopify://apps/frak/blocks/listener/xyz",
+                    },
+                } as Record<string, ThemeBlockInfo>,
             },
         };
-        expect(detectWalletButton(blocks)).toBeNull();
+        expect(detectFrakBannerInSections(sections)).toBe(false);
     });
 
-    it("returns null when blocks is undefined", () => {
-        expect(detectWalletButton(undefined)).toBeNull();
+    it("returns false when sections is undefined", () => {
+        expect(detectFrakBannerInSections(undefined)).toBe(false);
     });
 
-    it("returns null when blocks is empty", () => {
-        expect(detectWalletButton({})).toBeNull();
+    it("returns false when sections is empty", () => {
+        expect(detectFrakBannerInSections({})).toBe(false);
     });
 
-    it("extracts ID with complex suffix", () => {
-        const blocks: Record<string, ThemeBlockInfo> = {
-            block1: {
-                type: "shopify://apps/frak/blocks/wallet_button/def456-xyz",
+    it("finds banner among multiple sections and blocks", () => {
+        const sections = {
+            header: {
+                type: "header",
+                blocks: {
+                    block1: {
+                        type: "shopify://apps/frak/blocks/listener/1",
+                    },
+                } as Record<string, ThemeBlockInfo>,
+            },
+            footer: {
+                type: "footer",
+                blocks: {
+                    block2: {
+                        type: "shopify://apps/frak/blocks/banner/abc",
+                        disabled: false,
+                    },
+                    block3: {
+                        type: "shopify://apps/other/blocks/bar/2",
+                    },
+                } as Record<string, ThemeBlockInfo>,
             },
         };
-        expect(detectWalletButton(blocks)).toBe("def456-xyz");
+        expect(detectFrakBannerInSections(sections)).toBe(true);
+    });
+
+    it("ignores string sections", () => {
+        const sections = {
+            header: "some-string-value" as unknown as {
+                type: string;
+                blocks?: Record<string, ThemeBlockInfo>;
+            },
+        };
+        expect(detectFrakBannerInSections(sections)).toBe(false);
+    });
+
+    it("returns false when sections have no blocks property", () => {
+        const sections = {
+            header: {
+                type: "header",
+            },
+        };
+        expect(detectFrakBannerInSections(sections)).toBe(false);
     });
 });
 

@@ -41,7 +41,7 @@ const mockShopInfo = {
     },
     domain: "test.myshopify.com",
     normalizedDomain: "test.myshopify.com",
-    preferredCurrency: "usd" as const,
+    preferredCurrency: "eur" as const,
 };
 
 // ── Shared mock context ───────────────────────────────────────────────────────
@@ -141,7 +141,7 @@ describe("startupPurchase", () => {
                 confirmationUrl: "https://shopify.com/confirm/123",
                 shop: "test.myshopify.com",
                 amount: "100",
-                currency: "usd",
+                currency: "eur",
                 status: "pending",
                 bank: validBank,
             })
@@ -308,8 +308,8 @@ describe("purchase validation", () => {
 describe("purchase name generation", () => {
     it("generates name with amount and timestamp", () => {
         const amount = 100;
-        const name = `Frak bank - ${amount.toFixed(2)}usd - ${new Date().toISOString()}`;
-        expect(name).toMatch(/^Frak bank - 100\.00usd - \d{4}-\d{2}-\d{2}/);
+        const name = `Frak bank - ${amount.toFixed(2)}eur - ${new Date().toISOString()}`;
+        expect(name).toMatch(/^Frak bank - 100\.00eur - \d{4}-\d{2}-\d{2}/);
     });
 });
 

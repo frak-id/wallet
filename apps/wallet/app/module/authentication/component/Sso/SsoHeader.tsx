@@ -1,15 +1,21 @@
-import { LogoFrak } from "@frak-labs/ui/icons/LogoFrak";
+import { Box } from "@frak-labs/design-system/components/Box";
+import { Text } from "@frak-labs/design-system/components/Text";
+import { LogoFrak } from "@frak-labs/design-system/icons";
 import { useTranslation } from "react-i18next";
-import styles from "./SsoHeader.module.css";
+import * as styles from "./SsoHeader.css";
 
 export function SsoHeader() {
     const { t } = useTranslation();
     return (
-        <header className={styles.ssoHeader}>
-            <LogoFrak sizes={14} />
-            <h1 className={styles.ssoHeader__title}>
+        <Box as="header" className={styles.ssoHeader}>
+            <LogoFrak width={16} height={16} />
+            <Text
+                as="p"
+                variant="bodySmall"
+                className={styles.ssoHeader__title}
+            >
                 {t("authent.sso.header.title")}
-            </h1>
-        </header>
+            </Text>
+        </Box>
     );
 }

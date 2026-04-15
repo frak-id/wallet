@@ -1,11 +1,13 @@
+import { Box } from "@frak-labs/design-system/components/Box";
 import {
     Select,
     SelectContent,
     SelectItem,
     SelectTrigger,
     SelectValue,
-} from "@frak-labs/ui/component/Select";
-import { Switch } from "@frak-labs/ui/component/Switch";
+} from "@frak-labs/design-system/components/Select";
+import { Switch } from "@frak-labs/design-system/components/Switch";
+import { Text } from "@frak-labs/design-system/components/Text";
 import { Fingerprint } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import {
@@ -18,7 +20,7 @@ import {
 import { authenticateWithBiometrics } from "@/module/biometrics/utils/biometrics";
 import { Panel } from "@/module/common/component/Panel";
 import { Title } from "@/module/common/component/Title";
-import styles from "./index.module.css";
+import * as styles from "./index.css";
 
 export function BiometricSettings() {
     const { t } = useTranslation();
@@ -54,25 +56,35 @@ export function BiometricSettings() {
             <Title icon={<Fingerprint size={32} />}>
                 {t("biometrics.settings.title")}
             </Title>
-            <div className={styles.biometricSettings}>
-                <div className={styles.biometricSettings__row}>
-                    <span className={styles.biometricSettings__label}>
+            <Box flexDirection="column" gap="m" padding="none">
+                <Box
+                    flexDirection="row"
+                    padding="none"
+                    alignItems="center"
+                    justifyContent="space-between"
+                    className={styles.settingsRow}
+                >
+                    <Text variant="bodySmall">
                         {t("biometrics.settings.enable")}
-                    </span>
+                    </Text>
                     <Switch checked={enabled} onCheckedChange={handleToggle} />
-                </div>
+                </Box>
                 {enabled && (
-                    <div className={styles.biometricSettings__row}>
-                        <span className={styles.biometricSettings__label}>
+                    <Box
+                        flexDirection="row"
+                        padding="none"
+                        alignItems="center"
+                        justifyContent="space-between"
+                        className={styles.settingsRow}
+                    >
+                        <Text variant="bodySmall">
                             {t("biometrics.settings.timeout")}
-                        </span>
+                        </Text>
                         <Select
                             value={lockTimeout}
                             onValueChange={handleTimeoutChange}
                         >
-                            <SelectTrigger
-                                className={styles.biometricSettings__select}
-                            >
+                            <SelectTrigger className={styles.settingsSelect}>
                                 <SelectValue />
                             </SelectTrigger>
                             <SelectContent>
@@ -90,9 +102,9 @@ export function BiometricSettings() {
                                 </SelectItem>
                             </SelectContent>
                         </Select>
-                    </div>
+                    </Box>
                 )}
-            </div>
+            </Box>
         </Panel>
     );
 }

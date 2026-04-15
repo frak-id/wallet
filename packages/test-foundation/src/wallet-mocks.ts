@@ -4,7 +4,7 @@
  * This file provides common mocks for wallet-related dependencies used by both
  * the wallet app and wallet-shared package:
  *
- * - Wagmi hooks (useAccount, useConnect, useBalance, etc.)
+ * - Wagmi hooks (useConnection, useConnect, useBalance, etc.)
  * - TanStack Router hooks (useNavigate, useLocation, etc.) - via router-mocks.ts
  * - WebAuthn API (ox library)
  * - IndexedDB (idb-keyval)
@@ -22,6 +22,14 @@ import { setupTanStackRouterMock } from "./router-mocks";
 
 // Mock Wagmi hooks
 vi.mock("wagmi", () => ({
+    useConnection: vi.fn(() => ({
+        address: "0x1234567890123456789012345678901234567890",
+        isConnected: true,
+        isConnecting: false,
+        isDisconnected: false,
+        isReconnecting: false,
+        status: "connected",
+    })),
     useAccount: vi.fn(() => ({
         address: "0x1234567890123456789012345678901234567890",
         isConnected: true,
@@ -31,8 +39,8 @@ vi.mock("wagmi", () => ({
         status: "connected",
     })),
     useConnect: vi.fn(() => ({
+        mutate: vi.fn(),
         connect: vi.fn(),
-        connectors: [],
         error: null,
         isLoading: false,
         pendingConnector: null,

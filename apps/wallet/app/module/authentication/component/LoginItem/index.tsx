@@ -1,14 +1,27 @@
-import { Button } from "@frak-labs/ui/component/Button";
-import { formatHash } from "@frak-labs/ui/component/HashDisplay";
-import { FingerprintFrak } from "@frak-labs/ui/icons/FingerprintFrak";
+import { Box } from "@frak-labs/design-system/components/Box";
+import { Button } from "@frak-labs/design-system/components/Button";
+import { Stack } from "@frak-labs/design-system/components/Stack";
+import { Text } from "@frak-labs/design-system/components/Text";
 import type { PreviousAuthenticatorModel } from "@frak-labs/wallet-shared";
 import { useLogin } from "@frak-labs/wallet-shared";
 import { useNavigate } from "@tanstack/react-router";
-import { SquareUser } from "lucide-react";
+import { Fingerprint, SquareUser } from "lucide-react";
 import { useTransition } from "react";
 import { useTranslation } from "react-i18next";
-import { toHex } from "viem";
-import styles from "./index.module.css";
+import { type Hex, slice, toHex } from "viem";
+import * as styles from "./index.css";
+
+function formatHash({
+    hash,
+    format = { start: 2, end: 3 },
+}: {
+    hash: Hex;
+    format?: { start: number; end: number };
+}) {
+    const start = slice(hash, 0, format.start);
+    const end = slice(hash, -format.end).replace("0x", "");
+    return `${start}...${end}`;
+}
 
 export function LoginItem({
     lastAuthentication,
@@ -27,31 +40,32 @@ export function LoginItem({
     });
 
     return (
-        <li className={styles.loginItem}>
+        <Box as="li" className={styles.loginItem}>
             <Button
-                size={"small"}
                 className={styles.loginItem__button}
                 onClick={async () => {
                     await login({ lastAuthentication });
                 }}
             >
-                <span>
-                    <span className={styles.loginItem__name}>
-                        <SquareUser />{" "}
-                        {formatHash({ hash: lastAuthentication.wallet })}
-                    </span>
-                    {t("common.authenticator")}{" "}
-                    {formatHash({
-                        hash: toHex(lastAuthentication.authenticatorId),
-                    })}
-                </span>
-                <span>
-                    <FingerprintFrak
-                        width={36}
-                        className={styles.loginItem__icon}
-                    />
-                </span>
+                <Stack space="xxs" align="left">
+                    <Box as="span" className={styles.loginItem__name}>
+                        <SquareUser size={16} />
+                        <Text as="span" variant="bodySmall">
+                            {formatHash({ hash: lastAuthentication.wallet })}
+                        </Text>
+                    </Box>
+                    <Text as="span" variant="caption">
+                        {t("common.authenticator")}{" "}
+                        {formatHash({
+                            hash: toHex(lastAuthentication.authenticatorId),
+                            format: { start: 4, end: 4 },
+                        })}
+                    </Text>
+                </Stack>
+                <Box as="span" className={styles.loginItem__icon}>
+                    <Fingerprint size={32} />
+                </Box>
             </Button>
-        </li>
+        </Box>
     );
 }

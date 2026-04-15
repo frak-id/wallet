@@ -1,4 +1,4 @@
-import { Button } from "@frak-labs/ui/component/Button";
+import { Button } from "@frak-labs/design-system/components/Button";
 import { selectDemoPrivateKey, sessionStore } from "@frak-labs/wallet-shared";
 import { KeyRound } from "lucide-react";
 import { useCallback } from "react";
@@ -6,6 +6,7 @@ import { useTranslation } from "react-i18next";
 import { useBiometricConfirm } from "@/module/biometrics";
 import { Panel } from "@/module/common/component/Panel";
 import { Title } from "@/module/common/component/Title";
+import * as styles from "./index.css";
 
 export function PrivateKey() {
     const { t } = useTranslation();
@@ -38,14 +39,14 @@ function DeletePrivateKey() {
     }, [setPrivateKey, confirm]);
 
     return (
-        <Button
-            variant={"primary"}
-            size={"small"}
-            onClick={deletePrivateKey}
-            disabled={isConfirming}
-            isLoading={isConfirming}
-        >
-            {t("wallet.settings.deletePrivateKey")}
-        </Button>
+        <div className={styles.container}>
+            <Button
+                variant={"primary"}
+                onClick={deletePrivateKey}
+                disabled={isConfirming}
+            >
+                {t("wallet.settings.deletePrivateKey")}
+            </Button>
+        </div>
     );
 }

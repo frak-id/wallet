@@ -56,6 +56,16 @@
       "import": "./dist/openInApp.js",
       "types": "./dist/openInApp.d.ts"
     },
+    "./postPurchase": {
+      "development": "./src/components/PostPurchase/index.ts",
+      "import": "./dist/postPurchase.js",
+      "types": "./dist/postPurchase.d.ts"
+    },
+    "./banner": {
+      "development": "./src/components/Banner/index.ts",
+      "import": "./dist/banner.js",
+      "types": "./dist/banner.d.ts"
+    },
     "./cdn": {
       "import": "./cdn/components.js"
     },
@@ -78,15 +88,12 @@
   "dependencies": {
     "@frak-labs/core-sdk": "workspace:*",
     "@frak-labs/frame-connector": "workspace:*",
-    "class-variance-authority": "^0.7.1",
     "preact": "^10.29.0",
-    "preact-custom-element": "^4.6.0"
+    "preact-custom-element": "^4.6.0",
+    "@frak-labs/design-system": "workspace:*"
   },
   "devDependencies": {
-    "@bosh-code/tsdown-plugin-inject-css": "^2.0.0",
-    "@frak-labs/dev-tooling": "workspace:*",
     "@frak-labs/test-foundation": "workspace:*",
-    "@frak-labs/ui": "workspace:*",
     "@preact/preset-vite": "^2.10.4",
     "@rolldown/plugin-node-polyfills": "^1.0.3",
     "@testing-library/jest-dom": "^6.9.1",
@@ -95,12 +102,15 @@
     "@types/jsdom": "^28.0.0",
     "@types/node": "catalog:",
     "@types/preact-custom-element": "^4.0.4",
+    "@vanilla-extract/css": "^1.20.1",
+    "@vanilla-extract/integration": "^8.0.10",
+    "@vanilla-extract/vite-plugin": "^5.2.1",
+    "@vanilla-extract/sprinkles": "^1.6.5",
     "@vitest/coverage-v8": "^4.1.0",
     "@vitest/ui": "^4.1.0",
     "jsdom": "^29.0.0",
-    "tsdown": "^0.20.3",
-    "typescript": "^5.9.3",
-    "unplugin-lightningcss": "^0.4.5",
-    "vitest": "^4.1.0"
+    "tsdown": "^0.21.8",
+    "typescript": "^6.0.2",
+    "vitest": "^4.1.4"
   }
 }

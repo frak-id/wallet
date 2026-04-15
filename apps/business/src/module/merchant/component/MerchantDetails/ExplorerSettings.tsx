@@ -1,11 +1,8 @@
-import { Button } from "@frak-labs/ui/component/Button";
-import { Column, Columns } from "@frak-labs/ui/component/Columns";
-import { Input, type InputProps } from "@frak-labs/ui/component/forms/Input";
-import { Pencil } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { ExplorerCardPreview } from "@frak-labs/ui-preview";
+import { useCallback, useEffect, useMemo } from "react";
 import { useForm } from "react-hook-form";
-import { ActionsMessageSuccess } from "@/module/campaigns/component/Actions";
 import { Panel } from "@/module/common/component/Panel";
+import { PreviewWrapper } from "@/module/common/component/PreviewWrapper";
 import { Row } from "@/module/common/component/Row";
 import {
     Form,
@@ -15,7 +12,9 @@ import {
     FormLabel,
     FormMessage,
 } from "@/module/forms/Form";
+import { FormActions } from "@/module/forms/FormActions";
 import { Switch } from "@/module/forms/Switch";
+import { ImageUploadField } from "@/module/merchant/component/ImageUploadField";
 import { useMerchant } from "@/module/merchant/hook/useMerchant";
 import { useMerchantUpdate } from "@/module/merchant/hook/useMerchantUpdate";
 import styles from "./index.module.css";
@@ -63,21 +62,32 @@ export function ExplorerSettings({ merchantId }: { merchantId: string }) {
         form.reset(form.getValues());
     }, [editExplorerSuccess, form.reset, form.getValues, form]);
 
-    function onSubmit(values: ExplorerFormValues) {
-        const config =
-            values.heroImageUrl || values.logoUrl || values.description
-                ? {
-                      heroImageUrl: values.heroImageUrl,
-                      logoUrl: values.logoUrl,
-                      description: values.description,
-                  }
-                : undefined;
+    const onSubmit = useCallback(
+        (values: ExplorerFormValues) => {
+            const config =
+                values.heroImageUrl || values.logoUrl || values.description
+                    ? {
+                          heroImageUrl: values.heroImageUrl,
+                          logoUrl: values.logoUrl,
+                          description: values.description,
+                      }
+                    : undefined;
 
-        editExplorer({
-            enabled: values.enabled,
-            config,
-        });
-    }
+            editExplorer({
+                enabled: values.enabled,
+                config,
+            });
+        },
+        [editExplorer]
+    );
+
+    const handleUploadSuccess = useCallback(
+        (field: "heroImageUrl" | "logoUrl") => (url: string) => {
+            form.setValue(field, url, { shouldDirty: true });
+            form.handleSubmit(onSubmit)();
+        },
+        [form, onSubmit]
+    );
 
     if (!merchant) return null;
 
@@ -109,14 +119,16 @@ export function ExplorerSettings({ merchantId }: { merchantId: string }) {
                     name="heroImageUrl"
                     render={({ field }) => (
                         <FormItem>
-                            <FormLabel weight={"medium"}>
-                                Hero image URL
-                            </FormLabel>
+                            <FormLabel weight={"medium"}>Hero image</FormLabel>
                             <FormControl>
-                                <InputWithToggle
-                                    length={"medium"}
-                                    placeholder={"https://..."}
-                                    {...field}
+                                <ImageUploadField
+                                    merchantId={merchantId}
+                                    type="hero"
+                                    value={field.value ?? ""}
+                                    onChange={field.onChange}
+                                    onUploadSuccess={handleUploadSuccess(
+                                        "heroImageUrl"
+                                    )}
                                 />
                             </FormControl>
                             <FormMessage />
@@ -128,12 +140,16 @@ export function ExplorerSettings({ merchantId }: { merchantId: string }) {
                     name="logoUrl"
                     render={({ field }) => (
                         <FormItem>
-                            <FormLabel weight={"medium"}>Logo URL</FormLabel>
+                            <FormLabel weight={"medium"}>Logo</FormLabel>
                             <FormControl>
-                                <InputWithToggle
-                                    length={"medium"}
-                                    placeholder={"https://..."}
-                                    {...field}
+                                <ImageUploadField
+                                    merchantId={merchantId}
+                                    type="logo"
+                                    value={field.value ?? ""}
+                                    onChange={field.onChange}
+                                    onUploadSuccess={handleUploadSuccess(
+                                        "logoUrl"
+                                    )}
                                 />
                             </FormControl>
                             <FormMessage />
@@ -157,60 +173,28 @@ export function ExplorerSettings({ merchantId }: { merchantId: string }) {
                         </FormItem>
                     )}
                 />
-                <Columns>
-                    <Column>
-                        {editExplorerSuccess && <ActionsMessageSuccess />}
-                    </Column>
-                    <Column>
-                        <Button
-                            variant={"informationOutline"}
-                            onClick={() => {
-                                form.reset(formValues);
-                            }}
-                            disabled={
-                                editExplorerPending || !form.formState.isDirty
+                <FormActions
+                    isSuccess={editExplorerSuccess}
+                    isPending={editExplorerPending}
+                    isDirty={form.formState.isDirty}
+                    onDiscard={() => form.reset(formValues)}
+                    onSubmit={() => form.handleSubmit(onSubmit)()}
+                />
+                {(form.watch("logoUrl") ||
+                    form.watch("heroImageUrl") ||
+                    form.watch("description")) && (
+                    <PreviewWrapper label="How your brand appears in the explorer">
+                        <ExplorerCardPreview
+                            name={merchant.name}
+                            heroImageUrl={
+                                form.watch("heroImageUrl") || undefined
                             }
-                        >
-                            Discard Changes
-                        </Button>
-                        <Button
-                            variant={"submit"}
-                            onClick={() => {
-                                form.handleSubmit(onSubmit)();
-                            }}
-                            disabled={
-                                editExplorerPending || !form.formState.isDirty
-                            }
-                            isLoading={editExplorerPending}
-                        >
-                            Validate
-                        </Button>
-                    </Column>
-                </Columns>
+                            logoUrl={form.watch("logoUrl") || undefined}
+                            description={form.watch("description") || undefined}
+                        />
+                    </PreviewWrapper>
+                )}
             </Panel>
         </Form>
     );
 }
-
-const InputWithToggle = ({ ref, disabled, ...props }: InputProps) => {
-    const [isDisabled, setIsDisabled] = useState(true);
-    return (
-        <Row align={"center"}>
-            <Input
-                {...props}
-                ref={ref}
-                disabled={isDisabled}
-                onBlur={() => setIsDisabled(true)}
-            />
-            <button
-                type={"button"}
-                className={styles.inputWithToggle__button}
-                onClick={() => setIsDisabled(!isDisabled)}
-                disabled={disabled}
-            >
-                <Pencil size={20} />
-            </button>
-        </Row>
-    );
-};
-InputWithToggle.displayName = "InputWithToggle";

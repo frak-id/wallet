@@ -25,4 +25,4 @@ const PopoverContent = ({
 );
 PopoverContent.displayName = Content.displayName;
 
-export { Popover, PopoverTrigger, PopoverContent };
+export { Popover, PopoverContent, PopoverTrigger };

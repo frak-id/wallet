@@ -1,5 +1,6 @@
+import { Box } from "@frak-labs/design-system/components/Box";
 import { useDemoTap } from "@/module/authentication/hook/useDemoTap";
-import styles from "./index.module.css";
+import * as styles from "./index.css";
 
 export function DemoTapZone({
     navigate,
@@ -13,7 +14,8 @@ export function DemoTapZone({
     if (!enabled) return null;
 
     return (
-        <div
+        <Box
+            as="div"
             role="presentation"
             onClick={onTap}
             onKeyDown={undefined}

@@ -1,7 +1,7 @@
-import * as onDocumentReady from "@frak-labs/ui/utils/onDocumentReady";
 import register from "preact-custom-element";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import * as initFrakSdk from "./initFrakSdk";
+import * as onDocumentReady from "./onDocumentReady";
 import { registerWebComponent } from "./registerWebComponent";
 
 // Mock dependencies
@@ -9,7 +9,7 @@ vi.mock("./initFrakSdk", () => ({
     initFrakSdk: vi.fn(),
 }));
 
-vi.mock("@frak-labs/ui/utils/onDocumentReady", () => ({
+vi.mock("./onDocumentReady", () => ({
     onDocumentReady: vi.fn((callback) => {
         // Execute callback immediately in test environment
         callback();
@@ -20,7 +20,9 @@ vi.mock("preact-custom-element", () => ({
     default: vi.fn(),
 }));
 
-describe("registerWebComponent", () => {
+// Sequential: tests register/unregister the same custom element on
+// window.customElements, incompatible with concurrent execution.
+describe.sequential("registerWebComponent", () => {
     beforeEach(() => {
         vi.clearAllMocks();
         // Reset customElements registry
@@ -50,7 +52,7 @@ describe("registerWebComponent", () => {
             TestComponent,
             "test-element",
             [],
-            { shadow: false }
+            { shadow: true }
         );
     });
 
@@ -74,7 +76,7 @@ describe("registerWebComponent", () => {
             TestComponent,
             "test-element",
             observedAttributes,
-            { shadow: false }
+            { shadow: true }
         );
     });
 

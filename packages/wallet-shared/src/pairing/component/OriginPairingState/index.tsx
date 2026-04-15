@@ -1,3 +1,4 @@
+import type { TFunction } from "i18next";
 import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { useStore } from "zustand";
@@ -37,7 +38,9 @@ export function OriginPairingState({ type }: OriginPairingStateProps) {
 function InnerOriginPairingState({ type }: OriginPairingStateProps) {
     const client = useMemo(() => getOriginPairingClient(), []);
     const state = useStore(client.store);
-    const { status, text } = getStatusDetails(state);
+    const { t } = useTranslation();
+
+    const { status, text } = getStatusDetails(t, state);
     const components = {
         embedded: StatusBoxWalletEmbedded,
         modal: StatusBoxModal,
@@ -51,12 +54,13 @@ function InnerOriginPairingState({ type }: OriginPairingStateProps) {
     return <Component status={status} title={text} />;
 }
 
-function getStatusDetails(state: OriginPairingStateType): {
+function getStatusDetails(
+    t: TFunction,
+    state: OriginPairingStateType
+): {
     status: "success" | "waiting" | "loading" | "error";
     text: string;
 } {
-    const { t } = useTranslation();
-
     // If there are pending signatures, we display the signature request state
     if (state.signatureRequests.size > 0) {
         switch (state.status) {

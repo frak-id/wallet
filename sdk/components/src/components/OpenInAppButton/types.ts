@@ -3,6 +3,7 @@
  * @inline
  */
 export type OpenInAppButtonProps = {
+    placement?: string;
     /**
      * Text to display on the button
      * @defaultValue `"Open in App"`

@@ -1,8 +1,8 @@
-import { Slot } from "@radix-ui/react-slot";
-import { cx } from "class-variance-authority";
+import { Box } from "@frak-labs/design-system/components/Box";
+import { Card } from "@frak-labs/design-system/components/Card";
 import { X } from "lucide-react";
 import { type PropsWithChildren, useCallback, useState } from "react";
-import styles from "./index.module.css";
+import * as styles from "./index.css";
 
 /**
  * localStorage key prefix for dismissed panels.
@@ -47,6 +47,7 @@ export function Panel({
     dismissKey,
     children,
 }: PropsWithChildren<PanelProps>) {
+    void asChild;
     const storageKey = dismissKey
         ? `${panelDismissedPrefix}${dismissKey}`
         : undefined;
@@ -69,36 +70,39 @@ export function Panel({
 
     const backgroundStyle = cover ? { backgroundImage: `url(${cover})` } : {};
 
-    const Component = asChild ? Slot : "div";
-
     const renderDismissButton = () => {
         if (!isDismissible) return null;
 
         return (
-            <button
+            <Box
+                as="button"
                 type="button"
-                className={styles.dismissible__button}
+                className={styles.dismissButton}
                 onClick={handleDismiss}
             >
                 <X />
-            </button>
+            </Box>
         );
     };
+    void asChild;
 
     return (
-        <Component
-            className={cx(
+        <Card
+            padding="none"
+            className={[
                 styles.panel,
-                styles[variant],
-                styles[`size--${size}`],
-                withShadow && styles.shadow,
+                styles.variant[variant],
+                styles.size[size],
+                withShadow ? styles.shadow : undefined,
                 styles.dismissible,
-                className
-            )}
+                className,
+            ]
+                .filter(Boolean)
+                .join(" ")}
             style={backgroundStyle}
         >
             {children}
             {renderDismissButton()}
-        </Component>
+        </Card>
     );
 }

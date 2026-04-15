@@ -1,7 +1,7 @@
 {
     "$schema": "../../../node_modules/@tauri-apps/cli/config.schema.json",
     "productName": "Frak Wallet",
-    "version": "1.0.18",
+    "version": "1.0.27",
     "identifier": "id.frak.wallet",
     "build": {
         "frontendDist": "../dist",
@@ -17,7 +17,7 @@
                 "height": 600,
                 "resizable": true,
                 "fullscreen": false,
-                "backgroundColor": "#001432",
+                "backgroundColor": "#ffffff",
                 "disableInputAccessoryView": true
             }
         ],

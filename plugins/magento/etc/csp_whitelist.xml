@@ -1,0 +1,54 @@
+<?xml version="1.0"?>
+<csp_whitelist xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+               xsi:noNamespaceSchemaLocation="urn:magento:module:Magento_Csp:etc/csp_whitelist.xsd">
+    <policies>
+        <!-- Load SDK from jsDelivr CDN -->
+        <policy id="script-src">
+            <values>
+                <value id="fraklabs-jsdelivr" type="host">https://cdn.jsdelivr.net</value>
+            </values>
+        </policy>
+        <policy id="script-src-elem">
+            <values>
+                <value id="fraklabs-jsdelivr-elem" type="host">https://cdn.jsdelivr.net</value>
+            </values>
+        </policy>
+
+        <!-- Embed Frak wallet listener iframe -->
+        <policy id="frame-src">
+            <values>
+                <value id="fraklabs-wallet" type="host">https://wallet.frak.id</value>
+                <value id="fraklabs-wallet-dev" type="host">https://wallet-dev.frak.id</value>
+            </values>
+        </policy>
+
+        <!-- SDK API calls to Frak backend -->
+        <policy id="connect-src">
+            <values>
+                <value id="fraklabs-backend" type="host">https://backend.frak.id</value>
+                <value id="fraklabs-backend-dev" type="host">https://backend.gcp-dev.frak.id</value>
+                <value id="fraklabs-openpanel" type="host">https://op-api.gcp.frak.id</value>
+            </values>
+        </policy>
+
+        <!-- SDK fonts/images -->
+        <policy id="font-src">
+            <values>
+                <value id="fraklabs-fonts-googleapis" type="host">https://fonts.googleapis.com</value>
+                <value id="fraklabs-fonts-gstatic" type="host">https://fonts.gstatic.com</value>
+            </values>
+        </policy>
+        <policy id="style-src">
+            <values>
+                <value id="fraklabs-fonts-googleapis-style" type="host">https://fonts.googleapis.com</value>
+                <value id="fraklabs-jsdelivr-style" type="host">https://cdn.jsdelivr.net</value>
+            </values>
+        </policy>
+        <policy id="style-src-elem">
+            <values>
+                <value id="fraklabs-jsdelivr-style-elem" type="host">https://cdn.jsdelivr.net</value>
+                <value id="fraklabs-fonts-googleapis-style-elem" type="host">https://fonts.googleapis.com</value>
+            </values>
+        </policy>
+    </policies>
+</csp_whitelist>

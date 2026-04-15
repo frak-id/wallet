@@ -1,12 +1,15 @@
 import sharedConfig, {
     getReactTestPlugins,
 } from "@frak-labs/test-foundation/vitest.shared";
+import { vanillaExtractPlugin } from "@vanilla-extract/vite-plugin";
 import { defineConfig, mergeConfig } from "vitest/config";
+
+const plugins = await getReactTestPlugins();
 
 export default mergeConfig(
     sharedConfig,
     defineConfig({
-        plugins: await getReactTestPlugins(),
+        plugins: [...plugins, vanillaExtractPlugin()],
         test: {
             name: "wallet-unit",
             setupFiles: [

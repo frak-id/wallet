@@ -42,7 +42,6 @@ describe("smartAccountConnector", () => {
             expect(instance.id).toBe("frak-wallet-connector");
             expect(instance.name).toBe("Frak Smart Account");
             expect(instance.type).toBe("frakSmartAccountConnector");
-            expect(instance.supportsSimulation).toBe(true);
         });
     });
 
@@ -61,7 +60,7 @@ describe("smartAccountConnector", () => {
             const instance = connector(config);
             const getProviderSpy = vi.spyOn(instance, "getProvider");
 
-            await instance.setup();
+            await instance.setup?.();
 
             expect(getProviderSpy).toHaveBeenCalled();
         });
@@ -379,7 +378,7 @@ describe("smartAccountConnector", () => {
             } as any;
 
             const instance = connector(config);
-            const client = await instance.getClient();
+            const client = await instance.getClient!();
 
             expect(client).toEqual(mockClient);
         });
@@ -405,7 +404,7 @@ describe("smartAccountConnector", () => {
 
             const instance = connector(config);
 
-            await expect(instance.getClient()).rejects.toThrowError(
+            await expect(instance.getClient!()).rejects.toThrowError(
                 "No client found for the given chain"
             );
         });
@@ -432,7 +431,7 @@ describe("smartAccountConnector", () => {
             const instance = connector(config);
 
             await expect(
-                instance.getClient({ chainId: 999 })
+                instance.getClient!({ chainId: 999 })
             ).rejects.toThrowError("Invalid chain id");
         });
     });

@@ -1,11 +1,11 @@
 import { isTauri } from "@frak-labs/app-essentials/utils/platform";
-import { Button } from "@frak-labs/ui/component/Button";
+import { Box } from "@frak-labs/design-system/components/Box";
+import { Button } from "@frak-labs/design-system/components/Button";
+import { Inline } from "@frak-labs/design-system/components/Inline";
+import { Text } from "@frak-labs/design-system/components/Text";
 import { useQueryClient } from "@tanstack/react-query";
 import { BellOff, Settings } from "lucide-react";
 import { Trans } from "react-i18next";
-import { ButtonLabel } from "@/module/common/component/ButtonLabel";
-import { Panel } from "@/module/common/component/Panel";
-import { Row } from "@/module/common/component/Row";
 import { notificationAdapter } from "@/module/notification/adapter";
 import { useNotificationStatus } from "@/module/notification/hook/useNotificationSetupStatus";
 import { useUnsubscribeFromPushNotification } from "@/module/notification/hook/useUnsubscribeFromPushNotification";
@@ -36,7 +36,7 @@ function ManageNotificationsNative() {
     const queryClient = useQueryClient();
 
     return (
-        <Panel size={"none"} variant={"empty"}>
+        <Box>
             <Button
                 onClick={async () => {
                     await notificationAdapter.openSettings();
@@ -44,16 +44,15 @@ function ManageNotificationsNative() {
                         queryKey: notificationKey.push.permission,
                     });
                 }}
-                width={"full"}
-                align={"left"}
-                gap={"big"}
-                leftIcon={<Settings size={32} />}
             >
-                <ButtonLabel>
-                    <Trans i18nKey={"wallet.manageNotifications"} />
-                </ButtonLabel>
+                <Inline space="m" alignY="center">
+                    <Settings size={20} />
+                    <Text>
+                        <Trans i18nKey={"wallet.manageNotifications"} />
+                    </Text>
+                </Inline>
             </Button>
-        </Panel>
+        </Box>
     );
 }
 
@@ -62,17 +61,13 @@ function UnsubscribeWeb() {
         useUnsubscribeFromPushNotification();
 
     return (
-        <Panel size={"none"} variant={"empty"}>
-            <Button
-                onClick={() => unsubscribeFromPush()}
-                disabled={isPending}
-                isLoading={isPending}
-                width={"full"}
-            >
-                <Row>
-                    <BellOff size={32} /> Unsubscribe from all notifications
-                </Row>
+        <Box>
+            <Button onClick={() => unsubscribeFromPush()} disabled={isPending}>
+                <Inline space="m" alignY="center">
+                    <BellOff size={20} />
+                    <Text>Unsubscribe from all notifications</Text>
+                </Inline>
             </Button>
-        </Panel>
+        </Box>
     );
 }

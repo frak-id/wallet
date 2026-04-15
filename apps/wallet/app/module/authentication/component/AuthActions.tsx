@@ -1,4 +1,7 @@
-import { ButtonAuth } from "@frak-labs/ui/component/ButtonAuth";
+import { Box } from "@frak-labs/design-system/components/Box";
+import { Button } from "@frak-labs/design-system/components/Button";
+import { Spinner } from "@frak-labs/design-system/components/Spinner";
+import { Text } from "@frak-labs/design-system/components/Text";
 import {
     authenticationStore,
     isWebAuthNSupported,
@@ -36,9 +39,9 @@ export function AuthActions({
 
     if (!isWebAuthNSupported) {
         return (
-            <p className={className}>
+            <Text as="p" className={className}>
                 {t("wallet.openLogin.webauthnNotSupported")}
-            </p>
+            </Text>
         );
     }
 
@@ -59,17 +62,21 @@ export function AuthActions({
 
     return (
         <>
-            <ButtonAuth
-                disabled={loading}
-                isLoading={loading}
-                onClick={() => {
-                    onError(null);
-                    login({});
-                }}
-                className={className}
-            >
-                <Trans i18nKey={loginButtonText ?? "wallet.openLogin.login"} />
-            </ButtonAuth>
+            <Box>
+                <Button
+                    disabled={loading}
+                    onClick={() => {
+                        onError(null);
+                        login({});
+                    }}
+                    icon={loading ? <Spinner size="s" /> : undefined}
+                    className={className}
+                >
+                    <Trans
+                        i18nKey={loginButtonText ?? "wallet.openLogin.login"}
+                    />
+                </Button>
+            </Box>
             <SsoRegisterComponent
                 isPrimary={false}
                 onSuccess={onSuccess}

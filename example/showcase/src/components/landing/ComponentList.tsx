@@ -13,14 +13,12 @@ export function ComponentList() {
             description: t("components.shareButton.description"),
             action: t("components.shareButton.action"),
             preview: ButtonSharePreview,
-            showWallet: false,
         },
         {
             title: t("components.walletButton.title"),
             description: t("components.walletButton.description"),
             action: t("components.walletButton.action"),
             preview: ButtonWalletPreview,
-            showWallet: true,
         },
     ];
 

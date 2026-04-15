@@ -15,12 +15,11 @@
         "format:check": "biome check ."
     },
     "dependencies": {
-        "@frak-labs/core-sdk": "workspace:*",
         "@frak-labs/ui": "workspace:*",
         "@radix-ui/react-select": "^2.2.6",
         "@tanstack/react-router": "^1.167.3",
         "class-variance-authority": "^0.7.1",
-        "i18next": "^25.8.18",
+        "i18next": "^26.0.3",
         "i18next-browser-languagedetector": "^8.2.1",
         "lucide-react": "^0.577.0",
         "normalize.css": "^8.0.1",
@@ -39,12 +38,12 @@
         "@types/react": "catalog:",
         "@types/react-dom": "catalog:",
         "@vitejs/plugin-react": "catalog:",
-        "@vitest/coverage-v8": "^4.1.0",
-        "@vitest/ui": "^4.1.0",
+        "@vitest/coverage-v8": "^4.1.4",
+        "@vitest/ui": "^4.1.4",
         "jsdom": "^29.0.0",
         "typescript": "catalog:",
         "vite": "catalog:",
         "vite-plugin-html": "^3.2.2",
-        "vitest": "^4.1.0"
+        "vitest": "^4.1.4"
     }
 }

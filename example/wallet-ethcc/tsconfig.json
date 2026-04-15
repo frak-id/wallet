@@ -4,6 +4,7 @@
     "app/routeTree.gen.ts",
     "../shared/**/*"
   ],
+  "exclude": ["dist"],
   "compilerOptions": {
     "lib": ["DOM", "DOM.Iterable", "ES2022"],
     "types": ["vite/client"],

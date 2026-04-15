@@ -4,10 +4,10 @@ import {
     AccordionContent,
     AccordionItem,
     AccordionTrigger,
-} from "@frak-labs/ui/component/Accordion";
-import { WalletAddress } from "@frak-labs/ui/component/HashDisplay";
+} from "@frak-labs/design-system/components/Accordion";
 import { useTranslation } from "react-i18next";
 import { formatEther } from "viem";
+import { WalletAddress } from "@/module/component/WalletAddress";
 import styles from "./index.module.css";
 
 export function AccordionTransactions({

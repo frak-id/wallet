@@ -19,4 +19,10 @@ export namespace listenerMerchantKey {
                 merchantId ?? "no-merchant-id",
             ] as const,
     };
+
+    const referralStatusBase = "referralStatus" as const;
+    export const referralStatus = {
+        byMerchant: (merchantId?: string) =>
+            [base, referralStatusBase, merchantId ?? "no-merchant-id"] as const,
+    };
 }

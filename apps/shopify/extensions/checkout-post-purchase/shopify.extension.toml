@@ -1,0 +1,64 @@
+api_version = "2026-04"
+uid = "6a386c9f-1650-0932-cc95-5da6a42ace695f4c002e"
+
+[[extensions]]
+type = "ui_extension"
+name = "Frak Post Purchase"
+handle = "checkout-post-purchase"
+
+# Thank You page — shown immediately after checkout completes
+[[extensions.targeting]]
+target = "purchase.thank-you.block.render"
+module = "./src/ThankYou.tsx"
+
+# Order Status page — shown when customer revisits their order
+[[extensions.targeting]]
+target = "customer-account.order-status.block.render"
+module = "./src/OrderStatus.tsx"
+
+# Shop metafields auto-populated by the Frak app during onboarding.
+# These provide merchantId, walletUrl, and logoUrl without manual settings.
+[[extensions.metafields]]
+namespace = "frak"
+key = "merchant_id"
+
+[[extensions.metafields]]
+namespace = "frak"
+key = "wallet_url"
+
+[[extensions.metafields]]
+namespace = "frak"
+key = "appearance"
+
+# Merchant-configurable text settings
+[extensions.settings]
+
+[[extensions.settings.fields]]
+key = "sharing_url"
+type = "single_line_text_field"
+name = "Sharing URL"
+description = "The URL shared with customers. Falls back to the store's base URL when empty."
+
+[[extensions.settings.fields]]
+key = "message"
+type = "single_line_text_field"
+name = "Heading"
+description = "The main heading displayed to customers. Defaults to 'Earn rewards through sharing'"
+
+[[extensions.settings.fields]]
+key = "description"
+type = "single_line_text_field"
+name = "Description"
+description = "The description text below the subtitle. Defaults to 'If they buy, they earn... and so do you!'"
+
+[[extensions.settings.fields]]
+key = "cta_text"
+type = "single_line_text_field"
+name = "CTA Text"
+description = "Text for the call-to-action button. Defaults to 'Share & earn'"
+
+[[extensions.settings.fields]]
+key = "badge_text"
+type = "single_line_text_field"
+name = "Badge Text"
+description = "Optional pill label above the heading (e.g. 'New'). Leave empty to hide the badge."

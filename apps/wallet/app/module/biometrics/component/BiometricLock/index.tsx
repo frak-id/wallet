@@ -1,5 +1,7 @@
-import { Button } from "@frak-labs/ui/component/Button";
-import { LogoFrakWithName } from "@frak-labs/ui/icons/LogoFrakWithName";
+import { Box } from "@frak-labs/design-system/components/Box";
+import { Button } from "@frak-labs/design-system/components/Button";
+import { Text } from "@frak-labs/design-system/components/Text";
+import { LogoFrakWithName } from "@frak-labs/wallet-shared";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useBiometricAutoLock } from "@/module/biometrics/hooks/useBiometricAutoLock";
@@ -12,7 +14,7 @@ import {
     authenticateWithBiometrics,
     checkBiometricStatus,
 } from "@/module/biometrics/utils/biometrics";
-import styles from "./index.module.css";
+import * as styles from "./index.css";
 
 export function BiometricLock() {
     const { t } = useTranslation();
@@ -74,29 +76,27 @@ export function BiometricLock() {
     }
 
     return (
-        <div className={styles.lockScreen}>
-            <LogoFrakWithName className={styles.lockScreen__logo} />
-            <div className={styles.lockScreen__content}>
-                <h2 className={styles.lockScreen__title}>
-                    {t("biometrics.locked")}
-                </h2>
-                <p className={styles.lockScreen__subtitle}>
+        <Box
+            padding="l"
+            gap="xl"
+            className={styles.lockScreen}
+            flexDirection="column"
+            alignItems="center"
+            justifyContent="center"
+        >
+            <LogoFrakWithName className={styles.lockScreenLogo} />
+            <Box flexDirection="column" alignItems="center" gap="m">
+                <Text variant="heading1">{t("biometrics.locked")}</Text>
+                <Text variant="bodySmall">
                     {t("biometrics.unlockWith", { type: biometryLabel })}
-                </p>
+                </Text>
                 {error && (
-                    <p className={styles.lockScreen__error}>
-                        {t("biometrics.error")}
-                    </p>
+                    <Text variant="bodySmall">{t("biometrics.error")}</Text>
                 )}
-            </div>
-            <Button
-                className={styles.lockScreen__button}
-                onClick={handleUnlock}
-                disabled={isAuthenticating}
-                isLoading={isAuthenticating}
-            >
+            </Box>
+            <Button onClick={handleUnlock} disabled={isAuthenticating}>
                 {t("biometrics.unlock")}
             </Button>
-        </div>
+        </Box>
     );
 }

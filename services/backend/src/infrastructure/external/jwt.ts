@@ -1,10 +1,5 @@
 import { t } from "@backend-utils";
-import {
-    getSchemaValidator,
-    type Static,
-    type TSchema,
-    ValidationError,
-} from "elysia";
+import { getSchemaValidator, type Static, type TSchema } from "elysia";
 import {
     type JWSHeaderParameters,
     type JWTPayload,
@@ -122,7 +117,7 @@ function buildJwtContext<const Schema extends TSchema | undefined = undefined>({
     // Get the validator for the given schema
     const validator = schema
         ? getSchemaValidator(
-              t.Intersect([
+              t.Composite([
                   schema,
                   t.Partial(
                       t.Object({
@@ -132,7 +127,7 @@ function buildJwtContext<const Schema extends TSchema | undefined = undefined>({
                           jti: t.String(),
                           nbf: t.Number(),
                           exp: t.Number(),
-                          iat: t.String(),
+                          iat: t.Number(),
                       })
                   ),
               ]),
@@ -182,8 +177,8 @@ function buildJwtContext<const Schema extends TSchema | undefined = undefined>({
             try {
                 const data = (await jwtVerify<JwtPayload>(jwt, key)).payload;
 
-                if (validator?.Check(data))
-                    throw new ValidationError("JWT", validator, data);
+                // Validate payload against schema if present
+                if (validator && !validator.Check(data)) return false;
 
                 return data;
             } catch (_) {

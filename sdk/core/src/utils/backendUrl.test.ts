@@ -15,13 +15,13 @@ describe("getBackendUrl", () => {
     describe("with explicit walletUrl", () => {
         test("should return localhost backend for localhost:3000", () => {
             expect(getBackendUrl("https://localhost:3000")).toBe(
-                "http://localhost:3030"
+                "https://localhost:3030"
             );
         });
 
         test("should return localhost backend for localhost:3010", () => {
             expect(getBackendUrl("https://localhost:3010")).toBe(
-                "http://localhost:3030"
+                "https://localhost:3030"
             );
         });
 

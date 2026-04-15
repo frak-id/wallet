@@ -1,8 +1,17 @@
+import { BannerTab } from "app/components/Appearance/BannerTab";
 import { ButtonTab } from "app/components/Appearance/ButtonTab";
+import { CheckoutExtensionTab } from "app/components/Appearance/CheckoutExtensionTab";
 import { CustomizationsTab } from "app/components/Appearance/CustomizationsTab";
-import { WalletButtonTab } from "app/components/Appearance/WalletButtonTab";
+import { ExplorerTab } from "app/components/Appearance/ExplorerTab";
 import { PageHeading } from "app/components/ui/PageHeading";
 import { Tabs } from "app/components/ui/Tabs";
+import {
+    deleteMerchantMedia,
+    type ExplorerSettings,
+    getMerchantExplorerSettings,
+    updateMerchantExplorerSettings,
+    uploadMerchantMedia,
+} from "app/services.server/backendMerchant";
 import {
     type AppearanceMetafieldValue,
     getAppearanceMetafield,
@@ -11,16 +20,18 @@ import {
     updateAppearanceMetafield,
     updateI18nCustomizations,
 } from "app/services.server/metafields";
-import { firstProductPublished } from "app/services.server/shop";
+import { firstProductPublished, shopBrandInfo } from "app/services.server/shop";
 import {
+    doesThemeHasFrakBanner,
     doesThemeHasFrakButton,
-    doesThemeHasFrakWalletButton,
+    getMainThemeId,
 } from "app/services.server/theme";
 import { authenticate } from "app/shopify.server";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import type { ActionFunctionArgs, LoaderFunctionArgs } from "react-router";
-import { data, useLoaderData } from "react-router";
+import { data, useLoaderData, useRouteLoaderData } from "react-router";
+import type { loader as appLoader } from "./app";
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
     const context = await authenticate.admin(request);
@@ -30,29 +41,121 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
         customizations,
         appearanceMetafield,
         isThemeHasFrakButton,
+        isThemeHasFrakBanner,
         firstProduct,
-        themeWalletButton,
+        theme,
+        explorerSettings,
+        shopBrand,
     ] = await Promise.all([
         getI18nCustomizations(context),
         getAppearanceMetafield(context),
         doesThemeHasFrakButton(context),
+        doesThemeHasFrakBanner(context),
         firstProductPublished(context),
-        doesThemeHasFrakWalletButton(context),
+        getMainThemeId(context),
+        getMerchantExplorerSettings(context, request),
+        shopBrandInfo(context),
     ]);
 
     return data({
         customizations,
         appearanceMetafield,
         isThemeHasFrakButton,
+        isThemeHasFrakBanner,
         firstProduct,
-        themeWalletButton,
+        themeId: theme.id,
+        explorerSettings,
+        shopBrand,
     });
 };
+
+async function handleMediaUpload(
+    context: Awaited<ReturnType<typeof authenticate.admin>>,
+    request: Request,
+    formData: FormData
+) {
+    const type = formData.get("type") as string;
+    const image = formData.get("image") as File;
+    if (!type || !image) {
+        return data(
+            {
+                success: false,
+                error: "Missing image or type",
+                code: "missing_fields",
+            },
+            { status: 400 }
+        );
+    }
+    const result = await uploadMerchantMedia(context, request, image, type);
+    return data(result, { status: result.success ? 200 : 400 });
+}
+
+async function handleMediaDelete(
+    context: Awaited<ReturnType<typeof authenticate.admin>>,
+    request: Request,
+    formData: FormData
+) {
+    const type = formData.get("type") as string;
+    if (!type) {
+        return data(
+            { success: false, message: "Missing type" },
+            { status: 400 }
+        );
+    }
+    const result = await deleteMerchantMedia(context, request, type);
+    return data(result, { status: result.success ? 200 : 400 });
+}
+
+async function handleSaveExplorer(
+    context: Awaited<ReturnType<typeof authenticate.admin>>,
+    request: Request,
+    formData: FormData
+) {
+    const explorerSettingsData = formData.get("explorerSettings");
+    if (!explorerSettingsData) {
+        return data(
+            { success: false, message: "No explorer data provided" },
+            { status: 400 }
+        );
+    }
+
+    try {
+        const settings: ExplorerSettings = JSON.parse(
+            explorerSettingsData as string
+        );
+        const result = await updateMerchantExplorerSettings(
+            context,
+            request,
+            settings
+        );
+        return data(result, { status: result.success ? 200 : 400 });
+    } catch (error) {
+        console.error("Error saving explorer settings:", error);
+        return data(
+            {
+                success: false,
+                message: "Failed to save explorer settings",
+            },
+            { status: 500 }
+        );
+    }
+}
 
 export async function action({ request }: ActionFunctionArgs) {
     const context = await authenticate.admin(request);
     const formData = await request.formData();
     const intent = formData.get("intent");
+
+    if (intent === "uploadMedia") {
+        return handleMediaUpload(context, request, formData);
+    }
+
+    if (intent === "deleteMedia") {
+        return handleMediaDelete(context, request, formData);
+    }
+    if (intent === "saveExplorer") {
+        return handleSaveExplorer(context, request, formData);
+    }
 
     if (intent !== "save") {
         return data(
@@ -138,9 +241,13 @@ export default function AppearancePage() {
         customizations,
         appearanceMetafield,
         isThemeHasFrakButton,
+        isThemeHasFrakBanner,
         firstProduct,
-        themeWalletButton,
+        explorerSettings,
+        shopBrand,
     } = useLoaderData<typeof loader>();
+    const rootData = useRouteLoaderData<typeof appLoader>("routes/app");
+    const shopName = rootData?.shop?.name ?? "My Store";
     const { t } = useTranslation();
     const [selectedTab, setSelectedTab] = useState(0);
 
@@ -148,17 +255,22 @@ export default function AppearancePage() {
         {
             id: "customizations",
             content: t("appearance.tabs.customizations"),
-            panelID: "customizations-panel",
+        },
+        {
+            id: "explorer",
+            content: t("appearance.tabs.explorer"),
         },
         {
             id: "share-button",
             content: t("appearance.tabs.shareButton"),
-            panelID: "share-button-panel",
         },
         {
-            id: "wallet-button",
-            content: t("appearance.tabs.walletButton"),
-            panelID: "wallet-button-panel",
+            id: "banner",
+            content: t("appearance.tabs.banner"),
+        },
+        {
+            id: "checkout-extension",
+            content: t("appearance.tabs.checkoutExtension"),
         },
     ];
 
@@ -173,15 +285,26 @@ export default function AppearancePage() {
                 );
             case 1:
                 return (
+                    <ExplorerTab
+                        initialExplorerSettings={explorerSettings}
+                        shopBrand={shopBrand}
+                        sdkLogoUrl={appearanceMetafield.logoUrl || ""}
+                        shopName={shopName}
+                    />
+                );
+            case 2:
+                return (
                     <ButtonTab
                         isThemeHasFrakButton={isThemeHasFrakButton}
                         firstProduct={firstProduct}
                     />
                 );
-            case 2:
+            case 3:
                 return (
-                    <WalletButtonTab themeWalletButton={themeWalletButton} />
+                    <BannerTab isThemeHasFrakBanner={isThemeHasFrakBanner} />
                 );
+            case 4:
+                return <CheckoutExtensionTab />;
             default:
                 return null;
         }

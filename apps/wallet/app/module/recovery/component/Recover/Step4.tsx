@@ -1,4 +1,5 @@
-import { Button } from "@frak-labs/ui/component/Button";
+import { Button } from "@frak-labs/design-system/components/Button";
+import { Text } from "@frak-labs/design-system/components/Text";
 import type { WebAuthNWallet } from "@frak-labs/wallet-shared";
 import { useCallback } from "react";
 import { useTranslation } from "react-i18next";
@@ -8,7 +9,7 @@ import {
     recoveryStore,
     selectRecoveryFileContent,
 } from "@/module/stores/recoveryStore";
-import styles from "./Step4.module.css";
+import * as styles from "./Step4.css";
 
 const ACTUAL_STEP = 4;
 
@@ -39,13 +40,11 @@ export function Step4() {
             actualStep={ACTUAL_STEP}
             title={t("wallet.recovery.step4")}
         >
-            <p>{t("wallet.recovery.needCreatePasskey")}</p>
+            <Text>{t("wallet.recovery.needCreatePasskey")}</Text>
             <Button
-                width={"full"}
                 onClick={triggerAction}
                 disabled={isPending}
-                isLoading={isPending}
-                className={styles.step4__button}
+                className={styles.button}
             >
                 {t("wallet.recovery.createPasskey")}
             </Button>

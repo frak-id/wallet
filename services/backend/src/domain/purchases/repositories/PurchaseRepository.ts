@@ -87,6 +87,20 @@ export class PurchaseRepository {
         return result ?? null;
     }
 
+    async findByMerchantAndCheckoutToken(params: {
+        webhookId: number;
+        checkoutToken: string;
+    }): Promise<PurchaseSelect | null> {
+        const { webhookId, checkoutToken } = params;
+        const result = await db.query.purchasesTable.findFirst({
+            where: and(
+                eq(purchasesTable.purchaseToken, checkoutToken),
+                eq(purchasesTable.webhookId, webhookId)
+            ),
+        });
+        return result ?? null;
+    }
+
     async findByIds(ids: string[]): Promise<PurchaseSelect[]> {
         if (ids.length === 0) return [];
         return db

@@ -5,6 +5,7 @@ export {
     CampaignStatsResponseSchema,
 } from "./campaignStatsSchemas";
 export {
+    type ExplorerMerchantItem,
     ExplorerMerchantItemSchema,
     ExplorerQueryResultSchema,
 } from "./explorerSchemas";

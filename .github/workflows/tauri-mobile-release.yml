@@ -74,7 +74,7 @@ jobs:
         run: bun run build:sdk
 
       - name: "📤 Upload SDK artifact"
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: sdk-dist
           # Only needed within this workflow run
@@ -114,7 +114,7 @@ jobs:
           echo "$PWD/apps/wallet/node_modules/.bin" >> "$GITHUB_PATH"
 
       - name: "📥 Download SDK artifact"
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: sdk-dist
 
@@ -207,7 +207,7 @@ jobs:
 
       - name: "📦 Upload iOS artifact"
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: ios-ipa
           path: "apps/wallet/src-tauri/gen/apple/build/arm64/Frak Wallet.ipa"
@@ -242,18 +242,18 @@ jobs:
           echo "$PWD/apps/wallet/node_modules/.bin" >> "$GITHUB_PATH"
 
       - name: "📥 Download SDK artifact"
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: sdk-dist
 
       - name: "☕ Setup Java 17"
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@v5
         with:
           distribution: temurin
           java-version: "17"
 
       - name: "📱 Setup Android SDK"
-        uses: android-actions/setup-android@v3
+        uses: android-actions/setup-android@v4
 
       - name: "💾 Cache Gradle wrapper"
         uses: actions/cache@v5
@@ -342,7 +342,7 @@ jobs:
 
       - name: "📦 Upload Android artifact"
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: android-aab
           path: apps/wallet/src-tauri/gen/android/app/build/outputs/bundle/universalRelease/app-universal-release.aab
@@ -379,7 +379,7 @@ jobs:
 
       - name: "📌 Create version bump PR"
         if: github.ref == 'refs/heads/main'
-        uses: peter-evans/create-pull-request@v7
+        uses: peter-evans/create-pull-request@v8
         with:
           commit-message: "⬆️ v${{ inputs.version }}"
           branch: chore/mobile-v${{ inputs.version }}

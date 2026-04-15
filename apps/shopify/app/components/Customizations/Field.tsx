@@ -1,6 +1,7 @@
 import { useTranslation } from "react-i18next";
 import type { I18nCustomizations } from "../../services.server/metafields";
-import { ModalSection, SharingSection } from "./Section";
+import { ImageUploadField } from "../Appearance/ImageUploadField";
+import { SharingPageSection, SharingSection } from "./Section";
 
 // Single Language Fields Component
 export function SingleLanguageFields({
@@ -8,20 +9,20 @@ export function SingleLanguageFields({
     onUpdate,
     logoUrl,
 }: {
-    logoUrl?: string;
     customizations: I18nCustomizations;
     onUpdate: (key: string, value: string) => void;
+    logoUrl?: string;
 }) {
     // Use 'en' as the default language for single mode and merge logoUrl if provided
     const currentValues = customizations.en || {};
 
     return (
         <s-stack gap="large">
-            <ModalSection
+            <SharingPageSection
                 values={currentValues}
                 onUpdate={onUpdate}
-                logoUrl={logoUrl}
                 language="single"
+                logoUrl={logoUrl}
             />
             <SharingSection
                 values={currentValues}
@@ -38,8 +39,8 @@ export function MultiLanguageFields({
     logoUrl,
 }: {
     customizations: I18nCustomizations;
-    logoUrl?: string;
     onUpdate: (language: "fr" | "en", key: string, value: string) => void;
+    logoUrl?: string;
 }) {
     // Merge logoUrl into per-language values so the preview can access it
     const frValues = customizations.fr || {};
@@ -51,11 +52,11 @@ export function MultiLanguageFields({
             <s-section>
                 <s-stack gap="base">
                     <s-heading>French (Français)</s-heading>
-                    <ModalSection
+                    <SharingPageSection
                         values={frValues}
                         onUpdate={(key, value) => onUpdate("fr", key, value)}
-                        logoUrl={logoUrl}
                         language="fr"
+                        logoUrl={logoUrl}
                     />
                     <SharingSection
                         values={frValues}
@@ -69,11 +70,11 @@ export function MultiLanguageFields({
             <s-section>
                 <s-stack gap="base">
                     <s-heading>English</s-heading>
-                    <ModalSection
+                    <SharingPageSection
                         values={enValues}
                         onUpdate={(key, value) => onUpdate("en", key, value)}
-                        logoUrl={logoUrl}
                         language="en"
+                        logoUrl={logoUrl}
                     />
                     <SharingSection
                         values={enValues}
@@ -90,22 +91,25 @@ export function MultiLanguageFields({
 export function LogoField({
     logoUrl,
     onUpdate,
+    onUploadSuccess,
 }: {
     logoUrl: string;
     onUpdate: (logoUrl: string) => void;
+    onUploadSuccess: (url: string) => void;
 }) {
     const { t } = useTranslation();
     return (
         <s-section>
             <s-stack gap="base">
-                <s-heading>{t("customizations.modal.logo.title")}</s-heading>
-                <s-text>{t("customizations.modal.logo.description")}</s-text>
-                <s-text-area
+                <s-heading>{t("customizations.logo.title")}</s-heading>
+                <s-text>{t("customizations.logo.description")}</s-text>
+                <ImageUploadField
+                    type="logo"
+                    value={logoUrl || ""}
+                    onChange={onUpdate}
+                    onUploadSuccess={onUploadSuccess}
                     label={t("customizations.fields.logoUrl.label")}
                     placeholder={t("customizations.fields.logoUrl.placeholder")}
-                    value={logoUrl || ""}
-                    onChange={(e) => onUpdate(e.currentTarget.value)}
-                    autocomplete="off"
                 />
             </s-stack>
         </s-section>

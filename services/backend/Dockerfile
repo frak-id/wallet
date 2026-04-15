@@ -31,6 +31,9 @@ WORKDIR /app
 COPY --from=builder --chown=bun:bun /app/services/backend/package.json .
 COPY --from=builder --chown=bun:bun /app/services/backend/dist ./dist
 
+# Native modules with platform-specific binaries — can't be bundled, install directly in runtime
+RUN cd /tmp && bun add sharp lightningcss @libsql/client && cp -rL node_modules /app/node_modules && rm -rf /tmp/node_modules /tmp/package.json /tmp/bun.lock
+
 USER bun
 
 # Runtime port
@@ -41,4 +44,5 @@ ENV NODE_ENV=production
 ENV BUN_RUNTIME_TRANSPILER_CACHE_PATH=0
 
 # Direct entrypoint — Bun is PID 1, receives SIGTERM cleanly
-CMD ["bun", "dist/index.js"]
+# --smol: enables JSC's stopIfNecessaryTimer for aggressive GC in constrained containers
+CMD ["bun", "--smol", "dist/index.js"]

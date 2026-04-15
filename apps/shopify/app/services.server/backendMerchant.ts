@@ -514,7 +514,7 @@ export async function getFrakWebookStatus(
         }
         return {
             userErrors: [],
-            setup: Array.isArray(data) ? data.length > 0 : Boolean(data),
+            setup: data.setup === true,
         };
     } catch (error) {
         console.error(error);
@@ -522,5 +522,194 @@ export async function getFrakWebookStatus(
             userErrors: [{ message: "Error fetching frak webhook status" }],
             setup: false,
         };
+    }
+}
+
+export type ExplorerSettings = {
+    enabled: boolean;
+    heroImageUrl: string;
+    logoUrl: string;
+    description: string;
+};
+
+/**
+ * Fetch explorer settings for the current merchant from the Frak backend.
+ */
+export async function getMerchantExplorerSettings(
+    context: AuthenticatedContext,
+    request: Request
+): Promise<ExplorerSettings | null> {
+    const merchantId = await resolveMerchantId(context);
+    if (!merchantId) {
+        return null;
+    }
+
+    try {
+        const { data, error } = await backendApi.business
+            .merchant({ merchantId })
+            .get({
+                headers: buildBackendHeaders(request),
+            });
+        if (error) {
+            console.error(
+                `[backendMerchant] merchant detail fetch failed for ${merchantId}`
+            );
+            return null;
+        }
+
+        return {
+            enabled: data.explorerEnabledAt !== null,
+            heroImageUrl: data.explorerConfig?.heroImageUrl ?? "",
+            logoUrl: data.explorerConfig?.logoUrl ?? "",
+            description: data.explorerConfig?.description ?? "",
+        };
+    } catch (error) {
+        console.error(
+            `[backendMerchant] merchant detail fetch error for ${merchantId}:`,
+            error
+        );
+        return null;
+    }
+}
+
+/**
+ * Update explorer settings for the current merchant on the Frak backend.
+ */
+export async function updateMerchantExplorerSettings(
+    context: AuthenticatedContext,
+    request: Request,
+    settings: ExplorerSettings
+): Promise<{ success: boolean; message: string }> {
+    const merchantId = await resolveMerchantId(context);
+    if (!merchantId) {
+        return { success: false, message: "Merchant not found" };
+    }
+
+    const config =
+        settings.heroImageUrl || settings.logoUrl || settings.description
+            ? {
+                  heroImageUrl: settings.heroImageUrl || undefined,
+                  logoUrl: settings.logoUrl || undefined,
+                  description: settings.description || undefined,
+              }
+            : undefined;
+
+    try {
+        const { error } = await backendApi.business
+            .merchant({ merchantId })
+            .explorer.put(
+                { enabled: settings.enabled, config },
+                { headers: buildBackendHeaders(request) }
+            );
+        if (error) {
+            console.error(
+                `[backendMerchant] explorer update failed for ${merchantId}`
+            );
+            return {
+                success: false,
+                message: "Failed to update explorer settings",
+            };
+        }
+
+        return { success: true, message: "Explorer settings saved" };
+    } catch (error) {
+        console.error(
+            `[backendMerchant] explorer update error for ${merchantId}:`,
+            error
+        );
+        return {
+            success: false,
+            message: "Failed to update explorer settings",
+        };
+    }
+}
+
+/**
+ * Upload a media file (logo or hero image) for the current merchant.
+ */
+export async function uploadMerchantMedia(
+    context: AuthenticatedContext,
+    request: Request,
+    image: File,
+    type: string
+): Promise<
+    | { success: true; url: string }
+    | { success: false; error: string; code: string }
+> {
+    const merchantId = await resolveMerchantId(context);
+    if (!merchantId) {
+        return {
+            success: false,
+            error: "Merchant not found",
+            code: "merchant_not_found",
+        };
+    }
+
+    try {
+        const { data, error } = await backendApi.business
+            .merchant({ merchantId })
+            .media.upload.post(
+                { image, type: type as never },
+                { headers: buildBackendHeaders(request) }
+            );
+        if (error) {
+            const err = error as unknown as {
+                value?: { error?: string; code?: string };
+            };
+            if (err.value?.error) {
+                return {
+                    success: false,
+                    error: err.value.error,
+                    code: err.value.code ?? "upload_failed",
+                };
+            }
+            return {
+                success: false,
+                error: "Upload failed",
+                code: "upload_failed",
+            };
+        }
+        return { success: true, url: data.url };
+    } catch (error) {
+        console.error(
+            `[backendMerchant] media upload error for ${merchantId}:`,
+            error
+        );
+        return {
+            success: false,
+            error: "Upload failed",
+            code: "upload_failed",
+        };
+    }
+}
+
+/**
+ * Delete a media file (logo or hero image) for the current merchant.
+ */
+export async function deleteMerchantMedia(
+    context: AuthenticatedContext,
+    request: Request,
+    type: string
+): Promise<{ success: boolean; deleted?: boolean; message?: string }> {
+    const merchantId = await resolveMerchantId(context);
+    if (!merchantId) {
+        return { success: false, message: "Merchant not found" };
+    }
+
+    try {
+        const { error } = await backendApi.business
+            .merchant({ merchantId })
+            .media({ type })
+            .delete({ headers: buildBackendHeaders(request) });
+        if (error) {
+            return { success: false, message: "Failed to delete media" };
+        }
+        return { success: true, deleted: true };
+    } catch (error) {
+        console.error(
+            `[backendMerchant] media delete error for ${merchantId}:`,
+            error
+        );
+        return { success: false, message: "Failed to delete media" };
     }
 }

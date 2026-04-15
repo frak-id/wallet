@@ -1,6 +1,7 @@
 import { useMutation } from "@tanstack/react-query";
-import { useAccount, useSignMessage } from "wagmi";
+import { useConnection, useSignMessage } from "wagmi";
 import { moneriumStore } from "@/module/monerium/store/moneriumStore";
+import { shortenIban } from "@/module/monerium/utils/maskIban";
 import { placeOrder } from "@/module/monerium/utils/moneriumApi";
 import { moneriumConfig } from "@/module/monerium/utils/moneriumConfig";
 import { useMoneriumTokenRefresh } from "./useMoneriumClient";
@@ -17,13 +18,6 @@ function rfc3339(d: Date): string {
     return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}${tzOffset(d.getTimezoneOffset())}`;
 }
 
-function shortenIban(iban: string): string {
-    const ns = iban.replace(/\s/g, "");
-    return ns.length > 11
-        ? `${ns.substring(0, 4)}...${ns.substring(ns.length - 4)}`
-        : iban;
-}
-
 function buildPlaceOrderMessage(amount: string, iban: string): string {
     return `Send EUR ${amount} to ${shortenIban(iban)} at ${rfc3339(new Date())}`;
 }
@@ -31,6 +25,7 @@ function buildPlaceOrderMessage(amount: string, iban: string): string {
 type PlaceOrderParams = {
     amount: string;
     iban: string;
+    memo?: string;
 };
 
 function isSigningCancelledError(errorMessage: string): boolean {
@@ -73,13 +68,13 @@ function extractErrorMessage(error: unknown): string {
 }
 
 export function useMoneriumOfframp() {
-    const { signMessageAsync } = useSignMessage();
-    const { address: walletAddress } = useAccount();
+    const { mutateAsync: signMessageAsync } = useSignMessage();
+    const { address: walletAddress } = useConnection();
     const accessToken = moneriumStore((s) => s.accessToken);
     const { isReady } = useMoneriumTokenRefresh();
 
     const mutation = useMutation({
-        mutationFn: async ({ amount, iban }: PlaceOrderParams) => {
+        mutationFn: async ({ amount, iban, memo }: PlaceOrderParams) => {
             if (!accessToken || !isReady) {
                 throw new Error("Monerium is not ready");
             }
@@ -107,7 +102,7 @@ export function useMoneriumOfframp() {
                         details: {},
                     },
                     message,
-                    memo: "Frak Wallet offramp",
+                    memo: memo?.trim() || "Frak Wallet offramp",
                 });
             } catch (error) {
                 const errorMessage = extractErrorMessage(error);

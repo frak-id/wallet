@@ -3,9 +3,9 @@ import {
     AccordionContent,
     AccordionItem,
     AccordionTrigger,
-} from "@frak-labs/ui/component/Accordion";
+} from "@frak-labs/design-system/components/Accordion";
 import type { PropsWithChildren, ReactNode } from "react";
-import styles from "./index.module.css";
+import * as styles from "./index.css";
 
 export function AccordionLogin({
     trigger,

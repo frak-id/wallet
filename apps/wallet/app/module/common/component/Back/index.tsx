@@ -1,12 +1,17 @@
+import { Box } from "@frak-labs/design-system/components/Box";
+import { Text } from "@frak-labs/design-system/components/Text";
+import { ArrowLeftIcon } from "@frak-labs/design-system/icons";
 import { Link } from "@tanstack/react-router";
-import { ArrowLeft } from "lucide-react";
-import type { PropsWithChildren } from "react";
-import styles from "./index.module.css";
+import type { PropsWithChildren, ReactNode } from "react";
+import { GlassButton } from "@/module/common/component/GlassButton";
+import * as styles from "./index.css";
 
 type BackProps = {
     href?: string;
     onClick?: () => void;
     disabled?: boolean;
+    /** Override the default back arrow icon. */
+    icon?: ReactNode;
 };
 
 export function Back({
@@ -14,30 +19,58 @@ export function Back({
     href,
     onClick,
     disabled,
+    icon = <ArrowLeftIcon />,
 }: PropsWithChildren<BackProps>) {
-    return (
-        <div
-            className={`${styles.back} ${
-                disabled ? styles["back--disabled"] : ""
-            }`}
-        >
-            <ArrowLeft />
-            {href && (
-                <Link to={href} aria-disabled={disabled} viewTransition>
-                    {children}
-                </Link>
-            )}
-            {onClick && (
-                <button
-                    type={"button"}
-                    className={"button"}
-                    onClick={onClick}
-                    disabled={disabled}
+    if (href) {
+        return (
+            <Box>
+                <Link
+                    to={href}
                     aria-disabled={disabled}
+                    aria-label={
+                        typeof children === "string" ? children : undefined
+                    }
+                    viewTransition
+                    className={styles.actionButton}
                 >
-                    {children}
-                </button>
-            )}
-        </div>
+                    <GlassButton
+                        icon={icon}
+                        disabled={disabled}
+                        tabIndex={-1}
+                        aria-hidden
+                    />
+                    {children && (
+                        <Text as="span" className={styles.actionText}>
+                            {children}
+                        </Text>
+                    )}
+                </Link>
+            </Box>
+        );
+    }
+
+    return (
+        <Box>
+            <Box
+                as="button"
+                type="button"
+                className={styles.actionButton}
+                onClick={onClick}
+                disabled={disabled}
+                aria-disabled={disabled}
+            >
+                <GlassButton
+                    icon={icon}
+                    disabled={disabled}
+                    tabIndex={-1}
+                    aria-hidden
+                />
+                {children && (
+                    <Text as="span" className={styles.actionText}>
+                        {children}
+                    </Text>
+                )}
+            </Box>
+        </Box>
     );
 }

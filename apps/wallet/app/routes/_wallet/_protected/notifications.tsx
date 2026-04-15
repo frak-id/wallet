@@ -2,7 +2,6 @@ import { useQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import { BellRing } from "lucide-react";
 import { useTranslation } from "react-i18next";
-import { Grid } from "@/module/common/component/Grid";
 import { Panel } from "@/module/common/component/Panel";
 import { Row } from "@/module/common/component/Row";
 import { Skeleton } from "@/module/common/component/Skeleton";
@@ -37,33 +36,33 @@ function NotificationsPage() {
 
     if (isLoading) {
         return (
-            <Grid>
+            <div>
                 <Skeleton count={3} height={110} />
-            </Grid>
+            </div>
         );
     }
 
     if (notifications.length === 0) {
         return (
-            <Grid>
+            <div>
                 <Panel size={"small"}>
                     <Title icon={<BellRing />}>
                         {t("wallet.notifications.noNotifications")}
                     </Title>
                 </Panel>
-            </Grid>
+            </div>
         );
     }
 
     return (
-        <Grid>
+        <div>
             {notifications?.map((notificationItem, index) => (
                 <Notification
                     key={`${notificationItem.timestamp}-${notificationItem.id}-${index}`}
                     notification={notificationItem}
                 />
             ))}
-        </Grid>
+        </div>
     );
 }
 

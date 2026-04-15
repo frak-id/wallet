@@ -1,4 +1,4 @@
-import { Spinner } from "@frak-labs/ui/component/Spinner";
+import { Spinner } from "@frak-labs/design-system/components/Spinner";
 import { X } from "lucide-react";
 import type { MouseEvent, ReactNode } from "react";
 import { Warning } from "../Warning";

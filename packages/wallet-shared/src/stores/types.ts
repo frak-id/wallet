@@ -7,7 +7,6 @@ import type { Signature } from "ox";
 import type { SignMetadata } from "ox/WebAuthnP256";
 import type { Address, Hex } from "viem";
 import type { SdkSession, Session } from "../types/Session";
-import type { User } from "../types/User";
 
 /**
  * WebAuthn authentication response structure
@@ -37,20 +36,6 @@ export type SessionStore = {
 };
 
 /**
- * User Store Types
- */
-export type UserStore = {
-    // State
-    user: User | null;
-    userSetupLater: boolean | null;
-
-    // Actions
-    setUser: (user: User | null) => void;
-    setUserSetupLater: (setupLater: boolean | null) => void;
-    clearUser: () => void;
-};
-
-/**
  * Authentication Store Types
  */
 export type LastWebAuthNAction = {
@@ -70,36 +55,24 @@ export type SsoContext = {
 };
 
 export type AppSpecificSsoMetadata = SsoMetadata & {
-    name: string;
+    name?: string;
     css?: string;
 };
 
 export type AuthenticationStore = {
     // State
     lastAuthenticator: LastAuthentication | null;
+    lastAuthenticationAt: number | null;
     lastWebAuthNAction: LastWebAuthNAction | null;
     ssoContext: SsoContext | null;
 
     // Actions
     setLastAuthenticator: (auth: LastAuthentication | null) => void;
+    setLastAuthenticationAt: (timestamp: number | null) => void;
     setLastWebAuthNAction: (action: LastWebAuthNAction | null) => void;
     setSsoContext: (context: SsoContext | null) => void;
     clearAuthentication: () => void;
 };
-
-/**
- * Pairing Store Types
- */
-export type PairingStore = {
-    // State
-    pendingPairingId: string | null;
-    pendingPairingExpiresAt: number | null;
-
-    // Actions
-    setPendingPairingId: (id: string) => void;
-    clearPendingPairing: () => void;
-};
-
 /**
  * Client ID Store Types
  *

@@ -1,0 +1,101 @@
+.imageUploadField {
+    display: flex;
+    flex-direction: row;
+    align-items: flex-start;
+    gap: 12px;
+}
+
+.controls {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    flex: 1;
+}
+
+.inputRow {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.inputWrapper {
+    flex: 1;
+}
+
+.clearButton {
+    all: unset;
+    box-sizing: border-box;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    flex-shrink: 0;
+    cursor: pointer;
+    border-radius: 6px;
+    font-size: 14px;
+    color: #6d7175;
+    border: 1px solid #c9cccf;
+    background: #fff;
+    transition: all 0.2s;
+}
+
+.clearButton:hover {
+    color: #d72c0d;
+    border-color: #e0b3b2;
+    background-color: #fff4f4;
+}
+
+.dropzone {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 64px;
+    padding: 12px 16px;
+    border: 2px dashed #c9cccf;
+    border-radius: 8px;
+    background: #f6f6f7;
+    cursor: pointer;
+    transition:
+        border-color 0.2s,
+        background-color 0.2s;
+}
+
+.dropzone:hover {
+    border-color: #2c6ecb;
+}
+
+.dropzoneActive {
+    border-color: #2c6ecb;
+    background-color: #f2f7fe;
+}
+
+.dropzonePending {
+    opacity: 0.6;
+    cursor: wait;
+}
+
+.dropzoneText {
+    font-size: 13px;
+    color: #6d7175;
+    text-align: center;
+}
+
+.restrictions {
+    margin: 0;
+    font-size: 12px;
+    line-height: 1.4;
+    color: #6d7175;
+}
+
+.error {
+    margin: 0;
+    font-size: 13px;
+    color: #d72c0d;
+}
+
+.success {
+    margin: 0;
+    font-size: 13px;
+    color: #008060;
+}

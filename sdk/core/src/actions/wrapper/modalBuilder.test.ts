@@ -196,7 +196,8 @@ describe("modalBuilder", () => {
 
             expect(displayModal).toHaveBeenCalledWith(
                 mockClient,
-                builder.params
+                builder.params,
+                undefined
             );
         });
 
@@ -216,7 +217,8 @@ describe("modalBuilder", () => {
                 mockClient,
                 expect.objectContaining({
                     metadata: { header: { title: "Overridden" } },
-                })
+                }),
+                undefined
             );
         });
 

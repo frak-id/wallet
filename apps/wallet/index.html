@@ -26,7 +26,7 @@
             name="description"
             content="Frak Wallet: Your passkey-first smart wallet for a unified web identity. Earn rewards through website interactions, seamlessly integrate with partner sites, and manage your digital assets securely."
         >
-        <meta name="theme-color" content="#001432">
+        <meta name="theme-color" content="#ffffff">
         <meta
             name="keywords"
             content="frak, frak-wallet, blockchain wallet, smart wallet, web3 identity, passkey, digital rewards ,user engagement"
@@ -85,37 +85,9 @@
         <link rel="author" href="https://github.com/srod">
         <link rel="author" href="https://github.com/KONFeature">
 
-        <!-- Fonts: local for Tauri (no CDN dependency), Google Fonts CDN for web -->
-        <script>
-        (() => {
-            var link = document.createElement("link");
-            var preconnect2;
-            var fontLink;
-            if (window.__TAURI_INTERNALS__) {
-                // Tauri: load self-hosted font files for instant rendering
-                link.rel = "stylesheet";
-                link.href = "/fonts/sora.css";
-                document.head.appendChild(link);
-            } else {
-                // Web: load from Google Fonts CDN
-                link.rel = "preconnect";
-                link.href = "https://fonts.googleapis.com";
-                document.head.appendChild(link);
-
-                preconnect2 = document.createElement("link");
-                preconnect2.rel = "preconnect";
-                preconnect2.href = "https://fonts.gstatic.com";
-                preconnect2.crossOrigin = "";
-                document.head.appendChild(preconnect2);
-
-                fontLink = document.createElement("link");
-                fontLink.rel = "stylesheet";
-                fontLink.href =
-                    "https://fonts.googleapis.com/css2?family=Sora:wght@100..800&display=swap";
-                document.head.appendChild(fontLink);
-            }
-        })();
-        </script>
+        <!-- Fonts: self-hosted Inter + Inter Tight (no CDN dependency) -->
+        <link rel="stylesheet" href="/fonts/inter.css">
+        <link rel="stylesheet" href="/fonts/inter-tight.css">
 
         <!-- PWA Install Prompt Handler -->
         <script>
@@ -128,122 +100,7 @@
         </script>
     </head>
 
-    <body class="scrollbars">
-        <style>
-        html {
-            height: 100vh;
-        }
-
-        /* Splash overlay styles — must be in <style> block, not inline attributes,
-           because Tauri v2 CSP blocks inline style attributes (nonce-based policy) */
-        #splash-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            z-index: 99999;
-            display: none;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            gap: 32px;
-            background: #001432;
-            transition: opacity 0.3s ease-out;
-        }
-        #splash-overlay .splash-logo {
-            animation: splash-fade-in 0.4s ease-out;
-        }
-        #splash-overlay .splash-bar {
-            width: 40px;
-            height: 4px;
-            border-radius: 2px;
-            background: rgba(2, 186, 240, 0.2);
-            overflow: hidden;
-            animation: splash-fade-in 0.6s ease-out 0.2s both;
-        }
-        #splash-overlay .splash-bar-inner {
-            width: 100%;
-            height: 100%;
-            border-radius: 2px;
-            background: linear-gradient(90deg, #b123b3, #02baf0, #02e6d5);
-            animation: splash-loading 1.2s ease-in-out infinite;
-            transform-origin: left;
-        }
-        @keyframes splash-fade-in {
-            from {
-                opacity: 0;
-                transform: scale(0.95);
-            }
-            to {
-                opacity: 1;
-                transform: scale(1);
-            }
-        }
-        @keyframes splash-loading {
-            0% {
-                transform: scaleX(0);
-                transform-origin: left;
-            }
-            50% {
-                transform: scaleX(1);
-                transform-origin: left;
-            }
-            50.1% {
-                transform: scaleX(1);
-                transform-origin: right;
-            }
-            100% {
-                transform: scaleX(0);
-                transform-origin: right;
-            }
-        }
-        </style>
-
-        <!-- Splash overlay: shown while React loads, removed by main.tsx -->
-        <div id="splash-overlay">
-            <svg
-                class="splash-logo"
-                width="120"
-                height="120"
-                viewBox="0 0 38 38"
-                fill="none"
-                xmlns="http://www.w3.org/2000/svg"
-            >
-                <path
-                    fill="url(#splash-grad)"
-                    d="M12.973 29.544.485 25.302a.367.367 0 0 0-.485.35v7.738c0 .158.1.298.25.349l12.487 4.241a.367.367 0 0 0 .485-.349v-7.738a.37.37 0 0 0-.25-.35m12.989-14.84-12.49 4.241a.368.368 0 0 0-.25.35v7.738c0 .252.247.43.485.349l12.49-4.242c.15-.05.25-.19.25-.349v-7.738a.367.367 0 0 0-.485-.35M37.692.012l-20.911 6.76a.368.368 0 0 0-.255.35v7.928c0 .158.156.27.308.22l20.911-6.759a.369.369 0 0 0 .255-.35V.23a.235.235 0 0 0-.308-.22"
-                />
-                <defs>
-                    <linearGradient
-                        id="splash-grad"
-                        x1="1.77"
-                        x2="38.73"
-                        y1="31.574"
-                        y2="5.819"
-                        gradientUnits="userSpaceOnUse"
-                    >
-                        <stop offset=".021" stop-color="#B15EB3" />
-                        <stop offset=".292" stop-color="#B123B3" />
-                        <stop offset=".424" stop-color="#6E5CCA" />
-                        <stop offset=".554" stop-color="#348FDF" />
-                        <stop offset=".699" stop-color="#02BAF0" />
-                        <stop offset=".897" stop-color="#02E6D5" />
-                    </linearGradient>
-                </defs>
-            </svg>
-            <div class="splash-bar">
-                <div class="splash-bar-inner"></div>
-            </div>
-        </div>
-        <script>
-        // Only show splash overlay in Tauri native app
-        if (window.__TAURI_INTERNALS__) {
-            document.getElementById("splash-overlay").style.display = "flex";
-            window.__SPLASH_SHOWN_AT__ = Date.now();
-        }
-        </script>
-
+    <body>
         <div id="root"></div>
         <script type="module" src="/app/main.tsx"></script>
     </body>

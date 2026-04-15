@@ -11,7 +11,9 @@ import { drizzleDb } from "./db.server";
 
 // If the app is running locally, use the memory session storage
 // Otherwise, use the drizzle session storage
-const sessionStorageAdapter = process.env.SHOPIFY_APP_URL?.includes("localhost")
+const sessionStorageAdapter = process.env.SHOPIFY_APP_URL?.includes(
+    "trycloudflare.com"
+)
     ? new MemorySessionStorage()
     : new DrizzleSessionStorageAdapter(drizzleDb, sessionTable);
 
@@ -19,19 +21,16 @@ const sessionStorageAdapter = process.env.SHOPIFY_APP_URL?.includes("localhost")
 const shopify = shopifyApp({
     apiKey: process.env.SHOPIFY_API_KEY,
     apiSecretKey: process.env.SHOPIFY_API_SECRET || "",
-    apiVersion: ApiVersion.January25,
+    apiVersion: ApiVersion.April26,
     scopes: process.env.SCOPES?.split(","),
     appUrl: process.env.SHOPIFY_APP_URL || "",
     authPathPrefix: "/auth",
     sessionStorage: sessionStorageAdapter,
     distribution: AppDistribution.AppStore,
-    ...(process.env.SHOP_CUSTOM_DOMAIN
-        ? { customShopDomains: [process.env.SHOP_CUSTOM_DOMAIN] }
-        : {}),
 });
 
 export default shopify;
-export const apiVersion = ApiVersion.October24;
+export const apiVersion = ApiVersion.April26;
 export const addDocumentResponseHeaders = shopify.addDocumentResponseHeaders;
 export const authenticate = shopify.authenticate;
 export const unauthenticated = shopify.unauthenticated;

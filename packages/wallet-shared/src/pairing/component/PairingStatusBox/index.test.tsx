@@ -49,16 +49,7 @@ vi.mock("../../clients/store", () => ({
     })),
 }));
 
-// Mock UI components
-vi.mock("@frak-labs/ui/component/Button", () => ({
-    Button: ({ children, onClick, className }: any) => (
-        <button type="button" onClick={onClick} className={className}>
-            {children}
-        </button>
-    ),
-}));
-
-vi.mock("@frak-labs/ui/component/Spinner", () => ({
+vi.mock("@frak-labs/design-system/components/Spinner", () => ({
     Spinner: () => <div data-testid="spinner">Loading</div>,
 }));
 

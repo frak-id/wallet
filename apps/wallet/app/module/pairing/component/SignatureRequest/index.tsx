@@ -1,5 +1,7 @@
-import { Button } from "@frak-labs/ui/component/Button";
-import { Spinner } from "@frak-labs/ui/component/Spinner";
+import { Box } from "@frak-labs/design-system/components/Box";
+import { Button } from "@frak-labs/design-system/components/Button";
+import { Spinner } from "@frak-labs/design-system/components/Spinner";
+import { Text } from "@frak-labs/design-system/components/Text";
 import type { TargetPairingClient } from "@frak-labs/wallet-shared";
 import {
     useDeclineSignatureRequest,
@@ -12,7 +14,7 @@ import { useState } from "react";
 import { Trans, useTranslation } from "react-i18next";
 import { Panel } from "@/module/common/component/Panel";
 import { Title } from "@/module/common/component/Title";
-import styles from "./index.module.css";
+import * as styles from "./index.css";
 
 /**
  * List of signature requests
@@ -80,7 +82,7 @@ function SignatureRequestDescription({
     request: TargetPairingPendingSignature;
 }) {
     return (
-        <p className={styles.signatureRequest__description}>
+        <Text className={styles.signatureRequestDescription}>
             <Trans
                 i18nKey={"wallet.pairing.signatureRequest.description"}
                 values={{
@@ -88,13 +90,13 @@ function SignatureRequestDescription({
                 }}
                 components={{
                     strongFrom: (
-                        <strong className={styles.signatureRequest__from}>
+                        <strong className={styles.signatureRequestFrom}>
                             {request.from}
                         </strong>
                     ),
                 }}
             />
-        </p>
+        </Text>
     );
 }
 
@@ -113,15 +115,17 @@ function SignatureRequestState({
     const { t } = useTranslation();
 
     return (
-        <div className={styles.signatureRequest__state}>
-            <span>{t("wallet.pairing.signatureRequest.stateTitle")}</span>
-            <span>
+        <Box className={styles.signatureRequestState}>
+            <Text as="span" variant="bodySmall">
+                {t("wallet.pairing.signatureRequest.stateTitle")}
+            </Text>
+            <Box as="span">
                 <SignatureRequestStateLabel
                     status={status}
                     isDeclined={isDeclined}
                 />
-            </span>
-        </div>
+            </Box>
+        </Box>
     );
 }
 
@@ -139,47 +143,49 @@ function SignatureRequestStateLabel({
 
     if (isDeclined) {
         return (
-            <span className={styles.signatureRequest__stateLabel}>
-                <span className={styles.signatureRequest__stateLabelError}>
+            <Box as="span" className={styles.signatureRequestStateLabel}>
+                <Box as="span" className={styles.stateLabelError}>
                     <X size={16} />
-                </span>
+                </Box>
                 {t("wallet.pairing.signatureRequest.state.declined")}
-            </span>
+            </Box>
         );
     }
 
     switch (status) {
         case "pending":
             return (
-                <span className={styles.signatureRequest__stateLabel}>
-                    <Spinner />
+                <Box as="span" className={styles.signatureRequestStateLabel}>
+                    <Spinner size="s" />
                     {t("wallet.pairing.signatureRequest.state.pending")}
-                </span>
+                </Box>
             );
         case "success":
             return (
-                <span className={styles.signatureRequest__stateLabel}>
-                    <Check
-                        size={16}
-                        className={styles.signatureRequest__stateLabelSuccess}
-                    />
+                <Box as="span" className={styles.signatureRequestStateLabel}>
+                    <Check size={16} className={styles.stateLabelSuccess} />
                     {t("wallet.pairing.signatureRequest.state.success")}
-                </span>
+                </Box>
             );
         case "error":
             return (
-                <span className={styles.signatureRequest__stateLabel}>
-                    <X
-                        size={16}
-                        className={styles.signatureRequest__stateLabelError}
-                    />
+                <Box as="span" className={styles.signatureRequestStateLabel}>
+                    <X size={16} className={styles.stateLabelError} />
                     {t("wallet.pairing.signatureRequest.state.error")}
-                </span>
+                </Box>
             );
         case "idle":
-            return t("wallet.pairing.signatureRequest.state.idle");
+            return (
+                <Text as="span" variant="bodySmall">
+                    {t("wallet.pairing.signatureRequest.state.idle")}
+                </Text>
+            );
         default:
-            return t("wallet.pairing.signatureRequest.state.unknown");
+            return (
+                <Text as="span" variant="bodySmall">
+                    {t("wallet.pairing.signatureRequest.state.unknown")}
+                </Text>
+            );
     }
 }
 
@@ -200,27 +206,27 @@ function SignatureRequestActions({
     declineRequest: () => void;
 }) {
     const { t } = useTranslation();
+    const isDisabled = status === "pending" || status === "success";
 
     return (
-        <div className={styles.signatureRequest__buttons}>
+        <Box className={styles.signatureRequestButtons}>
             <Button
-                variant={"danger"}
-                size={"small"}
+                variant={"secondary"}
+                className={styles.dangerButton}
                 onClick={() => declineRequest()}
                 type={"button"}
-                disabled={status === "pending" || status === "success"}
+                disabled={isDisabled}
             >
                 {t("wallet.pairing.signatureRequest.buttons.reject")}
             </Button>
             <Button
                 variant={"primary"}
-                size={"small"}
                 onClick={() => signRequest()}
                 type={"button"}
-                disabled={status === "pending" || status === "success"}
+                disabled={isDisabled}
             >
                 {t("wallet.pairing.signatureRequest.buttons.sign")}
             </Button>
-        </div>
+        </Box>
     );
 }

@@ -20,6 +20,10 @@ interface UseGetMerchantInformationParams {
      * Optional query options, see {@link @tanstack/react-query!useQuery | `useQuery()`} for more infos
      */
     query?: QueryOptions;
+    /**
+     * Time in ms to cache the result at the core SDK level. Default: 30_000 (30s). Set to 0 to disable.
+     */
+    cacheTime?: number;
 }
 
 /**
@@ -40,6 +44,7 @@ interface UseGetMerchantInformationParams {
  */
 export function useGetMerchantInformation({
     query,
+    cacheTime,
 }: UseGetMerchantInformationParams = {}) {
     const client = useFrakClient();
 
@@ -50,7 +55,7 @@ export function useGetMerchantInformation({
             if (!client) {
                 throw new ClientNotFound();
             }
-            return getMerchantInformation(client);
+            return getMerchantInformation(client, { cacheTime });
         },
     });
 }

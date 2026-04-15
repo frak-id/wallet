@@ -4,7 +4,7 @@ import {
     rewardsKey,
 } from "@frak-labs/wallet-shared";
 import { useQuery } from "@tanstack/react-query";
-import { useAccount } from "wagmi";
+import { useConnection } from "wagmi";
 
 function toTimestamp(value: Date | string): number {
     const date = value instanceof Date ? value : new Date(value);
@@ -13,7 +13,7 @@ function toTimestamp(value: Date | string): number {
 }
 
 export function useGetRewardHistory() {
-    const { address } = useAccount();
+    const { address } = useConnection();
 
     const { data, error, isLoading, refetch } = useQuery({
         queryKey: rewardsKey.historyByAddress(address),

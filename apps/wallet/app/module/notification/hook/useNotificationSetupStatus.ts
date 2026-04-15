@@ -22,6 +22,7 @@ export function useNotificationStatus() {
     });
 
     const permissionGranted = permission === "granted";
+    const hasResolvedPermission = permission !== undefined;
 
     const { data: localToken } = useQuery({
         queryKey: notificationKey.push.localToken,
@@ -42,6 +43,9 @@ export function useNotificationStatus() {
 
     const hasLocalCapability =
         permissionGranted && localToken !== null && localToken !== undefined;
+    const isReady =
+        hasResolvedPermission &&
+        (!permissionGranted || localToken !== undefined);
 
     useEffect(() => {
         const controller = new AbortController();
@@ -93,9 +97,16 @@ export function useNotificationStatus() {
             permissionStatus: (permission ??
                 "prompt") as NotificationPermissionStatus,
             permissionGranted,
+            isReady,
             hasLocalCapability,
             hasBackendToken: hasBackendToken ?? false,
         }),
-        [permission, permissionGranted, hasLocalCapability, hasBackendToken]
+        [
+            permission,
+            permissionGranted,
+            isReady,
+            hasLocalCapability,
+            hasBackendToken,
+        ]
     );
 }

@@ -45,7 +45,7 @@ export default defineConfig((): UserConfig => {
                     inlineConst: { mode: "all", pass: 3 },
                 },
                 output: {
-                    advancedChunks: {
+                    codeSplitting: {
                         minShareCount: 1,
                         groups: [
                             {

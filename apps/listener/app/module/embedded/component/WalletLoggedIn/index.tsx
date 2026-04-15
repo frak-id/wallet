@@ -4,18 +4,18 @@ import {
     formatAmount,
     getCurrencyAmountKey,
 } from "@frak-labs/core-sdk";
-import { useCopyToClipboardWithState } from "@frak-labs/ui/hook/useCopyToClipboardWithState";
-import { Copy } from "@frak-labs/ui/icons/Copy";
-import { Share } from "@frak-labs/ui/icons/Share";
-import { prefixWalletCss } from "@frak-labs/ui/utils/prefixWalletCss";
 import {
     clientIdStore,
     OriginPairingState,
     trackGenericEvent,
+    useCopyToClipboardWithState,
     useGetUserBalance,
 } from "@frak-labs/wallet-shared";
 import { cx } from "class-variance-authority";
 import { toast } from "sonner";
+import { Copy } from "@/module/common/icons/Copy";
+import { Share } from "@/module/common/icons/Share";
+import { prefixWalletCss } from "@/module/common/utils/prefixWalletCss";
 import { ButtonWallet } from "@/module/embedded/component/ButtonWallet";
 import {
     OnboardingShare,

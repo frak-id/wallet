@@ -8,10 +8,9 @@ handle = "frakdev"
 
 [build]
 automatically_update_urls_on_dev = true
-include_config_on_deploy = true
 
 [webhooks]
-api_version = "2025-01"
+api_version = "2026-04"
 
   [[webhooks.subscriptions]]
   topics = [ "app_purchases_one_time/update", "app/uninstalled" ]

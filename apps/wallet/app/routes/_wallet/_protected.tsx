@@ -1,28 +1,22 @@
-import {
-    getSafeSession,
-    OriginPairingState,
-    pairingStore,
-    selectDistantWebauthnSession,
-    sessionStore,
-} from "@frak-labs/wallet-shared";
+import { getSafeSession } from "@frak-labs/wallet-shared";
 import { createFileRoute, Outlet, redirect } from "@tanstack/react-router";
-import { GlobalLayout } from "@/module/common/component/GlobalLayout";
-import { TargetPairingState } from "@/module/pairing/component/TargetPairingState";
+import { AppShell } from "@/module/common/component/AppShell";
+import { pendingActionsStore } from "@/module/pending-actions/stores/pendingActionsStore";
 
 export const Route = createFileRoute("/_wallet/_protected")({
     component: ProtectedLayout,
     beforeLoad: async ({ location }) => {
-        const search = new URLSearchParams(location.search);
-        const pairingId = search.get("id");
-
-        if (pairingId) {
-            pairingStore.getState().setPendingPairingId(pairingId);
-        }
-
-        // Check if user is authenticated
-        // Use getSafeSession() to handle cases where Zustand store hasn't hydrated from localStorage yet
         const session = getSafeSession();
         if (!session?.token) {
+            // Preserve the intended destination for post-auth resume
+            const search = Object.fromEntries(
+                new URLSearchParams(location.search)
+            );
+            pendingActionsStore.getState().addAction({
+                type: "navigation",
+                to: location.pathname,
+                search: Object.keys(search).length > 0 ? search : undefined,
+            });
             throw redirect({
                 to: "/register",
                 replace: true,
@@ -32,16 +26,16 @@ export const Route = createFileRoute("/_wallet/_protected")({
 });
 
 function ProtectedLayout() {
-    const session = sessionStore(selectDistantWebauthnSession);
-    const Component =
-        session?.type === "distant-webauthn"
-            ? OriginPairingState
-            : TargetPairingState;
+    // const session = sessionStore(selectDistantWebauthnSession);
+    // const Component =
+    //     session?.type === "distant-webauthn"
+    //         ? OriginPairingState
+    //         : TargetPairingState;
 
     return (
-        <GlobalLayout navigation={true}>
-            <Component type="wallet" />
+        <AppShell navigation={true}>
+            {/*<Component type="wallet" />*/}
             <Outlet />
-        </GlobalLayout>
+        </AppShell>
     );
 }

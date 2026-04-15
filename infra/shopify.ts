@@ -1,5 +1,4 @@
 import {
-    backendUrl,
     businessUrl,
     componentsUrl,
     nexusRpcSecret,
@@ -19,7 +18,9 @@ const shopifyEnv = {
     STAGE: normalizedStageName,
     FRAK_WALLET_URL: walletUrl,
     BUSINESS_URL: businessUrl,
-    BACKEND_URL: backendUrl,
+    BACKEND_URL: isProd
+        ? "https://backend.frak.id"
+        : "https://backend-dev.frak.id",
     FRAK_COMPONENTS_URL: componentsUrl,
     POSTGRES_SHOPIFY_DB: isProd ? "shopify_prod" : "shopify_dev",
     POSTGRES_USER: isProd ? "shopify-prod" : "shopify-dev",

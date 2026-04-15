@@ -62,7 +62,7 @@ function CampaignTable({ campaigns }: { campaigns: CampaignResponse[] }) {
     const { t } = useTranslation();
     const rootData = useRouteLoaderData<typeof rootLoader>("routes/app");
     const currencySymbol = (rootData?.shop.preferredCurrency ??
-        "usd") as Currency;
+        "eur") as Currency;
 
     if (campaigns.length === 0) {
         return (
@@ -179,6 +179,7 @@ function CampaignTableRow({
 }) {
     const fetcher = useFetcher<typeof action>();
     const { t } = useTranslation();
+    const rootData = useRouteLoaderData<typeof rootLoader>("routes/app");
 
     const isSubmitting = fetcher.state !== "idle";
     const submittingIntent = fetcher.formData?.get("intent");
@@ -277,7 +278,7 @@ function CampaignTableRow({
                         variant="tertiary"
                         onClick={() =>
                             window.open(
-                                `${process.env.BUSINESS_URL}/campaigns/${campaign.id}`,
+                                `${rootData?.businessUrl ?? ""}/campaigns/${campaign.id}`,
                                 "_blank"
                             )
                         }
@@ -519,7 +520,7 @@ function CampaignCreation({
     }, [rawCAC, ratio, globalBudget]);
 
     const currencySymbol = (rootData?.shop.preferredCurrency ??
-        "usd") as Currency;
+        "eur") as Currency;
 
     const handleCreate = useCallback(() => {
         fetcher.submit(
@@ -552,7 +553,7 @@ function CampaignCreation({
                     <s-text-field
                         label={t("status.campaign.nameInput")}
                         value={name}
-                        onChange={(e) => setName(e.currentTarget.value)}
+                        onChange={(e) => setName(e.currentTarget.value ?? "")}
                         autocomplete="off"
                     />
                 </s-grid-item>
@@ -571,7 +572,7 @@ function CampaignCreation({
                             label={t("status.campaign.budget")}
                             value={globalBudget}
                             onChange={(e) =>
-                                setGlobalBudget(e.currentTarget.value)
+                                setGlobalBudget(e.currentTarget.value ?? "")
                             }
                             inputMode="decimal"
                             min={0}
@@ -586,7 +587,9 @@ function CampaignCreation({
                         <s-number-field
                             label={t("status.campaign.rawCAC")}
                             value={rawCAC}
-                            onChange={(e) => setRawCAC(e.currentTarget.value)}
+                            onChange={(e) =>
+                                setRawCAC(e.currentTarget.value ?? "")
+                            }
                             inputMode="decimal"
                             min={0}
                             step={0.01}

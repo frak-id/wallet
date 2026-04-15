@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { useAccount } from "wagmi";
+import { useConnection } from "wagmi";
 import { moneriumKey } from "@/module/monerium/queryKeys/monerium";
 import {
     isMoneriumConnected,
@@ -11,7 +11,7 @@ import { useMoneriumTokenRefresh } from "./useMoneriumClient";
 const FIVE_MINUTES_MS = 5 * 60 * 1000;
 
 export function useMoneriumAddresses() {
-    const { address: walletAddress } = useAccount();
+    const { address: walletAddress } = useConnection();
     const isConnected = moneriumStore(isMoneriumConnected);
     const accessToken = moneriumStore((s) => s.accessToken);
     const { isReady } = useMoneriumTokenRefresh();

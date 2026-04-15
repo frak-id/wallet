@@ -44,6 +44,7 @@ describe("RuleEngineService", () => {
     const createMockAssetLogRepository = (): AssetLogRepository =>
         ({
             countByCampaignAndUserAsReferee: vi.fn(),
+            countByMerchantAndUserAsReferee: vi.fn(),
         }) as unknown as AssetLogRepository;
 
     const createMockCampaign = (
@@ -209,7 +210,7 @@ describe("RuleEngineService", () => {
             expect(mockRewardCalculator.calculateAll).toHaveBeenCalled();
         });
 
-        it("should use default cap of 1 when maxRewardsPerUser is not set", async () => {
+        it("should have no cap when maxRewardsPerUser is not set", async () => {
             const mockRepository = createMockRepository();
             const mockConditionEvaluator = createMockConditionEvaluator();
             const mockRewardCalculator = createMockRewardCalculator();
@@ -227,17 +228,24 @@ describe("RuleEngineService", () => {
                             amount: 100,
                         },
                     ],
-                    // maxRewardsPerUser is undefined
+                    // maxRewardsPerUser is undefined — no per-campaign cap
                 },
             });
+
+            const calculatedReward = createMockCalculatedReward();
 
             vi.mocked(mockRepository.findActiveByMerchant).mockResolvedValue([
                 campaign,
             ]);
             vi.mocked(mockConditionEvaluator.evaluate).mockReturnValue(true);
-            vi.mocked(
-                mockAssetLogRepository.countByCampaignAndUserAsReferee
-            ).mockResolvedValue(1);
+            vi.mocked(mockRewardCalculator.calculateAll).mockReturnValue({
+                calculated: [calculatedReward],
+                errors: [],
+            });
+            vi.mocked(mockRepository.consumeBudget).mockResolvedValue({
+                success: true,
+                remaining: {},
+            });
 
             const service = new RuleEngineService(
                 mockRepository,
@@ -252,9 +260,11 @@ describe("RuleEngineService", () => {
                 context: createMockContext(),
             });
 
-            // Should return empty rewards because user count (1) >= default cap (1)
-            expect(result.rewards).toEqual([]);
-            expect(mockRewardCalculator.calculateAll).not.toHaveBeenCalled();
+            // Should proceed to calculate rewards — no per-campaign cap
+            expect(result.rewards).toEqual([calculatedReward]);
+            expect(
+                mockAssetLogRepository.countByCampaignAndUserAsReferee
+            ).not.toHaveBeenCalled();
         });
 
         it("should respect custom cap value of 5", async () => {
@@ -362,6 +372,172 @@ describe("RuleEngineService", () => {
             expect(result.rewards).toEqual([]);
             expect(result.budgetExceeded).toBe(false);
             expect(mockRewardCalculator.calculateAll).not.toHaveBeenCalled();
+        });
+
+        it("should return empty rewards when merchant-wide cap is reached", async () => {
+            const mockRepository = createMockRepository();
+            const mockConditionEvaluator = createMockConditionEvaluator();
+            const mockRewardCalculator = createMockRewardCalculator();
+            const mockAssetLogRepository = createMockAssetLogRepository();
+
+            const campaign = createMockCampaign({
+                rule: {
+                    trigger: "purchase",
+                    conditions: [],
+                    rewards: [
+                        {
+                            recipient: "referee",
+                            type: "token",
+                            amountType: "fixed",
+                            amount: 100,
+                        },
+                    ],
+                    merchantMaxRewardsPerUser: 2,
+                },
+            });
+
+            vi.mocked(mockRepository.findActiveByMerchant).mockResolvedValue([
+                campaign,
+            ]);
+            vi.mocked(mockConditionEvaluator.evaluate).mockReturnValue(true);
+            // User has 2 rewards across all merchant campaigns
+            vi.mocked(
+                mockAssetLogRepository.countByMerchantAndUserAsReferee
+            ).mockResolvedValue(2);
+
+            const service = new RuleEngineService(
+                mockRepository,
+                mockConditionEvaluator,
+                mockRewardCalculator,
+                mockAssetLogRepository
+            );
+
+            const result = await service.evaluateRules({
+                merchantId: "merchant-1",
+                trigger: "purchase",
+                context: createMockContext(),
+            });
+
+            expect(result.rewards).toEqual([]);
+            expect(result.budgetExceeded).toBe(false);
+            expect(mockRewardCalculator.calculateAll).not.toHaveBeenCalled();
+        });
+
+        it("should proceed when merchant-wide count is under cap", async () => {
+            const mockRepository = createMockRepository();
+            const mockConditionEvaluator = createMockConditionEvaluator();
+            const mockRewardCalculator = createMockRewardCalculator();
+            const mockAssetLogRepository = createMockAssetLogRepository();
+
+            const campaign = createMockCampaign({
+                rule: {
+                    trigger: "purchase",
+                    conditions: [],
+                    rewards: [
+                        {
+                            recipient: "referee",
+                            type: "token",
+                            amountType: "fixed",
+                            amount: 100,
+                        },
+                    ],
+                    merchantMaxRewardsPerUser: 3,
+                },
+            });
+
+            const calculatedReward = createMockCalculatedReward();
+
+            vi.mocked(mockRepository.findActiveByMerchant).mockResolvedValue([
+                campaign,
+            ]);
+            vi.mocked(mockConditionEvaluator.evaluate).mockReturnValue(true);
+            vi.mocked(
+                mockAssetLogRepository.countByMerchantAndUserAsReferee
+            ).mockResolvedValue(1);
+            vi.mocked(mockRewardCalculator.calculateAll).mockReturnValue({
+                calculated: [calculatedReward],
+                errors: [],
+            });
+            vi.mocked(mockRepository.consumeBudget).mockResolvedValue({
+                success: true,
+                remaining: {},
+            });
+
+            const service = new RuleEngineService(
+                mockRepository,
+                mockConditionEvaluator,
+                mockRewardCalculator,
+                mockAssetLogRepository
+            );
+
+            const result = await service.evaluateRules({
+                merchantId: "merchant-1",
+                trigger: "purchase",
+                context: createMockContext(),
+            });
+
+            expect(result.rewards).toEqual([calculatedReward]);
+            expect(mockRewardCalculator.calculateAll).toHaveBeenCalled();
+        });
+
+        it("should skip merchant-wide count query when no campaign uses it", async () => {
+            const mockRepository = createMockRepository();
+            const mockConditionEvaluator = createMockConditionEvaluator();
+            const mockRewardCalculator = createMockRewardCalculator();
+            const mockAssetLogRepository = createMockAssetLogRepository();
+
+            const campaign = createMockCampaign({
+                rule: {
+                    trigger: "purchase",
+                    conditions: [],
+                    rewards: [
+                        {
+                            recipient: "referee",
+                            type: "token",
+                            amountType: "fixed",
+                            amount: 100,
+                        },
+                    ],
+                    maxRewardsPerUser: 5,
+                    // merchantMaxRewardsPerUser not set
+                },
+            });
+
+            const calculatedReward = createMockCalculatedReward();
+
+            vi.mocked(mockRepository.findActiveByMerchant).mockResolvedValue([
+                campaign,
+            ]);
+            vi.mocked(mockConditionEvaluator.evaluate).mockReturnValue(true);
+            vi.mocked(
+                mockAssetLogRepository.countByCampaignAndUserAsReferee
+            ).mockResolvedValue(0);
+            vi.mocked(mockRewardCalculator.calculateAll).mockReturnValue({
+                calculated: [calculatedReward],
+                errors: [],
+            });
+            vi.mocked(mockRepository.consumeBudget).mockResolvedValue({
+                success: true,
+                remaining: {},
+            });
+
+            const service = new RuleEngineService(
+                mockRepository,
+                mockConditionEvaluator,
+                mockRewardCalculator,
+                mockAssetLogRepository
+            );
+
+            await service.evaluateRules({
+                merchantId: "merchant-1",
+                trigger: "purchase",
+                context: createMockContext(),
+            });
+
+            // Should never query merchant-wide count
+            expect(
+                mockAssetLogRepository.countByMerchantAndUserAsReferee
+            ).not.toHaveBeenCalled();
         });
     });
 

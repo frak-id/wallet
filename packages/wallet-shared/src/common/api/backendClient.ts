@@ -4,7 +4,7 @@ import { clientIdStore } from "../../stores/clientIdStore";
 import { sessionStore } from "../../stores/sessionStore";
 import { getSafeSdkSession, getSafeSession } from "../utils/safeSession";
 
-const backendUrl = process.env.BACKEND_URL ?? "http://localhost:3030";
+const backendUrl = process.env.BACKEND_URL ?? "https://localhost:3030";
 
 /**
  * Treaty client with authentication tokens if present

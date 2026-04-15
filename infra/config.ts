@@ -37,7 +37,7 @@ export const erpcUrl = isProd
 export const backendUrl = getStaticVariable({
     prod: "https://backend.frak.id",
     dev: "https://backend.gcp-dev.frak.id",
-    local: "http://localhost:3030",
+    local: "https://localhost:3030",
 });
 export const walletUrl = getStaticVariable({
     prod: "https://wallet.frak.id",
@@ -55,6 +55,14 @@ export const businessUrl = getStaticVariable({
 });
 export const openPanelApiUrl = "https://op-api.gcp.frak.id";
 
+export const sqldUrl =
+    "http://sqld-production-service.db-production.svc.cluster.local:8080";
+
+// RustFS endpoint (single prod pod shared by all stages)
+export const rustfsEndpoint =
+    "http://rustfs-production-service.db-production.svc.cluster.local:9000";
+export const rustfsCdnBaseUrl = "https://cdn.gcp.frak.id";
+
 // Some secrets
 export const drpcApiKey = new sst.Secret("DRPC_API_KEY");
 export const pimlicoApiKey = new sst.Secret("PIMLICO_API_KEY");
@@ -65,6 +73,7 @@ export const mongoBusinessDb = new sst.Secret("MONGODB_BUSINESS_URI");
 export const onRampUrl = new sst.Secret("FUNDING_ON_RAMP_URL");
 export const jwtBusinessSecret = new sst.Secret("JWT_BUSINESS_SECRET");
 export const fcmServiceAccount = new sst.Secret("FCM_SERVICE_ACCOUNT_JSON");
+export const mongoNexusUri = new sst.Secret("MONGODB_NEXUS_URI");
 
 // Shopify
 export const shopifyClientId = new sst.Secret("SHOPIFY_CLIENT_ID");

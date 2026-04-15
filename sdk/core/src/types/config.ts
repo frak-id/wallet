@@ -27,7 +27,7 @@ export type FrakWalletSdkConfig = {
         /**
          * Your application name (will be displayed in a few modals and in SSO)
          */
-        name: string;
+        name?: string;
         /**
          * Your merchant ID from the Frak dashboard (UUID format)
          * Used for referral tracking and analytics
@@ -71,6 +71,13 @@ export type FrakWalletSdkConfig = {
      * @defaultValue window.location.host
      */
     domain?: string;
+    /**
+     * Wait for backend config before rendering components.
+     * When true (default), components show a spinner until backend config is resolved.
+     * When false, components render immediately with SDK static config / HTML attributes.
+     * @defaultValue true
+     */
+    waitForBackendConfig?: boolean;
 };
 
 /**
@@ -111,7 +118,7 @@ export type I18nConfig =
     | LocalizedI18nConfig;
 
 /**
- * A localized i18n config
+ * A localized i18n config (inline objects only — URL-based i18n removed)
  * @category Config
  */
-export type LocalizedI18nConfig = `${string}.css` | { [key: string]: string };
+export type LocalizedI18nConfig = { [key: string]: string };

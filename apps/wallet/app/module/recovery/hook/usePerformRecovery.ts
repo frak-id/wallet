@@ -3,7 +3,6 @@ import type {
     WebAuthNWallet,
 } from "@frak-labs/wallet-shared";
 import {
-    doAddPassKeyFnAbi,
     getPimlicoClient,
     getPimlicoTransport,
 } from "@frak-labs/wallet-shared";
@@ -21,6 +20,7 @@ import {
 import { createBundlerClient } from "viem/account-abstraction";
 import { useClient } from "wagmi";
 import { recoveryKey } from "@/module/recovery/queryKeys/recovery";
+import { doAddPassKeyFnAbi } from "@/module/recovery/utils/abi";
 import { recoverySmartAccount } from "@/module/wallet/smartWallet/RecoverySmartWallet";
 
 type MutationParams = {

@@ -7,10 +7,10 @@ import {
     RpcErrorCodes,
     type RpcPromiseHandler,
 } from "@frak-labs/frame-connector";
-import { authenticatedBackendApi } from "@frak-labs/wallet-shared";
+import { estimatedRewardsQueryOptions } from "@frak-labs/wallet-shared";
 import { useQueryClient } from "@tanstack/react-query";
 import { useCallback } from "react";
-import { estimatedRewardsQueryOptions } from "@/module/hooks/useEstimatedRewards";
+import { resolvingContextStore } from "@/module/stores/resolvingContextStore";
 import type { WalletRpcContext } from "@/module/types/context";
 
 type OnGetMerchantInformation = RpcPromiseHandler<
@@ -21,6 +21,7 @@ type OnGetMerchantInformation = RpcPromiseHandler<
 
 export function useOnGetMerchantInformation(): OnGetMerchantInformation {
     const queryClient = useQueryClient();
+    const backendConfig = resolvingContextStore((s) => s.backendSdkConfig);
 
     return useCallback(
         async (_params, context) => {
@@ -35,31 +36,19 @@ export function useOnGetMerchantInformation(): OnGetMerchantInformation {
 
             const domain = new URL(context.sourceUrl).host.replace("www.", "");
 
-            const [resolveResult, rewards] = await Promise.all([
-                authenticatedBackendApi.user.merchant.resolve.get({
-                    query: { domain },
-                }),
-                queryClient.fetchQuery(
-                    estimatedRewardsQueryOptions(merchantId)
-                ),
-            ]);
-
-            if (resolveResult.error || !resolveResult.data) {
-                throw new FrakRpcError(
-                    RpcErrorCodes.configError,
-                    "The current merchant doesn't exist within the Frak ecosystem"
-                );
-            }
+            const rewards = await queryClient.fetchQuery(
+                estimatedRewardsQueryOptions(merchantId)
+            );
 
             return {
-                id: resolveResult.data.merchantId,
+                id: merchantId,
                 onChainMetadata: {
-                    name: resolveResult.data.name ?? "",
+                    name: backendConfig?.name ?? "",
                     domain,
                 },
-                rewards,
+                rewards: rewards as GetMerchantInformationReturnType["rewards"],
             } satisfies GetMerchantInformationReturnType;
         },
-        [queryClient]
+        [queryClient, backendConfig]
     );
 }

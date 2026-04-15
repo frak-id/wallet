@@ -1,8 +1,8 @@
 # apps/wallet
 
-**Generated:** 2026-03-06
-**Commit:** 03e50a956
-**Branch:** dev
+**Generated:** 2026-03-19
+**Commit:** 50035fdd0
+**Branch:** feat/vanilla-extract
 
 TanStack Router SPA for user wallet. SSR disabled, module-based architecture with service worker.
 
@@ -50,6 +50,19 @@ bun run typecheck    # TanStack Router typegen runs first
 bun run test         # Unit tests (wallet-unit project)
 bun run test:e2e     # Playwright E2E tests
 ```
+
+## Styling (Vanilla Extract Migration)
+
+Migrating from CSS Modules (`.module.css`) → Vanilla Extract (`.css.ts`). **In progress** — some components still use CSS Modules.
+
+**New pattern**:
+- Styles in `.css.ts` files using `style()`, `styleVariants()` from `@vanilla-extract/css`
+- Layout via `Box` component with sprinkles props (no manual className for spacing/layout)
+- Semantic tokens: `vars.text.*`, `vars.surface.*`, `vars.border.*` from `@frak-labs/design-system`
+- Responsive: `{ mobile: ..., tablet: ..., desktop: ... }` via sprinkles conditions
+- Vite plugin: `@vanilla-extract/vite-plugin` in `vite.config.ts`
+
+**Import resolution**: tsconfig aliases `@/*` to both `./app/*` and `../../packages/design-system/src/*`
 
 ## Conventions
 

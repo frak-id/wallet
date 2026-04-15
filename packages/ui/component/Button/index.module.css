@@ -56,7 +56,7 @@
 }
 
 .gap--small {
-    gap: 8px;
+    gap: var(--frak-spacing-s);
 }
 
 .gap--medium {

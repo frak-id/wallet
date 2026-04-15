@@ -18,16 +18,11 @@
         "./dom-mocks": "./src/dom-mocks.ts"
     },
     "dependencies": {
-        "@openpanel/web": "*",
-        "@tanstack/react-router": "*",
         "@testing-library/jest-dom": "*",
         "@testing-library/react": "*",
         "@types/react": "*",
         "@vitejs/plugin-react": "*",
-        "idb-keyval": "*",
-        "ox": "*",
         "react": "*",
-        "vitest": "*",
-        "wagmi": "*"
+        "vitest": "*"
     }
 }

@@ -1,0 +1,24 @@
+.previewContainer {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+    width: 100%;
+}
+
+.previewColumn {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.previewTitle {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--frak-text-color);
+}
+
+.previewDescription {
+    font-size: 12px;
+    color: var(--frak-input-placeholder-color);
+    margin-bottom: 0.5rem;
+}

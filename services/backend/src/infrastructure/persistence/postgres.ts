@@ -10,6 +10,7 @@ import { campaignRulesTable } from "../../domain/campaign/db/schema";
 import {
     identityGroupsTable,
     identityNodesTable,
+    installCodesTable,
 } from "../../domain/identity/db/schema";
 import {
     merchantAdminsTable,
@@ -50,6 +51,7 @@ const postgresDb = postgres({
     connection: {
         search_path: schemaName,
     },
+    prepare: false,
 });
 
 export const db = drizzle({
@@ -60,6 +62,7 @@ export const db = drizzle({
         touchpointsTable,
         identityGroupsTable,
         identityNodesTable,
+        installCodesTable,
         merchantsTable,
         merchantAdminsTable,
         merchantOwnershipTransfersTable,

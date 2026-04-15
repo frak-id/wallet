@@ -1,6 +1,7 @@
 import "./attribution";
 import "./expiration";
 import "./pairing";
+import "./installCode";
 import "./rewardCalculation";
 import "./settlement";
 

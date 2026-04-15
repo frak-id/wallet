@@ -87,9 +87,9 @@ describe("buildCampaignRule", () => {
         expect(referee).not.toHaveProperty("chaining");
     });
 
-    it("should default maxRewardsPerUser to 1", () => {
+    it("should default merchantMaxRewardsPerUser to 1", () => {
         const rule = buildCampaignRule({ cacBrut: 10, ratio: 50 });
 
-        expect(rule.maxRewardsPerUser).toBe(1);
+        expect(rule.merchantMaxRewardsPerUser).toBe(1);
     });
 });

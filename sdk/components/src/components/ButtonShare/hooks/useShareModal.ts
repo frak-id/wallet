@@ -3,17 +3,21 @@ import {
     type InteractionTypeKey,
     trackEvent,
 } from "@frak-labs/core-sdk";
+import { modalBuilder } from "@frak-labs/core-sdk/actions";
 import { FrakRpcError, RpcErrorCodes } from "@frak-labs/frame-connector";
 import { useCallback, useState } from "preact/hooks";
-import { getModalBuilderSteps } from "@/utils/setup";
 
 /**
  * Open the share modal
  *
  * @description
- * This function will open the share modal with the configuration provided in the `window.FrakSetup.modalShareConfig` object.
+ * This function will open the share modal, lazily creating a modal builder on demand.
  */
-export function useShareModal(targetInteraction?: InteractionTypeKey) {
+export function useShareModal(
+    targetInteraction?: InteractionTypeKey,
+    placement?: string,
+    sharingLink?: string
+) {
     const [debugInfo, setDebugInfo] = useState<string | undefined>(undefined);
     const [isError, setIsError] = useState(false);
 
@@ -29,19 +33,15 @@ export function useShareModal(targetInteraction?: InteractionTypeKey) {
             return;
         }
 
-        const modalBuilderSteps = getModalBuilderSteps();
-
-        if (!modalBuilderSteps) {
-            throw new Error("modalBuilderSteps not found");
-        }
+        const builder = modalBuilder(window.FrakSetup.client, {});
 
         try {
-            await modalBuilderSteps
-                .sharing(window.FrakSetup?.modalShareConfig ?? {})
-                .display((metadata) => ({
-                    ...metadata,
-                    targetInteraction,
-                }));
+            await builder
+                .sharing(sharingLink ? { link: sharingLink } : {})
+                .display(
+                    (metadata) => ({ ...metadata, targetInteraction }),
+                    placement
+                );
         } catch (e) {
             if (
                 e instanceof FrakRpcError &&
@@ -67,7 +67,7 @@ export function useShareModal(targetInteraction?: InteractionTypeKey) {
             setIsError(true);
             console.error("Error while opening the modal", e);
         }
-    }, [targetInteraction]);
+    }, [targetInteraction, placement, sharingLink]);
 
     return { handleShare, isError, debugInfo };
 }

@@ -1,4 +1,5 @@
 import type { I18nConfig } from "../config";
+import type { ResolvedSdkConfig } from "../resolvedConfig";
 
 /**
  * Event related to the iframe lifecycle
@@ -9,9 +10,9 @@ export type ClientLifecycleEvent =
     | CustomI18nEvent
     | RestoreBackupEvent
     | HearbeatEvent
-    | HandshakeResponse
     | SsoRedirectCompleteEvent
-    | DeepLinkFailedEvent;
+    | DeepLinkFailedEvent
+    | ResolvedConfigEvent;
 
 type CustomCssEvent = {
     clientLifecycle: "modal-css";
@@ -33,31 +34,6 @@ type HearbeatEvent = {
     data?: never;
 };
 
-type HandshakeResponse = {
-    clientLifecycle: "handshake-response";
-    data: {
-        token: string;
-        currentUrl: string;
-        /**
-         * Pending merge token extracted from URL (?fmt= parameter)
-         * When present, listener should execute identity merge in background
-         * URL is cleaned after handshake response is sent
-         */
-        pendingMergeToken?: string;
-        /**
-         * Client ID for identity tracking (belt & suspenders fallback)
-         * Primary delivery is via iframe URL query param; handshake is backup for SSR
-         */
-        clientId?: string;
-        /**
-         * Explicit domain from SDK config (FrakWalletSdkConfig.domain)
-         * When present, listener should prefer this over URL-derived domain
-         * for merchant resolution (handles proxied/tunneled environments)
-         */
-        configDomain?: string;
-    };
-};
-
 type SsoRedirectCompleteEvent = {
     clientLifecycle: "sso-redirect-complete";
     data: { compressed: string };
@@ -66,4 +42,23 @@ type SsoRedirectCompleteEvent = {
 type DeepLinkFailedEvent = {
     clientLifecycle: "deep-link-failed";
     data: { originalUrl: string };
+};
+
+type ResolvedConfigEvent = {
+    clientLifecycle: "resolved-config";
+    data: {
+        merchantId: string;
+        /** The domain the backend resolved this config for */
+        domain: string;
+        /** All domains registered for this merchant (for domain proof) */
+        allowedDomains: string[];
+        /** Full URL of the parent page (for interaction tracking) */
+        sourceUrl: string;
+        /**
+         * Pending merge token extracted from URL (?fmt= parameter).
+         * When present, listener should execute identity merge in background.
+         */
+        pendingMergeToken?: string;
+        sdkConfig?: ResolvedSdkConfig;
+    };
 };

@@ -25,7 +25,7 @@ src/
 
 | Task | Location |
 |------|----------|
-| Session management | `src/stores/` (sessionStore, userStore, walletStore, authenticationStore) |
+| Session management | `src/stores/` (sessionStore, walletStore, authenticationStore, clientIdStore) |
 | WebAuthn flows | `src/authentication/` |
 | Wallet operations | `src/wallet/` |
 | Device pairing | `src/pairing/` |
@@ -36,7 +36,6 @@ src/
 | Store | Purpose |
 |-------|---------|
 | `sessionStore` | Auth session state |
-| `userStore` | User profile data |
 | `walletStore` | Wallet connection state |
 | `authenticationStore` | WebAuthn state |
 

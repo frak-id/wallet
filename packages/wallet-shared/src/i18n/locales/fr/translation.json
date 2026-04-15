@@ -33,7 +33,8 @@
         "amountRequired": "Le montant est requis",
         "added": "ajouté",
         "at": "à",
-        "authenticator": "Authentificateur :",
+        "accountId": "Porte-monnaie",
+        "authenticator": "Authentificateur",
         "balance": "Solde",
         "claim": "Réclamer",
         "claimed": "réclamé",
@@ -44,11 +45,12 @@
         "logout": "Déconnexion",
         "notifications": "Notifications",
         "pending": "en attente",
-        "receive": "Recevoir",
         "refresh": "Rafraîchir",
-        "rewards": "Gains",
+        "rewards": "Total balance",
         "send": "Envoyer",
         "submit": "Envoyer",
+        "today": "Aujourd'hui",
+        "yesterday": "Hier",
         "to": "À",
         "transactionHash": "Hash de transaction :",
         "transactionLink": "Lien de transaction",
@@ -57,7 +59,10 @@
         "walletAddress": "Adresse du porte-monnaie :",
         "walletAddressRequired": "L'adresse du porte-monnaie est requise",
         "walletInvalid": "Adresse de porte-monnaie invalide",
-        "back-to-wallet": "Retour au porte-monnaie"
+        "back-to-wallet": "Retour au porte-monnaie",
+        "back": "Retour",
+        "close": "Fermer",
+        "share": "Partager"
     },
     "sharing": {
         "btn": {
@@ -70,6 +75,50 @@
         "title": "Lien d'invitation {{productName}}"
     },
     "wallet": {
+        "pageTitle": "Porte-monnaie",
+        "profile": {
+            "pageTitle": "Profil",
+            "notificationSettings": "Paramètres de notification",
+            "manageAction": "Gérer",
+            "unsubscribeNotifications": "Se désabonner",
+            "biometricPrompt": "Demander {{biometryLabel}} à chaque ouverture de l'app",
+            "recoveryConfigured": "Configurée",
+            "privacyPolicy": "Politique de confidentialité",
+            "helpSupport": "Aide & support",
+            "rateApp": "Noter l'application",
+            "lastConnection": "Dernière connexion"
+        },
+        "transferToBank": "Transférer vers ma banque",
+        "transferEmpty": {
+            "title": "Tu n'as pas encore d'argent à transférer",
+            "description": "Partage des produits avec tes ami·e·s pour commencer à gagner de l'argent.",
+            "discover": "Découvrir les offres"
+        },
+        "pendingGains": {
+            "subtitle": "Gains en attente",
+            "heading": "Bonne nouvelle !\nDe l'argent t'attend.",
+            "description": "Un achat via ton lien t'a rapporté des gains. Collecte-les maintenant dans ton porte-monnaie.",
+            "confirm": "Collecter mes gains",
+            "success": "Gains collectés !"
+        },
+        "pendingEmpty": {
+            "title": "Tu n'as pas encore de gains",
+            "description": "Dès qu'un achat sera réalisé via ton lien de partage, tes gains apparaîtront ici.",
+            "confirm": "J'ai compris"
+        },
+        "transferredEmpty": {
+            "title": "Tu n'as pas encore transféré de gains",
+            "description": "La somme de tes gains apparaîtront ici dès que tu effectueras un transfert vers ton compte bancaire.",
+            "confirm": "J'ai compris"
+        },
+        "transferModal": {
+            "title": "Transférer",
+            "description": "Choisis l'une des options suivantes pour transférer tes gains.",
+            "bankAccount": "Compte bancaire",
+            "bankAccountDescription": "Ajouter un IBAN",
+            "wallet": "Wallet",
+            "walletDescription": "Transférer vers un crypto wallet"
+        },
         "activateNotifications": "<strong>Activer les notifications</strong><br /> pour être prévenu du versement de vos gains",
         "activateNotificationsRationale": "<strong>Activer les notifications</strong><br /> Nous avons besoin de votre permission pour vous notifier du versement de vos gains",
         "openNotificationSettings": "<strong>Notifications désactivées</strong><br /> Ouvrez les paramètres pour activer les notifications",
@@ -77,11 +126,11 @@
         "settings": {
             "biometryInfo": "Informations biométriques",
             "ecdsaInfo": "Informations de connection",
-            "ecdsaWallet": "Portefeuille Ecdsa",
+            "ecdsaWallet": "Porte-monnaie Ecdsa",
             "privateKey": "Clé privée",
             "deletePrivateKey": "Supprimer la clé privée",
             "legal": "Légal",
-            "termsOfUse": "Conditions Générales d'Utilisation",
+            "termsOfUse": "Conditions générales",
             "deleteAccount": "Supprimer mon compte"
         },
         "installWebApp": "<strong>Installer le wallet sur l'écran d'accueil</strong><br /> pour retrouver vos gains à tout moment",
@@ -174,14 +223,33 @@
             "amountLessThanBalance": "Le montant doit être inférieur au solde",
             "amountPositive": "Le montant doit être positif",
             "amountToSend": "Montant à envoyer",
-            "backToWallet": "Retour au porte-monnaie",
-            "receive": {
-                "title": "Recevoir des actifs sur <strong>les réseaux de test</strong>"
-            }
+            "backToWallet": "Retour au porte-monnaie"
         },
         "welcome": {
-            "title": "Bienvenue dans votre porte-monnaie",
-            "text": "Ce porte-monnaie vous permettra de collecter toutes les récompenses et bien plus encore."
+            "title": "Bienvenue dans Frak 🎉",
+            "text": "Ce porte-monnaie vous permet de collecter toutes les récompenses et bien plus encore.",
+            "check1": "Explore les marques partenaires",
+            "check2": "Recommande tes produits favoris",
+            "check3": "Gagne de l'argent à chaque parrainage",
+            "notifications": {
+                "title": "Ne rate aucun gain !",
+                "description": "Active tes notifs pour suivre tes gains en temps réel."
+            },
+            "detail": {
+                "howItWorks": "Comment ça marche ?",
+                "step1Title": "Explore nos marques partenaires",
+                "step1Description": "Un lien personnel est généré automatiquement à chaque partage.",
+                "step2Title": "Partage un article à tes ami·e·s",
+                "step2Description": "Un lien personnel est généré automatiquement à chaque partage.",
+                "step3Title": "Gagne de l'argent",
+                "step3Description": "En un clic, transfère tes gains vers ton compte bancaire.",
+                "discoverOffers": "Découvrir les offres",
+                "legal": "Les <termsLink>conditions générales</termsLink> de FRAK s'appliquent."
+            }
+        },
+        "stats": {
+            "pending": "En attente",
+            "lifetime": "Depuis le début"
         },
         "pairing": {
             "title": "Confirmation de l'appairage",
@@ -258,6 +326,9 @@
             }
         },
         "inAppBrowser": {
+            "title": "Ouvrir dans votre navigateur",
+            "description": "Pour une meilleure expérience, ouvrez cette page dans votre navigateur par défaut.",
+            "cta": "Ouvrir le navigateur",
             "warning": "Vous utilisez un navigateur intégré. Votre expérience pourrait être dégradée. Appuyez pour ouvrir dans votre navigateur.",
             "clickToOpen": "Appuyez pour ouvrir dans votre navigateur",
             "dismiss": "Masquer le message",
@@ -299,54 +370,88 @@
             "generic": "Une erreur est survenue. Veuillez réessayer."
         }
     },
+    "recoveryCode": {
+        "title": "Récupération de ton code",
+        "description": "Colle le code copié depuis wallet.frak.id pour récupérer tes gains.",
+        "paste": "Coller le code",
+        "validate": "Valider le code",
+        "digitLabel": "Caractère",
+        "error": {
+            "invalid": "Code incorrect ou expiré — vérifie le code copié depuis wallet.frak.id",
+            "alreadyLinked": "Ce code a déjà été utilisé.",
+            "generic": "Une erreur est survenue — réessaie."
+        },
+        "success": {
+            "title": "Ton lien de parrainage a bien été retrouvé !",
+            "description": "Tu recevras une notification dès qu'un·e ami·e achète via ton lien.",
+            "merchantInfo": "Connecté à {{merchantName}}"
+        }
+    },
+    "installCode": {
+        "title": "Ne perds pas tes {{ estimatedReward }} !\nCopie ce code",
+        "description": "Colle-le à l'ouverture de l'app. Il te permettra de récupérer tes gains une fois connecté·e.",
+        "copyCode": "Copier le code",
+        "codeCopied": "Code copié !",
+        "loading": "Génération de ton code...",
+        "error": "Échec de la génération du code. Rafraîchis la page.",
+        "infoTitle": "Code valable 3 jours",
+        "infoDescription": "À l'ouverture de l'app, appuie sur <1>\"J'ai un code de récupération\"</1>.",
+        "download": "Télécharger l'app",
+        "processing": "Configuration de ton portefeuille..."
+    },
     "onboarding": {
+        "start": "Commencer",
         "continue": "Continuer",
         "activateSecureSpace": "Activer mon espace sécurisé",
+        "alreadyHaveAccount": "Déjà un compte ?",
+        "recoveryCode": "J'ai un code de récupération",
         "slides": {
             "one": {
-                "title": "Slide 1 — Titre placeholder",
-                "description": "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua."
+                "title": "Gagne de l'argent en recommandant",
+                "description": "Partage tes coups de cœur et gagne de l'argent à chaque achat généré grâce à toi."
             },
             "two": {
-                "title": "Slide 2 — Titre placeholder",
-                "description": "Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat."
+                "title": "Tes gains en temps réel",
+                "description": "Suis tes gains et transfère-les sur ton compte bancaire quand tu veux."
             },
             "three": {
-                "title": "Slide 3 — Titre placeholder",
-                "description": "Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur."
+                "title": "Active ton espace sécurisé en 10 sec",
+                "description": "Sans formulaire, sans paperasse. Ton porte-monnaie est prêt à recevoir tes gains, instantanément."
             }
         },
         "keypass": {
-            "title": "Sécurisez votre compte",
-            "description": "Votre clé d'accès sera sauvegardée dans votre gestionnaire de mots de passe pour une connexion biométrique rapide.",
+            "title": "Sécurise ton compte",
+            "description": "Une clé sécurisée est enregistrée dans ton gestionnaire de mots de passe pour te connecter rapidement via la biométrie.",
             "unsupported": {
                 "title": "Navigateur non compatible",
-                "description": "Votre navigateur ne supporte pas l'authentification biométrique. Connectez-vous autrement pour accéder à votre portefeuille.",
+                "description": "Votre navigateur ne supporte pas l'authentification biométrique. Connectez-vous autrement pour accéder à votre porte-monnaie.",
                 "button": "Se connecter autrement"
             },
             "existingAccount": {
                 "title": "Bon retour parmi nous !",
-                "description": "Vous avez déjà un compte. Connectez-vous avec votre clé d'accès pour retrouver votre portefeuille.",
+                "description": "Vous avez déjà un compte. Connectez-vous avec votre clé d'accès pour retrouver votre porte-monnaie.",
                 "button": "Se connecter"
             }
         },
         "notification": {
-            "title": "Ne manquez aucun gain !",
-            "description": "Recevez des notifications pour suivre vos gains et vos récompenses en temps réel.",
+            "title": "Ne rate aucun gain !",
+            "description": "Sois averti dès que l'argent est crédité sur ton porte-monnaie.",
             "enable": "Oui, me prévenir",
             "skip": "Plus tard"
         },
         "welcome": {
-            "title": "Bienvenue dans votre portefeuille",
-            "description": "Votre portefeuille sécurisé est prêt. Commencez à explorer et à gérer vos actifs numériques.",
-            "button": "Commencer"
+            "title": "Bienvenue dans ton porte-monnaie",
+            "description": "C'est parti ! Explore nos marques partenaires, recommande tes coups de cœur et transforme ton influence en argent.",
+            "descriptionHighlight": "Tes gains sont sécurisés et accessibles à tout moment.",
+            "button": "Commencer",
+            "legal": "En continuant, tu acceptes nos <termsLink>Conditions générales</termsLink> et notre <privacyLink>Politique de confidentialité</privacyLink>"
         }
     },
     "reward": {
         "status": {
-            "pending": "En attente",
+            "pending": "En attente de validation par la marque",
             "processing": "En cours de traitement",
-            "settled": "Réglé",
+            "settled": "À collecter",
             "consumed": "Consommé",
             "cancelled": "Annulé",
             "expired": "Expiré"
@@ -359,8 +464,32 @@
             "custom": "Personnalisé"
         },
         "history": {
-            "empty": "Pas encore de récompenses",
-            "emptyDescription": "Vos récompenses apparaîtront ici dès que vous commencerez à en gagner"
+            "emptyTitle": "Prêt à gagner de l'argent ?",
+            "emptyDescription": "Explore les offres et recommande tes produits coups de cœur à tes ami·e·s pour gagner de l'argent.",
+            "discover": "Découvrir les offres",
+            "title": "Historique des gains",
+            "seeAll": "Tout afficher",
+            "viewAll": "Voir tout",
+            "stats": {
+                "totalShares": "Total partages",
+                "totalPurchases": "Achats générés",
+                "totalEarnings": "Total gains générés"
+            }
+        },
+        "detail": {
+            "title": "Détail de la récompense",
+            "description": "Détail de la récompense",
+            "updatedAt": "Mis à jour le {{date}} · {{time}}",
+            "purchaseMadeOn": "Achat effectué le {{date}} à {{time}}",
+            "purchaseDate": "Achat effectué le",
+            "rewardGenerated": "Gain généré",
+            "toCollect": "À collecter",
+            "creditedOn": "Crédité le",
+            "generatedDate": "Achat généré le",
+            "generatedOn": "Achat généré le {{date}} · {{time}}",
+            "pendingValidation": "En attente de validation par la marque",
+            "estimatedValidation": "Validation estimée le",
+            "pendingDisclaimer": "Ce gain sera disponible une fois l'achat confirmé par la marque."
         }
     },
     "mobile-sso": {
@@ -373,10 +502,10 @@
     },
     "mobile-tx": {
         "sendTransaction": "Envoyer la transaction",
-        "explanation": "Approuvez cette transaction dans votre portefeuille",
+        "explanation": "Approuvez cette transaction dans votre porte-monnaie",
         "waiting": "En attente d'approbation...",
-        "openWallet": "Ouvrir le portefeuille pour approuver",
-        "reopenWallet": "Ré-ouvrir le portefeuille",
+        "openWallet": "Ouvrir le porte-monnaie pour approuver",
+        "reopenWallet": "Ré-ouvrir le porte-monnaie",
         "timeout": "Délai d'approbation dépassé. Réessayer ?",
         "retry": "Réessayer",
         "appNotFound": "Application Frak Wallet introuvable",
@@ -384,11 +513,11 @@
     },
     "monerium": {
         "account": "Compte Monerium",
-        "connect": "Connecter à Monerium",
+        "connect": "Se connecter",
         "connecting": "Connexion...",
         "disconnect": "Déconnecter",
-        "completeSetup": "Terminer sur Monerium",
-        "linkWallet": "Lier votre portefeuille à Monerium",
+        "completeSetup": "Finaliser",
+        "linkWallet": "Lier le porte-monnaie",
         "status": {
             "settingUp": "Configuration...",
             "created": "Compte créé — terminez la vérification sur Monerium",
@@ -399,7 +528,7 @@
         "badge": {
             "pending": "Vérification bancaire en cours...",
             "approved": "Banque connectée :",
-            "notLinked": "IBAN non lié à ce portefeuille",
+            "notLinked": "IBAN non lié à ce porte-monnaie",
             "rejected": "Vérification échouée"
         },
         "offramp": {
@@ -407,7 +536,7 @@
             "balance": "Solde :",
             "max": "MAX",
             "destinationIban": "IBAN de destination",
-            "ibanWarning": "Attention : Cet IBAN n'est pas lié à votre adresse de portefeuille actuelle.",
+            "ibanWarning": "Attention : Cet IBAN n'est pas lié à votre adresse de porte-monnaie actuelle.",
             "submit": "Retirer vers la banque",
             "submitting": "Envoi de l'ordre...",
             "confirmBiometric": "Confirmer avec la biométrie...",
@@ -421,6 +550,113 @@
             "noCode": "Aucun code d'autorisation reçu",
             "failed": "Échec de l'authentification",
             "tryAgain": "Réessayer"
+        },
+        "bankFlow": {
+            "info": {
+                "title": "Finalise ton compte pour toucher tes gains.",
+                "description": "Pour transférer tes gains sur ton compte bancaire, tu dois finaliser ton compte de paiement sécurisé.",
+                "redirectNotice": "Tu vas être redirigé vers notre partenaire financier, Monerium, pour :",
+                "feature1Title": "Vérifier ton identité",
+                "feature1Description": "Pour sécuriser ton compte et vérifier que tu es bien le titulaire des gains.",
+                "feature2Title": "Ajouter ton IBAN",
+                "feature2Description": "Pour recevoir tes gains directement sur ton compte bancaire.",
+                "feature3Title": "Sécuriser tes transferts",
+                "feature3Description": "Tes transactions sont protégées et conformes aux normes de sécurité en vigueur.",
+                "cta": "Accepter et continuer"
+            },
+            "kyc": {
+                "title": "Finalise la vérification de ton identité",
+                "description": "Pour transférer tes gains, tu dois vérifier ton identité.",
+                "notice": "Cette étape est rapide et sécurisée.",
+                "featureTitle": "Vérifie ton identité",
+                "featureDescription": "Pour sécuriser ton compte et confirmer que tu es bien le titulaire des gains, nous utilisons un partenaire financier, Monerium.",
+                "cta": "Vérifier mon identité"
+            },
+            "link": {
+                "title": "Associe ton porte-monnaie",
+                "description": "Ton porte-monnaie n'est pas encore connecté à ton compte Monerium, connecte-le pour transférer tes gains.",
+                "featureTitle": "Associe ton compte Monerium à ton porte-monnaie",
+                "featureDescription": "Pour utiliser pleinement ton porte-monnaie, nous avons besoin de lié ton compte.",
+                "cta": "Associer mon compte"
+            },
+            "success": {
+                "title": "Tu peux maintenant transférer tes gains \uD83C\uDF89",
+                "description": "Ton compte est prêt. Tu peux maintenant transférer tes gains sur ton compte bancaire en toute simplicité.",
+                "cta": "Transférer mes gains"
+            },
+            "transfer": {
+                "amount": {
+                    "title": "Transférer mes gains",
+                    "walletLabel": "Porte-monnaie Frak",
+                    "totalBalance": "Total balance",
+                    "ibanLabel": "Destinataire",
+                    "ibanEmpty": "Aucun IBAN enregistré",
+                    "modify": "Modifier",
+                    "continue": "Continuer",
+                    "insufficientBalance": "Total balance Insuffisante"
+                },
+                "recap": {
+                    "title": "Récapitulatif",
+                    "cancel": "Annuler",
+                    "amountLabel": "Montant",
+                    "beneficiaryLabel": "Bénéficiaire",
+                    "addNote": "Ajouter une note",
+                    "defaultNote": "Envoyé depuis FRAK",
+                    "warning": "Une fois validée, l'opération ne peut être annulée",
+                    "confirm": "Confirmer le transfert"
+                },
+                "success": {
+                    "title": "Ta demande de transfert de {{amount}} € a été prise en compte",
+                    "description": "Tu recevras ton gain sous 10 secondes."
+                },
+                "ibanManager": {
+                    "title": "Gérer mes IBAN",
+                    "addNew": "Ajouter un IBAN",
+                    "nameLabel": "Nom du bénéficiaire",
+                    "namePlaceholder": "Ex. Mon compte courant",
+                    "ibanLabel": "IBAN",
+                    "ibanPlaceholder": "FR76...",
+                    "save": "Enregistrer",
+                    "remove": "Supprimer",
+                    "empty": "Aucun IBAN enregistré. Ajoutes-en un pour commencer.",
+                    "select": "Sélectionner"
+                }
+            }
+        }
+    },
+    "explorer": {
+        "pageTitle": "Explorer",
+        "empty": {
+            "title": "Aucune offre disponible",
+            "description": "De nouvelles offres arrivent bientôt. Revenez plus tard !"
+        },
+        "card": {
+            "badge": "Jusqu'à {{amount}}",
+            "until": "Jusqu'au {{date}}"
+        },
+        "detail": {
+            "close": "Fermer",
+            "share": "Partager",
+            "endDateBadge": "Se termine {{date}} ({{days}} j)",
+            "rewardPerReferral": "{{amount}} par parrainage",
+            "readMore": "Lire la suite",
+            "legal": "Les <termsLink>conditions générales de {{merchantName}}</termsLink> et les <termsLink>conditions générales de FRAK</termsLink> s'appliquent.",
+            "shareAndEarn": "Partager et gagner",
+            "endsIn": "Se termine dans {{count}} jour",
+            "endsIn_other": "Se termine dans {{count}} jours",
+            "referrerReward": "Récompense en tant que parrain",
+            "refereeReward": "Récompense en tant que filleul",
+            "earningsAvailability": "Disponibilité des gains",
+            "immediate": "Immédiate",
+            "pendingDays": "{{count}} jour",
+            "pendingDays_other": "{{count}} jours",
+            "instructions": "Instructions",
+            "step1Title": "Partage un article à tes ami·e·s",
+            "step1Description": "Un lien personnel est généré automatiquement à chaque partage.",
+            "step2Title": "Gagne {{amount}} à chaque achat réalisé grâce à toi",
+            "step2Description": "Chaque commande réalisée grâce à toi sur {{name}} te rapporte du cash directement dans ton porte-monnaie.",
+            "step3Title": "Récupère tes gains dans ton porte-monnaie",
+            "step3Description": "En un clic, transfère tes gains vers ton compte bancaire."
         }
     }
 }

@@ -1,0 +1,222 @@
+{% assign custom_class = '' %}
+{% if block.settings.banner_style == 'custom' %}
+  {% assign custom_class = 'frak-banner-custom' %}
+{% endif %}
+
+<frak-banner
+  classname="{{ custom_class }}"
+  {% if block.settings.interaction != 'default' and block.settings.interaction != blank %}interaction="{{ block.settings.interaction }}"{% endif %}
+  {% if block.settings.referral_title != blank %}referral-title="{{ block.settings.referral_title }}"{% endif %}
+  {% if block.settings.referral_description != blank %}referral-description="{{ block.settings.referral_description }}"{% endif %}
+  {% if block.settings.referral_cta != blank %}referral-cta="{{ block.settings.referral_cta }}"{% endif %}
+  {% if block.settings.inapp_title != blank %}inapp-title="{{ block.settings.inapp_title }}"{% endif %}
+  {% if block.settings.inapp_description != blank %}inapp-description="{{ block.settings.inapp_description }}"{% endif %}
+  {% if block.settings.inapp_cta != blank %}inapp-cta="{{ block.settings.inapp_cta }}"{% endif %}
+  {% if request.design_mode and block.settings.enable_preview %}preview="true" preview-mode="{{ block.settings.preview_mode }}"{% endif %}
+></frak-banner>
+
+{% style %}
+  frak-banner .frak-banner--referral {
+    background: #ffffff;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  }
+  frak-banner .frak-banner--inapp {
+    margin: 8px 12px;
+    display: block;
+  }
+  frak-banner .frak-banner--inapp p {
+    margin: 0;
+    padding: 0;
+    display: inline;
+  }
+  frak-banner .frak-banner--inapp .frak-banner__cta {
+    display: inline-flex;
+    margin: 0;
+    padding: 0;
+    background: none;
+    border: none;
+    font: inherit;
+    cursor: pointer;
+  }
+  frak-banner .frak-banner--inapp .frak-banner__close {
+    margin: 0;
+    padding: 0;
+    background: none;
+    border: none;
+    cursor: pointer;
+  }
+  frak-banner .frak-banner__text {
+    padding: 0;
+  }
+  .frak-banner-custom.frak-banner {
+    background-color: {{ block.settings.background_color }};
+    border-color: {{ block.settings.accent_color }};
+  }
+  .frak-banner-custom .frak-banner__icon {
+    color: {{ block.settings.accent_color }};
+  }
+  .frak-banner-custom .frak-banner__title {
+    color: {{ block.settings.text_color }};
+  }
+  .frak-banner-custom .frak-banner__description {
+    color: {{ block.settings.text_color }};
+  }
+  .frak-banner-custom .frak-banner__cta {
+    background-color: {{ block.settings.cta_color }};
+    border-color: {{ block.settings.cta_color }};
+    color: {{ block.settings.cta_text_color }};
+  }
+{% endstyle %}
+
+{% schema %}
+{
+  "name": "Frak Banner",
+  "target": "section",
+  "settings": [
+    {
+      "type": "select",
+      "id": "interaction",
+      "label": "Target interaction",
+      "info": "Filter rewards by interaction type. Default shows the best reward across all types",
+      "options": [
+        {
+          "value": "default",
+          "label": "Default (best reward)"
+        },
+        {
+          "value": "referral",
+          "label": "Referral"
+        },
+        {
+          "value": "purchase",
+          "label": "Purchase"
+        }
+      ],
+      "default": "default"
+    },
+    {
+      "type": "header",
+      "content": "Referral banner text"
+    },
+    {
+      "type": "text",
+      "id": "referral_title",
+      "label": "Title",
+      "info": "Override the referral banner title (e.g. \"You've been referred!\")"
+    },
+    {
+      "type": "textarea",
+      "id": "referral_description",
+      "label": "Description",
+      "info": "Override the referral banner description"
+    },
+    {
+      "type": "text",
+      "id": "referral_cta",
+      "label": "Button text",
+      "info": "Override the referral banner button text (default: \"Got it\")"
+    },
+    {
+      "type": "header",
+      "content": "In-app browser banner text"
+    },
+    {
+      "type": "text",
+      "id": "inapp_title",
+      "label": "Title",
+      "info": "Override the in-app browser banner title (e.g. \"Open in your browser\")"
+    },
+    {
+      "type": "textarea",
+      "id": "inapp_description",
+      "label": "Description",
+      "info": "Override the in-app browser banner description"
+    },
+    {
+      "type": "text",
+      "id": "inapp_cta",
+      "label": "Button text",
+      "info": "Override the in-app browser banner button text (default: \"Open browser\")"
+    },
+    {
+      "type": "header",
+      "content": "Theme editor preview"
+    },
+    {
+      "type": "checkbox",
+      "id": "enable_preview",
+      "label": "Show preview in editor",
+      "info": "Display a banner preview while customizing the theme",
+      "default": false
+    },
+    {
+      "type": "select",
+      "id": "preview_mode",
+      "label": "Preview variant",
+      "info": "Choose which banner variant to preview in the theme editor",
+      "options": [
+        {
+          "value": "referral",
+          "label": "Referral"
+        },
+        {
+          "value": "inapp",
+          "label": "In-app browser"
+        }
+      ],
+      "default": "referral"
+    },
+    {
+      "type": "header",
+      "content": "Style"
+    },
+    {
+      "type": "select",
+      "id": "banner_style",
+      "label": "Banner Style",
+      "options": [
+        {
+          "value": "default",
+          "label": "Default"
+        },
+        {
+          "value": "custom",
+          "label": "Custom Colors"
+        }
+      ],
+      "default": "default"
+    },
+    {
+      "type": "color",
+      "id": "accent_color",
+      "label": "Accent color",
+      "info": "Used for the border and icon",
+      "default": "#3b82f6"
+    },
+    {
+      "type": "color",
+      "id": "cta_color",
+      "label": "Button color",
+      "default": "#eab308"
+    },
+    {
+      "type": "color",
+      "id": "cta_text_color",
+      "label": "Button text color",
+      "default": "#1e293b"
+    },
+    {
+      "type": "color",
+      "id": "background_color",
+      "label": "Background color",
+      "default": "#ffffff"
+    },
+    {
+      "type": "color",
+      "id": "text_color",
+      "label": "Text color",
+      "default": "#1e293b"
+    }
+  ]
+}
+{% endschema %}

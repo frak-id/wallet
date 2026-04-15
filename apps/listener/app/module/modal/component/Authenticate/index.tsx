@@ -1,10 +1,13 @@
 import type { SiweAuthenticateModalStepType } from "@frak-labs/core-sdk";
-import { Spinner } from "@frak-labs/ui/component/Spinner";
-import { prefixModalCss } from "@frak-labs/ui/utils/prefixModalCss";
-import { HandleErrors, TextData } from "@frak-labs/wallet-shared";
+import { Spinner } from "@frak-labs/design-system/components/Spinner";
+import {
+    HandleErrors,
+    prefixModalCss,
+    TextData,
+} from "@frak-labs/wallet-shared";
 import { useMemo } from "react";
 import { createSiweMessage, type SiweMessage } from "viem/siwe";
-import { useAccount, useSignMessage } from "wagmi";
+import { useConnection, useSignMessage } from "wagmi";
 import styles from "@/module/modal/component/Modal/index.module.css";
 import { useListenerTranslation } from "@/module/providers/ListenerUiProvider";
 
@@ -21,7 +24,7 @@ export function SiweAuthenticateModalStep({
     onFinish: (result: SiweAuthenticateModalStepType["returns"]) => void;
 }) {
     const { t } = useListenerTranslation();
-    const { address, chainId } = useAccount();
+    const { address, chainId } = useConnection();
     const siweMessage: SiweMessage | undefined = useMemo(() => {
         if (!(address && chainId)) {
             return undefined;
@@ -45,7 +48,12 @@ export function SiweAuthenticateModalStep({
         [siweMessage]
     );
 
-    const { signMessage, isPending, isError, error } = useSignMessage({
+    const {
+        mutate: signMessage,
+        isPending,
+        isError,
+        error,
+    } = useSignMessage({
         mutation: {
             // Link success and error hooks
             onSuccess: (signature) =>

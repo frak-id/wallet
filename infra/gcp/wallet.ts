@@ -18,12 +18,18 @@ import {
     vapidPublicKey,
     walletUrl,
 } from "../config";
-import { getLocalIp, isProd, normalizedStageName } from "../utils";
+import { isProd, normalizedStageName } from "../utils";
 
 /**
  * Wallet display mode: loyalty in prod hides crypto UI, crypto in dev/staging shows full wallet.
  */
 const walletMode = isProd ? "loyalty" : "crypto";
+
+/**
+ * Whether the native mobile app is available for install prompts.
+ * When false, install CTAs are hidden and the sharing flow stays web-only.
+ */
+const isAppAvailable = isProd ? "false" : "true";
 
 import { baseDomainName, getRegistryPath, walletNamespace } from "./utils";
 
@@ -50,6 +56,7 @@ export const walletEnv = {
     OPEN_PANEL_LISTENER_CLIENT_ID: openPanelWalletClientId.value,
     ANDROID_SHA256_FINGERPRINT: androidSha256Fingerprint.value,
     MONERIUM_CLIENT_ID: moneriumClientId.value,
+    IS_APP_AVAILABLE: isAppAvailable,
 };
 
 let imageRefs = {
@@ -79,6 +86,7 @@ if (!$dev) {
             FRAK_WALLET_URL: walletEnv.FRAK_WALLET_URL,
             OPEN_PANEL_API_URL: walletEnv.OPEN_PANEL_API_URL,
             VITE_WALLET_MODE: walletMode,
+            IS_APP_AVAILABLE: walletEnv.IS_APP_AVAILABLE,
         },
         // Secrets passed via BuildKit (not stored in layers)
         secrets: {
@@ -112,6 +120,7 @@ if (!$dev) {
             ERPC_URL: walletEnv.ERPC_URL,
             FRAK_WALLET_URL: walletEnv.FRAK_WALLET_URL,
             OPEN_PANEL_API_URL: walletEnv.OPEN_PANEL_API_URL,
+            IS_APP_AVAILABLE: walletEnv.IS_APP_AVAILABLE,
         },
         // Secrets passed via BuildKit (not stored in layers)
         secrets: {
@@ -337,15 +346,11 @@ export const walletService = new KubernetesService(
 );
 
 // Tauri mobile development commands
-// These run outside of Kubernetes and use local IP for backend connectivity
 if ($dev) {
-    const localIp = getLocalIp();
-    const mobileEnv = {
+    const environment = {
         ...walletEnv,
-        // Override backend URL to use local IP instead of localhost
-        // This allows Android/iOS emulators and physical devices to connect
-        BACKEND_URL: `http://${localIp}:3030`,
         TAURI_CLI_RUNNING: "1",
+        BACKEND_URL: "http://localhost:3031",
         // Android signing (written to disk by tauri-dev.sh before build)
         ANDROID_KEYSTORE_BASE64: androidKeystoreBase64.value,
         ANDROID_KEY_PROPERTIES_BASE64: androidKeyPropertiesBase64.value,
@@ -361,7 +366,7 @@ if ($dev) {
             command: "./scripts/tauri-dev.sh dev",
             directory: "./apps/wallet",
         },
-        environment: mobileEnv,
+        environment,
     });
 
     new sst.x.DevCommand("wallet:tauri-android", {
@@ -371,7 +376,7 @@ if ($dev) {
             command: "./scripts/tauri-dev.sh android",
             directory: "./apps/wallet",
         },
-        environment: mobileEnv,
+        environment,
     });
 
     new sst.x.DevCommand("wallet:tauri-ios", {
@@ -381,6 +386,6 @@ if ($dev) {
             command: "./scripts/tauri-dev.sh ios",
             directory: "./apps/wallet",
         },
-        environment: mobileEnv,
+        environment,
     });
 }

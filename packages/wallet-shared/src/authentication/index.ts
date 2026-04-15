@@ -1,5 +1,5 @@
 // Components
-export { HandleErrors } from "./component/HandleErrors";
+export { HandleErrors, isUserCancellation } from "./component/HandleErrors";
 
 // Hooks
 export { useLogin } from "./hook/useLogin";

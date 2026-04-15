@@ -1,6 +1,7 @@
 import { log } from "@backend-infrastructure";
 import { Elysia } from "elysia";
 import { customWebhook } from "./customWebhook";
+import { magentoWebhook } from "./magentoWebhook";
 import { shopifyWebhook } from "./shopifyWebhook";
 import { wooCommerceWebhook } from "./wooCommerceWebhook";
 
@@ -10,6 +11,7 @@ export const webhookRoutes = new Elysia()
     })
     .use(shopifyWebhook)
     .use(wooCommerceWebhook)
+    .use(magentoWebhook)
     .use(customWebhook)
     .onError(({ error, code, path, headers, set }) => {
         const msg = "message" in error ? error.message : undefined;

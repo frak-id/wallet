@@ -13,7 +13,7 @@ type MutationOptions<T extends ModalStepTypes[]> = Omit<
     UseMutationOptions<
         ModalRpcStepsResultType<T>,
         FrakRpcError,
-        DisplayModalParamsType<T>
+        DisplayModalParamsType<T> & { placement?: string }
     >,
     "mutationFn" | "mutationKey"
 >;
@@ -56,13 +56,15 @@ export function useDisplayModal<T extends ModalStepTypes[] = ModalStepTypes[]>({
     return useMutation({
         ...mutations,
         mutationKey: ["frak-sdk", "display-modal"],
-        mutationFn: async (args: DisplayModalParamsType<T>) => {
+        mutationFn: async ({
+            placement,
+            ...params
+        }: DisplayModalParamsType<T> & { placement?: string }) => {
             if (!client) {
                 throw new ClientNotFound();
             }
 
-            // Ask to display the modal
-            return displayModal(client, args);
+            return displayModal(client, params, placement);
         },
     });
 }

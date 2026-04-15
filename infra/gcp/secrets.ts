@@ -4,11 +4,15 @@ import {
     erpcUrl,
     fcmServiceAccount,
     jwtBusinessSecret,
+    mongoNexusUri,
     nexusRpcSecret,
     pimlicoApiKey,
     productSetupCodeSalt,
+    rustfsCdnBaseUrl,
+    rustfsEndpoint,
     shopifyApiSecret,
     shopifyClientId,
+    sqldUrl,
     vapidPublicKey,
 } from "../config";
 import { isProd, normalizedStageName } from "../utils";
@@ -33,6 +37,18 @@ const masterPkey = $output(
     })
 ).apply((secret) => secret.secretData);
 
+// RustFS credentials (shared prod pod, stored in GCP Secret Manager by infra-core)
+const rustfsAccessKey = $output(
+    gcp.secretmanager.getSecretVersion({
+        secret: "rustfs-access-key-production",
+    })
+).apply((secret) => secret.secretData);
+const rustfsSecretKey = $output(
+    gcp.secretmanager.getSecretVersion({
+        secret: "rustfs-secret-key-production",
+    })
+).apply((secret) => secret.secretData);
+
 export const postgresEnv = {
     POSTGRES_DB: "wallet-backend",
     POSTGRES_USER: `wallet-backend_${dbStage}`,
@@ -49,8 +65,11 @@ export const elysiaEnv = {
     // Postgres related
     ...postgresEnv,
 
+    // Sqld database
+    LIBSQL_URL: sqldUrl,
+
     // Mongo related
-    MONGODB_NEXUS_URI: new sst.Secret("MONGODB_NEXUS_URI").value,
+    MONGODB_NEXUS_URI: mongoNexusUri.value,
 
     // Sessions
     JWT_SECRET: new sst.Secret("JWT_SECRET").value,
@@ -80,4 +99,10 @@ export const elysiaEnv = {
 
     // FCM
     FCM_SERVICE_ACCOUNT_JSON: fcmServiceAccount.value,
+
+    // RustFS (object storage for media uploads)
+    RUSTFS_ENDPOINT: rustfsEndpoint,
+    RUSTFS_ACCESS_KEY: rustfsAccessKey,
+    RUSTFS_SECRET_KEY: rustfsSecretKey,
+    RUSTFS_CDN_BASE_URL: rustfsCdnBaseUrl,
 };

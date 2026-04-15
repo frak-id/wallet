@@ -1,8 +1,7 @@
-import { LogoFrakWithName } from "@frak-labs/ui/icons/LogoFrakWithName";
-import { prefixWalletCss } from "@frak-labs/ui/utils/prefixWalletCss";
-import { sessionStore } from "@frak-labs/wallet-shared";
+import { LogoFrakWithName, sessionStore } from "@frak-labs/wallet-shared";
 import { cx } from "class-variance-authority";
 import { useState } from "react";
+import { prefixWalletCss } from "@/module/common/utils/prefixWalletCss";
 import { useEmbeddedListenerUI } from "@/module/providers/ListenerUiProvider";
 import styles from "../Wallet/index.module.css";
 

@@ -348,4 +348,27 @@ export class AssetLogRepository {
             );
         return result?.count ?? 0;
     }
+
+    async countByMerchantAndUserAsReferee(
+        merchantId: string,
+        identityGroupId: string
+    ): Promise<number> {
+        const [result] = await db
+            .select({ count: sql<number>`count(*)::int` })
+            .from(assetLogsTable)
+            .where(
+                and(
+                    eq(assetLogsTable.merchantId, merchantId),
+                    eq(assetLogsTable.identityGroupId, identityGroupId),
+                    inArray(assetLogsTable.status, [
+                        "pending",
+                        "processing",
+                        "settled",
+                        "bank_depleted",
+                    ]),
+                    eq(assetLogsTable.recipientType, "referee")
+                )
+            );
+        return result?.count ?? 0;
+    }
 }

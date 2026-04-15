@@ -7,13 +7,16 @@ const config: KnipConfig = {
     // Include all the workspaces
     workspaces: {
         ".": {
-            entry: ["sst.config.ts", "infra/*.ts"],
-            project: "iat/*.ts",
-            ignore: [".sst/**"],
+            entry: ["infra/*.ts"],
+            project: "infra/**/*.ts",
         },
-        "example/*": {
-            entry: ["app/*.{ts,tsx,css}", "app/views/**/*.tsx"],
-            project: ["app/**/*.{ts,tsx,css}"],
+        "example/showcase": {
+            entry: ["src/routes/**/*.tsx"],
+            project: ["src/**/*.{ts,tsx}"],
+        },
+        "example/vanilla-js": {
+            entry: ["app/*.{ts,tsx}"],
+            project: ["app/**/*.{ts,tsx}"],
         },
         "packages/ui": {
             entry: "**/*.{ts,tsx}",
@@ -22,7 +25,7 @@ const config: KnipConfig = {
             entry: "**/*.ts",
         },
         "apps/wallet": {
-            entry: ["app/*.{ts,tsx}", "app/views/**/*.tsx"],
+            entry: ["app/*.{ts,tsx}", "app/module/**/*.tsx"],
             project: ["app/**/*.{ts,tsx}"],
         },
         "apps/listener": {
@@ -31,24 +34,16 @@ const config: KnipConfig = {
         },
 
         "apps/shopify": {
-            entry: [
-                "app/root.tsx",
-                "app/routes.ts",
-                "app/routes/**/*.tsx",
-                "app/entry.client.tsx",
-                "app/entry.server.tsx",
-            ],
+            entry: ["app/routes/**/*.tsx"],
             project: ["app/**/*.{ts,tsx}", "db/**/*.ts"],
-            ignore: ["extensions/**", ".shopify/**", ".react-router/**"],
         },
         "apps/business": {
             entry: ["src/router.tsx", "src/routes/**/*.tsx"],
             project: ["src/**/*.{ts,tsx}"],
         },
         "services/backend": {
-            entry: ["src/index.ts", "src/jobs/*.ts"],
+            entry: ["src/jobs/*.ts"],
             project: "src/**/*.ts",
-            ignore: ["test/**", "scripts/**"],
             // Enable class member detection for backend (DDD with repositories/services)
             includeEntryExports: true,
         },
@@ -61,7 +56,7 @@ const config: KnipConfig = {
             project: "src/**/*.{ts,tsx}",
         },
         "sdk/components": {
-            entry: ["src/components.ts", "src/index.ts", "src/utils/loader.ts"],
+            entry: ["src/components.ts", "src/utils/loader.ts"],
             project: "src/**/*.{ts,tsx}",
         },
     },

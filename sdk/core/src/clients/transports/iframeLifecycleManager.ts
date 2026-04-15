@@ -1,6 +1,5 @@
 import { Deferred } from "@frak-labs/frame-connector";
 import type { FrakLifecycleEvent } from "../../types";
-import { getClientId } from "../../utils/clientId";
 import { BACKUP_KEY } from "../../utils/constants";
 import {
     isFrakDeepLink,
@@ -33,7 +32,7 @@ const isIOSInAppBrowser = (() => {
 /** @ignore */
 export type IframeLifecycleManager = {
     isConnected: Promise<boolean>;
-    handleEvent: (messageEvent: FrakLifecycleEvent) => Promise<void>;
+    handleEvent: (messageEvent: FrakLifecycleEvent) => void;
 };
 
 /**
@@ -44,42 +43,6 @@ function handleBackup(backup: string | undefined): void {
         localStorage.setItem(BACKUP_KEY, backup);
     } else {
         localStorage.removeItem(BACKUP_KEY);
-    }
-}
-
-/**
- * Handle handshake with iframe — sends client metadata so the listener can resolve the correct merchant
- * @param iframe - The iframe element to post the handshake response to
- * @param token - The handshake token received from the iframe
- * @param targetOrigin - The target origin for postMessage security
- * @param configDomain - Optional override domain for merchant resolution in tunneled/proxied environments
- */
-function handleHandshake(
-    iframe: HTMLIFrameElement,
-    token: string,
-    targetOrigin: string,
-    configDomain?: string
-): void {
-    const url = new URL(window.location.href);
-    const pendingMergeToken = url.searchParams.get("fmt") ?? undefined;
-
-    iframe.contentWindow?.postMessage(
-        {
-            clientLifecycle: "handshake-response",
-            data: {
-                token,
-                currentUrl: window.location.href,
-                pendingMergeToken,
-                configDomain,
-                clientId: getClientId(),
-            },
-        },
-        targetOrigin
-    );
-
-    if (pendingMergeToken) {
-        url.searchParams.delete("fmt");
-        window.history.replaceState({}, "", url.toString());
     }
 }
 
@@ -96,12 +59,12 @@ function computeRedirectUrl(
             return baseRedirectUrl;
         }
 
-        redirectUrl.searchParams.delete("u");
-        redirectUrl.searchParams.append("u", window.location.href);
+        // Append merge token to the page URL so it survives
+        // the backend /common/social redirect chain
+        const finalPageUrl = appendMergeToken(window.location.href, mergeToken);
 
-        if (mergeToken) {
-            redirectUrl.searchParams.append("fmt", mergeToken);
-        }
+        redirectUrl.searchParams.delete("u");
+        redirectUrl.searchParams.append("u", finalPageUrl);
 
         return redirectUrl.toString();
     } catch {
@@ -131,14 +94,39 @@ function isSocialRedirect(url: string): boolean {
 }
 
 /**
+ * Append merge token to a URL as the `fmt` query parameter.
+ */
+function appendMergeToken(urlString: string, mergeToken?: string): string {
+    if (!mergeToken) return urlString;
+    try {
+        const url = new URL(urlString);
+        url.searchParams.set("fmt", mergeToken);
+        return url.toString();
+    } catch {
+        const sep = urlString.includes("?") ? "&" : "?";
+        return `${urlString}${sep}fmt=${encodeURIComponent(mergeToken)}`;
+    }
+}
+
+/**
  * Handle redirect with deep link fallback
  */
 function handleRedirect(
     iframe: HTMLIFrameElement,
     baseRedirectUrl: string,
     targetOrigin: string,
-    mergeToken?: string
+    mergeToken?: string,
+    openInNewTab?: boolean
 ): void {
+    // If requested, open in a new tab instead of navigating the current page.
+    // This preserves the merchant page while triggering universal links.
+    // Requires the iframe postMessage to include user activation delegation.
+    if (openInNewTab) {
+        const finalUrl = computeRedirectUrl(baseRedirectUrl, mergeToken);
+        window.open(finalUrl, "_blank");
+        return;
+    }
+
     if (isFrakDeepLink(baseRedirectUrl)) {
         const finalUrl = computeRedirectUrl(baseRedirectUrl, mergeToken);
         triggerDeepLinkWithFallback(finalUrl, {
@@ -167,23 +155,20 @@ function handleRedirect(
  * @param args
  * @param args.iframe - The iframe element used for wallet communication
  * @param args.targetOrigin - The wallet URL origin for postMessage security
- * @param args.configDomain - Optional domain override forwarded during handshake for tunneled/proxied environments
  * @ignore
  */
 export function createIFrameLifecycleManager({
     iframe,
     targetOrigin,
-    configDomain,
 }: {
     iframe: HTMLIFrameElement;
     targetOrigin: string;
-    configDomain?: string;
 }): IframeLifecycleManager {
     // Create the isConnected listener
     const isConnectedDeferred = new Deferred<boolean>();
 
     // Build the handler itself
-    const handler = async (messageEvent: FrakLifecycleEvent) => {
+    const handler = (messageEvent: FrakLifecycleEvent) => {
         if (!("iframeLifecycle" in messageEvent)) return;
 
         const { iframeLifecycle: event, data } = messageEvent;
@@ -206,17 +191,14 @@ export function createIFrameLifecycleManager({
             case "hide":
                 changeIframeVisibility({ iframe, isVisible: event === "show" });
                 break;
-            // Handshake handling
-            case "handshake":
-                handleHandshake(iframe, data.token, targetOrigin, configDomain);
-                break;
             // Redirect handling
             case "redirect":
                 handleRedirect(
                     iframe,
                     data.baseRedirectUrl,
                     targetOrigin,
-                    data.mergeToken
+                    data.mergeToken,
+                    data.openInNewTab
                 );
                 break;
         }

@@ -2,11 +2,13 @@
  * Shared types for Zustand stores
  */
 
+import type { ResolvedSdkConfig } from "@frak-labs/backend-elysia/api/schemas";
 import type {
-    ClientLifecycleEvent,
     ModalRpcStepsResultType,
     ModalStepTypes,
 } from "@frak-labs/core-sdk";
+
+export type { ResolvedSdkConfig };
 
 /**
  * Type for modal step keys
@@ -14,23 +16,28 @@ import type {
 export type AnyModalKey = ModalStepTypes["key"];
 
 /**
+ * Trust tier for the SDK-listener connection, determined by domain proof.
+ *
+ * - `"pending"` — Config not yet received; no trust established.
+ * - `"verified"` — Origin matches a registered `allowedDomains` entry. Full access.
+ * - `"dev-override"` — MerchantId present but origin not in `allowedDomains`.
+ *   Read-only access: modals, embedded wallet, and merchant info are allowed.
+ *   Write operations (sendInteraction) are blocked to prevent fraudulent tracking.
+ * - `"unverified"` — Domain proof failed and no merchantId available (e.g. backend down).
+ *   Display-only access: modals, embedded wallet, and wallet status are allowed.
+ *   All write operations and merchant-specific queries are blocked.
+ */
+export type TrustLevel = "pending" | "verified" | "dev-override" | "unverified";
+
+/**
  * IFrame resolving context (from WalletRpcContext without source)
  */
-export interface IFrameResolvingContext {
-    /**
-     * The merchant ID (UUID from backend)
-     * Primary identifier for the merchant
-     */
+export type IFrameResolvingContext = {
     merchantId: string;
     origin: string;
     sourceUrl: string;
-    isAutoContext: boolean;
-    /**
-     * Anonymous client ID from the SDK (partner site localStorage)
-     * Used for identity tracking in backend API calls
-     */
     clientId?: string;
-}
+};
 
 /**
  * Displayed modal step with typed params and response callback
@@ -55,15 +62,17 @@ export type DisplayedModalStep<
 export interface ResolvingContextStore {
     // State
     context: IFrameResolvingContext | undefined;
-    handshakeTokens: Set<string>;
+    backendSdkConfig: ResolvedSdkConfig | undefined;
+    trustLevel: TrustLevel;
 
     // Actions
-    startHandshake: () => void;
-    handleHandshakeResponse: (
-        event: MessageEvent<ClientLifecycleEvent>
-    ) => boolean;
-    setContext: (context: IFrameResolvingContext | undefined) => void;
+    setContext: (context: IFrameResolvingContext) => void;
     clearContext: () => void;
+    setBackendConfig: (
+        merchantId: string,
+        config: ResolvedSdkConfig | undefined
+    ) => void;
+    setTrustLevel: (level: TrustLevel) => void;
 }
 
 /**

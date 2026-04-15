@@ -9,7 +9,7 @@ interface Resources {
                 final: {
                     description: "You've successfully completed all the steps.";
                     description_reward: "Check your earnings at any time on [wallet.frak.id](https://wallet.frak.id). You too can share with your friends, all your shares that lead to clicks, registrations or purchases generate new earnings!";
-                    description_sharing: "Your wallet has been created to receive your **{{ productName }}** reward for sharing. To find your wallet, go to [wallet.frak.id](https://wallet.frak.id).";
+                    description_sharing: "Your wallet has been created to receive your **{{productName}}** reward for sharing. To find your wallet, go to [wallet.frak.id](https://wallet.frak.id).";
                     dismissed: {
                         description: "All good";
                         description_sharing: "Share this article.";
@@ -19,9 +19,9 @@ interface Resources {
                     title_sharing: "Share";
                 };
                 login: {
-                    description: "Login to your Frak account to get the best experience on **{{ productName }}**";
-                    description_reward: "{{ productName }} pays you directly into your **wallets** for the value you create through actions on this site, such as clicks, registrations or purchases.";
-                    description_sharing: "{{ productName }} pays you directly on your **wallet** for the value you create if your shares lead to actions such as clicks, registrations or purchases.";
+                    description: "Login to your Frak account to get the best experience on **{{productName}}**";
+                    description_reward: "{{productName}} pays you directly into your **wallets** for the value you create through actions on this site, such as clicks, registrations or purchases.";
+                    description_sharing: "{{productName}} pays you directly on your **wallet** for the value you create if your shares lead to actions such as clicks, registrations or purchases.";
                     primaryAction: "I create my wallet under 30sec";
                     secondaryAction: "Use a QR code to connect";
                     success: "Connection successful";
@@ -49,8 +49,8 @@ interface Resources {
                 };
                 login: {
                     primaryAction: "I create my wallet";
-                    text: "Create your wallet and receive up to **{{ estimatedReward }}** per referred friend";
-                    text_referred: "Welcome! Receive up to **{{ estimatedReward }}** in case of purchase on the site.\n\nCreate your wallet in 1 click";
+                    text: "Create your wallet and receive up to **{{estimatedReward}}** per referred friend";
+                    text_referred: "Welcome! Receive up to **{{estimatedReward}}** in case of purchase on the site.\n\nCreate your wallet in 1 click";
                 };
             };
         };
@@ -68,7 +68,7 @@ interface Resources {
                         create: "Create a new wallet";
                         login: "Connect with your wallet";
                     };
-                    new: {
+                    "new": {
                         create: "Use biometrics to prove you're not a robot";
                         login: "Connect an existing wallet";
                         phone: "Use a QR code to connect";
@@ -78,9 +78,9 @@ interface Resources {
                 header: {
                     title: "Login with Frak Wallet";
                 };
-                previousWallet: "Your wallet: <strong>{{ wallet }}</strong>";
+                previousWallet: "Your wallet: <strong>{{wallet}}</strong>";
                 recover: "Recover wallet from file";
-                redirect: "You will be redirected to {{ productName }} in a few seconds.";
+                redirect: "You will be redirected to {{productName}} in a few seconds.";
                 redirectNow: "Redirect now";
                 subTitle: "to immediately receive your winnings from <pLink>{{productName}}</pLink>.";
                 title: "Create your wallet";
@@ -108,14 +108,17 @@ interface Resources {
             unlockWith: "Use {{type}} to unlock";
         };
         common: {
+            accountId: "Wallet";
             added: "added";
             amountRequired: "Amount is required";
             at: "at";
-            authenticator: "Authenticator:";
+            authenticator: "Authenticator";
+            back: "Back";
             "back-to-wallet": "Back to Wallet";
             balance: "Balance";
             claim: "Claim";
             claimed: "claimed";
+            close: "Close";
             copied: "Copied!";
             copyAddress: "Copy address";
             enterAddress: "Enter address";
@@ -123,12 +126,13 @@ interface Resources {
             logout: "Logout";
             notifications: "Notifications";
             pending: "pending";
-            receive: "Receive";
             refresh: "Refresh";
             rewards: "Rewards";
             send: "Send";
+            share: "Share";
             submit: "Submit";
             to: "To";
+            today: "Today";
             transactionHash: "Transaction Hash:";
             transactionLink: "Transaction Link";
             transactionSuccess: "Transaction Success!";
@@ -136,6 +140,7 @@ interface Resources {
             walletAddress: "Wallet address:";
             walletAddressRequired: "Wallet address is required";
             walletInvalid: "Invalid wallet address";
+            yesterday: "Yesterday";
         };
         error: {
             webauthn: {
@@ -143,6 +148,50 @@ interface Resources {
                 notAllowed: "You have cancelled the authentication process, please try again.";
                 userOperationExecution: "An error occurred while executing the transaction. Please try again.";
             };
+        };
+        explorer: {
+            card: {
+                badge: "Up to {{amount}}€";
+            };
+            detail: {
+                close: "Close";
+                earningsAvailability: "Earnings availability";
+                endDateBadge: "Ends {{date}} ({{days}}d)";
+                endsIn: "Ends in {{count}} day";
+                endsIn_other: "Ends in {{count}} days";
+                immediate: "Immediate";
+                instructions: "Instructions";
+                legal: "<termsLink>{{merchantName}}'s terms and conditions</termsLink> and <termsLink>FRAK's terms and conditions</termsLink> apply.";
+                readMore: "Read more";
+                refereeReward: "Reward as referee";
+                referrerReward: "Reward as referrer";
+                rewardPerReferral: "{{amount}}€ per referral";
+                share: "Share";
+                shareAndEarn: "Share and earn";
+                step1Description: "A personal link is automatically generated with each share.";
+                step1Title: "Share a product with your friends";
+                step2Description: "Every order made through your link on {{name}} earns you cash directly in your wallet.";
+                step2Title: "Earn {{amount}}€ for every purchase you help generate";
+                step3Description: "In one click, transfer your earnings to your bank account.";
+                step3Title: "Collect your earnings in your wallet";
+            };
+            empty: {
+                description: "New offers are coming soon. Check back later!";
+                title: "No offers available";
+            };
+            pageTitle: "Explorer";
+        };
+        installCode: {
+            codeCopied: "Code copied!";
+            copyCode: "Copy the code";
+            description: "Paste it when opening the app. It will let you claim your rewards once logged in.";
+            download: "Download the app";
+            error: "Failed to generate code. Please refresh.";
+            infoDescription: "When opening the app, tap 'I have a recovery code'.";
+            infoTitle: "Code valid for 3 days";
+            loading: "Generating your code...";
+            processing: "Setting up your wallet...";
+            title: "Copy this code";
         };
         "mobile-sso": {
             appNotFound: "Frak Wallet app not found";
@@ -163,24 +212,221 @@ interface Resources {
             timeout: "Approval timed out. Try again?";
             waiting: "Waiting for approval...";
         };
-        reward: {
-            history: {
-                empty: "No rewards yet";
-                time: {
-                    daysAgo: "{{count}}d ago";
-                    hoursAgo: "{{count}}h ago";
-                    justNow: "just now";
-                    minutesAgo: "{{count}}m ago";
+        monerium: {
+            account: "Monerium Account";
+            badge: {
+                approved: "Bank connected:";
+                notLinked: "IBAN not linked to this wallet";
+                pending: "Bank verification in progress...";
+                rejected: "Verification failed";
+            };
+            bankFlow: {
+                info: {
+                    cta: "Accept and continue";
+                    description: "To transfer your earnings to your bank account, you need to complete your secure payment account setup.";
+                    feature1Description: "To secure your account and verify that you are the rightful owner of the earnings.";
+                    feature1Title: "Verify your identity";
+                    feature2Description: "To receive your earnings directly into your bank account.";
+                    feature2Title: "Add your IBAN";
+                    feature3Description: "Your transactions are protected and comply with current security standards.";
+                    feature3Title: "Secure your transfers";
+                    redirectNotice: "You will be redirected to our financial partner, Monerium, to:";
+                    title: "Complete your account to claim your earnings.";
                 };
-                title: "Recent Rewards";
+                kyc: {
+                    cta: "Verify my identity";
+                    description: "To transfer your earnings, you need to verify your identity.";
+                    featureDescription: "To secure your account and confirm that you are the rightful owner of the earnings, we use a financial partner, Monerium.";
+                    featureTitle: "Verify your identity";
+                    notice: "This step is quick and secure.";
+                    title: "Complete your identity verification";
+                };
+                link: {
+                    cta: "Link my account";
+                    description: "Your wallet is not yet connected to your Monerium account, connect it to transfer your earnings.";
+                    featureDescription: "To fully use your wallet, we need to link your account.";
+                    featureTitle: "Link your Monerium account to your wallet";
+                    title: "Link your wallet";
+                };
+                success: {
+                    cta: "Transfer my earnings";
+                    description: "Your account is ready. You can now transfer your earnings to your bank account with ease.";
+                    title: "You can now transfer your earnings 🎉";
+                };
+                transfer: {
+                    amount: {
+                        continue: "Continue";
+                        ibanEmpty: "No IBAN saved";
+                        ibanLabel: "Recipient";
+                        insufficientBalance: "Insufficient balance";
+                        modify: "Edit";
+                        title: "Transfer my earnings";
+                        totalBalance: "Total balance";
+                        walletLabel: "Frak Wallet";
+                    };
+                    ibanManager: {
+                        addNew: "Add an IBAN";
+                        empty: "No IBAN saved. Add one to get started.";
+                        ibanLabel: "IBAN";
+                        ibanPlaceholder: "FR76...";
+                        nameLabel: "Beneficiary name";
+                        namePlaceholder: "e.g. My checking account";
+                        remove: "Remove";
+                        save: "Save";
+                        select: "Select";
+                        title: "Manage my IBANs";
+                    };
+                    recap: {
+                        addNote: "Add a note";
+                        amountLabel: "Amount";
+                        beneficiaryLabel: "Beneficiary";
+                        cancel: "Cancel";
+                        confirm: "Confirm transfer";
+                        defaultNote: "Sent from FRAK";
+                        title: "Summary";
+                        warning: "Once confirmed, this operation cannot be cancelled";
+                    };
+                    success: {
+                        description: "You will receive your payout within 10 seconds.";
+                        title: "Your transfer request of {{amount}} € has been received";
+                    };
+                };
+            };
+            callback: {
+                failed: "Failed to complete authentication";
+                noCode: "No authorization code received";
+                tryAgain: "Try again";
+            };
+            completeSetup: "Complete setup";
+            connect: "Connect";
+            connecting: "Connecting...";
+            disconnect: "Disconnect";
+            linkWallet: "Link wallet";
+            offramp: {
+                amountInvalid: "Amount must be greater than 0";
+                amountLabel: "Amount (EURe)";
+                amountRequired: "Amount is required";
+                balance: "Balance:";
+                confirmBiometric: "Confirm with biometric...";
+                destinationIban: "Destination IBAN";
+                ibanWarning: "Warning: This IBAN is not linked to your current wallet address.";
+                max: "MAX";
+                noIban: "No IBAN linked. Please complete Monerium verification first.";
+                submit: "Withdraw to bank";
+                submitting: "Submitting order...";
+                success: "Order submitted! Funds will arrive in 1-2 business days.";
+                tryAgain: "Try again";
+            };
+            status: {
+                approved: "Verified ✓";
+                created: "Account created — complete verification on Monerium";
+                pending: "Verification in progress";
+                rejected: "Verification failed";
+                settingUp: "Setting up...";
+            };
+        };
+        onboarding: {
+            activateSecureSpace: "Activate my secure space";
+            alreadyHaveAccount: "Already have an account?";
+            continue: "Continue";
+            keypass: {
+                description: "A secure key is saved in your password manager to quickly log in via biometrics.";
+                existingAccount: {
+                    button: "Log in";
+                    description: "You already have an account. Log in with your passkey to access your wallet.";
+                    title: "Welcome back!";
+                };
+                title: "Secure your account";
+                unsupported: {
+                    button: "Log in another way";
+                    description: "Your browser does not support biometric authentication. Log in another way to access your wallet.";
+                    title: "Browser not compatible";
+                };
+            };
+            notification: {
+                description: "Get notified as soon as money is credited to your wallet.";
+                descriptionHighlight: "Track your rewards in real time.";
+                enable: "Yes, notify me";
+                skip: "Later";
+                title: "Don't miss any reward!";
+            };
+            recoveryCode: "I have a recovery code";
+            slides: {
+                one: {
+                    description: "Share your favorites and earn money for every purchase you help generate.";
+                    title: "Earn money by recommending";
+                };
+                three: {
+                    description: "No forms, no paperwork. Your wallet is ready to receive your earnings, instantly.";
+                    title: "Activate your secure space in 10 sec";
+                };
+                two: {
+                    description: "Track your earnings and transfer them to your bank account whenever you want.";
+                    title: "Your earnings in real time";
+                };
+            };
+            start: "Get started";
+            welcome: {
+                button: "Get started";
+                description: "Let's go! Explore our partner brands, recommend your favorites and turn your influence into earnings.";
+                descriptionHighlight: "Your earnings are secure and accessible at any time.";
+                legal: "By continuing, you accept our <termsLink>Terms of Use</termsLink> and our <privacyLink>Privacy Policy</privacyLink>";
+                title: "Welcome to your wallet";
+            };
+        };
+        recoveryCode: {
+            description: "Paste the code copied from wallet.frak.id to recover your earnings.";
+            digitLabel: "Character";
+            error: {
+                alreadyLinked: "This code has already been used.";
+                generic: "Something went wrong — please try again.";
+                invalid: "Incorrect or expired code — check the code copied from wallet.frak.id";
+            };
+            paste: "Paste the code";
+            success: {
+                description: "You'll receive a notification as soon as a friend purchases via your link.";
+                merchantInfo: "Connected to {{merchantName}}";
+                title: "Your referral link has been found!";
+            };
+            title: "Recover your code";
+            validate: "Validate the code";
+        };
+        reward: {
+            detail: {
+                creditedOn: "Credited on";
+                description: "Reward detail";
+                estimatedValidation: "Estimated validation";
+                generatedDate: "Purchase generated on";
+                generatedOn: "Generated on {{date}} · {{time}}";
+                pendingDisclaimer: "This reward will be available once the purchase is confirmed by the brand.";
+                pendingValidation: "Pending brand validation";
+                purchaseDate: "Purchase date";
+                purchaseMadeOn: "Purchase made on {{date}} at {{time}}";
+                rewardGenerated: "Reward generated";
+                title: "Reward detail";
+                toCollect: "To collect";
+                updatedAt: "Updated on {{date}} · {{time}}";
+            };
+            history: {
+                discover: "Discover offers";
+                emptyDescription: "Explore offers and recommend your favorite products to friends to earn money.";
+                emptyTitle: "Ready to earn money?";
+                seeAll: "See all";
+                stats: {
+                    totalEarnings: "Total earnings";
+                    totalPurchases: "Purchases generated";
+                    totalShares: "Total shares";
+                };
+                title: "Earnings history";
+                viewAll: "View all";
             };
             status: {
                 cancelled: "Cancelled";
                 consumed: "Consumed";
                 expired: "Expired";
-                pending: "Pending";
+                pending: "Awaiting validation by the brand";
                 processing: "Processing";
-                settled: "Settled";
+                settled: "To collect";
             };
             trigger: {
                 create_referral_link: "Shared Link";
@@ -202,10 +448,14 @@ interface Resources {
         };
         wallet: {
             activateNotifications: "<strong>Enable notifications</strong> <br /> to be notified when your gains are paid";
+            activateNotificationsRationale: "<strong>Enable notifications</strong> <br /> We need your permission to notify you when gains are paid";
             inAppBrowser: {
+                title: "Open in your browser";
+                description: "For a better experience, open this page in your default browser.";
+                cta: "Open browser";
+                clickToOpen: "Tap to open in your browser.";
                 clipboardAlert: "This browser doesn't support all features needed.\n\nThe link has been copied to your clipboard.\n\nTo continue:\n1. Open Safari\n2. Tap the address bar\n3. Paste and go";
                 clipboardManualAlert: "This browser doesn't support all features needed.\n\nAutomatic copy failed.\n\nCopy this link manually:\n{{url}}\n\nThen:\n1. Open Safari\n2. Tap the address bar\n3. Paste and go";
-                clickToOpen: "Tap to open in your browser.";
                 dismiss: "Dismiss inapp browser warning";
                 warning: "You're using an embedded browser. Your experience may be degraded. Tap to open in your browser.";
             };
@@ -222,6 +472,7 @@ interface Resources {
                 useQRCode: "Use QR code to connect";
                 walletsOnDevice: "Wallets used on this device";
             };
+            manageNotifications: "<strong>Manage notifications</strong> <br /> Open settings to control your notifications";
             notifications: {
                 noNotifications: "No notifications";
             };
@@ -229,6 +480,8 @@ interface Resources {
                 login: "Connect with biometrics";
                 webauthnNotSupported: "WebAuthn is not supported on this device";
             };
+            openNotificationSettings: "<strong>Notifications disabled</strong> <br /> Open settings to enable notifications";
+            pageTitle: "Wallet";
             pairing: {
                 cancel: "Cancel";
                 code: "Check that the code is correct";
@@ -309,10 +562,34 @@ interface Resources {
                 pleaseEnter: "Please enter a password";
                 required: "Password is required";
             };
+            pendingEmpty: {
+                confirm: "Got it";
+                description: "As soon as a purchase is made through your sharing link, your earnings will appear here.";
+                title: "You don't have any earnings yet";
+            };
+            pendingGains: {
+                confirm: "Collect my earnings";
+                description: "A purchase through your link earned you rewards. Collect them now into your wallet.";
+                heading: "Great news!\nMoney is waiting for you.";
+                subtitle: "Pending earnings";
+                success: "Earnings collected!";
+            };
             pendingReferral: {
                 success: "You have claimed your reward successfully!";
                 text: "You got {{eurClaimable}} EUR pending thanks to your referral activities!";
                 title: "Pending referral reward";
+            };
+            profile: {
+                biometricPrompt: "Require {{biometryLabel}} at every app launch";
+                helpSupport: "Help & support";
+                lastConnection: "Last connection";
+                manageAction: "Manage";
+                notificationSettings: "Notification settings";
+                pageTitle: "Profil";
+                privacyPolicy: "Privacy Policy";
+                rateApp: "Rate the app";
+                recoveryConfigured: "Configured";
+                unsubscribeNotifications: "Unsubscribe";
             };
             recovery: {
                 continue: "Continue recovery";
@@ -374,12 +651,19 @@ interface Resources {
             };
             settings: {
                 biometryInfo: "Biometry informations";
+                deleteAccount: "Delete my account";
                 deletePrivateKey: "Delete private key";
                 ecdsaInfo: "Login informations";
                 ecdsaWallet: "Ecdsa wallet";
+                legal: "Legal";
                 privateKey: "Private key";
+                termsOfUse: "Terms and conditions";
             };
             "share-and-earn": "Share<br />& Earn";
+            stats: {
+                lifetime: "Lifetime";
+                pending: "Pending";
+            };
             toastLoading: {
                 dismiss: "Dismiss inapp browser warning";
                 stuck: "Stuck? See the <pLink>Troubleshooting</pLink> section for more information.<br /><br />You can try to <button>cleanup</button>.<br />(this will logout and you will need to redo a login / pairing)";
@@ -389,11 +673,45 @@ interface Resources {
                 amountPositive: "Amount must be positive";
                 amountToSend: "Amount to send";
                 backToWallet: "Back to wallet page";
-                receive: {
-                    title: "Receive assets on <strong>Testnets</strong>";
-                };
+            };
+            transferEmpty: {
+                description: "Share products with your friends to start earning money.";
+                discover: "Discover offers";
+                title: "You don't have any money to transfer yet";
+            };
+            transferModal: {
+                bankAccount: "Bank account";
+                bankAccountDescription: "Add an IBAN";
+                description: "Choose one of the following options to transfer your earnings.";
+                title: "Transfer";
+                wallet: "Wallet";
+                walletDescription: "Transfer to a crypto wallet";
+            };
+            transferToBank: "Transfer to my bank";
+            transferredEmpty: {
+                confirm: "Got it";
+                description: "The total of your earnings will appear here once you make a transfer to your bank account.";
+                title: "You haven't transferred any earnings yet";
             };
             welcome: {
+                check1: "Explore partner brands";
+                check2: "Recommend your favorite products";
+                check3: "Earn money with every referral";
+                detail: {
+                    discoverOffers: "Discover offers";
+                    howItWorks: "How does it work?";
+                    legal: "FRAK's <termsLink>terms and conditions</termsLink> apply.";
+                    step1Description: "A personal link is automatically generated with each share.";
+                    step1Title: "Explore our partner brands";
+                    step2Description: "A personal link is automatically generated with each share.";
+                    step2Title: "Share an article with your friends";
+                    step3Description: "In one click, transfer your earnings to your bank account.";
+                    step3Title: "Earn money";
+                };
+                notifications: {
+                    description: "Enable notifications to track your earnings in real time.";
+                    title: "Don't miss any earnings!";
+                };
                 text: "This wallet will enable you to collect all the rewards and much more.";
                 title: "Welcome in your wallet";
             };

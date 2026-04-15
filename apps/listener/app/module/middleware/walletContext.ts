@@ -51,7 +51,7 @@ export const walletContextMiddleware: RpcMiddleware<
         if (!resolvingContext) {
             throw new FrakRpcError(
                 RpcErrorCodes.configError,
-                "No resolving context available - handshake may be required"
+                "No resolving context available - resolved-config may be pending"
             );
         }
 
@@ -65,7 +65,6 @@ export const walletContextMiddleware: RpcMiddleware<
                 ...context,
                 merchantId: "",
                 sourceUrl: context.origin,
-                isAutoContext: false,
                 clientId: resolvingContext.clientId,
             };
         }
@@ -97,7 +96,6 @@ export const walletContextMiddleware: RpcMiddleware<
             ...context,
             merchantId: resolvingContext.merchantId,
             sourceUrl: resolvingContext.sourceUrl,
-            isAutoContext: resolvingContext.isAutoContext,
             clientId: resolvingContext.clientId,
         };
     },

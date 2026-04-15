@@ -1,10 +1,11 @@
-import { ButtonAuth } from "@frak-labs/ui/component/ButtonAuth";
+import { Box } from "@frak-labs/design-system/components/Box";
+import { Button } from "@frak-labs/design-system/components/Button";
+import { isUserCancellation } from "@frak-labs/wallet-shared";
 import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { useRegister } from "@/module/authentication/hook/useRegister";
 import { isAuthenticatorAlreadyRegistered } from "@/module/authentication/lib/isAuthenticatorAlreadyRegistered";
 import { Notice } from "@/module/common/component/Notice";
-import styles from "./index.module.css";
 
 /**
  * The register component
@@ -27,17 +28,16 @@ export function SsoRegisterComponent({
         onError: (error: Error) => onError(error),
     });
 
-    /**
-     * Boolean used to know if the error is about a previously used authenticator
-     */
     const isPreviouslyUsedAuthenticatorError = useMemo(
         () => !!error && isAuthenticatorAlreadyRegistered(error),
         [error]
     );
 
-    /**
-     * The status component
-     */
+    const isCancelledError = useMemo(
+        () => !!error && isUserCancellation(error),
+        [error]
+    );
+
     const statusComponent = useMemo(() => {
         if (isPreviouslyUsedAuthenticatorError) {
             return <Notice>{t("authent.create.inProgress")}</Notice>;
@@ -45,39 +45,27 @@ export function SsoRegisterComponent({
         if (isRegisterInProgress) {
             return <Notice>{t("authent.create.inProgress")}</Notice>;
         }
-        if (error) {
+        if (error && !isCancelledError) {
             return <Notice>{t("authent.create.error")}</Notice>;
         }
 
         return null;
-    }, [isPreviouslyUsedAuthenticatorError, error, isRegisterInProgress, t]);
+    }, [
+        isPreviouslyUsedAuthenticatorError,
+        isCancelledError,
+        error,
+        isRegisterInProgress,
+        t,
+    ]);
 
-    if (isPrimary) {
-        return (
-            <p className={styles.sso__primaryButtonWrapper}>
-                <ButtonAuth
-                    onClick={() => {
-                        // Reset the error
-                        onError(null);
-
-                        register({ merchantId });
-                    }}
-                    disabled={
-                        isRegisterInProgress ||
-                        isPreviouslyUsedAuthenticatorError
-                    }
-                >
-                    {t("authent.sso.btn.new.create")}
-                </ButtonAuth>
-                {statusComponent}
-            </p>
-        );
-    }
+    const label = isPrimary
+        ? t("authent.sso.btn.new.create")
+        : t("authent.sso.btn.existing.create");
 
     return (
-        <p className={styles.sso__secondaryButtonWrapper}>
-            <button
-                className={styles.sso__buttonLink}
+        <Box>
+            <Button
+                variant={isPrimary ? "primary" : "ghost"}
                 disabled={
                     isRegisterInProgress || isPreviouslyUsedAuthenticatorError
                 }
@@ -87,11 +75,10 @@ export function SsoRegisterComponent({
 
                     register({ merchantId });
                 }}
-                type={"button"}
             >
-                {t("authent.sso.btn.existing.create")}
-            </button>
+                {label}
+            </Button>
             {statusComponent}
-        </p>
+        </Box>
     );
 }

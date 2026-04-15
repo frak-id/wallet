@@ -1,0 +1,82 @@
+<?php
+/** @var \FrakLabs\Sdk\Block\SdkLoader $block */
+/** @var \Magento\Framework\Escaper $escaper */
+/** @var \Magento\Framework\View\Helper\SecureHtmlRenderer $secureRenderer */
+
+if (!$block->isEnabled()) {
+    return;
+}
+
+$componentsUrl = $block->getComponentsUrl();
+$config = $block->getFrakConfig();
+?>
+
+<!-- IMPORTANT: Set config FIRST, then load SDK script.
+     type="module" scripts are deferred by default — but we want FrakSetup
+     to be available the moment the SDK initializes, with no race condition. -->
+
+<!-- Set window.FrakSetup config (runs immediately, before SDK loads) -->
+<?= /* @noEscape */ $secureRenderer->renderTag(
+    "script",
+    [],
+    <<<JS
+    (function() {
+        var staticConfig = {$config};
+
+        window.FrakSetup = {
+            ...staticConfig,
+            config: {
+                ...staticConfig.config,
+                domain: window.location.host
+            },
+            modalConfig: {
+                ...staticConfig.modalConfig,
+                login: {
+                    ...((staticConfig.modalConfig || {}).login || {}),
+                    ssoMetadata: {
+                        ...((((staticConfig.modalConfig || {}).login || {}).ssoMetadata) || {}),
+                        homepageLink: window.location.host
+                    }
+                }
+            },
+            modalShareConfig: {
+                ...(staticConfig.modalShareConfig || {}),
+                link: window.location.href
+            }
+        };
+    })();
+    JS,
+    false
+) ?>
+
+<!-- Load Frak SDK components from CDN (deferred, runs after config is set) -->
+<?= /* @noEscape */ $secureRenderer->renderTag(
+    "script",
+    ["type" => "module", "src" => $escaper->escapeUrl($componentsUrl)],
+    "",
+    false
+) ?>
+
+<?= /* @noEscape */ $secureRenderer->renderTag(
+    "script",
+    [],
+    <<<JS
+    (function() {
+        var clientId = localStorage.getItem('frak-client-id');
+        if (clientId) {
+            document.cookie = 'frak_client_id=' + encodeURIComponent(clientId)
+                + ';path=/;max-age=86400;SameSite=Lax';
+        }
+
+        window.addEventListener('frakClientReady', function() {
+            var id = window.FrakSetup?.core?.getClientId?.()
+                ?? localStorage.getItem('frak-client-id');
+            if (id) {
+                document.cookie = 'frak_client_id=' + encodeURIComponent(id)
+                    + ';path=/;max-age=86400;SameSite=Lax';
+            }
+        }, { once: true });
+    })();
+    JS,
+    false
+) ?>

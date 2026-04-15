@@ -17,6 +17,19 @@ declare global {
 }
 
 // Register the ButtonShare component
-registerWebComponent(ButtonShare, "frak-button-share", ["text"], {
-    shadow: false,
-});
+registerWebComponent(
+    ButtonShare,
+    "frak-button-share",
+    [
+        "text",
+        "placement",
+        "classname",
+        "clickAction",
+        "useReward",
+        "noRewardText",
+        "targetInteraction",
+    ],
+    {
+        shadow: false,
+    }
+);

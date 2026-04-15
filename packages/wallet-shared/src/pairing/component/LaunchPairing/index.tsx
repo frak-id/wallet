@@ -1,4 +1,4 @@
-import { Spinner } from "@frak-labs/ui/component/Spinner";
+import { Spinner } from "@frak-labs/design-system/components/Spinner";
 import { cx } from "class-variance-authority";
 import { Cuer } from "cuer";
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -116,7 +116,7 @@ function PairingContent({ clientState }: { clientState: OriginPairingState }) {
                 >
                     <Cuer
                         arena={"/icon.svg"}
-                        value={`${process.env.FRAK_WALLET_URL}/pair?id=${pairingInfo.id}`}
+                        value={`${process.env.FRAK_WALLET_URL}/pairing?id=${pairingInfo.id}&mode=embedded`}
                         size={200}
                     />
                 </button>

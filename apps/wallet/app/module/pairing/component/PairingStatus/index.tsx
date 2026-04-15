@@ -1,38 +1,52 @@
-import { Spinner } from "@frak-labs/ui/component/Spinner";
+import { Badge } from "@frak-labs/design-system/components/Badge";
+import { Box } from "@frak-labs/design-system/components/Box";
+import { Spinner } from "@frak-labs/design-system/components/Spinner";
 import type { BasePairingState } from "@frak-labs/wallet-shared/pairing/types";
 import { Check } from "lucide-react";
 import { useTranslation } from "react-i18next";
-import styles from "./index.module.css";
+import * as styles from "./index.css";
 
 export function PairingStatus({
     status,
 }: {
     status: BasePairingState["status"];
 }) {
-    const statusDetails = getStatusDetails(status);
+    const statusDetails = useStatusDetails(status);
 
-    return <span className={styles.pairingStatus}>{statusDetails}</span>;
+    return (
+        <Box as="span" className={styles.pairingStatus}>
+            {statusDetails}
+        </Box>
+    );
 }
 
-function getStatusDetails(status: BasePairingState["status"]) {
+function useStatusDetails(status: BasePairingState["status"]) {
     const { t } = useTranslation();
 
     switch (status) {
         case "idle":
-            return t("wallet.pairing.status.idle");
+            return (
+                <Badge variant="neutral">
+                    {t("wallet.pairing.status.idle")}
+                </Badge>
+            );
         case "connecting":
             return (
-                <span className={styles.pairingStatus__connecting}>
-                    <Spinner />
-                    {t("wallet.pairing.status.connecting")}
-                </span>
+                <Badge variant="warning">
+                    <Box as="span" className={styles.statusInline}>
+                        <Spinner size="s" />
+                        {t("wallet.pairing.status.connecting")}
+                    </Box>
+                </Badge>
             );
         case "paired":
             return (
-                <span className={styles.pairingStatus__paired}>
-                    <Check color="green" size={16} />
-                    {t("wallet.pairing.status.paired")}
-                </span>
+                <Badge variant="success">
+                    <Box as="span" className={styles.statusInline}>
+                        <Check size={16} />
+                        {t("wallet.pairing.status.paired")}
+                    </Box>
+                </Badge>
             );
     }
 }

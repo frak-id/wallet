@@ -62,7 +62,7 @@ export class RewardHistoryService {
                 symbol: meta?.symbol ?? "UNKNOWN",
                 decimals,
             },
-            amount: this.buildTokenAmount(log.amount, decimals, price),
+            amount: this.buildTokenAmount(log.amount, price),
             status: log.status,
             role: log.recipientType,
             trigger: this.getTrigger(log.interactionType),
@@ -77,12 +77,8 @@ export class RewardHistoryService {
         };
     }
 
-    private buildTokenAmount(
-        rawAmount: string,
-        decimals: number,
-        price: TokenPrice | undefined
-    ) {
-        const amount = Number.parseFloat(rawAmount) / 10 ** decimals;
+    private buildTokenAmount(rawAmount: string, price: TokenPrice | undefined) {
+        const amount = Number.parseFloat(rawAmount);
         return {
             amount,
             eurAmount: price ? amount * price.eur : 0,

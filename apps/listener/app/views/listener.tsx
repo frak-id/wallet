@@ -1,12 +1,10 @@
 import type { FrakLifecycleEvent } from "@frak-labs/core-sdk";
 import { createRpcListener } from "@frak-labs/frame-connector";
-import { loadPolyfills } from "@frak-labs/ui/utils/polyfills";
 import { useEffect } from "react";
 import { ListenerUiRenderer } from "@/module/component/ListenerUiRenderer";
 import {
-    checkContextAndEmitReady,
     createClientLifecycleHandler,
-    initializeResolvingContext,
+    emitConnected,
 } from "@/module/handlers/lifecycleHandler";
 import {
     handleOpenSso,
@@ -15,8 +13,11 @@ import {
 } from "@/module/handlers/ssoHandler";
 import { useDisplayEmbeddedWallet } from "@/module/hooks/useDisplayEmbeddedWallet";
 import { useDisplayModalListener } from "@/module/hooks/useDisplayModalListener";
+import { useDisplaySharingPageListener } from "@/module/hooks/useDisplaySharingPageListener";
 import { useListenerDataPreload } from "@/module/hooks/useListenerDataPreload";
 import { useOnGetMerchantInformation } from "@/module/hooks/useOnGetMerchantInformation";
+import { useOnGetMergeToken } from "@/module/hooks/useOnGetMergeToken";
+import { useOnGetUserReferralStatus } from "@/module/hooks/useOnGetUserReferralStatus";
 import { useSendInteractionListener } from "@/module/hooks/useSendInteractionListener";
 import { useSendPing } from "@/module/hooks/useSendPing";
 import { useWalletStatusListener } from "@/module/hooks/useWalletStatusListener";
@@ -29,8 +30,6 @@ import type {
     CombinedRpcSchema,
     WalletRpcContext,
 } from "@/module/types/context";
-
-loadPolyfills();
 
 /**
  * Top level listener, wrapped with the Listener Ui context
@@ -62,6 +61,13 @@ function ListenerContent() {
 
     const onSendInteraction = useSendInteractionListener();
 
+    const onGetUserReferralStatus = useOnGetUserReferralStatus();
+
+    const onGetMergeToken = useOnGetMergeToken();
+
+    // Hook when a sharing page display is asked
+    const onDisplaySharingPage = useDisplaySharingPageListener();
+
     // Create the RPC listener with centralized message handling
     useEffect(() => {
         if (typeof window === "undefined") {
@@ -72,9 +78,8 @@ function ListenerContent() {
         let isReady = false;
         const setReadyToHandleRequest = () => {
             if (isReady) return;
-            if (checkContextAndEmitReady()) {
-                isReady = true;
-            }
+            isReady = true;
+            emitConnected();
         };
 
         // Create lifecycle handler
@@ -121,6 +126,9 @@ function ListenerContent() {
         );
         listener.handle("frak_displayEmbeddedWallet", onDisplayEmbeddedWallet);
         listener.handle("frak_sendInteraction", onSendInteraction);
+        listener.handle("frak_getUserReferralStatus", onGetUserReferralStatus);
+        listener.handle("frak_displaySharingPage", onDisplaySharingPage);
+        listener.handle("frak_getMergeToken", onGetMergeToken);
 
         // Register streaming handlers (IFrameRpcSchema)
         listener.handleStream(
@@ -131,9 +139,6 @@ function ListenerContent() {
         // Register SSO handlers (SsoRpcSchema)
         listener.handle("sso_complete", handleSsoComplete);
 
-        // Initialize resolving context (starts handshake if needed)
-        initializeResolvingContext();
-
         // On cleanup, destroy the listener
         return () => {
             listener.cleanup();
@@ -142,7 +147,10 @@ function ListenerContent() {
         onWalletListenRequest,
         onDisplayModalRequest,
         onGetMerchantInformation,
+        onGetUserReferralStatus,
+        onGetMergeToken,
         onDisplayEmbeddedWallet,
+        onDisplaySharingPage,
         onSendInteraction,
     ]);
 

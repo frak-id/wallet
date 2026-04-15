@@ -75,7 +75,12 @@ export const backendInstance = new KubernetesService(
                     name: "elysia",
                     image: elysiaImage.ref,
                     ports: [{ containerPort: 3030 }],
-                    env: [],
+                    env: [
+                        {
+                            name: "BUN_JSC_forceRAMSize",
+                            value: "419430400",
+                        },
+                    ],
                     // Mount all the secrets
                     envFrom: [
                         {

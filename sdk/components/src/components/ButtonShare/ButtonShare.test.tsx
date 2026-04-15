@@ -1,15 +1,20 @@
 import * as coreSdk from "@frak-labs/core-sdk";
-import * as coreSdkActions from "@frak-labs/core-sdk/actions";
 import { fireEvent, render, screen, waitFor } from "@testing-library/preact";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import * as useClientReadyHook from "@/hooks/useClientReady";
 import * as useRewardHook from "@/hooks/useReward";
+import * as embeddedWalletUtils from "@/utils/embeddedWallet";
+import * as sharingPageUtils from "@/utils/sharingPage";
 import { ButtonShare } from "./ButtonShare";
 import * as useShareModalHook from "./hooks/useShareModal";
 
 // Mock the hooks
 vi.mock("@/hooks/useClientReady", () => ({
-    useClientReady: vi.fn(() => ({ isClientReady: true })),
+    useClientReady: vi.fn(() => ({
+        shouldRender: true,
+        isHidden: false,
+        isClientReady: true,
+    })),
 }));
 
 vi.mock("@/hooks/useReward", () => ({
@@ -24,11 +29,23 @@ vi.mock("./hooks/useShareModal", () => ({
     })),
 }));
 
-describe("ButtonShare", () => {
+vi.mock("@/utils/embeddedWallet", () => ({
+    openEmbeddedWallet: vi.fn(),
+}));
+
+vi.mock("@/utils/sharingPage", () => ({
+    openSharingPage: vi.fn(),
+}));
+
+// Sequential: tests mutate vi.mock state for shared hooks and window globals,
+// incompatible with the workspace default of `sequence.concurrent: true`.
+describe.sequential("ButtonShare", () => {
     beforeEach(() => {
         vi.clearAllMocks();
         // Reset mocks to default state
         vi.mocked(useClientReadyHook.useClientReady).mockReturnValue({
+            shouldRender: true,
+            isHidden: false,
             isClientReady: true,
         });
         vi.mocked(useRewardHook.useReward).mockReturnValue({
@@ -59,22 +76,26 @@ describe("ButtonShare", () => {
         expect(button).toHaveClass("custom-class");
     });
 
-    it("should display spinner when client is not ready", () => {
+    it("should render nothing when config is not resolved", () => {
         vi.mocked(useClientReadyHook.useClientReady).mockReturnValue({
+            shouldRender: false,
+            isHidden: false,
             isClientReady: false,
         });
 
-        render(<ButtonShare />);
-        const button = screen.getByRole("button");
-        // Spinner should be rendered (check for spinner element)
-        expect(button.querySelector("span")).toBeInTheDocument();
+        const { container } = render(<ButtonShare />);
+        expect(container.querySelector("button")).not.toBeInTheDocument();
     });
 
-    it("should not display spinner when client is ready", () => {
-        render(<ButtonShare />);
-        const button = screen.getByRole("button");
-        // When client is ready, spinner should not be visible
-        expect(button).toHaveTextContent("Share and earn!");
+    it("should render nothing when SDK is hidden", () => {
+        vi.mocked(useClientReadyHook.useClientReady).mockReturnValue({
+            shouldRender: true,
+            isHidden: true,
+            isClientReady: true,
+        });
+
+        const { container } = render(<ButtonShare />);
+        expect(container.querySelector("button")).not.toBeInTheDocument();
     });
 
     it("should display reward when useReward is true and reward is available", () => {
@@ -113,7 +134,35 @@ describe("ButtonShare", () => {
         expect(button).toHaveTextContent("Share and earn! 10 eur");
     });
 
-    it("should call handleShare on click when showWallet is false", async () => {
+    it("should call openSharingPage on click by default", async () => {
+        render(<ButtonShare />);
+        const button = screen.getByRole("button");
+
+        fireEvent.click(button);
+
+        await waitFor(() => {
+            expect(sharingPageUtils.openSharingPage).toHaveBeenCalledWith(
+                undefined,
+                undefined
+            );
+        });
+    });
+
+    it("should call openEmbeddedWallet when clickAction is embedded-wallet", async () => {
+        render(<ButtonShare clickAction="embedded-wallet" />);
+        const button = screen.getByRole("button");
+
+        fireEvent.click(button);
+
+        await waitFor(() => {
+            expect(embeddedWalletUtils.openEmbeddedWallet).toHaveBeenCalledWith(
+                undefined,
+                undefined
+            );
+        });
+    });
+
+    it("should call handleShare when clickAction is share-modal", async () => {
         const mockHandleShare = vi.fn().mockResolvedValue(undefined);
         vi.mocked(useShareModalHook.useShareModal).mockReturnValue({
             handleShare: mockHandleShare,
@@ -121,27 +170,13 @@ describe("ButtonShare", () => {
             debugInfo: undefined,
         });
 
-        render(<ButtonShare />);
+        render(<ButtonShare clickAction="share-modal" />);
         const button = screen.getByRole("button");
 
         fireEvent.click(button);
 
         await waitFor(() => {
             expect(mockHandleShare).toHaveBeenCalledTimes(1);
-        });
-    });
-
-    it("should call displayEmbeddedWallet when showWallet is true", async () => {
-        render(<ButtonShare showWallet />);
-        const button = screen.getByRole("button");
-
-        fireEvent.click(button);
-
-        await waitFor(() => {
-            expect(coreSdkActions.displayEmbeddedWallet).toHaveBeenCalledWith(
-                window.FrakSetup.client,
-                window.FrakSetup.modalWalletConfig ?? {}
-            );
         });
     });
 
@@ -193,7 +228,8 @@ describe("ButtonShare", () => {
         render(<ButtonShare targetInteraction="custom.customerMeeting" />);
 
         expect(useShareModalHook.useShareModal).toHaveBeenCalledWith(
-            "custom.customerMeeting"
+            "custom.customerMeeting",
+            undefined
         );
     });
 });

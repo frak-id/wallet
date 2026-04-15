@@ -1,5 +1,6 @@
 import * as process from "node:process";
 import { tanstackRouter } from "@tanstack/router-plugin/vite";
+import { vanillaExtractPlugin } from "@vanilla-extract/vite-plugin";
 import viteReact from "@vitejs/plugin-react";
 import type { ConfigEnv, UserConfig } from "vite";
 import { defineConfig } from "vite";
@@ -11,12 +12,14 @@ import {
     lightningCssConfig,
     onwarn,
 } from "../../packages/dev-tooling";
+import walletPackage from "./package.json";
 
 const DEBUG = JSON.stringify(false);
 
 const isProd = process.env.STAGE?.includes("prod") ?? false;
 const isTauri = !!process.env.TAURI_CLI_RUNNING;
 const isSandbox = !!process.env.ATELIER_SANDBOX_ID;
+const appVersion = process.env.COMMIT_HASH ?? walletPackage.version;
 
 export default defineConfig(
     async ({ mode, command }: ConfigEnv): Promise<UserConfig> => {
@@ -53,9 +56,7 @@ export default defineConfig(
                 ),
                 "process.env.DEBUG": JSON.stringify(DEBUG),
                 "process.env.IS_TAURI": JSON.stringify(isTauri),
-                "process.env.APP_VERSION": JSON.stringify(
-                    process.env.COMMIT_HASH ?? "UNKNOWN"
-                ),
+                "process.env.APP_VERSION": JSON.stringify(appVersion),
                 "process.env.FRAK_WALLET_URL": JSON.stringify(
                     sandboxEnv.walletUrl ??
                         getSstResource("FRAK_WALLET_URL") ??
@@ -76,6 +77,9 @@ export default defineConfig(
                 ),
                 "process.env.MONERIUM_CLIENT_ID": JSON.stringify(
                     getSstResource("MONERIUM_CLIENT_ID")
+                ),
+                "process.env.IS_APP_AVAILABLE": JSON.stringify(
+                    process.env.IS_APP_AVAILABLE ?? "true"
                 ),
             },
         };
@@ -111,8 +115,10 @@ export default defineConfig(
                     routesDirectory: "./app/routes",
                     generatedRouteTree: "./app/routeTree.gen.ts",
                     autoCodeSplitting: true,
+                    routeFileIgnorePattern: "\\.css\\.ts$",
                 }),
                 viteReact(),
+                vanillaExtractPlugin(),
                 // Skip HTTPS for Tauri dev (simulators don't trust self-signed certs) and sandbox (proxy handles TLS)
                 ...(isTauri || isSandbox ? [] : [mkcert()]),
                 ...(isProd ? [removeConsole()] : []),
@@ -124,11 +130,6 @@ export default defineConfig(
                         ? ["production", "default"]
                         : ["development"],
                 alias: {
-                    // Enforce stub for @wagmi/connectors to avoid heavy dependencies (MetaMask SDK, etc.)
-                    "@wagmi/connectors": new URL(
-                        "../../.stubs/wagmi-connectors-stub/index.js",
-                        import.meta.url
-                    ).pathname,
                     ...(command === "build"
                         ? {
                               "react-dom/server": "react-dom/server.node",
@@ -182,7 +183,7 @@ export default defineConfig(
                         inlineConst: { mode: "all", pass: 3 },
                     },
                     output: {
-                        advancedChunks: {
+                        codeSplitting: {
                             // Only chunk stuff shared by at least 2 module
                             minShareCount: 2,
                             groups: [
@@ -210,7 +211,7 @@ export default defineConfig(
                                 // UI vendors - ALL UI libraries together
                                 {
                                     name: "ui-vendor",
-                                    test: /node_modules[\\/](@radix-ui|vaul|micromark|sonner|lucide-react|class-variance-authority|cuer|nprogress|react-hook-form|react-dropzone)/,
+                                    test: /node_modules[\\/](@radix-ui|vaul|micromark|sonner|lucide-react|class-variance-authority|cuer|react-hook-form|react-dropzone)/,
                                     priority: 30,
                                 },
 

@@ -146,6 +146,7 @@ export const CampaignRuleDefinitionSchema = t.Object({
     rewards: t.Array(RewardDefinitionSchema),
     pendingRewardExpirationDays: t.Optional(t.Number()),
     maxRewardsPerUser: t.Optional(t.Number()),
+    merchantMaxRewardsPerUser: t.Optional(t.Number()),
 });
 // Manual type def needed - recursive ConditionGroupSchema breaks Static<> inference
 export type CampaignRuleDefinition = {
@@ -154,6 +155,7 @@ export type CampaignRuleDefinition = {
     rewards: RewardDefinition[];
     pendingRewardExpirationDays?: number;
     maxRewardsPerUser?: number;
+    merchantMaxRewardsPerUser?: number;
 };
 
 const BudgetConfigItemSchema = t.Object({
@@ -240,6 +242,8 @@ const EstimatedRewardItemSchema = t.Object({
     conditions: RuleConditionsSchema,
     pendingRewardExpirationDays: t.Optional(t.Number()),
     maxRewardsPerUser: t.Optional(t.Number()),
+    merchantMaxRewardsPerUser: t.Optional(t.Number()),
+    expiresAt: t.Optional(t.Union([t.String(), t.Null()])),
 });
 export type EstimatedRewardItem = Omit<
     Static<typeof EstimatedRewardItemSchema>,

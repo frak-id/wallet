@@ -3,11 +3,14 @@ import {
     compressJsonToB64,
     decompressJsonFromB64,
     findIframeInOpener,
+    type SsoMetadata,
 } from "@frak-labs/core-sdk";
+import { Box } from "@frak-labs/design-system/components/Box";
+import { Button } from "@frak-labs/design-system/components/Button";
+import { Spinner } from "@frak-labs/design-system/components/Spinner";
+import { Text } from "@frak-labs/design-system/components/Text";
+import { CircleCheckIcon, LogoFrak } from "@frak-labs/design-system/icons";
 import { createRpcClient } from "@frak-labs/frame-connector";
-import { ButtonAuth } from "@frak-labs/ui/component/ButtonAuth";
-import { formatHash } from "@frak-labs/ui/component/HashDisplay";
-import { Spinner } from "@frak-labs/ui/component/Spinner";
 import type {
     OnPairingSuccessCallback,
     Session,
@@ -23,20 +26,41 @@ import {
     ua,
 } from "@frak-labs/wallet-shared";
 import { type UseMutationOptions, useMutation } from "@tanstack/react-query";
-import { createFileRoute, Link, redirect } from "@tanstack/react-router";
+import { createFileRoute, redirect } from "@tanstack/react-router";
 import i18next from "i18next";
-import { CloudUpload } from "lucide-react";
 import { useCallback, useMemo, useState } from "react";
 import { Trans, useTranslation } from "react-i18next";
+import { type Hex, slice } from "viem";
 import { AuthenticateWithPhone } from "@/module/authentication/component/AuthenticateWithPhone";
-import styles from "@/module/authentication/component/Sso/index.module.css";
+import { ButtonAuth } from "@/module/authentication/component/ButtonAuth";
+import * as styles from "@/module/authentication/component/Sso/index.css";
 import { SsoHeader } from "@/module/authentication/component/Sso/SsoHeader";
 import { SsoLoginComponent } from "@/module/authentication/component/Sso/SsoLogin";
 import { SsoRegisterComponent } from "@/module/authentication/component/Sso/SsoRegister";
 import { useDemoLogin } from "@/module/authentication/hook/useDemoLogin";
-import { Grid } from "@/module/common/component/Grid";
-import { Notice } from "@/module/common/component/Notice";
-import "./sso.global.css";
+import { StepLayout } from "@/module/common/component/StepLayout";
+
+/**
+ * Metadata actually stored on the SSO context — base SsoMetadata plus the
+ * optional `name` field injected by the wallet-shared store layer.
+ */
+type Metadata = SsoMetadata & { name?: string };
+
+/**
+ * Format a hex hash for display by truncating the middle.
+ */
+function formatHash({
+    hash,
+    format = { start: 2, end: 3 },
+}: {
+    hash: Hex;
+    format?: { start: number; end: number };
+}) {
+    if (!hash) return undefined;
+    const start = slice(hash, 0, format.start);
+    const end = slice(hash, -format.end).replace("0x", "");
+    return `${start}...${end}`;
+}
 
 export const Route = createFileRoute("/_wallet/_sso/sso")({
     component: Sso,
@@ -113,6 +137,13 @@ function Sso() {
     const currentMetadata = useMemo(
         () => ssoContext?.metadata,
         [ssoContext?.metadata]
+    );
+
+    /**
+     * Whether we know of a previously-used passkey on this device.
+     */
+    const lastAuthenticator = authenticationStore(
+        (state) => state.lastAuthenticator
     );
 
     /**
@@ -227,107 +258,10 @@ function Sso() {
         }
     }, []);
 
-    // Show error state if loader failed
-    if (loaderError) {
-        return (
-            <>
-                <SsoHeader />
-                <Grid className={styles.sso__grid}>
-                    <h2>An error occurred</h2>
-                    <HandleErrors error={loaderError} />
-                    <button
-                        className={styles.sso__buttonLink}
-                        onClick={() => window.close()}
-                        type={"button"}
-                    >
-                        Close
-                    </button>
-                </Grid>
-            </>
-        );
-    }
-
-    if (!currentMetadata) {
-        return <Spinner />;
-    }
-
-    return (
-        <>
-            <SsoHeader />
-            <Grid
-                className={styles.sso__grid}
-                footer={
-                    <>
-                        <Notice className={styles.sso__notice}>
-                            <Trans
-                                i18nKey={"authent.sso.description"}
-                                values={{
-                                    productName: currentMetadata.name,
-                                }}
-                            />
-                        </Notice>
-                        {hasRedirectUrl ? (
-                            <button
-                                onClick={cancelAndRedirect}
-                                className={styles.sso__recover}
-                                type={"button"}
-                            >
-                                {t("authent.sso.cancel")}
-                            </button>
-                        ) : (
-                            <Link
-                                to={"/recovery"}
-                                className={styles.sso__recover}
-                                viewTransition
-                            >
-                                <CloudUpload /> {t("authent.sso.recover")}
-                            </Link>
-                        )}
-                    </>
-                }
-            >
-                <Header />
-                {!success && (
-                    <>
-                        {error && <HandleErrors error={error} />}
-                        <Actions onSuccess={onSuccess} onError={setError} />
-                        <PhonePairingAction onSuccess={onSuccess} />
-                    </>
-                )}
-
-                {success && (
-                    <>
-                        <p className={styles.sso__redirect}>
-                            <Trans
-                                i18nKey={"authent.sso.redirect"}
-                                values={{
-                                    productName: currentMetadata.name,
-                                }}
-                            />
-                            <span className={"dotsLoading"}>...</span>
-                        </p>
-                        <button
-                            className={styles.sso__buttonLink}
-                            onClick={redirectOrClose}
-                            type={"button"}
-                        >
-                            {t("authent.sso.redirectNow")}
-                        </button>
-                    </>
-                )}
-            </Grid>
-        </>
-    );
-}
-
-function Header() {
-    const { t } = useTranslation();
-    const currentMetadata = authenticationStore(
-        (state) => state.ssoContext?.metadata
-    );
-    const lastAuthenticator = authenticationStore(
-        (state) => state.lastAuthenticator
-    );
+    /**
+     * Title shown in the hero — differs depending on whether the user has a
+     * previously-registered passkey on this device.
+     */
     const title = useMemo(
         () =>
             lastAuthenticator
@@ -336,46 +270,181 @@ function Header() {
         [t, lastAuthenticator]
     );
 
+    // Show error state if loader failed
+    if (loaderError) {
+        return (
+            <>
+                <SsoHeader />
+                <StepLayout
+                    icon={<span>⚠️</span>}
+                    title="An error occurred"
+                    description={
+                        <HandleErrors
+                            error={loaderError}
+                            className={styles.errorText}
+                        />
+                    }
+                    footer={
+                        <Button variant="ghost" onClick={() => window.close()}>
+                            Close
+                        </Button>
+                    }
+                />
+            </>
+        );
+    }
+
     if (!currentMetadata) {
-        return <h2>{title}</h2>;
+        return (
+            <>
+                <SsoHeader />
+                <Spinner />
+            </>
+        );
+    }
+
+    // Success state — waiting for redirect/close
+    if (success) {
+        return (
+            <>
+                <SsoHeader />
+                <StepLayout
+                    icon={
+                        <Box className={styles.successIcon}>
+                            <CircleCheckIcon width={72} height={72} />
+                        </Box>
+                    }
+                    title={title}
+                    description={
+                        <>
+                            <Trans
+                                i18nKey={"authent.sso.redirect"}
+                                values={{
+                                    productName: currentMetadata.name,
+                                }}
+                            />
+                            <span className="dotsLoading">...</span>
+                        </>
+                    }
+                    footer={
+                        <Button variant="ghost" onClick={redirectOrClose}>
+                            {t("authent.sso.redirectNow")}
+                        </Button>
+                    }
+                />
+            </>
+        );
     }
 
     return (
         <>
-            {currentMetadata.logoUrl && (
-                <img
-                    src={currentMetadata.logoUrl}
-                    alt={currentMetadata.name}
-                    className={styles.sso__logo}
-                />
-            )}
-            <h2 className={styles.sso__title}>{title}</h2>
-            {currentMetadata.name !== "" && (
-                <p className={styles.sso__ahead}>
-                    <Trans
-                        i18nKey={"authent.sso.subTitle"}
-                        values={{
-                            productName: currentMetadata.name,
-                            productLink: currentMetadata.homepageLink,
-                        }}
-                        components={{
-                            pLink: currentMetadata.homepageLink ? (
-                                <a
-                                    href={currentMetadata.homepageLink}
-                                    target={"_blank"}
-                                    rel={"noreferrer"}
-                                    className={styles.sso__link}
-                                >
-                                    {currentMetadata.name}
-                                </a>
-                            ) : (
-                                <u>{currentMetadata.name}</u>
-                            ),
-                        }}
-                    />
-                </p>
-            )}
+            <SsoHeader />
+            <StepLayout
+                icon={<MerchantIcon metadata={currentMetadata} />}
+                title={title}
+                description={<SsoSubtitle metadata={currentMetadata} />}
+                footer={
+                    <>
+                        {error && (
+                            <HandleErrors
+                                error={error}
+                                className={styles.errorText}
+                            />
+                        )}
+                        {lastAuthenticator && (
+                            <Text
+                                as="p"
+                                variant="caption"
+                                className={styles.previousWallet}
+                            >
+                                <Trans
+                                    i18nKey={"authent.sso.previousWallet"}
+                                    values={{
+                                        wallet: formatHash({
+                                            hash: lastAuthenticator.address,
+                                        }),
+                                    }}
+                                />
+                            </Text>
+                        )}
+                        <Actions onSuccess={onSuccess} onError={setError} />
+                        <PhonePairingAction onSuccess={onSuccess} />
+                        <Box as="p" className={styles.disclaimer}>
+                            <Trans
+                                i18nKey={"authent.sso.description"}
+                                values={{
+                                    productName: currentMetadata.name,
+                                }}
+                            />
+                        </Box>
+                        {hasRedirectUrl && (
+                            <Box
+                                as="button"
+                                className={styles.ghostLink}
+                                onClick={cancelAndRedirect}
+                                type="button"
+                            >
+                                {t("authent.sso.cancel")}
+                            </Box>
+                        )}
+                    </>
+                }
+            />
         </>
+    );
+}
+
+/**
+ * Circular merchant logo used as the hero icon.
+ * Falls back to the flat-blue Frak mark when no merchant logo is provided.
+ */
+function MerchantIcon({ metadata }: { metadata: Metadata }) {
+    if (metadata.logoUrl) {
+        return (
+            <Box className={styles.merchantIcon}>
+                <img
+                    src={metadata.logoUrl}
+                    alt={metadata.name ?? ""}
+                    className={styles.merchantImg}
+                />
+            </Box>
+        );
+    }
+    return (
+        <Box className={styles.merchantIcon}>
+            <LogoFrak width={36} height={36} />
+        </Box>
+    );
+}
+
+/**
+ * Hero subtitle — "to immediately receive your winnings from {merchant}".
+ * Returns null when the metadata has no merchant name.
+ */
+function SsoSubtitle({ metadata }: { metadata: Metadata }) {
+    if (!metadata.name) return null;
+    return (
+        <Trans
+            i18nKey={"authent.sso.subTitle"}
+            values={{
+                productName: metadata.name,
+                productLink: metadata.homepageLink,
+            }}
+            components={{
+                pLink: metadata.homepageLink ? (
+                    <a
+                        href={metadata.homepageLink}
+                        target={"_blank"}
+                        rel={"noreferrer"}
+                        className={styles.merchantLink}
+                    >
+                        {metadata.name}
+                    </a>
+                ) : (
+                    <u>{metadata.name}</u>
+                ),
+            }}
+        />
     );
 }
 
@@ -401,7 +470,7 @@ function Actions({
 
     if (privateKey) {
         return (
-            <p className={styles.sso__primaryButtonWrapper}>
+            <Box>
                 <ButtonAuth
                     onClick={() => {
                         login();
@@ -410,7 +479,7 @@ function Actions({
                 >
                     {t("authent.sso.btn.existing.login")}
                 </ButtonAuth>
-            </p>
+            </Box>
         );
     }
 
@@ -418,16 +487,6 @@ function Actions({
     if (lastAuthenticator) {
         return (
             <>
-                <p className={styles.sso__previousWallet}>
-                    <Trans
-                        i18nKey={"authent.sso.previousWallet"}
-                        values={{
-                            wallet: formatHash({
-                                hash: lastAuthenticator.address,
-                            }),
-                        }}
-                    />
-                </p>
                 <SsoLoginComponent
                     onSuccess={onSuccess}
                     onError={onError}
@@ -475,19 +534,18 @@ function PhonePairingAction({
 }) {
     const { t } = useTranslation();
 
-    // Don't show the phone pairing action if we don't have an sso id or if we are on a mobile device
+    // Don't show the phone pairing action on mobile devices
     if (ua.isMobile) {
         return null;
     }
 
     return (
-        <div className={styles.sso__secondaryButtonWrapper}>
+        <Box>
             <AuthenticateWithPhone
                 text={t("authent.sso.btn.new.phone")}
-                className={styles.sso__buttonLink}
                 onSuccess={onSuccess}
             />
-        </div>
+        </Box>
     );
 }
 

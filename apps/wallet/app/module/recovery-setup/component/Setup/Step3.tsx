@@ -1,4 +1,4 @@
-import { Button } from "@frak-labs/ui/component/Button";
+import { Button } from "@frak-labs/design-system/components/Button";
 import { X } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { AccordionRecoveryItem } from "@/module/common/component/AccordionRecoveryItem";
@@ -26,10 +26,8 @@ export function Step3() {
             title={t("wallet.recoverySetup.step3")}
         >
             <Button
-                width={"full"}
-                isLoading={isPending}
                 disabled={isPending}
-                leftIcon={isError ? <X /> : undefined}
+                icon={isError ? <X size={16} /> : undefined}
                 onClick={async (e) => {
                     // Prevent event propagation to avoid closing accordion
                     e.stopPropagation();
