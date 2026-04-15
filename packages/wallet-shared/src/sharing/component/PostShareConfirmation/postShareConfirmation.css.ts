@@ -1,6 +1,7 @@
 import { vars } from "@frak-labs/design-system/theme";
 import { alias, fontSize, zIndex } from "@frak-labs/design-system/tokens";
 import { style } from "@vanilla-extract/css";
+import { tabletContainerMedia } from "../shared.css";
 
 export const container = style({
     display: "flex",
@@ -10,6 +11,7 @@ export const container = style({
     overscrollBehavior: "contain",
     backgroundColor: vars.surface.background,
     color: vars.text.primary,
+    "@media": tabletContainerMedia,
 });
 
 export const header = style({
