@@ -1,5 +1,6 @@
 import {
     index,
+    integer,
     jsonb,
     pgTable,
     text,
@@ -59,5 +60,32 @@ export const merchantOwnershipTransfersTable = pgTable(
         toWallet: customHex("to_wallet").$type<Address>().notNull(),
         initiatedAt: timestamp("initiated_at").defaultNow().notNull(),
         expiresAt: timestamp("expires_at").notNull(),
+    }
+);
+
+/**
+ * Separate ranking table for explorer ordering.
+ * Isolates high-churn ranking data from the core merchant table.
+ *
+ * Signals are precomputed by a cron job and combined at query time
+ * via a dynamic weighted formula (e.g. manualBoost * 100 + activeCampaignScore),
+ * so weights can be tuned without recomputing.
+ *
+ * Planned evolution:
+ *  1. activeCampaignScore - precomputed from campaign_rules by cron
+ *  2. categoryScore - merchant categories (lifestyle, cosmetics, tech...),
+ *     matched against user category preferences at query time
+ *  3. Per-user personalization pushed into the DB query (not app-layer)
+ *     to preserve correct pagination
+ */
+export const merchantExplorerRankingTable = pgTable(
+    "merchant_explorer_ranking",
+    {
+        merchantId: uuid("merchant_id").primaryKey(),
+        manualBoost: integer("manual_boost").default(0).notNull(),
+        // Future signals:
+        // activeCampaignScore: integer("active_campaign_score").default(0).notNull(),
+        // categoryScore: integer("category_score").default(0).notNull(),
+        updatedAt: timestamp("updated_at").defaultNow().notNull(),
     }
 );

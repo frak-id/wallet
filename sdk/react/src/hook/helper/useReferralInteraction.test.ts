@@ -9,7 +9,6 @@ vi.mock("@frak-labs/core-sdk/actions");
 vi.mock("../useFrakClient");
 
 import { referralInteraction } from "@frak-labs/core-sdk/actions";
-import { ClientNotFound } from "@frak-labs/frame-connector";
 import { renderHook, waitFor } from "@testing-library/react";
 import { describe, expect, test } from "../../../tests/vitest-fixtures";
 import { useFrakClient } from "../useFrakClient";
@@ -75,7 +74,6 @@ describe("useReferralInteraction", () => {
             options,
         });
     });
-
 
     test("should handle processing state", ({
         queryWrapper,

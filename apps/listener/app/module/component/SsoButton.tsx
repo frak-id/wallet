@@ -167,7 +167,6 @@ function LinkSsoButton({
     );
 }
 
-
 /**
  * Whether the SSO redirect should be suppressed.
  * True when the native app was opened (page went hidden),

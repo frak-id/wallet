@@ -1,7 +1,10 @@
 import { and, count, eq, gt, isNotNull, isNull, or, sql } from "drizzle-orm";
 import { LRUCache } from "lru-cache";
 import { campaignRulesTable } from "../domain/campaign/db/schema";
-import { merchantsTable } from "../domain/merchant/db/schema";
+import {
+    merchantExplorerRankingTable,
+    merchantsTable,
+} from "../domain/merchant/db/schema";
 import { db } from "../infrastructure/persistence/postgres";
 import type {
     ExplorerMerchantItem,
@@ -78,9 +81,19 @@ export class ExplorerOrchestrator {
                     activeCampaignFilter
                 )
             )
+            .leftJoin(
+                merchantExplorerRankingTable,
+                eq(merchantExplorerRankingTable.merchantId, merchantsTable.id)
+            )
             .where(isNotNull(merchantsTable.explorerEnabledAt))
-            .groupBy(merchantsTable.id)
-            .orderBy(sql`COUNT(${campaignRulesTable.id}) DESC`)
+            .groupBy(
+                merchantsTable.id,
+                merchantExplorerRankingTable.manualBoost
+            )
+            .orderBy(
+                sql`COALESCE(${merchantExplorerRankingTable.manualBoost}, 0) DESC`,
+                sql`COUNT(${campaignRulesTable.id}) DESC`
+            )
             .limit(limit)
             .offset(offset);
 

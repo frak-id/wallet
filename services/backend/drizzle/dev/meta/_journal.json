@@ -183,6 +183,13 @@
             "when": 1775043773639,
             "tag": "0025_bright_paibok",
             "breakpoints": true
+        },
+        {
+            "idx": 26,
+            "version": "7",
+            "when": 1776251496237,
+            "tag": "0026_shocking_mojo",
+            "breakpoints": true
         }
     ]
 }
