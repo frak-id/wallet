@@ -1,16 +1,16 @@
 import {
     type ProcessReferralOptions,
-    processReferral,
+    referralInteraction,
 } from "@frak-labs/core-sdk/actions";
 import { ClientNotFound } from "@frak-labs/frame-connector";
 import { useQuery } from "@tanstack/react-query";
 import { useMemo } from "react";
 import { useFrakClient } from "../useFrakClient";
-import { useWalletStatus } from "../useWalletStatus";
-import { useFrakContext } from "../utils/useFrakContext";
 
 /**
  * Helper hook to automatically submit a referral interaction when detected
+ *
+ * Runs once when the Frak client becomes available.
  *
  * @group hooks
  *
@@ -21,48 +21,30 @@ import { useFrakContext } from "../utils/useFrakContext";
  *
  * @description This function will automatically handle the referral interaction process
  *
- * @see {@link @frak-labs/core-sdk!actions.processReferral | `processReferral()`} for more details on the automatic referral handling process
+ * @see {@link @frak-labs/core-sdk!actions.referralInteraction | `referralInteraction()`} for more details on the automatic referral handling process
  */
 export function useReferralInteraction({
     options,
 }: {
     options?: ProcessReferralOptions;
 } = {}) {
-    // Get the frak client
     const client = useFrakClient();
 
-    // Get the current frak context
-    const { frakContext } = useFrakContext();
-
-    // Get the wallet status
-    const { data: walletStatus } = useWalletStatus();
-
-    // Setup the query that will transmit the referral interaction
     const {
         data: referralState,
         error,
         status,
     } = useQuery({
-        gcTime: 0,
-        staleTime: 0,
-        queryKey: [
-            "frak-sdk",
-            "auto-referral-interaction",
-            frakContext?.r ?? "no-referrer",
-            walletStatus?.key ?? "no-wallet-status",
-        ],
-        queryFn: () => {
+        queryKey: ["frak-sdk", "auto-referral-interaction"],
+        queryFn: async () => {
             if (!client) {
                 throw new ClientNotFound();
             }
 
-            return processReferral(client, {
-                walletStatus,
-                frakContext,
-                options,
-            });
+            return referralInteraction(client, { options });
         },
-        enabled: !!walletStatus,
+        enabled: !!client,
+        staleTime: Number.POSITIVE_INFINITY,
     });
 
     return useMemo(() => {
