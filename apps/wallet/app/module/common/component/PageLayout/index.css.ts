@@ -5,7 +5,7 @@ import { style } from "@vanilla-extract/css";
 export const container = style({
     display: "flex",
     flexDirection: "column",
-    minHeight: "100%",
+    minHeight: `calc(100% + 2 * ${alias.spacing.m})`,
     margin: `calc(-1 * ${alias.spacing.m})`,
     background: vars.surface.background,
 });

@@ -12,6 +12,7 @@ type ContentBlockProps = {
     /** Heading level for the title element (default: "h2") */
     titleAs?: "h1" | "h2" | "h3";
     textSpacing?: "xs" | "m";
+    contentSpacing?: "m" | "l";
 };
 
 /**
@@ -27,10 +28,11 @@ export function ContentBlock({
     children,
     titleAs: TitleTag = "h2",
     textSpacing = "xs",
+    contentSpacing = "m",
 }: ContentBlockProps) {
     return (
         <>
-            <Box className={styles.content}>
+            <Box className={styles.content[contentSpacing]}>
                 <Box className={styles.icon}>{icon}</Box>
                 <Box className={styles.text[textSpacing]}>
                     <Text as={TitleTag} className={styles.title}>

@@ -1,5 +1,5 @@
 import { vars } from "@frak-labs/design-system/theme";
-import { alias, fontSize } from "@frak-labs/design-system/tokens";
+import { alias } from "@frak-labs/design-system/tokens";
 import { style } from "@vanilla-extract/css";
 
 export const errorText = style({
@@ -14,14 +14,12 @@ export const successIcon = style({
 });
 
 export const merchantIcon = style({
-    width: alias.size.xxl,
-    height: alias.size.xxl,
-    borderRadius: alias.cornerRadius.full,
+    width: "48px",
+    height: "48px",
     overflow: "hidden",
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: vars.surface.muted,
     color: vars.surface.primary,
 });
 
@@ -36,32 +34,24 @@ export const merchantLink = style({
     textDecoration: "underline",
 });
 
-export const previousWallet = style({
-    color: vars.text.secondary,
-    textAlign: "center",
+export const disclaimerLink = style({
+    color: vars.text.action,
+    textDecoration: "none",
 });
 
-export const disclaimer = style({
-    marginTop: alias.spacing.s,
-    padding: `${alias.spacing.s} ${alias.spacing.m}`,
-    backgroundColor: vars.surface.background2,
-    borderRadius: alias.cornerRadius.l,
-    color: vars.text.secondary,
-    fontSize: fontSize.xxs,
-    lineHeight: 1.5,
-    textAlign: "center",
+export const ssoActions = style({
+    display: "flex",
+    flexDirection: "column",
+    gap: alias.spacing.m,
+    width: "100%",
 });
 
-export const ghostLink = style({
-    display: "inline-flex",
+export const ssoContent = style({
+    display: "flex",
+    flexDirection: "column",
     alignItems: "center",
     justifyContent: "center",
-    gap: alias.spacing.xxs,
-    color: vars.text.secondary,
-    fontSize: fontSize.xs,
-    background: "transparent",
-    border: "none",
-    cursor: "pointer",
-    textDecoration: "none",
-    padding: 0,
+    flex: 1,
+    minHeight: 0,
+    padding: `0 ${alias.spacing.m}`,
 });
