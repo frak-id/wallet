@@ -23,9 +23,10 @@ type PostPurchaseSettings = {
     badge_text?: string;
 };
 
-type ProductInfo = {
+export type ProductInfo = {
     title: string;
     imageUrl?: string;
+    link?: string;
 };
 
 function constructSharingUrl({

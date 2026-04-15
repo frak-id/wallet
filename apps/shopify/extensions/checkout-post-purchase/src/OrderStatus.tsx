@@ -37,6 +37,7 @@ function OrderStatusExtension() {
             cartLines.map((line) => ({
                 title: line.merchandise.title,
                 imageUrl: line.merchandise.image?.url,
+                link: `${shop.storefrontUrl}/variants/${line.merchandise.id.split("/").pop()}`,
             })),
         [cartLines]
     );
