@@ -29,7 +29,7 @@ const walletMode = isProd ? "loyalty" : "crypto";
  * Whether the native mobile app is available for install prompts.
  * When false, install CTAs are hidden and the sharing flow stays web-only.
  */
-const isAppAvailable = $dev ? "true" : "false";
+const isAppAvailable = isProd ? "false" : "true";
 
 import { baseDomainName, getRegistryPath, walletNamespace } from "./utils";
 
