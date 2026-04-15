@@ -25,7 +25,6 @@ export function MintMerchant() {
     const domain = form.watch("domain");
     const setupCode = form.watch("setupCode");
 
-
     const { mutateAsync: checkDomainSetup } = useCheckDomainName();
 
     const {

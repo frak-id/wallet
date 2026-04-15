@@ -527,8 +527,7 @@ function CampaignCreation({
 
     const currencySymbol = useMemo(() => {
         if (rewardTokenSymbol) {
-            const meta =
-                currencyMetadata[rewardTokenSymbol as Stablecoin];
+            const meta = currencyMetadata[rewardTokenSymbol as Stablecoin];
             if (meta) {
                 return meta.currencyCode.toLowerCase() as Currency;
             }

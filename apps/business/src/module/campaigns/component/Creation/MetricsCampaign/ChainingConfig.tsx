@@ -2,6 +2,7 @@ import { Switch } from "@frak-labs/ui/component/Switch";
 import { useMemo } from "react";
 import { useFormContext, useWatch } from "react-hook-form";
 import { Row } from "@/module/common/component/Row";
+import { tokenAddressToCurrency } from "@/module/common/utils/currencyOptions";
 import {
     FormControl,
     FormDescription,
@@ -9,6 +10,7 @@ import {
     FormItem,
     FormLabel,
 } from "@/module/forms/Form";
+import { campaignStore } from "@/stores/campaignStore";
 import { currencyStore } from "@/stores/currencyStore";
 import styles from "./index.module.css";
 import { calculateChainDistribution, calculateDistribution } from "./utils";
@@ -16,6 +18,10 @@ import { calculateChainDistribution, calculateDistribution } from "./utils";
 export function ChainingConfig() {
     const { control, setValue } = useFormContext();
     const preferredCurrency = currencyStore((state) => state.preferredCurrency);
+    const rewardToken = campaignStore((s) => s.draft.rewardToken);
+    const currencyLabel = (
+        tokenAddressToCurrency(rewardToken) ?? preferredCurrency
+    ).toUpperCase();
 
     const cac = useWatch({ control, name: "cac" }) ?? 0;
     const ratio = useWatch({ control, name: "ratio" }) ?? 90;
@@ -145,7 +151,7 @@ export function ChainingConfig() {
                     {chainDistribution.length > 0 && referrerAmount > 0 && (
                         <FormItem>
                             <FormDescription
-                                label={`Chain Distribution Preview (${referrerAmount.toFixed(2)} ${preferredCurrency.toUpperCase()} referrer pool)`}
+                                label={`Chain Distribution Preview (${referrerAmount.toFixed(2)} ${currencyLabel} referrer pool)`}
                             />
                             <div className={styles.chaining__bars}>
                                 {chainDistribution.map((item) => (
@@ -159,8 +165,8 @@ export function ChainingConfig() {
                                             <span>Level {item.level}</span>
                                             <span>
                                                 {item.amount.toFixed(2)}{" "}
-                                                {preferredCurrency.toUpperCase()}{" "}
-                                                ({item.percentage}%)
+                                                {currencyLabel} (
+                                                {item.percentage}%)
                                             </span>
                                         </div>
                                         <div

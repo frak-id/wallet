@@ -1,6 +1,7 @@
 import { useMemo } from "react";
 import { useFormContext, useWatch } from "react-hook-form";
 import { InputAmount } from "@/module/common/component/InputAmount";
+import { tokenAddressToCurrency } from "@/module/common/utils/currencyOptions";
 import {
     FormControl,
     FormDescription,
@@ -9,12 +10,17 @@ import {
     FormLabel,
     FormMessage,
 } from "@/module/forms/Form";
+import { campaignStore } from "@/stores/campaignStore";
 import { currencyStore } from "@/stores/currencyStore";
 import { calculateDistribution } from "./utils";
 
 export function CacInput() {
     const { control } = useFormContext();
     const preferredCurrency = currencyStore((state) => state.preferredCurrency);
+    const rewardToken = campaignStore((s) => s.draft.rewardToken);
+    const currencyLabel = (
+        tokenAddressToCurrency(rewardToken) ?? preferredCurrency
+    ).toUpperCase();
 
     const cac = useWatch({ control, name: "cac" }) ?? 0;
     const ratio = useWatch({ control, name: "ratio" }) ?? 90;
@@ -38,16 +44,18 @@ export function CacInput() {
                 <FormItem>
                     <FormLabel>CPA</FormLabel>
                     <FormControl>
-                        <InputAmount placeholder="100.00" {...field} />
+                        <InputAmount
+                            placeholder="100.00"
+                            rightSection={currencyLabel}
+                            {...field}
+                        />
                     </FormControl>
                     {cac > 0 && (
                         <FormDescription>
                             For each conversion, Frak takes{" "}
-                            {frakCommission.toFixed(2)}{" "}
-                            {preferredCurrency.toUpperCase()} (20% commission)
-                            and {totalDistributed.toFixed(2)}{" "}
-                            {preferredCurrency.toUpperCase()} goes to your
-                            users.
+                            {frakCommission.toFixed(2)} {currencyLabel} (20%
+                            commission) and {totalDistributed.toFixed(2)}{" "}
+                            {currencyLabel} goes to your users.
                         </FormDescription>
                     )}
                     <FormMessage />
