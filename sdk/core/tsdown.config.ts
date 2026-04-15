@@ -68,7 +68,10 @@ export default defineConfig([
         platform: "browser",
         target: "es2022",
         clean: true,
-        minify: true,
+        minify:
+            process.env.STAGE === "production"
+                ? { compress: { dropConsole: true } }
+                : true,
         dts: false,
         outDir: "./cdn",
         noExternal: [/.*/],
