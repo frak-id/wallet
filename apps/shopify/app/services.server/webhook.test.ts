@@ -6,9 +6,10 @@ import type {
     GetWebhooksSubscriptionsReturnType,
 } from "./webhook";
 import {
+    buildExpectedWebhookUrl,
     createWebhook,
     deleteWebhook,
-    filterWebhooksByBackendUrl,
+    filterWebhooksByMerchantUrl,
 } from "./webhook";
 
 vi.mock("./merchant", () => ({
@@ -16,6 +17,9 @@ vi.mock("./merchant", () => ({
 }));
 
 import { resolveMerchantId } from "./merchant";
+
+const correctUrl =
+    "https://backend.frak.id/ext/merchant/merchant-123/webhook/shopify";
 
 const sampleEdges: GetWebhooksSubscriptionsReturnType["edges"] = [
     {
@@ -51,37 +55,45 @@ const sampleEdges: GetWebhooksSubscriptionsReturnType["edges"] = [
             format: "JSON",
             endpoint: {
                 __typename: "WebhookHttpEndpoint",
-                callbackUrl:
-                    "https://backend.frak.id/ext/products/0x456/webhook/oracle/shopify",
+                callbackUrl: correctUrl,
             },
         },
     },
 ];
 
+describe("buildExpectedWebhookUrl", () => {
+    it("builds correct URL from backend URL and merchant ID", () => {
+        expect(
+            buildExpectedWebhookUrl("https://backend.frak.id", "merchant-123")
+        ).toBe(correctUrl);
+    });
+});
+
 describe("webhook filtering", () => {
-    it("filters webhooks matching backend URL", () => {
-        const result = filterWebhooksByBackendUrl(
+    it("matches only the exact expected merchant URL", () => {
+        const result = filterWebhooksByMerchantUrl(sampleEdges, correctUrl);
+        expect(result).toHaveLength(1);
+        expect(result[0].node.id).toBe("gid://shopify/WebhookSubscription/3");
+    });
+
+    it("rejects old-format product URLs", () => {
+        const result = filterWebhooksByMerchantUrl(
             sampleEdges,
-            "https://backend.frak.id"
+            "https://backend.frak.id/ext/merchant/other-merchant/webhook/shopify"
         );
-        expect(result).toHaveLength(2);
-        expect(result[0].node.id).toBe("gid://shopify/WebhookSubscription/1");
-        expect(result[1].node.id).toBe("gid://shopify/WebhookSubscription/3");
+        expect(result).toHaveLength(0);
     });
 
     it("returns empty when no webhooks match", () => {
-        const result = filterWebhooksByBackendUrl(
+        const result = filterWebhooksByMerchantUrl(
             sampleEdges,
-            "https://nonexistent.example.com"
+            "https://nonexistent.example.com/ext/merchant/abc/webhook/shopify"
         );
         expect(result).toHaveLength(0);
     });
 
     it("handles empty edges array", () => {
-        const result = filterWebhooksByBackendUrl(
-            [],
-            "https://backend.frak.id"
-        );
+        const result = filterWebhooksByMerchantUrl([], correctUrl);
         expect(result).toHaveLength(0);
     });
 
@@ -99,19 +111,8 @@ describe("webhook filtering", () => {
                 },
             },
         ];
-        const result = filterWebhooksByBackendUrl(
-            edges,
-            "https://backend.frak.id"
-        );
+        const result = filterWebhooksByMerchantUrl(edges, correctUrl);
         expect(result).toHaveLength(0);
-    });
-
-    it("matches partial URL", () => {
-        const result = filterWebhooksByBackendUrl(
-            sampleEdges,
-            "backend.frak.id"
-        );
-        expect(result).toHaveLength(2);
     });
 });
 
@@ -119,6 +120,12 @@ describe("createWebhook", () => {
     beforeAll(() => {
         process.env.BACKEND_URL = "https://backend.frak.id";
     });
+
+    const emptyWebhooksResponse = {
+        json: async () => ({
+            data: { webhookSubscriptions: { edges: [] } },
+        }),
+    };
 
     it("should return webhook subscription on success", async () => {
         const expectedWebhook: CreateWebhookSubscriptionReturnType = {
@@ -138,11 +145,13 @@ describe("createWebhook", () => {
 
         vi.mocked(resolveMerchantId).mockResolvedValueOnce("merchant-123");
 
-        const mockGraphql = vi.fn().mockResolvedValueOnce({
-            json: async () => ({
-                data: { webhookSubscriptionCreate: expectedWebhook },
-            }),
-        });
+        const mockGraphql = vi.fn()
+            .mockResolvedValueOnce(emptyWebhooksResponse)
+            .mockResolvedValueOnce({
+                json: async () => ({
+                    data: { webhookSubscriptionCreate: expectedWebhook },
+                }),
+            });
         const mockContext = {
             admin: { graphql: mockGraphql },
         } as unknown as AuthenticatedContext;
@@ -172,23 +181,25 @@ describe("createWebhook", () => {
     it("should build correct webhook URL with merchantId", async () => {
         vi.mocked(resolveMerchantId).mockResolvedValueOnce("merchant-123");
 
-        const mockGraphql = vi.fn().mockResolvedValueOnce({
-            json: async () => ({
-                data: {
-                    webhookSubscriptionCreate: {
-                        userErrors: [],
-                        webhookSubscription: null,
+        const mockGraphql = vi.fn()
+            .mockResolvedValueOnce(emptyWebhooksResponse)
+            .mockResolvedValueOnce({
+                json: async () => ({
+                    data: {
+                        webhookSubscriptionCreate: {
+                            userErrors: [],
+                            webhookSubscription: null,
+                        },
                     },
-                },
-            }),
-        });
+                }),
+            });
         const mockContext = {
             admin: { graphql: mockGraphql },
         } as unknown as AuthenticatedContext;
 
         await createWebhook(mockContext);
 
-        const callArgs = mockGraphql.mock.calls[0];
+        const callArgs = mockGraphql.mock.calls[1];
         const variables = callArgs[1].variables;
         expect(variables.webhookSubscription.callbackUrl).toBe(
             "https://backend.frak.id/ext/merchant/merchant-123/webhook/shopify"
@@ -198,23 +209,25 @@ describe("createWebhook", () => {
     it("should pass correct variables to GraphQL mutation", async () => {
         vi.mocked(resolveMerchantId).mockResolvedValueOnce("merchant-123");
 
-        const mockGraphql = vi.fn().mockResolvedValueOnce({
-            json: async () => ({
-                data: {
-                    webhookSubscriptionCreate: {
-                        userErrors: [],
-                        webhookSubscription: null,
+        const mockGraphql = vi.fn()
+            .mockResolvedValueOnce(emptyWebhooksResponse)
+            .mockResolvedValueOnce({
+                json: async () => ({
+                    data: {
+                        webhookSubscriptionCreate: {
+                            userErrors: [],
+                            webhookSubscription: null,
+                        },
                     },
-                },
-            }),
-        });
+                }),
+            });
         const mockContext = {
             admin: { graphql: mockGraphql },
         } as unknown as AuthenticatedContext;
 
         await createWebhook(mockContext);
 
-        const callArgs = mockGraphql.mock.calls[0];
+        const callArgs = mockGraphql.mock.calls[1];
         const variables = callArgs[1].variables;
         expect(variables.topic).toBe("ORDERS_UPDATED");
         expect(variables.webhookSubscription.format).toBe("JSON");
@@ -223,23 +236,25 @@ describe("createWebhook", () => {
     it("should call graphql with mutation containing webhookSubscriptionCreate", async () => {
         vi.mocked(resolveMerchantId).mockResolvedValueOnce("merchant-123");
 
-        const mockGraphql = vi.fn().mockResolvedValueOnce({
-            json: async () => ({
-                data: {
-                    webhookSubscriptionCreate: {
-                        userErrors: [],
-                        webhookSubscription: null,
+        const mockGraphql = vi.fn()
+            .mockResolvedValueOnce(emptyWebhooksResponse)
+            .mockResolvedValueOnce({
+                json: async () => ({
+                    data: {
+                        webhookSubscriptionCreate: {
+                            userErrors: [],
+                            webhookSubscription: null,
+                        },
                     },
-                },
-            }),
-        });
+                }),
+            });
         const mockContext = {
             admin: { graphql: mockGraphql },
         } as unknown as AuthenticatedContext;
 
         await createWebhook(mockContext);
 
-        const mutationString = mockGraphql.mock.calls[0][0] as string;
+        const mutationString = mockGraphql.mock.calls[1][0] as string;
         expect(mutationString).toContain("webhookSubscriptionCreate");
     });
 });
