@@ -1,5 +1,40 @@
 # @frak-labs/components
 
+## 1.0.0
+
+### Major Changes
+
+- [#143](https://github.com/frak-id/wallet/pull/143) [`c7bbb51`](https://github.com/frak-id/wallet/commit/c7bbb5179dd8d04d5b99f573727f15fbe36c0822) Thanks [@KONFeature](https://github.com/KONFeature)! - ### Breaking changes
+
+  - **Removed `Spinner` component** — The standalone Spinner component has been removed.
+  - **Removed `setup` utilities** — `setupModalConfig` and `setupReferral` from `utils/setup.ts` are no longer available. Referral setup is now handled by `@frak-labs/core-sdk`'s `setupReferral` action directly.
+  - **Removed CSS Modules** — `ButtonShare.module.css`, `ButtonWallet.module.css`, and `OpenInAppButton.module.css` have been replaced by CSS-in-TS styling (`sharedCss`, `styleManager`).
+  - **Replaced `getCurrentReward` with `formatReward`** — The reward formatting utility has been rewritten with a new API.
+  - **Refactored `initFrakSdk`** — The global `frakSetupInProgress` flag is removed; concurrent initialization is now deduplicated via `withCache`. The function is synchronous-first (returns a `Promise<void>`). Core SDK is now exposed as a merged `{ ...coreSdkIndex, ...coreSdkActions }` object on `window.FrakSetup.core`.
+
+### Minor Changes
+
+- [#143](https://github.com/frak-id/wallet/pull/143) [`c7bbb51`](https://github.com/frak-id/wallet/commit/c7bbb5179dd8d04d5b99f573727f15fbe36c0822) Thanks [@KONFeature](https://github.com/KONFeature)! - ### New features
+
+  - **`Banner` component** — New web component for displaying referral reward banners and in-app browser escape prompts. Supports placement-based customization, interaction type filtering, and preview mode for theme editors.
+  - **`PostPurchase` component** — New web component for post-checkout referral sharing with referrer/referee variants, purchase tracking fallback, and reward display with `{REWARD}` template placeholders.
+  - **New hooks**: `useGlobalComponents` (manages global component registration), `useLightDomStyles` (injects styles into the Light DOM), `usePlacement` (resolves backend-driven placement config).
+  - **Enhanced `useReward`** — Extended with richer reward data and interaction type filtering.
+  - **Enhanced `useClientReady`** — Improved readiness detection with backend config awareness.
+  - **New utilities**: `embeddedWallet` (embedded wallet helpers), `sharedCss` (shared CSS-in-TS styles), `sharingPage` (sharing page integration), `styleManager` (Light DOM style injection), `onDocumentReady` (DOM readiness helper).
+  - **`GiftIcon` SVG component** added.
+
+### Patch Changes
+
+- [#143](https://github.com/frak-id/wallet/pull/143) [`c7bbb51`](https://github.com/frak-id/wallet/commit/c7bbb5179dd8d04d5b99f573727f15fbe36c0822) Thanks [@KONFeature](https://github.com/KONFeature)! - ### Internal improvements
+
+  - Refactored `ButtonShare`, `ButtonWallet`, and `OpenInAppButton` components with updated styling and improved structure.
+  - Migrated build configuration (`tsdown.config.ts`) with updated output handling.
+  - Updated test setup and vitest configuration.
+
+- Updated dependencies [[`c7bbb51`](https://github.com/frak-id/wallet/commit/c7bbb5179dd8d04d5b99f573727f15fbe36c0822), [`c7bbb51`](https://github.com/frak-id/wallet/commit/c7bbb5179dd8d04d5b99f573727f15fbe36c0822)]:
+  - @frak-labs/core-sdk@1.0.0
+
 ## 0.0.26
 
 ### Patch Changes
