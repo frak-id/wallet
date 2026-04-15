@@ -1,10 +1,13 @@
 {
   "name": "@frak-labs/wallet-shared",
-  "version": "0.0.3",
+  "version": "0.0.4",
   "private": true,
   "type": "module",
   "license": "GNU GPL 3.0",
-  "sideEffects": ["**/*.css", "**/*.css.ts"],
+  "sideEffects": [
+    "**/*.css",
+    "**/*.css.ts"
+  ],
   "scripts": {
     "test": "vitest",
     "test:ui": "vitest --ui",

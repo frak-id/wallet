@@ -1,5 +1,32 @@
 # @frak-labs/react-sdk
 
+## 1.0.0
+
+### Minor Changes
+
+- [#143](https://github.com/frak-id/wallet/pull/143) [`c7bbb51`](https://github.com/frak-id/wallet/commit/c7bbb5179dd8d04d5b99f573727f15fbe36c0822) Thanks [@KONFeature](https://github.com/KONFeature)! - ### New hooks
+
+  - **`useDisplaySharingPage`** — Mutation hook wrapping the new `displaySharingPage()` action. Displays a full-page sharing UI with product info and share/copy buttons.
+  - **`useGetMergeToken`** — Query hook wrapping the new `getMergeToken()` action. Fetches a merge token for in-app browser redirect flows.
+  - **`useGetUserReferralStatus`** — Query hook wrapping the new `getUserReferralStatus()` action. Returns the current user's referral status on the merchant.
+  - **`useSetupReferral`** — Fire-and-forget hook wrapping the new `setupReferral()` action. Auto-processes referral context and dispatches `"frak:referral-success"` DOM event.
+
+  ### Updated hooks
+
+  - **`useDisplayModal`** — Now accepts an optional `placement` field in the mutation variables.
+  - **`useGetMerchantInformation`** — Now accepts an optional `cacheTime` parameter to configure core SDK caching.
+  - **`useReferralInteraction`** — Simplified to use `referralInteraction()` directly instead of manually gathering URL context and wallet status. Now runs once (no duplicate tracking on wallet status changes) and dispatches `"frak:referral-success"` DOM event on success.
+
+  ### Internal improvements
+
+  - Updated dev dependencies: TypeScript 6, Vitest 4.1, jsdom 29, tsdown 0.21.
+  - Removed `@frak-labs/dev-tooling` dev dependency.
+
+### Patch Changes
+
+- Updated dependencies [[`c7bbb51`](https://github.com/frak-id/wallet/commit/c7bbb5179dd8d04d5b99f573727f15fbe36c0822), [`c7bbb51`](https://github.com/frak-id/wallet/commit/c7bbb5179dd8d04d5b99f573727f15fbe36c0822)]:
+  - @frak-labs/core-sdk@1.0.0
+
 ## 0.2.1
 
 ### Patch Changes

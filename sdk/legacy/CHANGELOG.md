@@ -1,5 +1,17 @@
 # @frak-labs/nexus-sdk
 
+## 0.0.45
+
+### Patch Changes
+
+- [#143](https://github.com/frak-id/wallet/pull/143) [`c7bbb51`](https://github.com/frak-id/wallet/commit/c7bbb5179dd8d04d5b99f573727f15fbe36c0822) Thanks [@KONFeature](https://github.com/KONFeature)! - ### Internal improvements
+
+  - Internalized `onDocumentReady` and `loadScript` utilities — no longer imported from `@frak-labs/ui`.
+  - Cleaned up `gapianne` config: removed `modalConfig`, `modalShareConfig`, and `show-wallet` attribute.
+
+- Updated dependencies [[`c7bbb51`](https://github.com/frak-id/wallet/commit/c7bbb5179dd8d04d5b99f573727f15fbe36c0822), [`c7bbb51`](https://github.com/frak-id/wallet/commit/c7bbb5179dd8d04d5b99f573727f15fbe36c0822)]:
+  - @frak-labs/core-sdk@1.0.0
+
 ## 0.0.44
 
 ### Patch Changes
