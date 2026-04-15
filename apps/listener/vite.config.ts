@@ -66,6 +66,9 @@ export default defineConfig(async () => {
             "process.env.ANDROID_SHA256_FINGERPRINT": JSON.stringify(
                 getSstResource("ANDROID_SHA256_FINGERPRINT")
             ),
+            "process.env.IS_APP_AVAILABLE": JSON.stringify(
+                process.env.IS_APP_AVAILABLE ?? "true"
+            ),
         },
         plugins: [
             react(),

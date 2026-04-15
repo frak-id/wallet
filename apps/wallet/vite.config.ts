@@ -78,6 +78,9 @@ export default defineConfig(
                 "process.env.MONERIUM_CLIENT_ID": JSON.stringify(
                     getSstResource("MONERIUM_CLIENT_ID")
                 ),
+                "process.env.IS_APP_AVAILABLE": JSON.stringify(
+                    process.env.IS_APP_AVAILABLE ?? "true"
+                ),
             },
         };
 

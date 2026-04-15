@@ -48,8 +48,13 @@ export const Route = createFileRoute("/install")({
 function InstallPage() {
     const search = Route.useSearch();
 
-    // Web + not logged in → show install code + store download links
-    if (!isTauri() && !getSafeSession()?.token) {
+    // Web + not logged in + app available → show install code + store download links
+    // Otherwise → use the web processing flow (ensure + register/login)
+    if (
+        process.env.IS_APP_AVAILABLE === "true" &&
+        !isTauri() &&
+        !getSafeSession()?.token
+    ) {
         return <InstallCodeView {...search} />;
     }
 

@@ -25,6 +25,12 @@ import { isProd, normalizedStageName } from "../utils";
  */
 const walletMode = isProd ? "loyalty" : "crypto";
 
+/**
+ * Whether the native mobile app is available for install prompts.
+ * When false, install CTAs are hidden and the sharing flow stays web-only.
+ */
+const isAppAvailable = $dev ? "true" : "false";
+
 import { baseDomainName, getRegistryPath, walletNamespace } from "./utils";
 
 // Resolve backend service name only in non-dev (avoids triggering Docker builds locally)
@@ -50,6 +56,7 @@ export const walletEnv = {
     OPEN_PANEL_LISTENER_CLIENT_ID: openPanelWalletClientId.value,
     ANDROID_SHA256_FINGERPRINT: androidSha256Fingerprint.value,
     MONERIUM_CLIENT_ID: moneriumClientId.value,
+    IS_APP_AVAILABLE: isAppAvailable,
 };
 
 let imageRefs = {
@@ -79,6 +86,7 @@ if (!$dev) {
             FRAK_WALLET_URL: walletEnv.FRAK_WALLET_URL,
             OPEN_PANEL_API_URL: walletEnv.OPEN_PANEL_API_URL,
             VITE_WALLET_MODE: walletMode,
+            IS_APP_AVAILABLE: walletEnv.IS_APP_AVAILABLE,
         },
         // Secrets passed via BuildKit (not stored in layers)
         secrets: {
@@ -112,6 +120,7 @@ if (!$dev) {
             ERPC_URL: walletEnv.ERPC_URL,
             FRAK_WALLET_URL: walletEnv.FRAK_WALLET_URL,
             OPEN_PANEL_API_URL: walletEnv.OPEN_PANEL_API_URL,
+            IS_APP_AVAILABLE: walletEnv.IS_APP_AVAILABLE,
         },
         // Secrets passed via BuildKit (not stored in layers)
         secrets: {
