@@ -6,22 +6,17 @@ import { MerchantResolveResponseSchema } from "../../schemas";
 import { exploreApi } from "./explorer";
 import { merchantReferralStatusRoute } from "./referralStatus";
 
-function normalizeDomain(domain: string): string {
-    return domain
-        .toLowerCase()
-        .replace(/^https?:\/\//, "")
-        .replace(/:\d+$/, "")
-        .replace(/\/$/, "")
-        .replace(/^www\./, "");
-}
-
 export const userMerchantApi = new Elysia({ prefix: "/merchant" })
     .get(
         "/resolve",
         async ({ query: { domain, merchantId, lang } }) => {
             const result = await MerchantContext.services.resolve.resolve({
                 id: merchantId,
-                domain: domain ? normalizeDomain(domain) : undefined,
+                domain: domain
+                    ? MerchantContext.repositories.dnsCheck.getNormalizedDomain(
+                          domain
+                      )
+                    : undefined,
                 lang,
             });
 

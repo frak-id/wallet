@@ -73,7 +73,9 @@ export class MerchantAuthorizationService {
     ): Promise<boolean> {
         const merchant = await this.merchantRepository.findById(merchantId);
         if (!merchant) return false;
-        return merchant.domain === shopDomain;
+        if (merchant.domain === shopDomain) return true;
+        if (merchant.allowedDomains?.includes(shopDomain)) return true;
+        return false;
     }
 
     async getAccessibleMerchantIds(wallet: Address): Promise<string[]> {

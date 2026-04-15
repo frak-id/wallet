@@ -1,7 +1,7 @@
 import { vars } from "@frak-labs/design-system/theme";
 import { alias, fontSize, zIndex } from "@frak-labs/design-system/tokens";
 import { globalStyle, style } from "@vanilla-extract/css";
-import { tabletContainerMedia } from "../shared.css";
+import { tabletContainerMedia, tabletFooterMedia } from "../shared.css";
 
 export const container = style({
     display: "flex",
@@ -332,6 +332,7 @@ export const footer = style({
     display: "flex",
     flexDirection: "column",
     gap: alias.spacing.s,
+    "@media": tabletFooterMedia,
 });
 
 export const shareButton = style({

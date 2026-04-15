@@ -30,6 +30,7 @@ export type MerchantData = {
     verifiedAt: string | null;
     createdAt: string | null;
     role: MerchantRole;
+    allowedDomains: string[];
     productId?: Hex;
 };
 
@@ -81,6 +82,7 @@ export const merchantQueryOptions = (merchantId: string, isDemoMode: boolean) =>
                 verifiedAt: data.verifiedAt,
                 createdAt: data.createdAt,
                 role: data.role,
+                allowedDomains: data.allowedDomains ?? [],
             };
         },
         staleTime: isDemoMode ? Number.POSITIVE_INFINITY : 5 * 60 * 1000,

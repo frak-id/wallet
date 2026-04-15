@@ -1,7 +1,7 @@
 import { vars } from "@frak-labs/design-system/theme";
 import { alias, fontSize, zIndex } from "@frak-labs/design-system/tokens";
 import { style } from "@vanilla-extract/css";
-import { tabletContainerMedia } from "../shared.css";
+import { tabletContainerMedia, tabletFooterMedia } from "../shared.css";
 
 export const container = style({
     display: "flex",
@@ -97,6 +97,7 @@ export const footer = style({
     flexDirection: "column",
     gap: alias.spacing.s,
     alignItems: "center",
+    "@media": tabletFooterMedia,
 });
 
 export const ctaButton = style({

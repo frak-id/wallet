@@ -24,6 +24,7 @@ export class MerchantRegistrationService {
         requestOrigin: string;
         setupCode?: string;
         defaultRewardToken: Address;
+        allowedDomains?: string[];
     }): Promise<RegistrationResult> {
         const siweResult = await this.verifySiweMessage({
             message: params.message,
@@ -70,6 +71,9 @@ export class MerchantRegistrationService {
             productId,
             defaultRewardToken: params.defaultRewardToken,
             verifiedAt: new Date(),
+            ...(params.allowedDomains?.length && {
+                allowedDomains: params.allowedDomains,
+            }),
         });
 
         return { success: true, merchantId: merchant.id };

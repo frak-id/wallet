@@ -6,6 +6,7 @@ import { getCapPeriod } from "@/module/campaigns/utils/capPeriods";
 import { Column } from "@/module/common/component/Column";
 import { InputAmount } from "@/module/common/component/InputAmount";
 import { Row } from "@/module/common/component/Row";
+import { tokenAddressToCurrency } from "@/module/common/utils/currencyOptions";
 import {
     FormControl,
     FormDescription,
@@ -16,6 +17,7 @@ import {
 } from "@/module/forms/Form";
 import { RadioGroup, RadioGroupItem } from "@/module/forms/RadioGroup";
 import type { CampaignDraft } from "@/stores/campaignStore";
+import { currencyStore } from "@/stores/currencyStore";
 import styles from "./FormBudgetRow.module.css";
 
 type BudgetPeriod = "daily" | "weekly" | "monthly" | "global";
@@ -32,6 +34,12 @@ export function FormBudgetRow({ disabled }: { disabled?: boolean }) {
     const { control, setValue, watch } = form;
     const budgetConfig = watch("budgetConfig");
     const budget = budgetConfig?.[0];
+
+    const preferredCurrency = currencyStore((state) => state.preferredCurrency);
+    const rewardToken = watch("rewardToken");
+    const currencyLabel = (
+        tokenAddressToCurrency(rewardToken) ?? preferredCurrency
+    ).toUpperCase();
 
     const [period, setPeriod] = useState<BudgetPeriod>("global");
 
@@ -117,6 +125,7 @@ export function FormBudgetRow({ disabled }: { disabled?: boolean }) {
                                     placeholder="25,00 €"
                                     length="medium"
                                     disabled={disabled}
+                                    rightSection={currencyLabel}
                                     value={currentAmount}
                                     onChange={
                                         ((val: number | string) => {
@@ -148,7 +157,7 @@ export function FormBudgetRow({ disabled }: { disabled?: boolean }) {
                         </span>
                     </div>
                     <div className={styles.budget__value}>
-                        {frakCommission.toFixed(2)} €
+                        {frakCommission.toFixed(2)} {currencyLabel}
                     </div>
                 </div>
 
@@ -164,7 +173,7 @@ export function FormBudgetRow({ disabled }: { disabled?: boolean }) {
                         </span>
                     </div>
                     <div className={styles.budget__value}>
-                        {remainingBudget.toFixed(2)} €
+                        {remainingBudget.toFixed(2)} {currencyLabel}
                     </div>
                 </div>
             </div>

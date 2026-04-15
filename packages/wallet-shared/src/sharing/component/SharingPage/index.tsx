@@ -20,6 +20,7 @@ import {
 import { Minus, Plus } from "lucide-react";
 import { Toaster } from "sonner";
 import { PostShareConfirmation } from "../PostShareConfirmation";
+import { overlay } from "../shared.css";
 import * as styles from "./sharingPage.css";
 
 export type SharingPageProps = {
@@ -147,281 +148,308 @@ export function SharingPage({
     };
 
     return (
-        <div className={styles.container}>
-            <Toaster position="top-center" />
+        <div
+            className={overlay}
+            onClick={onDismiss}
+            onKeyDown={(e) => {
+                if (e.key === "Escape") onDismiss();
+            }}
+        >
+            <div
+                className={styles.container}
+                onClick={(e) => e.stopPropagation()}
+                onKeyDown={(e) => e.stopPropagation()}
+            >
+                <Toaster position="top-center" />
 
-            <header className={styles.header}>
-                <Box display="flex" alignItems="center" gap="m">
-                    {logoUrl && (
-                        <img
-                            src={logoUrl}
-                            alt={appName}
-                            className={styles.merchantLogo}
-                        />
-                    )}
-                    <LogoFrakWithName className={styles.logo} color="#000" />
-                </Box>
-                <Button
-                    variant="ghost"
-                    size="none"
-                    width="auto"
-                    className={styles.dismissButton}
-                    onClick={onDismiss}
-                >
-                    {t("sdk.sharingPage.dismiss")}
-                </Button>
-            </header>
-
-            <main className={styles.main}>
-                <section className={styles.creditCard}>
-                    <CardBackground className={styles.creditCardBg} />
-                    <div className={styles.creditCardContent}>
-                        <div className={styles.creditCardTop}>
-                            <span className={styles.creditCardAmount}>
-                                {(() => {
-                                    const amount = t(
-                                        "sdk.sharingPage.card.amount"
-                                    );
-                                    const match = amount.match(
-                                        /^([\d\s]+)([.,]\d+)?\s*(.*)$/
-                                    );
-                                    if (!match) return amount;
-                                    const integer = match[1].trim();
-                                    const decimals = match[2] ?? ",00";
-                                    const currency = match[3] ?? "";
-                                    return (
-                                        <>
-                                            {integer}
-                                            <span
-                                                className={
-                                                    styles.creditCardCurrency
-                                                }
-                                            >
-                                                {decimals}
-                                                {currency}
-                                            </span>
-                                        </>
-                                    );
-                                })()}
-                            </span>
-                            <span className={styles.creditCardLabel}>
-                                {t("sdk.sharingPage.card.label")}
-                            </span>
-                        </div>
-                        <div className={styles.creditCardBottom}>
-                            <span className={styles.creditCardBottomText}>
-                                {t("sdk.sharingPage.card.tagline1")}
-                                <br />
-                                {t("sdk.sharingPage.card.tagline2")}
-                            </span>
-                            {logoUrl && (
-                                <img
-                                    src={logoUrl}
-                                    alt={appName}
-                                    className={styles.creditCardLogo}
-                                />
-                            )}
-                        </div>
-                    </div>
-                </section>
-
-                <section className={styles.rewardCard}>
-                    <Text as="h2" variant="heading2">
-                        {t("sdk.sharingPage.reward.title")}
-                    </Text>
-                    <Text variant="bodySmall" color="secondary">
-                        {t("sdk.sharingPage.reward.tagline")}
-                    </Text>
-                </section>
-
-                {products.length > 0 && (
-                    <Stack as="section" space="s">
-                        {products.map(
-                            (product: SharingPageProduct, index: number) => (
-                                <ProductCard
-                                    key={index}
-                                    product={product}
-                                    selected={effectiveSelectedIndex === index}
-                                    onSelect={() => onProductSelect?.(index)}
-                                />
-                            )
+                <header className={styles.header}>
+                    <Box display="flex" alignItems="center" gap="m">
+                        {logoUrl && (
+                            <img
+                                src={logoUrl}
+                                alt={appName}
+                                className={styles.merchantLogo}
+                            />
                         )}
-                    </Stack>
-                )}
+                        <LogoFrakWithName
+                            className={styles.logo}
+                            color="#000"
+                        />
+                    </Box>
+                    <Button
+                        variant="ghost"
+                        size="none"
+                        width="auto"
+                        className={styles.dismissButton}
+                        onClick={onDismiss}
+                    >
+                        {t("sdk.sharingPage.dismiss")}
+                    </Button>
+                </header>
 
-                <Stack as="section" space="m">
-                    <ol className={styles.stepper}>
-                        <li className={styles.stepItem}>
-                            <NumberedCircle number={1} color="filled" />
-                            <span className={styles.stepConnectorDark} />
-                            <Stack space="xxs">
-                                <Text variant="bodySmall" weight="semiBold">
-                                    {
-                                        splitStep(t("sdk.sharingPage.steps.1"))
-                                            .title
-                                    }
-                                </Text>
-                                {splitStep(t("sdk.sharingPage.steps.1"))
-                                    .description && (
-                                    <Text
-                                        variant="bodySmall"
-                                        className={styles.stepDescription}
-                                    >
+                <main className={styles.main}>
+                    <section className={styles.creditCard}>
+                        <CardBackground className={styles.creditCardBg} />
+                        <div className={styles.creditCardContent}>
+                            <div className={styles.creditCardTop}>
+                                <span className={styles.creditCardAmount}>
+                                    {(() => {
+                                        const amount = t(
+                                            "sdk.sharingPage.card.amount"
+                                        );
+                                        const match = amount.match(
+                                            /^([\d\s]+)([.,]\d+)?\s*(.*)$/
+                                        );
+                                        if (!match) return amount;
+                                        const integer = match[1].trim();
+                                        const decimals = match[2] ?? ",00";
+                                        const currency = match[3] ?? "";
+                                        return (
+                                            <>
+                                                {integer}
+                                                <span
+                                                    className={
+                                                        styles.creditCardCurrency
+                                                    }
+                                                >
+                                                    {decimals}
+                                                    {currency}
+                                                </span>
+                                            </>
+                                        );
+                                    })()}
+                                </span>
+                                <span className={styles.creditCardLabel}>
+                                    {t("sdk.sharingPage.card.label")}
+                                </span>
+                            </div>
+                            <div className={styles.creditCardBottom}>
+                                <span className={styles.creditCardBottomText}>
+                                    {t("sdk.sharingPage.card.tagline1")}
+                                    <br />
+                                    {t("sdk.sharingPage.card.tagline2")}
+                                </span>
+                                {logoUrl && (
+                                    <img
+                                        src={logoUrl}
+                                        alt={appName}
+                                        className={styles.creditCardLogo}
+                                    />
+                                )}
+                            </div>
+                        </div>
+                    </section>
+
+                    <section className={styles.rewardCard}>
+                        <Text as="h2" variant="heading2">
+                            {t("sdk.sharingPage.reward.title")}
+                        </Text>
+                        <Text variant="bodySmall" color="secondary">
+                            {t("sdk.sharingPage.reward.tagline")}
+                        </Text>
+                    </section>
+
+                    {products.length > 0 && (
+                        <Stack as="section" space="s">
+                            {products.map(
+                                (
+                                    product: SharingPageProduct,
+                                    index: number
+                                ) => (
+                                    <ProductCard
+                                        key={index}
+                                        product={product}
+                                        selected={
+                                            effectiveSelectedIndex === index
+                                        }
+                                        onSelect={() =>
+                                            onProductSelect?.(index)
+                                        }
+                                    />
+                                )
+                            )}
+                        </Stack>
+                    )}
+
+                    <Stack as="section" space="m">
+                        <ol className={styles.stepper}>
+                            <li className={styles.stepItem}>
+                                <NumberedCircle number={1} color="filled" />
+                                <span className={styles.stepConnectorDark} />
+                                <Stack space="xxs">
+                                    <Text variant="bodySmall" weight="semiBold">
                                         {
                                             splitStep(
                                                 t("sdk.sharingPage.steps.1")
-                                            ).description
+                                            ).title
                                         }
                                     </Text>
-                                )}
-                            </Stack>
-                        </li>
-                        <li className={styles.stepItem}>
-                            <NumberedCircle number={2} color="filled" />
-                            <span className={styles.stepConnector} />
-                            <Stack space="xxs">
-                                <Text variant="bodySmall" weight="semiBold">
-                                    {
-                                        splitStep(t("sdk.sharingPage.steps.2"))
-                                            .title
-                                    }
-                                </Text>
-                                {splitStep(t("sdk.sharingPage.steps.2"))
-                                    .description && (
-                                    <Text
-                                        variant="bodySmall"
-                                        className={styles.stepDescription}
-                                    >
+                                    {splitStep(t("sdk.sharingPage.steps.1"))
+                                        .description && (
+                                        <Text
+                                            variant="bodySmall"
+                                            className={styles.stepDescription}
+                                        >
+                                            {
+                                                splitStep(
+                                                    t("sdk.sharingPage.steps.1")
+                                                ).description
+                                            }
+                                        </Text>
+                                    )}
+                                </Stack>
+                            </li>
+                            <li className={styles.stepItem}>
+                                <NumberedCircle number={2} color="filled" />
+                                <span className={styles.stepConnector} />
+                                <Stack space="xxs">
+                                    <Text variant="bodySmall" weight="semiBold">
                                         {
                                             splitStep(
                                                 t("sdk.sharingPage.steps.2")
-                                            ).description
+                                            ).title
                                         }
                                     </Text>
-                                )}
-                            </Stack>
-                        </li>
-                        <li className={styles.stepItem}>
-                            <NumberedCircle number={3} color="filled" />
-                            <Stack space="xxs">
-                                <Text variant="bodySmall" weight="semiBold">
-                                    {
-                                        splitStep(t("sdk.sharingPage.steps.3"))
-                                            .title
-                                    }
-                                </Text>
-                                {splitStep(t("sdk.sharingPage.steps.3"))
-                                    .description && (
-                                    <Text
-                                        variant="bodySmall"
-                                        className={styles.stepDescription}
-                                    >
+                                    {splitStep(t("sdk.sharingPage.steps.2"))
+                                        .description && (
+                                        <Text
+                                            variant="bodySmall"
+                                            className={styles.stepDescription}
+                                        >
+                                            {
+                                                splitStep(
+                                                    t("sdk.sharingPage.steps.2")
+                                                ).description
+                                            }
+                                        </Text>
+                                    )}
+                                </Stack>
+                            </li>
+                            <li className={styles.stepItem}>
+                                <NumberedCircle number={3} color="filled" />
+                                <Stack space="xxs">
+                                    <Text variant="bodySmall" weight="semiBold">
                                         {
                                             splitStep(
                                                 t("sdk.sharingPage.steps.3")
-                                            ).description
+                                            ).title
                                         }
                                     </Text>
-                                )}
-                            </Stack>
-                        </li>
-                    </ol>
-                </Stack>
+                                    {splitStep(t("sdk.sharingPage.steps.3"))
+                                        .description && (
+                                        <Text
+                                            variant="bodySmall"
+                                            className={styles.stepDescription}
+                                        >
+                                            {
+                                                splitStep(
+                                                    t("sdk.sharingPage.steps.3")
+                                                ).description
+                                            }
+                                        </Text>
+                                    )}
+                                </Stack>
+                            </li>
+                        </ol>
+                    </Stack>
 
-                <Stack as="section" space="m" className={styles.faqWrapper}>
-                    <Text
-                        as="h3"
-                        variant="heading3"
-                        className={styles.faqTitle}
-                    >
-                        {t("sdk.sharingPage.faq.title")}
-                    </Text>
-                    <Accordion
-                        type="single"
-                        collapsible
-                        className={styles.faqList}
-                    >
-                        {[1, 2, 3, 4, 5].map((i) => (
-                            <AccordionItem
-                                key={`faq-${i}`}
-                                value={`faq-${i}`}
-                                className={styles.faqItem}
-                            >
-                                <AccordionTrigger className={styles.faqTrigger}>
-                                    {t(`sdk.sharingPage.faq.q${i}`)}
-                                    <Plus
-                                        size={20}
-                                        className={`${styles.faqIcon} ${styles.faqIconPlus}`}
-                                    />
-                                    <Minus
-                                        size={20}
-                                        className={`${styles.faqIcon} ${styles.faqIconMinus}`}
-                                    />
-                                </AccordionTrigger>
-                                <AccordionContent>
-                                    <div className={styles.faqContent}>
-                                        {t(`sdk.sharingPage.faq.a${i}`)}
-                                    </div>
-                                </AccordionContent>
-                            </AccordionItem>
-                        ))}
-                    </Accordion>
-                </Stack>
+                    <Stack as="section" space="m" className={styles.faqWrapper}>
+                        <Text
+                            as="h3"
+                            variant="heading3"
+                            className={styles.faqTitle}
+                        >
+                            {t("sdk.sharingPage.faq.title")}
+                        </Text>
+                        <Accordion
+                            type="single"
+                            collapsible
+                            className={styles.faqList}
+                        >
+                            {[1, 2, 3, 4, 5].map((i) => (
+                                <AccordionItem
+                                    key={`faq-${i}`}
+                                    value={`faq-${i}`}
+                                    className={styles.faqItem}
+                                >
+                                    <AccordionTrigger
+                                        className={styles.faqTrigger}
+                                    >
+                                        {t(`sdk.sharingPage.faq.q${i}`)}
+                                        <Plus
+                                            size={20}
+                                            className={`${styles.faqIcon} ${styles.faqIconPlus}`}
+                                        />
+                                        <Minus
+                                            size={20}
+                                            className={`${styles.faqIcon} ${styles.faqIconMinus}`}
+                                        />
+                                    </AccordionTrigger>
+                                    <AccordionContent>
+                                        <div className={styles.faqContent}>
+                                            {t(`sdk.sharingPage.faq.a${i}`)}
+                                        </div>
+                                    </AccordionContent>
+                                </AccordionItem>
+                            ))}
+                        </Accordion>
+                    </Stack>
 
-                <nav className={styles.legalLinks}>
-                    <a
-                        href="https://docs.frak.id"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className={styles.legalLink}
-                    >
-                        Aide
-                    </a>
-                    <a
-                        href="https://frak.id/privacy"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className={styles.legalLink}
-                    >
-                        Mentions légales
-                    </a>
-                    <a
-                        href="https://frak.id/terms"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className={styles.legalLink}
-                    >
-                        Conditions générales
-                    </a>
-                </nav>
-            </main>
+                    <nav className={styles.legalLinks}>
+                        <a
+                            href="https://docs.frak.id"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className={styles.legalLink}
+                        >
+                            Aide
+                        </a>
+                        <a
+                            href="https://frak.id/privacy"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className={styles.legalLink}
+                        >
+                            Mentions légales
+                        </a>
+                        <a
+                            href="https://frak.id/terms"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className={styles.legalLink}
+                        >
+                            Conditions générales
+                        </a>
+                    </nav>
+                </main>
 
-            <footer className={styles.footer}>
-                {canShare && (
+                <footer className={styles.footer}>
+                    {canShare && (
+                        <Button
+                            variant="primary"
+                            size="large"
+                            fontSize="s"
+                            onClick={onShare}
+                            disabled={isSharing || !sharingLink}
+                            className={styles.shareButton}
+                        >
+                            {t("sharing.btn.share")}
+                            <ShareIcon width={16} height={16} />
+                        </Button>
+                    )}
                     <Button
-                        variant="primary"
+                        variant="secondary"
                         size="large"
                         fontSize="s"
-                        onClick={onShare}
-                        disabled={isSharing || !sharingLink}
-                        className={styles.shareButton}
+                        onClick={onCopy}
+                        disabled={!sharingLink}
+                        className={styles.copyButton}
                     >
-                        {t("sharing.btn.share")}
-                        <ShareIcon width={16} height={16} />
+                        {t("sharing.btn.copy")}
+                        <CopyIcon width={16} height={16} />
                     </Button>
-                )}
-                <Button
-                    variant="secondary"
-                    size="large"
-                    fontSize="s"
-                    onClick={onCopy}
-                    disabled={!sharingLink}
-                    className={styles.copyButton}
-                >
-                    {t("sharing.btn.copy")}
-                    <CopyIcon width={16} height={16} />
-                </Button>
-            </footer>
+                </footer>
+            </div>
         </div>
     );
 }

@@ -24,6 +24,7 @@ import { InputWithToggle } from "@/module/forms/InputWithToggle";
 import { MerchantHead } from "@/module/merchant/component/MerchantHead";
 import { useMerchant } from "@/module/merchant/hook/useMerchant";
 import { useMerchantUpdate } from "@/module/merchant/hook/useMerchantUpdate";
+import { AllowedDomains } from "./AllowedDomains";
 import { ExplorerSettings } from "./ExplorerSettings";
 import { PurchasseTrackerSetup } from "./PurchaseTracker";
 
@@ -194,6 +195,10 @@ export function MerchantDetails({ merchantId }: { merchantId: string }) {
                     </Panel>
                 )}
             </Form>
+            <AllowedDomains
+                merchantId={merchantId}
+                allowedDomains={merchant?.allowedDomains ?? []}
+            />
             <ExplorerSettings merchantId={merchantId} />
             <PurchasseTrackerSetup merchantId={merchantId} />
         </FormLayout>

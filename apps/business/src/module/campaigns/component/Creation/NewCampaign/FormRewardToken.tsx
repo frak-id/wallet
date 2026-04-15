@@ -136,7 +136,7 @@ export function FormRewardToken() {
                                                 balance={
                                                     getTokenData(
                                                         merchantDefaultStablecoin ??
-                                                            "usdc"
+                                                            "eure"
                                                     )?.balance ?? 0n
                                                 }
                                                 tokenAddress={

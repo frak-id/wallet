@@ -1,12 +1,14 @@
 import { Slider } from "@frak-labs/ui/component/Slider";
 import { useMemo } from "react";
 import { useFormContext, useWatch } from "react-hook-form";
+import { tokenAddressToCurrency } from "@/module/common/utils/currencyOptions";
 import {
     FormControl,
     FormField,
     FormItem,
     FormLabel,
 } from "@/module/forms/Form";
+import { campaignStore } from "@/stores/campaignStore";
 import { currencyStore } from "@/stores/currencyStore";
 import styles from "./index.module.css";
 import { calculateDistribution } from "./utils";
@@ -14,6 +16,10 @@ import { calculateDistribution } from "./utils";
 export function DistributionSlider() {
     const { control, setValue } = useFormContext();
     const preferredCurrency = currencyStore((state) => state.preferredCurrency);
+    const rewardToken = campaignStore((s) => s.draft.rewardToken);
+    const currencyLabel = (
+        tokenAddressToCurrency(rewardToken) ?? preferredCurrency
+    ).toUpperCase();
 
     const cac = useWatch({ control, name: "cac" }) ?? 0;
     const ratio = useWatch({ control, name: "ratio" }) ?? 90;
@@ -70,8 +76,7 @@ export function DistributionSlider() {
                         Referee Earnings
                     </span>
                     <span className={styles.distribution__cardAmount}>
-                        {refereeAmount.toFixed(2)}{" "}
-                        {preferredCurrency.toUpperCase()}
+                        {refereeAmount.toFixed(2)} {currencyLabel}
                     </span>
                 </div>
                 <div className={styles.distribution__card}>
@@ -79,8 +84,7 @@ export function DistributionSlider() {
                         Referrer Earnings
                     </span>
                     <span className={styles.distribution__cardAmount}>
-                        {referrerAmount.toFixed(2)}{" "}
-                        {preferredCurrency.toUpperCase()}
+                        {referrerAmount.toFixed(2)} {currencyLabel}
                     </span>
                 </div>
             </div>

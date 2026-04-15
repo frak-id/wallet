@@ -11,7 +11,8 @@
             "explorerEnabledAt": null,
             "verifiedAt": null,
             "createdAt": "2026-01-01T00:00:00.000Z",
-            "role": "owner"
+            "role": "owner",
+            "allowedDomains": []
         },
         {
             "id": "22222222-2222-2222-2222-222222222222",
@@ -24,7 +25,8 @@
             "explorerEnabledAt": null,
             "verifiedAt": null,
             "createdAt": "2026-01-01T00:00:00.000Z",
-            "role": "owner"
+            "role": "owner",
+            "allowedDomains": []
         },
         {
             "id": "33333333-3333-3333-3333-333333333333",
@@ -37,7 +39,8 @@
             "explorerEnabledAt": null,
             "verifiedAt": null,
             "createdAt": "2026-01-01T00:00:00.000Z",
-            "role": "owner"
+            "role": "owner",
+            "allowedDomains": []
         }
     ],
     "adminOf": [
@@ -52,7 +55,8 @@
             "explorerEnabledAt": null,
             "verifiedAt": null,
             "createdAt": "2026-01-01T00:00:00.000Z",
-            "role": "admin"
+            "role": "admin",
+            "allowedDomains": []
         }
     ]
 }

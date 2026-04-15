@@ -96,6 +96,7 @@ export type MerchantResolveResponse = Static<
 export const MerchantDetailResponseSchema = t.Object({
     id: t.String(),
     domain: t.String(),
+    allowedDomains: t.Array(t.String()),
     name: t.String(),
     ownerWallet: t.Hex(),
     bankAddress: t.Union([t.Hex(), t.Null()]),

@@ -36,30 +36,57 @@ export type DeleteWebhookSubscriptionReturnType = {
 };
 
 /**
- * Filter webhook edges to those matching a backend URL.
+ * Build the expected webhook URL for a merchant.
  */
-export function filterWebhooksByBackendUrl(
+export function buildExpectedWebhookUrl(
+    backendUrl: string,
+    merchantId: string
+): string {
+    return `${backendUrl}/ext/merchant/${merchantId}/webhook/shopify`;
+}
+
+/**
+ * Filter webhook edges to those matching the expected merchant webhook URL.
+ */
+export function filterWebhooksByMerchantUrl(
     edges: GetWebhooksSubscriptionsReturnType["edges"],
-    backendUrl: string
+    expectedUrl: string
 ): GetWebhooksSubscriptionsReturnType["edges"] {
     return edges.filter((webhook) => {
-        return webhook.node.endpoint.callbackUrl?.includes(backendUrl) ?? false;
+        return webhook.node.endpoint.callbackUrl === expectedUrl;
     });
 }
 
 /**
- * Get all the webhooks
+ * Get webhooks matching the current merchant's expected URL.
  */
-export async function getWebhooks({
-    admin: { graphql },
-}: AuthenticatedContext): Promise<GetWebhooksSubscriptionsReturnType["edges"]> {
+export async function getWebhooks(
+    context: AuthenticatedContext
+): Promise<GetWebhooksSubscriptionsReturnType["edges"]> {
+    const merchantId = await resolveMerchantId(context);
+    const backendUrl = process.env.BACKEND_URL ?? "";
+
+    if (!merchantId || !backendUrl) {
+        return [];
+    }
+
+    const edges = await fetchAllOrdersWebhooks(context.admin.graphql);
+    const expectedUrl = buildExpectedWebhookUrl(backendUrl, merchantId);
+    return filterWebhooksByMerchantUrl(edges, expectedUrl);
+}
+
+/**
+ * Fetch all ORDERS_UPDATED webhook subscriptions (unfiltered).
+ */
+async function fetchAllOrdersWebhooks(
+    graphql: AuthenticatedContext["admin"]["graphql"]
+): Promise<GetWebhooksSubscriptionsReturnType["edges"]> {
     const response = await graphql(`
     query {
       webhookSubscriptions(first: 20, topics: ORDERS_UPDATED) {
         edges {
           node {
             id
-            topic
             endpoint {
               __typename
               ... on WebhookHttpEndpoint {
@@ -74,18 +101,32 @@ export async function getWebhooks({
     const {
         data: { webhookSubscriptions },
     } = await response.json();
-    const parsedWebhooks =
-        webhookSubscriptions as GetWebhooksSubscriptionsReturnType;
+    return (webhookSubscriptions as GetWebhooksSubscriptionsReturnType).edges;
+}
 
-    // Filter for the webhook containing the backend url
-    return filterWebhooksByBackendUrl(
-        parsedWebhooks.edges,
-        process.env.BACKEND_URL ?? ""
+/**
+ * Delete all stale webhooks pointing to our backend before creating a new one.
+ */
+async function deleteStaleBackendWebhooks(
+    context: AuthenticatedContext,
+    backendUrl: string
+): Promise<void> {
+    const edges = await fetchAllOrdersWebhooks(context.admin.graphql);
+    const staleWebhooks = edges.filter((webhook) =>
+        webhook.node.endpoint.callbackUrl?.includes(backendUrl) ?? false
+    );
+    if (staleWebhooks.length === 0) {
+        return;
+    }
+    await Promise.all(
+        staleWebhooks.map((webhook) =>
+            deleteWebhook({ ...context, id: webhook.node.id })
+        )
     );
 }
 
 /**
- * Create a webhook subscription
+ * Create a webhook subscription, cleaning up any stale backend webhooks first.
  */
 export async function createWebhook(
     context: AuthenticatedContext
@@ -102,8 +143,13 @@ export async function createWebhook(
             webhookSubscription: null,
         };
     }
+    const backendUrl = process.env.BACKEND_URL ?? "";
     const { graphql } = context.admin;
-    const webhookUrl = `${process.env.BACKEND_URL}/ext/merchant/${merchantId}/webhook/shopify`;
+
+    // Clean up any stale webhooks pointing to our backend
+    await deleteStaleBackendWebhooks(context, backendUrl);
+
+    const webhookUrl = buildExpectedWebhookUrl(backendUrl, merchantId);
     const response = await graphql(
         `
       mutation webhookSubscriptionCreate(

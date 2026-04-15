@@ -1,9 +1,8 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { Head } from "@/module/common/component/Head";
 import { useCheckDomainName } from "@/module/dashboard/hooks/dnsRecordHooks";
 import { useRegisterMerchant } from "@/module/dashboard/hooks/useMintMyMerchant";
-import { getDefaultStablecoin } from "@/module/dashboard/utils/mintUtils";
 import { FormLayout } from "@/module/forms/Form";
 import type { MerchantNew } from "@/types/Merchant";
 import { MerchantInformationPanel } from "./MerchantInformationPanel";
@@ -25,16 +24,6 @@ export function MintMerchant() {
     });
     const domain = form.watch("domain");
     const setupCode = form.watch("setupCode");
-
-    useEffect(() => {
-        const defaultCurrency = getDefaultStablecoin();
-        if (
-            form.getValues("currency") === "eure" &&
-            defaultCurrency !== "eure"
-        ) {
-            form.setValue("currency", defaultCurrency);
-        }
-    }, [form]);
 
     const { mutateAsync: checkDomainSetup } = useCheckDomainName();
 

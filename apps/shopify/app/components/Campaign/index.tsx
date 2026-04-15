@@ -414,7 +414,7 @@ function TokenSelect({
 }: {
     bankAddress: Address;
     value: string;
-    onChange: (value: string) => void;
+    onChange: (address: string, symbol: string) => void;
 }) {
     const { data: bankData, isLoading } = useMerchantBank({ bankAddress });
     const { t } = useTranslation();
@@ -444,7 +444,11 @@ function TokenSelect({
             onChange={(e) => {
                 const target = e.currentTarget;
                 if ("value" in target) {
-                    onChange(String(target.value));
+                    const selectedAddress = String(target.value);
+                    const selectedToken = bankData?.tokens.find(
+                        (t) => t.address === selectedAddress
+                    );
+                    onChange(selectedAddress, selectedToken?.symbol ?? "");
                 }
             }}
         >
@@ -474,6 +478,7 @@ function CampaignCreation({
     const [ratio, setRatio] = useState(90);
     const [name, setName] = useState("");
     const [rewardToken, setRewardToken] = useState("");
+    const [rewardTokenSymbol, setRewardTokenSymbol] = useState("");
 
     const isSubmitting = fetcher.state !== "idle";
     const actionResult = fetcher.data;
@@ -482,6 +487,7 @@ function CampaignCreation({
         if (actionResult?.success) {
             setName("");
             setRewardToken("");
+            setRewardTokenSymbol("");
             setGlobalBudget("");
             setRawCAC("");
             setRatio(90);
@@ -519,8 +525,15 @@ function CampaignCreation({
         };
     }, [rawCAC, ratio, globalBudget]);
 
-    const currencySymbol = (rootData?.shop.preferredCurrency ??
-        "eur") as Currency;
+    const currencySymbol = useMemo(() => {
+        if (rewardTokenSymbol) {
+            const meta = currencyMetadata[rewardTokenSymbol as Stablecoin];
+            if (meta) {
+                return meta.currencyCode.toLowerCase() as Currency;
+            }
+        }
+        return (rootData?.shop.preferredCurrency ?? "eur") as Currency;
+    }, [rewardTokenSymbol, rootData?.shop.preferredCurrency]);
 
     const handleCreate = useCallback(() => {
         fetcher.submit(
@@ -561,7 +574,10 @@ function CampaignCreation({
                     <TokenSelect
                         bankAddress={bankAddress}
                         value={rewardToken}
-                        onChange={setRewardToken}
+                        onChange={(address, symbol) => {
+                            setRewardToken(address);
+                            setRewardTokenSymbol(symbol);
+                        }}
                     />
                 </s-grid-item>
             </s-grid>

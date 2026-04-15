@@ -112,7 +112,10 @@ export class MerchantResolveService {
             productId,
             name: merchant.name,
             domain: merchant.domain,
-            allowedDomains: [merchant.domain],
+            allowedDomains: [
+                merchant.domain,
+                ...(merchant.allowedDomains ?? []),
+            ],
             ...(resolvedSdkConfig && { sdkConfig: resolvedSdkConfig }),
         };
 
