@@ -12,6 +12,7 @@ export const Route = createFileRoute("/embedded/_layout/mint")({
         // Optional parameters
         const n = search.n as string | undefined;
         const c = search.c as string | undefined;
+        const sd = search.sd as string | undefined;
 
         return {
             n,
@@ -19,6 +20,7 @@ export const Route = createFileRoute("/embedded/_layout/mint")({
             sc: sc ?? "",
             pt: pt ?? "",
             c,
+            sd,
         };
     },
 });

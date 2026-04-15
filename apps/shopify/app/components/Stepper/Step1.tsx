@@ -62,6 +62,12 @@ export function Step1({
             mintUrl.searchParams.append("d", rootData?.shop?.domain ?? "");
             mintUrl.searchParams.append("n", rootData?.shop?.name ?? "");
             mintUrl.searchParams.append("pt", "webshop,referral,purchase");
+            if (rootData?.shop?.myshopifyDomain) {
+                mintUrl.searchParams.append(
+                    "sd",
+                    rootData.shop.myshopifyDomain
+                );
+            }
 
             return mintUrl.toString();
         },

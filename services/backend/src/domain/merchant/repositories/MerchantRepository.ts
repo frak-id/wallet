@@ -1,5 +1,5 @@
 import { db } from "@backend-infrastructure";
-import { eq, inArray } from "drizzle-orm";
+import { arrayContains, eq, inArray, sql } from "drizzle-orm";
 import { LRUCache } from "lru-cache";
 import type { Address, Hex } from "viem";
 import { merchantsTable } from "../db/schema";
@@ -297,6 +297,52 @@ export class MerchantRepository {
         if (result) {
             this.invalidateCache(result);
         }
+        return result ?? null;
+    }
+
+    async addAllowedDomain(
+        id: string,
+        domain: string
+    ): Promise<MerchantSelect | null> {
+        const [result] = await db
+            .update(merchantsTable)
+            .set({
+                allowedDomains: sql`array_append(
+                    array_remove(${merchantsTable.allowedDomains}, ${domain}),
+                    ${domain}
+                )`,
+                updatedAt: new Date(),
+            })
+            .where(eq(merchantsTable.id, id))
+            .returning();
+        if (result) {
+            this.invalidateCache(result);
+        }
+        return result ?? null;
+    }
+
+    async setAllowedDomains(
+        id: string,
+        domains: string[]
+    ): Promise<MerchantSelect | null> {
+        const [result] = await db
+            .update(merchantsTable)
+            .set({
+                allowedDomains: domains,
+                updatedAt: new Date(),
+            })
+            .where(eq(merchantsTable.id, id))
+            .returning();
+        if (result) {
+            this.invalidateCache(result);
+        }
+        return result ?? null;
+    }
+
+    async findByAllowedDomain(domain: string): Promise<MerchantSelect | null> {
+        const result = await db.query.merchantsTable.findFirst({
+            where: arrayContains(merchantsTable.allowedDomains, [domain]),
+        });
         return result ?? null;
     }
 }

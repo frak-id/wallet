@@ -12,11 +12,12 @@ import styles from "./index.module.css";
 export function EmbeddedMint() {
     const search = useSearch({ from: "/embedded/_layout/mint" });
 
-    const { name, domain, setupCode, currency } = useMemo(() => {
+    const { name, domain, setupCode, currency, shopDomain } = useMemo(() => {
         const name = search.n;
         const domain = search.d;
         const setupCode = search.sc;
         const currency = search.c as Stablecoin | null;
+        const shopDomain = search.sd;
 
         if (!domain || !setupCode) {
             throw new Error("Missing required parameters");
@@ -27,6 +28,7 @@ export function EmbeddedMint() {
             domain,
             setupCode,
             currency: currency ?? ("eure" as Stablecoin),
+            shopDomain,
         };
     }, [search]);
 
@@ -56,6 +58,7 @@ export function EmbeddedMint() {
                         domain={domain}
                         setupCode={setupCode}
                         currency={currency}
+                        shopDomain={shopDomain}
                     />
                 ) : (
                     <>
@@ -94,11 +97,13 @@ function DoMintComponent({
     domain,
     setupCode,
     currency,
+    shopDomain,
 }: {
     name?: string;
     domain: string;
     setupCode: string;
     currency: Stablecoin;
+    shopDomain?: string;
 }) {
     // Mint hook
     const {
@@ -123,6 +128,7 @@ function DoMintComponent({
                         domain,
                         setupCode,
                         currency,
+                        allowedDomains: shopDomain ? [shopDomain] : undefined,
                     })
                 }
                 isLoading={isPending}

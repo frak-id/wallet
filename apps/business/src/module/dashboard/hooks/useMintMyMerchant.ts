@@ -39,6 +39,7 @@ export function useRegisterMerchant(
             domain: string;
             setupCode?: string;
             currency: Stablecoin;
+            allowedDomains?: string[];
         }
     >
 ) {
@@ -57,7 +58,13 @@ export function useRegisterMerchant(
                 queryKey: ["merchant"],
             });
         },
-        async mutationFn({ name, domain, setupCode, currency }) {
+        async mutationFn({
+            name,
+            domain,
+            setupCode,
+            currency,
+            allowedDomains,
+        }) {
             const wallet = walletStatus?.wallet;
             if (!wallet) {
                 throw new Error("Wallet not connected");
@@ -86,6 +93,7 @@ export function useRegisterMerchant(
                     name,
                     setupCode,
                     defaultRewardToken,
+                    allowedDomains,
                 });
             if (error) {
                 throw new Error(extractErrorMessage(error));

@@ -18,6 +18,7 @@ export const merchantsTable = pgTable(
         id: uuid("id").primaryKey().defaultRandom(),
         productId: customHex("product_id").unique(),
         domain: text("domain").unique().notNull(),
+        allowedDomains: text("allowed_domains").array().default([]).notNull(),
         name: text("name").notNull(),
         ownerWallet: customHex("owner_wallet").$type<Address>().notNull(),
         bankAddress: customHex("bank_address").$type<Address>(),
