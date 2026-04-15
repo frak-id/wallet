@@ -11,6 +11,7 @@ import {
     WalletIcon,
 } from "@frak-labs/design-system/icons";
 import type { ReactNode } from "react";
+import { overlay } from "../shared.css";
 import * as styles from "./postShareConfirmation.css";
 
 export type PostShareConfirmationProps = {
@@ -39,118 +40,135 @@ export function PostShareConfirmation({
     onInstall,
 }: PostShareConfirmationProps) {
     return (
-        <div className={styles.container}>
-            <header className={styles.header}>
-                <Box display="flex" alignItems="center" gap="m">
-                    {logoUrl && (
-                        <img
-                            src={logoUrl}
-                            alt={appName}
-                            className={styles.merchantLogo}
+        <div
+            className={overlay}
+            onClick={onDismiss}
+            onKeyDown={(e) => {
+                if (e.key === "Escape") onDismiss();
+            }}
+        >
+            <div
+                className={styles.container}
+                onClick={(e) => e.stopPropagation()}
+                onKeyDown={(e) => e.stopPropagation()}
+            >
+                <header className={styles.header}>
+                    <Box display="flex" alignItems="center" gap="m">
+                        {logoUrl && (
+                            <img
+                                src={logoUrl}
+                                alt={appName}
+                                className={styles.merchantLogo}
+                            />
+                        )}
+                        <LogoFrakWithName
+                            className={styles.logo}
+                            color="#000"
                         />
-                    )}
-                    <LogoFrakWithName className={styles.logo} color="#000" />
-                </Box>
-                <button
-                    type="button"
-                    className={styles.dismissButton}
-                    onClick={onDismiss}
-                >
-                    <CloseIcon width={24} height={24} />
-                </button>
-            </header>
+                    </Box>
+                    <button
+                        type="button"
+                        className={styles.dismissButton}
+                        onClick={onDismiss}
+                    >
+                        <CloseIcon width={24} height={24} />
+                    </button>
+                </header>
 
-            <main className={styles.main}>
-                <section className={styles.phoneVisual}>
-                    <div className={styles.phoneFrame}>
-                        <img
-                            src={iphoneBgUrl}
-                            alt="iPhone"
-                            className={styles.phoneImage}
-                        />
-                        <div className={styles.phonePopupContent}>
-                            <Text
-                                variant="heading6"
-                                className={styles.phonePopupTitle}
-                            >
-                                {t(
-                                    "sdk.sharingPage.confirmation.cardPopupTitle"
+                <main className={styles.main}>
+                    <section className={styles.phoneVisual}>
+                        <div className={styles.phoneFrame}>
+                            <img
+                                src={iphoneBgUrl}
+                                alt="iPhone"
+                                className={styles.phoneImage}
+                            />
+                            <div className={styles.phonePopupContent}>
+                                <Text
+                                    variant="heading6"
+                                    className={styles.phonePopupTitle}
+                                >
+                                    {t(
+                                        "sdk.sharingPage.confirmation.cardPopupTitle"
+                                    )}
+                                </Text>
+                                <Text className={styles.phonePopupDesc}>
+                                    {t(
+                                        "sdk.sharingPage.confirmation.cardPopupDescription"
+                                    )}
+                                </Text>
+                                {logoUrl && (
+                                    <img
+                                        src={logoUrl}
+                                        alt={appName}
+                                        className={
+                                            styles.phonePopupMerchantLogo
+                                        }
+                                    />
                                 )}
-                            </Text>
-                            <Text className={styles.phonePopupDesc}>
-                                {t(
-                                    "sdk.sharingPage.confirmation.cardPopupDescription"
-                                )}
-                            </Text>
-                            {logoUrl && (
-                                <img
-                                    src={logoUrl}
-                                    alt={appName}
-                                    className={styles.phonePopupMerchantLogo}
-                                />
-                            )}
+                            </div>
                         </div>
-                    </div>
-                </section>
-                <section className={styles.heroSection}>
-                    <Text
-                        as="h1"
-                        variant="heading3"
-                        className={styles.heroSectionTitle}
-                    >
-                        {t("sdk.sharingPage.confirmation.title")}
-                    </Text>
-                    <Text variant="bodySmall">
-                        {t("sdk.sharingPage.confirmation.subtitle")}
-                    </Text>
-                </section>
+                    </section>
+                    <section className={styles.heroSection}>
+                        <Text
+                            as="h1"
+                            variant="heading3"
+                            className={styles.heroSectionTitle}
+                        >
+                            {t("sdk.sharingPage.confirmation.title")}
+                        </Text>
+                        <Text variant="bodySmall">
+                            {t("sdk.sharingPage.confirmation.subtitle")}
+                        </Text>
+                    </section>
 
-                <Stack space="l">
-                    {benefits.map(({ key, icon }) => (
-                        <BenefitItem
-                            key={key}
-                            icon={icon}
-                            title={t(
-                                `sdk.sharingPage.confirmation.benefits.${key}.title`
-                            )}
-                            description={t(
-                                `sdk.sharingPage.confirmation.benefits.${key}.description`
-                            )}
-                        />
-                    ))}
-                </Stack>
-            </main>
+                    <Stack space="l">
+                        {benefits.map(({ key, icon }) => (
+                            <BenefitItem
+                                key={key}
+                                icon={icon}
+                                title={t(
+                                    `sdk.sharingPage.confirmation.benefits.${key}.title`
+                                )}
+                                description={t(
+                                    `sdk.sharingPage.confirmation.benefits.${key}.description`
+                                )}
+                            />
+                        ))}
+                    </Stack>
+                </main>
 
-            <footer className={styles.footer}>
-                {installUrl ? (
-                    <Button
-                        size="large"
-                        fontSize="s"
-                        width="full"
-                        className={styles.ctaButton}
-                        onClick={onInstall}
+                <footer className={styles.footer}>
+                    {installUrl ? (
+                        <Button
+                            size="large"
+                            fontSize="s"
+                            width="full"
+                            className={styles.ctaButton}
+                            onClick={onInstall}
+                        >
+                            {t("sdk.sharingPage.confirmation.cta")}
+                        </Button>
+                    ) : (
+                        <Button
+                            size="large"
+                            fontSize="s"
+                            width="full"
+                            className={styles.ctaButton}
+                            disabled
+                        >
+                            {t("sdk.sharingPage.confirmation.cta")}
+                        </Button>
+                    )}
+                    <button
+                        type="button"
+                        className={styles.shareAgainButton}
+                        onClick={onShareAgain}
                     >
-                        {t("sdk.sharingPage.confirmation.cta")}
-                    </Button>
-                ) : (
-                    <Button
-                        size="large"
-                        fontSize="s"
-                        width="full"
-                        className={styles.ctaButton}
-                        disabled
-                    >
-                        {t("sdk.sharingPage.confirmation.cta")}
-                    </Button>
-                )}
-                <button
-                    type="button"
-                    className={styles.shareAgainButton}
-                    onClick={onShareAgain}
-                >
-                    {t("sdk.sharingPage.confirmation.shareAgain")}
-                </button>
-            </footer>
+                        {t("sdk.sharingPage.confirmation.shareAgain")}
+                    </button>
+                </footer>
+            </div>
         </div>
     );
 }
