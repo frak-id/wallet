@@ -1,3 +1,4 @@
+import { fileURLToPath } from "node:url";
 import nodePolyfills from "@rolldown/plugin-node-polyfills";
 import { defineConfig } from "tsdown";
 
@@ -15,6 +16,14 @@ import { defineConfig } from "tsdown";
  * This package exists solely for backward compatibility and is marked as deprecated.
  * New integrations should use @frak-labs/core-sdk instead.
  */
+
+// Stub rrweb to avoid bundling it — @openpanel/web statically imports `record`
+// from rrweb even when session replay is disabled.
+// See: https://github.com/Openpanel-dev/openpanel/issues/336
+const rrwebStub = fileURLToPath(
+    new URL("../core/src/stubs/rrweb.ts", import.meta.url)
+);
+
 export default defineConfig({
     entry: {
         bundle: "./src/bundle.ts",
@@ -42,4 +51,5 @@ export default defineConfig({
         };
     },
     plugins: [nodePolyfills()],
+    alias: { rrweb: rrwebStub },
 });

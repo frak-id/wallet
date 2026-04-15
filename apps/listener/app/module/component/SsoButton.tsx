@@ -99,8 +99,8 @@ export function SsoButton({
         return null;
     }
 
-    // On mobile, use deep link redirect flow instead of popup
-    if (ua.isMobile) {
+    // On mobile + app available, use deep link redirect flow (tries native app first)
+    if (ua.isMobile && process.env.IS_APP_AVAILABLE === "true") {
         return (
             <MobileSsoButton link={link} text={text} className={className} />
         );
@@ -166,6 +166,7 @@ function LinkSsoButton({
         </a>
     );
 }
+
 
 /**
  * Whether the SSO redirect should be suppressed.

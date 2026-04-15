@@ -1,3 +1,4 @@
+import { fileURLToPath } from "node:url";
 import nodePolyfills from "@rolldown/plugin-node-polyfills";
 import {
     compile,
@@ -144,6 +145,13 @@ const preactCompatAlias: Record<string, string> = {
     "preact/jsx-runtime": preactJsxRuntime,
 };
 
+// Stub rrweb to avoid bundling it — @openpanel/web statically imports `record`
+// from rrweb even when session replay is disabled.
+// See: https://github.com/Openpanel-dev/openpanel/issues/336
+const rrwebStub = fileURLToPath(
+    new URL("../core/src/stubs/rrweb.ts", import.meta.url)
+);
+
 export default defineConfig([
     {
         entry: {
@@ -159,7 +167,7 @@ export default defineConfig([
         clean: true,
         dts: true,
         outDir: "./dist",
-        alias: preactCompatAlias,
+        alias: { ...preactCompatAlias, rrweb: rrwebStub },
         deps: { alwaysBundle: [/design-system/] },
         plugins: [vanillaExtractInlinePlugin(), nodePolyfills()],
     },
@@ -176,7 +184,7 @@ export default defineConfig([
         dts: false,
         outDir: "./cdn",
         deps: { alwaysBundle: [/.*/] },
-        alias: preactCompatAlias,
+        alias: { ...preactCompatAlias, rrweb: rrwebStub },
         treeshake: {
             moduleSideEffects: true,
         },
