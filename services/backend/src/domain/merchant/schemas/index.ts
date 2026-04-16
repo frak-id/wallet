@@ -86,6 +86,15 @@ export const PlacementSchema = t.Object({
 
 const PlacementIdSchema = t.String({ pattern: "^[a-zA-Z0-9_-]{3,16}$" });
 
+const AttributionDefaultsSchema = t.Object({
+    utmSource: t.Optional(t.String({ maxLength: 200 })),
+    utmMedium: t.Optional(t.String({ maxLength: 200 })),
+    utmCampaign: t.Optional(t.String({ maxLength: 200 })),
+    utmTerm: t.Optional(t.String({ maxLength: 200 })),
+    via: t.Optional(t.String({ maxLength: 200 })),
+    ref: t.Optional(t.String({ maxLength: 200 })),
+});
+
 export const SdkConfigSchema = t.Object({
     name: t.Optional(t.Union([t.String({ maxLength: 200 }), t.Null()])),
     logoUrl: t.Optional(
@@ -114,6 +123,7 @@ export const SdkConfigSchema = t.Object({
             t.Null(),
         ])
     ),
+    attribution: t.Optional(t.Union([AttributionDefaultsSchema, t.Null()])),
 });
 export type SdkConfig = Static<typeof SdkConfigSchema>;
 export type Placement = Static<typeof PlacementSchema>;

@@ -12,6 +12,7 @@ export { type LocalesKey, locales } from "./constants/locales";
 
 // Types
 export type {
+    AttributionDefaults,
     AttributionParams,
     ClientLifecycleEvent,
     CompressedData,
@@ -116,6 +117,8 @@ export {
     isFrakDeepLink,
     isInAppBrowser,
     isIOS,
+    type MergeAttributionInput,
+    mergeAttribution,
     redirectToExternalBrowser,
     sdkConfigStore,
     toAndroidIntentUrl,

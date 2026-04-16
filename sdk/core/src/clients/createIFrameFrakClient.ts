@@ -300,6 +300,12 @@ async function postConnectionSetup({
         const allowedDomains = merchantConfig?.allowedDomains ?? [];
         const raw = merchantConfig?.sdkConfig;
 
+        // Per-field merge: backend wins over SDK static config.
+        const mergedAttribution =
+            raw?.attribution || config.attribution
+                ? { ...config.attribution, ...raw?.attribution }
+                : undefined;
+
         sdkConfigStore.setConfig(
             raw
                 ? {
@@ -319,6 +325,7 @@ async function postConnectionSetup({
                       translations: raw.translations,
                       placements: raw.placements,
                       components: raw.components,
+                      attribution: mergedAttribution,
                   }
                 : {
                       isResolved: true,
@@ -330,6 +337,7 @@ async function postConnectionSetup({
                       homepageLink: config.metadata.homepageLink,
                       lang: config.metadata.lang,
                       currency: config.metadata.currency,
+                      attribution: mergedAttribution,
                   }
         );
     };
@@ -351,8 +359,11 @@ async function postConnectionSetup({
                   css: resolved.css,
                   translations: resolved.translations,
                   placements: resolved.placements,
+                  attribution: resolved.attribution,
               }
-            : undefined;
+            : resolved.attribution
+              ? { attribution: resolved.attribution }
+              : undefined;
 
         rpcClient.sendLifecycle({
             clientLifecycle: "resolved-config",

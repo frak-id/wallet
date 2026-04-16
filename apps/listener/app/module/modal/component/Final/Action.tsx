@@ -1,4 +1,8 @@
-import { type FinalActionType, FrakContextManager } from "@frak-labs/core-sdk";
+import {
+    type FinalActionType,
+    FrakContextManager,
+    mergeAttribution,
+} from "@frak-labs/core-sdk";
 import {
     clientIdStore,
     prefixModalCss,
@@ -12,6 +16,7 @@ import { ButtonAction } from "@/module/modal/component/ButtonAction";
 import styles from "@/module/modal/component/Modal/index.module.css";
 import { useListenerTranslation } from "@/module/providers/ListenerUiProvider";
 import { useSafeResolvingContext } from "@/module/stores/hooks";
+import { resolvingContextStore } from "@/module/stores/resolvingContextStore";
 import { useShareLink } from "../../../hooks/useShareLink";
 import { useTrackSharing } from "../../../hooks/useTrackSharing";
 
@@ -68,6 +73,9 @@ function SharingButtons({
     const { copy } = useCopyToClipboardWithState();
     const { t } = useListenerTranslation();
     const { mutate: trackSharing } = useTrackSharing();
+    const defaultAttribution = resolvingContextStore(
+        (s) => s.backendSdkConfig?.attribution
+    );
 
     const finalSharingLink = useMemo(() => {
         const url = link ?? sourceUrl;
@@ -80,12 +88,22 @@ function SharingButtons({
                     m: merchantId,
                     t: Math.floor(Date.now() / 1000),
                 },
-                attribution: {},
+                attribution: mergeAttribution({
+                    perCall: {},
+                    defaults: defaultAttribution,
+                }),
             });
         }
 
         return FrakContextManager.remove(url);
-    }, [link, isModalSuccess, clientId, merchantId, sourceUrl]);
+    }, [
+        link,
+        isModalSuccess,
+        clientId,
+        merchantId,
+        sourceUrl,
+        defaultAttribution,
+    ]);
 
     // Trigger native sharing
     const { mutate: triggerSharing, isPending: isSharing } = useShareLink(

@@ -63,6 +63,15 @@ const ResolvedPlacementSchema = t.Object({
     css: t.Optional(t.String()),
 });
 
+const AttributionDefaultsSchema = t.Object({
+    utmSource: t.Optional(t.String()),
+    utmMedium: t.Optional(t.String()),
+    utmCampaign: t.Optional(t.String()),
+    utmTerm: t.Optional(t.String()),
+    via: t.Optional(t.String()),
+    ref: t.Optional(t.String()),
+});
+
 const ResolvedSdkConfigSchema = t.Object({
     name: t.Optional(t.String()),
     logoUrl: t.Optional(t.String()),
@@ -76,6 +85,7 @@ const ResolvedSdkConfigSchema = t.Object({
     translations: t.Optional(t.Record(t.String(), t.String())),
     placements: t.Optional(t.Record(t.String(), ResolvedPlacementSchema)),
     components: t.Optional(ResolvedComponentsSchema),
+    attribution: t.Optional(AttributionDefaultsSchema),
 });
 
 export type ResolvedPlacement = Static<typeof ResolvedPlacementSchema>;

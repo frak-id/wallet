@@ -1,7 +1,7 @@
 import type { EstimatedRewardItem } from "@frak-labs/backend-elysia/domain/campaign";
 import type { ExplorerMerchantItem } from "@frak-labs/backend-elysia/orchestration/schemas";
 import type { EstimatedReward } from "@frak-labs/core-sdk";
-import { FrakContextManager } from "@frak-labs/core-sdk";
+import { FrakContextManager, mergeAttribution } from "@frak-labs/core-sdk";
 import { Box } from "@frak-labs/design-system/components/Box";
 import { Button } from "@frak-labs/design-system/components/Button";
 import { Card } from "@frak-labs/design-system/components/Card";
@@ -87,7 +87,7 @@ export function ExplorerDetail({ merchant, onClose }: ExplorerDetailProps) {
                     m: merchant.id,
                     t: Math.floor(Date.now() / 1000),
                 },
-                attribution: {},
+                attribution: mergeAttribution({ perCall: {} }),
             }) ?? baseUrl
         );
     }, [clientId, merchant.domain, merchant.id]);

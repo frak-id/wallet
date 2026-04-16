@@ -1,3 +1,5 @@
+import type { AttributionDefaults } from "./tracking";
+
 /**
  * All the currencies available
  * @category Config
@@ -78,6 +80,13 @@ export type FrakWalletSdkConfig = {
      * @defaultValue true
      */
     waitForBackendConfig?: boolean;
+    /**
+     * Default attribution params (UTM / via / ref) appended to outbound
+     * sharing URLs. Per-call `displaySharingPage` overrides win, then backend
+     * config, then this SDK-level default. `utm_content` is intentionally
+     * excluded — it is per-content/per-product, never a merchant-wide default.
+     */
+    attribution?: AttributionDefaults;
 };
 
 /**

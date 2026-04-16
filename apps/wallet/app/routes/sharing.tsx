@@ -3,7 +3,7 @@ import type {
     AttributionParams,
     SharingPageProduct,
 } from "@frak-labs/core-sdk";
-import { FrakContextManager } from "@frak-labs/core-sdk";
+import { FrakContextManager, mergeAttribution } from "@frak-labs/core-sdk";
 import {
     authenticatedBackendApi,
     clearConfirmation,
@@ -192,15 +192,10 @@ function WalletSharingPage() {
         const baseLink = selectedProduct?.link ?? link;
         if (!baseLink) return null;
 
-        const resolvedAttribution =
-            attribution === null
-                ? undefined
-                : {
-                      ...(attribution ?? {}),
-                      utmContent:
-                          selectedProduct?.utmContent ??
-                          attribution?.utmContent,
-                  };
+        const resolvedAttribution = mergeAttribution({
+            perCall: attribution,
+            productUtmContent: selectedProduct?.utmContent,
+        });
 
         return FrakContextManager.update({
             url: baseLink,
