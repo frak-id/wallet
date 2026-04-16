@@ -15,6 +15,7 @@ export {
     authenticatedWalletApi,
 } from "./api/backendClient";
 // Components
+export { CodeInput } from "./component/CodeInput";
 export {
     Drawer,
     DrawerContent,

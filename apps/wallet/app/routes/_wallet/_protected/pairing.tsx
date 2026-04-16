@@ -1,9 +1,9 @@
 import { Button } from "@frak-labs/design-system/components/Button";
 import { Skeleton } from "@frak-labs/design-system/components/Skeleton";
 import {
+    CodeInput,
     getTargetPairingClient,
     isPairingNotFoundError,
-    PairingCode,
     usePairingInfo,
 } from "@frak-labs/wallet-shared";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
@@ -154,7 +154,7 @@ function PairingPage() {
             <PairingHeader />
             <PairingInfo state={pairingState} id={id} />
             {shouldShowCode ? (
-                <PairingCode code={pairingInfo.pairingCode} />
+                <CodeInput value={pairingInfo.pairingCode} mode="numeric" />
             ) : (
                 <p className={styles.pairingNoCodeNotice}>
                     {t("wallet.pairing.noCodeNotice")}

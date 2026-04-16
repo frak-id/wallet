@@ -9,6 +9,7 @@ import { Text } from "@frak-labs/design-system/components/Text";
 import { CloseIcon, CopyIcon } from "@frak-labs/design-system/icons";
 import {
     authenticatedBackendApi,
+    CodeInput,
     getSafeSession,
     LogoFrakWithName,
     useFormattedEstimatedReward,
@@ -18,7 +19,6 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { Info } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Trans, useTranslation } from "react-i18next";
-import { CodeInput } from "@/module/common/component/CodeInput";
 import { PageLayout } from "@/module/common/component/PageLayout";
 import { useExecutePendingActions } from "@/module/pending-actions/hook/useExecutePendingActions";
 import { pendingActionsStore } from "@/module/pending-actions/stores/pendingActionsStore";

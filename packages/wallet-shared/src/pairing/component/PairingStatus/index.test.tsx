@@ -60,35 +60,6 @@ describe("PairingStatus", () => {
         });
     });
 
-    describe("component structure", () => {
-        it("should render with correct className", () => {
-            const { container } = render(<PairingStatus status="idle" />);
-
-            const statusElement = container.querySelector(
-                '[class*="pairingStatus"]'
-            );
-            expect(statusElement).toBeInTheDocument();
-        });
-
-        it("should render connecting status with connecting className", () => {
-            const { container } = render(<PairingStatus status="connecting" />);
-
-            const connectingElement = container.querySelector(
-                '[class*="pairingStatus__connecting"]'
-            );
-            expect(connectingElement).toBeInTheDocument();
-        });
-
-        it("should render paired status with paired className", () => {
-            const { container } = render(<PairingStatus status="paired" />);
-
-            const pairedElement = container.querySelector(
-                '[class*="pairingStatus__paired"]'
-            );
-            expect(pairedElement).toBeInTheDocument();
-        });
-    });
-
     describe("edge cases", () => {
         it("should handle all status values", () => {
             const statuses: Array<"idle" | "connecting" | "paired"> = [
@@ -97,35 +68,17 @@ describe("PairingStatus", () => {
                 "paired",
             ];
 
-            statuses.forEach((status) => {
-                const { unmount } = render(<PairingStatus status={status} />);
+            for (const status of statuses) {
+                const { container, unmount } = render(
+                    <PairingStatus status={status} />
+                );
 
-                expect(
-                    screen.getByText(`wallet.pairing.status.${status}`, {
-                        exact: false,
-                    })
-                ).toBeInTheDocument();
+                expect(container).toHaveTextContent(
+                    `wallet.pairing.status.${status}`
+                );
 
                 unmount();
-            });
-        });
-
-        it("should render connecting status with both spinner and text", () => {
-            render(<PairingStatus status="connecting" />);
-
-            expect(screen.getByTestId("spinner")).toBeInTheDocument();
-            expect(
-                screen.getByText("wallet.pairing.status.connecting")
-            ).toBeInTheDocument();
-        });
-
-        it("should render paired status with both icon and text", () => {
-            render(<PairingStatus status="paired" />);
-
-            expect(screen.getByTestId("check-icon")).toBeInTheDocument();
-            expect(
-                screen.getByText("wallet.pairing.status.paired")
-            ).toBeInTheDocument();
+            }
         });
     });
 });

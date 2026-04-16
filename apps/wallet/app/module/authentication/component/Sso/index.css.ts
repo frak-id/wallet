@@ -46,12 +46,15 @@ export const ssoActions = style({
     width: "100%",
 });
 
-export const ssoContent = style({
+const ssoContentBase = style({
     display: "flex",
     flexDirection: "column",
     alignItems: "center",
-    justifyContent: "center",
     flex: 1,
     minHeight: 0,
     padding: `0 ${alias.spacing.m}`,
 });
+
+export const ssoContent = style([ssoContentBase, { justifyContent: "center" }]);
+
+export const ssoContentTop = ssoContentBase;

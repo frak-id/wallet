@@ -19,6 +19,10 @@
             },
             "description": "Frak ne stocke aucune donnée personnelle ou biométrique. En continuant vous acceptez nos <conditionsLink>conditions</conditionsLink> et notre <privacyLink>politique de confidentialité</privacyLink>.",
             "header": { "title": "Connectez-vous avec Frak Wallet" },
+            "pairing": {
+                "title": "Se connecter avec mon mobile",
+                "description": "Scanne ce QR code pour te connecter depuis ton mobile."
+            },
             "recover": "Récupérer le porte-monnaie à partir du fichier",
             "redirect": "Vous serez redirigé vers {{ productName }} dans quelques secondes.",
             "redirectNow": "Rediriger maintenant",
@@ -293,7 +297,7 @@
             },
             "status": {
                 "idle": "Inactif",
-                "connecting": "Connexion en cours...",
+                "connecting": "Appairage en cours",
                 "paired": "Appairé"
             },
             "signatureRequest": {

@@ -21,6 +21,10 @@
             "header": {
                 "title": "Login with Frak Wallet"
             },
+            "pairing": {
+                "title": "Sign in with my mobile",
+                "description": "Scan this QR code to sign in from your mobile."
+            },
             "recover": "Recover wallet from file",
             "redirect": "You will be redirected to {{ productName }} in a few seconds.",
             "redirectNow": "Redirect now",
@@ -295,7 +299,7 @@
             },
             "status": {
                 "idle": "Idle",
-                "connecting": "Connecting...",
+                "connecting": "Pairing in progress",
                 "paired": "Paired"
             },
             "signatureRequest": {

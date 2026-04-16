@@ -11,16 +11,13 @@ import { Spinner } from "@frak-labs/design-system/components/Spinner";
 import { Text } from "@frak-labs/design-system/components/Text";
 import { CircleCheckIcon, LogoFrak } from "@frak-labs/design-system/icons";
 import { createRpcClient } from "@frak-labs/frame-connector";
-import type {
-    OnPairingSuccessCallback,
-    Session,
-    SsoRpcSchema,
-} from "@frak-labs/wallet-shared";
+import type { Session, SsoRpcSchema } from "@frak-labs/wallet-shared";
 import {
     authenticationStore,
     clientIdStore,
     compressedSsoToParams,
     HandleErrors,
+    PairingView,
     sessionStore,
     ssoKey,
     ua,
@@ -30,7 +27,6 @@ import { createFileRoute, redirect } from "@tanstack/react-router";
 import i18next from "i18next";
 import { useCallback, useMemo, useState } from "react";
 import { Trans, useTranslation } from "react-i18next";
-import { AuthenticateWithPhone } from "@/module/authentication/component/AuthenticateWithPhone";
 import { ButtonAuth } from "@/module/authentication/component/ButtonAuth";
 import * as styles from "@/module/authentication/component/Sso/index.css";
 import { SsoHeader } from "@/module/authentication/component/Sso/SsoHeader";
@@ -140,6 +136,11 @@ function Sso() {
      * The action error state (from login/register, retryable)
      */
     const [error, setError] = useState<Error | null>(null);
+
+    /**
+     * Current view: initial auth choices or QR-code pairing screen.
+     */
+    const [view, setView] = useState<"choose" | "pairing">("choose");
 
     /**
      * The on success callback
@@ -303,6 +304,20 @@ function Sso() {
         );
     }
 
+    if (view === "pairing") {
+        return (
+            <PageLayout>
+                <Box className={styles.ssoContentTop}>
+                    <PairingView
+                        title={t("authent.sso.pairing.title")}
+                        description={t("authent.sso.pairing.description")}
+                        onSuccess={onSuccess}
+                    />
+                </Box>
+            </PageLayout>
+        );
+    }
+
     return (
         <PageLayout
             footer={
@@ -315,7 +330,9 @@ function Sso() {
                     )}
                     <Box className={styles.ssoActions}>
                         <Actions onSuccess={onSuccess} onError={setError} />
-                        <PhonePairingAction onSuccess={onSuccess} />
+                        <PhonePairingAction
+                            onClick={() => setView("pairing")}
+                        />
                     </Box>
                     <Disclaimer metadata={currentMetadata} />
                 </>
@@ -505,11 +522,7 @@ function Actions({
     );
 }
 
-function PhonePairingAction({
-    onSuccess,
-}: {
-    onSuccess: OnPairingSuccessCallback;
-}) {
+function PhonePairingAction({ onClick }: { onClick: () => void }) {
     const { t } = useTranslation();
 
     // Don't show the phone pairing action on mobile devices
@@ -519,10 +532,9 @@ function PhonePairingAction({
 
     return (
         <Box>
-            <AuthenticateWithPhone
-                text={t("authent.sso.btn.new.phone")}
-                onSuccess={onSuccess}
-            />
+            <Button variant="ghost" onClick={onClick}>
+                {t("authent.sso.btn.new.phone")}
+            </Button>
         </Box>
     );
 }
