@@ -31,6 +31,7 @@ jobs:
         with:
           publish: bun changeset:release
           version: bun changeset:version
+          createGithubReleases: false
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           NPM_CONFIG_TOKEN: ${{ secrets.NPM_TOKEN }}
@@ -61,12 +62,12 @@ jobs:
               continue
             fi
             tag="sdk-${id}-${version}"
-            if git rev-parse "$tag" >/dev/null 2>&1; then
-              echo "::notice::Tag $tag already exists, skipping"
+            if git ls-remote --exit-code --tags origin "refs/tags/$tag" >/dev/null 2>&1; then
+              echo "::notice::Tag $tag already exists on remote, skipping"
             else
               git tag "$tag"
               git push origin "$tag"
-              echo "✅ Created tag $tag"
+              echo "Created tag $tag"
             fi
           done
 

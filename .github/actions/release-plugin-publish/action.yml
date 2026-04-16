@@ -1,0 +1,76 @@
+name: "Publish plugin release"
+description: "Build PHP plugin, create tag, and publish GitHub release from merged release PR"
+
+inputs:
+  plugin-name:
+    description: "Display name, e.g. 'WordPress Plugin'"
+    required: true
+  plugin-slug:
+    description: "Slug used in branch/tag/label, e.g. 'wordpress'"
+    required: true
+  directory:
+    description: "Plugin directory, e.g. 'plugins/wordpress'"
+    required: true
+  artifact-glob:
+    description: "Glob (relative to directory) for built release assets, e.g. 'dist/frak-integration-*.zip'"
+    required: true
+
+runs:
+  using: composite
+  steps:
+    - name: "🏷️ Extract version from PR branch"
+      id: version
+      shell: bash
+      env:
+        BRANCH: ${{ github.event.pull_request.head.ref }}
+        PLUGIN_SLUG: ${{ inputs.plugin-slug }}
+      run: |
+        VERSION="${BRANCH#release/${PLUGIN_SLUG}-}"
+        if ! echo "$VERSION" | grep -qE '^[0-9]+\.[0-9]+\.[0-9]+$'; then
+          echo "::error::Could not parse version from branch: $BRANCH"
+          exit 1
+        fi
+        echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+
+    - name: "📝 Extract release notes"
+      id: notes
+      uses: release-flow/keep-a-changelog-action@v3
+      with:
+        command: query
+        version: ${{ steps.version.outputs.version }}
+        changelog: ${{ inputs.directory }}/CHANGELOG.md
+
+    - name: "🐘 Setup PHP"
+      uses: shivammathur/setup-php@v2
+      with:
+        php-version: "8.4"
+        tools: "composer:v2"
+        coverage: none
+
+    - name: "📦 Build plugin zip"
+      shell: bash
+      working-directory: ${{ inputs.directory }}
+      env:
+        VERSION: ${{ steps.version.outputs.version }}
+      run: |
+        chmod +x build.sh
+        ./build.sh "$VERSION"
+
+    - name: "🏷️ Create tag"
+      shell: bash
+      env:
+        VERSION: ${{ steps.version.outputs.version }}
+        PLUGIN_SLUG: ${{ inputs.plugin-slug }}
+      run: |
+        git config user.name "github-actions[bot]"
+        git config user.email "github-actions[bot]@users.noreply.github.com"
+        git tag "${PLUGIN_SLUG}-${VERSION}"
+        git push origin "${PLUGIN_SLUG}-${VERSION}"
+
+    - name: "🚀 Create GitHub release"
+      uses: softprops/action-gh-release@v2
+      with:
+        tag_name: "${{ inputs.plugin-slug }}-${{ steps.version.outputs.version }}"
+        name: "${{ inputs.plugin-name }} ${{ steps.version.outputs.version }}"
+        body: ${{ steps.notes.outputs.release-notes }}
+        files: ${{ inputs.directory }}/${{ inputs.artifact-glob }}

@@ -7,9 +7,13 @@ on:
         description: "Version to release (e.g. 1.0.1)"
         required: true
         type: string
+  pull_request:
+    types: [closed]
+    branches: [main, dev]
 
 permissions:
   contents: write
+  pull-requests: write
 
 concurrency:
   group: release-wordpress
@@ -20,73 +24,46 @@ defaults:
     shell: bash
 
 jobs:
-  release:
-    name: "Build & publish"
+  prepare-pr:
+    name: "📝 Prepare release PR"
+    if: github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     steps:
-      - name: "✅ Validate version format"
-        run: |
-          if ! echo "$VERSION" | grep -qE '^[0-9]+\.[0-9]+\.[0-9]+$'; then
-            echo "::error::Invalid version format: $VERSION (expected: X.Y.Z)"
-            exit 1
-          fi
-        env:
-          VERSION: ${{ inputs.version }}
-
-      - name: "📥 Checkout main"
+      - name: "📥 Checkout source branch"
         uses: actions/checkout@v6
         with:
-          ref: main
+          ref: ${{ github.ref_name }}
           fetch-depth: 0
 
-      - name: "🔢 Bump plugin header version"
-        working-directory: plugins/wordpress
-        env:
-          VERSION: ${{ inputs.version }}
-        run: |
-          sed -i -E "s|^(\s*\*\s*Version:\s*).*$|\1${VERSION}|" frak-integration.php
-          grep -E '^\s*\*\s*Version:' frak-integration.php
-
-      - name: "📝 Promote CHANGELOG [Unreleased] → [${{ inputs.version }}]"
-        id: changelog
-        uses: release-flow/keep-a-changelog-action@v3
+      - name: "📦 Prepare release PR"
+        uses: ./.github/actions/release-plugin-prepare-pr
         with:
-          command: bump
           version: ${{ inputs.version }}
-          changelog: plugins/wordpress/CHANGELOG.md
-          tag-prefix: wordpress-
-          keep-unreleased-section: true
-          fail-on-empty-release-notes: true
+          plugin-name: "WordPress Plugin"
+          plugin-slug: wordpress
+          directory: plugins/wordpress
+          version-file: frak-integration.php
+          base-branch: ${{ github.ref_name }}
 
-      - name: "🐘 Setup PHP"
-        uses: shivammathur/setup-php@v2
+  publish:
+    name: "🚀 Build & publish"
+    if: |
+      github.event_name == 'pull_request' &&
+      github.event.pull_request.merged == true &&
+      contains(github.event.pull_request.labels.*.name, 'release:wordpress') &&
+      startsWith(github.event.pull_request.head.ref, 'release/wordpress-')
+    runs-on: ubuntu-latest
+    steps:
+      - name: "📥 Checkout merge commit"
+        uses: actions/checkout@v6
         with:
-          php-version: "8.4"
-          tools: "composer:v2"
-          coverage: none
+          ref: ${{ github.event.pull_request.merge_commit_sha }}
+          fetch-depth: 0
 
-      - name: "📦 Build plugin zip"
-        working-directory: plugins/wordpress
-        env:
-          VERSION: ${{ inputs.version }}
-        run: |
-          chmod +x build.sh
-          ./build.sh "$VERSION"
-
-      - name: "📤 Commit version bump + CHANGELOG & create tag"
-        uses: stefanzweifel/git-auto-commit-action@v5
+      - name: "📦 Publish release"
+        uses: ./.github/actions/release-plugin-publish
         with:
-          branch: main
-          commit_message: "chore(wordpress): release ${{ inputs.version }}"
-          file_pattern: |
-            plugins/wordpress/frak-integration.php
-            plugins/wordpress/CHANGELOG.md
-          tagging_message: "wordpress-${{ inputs.version }}"
-
-      - name: "🚀 Create GitHub release"
-        uses: softprops/action-gh-release@v2
-        with:
-          tag_name: "wordpress-${{ inputs.version }}"
-          name: "WordPress Plugin ${{ inputs.version }}"
-          body: ${{ steps.changelog.outputs.release-notes }}
-          files: plugins/wordpress/dist/frak-integration-*.zip
+          plugin-name: "WordPress Plugin"
+          plugin-slug: wordpress
+          directory: plugins/wordpress
+          artifact-glob: dist/frak-integration-*.zip
