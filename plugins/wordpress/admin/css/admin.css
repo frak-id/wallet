@@ -136,61 +136,6 @@
 	margin-left: 5px;
 }
 
-/* i18n table styling */
-.frak-i18n-table {
-	width: 100%;
-	border-collapse: collapse;
-}
-
-.frak-i18n-table td {
-	padding: 8px 10px 8px 0;
-	vertical-align: middle;
-}
-
-.frak-i18n-table td:first-child {
-	width: 250px;
-	font-weight: 600;
-	color: #23282d;
-}
-
-.frak-i18n-table input {
-	width: 100%;
-}
-
-.frak-i18n-table textarea {
-	width: 100%;
-	resize: vertical;
-}
-
-/* i18n group styling */
-.frak-i18n-group {
-	margin-bottom: 20px;
-	padding: 15px;
-	background: #f5f5f5;
-	border: 1px solid #e0e0e0;
-	border-radius: 3px;
-}
-
-.frak-i18n-group h4 {
-	margin: 0 0 10px 0;
-	color: #23282d;
-	font-size: 14px;
-	font-weight: 600;
-}
-
-.frak-i18n-group .description {
-	font-size: 13px;
-	color: #666;
-	line-height: 1.5;
-}
-
-.frak-i18n-group .description code {
-	background: #e0e0e0;
-	padding: 2px 4px;
-	border-radius: 3px;
-	font-size: 12px;
-}
-
 /* Logo preview */
 .frak-logo-preview {
 	margin-top: 10px;
@@ -228,16 +173,5 @@ select {
 
 	.frak-stats-grid {
 		grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
-	}
-
-	.frak-i18n-table td:first-child {
-		width: auto;
-		display: block;
-		margin-bottom: 5px;
-	}
-
-	.frak-i18n-table td {
-		display: block;
-		padding: 5px 0;
 	}
 }

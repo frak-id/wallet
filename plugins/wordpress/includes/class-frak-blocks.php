@@ -2,11 +2,11 @@
 /**
  * Gutenberg block registration.
  *
- * Every block bundled with the plugin is self-contained in its own folder
- * under `includes/blocks/*`, each providing a `block.json`, a vanilla-JS
- * editor script (no build pipeline), and a PHP `render.php`. Registration
- * is a single `init`-hooked loop so adding a new block only requires
- * dropping a new folder next to the existing ones.
+ * Every block bundled with the plugin lives in its own folder under
+ * `includes/blocks/*`, providing a `block.json`, a vanilla-JS editor script
+ * (no build pipeline), and a PHP `render.php`. The list is hard-coded below
+ * so we avoid a `glob()` disk scan on every `init` firing; adding a new
+ * block is a single-line change here plus dropping the folder.
  *
  * @package Frak_Integration
  */
@@ -17,6 +17,18 @@
 class Frak_Blocks {
 
 	/**
+	 * Folder names under `includes/blocks/` to register. Kept explicit so we
+	 * trade one cheap constant lookup for a filesystem scan per request.
+	 *
+	 * @var string[]
+	 */
+	private const BLOCKS = array(
+		'banner',
+		'post-purchase',
+		'share-button',
+	);
+
+	/**
 	 * Register hooks. Called once from {@see Frak_Plugin::init()}.
 	 */
 	public static function init() {
@@ -24,27 +36,11 @@ class Frak_Blocks {
 	}
 
 	/**
-	 * Discover every block folder under `includes/blocks/` and register it.
-	 *
-	 * Each block folder must contain a `block.json`. Dynamic rendering is
-	 * handled via the `render` property inside that file, so no per-block
-	 * PHP wiring is required here.
+	 * Register every bundled block via its `block.json` manifest.
 	 */
 	public static function register_blocks() {
-		$blocks_dir = FRAK_PLUGIN_DIR . 'includes/blocks';
-		if ( ! is_dir( $blocks_dir ) ) {
-			return;
-		}
-
-		$folders = glob( $blocks_dir . '/*', GLOB_ONLYDIR );
-		if ( empty( $folders ) ) {
-			return;
-		}
-
-		foreach ( $folders as $folder ) {
-			if ( file_exists( $folder . '/block.json' ) ) {
-				register_block_type( $folder );
-			}
+		foreach ( self::BLOCKS as $slug ) {
+			register_block_type( FRAK_PLUGIN_DIR . 'includes/blocks/' . $slug );
 		}
 	}
 }

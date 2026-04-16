@@ -13,7 +13,27 @@ use kornrunner\Keccak;
 class Frak_Webhook_Helper {
 
 	/**
+	 * `wp_cache` group + key used by the in-memory webhook log ring buffer.
+	 * We intentionally avoid `wp_options` (which would rewrite a serialized
+	 * array on every webhook dispatch) and live with a non-persistent buffer
+	 * on sites without a persistent object cache — the logs are diagnostic,
+	 * not a source of truth, so ephemeral storage is acceptable.
+	 */
+	private const LOG_CACHE_GROUP = 'frak';
+	private const LOG_CACHE_KEY   = 'webhook_logs';
+
+	/**
+	 * Hard cap on the number of log entries kept in the ring buffer.
+	 */
+	private const LOG_MAX_ENTRIES = 20;
+
+	/**
 	 * Get the product ID based on the site domain.
+	 *
+	 * TODO: review how this is computed — domain-based keccak is deterministic
+	 * so the result can be memoized (either in a static var or in the settings
+	 * cache) to drop the keccak hash cost on every call, and so we can consider
+	 * removing the `kornrunner/keccak` Composer dependency entirely.
 	 *
 	 * @return string
 	 */
@@ -164,16 +184,23 @@ class Frak_Webhook_Helper {
 			'success'        => null === $error && $http_code >= 200 && $http_code < 300 ? 1 : 0,
 		);
 
-		$existing_logs = get_option( 'frak_webhook_logs', array() );
-		if ( ! is_array( $existing_logs ) ) {
-			$existing_logs = array();
-		}
+		$logs = self::read_logs();
+		array_unshift( $logs, $data );
+		$logs = array_slice( $logs, 0, self::LOG_MAX_ENTRIES );
 
-		array_unshift( $existing_logs, $data );
-		$existing_logs = array_slice( $existing_logs, 0, 50 );
+		wp_cache_set( self::LOG_CACHE_KEY, $logs, self::LOG_CACHE_GROUP );
+	}
 
-		// Stored with autoload = 'no' so the serialized log array is not hydrated on every request.
-		update_option( 'frak_webhook_logs', $existing_logs, false );
+	/**
+	 * Read the ring buffer from the object cache. Returns an empty array when
+	 * nothing has been written yet (or on sites without a persistent cache,
+	 * after the originating request has ended).
+	 *
+	 * @return array<int, array<string, mixed>>
+	 */
+	private static function read_logs() {
+		$logs = wp_cache_get( self::LOG_CACHE_KEY, self::LOG_CACHE_GROUP );
+		return is_array( $logs ) ? $logs : array();
 	}
 
 	/**
@@ -183,11 +210,7 @@ class Frak_Webhook_Helper {
 	 * @return array
 	 */
 	public static function get_webhook_logs( $limit = 20 ) {
-		$logs = get_option( 'frak_webhook_logs', array() );
-		if ( ! is_array( $logs ) ) {
-			return array();
-		}
-		return array_slice( $logs, 0, $limit );
+		return array_slice( self::read_logs(), 0, $limit );
 	}
 
 	/**
@@ -238,7 +261,7 @@ class Frak_Webhook_Helper {
 	 * Clear webhook logs.
 	 */
 	public static function clear_webhook_logs() {
-		update_option( 'frak_webhook_logs', array() );
+		wp_cache_delete( self::LOG_CACHE_KEY, self::LOG_CACHE_GROUP );
 	}
 
 	/**

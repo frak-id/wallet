@@ -75,8 +75,7 @@ class Frak_Admin {
 			return;
 		}
 
-		$plugin_data = get_file_data( FRAK_PLUGIN_FILE, array( 'Version' => 'Version' ) );
-		$version     = ! empty( $plugin_data['Version'] ) ? $plugin_data['Version'] : false;
+		$version = defined( 'FRAK_PLUGIN_VERSION' ) ? FRAK_PLUGIN_VERSION : false;
 
 		wp_enqueue_code_editor( array( 'type' => 'text/javascript' ) );
 		wp_enqueue_script(
@@ -158,6 +157,13 @@ class Frak_Admin {
 
 	/**
 	 * Clear caches from popular caching plugins.
+	 *
+	 * Note: wp_cache_flush() is intentionally used as a "heavy hammer" here.
+	 * Scoping invalidations per-object would require tracking every cache key
+	 * touched by Frak settings (app_name, logo_url, webhook status, block output)
+	 * across multiple cache groups, which would considerably complexify the
+	 * implementation for little gain: this runs only on admin settings save,
+	 * not on front-end requests.
 	 */
 	private function clear_caches() {
 		if ( function_exists( 'rocket_clean_domain' ) ) {

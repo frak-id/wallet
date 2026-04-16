@@ -25,15 +25,32 @@ if ( ! defined( 'ABSPATH' ) ) {
 define( 'FRAK_PLUGIN_FILE', __FILE__ );
 define( 'FRAK_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
 define( 'FRAK_PLUGIN_URL', plugin_dir_url( __FILE__ ) );
+define( 'FRAK_PLUGIN_VERSION', '1.0.0' );
 
-// Load Composer autoloader if it exists.
+// Load Composer autoloader if it exists (lazy-loads `kornrunner\Keccak`).
 if ( file_exists( FRAK_PLUGIN_DIR . 'vendor/autoload.php' ) ) {
 	require_once FRAK_PLUGIN_DIR . 'vendor/autoload.php';
 }
 
-// Load the main plugin class.
-require_once FRAK_PLUGIN_DIR . 'includes/class-frak-plugin.php';
-require_once FRAK_PLUGIN_DIR . 'includes/class-frak-webhook-helper.php';
+// Register a small SPL autoloader for the plugin's own `Frak_*` classes so
+// admin/webhook code is only loaded when something actually touches it —
+// a plain frontend pageview never pays for the admin UI or webhook helper.
+spl_autoload_register(
+	static function ( $class ) {
+		static $map = array(
+			'Frak_Plugin'         => 'includes/class-frak-plugin.php',
+			'Frak_Settings'       => 'includes/class-frak-settings.php',
+			'Frak_Frontend'       => 'includes/class-frak-frontend.php',
+			'Frak_Blocks'         => 'includes/class-frak-blocks.php',
+			'Frak_Webhook_Helper' => 'includes/class-frak-webhook-helper.php',
+			'Frak_WooCommerce'    => 'includes/class-frak-woocommerce.php',
+			'Frak_Admin'          => 'admin/class-frak-admin.php',
+		);
+		if ( isset( $map[ $class ] ) ) {
+			require_once FRAK_PLUGIN_DIR . $map[ $class ];
+		}
+	}
+);
 
 /**
  * Initialize the plugin.
@@ -44,11 +61,53 @@ function frak_init() {
 add_action( 'plugins_loaded', 'frak_init' );
 
 /**
+ * Run the settings migration on plugin activation — one-time bootstrap
+ * for fresh installs and explicit reactivations.
+ */
+register_activation_hook(
+	FRAK_PLUGIN_FILE,
+	static function () {
+		Frak_Settings::migrate();
+		flush_rewrite_rules();
+	}
+);
+
+/**
+ * Run the settings migration after the plugin is updated via the WordPress
+ * updater — `register_activation_hook` does not fire on in-place upgrades,
+ * so this covers the "bump CURRENT_VERSION, ship a new migration step" case.
+ *
+ * @param WP_Upgrader $upgrader Unused (required by signature).
+ * @param array       $options  Hook payload describing the upgrade batch.
+ */
+add_action(
+	'upgrader_process_complete',
+	static function ( $upgrader, $options ) {
+		unset( $upgrader );
+		if ( ! isset( $options['action'], $options['type'], $options['plugins'] ) ) {
+			return;
+		}
+		if ( 'update' !== $options['action'] || 'plugin' !== $options['type'] ) {
+			return;
+		}
+		if ( ! is_array( $options['plugins'] ) ) {
+			return;
+		}
+		if ( ! in_array( plugin_basename( FRAK_PLUGIN_FILE ), $options['plugins'], true ) ) {
+			return;
+		}
+		Frak_Settings::migrate();
+	},
+	10,
+	2
+);
+
+/**
  * Declare compatibility with WooCommerce High-Performance Order Storage (HPOS / custom order tables).
  */
 add_action(
 	'before_woocommerce_init',
-	function () {
+	static function () {
 		if ( class_exists( \Automattic\WooCommerce\Utilities\FeaturesUtil::class ) ) {
 			\Automattic\WooCommerce\Utilities\FeaturesUtil::declare_compatibility( 'custom_order_tables', FRAK_PLUGIN_FILE, true );
 		}

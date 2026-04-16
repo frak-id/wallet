@@ -34,6 +34,7 @@ class Frak_Frontend {
 	 */
 	private function __construct() {
 		add_action( 'wp_enqueue_scripts', array( $this, 'enqueue_scripts' ), 20 );
+		add_filter( 'wp_resource_hints', array( $this, 'add_resource_hints' ), 10, 2 );
 	}
 
 	/**
@@ -57,6 +58,25 @@ class Frak_Frontend {
 
 		// Inline config injected 'before' the SDK so window.FrakSetup is populated prior to SDK bootstrap.
 		wp_add_inline_script( 'frak-sdk', $this->generate_config_script(), 'before' );
+	}
+
+	/**
+	 * Append DNS-prefetch / preconnect hints for the SDK origin so the
+	 * browser can warm the TLS handshake before the `<script>` tag parses.
+	 * Skipped when no app name is set (SDK is not enqueued in that case).
+	 *
+	 * @param array<int, string|array<string, string>> $hints    Existing hints from core.
+	 * @param string                                   $relation Relation type being filtered.
+	 * @return array<int, string|array<string, string>>
+	 */
+	public function add_resource_hints( $hints, $relation ) {
+		if ( empty( Frak_Settings::get( 'app_name' ) ) ) {
+			return $hints;
+		}
+		if ( 'dns-prefetch' === $relation || 'preconnect' === $relation ) {
+			$hints[] = 'https://cdn.jsdelivr.net';
+		}
+		return $hints;
 	}
 
 	/**

@@ -15,8 +15,9 @@ class Frak_WooCommerce {
 
 	/**
 	 * Set by the `frak/post-purchase` block when it renders with auto-
-	 * injected order context. When true, the inline `wp_footer` fallback
-	 * skips itself — the block's `<frak-post-purchase>` web component fires
+	 * injected order context. When true, the dedicated tracker callback
+	 * (hooked to `woocommerce_thankyou` / `woocommerce_view_order`) skips
+	 * itself — the block's `<frak-post-purchase>` web component fires
 	 * `trackPurchaseStatus` on its own and we avoid a duplicate SDK call.
 	 *
 	 * @var bool
@@ -25,10 +26,17 @@ class Frak_WooCommerce {
 
 	/**
 	 * Register WooCommerce hooks. Called once from {@see Frak_Plugin::init()}.
+	 *
+	 * Tracker registration uses `woocommerce_thankyou` and `woocommerce_view_order`
+	 * instead of a universal `wp_footer` listener so the callback only runs on
+	 * the exact two endpoints that carry an order — every other frontend page
+	 * pays zero PHP for tracking.
 	 */
 	public static function init() {
-		add_action( 'wp_footer', array( __CLASS__, 'render_purchase_tracker' ), 20 );
+		add_action( 'woocommerce_thankyou', array( __CLASS__, 'render_purchase_tracker_for_order' ) );
+		add_action( 'woocommerce_view_order', array( __CLASS__, 'render_purchase_tracker_for_order' ) );
 		add_action( 'woocommerce_order_status_changed', array( __CLASS__, 'handle_order_status_change' ), 10, 4 );
+		add_action( 'frak_dispatch_webhook', array( __CLASS__, 'dispatch_webhook' ), 10, 3 );
 	}
 
 	/**
@@ -106,25 +114,36 @@ class Frak_WooCommerce {
 	}
 
 	/**
-	 * Fallback inline tracker fired in `wp_footer` — ensures reward
-	 * attribution works even when the merchant has not placed the
-	 * `frak/post-purchase` block on their thank-you template. No-ops when
-	 * the block populated the context (avoids double-firing).
+	 * Inline tracker fired from `woocommerce_thankyou` and `woocommerce_view_order`
+	 * — ensures reward attribution works even when the merchant has not placed
+	 * the `frak/post-purchase` block on their template. No-ops when the block
+	 * populated the context (avoids double-firing).
+	 *
+	 * WooCommerce has already run its own endpoint + capability checks before
+	 * firing these actions, so we trust the `$order_id` argument and skip the
+	 * URL-key / `view_order` guard that {@see get_order_context()} performs.
+	 *
+	 * @param int $order_id Order ID provided by the WooCommerce action.
 	 */
-	public static function render_purchase_tracker() {
+	public static function render_purchase_tracker_for_order( $order_id ) {
 		if ( self::$tracking_populated ) {
 			return;
 		}
 
-		$context = self::get_order_context();
-		if ( null === $context ) {
+		$order_id = absint( $order_id );
+		if ( ! $order_id ) {
+			return;
+		}
+
+		$order = wc_get_order( $order_id );
+		if ( ! $order ) {
 			return;
 		}
 
 		$payload = array(
-			'customerId' => $context['customer-id'],
-			'orderId'    => $context['order-id'],
-			'token'      => $context['token'],
+			'customerId' => (string) $order->get_user_id(),
+			'orderId'    => (string) $order_id,
+			'token'      => $order->get_order_key() . '_' . $order_id,
 		);
 
 		$payload_json = wp_json_encode( $payload, JSON_UNESCAPED_SLASHES );
@@ -141,7 +160,11 @@ class Frak_WooCommerce {
 	}
 
 	/**
-	 * Send webhook when an order status changes.
+	 * React to an order status change by scheduling a webhook dispatch.
+	 *
+	 * The blocking HTTP call is NOT performed here — it is queued via Action
+	 * Scheduler (or WP-Cron as fallback) so the order-status request is not
+	 * held hostage by the Frak backend's response time.
 	 *
 	 * @param int      $order_id   Order ID.
 	 * @param string   $old_status Old status (unused, kept for signature compatibility).
@@ -151,16 +174,18 @@ class Frak_WooCommerce {
 	public static function handle_order_status_change( $order_id, $old_status, $new_status, $order ) {
 		unset( $old_status );
 
-		if ( empty( get_option( 'frak_webhook_secret' ) ) ) {
-			return;
-		}
-
 		$skip_statuses = array( 'checkout-draft', 'auto-draft' );
 		if ( in_array( $new_status, $skip_statuses, true ) ) {
 			$order->add_order_note(
 				/* translators: %s: order status */
 				sprintf( __( 'Frak: Skipping webhook for status: %s', 'frak' ), $new_status )
 			);
+			return;
+		}
+
+		// Read the webhook secret only after the cheap skip checks above so the
+		// fast-path for ignored statuses does not hit `wp_options`.
+		if ( empty( get_option( 'frak_webhook_secret' ) ) ) {
 			return;
 		}
 
@@ -173,23 +198,50 @@ class Frak_WooCommerce {
 			'refunded'   => 'refunded',
 			'failed'     => 'cancelled',
 		);
-
 		$webhook_status = $status_map[ $new_status ] ?? 'pending';
 
 		$order->add_order_note(
 			/* translators: %s: webhook status */
-			sprintf( __( 'Frak: Sending webhook with status: %s', 'frak' ), $webhook_status )
+			sprintf( __( 'Frak: Queued webhook with status: %s', 'frak' ), $webhook_status )
 		);
 
-		$result = Frak_Webhook_Helper::send( $order_id, $webhook_status, $order->get_order_key() );
+		// Defer the outbound HTTP call to a worker. Action Scheduler ships with
+		// WooCommerce >= 3.3 and gives us retries + a UI under
+		// WooCommerce > Status > Scheduled Actions; the WP-Cron fallback keeps
+		// old installs working.
+		$args = array( $order_id, $webhook_status, $order->get_order_key() );
+		if ( function_exists( 'as_enqueue_async_action' ) ) {
+			as_enqueue_async_action( 'frak_dispatch_webhook', $args, 'frak' );
+		} else {
+			wp_schedule_single_event( time(), 'frak_dispatch_webhook', $args );
+		}
+	}
+
+	/**
+	 * Async worker invoked by the `frak_dispatch_webhook` action. Performs the
+	 * actual HTTP POST and records the outcome as an order note so the merchant
+	 * still has per-order visibility into webhook delivery.
+	 *
+	 * @param int    $order_id       Order ID.
+	 * @param string $webhook_status Mapped webhook status.
+	 * @param string $token          Order key used to sign the payload token.
+	 */
+	public static function dispatch_webhook( $order_id, $webhook_status, $token ) {
+		$result = Frak_Webhook_Helper::send( $order_id, $webhook_status, $token );
+
+		$order = wc_get_order( $order_id );
+		if ( ! $order ) {
+			return;
+		}
 
 		if ( $result['success'] ) {
 			$order->add_order_note( __( 'Frak: Webhook sent successfully', 'frak' ) );
-		} else {
-			$order->add_order_note(
-				/* translators: %s: error message */
-				sprintf( __( 'Frak: Webhook failed: %s', 'frak' ), $result['error'] )
-			);
+			return;
 		}
+
+		$order->add_order_note(
+			/* translators: %s: error message */
+			sprintf( __( 'Frak: Webhook failed: %s', 'frak' ), $result['error'] )
+		);
 	}
 }

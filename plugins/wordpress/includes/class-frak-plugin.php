@@ -33,30 +33,14 @@ class Frak_Plugin {
 	 * Constructor.
 	 */
 	private function __construct() {
-		$this->includes();
 		$this->init_hooks();
 	}
 
-	/**
-	 * Include required files.
-	 */
-	private function includes() {
-		require_once FRAK_PLUGIN_DIR . 'includes/class-frak-settings.php';
-		require_once FRAK_PLUGIN_DIR . 'includes/class-frak-webhook-helper.php';
-		require_once FRAK_PLUGIN_DIR . 'includes/class-frak-blocks.php';
-		require_once FRAK_PLUGIN_DIR . 'admin/class-frak-admin.php';
-		require_once FRAK_PLUGIN_DIR . 'includes/class-frak-frontend.php';
-
-		if ( class_exists( 'WooCommerce' ) ) {
-			require_once FRAK_PLUGIN_DIR . 'includes/class-frak-woocommerce.php';
-		}
-	}
 
 	/**
 	 * Initialize hooks.
 	 */
 	private function init_hooks() {
-		register_activation_hook( FRAK_PLUGIN_FILE, array( $this, 'activate' ) );
 		register_deactivation_hook( FRAK_PLUGIN_FILE, array( $this, 'deactivate' ) );
 
 		add_action( 'init', array( $this, 'init' ) );
@@ -66,7 +50,22 @@ class Frak_Plugin {
 	 * Plugin init callback.
 	 */
 	public function init() {
-		Frak_Settings::migrate();
+		// Skip entirely in WP-CLI context — frontend SDK injection and admin UI
+		// are irrelevant when the request is a command-line invocation.
+		if ( defined( 'WP_CLI' ) && WP_CLI ) {
+			return;
+		}
+
+		// In cron, only the WooCommerce async-dispatch handlers need to be
+		// registered (that's where `frak_dispatch_webhook` runs). Everything
+		// else — admin UI, frontend enqueues, block registration — would be
+		// dead weight.
+		if ( wp_doing_cron() ) {
+			if ( class_exists( 'WooCommerce' ) ) {
+				Frak_WooCommerce::init();
+			}
+			return;
+		}
 
 		if ( is_admin() ) {
 			Frak_Admin::instance();
@@ -95,7 +94,9 @@ class Frak_Plugin {
 	}
 
 	/**
-	 * Plugin activation.
+	 * Plugin activation — delegated to the activation hook in the main
+	 * plugin file. Kept for backwards compatibility with the deactivation
+	 * counterpart below; safe to remove once no external code calls it.
 	 */
 	public function activate() {
 		flush_rewrite_rules();
