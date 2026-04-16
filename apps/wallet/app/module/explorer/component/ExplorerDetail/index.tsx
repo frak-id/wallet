@@ -1,6 +1,7 @@
 import type { EstimatedRewardItem } from "@frak-labs/backend-elysia/domain/campaign";
 import type { ExplorerMerchantItem } from "@frak-labs/backend-elysia/orchestration/schemas";
 import type { EstimatedReward } from "@frak-labs/core-sdk";
+import { FrakContextManager } from "@frak-labs/core-sdk";
 import { Box } from "@frak-labs/design-system/components/Box";
 import { Button } from "@frak-labs/design-system/components/Button";
 import { Card } from "@frak-labs/design-system/components/Card";
@@ -22,6 +23,7 @@ import {
     ShareIcon,
 } from "@frak-labs/design-system/icons";
 import {
+    clientIdStore,
     estimatedRewardsQueryOptions,
     formatEstimatedReward,
 } from "@frak-labs/wallet-shared";
@@ -40,6 +42,7 @@ type ExplorerDetailProps = {
 };
 
 export function ExplorerDetail({ merchant, onClose }: ExplorerDetailProps) {
+    const clientId = clientIdStore((s) => s.clientId);
     const [isDescriptionExpanded, setIsDescriptionExpanded] = useState(false);
     const [needsReadMore, setNeedsReadMore] = useState(false);
     const descriptionRef = useRef<HTMLElement>(null);
@@ -72,17 +75,34 @@ export function ExplorerDetail({ merchant, onClose }: ExplorerDetailProps) {
         setNeedsReadMore(el.scrollHeight > el.clientHeight);
     }, [description, isDescriptionExpanded]);
 
+    const shareUrl = useMemo(() => {
+        const baseUrl = `https://${merchant.domain}`;
+        if (!clientId) return baseUrl;
+        return (
+            FrakContextManager.update({
+                url: baseUrl,
+                context: {
+                    v: 2,
+                    c: clientId,
+                    m: merchant.id,
+                    t: Math.floor(Date.now() / 1000),
+                },
+                attribution: {},
+            }) ?? baseUrl
+        );
+    }, [clientId, merchant.domain, merchant.id]);
+
     const handleShare = useCallback(async () => {
         if (!navigator.share) return;
         try {
             await navigator.share({
                 title: merchant.name,
-                url: `${window.location.origin}/explorer`,
+                url: shareUrl,
             });
         } catch {
             // User cancelled or share failed — ignore
         }
-    }, [merchant.name]);
+    }, [merchant.name, shareUrl]);
 
     return (
         <DetailSheet style={{ paddingTop: 0 }}>

@@ -97,6 +97,17 @@ export function ListenerSharingPage() {
         const baseLink =
             selectedProduct?.link ?? currentRequest.params.link ?? sourceUrl;
 
+        const attribution = currentRequest.params.attribution;
+        const resolvedAttribution =
+            attribution === null
+                ? undefined
+                : {
+                      ...(attribution ?? {}),
+                      utmContent:
+                          selectedProduct?.utmContent ??
+                          attribution?.utmContent,
+                  };
+
         return FrakContextManager.update({
             url: baseLink,
             context: {
@@ -105,11 +116,13 @@ export function ListenerSharingPage() {
                 m: merchantId,
                 t: Math.floor(Date.now() / 1000),
             },
+            attribution: resolvedAttribution,
         });
     }, [
         clientId,
         merchantId,
         currentRequest.params.link,
+        currentRequest.params.attribution,
         sourceUrl,
         products,
         selectedProductIndex,

@@ -1,5 +1,8 @@
 import { isTauri } from "@frak-labs/app-essentials/utils/platform";
-import type { SharingPageProduct } from "@frak-labs/core-sdk";
+import type {
+    AttributionParams,
+    SharingPageProduct,
+} from "@frak-labs/core-sdk";
 import { FrakContextManager } from "@frak-labs/core-sdk";
 import {
     authenticatedBackendApi,
@@ -33,6 +36,38 @@ function sanitizeRedirectUrl(value: unknown): string | undefined {
         return undefined;
     }
 }
+
+/**
+ * Build AttributionParams from search params.
+ *
+ * Accepts either a JSON-encoded `attribution` param (for SDK-driven navigation)
+ * or individual `utm_*` / `ref` / `via` params (for direct merchant links).
+ * Returns `null` when the merchant explicitly disables attribution via `attribution=null`.
+ */
+function parseAttributionFromSearch(
+    search: Record<string, unknown>
+): AttributionParams | null | undefined {
+    const raw = search.attribution;
+    if (raw === null) return null;
+    if (raw && typeof raw === "object") {
+        return raw as AttributionParams;
+    }
+
+    const pick = (key: string): string | undefined =>
+        typeof search[key] === "string" ? (search[key] as string) : undefined;
+
+    const fromIndividual: AttributionParams = {
+        utmSource: pick("utm_source"),
+        utmMedium: pick("utm_medium"),
+        utmCampaign: pick("utm_campaign"),
+        utmContent: pick("utm_content"),
+        utmTerm: pick("utm_term"),
+        via: pick("via"),
+        ref: pick("ref"),
+    };
+    const hasAny = Object.values(fromIndividual).some((v) => v !== undefined);
+    return hasAny ? fromIndividual : undefined;
+}
 type SharingSearch = {
     merchantId?: string;
     clientId?: string;
@@ -44,6 +79,8 @@ type SharingSearch = {
     checkoutToken?: string;
     /** Redirect URL for post-dismiss navigation (e.g. Shopify storefront) */
     redirectUrl?: string;
+    /** Attribution overrides for the outbound sharing URL (UTMs, ref, via). */
+    attribution?: AttributionParams | null;
 };
 
 export const Route = createFileRoute("/sharing")({
@@ -68,6 +105,7 @@ export const Route = createFileRoute("/sharing")({
                 ? search.checkoutToken
                 : undefined,
         redirectUrl: sanitizeRedirectUrl(search.redirectUrl),
+        attribution: parseAttributionFromSearch(search),
     }),
     component: WalletSharingPage,
 });
@@ -82,6 +120,7 @@ function WalletSharingPage() {
         products,
         checkoutToken,
         redirectUrl,
+        attribution,
     } = Route.useSearch();
     const { t: rawT } = useTranslation();
     const navigate = useNavigate();
@@ -153,6 +192,16 @@ function WalletSharingPage() {
         const baseLink = selectedProduct?.link ?? link;
         if (!baseLink) return null;
 
+        const resolvedAttribution =
+            attribution === null
+                ? undefined
+                : {
+                      ...(attribution ?? {}),
+                      utmContent:
+                          selectedProduct?.utmContent ??
+                          attribution?.utmContent,
+                  };
+
         return FrakContextManager.update({
             url: baseLink,
             context: {
@@ -161,8 +210,16 @@ function WalletSharingPage() {
                 m: merchantId,
                 t: Math.floor(Date.now() / 1000),
             },
+            attribution: resolvedAttribution,
         });
-    }, [clientId, merchantId, link, products, selectedProductIndex]);
+    }, [
+        clientId,
+        merchantId,
+        link,
+        products,
+        selectedProductIndex,
+        attribution,
+    ]);
 
     // Share mutation using the shared hook
     const {

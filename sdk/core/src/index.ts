@@ -12,6 +12,7 @@ export { type LocalesKey, locales } from "./constants/locales";
 
 // Types
 export type {
+    AttributionParams,
     ClientLifecycleEvent,
     CompressedData,
     Currency,
