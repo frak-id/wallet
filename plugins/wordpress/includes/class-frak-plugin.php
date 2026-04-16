@@ -41,6 +41,7 @@ class Frak_Plugin {
 	 * Include required files.
 	 */
 	private function includes() {
+		require_once FRAK_PLUGIN_DIR . 'includes/class-frak-settings.php';
 		require_once FRAK_PLUGIN_DIR . 'includes/class-frak-webhook-helper.php';
 		require_once FRAK_PLUGIN_DIR . 'admin/class-frak-admin.php';
 		require_once FRAK_PLUGIN_DIR . 'includes/class-frak-frontend.php';
@@ -64,15 +65,30 @@ class Frak_Plugin {
 	 * Plugin init callback.
 	 */
 	public function init() {
+		Frak_Settings::migrate();
+
 		if ( is_admin() ) {
 			Frak_Admin::instance();
-		} else {
+
+			if ( ! wp_is_block_theme() ) {
+				add_action( 'admin_notices', array( $this, 'render_block_theme_notice' ) );
+			}
+		} elseif ( wp_is_block_theme() ) {
 			Frak_Frontend::instance();
 		}
 
-		if ( class_exists( 'WooCommerce' ) && get_option( 'frak_enable_purchase_tracking', 0 ) ) {
-			Frak_WooCommerce::instance();
+		if ( class_exists( 'WooCommerce' ) && Frak_Settings::get( 'enable_purchase_tracking' ) ) {
+			Frak_WooCommerce::init();
 		}
+	}
+
+	/**
+	 * Admin notice shown when the active theme is not a block theme.
+	 */
+	public function render_block_theme_notice() {
+		echo '<div class="notice notice-warning"><p>';
+		echo esc_html__( 'Frak requires a block theme to inject the SDK on the frontend. The settings page is still available, but the Frak SDK will not load on your site until you activate a block theme.', 'frak' );
+		echo '</p></div>';
 	}
 
 	/**

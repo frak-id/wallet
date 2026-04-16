@@ -172,7 +172,8 @@ class Frak_Webhook_Helper {
 		array_unshift( $existing_logs, $data );
 		$existing_logs = array_slice( $existing_logs, 0, 50 );
 
-		update_option( 'frak_webhook_logs', $existing_logs );
+		// Stored with autoload = 'no' so the serialized log array is not hydrated on every request.
+		update_option( 'frak_webhook_logs', $existing_logs, false );
 	}
 
 	/**

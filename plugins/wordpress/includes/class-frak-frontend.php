@@ -41,34 +41,35 @@ class Frak_Frontend {
 	 * Enqueue frontend scripts.
 	 */
 	public function enqueue_scripts() {
-		$has_config = ! empty( get_option( 'frak_app_name', '' ) );
-
-		if ( $has_config ) {
-			wp_enqueue_script(
-				'frak-sdk',
-				'https://cdn.jsdelivr.net/npm/@frak-labs/components',
-				array(),
-				false, // phpcs:ignore WordPress.WP.EnqueuedResourceParameters.NoExplicitVersion -- CDN serves latest version.
-				true
-			);
-
-			wp_script_add_data( 'frak-sdk', 'defer', true );
-
-			$inline_script = $this->generate_config_script();
-			wp_add_inline_script( 'frak-sdk', $inline_script, 'after' );
+		if ( empty( Frak_Settings::get( 'app_name' ) ) ) {
+			return;
 		}
+
+		wp_enqueue_script(
+			'frak-sdk',
+			'https://cdn.jsdelivr.net/npm/@frak-labs/components',
+			array(),
+			null, // phpcs:ignore WordPress.WP.EnqueuedResourceParameters -- CDN serves latest version; avoid ?ver= query param.
+			array(
+				'in_footer' => true,
+				'strategy'  => 'defer',
+			)
+		);
+
+		// Inline config injected 'before' the SDK so window.FrakSetup is populated prior to SDK bootstrap.
+		wp_add_inline_script( 'frak-sdk', $this->generate_config_script(), 'before' );
 	}
 
 	/**
 	 * Add floating button to footer.
 	 */
 	public function add_floating_button() {
-		if ( ! get_option( 'frak_enable_floating_button', 0 ) ) {
+		if ( ! Frak_Settings::get( 'enable_floating_button' ) ) {
 			return;
 		}
 
-		$show_reward = get_option( 'frak_show_reward', 0 );
-		$classname   = get_option( 'frak_button_classname', '' );
+		$show_reward = Frak_Settings::get( 'show_reward' );
+		$classname   = Frak_Settings::get( 'button_classname' );
 
 		$attributes = array();
 		if ( $show_reward ) {
@@ -82,75 +83,62 @@ class Frak_Frontend {
 	}
 
 	/**
-	 * Generate the configuration script.
+	 * Generate the inline configuration script for window.FrakSetup.
+	 *
+	 * Shape matches the current SDK contract (see @frak-labs/components):
+	 *   window.FrakSetup = {
+	 *     config: FrakWalletSdkConfig,
+	 *     modalWalletConfig: DisplayEmbeddedWalletParamsType,
+	 *   };
+	 *
+	 * Only fields the user can configure are emitted. Defaults such as
+	 * `walletUrl` and `domain` are left to the SDK.
 	 *
 	 * @return string
 	 */
 	private function generate_config_script() {
-		$app_name                 = esc_js( get_option( 'frak_app_name', get_bloginfo( 'name' ) ) );
-		$logo_url                 = esc_js( get_option( 'frak_logo_url', '' ) );
-		$modal_language           = get_option( 'frak_modal_language', 'default' );
-		$floating_button_position = esc_js( get_option( 'frak_floating_button_position', 'right' ) );
-		$modal_i18n               = get_option( 'frak_modal_i18n', '{}' );
+		$app_name_raw    = Frak_Settings::get( 'app_name' );
+		$app_name        = '' !== $app_name_raw ? $app_name_raw : get_bloginfo( 'name' );
+		$logo_url        = Frak_Settings::get( 'logo_url' );
+		$modal_language  = Frak_Settings::get( 'modal_language' );
+		$button_position = Frak_Settings::get( 'floating_button_position' );
+		$modal_i18n_raw  = Frak_Settings::get( 'modal_i18n' );
 
-		$shop_name    = esc_js( get_bloginfo( 'name' ) );
-		$modal_lng    = 'default' === $modal_language ? 'default' : esc_js( $modal_language );
-		$decoded_i18n = json_decode( $modal_i18n, true );
-
-		$config = array(
-			'walletUrl'      => 'https://wallet.frak.id',
-			'metadata'       => array(
-				'name'    => $shop_name,
-				'lang'    => 'default' === $modal_lng ? null : $modal_lng,
-				'logoUrl' => $logo_url,
+		$metadata = array_filter(
+			array(
+				'name'    => $app_name,
+				'lang'    => 'default' === $modal_language ? null : $modal_language,
+				'logoUrl' => '' !== $logo_url ? $logo_url : null,
 			),
-			'customizations' => array(
-				'i18n' => empty( $decoded_i18n ) ? new stdClass() : $decoded_i18n,
-			),
-			'domain'         => 'window.location.host',
+			function ( $value ) {
+				return null !== $value && '' !== $value;
+			}
 		);
 
-		$modal_config = array(
-			'login' => array(
-				'allowSso'    => true,
-				'ssoMetadata' => array(
-					'logoUrl'      => $logo_url,
-					'homepageLink' => 'window.location.host',
-				),
-			),
-		);
+		$decoded_i18n   = json_decode( $modal_i18n_raw, true );
+		$customizations = array();
+		if ( is_array( $decoded_i18n ) && ! empty( $decoded_i18n ) ) {
+			$customizations['i18n'] = $decoded_i18n;
+		}
 
-		$modal_share_config = array(
-			'link' => 'window.location.href',
-		);
+		$config = array( 'metadata' => $metadata );
+		if ( ! empty( $customizations ) ) {
+			$config['customizations'] = $customizations;
+		}
 
 		$modal_wallet_config = array(
 			'metadata' => array(
-				'position' => $floating_button_position,
+				'position' => in_array( $button_position, array( 'left', 'right' ), true ) ? $button_position : 'right',
 			),
 		);
 
 		$config_json              = wp_json_encode( $config, JSON_UNESCAPED_SLASHES );
-		$modal_config_json        = wp_json_encode( $modal_config, JSON_UNESCAPED_SLASHES );
-		$modal_share_config_json  = wp_json_encode( $modal_share_config, JSON_UNESCAPED_SLASHES );
 		$modal_wallet_config_json = wp_json_encode( $modal_wallet_config, JSON_UNESCAPED_SLASHES );
 
-		// Replace quoted dynamic values with actual JavaScript expressions.
-		$config_json             = str_replace( '"window.location.host"', 'window.location.host', $config_json );
-		$modal_config_json       = str_replace( '"window.location.host"', 'window.location.host', $modal_config_json );
-		$modal_share_config_json = str_replace( '"window.location.href"', 'window.location.href', $modal_share_config_json );
-
-		// Remove null values from the JSON.
-		$config_json = preg_replace( '/,?"lang":null/', '', $config_json );
-
-		$script = "
-window.FrakSetup = {
-    config: {$config_json},
-    modalConfig: {$modal_config_json},
-    modalShareConfig: {$modal_share_config_json},
-    modalWalletConfig: {$modal_wallet_config_json}
-};";
-
-		return $script;
+		return sprintf(
+			'window.FrakSetup=Object.assign(window.FrakSetup||{},{config:%s,modalWalletConfig:%s});',
+			$config_json,
+			$modal_wallet_config_json
+		);
 	}
 }

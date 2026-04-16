@@ -1,14 +1,14 @@
 === Frak ===
 Contributors: frak-labs
 Tags: rewards, engagement, web3, ecommerce, woocommerce
-Requires at least: 5.8
-Tested up to: 6.4
-Stable tag: 1.0
+Requires at least: 6.4
+Tested up to: 6.7
+Stable tag: 1.0.0
 Requires PHP: 8.3
-License: GPLv3
+License: GPL-3.0-only
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
-Frak integration plugin - Adds reward and engagement features to your WordPress site.
+Frak integration plugin — adds reward and engagement features to your WordPress site. Requires a block theme.
 
 == Description ==
 
@@ -21,10 +21,10 @@ The Frak plugin integrates the Frak SDK into your WordPress site, enabling:
 
 == Installation ==
 
-1. Upload the `frak-integration` folder to the `/wp-content/plugins/` directory
-2. Activate the plugin through the 'Plugins' menu in WordPress
-3. Configure the plugin settings under Settings > Frak
-
+1. Upload the `frak-integration` folder to the `/wp-content/plugins/` directory.
+2. Activate the plugin through the 'Plugins' menu in WordPress.
+3. Make sure a **block theme** is active (required for frontend injection).
+4. Configure the plugin settings under Settings > Frak.
 == Configuration ==
 
 After activation:
@@ -36,18 +36,21 @@ After activation:
 5. Save your settings
 
 == Frequently Asked Questions ==
-
 = Does this plugin require WooCommerce? =
 
-No, the plugin works without WooCommerce. The purchase tracking feature is optional and only activates if WooCommerce is installed.
+No. The plugin works without WooCommerce. The purchase tracking feature is optional and only activates if WooCommerce is installed.
+
+= Does this plugin require a block theme? =
+
+Yes. Frak only injects its SDK on block themes (Full Site Editing). The settings page still works on classic themes, but no SDK will load on the frontend until a block theme is activated.
 
 = Can I customize the button position? =
 
-Yes, you can set the button position to "left" or "right" in the advanced configuration settings.
+Yes, you can set the floating wallet button position to "left" or "right" in the settings.
 
 = Is the floating button shown on all pages? =
 
-The floating button can be enabled/disabled globally from the settings page.
+Yes when enabled. It is injected via `wp_footer` on every frontend page.
 
 == Changelog ==
 
