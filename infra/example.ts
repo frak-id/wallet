@@ -47,26 +47,3 @@ export const vanillaJsWebsite = new sst.aws.StaticSite("VanillaJsDemo", {
     },
     dev: { autostart: false },
 });
-
-/**
- * Frak SDK showcase website
- */
-export const showcaseWebsite = new sst.aws.StaticSite("ShowcaseDemo", {
-    path: "example/showcase",
-    // Set the custom domain
-    domain: {
-        name: "showcase.frak.id",
-    },
-    build: {
-        command: "bun run build",
-        output: "dist",
-    },
-    vite: {
-        types: "./sst-env.d.ts",
-    },
-    environment: {
-        STAGE: normalizedStageName,
-        FRAK_WALLET_URL: walletUrl,
-    },
-    dev: { autostart: false },
-});

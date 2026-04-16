@@ -47,7 +47,6 @@ COPY packages/wallet-shared/package.json ./packages/wallet-shared/
 COPY packages/test-foundation/package.json ./packages/test-foundation/
 
 # Examples
-COPY example/showcase/package.json ./example/showcase/
 COPY example/vanilla-js/package.json ./example/vanilla-js/
 COPY example/wallet-ethcc/package.json ./example/wallet-ethcc/
 

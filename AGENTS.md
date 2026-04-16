@@ -34,7 +34,7 @@ frak-wallet/
 ├── services/
 │   └── backend/       # Elysia.js API with DDD (11 domains + orchestration layer)
 ├── infra/             # SST v3 (AWS) + Pulumi (GCP)
-└── example/           # Integration examples (showcase, vanilla-js, wallet-ethcc)
+└── example/           # Integration examples (vanilla-js, wallet-ethcc)
 ```
 
 ## Where to Look
@@ -111,7 +111,7 @@ All four must pass. Do not commit or report completion with failures.
   - Light/dark themes via `[data-theme='dark']` selector
 - **Other apps**: CSS Modules + Lightning CSS (unchanged)
 - NO Tailwind anywhere
-- Lightning CSS via `packages/dev-tooling/src/vite.ts` (business, listener, showcase)
+- Lightning CSS via `packages/dev-tooling/src/vite.ts` (business, listener)
 - Browser targets: Chrome 100+, Safari 14+, Firefox 91+, Edge 100+
 
 ### Formatting (Biome)

@@ -10,10 +10,6 @@ const config: KnipConfig = {
             entry: ["infra/*.ts"],
             project: "infra/**/*.ts",
         },
-        "example/showcase": {
-            entry: ["src/routes/**/*.tsx"],
-            project: ["src/**/*.{ts,tsx}"],
-        },
         "example/vanilla-js": {
             entry: ["app/*.{ts,tsx}"],
             project: ["app/**/*.{ts,tsx}"],

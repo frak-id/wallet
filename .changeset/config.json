@@ -16,8 +16,6 @@
     "ignore": [
         "@frak-labs-example/wallet-ethcc",
         "@frak-labs-example/vanilla-js",
-        "@frak-labs-example/showcase",
-
         "@frak-labs/nexus-wallet",
         "@frak-labs/nexus-business",
         "@frak-labs/nexus-listener",

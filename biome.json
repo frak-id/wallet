@@ -21,7 +21,6 @@
             "!**/bundle.js",
             "!**/sst-env.d.ts",
             "!example/vanilla-js/index.html",
-            "!example/showcase/index.html",
             "!**/playwright-report",
             "!**/test-results",
             "!**/coverage",

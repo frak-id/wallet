@@ -278,42 +278,6 @@
         "vitest": "^4.1.4",
       },
     },
-    "example/showcase": {
-      "name": "@frak-labs-example/showcase",
-      "version": "0.0.1",
-      "dependencies": {
-        "@frak-labs/ui": "workspace:*",
-        "@radix-ui/react-select": "^2.2.6",
-        "@tanstack/react-router": "^1.167.3",
-        "class-variance-authority": "^0.7.1",
-        "i18next": "^26.0.3",
-        "i18next-browser-languagedetector": "^8.2.1",
-        "lucide-react": "^0.577.0",
-        "normalize.css": "^8.0.1",
-        "react": "catalog:",
-        "react-dom": "catalog:",
-        "react-hook-form": "^7.71.2",
-        "react-i18next": "^16.5.8",
-        "sonner": "^2.0.7",
-        "zustand": "catalog:",
-      },
-      "devDependencies": {
-        "@frak-labs/app-essentials": "workspace:*",
-        "@tanstack/router-plugin": "^1.166.12",
-        "@testing-library/jest-dom": "^6.9.1",
-        "@testing-library/react": "^16.3.2",
-        "@types/react": "catalog:",
-        "@types/react-dom": "catalog:",
-        "@vitejs/plugin-react": "catalog:",
-        "@vitest/coverage-v8": "^4.1.4",
-        "@vitest/ui": "^4.1.4",
-        "jsdom": "^29.0.0",
-        "typescript": "catalog:",
-        "vite": "catalog:",
-        "vite-plugin-html": "^3.2.2",
-        "vitest": "^4.1.4",
-      },
-    },
     "example/vanilla-js": {
       "name": "@frak-labs-example/vanilla-js",
       "version": "0.0.1",
@@ -1079,8 +1043,6 @@
     "@floating-ui/react-dom": ["@floating-ui/react-dom@2.1.8", "", { "dependencies": { "@floating-ui/dom": "^1.7.6" }, "peerDependencies": { "react": ">=16.8.0", "react-dom": ">=16.8.0" } }, "sha512-cC52bHwM/n/CxS87FH0yWdngEZrjdtLW/qVruo68qg+prK7ZQ4YGdut2GyDVpoGeAYe/h899rVeOVm6Oi40k2A=="],
 
     "@floating-ui/utils": ["@floating-ui/utils@0.2.11", "", {}, "sha512-RiB/yIh78pcIxl6lLMG0CgBXAZ2Y0eVHqMPYugu+9U0AeT6YBeiJpf7lbdJNIugFP5SIjwNRgo4DhR1Qxi26Gg=="],
-
-    "@frak-labs-example/showcase": ["@frak-labs-example/showcase@workspace:example/showcase"],
 
     "@frak-labs-example/vanilla-js": ["@frak-labs-example/vanilla-js@workspace:example/vanilla-js"],
 
