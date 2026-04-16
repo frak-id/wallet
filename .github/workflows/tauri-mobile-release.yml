@@ -395,3 +395,59 @@ jobs:
           git add -A
           git commit -m "⬆️ v${{ inputs.version }}" || echo "No changes to commit"
           git push
+
+  github-release:
+    name: "🏷️ GitHub Release"
+    needs: [ios, android]
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: "📥 Checkout main"
+        uses: actions/checkout@v6
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - name: "📥 Download iOS artifact"
+        uses: actions/download-artifact@v8
+        with:
+          name: ios-ipa
+          path: release-assets/ios
+
+      - name: "📥 Download Android artifact"
+        uses: actions/download-artifact@v8
+        with:
+          name: android-aab
+          path: release-assets/android
+
+      - name: "📝 Promote CHANGELOG [Unreleased] → [${{ inputs.version }}]"
+        id: changelog
+        uses: release-flow/keep-a-changelog-action@v3
+        with:
+          command: bump
+          version: ${{ inputs.version }}
+          changelog: apps/wallet/src-tauri/CHANGELOG.md
+          tag-prefix: app-
+          keep-unreleased-section: true
+          fail-on-empty-release-notes: true
+
+      - name: "📤 Commit CHANGELOG & create tag"
+        uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          branch: main
+          commit_message: "chore(mobile): release ${{ inputs.version }}"
+          file_pattern: apps/wallet/src-tauri/CHANGELOG.md
+          tagging_message: "app-${{ inputs.version }}"
+
+      - name: "🚀 Create GitHub release"
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: "app-${{ inputs.version }}"
+          name: "Frak Wallet ${{ inputs.version }}"
+          body: ${{ steps.changelog.outputs.release-notes }}
+          prerelease: ${{ inputs.stage == 'dev' }}
+          files: |
+            release-assets/ios/*.ipa
+            release-assets/android/*.aab

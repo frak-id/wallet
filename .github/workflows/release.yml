@@ -16,6 +16,8 @@ jobs:
     steps:
       - name: Checkout Repo
         uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
 
       - name: Setup Bun
         uses: oven-sh/setup-bun@v2
@@ -33,6 +35,40 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           NPM_CONFIG_TOKEN: ${{ secrets.NPM_TOKEN }}
           STAGE: production
+
+      - name: "🏷️ Create per-package sdk-{id}-{version} tags"
+        if: steps.changesets.outputs.published == 'true'
+        env:
+          PUBLISHED_PACKAGES: ${{ steps.changesets.outputs.publishedPackages }}
+        run: |
+          declare -A ID_MAP=(
+            ["@frak-labs/core-sdk"]="core"
+            ["@frak-labs/react-sdk"]="react"
+            ["@frak-labs/components"]="components"
+            ["@frak-labs/nexus-sdk"]="legacy"
+            ["@frak-labs/frame-connector"]="frame-connector"
+          )
+
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          echo "$PUBLISHED_PACKAGES" | jq -c '.[]' | while read -r pkg; do
+            name=$(echo "$pkg" | jq -r .name)
+            version=$(echo "$pkg" | jq -r .version)
+            id="${ID_MAP[$name]:-}"
+            if [ -z "$id" ]; then
+              echo "::warning::No tag identifier for $name, skipping"
+              continue
+            fi
+            tag="sdk-${id}-${version}"
+            if git rev-parse "$tag" >/dev/null 2>&1; then
+              echo "::notice::Tag $tag already exists, skipping"
+            else
+              git tag "$tag"
+              git push origin "$tag"
+              echo "✅ Created tag $tag"
+            fi
+          done
 
       - uses: gacts/purge-jsdelivr-cache@v1
         if: steps.changesets.outputs.published == 'true'
