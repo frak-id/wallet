@@ -23,6 +23,7 @@ export type MerchantData = {
     defaultRewardToken: Address;
     explorerConfig: {
         heroImageUrl?: string;
+        heroImageUrls?: string[];
         logoUrl?: string;
         description?: string;
     } | null;

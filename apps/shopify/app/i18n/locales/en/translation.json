@@ -391,6 +391,7 @@
             "enabledLabel": "Listed in Frak Explorer",
             "logoLabel": "Logo URL",
             "heroLabel": "Hero image URL",
+            "heroExtrasLabel": "Additional hero images",
             "descriptionLabel": "Store description",
             "descriptionPlaceholder": "Describe your store for the Frak Explorer...",
             "save": "Save",

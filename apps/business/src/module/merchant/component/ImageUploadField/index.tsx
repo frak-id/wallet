@@ -160,11 +160,15 @@ function ExistingFilePicker({
 }) {
     const { data: files } = useMediaList(merchantId);
 
-    // Show files of the *other* type that could be reused,
-    // plus files of the same type if the current value doesn't match any
+    // Show files matching the same type (logo → logo, hero → hero or hero-{variant}),
+    // excluding the file currently selected in the input.
     const pickableFiles = useMemo(() => {
         if (!files?.length) return [];
-        return files.filter((f) => f.type !== type && f.url !== currentValue);
+        return files.filter((f) => {
+            if (f.url === currentValue) return false;
+            if (type === "logo") return f.type === "logo";
+            return f.type === "hero" || f.type.startsWith("hero-");
+        });
     }, [files, type, currentValue]);
 
     if (!pickableFiles.length) return null;

@@ -97,7 +97,7 @@ export function LogoField({
     logoUrl: string;
     onUpdate: (logoUrl: string) => void;
     onUploadSuccess: (url: string) => void;
-    mediaFiles?: { type: "logo" | "hero"; url: string }[];
+    mediaFiles?: { type: string; url: string }[];
 }) {
     const { t } = useTranslation();
     return (

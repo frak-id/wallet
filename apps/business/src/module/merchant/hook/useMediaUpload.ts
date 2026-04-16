@@ -4,7 +4,7 @@ import { authenticatedBackendApi } from "@/api/backendClient";
 type MediaUploadInput = {
     merchantId: string;
     image: File;
-    type: "logo" | "hero";
+    type: "logo" | "hero" | "hero-extra";
 };
 
 export function useMediaUpload() {
@@ -25,12 +25,24 @@ export function useMediaUpload() {
 
             return data;
         },
+        onSettled: async (
+            _data,
+            _error,
+            { merchantId },
+            _result,
+            { client }
+        ) => {
+            await client.invalidateQueries({
+                queryKey: ["media", "list", merchantId],
+            });
+        },
     });
 }
 
 type MediaDeleteInput = {
     merchantId: string;
-    type: "logo" | "hero";
+    // Accepts "logo", "hero", or "hero-{hash}" for slider variants.
+    type: string;
 };
 
 export function useMediaDelete() {
@@ -45,6 +57,17 @@ export function useMediaDelete() {
             if (error) {
                 throw error;
             }
+        },
+        onSettled: async (
+            _data,
+            _error,
+            { merchantId },
+            _result,
+            { client }
+        ) => {
+            await client.invalidateQueries({
+                queryKey: ["media", "list", merchantId],
+            });
         },
     });
 }

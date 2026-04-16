@@ -15,6 +15,7 @@ import {
 import { FormActions } from "@/module/forms/FormActions";
 import { Switch } from "@/module/forms/Switch";
 import { ImageUploadField } from "@/module/merchant/component/ImageUploadField";
+import { MultiHeroImagesField } from "@/module/merchant/component/MultiHeroImagesField";
 import { useMerchant } from "@/module/merchant/hook/useMerchant";
 import { useMerchantUpdate } from "@/module/merchant/hook/useMerchantUpdate";
 import styles from "./index.module.css";
@@ -22,6 +23,7 @@ import styles from "./index.module.css";
 type ExplorerFormValues = {
     enabled: boolean;
     heroImageUrl?: string;
+    heroImageUrls?: string[];
     logoUrl?: string;
     description?: string;
 };
@@ -40,6 +42,8 @@ export function ExplorerSettings({ merchantId }: { merchantId: string }) {
                 ? {
                       enabled: merchant.explorerEnabledAt !== null,
                       heroImageUrl: merchant.explorerConfig?.heroImageUrl ?? "",
+                      heroImageUrls:
+                          merchant.explorerConfig?.heroImageUrls ?? [],
                       logoUrl: merchant.explorerConfig?.logoUrl ?? "",
                       description: merchant.explorerConfig?.description ?? "",
                   }
@@ -52,6 +56,7 @@ export function ExplorerSettings({ merchantId }: { merchantId: string }) {
         defaultValues: {
             enabled: false,
             heroImageUrl: "",
+            heroImageUrls: [],
             logoUrl: "",
             description: "",
         },
@@ -64,10 +69,16 @@ export function ExplorerSettings({ merchantId }: { merchantId: string }) {
 
     const onSubmit = useCallback(
         (values: ExplorerFormValues) => {
+            const hasHeroExtras =
+                values.heroImageUrls && values.heroImageUrls.length > 0;
             const config =
-                values.heroImageUrl || values.logoUrl || values.description
+                values.heroImageUrl ||
+                hasHeroExtras ||
+                values.logoUrl ||
+                values.description
                     ? {
                           heroImageUrl: values.heroImageUrl,
+                          heroImageUrls: values.heroImageUrls,
                           logoUrl: values.logoUrl,
                           description: values.description,
                       }
@@ -129,6 +140,28 @@ export function ExplorerSettings({ merchantId }: { merchantId: string }) {
                                     onUploadSuccess={handleUploadSuccess(
                                         "heroImageUrl"
                                     )}
+                                />
+                            </FormControl>
+                            <FormMessage />
+                        </FormItem>
+                    )}
+                />
+                <FormField
+                    control={form.control}
+                    name="heroImageUrls"
+                    render={({ field }) => (
+                        <FormItem>
+                            <FormLabel weight={"medium"}>
+                                Additional hero images
+                            </FormLabel>
+                            <FormControl>
+                                <MultiHeroImagesField
+                                    merchantId={merchantId}
+                                    values={field.value ?? []}
+                                    onChange={(next) => {
+                                        field.onChange(next);
+                                        form.handleSubmit(onSubmit)();
+                                    }}
                                 />
                             </FormControl>
                             <FormMessage />

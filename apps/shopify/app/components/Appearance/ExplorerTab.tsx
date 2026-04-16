@@ -15,6 +15,7 @@ import {
 import { useTranslation } from "react-i18next";
 import { Form, useFetcher, useNavigation } from "react-router";
 import { ImageUploadField } from "./ImageUploadField";
+import { MultiHeroImagesField } from "./MultiHeroImagesField";
 
 type ExplorerTabProps = {
     initialExplorerSettings: ExplorerSettings | null;
@@ -47,6 +48,7 @@ export function ExplorerTab({
                 initialExplorerSettings?.heroImageUrl ||
                 shopBrand.coverImageUrl ||
                 "",
+            heroImageUrls: initialExplorerSettings?.heroImageUrls ?? [],
             description:
                 initialExplorerSettings?.description ||
                 shopBrand.description ||
@@ -58,6 +60,7 @@ export function ExplorerTab({
     const [enabled, setEnabled] = useState(defaults.enabled);
     const [logoUrl, setLogoUrl] = useState(defaults.logoUrl);
     const [heroImageUrl, setHeroImageUrl] = useState(defaults.heroImageUrl);
+    const [heroImageUrls, setHeroImageUrls] = useState(defaults.heroImageUrls);
     const [description, setDescription] = useState(defaults.description);
 
     const isLoading = navigation.state === "submitting";
@@ -67,8 +70,9 @@ export function ExplorerTab({
             enabled !== defaults.enabled ||
             logoUrl !== defaults.logoUrl ||
             heroImageUrl !== defaults.heroImageUrl ||
+            heroImageUrls.join(",") !== defaults.heroImageUrls.join(",") ||
             description !== defaults.description,
-        [enabled, logoUrl, heroImageUrl, description, defaults]
+        [enabled, logoUrl, heroImageUrl, heroImageUrls, description, defaults]
     );
 
     useEffect(() => {
@@ -97,6 +101,7 @@ export function ExplorerTab({
                 enabled,
                 logoUrl,
                 heroImageUrl,
+                heroImageUrls,
                 description,
                 ...overrides,
             };
@@ -108,7 +113,7 @@ export function ExplorerTab({
                 { method: "post", action: "/app/appearance" }
             );
         },
-        [enabled, logoUrl, heroImageUrl, description, fetcher]
+        [enabled, logoUrl, heroImageUrl, heroImageUrls, description, fetcher]
     );
 
     const handleLogoUploadSuccess = useCallback(
@@ -137,6 +142,7 @@ export function ExplorerTab({
                     enabled,
                     logoUrl,
                     heroImageUrl,
+                    heroImageUrls,
                     description,
                 })}
             />
@@ -169,6 +175,15 @@ export function ExplorerTab({
                         onUploadSuccess={handleHeroUploadSuccess}
                         label={t("appearance.explorer.heroLabel")}
                         mediaFiles={mediaFiles}
+                    />
+
+                    <MultiHeroImagesField
+                        label={t("appearance.explorer.heroExtrasLabel")}
+                        values={heroImageUrls}
+                        onChange={(next) => {
+                            setHeroImageUrls(next);
+                            autoSave({ heroImageUrls: next });
+                        }}
                     />
 
                     <s-text-area

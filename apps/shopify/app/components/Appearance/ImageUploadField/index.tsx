@@ -3,7 +3,7 @@ import { useDropzone } from "react-dropzone";
 import { useFetcher } from "react-router";
 import styles from "./index.module.css";
 
-type MediaFile = { type: "logo" | "hero"; url: string };
+type MediaFile = { type: string; url: string };
 
 type ImageUploadFieldProps = {
     type: "logo" | "hero";
@@ -176,11 +176,15 @@ function ExistingFilePicker({
     mediaFiles?: MediaFile[];
     onPick: (url: string) => void;
 }) {
+    // Show files matching the same type (logo → logo, hero → hero or hero-{variant}),
+    // excluding the file currently selected in the input.
     const pickableFiles = useMemo(() => {
         if (!mediaFiles?.length) return [];
-        return mediaFiles.filter(
-            (f) => f.type !== type && f.url !== currentValue
-        );
+        return mediaFiles.filter((f) => {
+            if (f.url === currentValue) return false;
+            if (type === "logo") return f.type === "logo";
+            return f.type === "hero" || f.type.startsWith("hero-");
+        });
     }, [mediaFiles, type, currentValue]);
 
     if (!pickableFiles.length) return null;

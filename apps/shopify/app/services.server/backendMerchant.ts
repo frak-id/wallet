@@ -528,6 +528,7 @@ export async function getFrakWebookStatus(
 export type ExplorerSettings = {
     enabled: boolean;
     heroImageUrl: string;
+    heroImageUrls: string[];
     logoUrl: string;
     description: string;
 };
@@ -560,6 +561,7 @@ export async function getMerchantExplorerSettings(
         return {
             enabled: data.explorerEnabledAt !== null,
             heroImageUrl: data.explorerConfig?.heroImageUrl ?? "",
+            heroImageUrls: data.explorerConfig?.heroImageUrls ?? [],
             logoUrl: data.explorerConfig?.logoUrl ?? "",
             description: data.explorerConfig?.description ?? "",
         };
@@ -585,10 +587,17 @@ export async function updateMerchantExplorerSettings(
         return { success: false, message: "Merchant not found" };
     }
 
+    const hasHeroExtras = settings.heroImageUrls.length > 0;
     const config =
-        settings.heroImageUrl || settings.logoUrl || settings.description
+        settings.heroImageUrl ||
+        hasHeroExtras ||
+        settings.logoUrl ||
+        settings.description
             ? {
                   heroImageUrl: settings.heroImageUrl || undefined,
+                  heroImageUrls: hasHeroExtras
+                      ? settings.heroImageUrls
+                      : undefined,
                   logoUrl: settings.logoUrl || undefined,
                   description: settings.description || undefined,
               }
@@ -714,7 +723,7 @@ export async function deleteMerchantMedia(
     }
 }
 
-export type MediaFile = { type: "logo" | "hero"; url: string };
+export type MediaFile = { type: string; url: string };
 
 /**
  * List existing media files (logo/hero) for the current merchant.
