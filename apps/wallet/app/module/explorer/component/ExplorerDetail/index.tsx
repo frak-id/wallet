@@ -75,6 +75,14 @@ export function ExplorerDetail({ merchant, onClose }: ExplorerDetailProps) {
         setNeedsReadMore(el.scrollHeight > el.clientHeight);
     }, [description, isDescriptionExpanded]);
 
+    const brandLinkUrl = useMemo(() => {
+        const url = new URL(`https://${merchant.domain}`);
+        url.searchParams.set("utm_source", "frak");
+        url.searchParams.set("utm_medium", "explorer");
+        url.searchParams.set("utm_campaign", merchant.id);
+        return url.toString();
+    }, [merchant.domain, merchant.id]);
+
     const shareUrl = useMemo(() => {
         const baseUrl = `https://${merchant.domain}`;
         if (!clientId) return baseUrl;
@@ -176,7 +184,7 @@ export function ExplorerDetail({ merchant, onClose }: ExplorerDetailProps) {
                     <div className={styles.brandInfo}>
                         <Text as="h1" variant="heading1">
                             <a
-                                href={`https://${merchant.domain}`}
+                                href={brandLinkUrl}
                                 target="_blank"
                                 rel="noopener noreferrer"
                                 className={styles.brandLink}

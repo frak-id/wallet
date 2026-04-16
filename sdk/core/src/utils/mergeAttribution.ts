@@ -34,10 +34,12 @@ export type MergeAttributionInput = {
  *   3. Hardcoded fallbacks resolved later by `FrakContextManager`
  *
  * Special rules:
- * - `perCall === null` returns `undefined` (explicit disable).
+ * - `perCall === null` returns `undefined` (explicit disable: no UTM/ref/via).
+ * - `perCall === undefined` (no opinion) yields at least `{}` so `FrakContextManager`
+ *   applies its hardcoded defaults (utm_source=frak, utm_medium=referral,
+ *   utm_campaign=<merchantId>, ref=<clientId>, via=frak).
  * - `utm_content` never comes from `defaults`; only `productUtmContent` or
  *   `perCall.utmContent` can populate it.
- * - When all three layers are empty/absent, returns `undefined` (no attribution).
  */
 export function mergeAttribution({
     perCall,

@@ -138,9 +138,9 @@ function resolveAttributionValues(
 function applyAttributionParams(
     urlObj: URL,
     context: FrakContextV1 | FrakContextV2,
-    attribution: AttributionParams
+    attribution?: AttributionParams
 ): void {
-    const values = resolveAttributionValues(context, attribution);
+    const values = resolveAttributionValues(context, attribution ?? {});
     for (const [key, value] of Object.entries(values)) {
         if (value === undefined || value === "") continue;
         if (urlObj.searchParams.has(key)) continue;
@@ -178,9 +178,7 @@ function update({
 
     const urlObj = new URL(url);
     urlObj.searchParams.set(contextKey, compressedContext);
-    if (attribution) {
-        applyAttributionParams(urlObj, context, attribution);
-    }
+    applyAttributionParams(urlObj, context, attribution);
     return urlObj.toString();
 }
 
