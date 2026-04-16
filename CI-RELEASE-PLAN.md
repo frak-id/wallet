@@ -1,7 +1,7 @@
 # CI Release Reorganization
 
 Goal: split the monorepo's release pipelines by concern, and re-introduce
-tag-based GitHub releases with built assets & changelogs.
+tag-based GitHub releases with built assets and auto-generated changelogs.
 
 ## Target state
 
@@ -9,40 +9,48 @@ tag-based GitHub releases with built assets & changelogs.
 |---|---|---|
 | SDK releases (npm + GH release) | push to `main` (changesets) | `.github/workflows/release.yml` |
 | Beta SDK releases (npm only) | push to `dev` | `.github/workflows/beta-release.yml` *(unchanged)* |
-| App deploys (services + apps) | push to `main`/`dev` | `.github/workflows/deploy.yml` *(unchanged)* |
+| App / service deploys | push to `main`/`dev` | `.github/workflows/deploy.yml` *(unchanged)* |
 | WordPress plugin release | tag `wordpress-*` | `.github/workflows/release-wordpress.yml` *(new)* |
 | Magento plugin release | tag `magento-*` | `.github/workflows/release-magento.yml` *(new)* |
-| Tauri mobile release | `workflow_dispatch` (+ GH release step) | `.github/workflows/tauri-mobile-release.yml` |
-| PHP plugin CI (lint/phpstan) | PR / push on `plugins/**` | `.github/workflows/php-plugins.yaml` *(unchanged)* |
+| Tauri mobile release | `workflow_dispatch` | `.github/workflows/tauri-mobile-release.yml` |
+| PHP plugin CI | push / PR on `plugins/**` | `.github/workflows/php-plugins.yaml` *(unchanged)* |
 
-Tag conventions produced:
-- `sdk-core-1.2.3`, `sdk-react-...`, `sdk-components-...`, `sdk-legacy-...`, `sdk-frame-connector-...` *(auto-created by the SDK workflow after changesets publishes)*
-- `wordpress-1.0.1` *(developer creates)*
-- `magento-1.0.1` *(developer creates)*
-- `app-1.0.28` *(created by the tauri workflow after a successful release build)*
+Tag conventions:
+- `sdk-{id}-{version}` — created by the SDK workflow after changesets publishes (`sdk-core-1.2.3`, `sdk-react-...`, `sdk-components-...`, `sdk-legacy-...`, `sdk-frame-connector-...`)
+- `wordpress-{version}` — developer creates
+- `magento-{version}` — developer creates
+- `app-{version}` — created by the tauri workflow after a successful release build
 
-Changelog strategy for every release:
-1. Try to extract the `## {version}` section from a `CHANGELOG.md` in the relevant directory.
-2. Fall back to GitHub's auto-generated release notes.
+## Changelog strategy
+
+**No `CHANGELOG.md` files to maintain.**
+
+Every release uses GitHub's native auto-generated release notes (`gh release
+create --generate-notes`) scoped to the previous tag with the **same prefix**
+via `--notes-start-tag`. Example: releasing `wordpress-1.0.2` diffs against
+`wordpress-1.0.1`, not against whichever tag was most recent chronologically.
+
+Cleaner notes can be achieved by configuring `.github/release.yml` (categorise
+PRs by label, exclude chore labels, etc.). That's a follow-up, not blocking.
 
 ---
 
 ## Non-workflow files already applied in this branch
 
-These are committed directly (no `workflow` scope needed):
+Committed directly (no `workflow` scope needed):
 
 - `plugins/magento/build.sh` — new, mirrors `plugins/wordpress/build.sh`
 - `plugins/magento/.distignore` — defines what goes into the release zip
-- `plugins/magento/composer.json` — added a `"version"` field (source of truth for the tag)
-- `plugins/wordpress/build.sh` — fixed `awk '{print $2}'` bug that returned the literal string `"Version:"` instead of the version
+- `plugins/magento/composer.json` — added a `"version"` field as the tag source of truth
+- `plugins/wordpress/build.sh` — fixed version extraction (`awk '{print $3}'` and CLI/env override)
 
 ---
 
 ## 1. `.github/workflows/release.yml` — REPLACE
 
 Replaces the existing file. Keeps the changesets flow, adds per-package GitHub
-releases with tags shaped as `sdk-{id}-{version}`, reading the matching section
-out of each package's changeset-generated `CHANGELOG.md`.
+releases tagged `sdk-{id}-{version}`. Each release uses `gh --generate-notes`
+with the previous same-prefix tag as the starting point.
 
 ```yaml
 name: 📦 SDK Release
@@ -89,83 +97,43 @@ jobs:
 
       - name: "🏷️ Create GitHub releases per published package"
         if: steps.changesets.outputs.published == 'true'
-        uses: actions/github-script@v8
         env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           PUBLISHED_PACKAGES: ${{ steps.changesets.outputs.publishedPackages }}
-        with:
-          script: |
-            const fs = require('fs');
-            const path = require('path');
+        run: |
+          # npm name → short tag identifier
+          declare -A ID_MAP=(
+            ["@frak-labs/core-sdk"]="core"
+            ["@frak-labs/react-sdk"]="react"
+            ["@frak-labs/components"]="components"
+            ["@frak-labs/nexus-sdk"]="legacy"
+            ["@frak-labs/frame-connector"]="frame-connector"
+          )
 
-            // Map npm package name → short identifier used in the git tag
-            const idMap = {
-              '@frak-labs/core-sdk': 'core',
-              '@frak-labs/react-sdk': 'react',
-              '@frak-labs/components': 'components',
-              '@frak-labs/nexus-sdk': 'legacy',
-              '@frak-labs/frame-connector': 'frame-connector',
-            };
+          echo "$PUBLISHED_PACKAGES" | jq -c '.[]' | while read -r pkg; do
+            name=$(echo "$pkg" | jq -r .name)
+            version=$(echo "$pkg" | jq -r .version)
+            id="${ID_MAP[$name]:-}"
+            if [ -z "$id" ]; then
+              echo "::warning::No tag identifier for $name, skipping"
+              continue
+            fi
 
-            // Map npm package name → local directory (for CHANGELOG.md lookup)
-            const dirMap = {
-              '@frak-labs/core-sdk': 'sdk/core',
-              '@frak-labs/react-sdk': 'sdk/react',
-              '@frak-labs/components': 'sdk/components',
-              '@frak-labs/nexus-sdk': 'sdk/legacy',
-              '@frak-labs/frame-connector': 'packages/rpc',
-            };
+            tag="sdk-${id}-${version}"
 
-            function extractChangelog(dir, version) {
-              if (!dir) return '';
-              const file = path.join(dir, 'CHANGELOG.md');
-              if (!fs.existsSync(file)) return '';
-              const content = fs.readFileSync(file, 'utf8');
-              const lines = content.split('\n');
-              const esc = version.replace(/\./g, '\\.');
-              const startRe = new RegExp(`^##\\s*\\[?${esc}\\]?`);
-              const nextRe = /^##\s/;
-              let start = -1;
-              for (let i = 0; i < lines.length; i++) {
-                if (startRe.test(lines[i])) { start = i + 1; break; }
-              }
-              if (start === -1) return '';
-              let end = lines.length;
-              for (let i = start; i < lines.length; i++) {
-                if (nextRe.test(lines[i])) { end = i; break; }
-              }
-              return lines.slice(start, end).join('\n').trim();
-            }
+            # Previous same-prefix tag (semver-sorted) to scope the auto-generated notes
+            prev=$(git tag --list "sdk-${id}-*" --sort=-v:refname | grep -vFx "$tag" | head -n1 || true)
 
-            const published = JSON.parse(process.env.PUBLISHED_PACKAGES || '[]');
-            core.info(`Creating releases for ${published.length} packages`);
+            args=(--generate-notes --title "${name}@${version}")
+            [ -n "$prev" ] && args+=(--notes-start-tag "$prev")
 
-            for (const pkg of published) {
-              const id = idMap[pkg.name];
-              if (!id) {
-                core.warning(`No tag identifier mapped for ${pkg.name}, skipping release`);
-                continue;
-              }
-              const tag = `sdk-${id}-${pkg.version}`;
-              const body = extractChangelog(dirMap[pkg.name], pkg.version);
-
-              try {
-                await github.rest.repos.createRelease({
-                  owner: context.repo.owner,
-                  repo: context.repo.repo,
-                  tag_name: tag,
-                  name: `${pkg.name}@${pkg.version}`,
-                  body: body || undefined,
-                  generate_release_notes: !body,
-                });
-                core.info(`✅ Created release ${tag}`);
-              } catch (err) {
-                if (err.status === 422) {
-                  core.warning(`Release ${tag} already exists, skipping`);
-                } else {
-                  core.setFailed(`Failed to create release ${tag}: ${err.message}`);
-                }
-              }
-            }
+            if gh release view "$tag" >/dev/null 2>&1; then
+              echo "::notice::Release $tag already exists, skipping"
+            else
+              gh release create "$tag" "${args[@]}"
+              echo "✅ Created release $tag"
+            fi
+          done
 
       - uses: gacts/purge-jsdelivr-cache@v1
         if: steps.changesets.outputs.published == 'true'
@@ -179,8 +147,8 @@ jobs:
 ```
 
 ### Notes
-- `changesets/action@v1` already creates tags in the form `@frak-labs/core-sdk@1.2.3`. The new `sdk-{id}-{version}` tag is created as a **second** tag by the release step (GitHub creates the tag when `createRelease` is called with a new `tag_name`).
-- If you'd prefer to **replace** the changeset-created tags instead of having both, add `createGithubReleases: false` to the changesets action config (the `changesets/action` option for skipping its own release creation — already the default) and also pass `--no-git-tag` to `changeset publish` via your `changeset:release` script. Worth doing in a follow-up, not blocking.
+
+- `changesets/action@v1` creates its own `@frak-labs/core-sdk@1.2.3`-style tags in addition to the new `sdk-core-1.2.3` ones. Consolidating to a single convention is a follow-up (pass `--no-git-tag` to `changeset publish`).
 
 ---
 
@@ -208,6 +176,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v6
+        with:
+          fetch-depth: 0  # needed for git tag --list
 
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
@@ -226,7 +196,6 @@ jobs:
             exit 1
           fi
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
-          echo "Releasing WordPress plugin version $VERSION"
 
       - name: "✅ Validate plugin header matches tag"
         working-directory: plugins/wordpress
@@ -243,51 +212,26 @@ jobs:
           chmod +x build.sh
           ./build.sh
 
-      - name: "📝 Extract changelog section (if present)"
-        id: changelog
-        working-directory: plugins/wordpress
-        shell: bash
-        run: |
-          VERSION="${{ steps.version.outputs.version }}"
-          NOTES=""
-          if [ -f CHANGELOG.md ]; then
-            NOTES=$(awk -v v="$VERSION" '
-              BEGIN { IGNORECASE=0; found=0 }
-              $0 ~ "^##[[:space:]]*\\[?"v"\\]?([[:space:]]|$)" { found=1; next }
-              found && /^##[[:space:]]/ { exit }
-              found { print }
-            ' CHANGELOG.md | sed -e '/./,$!d' | sed -e :a -e '/^\n*$/{$d;N;ba' -e '}')
-          fi
-          if [ -n "$NOTES" ]; then
-            echo "has_notes=true" >> "$GITHUB_OUTPUT"
-            {
-              echo "notes<<CHANGELOG_EOF"
-              echo "$NOTES"
-              echo "CHANGELOG_EOF"
-            } >> "$GITHUB_OUTPUT"
-          else
-            echo "has_notes=false" >> "$GITHUB_OUTPUT"
-          fi
-
       - name: "🚀 Create GitHub release"
-        uses: softprops/action-gh-release@v2
-        with:
-          tag_name: ${{ github.ref_name }}
-          name: WordPress Plugin ${{ steps.version.outputs.version }}
-          files: plugins/wordpress/dist/frak-integration-*.zip
-          body: ${{ steps.changelog.outputs.has_notes == 'true' && steps.changelog.outputs.notes || '' }}
-          generate_release_notes: ${{ steps.changelog.outputs.has_notes != 'true' }}
-          fail_on_unmatched_files: true
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ github.ref_name }}
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          # Previous wordpress-* tag for scoped auto-generated notes
+          PREV=$(git tag --list 'wordpress-*' --sort=-v:refname | grep -vFx "$TAG" | head -n1 || true)
+
+          args=(--generate-notes --title "WordPress Plugin ${VERSION}")
+          [ -n "$PREV" ] && args+=(--notes-start-tag "$PREV")
+
+          gh release create "$TAG" "${args[@]}" plugins/wordpress/dist/frak-integration-*.zip
 ```
 
 ### How to release
 ```bash
 # 1. Bump "Version:" in plugins/wordpress/frak-integration.php
-# 2. Optionally add a "## 1.0.1" section to plugins/wordpress/CHANGELOG.md
-# 3. Commit & push on main
-# 4. Create + push the tag
+# 2. Commit & push on main
+# 3. Tag + push
 git tag wordpress-1.0.1
 git push origin wordpress-1.0.1
 ```
@@ -318,6 +262,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
 
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
@@ -336,7 +282,6 @@ jobs:
             exit 1
           fi
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
-          echo "Releasing Magento module version $VERSION"
 
       - name: "✅ Validate composer.json matches tag"
         working-directory: plugins/magento
@@ -353,51 +298,25 @@ jobs:
           chmod +x build.sh
           ./build.sh "${{ steps.version.outputs.version }}"
 
-      - name: "📝 Extract changelog section (if present)"
-        id: changelog
-        working-directory: plugins/magento
-        shell: bash
-        run: |
-          VERSION="${{ steps.version.outputs.version }}"
-          NOTES=""
-          if [ -f CHANGELOG.md ]; then
-            NOTES=$(awk -v v="$VERSION" '
-              BEGIN { IGNORECASE=0; found=0 }
-              $0 ~ "^##[[:space:]]*\\[?"v"\\]?([[:space:]]|$)" { found=1; next }
-              found && /^##[[:space:]]/ { exit }
-              found { print }
-            ' CHANGELOG.md | sed -e '/./,$!d' | sed -e :a -e '/^\n*$/{$d;N;ba' -e '}')
-          fi
-          if [ -n "$NOTES" ]; then
-            echo "has_notes=true" >> "$GITHUB_OUTPUT"
-            {
-              echo "notes<<CHANGELOG_EOF"
-              echo "$NOTES"
-              echo "CHANGELOG_EOF"
-            } >> "$GITHUB_OUTPUT"
-          else
-            echo "has_notes=false" >> "$GITHUB_OUTPUT"
-          fi
-
       - name: "🚀 Create GitHub release"
-        uses: softprops/action-gh-release@v2
-        with:
-          tag_name: ${{ github.ref_name }}
-          name: Magento Module ${{ steps.version.outputs.version }}
-          files: plugins/magento/dist/frak-magento2-module-*.zip
-          body: ${{ steps.changelog.outputs.has_notes == 'true' && steps.changelog.outputs.notes || '' }}
-          generate_release_notes: ${{ steps.changelog.outputs.has_notes != 'true' }}
-          fail_on_unmatched_files: true
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ github.ref_name }}
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          PREV=$(git tag --list 'magento-*' --sort=-v:refname | grep -vFx "$TAG" | head -n1 || true)
+
+          args=(--generate-notes --title "Magento Module ${VERSION}")
+          [ -n "$PREV" ] && args+=(--notes-start-tag "$PREV")
+
+          gh release create "$TAG" "${args[@]}" plugins/magento/dist/frak-magento2-module-*.zip
 ```
 
 ### How to release
 ```bash
 # 1. Bump "version" in plugins/magento/composer.json
-# 2. Optionally add a "## 1.0.1" section to plugins/magento/CHANGELOG.md
-# 3. Commit & push on main
-# 4. Create + push the tag
+# 2. Commit & push on main
+# 3. Tag + push
 git tag magento-1.0.1
 git push origin magento-1.0.1
 ```
@@ -406,18 +325,14 @@ git push origin magento-1.0.1
 
 ## 4. `.github/workflows/tauri-mobile-release.yml` — MODIFY
 
-Keeps the existing `workflow_dispatch` flow (iOS + TestFlight, Android + Play Store, version-commit PR). Only adds:
+Keep the existing `workflow_dispatch` (validate / prepare / ios / android /
+commit-version). Append one new job `github-release` that runs after iOS and
+Android succeed, downloads the artifacts, and creates a GitHub release with
+tag `app-{version}`.
 
-1. A new final job `github-release` that runs after iOS+Android succeed.
-2. That job downloads the `ios-ipa` / `android-aab` artifacts, creates tag `app-{version}`, and publishes a GitHub release with both assets and a changelog.
-
-Replace the file by appending the following job (or adjust the existing
-`commit-version` dependency). **Full file** — everything before is identical
-to your current one; only the last job is new:
+Insert this as the last job in the file (leave everything above unchanged):
 
 ```yaml
-# ...[existing validate / prepare / ios / android / commit-version jobs stay as-is]...
-
   github-release:
     name: "🏷️ GitHub Release"
     needs: [ios, android]
@@ -427,6 +342,8 @@ to your current one; only the last job is new:
     steps:
       - name: "📥 Checkout"
         uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
 
       - name: "📥 Download iOS artifact"
         uses: actions/download-artifact@v8
@@ -440,63 +357,35 @@ to your current one; only the last job is new:
           name: android-aab
           path: release-assets/android
 
-      - name: "📝 Extract changelog section (if present)"
-        id: changelog
-        shell: bash
-        run: |
-          VERSION="${{ inputs.version }}"
-          NOTES=""
-          for f in apps/wallet/CHANGELOG.md CHANGELOG.md; do
-            if [ -f "$f" ]; then
-              NOTES=$(awk -v v="$VERSION" '
-                BEGIN { found=0 }
-                $0 ~ "^##[[:space:]]*\\[?"v"\\]?([[:space:]]|$)" { found=1; next }
-                found && /^##[[:space:]]/ { exit }
-                found { print }
-              ' "$f" | sed -e '/./,$!d')
-              if [ -n "$NOTES" ]; then break; fi
-            fi
-          done
-          if [ -n "$NOTES" ]; then
-            echo "has_notes=true" >> "$GITHUB_OUTPUT"
-            {
-              echo "notes<<CHANGELOG_EOF"
-              echo "$NOTES"
-              echo "CHANGELOG_EOF"
-            } >> "$GITHUB_OUTPUT"
-          else
-            echo "has_notes=false" >> "$GITHUB_OUTPUT"
-          fi
-
       - name: "🚀 Create GitHub release"
-        uses: softprops/action-gh-release@v2
-        with:
-          tag_name: app-${{ inputs.version }}
-          name: Frak Wallet ${{ inputs.version }}
-          target_commitish: ${{ github.sha }}
-          prerelease: ${{ inputs.stage == 'dev' }}
-          files: |
-            release-assets/ios/*.ipa
-            release-assets/android/*.aab
-          body: ${{ steps.changelog.outputs.has_notes == 'true' && steps.changelog.outputs.notes || '' }}
-          generate_release_notes: ${{ steps.changelog.outputs.has_notes != 'true' }}
-          fail_on_unmatched_files: false
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-```
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          VERSION: ${{ inputs.version }}
+          STAGE: ${{ inputs.stage }}
+        run: |
+          TAG="app-${VERSION}"
+          PREV=$(git tag --list 'app-*' --sort=-v:refname | grep -vFx "$TAG" | head -n1 || true)
 
-### Notes
-- `prerelease: ${{ inputs.stage == 'dev' }}` marks internal/testing builds as pre-releases.
-- `fail_on_unmatched_files: false` because the matrix may be extended later (e.g. skip-ios / skip-android inputs).
-- If you'd prefer a **tag-driven** trigger (push `app-1.0.28` → run the whole pipeline), that's a bigger refactor — I can do it in a follow-up. This one just adds the release step to your current flow.
+          args=(--generate-notes --title "Frak Wallet ${VERSION}")
+          [ -n "$PREV" ] && args+=(--notes-start-tag "$PREV")
+          [ "$STAGE" = "dev" ] && args+=(--prerelease)
+
+          gh release create "$TAG" "${args[@]}" \
+            release-assets/ios/*.ipa \
+            release-assets/android/*.aab
+```
 
 ---
 
-## Summary of what ends up in each GitHub release
+## Summary
 
-| Tag | Assets | Body |
+| Tag | Assets | Notes |
 |---|---|---|
-| `sdk-core-1.2.3` etc. | *(none — npm is the distribution)* | `sdk/core/CHANGELOG.md` section, or auto-generated |
-| `wordpress-1.0.1` | `frak-integration-1.0.1.zip` | `plugins/wordpress/CHANGELOG.md` section, or auto-generated |
-| `magento-1.0.1` | `frak-magento2-module-1.0.1.zip` | `plugins/magento/CHANGELOG.md` section, or auto-generated |
-| `app-1.0.28` | `Frak Wallet.ipa`, `app-universal-release.aab` | `apps/wallet/CHANGELOG.md` section, or auto-generated |
+| `sdk-{id}-X.Y.Z` | *(npm only)* | Auto-generated, scoped to previous `sdk-{id}-*` tag |
+| `wordpress-X.Y.Z` | `frak-integration-X.Y.Z.zip` | Auto-generated, scoped to previous `wordpress-*` tag |
+| `magento-X.Y.Z` | `frak-magento2-module-X.Y.Z.zip` | Auto-generated, scoped to previous `magento-*` tag |
+| `app-X.Y.Z` | `Frak Wallet.ipa`, `app-universal-release.aab` | Auto-generated, scoped to previous `app-*` tag; `prerelease` on stage=dev |
+
+Optional polish (follow-up):
+- Add `.github/release.yml` to categorise the auto-generated notes by PR label.
+- Make changesets stop creating its own `@pkg@version` tags so only the `sdk-{id}-{version}` tags remain.
