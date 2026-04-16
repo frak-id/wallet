@@ -14,39 +14,117 @@
 class Frak_WooCommerce {
 
 	/**
+	 * Set by the `frak/post-purchase` block when it renders with auto-
+	 * injected order context. When true, the inline `wp_footer` fallback
+	 * skips itself — the block's `<frak-post-purchase>` web component fires
+	 * `trackPurchaseStatus` on its own and we avoid a duplicate SDK call.
+	 *
+	 * @var bool
+	 */
+	private static $tracking_populated = false;
+
+	/**
 	 * Register WooCommerce hooks. Called once from {@see Frak_Plugin::init()}.
 	 */
 	public static function init() {
-		add_action( 'woocommerce_thankyou', array( __CLASS__, 'render_purchase_tracker' ) );
+		add_action( 'wp_footer', array( __CLASS__, 'render_purchase_tracker' ), 20 );
 		add_action( 'woocommerce_order_status_changed', array( __CLASS__, 'handle_order_status_change' ), 10, 4 );
 	}
 
 	/**
-	 * Emit the purchase-tracking call on the WooCommerce thank-you page.
+	 * Resolve the WooCommerce order context for the current request.
 	 *
-	 * Instead of rendering the `<frak-post-purchase>` UI component (which is
-	 * now exposed as a Gutenberg block), this hook fires the core SDK action
-	 * `trackPurchaseStatus` so reward attribution still works even when the
-	 * merchant never drops the block onto the thank-you template. Auth is
-	 * handled by the SDK (reads `frak-wallet-interaction-token` from
-	 * sessionStorage + `frak-client-id` from localStorage).
+	 * Supports two order-scoped endpoints:
+	 *   - `order-received` (post-checkout thank-you page): public, guarded
+	 *     by the `key` query arg matching the stored order key — the same
+	 *     anti-enumeration check WooCommerce's own template performs.
+	 *   - `view-order` (My Account → Orders → View): authenticated, guarded
+	 *     by the `view_order` meta capability (current user must own the
+	 *     order, or be a shop manager).
 	 *
-	 * @param int $order_id Order ID.
+	 * Returns null on any other endpoint or when the guard fails.
+	 *
+	 * Shared by the `frak/post-purchase` block (to auto-inject HTML
+	 * attributes) and {@see render_purchase_tracker()} (for its payload).
+	 *
+	 * @return array<string, string>|null Map of HTML attribute name → value.
 	 */
-	public static function render_purchase_tracker( $order_id ) {
-		if ( ! $order_id ) {
+	public static function get_order_context() {
+		if ( ! function_exists( 'is_wc_endpoint_url' ) ) {
+			return null;
+		}
+
+		global $wp;
+		$order = null;
+
+		if ( is_wc_endpoint_url( 'order-received' ) ) {
+			$order_id = isset( $wp->query_vars['order-received'] ) ? absint( $wp->query_vars['order-received'] ) : 0;
+			if ( ! $order_id ) {
+				return null;
+			}
+			$candidate = wc_get_order( $order_id );
+			if ( ! $candidate ) {
+				return null;
+			}
+			// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Public endpoint; mirrors WooCommerce's own thank-you key check.
+			$url_key = isset( $_GET['key'] ) ? sanitize_text_field( wp_unslash( $_GET['key'] ) ) : '';
+			if ( '' === $url_key || $url_key !== $candidate->get_order_key() ) {
+				return null;
+			}
+			$order = $candidate;
+		} elseif ( is_wc_endpoint_url( 'view-order' ) ) {
+			$order_id = isset( $wp->query_vars['view-order'] ) ? absint( $wp->query_vars['view-order'] ) : 0;
+			if ( ! $order_id || ! current_user_can( 'view_order', $order_id ) ) {
+				return null;
+			}
+			$candidate = wc_get_order( $order_id );
+			if ( ! $candidate ) {
+				return null;
+			}
+			$order = $candidate;
+		}
+
+		if ( ! $order ) {
+			return null;
+		}
+
+		$order_id = $order->get_id();
+
+		return array(
+			'customer-id' => (string) $order->get_user_id(),
+			'order-id'    => (string) $order_id,
+			'token'       => $order->get_order_key() . '_' . $order_id,
+		);
+	}
+
+	/**
+	 * Flag that the `frak/post-purchase` block already rendered with order
+	 * context, so the `wp_footer` inline tracker should not fire.
+	 */
+	public static function mark_tracking_populated() {
+		self::$tracking_populated = true;
+	}
+
+	/**
+	 * Fallback inline tracker fired in `wp_footer` — ensures reward
+	 * attribution works even when the merchant has not placed the
+	 * `frak/post-purchase` block on their thank-you template. No-ops when
+	 * the block populated the context (avoids double-firing).
+	 */
+	public static function render_purchase_tracker() {
+		if ( self::$tracking_populated ) {
 			return;
 		}
 
-		$order = wc_get_order( $order_id );
-		if ( ! $order ) {
+		$context = self::get_order_context();
+		if ( null === $context ) {
 			return;
 		}
 
 		$payload = array(
-			'customerId' => (string) $order->get_user_id(),
-			'orderId'    => (string) $order_id,
-			'token'      => $order->get_order_key() . '_' . $order_id,
+			'customerId' => $context['customer-id'],
+			'orderId'    => $context['order-id'],
+			'token'      => $context['token'],
 		);
 
 		$payload_json = wp_json_encode( $payload, JSON_UNESCAPED_SLASHES );
