@@ -294,6 +294,9 @@ export class MerchantResolveService {
             ...(sdkConfig.components && {
                 components: this.buildResolvedComponents(sdkConfig.components),
             }),
+            ...(sdkConfig.attribution && {
+                attribution: sdkConfig.attribution,
+            }),
         };
     }
 

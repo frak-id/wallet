@@ -1,5 +1,6 @@
 import type { InteractionTypeKey } from "../../constants/interactionTypes";
 import type { I18nConfig } from "../config";
+import type { AttributionParams } from "../tracking";
 
 /**
  * Product information to display on the sharing page
@@ -19,6 +20,11 @@ export type SharingPageProduct = {
      * When provided and the product is selected, this link is used instead of the default sharing link
      */
     link?: string;
+    /**
+     * Optional `utm_content` value to apply when this product is selected.
+     * Falls back to the page-level `attribution.utmContent` when omitted.
+     */
+    utmContent?: string;
 };
 
 /**
@@ -37,6 +43,18 @@ export type DisplaySharingPageParamsType = {
      * If not provided, the sharing link will be generated from the current page URL + merchant context
      */
     link?: string;
+    /**
+     * Optional attribution overrides for the outbound sharing URL.
+     *
+     * When provided (even as an empty object), Frak adds standard affiliation
+     * params (`utm_source=frak`, `utm_medium=referral`, `utm_campaign=<merchantId>`,
+     * `ref=<clientId>`, `via=frak`) alongside `fCtx`. Existing UTMs on the base
+     * URL are preserved (gap-fill). Set this to `null` to disable attribution
+     * params entirely (only `fCtx` is added).
+     *
+     * @default {} — defaults applied
+     */
+    attribution?: AttributionParams | null;
     /**
      * Optional metadata overrides for the sharing page
      */

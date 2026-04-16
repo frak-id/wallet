@@ -145,7 +145,8 @@ describe("createWebhook", () => {
 
         vi.mocked(resolveMerchantId).mockResolvedValueOnce("merchant-123");
 
-        const mockGraphql = vi.fn()
+        const mockGraphql = vi
+            .fn()
             .mockResolvedValueOnce(emptyWebhooksResponse)
             .mockResolvedValueOnce({
                 json: async () => ({
@@ -181,7 +182,8 @@ describe("createWebhook", () => {
     it("should build correct webhook URL with merchantId", async () => {
         vi.mocked(resolveMerchantId).mockResolvedValueOnce("merchant-123");
 
-        const mockGraphql = vi.fn()
+        const mockGraphql = vi
+            .fn()
             .mockResolvedValueOnce(emptyWebhooksResponse)
             .mockResolvedValueOnce({
                 json: async () => ({
@@ -209,7 +211,8 @@ describe("createWebhook", () => {
     it("should pass correct variables to GraphQL mutation", async () => {
         vi.mocked(resolveMerchantId).mockResolvedValueOnce("merchant-123");
 
-        const mockGraphql = vi.fn()
+        const mockGraphql = vi
+            .fn()
             .mockResolvedValueOnce(emptyWebhooksResponse)
             .mockResolvedValueOnce({
                 json: async () => ({
@@ -236,7 +239,8 @@ describe("createWebhook", () => {
     it("should call graphql with mutation containing webhookSubscriptionCreate", async () => {
         vi.mocked(resolveMerchantId).mockResolvedValueOnce("merchant-123");
 
-        const mockGraphql = vi.fn()
+        const mockGraphql = vi
+            .fn()
             .mockResolvedValueOnce(emptyWebhooksResponse)
             .mockResolvedValueOnce({
                 json: async () => ({

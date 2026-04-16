@@ -1,5 +1,10 @@
 import { type Address, bytesToHex, hexToBytes, isAddress } from "viem";
-import type { FrakContext, FrakContextV1, FrakContextV2 } from "../types";
+import type {
+    AttributionParams,
+    FrakContext,
+    FrakContextV1,
+    FrakContextV2,
+} from "../types";
 import { isV2Context } from "../types";
 import { base64urlDecode, base64urlEncode } from "./compression/b64";
 import { compressJsonToB64 } from "./compression/compress";
@@ -92,19 +97,79 @@ function parse({ url }: { url: string }): FrakContext | null | undefined {
 }
 
 /**
+ * Default UTM medium value when attribution is requested.
+ */
+const DEFAULT_UTM_MEDIUM = "referral";
+
+/**
+ * Default utm_source / via value when attribution is requested.
+ */
+const DEFAULT_ATTRIBUTION_SOURCE = "frak";
+
+/**
+ * Resolve attribution defaults from the provided context.
+ *
+ * V2 contexts expose the merchantId (`m`) and clientId (`c`), which feed
+ * `utm_campaign` and `ref` respectively. V1 contexts have no equivalent, so
+ * only the static defaults (`utm_source`, `utm_medium`, `via`) apply.
+ */
+function resolveAttributionValues(
+    context: FrakContextV1 | FrakContextV2,
+    overrides: AttributionParams
+): Record<string, string | undefined> {
+    const isV2 = isV2Context(context);
+    return {
+        utm_source: overrides.utmSource ?? DEFAULT_ATTRIBUTION_SOURCE,
+        utm_medium: overrides.utmMedium ?? DEFAULT_UTM_MEDIUM,
+        utm_campaign: overrides.utmCampaign ?? (isV2 ? context.m : undefined),
+        utm_content: overrides.utmContent,
+        utm_term: overrides.utmTerm,
+        via: overrides.via ?? DEFAULT_ATTRIBUTION_SOURCE,
+        ref: overrides.ref ?? (isV2 ? context.c : undefined),
+    };
+}
+
+/**
+ * Append attribution query params to a URL using gap-fill semantics.
+ *
+ * Existing params on the URL are preserved untouched (so merchant-provided
+ * UTMs take precedence). Only missing keys are populated.
+ */
+function applyAttributionParams(
+    urlObj: URL,
+    context: FrakContextV1 | FrakContextV2,
+    attribution?: AttributionParams
+): void {
+    const values = resolveAttributionValues(context, attribution ?? {});
+    for (const [key, value] of Object.entries(values)) {
+        if (value === undefined || value === "") continue;
+        if (urlObj.searchParams.has(key)) continue;
+        urlObj.searchParams.set(key, value);
+    }
+}
+
+/**
  * Add or replace the `fCtx` query parameter in a URL with the given context.
+ *
+ * When `attribution` is provided (even as an empty object), standard affiliation
+ * params (`utm_source`, `utm_medium`, `utm_campaign`, `ref`, `via`, ...) are
+ * also appended using gap-fill semantics: pre-existing params on the URL are
+ * preserved, and defaults are derived from the context when applicable.
  *
  * @param args
  * @param args.url - The URL to update
  * @param args.context - The context to embed (V1 or V2)
+ * @param args.attribution - Optional attribution overrides. Omit to skip UTM/ref params.
  * @returns The updated URL string, or null on failure
  */
 function update({
     url,
     context,
+    attribution,
 }: {
     url?: string;
     context: FrakContextV1 | FrakContextV2;
+    attribution?: AttributionParams;
 }): string | null {
     if (!url) return null;
 
@@ -113,6 +178,7 @@ function update({
 
     const urlObj = new URL(url);
     urlObj.searchParams.set(contextKey, compressedContext);
+    applyAttributionParams(urlObj, context, attribution);
     return urlObj.toString();
 }
 

@@ -1,5 +1,6 @@
 import {
     FrakContextManager,
+    mergeAttribution,
     type SharingPageProduct,
 } from "@frak-labs/core-sdk";
 import {
@@ -21,11 +22,15 @@ import {
     useSharingListenerUI,
 } from "@/module/providers/ListenerUiProvider";
 import { useSafeResolvingContext } from "@/module/stores/hooks";
+import { resolvingContextStore } from "@/module/stores/resolvingContextStore";
 
 export function ListenerSharingPage() {
     const { currentRequest, clearRequest } = useSharingListenerUI();
     const { t } = useListenerTranslation();
     const { sourceUrl, merchantId } = useSafeResolvingContext();
+    const defaultAttribution = resolvingContextStore(
+        (s) => s.backendSdkConfig?.attribution
+    );
     const clientId = clientIdStore((s) => s.clientId);
     const { copy } = useCopyToClipboardWithState();
     const { mutate: trackSharing } = useTrackSharing();
@@ -97,6 +102,12 @@ export function ListenerSharingPage() {
         const baseLink =
             selectedProduct?.link ?? currentRequest.params.link ?? sourceUrl;
 
+        const resolvedAttribution = mergeAttribution({
+            perCall: currentRequest.params.attribution,
+            defaults: defaultAttribution,
+            productUtmContent: selectedProduct?.utmContent,
+        });
+
         return FrakContextManager.update({
             url: baseLink,
             context: {
@@ -105,14 +116,17 @@ export function ListenerSharingPage() {
                 m: merchantId,
                 t: Math.floor(Date.now() / 1000),
             },
+            attribution: resolvedAttribution,
         });
     }, [
         clientId,
         merchantId,
         currentRequest.params.link,
+        currentRequest.params.attribution,
         sourceUrl,
         products,
         selectedProductIndex,
+        defaultAttribution,
     ]);
 
     // Share mutation using the shared hook

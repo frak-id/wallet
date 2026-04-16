@@ -121,6 +121,150 @@ describe("FrakContextManager", () => {
                 expect(result).toContain("baz=qux");
                 expect(result).toContain("fCtx=");
             });
+
+            describe("update with attribution", () => {
+                const url = "https://example.com/product";
+
+                it("should not add attribution params when attribution is omitted", () => {
+                    const result = FrakContextManager.update({
+                        url,
+                        context: v2Context,
+                    });
+
+                    expect(result).toBeDefined();
+                    expect(result).toContain("fCtx=");
+                    expect(result).not.toContain("utm_source");
+                    expect(result).not.toContain("utm_medium");
+                    expect(result).not.toContain("utm_campaign");
+                    expect(result).not.toContain("ref=");
+                    expect(result).not.toContain("via=");
+                });
+
+                it("should apply default attribution params when attribution is an empty object", () => {
+                    const result = FrakContextManager.update({
+                        url,
+                        context: v2Context,
+                        attribution: {},
+                    });
+
+                    expect(result).toBeDefined();
+                    const parsedUrl = new URL(result!);
+                    expect(parsedUrl.searchParams.get("utm_source")).toBe(
+                        "frak"
+                    );
+                    expect(parsedUrl.searchParams.get("utm_medium")).toBe(
+                        "referral"
+                    );
+                    expect(parsedUrl.searchParams.get("utm_campaign")).toBe(
+                        v2Context.m
+                    );
+                    expect(parsedUrl.searchParams.get("via")).toBe("frak");
+                    expect(parsedUrl.searchParams.get("ref")).toBe(v2Context.c);
+                    expect(
+                        parsedUrl.searchParams.get("utm_content")
+                    ).toBeNull();
+                    expect(parsedUrl.searchParams.get("utm_term")).toBeNull();
+                });
+
+                it("should honor overrides over defaults", () => {
+                    const result = FrakContextManager.update({
+                        url,
+                        context: v2Context,
+                        attribution: {
+                            utmSource: "newsletter",
+                            utmMedium: "email",
+                            utmCampaign: "spring-sale",
+                            utmContent: "hero-banner",
+                            utmTerm: "wallet",
+                            via: "partner",
+                            ref: "alice",
+                        },
+                    });
+
+                    const parsedUrl = new URL(result!);
+                    expect(parsedUrl.searchParams.get("utm_source")).toBe(
+                        "newsletter"
+                    );
+                    expect(parsedUrl.searchParams.get("utm_medium")).toBe(
+                        "email"
+                    );
+                    expect(parsedUrl.searchParams.get("utm_campaign")).toBe(
+                        "spring-sale"
+                    );
+                    expect(parsedUrl.searchParams.get("utm_content")).toBe(
+                        "hero-banner"
+                    );
+                    expect(parsedUrl.searchParams.get("utm_term")).toBe(
+                        "wallet"
+                    );
+                    expect(parsedUrl.searchParams.get("via")).toBe("partner");
+                    expect(parsedUrl.searchParams.get("ref")).toBe("alice");
+                });
+
+                it("should preserve merchant-provided UTMs on the base URL (gap-fill)", () => {
+                    const baseUrl =
+                        "https://example.com/product?utm_source=google&utm_campaign=merchant-spring";
+                    const result = FrakContextManager.update({
+                        url: baseUrl,
+                        context: v2Context,
+                        attribution: {},
+                    });
+
+                    const parsedUrl = new URL(result!);
+                    // Merchant-provided values preserved
+                    expect(parsedUrl.searchParams.get("utm_source")).toBe(
+                        "google"
+                    );
+                    expect(parsedUrl.searchParams.get("utm_campaign")).toBe(
+                        "merchant-spring"
+                    );
+                    // Missing ones filled by Frak defaults
+                    expect(parsedUrl.searchParams.get("utm_medium")).toBe(
+                        "referral"
+                    );
+                    expect(parsedUrl.searchParams.get("ref")).toBe(v2Context.c);
+                });
+
+                it("should skip fields with empty-string overrides", () => {
+                    const result = FrakContextManager.update({
+                        url,
+                        context: v2Context,
+                        attribution: { utmContent: "", utmTerm: "" },
+                    });
+
+                    const parsedUrl = new URL(result!);
+                    expect(parsedUrl.searchParams.has("utm_content")).toBe(
+                        false
+                    );
+                    expect(parsedUrl.searchParams.has("utm_term")).toBe(false);
+                });
+
+                it("should skip context-derived defaults for V1 (no merchantId/clientId)", () => {
+                    const v1Context: FrakContextV1 = {
+                        r: "0x1234567890123456789012345678901234567890" as Address,
+                    };
+                    const result = FrakContextManager.update({
+                        url,
+                        context: v1Context,
+                        attribution: {},
+                    });
+
+                    const parsedUrl = new URL(result!);
+                    // Static defaults still applied
+                    expect(parsedUrl.searchParams.get("utm_source")).toBe(
+                        "frak"
+                    );
+                    expect(parsedUrl.searchParams.get("utm_medium")).toBe(
+                        "referral"
+                    );
+                    expect(parsedUrl.searchParams.get("via")).toBe("frak");
+                    // No derivable values from V1
+                    expect(parsedUrl.searchParams.has("utm_campaign")).toBe(
+                        false
+                    );
+                    expect(parsedUrl.searchParams.has("ref")).toBe(false);
+                });
+            });
         });
     });
 

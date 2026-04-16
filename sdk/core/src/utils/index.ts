@@ -28,6 +28,10 @@ export {
     isIOS,
     redirectToExternalBrowser,
 } from "./inAppBrowser";
+export {
+    type MergeAttributionInput,
+    mergeAttribution,
+} from "./mergeAttribution";
 export { sdkConfigStore } from "./sdkConfigStore";
 export {
     type AppSpecificSsoMetadata,

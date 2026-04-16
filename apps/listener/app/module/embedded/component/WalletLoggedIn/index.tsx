@@ -3,6 +3,7 @@ import {
     FrakContextManager,
     formatAmount,
     getCurrencyAmountKey,
+    mergeAttribution,
 } from "@frak-labs/core-sdk";
 import {
     clientIdStore,
@@ -26,6 +27,7 @@ import {
     useListenerTranslation,
 } from "@/module/providers/ListenerUiProvider";
 import { useSafeResolvingContext } from "@/module/stores/hooks";
+import { resolvingContextStore } from "@/module/stores/resolvingContextStore";
 import { useShareLink } from "../../../hooks/useShareLink";
 import { useTrackSharing } from "../../../hooks/useTrackSharing";
 import styles from "./index.module.css";
@@ -90,6 +92,9 @@ function ActionButtons() {
     const link = loggedIn?.action?.options?.link;
     const { sourceUrl, merchantId } = useSafeResolvingContext();
     const clientId = clientIdStore((s) => s.clientId);
+    const defaultAttribution = resolvingContextStore(
+        (s) => s.backendSdkConfig?.attribution
+    );
 
     const finalSharingLink =
         clientId && merchantId
@@ -101,6 +106,10 @@ function ActionButtons() {
                       m: merchantId,
                       t: Math.floor(Date.now() / 1000),
                   },
+                  attribution: mergeAttribution({
+                      perCall: {},
+                      defaults: defaultAttribution,
+                  }),
               })
             : null;
 
