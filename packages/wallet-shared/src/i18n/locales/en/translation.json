@@ -146,7 +146,8 @@
         },
         "login": {
             "accountCreation": "Account creation",
-            "button": "Recover your <strong>wallet</strong>",
+            "button": "Use biometrics",
+            "title": "Log in to your wallet",
             "recover": "Recover wallet from file",
             "walletsOnDevice": "Wallets used on this device",
             "privy": "Connect via Privy",

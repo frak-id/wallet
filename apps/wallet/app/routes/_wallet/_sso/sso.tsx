@@ -27,6 +27,7 @@ import { createFileRoute, redirect } from "@tanstack/react-router";
 import i18next from "i18next";
 import { useCallback, useMemo, useState } from "react";
 import { Trans, useTranslation } from "react-i18next";
+import * as layout from "@/module/authentication/component/authLayout.css";
 import { ButtonAuth } from "@/module/authentication/component/ButtonAuth";
 import * as styles from "@/module/authentication/component/Sso/index.css";
 import { SsoHeader } from "@/module/authentication/component/Sso/SsoHeader";
@@ -249,7 +250,7 @@ function Sso() {
                     description={
                         <HandleErrors
                             error={loaderError}
-                            className={styles.errorText}
+                            className={layout.errorText}
                         />
                     }
                     footer={
@@ -307,7 +308,7 @@ function Sso() {
     if (view === "pairing") {
         return (
             <PageLayout>
-                <Box className={styles.ssoContentTop}>
+                <Box className={layout.contentTop}>
                     <PairingView
                         title={t("authent.sso.pairing.title")}
                         description={t("authent.sso.pairing.description")}
@@ -325,10 +326,10 @@ function Sso() {
                     {error && (
                         <HandleErrors
                             error={error}
-                            className={styles.errorText}
+                            className={layout.errorText}
                         />
                     )}
-                    <Box className={styles.ssoActions}>
+                    <Box className={layout.actions}>
                         <Actions onSuccess={onSuccess} onError={setError} />
                         <PhonePairingAction
                             onClick={() => setView("pairing")}
@@ -339,7 +340,7 @@ function Sso() {
             }
         >
             <SsoHeader />
-            <Box className={styles.ssoContent}>
+            <Box className={layout.content}>
                 <ContentBlock
                     icon={<MerchantIcon metadata={currentMetadata} />}
                     titleAs="h1"
@@ -360,7 +361,7 @@ function Sso() {
 function MerchantIcon({ metadata }: { metadata: Metadata }) {
     if (metadata.logoUrl) {
         return (
-            <Box className={styles.merchantIcon}>
+            <Box className={layout.heroIcon}>
                 <img
                     src={metadata.logoUrl}
                     alt={metadata.name ?? ""}
@@ -370,7 +371,7 @@ function MerchantIcon({ metadata }: { metadata: Metadata }) {
         );
     }
     return (
-        <Box className={styles.merchantIcon}>
+        <Box className={layout.heroIcon}>
             <LogoFrak width={48} height={48} />
         </Box>
     );

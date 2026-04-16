@@ -144,7 +144,8 @@
         },
         "login": {
             "accountCreation": "Création de compte",
-            "button": "Récupérez votre <strong>porte-monnaie</strong>",
+            "button": "Utiliser la biométrie",
+            "title": "Connectez-vous à votre porte-monnaie",
             "recover": "Récupérer le porte-monnaie à partir du fichier",
             "walletsOnDevice": "Porte-monnaies utilisés sur cet appareil",
             "privy": "Connection via Privy",

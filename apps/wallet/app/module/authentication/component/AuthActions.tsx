@@ -1,7 +1,7 @@
 import { Box } from "@frak-labs/design-system/components/Box";
 import { Button } from "@frak-labs/design-system/components/Button";
-import { Spinner } from "@frak-labs/design-system/components/Spinner";
 import { Text } from "@frak-labs/design-system/components/Text";
+import { FaceIdIcon } from "@frak-labs/design-system/icons";
 import {
     authenticationStore,
     isWebAuthNSupported,
@@ -64,12 +64,12 @@ export function AuthActions({
         <>
             <Box>
                 <Button
-                    disabled={loading}
+                    loading={loading}
                     onClick={() => {
                         onError(null);
                         login({});
                     }}
-                    icon={loading ? <Spinner size="s" /> : undefined}
+                    icon={<FaceIdIcon width={24} height={24} />}
                     className={className}
                 >
                     <Trans

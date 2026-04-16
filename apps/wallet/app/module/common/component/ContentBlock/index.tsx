@@ -6,7 +6,7 @@ import * as styles from "./index.css";
 type ContentBlockProps = {
     icon: ReactNode;
     title: ReactNode;
-    description: ReactNode;
+    description?: ReactNode;
     footer?: ReactNode;
     children?: ReactNode;
     /** Heading level for the title element (default: "h2") */
@@ -38,9 +38,11 @@ export function ContentBlock({
                     <Text as={TitleTag} className={styles.title}>
                         {title}
                     </Text>
-                    <Text as="p" className={styles.description}>
-                        {description}
-                    </Text>
+                    {description && (
+                        <Text as="p" className={styles.description}>
+                            {description}
+                        </Text>
+                    )}
                 </Box>
                 {children}
             </Box>

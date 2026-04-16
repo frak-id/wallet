@@ -527,9 +527,10 @@ interface Resources {
             };
             login: {
                 accountCreation: "Account creation";
-                button: "Recover your <strong>wallet</strong>";
+                button: "Use biometrics";
                 privy: "Connect via Privy";
                 recover: "Recover wallet from file";
+                title: "Log in to your wallet";
                 useQRCode: "Use QR code to connect";
                 walletsOnDevice: "Wallets used on this device";
             };
@@ -603,7 +604,7 @@ interface Resources {
                     title: "Signature request";
                 };
                 status: {
-                    connecting: "Connecting...";
+                    connecting: "Pairing in progress";
                     idle: "Idle";
                     paired: "Paired";
                 };
