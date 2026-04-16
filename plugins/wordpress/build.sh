@@ -3,7 +3,7 @@
 # WordPress Plugin Build Script for Frak Integration
 
 PLUGIN_NAME="frak-integration"
-VERSION=$(grep "Version:" frak-integration.php | awk '{print $2}')
+VERSION="${1:-${VERSION:-$(grep -E '^\s*\*\s*Version:' frak-integration.php | head -n1 | awk '{print $3}')}}"
 BUILD_DIR="build"
 DIST_DIR="dist"
 
