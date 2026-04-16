@@ -27,27 +27,23 @@ define( 'FRAK_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
 define( 'FRAK_PLUGIN_URL', plugin_dir_url( __FILE__ ) );
 define( 'FRAK_PLUGIN_VERSION', '1.0.0' );
 
-// Load Composer autoloader if it exists (lazy-loads `kornrunner\Keccak`).
-if ( file_exists( FRAK_PLUGIN_DIR . 'vendor/autoload.php' ) ) {
-	require_once FRAK_PLUGIN_DIR . 'vendor/autoload.php';
-}
-
 // Register a small SPL autoloader for the plugin's own `Frak_*` classes so
 // admin/webhook code is only loaded when something actually touches it —
 // a plain frontend pageview never pays for the admin UI or webhook helper.
 spl_autoload_register(
-	static function ( $class ) {
+	static function ( $classname ) {
 		static $map = array(
 			'Frak_Plugin'         => 'includes/class-frak-plugin.php',
 			'Frak_Settings'       => 'includes/class-frak-settings.php',
 			'Frak_Frontend'       => 'includes/class-frak-frontend.php',
 			'Frak_Blocks'         => 'includes/class-frak-blocks.php',
 			'Frak_Webhook_Helper' => 'includes/class-frak-webhook-helper.php',
+			'Frak_Merchant'       => 'includes/class-frak-merchant.php',
 			'Frak_WooCommerce'    => 'includes/class-frak-woocommerce.php',
 			'Frak_Admin'          => 'admin/class-frak-admin.php',
 		);
-		if ( isset( $map[ $class ] ) ) {
-			require_once FRAK_PLUGIN_DIR . $map[ $class ];
+		if ( isset( $map[ $classname ] ) ) {
+			require_once FRAK_PLUGIN_DIR . $map[ $classname ];
 		}
 	}
 );

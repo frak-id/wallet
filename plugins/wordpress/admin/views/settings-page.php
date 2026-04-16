@@ -120,12 +120,11 @@ if ( ! defined( 'ABSPATH' ) ) {
 			</p>
 
 			<?php
-			$webhook_secret = get_option( 'frak_webhook_secret', '' );
-			$product_id     = Frak_Webhook_Helper::get_product_id();
-			$webhook_url    = Frak_Webhook_Helper::get_webhook_url();
-			$webhook_status = Frak_Webhook_Helper::get_webhook_status();
-			$webhook_logs   = Frak_Webhook_Helper::get_webhook_logs( 10 );
-			$webhook_stats  = Frak_Webhook_Helper::get_webhook_stats();
+			$webhook_secret  = get_option( 'frak_webhook_secret', '' );
+			$merchant_record = Frak_Merchant::get_record();
+			$webhook_url     = Frak_Webhook_Helper::get_webhook_url();
+			$webhook_logs    = Frak_Webhook_Helper::get_webhook_logs( 10 );
+			$webhook_stats   = Frak_Webhook_Helper::get_webhook_stats();
 			?>
 
 			<!-- Webhook Configuration -->
@@ -146,35 +145,36 @@ if ( ! defined( 'ABSPATH' ) ) {
 						</td>
 					</tr>
 					<tr>
-						<th scope="row"><?php esc_html_e( 'Webhook Status', 'frak' ); ?></th>
+						<th scope="row"><?php esc_html_e( 'Merchant', 'frak' ); ?></th>
 						<td>
-							<span class="frak-webhook-status <?php echo $webhook_status ? 'status-active' : 'status-inactive'; ?>">
-								<?php echo $webhook_status ? esc_html__( 'Active', 'frak' ) : esc_html__( 'Inactive', 'frak' ); ?>
-							</span>
-						</td>
-					</tr>
-					<tr>
-						<th scope="row"><?php esc_html_e( 'Manage Webhook', 'frak' ); ?></th>
-						<td>
-							<button type="button" id="open-webhook-popup" class="button"
-								data-product-id="<?php echo esc_attr( $product_id ); ?>">
-								<?php esc_html_e( 'Create Webhook', 'frak' ); ?>
+							<?php if ( $merchant_record ) : ?>
+								<span class="frak-webhook-status status-active">
+									<?php esc_html_e( '✓ Connected:', 'frak' ); ?> <strong><?php echo esc_html( $merchant_record['name'] ); ?></strong>
+								</span>
+							<?php else : ?>
+								<span class="frak-webhook-status status-inactive">
+									<?php esc_html_e( '✗ Not resolved for this domain', 'frak' ); ?>
+								</span>
+							<?php endif; ?>
+							<button type="button" id="refresh-merchant" class="button" style="margin-left: 10px;">
+								<?php esc_html_e( 'Refresh Merchant', 'frak' ); ?>
 							</button>
-							<a href="<?php echo esc_url( 'https://business.frak.id/product/' . $product_id ); ?>"
-								target="_blank" class="button">
-								<?php esc_html_e( 'Manage on Frak', 'frak' ); ?>
-							</a>
-							<button type="button" id="test-webhook" class="button">
-								<?php esc_html_e( 'Test Webhook', 'frak' ); ?>
-							</button>
+							<?php if ( $merchant_record ) : ?>
+								<a href="<?php echo esc_url( 'https://business.frak.id/merchant/' . $merchant_record['id'] ); ?>"
+									target="_blank" class="button">
+									<?php esc_html_e( 'Manage on Frak', 'frak' ); ?>
+								</a>
+							<?php endif; ?>
 						</td>
 					</tr>
 				</table>
 
 				<h4><?php esc_html_e( 'Webhook Information', 'frak' ); ?></h4>
 				<p><strong><?php esc_html_e( 'Domain:', 'frak' ); ?></strong> <?php echo esc_html( wp_parse_url( home_url(), PHP_URL_HOST ) ); ?></p>
-				<p><strong><?php esc_html_e( 'Product ID:', 'frak' ); ?></strong> <code><?php echo esc_html( $product_id ); ?></code></p>
-				<p><strong><?php esc_html_e( 'Webhook URL:', 'frak' ); ?></strong> <code><?php echo esc_html( $webhook_url ); ?></code></p>
+				<?php if ( $merchant_record ) : ?>
+					<p><strong><?php esc_html_e( 'Merchant ID:', 'frak' ); ?></strong> <code><?php echo esc_html( $merchant_record['id'] ); ?></code></p>
+					<p><strong><?php esc_html_e( 'Webhook URL:', 'frak' ); ?></strong> <code><?php echo esc_html( $webhook_url ); ?></code></p>
+				<?php endif; ?>
 
 				<h4><?php esc_html_e( 'Webhook Statistics', 'frak' ); ?></h4>
 				<div class="frak-stats-grid">

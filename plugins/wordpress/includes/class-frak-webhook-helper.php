@@ -5,7 +5,6 @@
  * @package Frak_Integration
  */
 
-use kornrunner\Keccak;
 
 /**
  * Class for handling webhook operations.
@@ -28,30 +27,20 @@ class Frak_Webhook_Helper {
 	private const LOG_MAX_ENTRIES = 20;
 
 	/**
-	 * Get the product ID based on the site domain.
+	 * Get the webhook URL for the resolved merchant, or null when the
+	 * site's domain has not yet been resolved to a Frak merchantId.
 	 *
-	 * TODO: review how this is computed — domain-based keccak is deterministic
-	 * so the result can be memoized (either in a static var or in the settings
-	 * cache) to drop the keccak hash cost on every call, and so we can consider
-	 * removing the `kornrunner/keccak` Composer dependency entirely.
+	 * The merchantId is resolved lazily on first access via Frak_Merchant,
+	 * so this stays free on every request that does not actually dispatch.
 	 *
-	 * @return string
-	 */
-	public static function get_product_id() {
-		$domain = wp_parse_url( home_url(), PHP_URL_HOST );
-		$domain = str_replace( array( 'www.' ), '', $domain );
-		$hash   = Keccak::hash( $domain, 256 );
-		return '0x' . $hash;
-	}
-
-	/**
-	 * Get the webhook URL.
-	 *
-	 * @return string
+	 * @return string|null
 	 */
 	public static function get_webhook_url() {
-		$product_id = self::get_product_id();
-		return 'https://backend.frak.id/ext/products/' . $product_id . '/webhook/oracle/custom';
+		$merchant_id = Frak_Merchant::get_id();
+		if ( ! $merchant_id ) {
+			return null;
+		}
+		return 'https://backend.frak.id/ext/merchant/' . rawurlencode( $merchant_id ) . '/webhook/custom';
 	}
 
 	/**
@@ -68,6 +57,10 @@ class Frak_Webhook_Helper {
 		$webhook_url = self::get_webhook_url();
 
 		try {
+			if ( null === $webhook_url ) {
+				throw new Exception( 'Merchant not resolved — webhook URL unavailable' );
+			}
+
 			$order = wc_get_order( $order_id );
 			if ( ! $order ) {
 				throw new Exception( 'Order not found: ' . $order_id );
@@ -134,6 +127,14 @@ class Frak_Webhook_Helper {
 			self::log_webhook_attempt( $order_id, $status, $http_code, $response_body, $execution_time, null );
 
 			if ( $http_code >= 200 && $http_code < 300 ) {
+				// Backend returns HTTP 200 with a `ko: <message>` body on semantic
+				// failures. A `Webhook not found` reply means the cached merchantId
+				// no longer maps to a live merchant (delete-and-recreate scenario),
+				// so drop the cache and let Action Scheduler retry with a fresh resolve.
+				if ( 0 === strncmp( $response_body, 'ko: Webhook not found', 21 ) ) {
+					Frak_Merchant::invalidate();
+					throw new Exception( 'Webhook not found (cache invalidated, will retry)' );
+				}
 				return array(
 					'success'   => true,
 					'http_code' => $http_code,
@@ -180,7 +181,6 @@ class Frak_Webhook_Helper {
 			'execution_time' => floatval( $execution_time ),
 			'error'          => $error ? substr( sanitize_text_field( $error ), 0, 500 ) : null,
 			'timestamp'      => current_time( 'mysql' ),
-			'webhook_url'    => self::get_webhook_url(),
 			'success'        => null === $error && $http_code >= 200 && $http_code < 300 ? 1 : 0,
 		);
 
@@ -262,113 +262,5 @@ class Frak_Webhook_Helper {
 	 */
 	public static function clear_webhook_logs() {
 		wp_cache_delete( self::LOG_CACHE_KEY, self::LOG_CACHE_GROUP );
-	}
-
-	/**
-	 * Test webhook connectivity.
-	 *
-	 * @return array
-	 * @throws Exception When the webhook secret is missing or the HTTP response indicates an error.
-	 */
-	public static function test_webhook() {
-		$start_time  = microtime( true );
-		$webhook_url = self::get_webhook_url();
-
-		try {
-			$test_payload = array(
-				'test'      => true,
-				'timestamp' => time(),
-				'domain'    => wp_parse_url( home_url(), PHP_URL_HOST ),
-			);
-
-			$json_body      = wp_json_encode( $test_payload );
-			$webhook_secret = get_option( 'frak_webhook_secret' );
-
-			if ( empty( $webhook_secret ) ) {
-				throw new Exception( 'Webhook secret not configured' );
-			}
-
-			$signature = base64_encode( hash_hmac( 'sha256', $json_body, $webhook_secret, true ) ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.obfuscation_base64_encode -- required for HMAC signature header.
-
-			$response = wp_remote_post(
-				$webhook_url,
-				array(
-					'body'    => $json_body,
-					'headers' => array(
-						'Content-Type'  => 'application/json',
-						'x-hmac-sha256' => $signature,
-					),
-					'timeout' => 30,
-				)
-			);
-
-			$execution_time = round( ( microtime( true ) - $start_time ) * 1000, 2 );
-
-			if ( is_wp_error( $response ) ) {
-				throw new Exception( 'WordPress error: ' . $response->get_error_message() );
-			}
-
-			$http_code     = wp_remote_retrieve_response_code( $response );
-			$response_body = wp_remote_retrieve_body( $response );
-
-			$result = array(
-				'success'        => $http_code >= 200 && $http_code < 300,
-				'http_code'      => $http_code,
-				'response'       => $response_body,
-				'execution_time' => $execution_time,
-				'error'          => null,
-			);
-
-			if ( ! $result['success'] ) {
-				$result['error'] = 'HTTP error: ' . $http_code;
-			}
-
-			return $result;
-		} catch ( Exception $e ) {
-			$execution_time = round( ( microtime( true ) - $start_time ) * 1000, 2 );
-
-			return array(
-				'success'        => false,
-				'http_code'      => 0,
-				'response'       => '',
-				'execution_time' => $execution_time,
-				'error'          => $e->getMessage(),
-			);
-		}
-	}
-
-	/**
-	 * Check webhook status.
-	 *
-	 * @return bool
-	 */
-	public static function get_webhook_status() {
-		$product_id = self::get_product_id();
-		$url        = 'https://backend.frak.id/business/product/' . $product_id . '/oracleWebhook/status';
-
-		$response = wp_remote_get(
-			$url,
-			array(
-				'timeout' => 10,
-			)
-		);
-
-		if ( is_wp_error( $response ) ) {
-			return false;
-		}
-
-		$http_code = wp_remote_retrieve_response_code( $response );
-		if ( 200 !== $http_code ) {
-			return false;
-		}
-
-		$body = wp_remote_retrieve_body( $response );
-		$data = json_decode( $body, true );
-
-		if ( JSON_ERROR_NONE !== json_last_error() ) {
-			return false;
-		}
-
-		return isset( $data['setup'] ) && true === $data['setup'];
 	}
 }

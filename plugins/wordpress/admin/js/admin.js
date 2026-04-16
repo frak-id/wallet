@@ -115,66 +115,27 @@
 	}
 
 	/**
-	 * Open the Frak business dashboard webhook setup flow in a popup.
+	 * Refresh the cached merchant for the current site and reload the page so
+	 * the admin view picks up the new state (resolved / still unresolved /
+	 * different name). Wired to the "Refresh Merchant" button — used to recover
+	 * from delete-and-recreate, domain change, or the 5-min negative cache.
 	 *
 	 * @param {Event} event
 	 */
-	function handleOpenWebhookPopup( event ) {
+	async function handleRefreshMerchant( event ) {
 		event.preventDefault();
-		const productId = event.currentTarget.dataset.productId;
-		const secretInput = document.getElementById( 'frak_webhook_secret' );
-		const secret = secretInput ? secretInput.value : '';
+		const button = event.currentTarget;
+		button.disabled = true;
+		button.textContent = 'Refreshing...';
 
-		if ( ! secret ) {
-			window.alert( 'Please generate a webhook secret first' );
-			return;
-		}
-
-		const createUrl = new URL( 'https://business.frak.id' );
-		createUrl.pathname = '/embedded/purchase-tracker';
-		createUrl.searchParams.append( 'pid', productId );
-		createUrl.searchParams.append( 's', secret );
-		createUrl.searchParams.append( 'p', 'custom' );
-
-		const popup = window.open(
-			createUrl.href,
-			'frak-business',
-			'menubar=no,status=no,scrollbars=no,fullscreen=no,width=500,height=800'
-		);
-		if ( ! popup ) {
-			return;
-		}
-		popup.focus();
-
-		const timer = setInterval( () => {
-			if ( popup.closed ) {
-				clearInterval( timer );
-				setTimeout( checkWebhookStatus, 1000 );
-			}
-		}, 500 );
-	}
-
-	/**
-	 * Fetch the current webhook status and update the UI badge.
-	 */
-	async function checkWebhookStatus() {
-		const response = await postAjax( 'frak_check_webhook_status' );
-		if ( ! response.success ) {
-			return;
-		}
-		const badge = document.querySelector( '.frak-webhook-status' );
-		if ( ! badge ) {
-			return;
-		}
-		if ( response.data.status ) {
-			badge.classList.remove( 'status-inactive' );
-			badge.classList.add( 'status-active' );
-			badge.textContent = 'Active';
-			showNotice( 'Webhook is now active!', 'success' );
+		const response = await postAjax( 'frak_refresh_merchant' );
+		if ( response.success ) {
+			showNotice( response.data.message, 'success' );
+			setTimeout( () => window.location.reload(), 800 );
 		} else {
-			badge.classList.remove( 'status-active' );
-			badge.classList.add( 'status-inactive' );
-			badge.textContent = 'Inactive';
+			showNotice( response.data.message, 'error' );
+			button.disabled = false;
+			button.textContent = 'Refresh Merchant';
 		}
 	}
 
@@ -202,28 +163,6 @@
 		} else {
 			showNotice( 'Error generating webhook secret', 'error' );
 		}
-	}
-
-	/**
-	 * Trigger a webhook test and surface the outcome.
-	 *
-	 * @param {Event} event
-	 */
-	async function handleTestWebhook( event ) {
-		event.preventDefault();
-		const button = event.currentTarget;
-		button.disabled = true;
-		button.textContent = 'Testing...';
-
-		const response = await postAjax( 'frak_test_webhook' );
-		if ( response.success ) {
-			showNotice( response.data.message, 'success' );
-		} else {
-			showNotice( response.data.message, 'error' );
-		}
-
-		button.disabled = false;
-		button.textContent = 'Test Webhook';
 	}
 
 	/**
@@ -288,19 +227,14 @@
 			generateBtn.addEventListener( 'click', handleGenerateSecret );
 		}
 
-		const testBtn = document.getElementById( 'test-webhook' );
-		if ( testBtn ) {
-			testBtn.addEventListener( 'click', handleTestWebhook );
+		const refreshMerchantBtn = document.getElementById( 'refresh-merchant' );
+		if ( refreshMerchantBtn ) {
+			refreshMerchantBtn.addEventListener( 'click', handleRefreshMerchant );
 		}
 
 		const clearBtn = document.getElementById( 'clear-webhook-logs' );
 		if ( clearBtn ) {
 			clearBtn.addEventListener( 'click', handleClearLogs );
-		}
-
-		const popupBtn = document.getElementById( 'open-webhook-popup' );
-		if ( popupBtn ) {
-			popupBtn.addEventListener( 'click', handleOpenWebhookPopup );
 		}
 	}
 

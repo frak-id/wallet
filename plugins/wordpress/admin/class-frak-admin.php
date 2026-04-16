@@ -39,9 +39,8 @@ class Frak_Admin {
 
 		// AJAX handlers for webhook operations.
 		add_action( 'wp_ajax_frak_generate_webhook_secret', array( $this, 'ajax_generate_webhook_secret' ) );
-		add_action( 'wp_ajax_frak_test_webhook', array( $this, 'ajax_test_webhook' ) );
+		add_action( 'wp_ajax_frak_refresh_merchant', array( $this, 'ajax_refresh_merchant' ) );
 		add_action( 'wp_ajax_frak_clear_webhook_logs', array( $this, 'ajax_clear_webhook_logs' ) );
-		add_action( 'wp_ajax_frak_check_webhook_status', array( $this, 'ajax_check_webhook_status' ) );
 	}
 
 	/**
@@ -270,33 +269,38 @@ class Frak_Admin {
 	}
 
 	/**
-	 * AJAX: Test webhook.
+	 * AJAX: Refresh the cached merchant record for the current site.
+	 *
+	 * Invalidates the `frak_merchant` option + negative cache, re-queries
+	 * the backend's resolve endpoint, and returns the fresh record. Wired
+	 * to the "Refresh Merchant" button on the admin settings page so
+	 * operators can recover from a delete-and-recreate, a domain change,
+	 * or the 5-minute negative-cache window without waiting for a webhook.
 	 */
-	public function ajax_test_webhook() {
+	public function ajax_refresh_merchant() {
 		check_ajax_referer( 'frak_ajax_nonce', 'nonce' );
 
 		if ( ! current_user_can( 'manage_options' ) ) {
 			wp_die( 'Unauthorized' );
 		}
 
-		$result = Frak_Webhook_Helper::test_webhook();
+		Frak_Merchant::invalidate();
+		$record = Frak_Merchant::get_record();
 
-		if ( $result['success'] ) {
-			wp_send_json_success(
-				array(
-					/* translators: %d: execution time in milliseconds */
-					'message' => sprintf( __( 'Webhook test successful (%dms)', 'frak' ), $result['execution_time'] ),
-					'details' => $result,
-				)
-			);
-		} else {
+		if ( null === $record ) {
 			wp_send_json_error(
 				array(
-					'message' => __( 'Webhook test failed: ', 'frak' ) . $result['error'],
-					'details' => $result,
+					'message' => __( 'Merchant not found for this domain. Register it on business.frak.id first.', 'frak' ),
 				)
 			);
 		}
+
+		wp_send_json_success(
+			array(
+				'message' => __( 'Merchant refreshed', 'frak' ),
+				'record'  => $record,
+			)
+		);
 	}
 
 	/**
@@ -314,25 +318,6 @@ class Frak_Admin {
 		wp_send_json_success(
 			array(
 				'message' => __( 'Webhook logs cleared successfully', 'frak' ),
-			)
-		);
-	}
-
-	/**
-	 * AJAX: Check webhook status.
-	 */
-	public function ajax_check_webhook_status() {
-		check_ajax_referer( 'frak_ajax_nonce', 'nonce' );
-
-		if ( ! current_user_can( 'manage_options' ) ) {
-			wp_die( 'Unauthorized' );
-		}
-
-		$status = Frak_Webhook_Helper::get_webhook_status();
-
-		wp_send_json_success(
-			array(
-				'status' => $status,
 			)
 		);
 	}

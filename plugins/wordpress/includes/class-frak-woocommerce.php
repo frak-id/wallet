@@ -189,7 +189,7 @@ class Frak_WooCommerce {
 			return;
 		}
 
-		$status_map = array(
+		$status_map     = array(
 			'completed'  => 'confirmed',
 			'processing' => 'pending',
 			'on-hold'    => 'pending',
@@ -222,9 +222,16 @@ class Frak_WooCommerce {
 	 * actual HTTP POST and records the outcome as an order note so the merchant
 	 * still has per-order visibility into webhook delivery.
 	 *
+	 * Failures (transient or semantic) re-throw so Action Scheduler marks the
+	 * run as failed and retries with its built-in backoff — this is what makes
+	 * the `ko: Webhook not found` self-heal path in Frak_Webhook_Helper::send()
+	 * actually recover: the merchant cache is invalidated on first attempt and
+	 * a fresh resolve happens on retry.
+	 *
 	 * @param int    $order_id       Order ID.
 	 * @param string $webhook_status Mapped webhook status.
 	 * @param string $token          Order key used to sign the payload token.
+	 * @throws Exception When webhook dispatch fails and Action Scheduler should retry.
 	 */
 	public static function dispatch_webhook( $order_id, $webhook_status, $token ) {
 		$result = Frak_Webhook_Helper::send( $order_id, $webhook_status, $token );
@@ -243,5 +250,11 @@ class Frak_WooCommerce {
 			/* translators: %s: error message */
 			sprintf( __( 'Frak: Webhook failed: %s', 'frak' ), $result['error'] )
 		);
+
+		// Throw so Action Scheduler marks this run as failed and schedules a
+		// retry. Covers transient failures: backend 5xx, unresolved merchant
+		// during first dispatch after install, and the `ko: Webhook not found`
+		// self-heal path that invalidates the merchant cache inside send().
+		throw new Exception( esc_html( $result['error'] ) );
 	}
 }
