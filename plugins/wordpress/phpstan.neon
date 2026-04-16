@@ -1,0 +1,11 @@
+parameters:
+    level: 5
+    paths:
+        - frak-integration.php
+        - includes
+        - admin/class-frak-admin.php
+    excludePaths:
+        - vendor
+        - test
+    scanDirectories:
+        - vendor/php-stubs

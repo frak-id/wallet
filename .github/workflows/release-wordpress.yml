@@ -1,0 +1,69 @@
+name: "🚀 Release WordPress Plugin"
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Version to release (e.g. 1.0.1)"
+        required: true
+        type: string
+  pull_request:
+    types: [closed]
+    branches: [main, dev]
+
+permissions:
+  contents: write
+  pull-requests: write
+
+concurrency:
+  group: release-wordpress
+  cancel-in-progress: false
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  prepare-pr:
+    name: "📝 Prepare release PR"
+    if: github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    steps:
+      - name: "📥 Checkout source branch"
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ github.ref_name }}
+          fetch-depth: 0
+
+      - name: "📦 Prepare release PR"
+        uses: ./.github/actions/release-plugin-prepare-pr
+        with:
+          version: ${{ inputs.version }}
+          plugin-name: "WordPress Plugin"
+          plugin-slug: wordpress
+          directory: plugins/wordpress
+          version-file: frak-integration.php
+          base-branch: ${{ github.ref_name }}
+
+  publish:
+    name: "🚀 Build & publish"
+    if: |
+      github.event_name == 'pull_request' &&
+      github.event.pull_request.merged == true &&
+      contains(github.event.pull_request.labels.*.name, 'release:wordpress') &&
+      startsWith(github.event.pull_request.head.ref, 'release/wordpress-')
+    runs-on: ubuntu-latest
+    steps:
+      - name: "📥 Checkout merge commit"
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ github.event.pull_request.merge_commit_sha }}
+          fetch-depth: 0
+
+      - name: "📦 Publish release"
+        uses: ./.github/actions/release-plugin-publish
+        with:
+          plugin-name: "WordPress Plugin"
+          plugin-slug: wordpress
+          directory: plugins/wordpress
+          artifact-glob: dist/frak-integration-*.zip

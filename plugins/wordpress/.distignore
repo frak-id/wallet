@@ -1,0 +1,50 @@
+# Development files
+.git
+.github
+.gitignore
+.distignore
+.DS_Store
+Thumbs.db
+
+# Editor files
+*.swp
+*.swo
+*~
+.idea
+.vscode
+
+# Build files
+node_modules
+package.json
+package-lock.json
+composer.json
+composer.lock
+
+# Development scripts
+*.sh
+Makefile
+
+# Tests
+tests
+phpunit.xml
+.phpunit.result.cache
+.phpunit.cache
+.phpcs.cache
+
+# Static analysis
+phpstan.neon
+phpcs.xml.dist
+
+# Documentation source files
+*.md
+!README.txt
+
+# Temporary files
+*.tmp
+*.log
+.cache
+
+# Assets source files (if any)
+assets/src
+assets/scss
+assets/sass

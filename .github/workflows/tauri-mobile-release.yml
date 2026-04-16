@@ -15,9 +15,12 @@ on:
           - prod
           - dev
         default: prod
+  pull_request:
+    types: [closed]
+    branches: [main, dev]
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
+  group: ${{ github.workflow }}
   cancel-in-progress: false
 
 permissions:
@@ -33,18 +36,100 @@ defaults:
     shell: bash
 
 jobs:
-  validate:
-    name: "✅ Validate"
+  prepare-pr:
+    name: "📝 Prepare release PR"
+    if: github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     steps:
       - name: "✅ Validate version format"
+        env:
+          VERSION: ${{ inputs.version }}
         run: |
           if ! echo "$VERSION" | grep -qE '^[0-9]+\.[0-9]+\.[0-9]+$'; then
             echo "::error::Invalid version format: $VERSION (expected: X.Y.Z)"
             exit 1
           fi
+
+      - name: "📥 Checkout source branch"
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ github.ref_name }}
+          fetch-depth: 0
+
+      - name: "🧅 Setup Bun"
+        uses: oven-sh/setup-bun@v2
+
+      - name: "📦 Install dependencies"
+        run: bun install --frozen-lockfile
+
+      - name: "🦀 Setup Rust"
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: "🔄 Sync version"
+        run: bun run --cwd apps/wallet tauri:version "$VERSION"
         env:
           VERSION: ${{ inputs.version }}
+
+      - name: "📝 Promote CHANGELOG [Unreleased] → [${{ inputs.version }}]"
+        uses: release-flow/keep-a-changelog-action@v3
+        with:
+          command: bump
+          version: ${{ inputs.version }}
+          changelog: apps/wallet/src-tauri/CHANGELOG.md
+          tag-prefix: app-
+          keep-unreleased-section: true
+          fail-on-empty-release-notes: true
+
+      - name: "📌 Create release PR"
+        uses: peter-evans/create-pull-request@v8
+        with:
+          branch: release/mobile-${{ inputs.version }}
+          base: ${{ github.ref_name }}
+          title: "chore(mobile): release ${{ inputs.version }} (${{ inputs.stage }})"
+          commit-message: "chore(mobile): release ${{ inputs.version }}"
+          body: |
+            Release **Frak Wallet Mobile ${{ inputs.version }}** (stage: `${{ inputs.stage }}`).
+
+            Merging this PR will:
+            - Build iOS (IPA) and Android (AAB)
+            - Upload iOS to TestFlight and Android to Google Play (internal track)
+            - Tag the merge commit as `app-${{ inputs.version }}`
+            - Create a GitHub release with the CHANGELOG notes + IPA + AAB
+          labels: |
+            release:mobile
+            release:mobile:${{ inputs.stage }}
+          delete-branch: true
+
+  validate:
+    name: "✅ Validate"
+    if: |
+      github.event_name == 'pull_request' &&
+      github.event.pull_request.merged == true &&
+      contains(github.event.pull_request.labels.*.name, 'release:mobile') &&
+      startsWith(github.event.pull_request.head.ref, 'release/mobile-')
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.extract.outputs.version }}
+      stage: ${{ steps.extract.outputs.stage }}
+    steps:
+      - name: "🏷️ Extract version & stage from PR"
+        id: extract
+        env:
+          BRANCH: ${{ github.event.pull_request.head.ref }}
+          LABELS: ${{ toJSON(github.event.pull_request.labels.*.name) }}
+        run: |
+          VERSION="${BRANCH#release/mobile-}"
+          if ! echo "$VERSION" | grep -qE '^[0-9]+\.[0-9]+\.[0-9]+$'; then
+            echo "::error::Could not parse version from branch: $BRANCH"
+            exit 1
+          fi
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+
+          if echo "$LABELS" | jq -r '.[]' | grep -qx 'release:mobile:dev'; then
+            echo "stage=dev" >> "$GITHUB_OUTPUT"
+          else
+            echo "stage=prod" >> "$GITHUB_OUTPUT"
+          fi
 
   prepare:
     name: "📦 Build SDK"
@@ -55,6 +140,7 @@ jobs:
       - name: "📥 Checkout"
         uses: actions/checkout@v6
         with:
+          ref: ${{ github.event.pull_request.merge_commit_sha }}
           fetch-depth: 1
 
       - name: "🧅 Setup Bun"
@@ -86,13 +172,14 @@ jobs:
 
   ios:
     name: "🍎 iOS"
-    needs: prepare
+    needs: [validate, prepare]
     runs-on: macos-26
 
     steps:
       - name: "📥 Checkout"
         uses: actions/checkout@v6
         with:
+          ref: ${{ github.event.pull_request.merge_commit_sha }}
           fetch-depth: 1
 
       - name: "🧅 Setup Bun"
@@ -155,11 +242,6 @@ jobs:
           aws-region: eu-west-1
           retry-max-attempts: 5
 
-      - name: "🔄 Sync version"
-        run: bun run --cwd apps/wallet tauri:version "$VERSION"
-        env:
-          VERSION: ${{ inputs.version }}
-
       - name: "🔑 Write App Store Connect API key"
         run: echo "$APPLE_API_KEY_CONTENT" > "$RUNNER_TEMP/AuthKey.p8"
         env:
@@ -175,14 +257,14 @@ jobs:
           echo "$VALUE" | base64 -d > apps/wallet/src-tauri/gen/apple/app_iOS/GoogleService-Info.plist
           echo "[ci] GoogleService-Info.plist written ($(wc -c < apps/wallet/src-tauri/gen/apple/app_iOS/GoogleService-Info.plist) bytes)"
         env:
-          STAGE: ${{ inputs.stage }}
+          STAGE: ${{ needs.validate.outputs.stage }}
 
       - name: "🏗️ Build iOS"
         # cd into wallet app so tauri finds src-tauri/ and beforeBuildCommand runs in correct directory
         run: sst shell --stage "$STAGE" --print-logs -- bash -c "cd apps/wallet && tauri ios build --export-method app-store-connect"
         env:
-          STAGE: ${{ inputs.stage }}
-          VITE_WALLET_MODE: ${{ inputs.stage == 'prod' && 'loyalty' || 'crypto' }}
+          STAGE: ${{ needs.validate.outputs.stage }}
+          VITE_WALLET_MODE: ${{ needs.validate.outputs.stage == 'prod' && 'loyalty' || 'crypto' }}
           APPLE_API_ISSUER: ${{ secrets.APPSTORE_ISSUER_ID }}
           APPLE_API_KEY: ${{ secrets.APPSTORE_API_KEY_ID }}
           APPLE_API_KEY_PATH: ${{ runner.temp }}/AuthKey.p8
@@ -214,13 +296,14 @@ jobs:
 
   android:
     name: "🤖 Android"
-    needs: prepare
+    needs: [validate, prepare]
     runs-on: ubuntu-latest
 
     steps:
       - name: "📥 Checkout"
         uses: actions/checkout@v6
         with:
+          ref: ${{ github.event.pull_request.merge_commit_sha }}
           fetch-depth: 1
 
       - name: "🧅 Setup Bun"
@@ -292,11 +375,6 @@ jobs:
           aws-region: eu-west-1
           retry-max-attempts: 5
 
-      - name: "🔄 Sync version"
-        run: bun run --cwd apps/wallet tauri:version "$VERSION"
-        env:
-          VERSION: ${{ inputs.version }}
-
       - name: "🔑 Write Android signing files"
         run: |
           echo "$KEYSTORE_BASE64" | base64 -d > apps/wallet/src-tauri/gen/android/upload-keystore.jks
@@ -321,14 +399,14 @@ jobs:
           echo "$VALUE" | base64 -d > apps/wallet/src-tauri/gen/android/app/google-services.json
           echo "[ci] google-services.json written ($(wc -c < apps/wallet/src-tauri/gen/android/app/google-services.json) bytes)"
         env:
-          STAGE: ${{ inputs.stage }}
+          STAGE: ${{ needs.validate.outputs.stage }}
 
       - name: "🏗️ Build Android"
         # cd into wallet app so tauri finds src-tauri/ and beforeBuildCommand runs in correct directory
         run: sst shell --stage "$STAGE" --print-logs -- bash -c "cd apps/wallet && tauri android build"
         env:
-          STAGE: ${{ inputs.stage }}
-          VITE_WALLET_MODE: ${{ inputs.stage == 'prod' && 'loyalty' || 'crypto' }}
+          STAGE: ${{ needs.validate.outputs.stage }}
+          VITE_WALLET_MODE: ${{ needs.validate.outputs.stage == 'prod' && 'loyalty' || 'crypto' }}
 
       # TODO: Graduate from `internal` track to `production` when ready for public release
       - name: "🚀 Upload to Play Store"
@@ -347,51 +425,55 @@ jobs:
           name: android-aab
           path: apps/wallet/src-tauri/gen/android/app/build/outputs/bundle/universalRelease/app-universal-release.aab
 
-  commit-version:
-    name: "📌 Commit Version"
-    needs: [ios, android]
+  github-release:
+    name: "🏷️ GitHub Release"
+    needs: [validate, ios, android]
     runs-on: ubuntu-latest
-
+    permissions:
+      contents: write
     steps:
-      - name: "📥 Checkout"
+      - name: "📥 Checkout merge commit"
         uses: actions/checkout@v6
-
-      - name: "🧅 Setup Bun"
-        uses: oven-sh/setup-bun@v2
-
-      - name: "💾 Cache Bun modules"
-        uses: actions/cache@v5
         with:
-          path: ~/.bun/install/cache
-          key: ${{ runner.os }}-bun-${{ hashFiles('bun.lock') }}
-          restore-keys: ${{ runner.os }}-bun-
+          ref: ${{ github.event.pull_request.merge_commit_sha }}
+          fetch-depth: 0
 
-      - name: "📦 Install dependencies"
-        run: bun install --frozen-lockfile
+      - name: "📥 Download iOS artifact"
+        uses: actions/download-artifact@v8
+        with:
+          name: ios-ipa
+          path: release-assets/ios
 
-      - name: "🦀 Setup Rust"
-        uses: dtolnay/rust-toolchain@stable
+      - name: "📥 Download Android artifact"
+        uses: actions/download-artifact@v8
+        with:
+          name: android-aab
+          path: release-assets/android
 
-      - name: "🔄 Sync version"
-        run: bun run --cwd apps/wallet tauri:version "$VERSION"
+      - name: "📝 Extract release notes"
+        id: notes
+        uses: release-flow/keep-a-changelog-action@v3
+        with:
+          command: query
+          version: ${{ needs.validate.outputs.version }}
+          changelog: apps/wallet/src-tauri/CHANGELOG.md
+
+      - name: "🏷️ Create tag"
         env:
-          VERSION: ${{ inputs.version }}
-
-      - name: "📌 Create version bump PR"
-        if: github.ref == 'refs/heads/main'
-        uses: peter-evans/create-pull-request@v8
-        with:
-          commit-message: "⬆️ v${{ inputs.version }}"
-          branch: chore/mobile-v${{ inputs.version }}
-          title: "⬆️ v${{ inputs.version }}"
-          body: "Auto-generated version bump from mobile release workflow."
-          delete-branch: true
-
-      - name: "📌 Commit & push"
-        if: github.ref != 'refs/heads/main'
+          VERSION: ${{ needs.validate.outputs.version }}
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add -A
-          git commit -m "⬆️ v${{ inputs.version }}" || echo "No changes to commit"
-          git push
+          git tag "app-${VERSION}"
+          git push origin "app-${VERSION}"
+
+      - name: "🚀 Create GitHub release"
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: "app-${{ needs.validate.outputs.version }}"
+          name: "Frak Wallet ${{ needs.validate.outputs.version }}"
+          body: ${{ steps.notes.outputs.release-notes }}
+          prerelease: ${{ needs.validate.outputs.stage == 'dev' }}
+          files: |
+            release-assets/ios/*.ipa
+            release-assets/android/*.aab
