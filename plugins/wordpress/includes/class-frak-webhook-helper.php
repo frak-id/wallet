@@ -41,6 +41,7 @@ class Frak_Webhook_Helper {
 	 * @param string $status   Order status.
 	 * @param string $token    Token.
 	 * @return array
+	 * @throws Exception When the order is not found, webhook secret is missing, payload encoding fails, or the HTTP response indicates an error.
 	 */
 	public static function send( $order_id, $status, $token ) {
 		$start_time  = microtime( true );
@@ -84,7 +85,7 @@ class Frak_Webhook_Helper {
 				throw new Exception( 'Failed to encode webhook payload as JSON' );
 			}
 
-			$signature = base64_encode( hash_hmac( 'sha256', $json_body, $webhook_secret, true ) );
+			$signature = base64_encode( hash_hmac( 'sha256', $json_body, $webhook_secret, true ) ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.obfuscation_base64_encode -- required for HMAC signature header.
 
 			$response = wp_remote_post(
 				$webhook_url,
@@ -240,6 +241,7 @@ class Frak_Webhook_Helper {
 	 * Test webhook connectivity.
 	 *
 	 * @return array
+	 * @throws Exception When the webhook secret is missing or the HTTP response indicates an error.
 	 */
 	public static function test_webhook() {
 		$start_time  = microtime( true );
@@ -259,7 +261,7 @@ class Frak_Webhook_Helper {
 				throw new Exception( 'Webhook secret not configured' );
 			}
 
-			$signature = base64_encode( hash_hmac( 'sha256', $json_body, $webhook_secret, true ) );
+			$signature = base64_encode( hash_hmac( 'sha256', $json_body, $webhook_secret, true ) ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.obfuscation_base64_encode -- required for HMAC signature header.
 
 			$response = wp_remote_post(
 				$webhook_url,

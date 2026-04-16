@@ -55,7 +55,7 @@ class Frak_WooCommerce {
 		$customer_id = $order->get_user_id();
 		$order_key   = $order->get_order_key();
 
-		wp_register_script( 'frak-purchase-tracking', false ); // phpcs:ignore WordPress.WP.EnqueuedResourceParameters.MissingVersion -- inline-only handle.
+		wp_register_script( 'frak-purchase-tracking', false, array(), null, true ); // phpcs:ignore WordPress.WP.EnqueuedResourceParameters.MissingVersion -- inline-only handle.
 		wp_enqueue_script( 'frak-purchase-tracking' );
 
 		$tracking_script = $this->get_tracking_script( $customer_id, $order_id, $order_key );

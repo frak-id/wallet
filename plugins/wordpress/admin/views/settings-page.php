@@ -79,8 +79,8 @@ if ( ! defined( 'ABSPATH' ) ) {
 							<p class="description">
 								<?php
 								printf(
-									/* translators: %s: URL to customizer */
 									wp_kses(
+										/* translators: %s: URL to customizer */
 										__( 'No site icon or custom logo found. <a href="%s" target="_blank">Set one in Customizer</a>', 'frak' ),
 										array(
 											'a' => array(

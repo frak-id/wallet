@@ -48,7 +48,7 @@ class Frak_Frontend {
 				'frak-sdk',
 				'https://cdn.jsdelivr.net/npm/@frak-labs/components',
 				array(),
-				null,
+				false,
 				true
 			);
 
@@ -93,8 +93,9 @@ class Frak_Frontend {
 		$floating_button_position = esc_js( get_option( 'frak_floating_button_position', 'right' ) );
 		$modal_i18n               = get_option( 'frak_modal_i18n', '{}' );
 
-		$shop_name = esc_js( get_bloginfo( 'name' ) );
-		$modal_lng = 'default' === $modal_language ? 'default' : esc_js( $modal_language );
+		$shop_name    = esc_js( get_bloginfo( 'name' ) );
+		$modal_lng    = 'default' === $modal_language ? 'default' : esc_js( $modal_language );
+		$decoded_i18n = json_decode( $modal_i18n, true );
 
 		$config = array(
 			'walletUrl'      => 'https://wallet.frak.id',
@@ -104,7 +105,7 @@ class Frak_Frontend {
 				'logoUrl' => $logo_url,
 			),
 			'customizations' => array(
-				'i18n' => json_decode( $modal_i18n, true ) ?: new stdClass(),
+				'i18n' => empty( $decoded_i18n ) ? new stdClass() : $decoded_i18n,
 			),
 			'domain'         => 'window.location.host',
 		);

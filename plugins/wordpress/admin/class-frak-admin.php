@@ -154,7 +154,7 @@ class Frak_Admin {
 		$app_name = isset( $_POST['frak_app_name'] ) ? sanitize_text_field( wp_unslash( $_POST['frak_app_name'] ) ) : '';
 
 		$logo_url = isset( $_POST['frak_logo_url'] ) ? esc_url_raw( wp_unslash( $_POST['frak_logo_url'] ) ) : '';
-		if ( ! empty( $_FILES['frak_logo_file'] ) && UPLOAD_ERR_OK === $_FILES['frak_logo_file']['error'] ) {
+		if ( isset( $_FILES['frak_logo_file']['error'] ) && UPLOAD_ERR_OK === $_FILES['frak_logo_file']['error'] ) {
 			$uploaded_logo = $this->handle_logo_upload( $_FILES['frak_logo_file'] ); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput -- handled by wp_handle_upload.
 			if ( $uploaded_logo ) {
 				$logo_url = $uploaded_logo;
