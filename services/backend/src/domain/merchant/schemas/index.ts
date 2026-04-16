@@ -3,6 +3,10 @@ import type { Static } from "elysia";
 
 export const ExplorerConfigSchema = t.Object({
     heroImageUrl: t.Optional(t.String({ format: "uri", maxLength: 2048 })),
+    // Up to 4 additional hero images. The wallet slider renders them after heroImageUrl.
+    heroImageUrls: t.Optional(
+        t.Array(t.String({ format: "uri", maxLength: 2048 }), { maxItems: 4 })
+    ),
     logoUrl: t.Optional(t.String({ format: "uri", maxLength: 2048 })),
     description: t.Optional(t.String({ maxLength: 1000 })),
 });

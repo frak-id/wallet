@@ -53,14 +53,15 @@ export function ExplorerDetail({ merchant, onClose }: ExplorerDetailProps) {
     );
     const rewardSummary = useRewardSummary(rewards, i18n.language);
 
-    const fallbackImage =
-        merchant.explorerConfig?.heroImageUrl ??
-        merchant.explorerConfig?.heroImageUrl;
-
-    const images = useMemo(
-        () => (fallbackImage ? [fallbackImage] : []),
-        [fallbackImage]
-    );
+    const images = useMemo(() => {
+        const main = merchant.explorerConfig?.heroImageUrl;
+        const extras = merchant.explorerConfig?.heroImageUrls ?? [];
+        const all = main ? [main, ...extras] : extras;
+        return all.filter((url): url is string => Boolean(url));
+    }, [
+        merchant.explorerConfig?.heroImageUrl,
+        merchant.explorerConfig?.heroImageUrls,
+    ]);
 
     const { currentIndex, scrollContainerRef } = useSlideCarousel({
         slideCount: images.length,

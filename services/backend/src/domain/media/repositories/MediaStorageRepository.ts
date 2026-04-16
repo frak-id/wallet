@@ -2,17 +2,14 @@ import {
     CreateBucketCommand,
     DeleteObjectCommand,
     HeadBucketCommand,
+    HeadObjectCommand,
+    ListObjectsV2Command,
     PutBucketPolicyCommand,
     PutObjectCommand,
     S3Client,
 } from "@aws-sdk/client-s3";
 import { log } from "@backend-infrastructure";
 import { isRunningLocally } from "@frak-labs/app-essentials";
-
-/**
- * Image type determining the storage key
- */
-type ImageType = "logo" | "hero";
 
 /**
  * Repository for storing media objects in RustFS (S3-compatible)
@@ -94,7 +91,7 @@ export class MediaStorageRepository {
         contentType,
     }: {
         merchantId: string;
-        type: ImageType;
+        type: string;
         body: Buffer | Uint8Array;
         contentType: string;
     }): Promise<string> {
@@ -118,6 +115,35 @@ export class MediaStorageRepository {
     }
 
     /**
+     * Check if a media object exists for the given merchant + type.
+     * Tries both webp and svg extensions.
+     */
+    async exists({
+        merchantId,
+        type,
+    }: {
+        merchantId: string;
+        type: string;
+    }): Promise<boolean> {
+        await this.ensureBucket();
+
+        for (const ext of ["webp", "svg"]) {
+            try {
+                await this.client.send(
+                    new HeadObjectCommand({
+                        Bucket: this.bucketName,
+                        Key: `${merchantId}/${type}.${ext}`,
+                    })
+                );
+                return true;
+            } catch {
+                // Not found — try next extension
+            }
+        }
+        return false;
+    }
+
+    /**
      * Delete all image variants for a given merchant + type
      */
     async delete({
@@ -125,7 +151,7 @@ export class MediaStorageRepository {
         type,
     }: {
         merchantId: string;
-        type: ImageType;
+        type: string;
     }): Promise<void> {
         await this.ensureBucket();
 
@@ -140,5 +166,44 @@ export class MediaStorageRepository {
                 )
             )
         );
+    }
+
+    /**
+     * List all media files for a given merchant
+     */
+    async list({
+        merchantId,
+    }: {
+        merchantId: string;
+    }): Promise<{ type: string; url: string }[]> {
+        await this.ensureBucket();
+
+        const result = await this.client.send(
+            new ListObjectsV2Command({
+                Bucket: this.bucketName,
+                Prefix: `${merchantId}/`,
+            })
+        );
+
+        if (!result.Contents) return [];
+
+        const files: { type: string; url: string }[] = [];
+        for (const obj of result.Contents) {
+            if (!obj.Key) continue;
+            // Match logo, hero, or hero-{variant} (e.g. hero-home, hero-cta)
+            const match = obj.Key.match(
+                /^[^/]+\/(logo|hero(?:-[a-zA-Z0-9_-]+)?)\.(webp|svg)$/
+            );
+            if (!match) continue;
+            const type = match[1];
+            // Deduplicate: keep only the first extension found per type
+            if (files.some((f) => f.type === type)) continue;
+            files.push({
+                type,
+                url: `${this.cdnBaseUrl}/${this.bucketName}/${obj.Key}`,
+            });
+        }
+
+        return files;
     }
 }
