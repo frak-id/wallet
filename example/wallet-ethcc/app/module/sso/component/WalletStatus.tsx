@@ -1,4 +1,5 @@
 import { useOpenSso, usePrepareSso } from "@frak-labs/react-sdk";
+import { Button } from "@/module/common/component/Button";
 import { Panel } from "@/module/common/component/Panel";
 
 export function Sso() {
@@ -6,7 +7,7 @@ export function Sso() {
     const { data, status, error, mutate } = useOpenSso();
 
     return (
-        <Panel variant={"primary"}>
+        <Panel>
             <h2>SSO</h2>
 
             <p>
@@ -21,8 +22,7 @@ export function Sso() {
 
             {error && <div>Error: {JSON.stringify(error)}</div>}
 
-            <button
-                type="button"
+            <Button
                 onClick={() => {
                     mutate({
                         redirectUrl: window.location.href,
@@ -33,10 +33,9 @@ export function Sso() {
                 }}
             >
                 With redirect
-            </button>
+            </Button>
 
-            <button
-                type="button"
+            <Button
                 onClick={() => {
                     mutate({
                         openInSameWindow: false,
@@ -45,7 +44,7 @@ export function Sso() {
                 }}
             >
                 Distant window
-            </button>
+            </Button>
         </Panel>
     );
 }

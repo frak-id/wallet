@@ -1,9 +1,8 @@
-import { ReactScan } from "@frak-labs/ui/component/ReactScan";
-import { Spinner } from "@frak-labs/ui/component/Spinner";
 import { createRootRoute, Outlet } from "@tanstack/react-router";
 import { TanStackRouterDevtools } from "@tanstack/react-router-devtools";
-import "../styles/all.css";
+import "../styles/theme.css";
 import { MainLayout } from "../module/common/component/MainLayout";
+import { Spinner } from "../module/common/component/Spinner";
 import { RootProvider } from "../module/common/provider/RootProvider";
 
 export const Route = createRootRoute({
@@ -14,7 +13,7 @@ export const Route = createRootRoute({
                 position: "fixed",
                 left: "50%",
                 top: "50%",
-                margin: "-8px 0 0 -8px",
+                transform: "translate(-50%, -50%)",
             }}
         >
             <Spinner />
@@ -26,7 +25,6 @@ export const Route = createRootRoute({
 function RootComponent() {
     return (
         <RootProvider>
-            {process.env.DEBUG === "true" && <ReactScan />}
             <MainLayout>
                 <Outlet />
             </MainLayout>

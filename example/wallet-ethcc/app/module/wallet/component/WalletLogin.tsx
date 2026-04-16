@@ -4,10 +4,10 @@ import type {
     SiweAuthenticateModalStepType,
 } from "@frak-labs/core-sdk";
 import { useDisplayModal } from "@frak-labs/react-sdk";
-import { Button } from "@frak-labs/ui/component/Button";
 import { BadgeCheck } from "lucide-react";
 import { useMemo } from "react";
 import { parseSiweMessage } from "viem/siwe";
+import { Button } from "@/module/common/component/Button";
 import { Panel } from "@/module/common/component/Panel";
 
 export function WalletLogin() {
@@ -20,7 +20,7 @@ export function WalletLogin() {
     } = useDisplayModal();
 
     return (
-        <Panel variant={"primary"}>
+        <Panel>
             <h2>SIWE Authentication</h2>
 
             <p>

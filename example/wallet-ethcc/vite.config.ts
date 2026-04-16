@@ -1,15 +1,15 @@
 import tanstackRouter from "@tanstack/router-plugin/vite";
+import { vanillaExtractPlugin } from "@vanilla-extract/vite-plugin";
 import viteReact from "@vitejs/plugin-react";
 import type { UserConfig } from "vite";
 import { defineConfig } from "vite";
-import { lightningCssConfig, onwarn } from "../../packages/dev-tooling";
+import { onwarn } from "../../packages/dev-tooling";
 
 const DEBUG = process.env.DEBUG === "true";
 const isProd = process.env.STAGE?.includes("prod") ?? false;
 
 export default defineConfig((): UserConfig => {
     return {
-        css: lightningCssConfig,
         define: {
             "process.env.STAGE": JSON.stringify(process.env.STAGE),
             "process.env.FRAK_WALLET_URL": JSON.stringify(
@@ -27,6 +27,7 @@ export default defineConfig((): UserConfig => {
                 autoCodeSplitting: true,
             }),
             viteReact(),
+            vanillaExtractPlugin(),
         ],
         resolve: {
             tsconfigPaths: true,
@@ -50,7 +51,7 @@ export default defineConfig((): UserConfig => {
                         groups: [
                             {
                                 name: "react-vendor",
-                                test: /node_modules[\\/](react|react-dom|scheduler|react-scan)/,
+                                test: /node_modules[\\/](react|react-dom|scheduler)/,
                                 priority: 40,
                             },
                             {
@@ -77,9 +78,6 @@ export default defineConfig((): UserConfig => {
                 },
                 onwarn,
             },
-        },
-        optimizeDeps: {
-            exclude: ["react-scan"],
         },
     };
 });

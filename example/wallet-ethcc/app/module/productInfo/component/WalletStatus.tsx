@@ -10,7 +10,7 @@ export function ProductInfo() {
     } = useGetMerchantInformation();
 
     return (
-        <Panel variant={"primary"}>
+        <Panel>
             <h2>Product information</h2>
 
             <p>

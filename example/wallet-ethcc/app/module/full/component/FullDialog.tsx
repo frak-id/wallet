@@ -6,11 +6,11 @@ import type {
     SiweAuthenticateModalStepType,
 } from "@frak-labs/core-sdk";
 import { useDisplayModal } from "@frak-labs/react-sdk";
-import { Button } from "@frak-labs/ui/component/Button";
 import { BadgeCheck } from "lucide-react";
 import { useMemo } from "react";
 import { encodeFunctionData, zeroAddress } from "viem";
 import { parseSiweMessage } from "viem/siwe";
+import { Button } from "@/module/common/component/Button";
 import { Panel } from "@/module/common/component/Panel";
 
 export function FullDialog() {
@@ -23,7 +23,7 @@ export function FullDialog() {
     } = useDisplayModal();
 
     return (
-        <Panel variant={"primary"}>
+        <Panel>
             <h2>Full Dialog</h2>
 
             <p>
