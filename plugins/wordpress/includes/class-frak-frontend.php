@@ -87,18 +87,18 @@ class Frak_Frontend {
 	 * @return string
 	 */
 	private function generate_config_script() {
-		$app_name                = esc_js( get_option( 'frak_app_name', get_bloginfo( 'name' ) ) );
-		$logo_url                = esc_js( get_option( 'frak_logo_url', '' ) );
-		$modal_language          = get_option( 'frak_modal_language', 'default' );
+		$app_name                 = esc_js( get_option( 'frak_app_name', get_bloginfo( 'name' ) ) );
+		$logo_url                 = esc_js( get_option( 'frak_logo_url', '' ) );
+		$modal_language           = get_option( 'frak_modal_language', 'default' );
 		$floating_button_position = esc_js( get_option( 'frak_floating_button_position', 'right' ) );
-		$modal_i18n              = get_option( 'frak_modal_i18n', '{}' );
+		$modal_i18n               = get_option( 'frak_modal_i18n', '{}' );
 
 		$shop_name = esc_js( get_bloginfo( 'name' ) );
 		$modal_lng = 'default' === $modal_language ? 'default' : esc_js( $modal_language );
 
 		$config = array(
-			'walletUrl' => 'https://wallet.frak.id',
-			'metadata'  => array(
+			'walletUrl'      => 'https://wallet.frak.id',
+			'metadata'       => array(
 				'name'    => $shop_name,
 				'lang'    => 'default' === $modal_lng ? null : $modal_lng,
 				'logoUrl' => $logo_url,
@@ -106,7 +106,7 @@ class Frak_Frontend {
 			'customizations' => array(
 				'i18n' => json_decode( $modal_i18n, true ) ?: new stdClass(),
 			),
-			'domain'    => 'window.location.host',
+			'domain'         => 'window.location.host',
 		);
 
 		$modal_config = array(

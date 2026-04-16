@@ -82,7 +82,12 @@ if ( ! defined( 'ABSPATH' ) ) {
 									/* translators: %s: URL to customizer */
 									wp_kses(
 										__( 'No site icon or custom logo found. <a href="%s" target="_blank">Set one in Customizer</a>', 'frak' ),
-										array( 'a' => array( 'href' => array(), 'target' => array() ) )
+										array(
+											'a' => array(
+												'href'   => array(),
+												'target' => array(),
+											),
+										)
 									),
 									esc_url( admin_url( 'customize.php' ) )
 								);

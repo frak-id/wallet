@@ -42,9 +42,9 @@ class Frak_Plugin {
 	 * Define plugin constants.
 	 */
 	private function define_constants() {
-		define( 'FRAK_PLUGIN_DIR', plugin_dir_path( dirname( __FILE__ ) ) );
-		define( 'FRAK_PLUGIN_URL', plugin_dir_url( dirname( __FILE__ ) ) );
-		define( 'FRAK_PLUGIN_FILE', dirname( dirname( __FILE__ ) ) . '/frak-integration.php' );
+		define( 'FRAK_PLUGIN_DIR', plugin_dir_path( __DIR__ ) );
+		define( 'FRAK_PLUGIN_URL', plugin_dir_url( __DIR__ ) );
+		define( 'FRAK_PLUGIN_FILE', dirname( __DIR__ ) . '/frak-integration.php' );
 	}
 
 	/**

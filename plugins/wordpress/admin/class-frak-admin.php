@@ -102,10 +102,10 @@ class Frak_Admin {
 		}
 
 		wp_enqueue_code_editor( array( 'type' => 'text/javascript' ) );
-		wp_enqueue_script( 'frak-admin', plugin_dir_url( dirname( __FILE__ ) ) . 'admin/js/admin.js', array( 'jquery' ), '1.0', true );
-		wp_enqueue_style( 'frak-admin', plugin_dir_url( dirname( __FILE__ ) ) . 'admin/css/admin.css', array(), '1.0' );
+		wp_enqueue_script( 'frak-admin', plugin_dir_url( __DIR__ ) . 'admin/js/admin.js', array( 'jquery' ), '1.0', true );
+		wp_enqueue_style( 'frak-admin', plugin_dir_url( __DIR__ ) . 'admin/css/admin.css', array(), '1.0' );
 
-		$logo_url    = '';
+		$logo_url     = '';
 		$site_icon_id = get_option( 'site_icon' );
 		if ( $site_icon_id ) {
 			$logo_url = wp_get_attachment_image_url( $site_icon_id, 'full' );

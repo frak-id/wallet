@@ -1,0 +1,74 @@
+name: CI - PHP Plugins
+
+on:
+  push:
+    branches: [main, dev]
+    paths: ['plugins/**']
+  pull_request:
+    paths: ['plugins/**']
+
+jobs:
+  # ── Magento ─────────────────────────────────────────────
+  magento-coding-standard:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: plugins/magento
+    steps:
+      - uses: actions/checkout@v6
+      - uses: shivammathur/setup-php@v2
+        with: { php-version: '8.4', tools: 'composer:v2', coverage: none }
+      - run: composer install --no-interaction --prefer-dist
+      - run: composer run cs
+
+  magento-phpstan:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: plugins/magento
+    steps:
+      - uses: actions/checkout@v6
+      - uses: shivammathur/setup-php@v2
+        with: { php-version: '8.4', tools: 'composer:v2', coverage: none }
+      - run: composer install --no-interaction --prefer-dist
+      - run: composer run analyse
+
+  magento-unit-tests:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        php: ['8.3', '8.4']
+    defaults:
+      run:
+        working-directory: plugins/magento
+    steps:
+      - uses: actions/checkout@v6
+      - uses: shivammathur/setup-php@v2
+        with: { php-version: '${{ matrix.php }}', tools: 'composer:v2' }
+      - run: composer install --no-interaction --prefer-dist
+      - run: composer run test
+
+  # ── WordPress ───────────────────────────────────────────
+  wordpress-coding-standard:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: plugins/wordpress
+    steps:
+      - uses: actions/checkout@v6
+      - uses: shivammathur/setup-php@v2
+        with: { php-version: '8.4', tools: 'composer:v2', coverage: none }
+      - run: composer install --no-interaction --prefer-dist
+      - run: composer run cs
+
+  wordpress-phpstan:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: plugins/wordpress
+    steps:
+      - uses: actions/checkout@v6
+      - uses: shivammathur/setup-php@v2
+        with: { php-version: '8.4', tools: 'composer:v2', coverage: none }
+      - run: composer install --no-interaction --prefer-dist
+      - run: composer run analyse
