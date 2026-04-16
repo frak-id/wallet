@@ -34,7 +34,6 @@ class Frak_Frontend {
 	 */
 	private function __construct() {
 		add_action( 'wp_enqueue_scripts', array( $this, 'enqueue_scripts' ), 20 );
-		add_action( 'wp_footer', array( $this, 'add_floating_button' ) );
 	}
 
 	/**
@@ -61,84 +60,37 @@ class Frak_Frontend {
 	}
 
 	/**
-	 * Add floating button to footer.
-	 */
-	public function add_floating_button() {
-		if ( ! Frak_Settings::get( 'enable_floating_button' ) ) {
-			return;
-		}
-
-		$show_reward = Frak_Settings::get( 'show_reward' );
-		$classname   = Frak_Settings::get( 'button_classname' );
-
-		$attributes = array();
-		if ( $show_reward ) {
-			$attributes[] = 'use-reward';
-		}
-		if ( ! empty( $classname ) ) {
-			$attributes[] = 'classname="' . esc_attr( $classname ) . '"';
-		}
-
-		echo '<frak-button-wallet ' . implode( ' ', $attributes ) . '></frak-button-wallet>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- attributes are escaped above.
-	}
-
-	/**
 	 * Generate the inline configuration script for window.FrakSetup.
 	 *
 	 * Shape matches the current SDK contract (see @frak-labs/components):
-	 *   window.FrakSetup = {
-	 *     config: FrakWalletSdkConfig,
-	 *     modalWalletConfig: DisplayEmbeddedWalletParamsType,
-	 *   };
+	 *   window.FrakSetup = { config: FrakWalletSdkConfig };
 	 *
-	 * Only fields the user can configure are emitted. Defaults such as
-	 * `walletUrl` and `domain` are left to the SDK.
+	 * Only the site-level metadata (name + logoUrl) is emitted — every other
+	 * knob is either SDK-default or merchant-dashboard driven.
 	 *
 	 * @return string
 	 */
 	private function generate_config_script() {
-		$app_name_raw    = Frak_Settings::get( 'app_name' );
-		$app_name        = '' !== $app_name_raw ? $app_name_raw : get_bloginfo( 'name' );
-		$logo_url        = Frak_Settings::get( 'logo_url' );
-		$modal_language  = Frak_Settings::get( 'modal_language' );
-		$button_position = Frak_Settings::get( 'floating_button_position' );
-		$modal_i18n_raw  = Frak_Settings::get( 'modal_i18n' );
+		$app_name_raw = Frak_Settings::get( 'app_name' );
+		$app_name     = '' !== $app_name_raw ? $app_name_raw : get_bloginfo( 'name' );
+		$logo_url     = Frak_Settings::get( 'logo_url' );
 
 		$metadata = array_filter(
 			array(
 				'name'    => $app_name,
-				'lang'    => 'default' === $modal_language ? null : $modal_language,
 				'logoUrl' => '' !== $logo_url ? $logo_url : null,
 			),
-			function ( $value ) {
+			static function ( $value ) {
 				return null !== $value && '' !== $value;
 			}
 		);
 
-		$decoded_i18n   = json_decode( $modal_i18n_raw, true );
-		$customizations = array();
-		if ( is_array( $decoded_i18n ) && ! empty( $decoded_i18n ) ) {
-			$customizations['i18n'] = $decoded_i18n;
-		}
-
-		$config = array( 'metadata' => $metadata );
-		if ( ! empty( $customizations ) ) {
-			$config['customizations'] = $customizations;
-		}
-
-		$modal_wallet_config = array(
-			'metadata' => array(
-				'position' => in_array( $button_position, array( 'left', 'right' ), true ) ? $button_position : 'right',
-			),
-		);
-
-		$config_json              = wp_json_encode( $config, JSON_UNESCAPED_SLASHES );
-		$modal_wallet_config_json = wp_json_encode( $modal_wallet_config, JSON_UNESCAPED_SLASHES );
+		$config      = array( 'metadata' => $metadata );
+		$config_json = wp_json_encode( $config, JSON_UNESCAPED_SLASHES );
 
 		return sprintf(
-			'window.FrakSetup=Object.assign(window.FrakSetup||{},{config:%s,modalWalletConfig:%s});',
-			$config_json,
-			$modal_wallet_config_json
+			'window.FrakSetup=Object.assign(window.FrakSetup||{},{config:%s});',
+			$config_json
 		);
 	}
 }

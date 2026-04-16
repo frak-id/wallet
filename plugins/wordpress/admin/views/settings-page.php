@@ -4,15 +4,8 @@
  *
  * @package Frak_Integration
  *
- * @var string $app_name                App name.
- * @var string $logo_url                Logo URL.
- * @var int    $enable_tracking         Purchase tracking enabled.
- * @var int    $enable_button           Floating button enabled.
- * @var int    $show_reward             Show reward enabled.
- * @var string $button_classname        Button class name.
- * @var string $floating_button_position Button position.
- * @var string $modal_language          Modal language.
- * @var array  $modal_i18n              Modal i18n overrides.
+ * @var string $app_name App name.
+ * @var string $logo_url Logo URL.
  */
 
 // Prevent direct access.
@@ -113,229 +106,18 @@ if ( ! defined( 'ABSPATH' ) ) {
 			</table>
 		</div>
 
-		<!-- Customisations Section -->
-		<div class="frak-section">
-			<h2><?php esc_html_e( 'Customisations', 'frak' ); ?></h2>
-
-			<!-- Floating Button Subsection -->
-			<div class="frak-subsection">
-				<h3><?php esc_html_e( 'Floating Button', 'frak' ); ?></h3>
-				<table class="form-table">
-					<tr>
-						<th scope="row">
-							<label for="frak_enable_floating_button"><?php esc_html_e( 'Enable Floating Button', 'frak' ); ?></label>
-						</th>
-						<td>
-							<label>
-								<input type="checkbox" id="frak_enable_floating_button"
-									name="frak_enable_floating_button" value="1"
-									<?php checked( $enable_button, 1 ); ?>>
-								<?php esc_html_e( 'Show floating button on all pages', 'frak' ); ?>
-							</label>
-						</td>
-					</tr>
-					<tr>
-						<th scope="row">
-							<label for="frak_show_reward"><?php esc_html_e( 'Show Potential Reward', 'frak' ); ?></label>
-						</th>
-						<td>
-							<label>
-								<input type="checkbox" id="frak_show_reward"
-									name="frak_show_reward" value="1"
-									<?php checked( $show_reward, 1 ); ?>
-									<?php echo $enable_button ? '' : 'disabled'; ?>>
-								<?php esc_html_e( 'Display potential reward on the button', 'frak' ); ?>
-							</label>
-						</td>
-					</tr>
-					<tr>
-						<th scope="row">
-							<label for="frak_floating_button_position"><?php esc_html_e( 'Button Position', 'frak' ); ?></label>
-						</th>
-						<td>
-							<select id="frak_floating_button_position" name="frak_floating_button_position"
-								<?php echo $enable_button ? '' : 'disabled'; ?>>
-								<option value="right" <?php selected( $floating_button_position, 'right' ); ?>><?php esc_html_e( 'Right', 'frak' ); ?></option>
-								<option value="left" <?php selected( $floating_button_position, 'left' ); ?>><?php esc_html_e( 'Left', 'frak' ); ?></option>
-							</select>
-						</td>
-					</tr>
-					<tr>
-						<th scope="row">
-							<label for="frak_button_classname"><?php esc_html_e( 'Custom Class Name', 'frak' ); ?></label>
-						</th>
-						<td>
-							<input type="text" id="frak_button_classname"
-								name="frak_button_classname"
-								value="<?php echo esc_attr( $button_classname ); ?>"
-								class="regular-text"
-								<?php echo $enable_button ? '' : 'disabled'; ?>>
-							<p class="description"><?php esc_html_e( 'Add custom CSS classes to the button', 'frak' ); ?></p>
-						</td>
-					</tr>
-				</table>
-			</div>
-
-			<!-- Modal Customization Subsection -->
-			<div class="frak-subsection">
-				<h3><?php esc_html_e( 'Modal Customization', 'frak' ); ?></h3>
-				<table class="form-table">
-					<tr>
-						<th scope="row">
-							<label for="frak_modal_language"><?php esc_html_e( 'Modal Language', 'frak' ); ?></label>
-						</th>
-						<td>
-							<select id="frak_modal_language" name="frak_modal_language">
-								<option value="default" <?php selected( $modal_language, 'default' ); ?>><?php esc_html_e( 'Default', 'frak' ); ?></option>
-								<option value="en" <?php selected( $modal_language, 'en' ); ?>><?php esc_html_e( 'English', 'frak' ); ?></option>
-								<option value="fr" <?php selected( $modal_language, 'fr' ); ?>><?php esc_html_e( 'Français', 'frak' ); ?></option>
-							</select>
-							<p class="description"><?php esc_html_e( 'Default language for the Frak modal', 'frak' ); ?></p>
-						</td>
-					</tr>
-					<tr>
-						<th scope="row"><?php esc_html_e( 'Custom Translations', 'frak' ); ?></th>
-						<td>
-							<p class="description" style="margin-bottom: 10px;"><?php esc_html_e( 'Override default text in the modal (leave empty to use defaults)', 'frak' ); ?></p>
-
-							<!-- Sharing Modal Customization -->
-							<div class="frak-i18n-group">
-								<h4 style="margin: 15px 0 10px 0;"><?php esc_html_e( 'Sharing Modal', 'frak' ); ?></h4>
-								<table class="frak-i18n-table">
-									<tr>
-										<td style="vertical-align: top; padding-bottom: 15px;">
-											<label for="frak_modal_i18n_sharing_title"><?php esc_html_e( 'Sharing Modal Title:', 'frak' ); ?></label>
-											<p class="description" style="margin-top: 5px;"><?php esc_html_e( 'The title that appears when users share your content on social media or messaging apps', 'frak' ); ?></p>
-										</td>
-										<td style="padding-bottom: 15px;">
-											<input type="text" id="frak_modal_i18n_sharing_title"
-												name="frak_modal_i18n[sharing.title]"
-												value="<?php echo isset( $modal_i18n['sharing.title'] ) ? esc_attr( $modal_i18n['sharing.title'] ) : ''; ?>"
-												class="large-text"
-												placeholder="<?php esc_attr_e( "Example: 'Share this amazing product with your friends!'", 'frak' ); ?>">
-										</td>
-									</tr>
-									<tr>
-										<td style="vertical-align: top; padding-bottom: 15px;">
-											<label for="frak_modal_i18n_sharing_text"><?php esc_html_e( 'Sharing Message Text:', 'frak' ); ?></label>
-											<p class="description" style="margin-top: 5px;"><?php esc_html_e( 'The default message that will be shared along with your product link', 'frak' ); ?></p>
-										</td>
-										<td style="padding-bottom: 15px;">
-											<textarea id="frak_modal_i18n_sharing_text"
-												name="frak_modal_i18n[sharing.text]"
-												class="large-text"
-												rows="3"
-												placeholder="<?php esc_attr_e( "Example: 'Check out this amazing product I found!'", 'frak' ); ?>"><?php echo isset( $modal_i18n['sharing.text'] ) ? esc_textarea( $modal_i18n['sharing.text'] ) : ''; ?></textarea>
-										</td>
-									</tr>
-								</table>
-							</div>
-
-							<!-- Wallet Login Modal Customization -->
-							<div class="frak-i18n-group">
-								<h4 style="margin: 15px 0 10px 0;"><?php esc_html_e( 'Wallet Login Modal', 'frak' ); ?></h4>
-								<table class="frak-i18n-table">
-									<tr>
-										<td style="vertical-align: top; padding-bottom: 15px;">
-											<label for="frak_modal_i18n_login_primary_action"><?php esc_html_e( 'Wallet Login Button Text:', 'frak' ); ?></label>
-											<p class="description" style="margin-top: 5px;"><?php esc_html_e( 'The text displayed on the main action button in the wallet login modal', 'frak' ); ?></p>
-										</td>
-										<td style="padding-bottom: 15px;">
-											<input type="text" id="frak_modal_i18n_login_primary_action"
-												name="frak_modal_i18n[sdk.wallet.login.primaryAction]"
-												value="<?php echo isset( $modal_i18n['sdk.wallet.login.primaryAction'] ) ? esc_attr( $modal_i18n['sdk.wallet.login.primaryAction'] ) : ''; ?>"
-												class="large-text"
-												placeholder="<?php esc_attr_e( "Example: 'Create your wallet in 2 seconds!'", 'frak' ); ?>">
-										</td>
-									</tr>
-									<tr>
-										<td style="vertical-align: top; padding-bottom: 15px;">
-											<label for="frak_modal_i18n_login_text_sharing"><?php esc_html_e( 'Login Text for Sharing:', 'frak' ); ?></label>
-											<p class="description" style="margin-top: 5px;">
-												<?php
-												echo wp_kses(
-													__( 'Message shown to users when they need to login to share content and earn rewards.<br>You can use <strong>**bold text**</strong>, <em>*italic text*</em>, and <code>{{ estimatedReward }}</code> to show the reward amount.', 'frak' ),
-													array(
-														'br'     => array(),
-														'strong' => array(),
-														'em'     => array(),
-														'code'   => array(),
-													)
-												);
-												?>
-											</p>
-										</td>
-										<td style="padding-bottom: 15px;">
-											<textarea id="frak_modal_i18n_login_text_sharing"
-												name="frak_modal_i18n[sdk.wallet.login.text_sharing]"
-												class="large-text"
-												rows="3"
-												placeholder="<?php esc_attr_e( "Example: 'Share, Refer, Earn up to **{{ estimatedReward }}** per successful referral'", 'frak' ); ?>"><?php echo isset( $modal_i18n['sdk.wallet.login.text_sharing'] ) ? esc_textarea( $modal_i18n['sdk.wallet.login.text_sharing'] ) : ''; ?></textarea>
-										</td>
-									</tr>
-									<tr>
-										<td style="vertical-align: top; padding-bottom: 15px;">
-											<label for="frak_modal_i18n_login_text_referred"><?php esc_html_e( 'Welcome Text for Referred Users:', 'frak' ); ?></label>
-											<p class="description" style="margin-top: 5px;">
-												<?php
-												echo wp_kses(
-													__( 'Message shown to users who clicked on a shared link.<br>You can use <strong>**bold text**</strong>, <em>*italic text*</em>, and <code>{{ estimatedReward }}</code> to show the reward amount.', 'frak' ),
-													array(
-														'br'     => array(),
-														'strong' => array(),
-														'em'     => array(),
-														'code'   => array(),
-													)
-												);
-												?>
-											</p>
-										</td>
-										<td style="padding-bottom: 15px;">
-											<textarea id="frak_modal_i18n_login_text_referred"
-												name="frak_modal_i18n[sdk.wallet.login.text_referred]"
-												class="large-text"
-												rows="3"
-												placeholder="<?php esc_attr_e( "Example: 'Welcome! Receive **{{ estimatedReward }}** when you make a purchase'", 'frak' ); ?>"><?php echo isset( $modal_i18n['sdk.wallet.login.text_referred'] ) ? esc_textarea( $modal_i18n['sdk.wallet.login.text_referred'] ) : ''; ?></textarea>
-										</td>
-									</tr>
-								</table>
-							</div>
-						</td>
-					</tr>
-				</table>
-			</div>
-		</div>
-
 		<!-- Purchase Tracking Section -->
 		<div class="frak-section">
 			<h2><?php esc_html_e( 'Purchase Tracking', 'frak' ); ?></h2>
-
-			<?php $woocommerce_active = class_exists( 'WooCommerce' ); ?>
-
-			<table class="form-table">
-				<tr>
-					<th scope="row">
-						<label for="frak_enable_purchase_tracking"><?php esc_html_e( 'WooCommerce Integration', 'frak' ); ?></label>
-					</th>
-					<td>
-						<?php if ( $woocommerce_active ) : ?>
-							<label>
-								<input type="checkbox" id="frak_enable_purchase_tracking"
-									name="frak_enable_purchase_tracking" value="1"
-									<?php checked( $enable_tracking, 1 ); ?>>
-								<?php esc_html_e( 'Enable WooCommerce orders tracking', 'frak' ); ?>
-							</label>
-							<p class="description" style="color: green;"><?php esc_html_e( '✓ WooCommerce plugin detected', 'frak' ); ?></p>
-						<?php else : ?>
-							<label style="color: #999;">
-								<input type="checkbox" disabled>
-								<?php esc_html_e( 'Enable WooCommerce orders tracking', 'frak' ); ?>
-							</label>
-							<p class="description" style="color: #666;"><?php esc_html_e( 'WooCommerce plugin not detected. Install and activate WooCommerce to enable this feature.', 'frak' ); ?></p>
-						<?php endif; ?>
-					</td>
-				</tr>
-			</table>
+			<p class="description">
+				<?php
+				if ( class_exists( 'WooCommerce' ) ) {
+					esc_html_e( 'WooCommerce detected — purchases are tracked automatically on the thank-you page. Configure the webhook below so order-status updates (refunds, cancellations) reach the Frak backend.', 'frak' );
+				} else {
+					esc_html_e( 'Install and activate WooCommerce to get automatic purchase tracking. The webhook below can still be configured for custom backends that POST their own order events.', 'frak' );
+				}
+				?>
+			</p>
 
 			<?php
 			$webhook_secret = get_option( 'frak_webhook_secret', '' );

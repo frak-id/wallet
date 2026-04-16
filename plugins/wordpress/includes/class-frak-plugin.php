@@ -43,6 +43,7 @@ class Frak_Plugin {
 	private function includes() {
 		require_once FRAK_PLUGIN_DIR . 'includes/class-frak-settings.php';
 		require_once FRAK_PLUGIN_DIR . 'includes/class-frak-webhook-helper.php';
+		require_once FRAK_PLUGIN_DIR . 'includes/class-frak-blocks.php';
 		require_once FRAK_PLUGIN_DIR . 'admin/class-frak-admin.php';
 		require_once FRAK_PLUGIN_DIR . 'includes/class-frak-frontend.php';
 
@@ -77,7 +78,9 @@ class Frak_Plugin {
 			Frak_Frontend::instance();
 		}
 
-		if ( class_exists( 'WooCommerce' ) && Frak_Settings::get( 'enable_purchase_tracking' ) ) {
+		Frak_Blocks::init();
+
+		if ( class_exists( 'WooCommerce' ) ) {
 			Frak_WooCommerce::init();
 		}
 	}

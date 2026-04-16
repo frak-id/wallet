@@ -1,0 +1,26 @@
+{
+	"$schema": "https://schemas.wp.org/trunk/block.json",
+	"apiVersion": 3,
+	"name": "frak/share-button",
+	"title": "Frak Share Button",
+	"description": "Button that opens the Frak sharing flow so users can earn rewards by sharing your content.",
+	"category": "widgets",
+	"icon": "share",
+	"keywords": ["frak", "share", "reward", "referral"],
+	"supports": {
+		"html": false,
+		"align": ["left", "center", "right"]
+	},
+	"textdomain": "frak",
+	"attributes": {
+		"text": { "type": "string", "default": "Share and earn!" },
+		"placement": { "type": "string", "default": "" },
+		"classname": { "type": "string", "default": "" },
+		"useReward": { "type": "boolean", "default": false },
+		"noRewardText": { "type": "string", "default": "" },
+		"targetInteraction": { "type": "string", "default": "" },
+		"clickAction": { "type": "string", "default": "embedded-wallet" }
+	},
+	"editorScript": "file:./editor.js",
+	"render": "file:./render.php"
+}

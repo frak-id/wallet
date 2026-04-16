@@ -17,20 +17,23 @@ class Frak_WooCommerce {
 	 * Register WooCommerce hooks. Called once from {@see Frak_Plugin::init()}.
 	 */
 	public static function init() {
-		add_action( 'woocommerce_thankyou', array( __CLASS__, 'render_post_purchase' ) );
+		add_action( 'woocommerce_thankyou', array( __CLASS__, 'render_purchase_tracker' ) );
 		add_action( 'woocommerce_order_status_changed', array( __CLASS__, 'handle_order_status_change' ), 10, 4 );
 	}
 
 	/**
-	 * Render the <frak-post-purchase> web component on the thank-you page.
+	 * Emit the purchase-tracking call on the WooCommerce thank-you page.
 	 *
-	 * Replaces the previous inline fetch() call — the SDK component handles
-	 * authentication (x-wallet-sdk-auth header pulled from sessionStorage),
-	 * merchant resolution, and renders a "Share & Earn" UI.
+	 * Instead of rendering the `<frak-post-purchase>` UI component (which is
+	 * now exposed as a Gutenberg block), this hook fires the core SDK action
+	 * `trackPurchaseStatus` so reward attribution still works even when the
+	 * merchant never drops the block onto the thank-you template. Auth is
+	 * handled by the SDK (reads `frak-wallet-interaction-token` from
+	 * sessionStorage + `frak-client-id` from localStorage).
 	 *
 	 * @param int $order_id Order ID.
 	 */
-	public static function render_post_purchase( $order_id ) {
+	public static function render_purchase_tracker( $order_id ) {
 		if ( ! $order_id ) {
 			return;
 		}
@@ -40,12 +43,23 @@ class Frak_WooCommerce {
 			return;
 		}
 
-		printf(
-			'<frak-post-purchase customer-id="%s" order-id="%s" token="%s"></frak-post-purchase>',
-			esc_attr( (string) $order->get_user_id() ),
-			esc_attr( (string) $order_id ),
-			esc_attr( $order->get_order_key() . '_' . $order_id )
+		$payload = array(
+			'customerId' => (string) $order->get_user_id(),
+			'orderId'    => (string) $order_id,
+			'token'      => $order->get_order_key() . '_' . $order_id,
 		);
+
+		$payload_json = wp_json_encode( $payload, JSON_UNESCAPED_SLASHES );
+
+		// Fires the tracking call as soon as the SDK client is ready. The
+		// synchronous pre-check covers the case where the SDK bootstraps
+		// before this inline script runs.
+		$script = sprintf(
+			'(function(p){var f=function(){var s=window.FrakSetup;if(s&&s.core&&s.core.trackPurchaseStatus){s.core.trackPurchaseStatus(p);return true;}return false;};if(!f())window.addEventListener("frak:client",f,{once:true});})(%s);',
+			$payload_json
+		);
+
+		wp_print_inline_script_tag( $script, array( 'id' => 'frak-purchase-tracker-inline' ) );
 	}
 
 	/**

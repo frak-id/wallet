@@ -49,26 +49,6 @@
 		}, 5000 );
 	}
 
-	/**
-	 * Enable or disable the floating-button sub-settings based on the master checkbox.
-	 */
-	function toggleFloatingButtonSettings() {
-		const master = document.getElementById( 'frak_enable_floating_button' );
-		if ( ! master ) {
-			return;
-		}
-		const enabled = master.checked;
-		[
-			'frak_show_reward',
-			'frak_button_classname',
-			'frak_floating_button_position',
-		].forEach( ( id ) => {
-			const element = document.getElementById( id );
-			if ( element ) {
-				element.disabled = ! enabled;
-			}
-		} );
-	}
 
 	/**
 	 * Render a logo preview inside the file-input's cell.
@@ -289,11 +269,6 @@
 			} );
 		}
 
-		const floatingMaster = document.getElementById( 'frak_enable_floating_button' );
-		if ( floatingMaster ) {
-			floatingMaster.addEventListener( 'change', toggleFloatingButtonSettings );
-			toggleFloatingButtonSettings();
-		}
 
 		const logoFile = document.getElementById( 'frak_logo_file' );
 		if ( logoFile ) {

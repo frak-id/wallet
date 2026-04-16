@@ -36,21 +36,31 @@ class Frak_Settings {
 	const CURRENT_VERSION = 1;
 
 	/**
-	 * Legacy individual option keys that 1.0 used. Migrated into
-	 * {@see self::OPTION_KEY} on upgrade.
+	 * Legacy individual option keys that an earlier, unreleased iteration of
+	 * the plugin persisted. Migrated into {@see self::OPTION_KEY} on upgrade,
+	 * then the legacy rows are deleted.
 	 *
 	 * @var array<string, string>
 	 */
 	private const LEGACY_OPTIONS = array(
-		'app_name'                 => 'frak_app_name',
-		'logo_url'                 => 'frak_logo_url',
-		'enable_purchase_tracking' => 'frak_enable_purchase_tracking',
-		'enable_floating_button'   => 'frak_enable_floating_button',
-		'show_reward'              => 'frak_show_reward',
-		'button_classname'         => 'frak_button_classname',
-		'floating_button_position' => 'frak_floating_button_position',
-		'modal_language'           => 'frak_modal_language',
-		'modal_i18n'               => 'frak_modal_i18n',
+		'app_name' => 'frak_app_name',
+		'logo_url' => 'frak_logo_url',
+	);
+
+	/**
+	Legacy `frak_*` option rows that the plugin no longer consumes. Kept
+	only so the migration can purge them from wp_options on upgrade.
+	 *
+	 * @var string[]
+	 */
+	private const DEPRECATED_LEGACY_OPTIONS = array(
+		'frak_enable_purchase_tracking',
+		'frak_enable_floating_button',
+		'frak_show_reward',
+		'frak_button_classname',
+		'frak_floating_button_position',
+		'frak_modal_language',
+		'frak_modal_i18n',
 	);
 
 	/**
@@ -59,15 +69,8 @@ class Frak_Settings {
 	 * @var array<string, mixed>
 	 */
 	private const DEFAULTS = array(
-		'app_name'                 => '',
-		'logo_url'                 => '',
-		'enable_purchase_tracking' => 0,
-		'enable_floating_button'   => 0,
-		'show_reward'              => 0,
-		'button_classname'         => '',
-		'floating_button_position' => 'right',
-		'modal_language'           => 'default',
-		'modal_i18n'               => '{}',
+		'app_name' => '',
+		'logo_url' => '',
 	);
 
 	/**
@@ -123,8 +126,11 @@ class Frak_Settings {
 	}
 
 	/**
-	 * Run one-time migration from legacy `frak_*` options into the bundled array.
-	 * Safe to call on every request — no-ops after the first successful run.
+	 * Run one-time migration. Safe to call on every request — no-ops after
+	 * the first successful run for the current {@see self::CURRENT_VERSION}.
+	 *
+	 * Imports surviving legacy rows into the bundle and deletes every known
+	 * legacy row (both migrated and deprecated) from wp_options.
 	 */
 	public static function migrate() {
 		$version = (int) get_option( self::VERSION_OPTION, 0 );
@@ -132,21 +138,27 @@ class Frak_Settings {
 			return;
 		}
 
-		$migrated = array();
+		$existing = get_option( self::OPTION_KEY, array() );
+		$existing = is_array( $existing ) ? $existing : array();
+
 		foreach ( self::LEGACY_OPTIONS as $new_key => $legacy_key ) {
+			if ( array_key_exists( $new_key, $existing ) ) {
+				continue;
+			}
 			$legacy_value = get_option( $legacy_key, null );
 			if ( null !== $legacy_value ) {
-				$migrated[ $new_key ] = $legacy_value;
+				$existing[ $new_key ] = $legacy_value;
 			}
 		}
 
-		if ( ! empty( $migrated ) ) {
-			$existing = get_option( self::OPTION_KEY, array() );
-			$existing = is_array( $existing ) ? $existing : array();
-			update_option( self::OPTION_KEY, array_merge( $existing, $migrated ) );
-		}
+		// Persist only known keys to keep the bundle tidy.
+		update_option( self::OPTION_KEY, array_intersect_key( $existing, self::DEFAULTS ) );
 
-		foreach ( self::LEGACY_OPTIONS as $legacy_key ) {
+		$legacy_to_delete = array_merge(
+			array_values( self::LEGACY_OPTIONS ),
+			self::DEPRECATED_LEGACY_OPTIONS
+		);
+		foreach ( $legacy_to_delete as $legacy_key ) {
 			delete_option( $legacy_key );
 		}
 

@@ -26,4 +26,9 @@
     <rule ref="Squiz.Commenting.FileComment">
         <severity>0</severity>
     </rule>
+
+    <!-- Block asset files follow the WordPress Gutenberg "<handle>.asset.php" convention -->
+    <rule ref="WordPress.Files.FileName.NotHyphenatedLowercase">
+        <exclude-pattern>*/blocks/*/*.asset.php</exclude-pattern>
+    </rule>
 </ruleset>

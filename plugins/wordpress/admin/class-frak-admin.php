@@ -145,38 +145,10 @@ class Frak_Admin {
 			}
 		}
 
-		$modal_i18n = isset( $_POST['frak_modal_i18n'] ) ? wp_unslash( $_POST['frak_modal_i18n'] ) : array(); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- sanitized below.
-		if ( is_array( $modal_i18n ) ) {
-			$textarea_keys = array( 'sharing.text', 'sdk.wallet.login.text_sharing', 'sdk.wallet.login.text_referred' );
-			foreach ( $modal_i18n as $key => $value ) {
-				$modal_i18n[ $key ] = in_array( $key, $textarea_keys, true )
-					? sanitize_textarea_field( $value )
-					: sanitize_text_field( $value );
-			}
-
-			$modal_i18n = array_filter(
-				$modal_i18n,
-				function ( $value ) {
-					return '' !== $value;
-				}
-			);
-
-			if ( isset( $modal_i18n['sdk.wallet.login.text_referred'] ) ) {
-				$modal_i18n['sdk.wallet.login.text'] = $modal_i18n['sdk.wallet.login.text_referred'];
-			}
-		}
-
 		Frak_Settings::replace(
 			array(
-				'app_name'                 => isset( $_POST['frak_app_name'] ) ? sanitize_text_field( wp_unslash( $_POST['frak_app_name'] ) ) : '',
-				'logo_url'                 => $logo_url,
-				'enable_purchase_tracking' => isset( $_POST['frak_enable_purchase_tracking'] ) ? 1 : 0,
-				'enable_floating_button'   => isset( $_POST['frak_enable_floating_button'] ) ? 1 : 0,
-				'show_reward'              => isset( $_POST['frak_show_reward'] ) ? 1 : 0,
-				'button_classname'         => isset( $_POST['frak_button_classname'] ) ? sanitize_text_field( wp_unslash( $_POST['frak_button_classname'] ) ) : '',
-				'floating_button_position' => isset( $_POST['frak_floating_button_position'] ) ? sanitize_text_field( wp_unslash( $_POST['frak_floating_button_position'] ) ) : 'right',
-				'modal_language'           => isset( $_POST['frak_modal_language'] ) ? sanitize_text_field( wp_unslash( $_POST['frak_modal_language'] ) ) : 'default',
-				'modal_i18n'               => wp_json_encode( $modal_i18n ),
+				'app_name' => isset( $_POST['frak_app_name'] ) ? sanitize_text_field( wp_unslash( $_POST['frak_app_name'] ) ) : '',
+				'logo_url' => $logo_url,
 			)
 		);
 		// phpcs:enable WordPress.Security.NonceVerification.Missing
@@ -207,17 +179,10 @@ class Frak_Admin {
 		$default_app_name = get_bloginfo( 'name' );
 		$default_logo_url = $this->get_site_icon_url();
 
-		$stored_app_name          = Frak_Settings::get( 'app_name' );
-		$stored_logo_url          = Frak_Settings::get( 'logo_url' );
-		$app_name                 = '' !== $stored_app_name ? $stored_app_name : $default_app_name;
-		$logo_url                 = '' !== $stored_logo_url ? $stored_logo_url : $default_logo_url;
-		$enable_tracking          = Frak_Settings::get( 'enable_purchase_tracking' );
-		$enable_button            = Frak_Settings::get( 'enable_floating_button' );
-		$show_reward              = Frak_Settings::get( 'show_reward' );
-		$button_classname         = Frak_Settings::get( 'button_classname' );
-		$floating_button_position = Frak_Settings::get( 'floating_button_position' );
-		$modal_language           = Frak_Settings::get( 'modal_language' );
-		$modal_i18n               = json_decode( Frak_Settings::get( 'modal_i18n' ), true );
+		$stored_app_name = Frak_Settings::get( 'app_name' );
+		$stored_logo_url = Frak_Settings::get( 'logo_url' );
+		$app_name        = '' !== $stored_app_name ? $stored_app_name : $default_app_name;
+		$logo_url        = '' !== $stored_logo_url ? $stored_logo_url : $default_logo_url;
 
 		include FRAK_PLUGIN_DIR . 'admin/views/settings-page.php';
 	}
