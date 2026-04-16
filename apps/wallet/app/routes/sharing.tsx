@@ -21,6 +21,7 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useCallback, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
+import { useMerchantResolvedConfig } from "@/module/common/hook/useMerchantResolvedConfig";
 
 /**
  * Sanitize a redirect URL from search params to prevent open redirects.
@@ -134,6 +135,12 @@ function WalletSharingPage() {
         merchantId,
     });
 
+    // Fetch backend-driven merchant config to source attribution defaults
+    const { data: defaultAttribution } = useMerchantResolvedConfig({
+        merchantId,
+        select: (config) => config?.sdkConfig?.attribution,
+    });
+
     // Wrap t to inject estimatedReward + productName into i18n interpolation
     const t = useCallback(
         (key: string, options?: Record<string, unknown>) =>
@@ -194,6 +201,7 @@ function WalletSharingPage() {
 
         const resolvedAttribution = mergeAttribution({
             perCall: attribution,
+            defaults: defaultAttribution ?? undefined,
             productUtmContent: selectedProduct?.utmContent,
         });
 
@@ -214,6 +222,7 @@ function WalletSharingPage() {
         products,
         selectedProductIndex,
         attribution,
+        defaultAttribution,
     ]);
 
     // Share mutation using the shared hook
