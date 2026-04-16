@@ -9,3 +9,7 @@ parameters:
         - test
     scanDirectories:
         - vendor/php-stubs
+    scanFiles:
+        - vendor/php-stubs/woocommerce-stubs/woocommerce-stubs.php
+    bootstrapFiles:
+        - phpstan-bootstrap.php

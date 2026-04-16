@@ -33,18 +33,8 @@ class Frak_Plugin {
 	 * Constructor.
 	 */
 	private function __construct() {
-		$this->define_constants();
 		$this->includes();
 		$this->init_hooks();
-	}
-
-	/**
-	 * Define plugin constants.
-	 */
-	private function define_constants() {
-		define( 'FRAK_PLUGIN_DIR', plugin_dir_path( __DIR__ ) );
-		define( 'FRAK_PLUGIN_URL', plugin_dir_url( __DIR__ ) );
-		define( 'FRAK_PLUGIN_FILE', dirname( __DIR__ ) . '/frak-integration.php' );
 	}
 
 	/**

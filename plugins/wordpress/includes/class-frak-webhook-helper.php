@@ -55,11 +55,14 @@ class Frak_Webhook_Helper {
 
 			$items = array();
 			foreach ( $order->get_items() as $item ) {
+				if ( ! $item instanceof WC_Order_Item_Product ) {
+					continue;
+				}
 				$product = $item->get_product();
 				$items[] = array(
-					'productId' => $product->get_id(),
+					'productId' => $product ? $product->get_id() : 0,
 					'quantity'  => $item->get_quantity(),
-					'price'     => $item->get_total() / $item->get_quantity(),
+					'price'     => (float) $item->get_total() / $item->get_quantity(),
 					'name'      => $item->get_name(),
 					'title'     => $item->get_name(),
 				);
@@ -215,10 +218,10 @@ class Frak_Webhook_Helper {
 			)
 		);
 		$failed         = $total_attempts - $successful;
-		$success_rate   = $total_attempts > 0 ? round( ( $successful / $total_attempts ) * 100, 1 ) : 0;
+		$success_rate   = round( ( $successful / $total_attempts ) * 100, 1 );
 
 		$total_time        = array_sum( array_column( $logs, 'execution_time' ) );
-		$avg_response_time = $total_attempts > 0 ? round( $total_time / $total_attempts, 2 ) : 0;
+		$avg_response_time = round( $total_time / $total_attempts, 2 );
 
 		return array(
 			'total_attempts'    => $total_attempts,
