@@ -1,70 +1,26 @@
-# packages/wallet-shared
+# packages/wallet-shared — Compass
 
-Shared code for wallet and listener apps ONLY. Not used by business/admin.
+Shared state/flows for **wallet + listener ONLY** (enforced by convention). 201 files, 15 domains. Used 153× in wallet, 75× in listener.
 
-## Structure
+## Key Files
+- `src/stores/` — Zustand: `sessionStore`, `walletStore`, `authenticationStore`, `clientIdStore` (all with `persist` middleware)
+- `src/authentication/` — WebAuthn flows (ox/WebAuthnP256)
+- `src/wallet/smartWallet/` — ERC-4337 kernel smart wallet logic
+- `src/pairing/` — WebSocket + signature device pairing
+- `src/providers/FrakContext.tsx` — SDK integration context
+- `src/i18n/` — react-i18next (wallet + listener consume these translations)
+- `src/test/factories.ts` — `createMockSession`, `createMockAddress`, etc.
 
-```
-src/
-├── authentication/   # WebAuthn auth (hooks, components, session)
-├── blockchain/       # Viem providers, AA connectors
-├── common/           # Shared utils, analytics (OpenPanel)
-├── i18n/             # react-i18next setup
-├── interaction/      # Interaction tracking
-├── pairing/          # Device pairing (WebSocket, signatures)
-├── providers/        # FrakContext for SDK integration
-├── recovery/         # Account recovery flows
-├── sdk/              # SDK lifecycle utilities
-├── stores/           # Zustand stores (4 stores)
-├── tokens/           # Token management
-├── types/            # Shared TypeScript types (11 files)
-└── wallet/           # Smart wallet operations (15 files)
-```
-
-## Where to Look
-
-| Task | Location |
-|------|----------|
-| Session management | `src/stores/` (sessionStore, walletStore, authenticationStore, clientIdStore) |
-| WebAuthn flows | `src/authentication/` |
-| Wallet operations | `src/wallet/` |
-| Device pairing | `src/pairing/` |
-| Type definitions | `src/types/` |
-
-## Stores (Zustand)
-
-| Store | Purpose |
-|-------|---------|
-| `sessionStore` | Auth session state |
-| `walletStore` | Wallet connection state |
-| `authenticationStore` | WebAuthn state |
-
-## Conventions
-
-- **Barrel exports**: Import from `@frak-labs/wallet-shared`
-- **Store selectors**: Always use `store((s) => s.field)`
-- **idb-keyval**: IndexedDB via lightweight idb-keyval (1.73 KB gzipped, SW-optimized)
+## Non-Obvious Patterns
+- **Scope enforcement is cultural, not technical**: do NOT add to business/backend/shopify imports. Violations have happened before.
+- **Zustand selector rule is non-negotiable**: `store((s) => s.field)` — destructuring whole store is an outage in the wallet app.
+- **`idb-keyval` not `idb`**: ~1.73 KB gzipped, works inside service worker context. Heavy IDB wrappers break the SW bundle.
+- **BigInt serialization polyfill**: required by Zustand `persist`; lives in `test-foundation/react-setup.ts` for tests, present in app entrypoints.
+- **Barrel from package root only**: `import { ... } from "@frak-labs/wallet-shared"` — internal paths discouraged.
+- **Known duplication**: `AlertDialog` exists here and in `packages/ui`; pick based on app context (wallet uses this one).
 
 ## Anti-Patterns
+Importing in business/backend/shopify · entire-store subscriptions · heavy IDB libs · internal-path imports.
 
-- Importing in business/admin apps (wallet+listener only)
-- Direct store subscriptions
-- Heavy IndexedDB operations (use idb-keyval)
-
-## Dependencies
-
-- `@frak-labs/ui`, `@frak-labs/app-essentials`
-- `@frak-labs/core-sdk`, `@frak-labs/frame-connector`
-- Zustand, Viem, Wagmi, TanStack Query
-
-## Testing
-
-- Vitest project: `wallet-shared-unit`
-- Tests co-located in `src/` or `tests/`
-- Mock stores with fresh instances per test
-
-## Notes
-
-- 201 TS/TSX files, 15 domain subdirectories
-- Used 228 times: wallet (153) + listener (75)
-- ⚠️ Known issue: AlertDialog duplicated with `ui` package
+## See Also
+Parent `packages/AGENTS.md` · `apps/wallet/AGENTS.md` · `apps/listener/AGENTS.md` · `packages/app-essentials/AGENTS.md` (ABIs, WebAuthn RP).

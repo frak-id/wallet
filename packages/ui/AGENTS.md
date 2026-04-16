@@ -1,65 +1,23 @@
-# packages/ui
+# packages/ui — Compass (LEGACY)
 
-Radix-based component library. Generic, reusable across all apps.
+Radix + CSS Modules component library. 22 components, 95 files. **Being replaced by `packages/design-system` — do not add new components.** Consumers: business, shopify (wallet is migrating away).
 
-## Structure
+## Key Files
+- `component/{Button,Dialog,AlertDialog,Input,Popover,...}/` — one dir per component
+  - `index.ts` (exports) · `<Name>.tsx` · `<Name>.module.css`
+- `hook/` — 6 shared hooks · `icons/` — 12 SVG React components
+- `styles/` — global styles, CSS variables · `utils/` — 22 helper files
 
-```
-├── component/        # UI components (22 components)
-│   ├── AlertDialog/
-│   ├── Button/
-│   ├── Dialog/
-│   ├── Input/
-│   ├── Popover/
-│   └── ...
-├── hook/             # Shared hooks (6 hooks)
-├── icons/            # SVG icons as React components (12 icons)
-├── styles/           # Global styles, variables
-├── types/            # Shared types
-└── utils/            # UI utilities (22 files)
-```
-
-## Where to Look
-
-| Task | Location |
-|------|----------|
-| Add component | `component/{ComponentName}/` |
-| Modify icons | `icons/` |
-| Shared hooks | `hook/` |
-| CSS variables | `styles/` |
-
-## Conventions
-
-- **Radix primitives**: All components wrap Radix UI
-- **CSS Modules**: Each component has `.module.css`
-- **Named exports**: Export from component index
-- **Compound components**: Use dot notation (`Dialog.Content`)
-
-## Component Pattern
-
-```
-component/
-└── Button/
-    ├── index.ts        # Exports
-    ├── Button.tsx      # Component
-    └── Button.module.css  # Styles
-```
+## Non-Obvious Patterns
+- **Radix-first**: every component wraps a Radix primitive — do not reimplement accessibility.
+- **Compound components** use dot notation (`Dialog.Content`, `Dialog.Trigger`).
+- **CSS Modules only** — no Tailwind, no inline styles, no vanilla-extract here (that lives in `design-system`).
+- **Known duplication**: `AlertDialog` also exists in `packages/wallet-shared` — historical accident.
+- **Generic-only**: no app-specific logic; UI primitives must be neutral.
+- **Named exports only**.
 
 ## Anti-Patterns
+Adding new components (use `design-system`) · Tailwind · inline styles · app-specific props · default exports.
 
-- Tailwind classes (CSS Modules only)
-- Inline styles
-- App-specific logic (keep generic)
-- Default exports
-
-## Testing
-
-- Tests in `tests/` directory
-- Focus on interaction behavior
-- Use Radix testing patterns
-
-## Notes
-
-- 95 TS/TSX files total
-- Used across all frontend apps
-- ⚠️ AlertDialog also exists in wallet-shared (duplication)
+## See Also
+Parent `packages/AGENTS.md` · `packages/design-system/AGENTS.md` (replacement).

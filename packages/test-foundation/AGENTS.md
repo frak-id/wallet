@@ -1,69 +1,32 @@
-# packages/test-foundation
+# packages/test-foundation — Compass
 
-Centralized test configuration and mock infrastructure. Consumed by all 10 Vitest projects (including shopify, ui, components).
+Centralised Vitest 4 config + shared mocks + fixtures. Consumed by all 10 Vitest projects.
 
-## Structure
+## Key Files
+- `src/vitest.shared.ts` — shared config, pool tuning, plugin helpers
+- `src/shared-setup.ts` — browser polyfills (crypto.randomUUID, matchMedia, IntersectionObserver, ResizeObserver, MessageChannel)
+- `src/react-setup.ts` — `BigInt.prototype.toJSON` (needed by Zustand `persist`)
+- `src/react-testing-library-setup.ts` — RTL cleanup + jest-dom matchers
+- `src/wallet-mocks.ts` — Wagmi hooks, Router, WebAuthn (ox), `idb-keyval` (wallet + wallet-shared only)
+- `src/apps-setup.ts` — env vars + OpenPanel mock (wallet, listener, business)
+- `src/router-mocks.ts` — `setupReactRouterMock`, `setupTanStackRouterMock`, `MockLink`
+- `src/dom-mocks.ts` — `mockWindowOrigin`, `mockDocumentReferrer`, `setupListenerDomMocks`
+- `src/index.ts` — barrel (import utilities from `@frak-labs/test-foundation`)
 
-```
-src/
-├── vitest.shared.ts     # Shared config, pool tuning, plugin helpers
-├── shared-setup.ts      # Browser API mocks
-├── react-setup.ts       # BigInt.prototype.toJSON for Zustand persist
-├── react-testing-library-setup.ts # RTL cleanup + jest-dom matchers
-├── wallet-mocks.ts      # Wagmi hooks, Router, WebAuthn, idb-keyval
-├── apps-setup.ts        # Env vars + OpenPanel mock
-├── router-mocks.ts      # Router mock factories
-├── dom-mocks.ts         # window.origin, document.referrer
-└── index.ts             # Barrel export
-```
+## Setup Execution Order (critical)
+1. `shared-setup` → 2. `react-setup` → 3. RTL setup → 4. `wallet-mocks` (wallet/wallet-shared) → 5. `apps-setup` (frontends) → 6. Per-project setup.
 
-## Where to Look
+## Non-Obvious Patterns
+- **Hoisting-safe mocks**: use getter properties for lazy evaluation — otherwise `vi.mock` + ESM imports order-trap.
+- **Fixture chain** via `test.extend()` — `BaseTestFixtures` (wallet-shared) → `ReactSdkTestFixtures` (react-sdk). Use fixtures for auto-reset; factories (`createMock*`) for variants.
+- **Router mocks differ by app**: `react-router` for wallet/wallet-shared, `@tanstack/react-router` for business. Mixing them fails silently.
+- **Do NOT mock TanStack Query globally** — create a `QueryClient` per test (`queryWrapper` fixture does this).
+- **Coverage disabled locally** — enabled only when `CI=true`. Use `bun run test:coverage` to force-enable.
+- **Backend uses Node env**: its setup is separate (`services/backend/test/...`); shared frontend mocks DO NOT apply.
+- **Pool**: threads, CPU-aware worker allocation (max = CPU−1). Frontend projects run concurrent; backend runs sequential (stateful mocks).
 
-| Task | Location |
-|------|----------|
-| Add browser mock | `src/shared-setup.ts` |
-| Mock Wagmi/WebAuthn | `src/wallet-mocks.ts` |
-| Mock router | `src/router-mocks.ts` |
-| Mock DOM APIs | `src/dom-mocks.ts` |
-| Add env vars | `src/apps-setup.ts` |
-| Vitest shared config | `src/vitest.shared.ts` |
+## Anti-Patterns
+Global TanStack Query mocks · mixing router mocks · importing setup files directly (they run automatically) · classes for test utils · shared mutable state across tests · `vi.mock` inside `describe`/`test`.
 
-## Setup File Execution Order
-
-1. shared-setup.ts      → Browser polyfills (all projects)
-2. react-setup.ts       → BigInt serialization (React projects)
-3. RTL setup            → Cleanup + matchers (React projects)
-4. wallet-mocks.ts      → Wagmi/Router/WebAuthn (wallet + wallet-shared)
-5. apps-setup.ts        → Env vars + analytics (wallet, listener, business)
-6. Project-specific     → Per-app setup files
-
-## Plugin Helpers
-
-- `getReactTestPlugins()` - React + vite-tsconfig-paths
-- `getReactOnlyPlugins()` - React only
-
-## Router Mock Factories
-
-- `setupTanStackRouterMock(options?)` - Global vi.mock for @tanstack/react-router
-- `createTanStackRouterMock(options?)` - Factory for custom mock instances
-- `MockLink` - Component replacement for `<Link>`
-
-## DOM Mock Utilities
-
-- `mockWindowOrigin(origin)` - Mock window.origin
-- `mockDocumentReferrer(referrer)` - Mock document.referrer
-- `setupListenerDomMocks(options?)` - Complete setup for listener app
-
-## Conventions
-
-- **Hoisting-safe mocks**: Use getter properties for lazy evaluation
-- **Fixture system**: `test.extend()` with auto-reset stores per test
-- **MSW**: API mocking for wallet and wallet-shared
-- **Vitest 4.0 Projects API**: Auto-discovery via glob patterns
-
-## Notes
-
-- Frontend projects: jsdom environment, concurrent execution
-- Backend project: Node environment, sequential execution (stateful mocks)
-- Coverage: V8 provider, 40% thresholds, disabled locally by default
-- Pool: threads with CPU-aware worker allocation (max workers = CPU count - 1)
+## See Also
+Parent `packages/AGENTS.md` · `packages/wallet-shared/src/tests/vitest-fixtures.ts` (fixture source) · per-project `tests/vitest-setup.ts`.
