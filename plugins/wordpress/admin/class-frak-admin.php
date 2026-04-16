@@ -34,7 +34,6 @@ class Frak_Admin {
 	 */
 	private function __construct() {
 		add_action( 'admin_menu', array( $this, 'add_admin_menu' ) );
-		add_action( 'admin_init', array( $this, 'register_settings' ) );
 		add_action( 'admin_enqueue_scripts', array( $this, 'enqueue_scripts' ) );
 
 		// AJAX handlers for webhook operations.
@@ -57,12 +56,17 @@ class Frak_Admin {
 	}
 
 	/**
-	 * Register plugin settings.
+	 * Nonce action for the settings form submission.
+	 *
+	 * The form posts back to the same page (instead of `options.php`) because
+	 * the settings payload is multipart (logo file upload), which does not map
+	 * cleanly onto the Settings API's `register_setting` sanitize-callback
+	 * pipeline. We therefore replicate the two security guarantees the Settings
+	 * API would provide:
+	 *   - `wp_nonce_field( SETTINGS_NONCE_ACTION )` emitted in the template.
+	 *   - `check_admin_referer()` + capability check in {@see save_settings()}.
 	 */
-	public function register_settings() {
-		register_setting( 'frak_settings', Frak_Settings::OPTION_KEY );
-		register_setting( 'frak_settings', 'frak_webhook_secret' );
-	}
+	public const SETTINGS_NONCE_ACTION = 'frak_save_settings';
 
 	/**
 	 * Enqueue admin scripts and styles.
@@ -76,7 +80,6 @@ class Frak_Admin {
 
 		$version = defined( 'FRAK_PLUGIN_VERSION' ) ? FRAK_PLUGIN_VERSION : false;
 
-		wp_enqueue_code_editor( array( 'type' => 'text/javascript' ) );
 		wp_enqueue_script(
 			'frak-admin',
 			plugin_dir_url( __DIR__ ) . 'admin/js/admin.js',
@@ -123,7 +126,7 @@ class Frak_Admin {
 			return;
 		}
 
-		if ( isset( $_POST['submit'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Missing -- nonce is verified by settings API.
+		if ( isset( $_POST['submit'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Missing -- the nonce is verified inside save_settings() via check_admin_referer().
 			$this->save_settings();
 		}
 
@@ -132,9 +135,20 @@ class Frak_Admin {
 
 	/**
 	 * Save settings from POST data.
+	 *
+	 * CSRF + capability protection: the template emits `wp_nonce_field()` with
+	 * {@see self::SETTINGS_NONCE_ACTION}, and `check_admin_referer()` below both
+	 * verifies the nonce and bails (via `wp_die`) when it is missing/invalid.
+	 * A redundant capability re-check guards against a hook that lowered the
+	 * requirement between page render and submit.
 	 */
 	private function save_settings() {
-		// phpcs:disable WordPress.Security.NonceVerification.Missing -- nonce is verified by settings API.
+		check_admin_referer( self::SETTINGS_NONCE_ACTION );
+
+		if ( ! current_user_can( 'manage_options' ) ) {
+			return;
+		}
+
 		$logo_url = isset( $_POST['frak_logo_url'] ) ? esc_url_raw( wp_unslash( $_POST['frak_logo_url'] ) ) : '';
 		if ( isset( $_FILES['frak_logo_file']['error'] ) && UPLOAD_ERR_OK === $_FILES['frak_logo_file']['error'] ) {
 			$uploaded_logo = $this->handle_logo_upload( $_FILES['frak_logo_file'] ); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput -- handled by wp_handle_upload.
@@ -149,20 +163,21 @@ class Frak_Admin {
 				'logo_url' => $logo_url,
 			)
 		);
-		// phpcs:enable WordPress.Security.NonceVerification.Missing
 
 		$this->clear_caches();
 	}
 
 	/**
-	 * Clear caches from popular caching plugins.
+	 * Clear front-end page caches from popular caching plugins.
 	 *
-	 * Note: wp_cache_flush() is intentionally used as a "heavy hammer" here.
-	 * Scoping invalidations per-object would require tracking every cache key
-	 * touched by Frak settings (app_name, logo_url, webhook status, block output)
-	 * across multiple cache groups, which would considerably complexify the
-	 * implementation for little gain: this runs only on admin settings save,
-	 * not on front-end requests.
+	 * Scoped to page-cache plugins on purpose — we deliberately avoid
+	 * `wp_cache_flush()` because on sites running a persistent object cache
+	 * (Redis, Memcached) that would nuke the entire site's cache
+	 * (posts, terms, user sessions) on every settings save. The plugin only
+	 * needs the rendered HTML to be regenerated so the new `window.FrakSetup`
+	 * config is emitted on the next request; the underlying settings are
+	 * hydrated fresh on the next request anyway (single autoloaded row, no
+	 * object-cache layer in between).
 	 */
 	private function clear_caches() {
 		if ( function_exists( 'rocket_clean_domain' ) ) {
@@ -174,7 +189,6 @@ class Frak_Admin {
 		if ( function_exists( 'wp_cache_clear_cache' ) ) {
 			wp_cache_clear_cache();
 		}
-		wp_cache_flush();
 	}
 
 	/**
@@ -224,7 +238,7 @@ class Frak_Admin {
 	 * @return string|false URL on success, false on failure.
 	 */
 	private function handle_logo_upload( $file ) {
-		$allowed_types = array( 'image/jpeg', 'image/png', 'image/gif', 'image/svg+xml' );
+		$allowed_types = array( 'image/jpeg', 'image/png', 'image/gif' );
 		if ( ! in_array( $file['type'], $allowed_types, true ) ) {
 			return false;
 		}

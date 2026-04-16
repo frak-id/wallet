@@ -27,6 +27,13 @@ version on dispatch.
 - Floating wallet button removed entirely. All related settings (`enable_floating_button`, `show_reward`, `button_classname`, `floating_button_position`), admin UI, and `wp_footer` render path are gone. Users place buttons via the new `frak/share-button` Gutenberg block when they want one.
 - Per-site modal i18n and language overrides removed from the plugin — these are now driven by the Frak merchant dashboard (`business.frak.id`), keeping the WordPress admin surface focused on what's WP-specific.
 - WooCommerce purchase-tracking toggle (`enable_purchase_tracking`) removed. Tracking is now automatic whenever WooCommerce is active; the admin panel just explains when and how it fires.
+- Replaced the ad-hoc `frak-integration.php` SPL autoloader with Composer's classmap autoloader. `composer.json` now maps both `includes/` and `admin/`; `build.sh` runs `composer install --optimize-autoloader` so production zips ship a warm classmap and no SPL closures fire per request.
+- Settings page CSRF protection: form now emits `wp_nonce_field( Frak_Admin::SETTINGS_NONCE_ACTION )`, and `Frak_Admin::save_settings()` calls `check_admin_referer()` + a second `current_user_can( 'manage_options' )` check before persisting.
+- Dropped `image/svg+xml` from the allowed logo upload types (avoids XSS via unsanitized SVG).
+- Removed the unused `wp_enqueue_code_editor()` call from the admin settings-page enqueue path.
+- Dropped the site-wide `wp_cache_flush()` from the settings save handler — we now only ping page-cache plugins (WP Rocket, W3TC, WP Super Cache) so persistent object caches (Redis, Memcached) are not invalidated on every save.
+- `Frak_WooCommerce::init()` only registers `woocommerce_order_status_changed` + `frak_dispatch_webhook` when a webhook secret is configured, so unconfigured stores pay zero cost on order-status transitions.
+- Removed the dead `register_setting()` calls (settings are persisted via the custom nonce-protected handler; registrations were never exercised).
 
 ### Added
 

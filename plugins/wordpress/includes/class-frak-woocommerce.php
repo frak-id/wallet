@@ -31,12 +31,21 @@ class Frak_WooCommerce {
 	 * instead of a universal `wp_footer` listener so the callback only runs on
 	 * the exact two endpoints that carry an order — every other frontend page
 	 * pays zero PHP for tracking.
+	 *
+	 * Webhook hooks (`woocommerce_order_status_changed`, `frak_dispatch_webhook`)
+	 * are only wired up when a webhook secret is configured. Without one, the
+	 * outbound HTTP call would bail inside {@see Frak_Webhook_Helper::send()}
+	 * anyway, so we avoid registering the listeners at all — every order-status
+	 * transition on unconfigured stores skips the lookup entirely.
 	 */
 	public static function init() {
 		add_action( 'woocommerce_thankyou', array( __CLASS__, 'render_purchase_tracker_for_order' ) );
 		add_action( 'woocommerce_view_order', array( __CLASS__, 'render_purchase_tracker_for_order' ) );
-		add_action( 'woocommerce_order_status_changed', array( __CLASS__, 'handle_order_status_change' ), 10, 4 );
-		add_action( 'frak_dispatch_webhook', array( __CLASS__, 'dispatch_webhook' ), 10, 3 );
+
+		if ( '' !== (string) get_option( 'frak_webhook_secret', '' ) ) {
+			add_action( 'woocommerce_order_status_changed', array( __CLASS__, 'handle_order_status_change' ), 10, 4 );
+			add_action( 'frak_dispatch_webhook', array( __CLASS__, 'dispatch_webhook' ), 10, 3 );
+		}
 	}
 
 	/**
@@ -183,11 +192,8 @@ class Frak_WooCommerce {
 			return;
 		}
 
-		// Read the webhook secret only after the cheap skip checks above so the
-		// fast-path for ignored statuses does not hit `wp_options`.
-		if ( empty( get_option( 'frak_webhook_secret' ) ) ) {
-			return;
-		}
+		// Webhook secret presence is already guaranteed at hook-registration time
+		// (see self::init()), so we skip a redundant option lookup here.
 
 		$status_map     = array(
 			'completed'  => 'confirmed',

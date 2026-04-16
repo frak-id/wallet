@@ -22,6 +22,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	</div>
 
 	<form method="post" action="" enctype="multipart/form-data">
+		<?php wp_nonce_field( Frak_Admin::SETTINGS_NONCE_ACTION ); ?>
 		<!-- Generic Website Info Section -->
 		<div class="frak-section">
 			<h2><?php esc_html_e( 'Website Information', 'frak' ); ?></h2>
