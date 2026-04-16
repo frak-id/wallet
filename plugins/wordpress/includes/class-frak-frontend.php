@@ -48,7 +48,7 @@ class Frak_Frontend {
 				'frak-sdk',
 				'https://cdn.jsdelivr.net/npm/@frak-labs/components',
 				array(),
-				false,
+				false, // phpcs:ignore WordPress.WP.EnqueuedResourceParameters.NoExplicitVersion -- CDN serves latest version.
 				true
 			);
 
