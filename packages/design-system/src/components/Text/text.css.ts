@@ -7,6 +7,20 @@ const base = style({
 
 export const textStyles = {
     base,
+    display1: style([
+        base,
+        {
+            fontSize: fontSize["7xl"],
+            lineHeight: "76px",
+        },
+    ]),
+    display: style([
+        base,
+        {
+            fontSize: fontSize["5xl"],
+            lineHeight: "48px",
+        },
+    ]),
     heading1: style([
         base,
         {

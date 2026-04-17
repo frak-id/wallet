@@ -332,4 +332,5 @@ export const fontSize = {
     "4xl": "32px",
     "5xl": "40px",
     "6xl": "48px",
+    "7xl": "60px",
 } as const;
