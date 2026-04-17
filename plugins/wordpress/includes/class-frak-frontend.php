@@ -24,12 +24,16 @@ class Frak_Frontend {
 
 	/**
 	 * Enqueue frontend scripts.
+	 *
+	 * Always loaded on block-theme frontend requests: the SDK pulls its real
+	 * metadata (merchant name, reward UI copy, etc.) from the Frak backend
+	 * once the merchant is registered on business.frak.id, so the plugin
+	 * must inject the script even when no WP-side `app_name` / `logo_url`
+	 * is configured. {@see generate_config_script()} falls back to
+	 * `get_bloginfo('name')` so `window.FrakSetup.config.metadata.name` is
+	 * never empty.
 	 */
 	public static function enqueue_scripts() {
-		if ( empty( Frak_Settings::get( 'app_name' ) ) ) {
-			return;
-		}
-
 		wp_enqueue_script(
 			'frak-sdk',
 			'https://cdn.jsdelivr.net/npm/@frak-labs/components',
@@ -48,16 +52,12 @@ class Frak_Frontend {
 	/**
 	 * Append DNS-prefetch / preconnect hints for the SDK origin so the
 	 * browser can warm the TLS handshake before the `<script>` tag parses.
-	 * Skipped when no app name is set (SDK is not enqueued in that case).
 	 *
 	 * @param array<int, string|array<string, string>> $hints    Existing hints from core.
 	 * @param string                                   $relation Relation type being filtered.
 	 * @return array<int, string|array<string, string>>
 	 */
 	public static function add_resource_hints( $hints, $relation ) {
-		if ( empty( Frak_Settings::get( 'app_name' ) ) ) {
-			return $hints;
-		}
 		if ( 'dns-prefetch' === $relation || 'preconnect' === $relation ) {
 			$hints[] = 'https://cdn.jsdelivr.net';
 		}

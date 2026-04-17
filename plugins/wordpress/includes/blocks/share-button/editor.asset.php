@@ -8,5 +8,5 @@
 
 return array(
 	'dependencies' => array( 'wp-blocks', 'wp-element', 'wp-block-editor', 'wp-components', 'wp-i18n', 'frak-sdk' ),
-	'version'      => '1.0.0',
+	'version'      => '1.1.0',
 );

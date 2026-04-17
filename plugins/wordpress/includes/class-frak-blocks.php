@@ -43,10 +43,23 @@ class Frak_Blocks {
 
 	/**
 	 * Register every bundled block via its `block.json` manifest.
+	 *
+	 * WP 6.7+ exposes {@see wp_register_block_metadata_collection()} which
+	 * maps the pre-baked `blocks-manifest.php` array into an in-memory
+	 * registry, so {@see register_block_type()} skips the
+	 * `file_get_contents()` + `json_decode()` cost on every request. On
+	 * older WP the collection call is a no-op and core falls back to
+	 * reading the on-disk `block.json` like before.
 	 */
 	public static function register_blocks() {
+		$blocks_dir = FRAK_PLUGIN_DIR . 'includes/blocks';
+
+		if ( function_exists( 'wp_register_block_metadata_collection' ) ) {
+			wp_register_block_metadata_collection( $blocks_dir, FRAK_PLUGIN_DIR . 'includes/blocks-manifest.php' );
+		}
+
 		foreach ( self::BLOCKS as $slug ) {
-			register_block_type( FRAK_PLUGIN_DIR . 'includes/blocks/' . $slug );
+			register_block_type( $blocks_dir . '/' . $slug );
 		}
 	}
 

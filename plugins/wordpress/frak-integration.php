@@ -51,18 +51,14 @@ if ( ! file_exists( FRAK_PLUGIN_DIR . 'vendor/autoload.php' ) ) {
 require_once FRAK_PLUGIN_DIR . 'vendor/autoload.php';
 
 /**
- * Load translations from the `languages/` directory. Called on `init` (which
- * is after `plugins_loaded`, matching the modern WP guidance for hooking
- * i18n loading). Self-hosted installs need this explicit call — WP.org
- * auto-loading from translate.wordpress.org only fires for plugins listed in
- * the directory, which this one is not yet.
+ * Translations are loaded just-in-time by WordPress core (see
+ * `_load_textdomain_just_in_time()` introduced in WP 4.6 and hardened in
+ * WP 6.7). Calling `load_plugin_textdomain()` explicitly from `init` used
+ * to be required; it is now redundant — WP derives the MO file path from
+ * the `Text Domain` + `Domain Path` headers of this file on first `__()`
+ * call. Dropping the manual hook removes two `file_exists()` probes per
+ * request on sites that never render Frak-translated strings.
  */
-add_action(
-	'init',
-	static function () {
-		load_plugin_textdomain( 'frak', false, dirname( plugin_basename( FRAK_PLUGIN_FILE ) ) . '/languages' );
-	}
-);
 
 /**
  * Bootstrap the plugin's static controller. {@see Frak_Plugin::boot()}
