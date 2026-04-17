@@ -14,11 +14,15 @@
 		{ label: __( 'Sharing page', 'frak' ), value: 'sharing-page' },
 	];
 
+	function attr( value ) {
+		return value !== '' && value !== undefined && value !== null ? String( value ) : undefined;
+	}
+
 	blocks.registerBlockType( 'frak/share-button', {
 		edit( props ) {
 			const { attributes, setAttributes } = props;
 			const blockProps = useBlockProps( {
-				className: 'frak-block-preview frak-block-preview--share-button',
+				className: 'frak-block-editor frak-block-editor--share-button',
 			} );
 
 			const setter = ( key ) => ( value ) => setAttributes( { [ key ]: value } );
@@ -78,19 +82,22 @@
 						} )
 					)
 				),
+				// Render the real `<frak-button-share>` with `preview` so it bypasses
+				// the `isClientReady` gate (no SDK client exists in the editor) and
+				// stays interactive-looking while the click handler is no-op'd.
 				el(
 					'div',
 					blockProps,
-					el(
-						'button',
-						{
-							type: 'button',
-							className: 'wp-block-button__link',
-							disabled: true,
-							style: { pointerEvents: 'none' },
-						},
-						attributes.text || __( 'Share and earn!', 'frak' )
-					)
+					el( 'frak-button-share', {
+						preview: 'true',
+						text: attr( attributes.text ),
+						classname: attr( attributes.classname ),
+						placement: attr( attributes.placement ),
+						'click-action': attr( attributes.clickAction ),
+						'use-reward': attributes.useReward ? '' : undefined,
+						'no-reward-text': attr( attributes.noRewardText ),
+						'target-interaction': attr( attributes.targetInteraction ),
+					} )
 				)
 			);
 		},

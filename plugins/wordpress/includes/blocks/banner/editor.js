@@ -13,25 +13,20 @@
 		{ label: __( 'In-app browser prompt', 'frak' ), value: 'inapp' },
 	];
 
+	// Drop empty strings so `<frak-banner>` only sees attributes the merchant
+	// actually set — the web component already has sensible defaults for the rest.
+	function attr( value ) {
+		return value !== '' && value !== undefined && value !== null ? String( value ) : undefined;
+	}
+
 	blocks.registerBlockType( 'frak/banner', {
 		edit( props ) {
 			const { attributes, setAttributes } = props;
 			const blockProps = useBlockProps( {
-				className: 'frak-block-preview frak-block-preview--banner',
+				className: 'frak-block-editor frak-block-editor--banner',
 			} );
 
 			const setter = ( key ) => ( value ) => setAttributes( { [ key ]: value } );
-
-			const previewIsInapp = attributes.previewMode === 'inapp';
-			const previewTitle = previewIsInapp
-				? attributes.inappTitle || __( 'Open in your browser', 'frak' )
-				: attributes.referralTitle || __( 'Referral reward', 'frak' );
-			const previewDescription = previewIsInapp
-				? attributes.inappDescription
-				: attributes.referralDescription;
-			const previewCta = previewIsInapp
-				? attributes.inappCta || __( 'Open browser', 'frak' )
-				: attributes.referralCta || __( 'Got it', 'frak' );
 
 			return el(
 				Fragment,
@@ -108,34 +103,27 @@
 						} )
 					)
 				),
+				// Render the real `<frak-banner>` web component with `preview` so it
+				// short-circuits the in-app / referral-event detection and renders
+				// immediately in the editor iframe. We re-key on `previewMode` so the
+				// element remounts cleanly when merchants toggle the preview variant.
 				el(
 					'div',
 					blockProps,
-					el(
-						'div',
-						{
-							style: {
-								border: '1px dashed #cbd2d9',
-								borderRadius: '8px',
-								padding: '16px',
-								background: '#f8fafb',
-							},
-						},
-						el( 'strong', null, previewTitle ),
-						previewDescription
-							? el( 'p', { style: { margin: '8px 0' } }, previewDescription )
-							: null,
-						el(
-							'button',
-							{
-								type: 'button',
-								className: 'wp-block-button__link',
-								disabled: true,
-								style: { pointerEvents: 'none' },
-							},
-							previewCta
-						)
-					)
+					el( 'frak-banner', {
+						key: attributes.previewMode || 'referral',
+						preview: 'true',
+						'preview-mode': attr( attributes.previewMode ) || 'referral',
+						placement: attr( attributes.placement ),
+						classname: attr( attributes.classname ),
+						interaction: attr( attributes.interaction ),
+						'referral-title': attr( attributes.referralTitle ),
+						'referral-description': attr( attributes.referralDescription ),
+						'referral-cta': attr( attributes.referralCta ),
+						'inapp-title': attr( attributes.inappTitle ),
+						'inapp-description': attr( attributes.inappDescription ),
+						'inapp-cta': attr( attributes.inappCta ),
+					} )
 				)
 			);
 		},

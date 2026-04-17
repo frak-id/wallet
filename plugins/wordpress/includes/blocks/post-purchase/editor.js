@@ -14,21 +14,23 @@
 		{ label: __( 'Referee (congratulations)', 'frak' ), value: 'referee' },
 	];
 
+	const PREVIEW_VARIANTS = [
+		{ label: __( 'Referrer (invite to share)', 'frak' ), value: 'referrer' },
+		{ label: __( 'Referee (congratulations)', 'frak' ), value: 'referee' },
+	];
+
+	function attr( value ) {
+		return value !== '' && value !== undefined && value !== null ? String( value ) : undefined;
+	}
+
 	blocks.registerBlockType( 'frak/post-purchase', {
 		edit( props ) {
 			const { attributes, setAttributes } = props;
 			const blockProps = useBlockProps( {
-				className: 'frak-block-preview frak-block-preview--post-purchase',
+				className: 'frak-block-editor frak-block-editor--post-purchase',
 			} );
 
 			const setter = ( key ) => ( value ) => setAttributes( { [ key ]: value } );
-
-			const previewBadge = attributes.badgeText || __( 'Limited offer', 'frak' );
-			const previewMessage =
-				attributes.referrerText ||
-				attributes.refereeText ||
-				__( 'Share this purchase and earn {REWARD}.', 'frak' );
-			const previewCta = attributes.ctaText || __( 'Share & earn', 'frak' );
 
 			return el(
 				Fragment,
@@ -61,6 +63,17 @@
 							help: __( 'Use {REWARD} to inject the reward amount.', 'frak' ),
 							value: attributes.ctaText,
 							onChange: setter( 'ctaText' ),
+						} )
+					),
+					el(
+						PanelBody,
+						{ title: __( 'Editor preview', 'frak' ), initialOpen: false },
+						el( SelectControl, {
+							label: __( 'Preview variant', 'frak' ),
+							help: __( 'Only affects the editor preview — at runtime the variant is picked from the referral status.', 'frak' ),
+							value: attributes.previewVariant,
+							options: PREVIEW_VARIANTS,
+							onChange: setter( 'previewVariant' ),
 						} )
 					),
 					el(
@@ -100,46 +113,28 @@
 						} )
 					)
 				),
+				// Render the real `<frak-post-purchase>` with `preview` so it skips
+				// the backend RPC gates (`getUserReferralStatus` / `getMerchantInformation`)
+				// that would otherwise keep it hidden in the editor. The re-key on the
+				// selected preview variant forces a clean remount when merchants flip
+				// between "referrer" and "referee" copy.
 				el(
 					'div',
 					blockProps,
-					el(
-						'div',
-						{
-							style: {
-								border: '1px dashed #cbd2d9',
-								borderRadius: '8px',
-								padding: '16px',
-								background: '#f8fafb',
-							},
-						},
-						el(
-							'span',
-							{
-								style: {
-									display: 'inline-block',
-									padding: '2px 8px',
-									borderRadius: '999px',
-									background: '#2271b1',
-									color: '#fff',
-									fontSize: '12px',
-									marginBottom: '8px',
-								},
-							},
-							previewBadge
-						),
-						el( 'p', { style: { margin: '8px 0' } }, previewMessage ),
-						el(
-							'button',
-							{
-								type: 'button',
-								className: 'wp-block-button__link',
-								disabled: true,
-								style: { pointerEvents: 'none' },
-							},
-							previewCta
-						)
-					)
+					el( 'frak-post-purchase', {
+						key: attributes.previewVariant || 'referrer',
+						preview: 'true',
+						'preview-variant': attr( attributes.previewVariant ) || 'referrer',
+						classname: attr( attributes.classname ),
+						placement: attr( attributes.placement ),
+						variant: attr( attributes.variant ),
+						'merchant-id': attr( attributes.merchantId ),
+						'sharing-url': attr( attributes.sharingUrl ),
+						'badge-text': attr( attributes.badgeText ),
+						'referrer-text': attr( attributes.referrerText ),
+						'referee-text': attr( attributes.refereeText ),
+						'cta-text': attr( attributes.ctaText ),
+					} )
 				)
 			);
 		},

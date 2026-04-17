@@ -21,7 +21,8 @@
 		"badgeText": { "type": "string", "default": "" },
 		"referrerText": { "type": "string", "default": "" },
 		"refereeText": { "type": "string", "default": "" },
-		"ctaText": { "type": "string", "default": "" }
+		"ctaText": { "type": "string", "default": "" },
+		"previewVariant": { "type": "string", "default": "referrer" }
 	},
 	"editorScript": "file:./editor.js",
 	"render": "file:./render.php"
