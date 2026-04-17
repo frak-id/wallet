@@ -37,7 +37,6 @@ class Frak_Admin {
 		add_action( 'admin_enqueue_scripts', array( $this, 'enqueue_scripts' ) );
 
 		// AJAX handlers for webhook operations.
-		add_action( 'wp_ajax_frak_generate_webhook_secret', array( $this, 'ajax_generate_webhook_secret' ) );
 		add_action( 'wp_ajax_frak_refresh_merchant', array( $this, 'ajax_refresh_merchant' ) );
 		add_action( 'wp_ajax_frak_clear_webhook_logs', array( $this, 'ajax_clear_webhook_logs' ) );
 	}
@@ -164,6 +163,15 @@ class Frak_Admin {
 			)
 		);
 
+		// The webhook secret is owned by the Frak business dashboard (single source
+		// of truth stored backend-side on `merchantWebhooksTable.hookSignatureKey`).
+		// The admin pastes it here so outbound HMAC signatures match what the
+		// backend verifies. An empty submission clears the row and disables dispatch.
+		if ( isset( $_POST['frak_webhook_secret'] ) ) {
+			$submitted_secret = sanitize_text_field( wp_unslash( $_POST['frak_webhook_secret'] ) );
+			update_option( 'frak_webhook_secret', $submitted_secret );
+		}
+
 		$this->clear_caches();
 	}
 
@@ -259,27 +267,6 @@ class Frak_Admin {
 		}
 
 		return false;
-	}
-
-	/**
-	 * AJAX: Generate webhook secret.
-	 */
-	public function ajax_generate_webhook_secret() {
-		check_ajax_referer( 'frak_ajax_nonce', 'nonce' );
-
-		if ( ! current_user_can( 'manage_options' ) ) {
-			wp_die( 'Unauthorized' );
-		}
-
-		$secret = wp_generate_password( 32, false );
-		update_option( 'frak_webhook_secret', $secret );
-
-		wp_send_json_success(
-			array(
-				'secret'  => $secret,
-				'message' => __( 'Webhook secret generated successfully', 'frak' ),
-			)
-		);
 	}
 
 	/**

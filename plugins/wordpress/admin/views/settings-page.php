@@ -139,10 +139,26 @@ if ( ! defined( 'ABSPATH' ) ) {
 						</th>
 						<td>
 							<input type="text" id="frak_webhook_secret" name="frak_webhook_secret"
-								value="<?php echo esc_attr( $webhook_secret ); ?>" class="regular-text" readonly>
-							<button type="button" id="generate-webhook-secret" class="button">
-								<?php echo $webhook_secret ? esc_html__( 'Regenerate', 'frak' ) : esc_html__( 'Generate', 'frak' ); ?>
-							</button>
+								value="<?php echo esc_attr( $webhook_secret ); ?>" class="regular-text"
+								placeholder="<?php esc_attr_e( 'Paste the webhook secret from your Frak dashboard', 'frak' ); ?>">
+							<p class="description">
+								<?php
+								printf(
+									wp_kses(
+										/* translators: %s: URL to the Frak business dashboard webhook configuration. */
+										__( 'Generate the secret in your <a href="%s" target="_blank" rel="noopener">Frak business dashboard</a> (Merchant → Purchase Tracker → WooCommerce) and paste it here. Save settings to apply.', 'frak' ),
+										array(
+											'a' => array(
+												'href'   => array(),
+												'target' => array(),
+												'rel'    => array(),
+											),
+										)
+									),
+									esc_url( 'https://business.frak.id/' )
+								);
+								?>
+							</p>
 						</td>
 					</tr>
 					<tr>

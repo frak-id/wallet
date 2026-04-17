@@ -140,32 +140,6 @@
 	}
 
 	/**
-	 * Regenerate the webhook secret (confirm first).
-	 *
-	 * @param {Event} event
-	 */
-	async function handleGenerateSecret( event ) {
-		event.preventDefault();
-		if (
-			! window.confirm(
-				'Are you sure you want to regenerate the webhook secret? This will break the integration if you have already configured it on Frak.'
-			)
-		) {
-			return;
-		}
-		const response = await postAjax( 'frak_generate_webhook_secret' );
-		if ( response.success ) {
-			const input = document.getElementById( 'frak_webhook_secret' );
-			if ( input ) {
-				input.value = response.data.secret;
-			}
-			showNotice( response.data.message, 'success' );
-		} else {
-			showNotice( 'Error generating webhook secret', 'error' );
-		}
-	}
-
-	/**
 	 * Clear stored webhook logs (confirm first, then reload page).
 	 *
 	 * @param {Event} event
@@ -220,11 +194,6 @@
 			if ( logoUrl.value ) {
 				updateLogoPreview( logoUrl.value );
 			}
-		}
-
-		const generateBtn = document.getElementById( 'generate-webhook-secret' );
-		if ( generateBtn ) {
-			generateBtn.addEventListener( 'click', handleGenerateSecret );
 		}
 
 		const refreshMerchantBtn = document.getElementById( 'refresh-merchant' );
