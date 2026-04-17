@@ -2,6 +2,10 @@
 /**
  * Main plugin controller.
  *
+ * Stateless static class — mirrors the pattern used by {@see Frak_WooCommerce}
+ * and {@see Frak_WC_Webhook_Registrar}. {@see boot()} wires the bootstrap
+ * hooks on `plugins_loaded`; everything else is a static callback.
+ *
  * @package Frak_Integration
  */
 
@@ -11,48 +15,27 @@
 class Frak_Plugin {
 
 	/**
-	 * Singleton instance.
-	 *
-	 * @var Frak_Plugin|null
+	 * Wire the bootstrap hooks. Called once from `plugins_loaded` in
+	 * `frak-integration.php`.
 	 */
-	private static $instance = null;
+	public static function boot() {
+		register_deactivation_hook( FRAK_PLUGIN_FILE, array( __CLASS__, 'deactivate' ) );
 
-	/**
-	 * Get singleton instance.
-	 *
-	 * @return Frak_Plugin
-	 */
-	public static function instance() {
-		if ( null === self::$instance ) {
-			self::$instance = new self();
-		}
-		return self::$instance;
-	}
-
-	/**
-	 * Constructor.
-	 */
-	private function __construct() {
-		$this->init_hooks();
-	}
-
-
-	/**
-	 * Initialize hooks.
-	 */
-	private function init_hooks() {
-		register_deactivation_hook( FRAK_PLUGIN_FILE, array( $this, 'deactivate' ) );
-
-		add_action( 'init', array( $this, 'init' ) );
+		add_action( 'init', array( __CLASS__, 'init' ) );
 	}
 
 	/**
 	 * Plugin init callback.
 	 */
-	public function init() {
-		// Skip entirely in WP-CLI context — frontend SDK injection and admin UI
-		// are irrelevant when the request is a command-line invocation.
+	public static function init() {
+		// WP-CLI keeps only the webhook registrar wired — its option-update hooks
+		// keep the WC webhook in sync when `wp option update frak_webhook_secret`
+		// or a domain change is executed from the CLI. Frontend SDK injection,
+		// admin UI, and block registration are irrelevant for CLI invocations.
 		if ( defined( 'WP_CLI' ) && WP_CLI ) {
+			if ( class_exists( 'WooCommerce' ) ) {
+				Frak_WC_Webhook_Registrar::init();
+			}
 			return;
 		}
 
@@ -69,13 +52,13 @@ class Frak_Plugin {
 		}
 
 		if ( is_admin() ) {
-			Frak_Admin::instance();
+			Frak_Admin::init();
 
 			if ( ! wp_is_block_theme() ) {
-				add_action( 'admin_notices', array( $this, 'render_block_theme_notice' ) );
+				add_action( 'admin_notices', array( __CLASS__, 'render_block_theme_notice' ) );
 			}
 		} elseif ( wp_is_block_theme() ) {
-			Frak_Frontend::instance();
+			Frak_Frontend::init();
 		}
 
 		Frak_Blocks::init();
@@ -89,25 +72,16 @@ class Frak_Plugin {
 	/**
 	 * Admin notice shown when the active theme is not a block theme.
 	 */
-	public function render_block_theme_notice() {
+	public static function render_block_theme_notice() {
 		echo '<div class="notice notice-warning"><p>';
 		echo esc_html__( 'Frak requires a block theme to inject the SDK on the frontend. The settings page is still available, but the Frak SDK will not load on your site until you activate a block theme.', 'frak' );
 		echo '</p></div>';
 	}
 
 	/**
-	 * Plugin activation — delegated to the activation hook in the main
-	 * plugin file. Kept for backwards compatibility with the deactivation
-	 * counterpart below; safe to remove once no external code calls it.
-	 */
-	public function activate() {
-		flush_rewrite_rules();
-	}
-
-	/**
 	 * Plugin deactivation.
 	 */
-	public function deactivate() {
+	public static function deactivate() {
 		// Cleanup if needed.
 	}
 }

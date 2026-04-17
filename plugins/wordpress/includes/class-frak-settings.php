@@ -33,7 +33,7 @@ class Frak_Settings {
 	/**
 	 * Current settings schema version. Bump when a migration is added.
 	 */
-	const CURRENT_VERSION = 1;
+	const CURRENT_VERSION = 2;
 
 	/**
 	 * Legacy individual option keys that an earlier, unreleased iteration of
@@ -129,8 +129,10 @@ class Frak_Settings {
 	 * Run one-time migration. Safe to call on every request — no-ops after
 	 * the first successful run for the current {@see self::CURRENT_VERSION}.
 	 *
-	 * Imports surviving legacy rows into the bundle and deletes every known
-	 * legacy row (both migrated and deprecated) from wp_options.
+	 * Imports surviving legacy rows into the bundle, deletes every known
+	 * legacy row (both migrated and deprecated) from wp_options, and forces
+	 * `frak_webhook_secret` to autoload=no so the credential is not loaded
+	 * into memory on every request (WP 6.4+ API).
 	 */
 	public static function migrate() {
 		$version = (int) get_option( self::VERSION_OPTION, 0 );
@@ -160,6 +162,13 @@ class Frak_Settings {
 		);
 		foreach ( $legacy_to_delete as $legacy_key ) {
 			delete_option( $legacy_key );
+		}
+
+		// Force autoload=no on the webhook secret so existing installs upgraded
+		// from v1 stop hydrating the credential on every request. Safe no-op
+		// when the option is already non-autoloaded or absent.
+		if ( function_exists( 'wp_set_option_autoload' ) ) {
+			wp_set_option_autoload( 'frak_webhook_secret', false );
 		}
 
 		update_option( self::VERSION_OPTION, self::CURRENT_VERSION );

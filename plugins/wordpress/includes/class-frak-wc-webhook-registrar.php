@@ -211,7 +211,7 @@ class Frak_WC_Webhook_Registrar {
 		$configured_secret = (string) get_option( 'frak_webhook_secret', '' );
 		$secret_configured = '' !== $configured_secret;
 		$wc_available      = self::is_wc_available();
-		$current_domain    = self::current_host();
+		$current_domain    = Frak_Utils::current_host();
 
 		$expected_url = '' !== $merchant_id ? self::build_delivery_url( $merchant_id ) : '';
 
@@ -282,22 +282,9 @@ class Frak_WC_Webhook_Registrar {
 		return 'https://backend.frak.id/ext/merchant/' . rawurlencode( $merchant_id ) . '/webhook/woocommerce';
 	}
 
-	/**
-	 * Return the current `home_url()` host, lower-cased and with a leading
-	 * `www.` stripped so comparisons align with the backend's normalization
-	 * (see `MerchantRepository::getNormalizedDomain`).
-	 */
-	private static function current_host(): string {
-		$host = wp_parse_url( home_url(), PHP_URL_HOST );
-		if ( ! is_string( $host ) || '' === $host ) {
-			return '';
-		}
-		$host = strtolower( $host );
-		if ( 0 === strpos( $host, 'www.' ) ) {
-			$host = substr( $host, 4 );
-		}
-		return $host;
-	}
+	// Normalised host is provided by {@see Frak_Utils::current_host()} so the
+	// webhook registrar and the merchant cache agree on the same normalisation
+	// (lower-cased, leading `www.` stripped).
 
 	/**
 	 * Load the existing Frak webhook by stored id, or null when it was deleted

@@ -117,6 +117,7 @@
 		const previewImage = preview.querySelector( 'img' );
 		if ( previewImage ) {
 			previewImage.src = src;
+		}
 	}
 
 	/**
@@ -181,6 +182,7 @@
 			showNotice( message, 'error' );
 			button.disabled = false;
 			button.textContent = 'Refresh Merchant';
+		}
 	}
 
 	/**
@@ -208,6 +210,7 @@
 			showNotice( message, 'error' );
 			button.disabled = false;
 			button.textContent = originalLabel;
+		}
 	}
 
 	/**

@@ -2,6 +2,10 @@
 /**
  * Frontend functionality.
  *
+ * Stateless static class — follows the same pattern as {@see Frak_WooCommerce}
+ * and {@see Frak_WC_Webhook_Registrar}. All handlers are static so no
+ * instance is held in memory between requests.
+ *
  * @package Frak_Integration
  */
 
@@ -11,36 +15,17 @@
 class Frak_Frontend {
 
 	/**
-	 * Singleton instance.
-	 *
-	 * @var Frak_Frontend|null
+	 * Register frontend hooks. Called once from {@see Frak_Plugin::init()}.
 	 */
-	private static $instance = null;
-
-	/**
-	 * Get singleton instance.
-	 *
-	 * @return Frak_Frontend
-	 */
-	public static function instance() {
-		if ( null === self::$instance ) {
-			self::$instance = new self();
-		}
-		return self::$instance;
-	}
-
-	/**
-	 * Constructor.
-	 */
-	private function __construct() {
-		add_action( 'wp_enqueue_scripts', array( $this, 'enqueue_scripts' ), 20 );
-		add_filter( 'wp_resource_hints', array( $this, 'add_resource_hints' ), 10, 2 );
+	public static function init() {
+		add_action( 'wp_enqueue_scripts', array( __CLASS__, 'enqueue_scripts' ), 20 );
+		add_filter( 'wp_resource_hints', array( __CLASS__, 'add_resource_hints' ), 10, 2 );
 	}
 
 	/**
 	 * Enqueue frontend scripts.
 	 */
-	public function enqueue_scripts() {
+	public static function enqueue_scripts() {
 		if ( empty( Frak_Settings::get( 'app_name' ) ) ) {
 			return;
 		}
@@ -57,7 +42,7 @@ class Frak_Frontend {
 		);
 
 		// Inline config injected 'before' the SDK so window.FrakSetup is populated prior to SDK bootstrap.
-		wp_add_inline_script( 'frak-sdk', $this->generate_config_script(), 'before' );
+		wp_add_inline_script( 'frak-sdk', self::generate_config_script(), 'before' );
 	}
 
 	/**
@@ -69,7 +54,7 @@ class Frak_Frontend {
 	 * @param string                                   $relation Relation type being filtered.
 	 * @return array<int, string|array<string, string>>
 	 */
-	public function add_resource_hints( $hints, $relation ) {
+	public static function add_resource_hints( $hints, $relation ) {
 		if ( empty( Frak_Settings::get( 'app_name' ) ) ) {
 			return $hints;
 		}
@@ -90,7 +75,7 @@ class Frak_Frontend {
 	 *
 	 * @return string
 	 */
-	private function generate_config_script() {
+	private static function generate_config_script() {
 		$app_name_raw = Frak_Settings::get( 'app_name' );
 		$app_name     = '' !== $app_name_raw ? $app_name_raw : get_bloginfo( 'name' );
 		$logo_url     = Frak_Settings::get( 'logo_url' );

@@ -17,6 +17,19 @@ mkdir -p ${BUILD_DIR}/${PLUGIN_NAME} ${DIST_DIR}
 echo "Installing composer dependencies..."
 composer install --no-dev --optimize-autoloader
 
+# Generate the translation template (.pot) when WP-CLI is available. Merchants
+# self-hosting the plugin read translations from `languages/`; releasing an
+# up-to-date template alongside the zip lets translators start immediately.
+# Skipped silently when WP-CLI is not installed on the build host.
+mkdir -p languages
+if command -v wp >/dev/null 2>&1; then
+  echo "Generating translation template (.pot)..."
+  wp i18n make-pot . languages/frak.pot --slug=frak --exclude=vendor,test,dist,build 2>/dev/null \
+    || echo "  (skipped: wp i18n unavailable)"
+else
+  echo "WP-CLI not found; skipping .pot generation."
+fi
+
 # Copy all files to build directory
 rsync -av --exclude-from='.distignore' \
   --exclude='build' \
@@ -41,5 +54,5 @@ echo "Build complete! Package created: ${DIST_DIR}/${PLUGIN_NAME}-${VERSION}.zip
 # List package contents for verification
 echo ""
 echo "Package contents:"
-unzip -l ${DIST_DIR}/${PLUGIN_NAME}-${VERSION}.zip | grep -E "Name|----|----|${PLUGIN_NAME}/" | head -20
+unzip -l ${DIST_DIR}/${PLUGIN_NAME}-${VERSION}.zip | grep -E "Name|----|${PLUGIN_NAME}/" | head -20
 echo "..."

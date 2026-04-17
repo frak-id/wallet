@@ -69,7 +69,7 @@ class Frak_Merchant {
 	 * @return array{id:string,name:string,domain:string,resolved_at:int}|null
 	 */
 	public static function get_record() {
-		$host = self::current_host();
+		$host = Frak_Utils::current_host();
 		if ( '' === $host ) {
 			return null;
 		}
@@ -140,22 +140,7 @@ class Frak_Merchant {
 		return $record;
 	}
 
-	/**
-	 * Return the current `home_url()` host, lower-cased and with a leading
-	 * `www.` stripped so the cache key aligns with the backend's
-	 * normalization (see `MerchantRepository::getNormalizedDomain`).
-	 *
-	 * @return string Empty string when the host cannot be determined.
-	 */
-	private static function current_host() {
-		$host = wp_parse_url( home_url(), PHP_URL_HOST );
-		if ( ! is_string( $host ) || '' === $host ) {
-			return '';
-		}
-		$host = strtolower( $host );
-		if ( 0 === strpos( $host, 'www.' ) ) {
-			$host = substr( $host, 4 );
-		}
-		return $host;
-	}
+	// Normalised host is provided by {@see Frak_Utils::current_host()} so the
+	// merchant cache key and the webhook registrar agree on the same
+	// normalisation (lower-cased, leading `www.` stripped).
 }
