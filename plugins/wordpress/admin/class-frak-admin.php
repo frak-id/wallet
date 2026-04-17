@@ -332,11 +332,13 @@ class Frak_Admin {
 			if ( ! $status['wc_available'] ) {
 				$message = __( 'WooCommerce is not active on this site.', 'frak' );
 			} elseif ( ! $status['merchant_resolved'] ) {
-				$message = __( 'Merchant not resolved for this domain — register it on business.frak.id first.', 'frak' );
+				$message = __( 'Merchant not resolved for this domain — register it in your Frak business dashboard (Merchant → Allowed Domains).', 'frak' );
+			} elseif ( ! $status['domain_matches'] ) {
+				$message = __( 'This site\'s domain changed since the merchant record was cached. Click "Refresh Merchant" first.', 'frak' );
 			} elseif ( ! $status['secret_configured'] ) {
 				$message = __( 'Paste the webhook secret from your Frak dashboard and save the form before enabling.', 'frak' );
 			} else {
-				$message = __( 'Failed to create the WooCommerce webhook.', 'frak' );
+				$message = __( 'Failed to create the WooCommerce webhook — check WooCommerce → Status → Logs for details.', 'frak' );
 			}
 
 			wp_send_json_error( array( 'message' => $message ) );

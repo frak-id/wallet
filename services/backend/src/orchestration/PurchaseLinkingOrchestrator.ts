@@ -37,6 +37,11 @@ type ClaimPurchaseResult = {
  *
  * Shopify / Magento / generic custom tokens don't match the `wc_order_`
  * prefix and pass through untouched.
+ *
+ * TODO(deprecate): remove once the last v1.0 WP merchant has upgraded to a
+ * plugin build that sends composite tokens. The only live consumer today is
+ * a single merchant; once telemetry shows zero bare-`wc_order_*` tokens in a
+ * full month this helper + its call sites can be deleted.
  */
 function normalizePurchaseToken(token: string, orderId: string): string {
     if (!token.startsWith("wc_order_")) {

@@ -26,8 +26,8 @@ $wc_logs_url     = $wc_active ? admin_url( 'admin.php?page=wc-status&tab=logs' )
 	<h1><?php echo esc_html( get_admin_page_title() ); ?></h1>
 
 	<div class="frak-links">
-		<a href="https://docs.frak.id/components/frak-setup" target="_blank">📚 Documentation</a>
-		<a href="https://business.frak.id/" target="_blank">🎯 Dashboard</a>
+		<a href="https://docs.frak.id/components/frak-setup" target="_blank" rel="noopener">📚 Documentation</a>
+		<a href="https://business.frak.id/" target="_blank" rel="noopener">🎯 Dashboard</a>
 	</div>
 
 	<form method="post" action="" enctype="multipart/form-data">
@@ -84,11 +84,12 @@ $wc_logs_url     = $wc_active ? admin_url( 'admin.php?page=wc-status&tab=logs' )
 								printf(
 									wp_kses(
 										/* translators: %s: URL to customizer */
-										__( 'No site icon or custom logo found. <a href="%s" target="_blank">Set one in Customizer</a>', 'frak' ),
+										__( 'No site icon or custom logo found. <a href="%s" target="_blank" rel="noopener">Set one in Customizer</a>', 'frak' ),
 										array(
 											'a' => array(
 												'href'   => array(),
 												'target' => array(),
+												'rel'    => array(),
 											),
 										)
 									),
@@ -173,13 +174,33 @@ $wc_logs_url     = $wc_active ? admin_url( 'admin.php?page=wc-status&tab=logs' )
 								<span class="frak-webhook-status status-inactive">
 									<?php esc_html_e( '✗ Not resolved for this domain', 'frak' ); ?>
 								</span>
+								<p class="description" style="margin-top: 8px;">
+									<?php
+									printf(
+										wp_kses(
+											/* translators: 1: current site host, 2: business dashboard URL. */
+											__( 'If you just moved the site to a new domain or this is a fresh install, add <code>%1$s</code> under <a href="%2$s" target="_blank" rel="noopener">Merchant → Allowed Domains</a> in the Frak dashboard, then click "Refresh Merchant".', 'frak' ),
+											array(
+												'a'    => array(
+													'href' => array(),
+													'target' => array(),
+													'rel'  => array(),
+												),
+												'code' => array(),
+											)
+										),
+										esc_html( wp_parse_url( home_url(), PHP_URL_HOST ) ),
+										esc_url( 'https://business.frak.id/' )
+									);
+									?>
+								</p>
 							<?php endif; ?>
 							<button type="button" id="refresh-merchant" class="button" style="margin-left: 10px;">
 								<?php esc_html_e( 'Refresh Merchant', 'frak' ); ?>
 							</button>
 							<?php if ( $merchant_record ) : ?>
 								<a href="<?php echo esc_url( 'https://business.frak.id/merchant/' . $merchant_record['id'] ); ?>"
-									target="_blank" class="button">
+									target="_blank" rel="noopener" class="button">
 									<?php esc_html_e( 'Manage on Frak', 'frak' ); ?>
 								</a>
 							<?php endif; ?>
@@ -203,8 +224,13 @@ $wc_logs_url     = $wc_active ? admin_url( 'admin.php?page=wc-status&tab=logs' )
 					$healthy = $wc_status['exists']
 						&& 'active' === $wc_status['status']
 						&& $wc_status['url_matches']
+						&& $wc_status['topic_matches']
+						&& $wc_status['api_version_matches']
+						&& $wc_status['secret_matches']
 						&& $wc_status['secret_configured']
-						&& $wc_status['merchant_resolved'];
+						&& $wc_status['merchant_resolved']
+						&& $wc_status['domain_matches']
+						&& 0 === $wc_status['failure_count'];
 					?>
 
 					<?php if ( $healthy ) : ?>
@@ -220,6 +246,8 @@ $wc_logs_url     = $wc_active ? admin_url( 'admin.php?page=wc-status&tab=logs' )
 								<?php
 								if ( ! $wc_status['merchant_resolved'] ) {
 									esc_html_e( 'Register this domain on business.frak.id, then click "Refresh Merchant" above.', 'frak' );
+								} elseif ( ! $wc_status['domain_matches'] ) {
+									esc_html_e( 'This site\'s domain has changed since the merchant was resolved. Click "Refresh Merchant" above — if the merchant fails to resolve, add the new domain under Merchant → Allowed Domains in the Frak dashboard.', 'frak' );
 								} elseif ( ! $wc_status['secret_configured'] ) {
 									esc_html_e( 'Paste your webhook secret above and save the form.', 'frak' );
 								} elseif ( ! $wc_status['exists'] ) {
@@ -228,6 +256,16 @@ $wc_logs_url     = $wc_active ? admin_url( 'admin.php?page=wc-status&tab=logs' )
 									esc_html_e( 'The webhook exists but is not active. Click "Re-enable webhook" to reset it.', 'frak' );
 								} elseif ( ! $wc_status['url_matches'] ) {
 									esc_html_e( 'The webhook is pointing at a stale URL. Click "Sync webhook" to fix it.', 'frak' );
+								} elseif ( ! $wc_status['topic_matches'] || ! $wc_status['api_version_matches'] ) {
+									esc_html_e( 'The webhook topic or API version was edited in WooCommerce. Click "Sync webhook" to restore the Frak defaults.', 'frak' );
+								} elseif ( ! $wc_status['secret_matches'] ) {
+									esc_html_e( 'The secret stored on the WooCommerce webhook no longer matches the one saved above. Click "Sync webhook" to reapply it.', 'frak' );
+								} elseif ( $wc_status['failure_count'] > 0 ) {
+									printf(
+										/* translators: %d: WooCommerce delivery failure count. */
+										esc_html( _n( 'WooCommerce has recorded %d delivery failure. Check the logs and click "Sync webhook" once the backend is reachable again.', 'WooCommerce has recorded %d delivery failures. Check the logs and click "Sync webhook" once the backend is reachable again.', (int) $wc_status['failure_count'], 'frak' ) ),
+										(int) $wc_status['failure_count']
+									);
 								}
 								?>
 							</p>
@@ -264,6 +302,48 @@ $wc_logs_url     = $wc_active ? admin_url( 'admin.php?page=wc-status&tab=logs' )
 								</td>
 							</tr>
 						<?php endif; ?>
+						<?php if ( $wc_status['exists'] ) : ?>
+							<tr>
+								<th scope="row"><?php esc_html_e( 'Topic', 'frak' ); ?></th>
+								<td>
+									<code><?php echo esc_html( Frak_WC_Webhook_Registrar::TOPIC ); ?></code>
+									<?php if ( ! $wc_status['topic_matches'] ) : ?>
+										<span style="color: #b32d2e;"><?php esc_html_e( '(WooCommerce has a different topic configured)', 'frak' ); ?></span>
+									<?php endif; ?>
+								</td>
+							</tr>
+							<tr>
+								<th scope="row"><?php esc_html_e( 'Secret in WooCommerce', 'frak' ); ?></th>
+								<td>
+									<?php if ( $wc_status['secret_matches'] ) : ?>
+										<span style="color: #46b450;"><?php esc_html_e( '✓ matches the secret saved above', 'frak' ); ?></span>
+									<?php else : ?>
+										<span style="color: #b32d2e;"><?php esc_html_e( '✗ does not match — click "Sync webhook" to reapply', 'frak' ); ?></span>
+									<?php endif; ?>
+								</td>
+							</tr>
+							<?php if ( $wc_status['failure_count'] > 0 || $wc_status['pending_delivery'] ) : ?>
+								<tr>
+									<th scope="row"><?php esc_html_e( 'Delivery health', 'frak' ); ?></th>
+									<td>
+										<?php if ( $wc_status['pending_delivery'] ) : ?>
+											<em><?php esc_html_e( 'Waiting for WooCommerce to deliver the first event…', 'frak' ); ?></em><br>
+										<?php endif; ?>
+										<?php if ( $wc_status['failure_count'] > 0 ) : ?>
+											<span style="color: #b32d2e;">
+												<?php
+												printf(
+													/* translators: %d: WooCommerce failure counter (5 auto-disables the webhook). */
+													esc_html( _n( '%d recent delivery failure (WooCommerce auto-disables after 5).', '%d recent delivery failures (WooCommerce auto-disables after 5).', (int) $wc_status['failure_count'], 'frak' ) ),
+													(int) $wc_status['failure_count']
+												);
+												?>
+											</span>
+										<?php endif; ?>
+									</td>
+								</tr>
+							<?php endif; ?>
+						<?php endif; ?>
 						<tr>
 							<th scope="row"><?php esc_html_e( 'Actions', 'frak' ); ?></th>
 							<td>
@@ -285,12 +365,12 @@ $wc_logs_url     = $wc_active ? admin_url( 'admin.php?page=wc-status&tab=logs' )
 									?>
 								</button>
 								<?php if ( $wc_admin_url ) : ?>
-									<a href="<?php echo esc_url( $wc_admin_url ); ?>" class="button" target="_blank">
+									<a href="<?php echo esc_url( $wc_admin_url ); ?>" class="button" target="_blank" rel="noopener">
 										<?php esc_html_e( 'View in WooCommerce', 'frak' ); ?>
 									</a>
 								<?php endif; ?>
 								<?php if ( $wc_logs_url ) : ?>
-									<a href="<?php echo esc_url( $wc_logs_url ); ?>" class="button" target="_blank">
+									<a href="<?php echo esc_url( $wc_logs_url ); ?>" class="button" target="_blank" rel="noopener">
 										<?php esc_html_e( 'Delivery logs', 'frak' ); ?>
 									</a>
 								<?php endif; ?>
