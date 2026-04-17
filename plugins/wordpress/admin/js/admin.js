@@ -140,19 +140,29 @@
 	}
 
 	/**
-	 * Clear stored webhook logs (confirm first, then reload page).
+	 * Create / refresh the Frak-owned WooCommerce webhook. Wired to the
+	 * "Set up / Re-enable / Sync" button on the settings page so operators can
+	 * recover from a manually-disabled webhook, a stale URL (domain change,
+	 * merchant re-register) or a missing row without editing WC's advanced
+	 * settings directly.
 	 *
 	 * @param {Event} event
 	 */
-	async function handleClearLogs( event ) {
+	async function handleSetupWcWebhook( event ) {
 		event.preventDefault();
-		if ( ! window.confirm( 'Are you sure you want to clear all webhook logs?' ) ) {
-			return;
-		}
-		const response = await postAjax( 'frak_clear_webhook_logs' );
+		const button = event.currentTarget;
+		const originalLabel = button.textContent;
+		button.disabled = true;
+		button.textContent = 'Working...';
+
+		const response = await postAjax( 'frak_setup_wc_webhook' );
 		if ( response.success ) {
 			showNotice( response.data.message, 'success' );
-			setTimeout( () => window.location.reload(), 1000 );
+			setTimeout( () => window.location.reload(), 800 );
+		} else {
+			showNotice( response.data.message, 'error' );
+			button.disabled = false;
+			button.textContent = originalLabel;
 		}
 	}
 
@@ -201,9 +211,9 @@
 			refreshMerchantBtn.addEventListener( 'click', handleRefreshMerchant );
 		}
 
-		const clearBtn = document.getElementById( 'clear-webhook-logs' );
-		if ( clearBtn ) {
-			clearBtn.addEventListener( 'click', handleClearLogs );
+		const setupWcBtn = document.getElementById( 'setup-wc-webhook' );
+		if ( setupWcBtn ) {
+			setupWcBtn.addEventListener( 'click', handleSetupWcWebhook );
 		}
 	}
 

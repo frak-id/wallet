@@ -28,7 +28,7 @@ export type WooCommerceOrderStatus =
     | "processing"
     | "on-hold"
     | "completed"
-    | "canncelled"
+    | "cancelled"
     | "refunded"
     | "failed"
     | "trash"

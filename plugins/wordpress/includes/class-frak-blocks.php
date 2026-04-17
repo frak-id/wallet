@@ -29,10 +29,15 @@ class Frak_Blocks {
 	);
 
 	/**
-	 * Register hooks. Called once from {@see Frak_Plugin::init()}.
+	 * Register every bundled block via its `block.json` manifest.
+	 *
+	 * Called from {@see Frak_Plugin::init()} which already runs on the `init`
+	 * action — we register synchronously instead of nesting another `init`
+	 * hook from inside one (same-priority callbacks added during iteration are
+	 * unreliable in `WP_Hook::apply_filters`).
 	 */
 	public static function init() {
-		add_action( 'init', array( __CLASS__, 'register_blocks' ) );
+		self::register_blocks();
 	}
 
 	/**

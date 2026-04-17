@@ -56,13 +56,14 @@ class Frak_Plugin {
 			return;
 		}
 
-		// In cron, only the WooCommerce async-dispatch handlers need to be
-		// registered (that's where `frak_dispatch_webhook` runs). Everything
-		// else — admin UI, frontend enqueues, block registration — would be
-		// dead weight.
+		// In cron, only the webhook registrar needs to stay wired — its
+		// option-update hooks keep the WC webhook in sync if a cron job mutates
+		// `frak_webhook_secret` / `frak_merchant`. The tracker hooks fire only
+		// on order-received / view-order frontend requests, and admin UI +
+		// frontend enqueues are dead weight here.
 		if ( wp_doing_cron() ) {
 			if ( class_exists( 'WooCommerce' ) ) {
-				Frak_WooCommerce::init();
+				Frak_WC_Webhook_Registrar::init();
 			}
 			return;
 		}
@@ -81,6 +82,7 @@ class Frak_Plugin {
 
 		if ( class_exists( 'WooCommerce' ) ) {
 			Frak_WooCommerce::init();
+			Frak_WC_Webhook_Registrar::init();
 		}
 	}
 

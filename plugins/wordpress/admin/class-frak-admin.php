@@ -38,7 +38,7 @@ class Frak_Admin {
 
 		// AJAX handlers for webhook operations.
 		add_action( 'wp_ajax_frak_refresh_merchant', array( $this, 'ajax_refresh_merchant' ) );
-		add_action( 'wp_ajax_frak_clear_webhook_logs', array( $this, 'ajax_clear_webhook_logs' ) );
+		add_action( 'wp_ajax_frak_setup_wc_webhook', array( $this, 'ajax_setup_wc_webhook' ) );
 	}
 
 	/**
@@ -305,20 +305,47 @@ class Frak_Admin {
 	}
 
 	/**
-	 * AJAX: Clear webhook logs.
+	 * AJAX: Create / refresh the WooCommerce webhook that ships order events
+	 * to the Frak backend. Wired to the "Set up" / "Re-enable" button on the
+	 * settings page so operators can recover from a manually-disabled webhook
+	 * (or a fresh install) without editing WC's advanced settings directly.
 	 */
-	public function ajax_clear_webhook_logs() {
+	public function ajax_setup_wc_webhook() {
 		check_ajax_referer( 'frak_ajax_nonce', 'nonce' );
 
 		if ( ! current_user_can( 'manage_options' ) ) {
 			wp_die( 'Unauthorized' );
 		}
 
-		Frak_Webhook_Helper::clear_webhook_logs();
+		if ( ! class_exists( 'Frak_WC_Webhook_Registrar' ) ) {
+			wp_send_json_error(
+				array(
+					'message' => __( 'WooCommerce integration unavailable.', 'frak' ),
+				)
+			);
+		}
+
+		$webhook_id = Frak_WC_Webhook_Registrar::ensure();
+		$status     = Frak_WC_Webhook_Registrar::status();
+
+		if ( null === $webhook_id ) {
+			if ( ! $status['wc_available'] ) {
+				$message = __( 'WooCommerce is not active on this site.', 'frak' );
+			} elseif ( ! $status['merchant_resolved'] ) {
+				$message = __( 'Merchant not resolved for this domain — register it on business.frak.id first.', 'frak' );
+			} elseif ( ! $status['secret_configured'] ) {
+				$message = __( 'Paste the webhook secret from your Frak dashboard and save the form before enabling.', 'frak' );
+			} else {
+				$message = __( 'Failed to create the WooCommerce webhook.', 'frak' );
+			}
+
+			wp_send_json_error( array( 'message' => $message ) );
+		}
 
 		wp_send_json_success(
 			array(
-				'message' => __( 'Webhook logs cleared successfully', 'frak' ),
+				'message' => __( 'WooCommerce webhook is active — order updates will now reach Frak.', 'frak' ),
+				'status'  => $status,
 			)
 		);
 	}

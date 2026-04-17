@@ -67,8 +67,7 @@ export const wooCommerceWebhook = new Elysia()
                         webhookId: resolved.webhook.id,
                         externalId: webhookData.id.toString(),
                         externalCustomerId: webhookData.customer_id.toString(),
-                        purchaseToken:
-                            webhookData.order_key ?? webhookData.transaction_id,
+                        purchaseToken: buildPurchaseToken(webhookData),
                         status: purchaseStatus,
                         totalPrice: webhookData.total,
                         currencyCode: webhookData.currency,
@@ -98,6 +97,29 @@ export const wooCommerceWebhook = new Elysia()
         }
     );
 
+/**
+ * Build the canonical purchase token used as the secondary index on the
+ * purchases table.
+ *
+ * We combine `order_key` with `id` because WooCommerce's `order_key` is not
+ * guaranteed unique across a store's history — plugins that clone/import
+ * orders (CSV importers, subscription renewals, manual admin duplication)
+ * can reuse a key since the `_order_key` post meta has no DB-level UNIQUE
+ * constraint. Appending the auto-increment order id neutralizes that risk
+ * and matches the token the plugin's frontend sends on the thank-you page.
+ *
+ * The frontend mirror lives in the WP plugin at:
+ *   plugins/wordpress/includes/class-frak-woocommerce.php (`render_purchase_tracker_for_order`)
+ */
+function buildPurchaseToken(
+    webhookData: WooCommerceOrderUpdateWebhookDto
+): string {
+    if (webhookData.order_key) {
+        return `${webhookData.order_key}_${webhookData.id}`;
+    }
+    return webhookData.transaction_id || webhookData.id.toString();
+}
+
 function mapOrderStatus(orderStatus: WooCommerceOrderStatus): PurchaseStatus {
     if (orderStatus === "completed") {
         return "confirmed";
@@ -105,7 +127,7 @@ function mapOrderStatus(orderStatus: WooCommerceOrderStatus): PurchaseStatus {
     if (orderStatus === "refunded") {
         return "refunded";
     }
-    if (orderStatus === "cancelled") {
+    if (orderStatus === "cancelled" || orderStatus === "failed") {
         return "cancelled";
     }
 

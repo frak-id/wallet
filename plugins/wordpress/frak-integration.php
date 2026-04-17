@@ -46,12 +46,37 @@ add_action( 'plugins_loaded', 'frak_init' );
 /**
  * Run the settings migration on plugin activation — one-time bootstrap
  * for fresh installs and explicit reactivations.
+ *
+ * Also ensures the WooCommerce webhook exists when both a merchant and a
+ * secret are already configured (reactivation after a deactivate/activate
+ * cycle, or install on a site that restored its `frak_*` options from a
+ * backup). Ensure() itself is a no-op when prerequisites are missing, so
+ * fresh installs still do the right thing — it just wires up later when
+ * the admin saves the settings form.
  */
 register_activation_hook(
 	FRAK_PLUGIN_FILE,
 	static function () {
 		Frak_Settings::migrate();
+		if ( class_exists( 'Frak_WC_Webhook_Registrar' ) ) {
+			Frak_WC_Webhook_Registrar::ensure();
+		}
 		flush_rewrite_rules();
+	}
+);
+
+/**
+ * Remove the WooCommerce webhook we own on deactivation so the merchant's
+ * WC admin UI doesn't accumulate stale rows. The settings themselves are
+ * preserved (they live in `wp_options`) so a subsequent reactivation picks
+ * up where we left off.
+ */
+register_deactivation_hook(
+	FRAK_PLUGIN_FILE,
+	static function () {
+		if ( class_exists( 'Frak_WC_Webhook_Registrar' ) ) {
+			Frak_WC_Webhook_Registrar::remove();
+		}
 	}
 );
 

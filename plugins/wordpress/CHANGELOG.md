@@ -32,7 +32,7 @@ version on dispatch.
 - Dropped `image/svg+xml` from the allowed logo upload types (avoids XSS via unsanitized SVG).
 - Removed the unused `wp_enqueue_code_editor()` call from the admin settings-page enqueue path.
 - Dropped the site-wide `wp_cache_flush()` from the settings save handler — we now only ping page-cache plugins (WP Rocket, W3TC, WP Super Cache) so persistent object caches (Redis, Memcached) are not invalidated on every save.
-- `Frak_WooCommerce::init()` only registers `woocommerce_order_status_changed` + `frak_dispatch_webhook` when a webhook secret is configured, so unconfigured stores pay zero cost on order-status transitions.
+- Delegated order-status webhook delivery to WooCommerce's native webhook pipeline (`WC_Webhook` + `woocommerce_deliver_webhook_async`). The plugin now creates/updates a single `order.updated` webhook pointing at `https://backend.frak.id/ext/merchant/<id>/webhook/woocommerce`, signed with WC's own `X-WC-Webhook-Signature` (base64 HMAC-SHA256). The `Frak_Webhook_Helper` class, custom HMAC dispatcher, Action Scheduler worker, `frak_dispatch_webhook` action, `woocommerce_order_status_changed` handler, and the ephemeral `wp_cache` log ring buffer were all removed — WooCommerce now owns retry, delivery logging (visible under `WooCommerce → Status → Logs`), and admin visibility under `WooCommerce → Settings → Advanced → Webhooks`. The settings page now probes the webhook's health and exposes a "Set up / Re-enable / Sync" action that recreates the row when it's missing, disabled, or pointing at a stale URL.
 - Removed the dead `register_setting()` calls (settings are persisted via the custom nonce-protected handler; registrations were never exercised).
 
 ### Added

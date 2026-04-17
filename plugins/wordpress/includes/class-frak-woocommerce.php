@@ -32,20 +32,14 @@ class Frak_WooCommerce {
 	 * the exact two endpoints that carry an order — every other frontend page
 	 * pays zero PHP for tracking.
 	 *
-	 * Webhook hooks (`woocommerce_order_status_changed`, `frak_dispatch_webhook`)
-	 * are only wired up when a webhook secret is configured. Without one, the
-	 * outbound HTTP call would bail inside {@see Frak_Webhook_Helper::send()}
-	 * anyway, so we avoid registering the listeners at all — every order-status
-	 * transition on unconfigured stores skips the lookup entirely.
+	 * Order-status → webhook dispatch lives in WooCommerce's native webhook
+	 * pipeline now (see {@see Frak_WC_Webhook_Registrar}); we no longer hook
+	 * `woocommerce_order_status_changed` from PHP because WC's own
+	 * `woocommerce_update_order` trigger + queued delivery + retry handles it.
 	 */
 	public static function init() {
 		add_action( 'woocommerce_thankyou', array( __CLASS__, 'render_purchase_tracker_for_order' ) );
 		add_action( 'woocommerce_view_order', array( __CLASS__, 'render_purchase_tracker_for_order' ) );
-
-		if ( '' !== (string) get_option( 'frak_webhook_secret', '' ) ) {
-			add_action( 'woocommerce_order_status_changed', array( __CLASS__, 'handle_order_status_change' ), 10, 4 );
-			add_action( 'frak_dispatch_webhook', array( __CLASS__, 'dispatch_webhook' ), 10, 3 );
-		}
 	}
 
 	/**
@@ -166,101 +160,5 @@ class Frak_WooCommerce {
 		);
 
 		wp_print_inline_script_tag( $script, array( 'id' => 'frak-purchase-tracker-inline' ) );
-	}
-
-	/**
-	 * React to an order status change by scheduling a webhook dispatch.
-	 *
-	 * The blocking HTTP call is NOT performed here — it is queued via Action
-	 * Scheduler (or WP-Cron as fallback) so the order-status request is not
-	 * held hostage by the Frak backend's response time.
-	 *
-	 * @param int      $order_id   Order ID.
-	 * @param string   $old_status Old status (unused, kept for signature compatibility).
-	 * @param string   $new_status New status.
-	 * @param WC_Order $order      Order object.
-	 */
-	public static function handle_order_status_change( $order_id, $old_status, $new_status, $order ) {
-		unset( $old_status );
-
-		$skip_statuses = array( 'checkout-draft', 'auto-draft' );
-		if ( in_array( $new_status, $skip_statuses, true ) ) {
-			$order->add_order_note(
-				/* translators: %s: order status */
-				sprintf( __( 'Frak: Skipping webhook for status: %s', 'frak' ), $new_status )
-			);
-			return;
-		}
-
-		// Webhook secret presence is already guaranteed at hook-registration time
-		// (see self::init()), so we skip a redundant option lookup here.
-
-		$status_map     = array(
-			'completed'  => 'confirmed',
-			'processing' => 'pending',
-			'on-hold'    => 'pending',
-			'pending'    => 'pending',
-			'cancelled'  => 'cancelled',
-			'refunded'   => 'refunded',
-			'failed'     => 'cancelled',
-		);
-		$webhook_status = $status_map[ $new_status ] ?? 'pending';
-
-		$order->add_order_note(
-			/* translators: %s: webhook status */
-			sprintf( __( 'Frak: Queued webhook with status: %s', 'frak' ), $webhook_status )
-		);
-
-		// Defer the outbound HTTP call to a worker. Action Scheduler ships with
-		// WooCommerce >= 3.3 and gives us retries + a UI under
-		// WooCommerce > Status > Scheduled Actions; the WP-Cron fallback keeps
-		// old installs working.
-		$args = array( $order_id, $webhook_status, $order->get_order_key() );
-		if ( function_exists( 'as_enqueue_async_action' ) ) {
-			as_enqueue_async_action( 'frak_dispatch_webhook', $args, 'frak' );
-		} else {
-			wp_schedule_single_event( time(), 'frak_dispatch_webhook', $args );
-		}
-	}
-
-	/**
-	 * Async worker invoked by the `frak_dispatch_webhook` action. Performs the
-	 * actual HTTP POST and records the outcome as an order note so the merchant
-	 * still has per-order visibility into webhook delivery.
-	 *
-	 * Failures (transient or semantic) re-throw so Action Scheduler marks the
-	 * run as failed and retries with its built-in backoff — this is what makes
-	 * the `ko: Webhook not found` self-heal path in Frak_Webhook_Helper::send()
-	 * actually recover: the merchant cache is invalidated on first attempt and
-	 * a fresh resolve happens on retry.
-	 *
-	 * @param int    $order_id       Order ID.
-	 * @param string $webhook_status Mapped webhook status.
-	 * @param string $token          Order key used to sign the payload token.
-	 * @throws Exception When webhook dispatch fails and Action Scheduler should retry.
-	 */
-	public static function dispatch_webhook( $order_id, $webhook_status, $token ) {
-		$result = Frak_Webhook_Helper::send( $order_id, $webhook_status, $token );
-
-		$order = wc_get_order( $order_id );
-		if ( ! $order ) {
-			return;
-		}
-
-		if ( $result['success'] ) {
-			$order->add_order_note( __( 'Frak: Webhook sent successfully', 'frak' ) );
-			return;
-		}
-
-		$order->add_order_note(
-			/* translators: %s: error message */
-			sprintf( __( 'Frak: Webhook failed: %s', 'frak' ), $result['error'] )
-		);
-
-		// Throw so Action Scheduler marks this run as failed and schedules a
-		// retry. Covers transient failures: backend 5xx, unresolved merchant
-		// during first dispatch after install, and the `ko: Webhook not found`
-		// self-heal path that invalidates the merchant cache inside send().
-		throw new Exception( esc_html( $result['error'] ) );
 	}
 }

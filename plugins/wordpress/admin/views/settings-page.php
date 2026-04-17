@@ -12,6 +12,15 @@
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
+
+$webhook_secret  = get_option( 'frak_webhook_secret', '' );
+$merchant_record = Frak_Merchant::get_record();
+$wc_active       = class_exists( 'WooCommerce' );
+$wc_status       = $wc_active && class_exists( 'Frak_WC_Webhook_Registrar' )
+	? Frak_WC_Webhook_Registrar::status()
+	: null;
+$wc_admin_url    = $wc_active ? admin_url( 'admin.php?page=wc-settings&tab=advanced&section=webhooks' ) : '';
+$wc_logs_url     = $wc_active ? admin_url( 'admin.php?page=wc-status&tab=logs' ) : '';
 ?>
 <div class="wrap">
 	<h1><?php echo esc_html( get_admin_page_title() ); ?></h1>
@@ -96,7 +105,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 					</th>
 					<td>
 						<input type="file" id="frak_logo_file" name="frak_logo_file" accept="image/*">
-						<p class="description"><?php esc_html_e( 'Upload a logo image (JPG, PNG, GIF, SVG - Max 2MB)', 'frak' ); ?></p>
+						<p class="description"><?php esc_html_e( 'Upload a logo image (JPG, PNG, GIF - Max 2MB)', 'frak' ); ?></p>
 						<?php if ( $logo_url ) : ?>
 							<div class="frak-logo-preview" style="margin-top: 10px;">
 								<img src="<?php echo esc_url( $logo_url ); ?>" alt="<?php esc_attr_e( 'Current logo', 'frak' ); ?>" style="max-height: 80px; max-width: 200px;">
@@ -112,21 +121,13 @@ if ( ! defined( 'ABSPATH' ) ) {
 			<h2><?php esc_html_e( 'Purchase Tracking', 'frak' ); ?></h2>
 			<p class="description">
 				<?php
-				if ( class_exists( 'WooCommerce' ) ) {
-					esc_html_e( 'WooCommerce detected — purchases are tracked automatically on the thank-you page. Configure the webhook below so order-status updates (refunds, cancellations) reach the Frak backend.', 'frak' );
+				if ( $wc_active ) {
+					esc_html_e( 'WooCommerce detected — purchases are tracked automatically on the thank-you page, and order-status updates are delivered via WooCommerce\'s native webhook pipeline.', 'frak' );
 				} else {
-					esc_html_e( 'Install and activate WooCommerce to get automatic purchase tracking. The webhook below can still be configured for custom backends that POST their own order events.', 'frak' );
+					esc_html_e( 'Install and activate WooCommerce to get automatic purchase tracking and order-status webhooks.', 'frak' );
 				}
 				?>
 			</p>
-
-			<?php
-			$webhook_secret  = get_option( 'frak_webhook_secret', '' );
-			$merchant_record = Frak_Merchant::get_record();
-			$webhook_url     = Frak_Webhook_Helper::get_webhook_url();
-			$webhook_logs    = Frak_Webhook_Helper::get_webhook_logs( 10 );
-			$webhook_stats   = Frak_Webhook_Helper::get_webhook_stats();
-			?>
 
 			<!-- Webhook Configuration -->
 			<div class="frak-subsection">
@@ -146,7 +147,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 								printf(
 									wp_kses(
 										/* translators: %s: URL to the Frak business dashboard webhook configuration. */
-										__( 'Generate the secret in your <a href="%s" target="_blank" rel="noopener">Frak business dashboard</a> (Merchant → Purchase Tracker → WooCommerce) and paste it here. Save settings to apply.', 'frak' ),
+										__( 'Generate the secret in your <a href="%s" target="_blank" rel="noopener">Frak business dashboard</a> (Merchant → Purchase Tracker → WooCommerce) and paste it here. Saving this form will automatically configure the WooCommerce webhook with the new secret.', 'frak' ),
 										array(
 											'a' => array(
 												'href'   => array(),
@@ -186,98 +187,118 @@ if ( ! defined( 'ABSPATH' ) ) {
 					</tr>
 				</table>
 
-				<h4><?php esc_html_e( 'Webhook Information', 'frak' ); ?></h4>
+				<h4><?php esc_html_e( 'Site Information', 'frak' ); ?></h4>
 				<p><strong><?php esc_html_e( 'Domain:', 'frak' ); ?></strong> <?php echo esc_html( wp_parse_url( home_url(), PHP_URL_HOST ) ); ?></p>
 				<?php if ( $merchant_record ) : ?>
 					<p><strong><?php esc_html_e( 'Merchant ID:', 'frak' ); ?></strong> <code><?php echo esc_html( $merchant_record['id'] ); ?></code></p>
-					<p><strong><?php esc_html_e( 'Webhook URL:', 'frak' ); ?></strong> <code><?php echo esc_html( $webhook_url ); ?></code></p>
-				<?php endif; ?>
-
-				<h4><?php esc_html_e( 'Webhook Statistics', 'frak' ); ?></h4>
-				<div class="frak-stats-grid">
-					<div class="frak-stat-box">
-						<h3><?php echo esc_html( $webhook_stats['total_attempts'] ); ?></h3>
-						<p><?php esc_html_e( 'Total Attempts', 'frak' ); ?></p>
-					</div>
-					<div class="frak-stat-box">
-						<h3><?php echo esc_html( $webhook_stats['successful'] ); ?></h3>
-						<p><?php esc_html_e( 'Successful', 'frak' ); ?></p>
-					</div>
-					<div class="frak-stat-box">
-						<h3><?php echo esc_html( $webhook_stats['failed'] ); ?></h3>
-						<p><?php esc_html_e( 'Failed', 'frak' ); ?></p>
-					</div>
-					<div class="frak-stat-box">
-						<h3><?php echo esc_html( $webhook_stats['success_rate'] ); ?>%</h3>
-						<p><?php esc_html_e( 'Success Rate', 'frak' ); ?></p>
-					</div>
-					<div class="frak-stat-box">
-						<h3><?php echo esc_html( $webhook_stats['avg_response_time'] ); ?>ms</h3>
-						<p><?php esc_html_e( 'Avg Response Time', 'frak' ); ?></p>
-					</div>
-				</div>
-
-				<h4><?php esc_html_e( 'Recent Webhook Attempts', 'frak' ); ?></h4>
-				<?php if ( ! empty( $webhook_logs ) ) : ?>
-					<table class="wp-list-table widefat fixed striped">
-						<thead>
-							<tr>
-								<th><?php esc_html_e( 'Timestamp', 'frak' ); ?></th>
-								<th><?php esc_html_e( 'Order ID', 'frak' ); ?></th>
-								<th><?php esc_html_e( 'Status', 'frak' ); ?></th>
-								<th><?php esc_html_e( 'HTTP Code', 'frak' ); ?></th>
-								<th><?php esc_html_e( 'Response Time', 'frak' ); ?></th>
-								<th><?php esc_html_e( 'Result', 'frak' ); ?></th>
-								<th><?php esc_html_e( 'Error', 'frak' ); ?></th>
-							</tr>
-						</thead>
-						<tbody>
-							<?php foreach ( $webhook_logs as $log ) : ?>
-								<tr>
-									<td><?php echo esc_html( $log['timestamp'] ); ?></td>
-									<td>
-										<?php if ( $log['order_id'] > 0 ) : ?>
-											<a href="<?php echo esc_url( admin_url( 'post.php?post=' . $log['order_id'] . '&action=edit' ) ); ?>" target="_blank">
-												#<?php echo esc_html( $log['order_id'] ); ?>
-											</a>
-										<?php else : ?>
-											<?php esc_html_e( 'Test', 'frak' ); ?>
-										<?php endif; ?>
-									</td>
-									<td><?php echo esc_html( $log['status'] ); ?></td>
-									<td>
-										<span class="<?php echo $log['http_code'] >= 200 && $log['http_code'] < 300 ? 'text-success' : 'text-error'; ?>">
-											<?php echo esc_html( $log['http_code'] ); ?>
-										</span>
-									</td>
-									<td><?php echo esc_html( $log['execution_time'] ); ?>ms</td>
-									<td>
-										<?php if ( $log['success'] ) : ?>
-											<span style="color: green;">✓ <?php esc_html_e( 'Success', 'frak' ); ?></span>
-										<?php else : ?>
-											<span style="color: red;">✗ <?php esc_html_e( 'Failed', 'frak' ); ?></span>
-										<?php endif; ?>
-									</td>
-									<td>
-										<?php if ( $log['error'] ) : ?>
-											<span title="<?php echo esc_attr( $log['error'] ); ?>">
-												<?php echo esc_html( substr( $log['error'], 0, 50 ) . ( strlen( $log['error'] ) > 50 ? '...' : '' ) ); ?>
-											</span>
-										<?php else : ?>
-											-
-										<?php endif; ?>
-									</td>
-								</tr>
-							<?php endforeach; ?>
-						</tbody>
-					</table>
-					<p>
-						<button type="button" id="clear-webhook-logs" class="button"><?php esc_html_e( 'Clear Logs', 'frak' ); ?></button>
-					</p>
-				<?php else : ?>
-					<p><?php esc_html_e( 'No webhook attempts recorded yet. Webhook logs will appear here after orders are placed or tests are run.', 'frak' ); ?></p>
 				<?php endif; ?>
 			</div>
+
+			<?php if ( null !== $wc_status ) : ?>
+				<!-- WooCommerce webhook health -->
+				<div class="frak-subsection">
+					<h3><?php esc_html_e( 'WooCommerce Webhook', 'frak' ); ?></h3>
+
+					<?php
+					$healthy = $wc_status['exists']
+						&& 'active' === $wc_status['status']
+						&& $wc_status['url_matches']
+						&& $wc_status['secret_configured']
+						&& $wc_status['merchant_resolved'];
+					?>
+
+					<?php if ( $healthy ) : ?>
+						<div class="notice notice-success inline" style="margin: 0 0 12px;">
+							<p>
+								<?php esc_html_e( '✓ WooCommerce webhook active — order updates are being delivered to Frak.', 'frak' ); ?>
+							</p>
+						</div>
+					<?php else : ?>
+						<div class="notice notice-warning inline" style="margin: 0 0 12px;">
+							<p>
+								<strong><?php esc_html_e( 'WooCommerce webhook is not ready.', 'frak' ); ?></strong>
+								<?php
+								if ( ! $wc_status['merchant_resolved'] ) {
+									esc_html_e( 'Register this domain on business.frak.id, then click "Refresh Merchant" above.', 'frak' );
+								} elseif ( ! $wc_status['secret_configured'] ) {
+									esc_html_e( 'Paste your webhook secret above and save the form.', 'frak' );
+								} elseif ( ! $wc_status['exists'] ) {
+									esc_html_e( 'Click "Set up webhook" to create it in WooCommerce.', 'frak' );
+								} elseif ( 'active' !== $wc_status['status'] ) {
+									esc_html_e( 'The webhook exists but is not active. Click "Re-enable webhook" to reset it.', 'frak' );
+								} elseif ( ! $wc_status['url_matches'] ) {
+									esc_html_e( 'The webhook is pointing at a stale URL. Click "Sync webhook" to fix it.', 'frak' );
+								}
+								?>
+							</p>
+						</div>
+					<?php endif; ?>
+
+					<table class="form-table">
+						<tr>
+							<th scope="row"><?php esc_html_e( 'Status', 'frak' ); ?></th>
+							<td>
+								<?php if ( $wc_status['exists'] ) : ?>
+									<code><?php echo esc_html( $wc_status['status'] ); ?></code>
+								<?php else : ?>
+									<em><?php esc_html_e( 'not created', 'frak' ); ?></em>
+								<?php endif; ?>
+							</td>
+						</tr>
+						<?php if ( '' !== $wc_status['expected_url'] ) : ?>
+							<tr>
+								<th scope="row"><?php esc_html_e( 'Delivery URL', 'frak' ); ?></th>
+								<td>
+									<code><?php echo esc_html( $wc_status['expected_url'] ); ?></code>
+									<?php if ( $wc_status['exists'] && ! $wc_status['url_matches'] ) : ?>
+										<p class="description" style="color: #b32d2e;">
+											<?php
+											printf(
+												/* translators: %s: current delivery URL */
+												esc_html__( 'Currently pointing at: %s', 'frak' ),
+												'<code>' . esc_html( $wc_status['delivery_url'] ) . '</code>'
+											);
+											?>
+										</p>
+									<?php endif; ?>
+								</td>
+							</tr>
+						<?php endif; ?>
+						<tr>
+							<th scope="row"><?php esc_html_e( 'Actions', 'frak' ); ?></th>
+							<td>
+								<button type="button" id="setup-wc-webhook" class="button button-primary"
+									<?php
+									disabled(
+										! ( $wc_status['merchant_resolved'] && $wc_status['secret_configured'] )
+									);
+									?>
+								>
+									<?php
+									if ( ! $wc_status['exists'] ) {
+										esc_html_e( 'Set up webhook', 'frak' );
+									} elseif ( 'active' !== $wc_status['status'] ) {
+										esc_html_e( 'Re-enable webhook', 'frak' );
+									} else {
+										esc_html_e( 'Sync webhook', 'frak' );
+									}
+									?>
+								</button>
+								<?php if ( $wc_admin_url ) : ?>
+									<a href="<?php echo esc_url( $wc_admin_url ); ?>" class="button" target="_blank">
+										<?php esc_html_e( 'View in WooCommerce', 'frak' ); ?>
+									</a>
+								<?php endif; ?>
+								<?php if ( $wc_logs_url ) : ?>
+									<a href="<?php echo esc_url( $wc_logs_url ); ?>" class="button" target="_blank">
+										<?php esc_html_e( 'Delivery logs', 'frak' ); ?>
+									</a>
+								<?php endif; ?>
+							</td>
+						</tr>
+					</table>
+				</div>
+			<?php endif; ?>
 		</div>
 
 		<?php submit_button( __( 'Save Settings', 'frak' ) ); ?>

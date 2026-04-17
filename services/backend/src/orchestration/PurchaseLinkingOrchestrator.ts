@@ -23,6 +23,32 @@ type ClaimPurchaseResult = {
     merged?: boolean;
 };
 
+/**
+ * Normalize an incoming purchase token so lookups hit the canonical format
+ * the webhook side stores.
+ *
+ * Legacy WooCommerce plugin builds (v1.0 and earlier) sent the bare
+ * `wc_order_*` key as the token. The current plugin and the backend's WC
+ * webhook handler use `${order_key}_${order_id}` (see
+ * `wooCommerceWebhook.ts#buildPurchaseToken`), because `order_key` alone is
+ * not guaranteed unique across a store's history (clone/import plugins can
+ * reuse a key). Normalizing here keeps old-client claims compatible without
+ * a dual-write migration.
+ *
+ * Shopify / Magento / generic custom tokens don't match the `wc_order_`
+ * prefix and pass through untouched.
+ */
+function normalizePurchaseToken(token: string, orderId: string): string {
+    if (!token.startsWith("wc_order_")) {
+        return token;
+    }
+    const expectedSuffix = `_${orderId}`;
+    if (token.endsWith(expectedSuffix)) {
+        return token;
+    }
+    return `${token}${expectedSuffix}`;
+}
+
 export class PurchaseLinkingOrchestrator {
     constructor(
         private readonly purchaseRepository: PurchaseRepository,
@@ -40,6 +66,11 @@ export class PurchaseLinkingOrchestrator {
             );
         }
 
+        const normalizedToken = normalizePurchaseToken(
+            params.token,
+            params.orderId
+        );
+
         const { finalGroupId, merged } =
             await this.identityOrchestrator.resolveAndAssociate(
                 params.identityNodes
@@ -47,7 +78,7 @@ export class PurchaseLinkingOrchestrator {
 
         const purchase = await this.purchaseRepository.findByOrderAndToken(
             params.orderId,
-            params.token
+            normalizedToken
         );
 
         if (purchase) {
@@ -64,7 +95,7 @@ export class PurchaseLinkingOrchestrator {
             merchantId: params.merchantId,
             customerId: params.customerId,
             orderId: params.orderId,
-            purchaseToken: params.token,
+            purchaseToken: normalizedToken,
             claimingIdentityGroupId: finalGroupId,
         });
 
