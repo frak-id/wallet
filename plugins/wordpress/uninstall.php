@@ -21,12 +21,20 @@ if ( ! defined( 'WP_UNINSTALL_PLUGIN' ) ) {
 // Plugin-owned option rows (single source of truth; mirrors the constants
 // defined on `Frak_Settings` / `Frak_Merchant` / `Frak_WC_Webhook_Registrar`
 // to avoid having to bootstrap the full autoloader just to read them).
+//
+// The three `widget_frak_*_widget` rows are written by WP core when a merchant
+// places one of the plugin's `WP_Widget` subclasses into a sidebar. They are
+// autoloaded by default — leaving them behind pollutes `wp_options` on every
+// fresh install that happens to re-register the same widget ids.
 $frak_options = array(
 	'frak_settings',
 	'frak_settings_version',
 	'frak_webhook_secret',
 	'frak_merchant',
 	'frak_wc_webhook_id',
+	'widget_frak_banner_widget',
+	'widget_frak_share_button_widget',
+	'widget_frak_post_purchase_widget',
 );
 
 foreach ( $frak_options as $frak_option ) {

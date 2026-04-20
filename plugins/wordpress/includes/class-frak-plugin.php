@@ -40,7 +40,16 @@ class Frak_Plugin {
 	 *     actually mutates `frak_webhook_secret` / `frak_merchant` /
 	 *     `home` / `siteurl` — registering those 6 option-update hooks on
 	 *     every frontend request was dead weight).
-	 *   - Frontend: SDK injection (block theme only), blocks, WC tracker.
+	 *   - Frontend: SDK injection, blocks, shortcodes, widgets, WC tracker.
+	 *
+	 * Blocks, shortcodes and widgets are registered in every non-CLI context
+	 * (admin + frontend) so the block editor iframe, TinyMCE shortcode
+	 * resolution and the widget admin screen all see the same set of
+	 * insertion surfaces. The SDK itself loads on the frontend regardless of
+	 * theme type — the previous `wp_is_block_theme()` gate was a vestige of
+	 * the now-removed floating wallet button and is no longer needed: modern
+	 * classic themes call `wp_footer()` reliably and the SDK is enqueued via
+	 * the standard `wp_enqueue_scripts` pipeline with `strategy: defer`.
 	 */
 	public static function init() {
 		$has_wc = class_exists( 'WooCommerce' );
@@ -52,35 +61,22 @@ class Frak_Plugin {
 			return;
 		}
 
-		$is_block_theme = wp_is_block_theme();
-
 		if ( is_admin() ) {
 			Frak_Admin::init();
-
-			if ( ! $is_block_theme ) {
-				add_action( 'admin_notices', array( __CLASS__, 'render_block_theme_notice' ) );
-			}
 
 			if ( $has_wc ) {
 				Frak_WC_Webhook_Registrar::init();
 			}
-		} elseif ( $is_block_theme ) {
+		} else {
 			Frak_Frontend::init();
 		}
 
 		Frak_Blocks::init();
+		Frak_Shortcodes::init();
+		Frak_Widgets::init();
 
 		if ( $has_wc ) {
 			Frak_WooCommerce::init();
 		}
-	}
-
-	/**
-	 * Admin notice shown when the active theme is not a block theme.
-	 */
-	public static function render_block_theme_notice() {
-		echo '<div class="notice notice-warning"><p>';
-		echo esc_html__( 'Frak requires a block theme to inject the SDK on the frontend. The settings page is still available, but the Frak SDK will not load on your site until you activate a block theme.', 'frak' );
-		echo '</p></div>';
 	}
 }

@@ -8,15 +8,15 @@ Requires PHP: 8.0
 License: GPL-3.0-only
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
-Frak integration plugin — adds reward, referral, and engagement features to your WordPress site. Requires a block theme.
+Frak integration plugin — adds reward, referral, and engagement features to your WordPress site. Works with classic and block themes.
 
 == Description ==
 
-The Frak plugin integrates the Frak SDK into your WordPress site and ships three Gutenberg blocks for the most common reward surfaces:
+The Frak plugin integrates the Frak SDK into your WordPress site and ships three components, each exposed as a Gutenberg block, a shortcode, and a sidebar widget — so they drop into any post, page, template part, widget area, or page-builder layout:
 
-* **Frak Share Button** (`frak/share-button`) — a share-and-earn CTA placed wherever you want.
-* **Frak Banner** (`frak/banner`) — a notification banner that handles referral success and in-app browser prompts. Auto-hides when not needed.
-* **Frak Post-Purchase** (`frak/post-purchase`) — a thank-you card with referrer / referee variants. Auto-populates WooCommerce order context on the thank-you page.
+* **Frak Share Button** (`frak/share-button`, `[frak_share_button]`) — a share-and-earn CTA placed wherever you want.
+* **Frak Banner** (`frak/banner`, `[frak_banner]`) — a notification banner that handles referral success and in-app browser prompts. Auto-hides when not needed.
+* **Frak Post-Purchase** (`frak/post-purchase`, `[frak_post_purchase]`) — a thank-you card with referrer / referee variants. Auto-populates WooCommerce order context on the thank-you page.
 
 When WooCommerce is active, the plugin also wires a native WooCommerce webhook (`order.updated`) that ships order events to the Frak backend for reward attribution. Delivery, retries, and logs are handled by WooCommerce's own webhook pipeline (visible under **WooCommerce → Status → Logs**).
 
@@ -24,8 +24,8 @@ When WooCommerce is active, the plugin also wires a native WooCommerce webhook (
 
 1. Upload the `frak-integration` folder to the `/wp-content/plugins/` directory (or install the packaged zip from your dashboard).
 2. Activate the plugin through the **Plugins** menu in WordPress.
-3. Make sure a **block theme** is active (required for frontend SDK injection).
-4. Configure the plugin under **Settings → Frak**.
+3. Configure the plugin under **Settings → Frak**.
+4. Add Frak components to your site via Gutenberg blocks (block editor), `[frak_*]` shortcodes (Classic Editor / page builders / PHP templates), or the sidebar widgets (**Appearance → Widgets**).
 
 == Configuration ==
 
@@ -37,7 +37,7 @@ After activation:
 4. In the dashboard, generate or copy your **webhook secret** from **Merchant → Purchase Tracker → WooCommerce**.
 5. Paste the secret into the **Webhook Secret** field on the WordPress admin page and click **Save Settings**.
 6. If WooCommerce is active and the merchant resolved correctly, click **Set up webhook** in the WooCommerce Webhook section. You should see a green ✓ banner.
-7. Place the Frak blocks where you want them via the Site Editor (FSE).
+7. Place the Frak components where you want them — as blocks via the block editor / Site Editor, as shortcodes in classic posts, or as widgets in your theme sidebars.
 
 == Frequently Asked Questions ==
 
@@ -47,7 +47,19 @@ No. The plugin works without WooCommerce — you can still use the Frak blocks f
 
 = Does this plugin require a block theme? =
 
-Yes. Frak only injects its SDK on block themes (Full Site Editing). The settings page still works on classic themes, but no SDK loads on the frontend until a block theme is activated.
+No. The plugin works on both classic and block themes. The SDK is enqueued via the standard `wp_enqueue_scripts` pipeline, and every Frak component is available as a Gutenberg block, a shortcode, and a sidebar widget — use whichever surface fits your theme.
+
+= How do I insert a Frak component in the Classic Editor / TinyMCE? =
+
+Use the matching shortcode. Attribute names are snake_case and mirror the block attributes:
+
+* `[frak_banner placement="top" referral_title="Welcome back!" referral_cta="Claim"]`
+* `[frak_share_button text="Share & earn" use_reward="1" click_action="share-modal"]`
+* `[frak_post_purchase variant="referrer" cta_text="Share now"]`
+
+= How do I add a Frak component to a classic-theme sidebar or footer? =
+
+Go to **Appearance → Widgets** and add one of: **Frak Banner**, **Frak Share Button**, or **Frak Post-Purchase** to the target widget area. The widgets mirror the block attributes in a simple form UI.
 
 = Where do I get my webhook secret? =
 

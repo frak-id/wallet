@@ -13,7 +13,7 @@ version on dispatch.
 
 ### Changed
 
-- Plugin now requires a block theme for frontend SDK injection (admin notice is shown otherwise).
+- Frontend SDK injection is no longer gated on `wp_is_block_theme()` — the plugin now works on classic themes too. The previous gate was a vestige of the floating wallet button (removed) and no longer serves a purpose: the SDK is enqueued via `wp_enqueue_scripts` with `strategy: defer`, which every well-behaved theme supports. Admin notice + documentation adjusted accordingly.
 - Dropped unused `simplito/elliptic-php` dependency (~2.9 MB in the shipped zip).
 - Cleaned up `window.FrakSetup` injection to match the current `@frak-labs/components` contract: only `config.metadata` (site name + logo) is emitted; `modalWalletConfig`, `modalConfig`, `modalShareConfig`, per-site modal i18n, and redundant `walletUrl` / `domain` defaults are gone.
 - Added proper plugin headers: `Text Domain`, `Domain Path`, `Requires at least`, `Requires PHP`, `License`, `License URI`.
@@ -36,12 +36,15 @@ version on dispatch.
 
 ### Added
 
-- New Gutenberg blocks, usable from the FSE site editor on any page/template:
+- New Gutenberg blocks, usable from the block editor on any theme type (classic or block / FSE):
   - `frak/share-button` wraps `<frak-button-share>` (rewards-aware share CTA).
   - `frak/banner` wraps `<frak-banner>` (referral success + in-app browser prompt).
   - `frak/post-purchase` wraps `<frak-post-purchase>` (thank-you card with referrer/referee variants).
   All three are dynamic (`render.php`), attribute-driven, and rely on the globally enqueued SDK — no per-block bundle download.
 - `Frak_Blocks` registers every folder under `includes/blocks/` on `init` via a single glob loop, so adding a new block only requires dropping a new folder with `block.json` + `editor.js` + `render.php`.
+- Three `[frak_*]` shortcodes (`[frak_banner]`, `[frak_share_button]`, `[frak_post_purchase]`) mirror the blocks for Classic Editor / TinyMCE, page builders (Elementor, Beaver, WPBakery), and theme/plugin authors calling `do_shortcode()` from PHP templates. Snake_case attribute names map to the same camelCase block attributes; boolean toggles accept `"1" / "true" / "yes" / "on"`.
+- Three sidebar widgets (`Frak_Banner_Widget`, `Frak_Share_Button_Widget`, `Frak_Post_Purchase_Widget`) for classic-theme sidebars / footers — also usable from the block-based widget screen via core's Legacy Widget block wrapper. Each widget exposes the same attributes as the matching block via a simple form UI.
+- `Frak_Component_Renderer` centralises the block-attr → web-component-HTML mapping so the block `render.php`, the shortcodes, and the widgets all emit byte-identical markup and share the WooCommerce order-context auto-injection logic.
 
 ## [1.0.0] - 2026-04-16
 

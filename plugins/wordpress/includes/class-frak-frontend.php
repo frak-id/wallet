@@ -25,13 +25,13 @@ class Frak_Frontend {
 	/**
 	 * Enqueue frontend scripts.
 	 *
-	 * Always loaded on block-theme frontend requests: the SDK pulls its real
-	 * metadata (merchant name, reward UI copy, etc.) from the Frak backend
-	 * once the merchant is registered on business.frak.id, so the plugin
-	 * must inject the script even when no WP-side `app_name` / `logo_url`
-	 * is configured. {@see generate_config_script()} falls back to
-	 * `get_bloginfo('name')` so `window.FrakSetup.config.metadata.name` is
-	 * never empty.
+	 * Always loaded on frontend requests (classic + block themes): the SDK
+	 * pulls its real metadata (merchant name, reward UI copy, etc.) from the
+	 * Frak backend once the merchant is registered on business.frak.id, so
+	 * the plugin must inject the script even when no WP-side `app_name` /
+	 * `logo_url` is configured. {@see generate_config_script()} falls back
+	 * to `get_bloginfo('name')` so `window.FrakSetup.config.metadata.name`
+	 * is never empty.
 	 */
 	public static function enqueue_scripts() {
 		wp_enqueue_script(
