@@ -28,6 +28,58 @@
 class Frak_Shortcodes {
 
 	/**
+	 * Default attribute pairs for `[frak_banner]`. Merged with caller-
+	 * supplied attributes via {@see shortcode_atts()} so unknown keys are
+	 * dropped and missing values fall back to empty strings (which the
+	 * renderer then omits from the emitted HTML).
+	 *
+	 * @var array<string, string>
+	 */
+	private const BANNER_DEFAULTS = array(
+		'placement'            => '',
+		'classname'            => '',
+		'interaction'          => '',
+		'referral_title'       => '',
+		'referral_description' => '',
+		'referral_cta'         => '',
+		'inapp_title'          => '',
+		'inapp_description'    => '',
+		'inapp_cta'            => '',
+	);
+
+	/**
+	 * Default attribute pairs for `[frak_share_button]`.
+	 *
+	 * @var array<string, string>
+	 */
+	private const SHARE_BUTTON_DEFAULTS = array(
+		'text'               => '',
+		'placement'          => '',
+		'classname'          => '',
+		'use_reward'         => '',
+		'no_reward_text'     => '',
+		'target_interaction' => '',
+		'click_action'       => '',
+	);
+
+	/**
+	 * Default attribute pairs for `[frak_post_purchase]`.
+	 *
+	 * @var array<string, string>
+	 */
+	private const POST_PURCHASE_DEFAULTS = array(
+		'sharing_url'   => '',
+		'merchant_id'   => '',
+		'placement'     => '',
+		'classname'     => '',
+		'variant'       => '',
+		'badge_text'    => '',
+		'referrer_text' => '',
+		'referee_text'  => '',
+		'cta_text'      => '',
+	);
+
+	/**
 	 * Register the three shortcode handlers. Called once from
 	 * {@see Frak_Plugin::init()}.
 	 */
@@ -47,6 +99,7 @@ class Frak_Shortcodes {
 		if ( ! self::is_renderable_context() ) {
 			return '';
 		}
+		$atts = shortcode_atts( self::BANNER_DEFAULTS, (array) $atts, 'frak_banner' );
 		return Frak_Component_Renderer::banner( self::normalize( $atts ) );
 	}
 
@@ -60,6 +113,7 @@ class Frak_Shortcodes {
 		if ( ! self::is_renderable_context() ) {
 			return '';
 		}
+		$atts = shortcode_atts( self::SHARE_BUTTON_DEFAULTS, (array) $atts, 'frak_share_button' );
 		return Frak_Component_Renderer::share_button( self::normalize( $atts ) );
 	}
 
@@ -78,6 +132,7 @@ class Frak_Shortcodes {
 		if ( ! self::is_renderable_context() ) {
 			return '';
 		}
+		$atts = shortcode_atts( self::POST_PURCHASE_DEFAULTS, (array) $atts, 'frak_post_purchase' );
 		return Frak_Component_Renderer::post_purchase( self::normalize( $atts ) );
 	}
 
@@ -106,11 +161,11 @@ class Frak_Shortcodes {
 	 *     web component and would render raw `<frak-*>` strings.
 	 *   - oEmbed render contexts (`is_embed()`) — the embedded iframe response
 	 *     doesn't carry the SDK, so the component would never hydrate.
-	 *   - REST-API responses (`REST_REQUEST` constant, set by `WP_REST_Server`)
-	 *     — `the_content` runs during `/wp/v2/posts/:id`, so without this guard
-	 *     headless / mobile consumers get `<frak-banner>` markup baked into the
-	 *     JSON `rendered` field. `wp_is_rest_endpoint()` would be preferable but
-	 *     it only exists on WP 6.5+; the constant has been stable for years.
+	 *   - REST-API responses — `the_content` runs during `/wp/v2/posts/:id`,
+	 *     so without this guard headless / mobile consumers get `<frak-banner>`
+	 *     markup baked into the JSON `rendered` field. Uses
+	 *     `wp_is_serving_rest_request()` on WP 6.5+; falls back to the
+	 *     `REST_REQUEST` constant on older cores.
 	 *
 	 * The SDK is not loaded in any of these contexts (see
 	 * {@see Frak_Frontend::enqueue_scripts()}, which only runs on
@@ -126,7 +181,7 @@ class Frak_Shortcodes {
 		if ( function_exists( 'is_embed' ) && is_embed() ) {
 			return false;
 		}
-		if ( defined( 'REST_REQUEST' ) && REST_REQUEST ) {
+		if ( function_exists( 'wp_is_serving_rest_request' ) ? wp_is_serving_rest_request() : ( defined( 'REST_REQUEST' ) && REST_REQUEST ) ) {
 			return false;
 		}
 		return true;

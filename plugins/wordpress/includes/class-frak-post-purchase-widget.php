@@ -63,7 +63,7 @@ class Frak_Post_Purchase_Widget extends Frak_Widget_Base {
 				'label' => __( 'Call-to-action text', 'frak' ),
 			),
 			'sharingUrl'   => array(
-				'type'  => 'text',
+				'type'  => 'url',
 				'label' => __( 'Sharing URL', 'frak' ),
 			),
 			'merchantId'   => array(

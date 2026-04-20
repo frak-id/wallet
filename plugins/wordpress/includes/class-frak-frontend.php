@@ -58,8 +58,14 @@ class Frak_Frontend {
 	 * @return array<int, string|array<string, string>>
 	 */
 	public static function add_resource_hints( $hints, $relation ) {
-		if ( 'dns-prefetch' === $relation || 'preconnect' === $relation ) {
+		if ( 'dns-prefetch' === $relation ) {
 			$hints[] = 'https://cdn.jsdelivr.net';
+		}
+		if ( 'preconnect' === $relation ) {
+			$hints[] = array(
+				'href'        => 'https://cdn.jsdelivr.net',
+				'crossorigin' => 'anonymous',
+			);
 		}
 		return $hints;
 	}

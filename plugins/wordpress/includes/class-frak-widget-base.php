@@ -14,6 +14,7 @@
  *   - `textarea` => `<textarea>` + `sanitize_textarea_field`.
  *   - `checkbox` => `<input type="checkbox">` + boolean cast.
  *   - `select`   => `<select>` (requires `options` map); value restricted to keys.
+ *   - `url`      => `<input type="url">` + `esc_url_raw` on save, `esc_url` on render.
  *
  * All field labels are translatable via the `frak` text domain. Each widget
  * additionally carries the standard `title` field (rendered inside the
@@ -126,6 +127,10 @@ abstract class Frak_Widget_Base extends WP_Widget {
 					$clean[ $key ] = array_key_exists( $raw_str, $options ) ? $raw_str : '';
 					break;
 
+				case 'url':
+					$clean[ $key ] = esc_url_raw( (string) $raw );
+					break;
+
 				case 'text':
 				default:
 					$clean[ $key ] = sanitize_text_field( (string) $raw );
@@ -171,6 +176,11 @@ abstract class Frak_Widget_Base extends WP_Widget {
 					echo '<option value="' . esc_attr( $option_value ) . '"' . selected( (string) $value, (string) $option_value, false ) . '>' . esc_html( $option_label ) . '</option>';
 				}
 				echo '</select>';
+				break;
+
+			case 'url':
+				echo '<label for="' . esc_attr( $field_id ) . '">' . esc_html( $field['label'] ) . '</label>';
+				echo '<input class="widefat" type="url" id="' . esc_attr( $field_id ) . '" name="' . esc_attr( $field_name ) . '" value="' . esc_url( (string) $value ) . '" />';
 				break;
 
 			case 'text':

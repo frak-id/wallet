@@ -24,6 +24,9 @@ class Frak_Plugin {
 	 */
 	public static function boot() {
 		add_action( 'init', array( __CLASS__, 'init' ) );
+		// Widgets register their `widgets_init` callback here so the factory is
+		// wired on `plugins_loaded` — avoids an `init → widgets_init` chain.
+		Frak_Widgets::init();
 	}
 
 	/**
@@ -42,14 +45,17 @@ class Frak_Plugin {
 	 *     every frontend request was dead weight).
 	 *   - Frontend: SDK injection, blocks, shortcodes, widgets, WC tracker.
 	 *
-	 * Blocks, shortcodes and widgets are registered in every non-CLI context
-	 * (admin + frontend) so the block editor iframe, TinyMCE shortcode
-	 * resolution and the widget admin screen all see the same set of
-	 * insertion surfaces. The SDK itself loads on the frontend regardless of
-	 * theme type — the previous `wp_is_block_theme()` gate was a vestige of
-	 * the now-removed floating wallet button and is no longer needed: modern
-	 * classic themes call `wp_footer()` reliably and the SDK is enqueued via
-	 * the standard `wp_enqueue_scripts` pipeline with `strategy: defer`.
+	 * Blocks and shortcodes are registered here (every non-CLI context —
+	 * admin + frontend) so the block editor iframe and TinyMCE shortcode
+	 * resolution see the same set of insertion surfaces. Widgets register
+	 * their `widgets_init` callback earlier from {@see boot()} to skip the
+	 * `init → widgets_init` dependency chain.
+	 *
+	 * The SDK itself loads on the frontend regardless of theme type — the
+	 * previous `wp_is_block_theme()` gate was a vestige of the now-removed
+	 * floating wallet button and is no longer needed: modern classic themes
+	 * call `wp_footer()` reliably and the SDK is enqueued via the standard
+	 * `wp_enqueue_scripts` pipeline with `strategy: defer`.
 	 */
 	public static function init() {
 		$has_wc = class_exists( 'WooCommerce' );
@@ -73,7 +79,6 @@ class Frak_Plugin {
 
 		Frak_Blocks::init();
 		Frak_Shortcodes::init();
-		Frak_Widgets::init();
 
 		if ( $has_wc ) {
 			Frak_WooCommerce::init();
