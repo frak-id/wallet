@@ -10,7 +10,6 @@
  * Semantics split:
  *   - `frak_settings` (autoloaded) — UI/config, read on every frontend request.
  *   - `frak_webhook_secret` (autoload=no) — credential, read only on webhook send/test.
- *   - `frak_webhook_logs` (autoload=no) — growing list, read only on the settings page.
  *
  * @package Frak_Integration
  */
@@ -51,6 +50,12 @@ class Frak_Settings {
 	Legacy `frak_*` option rows that the plugin no longer consumes. Kept
 	only so the migration can purge them from wp_options on upgrade.
 	 *
+	 * `frak_webhook_logs` was a ring buffer (max 50 rows) populated by the v1
+	 * PHP webhook dispatcher. The dispatcher is gone (delivery + logging now
+	 * live in WooCommerce's native pipeline under `WooCommerce → Status → Logs`),
+	 * so the option is dead weight — and was autoloaded on v1, which is the
+	 * worst flavour of dead weight.
+	 *
 	 * @var string[]
 	 */
 	private const DEPRECATED_LEGACY_OPTIONS = array(
@@ -61,6 +66,7 @@ class Frak_Settings {
 		'frak_floating_button_position',
 		'frak_modal_language',
 		'frak_modal_i18n',
+		'frak_webhook_logs',
 	);
 
 	/**

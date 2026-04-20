@@ -14,17 +14,6 @@
 class Frak_WooCommerce {
 
 	/**
-	 * Set by the `frak/post-purchase` block when it renders with auto-
-	 * injected order context. When true, the dedicated tracker callback
-	 * (hooked to `woocommerce_thankyou` / `woocommerce_view_order`) skips
-	 * itself — the block's `<frak-post-purchase>` web component fires
-	 * `trackPurchaseStatus` on its own and we avoid a duplicate SDK call.
-	 *
-	 * @var bool
-	 */
-	private static $tracking_populated = false;
-
-	/**
 	 * Register WooCommerce hooks. Called once from {@see Frak_Plugin::init()}.
 	 *
 	 * Tracker registration uses `woocommerce_thankyou` and `woocommerce_view_order`
@@ -109,18 +98,16 @@ class Frak_WooCommerce {
 	}
 
 	/**
-	 * Flag that the `frak/post-purchase` block already rendered with order
-	 * context, so the `wp_footer` inline tracker should not fire.
-	 */
-	public static function mark_tracking_populated() {
-		self::$tracking_populated = true;
-	}
-
-	/**
 	 * Inline tracker fired from `woocommerce_thankyou` and `woocommerce_view_order`
-	 * — ensures reward attribution works even when the merchant has not placed
-	 * the `frak/post-purchase` block on their template. No-ops when the block
-	 * populated the context (avoids double-firing).
+	 * — always emits the `trackPurchaseStatus` call so reward attribution works
+	 * even when the merchant has not placed the `frak/post-purchase` block on
+	 * their template.
+	 *
+	 * The `frak/post-purchase` block, when present, ALSO fires `trackPurchaseStatus`
+	 * from its `<frak-post-purchase>` web component on mount. The duplicate call
+	 * is intentional — the SDK is idempotent on the same `(customerId, orderId,
+	 * token)` triple, and having both surfaces fire keeps tracking working when
+	 * either one is missing (block absent, or block present but SDK still warming).
 	 *
 	 * WooCommerce has already run its own endpoint + capability checks before
 	 * firing these actions, so we trust the `$order_id` argument and skip the
@@ -129,10 +116,6 @@ class Frak_WooCommerce {
 	 * @param int $order_id Order ID provided by the WooCommerce action.
 	 */
 	public static function render_purchase_tracker_for_order( $order_id ) {
-		if ( self::$tracking_populated ) {
-			return;
-		}
-
 		$order_id = absint( $order_id );
 		if ( ! $order_id ) {
 			return;

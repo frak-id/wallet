@@ -10,9 +10,11 @@
  * On a non-WC custom thank-you page the merchant is expected to trigger
  * tracking themselves via `window.FrakSetup.core.trackPurchaseStatus`.
  *
- * When auto-injection fires, {@see Frak_WooCommerce::mark_tracking_populated()}
- * is flagged so the inline `wp_footer` fallback stays silent and the reward
- * endpoint is not called twice.
+ * The inline `wp_footer`-adjacent tracker in {@see Frak_WooCommerce::render_purchase_tracker_for_order()}
+ * ALSO fires on the same two endpoints. The duplicate call is intentional —
+ * `trackPurchaseStatus` is idempotent on the same `(customerId, orderId, token)`
+ * triple, and having both surfaces fire keeps attribution working when the
+ * block is present but the SDK is still warming up, or vice versa.
  *
  * @package Frak_Integration
  *
@@ -56,7 +58,6 @@ if ( class_exists( 'Frak_WooCommerce' ) ) {
 		foreach ( $frak_wc_context as $frak_html_attr => $frak_context_value ) {
 			$frak_attr_pairs[] = sprintf( '%s="%s"', esc_attr( $frak_html_attr ), esc_attr( $frak_context_value ) );
 		}
-		Frak_WooCommerce::mark_tracking_populated();
 	}
 }
 
