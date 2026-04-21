@@ -19,7 +19,8 @@
 		"useReward": { "type": "boolean", "default": false },
 		"noRewardText": { "type": "string", "default": "" },
 		"targetInteraction": { "type": "string", "default": "" },
-		"clickAction": { "type": "string", "default": "embedded-wallet" }
+		"clickAction": { "type": "string", "default": "sharing-page" },
+		"buttonStyle": { "type": "string", "default": "primary" }
 	},
 	"editorScript": "file:./editor.js",
 	"render": "file:./render.php"

@@ -3,27 +3,61 @@
 	'use strict';
 
 	const el = element.createElement;
-	const { Fragment } = element;
+	const { Fragment, useEffect, useRef } = element;
 	const { InspectorControls, useBlockProps } = blockEditor;
 	const { PanelBody, TextControl, ToggleControl, SelectControl } = components;
 	const { __ } = i18n;
 
 	const CLICK_ACTIONS = [
-		{ label: __( 'Embedded wallet', 'frak' ), value: 'embedded-wallet' },
-		{ label: __( 'Share modal', 'frak' ), value: 'share-modal' },
 		{ label: __( 'Sharing page', 'frak' ), value: 'sharing-page' },
+		{ label: __( 'Share modal', 'frak' ), value: 'share-modal' },
+		{ label: __( 'Embedded wallet', 'frak' ), value: 'embedded-wallet' },
 	];
 
+	const BUTTON_STYLES = [
+		{ label: __( 'Primary (theme button)', 'frak' ), value: 'primary' },
+		{ label: __( 'Secondary (outline)', 'frak' ), value: 'secondary' },
+		{ label: __( 'None (custom class only)', 'frak' ), value: 'none' },
+	];
+
+	const BUTTON_STYLE_CLASSES = {
+		primary: 'wp-element-button wp-block-button__link',
+		secondary: 'wp-element-button wp-block-button__link is-style-outline',
+		none: '',
+	};
+
+	function composeClassname( buttonStyle, classname ) {
+		const preset = BUTTON_STYLE_CLASSES[ buttonStyle ] || '';
+		return [ preset, classname ].filter( Boolean ).join( ' ' ).trim();
+	}
+
+	// Return null (not undefined) for missing values so React 18 calls
+	// `removeAttribute()` on custom elements. Passing `undefined` leaves the
+	// attribute stuck in the DOM across re-renders, which corrupts the web
+	// component's state (presence of `use-reward` is treated as truthy even
+	// when the toggle is off).
 	function attr( value ) {
-		return value !== '' && value !== undefined && value !== null ? String( value ) : undefined;
+		return value !== '' && value !== undefined && value !== null ? String( value ) : null;
 	}
 
 	blocks.registerBlockType( 'frak/share-button', {
 		edit( props ) {
 			const { attributes, setAttributes } = props;
+			const hostRef = useRef( null );
 			const blockProps = useBlockProps( {
 				className: 'frak-block-editor frak-block-editor--share-button',
 			} );
+
+			// Gutenberg renders the block canvas in a same-origin iframe, but WP
+			// only forwards styles — not scripts — so the SDK enqueued against
+			// the outer window never defines custom elements in the iframe's
+			// registry. Re-inject from the owning document once the wrapper is
+			// mounted; the helper no-ops when we're already in the outer window.
+			useEffect( () => {
+				if ( typeof window !== 'undefined' && typeof window.__frakEditorInjectSdk === 'function' ) {
+					window.__frakEditorInjectSdk( hostRef.current );
+				}
+			}, [] );
 
 			const setter = ( key ) => ( value ) => setAttributes( { [ key ]: value } );
 
@@ -42,6 +76,13 @@
 							value: attributes.text,
 							onChange: setter( 'text' ),
 						} ),
+						el( SelectControl, {
+							label: __( 'Button style', 'frak' ),
+							help: __( 'Applies WordPress button classes so the button inherits your theme styling.', 'frak' ),
+							value: attributes.buttonStyle,
+							options: BUTTON_STYLES,
+							onChange: setter( 'buttonStyle' ),
+						} ),
 						el( ToggleControl, {
 							label: __( 'Show potential reward', 'frak' ),
 							help: __( 'Fetches and displays the reward value on the button.', 'frak' ),
@@ -53,17 +94,18 @@
 								label: __( 'Fallback text (no reward)', 'frak' ),
 								value: attributes.noRewardText,
 								onChange: setter( 'noRewardText' ),
-							} ),
-						el( SelectControl, {
-							label: __( 'Click action', 'frak' ),
-							value: attributes.clickAction,
-							options: CLICK_ACTIONS,
-							onChange: setter( 'clickAction' ),
-						} )
+							} )
 					),
 					el(
 						PanelBody,
 						{ title: __( 'Advanced', 'frak' ), initialOpen: false },
+						el( SelectControl, {
+							label: __( 'Click action', 'frak' ),
+							help: __( 'Override what happens when the button is clicked.', 'frak' ),
+							value: attributes.clickAction,
+							options: CLICK_ACTIONS,
+							onChange: setter( 'clickAction' ),
+						} ),
 						el( TextControl, {
 							label: __( 'Placement ID', 'frak' ),
 							help: __( 'Backend placement identifier for custom configuration.', 'frak' ),
@@ -77,6 +119,7 @@
 						} ),
 						el( TextControl, {
 							label: __( 'CSS class name', 'frak' ),
+							help: __( 'Additional classes appended after the button-style preset.', 'frak' ),
 							value: attributes.classname,
 							onChange: setter( 'classname' ),
 						} )
@@ -87,14 +130,16 @@
 				// stays interactive-looking while the click handler is no-op'd.
 				el(
 					'div',
-					blockProps,
+					{ ...blockProps, ref: hostRef },
 					el( 'frak-button-share', {
 						preview: 'true',
 						text: attr( attributes.text ),
-						classname: attr( attributes.classname ),
+						classname: attr( composeClassname( attributes.buttonStyle, attributes.classname ) ),
 						placement: attr( attributes.placement ),
 						'click-action': attr( attributes.clickAction ),
-						'use-reward': attributes.useReward ? '' : undefined,
+						// Boolean HTML attribute: spread the key in only when truthy so
+						// React 18 actually strips it from the DOM when the toggle is off.
+						...( attributes.useReward ? { 'use-reward': '' } : {} ),
 						'no-reward-text': attr( attributes.noRewardText ),
 						'target-interaction': attr( attributes.targetInteraction ),
 					} )

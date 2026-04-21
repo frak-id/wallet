@@ -41,6 +41,16 @@ class Frak_Share_Button_Widget extends Frak_Widget_Base {
 				'label' => __( 'Button text', 'frak' ),
 				'help'  => __( 'Use {REWARD} to inject the live reward amount.', 'frak' ),
 			),
+			'buttonStyle'       => array(
+				'type'    => 'select',
+				'label'   => __( 'Button style', 'frak' ),
+				'help'    => __( 'Applies WordPress button classes so the button inherits your theme styling.', 'frak' ),
+				'options' => array(
+					'primary'   => __( 'Primary (theme button)', 'frak' ),
+					'secondary' => __( 'Secondary (outline)', 'frak' ),
+					'none'      => __( 'None (custom class only)', 'frak' ),
+				),
+			),
 			'useReward'         => array(
 				'type'  => 'checkbox',
 				'label' => __( 'Show potential reward', 'frak' ),
@@ -51,11 +61,12 @@ class Frak_Share_Button_Widget extends Frak_Widget_Base {
 			),
 			'clickAction'       => array(
 				'type'    => 'select',
-				'label'   => __( 'Click action', 'frak' ),
+				'label'   => __( 'Click action (advanced)', 'frak' ),
+				'help'    => __( 'Override what happens when the button is clicked.', 'frak' ),
 				'options' => array(
-					'embedded-wallet' => __( 'Embedded wallet', 'frak' ),
-					'share-modal'     => __( 'Share modal', 'frak' ),
 					'sharing-page'    => __( 'Sharing page', 'frak' ),
+					'share-modal'     => __( 'Share modal', 'frak' ),
+					'embedded-wallet' => __( 'Embedded wallet', 'frak' ),
 				),
 			),
 			'placement'         => array(
@@ -70,6 +81,7 @@ class Frak_Share_Button_Widget extends Frak_Widget_Base {
 			'classname'         => array(
 				'type'  => 'text',
 				'label' => __( 'CSS class name', 'frak' ),
+				'help'  => __( 'Additional classes appended after the button-style preset.', 'frak' ),
 			),
 		);
 	}

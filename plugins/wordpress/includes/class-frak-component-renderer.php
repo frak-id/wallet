@@ -58,6 +58,27 @@ class Frak_Component_Renderer {
 	);
 
 	/**
+	 * WordPress-native button style presets. The `buttonStyle` attribute
+	 * doesn't map to an HTML attribute on the web component — it's a
+	 * plugin-side convenience that prepends WordPress core button classes
+	 * onto the `classname` so the rendered `<button>` picks up the
+	 * merchant theme's button styling (via `wp-element-button` applied by
+	 * `theme.json` on WP 5.9+) without the merchant having to type the
+	 * class names manually.
+	 *
+	 * `wp-element-button` alone triggers theme.json button colours;
+	 * combining with `wp-block-button__link` picks up Button-block styling
+	 * including the `is-style-outline` variation.
+	 *
+	 * @var array<string, string>
+	 */
+	private const SHARE_BUTTON_STYLE_CLASSES = array(
+		'primary'   => 'wp-element-button wp-block-button__link',
+		'secondary' => 'wp-element-button wp-block-button__link is-style-outline',
+		'none'      => '',
+	);
+
+	/**
 	 * Post-purchase: camelCase block-attr key => kebab-case HTML attribute name.
 	 *
 	 * @var array<string, string>
@@ -105,7 +126,34 @@ class Frak_Component_Renderer {
 	 * @return string
 	 */
 	public static function share_button( array $attrs, string $wrapper = '' ): string {
-		return self::render( 'frak-button-share', self::SHARE_BUTTON_ATTRS, $attrs, $wrapper );
+		return self::render( 'frak-button-share', self::SHARE_BUTTON_ATTRS, self::apply_share_button_style( $attrs ), $wrapper );
+	}
+
+	/**
+	 * Prepend the WordPress button-style classes onto `classname` based on
+	 * the caller-supplied `buttonStyle` preset. A missing or empty
+	 * `buttonStyle` falls back to `primary` so every surface (block,
+	 * widget, shortcode) picks up WP-native styling out of the box;
+	 * merchants opt out by passing `buttonStyle => 'none'`. Unknown
+	 * presets are treated as a no-op. `buttonStyle` is stripped from the
+	 * returned array so it never leaks to the HTML as an unknown
+	 * attribute on the web component.
+	 *
+	 * @param array<string, mixed> $attrs Raw camelCase attribute map.
+	 * @return array<string, mixed>
+	 */
+	private static function apply_share_button_style( array $attrs ): array {
+		$style = ( isset( $attrs['buttonStyle'] ) && '' !== $attrs['buttonStyle'] ) ? (string) $attrs['buttonStyle'] : 'primary';
+		unset( $attrs['buttonStyle'] );
+
+		$style_classes = isset( self::SHARE_BUTTON_STYLE_CLASSES[ $style ] ) ? self::SHARE_BUTTON_STYLE_CLASSES[ $style ] : '';
+		if ( '' === $style_classes ) {
+			return $attrs;
+		}
+
+		$existing           = isset( $attrs['classname'] ) ? trim( (string) $attrs['classname'] ) : '';
+		$attrs['classname'] = '' === $existing ? $style_classes : $style_classes . ' ' . $existing;
+		return $attrs;
 	}
 
 	/**

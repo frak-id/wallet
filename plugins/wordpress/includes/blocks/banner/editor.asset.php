@@ -7,6 +7,6 @@
  */
 
 return array(
-	'dependencies' => array( 'wp-blocks', 'wp-element', 'wp-block-editor', 'wp-components', 'wp-i18n', 'frak-sdk' ),
-	'version'      => '1.1.0',
+	'dependencies' => array( 'wp-blocks', 'wp-element', 'wp-block-editor', 'wp-components', 'wp-i18n', 'frak-sdk', 'frak-editor-sdk-injector' ),
+	'version'      => defined( 'FRAK_PLUGIN_VERSION' ) ? FRAK_PLUGIN_VERSION : '0.0.0',
 );

@@ -60,6 +60,7 @@ class Frak_Shortcodes {
 		'no_reward_text'     => '',
 		'target_interaction' => '',
 		'click_action'       => '',
+		'button_style'       => '',
 	);
 
 	/**

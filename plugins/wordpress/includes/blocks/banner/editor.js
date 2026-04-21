@@ -3,7 +3,7 @@
 	'use strict';
 
 	const el = element.createElement;
-	const { Fragment } = element;
+	const { Fragment, useEffect, useRef } = element;
 	const { InspectorControls, useBlockProps } = blockEditor;
 	const { PanelBody, TextControl, TextareaControl, SelectControl } = components;
 	const { __ } = i18n;
@@ -15,16 +15,30 @@
 
 	// Drop empty strings so `<frak-banner>` only sees attributes the merchant
 	// actually set — the web component already has sensible defaults for the rest.
+	// Return null (not undefined) so React 18 calls `removeAttribute()` on the
+	// custom element. Passing `undefined` leaves stale attrs stuck in the DOM.
 	function attr( value ) {
-		return value !== '' && value !== undefined && value !== null ? String( value ) : undefined;
+		return value !== '' && value !== undefined && value !== null ? String( value ) : null;
 	}
 
 	blocks.registerBlockType( 'frak/banner', {
 		edit( props ) {
 			const { attributes, setAttributes } = props;
+			const hostRef = useRef( null );
 			const blockProps = useBlockProps( {
 				className: 'frak-block-editor frak-block-editor--banner',
 			} );
+
+			// Gutenberg renders the block canvas in a same-origin iframe, but WP
+			// only forwards styles — not scripts — so the SDK enqueued against
+			// the outer window never defines custom elements in the iframe's
+			// registry. Re-inject from the owning document once the wrapper is
+			// mounted; the helper no-ops when we're already in the outer window.
+			useEffect( () => {
+				if ( typeof window !== 'undefined' && typeof window.__frakEditorInjectSdk === 'function' ) {
+					window.__frakEditorInjectSdk( hostRef.current );
+				}
+			}, [] );
 
 			const setter = ( key ) => ( value ) => setAttributes( { [ key ]: value } );
 
@@ -109,7 +123,7 @@
 				// element remounts cleanly when merchants toggle the preview variant.
 				el(
 					'div',
-					blockProps,
+					{ ...blockProps, ref: hostRef },
 					el( 'frak-banner', {
 						key: attributes.previewMode || 'referral',
 						preview: 'true',

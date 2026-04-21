@@ -54,7 +54,7 @@ No. The plugin works on both classic and block themes. The SDK is enqueued via t
 Use the matching shortcode. Attribute names are snake_case and mirror the block attributes:
 
 * `[frak_banner placement="top" referral_title="Welcome back!" referral_cta="Claim"]`
-* `[frak_share_button text="Share & earn" use_reward="1" click_action="share-modal"]`
+* `[frak_share_button text="Share & earn" use_reward="1" button_style="primary" click_action="share-modal"]`
 * `[frak_post_purchase variant="referrer" cta_text="Share now"]`
 
 = How do I add a Frak component to a classic-theme sidebar or footer? =

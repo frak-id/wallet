@@ -176,7 +176,11 @@ return array(
 			),
 			'clickAction'       => array(
 				'type'    => 'string',
-				'default' => 'embedded-wallet',
+				'default' => 'sharing-page',
+			),
+			'buttonStyle'       => array(
+				'type'    => 'string',
+				'default' => 'primary',
 			),
 		),
 		'editorScript' => 'file:./editor.js',

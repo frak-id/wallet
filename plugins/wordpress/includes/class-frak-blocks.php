@@ -71,6 +71,14 @@ class Frak_Blocks {
 	 * Each block's `editor.asset.php` lists `frak-sdk` as a dependency so
 	 * WordPress forwards the script into the block-editor iframe in the right
 	 * order.
+	 *
+	 * Also registers the `frak-editor-sdk-injector` helper: since Gutenberg
+	 * renders the block canvas inside a same-origin iframe (WP 6.3+), and WP
+	 * only forwards `<style>`/`<link>` tags into that iframe, the SDK script
+	 * enqueued against the outer admin window never defines custom elements
+	 * in the iframe's `CustomElementRegistry`. The helper bridges that gap
+	 * by re-injecting the SDK `<script>` (plus forwarded `FrakSetup.config`)
+	 * into the iframe's document from inside each block's `useEffect`.
 	 */
 	public static function enqueue_editor_assets() {
 		wp_register_script(
@@ -84,6 +92,15 @@ class Frak_Blocks {
 		wp_add_inline_script( 'frak-sdk', self::generate_editor_config_script(), 'before' );
 
 		wp_enqueue_script( 'frak-sdk' );
+
+		wp_register_script(
+			'frak-editor-sdk-injector',
+			FRAK_PLUGIN_URL . 'includes/blocks/frak-editor-sdk-injector.js',
+			array( 'frak-sdk' ),
+			FRAK_PLUGIN_VERSION,
+			true
+		);
+		wp_enqueue_script( 'frak-editor-sdk-injector' );
 	}
 
 	/**

@@ -3,7 +3,7 @@
 	'use strict';
 
 	const el = element.createElement;
-	const { Fragment } = element;
+	const { Fragment, useEffect, useRef } = element;
 	const { InspectorControls, useBlockProps } = blockEditor;
 	const { PanelBody, TextControl, TextareaControl, SelectControl } = components;
 	const { __ } = i18n;
@@ -19,16 +19,31 @@
 		{ label: __( 'Referee (congratulations)', 'frak' ), value: 'referee' },
 	];
 
+	// Return null (not undefined) for missing values so React 18 calls
+	// `removeAttribute()` on custom elements. Passing `undefined` leaves stale
+	// attrs stuck in the DOM across re-renders.
 	function attr( value ) {
-		return value !== '' && value !== undefined && value !== null ? String( value ) : undefined;
+		return value !== '' && value !== undefined && value !== null ? String( value ) : null;
 	}
 
 	blocks.registerBlockType( 'frak/post-purchase', {
 		edit( props ) {
 			const { attributes, setAttributes } = props;
+			const hostRef = useRef( null );
 			const blockProps = useBlockProps( {
 				className: 'frak-block-editor frak-block-editor--post-purchase',
 			} );
+
+			// Gutenberg renders the block canvas in a same-origin iframe, but WP
+			// only forwards styles — not scripts — so the SDK enqueued against
+			// the outer window never defines custom elements in the iframe's
+			// registry. Re-inject from the owning document once the wrapper is
+			// mounted; the helper no-ops when we're already in the outer window.
+			useEffect( () => {
+				if ( typeof window !== 'undefined' && typeof window.__frakEditorInjectSdk === 'function' ) {
+					window.__frakEditorInjectSdk( hostRef.current );
+				}
+			}, [] );
 
 			const setter = ( key ) => ( value ) => setAttributes( { [ key ]: value } );
 
@@ -120,7 +135,7 @@
 				// between "referrer" and "referee" copy.
 				el(
 					'div',
-					blockProps,
+					{ ...blockProps, ref: hostRef },
 					el( 'frak-post-purchase', {
 						key: attributes.previewVariant || 'referrer',
 						preview: 'true',
