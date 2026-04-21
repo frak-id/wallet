@@ -1,131 +1,49 @@
-import {
-    isAndroid,
-    isIOS,
-    isTauri,
-} from "@frak-labs/app-essentials/utils/platform";
-import { OpenPanel } from "@openpanel/web";
-import { isStandalonePWA } from "ua-parser-js/helpers";
 import type { Session } from "../../types/Session";
-import { isInIframe } from "../lib/inApp";
-import type {
+import {
+    getOrCreateSessionId,
+    initAnalytics,
+    updateGlobalProperties,
+} from "./globalProps";
+import { getPlatformInfo, openPanel } from "./openpanel";
+import type { AnalyticsAuthenticationType } from "./types";
+
+export type {
+    AuthEventMap,
+    EventMap,
+    FlowEndExtras,
+    FlowEventMap,
+    FlowOutcome,
+    SharingEventMap,
+} from "./events";
+export { flowOutcomeToEventName } from "./events";
+export {
+    getOrCreateSessionId,
+    initAnalytics,
+    setBiometricsFlag,
+    setInstallSource,
+    setLocale,
+    setProfileId,
+    updateGlobalProperties,
+} from "./globalProps";
+export { getPlatformInfo, openPanel } from "./openpanel";
+export type { Flow } from "./startFlow";
+export { startFlow } from "./startFlow";
+export { trackEvent } from "./trackEvent";
+export type {
     AnalyticsAuthenticationType,
     AnalyticsGlobalProperties,
 } from "./types";
 
-/**
- * Get platform information for analytics
- */
-export function getPlatformInfo() {
-    const tauri = isTauri();
-    return {
-        isTauri: tauri,
-        platform: tauri
-            ? isIOS()
-                ? "ios"
-                : isAndroid()
-                  ? "android"
-                  : "unknown"
-            : "web",
-    } as const;
-}
+// Initialise OpenPanel at module load — preserves existing behaviour.
+// Callers that need to update locale later should call `setLocale(...)`.
+initAnalytics();
 
-/**
- * Create the open panel instance if the env variables are set
- */
-export const openPanel =
-    process.env.OPEN_PANEL_API_URL && process.env.OPEN_PANEL_WALLET_CLIENT_ID
-        ? new OpenPanel({
-              apiUrl: process.env.OPEN_PANEL_API_URL,
-              clientId: process.env.OPEN_PANEL_WALLET_CLIENT_ID,
-              trackScreenViews: true,
-              trackOutgoingLinks: true,
-              trackAttributes: false,
-              // We use a filter to ensure we got the open panel instance initialized
-              //  A bit hacky, but this way we are sure that we got everything needed for the first event ever sent
-              filter: ({ type, payload }) => {
-                  if (type !== "track") return true;
-                  if (!payload?.properties) return true;
+// ---------------------------------------------------------------------------
+// Backward-compatible helpers. Keep their signatures identical so existing
+// callsites in wallet-shared/apps/listener keep working during the Phase 2+
+// rollout that migrates them to `trackEvent(...)`.
+// ---------------------------------------------------------------------------
 
-                  // Check if we we got the properties once initialized
-                  if (!("isIframe" in payload.properties)) {
-                      console.log("force initOpenPanel");
-                      payload.properties = {
-                          ...payload.properties,
-                          ...getInitProperties(),
-                      };
-                  }
-
-                  return true;
-              },
-          })
-        : undefined;
-
-/**
- * Get the properties to init open panel
- */
-function getIsStandalonePwa() {
-    if (
-        typeof window === "undefined" ||
-        typeof window.matchMedia !== "function"
-    ) {
-        return false;
-    }
-
-    try {
-        return isStandalonePWA();
-    } catch {
-        return false;
-    }
-}
-
-function getInitProperties() {
-    if (typeof window === "undefined") return {};
-    const referrer =
-        isInIframe && document.referrer !== "" ? document.referrer : undefined;
-    return {
-        isIframe: isInIframe,
-        isPwa: getIsStandalonePwa(),
-        iframeReferrer: referrer,
-        ...getPlatformInfo(),
-    };
-}
-
-/**
- * Function used to init open panel
- */
-function initOpenPanel() {
-    if (!openPanel) return;
-    openPanel.init();
-    updateGlobalProperties(getInitProperties());
-}
-initOpenPanel();
-
-/**
- * Set the profile id of the open panel
- */
-export function setProfileId(profileId?: string) {
-    if (!openPanel) return;
-    openPanel.profileId = profileId;
-}
-
-/**
- * Update the global properties of the open panel
- * @param properties - The properties to update
- */
-export function updateGlobalProperties(
-    properties: Partial<AnalyticsGlobalProperties>
-) {
-    if (!openPanel) return;
-    const current = openPanel.global ?? {};
-    openPanel.setGlobalProperties({
-        ...current,
-        ...properties,
-    });
-}
-
-/**
- * Track the authentication initiated event
- */
 export async function trackAuthInitiated(
     event: AnalyticsAuthenticationType,
     args?: {
@@ -136,9 +54,6 @@ export async function trackAuthInitiated(
     await openPanel.track(`${event}_initiated`, args);
 }
 
-/**
- * Track the authentication completed event
- */
 export async function trackAuthCompleted(
     event: AnalyticsAuthenticationType,
     wallet: Omit<Session, "token">
@@ -146,9 +61,9 @@ export async function trackAuthCompleted(
     if (!openPanel) return;
     updateGlobalProperties({
         wallet: wallet.address,
+        session_id: getOrCreateSessionId(),
     });
     await Promise.allSettled([
-        // Identify the user
         await openPanel.identify({
             profileId: wallet.address,
             properties: {
@@ -157,16 +72,11 @@ export async function trackAuthCompleted(
                 ...getPlatformInfo(),
             },
         }),
-        // Track the auth related event
         openPanel.track(`${event}_completed`),
-        // Track another event to tell that the user is logged in
         openPanel.track("user_logged_in"),
     ]);
 }
 
-/**
- * Track the authentication failed event
- */
 export async function trackAuthFailed(
     event: AnalyticsAuthenticationType,
     reason: string
@@ -177,9 +87,6 @@ export async function trackAuthFailed(
     });
 }
 
-/**
- * Track generic events
- */
 export async function trackGenericEvent(
     event: string,
     params?: Record<string, unknown>

@@ -1,11 +1,27 @@
 // Icons
 export { LogoFrakWithName } from "@frak-labs/design-system/icons";
+export type {
+    AuthEventMap,
+    EventMap,
+    Flow,
+    FlowEndExtras,
+    FlowEventMap,
+    FlowOutcome,
+    SharingEventMap,
+} from "./analytics";
 export {
+    getOrCreateSessionId,
+    initAnalytics,
     openPanel,
+    setBiometricsFlag,
+    setInstallSource,
+    setLocale,
     setProfileId,
+    startFlow,
     trackAuthCompleted,
     trackAuthFailed,
     trackAuthInitiated,
+    trackEvent,
     trackGenericEvent,
     updateGlobalProperties,
 } from "./analytics";
