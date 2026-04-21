@@ -1,7 +1,12 @@
 import { Box } from "@frak-labs/design-system/components/Box";
 import { Button } from "@frak-labs/design-system/components/Button";
 import { LogoFrak } from "@frak-labs/design-system/icons";
-import { HandleErrors, PairingView, ua } from "@frak-labs/wallet-shared";
+import {
+    HandleErrors,
+    PairingView,
+    trackEvent,
+    ua,
+} from "@frak-labs/wallet-shared";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useCallback, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -79,7 +84,13 @@ function LoginPage() {
                                 <Box>
                                     <Button
                                         variant="ghost"
-                                        onClick={() => setView("pairing")}
+                                        onClick={() => {
+                                            trackEvent(
+                                                "auth_login_method_selected",
+                                                { method: "qr" }
+                                            );
+                                            setView("pairing");
+                                        }}
                                     >
                                         {t("wallet.login.useQRCode")}
                                     </Button>

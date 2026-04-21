@@ -1,4 +1,5 @@
-import { getInitProperties, openPanel } from "./openpanel";
+import type { Session } from "../../types/Session";
+import { getInitProperties, getPlatformInfo, openPanel } from "./openpanel";
 import type { AnalyticsGlobalProperties } from "./types";
 
 const SESSION_ID_STORAGE_KEY = "frak_analytics_session_id";
@@ -66,4 +67,30 @@ export function setBiometricsFlag(hasBiometrics: boolean) {
 
 export function setInstallSource(source: string) {
     updateGlobalProperties({ install_source: source });
+}
+
+/**
+ * Flag the current OpenPanel session as belonging to an authenticated user.
+ * Updates wallet/session_id global props, identifies the profile with
+ * platform metadata, and emits `user_logged_in`.
+ *
+ * Does NOT emit the domain `${event}_completed` event — callers emit that
+ * via `trackEvent("register_completed", { flow_id })` so the flow_id is
+ * attached explicitly.
+ */
+export function identifyAuthenticatedUser(session: Omit<Session, "token">) {
+    if (!openPanel) return;
+    updateGlobalProperties({
+        wallet: session.address,
+        session_id: getOrCreateSessionId(),
+    });
+    openPanel.identify({
+        profileId: session.address,
+        properties: {
+            sessionType: session.type ?? "webauthn",
+            sessionSrc: "pairing",
+            ...getPlatformInfo(),
+        },
+    });
+    openPanel.track("user_logged_in");
 }

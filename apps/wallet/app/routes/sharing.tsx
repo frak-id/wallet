@@ -11,7 +11,7 @@ import {
     getSavedConfirmation,
     SharingPage,
     saveConfirmation,
-    trackGenericEvent,
+    trackEvent,
     useCopyToClipboardWithState,
     useFormattedEstimatedReward,
     useShareLink,
@@ -240,8 +240,8 @@ function WalletSharingPage() {
             onSuccess: (result) => {
                 if (!result) return;
                 toast.success(t("sharing.btn.shareSuccess"));
-                trackGenericEvent("sharing-share-link", {
-                    link: finalSharingLink,
+                trackEvent("sharing_link_shared", {
+                    link: finalSharingLink ?? undefined,
                 });
                 if (merchantId) saveConfirmation(merchantId);
                 setShowConfirmation(true);
@@ -257,8 +257,8 @@ function WalletSharingPage() {
     const handleCopy = () => {
         if (!finalSharingLink) return;
         copy(finalSharingLink);
-        trackGenericEvent("sharing-copy-link", {
-            link: finalSharingLink,
+        trackEvent("sharing_link_copied", {
+            link: finalSharingLink ?? undefined,
         });
         toast.success(t("sharing.btn.copySuccess"));
         if (merchantId) saveConfirmation(merchantId);

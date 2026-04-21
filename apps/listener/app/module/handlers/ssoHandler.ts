@@ -8,11 +8,12 @@ import {
 import {
     addLastAuthentication,
     emitLifecycleEvent,
+    identifyAuthenticatedUser,
     type SdkSession,
     type Session,
     type SsoRpcSchema,
     sessionStore,
-    trackAuthCompleted,
+    trackEvent,
 } from "@frak-labs/wallet-shared";
 import type { Hex } from "viem";
 import type { WalletRpcContext } from "@/module/types/context";
@@ -66,7 +67,8 @@ export async function processSsoCompletion(
         sessionStore.getState().setSdkSession(sdkSession);
 
         // Track successful authentication
-        await trackAuthCompleted("sso", session);
+        identifyAuthenticatedUser(session);
+        trackEvent("sso_completed");
 
         // Resolve pending RPC call if exists
         pendingSsoRequest?.resolve({ wallet: session.address });

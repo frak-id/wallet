@@ -1,33 +1,20 @@
-/**
- * Listener transaction event map.
- *
- * This is the partner-initiated transaction flow that runs inside the
- * listener iframe (triggered by `frak_displayModal` with `sendTransaction`
- * step). It is distinct from the wallet-native `tokens_send_*` flow: those
- * events live in the wallet app and cover user-initiated sends.
- *
- * The listener flow is wired through `startFlow("listener_transaction")` so
- * every event shares a `flow_id`.
- */
+import type { FlowEvents } from "./flow";
+
 type TxBaseProps = {
-    tx_count: number;
+    tx_count?: number;
     flow_id?: string;
 };
 
-export type ListenerTxEventMap = {
-    listener_tx_viewed: TxBaseProps & {
-        is_mobile_pairing: boolean;
-    };
-    listener_tx_submitted: TxBaseProps;
-    listener_tx_succeeded: TxBaseProps & {
-        hash: string;
-    };
-    listener_tx_failed: TxBaseProps & {
-        error_type?: string;
-        reason?: string;
-    };
+type ListenerTxFlowExtras = {
+    tx_count?: number;
+    is_mobile_pairing?: boolean;
+    hash?: string;
+};
 
-    // Mobile-specific (distant-webauthn / deep link flow)
+type ListenerTxFlow = FlowEvents<"listener_tx", ListenerTxFlowExtras>;
+
+type ListenerTxMidFlowEvents = {
+    listener_tx_submitted: TxBaseProps;
     listener_tx_mobile_deeplink_clicked: {
         retry: boolean;
         flow_id?: string;
@@ -39,3 +26,5 @@ export type ListenerTxEventMap = {
         flow_id?: string;
     };
 };
+
+export type ListenerTxEventMap = ListenerTxFlow & ListenerTxMidFlowEvents;

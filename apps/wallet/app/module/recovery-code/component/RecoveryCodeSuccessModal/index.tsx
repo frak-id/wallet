@@ -2,8 +2,9 @@ import { Box } from "@frak-labs/design-system/components/Box";
 import { ResponsiveModal } from "@frak-labs/design-system/components/ResponsiveModal";
 import { Text } from "@frak-labs/design-system/components/Text";
 import { CircleCheckIcon } from "@frak-labs/design-system/icons";
+import { trackEvent } from "@frak-labs/wallet-shared";
 import { useNavigate } from "@tanstack/react-router";
-import { useCallback } from "react";
+import { useCallback, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import * as styles from "./index.css";
 
@@ -18,6 +19,10 @@ export function RecoveryCodeSuccessModal({
 }: RecoveryCodeSuccessModalProps) {
     const { t } = useTranslation();
     const navigate = useNavigate();
+    useEffect(() => {
+        trackEvent("install_code_success_modal_viewed");
+    }, []);
+
     const handleClose = useCallback(() => {
         onClose();
         // Navigate back to register to continue the onboarding

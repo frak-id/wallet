@@ -1,8 +1,8 @@
 import { Box } from "@frak-labs/design-system/components/Box";
 import { Button } from "@frak-labs/design-system/components/Button";
-import { CodeInput } from "@frak-labs/wallet-shared";
+import { CodeInput, trackEvent } from "@frak-labs/wallet-shared";
 import { useNavigate } from "@tanstack/react-router";
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Back } from "@/module/common/component/Back";
 import { PageLayout } from "@/module/common/component/PageLayout";
@@ -26,6 +26,10 @@ export function RecoveryCodePage() {
         reset: resetMutation,
     } = useResolveInstallCode();
 
+    useEffect(() => {
+        trackEvent("install_code_page_viewed");
+    }, []);
+
     const isComplete = code.length === CODE_LENGTH;
 
     const handleCodeChange = useCallback(
@@ -39,6 +43,7 @@ export function RecoveryCodePage() {
     const handleValidate = useCallback(async () => {
         if (!isComplete || isPending) return;
 
+        trackEvent("install_code_submitted");
         try {
             const result = await resolveAsync(code);
             openModal({

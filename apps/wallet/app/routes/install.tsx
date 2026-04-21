@@ -12,12 +12,13 @@ import {
     CodeInput,
     getSafeSession,
     LogoFrakWithName,
+    trackEvent,
     useFormattedEstimatedReward,
 } from "@frak-labs/wallet-shared";
 import { queryOptions, useQuery } from "@tanstack/react-query";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { Info } from "lucide-react";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Trans, useTranslation } from "react-i18next";
 import { PageLayout } from "@/module/common/component/PageLayout";
 import { useExecutePendingActions } from "@/module/pending-actions/hook/useExecutePendingActions";
@@ -50,11 +51,20 @@ function InstallPage() {
 
     // Web + not logged in + app available → show install code + store download links
     // Otherwise → use the web processing flow (ensure + register/login)
-    if (
+    const shouldShowCodeView =
         process.env.IS_APP_AVAILABLE === "true" &&
         !isTauri() &&
-        !getSafeSession()?.token
-    ) {
+        !getSafeSession()?.token;
+
+    useEffect(() => {
+        trackEvent("install_page_viewed", {
+            merchant_id: search.m,
+            has_anonymous_id: Boolean(search.a),
+            view: shouldShowCodeView ? "code" : "processing",
+        });
+    }, [search.m, search.a, shouldShowCodeView]);
+
+    if (shouldShowCodeView) {
         return <InstallCodeView {...search} />;
     }
 
@@ -97,6 +107,10 @@ function InstallProcessing({ m: merchantId, a: anonymousId }: InstallSearch) {
                 : undefined;
 
         const isLoggedIn = !!getSafeSession()?.token;
+        trackEvent("install_processing_started", {
+            is_logged_in: isLoggedIn,
+            has_ensure_action: Boolean(ensureAction),
+        });
 
         if (isLoggedIn) {
             Promise.all([
@@ -178,26 +192,53 @@ function InstallCodeView({ m: merchantId, a: anonymousId }: InstallSearch) {
         [rawT, estimatedReward]
     );
 
-    const { data, isLoading, error } = useGenerateInstallCode({
+    const {
+        data,
+        isLoading,
+        error,
+        status: codeQueryStatus,
+    } = useGenerateInstallCode({
         merchantId,
         anonymousId,
     });
 
-    // Platform-aware store URL
+    // `install_code_displayed` fires once per successful generation,
+    // `install_code_generation_failed` fires on transition into error state.
+    const reportedCodeRef = useRef<string | null>(null);
+    const reportedErrorRef = useRef(false);
+    useEffect(() => {
+        if (data?.code && reportedCodeRef.current !== data.code) {
+            reportedCodeRef.current = data.code;
+            trackEvent("install_code_displayed", { merchant_id: merchantId });
+        }
+    }, [data?.code, merchantId]);
+    useEffect(() => {
+        if (codeQueryStatus === "error" && !reportedErrorRef.current) {
+            reportedErrorRef.current = true;
+            trackEvent("install_code_generation_failed", {
+                merchant_id: merchantId,
+                error_type: error instanceof Error ? error.name : "unknown",
+            });
+        } else if (codeQueryStatus !== "error") {
+            reportedErrorRef.current = false;
+        }
+    }, [codeQueryStatus, error, merchantId]);
+
+    const isAndroid = useMemo(() => /android/i.test(navigator.userAgent), []);
     const downloadUrl = useMemo(() => {
-        const isAndroid = /android/i.test(navigator.userAgent);
         if (!isAndroid) return appStoreUrl;
         if (!merchantId || !anonymousId) return playStoreUrl;
         const referrerData = `merchantId=${merchantId}&anonymousId=${anonymousId}`;
         return `${playStoreUrl}&referrer=${encodeURIComponent(referrerData)}`;
-    }, [merchantId, anonymousId]);
+    }, [merchantId, anonymousId, isAndroid]);
 
     const handleCopy = useCallback(async () => {
         if (!data?.code) return;
         await navigator.clipboard.writeText(data.code);
+        trackEvent("install_code_copied", { merchant_id: merchantId });
         setCopied(true);
         setTimeout(() => setCopied(false), 2000);
-    }, [data?.code]);
+    }, [data?.code, merchantId]);
 
     return (
         <div className={styles.container}>
@@ -215,7 +256,10 @@ function InstallCodeView({ m: merchantId, a: anonymousId }: InstallSearch) {
                 <button
                     type="button"
                     className={styles.dismissButton}
-                    onClick={() => window.close()}
+                    onClick={() => {
+                        trackEvent("install_page_dismissed");
+                        window.close();
+                    }}
                 >
                     <CloseIcon width={24} height={24} />
                 </button>
@@ -301,6 +345,14 @@ function InstallCodeView({ m: merchantId, a: anonymousId }: InstallSearch) {
                     target="_blank"
                     rel="noopener noreferrer"
                     className={styles.downloadButton}
+                    onClick={() => {
+                        trackEvent("install_store_clicked", {
+                            store: isAndroid ? "play_store" : "app_store",
+                            has_referrer:
+                                isAndroid && Boolean(merchantId && anonymousId),
+                            merchant_id: merchantId,
+                        });
+                    }}
                 >
                     {t("installCode.download")}
                 </a>

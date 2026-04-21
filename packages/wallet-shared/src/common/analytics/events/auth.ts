@@ -1,31 +1,29 @@
-import type { AnalyticsAuthenticationType } from "../types";
+import type { FlowEvents } from "./flow";
 
-type AuthMethod = "global" | "specific" | "popup" | "link" | "mobile";
+type AuthLoginFlow = FlowEvents<
+    "auth_login",
+    { method?: "global" | "specific" }
+>;
+type AuthRegisterFlow = FlowEvents<"auth_register">;
+type AuthDemoFlow = FlowEvents<"auth_demo">;
 
-type AuthFailureProps = {
-    reason: string;
-    error_type?: string;
-    method?: AuthMethod;
-    flow_id?: string;
-};
-
-/**
- * Auth event map — kept as snake_case top-level names to preserve historical
- * OpenPanel dashboards. New failure variants follow the same convention.
- * `AnalyticsAuthenticationType` is the source of truth for the auth domain;
- * this map is derived from it so new auth types flow through automatically.
- */
-export type AuthEventMap = {
-    [K in AnalyticsAuthenticationType as `${K}_initiated`]:
-        | { method?: AuthMethod }
-        | undefined;
-} & {
-    [K in AnalyticsAuthenticationType as `${K}_completed`]: undefined;
-} & {
-    [K in AnalyticsAuthenticationType as `${K}_failed`]: AuthFailureProps;
-} & {
-    user_logged_in: undefined;
-    logout: undefined;
+type StandaloneAuthEvents = {
+    // Pre-flow clicks on the login screen
     auth_login_method_selected: { method: "passkey" | "qr" };
     auth_recovery_code_clicked: undefined;
+    // Post-auth side-effects
+    user_logged_in: undefined;
+    logout: undefined;
+    // Pairing — not flow-wrapped (different components fire start vs end)
+    pairing_initiated: undefined;
+    pairing_completed: undefined;
+    // SSO — not flow-wrapped (popup/redirect spans different contexts)
+    sso_initiated: { method: "popup" | "link" | "mobile" };
+    sso_completed: undefined;
+    sso_failed: { reason: string };
 };
+
+export type AuthEventMap = AuthLoginFlow &
+    AuthRegisterFlow &
+    AuthDemoFlow &
+    StandaloneAuthEvents;

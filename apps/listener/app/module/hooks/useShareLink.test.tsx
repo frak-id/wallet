@@ -175,10 +175,9 @@ describe("useShareLink", () => {
             text: "Check this out!",
             url: "https://example.com",
         });
-        expect(mockTrackEvent).toHaveBeenCalledWith(
-            "sharing_link_shared",
-            { link: "https://example.com" }
-        );
+        expect(mockTrackEvent).toHaveBeenCalledWith("sharing_link_shared", {
+            link: "https://example.com",
+        });
         expect(response).toBe("Shared successfully");
     });
 

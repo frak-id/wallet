@@ -1,6 +1,6 @@
 import { nanoid } from "nanoid";
 import type { Hex } from "viem";
-import { trackAuthCompleted } from "../../common/analytics";
+import { identifyAuthenticatedUser, trackEvent } from "../../common/analytics";
 import { getSafeSession } from "../../common/utils/safeSession";
 import { sessionStore } from "../../stores/sessionStore";
 import type {
@@ -198,7 +198,8 @@ export class OriginPairingClient extends BasePairingClient<
             sessionStore.getState().setSdkSession(message.payload.sdkJwt);
 
             // Track the event
-            trackAuthCompleted("pairing", message.payload.wallet);
+            identifyAuthenticatedUser(message.payload.wallet);
+            trackEvent("pairing_completed");
 
             // And trigger a reconnection
             this.forceConnect(() => this.reconnect());

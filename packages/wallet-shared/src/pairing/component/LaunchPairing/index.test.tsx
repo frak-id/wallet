@@ -53,7 +53,7 @@ vi.mock("../PairingStatus", () => ({
 
 // Mock analytics
 vi.mock("../../../common/analytics", () => ({
-    trackAuthInitiated: vi.fn(),
+    trackEvent: vi.fn(),
 }));
 
 // Mock pairing client
@@ -106,14 +106,12 @@ describe("LaunchPairing", () => {
             expect(mockInitiatePairing).toHaveBeenCalledTimes(1);
         });
 
-        it("should call trackAuthInitiated on mount", async () => {
-            const { trackAuthInitiated } = await import(
-                "../../../common/analytics"
-            );
+        it("emits pairing_initiated on mount", async () => {
+            const { trackEvent } = await import("../../../common/analytics");
             render(<LaunchPairing />);
 
-            expect(vi.mocked(trackAuthInitiated)).toHaveBeenCalledWith(
-                "pairing"
+            expect(vi.mocked(trackEvent)).toHaveBeenCalledWith(
+                "pairing_initiated"
             );
         });
 

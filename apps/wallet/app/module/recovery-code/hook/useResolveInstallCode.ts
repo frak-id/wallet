@@ -1,4 +1,8 @@
-import { authenticatedBackendApi } from "@frak-labs/wallet-shared";
+import {
+    authenticatedBackendApi,
+    setInstallSource,
+    trackEvent,
+} from "@frak-labs/wallet-shared";
 import { type UseMutationOptions, useMutation } from "@tanstack/react-query";
 import { pendingActionsStore } from "@/module/pending-actions/stores/pendingActionsStore";
 import { installCodeKey } from "@/module/recovery-code/queryKeys/install-code";
@@ -30,8 +34,19 @@ export function useResolveInstallCode(
             ].resolve.post({ code });
 
             if (error) {
+                trackEvent("install_code_resolve_failed", {
+                    error_code:
+                        (error as { value?: { code?: string } })?.value?.code ??
+                        "unknown",
+                });
                 throw error;
             }
+
+            trackEvent("install_code_resolved", {
+                has_wallet: Boolean(data.hasWallet),
+                merchant_domain: data.merchant.domain,
+            });
+            setInstallSource("install_code");
 
             // Add ensure action for post-auth identity merge
             pendingActionsStore.getState().addAction({

@@ -10,7 +10,7 @@ import {
     type RpcPromiseHandler,
     type RpcResponse,
 } from "@frak-labs/frame-connector";
-import { trackGenericEvent } from "@frak-labs/wallet-shared";
+import { trackEvent } from "@frak-labs/wallet-shared";
 import { useCallback, useRef } from "react";
 import { useListenerUI } from "@/module/providers/ListenerUiProvider";
 import { resolvingContextStore } from "@/module/stores/resolvingContextStore";
@@ -113,7 +113,7 @@ export function useDisplaySharingPageListener(): OnDisplaySharingPageRequest {
                 placement: placementId,
             });
 
-            trackGenericEvent("open-sharing-page", request);
+            trackEvent("sharing_page_opened");
 
             // Wait for user action via deferred promise
             return await deferred.promise;

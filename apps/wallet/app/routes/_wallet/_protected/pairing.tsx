@@ -4,11 +4,13 @@ import {
     CodeInput,
     getTargetPairingClient,
     isPairingNotFoundError,
+    type PairingMode,
+    trackEvent,
     usePairingInfo,
 } from "@frak-labs/wallet-shared";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { AlertCircle } from "lucide-react";
-import { useCallback } from "react";
+import { useCallback, useEffect, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { useStore } from "zustand";
 import { Title } from "@/module/common/component/Title";
@@ -68,18 +70,60 @@ function PairingPage() {
         isPairingError,
         pairingError
     );
+    const pairingModeTag: PairingMode | undefined =
+        mode === "embedded" ? "deep_link" : hasPairingCode ? "code" : "qr";
+    const viewedAtRef = useRef<number>(Date.now());
+    const errorReportedRef = useRef<"not_found" | "transient" | null>(null);
+
+    // Page mount — emit viewed or no_id for funnel analysis
+    useEffect(() => {
+        if (!id) {
+            trackEvent("pairing_request_no_id");
+            return;
+        }
+        trackEvent("pairing_request_viewed", {
+            has_id: true,
+            mode: pairingModeTag,
+        });
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [id]);
+
+    // Track transient / not-found errors once each time they occur
+    useEffect(() => {
+        if (pairingErrorState === "none") {
+            errorReportedRef.current = null;
+            return;
+        }
+        const mappedState =
+            pairingErrorState === "not-found" ? "not_found" : "transient";
+        if (errorReportedRef.current === mappedState) return;
+        errorReportedRef.current = mappedState;
+        trackEvent("pairing_request_error", {
+            error_state: mappedState,
+            mode: pairingModeTag,
+        });
+    }, [pairingErrorState, pairingModeTag]);
 
     const actionPairing = useCallback(
         (action: "join" | "cancel") => {
+            const duration_ms = Date.now() - viewedAtRef.current;
             if (action === "join" && id && pairingInfo) {
+                trackEvent("pairing_request_confirmed", {
+                    mode: pairingModeTag,
+                    duration_ms,
+                });
                 client.joinPairing(id, pairingInfo.pairingCode);
             }
             if (action === "cancel") {
+                trackEvent("pairing_request_cancelled", {
+                    mode: pairingModeTag,
+                    duration_ms,
+                });
                 client.disconnect();
             }
             navigate({ to: "/wallet" });
         },
-        [navigate, client, pairingInfo, id]
+        [navigate, client, pairingInfo, id, pairingModeTag]
     );
 
     // No pairing ID provided
@@ -129,6 +173,9 @@ function PairingPage() {
                     <Button
                         variant="secondary"
                         onClick={() => {
+                            trackEvent("pairing_request_refreshed", {
+                                mode: pairingModeTag,
+                            });
                             void refetchPairingInfo();
                         }}
                     >

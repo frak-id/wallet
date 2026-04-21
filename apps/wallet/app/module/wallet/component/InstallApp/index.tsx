@@ -1,10 +1,7 @@
 import { isTauri } from "@frak-labs/app-essentials/utils/platform";
 import { Box } from "@frak-labs/design-system/components/Box";
 import { Button } from "@frak-labs/design-system/components/Button";
-import {
-    trackGenericEvent,
-    useAddToHomeScreenPrompt,
-} from "@frak-labs/wallet-shared";
+import { trackEvent, useAddToHomeScreenPrompt } from "@frak-labs/wallet-shared";
 import { useCallback, useEffect, useState } from "react";
 import { Trans } from "react-i18next";
 import { usePwaInstallRef } from "@/module/common/context/PwaInstallContext";
@@ -65,7 +62,7 @@ function InstallAppContent() {
     }, [pwaInstallRef]);
 
     const handleInstall = useCallback(() => {
-        trackGenericEvent("install-pwa_initiated");
+        trackEvent("install_pwa_initiated");
         if (prompt) {
             launchInstallation();
             return;

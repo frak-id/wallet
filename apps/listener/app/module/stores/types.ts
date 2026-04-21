@@ -2,12 +2,12 @@
  * Shared types for Zustand stores
  */
 
-import type { ModalDismissSource } from "@frak-labs/wallet-shared";
 import type { ResolvedSdkConfig } from "@frak-labs/backend-elysia/api/schemas";
 import type {
     ModalRpcStepsResultType,
     ModalStepTypes,
 } from "@frak-labs/core-sdk";
+import type { ModalDismissSource } from "@frak-labs/wallet-shared";
 
 export type { ResolvedSdkConfig };
 

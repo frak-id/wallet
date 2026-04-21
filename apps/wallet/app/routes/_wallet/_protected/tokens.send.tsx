@@ -2,10 +2,14 @@ import { Box } from "@frak-labs/design-system/components/Box";
 import { Button } from "@frak-labs/design-system/components/Button";
 import { Input } from "@frak-labs/design-system/components/Input";
 import { Text } from "@frak-labs/design-system/components/Text";
-import type { BalanceItem } from "@frak-labs/wallet-shared";
-import { useGetUserBalance } from "@frak-labs/wallet-shared";
+import type {
+    BalanceItem,
+    Flow,
+    TokensSendAmountBucket,
+} from "@frak-labs/wallet-shared";
+import { startFlow, useGetUserBalance } from "@frak-labs/wallet-shared";
 import { createFileRoute } from "@tanstack/react-router";
-import { memo, useCallback, useEffect, useState } from "react";
+import { memo, useCallback, useEffect, useRef, useState } from "react";
 import type {
     FieldErrors,
     SubmitHandler,
@@ -87,6 +91,8 @@ const AmountInput = function AmountInput({
     setValue,
     setSelectedToken,
     resetField,
+    onTokenChanged,
+    onMaxClicked,
 }: {
     register: UseFormRegister<FormInput>;
     errors: FieldErrors<FormInput>;
@@ -94,21 +100,25 @@ const AmountInput = function AmountInput({
     setValue: UseFormSetValue<FormInput>;
     setSelectedToken: (token: BalanceItem) => void;
     resetField: UseFormResetField<FormInput>;
+    onTokenChanged: (token_symbol: string) => void;
+    onMaxClicked: (token_symbol: string) => void;
 }) {
     const { t } = useTranslation();
 
     const handleMaxClick = useCallback(() => {
+        onMaxClicked(selectedToken?.symbol ?? "unknown");
         setValue("amount", selectedToken?.amount.toString(), {
             shouldValidate: true,
         });
-    }, [selectedToken, setValue]);
+    }, [selectedToken, setValue, onMaxClicked]);
 
     const handleTokenChange = useCallback(
         (token: BalanceItem) => {
+            onTokenChanged(token.symbol ?? "unknown");
             setSelectedToken(token);
             resetField("amount");
         },
-        [setSelectedToken, resetField]
+        [setSelectedToken, resetField, onTokenChanged]
     );
 
     return (
@@ -177,6 +187,7 @@ function TokensSendPage() {
     const { t } = useTranslation();
     const { confirm, isConfirming } = useBiometricConfirm();
     const { to: prefillAddress } = Route.useSearch();
+    const flowRef = useRef<Flow | null>(null);
 
     const {
         register,
@@ -226,14 +237,67 @@ function TokensSendPage() {
         if (findTokenUpdated) setSelectedToken(findTokenUpdated);
     }, [userBalance, selectedToken]);
 
+    // Open the send flow on mount; end as "abandoned" on unmount if the user
+    // never submitted. Merchant/prefill context rides on tokens_send_started.
+    useEffect(() => {
+        const flow = startFlow("tokens_send", {
+            prefill_address: Boolean(prefillAddress),
+        });
+        flowRef.current = flow;
+        return () => {
+            if (!flow.ended) flow.end("abandoned");
+        };
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+
+    // Validation errors — emit once per error type, not on every keystroke
+    const reportedAddressError = useRef<string | null>(null);
+    useEffect(() => {
+        const errType = errors.toAddress?.type ?? null;
+        if (errType && errType !== reportedAddressError.current) {
+            reportedAddressError.current = errType;
+            flowRef.current?.track("tokens_send_validation_failed", {
+                field: "address",
+                error_type: errType,
+            });
+        } else if (!errType) {
+            reportedAddressError.current = null;
+        }
+    }, [errors.toAddress]);
+
+    const reportedAmountError = useRef<string | null>(null);
+    useEffect(() => {
+        const errType = errors.amount?.type ?? null;
+        if (errType && errType !== reportedAmountError.current) {
+            reportedAmountError.current = errType;
+            flowRef.current?.track("tokens_send_validation_failed", {
+                field: "amount",
+                error_type: errType,
+            });
+        } else if (!errType) {
+            reportedAmountError.current = null;
+        }
+    }, [errors.amount]);
+
     const onSubmit: SubmitHandler<FormInput> = useCallback(
         async (data) => {
             if (!selectedToken) return;
+            const tokenSymbol = selectedToken.symbol ?? "unknown";
 
+            flowRef.current?.track("tokens_send_biometric_requested");
             const confirmed = await confirm();
-            if (!confirmed) return;
+            if (!confirmed) {
+                flowRef.current?.track("tokens_send_biometric_rejected");
+                return;
+            }
 
             const { toAddress, amount } = data;
+            const amount_bucket = bucketAmount(amount);
+            flowRef.current?.track("tokens_send_submitted", {
+                token_symbol: tokenSymbol,
+                amount_bucket,
+            });
+            const _startedAt = Date.now();
 
             try {
                 await writeContractAsync({
@@ -245,15 +309,34 @@ function TokensSendPage() {
                         parseUnits(amount, selectedToken.decimals),
                     ],
                 });
+                flowRef.current?.end("succeeded", {
+                    token_symbol: tokenSymbol,
+                });
 
                 reset();
                 await refetch();
             } catch (err) {
+                const error_message =
+                    err instanceof Error ? err.message : String(err);
+                const error_type = err instanceof Error ? err.name : undefined;
+                flowRef.current?.end("failed", {
+                    token_symbol: tokenSymbol,
+                    error_type,
+                    error_message,
+                });
                 console.error("Transaction failed:", err);
             }
         },
         [selectedToken, writeContractAsync, reset, refetch, confirm]
     );
+
+    const handleTokenChanged = useCallback((token_symbol: string) => {
+        flowRef.current?.track("tokens_send_token_changed", { token_symbol });
+    }, []);
+
+    const handleMaxClicked = useCallback((token_symbol: string) => {
+        flowRef.current?.track("tokens_send_max_clicked", { token_symbol });
+    }, []);
 
     return (
         <>
@@ -276,6 +359,8 @@ function TokensSendPage() {
                                 setValue={setValue}
                                 setSelectedToken={setSelectedToken}
                                 resetField={resetField}
+                                onTokenChanged={handleTokenChanged}
+                                onMaxClicked={handleMaxClicked}
                             />
 
                             <Button
@@ -297,4 +382,12 @@ function TokensSendPage() {
             </form>
         </>
     );
+}
+
+function bucketAmount(raw: string): TokensSendAmountBucket {
+    const n = Number.parseFloat(raw);
+    if (!Number.isFinite(n) || n < 1) return "<1";
+    if (n < 10) return "1-10";
+    if (n < 100) return "10-100";
+    return ">100";
 }

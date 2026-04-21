@@ -109,9 +109,7 @@ describe("modalStore", () => {
         });
 
         test("should call onResponse to update results and move to next step", async () => {
-            const { trackEvent } = await import(
-                "@frak-labs/wallet-shared"
-            );
+            const { trackEvent } = await import("@frak-labs/wallet-shared");
 
             const steps = [{ key: "login" as const, params: {} as any }];
 
@@ -187,9 +185,7 @@ describe("modalStore", () => {
         });
 
         test("should track analytics event", async () => {
-            const { trackEvent } = await import(
-                "@frak-labs/wallet-shared"
-            );
+            const { trackEvent } = await import("@frak-labs/wallet-shared");
 
             modalStore
                 .getState()
@@ -291,9 +287,7 @@ describe("modalStore", () => {
 
     describe("dismissModal", () => {
         test("should set dismissed flag when no steps present", async () => {
-            const { trackEvent } = await import(
-                "@frak-labs/wallet-shared"
-            );
+            const { trackEvent } = await import("@frak-labs/wallet-shared");
 
             modalStore.setState({ steps: undefined });
 
@@ -309,9 +303,7 @@ describe("modalStore", () => {
         });
 
         test("should set dismissed flag when no final step found", async () => {
-            const { trackEvent } = await import(
-                "@frak-labs/wallet-shared"
-            );
+            const { trackEvent } = await import("@frak-labs/wallet-shared");
 
             const steps = [
                 {
@@ -334,9 +326,7 @@ describe("modalStore", () => {
         });
 
         test("should atomically set dismissed and move to final step for non-reward", async () => {
-            const { trackEvent } = await import(
-                "@frak-labs/wallet-shared"
-            );
+            const { trackEvent } = await import("@frak-labs/wallet-shared");
 
             const steps = [
                 {
@@ -365,9 +355,7 @@ describe("modalStore", () => {
         });
 
         test("should atomically set dismissed and skip past reward final step", async () => {
-            const { trackEvent } = await import(
-                "@frak-labs/wallet-shared"
-            );
+            const { trackEvent } = await import("@frak-labs/wallet-shared");
 
             const steps = [
                 {
@@ -396,9 +384,7 @@ describe("modalStore", () => {
         });
 
         test("should work correctly when already on final step", async () => {
-            const { trackEvent } = await import(
-                "@frak-labs/wallet-shared"
-            );
+            const { trackEvent } = await import("@frak-labs/wallet-shared");
 
             const steps = [
                 {
@@ -717,9 +703,7 @@ describe("modalStore", () => {
 
     describe("Edge cases and complex workflows", () => {
         test("should handle multi-step workflow with onResponse callbacks", async () => {
-            const { trackEvent } = await import(
-                "@frak-labs/wallet-shared"
-            );
+            const { trackEvent } = await import("@frak-labs/wallet-shared");
 
             const steps = [
                 { key: "login" as const, params: {} as any },

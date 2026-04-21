@@ -1,13 +1,14 @@
-import type { Session } from "@frak-labs/wallet-shared";
+import type { Flow, Session } from "@frak-labs/wallet-shared";
 import {
     addLastAuthentication,
     authenticatedWalletApi,
     authKey,
+    extractAuthError,
     getRegisterOptions,
     getTauriCreateFn,
+    identifyAuthenticatedUser,
     sessionStore,
-    trackAuthCompleted,
-    trackAuthInitiated,
+    startFlow,
 } from "@frak-labs/wallet-shared";
 import type { UseMutationOptions } from "@tanstack/react-query";
 import { useMutation } from "@tanstack/react-query";
@@ -20,32 +21,23 @@ type UseRegisterArgs = {
     // biome-ignore lint/suspicious/noConfusingVoidType: required for optional mutation arguments
 } | void;
 
-/**
- * Hook that handle the registration process
- */
+type RegisterContext = { flow: Flow };
+
 export function useRegister(
     options?: UseMutationOptions<Session, Error, UseRegisterArgs>
 ) {
-    // Setter for the last authentication
     const { data: previousAuthenticators } = usePreviousAuthenticators();
 
-    /**
-     * Mutation used to launch the registration process
-     */
     const {
         isPending: isRegisterInProgress,
         isSuccess,
         isError,
         error,
         mutateAsync: register,
-    } = useMutation({
+    } = useMutation<Session, Error, UseRegisterArgs, RegisterContext>({
         ...options,
         mutationKey: authKey.register,
         mutationFn: async (args?: UseRegisterArgs) => {
-            // Identify the user and track the event
-            const events = [trackAuthInitiated("register")];
-
-            // Start the registration with ox
             // Only pass createFn if defined (Android), omit for iOS/web to use browser default
             const tauriCreateFn = getTauriCreateFn();
             const { id, publicKey, raw } = await WebAuthnP256.createCredential({
@@ -56,7 +48,6 @@ export function useRegister(
                 ...(tauriCreateFn && { createFn: tauriCreateFn }),
             });
 
-            // Verify it
             const encodedResponse = btoa(JSON.stringify(raw));
             const { data, error } =
                 await authenticatedWalletApi.auth.register.post({
@@ -74,22 +65,33 @@ export function useRegister(
                 throw error;
             }
 
-            // Extract a few data
             const { token, sdkJwt, ...authentication } = data;
             const session = { ...authentication, token } as Session;
 
-            // Save this to the last authenticator
             await addLastAuthentication(session);
 
-            // Store the session
             sessionStore.getState().setSession(session);
             sessionStore.getState().setSdkSession(sdkJwt);
 
-            // Track the event
-            events.push(trackAuthCompleted("register", session));
-            await Promise.allSettled(events);
-
             return session;
+        },
+        onMutate: (vars, mutationCtx) => {
+            const flow = startFlow("auth_register");
+            options?.onMutate?.(vars, mutationCtx);
+            return { flow };
+        },
+        onSuccess: (session, vars, ctx, mutationCtx) => {
+            identifyAuthenticatedUser(session);
+            ctx?.flow.end("succeeded");
+            options?.onSuccess?.(session, vars, ctx, mutationCtx);
+        },
+        onError: (err, vars, ctx, mutationCtx) => {
+            const { reason, error_type } = extractAuthError(err);
+            ctx?.flow.end("failed", {
+                error_type,
+                error_message: reason,
+            });
+            options?.onError?.(err, vars, ctx, mutationCtx);
         },
     });
 

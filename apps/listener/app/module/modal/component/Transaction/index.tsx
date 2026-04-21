@@ -6,7 +6,6 @@ import {
     HandleErrors,
     sessionStore,
     startFlow,
-    trackEvent,
     ua,
     useMountedTimeout,
 } from "@frak-labs/wallet-shared";
@@ -43,12 +42,11 @@ export function TransactionModalStep({
     // Abandonment: flow.end("abandoned") on unmount if not already terminated.
     const flowRef = useRef<Flow | null>(null);
     useEffect(() => {
-        const flow = startFlow("listener_transaction");
-        flowRef.current = flow;
-        flow.track("listener_tx_viewed", {
+        const flow = startFlow("listener_tx", {
             tx_count: txs.length,
             is_mobile_pairing: isMobilePairing,
         });
+        flowRef.current = flow;
         return () => {
             if (!flow.ended) flow.end("abandoned");
         };
@@ -65,21 +63,18 @@ export function TransactionModalStep({
     } = useSendTransaction({
         mutation: {
             onSuccess: (hash) => {
-                const flow = flowRef.current;
-                flow?.track("listener_tx_succeeded", {
+                flowRef.current?.end("succeeded", {
                     tx_count: txs.length,
                     hash,
                 });
-                flow?.end("succeeded");
                 onFinish({ hash });
             },
             onError: (err) => {
-                const flow = flowRef.current;
-                flow?.track("listener_tx_failed", {
+                flowRef.current?.end("failed", {
                     tx_count: txs.length,
-                    reason: err?.message ?? "unknown",
+                    error_type: err?.name,
+                    error_message: err?.message ?? "unknown",
                 });
-                flow?.end("failed", { error_type: err?.name });
             },
         },
     });
@@ -190,10 +185,9 @@ function MobileTransactionStep({
 
     const emitDeepLink = useCallback(
         (retry: boolean) => {
-            flowRef.current?.track(
-                "listener_tx_mobile_deeplink_clicked",
-                { retry }
-            );
+            flowRef.current?.track("listener_tx_mobile_deeplink_clicked", {
+                retry,
+            });
             emitRedirectWithFallback(mobileWalletDeepLink, () => {
                 flowRef.current?.track("listener_tx_mobile_app_not_found", {});
                 setAppNotFound(true);
@@ -232,8 +226,6 @@ function MobileTransactionStep({
             clearTxTimeout();
         }
     }, [isPending, isError, status, clearTxTimeout]);
-
-
 
     if (appNotFound) {
         return (
