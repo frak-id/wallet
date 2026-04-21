@@ -104,6 +104,28 @@ export function useDisplayEmbeddedWallet(): OnDisplayEmbeddedWalletRequest {
             const deferred = new Deferred<{ wallet: Hex }>();
             currentDeferredRef.current = deferred;
 
+            // Capture open state once for duration / state-at-close tracking.
+            // Fires on any close path (resolve, reject, unmount, supersede)
+            // because every path settles this deferred.
+            const openedAt = Date.now();
+            const loggedInAtOpen = Boolean(session?.address);
+            deferred.promise.finally(() => {
+                trackEvent("embedded_wallet_closed", {
+                    duration_ms: Date.now() - openedAt,
+                    logged_in_at_close: Boolean(
+                        sessionStore.getState().session?.address
+                    ),
+                });
+            });
+            // Avoid unhandled rejection noise on the tracking promise itself.
+            deferred.promise.catch(() => {});
+
+            // Keep the opened event emission next to the matching global
+            // state so the (opened, closed) pair is easy to audit.
+            trackEvent("embedded_wallet_opened", {
+                logged_in: loggedInAtOpen,
+            });
+
             // Create emitter that resolves the deferred
             // This maintains backward compatibility with any legacy code
             const emitter = async (
@@ -150,10 +172,6 @@ export function useDisplayEmbeddedWallet(): OnDisplayEmbeddedWalletRequest {
                 },
                 configMetadata,
                 placement: placementId,
-            });
-
-            trackEvent("embedded_wallet_opened", {
-                logged_in: Boolean(session?.address),
             });
 
             // Wait for user login via deferred promise

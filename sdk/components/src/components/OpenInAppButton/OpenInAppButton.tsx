@@ -53,7 +53,7 @@ export function OpenInAppButton({
     }
 
     const handleClick = () => {
-        openFrakWalletApp();
+        openFrakWalletApp(undefined, placementId);
     };
 
     const buttonClass = ["button", "button__fadeIn", classname]

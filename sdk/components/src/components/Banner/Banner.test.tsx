@@ -7,6 +7,7 @@ import { Banner } from "./Banner";
 const coreSdkMock = vi.hoisted(() => ({
     isInAppBrowser: false,
     redirectToExternalBrowser: vi.fn(),
+    trackEvent: vi.fn(),
     sdkConfigStore: {
         getConfig: () => ({ components: undefined }),
     },

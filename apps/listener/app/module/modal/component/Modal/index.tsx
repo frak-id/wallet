@@ -80,10 +80,22 @@ export function ListenerModal({
     }, [clearRequest]);
 
     /**
-     * Method to close the modal
+     * Method to close the modal on error.
+     *
+     * Emits `modal_step_error` for genuine errors; `clientAborted` is a
+     * user-initiated dismiss and is tracked via `modal_dismissed` elsewhere.
      */
     const onError = useCallback(
         (reason?: string, code: number = RpcErrorCodes.serverError) => {
+            if (code !== RpcErrorCodes.clientAborted) {
+                const state = modalStore.getState();
+                const step = state.steps?.[state.currentStep]?.key ?? "unknown";
+                trackEvent("modal_step_error", {
+                    step,
+                    reason: reason ?? "unknown",
+                    recoverable: false,
+                });
+            }
             emitter({
                 error: {
                     code,
@@ -323,8 +335,7 @@ function CurrentModalStepComponent({
     useEffect(() => {
         if (!currentStep) return;
         const stepKey =
-            currentStep.key === "final" &&
-            currentStep.params.action?.key
+            currentStep.key === "final" && currentStep.params.action?.key
                 ? currentStep.params.action.key
                 : currentStep.key;
         trackEvent("modal_step_viewed", {

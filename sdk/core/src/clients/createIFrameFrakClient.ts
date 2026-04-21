@@ -198,7 +198,6 @@ export function createIFrameFrakClient({
             openPanel?.track("sdk_iframe_handshake_failed", {
                 reason: "timeout",
             });
-            openPanel?.track("sdk_iframe_heartbeat_timeout", undefined);
         }, 30_000);
         lifecycleManager.isConnected
             .then(() => {

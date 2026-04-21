@@ -154,7 +154,13 @@ export function ButtonWallet({
                 onClick={() => {
                     trackEvent(
                         window.FrakSetup.client,
-                        "wallet_button_clicked"
+                        "wallet_button_clicked",
+                        {
+                            placement: placementId,
+                            target_interaction: resolvedTargetInteraction,
+                            has_reward: Boolean(reward),
+                            position,
+                        }
                     );
                     openWalletModal(resolvedTargetInteraction, placementId);
                 }}

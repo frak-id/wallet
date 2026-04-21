@@ -7,7 +7,4 @@ export type SdkReferralEventMap = {
     user_referred_completed: {
         status: "success";
     };
-    user_referred_error: {
-        reason: string;
-    };
 };

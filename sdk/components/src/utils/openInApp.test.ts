@@ -28,7 +28,8 @@ describe("openFrakWalletApp", () => {
 
             expect(coreSdk.trackEvent).toHaveBeenCalledWith(
                 window.FrakSetup?.client,
-                "open_in_app_clicked"
+                "open_in_app_clicked",
+                { path: "wallet", placement: undefined }
             );
         });
 
@@ -74,7 +75,8 @@ describe("openFrakWalletApp", () => {
 
             expect(coreSdk.trackEvent).toHaveBeenCalledWith(
                 window.FrakSetup?.client,
-                "app_not_installed"
+                "app_not_installed",
+                { path: "wallet", placement: undefined }
             );
         });
     });

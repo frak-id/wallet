@@ -56,11 +56,13 @@ export function useShareModal(
 
             // Track the error
             trackEvent(window.FrakSetup.client, "share_modal_error", {
+                placement,
+                target_interaction: targetInteraction,
                 error:
                     e instanceof Object && "message" in e
-                        ? e.message
+                        ? (e.message as string)
                         : "Unknown error",
-                debugInfo,
+                debug_info: debugInfo,
             });
 
             setDebugInfo(debugInfo);

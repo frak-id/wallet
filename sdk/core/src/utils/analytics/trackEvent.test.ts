@@ -85,17 +85,6 @@ describe("trackEvent", () => {
                 { status: "success" }
             );
         });
-
-        it("should track user_referred_error event", () => {
-            trackEvent(mockClient, "user_referred_error", {
-                reason: "test",
-            });
-
-            expect(mockClient.openPanel?.track).toHaveBeenCalledWith(
-                "user_referred_error",
-                { reason: "test" }
-            );
-        });
     });
 
     describe("without client", () => {
@@ -153,12 +142,14 @@ describe("trackEvent", () => {
     });
 
     describe("edge cases", () => {
-        it("should handle empty props object", () => {
-            trackEvent(mockClient, "share_button_clicked", {});
+        it("should handle typed props object", () => {
+            trackEvent(mockClient, "share_button_clicked", {
+                click_action: "share-modal",
+            });
 
             expect(mockClient.openPanel?.track).toHaveBeenCalledWith(
                 "share_button_clicked",
-                {}
+                { click_action: "share-modal" }
             );
         });
 

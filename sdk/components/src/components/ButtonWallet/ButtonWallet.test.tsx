@@ -92,7 +92,11 @@ describe.sequential("ButtonWallet", () => {
 
         expect(coreSdk.trackEvent).toHaveBeenCalledWith(
             window.FrakSetup.client,
-            "wallet_button_clicked"
+            "wallet_button_clicked",
+            expect.objectContaining({
+                position: "right",
+                has_reward: false,
+            })
         );
     });
 

@@ -1,3 +1,4 @@
+import { trackEvent } from "@frak-labs/core-sdk";
 import { useState } from "preact/hooks";
 import { useCopyToClipboard } from "@/hooks/useCopyToClipboard";
 
@@ -87,8 +88,24 @@ function ToggleMessage({ debugInfo }: { debugInfo?: string }) {
  * @param {Object} props - Component props
  * @param {string} [props.debugInfo] - Debug information that can be copied or displayed
  */
-export function ErrorMessage({ debugInfo }: { debugInfo?: string }) {
+export function ErrorMessage({
+    debugInfo,
+    placement,
+    targetInteraction,
+}: {
+    debugInfo?: string;
+    placement?: string;
+    targetInteraction?: string;
+}) {
     const { copied, copy } = useCopyToClipboard();
+
+    const handleCopy = () => {
+        copy(debugInfo ?? "");
+        trackEvent(window.FrakSetup?.client, "share_error_debug_copied", {
+            placement,
+            target_interaction: targetInteraction,
+        });
+    };
 
     return (
         <div style={styles.errorContainer}>
@@ -118,7 +135,7 @@ export function ErrorMessage({ debugInfo }: { debugInfo?: string }) {
             {/* Copy debug info button with dynamic text based on copy state */}
             <button
                 type={"button"}
-                onClick={() => copy(debugInfo ?? "")}
+                onClick={handleCopy}
                 style={styles.copyButton}
             >
                 {copied
