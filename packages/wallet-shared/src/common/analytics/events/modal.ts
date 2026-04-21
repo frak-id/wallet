@@ -47,3 +47,27 @@ export type ModalEventMap = {
         recoverable: boolean;
     };
 };
+
+/**
+ * Wallet-side modal auto-tracking. Emitted by the wallet `modalStore`
+ * subscription — every `openModal` / `closeModal` call produces a pair
+ * without any per-modal instrumentation.
+ *
+ * `modal` is the discriminator id from the wallet `ModalState` union
+ * (e.g. "transfer", "keypass", "recoveryCodeSuccess"). We accept a bare
+ * string here to keep `wallet-shared` decoupled from the wallet app.
+ *
+ * `from_stack` distinguishes "user explicitly opened a new modal" from
+ * "user popped back to an earlier modal in the stack" — filters out
+ * inflated counts when the ModalOutlet re-renders a previous modal.
+ */
+export type WalletModalEventMap = {
+    wallet_modal_opened: {
+        modal: string;
+        from_stack: boolean;
+    };
+    wallet_modal_closed: {
+        modal: string;
+        duration_ms: number;
+    };
+};

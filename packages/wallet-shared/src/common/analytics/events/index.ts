@@ -2,7 +2,7 @@ import type { AuthEventMap } from "./auth";
 import type { EmbeddedWalletEventMap } from "./embeddedWallet";
 import type { InstallEventMap } from "./install";
 import type { ListenerMiscEventMap } from "./listener";
-import type { ModalEventMap } from "./modal";
+import type { ModalEventMap, WalletModalEventMap } from "./modal";
 import type { NotificationEventMap } from "./notification";
 import type { OnboardingEventMap } from "./onboarding";
 import type { PairingEventMap } from "./pairing";
@@ -29,7 +29,11 @@ export type {
     InAppBrowserRedirectTarget,
     ListenerMiscEventMap,
 } from "./listener";
-export type { ModalDismissSource, ModalEventMap } from "./modal";
+export type {
+    ModalDismissSource,
+    ModalEventMap,
+    WalletModalEventMap,
+} from "./modal";
 export type {
     NotificationEventMap,
     NotificationOptInOutcome,
@@ -47,6 +51,7 @@ export type { ListenerTxEventMap } from "./transaction";
 export type EventMap = AuthEventMap &
     SharingEventMap &
     ModalEventMap &
+    WalletModalEventMap &
     ListenerTxEventMap &
     EmbeddedWalletEventMap &
     ListenerMiscEventMap &

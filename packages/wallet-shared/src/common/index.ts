@@ -29,6 +29,7 @@ export type {
     SharingEventMap,
     TokensEventMap,
     TokensSendAmountBucket,
+    WalletModalEventMap,
 } from "./analytics";
 export {
     extractAuthError,

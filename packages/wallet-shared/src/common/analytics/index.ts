@@ -28,6 +28,7 @@ export type {
     SharingEventMap,
     TokensEventMap,
     TokensSendAmountBucket,
+    WalletModalEventMap,
 } from "./events";
 export {
     getOrCreateSessionId,
