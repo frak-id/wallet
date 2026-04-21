@@ -28,6 +28,7 @@ registerWebComponent(
         "useReward",
         "noRewardText",
         "targetInteraction",
+        "preview",
     ],
     {
         shadow: false,

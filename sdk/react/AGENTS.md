@@ -1,45 +1,30 @@
-# sdk/react
+# sdk/react — Compass
 
-React hooks and providers wrapping `core-sdk`. NPM only (no CDN).
+React bindings for `@frak-labs/core-sdk`. NPM only (no CDN). 10 public hooks, 2 providers. Peer deps: React 18+, TanStack Query 5+, Viem 2+.
 
-## Structure
+## Key Files
+- `src/hook/` — `useFrakClient`, `useFrakConfig`, `useWalletStatus`, `useDisplayModal`, `useSiweAuthenticate`, `useOpenSso`, `usePrepareSso`, `useSendTransactionAction`, `useGetMerchantInformation`, `useReferralInteraction`
+- `src/provider/` — `FrakConfigProvider` (REQUIRED at app root), `FrakIFrameClientProvider`
+- `src/index.ts` — barrel
 
+## Hook Pattern
+```ts
+export function useWalletStatus(options?: UseQueryOptions) {
+  const client = useFrakClient();
+  return useQuery({
+    queryKey: ["walletStatus"],
+    queryFn: () => watchWalletStatus(client),
+    ...options,
+  });
+}
 ```
-src/
-├── hook/             # 10 public hooks + helpers
-├── provider/         # FrakConfigProvider, FrakIFrameClientProvider
-└── index.ts          # Barrel exports
-```
 
-## Hooks (10 public)
+## Non-Obvious Patterns
+- **`FrakConfigProvider` is mandatory at root**; omitting it yields `useFrakClient is undefined` at runtime.
+- **All hooks wrap core-sdk actions** — never re-implement logic here; delegate to `sdk/core`.
+- **TanStack Query v5 API only** — do not mix with v4 patterns (`isLoading` vs `isPending`, etc.).
+- **No CDN**: do not add IIFE/globalName config.
+- **Test via `renderHook`** with `@frak-labs/test-foundation` `queryWrapper` fixture; mocks live there.
 
-| Hook | Purpose |
-|------|---------|
-| `useFrakClient` | Access FrakClient instance |
-| `useFrakConfig` | Access SDK config |
-| `useWalletStatus` | Wallet connection state |
-| `useDisplayModal` | Show SDK modals |
-| `useSiweAuthenticate` | SIWE authentication |
-| `useOpenSso` | SSO flow |
-| `usePrepareSso` | Prepare SSO data |
-| `useSendTransactionAction` | Send blockchain transaction actions |
-| `useGetMerchantInformation` | Merchant info query |
-| `useReferralInteraction` | Referral interaction helper |
-
-## Conventions
-
-- **TanStack Query**: All data hooks use React Query v5.
-- **Peer Deps**: React 18+, TanStack Query 5+, Viem 2+.
-- **Composition**: Hooks compose from `core-sdk` actions.
-
-## Testing
-
-- Vitest with jsdom (`react-sdk-unit` project).
-- Mock TanStack Query with `@frak-labs/test-foundation`.
-- Use `renderHook` for testing.
-
-## Notes
-
-- Requires `FrakConfigProvider` at app root.
-- Depends on `@frak-labs/core-sdk`.
-
+## See Also
+Parent `sdk/AGENTS.md` · `sdk/core/AGENTS.md` (underlying actions) · `packages/test-foundation/AGENTS.md`.

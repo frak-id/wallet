@@ -1,117 +1,48 @@
-# Infrastructure Context
+# infra/ — Compass
 
-## Multi-Cloud Strategy
+Multi-cloud IaC. **AWS (SST v3)**: admin dashboard, examples, dev deployments. **GCP (Pulumi on GKE, `frak-main-v1`, `europe-west1`)**: all production apps.
 
-- **AWS (SST v3)**: Admin dashboard, example apps, dev deployments
-- **GCP (Pulumi)**: All production apps (backend, wallet, business, listener) on GKE
+## Quick Commands
+```bash
+bun run build:infra         # Pre-build shared infra deps
+bun run deploy              # SST → AWS dev
+bun run deploy:prod         # SST → AWS prod
+bun run deploy-gcp:staging  # Pulumi → GCP staging
+bun run deploy-gcp:prod     # Pulumi → GCP production (all prod apps live here)
+```
 
 ## Key Files
+- `sst.config.ts` (root) — SST v3 app config (AWS)
+- `infra/gcp/*.ts` — Pulumi resources per app (backend, wallet, business, listener)
+- `infra/components/KubernetesService.ts` — Deployment + Service + HPA + Ingress + ServiceMonitor
+- `infra/components/KubernetesJob.ts` — one-shot K8s Job (e.g., DB migrations)
+- `infra/utils.ts` — stage helpers: `isProd`, `isGcp`, `isV2`, `normalizedStageName`
+- `Dockerfile.base` — pre-builds SDK packages once (~3–4 min); app Dockerfiles `FROM` this for cached layers
+- `apps/*/Dockerfile` — multi-stage → `nginx:1.29.1` with pre-compressed gzip
+- `services/backend/{Dockerfile, MigrationDockerfile}`
 
-| File | Purpose |
-|------|---------|
-| `sst.config.ts` | SST v3 root config (AWS) |
-| `infra/gcp/*.ts` | Pulumi resources per app (backend, wallet, business) |
-| `infra/components/` | Reusable K8s components (`KubernetesService`, `KubernetesJob`) |
-| `infra/utils.ts` | Stage detection helpers (`isProd`, `isGcp`, `isV2`, `normalizedStageName`) |
-| `Dockerfile.base` | Base image — pre-builds SDK packages for all app Dockerfiles |
-| `apps/*/Dockerfile` | Per-app: multi-stage build → nginx:1.29.1 with pre-compressed gzip |
-| `services/backend/Dockerfile` | Backend app image (Bun runtime) |
-| `services/backend/MigrationDockerfile` | Database migration K8s Job image |
+## Stages
+`$dev` (local) · `dev` / `prod` (AWS) · `gcp-staging` / `gcp-production` (GCP).
 
-## Reusable Components
+## Non-Obvious Patterns
+- **Migration Job gate**: `KubernetesJob` (Drizzle migrate) MUST finish before backend `KubernetesService` — enforced by Pulumi `dependsOn`. Skipping = broken pods.
+- **Listener is path-routed** at `/listener` on the wallet ingress — no standalone service.
+- **Frontend secrets are BUILD-TIME only** (BuildKit `--mount=type=secret`); runtime pod specs must never expose them.
+- **Backend secrets**: GCP Secret Manager → K8s env vars. AWS dev: `sst secret set Key "value"`.
+- **HPA defaults**: backend min=1, max=2, CPU target 120%. Health probes on `/health`.
+- **Cloud SQL schema** depends on stage: `staging_v2` or `production_v2`. Local dev via `cloud-sql-proxy` tunnel.
+- **Vite `define`** injects `VITE_*` env at build time for frontends — runtime env is unused.
+- **Stage literal trap**: Shopify + SST forbid `"prod"` — use `"production"`. Check before adding new stages.
+- **Dockerfile.base is a caching choice**: changes there rebuild everything. Touch it carefully.
 
-**`KubernetesService`** (in `infra/components/`):
-- Creates: Deployment + Service + HPA + Ingress + ServiceMonitor
-- Used by: backend, wallet, business
-
-**`KubernetesJob`**:
-- One-shot K8s Job (e.g., database migrations)
-
-## Docker Strategy
-
-- **`Dockerfile.base`**: Builds SDK packages once (3-4min), providing a shared layer for all apps.
-- **Frontends**: Multi-stage builds ending in `nginx:1.29.1` with pre-compressed gzip assets.
-- **Backend**: Bun runtime for high-performance execution.
-- **Secrets**: Frontend secrets are build-time only (BuildKit `--mount=type=secret`), backend secrets are runtime K8s env vars.
-
-## GCP Architecture
-
-**Stages**: `gcp-staging`, `gcp-production`
-
-**K8s (GKE)**:
-- **Backend**: HPA min=1, max=2, CPU=120%. Health probes on `/health`.
-- **Routing**: Path-based ingress. Listener served via wallet ingress at `/listener`.
-
-**Database**: Cloud SQL PostgreSQL.
-- **Schema**: `staging_v2` or `production_v2`.
-- **Migrations**: `KubernetesJob` runs Drizzle migrate before deployment.
-- **Access**: Local dev via `cloud-sql-proxy` tunnel.
-
-## SST Config
-
-**AWS (eu-west-1)**: Deploys admin dashboard and example apps.
-**GCP (europe-west1)**: Provider `frak-main-v1` for production apps.
-
-```typescript
-export default $config({
-    app(input) {
-        return { 
-            name: "wallet", 
-            home: "aws",
-            providers: { aws: { region: "eu-west-1" } }
-        };
-    },
-    async run() {
-        // ... imports for dashboard and example
-    },
-});
-```
-
-## CI/CD Workflows
-
-- **`deploy.yml`**: Path-based triggers. `main` → prod, `dev` → staging.
-- **`release.yml`**: Changesets → npm publish + jsDelivr cache purge.
-- **`beta-release.yml`**: SDK changes on `dev` → beta publish with content hash.
-- **`tauri-mobile-release.yml`**: Manual trigger → iOS TestFlight + Android Play Store.
-
-## Environment Variables
-
-**Frontend (Vite)**: `VITE_*` prefix, baked at build time via `define` config
-**Backend**: Runtime env vars from K8s pod spec + Secret Manager
-
-## Secrets Management
-
-| Context | Mechanism |
-|---------|-----------|
-| AWS dev | `sst secret set Key "value"` |
-| GCP prod | GCP Secret Manager → K8s env vars |
-| Frontend build | BuildKit `--mount=type=secret` (never in runtime) |
-
-## Database
-
-```bash
-cd services/backend
-bun db:generate    # Generate migration from schema
-bun db:migrate     # Apply migration locally
-bun db:studio      # Open Drizzle Studio
-```
-
-**Production**: Migration Docker image → `KubernetesJob` → then deploy backend
-
-## Deployment Commands
-
-```bash
-# AWS (SST)
-bun run deploy             # Dev
-bun run deploy:prod        # Prod
-
-# GCP (Pulumi)
-bun run deploy-gcp:staging
-bun run deploy-gcp:prod
-```
+## CI/CD (.github/workflows)
+- `deploy.yml` — path-based triggers; `main` → prod, `dev` → staging
+- `release.yml` — Changesets → npm publish + jsDelivr cache purge
+- `beta-release.yml` — SDK changes on `dev` → beta publish tagged with content hash
+- `tauri-mobile-release.yml` — manual → iOS TestFlight + Android Play Store
 
 ## Anti-Patterns
+Runtime frontend secrets · hardcoded stage names (use `infra/utils.ts`) · skipping migration Job · editing `Dockerfile.base` casually · stage `"prod"`.
 
-- Never expose runtime secrets in frontend pod specs (config is build-time only)
-- Never hardcode stage names — use `infra/utils.ts` helpers
-- Never skip migration Job before backend deployment
+## See Also
+Parent `/AGENTS.md` · `services/backend/AGENTS.md` (consumer of migration Job) · `apps/*/Dockerfile`.

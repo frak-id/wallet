@@ -2,6 +2,11 @@
 /**
  * Admin settings.
  *
+ * Stateless static class — mirrors the pattern used by {@see Frak_WooCommerce}
+ * and {@see Frak_WC_Webhook_Registrar}. {@see init()} registers the hooks on
+ * `Frak_Plugin::init()`; every callback is static so no instance is held
+ * between requests.
+ *
  * @package Frak_Integration
  */
 
@@ -11,84 +16,41 @@
 class Frak_Admin {
 
 	/**
-	 * Singleton instance.
+	 * Nonce action for the settings form submission.
 	 *
-	 * @var Frak_Admin|null
+	 * The form posts back to the same page (instead of `options.php`) because
+	 * the settings payload is multipart (logo file upload), which does not map
+	 * cleanly onto the Settings API's `register_setting` sanitize-callback
+	 * pipeline. We therefore replicate the two security guarantees the Settings
+	 * API would provide:
+	 *   - `wp_nonce_field( SETTINGS_NONCE_ACTION )` emitted in the template.
+	 *   - `check_admin_referer()` + capability check in {@see save_settings()}.
 	 */
-	private static $instance = null;
+	public const SETTINGS_NONCE_ACTION = 'frak_save_settings';
 
 	/**
-	 * Get singleton instance.
-	 *
-	 * @return Frak_Admin
+	 * Register admin hooks. Called once from {@see Frak_Plugin::init()}.
 	 */
-	public static function instance() {
-		if ( null === self::$instance ) {
-			self::$instance = new self();
-		}
-		return self::$instance;
-	}
-
-	/**
-	 * Constructor.
-	 */
-	private function __construct() {
-		add_action( 'admin_menu', array( $this, 'add_admin_menu' ) );
-		add_action( 'admin_init', array( $this, 'register_settings' ) );
-		add_action( 'admin_enqueue_scripts', array( $this, 'enqueue_scripts' ) );
+	public static function init() {
+		add_action( 'admin_menu', array( __CLASS__, 'add_admin_menu' ) );
+		add_action( 'admin_enqueue_scripts', array( __CLASS__, 'enqueue_scripts' ) );
 
 		// AJAX handlers for webhook operations.
-		add_action( 'wp_ajax_frak_generate_webhook_secret', array( $this, 'ajax_generate_webhook_secret' ) );
-		add_action( 'wp_ajax_frak_test_webhook', array( $this, 'ajax_test_webhook' ) );
-		add_action( 'wp_ajax_frak_clear_webhook_logs', array( $this, 'ajax_clear_webhook_logs' ) );
-		add_action( 'wp_ajax_frak_check_webhook_status', array( $this, 'ajax_check_webhook_status' ) );
+		add_action( 'wp_ajax_frak_refresh_merchant', array( __CLASS__, 'ajax_refresh_merchant' ) );
+		add_action( 'wp_ajax_frak_setup_wc_webhook', array( __CLASS__, 'ajax_setup_wc_webhook' ) );
 	}
 
 	/**
 	 * Add admin menu page.
 	 */
-	public function add_admin_menu() {
+	public static function add_admin_menu() {
 		add_options_page(
 			'Frak Settings',
 			'Frak',
 			'manage_options',
 			'frak-settings',
-			array( $this, 'settings_page' )
+			array( __CLASS__, 'settings_page' )
 		);
-	}
-
-	/**
-	 * Register plugin settings.
-	 */
-	public function register_settings() {
-		register_setting( 'frak_settings', 'frak_app_name' );
-		register_setting( 'frak_settings', 'frak_logo_url' );
-		register_setting( 'frak_settings', 'frak_enable_purchase_tracking' );
-		register_setting( 'frak_settings', 'frak_enable_floating_button' );
-		register_setting( 'frak_settings', 'frak_show_reward' );
-		register_setting( 'frak_settings', 'frak_button_classname' );
-		register_setting( 'frak_settings', 'frak_floating_button_position' );
-		register_setting( 'frak_settings', 'frak_modal_language' );
-		register_setting(
-			'frak_settings',
-			'frak_modal_i18n',
-			array(
-				'sanitize_callback' => function ( $input ) {
-					if ( is_array( $input ) ) {
-						return wp_json_encode(
-							array_filter(
-								$input,
-								function ( $value ) {
-									return '' !== $value;
-								}
-							)
-						);
-					}
-					return $input;
-				},
-			)
-		);
-		register_setting( 'frak_settings', 'frak_webhook_secret' );
 	}
 
 	/**
@@ -96,119 +58,123 @@ class Frak_Admin {
 	 *
 	 * @param string $hook Current admin page hook.
 	 */
-	public function enqueue_scripts( $hook ) {
+	public static function enqueue_scripts( $hook ) {
 		if ( 'settings_page_frak-settings' !== $hook ) {
 			return;
 		}
 
-		wp_enqueue_code_editor( array( 'type' => 'text/javascript' ) );
-		wp_enqueue_script( 'frak-admin', plugin_dir_url( __DIR__ ) . 'admin/js/admin.js', array( 'jquery' ), '1.0', true );
-		wp_enqueue_style( 'frak-admin', plugin_dir_url( __DIR__ ) . 'admin/css/admin.css', array(), '1.0' );
+		$version = defined( 'FRAK_PLUGIN_VERSION' ) ? FRAK_PLUGIN_VERSION : false;
 
-		$logo_url     = '';
-		$site_icon_id = get_option( 'site_icon' );
-		if ( $site_icon_id ) {
-			$logo_url = wp_get_attachment_image_url( $site_icon_id, 'full' );
-		}
-		if ( ! $logo_url ) {
-			$custom_logo_id = get_theme_mod( 'custom_logo' );
-			if ( $custom_logo_id ) {
-				$logo_url = wp_get_attachment_image_url( $custom_logo_id, 'full' );
-			}
-		}
-
-		wp_localize_script(
+		wp_enqueue_script(
 			'frak-admin',
-			'frak_ajax',
+			plugin_dir_url( __DIR__ ) . 'admin/js/admin.js',
+			array(),
+			$version,
 			array(
-				'ajax_url'  => admin_url( 'admin-ajax.php' ),
-				'nonce'     => wp_create_nonce( 'frak_ajax_nonce' ),
-				'site_info' => array(
-					'name'     => get_bloginfo( 'name' ),
-					'logo_url' => $logo_url,
-				),
+				'in_footer' => true,
+				'strategy'  => 'defer',
 			)
+		);
+		wp_enqueue_style( 'frak-admin', plugin_dir_url( __DIR__ ) . 'admin/css/admin.css', array(), $version );
+
+		// Emit the AJAX bootstrap payload as a plain JSON object on
+		// `window.frak_ajax` — `wp_localize_script` used to do this, but it
+		// forces the value through `esc_attr`-style mangling and is slated
+		// for eventual deprecation. `wp_add_inline_script` with `'before'`
+		// runs prior to the deferred admin script executing.
+		$ajax_payload = array(
+			'ajax_url'  => admin_url( 'admin-ajax.php' ),
+			'nonce'     => wp_create_nonce( 'frak_ajax_nonce' ),
+			'site_info' => array(
+				'name'     => get_bloginfo( 'name' ),
+				'logo_url' => Frak_Utils::site_icon_url(),
+			),
+		);
+		wp_add_inline_script(
+			'frak-admin',
+			'var frak_ajax = ' . wp_json_encode( $ajax_payload ) . ';',
+			'before'
 		);
 	}
 
 	/**
 	 * Render settings page.
 	 */
-	public function settings_page() {
+	public static function settings_page() {
 		if ( ! current_user_can( 'manage_options' ) ) {
 			return;
 		}
 
-		if ( isset( $_POST['submit'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Missing -- nonce is verified by settings API.
-			$this->save_settings();
+		if ( isset( $_POST['submit'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Missing -- the nonce is verified inside save_settings() via check_admin_referer().
+			self::save_settings();
 		}
 
-		$this->render_settings_page();
+		self::render_settings_page();
 	}
 
 	/**
 	 * Save settings from POST data.
+	 *
+	 * CSRF + capability protection: the template emits `wp_nonce_field()` with
+	 * {@see self::SETTINGS_NONCE_ACTION}, and `check_admin_referer()` below both
+	 * verifies the nonce and bails (via `wp_die`) when it is missing/invalid.
+	 * A redundant capability re-check guards against a hook that lowered the
+	 * requirement between page render and submit.
 	 */
-	private function save_settings() {
-		// phpcs:disable WordPress.Security.NonceVerification.Missing -- nonce is verified by settings API.
-		$app_name = isset( $_POST['frak_app_name'] ) ? sanitize_text_field( wp_unslash( $_POST['frak_app_name'] ) ) : '';
+	private static function save_settings() {
+		check_admin_referer( self::SETTINGS_NONCE_ACTION );
+
+		if ( ! current_user_can( 'manage_options' ) ) {
+			return;
+		}
 
 		$logo_url = isset( $_POST['frak_logo_url'] ) ? esc_url_raw( wp_unslash( $_POST['frak_logo_url'] ) ) : '';
 		if ( isset( $_FILES['frak_logo_file']['error'] ) && UPLOAD_ERR_OK === $_FILES['frak_logo_file']['error'] ) {
-			$uploaded_logo = $this->handle_logo_upload( $_FILES['frak_logo_file'] ); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput -- handled by wp_handle_upload.
+			$uploaded_logo = self::handle_logo_upload( $_FILES['frak_logo_file'] ); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput -- handled by wp_handle_upload.
 			if ( $uploaded_logo ) {
 				$logo_url = $uploaded_logo;
 			}
 		}
 
-		$enable_tracking          = isset( $_POST['frak_enable_purchase_tracking'] ) ? 1 : 0;
-		$enable_button            = isset( $_POST['frak_enable_floating_button'] ) ? 1 : 0;
-		$show_reward              = isset( $_POST['frak_show_reward'] ) ? 1 : 0;
-		$button_classname         = isset( $_POST['frak_button_classname'] ) ? sanitize_text_field( wp_unslash( $_POST['frak_button_classname'] ) ) : '';
-		$floating_button_position = isset( $_POST['frak_floating_button_position'] ) ? sanitize_text_field( wp_unslash( $_POST['frak_floating_button_position'] ) ) : 'right';
-		$modal_language           = isset( $_POST['frak_modal_language'] ) ? sanitize_text_field( wp_unslash( $_POST['frak_modal_language'] ) ) : 'en';
+		Frak_Settings::replace(
+			array(
+				'app_name' => isset( $_POST['frak_app_name'] ) ? sanitize_text_field( wp_unslash( $_POST['frak_app_name'] ) ) : '',
+				'logo_url' => $logo_url,
+			)
+		);
 
-		$modal_i18n = isset( $_POST['frak_modal_i18n'] ) ? wp_unslash( $_POST['frak_modal_i18n'] ) : array(); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- sanitized below.
-		if ( is_array( $modal_i18n ) ) {
-			$textarea_keys = array( 'sharing.text', 'sdk.wallet.login.text_sharing', 'sdk.wallet.login.text_referred' );
-			foreach ( $modal_i18n as $key => $value ) {
-				if ( in_array( $key, $textarea_keys, true ) ) {
-					$modal_i18n[ $key ] = sanitize_textarea_field( $value );
-				} else {
-					$modal_i18n[ $key ] = sanitize_text_field( $value );
-				}
-			}
-
-			$modal_i18n = array_filter(
-				$modal_i18n,
-				function ( $value ) {
-					return '' !== $value;
-				}
-			);
-
-			if ( isset( $modal_i18n['sdk.wallet.login.text_referred'] ) ) {
-				$modal_i18n['sdk.wallet.login.text'] = $modal_i18n['sdk.wallet.login.text_referred'];
-			}
+		// The webhook secret is owned by the Frak business dashboard (single source
+		// of truth stored backend-side on `merchantWebhooksTable.hookSignatureKey`).
+		// The admin pastes it here so outbound HMAC signatures match what the
+		// backend verifies. An empty submission clears the row and disables dispatch.
+		// Stored with `autoload=no` so the credential is not loaded on every
+		// request (only webhook send / admin pages read it).
+		if ( isset( $_POST['frak_webhook_secret'] ) ) {
+			$submitted_secret = sanitize_text_field( wp_unslash( $_POST['frak_webhook_secret'] ) );
+			update_option( 'frak_webhook_secret', $submitted_secret, false );
 		}
-		// phpcs:enable WordPress.Security.NonceVerification.Missing
 
-		update_option( 'frak_app_name', $app_name );
-		update_option( 'frak_logo_url', $logo_url );
-		update_option( 'frak_enable_purchase_tracking', $enable_tracking );
-		update_option( 'frak_enable_floating_button', $enable_button );
-		update_option( 'frak_show_reward', $show_reward );
-		update_option( 'frak_button_classname', $button_classname );
-		update_option( 'frak_floating_button_position', $floating_button_position );
-		update_option( 'frak_modal_language', $modal_language );
-		update_option( 'frak_modal_i18n', wp_json_encode( $modal_i18n ) );
-
-		$this->clear_caches();
+		self::clear_caches();
 	}
 
 	/**
-	 * Clear caches from popular caching plugins.
+	 * Clear front-end page caches from popular caching plugins.
+	 *
+	 * Scoped to page-cache plugins on purpose — we deliberately avoid
+	 * `wp_cache_flush()` because on sites running a persistent object cache
+	 * (Redis, Memcached) that would nuke the entire site's cache
+	 * (posts, terms, user sessions) on every settings save. The plugin only
+	 * needs the rendered HTML to be regenerated so the new `window.FrakSetup`
+	 * config is emitted on the next request; the underlying settings are
+	 * hydrated fresh on the next request anyway (single autoloaded row, no
+	 * object-cache layer in between).
+	 *
+	 * Covers the five most common page-cache plugins on WP.org: WP Rocket,
+	 * W3 Total Cache, WP Super Cache, LiteSpeed Cache, and Hummingbird. Each
+	 * one exposes either a direct helper function or a well-known action
+	 * hook for third-party integrations to trigger a flush.
 	 */
-	private function clear_caches() {
+	private static function clear_caches() {
 		if ( function_exists( 'rocket_clean_domain' ) ) {
 			rocket_clean_domain();
 		}
@@ -218,83 +184,74 @@ class Frak_Admin {
 		if ( function_exists( 'wp_cache_clear_cache' ) ) {
 			wp_cache_clear_cache();
 		}
-		wp_cache_flush();
+		// LiteSpeed Cache exposes a standard action hook for third-party purge.
+		if ( defined( 'LSCWP_V' ) || has_action( 'litespeed_purge_all' ) ) {
+			do_action( 'litespeed_purge_all' );
+		}
+		// Hummingbird fires this action to clear its page cache.
+		if ( has_action( 'wphb_clear_page_cache' ) ) {
+			do_action( 'wphb_clear_page_cache' );
+		}
 	}
 
 	/**
 	 * Render the settings page template.
 	 */
-	private function render_settings_page() {
+	private static function render_settings_page() {
 		$default_app_name = get_bloginfo( 'name' );
-		$default_logo_url = $this->get_site_icon_url();
+		$default_logo_url = Frak_Utils::site_icon_url();
 
-		$app_name = get_option( 'frak_app_name', $default_app_name );
-		$logo_url = get_option( 'frak_logo_url', $default_logo_url );
-
-		$enable_tracking_option = get_option( 'frak_enable_purchase_tracking', null );
-		if ( null === $enable_tracking_option && class_exists( 'WooCommerce' ) ) {
-			$enable_tracking = 1;
-			update_option( 'frak_enable_purchase_tracking', 1 );
-		} else {
-			$enable_tracking = get_option( 'frak_enable_purchase_tracking', 0 );
-		}
-
-		$enable_button            = get_option( 'frak_enable_floating_button', 0 );
-		$show_reward              = get_option( 'frak_show_reward', 0 );
-		$button_classname         = get_option( 'frak_button_classname', '' );
-		$floating_button_position = get_option( 'frak_floating_button_position', 'right' );
-		$modal_language           = get_option( 'frak_modal_language', 'default' );
-		$modal_i18n               = json_decode( get_option( 'frak_modal_i18n', '{}' ), true );
+		$stored_app_name = Frak_Settings::get( 'app_name' );
+		$stored_logo_url = Frak_Settings::get( 'logo_url' );
+		$app_name        = '' !== $stored_app_name ? $stored_app_name : $default_app_name;
+		$logo_url        = '' !== $stored_logo_url ? $stored_logo_url : $default_logo_url;
 
 		include FRAK_PLUGIN_DIR . 'admin/views/settings-page.php';
 	}
 
 	/**
-	 * Get the site icon URL.
-	 *
-	 * @return string
-	 */
-	private function get_site_icon_url() {
-		$site_icon_id = get_option( 'site_icon' );
-		if ( $site_icon_id ) {
-			$site_icon_url = wp_get_attachment_image_url( $site_icon_id, 'full' );
-			if ( $site_icon_url ) {
-				return $site_icon_url;
-			}
-		}
-
-		$custom_logo_id = get_theme_mod( 'custom_logo' );
-		if ( $custom_logo_id ) {
-			$custom_logo_url = wp_get_attachment_image_url( $custom_logo_id, 'full' );
-			if ( $custom_logo_url ) {
-				return $custom_logo_url;
-			}
-		}
-
-		return '';
-	}
-
-	/**
 	 * Handle logo file upload.
 	 *
-	 * @param array $file Uploaded file data.
+	 * Uses `wp_check_filetype_and_ext()` to validate the real MIME type
+	 * against the uploaded extension — this catches `evil.php` renamed to
+	 * `evil.jpg` with a spoofed `image/jpeg` header, which the previous
+	 * browser-supplied `$file['type']` check could not. `wp_handle_upload`
+	 * itself re-runs the same check, but validating up-front lets us reject
+	 * the upload before the tmp file is moved into `wp-content/uploads/`.
+	 *
+	 * @param array<string, mixed> $file Uploaded file data.
 	 * @return string|false URL on success, false on failure.
 	 */
-	private function handle_logo_upload( $file ) {
-		$allowed_types = array( 'image/jpeg', 'image/png', 'image/gif', 'image/svg+xml' );
-		if ( ! in_array( $file['type'], $allowed_types, true ) ) {
+	private static function handle_logo_upload( $file ) {
+		// Reject oversized uploads before touching the filesystem.
+		if ( ! isset( $file['size'] ) || $file['size'] > 2 * 1024 * 1024 ) {
 			return false;
 		}
 
-		if ( $file['size'] > 2 * 1024 * 1024 ) {
-			return false;
-		}
-
-		if ( ! function_exists( 'wp_handle_upload' ) ) {
+		if ( ! function_exists( 'wp_check_filetype_and_ext' ) ) {
 			require_once ABSPATH . 'wp-admin/includes/file.php';
 		}
 
-		$upload_overrides = array( 'test_form' => false );
+		$allowed_mimes = array(
+			'jpg|jpeg|jpe' => 'image/jpeg',
+			'png'          => 'image/png',
+			'gif'          => 'image/gif',
+		);
+
+		$check = wp_check_filetype_and_ext(
+			isset( $file['tmp_name'] ) ? $file['tmp_name'] : '',
+			isset( $file['name'] ) ? $file['name'] : '',
+			$allowed_mimes
+		);
+
+		if ( empty( $check['type'] ) || ! in_array( $check['type'], $allowed_mimes, true ) ) {
+			return false;
+		}
+
+		$upload_overrides = array(
+			'test_form' => false,
+			'mimes'     => $allowed_mimes,
+		);
 		$movefile         = wp_handle_upload( $file, $upload_overrides );
 
 		if ( $movefile && ! isset( $movefile['error'] ) ) {
@@ -305,90 +262,84 @@ class Frak_Admin {
 	}
 
 	/**
-	 * AJAX: Generate webhook secret.
+	 * AJAX: Refresh the cached merchant record for the current site.
+	 *
+	 * Invalidates the `frak_merchant` option + negative cache, re-queries
+	 * the backend's resolve endpoint, and returns the fresh record. Wired
+	 * to the "Refresh Merchant" button on the admin settings page so
+	 * operators can recover from a delete-and-recreate, a domain change,
+	 * or the 5-minute negative-cache window without waiting for a webhook.
 	 */
-	public function ajax_generate_webhook_secret() {
+	public static function ajax_refresh_merchant() {
 		check_ajax_referer( 'frak_ajax_nonce', 'nonce' );
 
 		if ( ! current_user_can( 'manage_options' ) ) {
 			wp_die( 'Unauthorized' );
 		}
 
-		$secret = wp_generate_password( 32, false );
-		update_option( 'frak_webhook_secret', $secret );
+		Frak_Merchant::invalidate();
+		$record = Frak_Merchant::get_record();
 
-		wp_send_json_success(
-			array(
-				'secret'  => $secret,
-				'message' => __( 'Webhook secret generated successfully', 'frak' ),
-			)
-		);
-	}
-
-	/**
-	 * AJAX: Test webhook.
-	 */
-	public function ajax_test_webhook() {
-		check_ajax_referer( 'frak_ajax_nonce', 'nonce' );
-
-		if ( ! current_user_can( 'manage_options' ) ) {
-			wp_die( 'Unauthorized' );
-		}
-
-		$result = Frak_Webhook_Helper::test_webhook();
-
-		if ( $result['success'] ) {
-			wp_send_json_success(
-				array(
-					/* translators: %d: execution time in milliseconds */
-					'message' => sprintf( __( 'Webhook test successful (%dms)', 'frak' ), $result['execution_time'] ),
-					'details' => $result,
-				)
-			);
-		} else {
+		if ( null === $record ) {
 			wp_send_json_error(
 				array(
-					'message' => __( 'Webhook test failed: ', 'frak' ) . $result['error'],
-					'details' => $result,
+					'message' => __( 'Merchant not found for this domain. Register it on business.frak.id first.', 'frak' ),
 				)
 			);
 		}
-	}
-
-	/**
-	 * AJAX: Clear webhook logs.
-	 */
-	public function ajax_clear_webhook_logs() {
-		check_ajax_referer( 'frak_ajax_nonce', 'nonce' );
-
-		if ( ! current_user_can( 'manage_options' ) ) {
-			wp_die( 'Unauthorized' );
-		}
-
-		Frak_Webhook_Helper::clear_webhook_logs();
 
 		wp_send_json_success(
 			array(
-				'message' => __( 'Webhook logs cleared successfully', 'frak' ),
+				'message' => __( 'Merchant refreshed', 'frak' ),
+				'record'  => $record,
 			)
 		);
 	}
 
 	/**
-	 * AJAX: Check webhook status.
+	 * AJAX: Create / refresh the WooCommerce webhook that ships order events
+	 * to the Frak backend. Wired to the "Set up" / "Re-enable" button on the
+	 * settings page so operators can recover from a manually-disabled webhook
+	 * (or a fresh install) without editing WC's advanced settings directly.
 	 */
-	public function ajax_check_webhook_status() {
+	public static function ajax_setup_wc_webhook() {
 		check_ajax_referer( 'frak_ajax_nonce', 'nonce' );
 
 		if ( ! current_user_can( 'manage_options' ) ) {
 			wp_die( 'Unauthorized' );
 		}
 
-		$status = Frak_Webhook_Helper::get_webhook_status();
+		if ( ! class_exists( 'Frak_WC_Webhook_Registrar' ) ) {
+			wp_send_json_error(
+				array(
+					'message' => __( 'WooCommerce integration unavailable.', 'frak' ),
+				)
+			);
+		}
+
+		$webhook_id = Frak_WC_Webhook_Registrar::ensure();
+		$status     = Frak_WC_Webhook_Registrar::status();
+
+		if ( null === $webhook_id ) {
+			if ( ! $status['wc_available'] ) {
+				$message = __( 'WooCommerce is not active on this site.', 'frak' );
+			} elseif ( ! $status['merchant_resolved'] ) {
+				$message = __( 'Merchant not resolved for this domain — register it in your Frak business dashboard (Merchant → Allowed Domains).', 'frak' );
+			} elseif ( ! $status['domain_matches'] ) {
+				$message = __( 'This site\'s domain changed since the merchant record was cached. Click "Refresh Merchant" first.', 'frak' );
+			} elseif ( ! $status['secret_configured'] ) {
+				$message = __( 'Paste the webhook secret from your Frak dashboard and save the form before enabling.', 'frak' );
+			} else {
+				$message = __( 'Failed to create the WooCommerce webhook — check WooCommerce → Status → Logs for details.', 'frak' );
+			}
+
+			wp_send_json_error( array( 'message' => $message ) );
+		}
 
 		wp_send_json_success(
 			array(
-				'status' => $status,
+				'message' => __( 'WooCommerce webhook is active — order updates will now reach Frak.', 'frak' ),
+				'status'  => $status,
 			)
 		);
 	}

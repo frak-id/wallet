@@ -58,4 +58,16 @@ export type PostPurchaseProps = {
      * Use `{REWARD}` as placeholder for the reward amount.
      */
     ctaText?: string;
+    /**
+     * When set, renders the card in preview mode (e.g. Shopify/WP editor).
+     * Bypasses the client-ready / RPC gates that normally hide the card
+     * until the backend resolves, and no-ops the click handler so merchants
+     * can see the final layout with their configured copy.
+     */
+    preview?: string;
+    /**
+     * Which variant to show when {@link preview} is set.
+     * Defaults to `"referrer"`.
+     */
+    previewVariant?: "referrer" | "referee";
 };

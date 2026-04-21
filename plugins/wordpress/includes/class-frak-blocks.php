@@ -1,0 +1,143 @@
+<?php
+/**
+ * Gutenberg block registration.
+ *
+ * Every block bundled with the plugin lives in its own folder under
+ * `includes/blocks/*`, providing a `block.json`, a vanilla-JS editor script
+ * (no build pipeline), and a PHP `render.php`. The list is hard-coded below
+ * so we avoid a `glob()` disk scan on every `init` firing; adding a new
+ * block is a single-line change here plus dropping the folder.
+ *
+ * @package Frak_Integration
+ */
+
+/**
+ * Class Frak_Blocks
+ */
+class Frak_Blocks {
+
+	/**
+	 * Folder names under `includes/blocks/` to register. Kept explicit so we
+	 * trade one cheap constant lookup for a filesystem scan per request.
+	 *
+	 * @var string[]
+	 */
+	private const BLOCKS = array(
+		'banner',
+		'post-purchase',
+		'share-button',
+	);
+
+	/**
+	 * Register every bundled block via its `block.json` manifest.
+	 *
+	 * Called from {@see Frak_Plugin::init()} which already runs on the `init`
+	 * action — we register synchronously instead of nesting another `init`
+	 * hook from inside one (same-priority callbacks added during iteration are
+	 * unreliable in `WP_Hook::apply_filters`).
+	 */
+	public static function init() {
+		self::register_blocks();
+		add_action( 'enqueue_block_editor_assets', array( __CLASS__, 'enqueue_editor_assets' ) );
+	}
+
+	/**
+	 * Register every bundled block via its `block.json` manifest.
+	 *
+	 * WP 6.7+ exposes {@see wp_register_block_metadata_collection()} which
+	 * maps the pre-baked `blocks-manifest.php` array into an in-memory
+	 * registry, so {@see register_block_type()} skips the
+	 * `file_get_contents()` + `json_decode()` cost on every request. On
+	 * older WP the collection call is a no-op and core falls back to
+	 * reading the on-disk `block.json` like before.
+	 */
+	public static function register_blocks() {
+		$blocks_dir = FRAK_PLUGIN_DIR . 'includes/blocks';
+
+		if ( function_exists( 'wp_register_block_metadata_collection' ) ) {
+			wp_register_block_metadata_collection( $blocks_dir, FRAK_PLUGIN_DIR . 'includes/blocks-manifest.php' );
+		}
+
+		foreach ( self::BLOCKS as $slug ) {
+			register_block_type( $blocks_dir . '/' . $slug );
+		}
+	}
+
+	/**
+	 * Load the Frak SDK CDN inside the block editor so the bundled blocks can
+	 * render the real web components with their `preview` attribute — giving
+	 * merchants a faithful preview of Banner / Post-Purchase / Share Button.
+	 *
+	 * Each block's `editor.asset.php` lists `frak-sdk` as a dependency so
+	 * WordPress forwards the script into the block-editor iframe in the right
+	 * order.
+	 *
+	 * Also registers the `frak-editor-sdk-injector` helper: since Gutenberg
+	 * renders the block canvas inside a same-origin iframe (WP 6.3+), and WP
+	 * only forwards `<style>`/`<link>` tags into that iframe, the SDK script
+	 * enqueued against the outer admin window never defines custom elements
+	 * in the iframe's `CustomElementRegistry`. The helper bridges that gap
+	 * by re-injecting the SDK `<script>` (plus forwarded `FrakSetup.config`)
+	 * into the iframe's document from inside each block's `useEffect`.
+	 */
+	public static function enqueue_editor_assets() {
+		wp_register_script(
+			'frak-sdk',
+			'https://cdn.jsdelivr.net/npm/@frak-labs/components',
+			array(),
+			null, // phpcs:ignore WordPress.WP.EnqueuedResourceParameters -- CDN serves latest version; avoid ?ver= query param.
+			true
+		);
+
+		wp_add_inline_script( 'frak-sdk', self::generate_editor_config_script(), 'before' );
+
+		wp_enqueue_script( 'frak-sdk' );
+
+		wp_register_script(
+			'frak-editor-sdk-injector',
+			FRAK_PLUGIN_URL . 'includes/blocks/frak-editor-sdk-injector.js',
+			array( 'frak-sdk' ),
+			FRAK_PLUGIN_VERSION,
+			true
+		);
+		wp_enqueue_script( 'frak-editor-sdk-injector' );
+	}
+
+	/**
+	 * Build the inline `window.FrakSetup` stub used in the block editor.
+	 *
+	 * `waitForBackendConfig: false` short-circuits the SDK's "wait for
+	 * backend-resolved config" gate so `<frak-banner preview>`,
+	 * `<frak-post-purchase preview>` and `<frak-button-share preview>` render
+	 * immediately in the editor iframe without a real Frak client.
+	 *
+	 * @return string
+	 */
+	private static function generate_editor_config_script() {
+		$app_name_raw = Frak_Settings::get( 'app_name' );
+		$app_name     = '' !== $app_name_raw ? $app_name_raw : get_bloginfo( 'name' );
+		$logo_url     = Frak_Settings::get( 'logo_url' );
+
+		$metadata = array_filter(
+			array(
+				'name'    => $app_name,
+				'logoUrl' => '' !== $logo_url ? $logo_url : null,
+			),
+			static function ( $value ) {
+				return null !== $value && '' !== $value;
+			}
+		);
+
+		$config = array(
+			'waitForBackendConfig' => false,
+			'metadata'             => $metadata,
+		);
+
+		$config_json = wp_json_encode( $config, JSON_UNESCAPED_SLASHES );
+
+		return sprintf(
+			'window.FrakSetup=Object.assign(window.FrakSetup||{},{config:%s});',
+			$config_json
+		);
+	}
+}

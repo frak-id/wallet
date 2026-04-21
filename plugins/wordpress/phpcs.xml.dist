@@ -26,4 +26,18 @@
     <rule ref="Squiz.Commenting.FileComment">
         <severity>0</severity>
     </rule>
+
+    <!-- Block asset files follow the WordPress Gutenberg "<handle>.asset.php" convention -->
+    <rule ref="WordPress.Files.FileName.NotHyphenatedLowercase">
+        <exclude-pattern>*/blocks/*/*.asset.php</exclude-pattern>
+    </rule>
+
+    <!-- WooCommerce registers `view_order` as a meta capability (see WC customer cap filter) -->
+    <rule ref="WordPress.WP.Capabilities">
+        <properties>
+            <property name="custom_capabilities" type="array">
+                <element value="view_order"/>
+            </property>
+        </properties>
+    </rule>
 </ruleset>

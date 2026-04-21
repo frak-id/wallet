@@ -119,7 +119,10 @@ export function PostPurchase({
     referrerText: propReferrerText,
     refereeText: propRefereeText,
     ctaText: propCtaText,
+    preview,
+    previewVariant,
 }: PostPurchaseProps) {
+    const isPreview = !!preview;
     const { shouldRender, isHidden, isClientReady } = useClientReady();
     const placement = usePlacement(placementId);
 
@@ -137,6 +140,7 @@ export function PostPurchase({
 
     // Fire-and-forget purchase tracking (fallback for Shopify pixel)
     useEffect(() => {
+        if (isPreview) return;
         if (!isClientReady || !customerId || !orderId || !token) return;
         trackPurchaseStatus({
             customerId,
@@ -146,10 +150,11 @@ export function PostPurchase({
         }).catch(() => {
             /* dedup handled server-side */
         });
-    }, [isClientReady, customerId, orderId, token, merchantId]);
+    }, [isPreview, isClientReady, customerId, orderId, token, merchantId]);
 
     // Fetch referral status + merchant info in parallel, compute variant locally
     useEffect(() => {
+        if (isPreview) return;
         if (!isClientReady || hasFetched) return;
         const client = window.FrakSetup?.client;
         if (!client) return;
@@ -176,10 +181,14 @@ export function PostPurchase({
                 // Transient errors: allow retry on next render
                 console.warn("[Frak] Post-purchase context error", e);
             });
-    }, [isClientReady, hasFetched]);
+    }, [isPreview, isClientReady, hasFetched]);
 
-    // Resolve variant and reward
-    const resolvedVariant = forcedVariant ?? context?.variant;
+    // Resolve variant and reward. In preview mode we synthesise a variant from
+    // the `previewVariant` prop so the card renders without backend data.
+    const resolvedVariant =
+        forcedVariant ??
+        context?.variant ??
+        (isPreview ? (previewVariant ?? "referrer") : undefined);
     const resolvedSharingUrl = sharingUrl ?? context?.merchantDomain;
 
     const rewardText = useMemo(() => {
@@ -248,8 +257,9 @@ export function PostPurchase({
     );
 
     // Bail conditions
-    if (!shouldRender || isHidden) return null;
-    if (!context || !resolvedVariant) return null;
+    if (!isPreview && (!shouldRender || isHidden)) return null;
+    if (!isPreview && (!context || !resolvedVariant)) return null;
+    if (!resolvedVariant) return null;
 
     const cardClass = [card, classname].filter(Boolean).join(" ");
 
@@ -266,8 +276,8 @@ export function PostPurchase({
                             as="button"
                             type="button"
                             className={`${cta} button`}
-                            disabled={!isClientReady}
-                            onClick={handleShare}
+                            disabled={!isPreview && !isClientReady}
+                            onClick={isPreview ? undefined : handleShare}
                         >
                             {texts.cta}
                             <svg

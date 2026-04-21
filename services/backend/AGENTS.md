@@ -1,183 +1,71 @@
-# services/backend
+# services/backend — Compass
 
-Elysia.js API with domain-driven design. PostgreSQL (Drizzle) + MongoDB.
+Elysia.js API with DDD (12 domains + orchestration layer). Bun runtime. PostgreSQL (Drizzle) for most domains + libSQL/Turso for WebAuthn credentials. Packaged via `Dockerfile` (binary built with `bun build:binary` for Linux/ARM64); migrations via `MigrationDockerfile` as K8s Job.
 
-## Structure
+## Quick Commands
+```bash
+bun run dev          # SST shell
+bun run test         # backend-unit (Node env, sequential)
+bun db:generate      # Generate Drizzle migration
+bun db:migrate       # Apply Postgres migrations (local via SST context)
+bun db:studio        # Drizzle Studio
+bun db:generate:libsql  # Generate libSQL (auth) migration
+bun db:migrate:libsql   # Apply libSQL migrations
+```
 
+## Structure (only non-obvious parts)
 ```
 src/
-├── api/              # BFF API layer (user, business, external, common)
-├── orchestration/    # Cross-domain coordination (11+ orchestrators)
-│   ├── identity/     # Identity resolution
-│   ├── interaction-submission/
-│   ├── reward/
-│   ├── schemas/
-│   └── context.ts
-├── domain/           # DDD bounded contexts (11 domains)
-│   ├── attribution/  # Touchpoint tracking, conversion attribution
-│   ├── auth/         # WebAuthn authentication
-│   ├── campaign/     # Campaign rules, reward calculation
-│   ├── campaign-bank/ # Campaign banking
-│   ├── identity/     # Identity resolution, group management
-│   ├── merchant/     # Merchant management
-│   ├── notifications/ # Push notifications
-│   ├── pairing/      # Device pairing
-│   ├── purchases/    # Purchase tracking, webhooks
-│   ├── rewards/      # Asset logs, settlements
-│   └── wallet/       # Wallet operations
-├── infrastructure/   # Technical capabilities
-│   ├── blockchain/   # Viem, AA, RPC
-│   ├── persistence/  # Drizzle, MongoDB, Redis
-│   ├── messaging/    # Email, SMS, Push
-│   ├── integrations/ # Shopify, Stripe, etc.
-│   ├── keys/         # KMS, encryption
-│   ├── dns/          # Domain management
-│   ├── pricing/      # Token price feeds
-│   ├── rateLimit/    # Throttling
-│   └── macro/        # Elysia middleware
-├── jobs/             # Background tasks
-└── utils/            # Shared helpers
+├── api/                 # BFF: user, business, external, common
+├── orchestration/       # 14+ orchestrators (grouped in subfolders: identity/, reward/, interaction-submission/) — ONLY place for cross-domain logic
+│   └── context.ts       # Orchestrator singletons (imports from domain contexts)
+├── domain/{attribution, auth, campaign, campaign-bank, identity, media,
+│           merchant, notifications, pairing, purchases, rewards, wallet}/
+│   ├── db/schema.ts     # Drizzle schema (pgTable — except `auth` which uses sqliteTable for libSQL)
+│   ├── repositories/    # Data access
+│   ├── services/        # Pure business logic (no cross-domain imports)
+│   ├── context.ts       # `{Domain}Context.{repositories,services}` singletons
+│   └── index.ts         # Public exports
+├── infrastructure/      # blockchain, persistence (postgres + libsql), messaging, integrations,
+│                       # external, keys (KMS), dns, pricing, rateLimit, macro (Elysia middleware)
+├── jobs/                # Background tasks
+└── utils/
 ```
 
-## Architecture: Orchestration Layer
-
-Cross-domain coordination uses an **orchestration layer** to avoid coupling between domain services.
-
-### Flow Rules
-
+## Flow Rules
 ```
-Simple flow:  api → service → repository
-Complex flow: api → orchestrator → services/repositories
+Simple:  api → service → repository
+Complex: api → orchestrator → (services | repositories)
 
-FORBIDDEN:
-- service → orchestrator (services must stay pure)
-- repository → service
+FORBIDDEN: service → service (cross-domain) · service → orchestrator · repository → service
 ```
 
-### Domain Context Pattern
-
-Each domain exposes a `context.ts` that builds singletons bottom-up:
-
-```typescript
-// domain/referral/context.ts
-const referralLinkRepository = new ReferralLinkRepository();
-const referralService = new ReferralService(referralLinkRepository);
-
-export namespace ReferralContext {
-    export const repositories = { referralLink: referralLinkRepository };
-    export const services = { referral: referralService };
-}
-```
-
-### Orchestration Context
-
-Orchestrators are instantiated in `orchestration/context.ts`, importing from domain contexts:
-
-```typescript
-// orchestration/context.ts
-import { IdentityContext } from "../domain/identity/context";
-import { RewardsContext } from "../domain/rewards/context";
-
-const rewardOrchestrator = new RewardOrchestrator(
-    RewardsContext.repositories.interactionLog,
-    RewardsContext.repositories.assetLog,
-    // ... other dependencies from domain contexts
-);
-
-export namespace OrchestrationContext {
-    export const orchestrators = { reward: rewardOrchestrator };
-}
-```
-
-### Constructor Pattern
-
-Use **required readonly params** (never nullable with defaults):
-
-```typescript
-// CORRECT
+## Constructor Pattern (DI)
+```ts
+// CORRECT — required readonly params
 constructor(
-    readonly repository: IdentityRepository,
-    readonly rewardsHub: RewardsHubRepository
+  readonly repo: IdentityRepository,
+  readonly rewardsHub: RewardsHubRepository,
 ) {}
 
-// WRONG - anti-pattern
-constructor(repository?: IdentityRepository) {
-    this.repository = repository ?? new IdentityRepository();
-}
+// WRONG — nullable with default fallback
+constructor(repo?: IdentityRepository) { this.repo = repo ?? new IdentityRepository(); }
 ```
 
-## Where to Look
-
-| Task | Location |
-|------|----------|
-| Add domain | `src/domain/{name}/` |
-| Cross-domain logic | `src/orchestration/` |
-| Domain singletons | `src/domain/{name}/context.ts` |
-| DB schemas | `src/domain/*/db/schema.ts` |
-| API routes | `src/api/` (user, business, external, common) |
-| Background jobs | `src/jobs/` |
-| DB connection | `src/infrastructure/persistence/` |
-| Shared utilities | `src/utils/` |
-
-## Domain Pattern
-
-```
-domain/
-└── auth/
-    ├── api/          # Elysia routes (optional, can be in src/api/)
-    ├── db/           # Drizzle schema
-    ├── repositories/ # Data access
-    ├── services/     # Business logic (pure, no cross-domain deps)
-    ├── context.ts    # Singleton exports
-    └── index.ts      # Public exports
-```
-
-## Commands
-
-```bash
-bun run dev          # Development (SST shell)
-bun run test         # Unit tests (backend-unit project)
-bun run test:watch   # Watch mode
-bun db:studio        # Drizzle Studio
-bun db:generate      # Generate migrations
-bun db:migrate       # Run migrations
-```
-
-## Conventions
-
-- **DDD**: Each domain isolated with own context
-- **Repository pattern**: Abstract data access
-- **Orchestration pattern**: Cross-domain coordination in `src/orchestration/`
-- **Context pattern**: Domain singletons via `{Domain}Context` namespace
-- **Macro pattern**: Reusable Elysia middleware
-- **Drizzle schemas**: `src/domain/*/db/schema.ts`
+## Non-Obvious Patterns
+- **Use `{Domain}Context.services.*` everywhere** — never `new Service()` in API handlers.
+- **Drizzle schemas live per-domain** (`src/domain/*/db/schema.ts`) — no central `schema.ts`. Not every domain has one (e.g. `wallet`, `campaign-bank`, `media` are DB-less).
+- **WebAuthn credentials live in libSQL/Turso** (`src/domain/auth/db/schema.ts` uses `sqliteTable`, `drizzle-libsql.config.ts`). Append-only, shared across environments. PostgreSQL backs every other domain.
+- **Macro pattern** = reusable Elysia middleware (auth, rate limit, CORS) in `src/infrastructure/macro/`.
+- **Migrations deploy as `KubernetesJob`** BEFORE the backend `KubernetesService` — skipping this breaks the pod.
+- **Path aliases**: `@backend-utils`, `@backend-infrastructure/*`, `@backend-domain/*` (see tsconfig).
+- **BFF split**: `src/api/{user,business,external,common}` — pick the right one by consumer, not by feature.
+- **Blockchain via viem + permissionless + ox**; Pimlico/ZeroDev for ERC-4337 bundler/paymaster.
+- **Merkle oracle** for purchase proofs. LRU cache for token metadata.
+- **Error-as-body**: some endpoints return HTTP 200 with error payload inside body (legacy plugin integrations) — check the shape, not the status.
 
 ## Anti-Patterns
+`new Service()` in handlers · cross-domain service imports · service → orchestrator · nullable DI params · raw SQL (use Drizzle) · blocking ops in handlers · central `schema.ts`.
 
-| Forbidden | Do Instead |
-|-----------|------------|
-| Cross-domain service imports | Use orchestration layer |
-| Service importing orchestrator | Move logic to orchestrator |
-| `new Service()` in API handlers | Use `{Domain}Context.services.*` |
-| Nullable constructor params | Required readonly params with DI |
-| Direct SQL | Use Drizzle queries |
-| Blocking operations in handlers | Use async/await |
-
-## Database
-
-- **PostgreSQL**: Drizzle ORM, domain-specific schemas
-- **MongoDB**: Authenticator credentials storage
-- **Migrations**: `drizzle/{prod,dev}/` directories
-
-## Testing
-
-- Vitest with Node environment
-- Sequential execution (stateful mocks)
-- Mocks: `test/mock/` (viem, drizzle, webauthn, bun)
-
-## Notes
-
-- WebAuthn via ox/WebAuthnP256
-- Merkle tree oracle for purchase proofs
-- LRU caching for token metadata
-- BFF (Backend for Frontend) API organization in `src/api/`
+## See Also
+Parent `/AGENTS.md` · `infra/AGENTS.md` (migration Job, GKE deploy) · `packages/client/` (Eden Treaty) · `packages/app-essentials/` (ABIs, addresses).

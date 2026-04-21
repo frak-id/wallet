@@ -21,6 +21,14 @@ export type WooCommerceOrderUpdateWebhookDto = Readonly<{
             src?: string;
         };
     }[];
+    // Present when partial or full refunds have been issued. A full refund
+    // also flips `status` to `refunded`; partial refunds only populate this
+    // array and leave `status` on its pre-refund value (`completed`, etc.).
+    refunds?: {
+        id: number;
+        reason?: string;
+        total: string;
+    }[];
 }>;
 
 export type WooCommerceOrderStatus =
@@ -28,7 +36,7 @@ export type WooCommerceOrderStatus =
     | "processing"
     | "on-hold"
     | "completed"
-    | "canncelled"
+    | "cancelled"
     | "refunded"
     | "failed"
     | "trash"

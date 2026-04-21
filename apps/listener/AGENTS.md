@@ -1,65 +1,33 @@
-# apps/listener
+# apps/listener — Compass
 
-**Generated:** 2026-03-06
-**Commit:** 03e50a956
-**Branch:** dev
+Iframe RPC handler bridging partner-site SDK ↔ Frak Wallet. Single-view (no routing). Minimal bundle (iframe load time critical). Served at `/listener` path on wallet ingress — not standalone.
 
-Iframe RPC handler for SDK-to-wallet communication. Embedded in partner sites via SDK. Deployed at `/listener` path on wallet ingress.
-
-## Structure
-
-```
-app/
-├── module/           # 13 modules
-│   ├── common/       # Shared utilities
-│   ├── component/    # Shared components (SsoButton, ToastLoading)
-│   ├── embedded/     # Embedded wallet UI components
-│   ├── handlers/     # RPC message handler wrappers
-│   ├── hooks/        # 14 RPC hooks (core logic)
-│   ├── middleware/    # Request/response middleware
-│   ├── modal/        # Modal UI for wallet operations
-│   ├── providers/    # RootProvider (Wagmi, QueryClient)
-│   ├── queryKeys/    # TanStack Query key factories
-│   ├── stores/       # Zustand stores (modal, context state)
-│   ├── types/        # TypeScript definitions
-│   └── utils/        # Utility functions
-├── styles/           # Minimal CSS
-└── views/            # Main listener orchestration (RPC setup)
-```
-
-## Where to Look
-
-| Task | Location |
-|------|----------|
-| RPC handlers | `app/module/hooks/` (14 hooks) |
-| Modal rendering | `app/module/modal/` |
-| Embedded wallet | `app/module/embedded/` |
-| Main listener | `app/views/listener.tsx` |
-| Entry point | `app/entry.client.tsx` |
-
-## Commands
-
+## Quick Commands
 ```bash
-bun run dev          # Development server
+bun run dev          # Dev server
 bun run build        # Production build
-bun run test         # Unit tests (listener-unit project)
+bun run bundle:check # Vite bundle visualizer — enforce minimal size
+bun run test         # listener-unit Vitest project
 ```
 
-## Conventions
+## Key Files
+- `app/entry.client.tsx` — iframe bootstrap
+- `app/views/listener.tsx` — RPC setup (single view, no routing)
+- `app/module/hooks/` — **14 RPC message handlers** (core logic, add new handlers here)
+- `app/module/handlers/` — handler wrappers · `app/module/middleware/` — request/response middleware
+- `app/module/{modal,embedded}/` — wallet UI rendered over partner site
+- `app/module/stores/` — Zustand (modal + context state) · `app/module/providers/` — RootProvider (Wagmi, QueryClient)
 
-- **RPC pattern**: Each message type has handler in `hooks/`
-- **Minimal bundle**: Critical for iframe load time (avoid heavy deps)
-- **No routing**: Single-page app, no navigation
-- **Shared logic**: Uses `@frak-labs/wallet-shared` for core wallet state
+## Non-Obvious Patterns
+- **No routing**: single-view iframe; adding a route means rethinking the architecture.
+- **Bundle size is a KPI**: avoid heavy deps; always run `bundle:check` before merging.
+- **Served via wallet ingress**: path-based routing `/listener` — do NOT deploy as independent service.
+- **postMessage security**: mock `window.origin` + `document.referrer` in tests (see `test-foundation/dom-mocks.ts`, `setupListenerDomMocks`).
+- **Shared logic comes from `@frak-labs/wallet-shared`** (auth, smart wallet, sessions) — do not duplicate.
+- **RPC protocol defined in `@frak-labs/frame-connector`** — adding a method also requires SDK schema updates in `sdk/core/src/types/rpc/` + `IFrameRpcSchema`.
 
-## Testing
+## Anti-Patterns
+Adding routes · heavy dependencies · bypassing `frame-connector` schema · deploying standalone.
 
-- Mock iframe communication via `@frak-labs/test-foundation`
-- Test RPC handlers in isolation
-- Coverage target in `app/module/hooks/`
-
-## Notes
-
-- Communicates with SDK via `@frak-labs/frame-connector` protocol
-- Renders modals for wallet operations (auth, transactions)
-- Not a standalone app; served via wallet ingress
+## See Also
+Parent `/AGENTS.md` · `apps/wallet/AGENTS.md` (shares ingress) · `packages/wallet-shared/AGENTS.md` · `packages/rpc/` (frame-connector) · `sdk/core/AGENTS.md` (RPC schema).

@@ -7,42 +7,116 @@
 
 /**
  * Class Frak_WooCommerce
+ *
+ * Stateless hook container — all handlers are static so no instance is held
+ * in memory between requests. Hooks are registered in {@see init()}.
  */
 class Frak_WooCommerce {
 
 	/**
-	 * Singleton instance.
+	 * Register WooCommerce hooks. Called once from {@see Frak_Plugin::init()}.
 	 *
-	 * @var Frak_WooCommerce|null
+	 * Tracker registration uses `woocommerce_thankyou` and `woocommerce_view_order`
+	 * instead of a universal `wp_footer` listener so the callback only runs on
+	 * the exact two endpoints that carry an order — every other frontend page
+	 * pays zero PHP for tracking.
+	 *
+	 * Order-status → webhook dispatch lives in WooCommerce's native webhook
+	 * pipeline now (see {@see Frak_WC_Webhook_Registrar}); we no longer hook
+	 * `woocommerce_order_status_changed` from PHP because WC's own
+	 * `woocommerce_update_order` trigger + queued delivery + retry handles it.
 	 */
-	private static $instance = null;
+	public static function init() {
+		add_action( 'woocommerce_thankyou', array( __CLASS__, 'render_purchase_tracker_for_order' ) );
+		add_action( 'woocommerce_view_order', array( __CLASS__, 'render_purchase_tracker_for_order' ) );
+	}
 
 	/**
-	 * Get singleton instance.
+	 * Resolve the WooCommerce order context for the current request.
 	 *
-	 * @return Frak_WooCommerce
+	 * Supports two order-scoped endpoints:
+	 *   - `order-received` (post-checkout thank-you page): public, guarded
+	 *     by the `key` query arg matching the stored order key — the same
+	 *     anti-enumeration check WooCommerce's own template performs.
+	 *   - `view-order` (My Account → Orders → View): authenticated, guarded
+	 *     by the `view_order` meta capability (current user must own the
+	 *     order, or be a shop manager).
+	 *
+	 * Returns null on any other endpoint or when the guard fails.
+	 *
+	 * Shared by the `frak/post-purchase` block (to auto-inject HTML
+	 * attributes) and {@see render_purchase_tracker()} (for its payload).
+	 *
+	 * @return array<string, string>|null Map of HTML attribute name → value.
 	 */
-	public static function instance() {
-		if ( null === self::$instance ) {
-			self::$instance = new self();
+	public static function get_order_context() {
+		if ( ! function_exists( 'is_wc_endpoint_url' ) ) {
+			return null;
 		}
-		return self::$instance;
+
+		global $wp;
+		$order = null;
+
+		if ( is_wc_endpoint_url( 'order-received' ) ) {
+			$order_id = isset( $wp->query_vars['order-received'] ) ? absint( $wp->query_vars['order-received'] ) : 0;
+			if ( ! $order_id ) {
+				return null;
+			}
+			$candidate = wc_get_order( $order_id );
+			if ( ! $candidate ) {
+				return null;
+			}
+			// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Public endpoint; mirrors WooCommerce's own thank-you key check.
+			$url_key = isset( $_GET['key'] ) ? sanitize_text_field( wp_unslash( $_GET['key'] ) ) : '';
+			if ( '' === $url_key || $url_key !== $candidate->get_order_key() ) {
+				return null;
+			}
+			$order = $candidate;
+		} elseif ( is_wc_endpoint_url( 'view-order' ) ) {
+			$order_id = isset( $wp->query_vars['view-order'] ) ? absint( $wp->query_vars['view-order'] ) : 0;
+			if ( ! $order_id || ! current_user_can( 'view_order', $order_id ) ) {
+				return null;
+			}
+			$candidate = wc_get_order( $order_id );
+			if ( ! $candidate ) {
+				return null;
+			}
+			$order = $candidate;
+		}
+
+		if ( ! $order ) {
+			return null;
+		}
+
+		$order_id = $order->get_id();
+
+		return array(
+			'customer-id' => (string) $order->get_user_id(),
+			'order-id'    => (string) $order_id,
+			'token'       => $order->get_order_key() . '_' . $order_id,
+		);
 	}
 
 	/**
-	 * Constructor.
-	 */
-	private function __construct() {
-		add_action( 'woocommerce_thankyou', array( $this, 'track_purchase' ) );
-		add_action( 'woocommerce_order_status_changed', array( $this, 'handle_order_status_change' ), 10, 4 );
-	}
-
-	/**
-	 * Track purchase on thank-you page.
+	 * Inline tracker fired from `woocommerce_thankyou` and `woocommerce_view_order`
+	 * — always emits the `trackPurchaseStatus` call so reward attribution works
+	 * even when the merchant has not placed the `frak/post-purchase` block on
+	 * their template.
 	 *
-	 * @param int $order_id Order ID.
+	 * The `frak/post-purchase` block, when present, ALSO fires `trackPurchaseStatus`
+	 * from its `<frak-post-purchase>` web component on mount. The duplicate call
+	 * is intentional — the SDK is idempotent on the same `(customerId, orderId,
+	 * token)` triple, and having both surfaces fire keeps tracking working when
+	 * either one is missing (block absent, or block present but SDK still warming).
+	 *
+	 * WooCommerce has already run its own endpoint + capability checks before
+	 * firing these actions, so we trust the `$order_id` argument and skip the
+	 * URL-key / `view_order` guard that {@see get_order_context()} performs.
+	 *
+	 * @param int $order_id Order ID provided by the WooCommerce action.
 	 */
-	public function track_purchase( $order_id ) {
+	public static function render_purchase_tracker_for_order( $order_id ) {
+		$order_id = absint( $order_id );
 		if ( ! $order_id ) {
 			return;
 		}
@@ -52,105 +126,22 @@ class Frak_WooCommerce {
 			return;
 		}
 
-		$customer_id = $order->get_user_id();
-		$order_key   = $order->get_order_key();
-
-		wp_register_script( 'frak-purchase-tracking', false, array(), null, true ); // phpcs:ignore WordPress.WP.EnqueuedResourceParameters.MissingVersion -- inline-only handle.
-		wp_enqueue_script( 'frak-purchase-tracking' );
-
-		$tracking_script = $this->get_tracking_script( $customer_id, $order_id, $order_key );
-		wp_add_inline_script( 'frak-purchase-tracking', $tracking_script );
-	}
-
-	/**
-	 * Get the tracking script for a purchase.
-	 *
-	 * @param int    $customer_id Customer ID.
-	 * @param int    $order_id    Order ID.
-	 * @param string $order_key   Order key.
-	 * @return string
-	 */
-	private function get_tracking_script( $customer_id, $order_id, $order_key ) {
 		$payload = array(
-			'customerId' => $customer_id,
-			'orderId'    => $order_id,
-			'token'      => $order_key . '_' . $order_id,
+			'customerId' => (string) $order->get_user_id(),
+			'orderId'    => (string) $order_id,
+			'token'      => $order->get_order_key() . '_' . $order_id,
 		);
 
-		return "
-        (function() {
-            try {
-                const interactionToken = sessionStorage.getItem('frak-wallet-interaction-token');
-                if (interactionToken) {
-                    fetch('https://backend.frak.id/wallet/interactions/listenForPurchase', {
-                        method: 'POST',
-                        headers: {
-                            'Accept': 'application/json',
-                            'Content-Type': 'application/json',
-                            'x-wallet-sdk-auth': interactionToken
-                        },
-                        body: JSON.stringify(" . wp_json_encode( $payload ) . ")
-                    }).catch(error => {
-                        console.error('Frak purchase tracking error:', error);
-                    });
-                }
-            } catch (error) {
-                console.error('Frak purchase tracking error:', error);
-            }
-        })();";
-	}
+		$payload_json = wp_json_encode( $payload, JSON_UNESCAPED_SLASHES );
 
-	/**
-	 * Handle order status changes.
-	 *
-	 * @param int    $order_id   Order ID.
-	 * @param string $old_status Old status.
-	 * @param string $new_status New status.
-	 * @param object $order      Order object.
-	 */
-	public function handle_order_status_change( $order_id, $old_status, $new_status, $order ) {
-		$webhook_secret = get_option( 'frak_webhook_secret' );
-		if ( empty( $webhook_secret ) ) {
-			return;
-		}
-
-		$status_map = array(
-			'completed'  => 'confirmed',
-			'processing' => 'pending',
-			'on-hold'    => 'pending',
-			'pending'    => 'pending',
-			'cancelled'  => 'cancelled',
-			'refunded'   => 'refunded',
-			'failed'     => 'cancelled',
+		// Fires the tracking call as soon as the SDK client is ready. The
+		// synchronous pre-check covers the case where the SDK bootstraps
+		// before this inline script runs.
+		$script = sprintf(
+			'(function(p){var f=function(){var s=window.FrakSetup;if(s&&s.core&&s.core.trackPurchaseStatus){s.core.trackPurchaseStatus(p);return true;}return false;};if(!f())window.addEventListener("frak:client",f,{once:true});})(%s);',
+			$payload_json
 		);
 
-		$skip_statuses = array( 'checkout-draft', 'auto-draft' );
-
-		if ( in_array( $new_status, $skip_statuses, true ) ) {
-			$order->add_order_note(
-				/* translators: %s: order status */
-				sprintf( __( 'Frak: Skipping webhook for status: %s', 'frak' ), $new_status )
-			);
-			return;
-		}
-
-		$webhook_status = isset( $status_map[ $new_status ] ) ? $status_map[ $new_status ] : 'pending';
-		$token          = $order->get_order_key();
-
-		$order->add_order_note(
-			/* translators: %s: webhook status */
-			sprintf( __( 'Frak: Sending webhook with status: %s', 'frak' ), $webhook_status )
-		);
-
-		$result = Frak_Webhook_Helper::send( $order_id, $webhook_status, $token );
-
-		if ( $result['success'] ) {
-			$order->add_order_note( __( 'Frak: Webhook sent successfully', 'frak' ) );
-		} else {
-			$order->add_order_note(
-				/* translators: %s: error message */
-				sprintf( __( 'Frak: Webhook failed: %s', 'frak' ), $result['error'] )
-			);
-		}
+		wp_print_inline_script_tag( $script, array( 'id' => 'frak-purchase-tracker-inline' ) );
 	}
 }

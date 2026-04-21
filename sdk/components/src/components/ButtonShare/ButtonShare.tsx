@@ -61,7 +61,9 @@ export function ButtonShare({
     noRewardText,
     targetInteraction,
     clickAction: rawClickAction,
+    preview,
 }: ButtonShareProps) {
+    const isPreview = !!preview;
     const placement = usePlacement(placementId);
     const globalComponents = useGlobalComponents();
     const componentConfig =
@@ -113,6 +115,7 @@ export function ButtonShare({
     }, [shouldUseReward, resolvedText, resolvedNoRewardText, reward]);
 
     const onClick = useCallback(async () => {
+        if (isPreview) return;
         trackEvent(window.FrakSetup.client, "share_button_clicked");
         if (resolvedClickAction === "embedded-wallet") {
             openEmbeddedWallet(resolvedTargetInteraction, placementId);
@@ -122,13 +125,14 @@ export function ButtonShare({
             openSharingPage(resolvedTargetInteraction, placementId);
         }
     }, [
+        isPreview,
         resolvedClickAction,
         handleShare,
         resolvedTargetInteraction,
         placementId,
     ]);
 
-    if (!shouldRender || isHidden) {
+    if (!isPreview && (!shouldRender || isHidden)) {
         return null;
     }
 
@@ -140,7 +144,7 @@ export function ButtonShare({
         <>
             <button
                 type={"button"}
-                disabled={!isClientReady}
+                disabled={!isPreview && !isClientReady}
                 class={buttonClass}
                 onClick={onClick}
             >
