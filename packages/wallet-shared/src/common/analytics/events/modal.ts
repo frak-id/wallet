@@ -21,7 +21,9 @@ type ModalBaseProps = {
  * Listener modal event map. Events are emitted from the iframe listener app
  * that hosts partner-initiated modals (login, siwe, sendTransaction, final).
  *
- * `_viewed` + `_completed` pairs unlock per-step dropoff KPIs.
+ * Step-level funnel uses `modal_step_viewed` transitions — completion of
+ * step N is inferred from the next `modal_step_viewed` (step N+1) or from
+ * `modal_dismissed` with `last_step`. `modal_step_error` surfaces failures.
  */
 export type ModalEventMap = {
     modal_opened: ModalBaseProps & {
@@ -38,10 +40,6 @@ export type ModalEventMap = {
         step: string;
         index: number;
         total: number;
-    };
-    modal_step_completed: ModalBaseProps & {
-        step: string;
-        index: number;
     };
     modal_step_error: ModalBaseProps & {
         step: string;

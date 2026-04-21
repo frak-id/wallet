@@ -40,13 +40,8 @@ export const modalStore = create<ModalStore>((set, get) => ({
                     },
                 });
 
-                // Track completion
-                trackEvent("modal_step_completed", {
-                    step: step.key,
-                    index,
-                });
-
-                // Update the displayed step index
+                // Move to next step (step completion is inferred from the
+                // next step's `modal_step_viewed` event in the Modal component)
                 set({ currentStep: index + 1 });
             },
         })) as DisplayedModalStep<AnyModalKey>[];
@@ -70,12 +65,6 @@ export const modalStore = create<ModalStore>((set, get) => ({
                 ...results,
                 [stepKey]: response,
             },
-        });
-
-        // Track completion
-        trackEvent("modal_step_completed", {
-            step: stepKey,
-            index: currentStep,
         });
 
         // Move to next step

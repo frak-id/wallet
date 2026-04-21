@@ -19,6 +19,13 @@ type DemoLoginArgs = {
 
 type DemoContext = { flow: Flow };
 
+/**
+ * Demo-login TanStack mutation with scoped `auth_demo` flow.
+ *
+ * Like `useLogin`, abandonment is not instrumented at the hook layer — the
+ * mutation outlives the component. If needed, wire `flow.end("abandoned")`
+ * at the consuming route's unmount cleanup.
+ */
 export function useDemoLogin() {
     return useMutation<Session, Error, DemoLoginArgs, DemoContext>({
         mutationKey: authKey.demo.login,

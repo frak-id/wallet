@@ -20,20 +20,12 @@ export type SdkComponentEventMap = {
     };
     share_error_debug_copied: ButtonBaseProps;
 
-    // Wallet button — floating position is all we can reliably capture
-    // from the component; wallet status would require a subscription that
-    // bloats the bundle, so we skip it for now.
-    wallet_button_clicked: ButtonBaseProps & {
-        position?: "left" | "right";
-    };
+    // Wallet button (floating) — NOT actively used in production. No tracking.
 
     // Open in app — path lets us compare deep-link destinations once we add more.
     open_in_app_clicked: {
         placement?: string;
         path: string;
-    };
-    open_in_app_login_clicked: {
-        placement?: string;
     };
     app_not_installed: {
         placement?: string;

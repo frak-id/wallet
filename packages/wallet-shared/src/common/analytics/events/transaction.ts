@@ -1,10 +1,14 @@
 import type { FlowEvents } from "./flow";
 
-type TxBaseProps = {
-    tx_count?: number;
-    flow_id?: string;
-};
-
+/**
+ * Listener transaction flow — used only by the legacy modal flow (business
+ * app). We track the 3 flow outcomes plus `listener_tx_mobile_app_not_found`
+ * so we keep visibility on mobile app adoption issues during tx signing.
+ *
+ * Note: `listener_tx_abandoned` is emitted by `startFlow` when the modal
+ * unmounts before success/failure. We don't dashboard it but accept the
+ * dead event name in the map.
+ */
 type ListenerTxFlowExtras = {
     tx_count?: number;
     is_mobile_pairing?: boolean;
@@ -13,18 +17,10 @@ type ListenerTxFlowExtras = {
 
 type ListenerTxFlow = FlowEvents<"listener_tx", ListenerTxFlowExtras>;
 
-type ListenerTxMidFlowEvents = {
-    listener_tx_submitted: TxBaseProps;
-    listener_tx_mobile_deeplink_clicked: {
-        retry: boolean;
-        flow_id?: string;
-    };
-    listener_tx_mobile_timeout: {
-        flow_id?: string;
-    };
+type ListenerTxMobileEvents = {
     listener_tx_mobile_app_not_found: {
         flow_id?: string;
     };
 };
 
-export type ListenerTxEventMap = ListenerTxFlow & ListenerTxMidFlowEvents;
+export type ListenerTxEventMap = ListenerTxFlow & ListenerTxMobileEvents;

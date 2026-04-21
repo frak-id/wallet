@@ -107,7 +107,7 @@ function InstallProcessing({ m: merchantId, a: anonymousId }: InstallSearch) {
                 : undefined;
 
         const isLoggedIn = !!getSafeSession()?.token;
-        trackEvent("install_processing_started", {
+        trackEvent("install_processing_triggered", {
             is_logged_in: isLoggedIn,
             has_ensure_action: Boolean(ensureAction),
         });

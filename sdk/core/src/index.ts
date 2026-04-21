@@ -127,10 +127,6 @@ export {
 } from "./utils";
 export type {
     SdkEventMap,
-    SdkFlow,
-    SdkFlowEndExtras,
-    SdkFlowOutcome,
     SdkHandshakeFailureReason,
 } from "./utils/analytics";
-export { startFlow } from "./utils/analytics";
 export { computeLegacyProductId } from "./utils/computeLegacyProductId";

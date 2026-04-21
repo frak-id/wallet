@@ -108,9 +108,7 @@ describe("modalStore", () => {
             expect(modalStore.getState().dismissed).toBe(false);
         });
 
-        test("should call onResponse to update results and move to next step", async () => {
-            const { trackEvent } = await import("@frak-labs/wallet-shared");
-
+        test("should call onResponse to update results and move to next step", () => {
             const steps = [{ key: "login" as const, params: {} as any }];
 
             modalStore.getState().setNewModal({
@@ -130,10 +128,6 @@ describe("modalStore", () => {
                 login: { status: "success" },
             });
             expect(updatedState.currentStep).toBe(1);
-            expect(trackEvent).toHaveBeenCalledWith("modal_step_completed", {
-                step: "login",
-                index: 0,
-            });
         });
 
         test("should not update results if results is undefined when onResponse called", () => {
@@ -184,18 +178,6 @@ describe("modalStore", () => {
             expect(state.results).toEqual({ login: { status: "success" } });
         });
 
-        test("should track analytics event", async () => {
-            const { trackEvent } = await import("@frak-labs/wallet-shared");
-
-            modalStore
-                .getState()
-                .completeStep("login", { status: "success" } as any);
-
-            expect(trackEvent).toHaveBeenCalledWith("modal_step_completed", {
-                step: "login",
-                index: 0,
-            });
-        });
 
         test("should move to next step", () => {
             modalStore
@@ -702,8 +684,7 @@ describe("modalStore", () => {
     });
 
     describe("Edge cases and complex workflows", () => {
-        test("should handle multi-step workflow with onResponse callbacks", async () => {
-            const { trackEvent } = await import("@frak-labs/wallet-shared");
+        test("should handle multi-step workflow with onResponse callbacks", () => {
 
             const steps = [
                 { key: "login" as const, params: {} as any },
@@ -737,8 +718,6 @@ describe("modalStore", () => {
                 login: { status: "success" },
                 siweAuthenticate: { signature: "0x123" },
             });
-
-            expect(trackEvent).toHaveBeenCalledTimes(2);
         });
 
         test("should handle rapid modal changes", () => {

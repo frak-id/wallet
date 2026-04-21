@@ -1,4 +1,3 @@
-import * as coreSdk from "@frak-labs/core-sdk";
 import { fireEvent, render, screen } from "@testing-library/preact";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import * as useClientReadyHook from "@/hooks/useClientReady";
@@ -84,21 +83,6 @@ describe.sequential("ButtonWallet", () => {
         expect(buttonWalletUtils.openWalletModal).toHaveBeenCalledTimes(1);
     });
 
-    it("should track event on click", () => {
-        render(<ButtonWallet />);
-        const button = screen.getByRole("button", { name: "Open wallet" });
-
-        fireEvent.click(button);
-
-        expect(coreSdk.trackEvent).toHaveBeenCalledWith(
-            window.FrakSetup.client,
-            "wallet_button_clicked",
-            expect.objectContaining({
-                position: "right",
-                has_reward: false,
-            })
-        );
-    });
 
     it("should display reward when useReward is true and reward is available", () => {
         vi.mocked(useRewardHook.useReward).mockReturnValue({

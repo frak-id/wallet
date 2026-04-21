@@ -19,25 +19,21 @@ export type {
     ModalDismissSource,
     ModalEventMap,
     NotificationEventMap,
-    NotificationPermission,
+    NotificationOptInOutcome,
     OnboardingAction,
     OnboardingEventMap,
-    OnboardingStep,
     PairingErrorState,
     PairingEventMap,
     PairingMode,
     SharingEventMap,
     TokensEventMap,
     TokensSendAmountBucket,
-    TokensSendValidationField,
 } from "./events";
 export {
     getOrCreateSessionId,
     identifyAuthenticatedUser,
     initAnalytics,
-    setBiometricsFlag,
     setInstallSource,
-    setLocale,
     setProfileId,
     updateGlobalProperties,
 } from "./globalProps";
@@ -51,7 +47,6 @@ export type {
 } from "./types";
 
 // Initialise OpenPanel at module load — preserves existing behaviour.
-// Callers that need to update locale later should call `setLocale(...)`.
 initAnalytics();
 
 /**

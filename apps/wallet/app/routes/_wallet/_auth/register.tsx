@@ -1,7 +1,6 @@
 import {
     authenticatorStorage,
     type Flow,
-    type NotificationPermission,
     startFlow,
     trackEvent,
     useLogin,
@@ -78,18 +77,13 @@ function RegisterPage() {
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
-    const advanceStep = useCallback((to: FlowStep, from: FlowStep) => {
-        flowRef.current?.track("onboarding_step_advanced", { from, to });
-        setStep(to);
-    }, []);
-
     const advanceToNotification = useCallback(() => {
         closeModal();
         // Drain logical pending actions (ensure calls) immediately after auth.
         // Navigation actions are deferred until after the welcome screen.
         executePendingActions({ skipNavigation: true });
-        advanceStep("notification", "onboarding");
-    }, [closeModal, executePendingActions, advanceStep]);
+        setStep("notification");
+    }, [closeModal, executePendingActions]);
 
     const { login, isLoading: isLoginLoading } = useLogin({
         onSuccess: advanceToNotification,
@@ -106,16 +100,6 @@ function RegisterPage() {
         }
     }, [step]);
 
-    // Fire `notification_permission_resolved` once the permission is known
-    const trackedPermissionRef = useRef(false);
-    useEffect(() => {
-        if (trackedPermissionRef.current || !permissionStatus) return;
-        trackedPermissionRef.current = true;
-        flowRef.current?.track("notification_permission_resolved", {
-            permission: permissionStatus as NotificationPermission,
-        });
-    }, [permissionStatus]);
-
     // Auto-skip notification step if already granted or denied
     useEffect(() => {
         if (
@@ -126,20 +110,14 @@ function RegisterPage() {
             )
         )
             return;
-        flowRef.current?.track("notification_auto_skipped", {
-            reason:
+        flowRef.current?.track("notification_opt_in_resolved", {
+            outcome:
                 permissionStatus === "denied"
-                    ? "already_denied"
-                    : "already_granted",
+                    ? "auto_skipped_denied"
+                    : "auto_skipped_granted",
         });
-        advanceStep("welcome", "notification");
-    }, [
-        step,
-        permissionStatus,
-        permissionGranted,
-        hasBackendToken,
-        advanceStep,
-    ]);
+        setStep("welcome");
+    }, [step, permissionStatus, permissionGranted, hasBackendToken]);
 
     const handleOpenKeypass = useCallback(() => {
         // Blur active element before opening drawer to prevent
@@ -150,7 +128,6 @@ function RegisterPage() {
         flowRef.current?.track("onboarding_action_clicked", {
             action: "activate_secure_space",
         });
-        flowRef.current?.track("onboarding_keypass_opened");
         openModal({
             id: "keypass",
             onAuthSuccess: advanceToNotification,
@@ -199,25 +176,34 @@ function RegisterPage() {
             {step === "notification" && (
                 <NotificationOptIn
                     onEnable={() => {
-                        flowRef.current?.track("notification_opt_in_enabled");
                         subscribeToPushAsync()
-                            .then(() => advanceStep("welcome", "notification"))
+                            .then(() => {
+                                flowRef.current?.track(
+                                    "notification_opt_in_resolved",
+                                    { outcome: "enabled" }
+                                );
+                                setStep("welcome");
+                            })
                             .catch((err: unknown) => {
                                 flowRef.current?.track(
-                                    "notification_opt_in_denied",
+                                    "notification_opt_in_resolved",
                                     {
+                                        outcome: "denied",
                                         reason:
                                             err instanceof Error
                                                 ? err.message
                                                 : String(err),
                                     }
                                 );
-                                advanceStep("welcome", "notification");
+                                setStep("welcome");
                             });
                     }}
                     onSkip={() => {
-                        flowRef.current?.track("notification_opt_in_skipped");
-                        advanceStep("welcome", "notification");
+                        flowRef.current?.track(
+                            "notification_opt_in_resolved",
+                            { outcome: "skipped" }
+                        );
+                        setStep("welcome");
                     }}
                 />
             )}

@@ -32,24 +32,16 @@ export type {
 export type { ModalDismissSource, ModalEventMap } from "./modal";
 export type {
     NotificationEventMap,
-    NotificationPermission,
+    NotificationOptInOutcome,
 } from "./notification";
-export type {
-    OnboardingAction,
-    OnboardingEventMap,
-    OnboardingStep,
-} from "./onboarding";
+export type { OnboardingAction, OnboardingEventMap } from "./onboarding";
 export type {
     PairingErrorState,
     PairingEventMap,
     PairingMode,
 } from "./pairing";
 export type { SharingEventMap } from "./sharing";
-export type {
-    TokensEventMap,
-    TokensSendAmountBucket,
-    TokensSendValidationField,
-} from "./tokens";
+export type { TokensEventMap, TokensSendAmountBucket } from "./tokens";
 export type { ListenerTxEventMap } from "./transaction";
 
 export type EventMap = AuthEventMap &

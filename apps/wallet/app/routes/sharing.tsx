@@ -18,7 +18,7 @@ import {
 } from "@frak-labs/wallet-shared";
 import { useQuery } from "@tanstack/react-query";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import { useMerchantResolvedConfig } from "@/module/common/hook/useMerchantResolvedConfig";
@@ -135,6 +135,12 @@ function WalletSharingPage() {
         merchantId,
     });
 
+    // Fire `sharing_page_viewed` once per mount, independent of whether we end up
+    // rendering the confirmation screen. Denominator for the sharing funnel.
+    useEffect(() => {
+        trackEvent("sharing_page_viewed", { merchant_id: merchantId });
+    }, [merchantId]);
+
     // Fetch backend-driven merchant config to source attribution defaults
     const { data: defaultAttribution } = useMerchantResolvedConfig({
         merchantId,
@@ -224,6 +230,17 @@ function WalletSharingPage() {
         attribution,
         defaultAttribution,
     ]);
+
+    // Emit `sharing_link_generated` once the final link is resolved. Ref guard
+    // keeps the event at-most-once per (merchantId, link) tuple so product
+    // re-selection doesn't inflate the funnel.
+    const reportedLinkRef = useRef<string | null>(null);
+    useEffect(() => {
+        if (!finalSharingLink) return;
+        if (reportedLinkRef.current === finalSharingLink) return;
+        reportedLinkRef.current = finalSharingLink;
+        trackEvent("sharing_link_generated", { merchant_id: merchantId });
+    }, [finalSharingLink, merchantId]);
 
     // Share mutation using the shared hook
     const {

@@ -31,6 +31,16 @@ type LoginContext = {
     method: "global" | "specific";
 };
 
+/**
+ * Auth-login TanStack mutation with scoped `auth_login` flow.
+ *
+ * The flow emits `_started` in `onMutate` and terminates in `onSuccess`/
+ * `onError`. Abandonment (user closing the dialog mid-auth) is **not**
+ * instrumented at this layer — the mutation outlives the component, and
+ * we'd need the consuming route to own the cleanup. If a dedicated auth
+ * abandonment metric becomes necessary, wire `flow.end("abandoned")` at
+ * the component unmount site that holds the `ctx.flow` reference.
+ */
 export function useLogin(
     options?: UseMutationOptions<Session, Error, UseLoginArgs>
 ) {

@@ -47,11 +47,11 @@ describe("trackEvent", () => {
         });
 
         it("should track event with props", () => {
-            const props = { placement: "footer" } as const;
-            trackEvent(mockClient, "wallet_button_clicked", props);
+            const props = { placement: "footer", click_action: "share-modal" } as const;
+            trackEvent(mockClient, "share_button_clicked", props);
 
             expect(mockClient.openPanel?.track).toHaveBeenCalledWith(
-                "wallet_button_clicked",
+                "share_button_clicked",
                 props
             );
         });
@@ -95,7 +95,7 @@ describe("trackEvent", () => {
         });
 
         it("should log debug message when client is undefined", () => {
-            trackEvent(undefined, "wallet_button_clicked");
+            trackEvent(undefined, "share_button_clicked");
 
             expect(consoleDebugSpy).toHaveBeenCalledWith(
                 "[Frak] No client provided, skipping event tracking"
@@ -136,7 +136,7 @@ describe("trackEvent", () => {
             const clientWithoutPanel = {} as FrakClient;
 
             expect(() => {
-                trackEvent(clientWithoutPanel, "wallet_button_clicked");
+                trackEvent(clientWithoutPanel, "share_button_clicked");
             }).not.toThrow();
         });
     });

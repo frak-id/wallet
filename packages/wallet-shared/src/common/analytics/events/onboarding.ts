@@ -1,6 +1,5 @@
 import type { FlowEvents } from "./flow";
 
-export type OnboardingStep = "onboarding" | "notification" | "welcome";
 export type OnboardingAction =
     | "start"
     | "continue"
@@ -22,11 +21,6 @@ type OnboardingMidFlowEvents = {
     onboarding_action_clicked: OnboardingBaseProps & {
         action: OnboardingAction;
         slide_index?: number;
-    };
-    onboarding_keypass_opened: OnboardingBaseProps | undefined;
-    onboarding_step_advanced: OnboardingBaseProps & {
-        from: OnboardingStep;
-        to: OnboardingStep;
     };
 };
 

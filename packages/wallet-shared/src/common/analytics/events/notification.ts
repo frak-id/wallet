@@ -1,11 +1,21 @@
 /**
- * Notification opt-in event map — covers the register-flow notification step
- * plus the ambient permission resolution that runs on every mount.
+ * Notification opt-in event map — covers the register-flow notification step.
  *
- * These events share the `onboarding` flow id when fired inside the register
- * flow (the notification step is a sub-step of onboarding).
+ * Two events:
+ *   - `notification_opt_in_viewed` — user landed on the notification step
+ *   - `notification_opt_in_resolved` — step terminated, `outcome` says how
+ *
+ * `outcome` unifies what used to be 5 separate events (enabled, skipped,
+ * denied, auto_skipped with granted/denied). Dashboards filter by outcome
+ * instead of joining multiple event streams. Shares the `onboarding` flow_id
+ * when fired inside the register flow.
  */
-export type NotificationPermission = "granted" | "denied" | "default";
+export type NotificationOptInOutcome =
+    | "enabled"
+    | "skipped"
+    | "denied"
+    | "auto_skipped_granted"
+    | "auto_skipped_denied";
 
 type NotificationBaseProps = {
     flow_id?: string;
@@ -13,15 +23,8 @@ type NotificationBaseProps = {
 
 export type NotificationEventMap = {
     notification_opt_in_viewed: NotificationBaseProps | undefined;
-    notification_opt_in_enabled: NotificationBaseProps | undefined;
-    notification_opt_in_skipped: NotificationBaseProps | undefined;
-    notification_opt_in_denied: NotificationBaseProps & {
-        reason: string;
-    };
-    notification_permission_resolved: NotificationBaseProps & {
-        permission: NotificationPermission;
-    };
-    notification_auto_skipped: NotificationBaseProps & {
-        reason: "already_granted" | "already_denied";
+    notification_opt_in_resolved: NotificationBaseProps & {
+        outcome: NotificationOptInOutcome;
+        reason?: string;
     };
 };

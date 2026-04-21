@@ -91,8 +91,6 @@ const AmountInput = function AmountInput({
     setValue,
     setSelectedToken,
     resetField,
-    onTokenChanged,
-    onMaxClicked,
 }: {
     register: UseFormRegister<FormInput>;
     errors: FieldErrors<FormInput>;
@@ -100,25 +98,21 @@ const AmountInput = function AmountInput({
     setValue: UseFormSetValue<FormInput>;
     setSelectedToken: (token: BalanceItem) => void;
     resetField: UseFormResetField<FormInput>;
-    onTokenChanged: (token_symbol: string) => void;
-    onMaxClicked: (token_symbol: string) => void;
 }) {
     const { t } = useTranslation();
 
     const handleMaxClick = useCallback(() => {
-        onMaxClicked(selectedToken?.symbol ?? "unknown");
         setValue("amount", selectedToken?.amount.toString(), {
             shouldValidate: true,
         });
-    }, [selectedToken, setValue, onMaxClicked]);
+    }, [selectedToken, setValue]);
 
     const handleTokenChange = useCallback(
         (token: BalanceItem) => {
-            onTokenChanged(token.symbol ?? "unknown");
             setSelectedToken(token);
             resetField("amount");
         },
-        [setSelectedToken, resetField, onTokenChanged]
+        [setSelectedToken, resetField]
     );
 
     return (
@@ -250,54 +244,15 @@ function TokensSendPage() {
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
-    // Validation errors — emit once per error type, not on every keystroke
-    const reportedAddressError = useRef<string | null>(null);
-    useEffect(() => {
-        const errType = errors.toAddress?.type ?? null;
-        if (errType && errType !== reportedAddressError.current) {
-            reportedAddressError.current = errType;
-            flowRef.current?.track("tokens_send_validation_failed", {
-                field: "address",
-                error_type: errType,
-            });
-        } else if (!errType) {
-            reportedAddressError.current = null;
-        }
-    }, [errors.toAddress]);
-
-    const reportedAmountError = useRef<string | null>(null);
-    useEffect(() => {
-        const errType = errors.amount?.type ?? null;
-        if (errType && errType !== reportedAmountError.current) {
-            reportedAmountError.current = errType;
-            flowRef.current?.track("tokens_send_validation_failed", {
-                field: "amount",
-                error_type: errType,
-            });
-        } else if (!errType) {
-            reportedAmountError.current = null;
-        }
-    }, [errors.amount]);
-
     const onSubmit: SubmitHandler<FormInput> = useCallback(
         async (data) => {
             if (!selectedToken) return;
             const tokenSymbol = selectedToken.symbol ?? "unknown";
 
-            flowRef.current?.track("tokens_send_biometric_requested");
             const confirmed = await confirm();
-            if (!confirmed) {
-                flowRef.current?.track("tokens_send_biometric_rejected");
-                return;
-            }
+            if (!confirmed) return;
 
             const { toAddress, amount } = data;
-            const amount_bucket = bucketAmount(amount);
-            flowRef.current?.track("tokens_send_submitted", {
-                token_symbol: tokenSymbol,
-                amount_bucket,
-            });
-            const _startedAt = Date.now();
 
             try {
                 await writeContractAsync({
@@ -311,6 +266,7 @@ function TokensSendPage() {
                 });
                 flowRef.current?.end("succeeded", {
                     token_symbol: tokenSymbol,
+                    amount_bucket: bucketAmount(amount),
                 });
 
                 reset();
@@ -329,14 +285,6 @@ function TokensSendPage() {
         },
         [selectedToken, writeContractAsync, reset, refetch, confirm]
     );
-
-    const handleTokenChanged = useCallback((token_symbol: string) => {
-        flowRef.current?.track("tokens_send_token_changed", { token_symbol });
-    }, []);
-
-    const handleMaxClicked = useCallback((token_symbol: string) => {
-        flowRef.current?.track("tokens_send_max_clicked", { token_symbol });
-    }, []);
 
     return (
         <>
@@ -359,8 +307,6 @@ function TokensSendPage() {
                                 setValue={setValue}
                                 setSelectedToken={setSelectedToken}
                                 resetField={resetField}
-                                onTokenChanged={handleTokenChanged}
-                                onMaxClicked={handleMaxClicked}
                             />
 
                             <Button

@@ -478,5 +478,20 @@ async function postConnectionSetup({
         });
     }
 
-    await Promise.allSettled([pushCss(), pushI18n(), pushBackup()]);
+    // Inspect each setup result — a failed CSS/i18n/backup push leaves the
+    // partner UI in a broken-but-connected state (iframe reports
+    // `sdk_iframe_connected`, user sees no modal styles / wrong locale).
+    // Surface it as a distinct handshake reason so dashboards can
+    // distinguish timeout vs. asset-push failures.
+    const results = await Promise.allSettled([
+        pushCss(),
+        pushI18n(),
+        pushBackup(),
+    ]);
+    const hasFailedAssetPush = results.some((r) => r.status === "rejected");
+    if (hasFailedAssetPush) {
+        openPanel?.track("sdk_iframe_handshake_failed", {
+            reason: "asset_push",
+        });
+    }
 }

@@ -65,25 +65,28 @@ describe("startFlow", () => {
 
     describe("track", () => {
         it("injects flow_id into scoped track calls", () => {
-            const flow = startFlow("tokens_send");
+            const flow = startFlow("onboarding");
             mockTrack.mockClear();
-            flow.track("tokens_send_submitted", {
-                token_symbol: "USDC",
-                amount_bucket: "1-10",
+            flow.track("onboarding_slide_viewed", {
+                index: 0,
+                translation_key: "slides.welcome",
             });
-            expect(mockTrack).toHaveBeenCalledWith("tokens_send_submitted", {
-                token_symbol: "USDC",
-                amount_bucket: "1-10",
-                flow_id: flow.flowId,
-            });
+            expect(mockTrack).toHaveBeenCalledWith(
+                "onboarding_slide_viewed",
+                {
+                    index: 0,
+                    translation_key: "slides.welcome",
+                    flow_id: flow.flowId,
+                }
+            );
         });
 
         it("allows undefined properties", () => {
-            const flow = startFlow("tokens_send");
+            const flow = startFlow("onboarding");
             mockTrack.mockClear();
-            flow.track("tokens_send_biometric_requested");
+            flow.track("notification_opt_in_viewed");
             expect(mockTrack).toHaveBeenCalledWith(
-                "tokens_send_biometric_requested",
+                "notification_opt_in_viewed",
                 { flow_id: flow.flowId }
             );
         });
@@ -104,7 +107,7 @@ describe("startFlow", () => {
             expect(flow.ended).toBe(true);
         });
 
-        it("emits {name}_failed, {name}_abandoned and {name}_cancelled", () => {
+        it("emits {name}_failed and {name}_abandoned with end extras", () => {
             const failed = startFlow("auth_login");
             mockTrack.mockClear();
             failed.end("failed", { error_type: "timeout" });
@@ -120,14 +123,6 @@ describe("startFlow", () => {
                 "onboarding_abandoned",
                 expect.objectContaining({ last_step: "slide_2" })
             );
-
-            const cancelled = startFlow("tokens_send");
-            mockTrack.mockClear();
-            cancelled.end("cancelled");
-            expect(mockTrack).toHaveBeenLastCalledWith(
-                "tokens_send_cancelled",
-                expect.objectContaining({ flow_name: "tokens_send" })
-            );
         });
     });
 
@@ -137,7 +132,7 @@ describe("startFlow", () => {
             mockTrack.mockClear();
             flow.end("succeeded");
             flow.end("failed");
-            flow.end("cancelled");
+            flow.end("abandoned");
             expect(mockTrack).toHaveBeenCalledTimes(1);
             expect(mockTrack).toHaveBeenLastCalledWith(
                 "tokens_send_succeeded",
@@ -149,9 +144,9 @@ describe("startFlow", () => {
             const flow = startFlow("tokens_send");
             flow.end("succeeded");
             mockTrack.mockClear();
-            flow.track("tokens_send_submitted", {
-                token_symbol: "USDC",
-                amount_bucket: "1-10",
+            flow.track("onboarding_slide_viewed", {
+                index: 0,
+                translation_key: "slides.welcome",
             });
             expect(mockTrack).not.toHaveBeenCalled();
         });

@@ -79,7 +79,14 @@ export async function processSsoCompletion(
         });
     } catch (error) {
         console.error("[SSO] Error handling completion:", error);
-
+        // Session-persistence failure after a successful SSO round-trip leaves
+        // the user in a silently-broken logged-out state. Surface it so the
+        // funnel reflects the real outcome.
+        const reason =
+            error instanceof Error
+                ? (error.name ?? "session_persist_failed")
+                : "session_persist_failed";
+        trackEvent("sso_failed", { reason });
         // Reject pending RPC call on error
         pendingSsoRequest?.reject(
             new FrakRpcError(

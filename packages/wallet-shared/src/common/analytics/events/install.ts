@@ -14,6 +14,7 @@ export type InstallSource =
     | "url_params"
     | "install_referrer"
     | "install_code"
+    | "inapp_redirect"
     | "stored";
 
 export type InstallStore = "app_store" | "play_store";
@@ -34,7 +35,9 @@ export type InstallEventMap = {
         has_anonymous_id: boolean;
         view: InstallPageView;
     };
-    install_processing_started: {
+    // Fire-and-forget — no `_succeeded/_failed` outcome is tracked at this level;
+    // the ensuing `identity_ensure_*` events own the funnel terminal state.
+    install_processing_triggered: {
         is_logged_in: boolean;
         has_ensure_action: boolean;
     };
@@ -79,7 +82,6 @@ export type InstallEventMap = {
     install_code_resolve_failed: {
         error_code: string;
     };
-    install_code_success_modal_viewed: MerchantMaybe;
 
     // ---------------------------------------------------------------------
     // Ensure outcome (cross-cutting — all three mechanisms converge here)

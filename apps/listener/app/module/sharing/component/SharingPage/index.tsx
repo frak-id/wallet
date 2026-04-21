@@ -49,6 +49,14 @@ export function ListenerSharingPage() {
         merchantId ? getSavedConfirmation(merchantId) : false
     );
 
+    // Fire `sharing_page_viewed` once per mount — denominator for the listener
+    // sharing funnel. `sharing_page_opened` already fires in the RPC handler
+    // when the iframe first receives the request; `sharing_page_viewed` fires
+    // when the UI actually mounts, so both are useful (RPC vs. render).
+    useEffect(() => {
+        trackEvent("sharing_page_viewed", { merchant_id: merchantId });
+    }, [merchantId]);
+
     // If we restore from sessionStorage, still resolve the RPC as "shared"
     // so the SDK consumer gets the result
     useEffect(() => {
@@ -128,6 +136,16 @@ export function ListenerSharingPage() {
         selectedProductIndex,
         defaultAttribution,
     ]);
+
+    // Emit `sharing_link_generated` once the final link is resolved. Ref guard
+    // keeps the event at-most-once per (merchantId, link) tuple.
+    const reportedLinkRef = useRef<string | null>(null);
+    useEffect(() => {
+        if (!finalSharingLink) return;
+        if (reportedLinkRef.current === finalSharingLink) return;
+        reportedLinkRef.current = finalSharingLink;
+        trackEvent("sharing_link_generated", { merchant_id: merchantId });
+    }, [finalSharingLink, merchantId]);
 
     // Share mutation using the shared hook
     const { mutate: triggerSharing, isPending: isSharing } = useShareLink(

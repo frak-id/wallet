@@ -83,19 +83,12 @@ export function TransactionModalStep({
         return null;
     }
 
-    const onSubmit = () => {
-        flowRef.current?.track("listener_tx_submitted", {
-            tx_count: txs.length,
-        });
-    };
-
     if (isMobilePairing) {
         return (
             <MobileTransactionStep
                 txs={txs}
                 toSendTx={toSendTx}
                 sendTransaction={sendTransaction}
-                onSubmit={onSubmit}
                 flowRef={flowRef}
                 isPending={isPending}
                 isError={isError}
@@ -109,7 +102,6 @@ export function TransactionModalStep({
             txs={txs}
             toSendTx={toSendTx}
             sendTransaction={sendTransaction}
-            onSubmit={onSubmit}
             isPending={isPending}
             isError={isError}
             error={error}
@@ -121,7 +113,6 @@ type TransactionStepProps = {
     txs: ReturnType<typeof useMappedTx>["txs"];
     toSendTx: NonNullable<ReturnType<typeof useMappedTx>["toSendTx"]>;
     sendTransaction: ReturnType<typeof useSendTransaction>["sendTransaction"];
-    onSubmit: () => void;
     isPending: boolean;
     isError: boolean;
     error: Error | null;
@@ -131,7 +122,6 @@ function DesktopTransactionStep({
     txs,
     toSendTx,
     sendTransaction,
-    onSubmit,
     isPending,
     isError,
     error,
@@ -146,10 +136,7 @@ function DesktopTransactionStep({
                 size={"small"}
                 width={"full"}
                 disabled={isPending}
-                onClick={() => {
-                    onSubmit();
-                    sendTransaction(toSendTx);
-                }}
+                onClick={() => sendTransaction(toSendTx)}
             >
                 {t("sdk.modal.sendTransaction.primaryAction", {
                     count: txs.length,
@@ -165,7 +152,6 @@ function MobileTransactionStep({
     txs,
     toSendTx,
     sendTransaction,
-    onSubmit,
     flowRef,
     isPending,
     isError,
@@ -184,10 +170,7 @@ function MobileTransactionStep({
     isPendingRef.current = isPending;
 
     const emitDeepLink = useCallback(
-        (retry: boolean) => {
-            flowRef.current?.track("listener_tx_mobile_deeplink_clicked", {
-                retry,
-            });
+        (_retry: boolean) => {
             emitRedirectWithFallback(mobileWalletDeepLink, () => {
                 flowRef.current?.track("listener_tx_mobile_app_not_found", {});
                 setAppNotFound(true);
@@ -198,7 +181,6 @@ function MobileTransactionStep({
 
     const triggerTransaction = useCallback(() => {
         setStatus("waiting");
-        onSubmit();
         sendTransaction(toSendTx);
 
         // Trigger deep link immediately — must stay synchronous in click
@@ -209,17 +191,9 @@ function MobileTransactionStep({
 
         startTimeout(() => {
             if (!isPendingRef.current) return;
-            flowRef.current?.track("listener_tx_mobile_timeout", {});
             setStatus("timeout");
         }, 30_000);
-    }, [
-        sendTransaction,
-        toSendTx,
-        emitDeepLink,
-        startTimeout,
-        onSubmit,
-        flowRef,
-    ]);
+    }, [sendTransaction, toSendTx, emitDeepLink, startTimeout]);
 
     useEffect(() => {
         if (!isError && !isPending && status === "waiting") {

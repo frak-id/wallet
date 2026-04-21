@@ -329,9 +329,9 @@ function CurrentModalStepComponent({
     const currentStepIndex = modalStore((s) => s.currentStep);
     const totalSteps = modalStore((s) => s.steps?.length ?? 0);
 
-    // Emit modal_step_viewed on every step transition. Paired with the
-    // modal_step_completed event in modalStore, this unlocks per-step
-    // dropoff analysis in OpenPanel funnels.
+    // Emit modal_step_viewed on every step transition. Step completion is
+    // inferred from the next step's _viewed event (or modal_dismissed with
+    // last_step) so we don't need a dedicated _completed event.
     useEffect(() => {
         if (!currentStep) return;
         const stepKey =

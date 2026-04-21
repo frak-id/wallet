@@ -85,7 +85,7 @@ packages/wallet-shared/src/common/analytics/
 ├── events/
 │   ├── auth.ts         ← register_*, login_*, demo_*, sso_*, pairing_*, user_logged_in, logout
 │   ├── sharing.ts      ← sharing_link_* (snake) + legacy kebab aliases
-│   ├── flow.ts         ← flow_started / flow_succeeded / flow_failed / flow_abandoned / flow_cancelled
+│   ├── flow.ts         ← FlowEvents<Name, Extras> utility → {name}_started / _succeeded / _failed / _abandoned
 │   └── index.ts        ← merged EventMap = Auth & Sharing & Flow (extend as phases land)
 ├── trackEvent.ts       ← typed trackEvent<K extends keyof EventMap>(name, props)
 ├── startFlow.ts        ← scoped flow helper with double-end + track-after-end guards
@@ -212,11 +212,10 @@ useEffect(() => {
 
 | Event | When |
 |---|---|
-| `flow_started` | `startFlow(name)` — emits `{ flow_name, flow_id }` |
-| `flow_succeeded` | `flow.end("succeeded")` — emits `{ flow_name, flow_id, duration_ms, ...extras }` |
-| `flow_failed` | `flow.end("failed")` — emits `{ flow_name, flow_id, duration_ms, error_type, ... }` |
-| `flow_abandoned` | `flow.end("abandoned")` — emits `{ flow_name, flow_id, duration_ms, last_step, ... }` |
-| `flow_cancelled` | `flow.end("cancelled")` — user-initiated cancel |
+| `{name}_started` | `startFlow(name, extras)` — emits `{ flow_name, flow_id, …extras }` |
+| `{name}_succeeded` | `flow.end("succeeded")` — emits `{ flow_name, flow_id, duration_ms, …extras }` |
+| `{name}_failed` | `flow.end("failed")` — emits `{ flow_name, flow_id, duration_ms, error_type, … }` |
+| `{name}_abandoned` | `flow.end("abandoned")` — emits `{ flow_name, flow_id, duration_ms, last_step, … }` |
 
 These are defined in `wallet-shared/analytics/events/flow.ts` and are always available regardless of the app map.
 
@@ -356,7 +355,7 @@ The `/install` route is the web-side gateway. It renders two variants depending 
 | Event | Properties | Trigger | File |
 |---|---|---|---|
 | `install_page_viewed` | `merchant_id?`, `has_anonymous_id: boolean`, `view: "code" \| "processing"` | Route mount (either variant) | `apps/wallet/app/routes/install.tsx:48` |
-| `install_processing_started` | `is_logged_in: boolean`, `has_ensure_action: boolean` | `InstallProcessing` effect mount | `install.tsx:88-120` |
+| `install_processing_triggered` | `is_logged_in: boolean`, `has_ensure_action: boolean` | `InstallProcessing` effect mount (fire-and-forget — terminal outcome is captured by `identity_ensure_*`) | `install.tsx` |
 | `install_code_displayed` | `merchant_id?` | `data?.code` resolved from `useGenerateInstallCode` | `install.tsx:249` |
 | `install_code_generation_failed` | `error_type`, `merchant_id?` | `useGenerateInstallCode` error | `install.tsx:243-247` |
 | `install_code_copied` | `merchant_id?` | Copy button click | `install.tsx:195-200` |
@@ -496,7 +495,7 @@ Existing `install_pwa_initiated` (after kebab→snake migration) remains — fir
 | `sso_flow_viewed` | `referrer_merchant` | `_sso/sso.tsx` mount | `app/routes/_wallet/_sso/sso.tsx` |
 | `sso_flow_succeeded` | `duration_ms` | success path | `_sso/sso.tsx` |
 | `sso_flow_failed` | `error_type` | error path | `_sso/sso.tsx` |
-| `sso_flow_cancelled` | – | cancel path | `_sso/sso.tsx` |
+| `sso_flow_abandoned` | – | unmount-before-resolve (no explicit cancel button wired yet) | `_sso/sso.tsx` |
 
 Listener already fires `trackAuthCompleted("sso", …)` → `sso_completed`; these new events capture the wallet-side view.
 
