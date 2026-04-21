@@ -2,6 +2,7 @@
  * Shared types for Zustand stores
  */
 
+import type { ModalDismissSource } from "@frak-labs/wallet-shared";
 import type { ResolvedSdkConfig } from "@frak-labs/backend-elysia/api/schemas";
 import type {
     ModalRpcStepsResultType,
@@ -98,5 +99,5 @@ export interface ModalStore {
     nextStep: () => void;
     clearModal: () => void;
     setDismissed: (dismissed: boolean) => void;
-    dismissModal: () => void;
+    dismissModal: (source?: ModalDismissSource) => void;
 }

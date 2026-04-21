@@ -12,7 +12,7 @@ import {
     type RpcPromiseHandler,
     type RpcResponse,
 } from "@frak-labs/frame-connector";
-import { sessionStore, trackGenericEvent } from "@frak-labs/wallet-shared";
+import { sessionStore, trackEvent } from "@frak-labs/wallet-shared";
 import { useCallback, useRef } from "react";
 import { useListenerUI } from "@/module/providers/ListenerUiProvider";
 import { modalStore, selectShouldFinish } from "@/module/stores/modalStore";
@@ -187,19 +187,20 @@ function trackModalDisplay(
     currentStep: number
 ) {
     const currentKey = steps[currentStep].key;
-    const trackingData: { step: string } = {
-        step: currentKey,
-    };
+    let entryStep: string = currentKey;
 
-    // In case of final step, track the final action
+    // In case of final step, track the underlying final-action key
     if (currentKey === "final") {
         const finalStepKey = steps[currentStep].params.action.key;
         if (finalStepKey) {
-            trackingData.step = finalStepKey;
+            entryStep = finalStepKey;
         }
     }
 
-    trackGenericEvent("open-modal", trackingData);
+    trackEvent("modal_opened", {
+        steps: steps.map((s) => s.key),
+        entry_step: entryStep,
+    });
 }
 
 /**

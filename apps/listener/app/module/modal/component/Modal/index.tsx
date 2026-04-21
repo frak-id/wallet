@@ -7,6 +7,7 @@ import {
     LogoFrakWithName,
     OriginPairingState,
     prefixModalCss,
+    trackEvent,
     WalletModal,
 } from "@frak-labs/wallet-shared";
 import { cx } from "class-variance-authority";
@@ -313,6 +314,25 @@ function CurrentModalStepComponent({
     onError: (reason?: string) => void;
 }) {
     const currentStep = modalStore(selectCurrentStep);
+    const currentStepIndex = modalStore((s) => s.currentStep);
+    const totalSteps = modalStore((s) => s.steps?.length ?? 0);
+
+    // Emit modal_step_viewed on every step transition. Paired with the
+    // modal_step_completed event in modalStore, this unlocks per-step
+    // dropoff analysis in OpenPanel funnels.
+    useEffect(() => {
+        if (!currentStep) return;
+        const stepKey =
+            currentStep.key === "final" &&
+            currentStep.params.action?.key
+                ? currentStep.params.action.key
+                : currentStep.key;
+        trackEvent("modal_step_viewed", {
+            step: stepKey,
+            index: currentStepIndex,
+            total: totalSteps,
+        });
+    }, [currentStep, currentStepIndex, totalSteps]);
 
     /**
      * Return the right modal depending on the state

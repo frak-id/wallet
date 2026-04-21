@@ -4,10 +4,10 @@ import { beforeEach, describe, expect, test } from "@/tests/fixtures";
 import { useShareLink } from "./useShareLink";
 
 // Mock wallet-shared
-const mockTrackGenericEvent = vi.fn();
+const mockTrackEvent = vi.fn();
 vi.mock("@frak-labs/wallet-shared", () => ({
-    get trackGenericEvent() {
-        return mockTrackGenericEvent;
+    get trackEvent() {
+        return mockTrackEvent;
     },
 }));
 
@@ -47,7 +47,7 @@ describe("useShareLink", () => {
         await result.current.mutateAsync();
 
         // Should not call navigator.share or track event
-        expect(mockTrackGenericEvent).not.toHaveBeenCalled();
+        expect(mockTrackEvent).not.toHaveBeenCalled();
     });
 
     test("should return early if link is empty string", async ({
@@ -59,7 +59,7 @@ describe("useShareLink", () => {
 
         await result.current.mutateAsync();
 
-        expect(mockTrackGenericEvent).not.toHaveBeenCalled();
+        expect(mockTrackEvent).not.toHaveBeenCalled();
     });
 
     test("should return early if navigator is undefined", async ({
@@ -79,7 +79,7 @@ describe("useShareLink", () => {
 
         await result.current.mutateAsync();
 
-        expect(mockTrackGenericEvent).not.toHaveBeenCalled();
+        expect(mockTrackEvent).not.toHaveBeenCalled();
 
         // Restore navigator
         global.navigator = originalNavigator;
@@ -101,7 +101,7 @@ describe("useShareLink", () => {
 
         await result.current.mutateAsync();
 
-        expect(mockTrackGenericEvent).not.toHaveBeenCalled();
+        expect(mockTrackEvent).not.toHaveBeenCalled();
 
         // Restore share function
         if (originalShare) {
@@ -141,7 +141,7 @@ describe("useShareLink", () => {
             url: "https://example.com",
         });
         expect(mockShare).not.toHaveBeenCalled();
-        expect(mockTrackGenericEvent).not.toHaveBeenCalled();
+        expect(mockTrackEvent).not.toHaveBeenCalled();
     });
 
     test("should successfully share link and track event", async ({
@@ -175,8 +175,8 @@ describe("useShareLink", () => {
             text: "Check this out!",
             url: "https://example.com",
         });
-        expect(mockTrackGenericEvent).toHaveBeenCalledWith(
-            "sharing-share-link",
+        expect(mockTrackEvent).toHaveBeenCalledWith(
+            "sharing_link_shared",
             { link: "https://example.com" }
         );
         expect(response).toBe("Shared successfully");
@@ -212,7 +212,7 @@ describe("useShareLink", () => {
         const response = await result.current.mutateAsync();
 
         expect(mockShare).toHaveBeenCalled();
-        expect(mockTrackGenericEvent).not.toHaveBeenCalled();
+        expect(mockTrackEvent).not.toHaveBeenCalled();
         expect(consoleWarnSpy).toHaveBeenCalled();
         expect(response).toBeUndefined();
 

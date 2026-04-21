@@ -100,10 +100,8 @@ describe("processReferral", () => {
                 mockClient,
                 "user_referred_started",
                 {
-                    properties: {
-                        referrerClientId: "referrer-client-id",
-                        walletStatus: "connected",
-                    },
+                    referrerClientId: "referrer-client-id",
+                    walletStatus: "connected",
                 }
             );
 
@@ -156,10 +154,8 @@ describe("processReferral", () => {
                 mockClient,
                 "user_referred_started",
                 {
-                    properties: {
-                        referrer: "0xabcdefabcdefabcdefabcdefabcdefabcdefabcd",
-                        walletStatus: "connected",
-                    },
+                    referrer: "0xabcdefabcdefabcdefabcdefabcdefabcdefabcd",
+                    walletStatus: "connected",
                 }
             );
         });

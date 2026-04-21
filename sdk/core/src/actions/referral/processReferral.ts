@@ -54,10 +54,8 @@ function trackArrivalIfValid(
 
     if (isV2Context(frakContext)) {
         trackEvent(client, "user_referred_started", {
-            properties: {
-                referrerClientId: frakContext.c,
-                walletStatus: walletStatus?.key,
-            },
+            referrerClientId: frakContext.c,
+            walletStatus: walletStatus?.key,
         });
         sendInteraction(client, {
             type: "arrival",
@@ -71,10 +69,8 @@ function trackArrivalIfValid(
 
     if (isV1Context(frakContext)) {
         trackEvent(client, "user_referred_started", {
-            properties: {
-                referrer: frakContext.r,
-                walletStatus: walletStatus?.key,
-            },
+            referrer: frakContext.r,
+            walletStatus: walletStatus?.key,
         });
         sendInteraction(client, {
             type: "arrival",
@@ -177,9 +173,7 @@ export function processReferral(
     });
 
     trackEvent(client, "user_referred_completed", {
-        properties: {
-            status: "success",
-        },
+        status: "success",
     });
 
     return "success";

@@ -10,8 +10,8 @@ import {
     expect,
     it,
     vi,
-} from "../../tests/vitest-fixtures";
-import type { FrakClient } from "../types";
+} from "../../../tests/vitest-fixtures";
+import type { FrakClient } from "../../types";
 import { trackEvent } from "./trackEvent";
 
 describe("trackEvent", () => {
@@ -42,12 +42,12 @@ describe("trackEvent", () => {
 
             expect(mockClient.openPanel?.track).toHaveBeenCalledWith(
                 "share_button_clicked",
-                {}
+                undefined
             );
         });
 
         it("should track event with props", () => {
-            const props = { userId: "123", page: "home" };
+            const props = { placement: "footer" } as const;
             trackEvent(mockClient, "wallet_button_clicked", props);
 
             expect(mockClient.openPanel?.track).toHaveBeenCalledWith(
@@ -71,25 +71,29 @@ describe("trackEvent", () => {
 
             expect(mockClient.openPanel?.track).toHaveBeenCalledWith(
                 "user_referred_started",
-                {}
+                undefined
             );
         });
 
         it("should track user_referred_completed event", () => {
-            trackEvent(mockClient, "user_referred_completed");
+            trackEvent(mockClient, "user_referred_completed", {
+                status: "success",
+            });
 
             expect(mockClient.openPanel?.track).toHaveBeenCalledWith(
                 "user_referred_completed",
-                {}
+                { status: "success" }
             );
         });
 
         it("should track user_referred_error event", () => {
-            trackEvent(mockClient, "user_referred_error");
+            trackEvent(mockClient, "user_referred_error", {
+                reason: "test",
+            });
 
             expect(mockClient.openPanel?.track).toHaveBeenCalledWith(
                 "user_referred_error",
-                {}
+                { reason: "test" }
             );
         });
     });
@@ -160,13 +164,7 @@ describe("trackEvent", () => {
 
         it("should handle complex props object", () => {
             const complexProps = {
-                userId: "123",
-                metadata: {
-                    page: "home",
-                    section: "header",
-                },
-                tags: ["tag1", "tag2"],
-                timestamp: Date.now(),
+                status: "success" as const,
             };
 
             trackEvent(mockClient, "user_referred_completed", complexProps);

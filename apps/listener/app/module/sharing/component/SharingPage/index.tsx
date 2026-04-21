@@ -10,7 +10,7 @@ import {
     getSavedConfirmation,
     SharingPage,
     saveConfirmation,
-    trackGenericEvent,
+    trackEvent,
     useCopyToClipboardWithState,
     useShareLink,
 } from "@frak-labs/wallet-shared";
@@ -140,8 +140,8 @@ export function ListenerSharingPage() {
             onSuccess: (result) => {
                 if (!result) return;
                 toast.success(t("sharing.btn.shareSuccess"));
-                trackGenericEvent("sharing-share-link", {
-                    link: finalSharingLink,
+                trackEvent("sharing_link_shared", {
+                    link: finalSharingLink ?? undefined,
                 });
                 trackSharing();
                 resolveAction("shared");
@@ -154,7 +154,7 @@ export function ListenerSharingPage() {
     const handleCopy = () => {
         if (!finalSharingLink) return;
         copy(finalSharingLink);
-        trackGenericEvent("sharing-copy-link", {
+        trackEvent("sharing_link_copied", {
             link: finalSharingLink,
         });
         trackSharing();

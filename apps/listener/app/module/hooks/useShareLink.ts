@@ -1,4 +1,4 @@
-import { trackGenericEvent } from "@frak-labs/wallet-shared";
+import { trackEvent } from "@frak-labs/wallet-shared";
 import { type MutationOptions, useMutation } from "@tanstack/react-query";
 import { useListenerTranslation } from "../providers/ListenerUiProvider";
 import { listenerSharingKey } from "../queryKeys/sharing";
@@ -32,7 +32,7 @@ export function useShareLink(link: string | null, options?: MutationOptions) {
             // try to share the link
             try {
                 await navigator.share(shareData);
-                trackGenericEvent("sharing-share-link", {
+                trackEvent("sharing_link_shared", {
                     link: link,
                 });
                 trackSharing().catch(() => {});

@@ -8,7 +8,7 @@ import {
 import {
     clientIdStore,
     OriginPairingState,
-    trackGenericEvent,
+    trackEvent,
     useCopyToClipboardWithState,
     useGetUserBalance,
 } from "@frak-labs/wallet-shared";
@@ -144,7 +144,7 @@ function ButtonCopyLink({
             onClick={async () => {
                 if (!finalSharingLink) return;
                 copy(finalSharingLink);
-                trackGenericEvent("sharing-copy-link", {
+                trackEvent("sharing_link_copied", {
                     link: finalSharingLink,
                 });
                 trackSharing();
@@ -188,7 +188,7 @@ function ButtonSharingLink({
                 onClick={() => {
                     if (!finalSharingLink) return;
                     triggerSharing();
-                    trackGenericEvent("sharing-share-link", {
+                    trackEvent("sharing_link_shared", {
                         link: finalSharingLink,
                     });
                 }}

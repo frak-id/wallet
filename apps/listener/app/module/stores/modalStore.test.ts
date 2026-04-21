@@ -15,7 +15,7 @@ import {
 
 // Mock wallet-shared imports
 vi.mock("@frak-labs/wallet-shared", () => ({
-    trackGenericEvent: vi.fn(),
+    trackEvent: vi.fn(),
 }));
 
 describe("modalStore", () => {
@@ -109,7 +109,7 @@ describe("modalStore", () => {
         });
 
         test("should call onResponse to update results and move to next step", async () => {
-            const { trackGenericEvent } = await import(
+            const { trackEvent } = await import(
                 "@frak-labs/wallet-shared"
             );
 
@@ -132,9 +132,10 @@ describe("modalStore", () => {
                 login: { status: "success" },
             });
             expect(updatedState.currentStep).toBe(1);
-            expect(trackGenericEvent).toHaveBeenCalledWith(
-                "modal_step_login_completed"
-            );
+            expect(trackEvent).toHaveBeenCalledWith("modal_step_completed", {
+                step: "login",
+                index: 0,
+            });
         });
 
         test("should not update results if results is undefined when onResponse called", () => {
@@ -186,7 +187,7 @@ describe("modalStore", () => {
         });
 
         test("should track analytics event", async () => {
-            const { trackGenericEvent } = await import(
+            const { trackEvent } = await import(
                 "@frak-labs/wallet-shared"
             );
 
@@ -194,9 +195,10 @@ describe("modalStore", () => {
                 .getState()
                 .completeStep("login", { status: "success" } as any);
 
-            expect(trackGenericEvent).toHaveBeenCalledWith(
-                "modal_step_login_completed"
-            );
+            expect(trackEvent).toHaveBeenCalledWith("modal_step_completed", {
+                step: "login",
+                index: 0,
+            });
         });
 
         test("should move to next step", () => {
@@ -289,7 +291,7 @@ describe("modalStore", () => {
 
     describe("dismissModal", () => {
         test("should set dismissed flag when no steps present", async () => {
-            const { trackGenericEvent } = await import(
+            const { trackEvent } = await import(
                 "@frak-labs/wallet-shared"
             );
 
@@ -299,11 +301,15 @@ describe("modalStore", () => {
 
             const state = modalStore.getState();
             expect(state.dismissed).toBe(true);
-            expect(trackGenericEvent).toHaveBeenCalledWith("modal_dismissed");
+            expect(trackEvent).toHaveBeenCalledWith("modal_dismissed", {
+                last_step: undefined,
+                completed: false,
+                source: "close_btn",
+            });
         });
 
         test("should set dismissed flag when no final step found", async () => {
-            const { trackGenericEvent } = await import(
+            const { trackEvent } = await import(
                 "@frak-labs/wallet-shared"
             );
 
@@ -320,11 +326,15 @@ describe("modalStore", () => {
 
             const state = modalStore.getState();
             expect(state.dismissed).toBe(true);
-            expect(trackGenericEvent).toHaveBeenCalledWith("modal_dismissed");
+            expect(trackEvent).toHaveBeenCalledWith("modal_dismissed", {
+                last_step: "login",
+                completed: false,
+                source: "close_btn",
+            });
         });
 
         test("should atomically set dismissed and move to final step for non-reward", async () => {
-            const { trackGenericEvent } = await import(
+            const { trackEvent } = await import(
                 "@frak-labs/wallet-shared"
             );
 
@@ -347,11 +357,15 @@ describe("modalStore", () => {
             const state = modalStore.getState();
             expect(state.dismissed).toBe(true);
             expect(state.currentStep).toBe(1);
-            expect(trackGenericEvent).toHaveBeenCalledWith("modal_dismissed");
+            expect(trackEvent).toHaveBeenCalledWith("modal_dismissed", {
+                last_step: "login",
+                completed: false,
+                source: "close_btn",
+            });
         });
 
         test("should atomically set dismissed and skip past reward final step", async () => {
-            const { trackGenericEvent } = await import(
+            const { trackEvent } = await import(
                 "@frak-labs/wallet-shared"
             );
 
@@ -374,11 +388,15 @@ describe("modalStore", () => {
             const state = modalStore.getState();
             expect(state.dismissed).toBe(true);
             expect(state.currentStep).toBe(2);
-            expect(trackGenericEvent).toHaveBeenCalledWith("modal_dismissed");
+            expect(trackEvent).toHaveBeenCalledWith("modal_dismissed", {
+                last_step: "login",
+                completed: false,
+                source: "close_btn",
+            });
         });
 
         test("should work correctly when already on final step", async () => {
-            const { trackGenericEvent } = await import(
+            const { trackEvent } = await import(
                 "@frak-labs/wallet-shared"
             );
 
@@ -401,7 +419,11 @@ describe("modalStore", () => {
             const state = modalStore.getState();
             expect(state.dismissed).toBe(true);
             expect(state.currentStep).toBe(1);
-            expect(trackGenericEvent).toHaveBeenCalledWith("modal_dismissed");
+            expect(trackEvent).toHaveBeenCalledWith("modal_dismissed", {
+                last_step: "final",
+                completed: false,
+                source: "close_btn",
+            });
         });
     });
 
@@ -695,7 +717,7 @@ describe("modalStore", () => {
 
     describe("Edge cases and complex workflows", () => {
         test("should handle multi-step workflow with onResponse callbacks", async () => {
-            const { trackGenericEvent } = await import(
+            const { trackEvent } = await import(
                 "@frak-labs/wallet-shared"
             );
 
@@ -732,7 +754,7 @@ describe("modalStore", () => {
                 siweAuthenticate: { signature: "0x123" },
             });
 
-            expect(trackGenericEvent).toHaveBeenCalledTimes(2);
+            expect(trackEvent).toHaveBeenCalledTimes(2);
         });
 
         test("should handle rapid modal changes", () => {

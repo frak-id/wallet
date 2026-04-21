@@ -59,6 +59,13 @@ type ResolvedConfigEvent = {
          * When present, listener should execute identity merge in background.
          */
         pendingMergeToken?: string;
+        /**
+         * Persistent per-origin anonymous id generated on the partner site
+         * (SDK-side localStorage). Propagated here so the listener can
+         * set it as an OpenPanel global property and stitch SDK events
+         * with listener events in the same funnel.
+         */
+        sdkAnonymousId?: string;
         sdkConfig?: ResolvedSdkConfig;
     };
 };

@@ -80,6 +80,10 @@ export function createIFrameFrakClient({
     // Resolved after first resolved-config is sent to iframe (prevents RPC before context exists)
     const contextSent = new Deferred<void>();
 
+    // Handshake timing: measured from client creation until the iframe
+    // lifecycle manager resolves the `isConnected` promise.
+    const handshakeStartedAt = Date.now();
+
     // Create our debug info gatherer
     const debugInfo = new DebugInfoGatherer(config, iframe);
 
@@ -180,6 +184,39 @@ export function createIFrameFrakClient({
             userAnonymousClientId: getClientId(),
         });
         openPanel.init();
+        openPanel.track("sdk_initialized", {
+            sdkVersion: process.env.SDK_VERSION,
+        });
+
+        // Race the connection against the heartbeat timeout so we can
+        // distinguish "connected" from "timeout" cleanly without touching
+        // the heartbeat plumbing. 30s matches `HEARTBEAT_TIMEOUT`.
+        let settled = false;
+        const timeoutHandle = setTimeout(() => {
+            if (settled) return;
+            settled = true;
+            openPanel?.track("sdk_iframe_handshake_failed", {
+                reason: "timeout",
+            });
+            openPanel?.track("sdk_iframe_heartbeat_timeout", undefined);
+        }, 30_000);
+        lifecycleManager.isConnected
+            .then(() => {
+                if (settled) return;
+                settled = true;
+                clearTimeout(timeoutHandle);
+                openPanel?.track("sdk_iframe_connected", {
+                    handshake_duration_ms: Date.now() - handshakeStartedAt,
+                });
+            })
+            .catch(() => {
+                if (settled) return;
+                settled = true;
+                clearTimeout(timeoutHandle);
+                openPanel?.track("sdk_iframe_handshake_failed", {
+                    reason: "unknown",
+                });
+            });
     }
 
     // Perform the post connection setup
@@ -189,6 +226,7 @@ export function createIFrameFrakClient({
         lifecycleManager,
         configPromise,
         contextSent,
+        openPanel,
     })
         .then(() => debugInfo.updateSetupStatus(true))
         .catch((err) => {
@@ -273,12 +311,14 @@ async function postConnectionSetup({
     lifecycleManager,
     configPromise,
     contextSent,
+    openPanel,
 }: {
     config: FrakWalletSdkConfig;
     rpcClient: SdkRpcClient;
     lifecycleManager: IframeLifecycleManager;
     configPromise: Promise<MerchantConfigResult> | undefined;
     contextSent: Deferred<void>;
+    openPanel: OpenPanel | undefined;
 }): Promise<void> {
     await lifecycleManager.isConnected;
 
@@ -342,7 +382,11 @@ async function postConnectionSetup({
         );
     };
 
-    // Send the resolved-config lifecycle event to the iframe
+    // Send the resolved-config lifecycle event to the iframe.
+    // This is where we also update SDK-side OpenPanel global props with
+    // `merchantId` + `domain` (first time they are known) so every
+    // subsequent SDK event is merchant-attributed. We pass
+    // `sdkAnonymousId` through so the listener can join SDK funnels.
     let mergeTokenConsumed = false;
     const sendLifecycleConfig = (resolved: SdkResolvedConfig) => {
         const token = mergeTokenConsumed ? undefined : pendingMergeToken;
@@ -365,6 +409,17 @@ async function postConnectionSetup({
               ? { attribution: resolved.attribution }
               : undefined;
 
+        const sdkAnonymousId = getClientId();
+
+        if (openPanel) {
+            const current = openPanel.global ?? {};
+            openPanel.setGlobalProperties({
+                ...current,
+                merchantId: resolved.merchantId,
+                domain: resolved.domain ?? "",
+            });
+        }
+
         rpcClient.sendLifecycle({
             clientLifecycle: "resolved-config",
             data: {
@@ -372,6 +427,7 @@ async function postConnectionSetup({
                 domain: resolved.domain ?? "",
                 allowedDomains: resolved.allowedDomains ?? [],
                 sourceUrl: window.location.href,
+                ...(sdkAnonymousId && { sdkAnonymousId }),
                 ...(token && { pendingMergeToken: token }),
                 ...(sdkConfig && { sdkConfig }),
             },

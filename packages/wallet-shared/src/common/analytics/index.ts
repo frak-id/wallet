@@ -9,10 +9,16 @@ import type { AnalyticsAuthenticationType } from "./types";
 
 export type {
     AuthEventMap,
+    EmbeddedWalletEventMap,
     EventMap,
     FlowEndExtras,
     FlowEventMap,
     FlowOutcome,
+    InAppBrowserRedirectTarget,
+    ListenerMiscEventMap,
+    ListenerTxEventMap,
+    ModalDismissSource,
+    ModalEventMap,
     SharingEventMap,
 } from "./events";
 export { flowOutcomeToEventName } from "./events";

@@ -17,7 +17,7 @@ const sessionState = vi.hoisted(() => ({
 
 const eventMocks = vi.hoisted(() => ({
     emitLifecycleEvent: vi.fn(),
-    trackGenericEvent: vi.fn(),
+    trackEvent: vi.fn(),
     redirectToExternalBrowser: vi.fn(),
 }));
 
@@ -32,7 +32,7 @@ vi.mock("../../utils/lifecycleEvents", () => ({
 }));
 
 vi.mock("../../analytics", () => ({
-    trackGenericEvent: eventMocks.trackGenericEvent,
+    trackEvent: eventMocks.trackEvent,
 }));
 
 vi.mock("../../hook/useSessionFlag", () => ({
@@ -141,8 +141,8 @@ describe("InAppBrowserToast", () => {
         });
 
         expect(eventMocks.emitLifecycleEvent).not.toHaveBeenCalled();
-        expect(eventMocks.trackGenericEvent).toHaveBeenCalledWith(
-            "in-app-browser-redirect",
+        expect(eventMocks.trackEvent).toHaveBeenCalledWith(
+            "in_app_browser_redirected",
             { target: "sd-iframe-clipboard" }
         );
         expect(window.alert).toHaveBeenCalledWith(
@@ -166,8 +166,8 @@ describe("InAppBrowserToast", () => {
         });
 
         expect(eventMocks.emitLifecycleEvent).not.toHaveBeenCalled();
-        expect(eventMocks.trackGenericEvent).toHaveBeenCalledWith(
-            "in-app-browser-redirect",
+        expect(eventMocks.trackEvent).toHaveBeenCalledWith(
+            "in_app_browser_redirected",
             { target: "sd-iframe-clipboard" }
         );
     });

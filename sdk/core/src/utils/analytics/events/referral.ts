@@ -1,0 +1,13 @@
+export type SdkReferralEventMap = {
+    user_referred_started: {
+        referrer?: string;
+        referrerClientId?: string;
+        walletStatus?: string;
+    };
+    user_referred_completed: {
+        status: "success";
+    };
+    user_referred_error: {
+        reason: string;
+    };
+};

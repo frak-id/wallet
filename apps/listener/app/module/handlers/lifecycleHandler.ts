@@ -9,6 +9,7 @@ import {
     authenticatedBackendApi,
     clientIdStore,
     emitLifecycleEvent,
+    updateGlobalProperties,
 } from "@frak-labs/wallet-shared";
 import { getI18n } from "react-i18next";
 import {
@@ -122,6 +123,7 @@ function isValidResolvedConfigPayload(data: unknown): data is {
     allowedDomains: string[];
     sourceUrl: string;
     pendingMergeToken?: string;
+    sdkAnonymousId?: string;
     sdkConfig?: ResolvedSdkConfig;
 } {
     if (!data || typeof data !== "object") return false;
@@ -142,6 +144,7 @@ async function handleResolvedConfig(
         allowedDomains: string[];
         sourceUrl: string;
         pendingMergeToken?: string;
+        sdkAnonymousId?: string;
         sdkConfig?: ResolvedSdkConfig;
     },
     context: RpcRequestContext
@@ -187,6 +190,14 @@ async function handleResolvedConfig(
         sourceUrl: data.sourceUrl,
         ...(iframeClientId && { clientId: iframeClientId }),
     });
+
+    // Stitch SDK ↔ listener funnels: if the SDK propagated its persistent
+    // anonymous id through the resolved-config payload, expose it as a
+    // global OpenPanel property so every listener event is joinable with
+    // the corresponding SDK events.
+    if (data.sdkAnonymousId) {
+        updateGlobalProperties({ sdk_anonymous_id: data.sdkAnonymousId });
+    }
 
     store.setBackendConfig(data.merchantId, data.sdkConfig);
 

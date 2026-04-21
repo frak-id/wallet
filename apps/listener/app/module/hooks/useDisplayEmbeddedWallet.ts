@@ -12,7 +12,7 @@ import {
 import {
     selectSession,
     sessionStore,
-    trackGenericEvent,
+    trackEvent,
 } from "@frak-labs/wallet-shared";
 import { useCallback, useEffect, useRef } from "react";
 import type { Hex } from "viem";
@@ -152,7 +152,9 @@ export function useDisplayEmbeddedWallet(): OnDisplayEmbeddedWalletRequest {
                 placement: placementId,
             });
 
-            trackGenericEvent("open-embedded-wallet", params[0]);
+            trackEvent("embedded_wallet_opened", {
+                logged_in: Boolean(session?.address),
+            });
 
             // Wait for user login via deferred promise
             // This will resolve when session + sessionStatus are available

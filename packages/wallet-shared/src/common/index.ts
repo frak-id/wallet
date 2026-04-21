@@ -2,11 +2,17 @@
 export { LogoFrakWithName } from "@frak-labs/design-system/icons";
 export type {
     AuthEventMap,
+    EmbeddedWalletEventMap,
     EventMap,
     Flow,
     FlowEndExtras,
     FlowEventMap,
     FlowOutcome,
+    InAppBrowserRedirectTarget,
+    ListenerMiscEventMap,
+    ListenerTxEventMap,
+    ModalDismissSource,
+    ModalEventMap,
     SharingEventMap,
 } from "./analytics";
 export {

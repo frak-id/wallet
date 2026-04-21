@@ -25,8 +25,8 @@ domain_entity_action_outcome
 
 | Segment | Examples |
 |---|---|
-| `domain` | `auth`, `onboarding`, `pairing`, `tokens`, `recovery`, `settings`, `explorer`, `history`, `notification`, `sso`, `wallet`, `sharing`, `monerium`, `pending_action`, `modal`, `embedded_wallet` |
-| `entity` | `register`, `login`, `flow`, `slide`, `request`, `send`, `step`, `biometrics`, `merchant`, `item`, `link` |
+| `domain` | `auth`, `onboarding`, `pairing`, `tokens`, `install`, `identity`, `settings`, `explorer`, `history`, `notification`, `sso`, `wallet`, `sharing`, `monerium`, `pending_action`, `modal`, `embedded_wallet` |
+| `entity` | `register`, `login`, `flow`, `slide`, `request`, `send`, `step`, `biometrics`, `merchant`, `item`, `link`, `page`, `code`, `referrer`, `store`, `ensure` |
 | `action` | `viewed`, `clicked`, `submitted`, `toggled`, `generated`, `uploaded`, `copied`, `dismissed` |
 | `outcome` | `initiated`, `succeeded`, `failed`, `cancelled`, `skipped`, `abandoned` |
 
@@ -96,7 +96,7 @@ sdk/core/src/utils/trackEvent.ts   ← UNTOUCHED (different OpenPanel client, CD
 
 **Key principles:**
 - One merged `EventMap` spans wallet + listener + shared domains. Listener-only events show up in wallet autocomplete; fine — no code path triggers them.
-- New domain events (tokens_*, onboarding_*, modal_*, embedded_wallet_*, recovery_*, …) are added to `events/` as each Phase 2+ PR lands — either by extending an existing domain file or adding `events/<domain>.ts` and merging into `EventMap` in `events/index.ts`.
+- New domain events (install_*, tokens_*, onboarding_*, modal_*, embedded_wallet_*, …) are added to `events/` as each Phase 2+ PR lands — either by extending an existing domain file or adding `events/<domain>.ts` and merging into `EventMap` in `events/index.ts`.
 - The SDK stays isolated — different client (`OPEN_PANEL_SDK_CLIENT_ID` vs `OPEN_PANEL_WALLET_CLIENT_ID`), different bundle constraints (`noExternal: [/.*/]`), different audience (partner sites).
 
 ### 2c. API
@@ -142,7 +142,7 @@ Added via `setGlobalProperties` in `wallet-shared/analytics/globalProps.ts`:
 | `app_version` | build-time Vite `define` | correlate regressions with releases |
 | `locale` | `i18next` current language | segment KPIs per language |
 | `has_biometrics` | biometric store (set lazily after first check, then cached) | segment by security posture |
-| `install_source` | install referrer (Tauri/Android) | attribution |
+| `install_source` | set by `useInstallReferrer` (Android Play), `useResolveInstallCode` (magic code), or `/install` query params; falls back to `"direct"` for organic installs | mobile-app attribution (`url_params` / `install_referrer` / `install_code` / `direct`) |
 
 Already present: `wallet`, `isIframe`, `isPwa`, `isTauri`, `platform`, `iframeReferrer`, `productId`, `contextUrl`.
 
@@ -336,48 +336,94 @@ All tracked via `startFlow("tokens_send")`.
 - Biometric rejection rate (security friction)
 - Median send duration
 
+### 5f. Install Attribution (mobile app retrieval)
+
+**Owner:** `wallet-shared/analytics/events/install.ts` (new in Phase 2).
+
+**Gap:** Today we have zero visibility on the entire mobile app retrieval funnel — the biggest remaining KPI blind spot given the mobile-first push documented in `docs/mobile-onboarding-plan.md`. The `ensure` action that merges a user's anonymous web identity with their new mobile wallet is fired silently through three distinct mechanisms, and we cannot answer basic questions:
+
+- What share of users who land on `/install` end up installing?
+- What share of mobile installs successfully attribute back to a referring merchant (vs. organic)?
+- Which attribution mechanism wins: Android Play Install Referrer, magic install code, or direct URL params?
+- Where does the magic code funnel drop off (display → copy → resolve)?
+
+Three entry points feed the same post-auth `pendingActionsStore` ensure action; this section instruments all three plus the backend outcome.
+
+#### Install page — `wallet.frak.id/install` (web → app download)
+
+The `/install` route is the web-side gateway. It renders two variants depending on platform + session state (see decision matrix in `apps/wallet/app/routes/install.tsx:41-63`).
+
+| Event | Properties | Trigger | File |
+|---|---|---|---|
+| `install_page_viewed` | `merchant_id?`, `has_anonymous_id: boolean`, `view: "code" \| "processing"` | Route mount (either variant) | `apps/wallet/app/routes/install.tsx:48` |
+| `install_processing_started` | `is_logged_in: boolean`, `has_ensure_action: boolean` | `InstallProcessing` effect mount | `install.tsx:88-120` |
+| `install_code_displayed` | `merchant_id?` | `data?.code` resolved from `useGenerateInstallCode` | `install.tsx:249` |
+| `install_code_generation_failed` | `error_type`, `merchant_id?` | `useGenerateInstallCode` error | `install.tsx:243-247` |
+| `install_code_copied` | `merchant_id?` | Copy button click | `install.tsx:195-200` |
+| `install_store_clicked` | `store: "app_store" \| "play_store"`, `has_referrer: boolean`, `merchant_id?` | Download link click | `install.tsx:299-306` |
+| `install_page_dismissed` | – | Close button / `window.close()` | `install.tsx:215-221` |
+
+**Note:** `has_referrer` is `true` when the Play Store URL carries the `referrer=merchantId=...&anonymousId=...` query (Android only, requires both IDs present — see `install.tsx:187-193`).
+
+#### Android Play Install Referrer (passive attribution, zero-friction)
+
+Read once on first launch via Tauri plugin. Deterministic, Google-signed, 90-day window. This is the winning path for the ~37% Android user base.
+
+| Event | Properties | Trigger | File |
+|---|---|---|---|
+| `install_referrer_checked` | – | `useInstallReferrer` queryFn runs (Tauri + Android only) | `apps/wallet/app/module/onboarding/hook/useInstallReferrer.ts:25` |
+| `install_referrer_resolved` | `has_merchant: boolean` | Valid `merchantId` + `anonymousId` parsed and merchant resolved (also calls `setInstallSource("install_referrer")`) | `useInstallReferrer.ts:42-47` |
+| `install_referrer_missing` | `reason: "empty" \| "missing_params"` | Referrer absent or missing required params | `useInstallReferrer.ts:30` |
+| `install_referrer_failed` | `error_type` | Tauri plugin error (e.g. Play Services unavailable) | `useInstallReferrer.ts` error branch |
+
+#### Magic install code (user-entered fallback, iOS + non-Chrome Android)
+
+The 6-char alphanumeric code displayed on `/install` is re-entered inside the mobile app via `RecoveryCodePage` (misleadingly named — the `recovery-code/` module actually hosts the install-code resolver, unrelated to the recovery system).
+
+| Event | Properties | Trigger | File |
+|---|---|---|---|
+| `install_code_page_viewed` | – | `RecoveryCodePage` mount | `apps/wallet/app/module/recovery-code/component/RecoveryCodePage/index.tsx:16` |
+| `install_code_submitted` | – | Validate button click | `RecoveryCodePage/index.tsx:39` |
+| `install_code_resolved` | `has_wallet: boolean`, `merchant_domain` | Successful resolve (also calls `setInstallSource("install_code")`) | `RecoveryCodePage/index.tsx:43-48` |
+| `install_code_resolve_failed` | `error_code` (e.g. `CODE_NOT_FOUND`) | Resolve error | `apps/wallet/app/module/recovery-code/hook/useResolveInstallCode.ts:32` |
+| `install_code_success_modal_viewed` | `merchant_id?` | Modal open | `apps/wallet/app/module/recovery-code/component/RecoveryCodeSuccessModal` |
+
+#### Ensure outcome (cross-cutting — all three mechanisms converge here)
+
+All three attribution paths land in `pendingActionsStore` as an `ensure` action, drained by `executePendingActions`. Tagging the outcome lets us measure the actual attribution success rate independent of entry point.
+
+| Event | Properties | Trigger | File |
+|---|---|---|---|
+| `identity_ensure_executed` | `source: "url_params" \| "install_referrer" \| "install_code" \| "stored"` | `executeEnsure` called | `apps/wallet/app/module/pending-actions/hook/useExecutePendingActions.ts:101-111` |
+| `identity_ensure_succeeded` | `source`, `duration_ms` | `executeEnsure` resolved | same |
+| `identity_ensure_failed` | `source`, `error_type` | `executeEnsure` rejected | same |
+
+`source` mirrors the `install_source` global property (set once per session by whichever mechanism resolved first) but stays per-event so retries / multi-source sessions remain debuggable.
+
+#### Tracking notes
+
+- **No `flow_id`** on these events — attribution is distributed across devices (web browser → Store → mobile app) so a single-process closure can't span the gap. Stitching is done server-side via the shared `merchantId` + `anonymousId` tuple (or the install code).
+- `/install` events fire on the **web wallet**; referrer + code + ensure events fire on the **Tauri mobile app**. Aggregate KPIs need to join across the two `platform` values.
+- Set `install_source` via `setInstallSource(…)` at the first successful resolve in a session; leave unset (or `"direct"` after auth completes without any prior signal) for organic installs.
+
+**KPIs unlocked:**
+- `/install` page conversion — `install_store_clicked / install_page_viewed`
+- Install code funnel — `install_code_displayed → install_code_copied → install_code_submitted → install_code_resolved`
+- Android passive attribution rate — `install_referrer_resolved / install_referrer_checked`
+- Overall attribution success rate — `identity_ensure_succeeded / identity_ensure_executed` segmented by `source`
+- Mechanism share — `install_source` distribution across all authenticated users
+- Time-to-install — median elapsed time between `install_page_viewed` (web session) and the first `identity_ensure_succeeded` for the same merchant pair
+- Organic vs referred install ratio — share of `identity_ensure_executed` with `source = "direct"` vs attributed sources
+
 ---
 
-## 6. P1 — Recovery, Settings & Security
+## 6. P1 — Settings & Security
 
 All P1 events live in `wallet-shared/analytics/events/<domain>.ts` files merged into the shared `EventMap` (one file per domain as phases land).
 
-### 6a. Recovery import flow (6 steps)
+> **Recovery flows intentionally omitted.** The existing `recovery/` import flow (6-step) and `recovery-setup/` module (encrypted backup kit) are scheduled for a full rework and are out of scope for this tagging plan. The `recovery-code/` directory, despite its name, is instrumented under §5f (it's the magic install-code resolver, not part of the recovery system). Re-evaluate recovery instrumentation once the rework lands.
 
-| Event | Properties | Trigger | File |
-|---|---|---|---|
-| `recovery_flow_started` | `entry_point: "login" \| "settings"` | Recovery route mount | `app/routes/_wallet/_auth/recovery.tsx` |
-| `recovery_step_viewed` | `step: 1..6` | Each `StepN.tsx` mount | `app/module/recovery/component/Recover/Step{1..6}.tsx` |
-| `recovery_file_uploaded` | `success: boolean` | Step1 file input | `Step1.tsx` |
-| `recovery_file_invalid` | `error_type` | Step1 validation failure | `Step1.tsx` |
-| `recovery_password_submitted` | – | Step2 submit | `Step2.tsx` |
-| `recovery_password_failed` | – | Decryption error | `Step2.tsx` |
-| `recovery_passkey_created` | – | Step4 success | `Step4.tsx` |
-| `recovery_flow_succeeded` | `duration_ms` | Final step | `Step6.tsx` |
-| `recovery_flow_abandoned` | `last_step` | navigation away / unmount | route leave cleanup |
-
-Tracked via `startFlow("recovery")`.
-
-### 6b. Recovery code (create recovery kit)
-
-| Event | Properties | Trigger | File |
-|---|---|---|---|
-| `recovery_code_page_viewed` | – | `RecoveryCodePage` mount | `app/module/recovery-code/component/RecoveryCodePage` |
-| `recovery_code_generated` | – | generation trigger | `recovery-code/hook` |
-| `recovery_code_copied` | – | copy button | `RecoveryCodePage` |
-| `recovery_code_downloaded` | – | download button | `RecoveryCodePage` |
-| `recovery_code_success_modal_viewed` | – | success modal | `RecoveryCodeSuccessModal` |
-
-### 6c. Recovery setup (attach recovery to existing wallet)
-
-| Event | Properties | Trigger | File |
-|---|---|---|---|
-| `recovery_setup_started` | – | Setup mount | `app/module/recovery-setup/component/Setup` |
-| `recovery_setup_status_viewed` | `has_setup: boolean` | CurrentSetupStatus mount | `CurrentSetupStatus` |
-| `recovery_setup_succeeded` | `duration_ms` | Success | `Setup` |
-| `recovery_setup_failed` | `error_type` | Error | `Setup` |
-
-### 6d. Settings
+### 6a. Settings
 
 | Event | Properties | Trigger | File |
 |---|---|---|---|
@@ -396,7 +442,7 @@ Tracked via `startFlow("recovery")`.
 
 Existing `logout` event stays as-is.
 
-### 6e. Notifications center
+### 6b. Notifications center
 
 | Event | Properties | Trigger | File |
 |---|---|---|---|
@@ -506,16 +552,15 @@ Existing events migrate to snake_case (`sharing_link_shared`, `sharing_link_copi
 - **PR 3:** Tokens send funnel.
 - **PR 4:** Onboarding slide-level + notification opt-in.
 
-### Phase 3 — P1 (Recovery, Settings, Security)
+### Phase 3 — P1 (Settings & Security)
 
-- **PR 5:** Recovery flow (6-step).
-- **PR 6:** Recovery code & recovery setup.
-- **PR 7:** Settings (preferences, biometrics, private key).
+- **PR 5:** Install attribution (install page + Play referrer + install code + ensure outcome) — unlocks the mobile retrieval funnel documented in §5f.
+- **PR 6:** Settings (preferences, biometrics, private key, notifications center).
 
 ### Phase 4 — P2 (Discovery & Engagement)
 
-- **PR 8:** Explorer + History + Wallet dashboard.
-- **PR 9:** SSO + Pending actions + Monerium + Sharing (incl. kebab→snake migration for both apps).
+- **PR 7:** Explorer + History + Wallet dashboard.
+- **PR 8:** SSO + Pending actions + Monerium + Sharing (incl. kebab→snake migration for both apps).
 
 ### Phase 5 — OpenPanel dashboards (non-code)
 
@@ -523,7 +568,7 @@ Build dashboards/funnels in OpenPanel matching the KPI section. Suggested:
 - **Onboarding funnel:** `onboarding_flow_started` → each `onboarding_slide_viewed` → `register_completed`
 - **Send funnel:** `tokens_send_viewed` → `tokens_send_submitted` → `tokens_send_succeeded`
 - **Pairing funnel:** `pairing_request_viewed` → `pairing_request_confirmed`
-- **Recovery funnel:** `recovery_flow_started` → `recovery_step_viewed(6)` → `recovery_flow_succeeded`
+- **Install funnel:** `install_page_viewed` → `install_store_clicked` → `identity_ensure_succeeded` (split by `source`)
 - **Segmented by:** `platform`, `isIframe`, `isPwa`, `locale`, `productId`, `app_version`
 
 ---
@@ -542,7 +587,11 @@ Build dashboards/funnels in OpenPanel matching the KPI section. Suggested:
 | Send tx success rate | `tokens_send_succeeded / tokens_send_submitted` | P0 send |
 | Biometric friction | `tokens_send_biometric_rejected / tokens_send_biometric_requested` | P0 send |
 | Flow abandonment rate (any) | `flow_abandoned / flow_started` grouped by `flow_name` | Phase 1 |
-| Recovery success rate | `recovery_flow_succeeded / recovery_flow_started` | P1 recovery |
+| Install attribution success rate | `identity_ensure_succeeded / identity_ensure_executed` segmented by `source` | P0 install |
+| `/install` page conversion | `install_store_clicked / install_page_viewed` | P0 install |
+| Install code funnel conversion | `install_code_resolved / install_code_displayed` | P0 install |
+| Android passive attribution rate | `install_referrer_resolved / install_referrer_checked` | P0 install |
+| Organic vs referred install ratio | `identity_ensure_executed` grouped by `source` (`direct` vs rest) | P0 install |
 | Biometrics adoption | distinct users with `settings_biometrics_toggled({enabled:true})` | P1 settings |
 | Explorer CTR | `explorer_merchant_clicked / explorer_merchant_viewed` | P2 explorer |
 | MAU by merchant | distinct `wallet` grouped by `productId` over window | existing + explorer |

@@ -39,4 +39,4 @@ export {
     type FullSsoParams,
     generateSsoUrl,
 } from "./sso";
-export { type FrakEvent, trackEvent } from "./trackEvent";
+export { trackEvent } from "./analytics";

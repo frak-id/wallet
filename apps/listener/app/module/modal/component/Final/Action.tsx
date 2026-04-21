@@ -6,7 +6,7 @@ import {
 import {
     clientIdStore,
     prefixModalCss,
-    trackGenericEvent,
+    trackEvent,
     useCopyToClipboardWithState,
 } from "@frak-labs/wallet-shared";
 import { Copy, Share } from "lucide-react";
@@ -46,7 +46,11 @@ export function FinalModalActionComponent({
             className={`${styles.modalListener__buttonLink} ${prefixModalCss("button-link")}`}
             onClick={() => {
                 onFinish({});
-                trackGenericEvent("modal-dismissed");
+                trackEvent("modal_dismissed", {
+                    last_step: "final",
+                    completed: true,
+                    source: "final_action",
+                });
             }}
         >
             {t("sdk.modal.dismiss.primaryAction")}
@@ -121,7 +125,7 @@ function SharingButtons({
                 onClick={async () => {
                     if (!finalSharingLink) return;
                     copy(finalSharingLink);
-                    trackGenericEvent("sharing-copy-link", {
+                    trackEvent("sharing_link_copied", {
                         link: finalSharingLink,
                     });
                     trackSharing();
