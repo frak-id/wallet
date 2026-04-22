@@ -19,14 +19,18 @@ export const airtableRoutes = new Elysia({ name: "Routes.airtable" })
             if (!query.table) {
                 return status(
                     400,
-                    "table query parameter is required (demo_request or simulation)"
+                    "table query parameter is required (demo_request, simulation, or newsletter)"
                 );
             }
 
-            if (!["demo_request", "simulation"].includes(query.table)) {
+            if (
+                !["demo_request", "simulation", "newsletter"].includes(
+                    query.table
+                )
+            ) {
                 return status(
                     400,
-                    "table must be either 'demo_request' or 'simulation'"
+                    "table must be one of 'demo_request', 'simulation', or 'newsletter'"
                 );
             }
 

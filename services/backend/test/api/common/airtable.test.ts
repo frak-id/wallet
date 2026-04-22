@@ -214,7 +214,7 @@ describe("Airtable Route API", () => {
             expect(response.status).toBe(400);
             const errorMessage = await response.text();
             expect(errorMessage).toBe(
-                "table must be either 'demo_request' or 'simulation'"
+                "table must be one of 'demo_request', 'simulation', or 'newsletter'"
             );
             expect(mockRepository.processRequest).not.toHaveBeenCalled();
         });
@@ -243,11 +243,11 @@ describe("Airtable Route API", () => {
             expect(mockRepository.processRequest).not.toHaveBeenCalled();
         });
 
-        it("should return 422 when request body is missing required fields", async () => {
+        it("should return 422 when request body is missing required fields for demo_request", async () => {
             const mockRepository = getMockRepository();
             const requestBody = {
-                email: "test@example.com",
-                // Missing other required fields
+                lastName: "Doe",
+                // Missing many required fields; matches no union variant
             };
 
             const response = await airtableRoutes.handle(
@@ -261,6 +261,36 @@ describe("Airtable Route API", () => {
             // Elysia returns 422 for validation errors
             expect(response.status).toBe(422);
             expect(mockRepository.processRequest).not.toHaveBeenCalled();
+        });
+
+        it("should process valid newsletter submission with only email", async () => {
+            const mockRepository = getMockRepository();
+            const mockResult = {
+                recordId: "recNews1",
+                message: "Record created successfully in newsletter table",
+            };
+            mockRepository.processRequest.mockResolvedValue(mockResult);
+
+            const requestBody = {
+                email: "subscriber@example.com",
+            };
+
+            const response = await airtableRoutes.handle(
+                new Request("http://localhost/airtable?table=newsletter", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(requestBody),
+                })
+            );
+
+            expect(response.status).toBe(200);
+            expect(mockRepository.processRequest).toHaveBeenCalledWith(
+                "newsletter",
+                requestBody
+            );
+
+            const data = await response.json();
+            expect(data).toEqual({ success: true });
         });
 
         it("should return 409 when repository throws 'already exists' error", async () => {
