@@ -1,9 +1,6 @@
+import type { SharingPageProduct } from "@frak-labs/core-sdk";
 import {
-    FrakContextManager,
-    mergeAttribution,
-    type SharingPageProduct,
-} from "@frak-labs/core-sdk";
-import {
+    buildSharingLink,
     clearConfirmation,
     clientIdStore,
     emitLifecycleEvent,
@@ -101,30 +98,20 @@ export function ListenerSharingPage() {
     // Product selection state — default to first product
     const [selectedProductIndex, setSelectedProductIndex] = useState(0);
 
-    // Build the final sharing link with Frak context
-    // Use the selected product's link if available, otherwise fall back to default
+    // Build the final sharing link with Frak context via shared helper.
+    // Use the selected product's link if available, otherwise fall back to default.
     const finalSharingLink = useMemo(() => {
-        if (!(clientId && merchantId)) return null;
-
         const selectedProduct = products[selectedProductIndex];
-        const baseLink =
-            selectedProduct?.link ?? currentRequest.params.link ?? sourceUrl;
-
-        const resolvedAttribution = mergeAttribution({
-            perCall: currentRequest.params.attribution,
-            defaults: defaultAttribution,
+        return buildSharingLink({
+            clientId: clientId ?? undefined,
+            merchantId,
+            baseUrl:
+                selectedProduct?.link ??
+                currentRequest.params.link ??
+                sourceUrl,
+            attribution: currentRequest.params.attribution,
+            defaultAttribution,
             productUtmContent: selectedProduct?.utmContent,
-        });
-
-        return FrakContextManager.update({
-            url: baseLink,
-            context: {
-                v: 2,
-                c: clientId,
-                m: merchantId,
-                t: Math.floor(Date.now() / 1000),
-            },
-            attribution: resolvedAttribution,
         });
     }, [
         clientId,
@@ -137,17 +124,8 @@ export function ListenerSharingPage() {
         defaultAttribution,
     ]);
 
-    // Emit `sharing_link_generated` once the final link is resolved. Ref guard
-    // keeps the event at-most-once per (merchantId, link) tuple.
-    const reportedLinkRef = useRef<string | null>(null);
-    useEffect(() => {
-        if (!finalSharingLink) return;
-        if (reportedLinkRef.current === finalSharingLink) return;
-        reportedLinkRef.current = finalSharingLink;
-        trackEvent("sharing_link_generated", { merchant_id: merchantId });
-    }, [finalSharingLink, merchantId]);
 
-    // Share mutation using the shared hook
+    // Share mutation using the shared hook (auto-fires `sharing_link_shared`).
     const { mutate: triggerSharing, isPending: isSharing } = useShareLink(
         finalSharingLink,
         {
@@ -155,13 +133,12 @@ export function ListenerSharingPage() {
             text: t("sharing.text"),
         },
         {
+            source: "sharing_page_listener",
+            merchantId,
+            onShared: () => trackSharing(),
             onSuccess: (result) => {
                 if (!result) return;
                 toast.success(t("sharing.btn.shareSuccess"));
-                trackEvent("sharing_link_shared", {
-                    link: finalSharingLink ?? undefined,
-                });
-                trackSharing();
                 resolveAction("shared");
                 if (merchantId) saveConfirmation(merchantId);
                 setShowConfirmation(true);
@@ -173,6 +150,8 @@ export function ListenerSharingPage() {
         if (!finalSharingLink) return;
         copy(finalSharingLink);
         trackEvent("sharing_link_copied", {
+            source: "sharing_page_listener",
+            merchant_id: merchantId,
             link: finalSharingLink,
         });
         trackSharing();

@@ -213,22 +213,35 @@ Flow wraps the whole register page. `_started` fires on mount, `_abandoned` on u
 
 ---
 
-## 7. Sharing (wallet + listener sharing page)
+## 7. Sharing (unified across 5 entry points)
 
-**Business question:** Does the sharing page convert? Which distribution channel (native share vs copy) wins?
+**Business question:** Does sharing convert? Which entry point performs best? Does native share vs copy split differently per surface?
+
+**Entry points** (carried as `source` on every link event):
+- `sharing_page_wallet` — wallet `/sharing` route (merchant-driven flow, full funnel)
+- `sharing_page_listener` — listener `frak_displaySharingPage` handler (SDK-driven overlay)
+- `modal` — listener legacy modal final sharing step (business app)
+- `embedded_wallet` — listener embedded wallet view (deprecating)
+- `explorer_detail` — wallet explorer merchant detail card (native share only, no copy)
+
+**Shared infrastructure** (`packages/wallet-shared/src/sharing/`):
+- `buildSharingLink()` — single helper for `FrakContextManager.update` + `mergeAttribution`; used by all 5 entry points.
+- `useShareLink()` — single hook; auto-fires `sharing_link_shared` with `{source, merchant_id, link}` on success. Takes an optional `onShared` callback for the listener's backend `useTrackSharing` interaction.
 
 **KPIs unlocked:**
-- Sharing page conversion — `(sharing_link_shared + sharing_link_copied) / sharing_page_viewed`
-- Share-vs-copy split — ratio of `sharing_link_shared` to `sharing_link_copied`
-- Listener-side view — `sharing_page_opened` (partner site invoked the sharing page)
+- Sharing conversion per entry point — `(sharing_link_shared + sharing_link_copied) / sharing_page_viewed` grouped by `source`
+- Share-vs-copy split — ratio per `source`
+- Entry-point performance comparison — `sharing_link_shared` distribution across the 5 `source` values
+- Listener overlay open rate — `sharing_page_opened` (partner-site trigger) paired with `sharing_page_viewed` (actual render)
 
 | Event | Properties | Why |
 |---|---|---|
-| `sharing_page_viewed` | `merchant_id?` | Page mount on `wallet.frak.id/sharing`. |
-| `sharing_page_opened` | `merchant_id?` | Listener-side event: the SDK called `frak_displaySharingPage`. Joinable with wallet-side `sharing_page_viewed` via `sdk_anonymous_id`. |
-| `sharing_link_generated` | `merchant_id?` | Backend successfully produced a short link. |
-| `sharing_link_shared` | `merchant_id?`, `link?` | Native share sheet invoked. |
-| `sharing_link_copied` | `merchant_id?`, `link?` | Clipboard copy. |
+| `sharing_page_viewed` | `merchant_id?` | Page mount. Fires on both sharing-page surfaces (`sharing_page_wallet` and `sharing_page_listener`). Not fired on modal/embedded/explorer surfaces — they're one-shot buttons, not dedicated pages. |
+| `sharing_page_opened` | `merchant_id?` | Listener-only: the SDK called `frak_displaySharingPage` via RPC. Joinable with the paired `sharing_page_viewed` via `sdk_anonymous_id`. |
+| `sharing_link_shared` | `source`, `merchant_id?`, `link?` | Native share succeeded. Auto-fired by `useShareLink` — consistent across all 5 entry points. |
+| `sharing_link_copied` | `source`, `merchant_id?`, `link?` | Clipboard copy. Fired manually at each callsite (4 entry points — explorer has no copy button). |
+
+> **`source` is required** on every link event so segmentation is trivial. Adding a new sharing surface requires extending the `SharingSource` union in `packages/wallet-shared/src/common/analytics/events/sharing.ts`, which makes the requirement visible at compile time.
 
 ---
 

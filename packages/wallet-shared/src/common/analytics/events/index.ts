@@ -44,7 +44,7 @@ export type {
     PairingEventMap,
     PairingMode,
 } from "./pairing";
-export type { SharingEventMap } from "./sharing";
+export type { SharingEventMap, SharingSource } from "./sharing";
 export type { TokensEventMap, TokensSendAmountBucket } from "./tokens";
 export type { ListenerTxEventMap } from "./transaction";
 

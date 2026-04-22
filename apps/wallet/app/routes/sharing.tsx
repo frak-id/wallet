@@ -3,9 +3,9 @@ import type {
     AttributionParams,
     SharingPageProduct,
 } from "@frak-labs/core-sdk";
-import { FrakContextManager, mergeAttribution } from "@frak-labs/core-sdk";
 import {
     authenticatedBackendApi,
+    buildSharingLink,
     clearConfirmation,
     clientIdStore,
     getSavedConfirmation,
@@ -18,7 +18,7 @@ import {
 } from "@frak-labs/wallet-shared";
 import { useQuery } from "@tanstack/react-query";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import { useMerchantResolvedConfig } from "@/module/common/hook/useMerchantResolvedConfig";
@@ -195,31 +195,18 @@ function WalletSharingPage() {
         merchantId ? getSavedConfirmation(merchantId) : false
     );
 
-    // Build the final sharing link with Frak context
-    // Use the selected product's link if available, otherwise fall back to default
+    // Build the final sharing link with Frak context via shared helper.
+    // Use the selected product's link if available, otherwise fall back to default.
     const finalSharingLink = useMemo(() => {
-        if (!(clientId && merchantId)) return null;
-
         const safeProducts = products ?? [];
         const selectedProduct = safeProducts[selectedProductIndex];
-        const baseLink = selectedProduct?.link ?? link;
-        if (!baseLink) return null;
-
-        const resolvedAttribution = mergeAttribution({
-            perCall: attribution,
-            defaults: defaultAttribution ?? undefined,
+        return buildSharingLink({
+            clientId,
+            merchantId,
+            baseUrl: selectedProduct?.link ?? link,
+            attribution,
+            defaultAttribution: defaultAttribution ?? undefined,
             productUtmContent: selectedProduct?.utmContent,
-        });
-
-        return FrakContextManager.update({
-            url: baseLink,
-            context: {
-                v: 2,
-                c: clientId,
-                m: merchantId,
-                t: Math.floor(Date.now() / 1000),
-            },
-            attribution: resolvedAttribution,
         });
     }, [
         clientId,
@@ -231,18 +218,8 @@ function WalletSharingPage() {
         defaultAttribution,
     ]);
 
-    // Emit `sharing_link_generated` once the final link is resolved. Ref guard
-    // keeps the event at-most-once per (merchantId, link) tuple so product
-    // re-selection doesn't inflate the funnel.
-    const reportedLinkRef = useRef<string | null>(null);
-    useEffect(() => {
-        if (!finalSharingLink) return;
-        if (reportedLinkRef.current === finalSharingLink) return;
-        reportedLinkRef.current = finalSharingLink;
-        trackEvent("sharing_link_generated", { merchant_id: merchantId });
-    }, [finalSharingLink, merchantId]);
 
-    // Share mutation using the shared hook
+    // Share mutation using the shared hook (auto-fires `sharing_link_shared`).
     const {
         mutate: triggerSharing,
         isPending: isSharing,
@@ -254,12 +231,11 @@ function WalletSharingPage() {
             text: t("sharing.text"),
         },
         {
+            source: "sharing_page_wallet",
+            merchantId,
             onSuccess: (result) => {
                 if (!result) return;
                 toast.success(t("sharing.btn.shareSuccess"));
-                trackEvent("sharing_link_shared", {
-                    link: finalSharingLink ?? undefined,
-                });
                 if (merchantId) saveConfirmation(merchantId);
                 setShowConfirmation(true);
             },
@@ -275,7 +251,9 @@ function WalletSharingPage() {
         if (!finalSharingLink) return;
         copy(finalSharingLink);
         trackEvent("sharing_link_copied", {
-            link: finalSharingLink ?? undefined,
+            source: "sharing_page_wallet",
+            merchant_id: merchantId,
+            link: finalSharingLink,
         });
         toast.success(t("sharing.btn.copySuccess"));
         if (merchantId) saveConfirmation(merchantId);

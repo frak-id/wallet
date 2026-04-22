@@ -26,6 +26,7 @@ export type {
     PairingEventMap,
     PairingMode,
     SharingEventMap,
+    SharingSource,
     TokensEventMap,
     TokensSendAmountBucket,
     WalletModalEventMap,

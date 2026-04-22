@@ -1,7 +1,6 @@
 import type { EstimatedRewardItem } from "@frak-labs/backend-elysia/domain/campaign";
 import type { ExplorerMerchantItem } from "@frak-labs/backend-elysia/orchestration/schemas";
 import type { EstimatedReward } from "@frak-labs/core-sdk";
-import { FrakContextManager, mergeAttribution } from "@frak-labs/core-sdk";
 import { Box } from "@frak-labs/design-system/components/Box";
 import { Button } from "@frak-labs/design-system/components/Button";
 import { Card } from "@frak-labs/design-system/components/Card";
@@ -23,9 +22,11 @@ import {
     ShareIcon,
 } from "@frak-labs/design-system/icons";
 import {
+    buildSharingLink,
     clientIdStore,
     estimatedRewardsQueryOptions,
     formatEstimatedReward,
+    useShareLink,
 } from "@frak-labs/wallet-shared";
 import { useQuery } from "@tanstack/react-query";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -86,32 +87,29 @@ export function ExplorerDetail({ merchant, onClose }: ExplorerDetailProps) {
 
     const shareUrl = useMemo(() => {
         const baseUrl = `https://${merchant.domain}`;
-        if (!clientId) return baseUrl;
-        return (
-            FrakContextManager.update({
-                url: baseUrl,
-                context: {
-                    v: 2,
-                    c: clientId,
-                    m: merchant.id,
-                    t: Math.floor(Date.now() / 1000),
-                },
-                attribution: mergeAttribution({ perCall: {} }),
-            }) ?? baseUrl
-        );
+        return buildSharingLink({
+            clientId: clientId ?? undefined,
+            merchantId: merchant.id,
+            baseUrl,
+        }) ?? baseUrl;
     }, [clientId, merchant.domain, merchant.id]);
 
-    const handleShare = useCallback(async () => {
-        if (!navigator.share) return;
-        try {
-            await navigator.share({
-                title: merchant.name,
-                url: shareUrl,
-            });
-        } catch {
-            // User cancelled or share failed — ignore
+    const { mutate: triggerSharing } = useShareLink(
+        shareUrl,
+        {
+            title: merchant.name,
+            text: merchant.name,
+        },
+        {
+            source: "explorer_detail",
+            merchantId: merchant.id,
         }
-    }, [merchant.name, shareUrl]);
+    );
+
+    const handleShare = useCallback(() => {
+        if (!navigator.share) return;
+        triggerSharing();
+    }, [triggerSharing]);
 
     return (
         <DetailSheet style={{ paddingTop: 0 }}>
