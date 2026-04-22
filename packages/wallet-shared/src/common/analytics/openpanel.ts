@@ -4,7 +4,7 @@ import {
     isTauri,
 } from "@frak-labs/app-essentials/utils/platform";
 import { OpenPanel } from "@openpanel/web";
-import { isStandalonePWA } from "ua-parser-js/helpers";
+import { isStandalonePWA } from "ua-parser-js/browser-detection";
 import { isInIframe } from "../lib/inApp";
 
 export function getPlatformInfo() {
@@ -34,11 +34,19 @@ export const openPanel =
               trackScreenViews: true,
               trackOutgoingLinks: true,
               trackAttributes: false,
-              // Hacky but effective: force-merge init props on the first event
-              // that slips through before `updateGlobalProperties` runs.
               filter: ({ type, payload }) => {
                   if (type !== "track") return true;
                   if (!payload?.properties) return true;
+                  // Tauri runs the wallet under the `tauri://localhost/<path>`
+                  // origin, which OpenPanel groups as an unknown host and
+                  // displays with broken screen-view metrics. Rewrite to the
+                  // canonical public URL so the dashboard merges native-app
+                  // traffic with the web app — platform/isTauri global props
+                  // still let us segment them when needed.
+                  rewriteTauriPath(payload.properties);
+                  // Hacky but effective: force-merge init props on the first
+                  // event that slips through before `updateGlobalProperties`
+                  // runs.
                   if (!("isIframe" in payload.properties)) {
                       payload.properties = {
                           ...payload.properties,
@@ -49,6 +57,21 @@ export const openPanel =
               },
           })
         : undefined;
+
+const WALLET_PUBLIC_ORIGIN =
+    process.env.FRAK_WALLET_URL ?? "https://wallet.frak.id";
+
+function rewriteTauriPath(properties: Record<string, unknown>) {
+    const path = properties.__path;
+    if (typeof path !== "string" || !path.startsWith("tauri://")) return;
+    try {
+        const url = new URL(path);
+        properties.__path = `${WALLET_PUBLIC_ORIGIN}${url.pathname}${url.search}${url.hash}`;
+    } catch {
+        // Parse failure — leave as-is; better to show the original than
+        // send something wrong.
+    }
+}
 
 function getIsStandalonePwa() {
     if (
