@@ -177,7 +177,8 @@ Flow wraps the whole register page. `_started` fires on mount, `_abandoned` on u
 
 **KPIs unlocked:**
 - Share button CTR — `share_button_clicked / (page views on partner site)`
-- Banner CTR — `banner_clicked / banner_impression` (per `variant`)
+- Banner CTR — `banner_resolved{outcome:"clicked"} / banner_impression` (per `variant`)
+- Banner dismiss rate — `banner_resolved{outcome:"dismissed"} / banner_impression` (per `variant`)
 - Post-purchase CTR — `post_purchase_clicked / post_purchase_impression`
 - Referral conversion — `user_referred_completed / user_referred_started`
 - Open-in-app success — `open_in_app_clicked / (open_in_app_clicked + app_not_installed)`
@@ -187,8 +188,7 @@ Flow wraps the whole register page. `_started` fires on mount, `_abandoned` on u
 | Event | Properties | Why |
 |---|---|---|
 | `share_button_clicked` | `placement?`, `target_interaction?`, `has_reward?`, `click_action: "share-modal" \| "embedded-wallet" \| "sharing-page"` | `click_action` captures which destination the merchant configuration resolved to. Lets us compare per-configuration performance. |
-| `share_modal_error` | `placement?`, `target_interaction?`, `has_reward?`, `error?`, `debug_info?` | Error surfacing — low-volume, but important for partner support. |
-| `share_error_debug_copied` | `placement?`, `target_interaction?`, `has_reward?` | User copied the debug payload → they're actively trying to report the error. Micro signal for support load. |
+| `share_modal_error` | `placement?`, `target_interaction?`, `has_reward?`, `error?` | Error surfacing — low-volume, but important for partner support. |
 | `open_in_app_clicked` | `placement?`, `path` | Primary action event for `<frak-open-in-app>`. |
 | `app_not_installed` | `placement?`, `path` | Deep-link fallback fired when the app doesn't answer within 2.5s. Implicit "user needs to install" signal. |
 
@@ -199,8 +199,7 @@ Flow wraps the whole register page. `_started` fires on mount, `_abandoned` on u
 | Event | Properties | Why |
 |---|---|---|
 | `banner_impression` | `placement?`, `variant: "referral" \| "inapp"`, `has_reward?` | Fired once per banner/variant/page, deduped in component state. CTR denominator. |
-| `banner_clicked` | `placement?`, `variant` | CTR numerator. |
-| `banner_dismissed` | `placement?`, `variant` | Explicit "not interested" signal. Distinguishes banner blindness from rejection. |
+| `banner_resolved` | `placement?`, `variant`, `outcome: "clicked" \| "dismissed"` | Single terminal event per banner session. `outcome` consolidates CTR numerator and explicit dismissal signal — consistent with `notification_opt_in_resolved` pattern. |
 | `post_purchase_impression` | `placement?`, `variant: "referrer" \| "referee"`, `has_reward?` | Highest-intent entry into the referral loop. `variant` tells us whether we're upselling a new share or celebrating an existing referee. |
 | `post_purchase_clicked` | `placement?`, `variant` | CTR numerator for the post-purchase card. |
 
@@ -378,7 +377,7 @@ Flow emits the standard 4 events; `_abandoned` is retained as a dead event name.
 | Embedded wallet | `events/embeddedWallet.ts` | 2 | Listener embedded wallet |
 | Listener misc | `events/listener.ts` | 2 | InApp browser escape + SDK cleanup |
 | SDK lifecycle | `sdk/core/.../lifecycle.ts` | 4 | SDK init + handshake |
-| SDK components | `sdk/core/.../component.ts` | 10 | Merchant-site buttons/banners |
+| SDK components | `sdk/core/.../component.ts` | 8 | Merchant-site buttons/banners |
 | SDK referral | `sdk/core/.../referral.ts` | 2 | Referral detection & completion |
 
 **Flow events** (started + succeeded + failed + abandoned) per `FlowEvents<T>` helper: `auth_login`, `auth_register`, `auth_demo`, `onboarding`, `tokens_send`, `listener_tx`.

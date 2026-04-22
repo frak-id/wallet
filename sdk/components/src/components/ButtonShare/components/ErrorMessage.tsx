@@ -1,4 +1,3 @@
-import { trackEvent } from "@frak-labs/core-sdk";
 import { useState } from "preact/hooks";
 import { useCopyToClipboard } from "@/hooks/useCopyToClipboard";
 
@@ -88,23 +87,11 @@ function ToggleMessage({ debugInfo }: { debugInfo?: string }) {
  * @param {Object} props - Component props
  * @param {string} [props.debugInfo] - Debug information that can be copied or displayed
  */
-export function ErrorMessage({
-    debugInfo,
-    placement,
-    targetInteraction,
-}: {
-    debugInfo?: string;
-    placement?: string;
-    targetInteraction?: string;
-}) {
+export function ErrorMessage({ debugInfo }: { debugInfo?: string }) {
     const { copied, copy } = useCopyToClipboard();
 
     const handleCopy = () => {
         copy(debugInfo ?? "");
-        trackEvent(window.FrakSetup?.client, "share_error_debug_copied", {
-            placement,
-            target_interaction: targetInteraction,
-        });
     };
 
     return (

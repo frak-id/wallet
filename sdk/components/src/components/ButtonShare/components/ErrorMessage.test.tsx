@@ -1,6 +1,5 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/preact";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import * as coreSdk from "@frak-labs/core-sdk";
 import * as useCopyToClipboardHook from "@/hooks/useCopyToClipboard";
 import { ErrorMessage } from "./ErrorMessage";
 
@@ -67,29 +66,6 @@ describe.sequential("ErrorMessage", () => {
         expect(mockCopy).toHaveBeenCalledWith("");
     });
 
-    it("should track share_error_debug_copied on copy click", () => {
-        vi.mocked(useCopyToClipboardHook.useCopyToClipboard).mockReturnValue({
-            copied: false,
-            copy: vi.fn(),
-        });
-
-        render(
-            <ErrorMessage
-                debugInfo="x"
-                placement="hero"
-                targetInteraction="purchase"
-            />
-        );
-        fireEvent.click(
-            screen.getByText("Copier les informations de débogage")
-        );
-
-        expect(coreSdk.trackEvent).toHaveBeenCalledWith(
-            window.FrakSetup?.client,
-            "share_error_debug_copied",
-            { placement: "hero", target_interaction: "purchase" }
-        );
-    });
 
     it("should display copied state when copy is successful", () => {
         vi.mocked(useCopyToClipboardHook.useCopyToClipboard).mockReturnValue({

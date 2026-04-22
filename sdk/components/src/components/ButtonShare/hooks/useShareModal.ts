@@ -62,7 +62,6 @@ export function useShareModal(
                     e instanceof Object && "message" in e
                         ? (e.message as string)
                         : "Unknown error",
-                debug_info: debugInfo,
             });
 
             setDebugInfo(debugInfo);

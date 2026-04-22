@@ -8,7 +8,7 @@ import {
     REFERRAL_SUCCESS_EVENT,
 } from "@frak-labs/core-sdk/actions";
 import { InAppBanner } from "@frak-labs/design-system/components/InAppBanner";
-import { useCallback, useEffect, useMemo, useState } from "preact/hooks";
+import { useCallback, useEffect, useMemo, useRef, useState } from "preact/hooks";
 import { useClientReady } from "@/hooks/useClientReady";
 import { useGlobalComponents } from "@/hooks/useGlobalComponents";
 import { useLightDomStyles } from "@/hooks/useLightDomStyles";
@@ -93,10 +93,9 @@ export function Banner({
 
     // Emit a single impression per (mount, mode) pair. A user who sees the
     // referral banner and the in-app banner in the same session produces
-    // two impressions — which is the desired funnel granularity.
-    const [trackedImpressionMode, setTrackedImpressionMode] = useState<
-        BannerMode | null
-    >(null);
+    // two impressions — which is the desired funnel granularity. Ref instead
+    // of state to avoid triggering a re-render on each fire.
+    const trackedImpressionModeRef = useRef<BannerMode | null>(null);
 
     // Sync preview mode changes from theme editor
     useEffect(() => {
@@ -124,30 +123,20 @@ export function Banner({
             .catch(() => {});
     }, [mode, isPreview, isClientReady]);
 
-    // Emit a single impression per (mount, mode) pair. A user who sees
-    // the referral banner and the in-app banner in the same session
-    // produces two impressions — desired funnel granularity.
     useEffect(() => {
         if (isPreview || !mode || dismissed) return;
-        if (trackedImpressionMode === mode) return;
+        if (trackedImpressionModeRef.current === mode) return;
         if (!isClientReady) return;
         trackEvent(window.FrakSetup?.client, "banner_impression", {
             placement: placementId,
             variant: mode,
             has_reward: mode === "referral" ? Boolean(reward) : undefined,
         });
-        setTrackedImpressionMode(mode);
+        trackedImpressionModeRef.current = mode;
         // `reward` is intentionally omitted — async arrival would produce
         // a second impression event.
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [
-        mode,
-        dismissed,
-        isClientReady,
-        isPreview,
-        placementId,
-        trackedImpressionMode,
-    ]);
+    }, [mode, dismissed, isClientReady, isPreview, placementId]);
 
     // Listen for the referral success event (only when not in preview or in-app browser mode)
     useEffect(() => {
@@ -162,9 +151,10 @@ export function Banner({
 
     const handleAction = useCallback(async () => {
         if (isPreview) return;
-        trackEvent(window.FrakSetup?.client, "banner_clicked", {
+        trackEvent(window.FrakSetup?.client, "banner_resolved", {
             placement: placementId,
             variant: mode ?? "referral",
+            outcome: "clicked",
         });
         if (mode === "referral") {
             setDismissed(true);
@@ -192,9 +182,10 @@ export function Banner({
 
     const handleDismiss = useCallback(() => {
         if (isPreview) return;
-        trackEvent(window.FrakSetup?.client, "banner_dismissed", {
+        trackEvent(window.FrakSetup?.client, "banner_resolved", {
             placement: placementId,
             variant: mode ?? "referral",
+            outcome: "dismissed",
         });
         setDismissed(true);
     }, [isPreview, mode, placementId]);

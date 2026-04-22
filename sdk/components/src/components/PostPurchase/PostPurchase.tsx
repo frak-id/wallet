@@ -15,7 +15,7 @@ import { Columns } from "@frak-labs/design-system/components/Columns";
 import { Stack } from "@frak-labs/design-system/components/Stack";
 import { LogoFrak } from "@frak-labs/design-system/icons";
 import { FrakRpcError, RpcErrorCodes } from "@frak-labs/frame-connector";
-import { useEffect, useMemo, useState } from "preact/hooks";
+import { useEffect, useMemo, useRef, useState } from "preact/hooks";
 import { useClientReady } from "@/hooks/useClientReady";
 import { useGlobalComponents } from "@/hooks/useGlobalComponents";
 import { useLightDomStyles } from "@/hooks/useLightDomStyles";
@@ -186,8 +186,9 @@ export function PostPurchase({
 
     // Impression tracking fires once per (mount, variant) pair after the
     // variant is resolved — so preview-mode views, referrer, and referee
-    // renders are each counted separately.
-    const [trackedImpressionVariant, setTrackedImpressionVariant] = useState<
+    // renders are each counted separately. Ref instead of state to avoid
+    // triggering a re-render on each fire.
+    const trackedImpressionVariantRef = useRef<
         "referrer" | "referee" | null
     >(null);
 
@@ -259,7 +260,7 @@ export function PostPurchase({
 
     useEffect(() => {
         if (!resolvedVariant) return;
-        if (trackedImpressionVariant === resolvedVariant) return;
+        if (trackedImpressionVariantRef.current === resolvedVariant) return;
         if (!isPreview && (!shouldRender || isHidden || !isClientReady))
             return;
         trackEvent(window.FrakSetup?.client, "post_purchase_impression", {
@@ -267,10 +268,9 @@ export function PostPurchase({
             variant: resolvedVariant,
             has_reward: Boolean(context?.reward),
         });
-        setTrackedImpressionVariant(resolvedVariant);
+        trackedImpressionVariantRef.current = resolvedVariant;
     }, [
         resolvedVariant,
-        trackedImpressionVariant,
         shouldRender,
         isHidden,
         isClientReady,

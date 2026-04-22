@@ -156,13 +156,7 @@ export function ButtonShare({
             >
                 {btnText}
             </button>
-            {isError && (
-                <ErrorMessage
-                    debugInfo={debugInfo}
-                    placement={placementId}
-                    targetInteraction={resolvedTargetInteraction}
-                />
-            )}
+            {isError && <ErrorMessage debugInfo={debugInfo} />}
         </>
     );
 }

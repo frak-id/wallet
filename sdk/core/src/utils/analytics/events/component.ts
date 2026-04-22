@@ -5,6 +5,7 @@ type ButtonBaseProps = {
 };
 
 type BannerVariant = "referral" | "inapp";
+type BannerOutcome = "clicked" | "dismissed";
 type PostPurchaseVariant = "referrer" | "referee";
 type ShareClickAction = "share-modal" | "embedded-wallet" | "sharing-page";
 
@@ -16,9 +17,7 @@ export type SdkComponentEventMap = {
     };
     share_modal_error: ButtonBaseProps & {
         error?: string;
-        debug_info?: string;
     };
-    share_error_debug_copied: ButtonBaseProps;
 
     // Wallet button (floating) — NOT actively used in production. No tracking.
 
@@ -38,13 +37,10 @@ export type SdkComponentEventMap = {
         variant: BannerVariant;
         has_reward?: boolean;
     };
-    banner_clicked: {
+    banner_resolved: {
         placement?: string;
         variant: BannerVariant;
-    };
-    banner_dismissed: {
-        placement?: string;
-        variant: BannerVariant;
+        outcome: BannerOutcome;
     };
 
     // Post-purchase — the card drives the highest-intent entry into the
