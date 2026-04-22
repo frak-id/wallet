@@ -71,14 +71,11 @@ describe("startFlow", () => {
                 index: 0,
                 translation_key: "slides.welcome",
             });
-            expect(mockTrack).toHaveBeenCalledWith(
-                "onboarding_slide_viewed",
-                {
-                    index: 0,
-                    translation_key: "slides.welcome",
-                    flow_id: flow.flowId,
-                }
-            );
+            expect(mockTrack).toHaveBeenCalledWith("onboarding_slide_viewed", {
+                index: 0,
+                translation_key: "slides.welcome",
+                flow_id: flow.flowId,
+            });
         });
 
         it("allows undefined properties", () => {

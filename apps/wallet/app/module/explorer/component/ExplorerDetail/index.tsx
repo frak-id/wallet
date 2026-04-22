@@ -114,31 +114,31 @@ export function ExplorerDetail({ merchant, onClose }: ExplorerDetailProps) {
     return (
         <DetailSheet style={{ paddingTop: 0 }}>
             <DetailSheetHero height={375} className={styles.heroImageSheet}>
-                {images.length === 1 && (
-                    <img
-                        src={images[0]}
-                        alt={merchant.name}
-                        className={styles.heroImage}
-                    />
-                )}
-
-                {images.length > 1 && (
-                    <div ref={scrollContainerRef} className={styles.heroSlider}>
-                        {images.map((url, index) => (
+                <div ref={scrollContainerRef} className={styles.heroSlider}>
+                    {images.map((url, index) => (
+                        <div
+                            key={index}
+                            className={styles.heroSlide}
+                            data-index={index}
+                        >
+                            <img
+                                src={url}
+                                alt=""
+                                aria-hidden
+                                className={styles.heroBackground}
+                            />
                             <div
-                                key={index}
-                                className={styles.heroSlide}
-                                data-index={index}
-                            >
-                                <img
-                                    src={url}
-                                    alt={`${merchant.name} ${index + 1}`}
-                                    className={styles.heroImage}
-                                />
-                            </div>
-                        ))}
-                    </div>
-                )}
+                                className={styles.heroOverlay}
+                                aria-hidden
+                            />
+                            <img
+                                src={url}
+                                alt={`${merchant.name}${images.length > 1 ? ` ${index + 1}` : ""}`}
+                                className={styles.heroImage}
+                            />
+                        </div>
+                    ))}
+                </div>
 
                 <DetailSheetActions>
                     <GlassButton

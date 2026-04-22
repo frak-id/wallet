@@ -66,7 +66,6 @@ describe.sequential("ErrorMessage", () => {
         expect(mockCopy).toHaveBeenCalledWith("");
     });
 
-
     it("should display copied state when copy is successful", () => {
         vi.mocked(useCopyToClipboardHook.useCopyToClipboard).mockReturnValue({
             copied: true,

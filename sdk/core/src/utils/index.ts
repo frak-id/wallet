@@ -1,4 +1,5 @@
 export { Deferred } from "@frak-labs/frame-connector";
+export { trackEvent } from "./analytics";
 export { getBackendUrl } from "./backendUrl";
 export { clearAllCache, getCache, withCache } from "./cache";
 export { getClientId } from "./clientId";
@@ -39,4 +40,3 @@ export {
     type FullSsoParams,
     generateSsoUrl,
 } from "./sso";
-export { trackEvent } from "./analytics";

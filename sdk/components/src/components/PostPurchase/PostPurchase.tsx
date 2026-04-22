@@ -188,9 +188,9 @@ export function PostPurchase({
     // variant is resolved — so preview-mode views, referrer, and referee
     // renders are each counted separately. Ref instead of state to avoid
     // triggering a re-render on each fire.
-    const trackedImpressionVariantRef = useRef<
-        "referrer" | "referee" | null
-    >(null);
+    const trackedImpressionVariantRef = useRef<"referrer" | "referee" | null>(
+        null
+    );
 
     // Resolve variant and reward. In preview mode we synthesise a variant from
     // the `previewVariant` prop so the card renders without backend data.
@@ -261,8 +261,7 @@ export function PostPurchase({
     useEffect(() => {
         if (!resolvedVariant) return;
         if (trackedImpressionVariantRef.current === resolvedVariant) return;
-        if (!isPreview && (!shouldRender || isHidden || !isClientReady))
-            return;
+        if (!isPreview && (!shouldRender || isHidden || !isClientReady)) return;
         trackEvent(window.FrakSetup?.client, "post_purchase_impression", {
             placement: placementId,
             variant: resolvedVariant,

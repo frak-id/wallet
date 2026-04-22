@@ -218,7 +218,6 @@ function WalletSharingPage() {
         defaultAttribution,
     ]);
 
-
     // Share mutation using the shared hook (auto-fires `sharing_link_shared`).
     const {
         mutate: triggerSharing,

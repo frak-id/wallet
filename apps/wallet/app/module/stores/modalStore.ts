@@ -14,7 +14,7 @@
  */
 
 import type { ExplorerMerchantItem } from "@frak-labs/backend-elysia/orchestration/schemas";
-import { trackEvent, type RewardHistoryItem } from "@frak-labs/wallet-shared";
+import { type RewardHistoryItem, trackEvent } from "@frak-labs/wallet-shared";
 import { create } from "zustand";
 
 /**

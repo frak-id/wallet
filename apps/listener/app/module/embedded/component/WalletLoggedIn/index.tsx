@@ -109,8 +109,14 @@ function ActionButtons() {
                 prefixWalletCss("modalListenerWallet__actionButtons")
             )}
         >
-            <ButtonCopyLink finalSharingLink={finalSharingLink} merchantId={merchantId} />
-            <ButtonSharingLink finalSharingLink={finalSharingLink} merchantId={merchantId} />
+            <ButtonCopyLink
+                finalSharingLink={finalSharingLink}
+                merchantId={merchantId}
+            />
+            <ButtonSharingLink
+                finalSharingLink={finalSharingLink}
+                merchantId={merchantId}
+            />
         </div>
     );
 }

@@ -47,7 +47,10 @@ describe("trackEvent", () => {
         });
 
         it("should track event with props", () => {
-            const props = { placement: "footer", click_action: "share-modal" } as const;
+            const props = {
+                placement: "footer",
+                click_action: "share-modal",
+            } as const;
             trackEvent(mockClient, "share_button_clicked", props);
 
             expect(mockClient.openPanel?.track).toHaveBeenCalledWith(

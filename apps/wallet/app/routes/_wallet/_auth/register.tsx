@@ -199,10 +199,9 @@ function RegisterPage() {
                             });
                     }}
                     onSkip={() => {
-                        flowRef.current?.track(
-                            "notification_opt_in_resolved",
-                            { outcome: "skipped" }
-                        );
+                        flowRef.current?.track("notification_opt_in_resolved", {
+                            outcome: "skipped",
+                        });
                         setStep("welcome");
                     }}
                 />

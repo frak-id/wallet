@@ -102,7 +102,13 @@ export function ExplorerCard({ merchant, onClick }: ExplorerCardProps) {
                 <Text as="h2" variant="body" weight="semiBold">
                     {name}
                 </Text>
-                <Text variant="bodySmall" weight="medium">
+                <Text
+                    variant="bodySmall"
+                    weight="medium"
+                    className={
+                        cardInfo ? undefined : styles.descriptionFallback
+                    }
+                >
                     {cardInfo ? (
                         <>
                             {t("explorer.detail.rewardPerReferral", {

@@ -178,7 +178,6 @@ describe("modalStore", () => {
             expect(state.results).toEqual({ login: { status: "success" } });
         });
 
-
         test("should move to next step", () => {
             modalStore
                 .getState()
@@ -685,7 +684,6 @@ describe("modalStore", () => {
 
     describe("Edge cases and complex workflows", () => {
         test("should handle multi-step workflow with onResponse callbacks", () => {
-
             const steps = [
                 { key: "login" as const, params: {} as any },
                 { key: "siweAuthenticate" as const, params: {} as any },

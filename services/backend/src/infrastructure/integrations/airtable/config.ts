@@ -48,8 +48,7 @@ export const AIRTABLE_CONFIG: Record<TableType, AirtableTableConfig> = {
     },
     newsletter: {
         tableId:
-            process.env.AIRTABLE_NEWSLETTER_TABLE_ID ||
-            "tblEt670VPBhsVkXC",
+            process.env.AIRTABLE_NEWSLETTER_TABLE_ID || "tblEt670VPBhsVkXC",
         baseId: "appsfnUHGcLzwO4Bv",
     },
 } as const;

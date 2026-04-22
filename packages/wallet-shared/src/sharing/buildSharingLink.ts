@@ -1,4 +1,7 @@
-import type { AttributionDefaults, AttributionParams } from "@frak-labs/core-sdk";
+import type {
+    AttributionDefaults,
+    AttributionParams,
+} from "@frak-labs/core-sdk";
 import { FrakContextManager, mergeAttribution } from "@frak-labs/core-sdk";
 
 /**

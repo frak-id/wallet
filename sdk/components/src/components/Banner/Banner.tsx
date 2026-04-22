@@ -8,7 +8,13 @@ import {
     REFERRAL_SUCCESS_EVENT,
 } from "@frak-labs/core-sdk/actions";
 import { InAppBanner } from "@frak-labs/design-system/components/InAppBanner";
-import { useCallback, useEffect, useMemo, useRef, useState } from "preact/hooks";
+import {
+    useCallback,
+    useEffect,
+    useMemo,
+    useRef,
+    useState,
+} from "preact/hooks";
 import { useClientReady } from "@/hooks/useClientReady";
 import { useGlobalComponents } from "@/hooks/useGlobalComponents";
 import { useLightDomStyles } from "@/hooks/useLightDomStyles";

@@ -22,6 +22,9 @@ export const heroImage = style({
     width: "100%",
     height: "100%",
     objectFit: "cover",
+    // Figma spec: 361 × 158.5 hero — pin the aspect ratio so every card shares
+    // a consistent height regardless of the source image dimensions.
+    aspectRatio: "361 / 158.5",
 });
 
 export const badge = style({
@@ -85,9 +88,21 @@ export const merchantName = style({
 
 export const imagePlaceholder = style({
     width: "100%",
-    height: 157,
+    height: "100%",
     backgroundColor: vars.surface.disabled,
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
+});
+
+/**
+ * Single-line fallback used when no reward is available — keeps the card
+ * bottom line consistent in height with the reward variant.
+ */
+export const descriptionFallback = style({
+    display: "-webkit-box",
+    WebkitLineClamp: 1,
+    WebkitBoxOrient: "vertical",
+    overflow: "hidden",
+    color: vars.text.secondary,
 });

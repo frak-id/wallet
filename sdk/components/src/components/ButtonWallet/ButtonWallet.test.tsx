@@ -83,7 +83,6 @@ describe.sequential("ButtonWallet", () => {
         expect(buttonWalletUtils.openWalletModal).toHaveBeenCalledTimes(1);
     });
 
-
     it("should display reward when useReward is true and reward is available", () => {
         vi.mocked(useRewardHook.useReward).mockReturnValue({
             reward: "10 eur",
