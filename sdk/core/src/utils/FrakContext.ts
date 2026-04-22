@@ -151,15 +151,15 @@ function applyAttributionParams(
 /**
  * Add or replace the `fCtx` query parameter in a URL with the given context.
  *
- * When `attribution` is provided (even as an empty object), standard affiliation
- * params (`utm_source`, `utm_medium`, `utm_campaign`, `ref`, `via`, ...) are
- * also appended using gap-fill semantics: pre-existing params on the URL are
- * preserved, and defaults are derived from the context when applicable.
+ * Standard affiliation params (`utm_source`, `utm_medium`, `utm_campaign`,
+ * `ref`, `via`, ...) are always appended using gap-fill semantics: pre-existing
+ * params on the URL are preserved, defaults are derived from the context when
+ * applicable, and `attribution` overrides take precedence when provided.
  *
  * @param args
  * @param args.url - The URL to update
  * @param args.context - The context to embed (V1 or V2)
- * @param args.attribution - Optional attribution overrides. Omit to skip UTM/ref params.
+ * @param args.attribution - Optional attribution overrides. Defaults are applied even when omitted.
  * @returns The updated URL string, or null on failure
  */
 function update({
