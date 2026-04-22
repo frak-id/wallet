@@ -19,7 +19,8 @@ export type SharingSource =
     | "sharing_page_listener"
     | "modal"
     | "embedded_wallet"
-    | "explorer_detail";
+    | "explorer_detail"
+    | "welcome_card";
 
 type SharingLinkProps = {
     source: SharingSource;

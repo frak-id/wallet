@@ -228,6 +228,11 @@ function WalletSharingPage() {
         {
             title: t("sharing.title"),
             text: t("sharing.text"),
+            // `logoUrl` comes from the merchant's config and drives the
+            // rich preview header (iOS LinkPresentation / Android chooser
+            // thumbnail). Falls back gracefully when the merchant has no
+            // logo configured.
+            imageUrl: logoUrl,
         },
         {
             source: "sharing_page_wallet",

@@ -87,18 +87,29 @@ export function ExplorerDetail({ merchant, onClose }: ExplorerDetailProps) {
 
     const shareUrl = useMemo(() => {
         const baseUrl = `https://${merchant.domain}`;
-        return buildSharingLink({
-            clientId: clientId ?? undefined,
-            merchantId: merchant.id,
-            baseUrl,
-        }) ?? baseUrl;
+        return (
+            buildSharingLink({
+                clientId: clientId ?? undefined,
+                merchantId: merchant.id,
+                baseUrl,
+            }) ?? baseUrl
+        );
     }, [clientId, merchant.domain, merchant.id]);
 
-    const { mutate: triggerSharing } = useShareLink(
+    const { mutate: triggerSharing, canShare } = useShareLink(
         shareUrl,
         {
-            title: merchant.name,
-            text: merchant.name,
+            // Reuse the global sharing strings so iOS / Android show the
+            // same branded subject + body across every entry point.
+            // `productName` is interpolated into `sharing.title`
+            // ("{{productName}} invite link") to give the share sheet a
+            // recognisable header instead of the raw merchant name.
+            title: t("sharing.title", { productName: merchant.name }),
+            text: t("sharing.text"),
+            // Surface the merchant's logo (preferred) or first hero image so
+            // iOS LinkPresentation + the Android chooser render a branded
+            // preview tile above the activity grid.
+            imageUrl: logoUrl ?? images[0],
         },
         {
             source: "explorer_detail",
@@ -107,9 +118,11 @@ export function ExplorerDetail({ merchant, onClose }: ExplorerDetailProps) {
     );
 
     const handleShare = useCallback(() => {
-        if (!navigator.share) return;
+        // `canShare` is true on Tauri (routed through the native plugin) and on
+        // web browsers that expose `navigator.share`. No-op elsewhere.
+        if (!canShare) return;
         triggerSharing();
-    }, [triggerSharing]);
+    }, [canShare, triggerSharing]);
 
     return (
         <DetailSheet style={{ paddingTop: 0 }}>
@@ -127,10 +140,7 @@ export function ExplorerDetail({ merchant, onClose }: ExplorerDetailProps) {
                                 aria-hidden
                                 className={styles.heroBackground}
                             />
-                            <div
-                                className={styles.heroOverlay}
-                                aria-hidden
-                            />
+                            <div className={styles.heroOverlay} aria-hidden />
                             <img
                                 src={url}
                                 alt={`${merchant.name}${images.length > 1 ? ` ${index + 1}` : ""}`}
@@ -147,12 +157,14 @@ export function ExplorerDetail({ merchant, onClose }: ExplorerDetailProps) {
                         onClick={onClose}
                         aria-label={t("explorer.detail.close")}
                     />
-                    <GlassButton
-                        as="button"
-                        icon={<ShareIcon width={20} height={20} />}
-                        onClick={handleShare}
-                        aria-label={t("explorer.detail.share")}
-                    />
+                    {canShare && (
+                        <GlassButton
+                            as="button"
+                            icon={<ShareIcon width={20} height={20} />}
+                            onClick={handleShare}
+                            aria-label={t("explorer.detail.share")}
+                        />
+                    )}
                 </DetailSheetActions>
 
                 {rewardSummary.daysRemaining != null &&
@@ -263,7 +275,7 @@ export function ExplorerDetail({ merchant, onClose }: ExplorerDetailProps) {
                 </Box>
             </DetailSheetBody>
 
-            <DetailSheetFooter>
+            <DetailSheetFooter className={styles.floatingFooter}>
                 <Button
                     variant="primary"
                     width="full"

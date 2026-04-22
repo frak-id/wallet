@@ -8,7 +8,9 @@ import {
 } from "@frak-labs/design-system/components/DetailSheet";
 import { Text } from "@frak-labs/design-system/components/Text";
 import { CloseIcon, ShareIcon } from "@frak-labs/design-system/icons";
+import { useShareLink } from "@frak-labs/wallet-shared";
 import { useNavigate } from "@tanstack/react-router";
+import { useCallback } from "react";
 import { Trans, useTranslation } from "react-i18next";
 import { GlassButton } from "@/module/common/component/GlassButton";
 import { InstructionList } from "@/module/common/component/InstructionList";
@@ -29,17 +31,23 @@ type WelcomeDetailProps = {
 export function WelcomeDetail({ onClose }: WelcomeDetailProps) {
     const { t } = useTranslation();
     const navigate = useNavigate();
-    const handleShare = async () => {
-        if (!navigator.share) return;
-        try {
-            await navigator.share({
-                title: t("wallet.welcome.title"),
-                url: window.location.origin,
-            });
-        } catch {
-            // User cancelled or share failed — ignore
-        }
-    };
+
+    // Use the shared hook so Tauri (iOS / Android) goes through the native
+    // share plugin and web uses the Web Share API — keeps analytics consistent
+    // with every other share entry point (sharing page, explorer detail, …).
+    const { mutate: triggerSharing, canShare } = useShareLink(
+        window.location.origin,
+        {
+            title: t("wallet.welcome.title"),
+            text: t("wallet.welcome.title"),
+        },
+        { source: "welcome_card" }
+    );
+
+    const handleShare = useCallback(() => {
+        if (!canShare) return;
+        triggerSharing();
+    }, [canShare, triggerSharing]);
 
     const handleDiscover = () => {
         onClose();
@@ -57,12 +65,14 @@ export function WelcomeDetail({ onClose }: WelcomeDetailProps) {
                         onClick={onClose}
                         aria-label={t("common.close")}
                     />
-                    <GlassButton
-                        as="button"
-                        icon={<ShareIcon width={20} height={20} />}
-                        onClick={handleShare}
-                        aria-label={t("common.share")}
-                    />
+                    {canShare && (
+                        <GlassButton
+                            as="button"
+                            icon={<ShareIcon width={20} height={20} />}
+                            onClick={handleShare}
+                            aria-label={t("common.share")}
+                        />
+                    )}
                 </DetailSheetActions>
             </DetailSheetHero>
 

@@ -1,0 +1,13 @@
+[package]
+name = "tauri-plugin-frak-share"
+version = "0.1.0"
+edition = "2021"
+links = "tauri-plugin-frak-share"
+
+[dependencies]
+tauri = "2"
+serde = "1"
+serde_json = "1"
+
+[build-dependencies]
+tauri-plugin = { version = "2", features = ["build"] }

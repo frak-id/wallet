@@ -117,7 +117,7 @@ export const imageCountBadge = style({
     backgroundColor: "rgba(0, 0, 0, 0.7)",
     backdropFilter: "blur(16px)",
     color: vars.text.onAction,
-    zIndex: 1
+    zIndex: 1,
 });
 
 /**

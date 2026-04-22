@@ -1,0 +1,3 @@
+[default]
+description = "Default permissions for the frak-share plugin"
+permissions = ["allow-share-text"]
