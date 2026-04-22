@@ -5,6 +5,7 @@ import {
     clientIdStore,
     emitLifecycleEvent,
     getSavedConfirmation,
+    sessionStore,
     SharingPage,
     saveConfirmation,
     trackEvent,
@@ -29,6 +30,7 @@ export function ListenerSharingPage() {
         (s) => s.backendSdkConfig?.attribution
     );
     const clientId = clientIdStore((s) => s.clientId);
+    const walletAddress = sessionStore((s) => s.session?.address);
     const { copy } = useCopyToClipboardWithState();
     const { mutate: trackSharing } = useTrackSharing();
 
@@ -105,6 +107,7 @@ export function ListenerSharingPage() {
         return buildSharingLink({
             clientId: clientId ?? undefined,
             merchantId,
+            wallet: walletAddress,
             baseUrl:
                 selectedProduct?.link ??
                 currentRequest.params.link ??
@@ -115,6 +118,7 @@ export function ListenerSharingPage() {
         });
     }, [
         clientId,
+        walletAddress,
         merchantId,
         currentRequest.params.link,
         currentRequest.params.attribution,

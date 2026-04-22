@@ -27,6 +27,31 @@ export type ArrivalExtra = {
     touchpointId: string;
 };
 
+/**
+ * Referrer identity normalized from the raw arrival input.
+ *
+ * `wallet` is only set when the raw input passes `isAddress`; callers can
+ * therefore trust that a present `wallet` is always a valid {@link Address}.
+ */
+type NormalizedReferrer = {
+    wallet?: Address;
+    clientId?: string;
+    merchantId?: string;
+    timestamp?: number;
+};
+
+function normalizeReferrer(input: ArrivalInput): NormalizedReferrer {
+    return {
+        wallet:
+            input.referrerWallet && isAddress(input.referrerWallet)
+                ? (input.referrerWallet as Address)
+                : undefined,
+        clientId: input.referrerClientId,
+        merchantId: input.referrerMerchantId,
+        timestamp: input.referralTimestamp,
+    };
+}
+
 export class ArrivalHandler
     implements
         InteractionHandler<ArrivalInput, ReferralArrivalPayload, ArrivalExtra>
@@ -49,9 +74,10 @@ export class ArrivalHandler
         input: ArrivalInput,
         context: HandlerContext
     ): Promise<ReferralArrivalPayload> {
-        const sourceData = this.buildSourceData(input);
+        const referrer = normalizeReferrer(input);
+        const sourceData = this.buildSourceData(input, referrer);
         const referrerIdentityGroupId =
-            await this.resolveReferrerGroupId(input);
+            await this.resolveReferrerGroupId(referrer);
 
         const { touchpoint, referralRegistered } =
             await this.attributionService.recordTouchpoint({
@@ -64,10 +90,10 @@ export class ArrivalHandler
             });
 
         return {
-            referrerWallet: input.referrerWallet as Address | undefined,
-            referrerClientId: input.referrerClientId,
-            referrerMerchantId: input.referrerMerchantId,
-            referralTimestamp: input.referralTimestamp,
+            referrerWallet: referrer.wallet,
+            referrerClientId: referrer.clientId,
+            referrerMerchantId: referrer.merchantId,
+            referralTimestamp: referrer.timestamp,
             landingUrl: input.landingUrl,
             touchpointId: touchpoint.id,
             referralRegistered,
@@ -84,38 +110,42 @@ export class ArrivalHandler
         };
     }
 
+    /**
+     * `referralRegistered === true` is only ever set by `AttributionService`
+     * when the touchpoint source is `referral_link` AND a referrer identity
+     * group was resolved — so it already implies a valid referral source.
+     */
     shouldCreateInteractionLog(
-        input: ArrivalInput,
+        _input: ArrivalInput,
         payload: ReferralArrivalPayload
     ): boolean {
-        return (
-            this.isReferralSource(input) && payload.referralRegistered === true
-        );
+        return payload.referralRegistered === true;
     }
 
-    private isReferralSource(input: ArrivalInput): boolean {
-        if (input.referrerClientId && input.referrerMerchantId) {
-            return true;
-        }
-        return Boolean(input.referrerWallet && isAddress(input.referrerWallet));
-    }
-
-    private buildSourceData(input: ArrivalInput): TouchpointSourceData {
-        if (input.referrerClientId && input.referrerMerchantId) {
+    private buildSourceData(
+        input: ArrivalInput,
+        referrer: NormalizedReferrer
+    ): TouchpointSourceData {
+        // V2: merchantId + at least one sharer identifier (clientId or wallet).
+        if (referrer.merchantId && (referrer.clientId || referrer.wallet)) {
             return {
                 type: "referral_link",
                 v: 2,
-                referrerClientId: input.referrerClientId,
-                referrerMerchantId: input.referrerMerchantId,
-                referralTimestamp: input.referralTimestamp,
+                referrerMerchantId: referrer.merchantId,
+                referralTimestamp: referrer.timestamp,
+                ...(referrer.clientId && {
+                    referrerClientId: referrer.clientId,
+                }),
+                ...(referrer.wallet && { referrerWallet: referrer.wallet }),
             };
         }
 
-        if (input.referrerWallet && isAddress(input.referrerWallet)) {
+        // V1 legacy: wallet-only (no merchantId embedded).
+        if (referrer.wallet) {
             return {
                 type: "referral_link",
                 v: 1,
-                referrerWallet: input.referrerWallet as Address,
+                referrerWallet: referrer.wallet,
             };
         }
 
@@ -133,29 +163,33 @@ export class ArrivalHandler
         return { type: "direct" };
     }
 
+    /**
+     * Wallet lookup takes precedence — it's global, WebAuthn-bound, and survives
+     * localStorage clears. Anonymous fingerprint (clientId scoped to merchantId)
+     * is the fallback for truly anonymous sharers.
+     */
     private async resolveReferrerGroupId(
-        input: ArrivalInput
+        referrer: NormalizedReferrer
     ): Promise<string | undefined> {
-        if (input.referrerClientId && input.referrerMerchantId) {
-            const group =
-                await IdentityContext.repositories.identity.findGroupByIdentity(
-                    {
-                        type: "anonymous_fingerprint",
-                        value: input.referrerClientId,
-                        merchantId: input.referrerMerchantId,
-                    }
-                );
+        const repo = IdentityContext.repositories.identity;
+
+        if (referrer.wallet) {
+            const group = await repo.findGroupByIdentity({
+                type: "wallet",
+                value: referrer.wallet,
+            });
+            if (group?.id) return group.id;
+        }
+
+        if (referrer.clientId && referrer.merchantId) {
+            const group = await repo.findGroupByIdentity({
+                type: "anonymous_fingerprint",
+                value: referrer.clientId,
+                merchantId: referrer.merchantId,
+            });
             return group?.id ?? undefined;
         }
 
-        if (!input.referrerWallet || !isAddress(input.referrerWallet)) {
-            return undefined;
-        }
-        const group =
-            await IdentityContext.repositories.identity.findGroupByIdentity({
-                type: "wallet",
-                value: input.referrerWallet,
-            });
-        return group?.id ?? undefined;
+        return undefined;
     }
 }

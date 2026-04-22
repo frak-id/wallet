@@ -26,6 +26,7 @@ import {
     clientIdStore,
     estimatedRewardsQueryOptions,
     formatEstimatedReward,
+    sessionStore,
     useShareLink,
 } from "@frak-labs/wallet-shared";
 import { useQuery } from "@tanstack/react-query";
@@ -44,6 +45,7 @@ type ExplorerDetailProps = {
 
 export function ExplorerDetail({ merchant, onClose }: ExplorerDetailProps) {
     const clientId = clientIdStore((s) => s.clientId);
+    const walletAddress = sessionStore((s) => s.session?.address);
     const [isDescriptionExpanded, setIsDescriptionExpanded] = useState(false);
     const [needsReadMore, setNeedsReadMore] = useState(false);
     const descriptionRef = useRef<HTMLElement>(null);
@@ -91,10 +93,11 @@ export function ExplorerDetail({ merchant, onClose }: ExplorerDetailProps) {
             buildSharingLink({
                 clientId: clientId ?? undefined,
                 merchantId: merchant.id,
+                wallet: walletAddress,
                 baseUrl,
             }) ?? baseUrl
         );
-    }, [clientId, merchant.domain, merchant.id]);
+    }, [clientId, walletAddress, merchant.domain, merchant.id]);
 
     const { mutate: triggerSharing, canShare } = useShareLink(
         shareUrl,

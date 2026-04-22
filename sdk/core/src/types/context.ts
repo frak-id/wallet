@@ -11,19 +11,31 @@ export type FrakContextV1 = {
 };
 
 /**
- * V2 Frak Context — anonymous-first referral context.
- * Contains the sharer's clientId, merchantId, and link creation timestamp.
+ * V2 Frak Context — anonymous-first referral context with optional wallet.
+ *
+ * Carries merchant context (`m`) and creation timestamp (`t`) unconditionally.
+ * Identifies the sharer via either the anonymous clientId (`c`) or, when the
+ * sharer is authenticated, the stronger wallet identifier (`w`). A valid V2
+ * context MUST contain at least one of `c` or `w`; both may be present when
+ * a logged-in user shares a link (best attribution signal).
+ *
+ * `w` takes precedence as the source of truth because the wallet is bound to
+ * the user's WebAuthn credential, survives localStorage clears, and is global
+ * across merchants — unlike `c`, which is a per-browser UUID.
+ *
  * @ignore
  */
 export type FrakContextV2 = {
     /** Version discriminator */
     v: 2;
-    /** Sharer's anonymous clientId (UUID from localStorage) */
-    c: string;
     /** Merchant ID (UUID) */
     m: string;
     /** Link creation timestamp (epoch seconds) */
     t: number;
+    /** Sharer's anonymous clientId (UUID from localStorage). Optional when `w` is provided. */
+    c?: string;
+    /** Sharer's wallet address. Preferred source of truth when the sharer is authenticated. Optional when `c` is provided. */
+    w?: Address;
 };
 
 /**

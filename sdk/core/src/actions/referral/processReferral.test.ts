@@ -101,6 +101,7 @@ describe("processReferral", () => {
                 "user_referred_started",
                 {
                     referrerClientId: "referrer-client-id",
+                    referrerWallet: undefined,
                     walletStatus: "connected",
                 }
             );
@@ -109,6 +110,7 @@ describe("processReferral", () => {
                 type: "arrival",
                 referrerClientId: "referrer-client-id",
                 referrerMerchantId: "merchant-uuid",
+                referrerWallet: undefined,
                 referralTimestamp: 1709654400,
                 landingUrl: "https://example.com/test",
             });
@@ -128,6 +130,73 @@ describe("processReferral", () => {
             const result = await processReferral(mockClient, {
                 walletStatus: mockWalletStatus,
                 frakContext: v2SelfReferralContext,
+            });
+
+            expect(result).toBe("self-referral");
+            vi.mocked(utils.getClientId).mockReturnValue("test-client-id");
+        });
+
+        it("should successfully process v2 referral with wallet only (no clientId)", async () => {
+            await import("../../utils");
+            const { sendInteraction } = await import("../sendInteraction");
+
+            const referrerWallet =
+                "0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa" as Address;
+            const v2WithWalletOnly: FrakContextV2 = {
+                v: 2,
+                m: "merchant-uuid",
+                t: 1709654400,
+                w: referrerWallet,
+            };
+
+            const result = await processReferral(mockClient, {
+                walletStatus: mockWalletStatus,
+                frakContext: v2WithWalletOnly,
+            });
+
+            expect(result).toBe("success");
+            expect(sendInteraction).toHaveBeenCalledWith(mockClient, {
+                type: "arrival",
+                referrerClientId: undefined,
+                referrerMerchantId: "merchant-uuid",
+                referrerWallet,
+                referralTimestamp: 1709654400,
+                landingUrl: "https://example.com/test",
+            });
+        });
+
+        it("should return 'self-referral' when v2 wallet matches current wallet", async () => {
+            const v2SelfReferralByWallet: FrakContextV2 = {
+                v: 2,
+                m: "merchant-uuid",
+                t: 1709654400,
+                w: mockAddress,
+            };
+
+            const result = await processReferral(mockClient, {
+                walletStatus: mockWalletStatus,
+                frakContext: v2SelfReferralByWallet,
+            });
+
+            expect(result).toBe("self-referral");
+        });
+
+        it("should prefer wallet over clientId for self-referral when both are present", async () => {
+            const utils = await import("../../utils");
+            // clientId does NOT match current user, but wallet does → still self-referral
+            vi.mocked(utils.getClientId).mockReturnValue("some-other-client");
+
+            const v2Hybrid: FrakContextV2 = {
+                v: 2,
+                c: "referrer-client-id",
+                m: "merchant-uuid",
+                t: 1709654400,
+                w: mockAddress,
+            };
+
+            const result = await processReferral(mockClient, {
+                walletStatus: mockWalletStatus,
+                frakContext: v2Hybrid,
             });
 
             expect(result).toBe("self-referral");

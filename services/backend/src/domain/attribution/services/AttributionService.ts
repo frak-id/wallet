@@ -111,11 +111,21 @@ export class AttributionService {
         if (sourceData.type !== "referral_link") return undefined;
 
         if (sourceData.v === 2) {
-            return {
-                type: "anonymous_fingerprint",
-                value: sourceData.referrerClientId,
-                merchantId: sourceData.referrerMerchantId,
-            };
+            // Wallet takes precedence — strongest identity signal when present.
+            if (sourceData.referrerWallet) {
+                return {
+                    type: "wallet",
+                    value: sourceData.referrerWallet,
+                };
+            }
+            if (sourceData.referrerClientId) {
+                return {
+                    type: "anonymous_fingerprint",
+                    value: sourceData.referrerClientId,
+                    merchantId: sourceData.referrerMerchantId,
+                };
+            }
+            return undefined;
         }
 
         return {

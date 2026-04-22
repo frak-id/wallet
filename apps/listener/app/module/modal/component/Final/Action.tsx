@@ -3,6 +3,7 @@ import {
     buildSharingLink,
     clientIdStore,
     prefixModalCss,
+    sessionStore,
     trackEvent,
     useCopyToClipboardWithState,
     useShareLink,
@@ -71,6 +72,7 @@ function SharingButtons({
 }) {
     const { sourceUrl, merchantId } = useSafeResolvingContext();
     const clientId = clientIdStore((s) => s.clientId);
+    const walletAddress = sessionStore((s) => s.session?.address);
     const { copy } = useCopyToClipboardWithState();
     const { t } = useListenerTranslation();
     const { mutate: trackSharing } = useTrackSharing();
@@ -85,6 +87,7 @@ function SharingButtons({
                 buildSharingLink({
                     clientId: clientId ?? undefined,
                     merchantId,
+                    wallet: walletAddress,
                     baseUrl: url,
                     defaultAttribution,
                 }) ?? FrakContextManager.remove(url)
@@ -95,6 +98,7 @@ function SharingButtons({
         link,
         isModalSuccess,
         clientId,
+        walletAddress,
         merchantId,
         sourceUrl,
         defaultAttribution,

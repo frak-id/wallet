@@ -9,6 +9,7 @@ import {
     clearConfirmation,
     clientIdStore,
     getSavedConfirmation,
+    sessionStore,
     SharingPage,
     saveConfirmation,
     trackEvent,
@@ -126,6 +127,7 @@ function WalletSharingPage() {
     const { t: rawT } = useTranslation();
     const navigate = useNavigate();
     const storeClientId = clientIdStore((s) => s.clientId);
+    const walletAddress = sessionStore((s) => s.session?.address);
     const { copy } = useCopyToClipboardWithState();
 
     // Product selection state — default to first product
@@ -203,6 +205,7 @@ function WalletSharingPage() {
         return buildSharingLink({
             clientId,
             merchantId,
+            wallet: walletAddress,
             baseUrl: selectedProduct?.link ?? link,
             attribution,
             defaultAttribution: defaultAttribution ?? undefined,
@@ -211,6 +214,7 @@ function WalletSharingPage() {
     }, [
         clientId,
         merchantId,
+        walletAddress,
         link,
         products,
         selectedProductIndex,

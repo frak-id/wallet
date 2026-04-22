@@ -55,12 +55,14 @@ function trackArrivalIfValid(
     if (isV2Context(frakContext)) {
         trackEvent(client, "user_referred_started", {
             referrerClientId: frakContext.c,
+            referrerWallet: frakContext.w,
             walletStatus: walletStatus?.key,
         });
         sendInteraction(client, {
             type: "arrival",
             referrerClientId: frakContext.c,
             referrerMerchantId: frakContext.m,
+            referrerWallet: frakContext.w,
             referralTimestamp: frakContext.t,
             landingUrl,
         });
@@ -107,7 +109,14 @@ function isSelfReferral(
     walletStatus?: WalletStatusReturnType
 ): boolean {
     if (isV2Context(frakContext)) {
-        return getClientId() === frakContext.c;
+        // Wallet match takes precedence — it's the strongest signal we have.
+        if (frakContext.w && walletStatus?.wallet) {
+            return isAddressEqual(frakContext.w, walletStatus.wallet);
+        }
+        if (frakContext.c) {
+            return getClientId() === frakContext.c;
+        }
+        return false;
     }
     if (isV1Context(frakContext) && walletStatus?.wallet) {
         return isAddressEqual(frakContext.r, walletStatus.wallet);

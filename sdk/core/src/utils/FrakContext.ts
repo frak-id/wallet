@@ -28,13 +28,16 @@ function compress(context?: FrakContextV1 | FrakContextV2): string | undefined {
     if (!context) return;
     try {
         if (isV2Context(context)) {
-            // Runtime validation: all V2 fields must be present and truthy
-            if (!context.c || !context.m || !context.t) return undefined;
+            // Runtime validation: m + t are always required, and at least one of
+            // c (anonymous fingerprint) or w (wallet) must be present.
+            if (!context.m || !context.t) return undefined;
+            if (!context.c && !context.w) return undefined;
             return compressJsonToB64({
                 v: 2,
-                c: context.c,
                 m: context.m,
                 t: context.t,
+                ...(context.c ? { c: context.c } : {}),
+                ...(context.w ? { w: context.w } : {}),
             });
         }
 
@@ -61,10 +64,15 @@ function decompress(context?: string): FrakContext | undefined {
         // Try V2 JSON first — V2 payloads are longer than V1's 20-byte address
         const json = decompressJsonFromB64<FrakContextV2>(context);
         if (json && typeof json === "object" && json.v === 2) {
-            if (json.c && json.m && json.t) {
-                return { v: 2, c: json.c, m: json.m, t: json.t };
-            }
-            return undefined;
+            if (!json.m || !json.t) return undefined;
+            if (!json.c && !json.w) return undefined;
+            return {
+                v: 2,
+                m: json.m,
+                t: json.t,
+                ...(json.c ? { c: json.c } : {}),
+                ...(json.w ? { w: json.w } : {}),
+            };
         }
 
         // Fall back to V1: raw 20-byte address
@@ -109,9 +117,10 @@ const DEFAULT_ATTRIBUTION_SOURCE = "frak";
 /**
  * Resolve attribution defaults from the provided context.
  *
- * V2 contexts expose the merchantId (`m`) and clientId (`c`), which feed
- * `utm_campaign` and `ref` respectively. V1 contexts have no equivalent, so
- * only the static defaults (`utm_source`, `utm_medium`, `via`) apply.
+ * V2 contexts expose the merchantId (`m`) and, when anonymous, the clientId
+ * (`c`), which feed `utm_campaign` and `ref` respectively. When V2 only carries
+ * a wallet (`w`), `ref` is intentionally left unset — we don't want wallet
+ * addresses leaking into UTM params. V1 contexts have no equivalent.
  */
 function resolveAttributionValues(
     context: FrakContextV1 | FrakContextV2,

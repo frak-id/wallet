@@ -7,6 +7,7 @@ import {
     buildSharingLink,
     clientIdStore,
     OriginPairingState,
+    sessionStore,
     trackEvent,
     useCopyToClipboardWithState,
     useGetUserBalance,
@@ -91,6 +92,7 @@ function ActionButtons() {
     const link = loggedIn?.action?.options?.link;
     const { sourceUrl, merchantId } = useSafeResolvingContext();
     const clientId = clientIdStore((s) => s.clientId);
+    const walletAddress = sessionStore((s) => s.session?.address);
     const defaultAttribution = resolvingContextStore(
         (s) => s.backendSdkConfig?.attribution
     );
@@ -98,6 +100,7 @@ function ActionButtons() {
     const finalSharingLink = buildSharingLink({
         clientId: clientId ?? undefined,
         merchantId,
+        wallet: walletAddress,
         baseUrl: link ?? sourceUrl,
         defaultAttribution,
     });

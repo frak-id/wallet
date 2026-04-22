@@ -42,12 +42,39 @@ describe("FrakContextManager", () => {
                 expect(result).not.toMatch(/[+/=]/);
             });
 
-            it("should return undefined when v2 context is missing clientId", () => {
+            it("should return undefined when v2 context has neither clientId nor wallet", () => {
                 const partial = { v: 2 as const, m: "m", t: 123 };
                 const result = FrakContextManager.compress(
                     partial as FrakContextV2
                 );
                 expect(result).toBeUndefined();
+            });
+
+            it("should compress v2 context with wallet only (no clientId)", () => {
+                const v2WithWalletOnly: FrakContextV2 = {
+                    v: 2,
+                    m: "merchant-uuid-1234",
+                    t: 1709654400,
+                    w: "0x1234567890123456789012345678901234567890" as Address,
+                };
+                const result = FrakContextManager.compress(v2WithWalletOnly);
+                expect(result).toBeDefined();
+                const decompressed = FrakContextManager.decompress(result);
+                expect(decompressed).toEqual(v2WithWalletOnly);
+            });
+
+            it("should compress v2 context with both clientId and wallet", () => {
+                const v2Hybrid: FrakContextV2 = {
+                    v: 2,
+                    c: "test-client-id-uuid",
+                    m: "merchant-uuid-1234",
+                    t: 1709654400,
+                    w: "0x1234567890123456789012345678901234567890" as Address,
+                };
+                const result = FrakContextManager.compress(v2Hybrid);
+                expect(result).toBeDefined();
+                const decompressed = FrakContextManager.decompress(result);
+                expect(decompressed).toEqual(v2Hybrid);
             });
 
             it("should return undefined when v2 context is missing merchantId", () => {
