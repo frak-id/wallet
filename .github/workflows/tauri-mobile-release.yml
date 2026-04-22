@@ -71,7 +71,10 @@ jobs:
           VERSION: ${{ inputs.version }}
 
       - name: "📝 Promote CHANGELOG [Unreleased] → [${{ inputs.version }}]"
-        uses: release-flow/keep-a-changelog-action@v3
+        # Pinned to commit on main (PR #86) which adds support for explicit semver versions.
+        # v3.0.0 (the latest tag) only accepts bump keywords (patch/minor/major) and rejects values like "1.0.28".
+        # Revert to @v3 once a newer tag is released that contains this change.
+        uses: release-flow/keep-a-changelog-action@51fdfb38631a4d2530cf1f3b11c0bba0c0f5f1e2
         with:
           command: bump
           version: ${{ inputs.version }}
