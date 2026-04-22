@@ -1,16 +1,13 @@
+import type { SharingPageProduct } from "@frak-labs/core-sdk";
 import {
-    FrakContextManager,
-    mergeAttribution,
-    type SharingPageProduct,
-} from "@frak-labs/core-sdk";
-import {
+    buildSharingLink,
     clearConfirmation,
     clientIdStore,
     emitLifecycleEvent,
     getSavedConfirmation,
     SharingPage,
     saveConfirmation,
-    trackGenericEvent,
+    trackEvent,
     useCopyToClipboardWithState,
     useShareLink,
 } from "@frak-labs/wallet-shared";
@@ -48,6 +45,14 @@ export function ListenerSharingPage() {
     const [showConfirmation, setShowConfirmation] = useState(() =>
         merchantId ? getSavedConfirmation(merchantId) : false
     );
+
+    // Fire `sharing_page_viewed` once per mount — denominator for the listener
+    // sharing funnel. `sharing_page_opened` already fires in the RPC handler
+    // when the iframe first receives the request; `sharing_page_viewed` fires
+    // when the UI actually mounts, so both are useful (RPC vs. render).
+    useEffect(() => {
+        trackEvent("sharing_page_viewed", { merchant_id: merchantId });
+    }, [merchantId]);
 
     // If we restore from sessionStorage, still resolve the RPC as "shared"
     // so the SDK consumer gets the result
@@ -93,30 +98,20 @@ export function ListenerSharingPage() {
     // Product selection state — default to first product
     const [selectedProductIndex, setSelectedProductIndex] = useState(0);
 
-    // Build the final sharing link with Frak context
-    // Use the selected product's link if available, otherwise fall back to default
+    // Build the final sharing link with Frak context via shared helper.
+    // Use the selected product's link if available, otherwise fall back to default.
     const finalSharingLink = useMemo(() => {
-        if (!(clientId && merchantId)) return null;
-
         const selectedProduct = products[selectedProductIndex];
-        const baseLink =
-            selectedProduct?.link ?? currentRequest.params.link ?? sourceUrl;
-
-        const resolvedAttribution = mergeAttribution({
-            perCall: currentRequest.params.attribution,
-            defaults: defaultAttribution,
+        return buildSharingLink({
+            clientId: clientId ?? undefined,
+            merchantId,
+            baseUrl:
+                selectedProduct?.link ??
+                currentRequest.params.link ??
+                sourceUrl,
+            attribution: currentRequest.params.attribution,
+            defaultAttribution,
             productUtmContent: selectedProduct?.utmContent,
-        });
-
-        return FrakContextManager.update({
-            url: baseLink,
-            context: {
-                v: 2,
-                c: clientId,
-                m: merchantId,
-                t: Math.floor(Date.now() / 1000),
-            },
-            attribution: resolvedAttribution,
         });
     }, [
         clientId,
@@ -129,7 +124,8 @@ export function ListenerSharingPage() {
         defaultAttribution,
     ]);
 
-    // Share mutation using the shared hook
+
+    // Share mutation using the shared hook (auto-fires `sharing_link_shared`).
     const { mutate: triggerSharing, isPending: isSharing } = useShareLink(
         finalSharingLink,
         {
@@ -137,13 +133,12 @@ export function ListenerSharingPage() {
             text: t("sharing.text"),
         },
         {
+            source: "sharing_page_listener",
+            merchantId,
+            onShared: () => trackSharing(),
             onSuccess: (result) => {
                 if (!result) return;
                 toast.success(t("sharing.btn.shareSuccess"));
-                trackGenericEvent("sharing-share-link", {
-                    link: finalSharingLink,
-                });
-                trackSharing();
                 resolveAction("shared");
                 if (merchantId) saveConfirmation(merchantId);
                 setShowConfirmation(true);
@@ -154,7 +149,9 @@ export function ListenerSharingPage() {
     const handleCopy = () => {
         if (!finalSharingLink) return;
         copy(finalSharingLink);
-        trackGenericEvent("sharing-copy-link", {
+        trackEvent("sharing_link_copied", {
+            source: "sharing_page_listener",
+            merchant_id: merchantId,
             link: finalSharingLink,
         });
         trackSharing();

@@ -8,11 +8,12 @@ import {
 import {
     addLastAuthentication,
     emitLifecycleEvent,
+    identifyAuthenticatedUser,
     type SdkSession,
     type Session,
     type SsoRpcSchema,
     sessionStore,
-    trackAuthCompleted,
+    trackEvent,
 } from "@frak-labs/wallet-shared";
 import type { Hex } from "viem";
 import type { WalletRpcContext } from "@/module/types/context";
@@ -66,7 +67,8 @@ export async function processSsoCompletion(
         sessionStore.getState().setSdkSession(sdkSession);
 
         // Track successful authentication
-        await trackAuthCompleted("sso", session);
+        identifyAuthenticatedUser(session);
+        trackEvent("sso_completed");
 
         // Resolve pending RPC call if exists
         pendingSsoRequest?.resolve({ wallet: session.address });
@@ -77,7 +79,14 @@ export async function processSsoCompletion(
         });
     } catch (error) {
         console.error("[SSO] Error handling completion:", error);
-
+        // Session-persistence failure after a successful SSO round-trip leaves
+        // the user in a silently-broken logged-out state. Surface it so the
+        // funnel reflects the real outcome.
+        const reason =
+            error instanceof Error
+                ? (error.name ?? "session_persist_failed")
+                : "session_persist_failed";
+        trackEvent("sso_failed", { reason });
         // Reject pending RPC call on error
         pendingSsoRequest?.reject(
             new FrakRpcError(

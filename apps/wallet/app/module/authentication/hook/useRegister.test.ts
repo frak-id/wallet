@@ -34,8 +34,8 @@ vi.mock("@frak-labs/wallet-shared", async (importOriginal) => {
                 setSdkSession: vi.fn(),
             })),
         },
-        trackAuthCompleted: vi.fn(() => Promise.resolve()),
-        trackAuthInitiated: vi.fn(() => Promise.resolve()),
+        identifyAuthenticatedUser: vi.fn(),
+        trackEvent: vi.fn(),
     };
 });
 
@@ -123,12 +123,13 @@ describe("useRegister", () => {
         expect(setSdkSession).toHaveBeenCalledWith("sdk-jwt");
     });
 
-    test("should track authentication events", async ({ queryWrapper }) => {
+    test("should identify the authenticated user on success", async ({
+        queryWrapper,
+    }) => {
         const { WebAuthnP256 } = await import("ox");
         const {
             authenticatedWalletApi,
-            trackAuthInitiated,
-            trackAuthCompleted,
+            identifyAuthenticatedUser,
             sessionStore,
         } = await import("@frak-labs/wallet-shared");
 
@@ -156,10 +157,8 @@ describe("useRegister", () => {
             expect(result.current.isSuccess).toBe(true);
         });
 
-        expect(trackAuthInitiated).toHaveBeenCalledWith("register");
-        expect(trackAuthCompleted).toHaveBeenCalledWith(
-            "register",
-            expect.any(Object)
+        expect(identifyAuthenticatedUser).toHaveBeenCalledWith(
+            expect.objectContaining({ address: "0x123" })
         );
     });
 

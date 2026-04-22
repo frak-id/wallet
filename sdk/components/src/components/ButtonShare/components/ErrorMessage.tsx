@@ -90,6 +90,10 @@ function ToggleMessage({ debugInfo }: { debugInfo?: string }) {
 export function ErrorMessage({ debugInfo }: { debugInfo?: string }) {
     const { copied, copy } = useCopyToClipboard();
 
+    const handleCopy = () => {
+        copy(debugInfo ?? "");
+    };
+
     return (
         <div style={styles.errorContainer}>
             {/* Error message header */}
@@ -118,7 +122,7 @@ export function ErrorMessage({ debugInfo }: { debugInfo?: string }) {
             {/* Copy debug info button with dynamic text based on copy state */}
             <button
                 type={"button"}
-                onClick={() => copy(debugInfo ?? "")}
+                onClick={handleCopy}
                 style={styles.copyButton}
             >
                 {copied

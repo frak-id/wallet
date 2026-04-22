@@ -7,6 +7,7 @@ import type {
     ModalRpcStepsResultType,
     ModalStepTypes,
 } from "@frak-labs/core-sdk";
+import type { ModalDismissSource } from "@frak-labs/wallet-shared";
 
 export type { ResolvedSdkConfig };
 
@@ -98,5 +99,5 @@ export interface ModalStore {
     nextStep: () => void;
     clearModal: () => void;
     setDismissed: (dismissed: boolean) => void;
-    dismissModal: () => void;
+    dismissModal: (source?: ModalDismissSource) => void;
 }

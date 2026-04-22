@@ -5,6 +5,7 @@ import { FaceIdIcon } from "@frak-labs/design-system/icons";
 import {
     authenticationStore,
     isWebAuthNSupported,
+    trackEvent,
     useLogin,
 } from "@frak-labs/wallet-shared";
 import { Trans, useTranslation } from "react-i18next";
@@ -67,6 +68,9 @@ export function AuthActions({
                     loading={loading}
                     onClick={() => {
                         onError(null);
+                        trackEvent("auth_login_method_selected", {
+                            method: "passkey",
+                        });
                         login({});
                     }}
                     icon={<FaceIdIcon width={24} height={24} />}

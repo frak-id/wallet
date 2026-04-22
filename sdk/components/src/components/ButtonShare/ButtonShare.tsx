@@ -116,7 +116,12 @@ export function ButtonShare({
 
     const onClick = useCallback(async () => {
         if (isPreview) return;
-        trackEvent(window.FrakSetup.client, "share_button_clicked");
+        trackEvent(window.FrakSetup.client, "share_button_clicked", {
+            placement: placementId,
+            target_interaction: resolvedTargetInteraction,
+            has_reward: Boolean(reward),
+            click_action: resolvedClickAction,
+        });
         if (resolvedClickAction === "embedded-wallet") {
             openEmbeddedWallet(resolvedTargetInteraction, placementId);
         } else if (resolvedClickAction === "share-modal") {
@@ -130,6 +135,7 @@ export function ButtonShare({
         handleShare,
         resolvedTargetInteraction,
         placementId,
+        reward,
     ]);
 
     if (!isPreview && (!shouldRender || isHidden)) {

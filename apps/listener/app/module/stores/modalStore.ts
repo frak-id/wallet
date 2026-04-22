@@ -3,7 +3,8 @@
  */
 
 import type { ModalStepTypes } from "@frak-labs/core-sdk";
-import { trackGenericEvent } from "@frak-labs/wallet-shared";
+import type { ModalDismissSource } from "@frak-labs/wallet-shared";
+import { trackEvent } from "@frak-labs/wallet-shared";
 import { create } from "zustand";
 import type { AnyModalKey, DisplayedModalStep, ModalStore } from "./types";
 
@@ -39,10 +40,8 @@ export const modalStore = create<ModalStore>((set, get) => ({
                     },
                 });
 
-                // Track completion
-                trackGenericEvent(`modal_step_${step.key}_completed`);
-
-                // Update the displayed step index
+                // Move to next step (step completion is inferred from the
+                // next step's `modal_step_viewed` event in the Modal component)
                 set({ currentStep: index + 1 });
             },
         })) as DisplayedModalStep<AnyModalKey>[];
@@ -68,9 +67,6 @@ export const modalStore = create<ModalStore>((set, get) => ({
             },
         });
 
-        // Track completion
-        trackGenericEvent(`modal_step_${stepKey}_completed`);
-
         // Move to next step
         set({ currentStep: currentStep + 1 });
     },
@@ -92,17 +88,23 @@ export const modalStore = create<ModalStore>((set, get) => ({
         set({ dismissed });
     },
 
-    dismissModal: () => {
-        const { steps } = get();
+    dismissModal: (source: ModalDismissSource = "close_btn") => {
+        const { steps, currentStep } = get();
 
         // Find the final step
         const finalStepIndex =
             steps?.findIndex((step) => step.key === "final") ?? -1;
 
+        const lastStep = steps?.[currentStep]?.key;
+
         if (finalStepIndex === -1 || !steps) {
             // No final step found, just mark as dismissed
             set({ dismissed: true });
-            trackGenericEvent("modal_dismissed");
+            trackEvent("modal_dismissed", {
+                last_step: lastStep,
+                completed: false,
+                source,
+            });
             return;
         }
 
@@ -120,7 +122,11 @@ export const modalStore = create<ModalStore>((set, get) => ({
             currentStep: isRewardStep ? finalStepIndex + 1 : finalStepIndex,
         });
 
-        trackGenericEvent("modal_dismissed");
+        trackEvent("modal_dismissed", {
+            last_step: lastStep,
+            completed: false,
+            source,
+        });
     },
 }));
 

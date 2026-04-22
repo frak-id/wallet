@@ -10,8 +10,8 @@ import {
     expect,
     it,
     vi,
-} from "../../tests/vitest-fixtures";
-import type { FrakClient } from "../types";
+} from "../../../tests/vitest-fixtures";
+import type { FrakClient } from "../../types";
 import { trackEvent } from "./trackEvent";
 
 describe("trackEvent", () => {
@@ -42,16 +42,16 @@ describe("trackEvent", () => {
 
             expect(mockClient.openPanel?.track).toHaveBeenCalledWith(
                 "share_button_clicked",
-                {}
+                undefined
             );
         });
 
         it("should track event with props", () => {
-            const props = { userId: "123", page: "home" };
-            trackEvent(mockClient, "wallet_button_clicked", props);
+            const props = { placement: "footer", click_action: "share-modal" } as const;
+            trackEvent(mockClient, "share_button_clicked", props);
 
             expect(mockClient.openPanel?.track).toHaveBeenCalledWith(
-                "wallet_button_clicked",
+                "share_button_clicked",
                 props
             );
         });
@@ -71,25 +71,18 @@ describe("trackEvent", () => {
 
             expect(mockClient.openPanel?.track).toHaveBeenCalledWith(
                 "user_referred_started",
-                {}
+                undefined
             );
         });
 
         it("should track user_referred_completed event", () => {
-            trackEvent(mockClient, "user_referred_completed");
+            trackEvent(mockClient, "user_referred_completed", {
+                status: "success",
+            });
 
             expect(mockClient.openPanel?.track).toHaveBeenCalledWith(
                 "user_referred_completed",
-                {}
-            );
-        });
-
-        it("should track user_referred_error event", () => {
-            trackEvent(mockClient, "user_referred_error");
-
-            expect(mockClient.openPanel?.track).toHaveBeenCalledWith(
-                "user_referred_error",
-                {}
+                { status: "success" }
             );
         });
     });
@@ -102,7 +95,7 @@ describe("trackEvent", () => {
         });
 
         it("should log debug message when client is undefined", () => {
-            trackEvent(undefined, "wallet_button_clicked");
+            trackEvent(undefined, "share_button_clicked");
 
             expect(consoleDebugSpy).toHaveBeenCalledWith(
                 "[Frak] No client provided, skipping event tracking"
@@ -143,30 +136,26 @@ describe("trackEvent", () => {
             const clientWithoutPanel = {} as FrakClient;
 
             expect(() => {
-                trackEvent(clientWithoutPanel, "wallet_button_clicked");
+                trackEvent(clientWithoutPanel, "share_button_clicked");
             }).not.toThrow();
         });
     });
 
     describe("edge cases", () => {
-        it("should handle empty props object", () => {
-            trackEvent(mockClient, "share_button_clicked", {});
+        it("should handle typed props object", () => {
+            trackEvent(mockClient, "share_button_clicked", {
+                click_action: "share-modal",
+            });
 
             expect(mockClient.openPanel?.track).toHaveBeenCalledWith(
                 "share_button_clicked",
-                {}
+                { click_action: "share-modal" }
             );
         });
 
         it("should handle complex props object", () => {
             const complexProps = {
-                userId: "123",
-                metadata: {
-                    page: "home",
-                    section: "header",
-                },
-                tags: ["tag1", "tag2"],
-                timestamp: Date.now(),
+                status: "success" as const,
             };
 
             trackEvent(mockClient, "user_referred_completed", complexProps);

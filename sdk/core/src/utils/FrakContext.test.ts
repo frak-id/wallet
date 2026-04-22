@@ -125,7 +125,7 @@ describe("FrakContextManager", () => {
             describe("update with attribution", () => {
                 const url = "https://example.com/product";
 
-                it("should not add attribution params when attribution is omitted", () => {
+                it("should apply default attribution params when attribution is omitted", () => {
                     const result = FrakContextManager.update({
                         url,
                         context: v2Context,
@@ -133,11 +133,18 @@ describe("FrakContextManager", () => {
 
                     expect(result).toBeDefined();
                     expect(result).toContain("fCtx=");
-                    expect(result).not.toContain("utm_source");
-                    expect(result).not.toContain("utm_medium");
-                    expect(result).not.toContain("utm_campaign");
-                    expect(result).not.toContain("ref=");
-                    expect(result).not.toContain("via=");
+                    const parsedUrl = new URL(result!);
+                    expect(parsedUrl.searchParams.get("utm_source")).toBe(
+                        "frak"
+                    );
+                    expect(parsedUrl.searchParams.get("utm_medium")).toBe(
+                        "referral"
+                    );
+                    expect(parsedUrl.searchParams.get("utm_campaign")).toBe(
+                        v2Context.m
+                    );
+                    expect(parsedUrl.searchParams.get("via")).toBe("frak");
+                    expect(parsedUrl.searchParams.get("ref")).toBe(v2Context.c);
                 });
 
                 it("should apply default attribution params when attribution is an empty object", () => {

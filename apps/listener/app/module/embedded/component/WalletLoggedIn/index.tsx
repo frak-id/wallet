@@ -1,16 +1,16 @@
 import {
     type Currency,
-    FrakContextManager,
     formatAmount,
     getCurrencyAmountKey,
-    mergeAttribution,
 } from "@frak-labs/core-sdk";
 import {
+    buildSharingLink,
     clientIdStore,
     OriginPairingState,
-    trackGenericEvent,
+    trackEvent,
     useCopyToClipboardWithState,
     useGetUserBalance,
+    useShareLink,
 } from "@frak-labs/wallet-shared";
 import { cx } from "class-variance-authority";
 import { toast } from "sonner";
@@ -28,7 +28,6 @@ import {
 } from "@/module/providers/ListenerUiProvider";
 import { useSafeResolvingContext } from "@/module/stores/hooks";
 import { resolvingContextStore } from "@/module/stores/resolvingContextStore";
-import { useShareLink } from "../../../hooks/useShareLink";
 import { useTrackSharing } from "../../../hooks/useTrackSharing";
 import styles from "./index.module.css";
 
@@ -96,22 +95,12 @@ function ActionButtons() {
         (s) => s.backendSdkConfig?.attribution
     );
 
-    const finalSharingLink =
-        clientId && merchantId
-            ? FrakContextManager.update({
-                  url: link ?? sourceUrl,
-                  context: {
-                      v: 2,
-                      c: clientId,
-                      m: merchantId,
-                      t: Math.floor(Date.now() / 1000),
-                  },
-                  attribution: mergeAttribution({
-                      perCall: {},
-                      defaults: defaultAttribution,
-                  }),
-              })
-            : null;
+    const finalSharingLink = buildSharingLink({
+        clientId: clientId ?? undefined,
+        merchantId,
+        baseUrl: link ?? sourceUrl,
+        defaultAttribution,
+    });
 
     return (
         <div
@@ -120,16 +109,18 @@ function ActionButtons() {
                 prefixWalletCss("modalListenerWallet__actionButtons")
             )}
         >
-            <ButtonCopyLink finalSharingLink={finalSharingLink} />
-            <ButtonSharingLink finalSharingLink={finalSharingLink} />
+            <ButtonCopyLink finalSharingLink={finalSharingLink} merchantId={merchantId} />
+            <ButtonSharingLink finalSharingLink={finalSharingLink} merchantId={merchantId} />
         </div>
     );
 }
 
 function ButtonCopyLink({
     finalSharingLink,
+    merchantId,
 }: {
     finalSharingLink: string | null;
+    merchantId: string | undefined;
 }) {
     const { copied, copy } = useCopyToClipboardWithState();
     const { t } = useListenerTranslation();
@@ -144,7 +135,9 @@ function ButtonCopyLink({
             onClick={async () => {
                 if (!finalSharingLink) return;
                 copy(finalSharingLink);
-                trackGenericEvent("sharing-copy-link", {
+                trackEvent("sharing_link_copied", {
+                    source: "embedded_wallet",
+                    merchant_id: merchantId,
                     link: finalSharingLink,
                 });
                 trackSharing();
@@ -158,15 +151,25 @@ function ButtonCopyLink({
 
 function ButtonSharingLink({
     finalSharingLink,
+    merchantId,
 }: {
     finalSharingLink: string | null;
+    merchantId: string | undefined;
 }) {
     const { t } = useListenerTranslation();
+    const { mutate: trackSharing } = useTrackSharing();
 
-    // Trigger native sharing
+    // Trigger native sharing — hook auto-fires `sharing_link_shared`.
     const { mutate: triggerSharing, isPending: isSharing } = useShareLink(
         finalSharingLink,
         {
+            title: t("sharing.title"),
+            text: t("sharing.text"),
+        },
+        {
+            source: "embedded_wallet",
+            merchantId,
+            onShared: () => trackSharing(),
             onSuccess: (message) => {
                 message && toast.success(message as string);
             },
@@ -188,9 +191,6 @@ function ButtonSharingLink({
                 onClick={() => {
                     if (!finalSharingLink) return;
                     triggerSharing();
-                    trackGenericEvent("sharing-share-link", {
-                        link: finalSharingLink,
-                    });
                 }}
             >
                 {t("sharing.btn.share")}

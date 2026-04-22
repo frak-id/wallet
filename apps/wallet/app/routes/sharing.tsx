@@ -3,22 +3,22 @@ import type {
     AttributionParams,
     SharingPageProduct,
 } from "@frak-labs/core-sdk";
-import { FrakContextManager, mergeAttribution } from "@frak-labs/core-sdk";
 import {
     authenticatedBackendApi,
+    buildSharingLink,
     clearConfirmation,
     clientIdStore,
     getSavedConfirmation,
     SharingPage,
     saveConfirmation,
-    trackGenericEvent,
+    trackEvent,
     useCopyToClipboardWithState,
     useFormattedEstimatedReward,
     useShareLink,
 } from "@frak-labs/wallet-shared";
 import { useQuery } from "@tanstack/react-query";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import { useMerchantResolvedConfig } from "@/module/common/hook/useMerchantResolvedConfig";
@@ -135,6 +135,12 @@ function WalletSharingPage() {
         merchantId,
     });
 
+    // Fire `sharing_page_viewed` once per mount, independent of whether we end up
+    // rendering the confirmation screen. Denominator for the sharing funnel.
+    useEffect(() => {
+        trackEvent("sharing_page_viewed", { merchant_id: merchantId });
+    }, [merchantId]);
+
     // Fetch backend-driven merchant config to source attribution defaults
     const { data: defaultAttribution } = useMerchantResolvedConfig({
         merchantId,
@@ -189,31 +195,18 @@ function WalletSharingPage() {
         merchantId ? getSavedConfirmation(merchantId) : false
     );
 
-    // Build the final sharing link with Frak context
-    // Use the selected product's link if available, otherwise fall back to default
+    // Build the final sharing link with Frak context via shared helper.
+    // Use the selected product's link if available, otherwise fall back to default.
     const finalSharingLink = useMemo(() => {
-        if (!(clientId && merchantId)) return null;
-
         const safeProducts = products ?? [];
         const selectedProduct = safeProducts[selectedProductIndex];
-        const baseLink = selectedProduct?.link ?? link;
-        if (!baseLink) return null;
-
-        const resolvedAttribution = mergeAttribution({
-            perCall: attribution,
-            defaults: defaultAttribution ?? undefined,
+        return buildSharingLink({
+            clientId,
+            merchantId,
+            baseUrl: selectedProduct?.link ?? link,
+            attribution,
+            defaultAttribution: defaultAttribution ?? undefined,
             productUtmContent: selectedProduct?.utmContent,
-        });
-
-        return FrakContextManager.update({
-            url: baseLink,
-            context: {
-                v: 2,
-                c: clientId,
-                m: merchantId,
-                t: Math.floor(Date.now() / 1000),
-            },
-            attribution: resolvedAttribution,
         });
     }, [
         clientId,
@@ -225,7 +218,8 @@ function WalletSharingPage() {
         defaultAttribution,
     ]);
 
-    // Share mutation using the shared hook
+
+    // Share mutation using the shared hook (auto-fires `sharing_link_shared`).
     const {
         mutate: triggerSharing,
         isPending: isSharing,
@@ -237,12 +231,11 @@ function WalletSharingPage() {
             text: t("sharing.text"),
         },
         {
+            source: "sharing_page_wallet",
+            merchantId,
             onSuccess: (result) => {
                 if (!result) return;
                 toast.success(t("sharing.btn.shareSuccess"));
-                trackGenericEvent("sharing-share-link", {
-                    link: finalSharingLink,
-                });
                 if (merchantId) saveConfirmation(merchantId);
                 setShowConfirmation(true);
             },
@@ -257,7 +250,9 @@ function WalletSharingPage() {
     const handleCopy = () => {
         if (!finalSharingLink) return;
         copy(finalSharingLink);
-        trackGenericEvent("sharing-copy-link", {
+        trackEvent("sharing_link_copied", {
+            source: "sharing_page_wallet",
+            merchant_id: merchantId,
             link: finalSharingLink,
         });
         toast.success(t("sharing.btn.copySuccess"));

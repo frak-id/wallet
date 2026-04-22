@@ -6,7 +6,7 @@ import { Cuer } from "cuer";
 import { type ReactNode, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { useStore } from "zustand";
-import { trackAuthInitiated } from "../../../common/analytics";
+import { trackEvent } from "../../../common/analytics";
 import { CodeInput } from "../../../common/component/CodeInput";
 import type { OnPairingSuccessCallback } from "../../clients/origin";
 import { getOriginPairingClient } from "../../clients/store";
@@ -44,7 +44,7 @@ export function PairingView({
 
     useEffect(() => {
         client.initiatePairing({ onSuccess, originNode });
-        trackAuthInitiated("pairing");
+        trackEvent("pairing_initiated");
     }, [client, onSuccess, originNode]);
 
     return (

@@ -102,7 +102,6 @@ export {
     type DeepLinkFallbackOptions,
     decompressJsonFromB64,
     FrakContextManager,
-    type FrakEvent,
     type FullSsoParams,
     findIframeInOpener,
     formatAmount,
@@ -126,4 +125,8 @@ export {
     triggerDeepLinkWithFallback,
     withCache,
 } from "./utils";
+export type {
+    SdkEventMap,
+    SdkHandshakeFailureReason,
+} from "./utils/analytics";
 export { computeLegacyProductId } from "./utils/computeLegacyProductId";

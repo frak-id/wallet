@@ -3,6 +3,7 @@ import type {
     GetMerchantInformationReturnType,
     UserReferralStatusType,
 } from "@frak-labs/core-sdk";
+import { trackEvent } from "@frak-labs/core-sdk";
 import {
     getMerchantInformation,
     getUserReferralStatus,
@@ -14,7 +15,7 @@ import { Columns } from "@frak-labs/design-system/components/Columns";
 import { Stack } from "@frak-labs/design-system/components/Stack";
 import { LogoFrak } from "@frak-labs/design-system/icons";
 import { FrakRpcError, RpcErrorCodes } from "@frak-labs/frame-connector";
-import { useEffect, useMemo, useState } from "preact/hooks";
+import { useEffect, useMemo, useRef, useState } from "preact/hooks";
 import { useClientReady } from "@/hooks/useClientReady";
 import { useGlobalComponents } from "@/hooks/useGlobalComponents";
 import { useLightDomStyles } from "@/hooks/useLightDomStyles";
@@ -183,6 +184,14 @@ export function PostPurchase({
             });
     }, [isPreview, isClientReady, hasFetched]);
 
+    // Impression tracking fires once per (mount, variant) pair after the
+    // variant is resolved — so preview-mode views, referrer, and referee
+    // renders are each counted separately. Ref instead of state to avoid
+    // triggering a re-render on each fire.
+    const trackedImpressionVariantRef = useRef<
+        "referrer" | "referee" | null
+    >(null);
+
     // Resolve variant and reward. In preview mode we synthesise a variant from
     // the `previewVariant` prop so the card renders without backend data.
     const resolvedVariant =
@@ -249,6 +258,27 @@ export function PostPurchase({
         propCtaText,
     ]);
 
+    useEffect(() => {
+        if (!resolvedVariant) return;
+        if (trackedImpressionVariantRef.current === resolvedVariant) return;
+        if (!isPreview && (!shouldRender || isHidden || !isClientReady))
+            return;
+        trackEvent(window.FrakSetup?.client, "post_purchase_impression", {
+            placement: placementId,
+            variant: resolvedVariant,
+            has_reward: Boolean(context?.reward),
+        });
+        trackedImpressionVariantRef.current = resolvedVariant;
+    }, [
+        resolvedVariant,
+        shouldRender,
+        isHidden,
+        isClientReady,
+        isPreview,
+        placementId,
+        context?.reward,
+    ]);
+
     // Reuse shared share-modal hook (includes error tracking + debug info)
     const { handleShare } = useShareModal(
         undefined,
@@ -277,7 +307,22 @@ export function PostPurchase({
                             type="button"
                             className={`${cta} button`}
                             disabled={!isPreview && !isClientReady}
-                            onClick={isPreview ? undefined : handleShare}
+                            onClick={
+                                isPreview
+                                    ? undefined
+                                    : () => {
+                                          if (!resolvedVariant) return;
+                                          trackEvent(
+                                              window.FrakSetup?.client,
+                                              "post_purchase_clicked",
+                                              {
+                                                  placement: placementId,
+                                                  variant: resolvedVariant,
+                                              }
+                                          );
+                                          handleShare();
+                                      }
+                            }
                         >
                             {texts.cta}
                             <svg

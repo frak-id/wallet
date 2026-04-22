@@ -1,5 +1,5 @@
 import { Button } from "@frak-labs/design-system/components/Button";
-import { Children, type ReactNode, useCallback } from "react";
+import { Children, type ReactNode, useCallback, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { PageLayout } from "@/module/common/component/PageLayout";
 import { useSlideCarousel } from "@/module/common/hook/useSlideCarousel";
@@ -28,6 +28,8 @@ type OnboardingProps = {
     isLoginLoading?: boolean;
     /** Called when user clicks the recovery code button */
     onRecoveryCodeClick?: () => void;
+    /** Called when a slide becomes visible — analytics hook */
+    onSlideViewed?: (index: number) => void;
     /** The slide contents — each direct child = one slide */
     children: ReactNode;
 };
@@ -41,6 +43,7 @@ export function Onboarding({
     onLoginClick,
     isLoginLoading,
     onRecoveryCodeClick,
+    onSlideViewed,
     children,
 }: OnboardingProps) {
     const { t } = useTranslation();
@@ -55,6 +58,10 @@ export function Onboarding({
             initialIndex: savedIndex,
             onIndexChange: setSlideIndex,
         });
+
+    useEffect(() => {
+        onSlideViewed?.(currentIndex);
+    }, [currentIndex, onSlideViewed]);
 
     const handleNext = useCallback(() => {
         if (currentIndex === slidesCount - 1) {

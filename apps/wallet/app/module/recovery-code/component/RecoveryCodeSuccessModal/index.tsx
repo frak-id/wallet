@@ -18,6 +18,7 @@ export function RecoveryCodeSuccessModal({
 }: RecoveryCodeSuccessModalProps) {
     const { t } = useTranslation();
     const navigate = useNavigate();
+
     const handleClose = useCallback(() => {
         onClose();
         // Navigate back to register to continue the onboarding

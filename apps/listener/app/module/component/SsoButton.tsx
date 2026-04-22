@@ -8,8 +8,7 @@ import {
     emitLifecycleEvent,
     getOriginPairingClient,
     type OriginIdentityNode,
-    trackAuthFailed,
-    trackAuthInitiated,
+    trackEvent,
     ua,
     useMountedTimeout,
 } from "@frak-labs/wallet-shared";
@@ -43,10 +42,10 @@ function tryOpenSsoPopup(link: string): boolean {
     const openedWindow = window.open(link, ssoPopupName, ssoPopupFeatures);
     if (openedWindow) {
         openedWindow.focus();
-        trackAuthInitiated("sso", { method: "popup" });
+        trackEvent("sso_initiated", { method: "popup" });
         return true;
     }
-    trackAuthFailed("sso", "failed-to-open");
+    trackEvent("sso_failed", { reason: "failed-to-open" });
     return false;
 }
 
@@ -159,7 +158,7 @@ function LinkSsoButton({
             target="frak-sso"
             rel="noreferrer"
             onClick={() => {
-                trackAuthInitiated("sso", { method: "link" });
+                trackEvent("sso_initiated", { method: "link" });
             }}
         >
             {text}
@@ -250,7 +249,7 @@ function MobileSsoButton({
     }, [client]);
 
     const handleStartPairing = async () => {
-        trackAuthInitiated("sso", { method: "mobile" });
+        trackEvent("sso_initiated", { method: "mobile" });
         setStatus("connecting");
 
         // Reset visibility tracking for this new attempt
@@ -262,7 +261,7 @@ function MobileSsoButton({
             await client.initiatePairing({ originNode });
         } catch {
             setStatus("idle");
-            trackAuthFailed("sso", "pairing-init-failed");
+            trackEvent("sso_failed", { reason: "pairing-init-failed" });
             return;
         }
 
@@ -271,7 +270,7 @@ function MobileSsoButton({
                 return;
             }
             setStatus("timeout");
-            trackAuthFailed("sso", "pairing-timeout");
+            trackEvent("sso_failed", { reason: "pairing-timeout" });
         }, 30_000);
     };
 

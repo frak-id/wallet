@@ -6,7 +6,7 @@ import {
 import { InAppBanner } from "@frak-labs/design-system/components/InAppBanner";
 import { useCallback, useEffect } from "react";
 import { useTranslation } from "react-i18next";
-import { trackGenericEvent } from "../../analytics";
+import { trackEvent } from "../../analytics";
 import { useSessionFlag } from "../../hook/useSessionFlag";
 import { isInIframe, isIPad } from "../../lib/inApp";
 import { emitLifecycleEvent } from "../../utils/lifecycleEvents";
@@ -41,7 +41,7 @@ export function InAppBrowserToast({
                 // x-safari-https://, window.open, <a target="_blank">,
                 // navigator.share (no Safari option in share sheet).
                 // Clipboard copy + instruction is the only path.
-                trackGenericEvent("in-app-browser-redirect", {
+                trackEvent("in_app_browser_redirected", {
                     target: "sd-iframe-clipboard",
                 });
                 const mergeToken = await getMergeToken?.();
@@ -59,7 +59,7 @@ export function InAppBrowserToast({
                 );
             } else {
                 // iPhone/other: lifecycle event → parent uses x-safari-https://
-                trackGenericEvent("in-app-browser-redirect", {
+                trackEvent("in_app_browser_redirected", {
                     target: "sd-iframe",
                 });
                 const mergeToken = await getMergeToken?.();
@@ -72,7 +72,7 @@ export function InAppBrowserToast({
                 });
             }
         } else {
-            trackGenericEvent("in-app-browser-redirect", {
+            trackEvent("in_app_browser_redirected", {
                 target: "window",
             });
             redirectToExternalBrowser(window.location.href);

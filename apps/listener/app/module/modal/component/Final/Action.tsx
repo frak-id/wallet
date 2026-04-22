@@ -1,13 +1,11 @@
+import { type FinalActionType, FrakContextManager } from "@frak-labs/core-sdk";
 import {
-    type FinalActionType,
-    FrakContextManager,
-    mergeAttribution,
-} from "@frak-labs/core-sdk";
-import {
+    buildSharingLink,
     clientIdStore,
     prefixModalCss,
-    trackGenericEvent,
+    trackEvent,
     useCopyToClipboardWithState,
+    useShareLink,
 } from "@frak-labs/wallet-shared";
 import { Copy, Share } from "lucide-react";
 import { useMemo } from "react";
@@ -17,7 +15,6 @@ import styles from "@/module/modal/component/Modal/index.module.css";
 import { useListenerTranslation } from "@/module/providers/ListenerUiProvider";
 import { useSafeResolvingContext } from "@/module/stores/hooks";
 import { resolvingContextStore } from "@/module/stores/resolvingContextStore";
-import { useShareLink } from "../../../hooks/useShareLink";
 import { useTrackSharing } from "../../../hooks/useTrackSharing";
 
 export function FinalModalActionComponent({
@@ -46,7 +43,11 @@ export function FinalModalActionComponent({
             className={`${styles.modalListener__buttonLink} ${prefixModalCss("button-link")}`}
             onClick={() => {
                 onFinish({});
-                trackGenericEvent("modal-dismissed");
+                trackEvent("modal_dismissed", {
+                    last_step: "final",
+                    completed: true,
+                    source: "final_action",
+                });
             }}
         >
             {t("sdk.modal.dismiss.primaryAction")}
@@ -79,22 +80,16 @@ function SharingButtons({
 
     const finalSharingLink = useMemo(() => {
         const url = link ?? sourceUrl;
-        if (isModalSuccess && clientId && merchantId) {
-            return FrakContextManager.update({
-                url,
-                context: {
-                    v: 2,
-                    c: clientId,
-                    m: merchantId,
-                    t: Math.floor(Date.now() / 1000),
-                },
-                attribution: mergeAttribution({
-                    perCall: {},
-                    defaults: defaultAttribution,
-                }),
-            });
+        if (isModalSuccess) {
+            return (
+                buildSharingLink({
+                    clientId: clientId ?? undefined,
+                    merchantId,
+                    baseUrl: url,
+                    defaultAttribution,
+                }) ?? FrakContextManager.remove(url)
+            );
         }
-
         return FrakContextManager.remove(url);
     }, [
         link,
@@ -105,10 +100,17 @@ function SharingButtons({
         defaultAttribution,
     ]);
 
-    // Trigger native sharing
+    // Trigger native sharing — hook auto-fires `sharing_link_shared`.
     const { mutate: triggerSharing, isPending: isSharing } = useShareLink(
         finalSharingLink,
         {
+            title: t("sharing.title"),
+            text: t("sharing.text"),
+        },
+        {
+            source: "modal",
+            merchantId,
+            onShared: () => trackSharing(),
             onSuccess: (message) => {
                 message && toast.success(message as string);
             },
@@ -121,7 +123,9 @@ function SharingButtons({
                 onClick={async () => {
                     if (!finalSharingLink) return;
                     copy(finalSharingLink);
-                    trackGenericEvent("sharing-copy-link", {
+                    trackEvent("sharing_link_copied", {
+                        source: "modal",
+                        merchant_id: merchantId,
                         link: finalSharingLink,
                     });
                     trackSharing();

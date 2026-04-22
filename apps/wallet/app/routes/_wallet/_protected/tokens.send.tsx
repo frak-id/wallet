@@ -2,10 +2,14 @@ import { Box } from "@frak-labs/design-system/components/Box";
 import { Button } from "@frak-labs/design-system/components/Button";
 import { Input } from "@frak-labs/design-system/components/Input";
 import { Text } from "@frak-labs/design-system/components/Text";
-import type { BalanceItem } from "@frak-labs/wallet-shared";
-import { useGetUserBalance } from "@frak-labs/wallet-shared";
+import type {
+    BalanceItem,
+    Flow,
+    TokensSendAmountBucket,
+} from "@frak-labs/wallet-shared";
+import { startFlow, useGetUserBalance } from "@frak-labs/wallet-shared";
 import { createFileRoute } from "@tanstack/react-router";
-import { memo, useCallback, useEffect, useState } from "react";
+import { memo, useCallback, useEffect, useRef, useState } from "react";
 import type {
     FieldErrors,
     SubmitHandler,
@@ -177,6 +181,7 @@ function TokensSendPage() {
     const { t } = useTranslation();
     const { confirm, isConfirming } = useBiometricConfirm();
     const { to: prefillAddress } = Route.useSearch();
+    const flowRef = useRef<Flow | null>(null);
 
     const {
         register,
@@ -226,9 +231,23 @@ function TokensSendPage() {
         if (findTokenUpdated) setSelectedToken(findTokenUpdated);
     }, [userBalance, selectedToken]);
 
+    // Open the send flow on mount; end as "abandoned" on unmount if the user
+    // never submitted. Merchant/prefill context rides on tokens_send_started.
+    useEffect(() => {
+        const flow = startFlow("tokens_send", {
+            prefill_address: Boolean(prefillAddress),
+        });
+        flowRef.current = flow;
+        return () => {
+            if (!flow.ended) flow.end("abandoned");
+        };
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+
     const onSubmit: SubmitHandler<FormInput> = useCallback(
         async (data) => {
             if (!selectedToken) return;
+            const tokenSymbol = selectedToken.symbol ?? "unknown";
 
             const confirmed = await confirm();
             if (!confirmed) return;
@@ -245,10 +264,22 @@ function TokensSendPage() {
                         parseUnits(amount, selectedToken.decimals),
                     ],
                 });
+                flowRef.current?.end("succeeded", {
+                    token_symbol: tokenSymbol,
+                    amount_bucket: bucketAmount(amount),
+                });
 
                 reset();
                 await refetch();
             } catch (err) {
+                const error_message =
+                    err instanceof Error ? err.message : String(err);
+                const error_type = err instanceof Error ? err.name : undefined;
+                flowRef.current?.end("failed", {
+                    token_symbol: tokenSymbol,
+                    error_type,
+                    error_message,
+                });
                 console.error("Transaction failed:", err);
             }
         },
@@ -297,4 +328,12 @@ function TokensSendPage() {
             </form>
         </>
     );
+}
+
+function bucketAmount(raw: string): TokensSendAmountBucket {
+    const n = Number.parseFloat(raw);
+    if (!Number.isFinite(n) || n < 1) return "<1";
+    if (n < 10) return "1-10";
+    if (n < 100) return "10-100";
+    return ">100";
 }

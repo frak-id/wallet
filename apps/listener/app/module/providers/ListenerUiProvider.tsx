@@ -1,8 +1,8 @@
 import {
     type DisplayEmbeddedWalletParamsType,
     type DisplaySharingPageParamsType,
-    formatAmount,
     type FrakWalletSdkConfig,
+    formatAmount,
     type IFrameRpcSchema,
     type InteractionTypeKey,
     type Language,

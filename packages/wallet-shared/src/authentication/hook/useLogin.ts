@@ -3,7 +3,12 @@ import type { UseMutationOptions } from "@tanstack/react-query";
 import { useMutation } from "@tanstack/react-query";
 import { WebAuthnP256 } from "ox";
 import { generatePrivateKey } from "viem/accounts";
-import { trackAuthCompleted, trackAuthInitiated } from "../../common/analytics";
+import {
+    extractAuthError,
+    type Flow,
+    identifyAuthenticatedUser,
+    startFlow,
+} from "../../common/analytics";
 import { authenticatedWalletApi } from "../../common/api/backendClient";
 import type { PreviousAuthenticatorModel } from "../../common/storage/PreviousAuthenticatorModel";
 import {
@@ -21,31 +26,34 @@ type UseLoginArgs = {
     // biome-ignore lint/suspicious/noConfusingVoidType: required for optional mutation arguments
 } | void;
 
+type LoginContext = {
+    flow: Flow;
+    method: "global" | "specific";
+};
+
 /**
- * Hook that handle the registration process
+ * Auth-login TanStack mutation with scoped `auth_login` flow.
+ *
+ * The flow emits `_started` in `onMutate` and terminates in `onSuccess`/
+ * `onError`. Abandonment (user closing the dialog mid-auth) is **not**
+ * instrumented at this layer — the mutation outlives the component, and
+ * we'd need the consuming route to own the cleanup. If a dedicated auth
+ * abandonment metric becomes necessary, wire `flow.end("abandoned")` at
+ * the component unmount site that holds the `ctx.flow` reference.
  */
 export function useLogin(
     options?: UseMutationOptions<Session, Error, UseLoginArgs>
 ) {
-    // The mutation that will be used to perform the registration process
     const {
         isPending: isLoading,
         isSuccess,
         isError,
         error,
         mutateAsync: login,
-    } = useMutation({
+    } = useMutation<Session, Error, UseLoginArgs, LoginContext>({
         ...options,
         mutationKey: authKey.login,
         mutationFn: async (args?: UseLoginArgs) => {
-            // Identify the user and track the event
-            const events = [
-                trackAuthInitiated("login", {
-                    method: args?.lastAuthentication ? "specific" : "global",
-                }),
-            ];
-
-            // Sign with WebAuthn using ox
             // Only pass getFn if defined (Android), omit for iOS/web to use browser default
             const challenge = generatePrivateKey();
             const tauriGetFn = getTauriGetFn();
@@ -58,7 +66,6 @@ export function useLogin(
             });
             const credentialId = raw.id;
 
-            // Convert ox response to the format expected by backend
             const authenticationResponse = {
                 id: credentialId,
                 response: {
@@ -67,7 +74,6 @@ export function useLogin(
                 },
             };
 
-            // Verify it
             const encodedResponse = btoa(
                 JSON.stringify(authenticationResponse)
             );
@@ -81,30 +87,41 @@ export function useLogin(
                 throw error;
             }
 
-            // Store this last webauthn action
             authenticationStore.getState().setLastWebAuthNAction({
                 wallet: data.address,
                 signature: authenticationResponse,
                 challenge: challenge,
             });
 
-            // Extract a few data
             const { token, sdkJwt, ...authentication } = data;
             const session = { ...authentication, token } as Session;
 
-            // Save this to the last authenticator
             await addLastAuthentication(session);
 
-            // Store the session
             sessionStore.getState().setSession(session);
             sessionStore.getState().setSdkSession(sdkJwt);
 
-            // Track the event
-            events.push(trackAuthCompleted("login", session));
-
-            await Promise.allSettled(events);
-
             return session;
+        },
+        onMutate: (vars, mutationCtx) => {
+            const method = vars?.lastAuthentication ? "specific" : "global";
+            const flow = startFlow("auth_login", { method });
+            options?.onMutate?.(vars, mutationCtx);
+            return { flow, method };
+        },
+        onSuccess: (session, vars, ctx, mutationCtx) => {
+            identifyAuthenticatedUser(session);
+            ctx?.flow.end("succeeded", { method: ctx?.method });
+            options?.onSuccess?.(session, vars, ctx, mutationCtx);
+        },
+        onError: (err, vars, ctx, mutationCtx) => {
+            const { reason, error_type } = extractAuthError(err);
+            ctx?.flow.end("failed", {
+                method: ctx?.method,
+                error_type,
+                error_message: reason,
+            });
+            options?.onError?.(err, vars, ctx, mutationCtx);
         },
     });
 
