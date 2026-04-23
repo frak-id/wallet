@@ -14,9 +14,11 @@ import {
 import { Text } from "@frak-labs/design-system/components/Text";
 import {
     CalendarIcon,
+    CheckIcon,
     ClockIcon,
     CloseIcon,
     CoinsIcon,
+    CopyIcon,
     ExternalLinkIcon,
     ImageIcon,
     ShareIcon,
@@ -27,6 +29,9 @@ import {
     estimatedRewardsQueryOptions,
     formatEstimatedReward,
     sessionStore,
+    trackEvent,
+    ua,
+    useCopyToClipboardWithState,
     useShareLink,
 } from "@frak-labs/wallet-shared";
 import { useQuery } from "@tanstack/react-query";
@@ -126,6 +131,17 @@ export function ExplorerDetail({ merchant, onClose }: ExplorerDetailProps) {
         if (!canShare) return;
         triggerSharing();
     }, [canShare, triggerSharing]);
+
+    const { copied, copy } = useCopyToClipboardWithState();
+
+    const handleCopy = useCallback(() => {
+        copy(shareUrl);
+        trackEvent("sharing_link_copied", {
+            source: "explorer_detail",
+            merchant_id: merchant.id,
+            link: shareUrl,
+        });
+    }, [copy, shareUrl, merchant.id]);
 
     return (
         <DetailSheet style={{ paddingTop: 0 }}>
@@ -289,6 +305,26 @@ export function ExplorerDetail({ merchant, onClose }: ExplorerDetailProps) {
                     {t("explorer.detail.shareAndEarn")}
                     <CoinsIcon width={16} height={16} />
                 </Button>
+                {!ua.isMobile && (
+                    <Button
+                        variant="ghost"
+                        width="full"
+                        onClick={handleCopy}
+                        size="large"
+                        fontSize="s"
+                    >
+                        {copied ? (
+                            <CheckIcon width={16} height={16} />
+                        ) : (
+                            <CopyIcon width={16} height={16} />
+                        )}
+                        {t(
+                            copied
+                                ? "sharing.btn.copySuccess"
+                                : "sharing.btn.copy"
+                        )}
+                    </Button>
+                )}
             </DetailSheetFooter>
         </DetailSheet>
     );
