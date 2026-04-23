@@ -1,5 +1,20 @@
 # @frak-labs/components
 
+## 1.0.1
+
+### Patch Changes
+
+- [#147](https://github.com/frak-id/wallet/pull/147) [`b56cb99`](https://github.com/frak-id/wallet/commit/b56cb990326841f65602b80c9402959c0293ff57) Thanks [@KONFeature](https://github.com/KONFeature)! - Fix `<frak-banner>` rendering unstyled in in-app browser mode. The InAppBanner vanilla-extract styles (`inAppBanner_container`, `inAppBanner_cta`, `inAppBanner_closeButton`, etc.) were compiled but never aggregated into the `cssSource` string injected by `useLightDomStyles`, because `Banner.css.ts` did not reference `inAppBanner.css.ts` in its vanilla-extract dependency graph. Added a side-effect import of `@frak-labs/design-system/styles/inAppBanner` so the plugin now bundles the missing CSS into the banner's runtime-injected `<style>` tag.
+
+- [#145](https://github.com/frak-id/wallet/pull/145) [`e8786d1`](https://github.com/frak-id/wallet/commit/e8786d1ddfabd5354617d7049a65084ede5b4b3a) Thanks [@KONFeature](https://github.com/KONFeature)! - Drop console.log during build
+
+- [#147](https://github.com/frak-id/wallet/pull/147) [`dbd69f1`](https://github.com/frak-id/wallet/commit/dbd69f1a1f3f66763700add70ee5c26db7be6df7) Thanks [@KONFeature](https://github.com/KONFeature)! - Add `preview` attribute to `<frak-button-share>` and `<frak-post-purchase>` (symmetric with `<frak-banner>`). When set, skips the client-ready / RPC gates and no-ops the click handler so theme/block editors (Shopify, WordPress) can render the real web components without a configured Frak client. `<frak-post-purchase>` also gains a `preview-variant` attribute (`"referrer" | "referee"`, defaults to `"referrer"`) to pick which variant is displayed.
+
+- [#147](https://github.com/frak-id/wallet/pull/147) [`3fb1915`](https://github.com/frak-id/wallet/commit/3fb1915a0d5d4fcd92af196afb3332f5814c87dc) Thanks [@KONFeature](https://github.com/KONFeature)! - Review SDK analytics events against business KPIs. Removed events that don't map to dashboarded metrics (`wallet_button_clicked`, `share_error_debug_copied`, `modal_step_completed`, `install_code_success_modal_viewed`, `sharing_link_generated`, `user_referred_error`, `sdk_iframe_heartbeat_timeout`, `onboarding_keypass_opened`, `onboarding_step_advanced`) and trimmed bloated payloads (e.g. `debug_info` from `share_modal_error`). Consolidated redundant events into outcome-based terminal events: `banner_resolved { outcome }` (replaces `banner_clicked` + `banner_dismissed`) and `notification_opt_in_resolved { outcome }` (5 events → 1). Added coverage for gaps: `sharing_link_shared` / `sharing_link_copied` with unified `source` across all 5 entry points, auto-tracked `wallet_modal_opened` / `wallet_modal_closed`, `inapp_redirect` as an identity-merge source, and `sdk_init_failed` for CDN bootstrap failures. Full reference in `docs/openpanel-events.md`.
+
+- Updated dependencies [[`6e64da9`](https://github.com/frak-id/wallet/commit/6e64da91da66c4b6e02b430005c908eecf2e42aa), [`d55d777`](https://github.com/frak-id/wallet/commit/d55d777f2713c57d8f95fb35ade13fcd7b018ed9), [`799b5c9`](https://github.com/frak-id/wallet/commit/799b5c91e6cfd4453d6daf8db826c8a2e9dc2910), [`e8786d1`](https://github.com/frak-id/wallet/commit/e8786d1ddfabd5354617d7049a65084ede5b4b3a), [`3fb1915`](https://github.com/frak-id/wallet/commit/3fb1915a0d5d4fcd92af196afb3332f5814c87dc)]:
+  - @frak-labs/core-sdk@1.0.1
+
 ## 1.0.0
 
 ### Major Changes

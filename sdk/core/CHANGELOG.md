@@ -1,5 +1,25 @@
 # @frak-labs/core-sdk
 
+## 1.0.1
+
+### Patch Changes
+
+- [#147](https://github.com/frak-id/wallet/pull/147) [`6e64da9`](https://github.com/frak-id/wallet/commit/6e64da91da66c4b6e02b430005c908eecf2e42aa) Thanks [@KONFeature](https://github.com/KONFeature)! - Allow UTM/attribution defaults from SDK config and backend-driven config. Priority: per-call override > backend config > SDK config > hardcoded fallbacks. Exposes `mergeAttribution` helper and `AttributionDefaults` type (excludes per-product `utmContent`).
+
+- [#147](https://github.com/frak-id/wallet/pull/147) [`d55d777`](https://github.com/frak-id/wallet/commit/d55d777f2713c57d8f95fb35ade13fcd7b018ed9) Thanks [@KONFeature](https://github.com/KONFeature)! - Replace the V2 `FrakContext` wire format (JSON + base64url) with a compact binary layout: a 1-byte header (4 version bits + `has_c`/`has_w` flags + reserved bits) followed by raw UUID/address bytes and a big-endian uint32 timestamp. The resulting `fCtx` URL parameter is ~65% shorter across all variants (e.g. anonymous `c`-only drops from ~154 to 50 chars; hybrid `c`+`w` drops from ~220 to 76 chars). V1 payloads (20-byte wallet address) are unchanged and still recognized via length-based disambiguation.
+
+  `encodeFrakContextV2` now strictly validates that `m` and `c` are canonical UUIDs and that `t` fits in a uint32; invalid contexts return `undefined` from `FrakContextManager.compress`. Reserved header bits are checked on decode to keep future versions forward-compatible.
+
+- [#147](https://github.com/frak-id/wallet/pull/147) [`799b5c9`](https://github.com/frak-id/wallet/commit/799b5c91e6cfd4453d6daf8db826c8a2e9dc2910) Thanks [@KONFeature](https://github.com/KONFeature)! - Extend `FrakContextV2` to carry an optional wallet address (`w`) and make the anonymous clientId (`c`) optional. A valid V2 context now only requires `m` (merchantId) + `t` (timestamp) plus at least one sharer identifier (`c` or `w`). When the sharer is authenticated, the wallet becomes the preferred identity signal — global, WebAuthn-bound, and durable across localStorage clears. `processReferral` self-referral detection and URL replacement (`alwaysAppendUrl`) prefer wallet match over clientId when both are available. `w` is validated with `isAddress()` on both compress and decompress to guard `isSelfReferral` against crafted URLs.
+
+  **Privacy note:** wallet addresses now appear in `fCtx` URL payloads, outbound share events, and SDK analytics (`user_referred_started`). The `ref` UTM param is intentionally kept clientId-only and never falls back to wallet.
+
+  **Backend observers:** the `referral` interaction V2 source_data now carries an optional `referrerWallet` field alongside `referrerClientId` / `referrerMerchantId`. Downstream indexers and analytics consumers should treat `referrerWallet` as the strongest referrer identity when present.
+
+- [#145](https://github.com/frak-id/wallet/pull/145) [`e8786d1`](https://github.com/frak-id/wallet/commit/e8786d1ddfabd5354617d7049a65084ede5b4b3a) Thanks [@KONFeature](https://github.com/KONFeature)! - Drop console.log during build
+
+- [#147](https://github.com/frak-id/wallet/pull/147) [`3fb1915`](https://github.com/frak-id/wallet/commit/3fb1915a0d5d4fcd92af196afb3332f5814c87dc) Thanks [@KONFeature](https://github.com/KONFeature)! - Review SDK analytics events against business KPIs. Removed events that don't map to dashboarded metrics (`wallet_button_clicked`, `share_error_debug_copied`, `modal_step_completed`, `install_code_success_modal_viewed`, `sharing_link_generated`, `user_referred_error`, `sdk_iframe_heartbeat_timeout`, `onboarding_keypass_opened`, `onboarding_step_advanced`) and trimmed bloated payloads (e.g. `debug_info` from `share_modal_error`). Consolidated redundant events into outcome-based terminal events: `banner_resolved { outcome }` (replaces `banner_clicked` + `banner_dismissed`) and `notification_opt_in_resolved { outcome }` (5 events → 1). Added coverage for gaps: `sharing_link_shared` / `sharing_link_copied` with unified `source` across all 5 entry points, auto-tracked `wallet_modal_opened` / `wallet_modal_closed`, `inapp_redirect` as an identity-merge source, and `sdk_init_failed` for CDN bootstrap failures. Full reference in `docs/openpanel-events.md`.
+
 ## 1.0.0
 
 ### Major Changes
