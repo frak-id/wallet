@@ -1,4 +1,4 @@
-name: Release
+name: "🚀 Release SDK"
 
 on:
   push:
@@ -11,7 +11,7 @@ concurrency: ${{ github.workflow }}-${{ github.ref }}
 
 jobs:
   release:
-    name: Release
+    name: "🚀 Release SDK"
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Repo
@@ -38,9 +38,7 @@ jobs:
           STAGE: production
 
       - name: "🏷️ Create per-package sdk-{id}-{version} tags"
-        if: steps.changesets.outputs.published == 'true'
-        env:
-          PUBLISHED_PACKAGES: ${{ steps.changesets.outputs.publishedPackages }}
+        id: sdk_tags
         run: |
           declare -A ID_MAP=(
             ["@frak-labs/core-sdk"]="core"
@@ -49,18 +47,22 @@ jobs:
             ["@frak-labs/nexus-sdk"]="legacy"
             ["@frak-labs/frame-connector"]="frame-connector"
           )
+          declare -A DIR_MAP=(
+            ["@frak-labs/core-sdk"]="sdk/core"
+            ["@frak-labs/react-sdk"]="sdk/react"
+            ["@frak-labs/components"]="sdk/components"
+            ["@frak-labs/nexus-sdk"]="sdk/legacy"
+            ["@frak-labs/frame-connector"]="packages/rpc"
+          )
 
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
 
-          echo "$PUBLISHED_PACKAGES" | jq -c '.[]' | while read -r pkg; do
-            name=$(echo "$pkg" | jq -r .name)
-            version=$(echo "$pkg" | jq -r .version)
-            id="${ID_MAP[$name]:-}"
-            if [ -z "$id" ]; then
-              echo "::warning::No tag identifier for $name, skipping"
-              continue
-            fi
+          created_any=false
+          for name in "${!ID_MAP[@]}"; do
+            id="${ID_MAP[$name]}"
+            dir="${DIR_MAP[$name]}"
+            version=$(jq -r .version "${dir}/package.json")
             tag="sdk-${id}-${version}"
             if git ls-remote --exit-code --tags origin "refs/tags/$tag" >/dev/null 2>&1; then
               echo "::notice::Tag $tag already exists on remote, skipping"
@@ -68,11 +70,13 @@ jobs:
               git tag "$tag"
               git push origin "$tag"
               echo "Created tag $tag"
+              created_any=true
             fi
           done
+          echo "created_any=${created_any}" >> "$GITHUB_OUTPUT"
 
       - uses: gacts/purge-jsdelivr-cache@v1
-        if: steps.changesets.outputs.published == 'true'
+        if: steps.sdk_tags.outputs.created_any == 'true'
         with:
           url: |
             https://cdn.jsdelivr.net/npm/@frak-labs/nexus-sdk@latest/dist/bundle/bundle.js
