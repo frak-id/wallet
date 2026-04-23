@@ -7,8 +7,7 @@ import type {
 } from "../types";
 import { isV2Context } from "../types";
 import { base64urlDecode, base64urlEncode } from "./compression/b64";
-import { compressJsonToB64 } from "./compression/compress";
-import { decompressJsonFromB64 } from "./compression/decompress";
+import { decodeFrakContextV2, encodeFrakContextV2 } from "./frakContextV2Codec";
 
 /**
  * URL parameter key for the Frak referral context
@@ -18,7 +17,8 @@ const contextKey = "fCtx";
 /**
  * Compress a Frak context into a URL-safe string.
  *
- * - V2 contexts are serialized as compressed JSON (base64url).
+ * - V2 contexts are encoded using a compact binary layout (see
+ *   {@link encodeFrakContextV2}) then base64url-encoded.
  * - V1 contexts encode the wallet address as raw bytes (base64url).
  *
  * @param context - The context to compress (V1 or V2)
@@ -28,18 +28,9 @@ function compress(context?: FrakContextV1 | FrakContextV2): string | undefined {
     if (!context) return;
     try {
         if (isV2Context(context)) {
-            // Runtime validation: m + t are always required, and at least one of
-            // c (anonymous fingerprint) or w (valid wallet) must be present.
-            if (!context.m || !context.t) return undefined;
-            const hasValidWallet = context.w && isAddress(context.w);
-            if (!context.c && !hasValidWallet) return undefined;
-            return compressJsonToB64({
-                v: 2,
-                m: context.m,
-                t: context.t,
-                ...(context.c ? { c: context.c } : {}),
-                ...(hasValidWallet ? { w: context.w } : {}),
-            });
+            const encoded = encodeFrakContextV2(context);
+            if (!encoded) return undefined;
+            return base64urlEncode(encoded);
         }
 
         // V1 legacy: compress wallet address as raw bytes
@@ -54,7 +45,8 @@ function compress(context?: FrakContextV1 | FrakContextV2): string | undefined {
 /**
  * Decompress a base64url string back into a Frak context.
  *
- * Attempts V2 JSON decompression first, then falls back to V1 raw bytes.
+ * V1 (exactly 20 bytes) and V2 (37, 41, or 57 bytes) are distinguished by
+ * their decoded byte length, so there is no ambiguity.
  *
  * @param context - The compressed context string
  * @returns The decompressed FrakContext, or undefined on failure
@@ -62,25 +54,16 @@ function compress(context?: FrakContextV1 | FrakContextV2): string | undefined {
 function decompress(context?: string): FrakContext | undefined {
     if (!context || context.length === 0) return;
     try {
-        // Try V2 JSON first — V2 payloads are longer than V1's 20-byte address
-        const json = decompressJsonFromB64<FrakContextV2>(context);
-        if (json && typeof json === "object" && json.v === 2) {
-            if (!json.m || !json.t) return undefined;
-            // Validate `w` with isAddress() — protects self-referral checks and
-            // URL replacement from crafted payloads carrying a malformed wallet.
-            const hasValidWallet = json.w && isAddress(json.w);
-            if (!json.c && !hasValidWallet) return undefined;
-            return {
-                v: 2,
-                m: json.m,
-                t: json.t,
-                ...(json.c ? { c: json.c } : {}),
-                ...(hasValidWallet ? { w: json.w } : {}),
-            };
+        const bytes = base64urlDecode(context);
+
+        // V1 is a raw 20-byte wallet address; V2 binary is always longer
+        // and starts with a header byte whose low nibble is the version.
+        if (bytes.length !== 20) {
+            const v2 = decodeFrakContextV2(bytes);
+            if (v2) return v2;
+            return undefined;
         }
 
-        // Fall back to V1: raw 20-byte address
-        const bytes = base64urlDecode(context);
         const hex = bytesToHex(bytes, { size: 20 }) as Address;
         if (isAddress(hex)) {
             return { r: hex };

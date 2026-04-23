@@ -25,10 +25,12 @@ describe("FrakContextManager", () => {
     });
 
     describe("V2 context", () => {
+        const MERCHANT_ID = "550e8400-e29b-41d4-a716-446655440000";
+        const CLIENT_ID = "550e8400-e29b-41d4-a716-446655440001";
         const v2Context: FrakContextV2 = {
             v: 2,
-            c: "test-client-id-uuid",
-            m: "merchant-uuid-1234",
+            c: CLIENT_ID,
+            m: MERCHANT_ID,
             t: 1709654400,
         };
 
@@ -53,7 +55,7 @@ describe("FrakContextManager", () => {
             it("should compress v2 context with wallet only (no clientId)", () => {
                 const v2WithWalletOnly: FrakContextV2 = {
                     v: 2,
-                    m: "merchant-uuid-1234",
+                    m: MERCHANT_ID,
                     t: 1709654400,
                     w: "0x1234567890123456789012345678901234567890" as Address,
                 };
@@ -66,8 +68,8 @@ describe("FrakContextManager", () => {
             it("should compress v2 context with both clientId and wallet", () => {
                 const v2Hybrid: FrakContextV2 = {
                     v: 2,
-                    c: "test-client-id-uuid",
-                    m: "merchant-uuid-1234",
+                    c: CLIENT_ID,
+                    m: MERCHANT_ID,
                     t: 1709654400,
                     w: "0x1234567890123456789012345678901234567890" as Address,
                 };
@@ -78,7 +80,7 @@ describe("FrakContextManager", () => {
             });
 
             it("should return undefined when v2 context is missing merchantId", () => {
-                const partial = { v: 2 as const, c: "c", t: 123 };
+                const partial = { v: 2 as const, c: CLIENT_ID, t: 123 };
                 const result = FrakContextManager.compress(
                     partial as FrakContextV2
                 );
@@ -86,7 +88,7 @@ describe("FrakContextManager", () => {
             });
 
             it("should return undefined when v2 context is missing timestamp", () => {
-                const partial = { v: 2 as const, c: "c", m: "m" };
+                const partial = { v: 2 as const, c: CLIENT_ID, m: MERCHANT_ID };
                 const result = FrakContextManager.compress(
                     partial as FrakContextV2
                 );
@@ -96,7 +98,7 @@ describe("FrakContextManager", () => {
             it("should reject v2 context with a malformed wallet address", () => {
                 const partial = {
                     v: 2 as const,
-                    m: "merchant-uuid",
+                    m: MERCHANT_ID,
                     t: 1709654400,
                     w: "0xnot-a-valid-address" as Address,
                 };
@@ -110,8 +112,8 @@ describe("FrakContextManager", () => {
             it("should drop a malformed wallet but keep a valid clientId", () => {
                 const hybrid = {
                     v: 2 as const,
-                    c: "valid-client-id",
-                    m: "merchant-uuid",
+                    c: CLIENT_ID,
+                    m: MERCHANT_ID,
                     t: 1709654400,
                     w: "0xnot-a-valid-address" as Address,
                 };
@@ -121,8 +123,8 @@ describe("FrakContextManager", () => {
                 const decompressed = FrakContextManager.decompress(compressed);
                 expect(decompressed).toEqual({
                     v: 2,
-                    c: "valid-client-id",
-                    m: "merchant-uuid",
+                    c: CLIENT_ID,
+                    m: MERCHANT_ID,
                     t: 1709654400,
                 });
             });
@@ -136,26 +138,20 @@ describe("FrakContextManager", () => {
                 expect(decompressed).toEqual(v2Context);
             });
 
-            it("should drop malformed `w` field on decompress (defense against crafted URLs)", async () => {
-                // Manually compress a payload bypassing client-side validation
-                // by reaching into the underlying compressJsonToB64.
-                const { compressJsonToB64 } = await import(
-                    "./compression/compress"
+            it("should reject payloads whose header reserved bits are set", async () => {
+                // Craft a valid V2 binary payload then flip a reserved bit
+                // in the header — decompress must refuse to parse it (forward-compat guard).
+                const { encodeFrakContextV2 } = await import(
+                    "./frakContextV2Codec"
                 );
-                const malformed = compressJsonToB64({
-                    v: 2,
-                    c: "valid-client-id",
-                    m: "merchant-uuid",
-                    t: 1709654400,
-                    w: "0xnot-a-real-address",
-                });
-                const result = FrakContextManager.decompress(malformed);
-                expect(result).toEqual({
-                    v: 2,
-                    c: "valid-client-id",
-                    m: "merchant-uuid",
-                    t: 1709654400,
-                });
+                const { base64urlEncode } = await import("./compression/b64");
+                const encoded = encodeFrakContextV2(v2Context);
+                expect(encoded).toBeDefined();
+                const tampered = new Uint8Array(encoded as Uint8Array);
+                tampered[0] |= 0x40; // set a reserved bit
+                const payload = base64urlEncode(tampered);
+                const result = FrakContextManager.decompress(payload);
+                expect(result).toBeUndefined();
             });
         });
 
@@ -169,8 +165,8 @@ describe("FrakContextManager", () => {
                 expect(result).toBeDefined();
                 expect(result).toHaveProperty("v", 2);
                 const v2 = result as FrakContextV2;
-                expect(v2.c).toBe("test-client-id-uuid");
-                expect(v2.m).toBe("merchant-uuid-1234");
+                expect(v2.c).toBe(CLIENT_ID);
+                expect(v2.m).toBe(MERCHANT_ID);
                 expect(v2.t).toBe(1709654400);
             });
         });
@@ -650,8 +646,8 @@ describe("FrakContextManager", () => {
             const url = "https://example.com/test";
             const context: FrakContextV2 = {
                 v: 2,
-                c: "client-id",
-                m: "merchant-id",
+                c: "550e8400-e29b-41d4-a716-446655440001",
+                m: "550e8400-e29b-41d4-a716-446655440000",
                 t: 1709654400,
             };
 

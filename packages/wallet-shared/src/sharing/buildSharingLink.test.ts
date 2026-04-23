@@ -4,8 +4,8 @@ import { describe, expect, it } from "vitest";
 import { buildSharingLink } from "./buildSharingLink";
 
 const baseUrl = "https://example.com/product";
-const clientId = "client-id-uuid-1234";
-const merchantId = "merchant-uuid-5678";
+const clientId = "550e8400-e29b-41d4-a716-446655440001";
+const merchantId = "550e8400-e29b-41d4-a716-446655440000";
 const wallet = "0x1234567890123456789012345678901234567890" as Address;
 
 function parseCtx(link: string | null) {

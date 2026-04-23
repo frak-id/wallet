@@ -20,7 +20,9 @@ vi.mock("../../../domain/identity", () => ({
 const validWallet = "0x1234567890123456789012345678901234567890" as Address;
 const otherWallet = "0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa" as Address;
 
-function makeHandler(recordTouchpointImpl?: Parameters<AttributionService["recordTouchpoint"]>[0]) {
+function makeHandler(
+    recordTouchpointImpl?: Parameters<AttributionService["recordTouchpoint"]>[0]
+) {
     const recordTouchpoint = vi.fn().mockResolvedValue({
         touchpoint: { id: "tp-123" },
         referralRegistered: true,
@@ -191,9 +193,9 @@ describe("ArrivalHandler", () => {
                 type: "wallet",
                 value: validWallet,
             });
-            expect(recordTouchpoint.mock.calls[0][0].referrerIdentityGroupId).toBe(
-                "group-wallet"
-            );
+            expect(
+                recordTouchpoint.mock.calls[0][0].referrerIdentityGroupId
+            ).toBe("group-wallet");
         });
 
         it("falls back to anonymous_fingerprint when wallet lookup returns null", async () => {
@@ -221,9 +223,9 @@ describe("ArrivalHandler", () => {
                 value: "client-xyz",
                 merchantId: "merchant-referrer",
             });
-            expect(recordTouchpoint.mock.calls[0][0].referrerIdentityGroupId).toBe(
-                "group-anon"
-            );
+            expect(
+                recordTouchpoint.mock.calls[0][0].referrerIdentityGroupId
+            ).toBe("group-anon");
         });
 
         it("returns undefined when neither identifier resolves", async () => {
