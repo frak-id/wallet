@@ -151,7 +151,9 @@
             "recover": "Recover wallet from file",
             "walletsOnDevice": "Wallets used on this device",
             "privy": "Connect via Privy",
-            "useQRCode": "Use QR code to connect"
+            "useQRCode": "Use QR code to connect",
+            "useMyAccount": "Use my account <strong>{{address}}</strong>",
+            "anotherAccount": "Connect another account"
         },
         "notifications": {
             "noNotifications": "No notifications"

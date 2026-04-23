@@ -11,6 +11,7 @@ import {
 } from "../../common/analytics";
 import { authenticatedWalletApi } from "../../common/api/backendClient";
 import type { PreviousAuthenticatorModel } from "../../common/storage/PreviousAuthenticatorModel";
+import { recoveryHintStorage } from "../../common/storage/recoveryHint";
 import {
     addLastAuthentication,
     authenticationStore,
@@ -97,6 +98,14 @@ export function useLogin(
             const session = { ...authentication, token } as Session;
 
             await addLastAuthentication(session);
+
+            // Persist a tiny uninstall-resilient hint so the next fresh
+            // install can resume from the login flow. No-op outside Tauri.
+            await recoveryHintStorage.set({
+                lastAuthenticatorId: session.authenticatorId,
+                lastWallet: session.address,
+                lastLoginAt: Date.now(),
+            });
 
             sessionStore.getState().setSession(session);
             sessionStore.getState().setSdkSession(sdkJwt);

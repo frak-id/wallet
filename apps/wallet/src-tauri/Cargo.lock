@@ -95,6 +95,7 @@ dependencies = [
  "tauri-plugin-install-referrer",
  "tauri-plugin-log",
  "tauri-plugin-opener",
+ "tauri-plugin-recovery-hint",
  "tauri-plugin-safe-area-insets",
  "tauri-plugin-share",
 ]
@@ -4263,6 +4264,16 @@ dependencies = [
  "url",
  "windows",
  "zbus",
+]
+
+[[package]]
+name = "tauri-plugin-recovery-hint"
+version = "0.1.0"
+dependencies = [
+ "serde",
+ "serde_json",
+ "tauri",
+ "tauri-plugin",
 ]
 
 [[package]]

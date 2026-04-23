@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Android 12+ data extraction rules (replaces `android:fullBackupContent`
+    for backup + adds device-to-device transfer rules).
+
+    We include the recovery-hint SharedPreferences file in both backup
+    scopes so:
+      - Cloud backup: the hint survives uninstall on the same device (when
+        "Backup by Google" is enabled).
+      - Device transfer: the hint follows the user when they move to a new
+        Android device via D2D transfer — complementing Block Store's own
+        new-device restore path.
+
+    See tauri-plugin-recovery-hint for the write-side logic.
+-->
+<data-extraction-rules>
+    <cloud-backup>
+        <include domain="sharedpref" path="frak.wallet.recovery_hint.xml" />
+    </cloud-backup>
+    <device-transfer>
+        <include domain="sharedpref" path="frak.wallet.recovery_hint.xml" />
+    </device-transfer>
+</data-extraction-rules>

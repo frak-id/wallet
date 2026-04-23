@@ -1,4 +1,4 @@
-name: "📱 Mobile Release"
+name: "🚀 Release Mobile App"
 
 on:
   workflow_dispatch:

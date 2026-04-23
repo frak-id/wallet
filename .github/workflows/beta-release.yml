@@ -1,4 +1,4 @@
-name: Beta Release
+name: "🚀 Release SDK (Beta)"
 
 on:
   workflow_dispatch:
@@ -16,7 +16,7 @@ concurrency: ${{ github.workflow }}-${{ github.ref }}
 
 jobs:
   beta-release:
-    name: Beta Release
+    name: "🚀 Release SDK (Beta)"
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Repo

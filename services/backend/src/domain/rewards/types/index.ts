@@ -54,7 +54,7 @@ export type ReferralArrivalPayload = {
  * Payload for create referral link interaction (user shares their link).
  */
 export type CreateReferralLinkPayload = {
-    sharerWallet: Address;
+    sharerWallet?: Address;
     merchantId: string;
     touchpointId?: string;
     sharingTimestamp?: number;

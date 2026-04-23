@@ -1,4 +1,4 @@
-name: CI - PHP Plugins
+name: "✅ CI: PHP Plugins"
 
 on:
   push:
@@ -10,6 +10,7 @@ on:
 jobs:
   # ── Magento ─────────────────────────────────────────────
   magento-coding-standard:
+    name: "📏 Magento · Coding standard"
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -22,6 +23,7 @@ jobs:
       - run: composer run cs
 
   magento-phpstan:
+    name: "🔍 Magento · PHPStan"
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -34,6 +36,7 @@ jobs:
       - run: composer run analyse
 
   magento-unit-tests:
+    name: "🧪 Magento · Unit tests"
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -47,6 +50,7 @@ jobs:
 
   # ── WordPress ───────────────────────────────────────────
   wordpress-coding-standard:
+    name: "📏 WordPress · Coding standard"
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -59,6 +63,7 @@ jobs:
       - run: composer run cs
 
   wordpress-phpstan:
+    name: "🔍 WordPress · PHPStan"
     runs-on: ubuntu-latest
     defaults:
       run:

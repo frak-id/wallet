@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Android Auto Backup rules (pre-Android 12).
+    Applied when `android:fullBackupContent` is set on the <application>.
+
+    We opt the `frak.wallet.recovery_hint` SharedPreferences file into backup
+    so the reinstall-recovery hint survives uninstall on devices without
+    Google Play Services (where Block Store is unavailable).
+
+    See tauri-plugin-recovery-hint for the write-side logic.
+-->
+<full-backup-content>
+    <include domain="sharedpref" path="frak.wallet.recovery_hint.xml" />
+</full-backup-content>

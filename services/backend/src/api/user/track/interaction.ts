@@ -34,34 +34,22 @@ export const trackInteractionRoute = new Elysia().post(
             }
         }
 
-        try {
-            const result =
-                await OrchestrationContext.orchestrators.interactionSubmission.submit(
-                    body as InteractionSubmission,
-                    {
-                        identityGroupId,
-                        walletAddress,
-                    }
-                );
-
-            return {
-                success: true,
-                identityGroupId,
-                interactionLogId: result.interactionLog?.id ?? null,
-                isDuplicate: result.isDuplicate,
-                ...buildTypeSpecificResponse(body.type, result),
-            };
-        } catch (error) {
-            if (error instanceof Error) {
-                if (error.message.includes("Wallet address required")) {
-                    return status(400, {
-                        success: false,
-                        error: error.message,
-                    });
+        const result =
+            await OrchestrationContext.orchestrators.interactionSubmission.submit(
+                body as InteractionSubmission,
+                {
+                    identityGroupId,
+                    walletAddress,
                 }
-            }
-            throw error;
-        }
+            );
+
+        return {
+            success: true,
+            identityGroupId,
+            interactionLogId: result.interactionLog?.id ?? null,
+            isDuplicate: result.isDuplicate,
+            ...buildTypeSpecificResponse(body.type, result),
+        };
     },
     {
         headers: sdkIdentityHeaderSchema,

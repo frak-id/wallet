@@ -78,7 +78,6 @@ function LoginPage() {
                             <AuthActions
                                 onSuccess={handlePostLoginRedirect}
                                 onError={setError}
-                                loginButtonText="wallet.login.button"
                             />
                             {!ua.isMobile && (
                                 <Box>

@@ -1,0 +1,7 @@
+[default]
+description = "Default permissions for the recovery-hint plugin"
+permissions = [
+    "allow-get-recovery-hint",
+    "allow-set-recovery-hint",
+    "allow-clear-recovery-hint",
+]
