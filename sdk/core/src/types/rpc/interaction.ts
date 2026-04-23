@@ -11,7 +11,7 @@ import type { Address } from "viem";
 export type SendInteractionParamsType =
     | {
           type: "arrival";
-          /** @deprecated V1 legacy — use referrerClientId for v2 */
+          /** Sharer wallet address. Accepted in both V1 (legacy, wallet-only) and V2 (authenticated sharer) contexts. */
           referrerWallet?: Address;
           referrerClientId?: string;
           referrerMerchantId?: string;

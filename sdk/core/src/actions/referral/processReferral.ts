@@ -87,16 +87,23 @@ function trackArrivalIfValid(
 
 /**
  * Build a V2 context representing the current user for URL replacement.
- * @returns A V2 context, or null if clientId or merchantId is unavailable
+ *
+ * Emits both `c` (anonymous clientId) and `w` (wallet) when available — wallet
+ * is the preferred identity signal and takes attribution precedence downstream.
+ * Returns null when neither identifier is available.
  */
-function buildCurrentUserContext(merchantId: string): FrakContextV2 | null {
+function buildCurrentUserContext(
+    merchantId: string,
+    wallet?: WalletStatusReturnType["wallet"]
+): FrakContextV2 | null {
     const clientId = getClientId();
-    if (!clientId) return null;
+    if (!clientId && !wallet) return null;
     return {
         v: 2,
-        c: clientId,
         m: merchantId,
         t: Math.floor(Date.now() / 1000),
+        ...(clientId ? { c: clientId } : {}),
+        ...(wallet ? { w: wallet } : {}),
     };
 }
 
@@ -173,7 +180,7 @@ export function processReferral(
 
     const replaceContext =
         options?.alwaysAppendUrl && contextMerchantId
-            ? buildCurrentUserContext(contextMerchantId)
+            ? buildCurrentUserContext(contextMerchantId, walletStatus?.wallet)
             : null;
 
     FrakContextManager.replaceUrl({

@@ -38,6 +38,7 @@ export {
 export {
     type InteractionSubmission,
     InteractionSubmissionSchema,
+    validateArrivalReferrer,
 } from "./interactionSchemas";
 export {
     type MerchantDetailResponse,

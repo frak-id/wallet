@@ -92,6 +92,40 @@ describe("FrakContextManager", () => {
                 );
                 expect(result).toBeUndefined();
             });
+
+            it("should reject v2 context with a malformed wallet address", () => {
+                const partial = {
+                    v: 2 as const,
+                    m: "merchant-uuid",
+                    t: 1709654400,
+                    w: "0xnot-a-valid-address" as Address,
+                };
+                const result = FrakContextManager.compress(
+                    partial as FrakContextV2
+                );
+                // Invalid wallet → falls back to clientId requirement; absent here → undefined
+                expect(result).toBeUndefined();
+            });
+
+            it("should drop a malformed wallet but keep a valid clientId", () => {
+                const hybrid = {
+                    v: 2 as const,
+                    c: "valid-client-id",
+                    m: "merchant-uuid",
+                    t: 1709654400,
+                    w: "0xnot-a-valid-address" as Address,
+                };
+                const compressed = FrakContextManager.compress(
+                    hybrid as FrakContextV2
+                );
+                const decompressed = FrakContextManager.decompress(compressed);
+                expect(decompressed).toEqual({
+                    v: 2,
+                    c: "valid-client-id",
+                    m: "merchant-uuid",
+                    t: 1709654400,
+                });
+            });
         });
 
         describe("decompress", () => {
@@ -100,6 +134,28 @@ describe("FrakContextManager", () => {
                 const decompressed = FrakContextManager.decompress(compressed);
 
                 expect(decompressed).toEqual(v2Context);
+            });
+
+            it("should drop malformed `w` field on decompress (defense against crafted URLs)", async () => {
+                // Manually compress a payload bypassing client-side validation
+                // by reaching into the underlying compressJsonToB64.
+                const { compressJsonToB64 } = await import(
+                    "./compression/compress"
+                );
+                const malformed = compressJsonToB64({
+                    v: 2,
+                    c: "valid-client-id",
+                    m: "merchant-uuid",
+                    t: 1709654400,
+                    w: "0xnot-a-real-address",
+                });
+                const result = FrakContextManager.decompress(malformed);
+                expect(result).toEqual({
+                    v: 2,
+                    c: "valid-client-id",
+                    m: "merchant-uuid",
+                    t: 1709654400,
+                });
             });
         });
 

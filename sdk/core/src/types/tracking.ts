@@ -45,7 +45,7 @@ export type AttributionParams = {
 export type AttributionDefaults = Omit<AttributionParams, "utmContent">;
 
 export type TrackArrivalParams = {
-    /** @deprecated V1 legacy — use referrerClientId for v2 contexts */
+    /** Sharer wallet address. Accepted in both V1 (legacy) and V2 (authenticated sharer) contexts. */
     referrerWallet?: Address;
     referrerClientId?: string;
     referrerMerchantId?: string;

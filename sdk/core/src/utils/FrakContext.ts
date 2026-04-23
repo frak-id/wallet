@@ -29,15 +29,16 @@ function compress(context?: FrakContextV1 | FrakContextV2): string | undefined {
     try {
         if (isV2Context(context)) {
             // Runtime validation: m + t are always required, and at least one of
-            // c (anonymous fingerprint) or w (wallet) must be present.
+            // c (anonymous fingerprint) or w (valid wallet) must be present.
             if (!context.m || !context.t) return undefined;
-            if (!context.c && !context.w) return undefined;
+            const hasValidWallet = context.w && isAddress(context.w);
+            if (!context.c && !hasValidWallet) return undefined;
             return compressJsonToB64({
                 v: 2,
                 m: context.m,
                 t: context.t,
                 ...(context.c ? { c: context.c } : {}),
-                ...(context.w ? { w: context.w } : {}),
+                ...(hasValidWallet ? { w: context.w } : {}),
             });
         }
 
@@ -65,13 +66,16 @@ function decompress(context?: string): FrakContext | undefined {
         const json = decompressJsonFromB64<FrakContextV2>(context);
         if (json && typeof json === "object" && json.v === 2) {
             if (!json.m || !json.t) return undefined;
-            if (!json.c && !json.w) return undefined;
+            // Validate `w` with isAddress() — protects self-referral checks and
+            // URL replacement from crafted payloads carrying a malformed wallet.
+            const hasValidWallet = json.w && isAddress(json.w);
+            if (!json.c && !hasValidWallet) return undefined;
             return {
                 v: 2,
                 m: json.m,
                 t: json.t,
                 ...(json.c ? { c: json.c } : {}),
-                ...(json.w ? { w: json.w } : {}),
+                ...(hasValidWallet ? { w: json.w } : {}),
             };
         }
 

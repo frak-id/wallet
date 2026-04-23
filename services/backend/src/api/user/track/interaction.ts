@@ -3,6 +3,7 @@ import { OrchestrationContext } from "../../../orchestration/context";
 import {
     type InteractionSubmission,
     InteractionSubmissionSchema,
+    validateArrivalReferrer,
 } from "../../schemas";
 import { resolveSdkIdentity, sdkIdentityHeaderSchema } from "./sdkIdentity";
 
@@ -22,6 +23,16 @@ export const trackInteractionRoute = new Elysia().post(
         }
 
         const { identityGroupId, walletAddress } = identityResult;
+
+        if (body.type === "arrival") {
+            const referrerError = validateArrivalReferrer(body);
+            if (referrerError) {
+                return status(400, {
+                    success: false,
+                    error: referrerError,
+                });
+            }
+        }
 
         try {
             const result =

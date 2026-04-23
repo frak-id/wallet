@@ -207,7 +207,7 @@ Flow wraps the whole register page. `_started` fires on mount, `_abandoned` on u
 
 | Event | Properties | Why |
 |---|---|---|
-| `user_referred_started` | `referrer?`, `referrerClientId?`, `walletStatus?` | Fires when the SDK detects a referral context. |
+| `user_referred_started` | `referrer?`, `referrerClientId?`, `referrerWallet?`, `walletStatus?` | Fires when the SDK detects a referral context. `referrer` is the V1 legacy wallet field; `referrerWallet` is the V2 authenticated-sharer wallet when present. |
 | `user_referred_completed` | `status: "success"` | Processed successfully. |
 
 ---

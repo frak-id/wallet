@@ -267,6 +267,7 @@ describe("processReferral", () => {
                 v: 2,
                 c: "test-client-id",
                 m: "merchant-uuid",
+                w: mockAddress,
             }),
         });
     });
@@ -293,5 +294,60 @@ describe("processReferral", () => {
             url: window.location.href,
             context: null,
         });
+    });
+
+    it("should emit wallet in replacement context when alwaysAppendUrl is true and user is connected", async () => {
+        const utils = await import("../../utils");
+        vi.mocked(utils.getClientId).mockReturnValue(null as never);
+
+        const v2Context: FrakContextV2 = {
+            v: 2,
+            c: "referrer-client-id",
+            m: "merchant-uuid",
+            t: 1709654400,
+        };
+
+        await processReferral(mockClient, {
+            walletStatus: mockWalletStatus,
+            frakContext: v2Context,
+            options: { alwaysAppendUrl: true },
+        });
+
+        // clientId is null, but wallet is available — should still emit {w, m}
+        expect(utils.FrakContextManager.replaceUrl).toHaveBeenCalledWith({
+            url: window.location.href,
+            context: expect.objectContaining({
+                v: 2,
+                m: "merchant-uuid",
+                w: mockAddress,
+            }),
+        });
+
+        vi.mocked(utils.getClientId).mockReturnValue("test-client-id");
+    });
+
+    it("should return null replacement context when both clientId and wallet are missing", async () => {
+        const utils = await import("../../utils");
+        vi.mocked(utils.getClientId).mockReturnValue(null as never);
+
+        const v2Context: FrakContextV2 = {
+            v: 2,
+            c: "referrer-client-id",
+            m: "merchant-uuid",
+            t: 1709654400,
+        };
+
+        await processReferral(mockClient, {
+            walletStatus: { key: "not-connected" as const },
+            frakContext: v2Context,
+            options: { alwaysAppendUrl: true },
+        });
+
+        expect(utils.FrakContextManager.replaceUrl).toHaveBeenCalledWith({
+            url: window.location.href,
+            context: null,
+        });
+
+        vi.mocked(utils.getClientId).mockReturnValue("test-client-id");
     });
 });
