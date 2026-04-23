@@ -77,7 +77,7 @@ checksum = "a23eb6b1614318a8071c9b2521f36b424b2c83db5eb3a0fead4a6c0809af6e61"
 
 [[package]]
 name = "app"
-version = "1.0.27"
+version = "1.0.31"
 dependencies = [
  "log",
  "serde",
@@ -89,6 +89,7 @@ dependencies = [
  "tauri-plugin-clipboard-manager",
  "tauri-plugin-deep-link",
  "tauri-plugin-fcm",
+ "tauri-plugin-frak-share",
  "tauri-plugin-frak-webauthn",
  "tauri-plugin-fs",
  "tauri-plugin-install-referrer",
@@ -4167,6 +4168,16 @@ dependencies = [
  "tauri",
  "tauri-plugin",
  "thiserror 2.0.17",
+]
+
+[[package]]
+name = "tauri-plugin-frak-share"
+version = "0.1.0"
+dependencies = [
+ "serde",
+ "serde_json",
+ "tauri",
+ "tauri-plugin",
 ]
 
 [[package]]

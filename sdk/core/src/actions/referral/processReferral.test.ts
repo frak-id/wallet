@@ -100,10 +100,9 @@ describe("processReferral", () => {
                 mockClient,
                 "user_referred_started",
                 {
-                    properties: {
-                        referrerClientId: "referrer-client-id",
-                        walletStatus: "connected",
-                    },
+                    referrerClientId: "referrer-client-id",
+                    referrerWallet: undefined,
+                    walletStatus: "connected",
                 }
             );
 
@@ -111,6 +110,7 @@ describe("processReferral", () => {
                 type: "arrival",
                 referrerClientId: "referrer-client-id",
                 referrerMerchantId: "merchant-uuid",
+                referrerWallet: undefined,
                 referralTimestamp: 1709654400,
                 landingUrl: "https://example.com/test",
             });
@@ -130,6 +130,73 @@ describe("processReferral", () => {
             const result = await processReferral(mockClient, {
                 walletStatus: mockWalletStatus,
                 frakContext: v2SelfReferralContext,
+            });
+
+            expect(result).toBe("self-referral");
+            vi.mocked(utils.getClientId).mockReturnValue("test-client-id");
+        });
+
+        it("should successfully process v2 referral with wallet only (no clientId)", async () => {
+            await import("../../utils");
+            const { sendInteraction } = await import("../sendInteraction");
+
+            const referrerWallet =
+                "0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa" as Address;
+            const v2WithWalletOnly: FrakContextV2 = {
+                v: 2,
+                m: "merchant-uuid",
+                t: 1709654400,
+                w: referrerWallet,
+            };
+
+            const result = await processReferral(mockClient, {
+                walletStatus: mockWalletStatus,
+                frakContext: v2WithWalletOnly,
+            });
+
+            expect(result).toBe("success");
+            expect(sendInteraction).toHaveBeenCalledWith(mockClient, {
+                type: "arrival",
+                referrerClientId: undefined,
+                referrerMerchantId: "merchant-uuid",
+                referrerWallet,
+                referralTimestamp: 1709654400,
+                landingUrl: "https://example.com/test",
+            });
+        });
+
+        it("should return 'self-referral' when v2 wallet matches current wallet", async () => {
+            const v2SelfReferralByWallet: FrakContextV2 = {
+                v: 2,
+                m: "merchant-uuid",
+                t: 1709654400,
+                w: mockAddress,
+            };
+
+            const result = await processReferral(mockClient, {
+                walletStatus: mockWalletStatus,
+                frakContext: v2SelfReferralByWallet,
+            });
+
+            expect(result).toBe("self-referral");
+        });
+
+        it("should prefer wallet over clientId for self-referral when both are present", async () => {
+            const utils = await import("../../utils");
+            // clientId does NOT match current user, but wallet does → still self-referral
+            vi.mocked(utils.getClientId).mockReturnValue("some-other-client");
+
+            const v2Hybrid: FrakContextV2 = {
+                v: 2,
+                c: "referrer-client-id",
+                m: "merchant-uuid",
+                t: 1709654400,
+                w: mockAddress,
+            };
+
+            const result = await processReferral(mockClient, {
+                walletStatus: mockWalletStatus,
+                frakContext: v2Hybrid,
             });
 
             expect(result).toBe("self-referral");
@@ -156,10 +223,8 @@ describe("processReferral", () => {
                 mockClient,
                 "user_referred_started",
                 {
-                    properties: {
-                        referrer: "0xabcdefabcdefabcdefabcdefabcdefabcdefabcd",
-                        walletStatus: "connected",
-                    },
+                    referrer: "0xabcdefabcdefabcdefabcdefabcdefabcdefabcd",
+                    walletStatus: "connected",
                 }
             );
         });
@@ -202,6 +267,7 @@ describe("processReferral", () => {
                 v: 2,
                 c: "test-client-id",
                 m: "merchant-uuid",
+                w: mockAddress,
             }),
         });
     });
@@ -228,5 +294,60 @@ describe("processReferral", () => {
             url: window.location.href,
             context: null,
         });
+    });
+
+    it("should emit wallet in replacement context when alwaysAppendUrl is true and user is connected", async () => {
+        const utils = await import("../../utils");
+        vi.mocked(utils.getClientId).mockReturnValue(null as never);
+
+        const v2Context: FrakContextV2 = {
+            v: 2,
+            c: "referrer-client-id",
+            m: "merchant-uuid",
+            t: 1709654400,
+        };
+
+        await processReferral(mockClient, {
+            walletStatus: mockWalletStatus,
+            frakContext: v2Context,
+            options: { alwaysAppendUrl: true },
+        });
+
+        // clientId is null, but wallet is available — should still emit {w, m}
+        expect(utils.FrakContextManager.replaceUrl).toHaveBeenCalledWith({
+            url: window.location.href,
+            context: expect.objectContaining({
+                v: 2,
+                m: "merchant-uuid",
+                w: mockAddress,
+            }),
+        });
+
+        vi.mocked(utils.getClientId).mockReturnValue("test-client-id");
+    });
+
+    it("should return null replacement context when both clientId and wallet are missing", async () => {
+        const utils = await import("../../utils");
+        vi.mocked(utils.getClientId).mockReturnValue(null as never);
+
+        const v2Context: FrakContextV2 = {
+            v: 2,
+            c: "referrer-client-id",
+            m: "merchant-uuid",
+            t: 1709654400,
+        };
+
+        await processReferral(mockClient, {
+            walletStatus: { key: "not-connected" as const },
+            frakContext: v2Context,
+            options: { alwaysAppendUrl: true },
+        });
+
+        expect(utils.FrakContextManager.replaceUrl).toHaveBeenCalledWith({
+            url: window.location.href,
+            context: null,
+        });
+
+        vi.mocked(utils.getClientId).mockReturnValue("test-client-id");
     });
 });

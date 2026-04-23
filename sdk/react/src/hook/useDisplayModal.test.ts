@@ -152,7 +152,8 @@ describe("useDisplayModal", () => {
                         title: "Custom Login",
                     },
                 }),
-            })
+            }),
+            undefined
         );
     });
 

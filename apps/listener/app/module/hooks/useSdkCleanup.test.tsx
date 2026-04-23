@@ -5,14 +5,14 @@ import { beforeEach, describe, expect, test } from "@/tests/fixtures";
 import { useSdkCleanup } from "./useSdkCleanup";
 
 // Mock wallet-shared
-const mockTrackGenericEvent = vi.fn();
+const mockTrackEvent = vi.fn();
 const mockEmitLifecycleEvent = vi.fn();
 const mockSetSession = vi.fn();
 const mockSetSdkSession = vi.fn();
 
 vi.mock("@frak-labs/wallet-shared", () => ({
-    get trackGenericEvent() {
-        return mockTrackGenericEvent;
+    get trackEvent() {
+        return mockTrackEvent;
     },
     get emitLifecycleEvent() {
         return mockEmitLifecycleEvent;
@@ -60,7 +60,7 @@ describe("useSdkCleanup", () => {
 
         result.current();
 
-        expect(mockTrackGenericEvent).toHaveBeenCalledWith("sdk-cleanup");
+        expect(mockTrackEvent).toHaveBeenCalledWith("sdk_cleaned_up");
     });
 
     test("should emit remove-backup lifecycle event", ({ queryWrapper }) => {

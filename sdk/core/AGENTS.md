@@ -1,50 +1,27 @@
-# sdk/core
+# sdk/core — Compass
 
-Framework-agnostic core SDK. 111 total exports.
+Framework-agnostic core SDK (111 public exports). Dual build: NPM (`dist/`, ESM+CJS+types) and CDN (`cdn/bundle.js`, IIFE, `window.FrakSDK`).
 
-## Structure
+## Key Files
+- `src/index.ts` — main barrel
+- `src/actions/` — 14 actions: `displayModal`, `displayEmbeddedWallet`, `sendInteraction`, `sendTransaction`, `watchWalletStatus`, `getMerchantInformation`, `openSso`, `prepareSso`, `processReferral`, `referralInteraction`, `trackPurchaseStatus`, `modalBuilder`, `siweAuthenticate` (+ `index.ts`)
+- `src/clients/` — `createIFrameFrakClient`, `setupClient`, iframe communication, `DebugInfoGatherer`
+- `src/types/rpc/` — `IFrameRpcSchema` + per-method types
+- `src/bundle.ts` — CDN entry (IIFE)
+- `src/utils/` — compression (`compressJsonToB64`), base64url, URL builders, `sdkConfigStore`, `FrakContextManager`
 
-```
-src/
-├── actions/          # 14 files (displayModal, sendInteraction, displayEmbeddedWallet, etc.)
-├── clients/          # FrakClient + iframe communication
-├── constants/        # Chain configs, addresses
-├── types/            # TypeScript definitions
-└── utils/            # 20 files (compression, URL builders, etc.)
-```
+## Subpath Exports
+`.`, `./actions`, `./bundle`. Browser field → `./cdn/bundle.js`. `development` condition → `./src/index.ts` (monorepo dev).
 
-## Build & Exports
+## Defined Variables (tsdown)
+`OPEN_PANEL_API_URL`, `SDK_VERSION` — injected at build time; not read from runtime env.
 
-Dual tsdown config for NPM and CDN.
+## Non-Obvious Patterns
+- **Framework-agnostic rule**: NO React/Preact/Vue code here — that belongs in `sdk/react` or `sdk/components`.
+- **Pure actions**: no side effects outside `client.request`. Tree-shakeable named exports only.
+- **Adding an action requires schema update**: always extend `IFrameRpcSchema` first, or the RPC is not typed end-to-end.
+- **CDN bundle is `noExternal: [/.*/]`**: viem + all deps inline. Be conscious of size on every change.
+- **Client is singleton per iframe**: prefer `setupClient` once; don't instantiate repeatedly.
 
-| Format | Output | Usage |
-|--------|--------|-------|
-| NPM | `dist/` | ESM/CJS (index, actions, bundle entry points) |
-| CDN | `cdn/bundle.js` | IIFE with `window.FrakSDK` global |
-
-**Subpath Exports:** `.`, `./actions`, `./bundle`
-**Browser Field:** `./cdn/bundle.js`
-
-**Defined Variables:**
-- `OPEN_PANEL_API_URL`
-- `SDK_VERSION`
-
-## Conventions
-
-- **Pure functions**: No side effects in actions.
-- **Type-first**: All exports fully typed.
-- **Tree-shakeable**: Named exports only.
-- **No React**: Keep framework-agnostic.
-
-## Usage
-
-```typescript
-import { FrakClient } from "@frak-labs/core-sdk";
-import { sendInteraction } from "@frak-labs/core-sdk/actions";
-```
-
-## Testing
-
-- Vitest with jsdom (`core-sdk-unit` project).
-- Mock iframe communication.
-
+## See Also
+Parent `sdk/AGENTS.md` · `sdk/react/AGENTS.md` (hook wrappers) · `sdk/components/AGENTS.md` · `packages/rpc/` (transport) · `apps/listener/` (iframe endpoint).

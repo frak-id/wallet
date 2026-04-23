@@ -3,11 +3,11 @@ import { cx } from "class-variance-authority";
 import { Cuer } from "cuer";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { create, useStore } from "zustand";
-import { trackAuthInitiated } from "../../../common/analytics";
+import { trackEvent } from "../../../common/analytics";
+import { CodeInput } from "../../../common/component/CodeInput";
 import type { OnPairingSuccessCallback } from "../../clients/origin";
 import { getOriginPairingClient } from "../../clients/store";
 import type { OriginIdentityNode, OriginPairingState } from "../../types";
-import { PairingCode } from "../PairingCode";
 import { PairingStatus } from "../PairingStatus";
 import styles from "./index.module.css";
 
@@ -68,7 +68,7 @@ export function LaunchPairing({
 
     useEffect(() => {
         client.initiatePairing({ onSuccess, originNode });
-        trackAuthInitiated("pairing");
+        trackEvent("pairing_initiated");
     }, [client, onSuccess]);
 
     const pairingContent = useMemo(
@@ -132,10 +132,7 @@ function PairingContent({ clientState }: { clientState: OriginPairingState }) {
                 </p>
             )}
             {pairingInfo?.code && (
-                <PairingCode
-                    code={pairingInfo.code}
-                    theme={showBrighterQRCode ? "dark" : "light"}
-                />
+                <CodeInput value={pairingInfo.code} mode="numeric" />
             )}
         </div>
     );

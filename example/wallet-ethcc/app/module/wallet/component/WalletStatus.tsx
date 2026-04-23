@@ -6,7 +6,7 @@ export function WalletStatus() {
     const { data: walletStatus } = useWalletStatus();
 
     return (
-        <Panel variant={"primary"}>
+        <Panel>
             <h2>Wallet Status</h2>
             <InnerStatus status={walletStatus} />
             <a href={process.env.FRAK_WALLET_URL ?? ""}>Check on Frak Wallet</a>

@@ -1,7 +1,7 @@
 import {
     emitLifecycleEvent,
     sessionStore,
-    trackGenericEvent,
+    trackEvent,
 } from "@frak-labs/wallet-shared";
 import { useQueryClient } from "@tanstack/react-query";
 import { useCallback } from "react";
@@ -16,7 +16,7 @@ export function useSdkCleanup() {
     const queryClient = useQueryClient();
 
     return useCallback(() => {
-        trackGenericEvent("sdk-cleanup");
+        trackEvent("sdk_cleaned_up");
 
         // Remove backup data from the client website
         emitLifecycleEvent({

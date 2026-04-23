@@ -2,10 +2,17 @@ import { vars } from "@frak-labs/design-system/theme";
 import { alias, fontSize } from "@frak-labs/design-system/tokens";
 import { style, styleVariants } from "@vanilla-extract/css";
 
-export const content = style({
-    display: "flex",
-    flexDirection: "column",
-    gap: alias.spacing.m,
+export const content = styleVariants({
+    m: {
+        display: "flex",
+        flexDirection: "column",
+        gap: alias.spacing.m,
+    },
+    l: {
+        display: "flex",
+        flexDirection: "column",
+        gap: alias.spacing.l,
+    },
 });
 
 export const icon = style({

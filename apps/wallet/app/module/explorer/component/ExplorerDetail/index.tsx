@@ -14,16 +14,26 @@ import {
 import { Text } from "@frak-labs/design-system/components/Text";
 import {
     CalendarIcon,
+    CheckIcon,
     ClockIcon,
     CloseIcon,
     CoinsIcon,
+    CopyIcon,
     ExternalLinkIcon,
     ImageIcon,
     ShareIcon,
 } from "@frak-labs/design-system/icons";
 import {
+    buildSharingLink,
+    clientIdStore,
     estimatedRewardsQueryOptions,
     formatEstimatedReward,
+    mergeTokenQueryOptions,
+    sessionStore,
+    trackEvent,
+    ua,
+    useCopyToClipboardWithState,
+    useShareLink,
 } from "@frak-labs/wallet-shared";
 import { useQuery } from "@tanstack/react-query";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -40,6 +50,8 @@ type ExplorerDetailProps = {
 };
 
 export function ExplorerDetail({ merchant, onClose }: ExplorerDetailProps) {
+    const clientId = clientIdStore((s) => s.clientId);
+    const walletAddress = sessionStore((s) => s.session?.address);
     const [isDescriptionExpanded, setIsDescriptionExpanded] = useState(false);
     const [needsReadMore, setNeedsReadMore] = useState(false);
     const descriptionRef = useRef<HTMLElement>(null);
@@ -50,14 +62,15 @@ export function ExplorerDetail({ merchant, onClose }: ExplorerDetailProps) {
     );
     const rewardSummary = useRewardSummary(rewards, i18n.language);
 
-    const fallbackImage =
-        merchant.explorerConfig?.heroImageUrl ??
-        merchant.explorerConfig?.heroImageUrl;
-
-    const images = useMemo(
-        () => (fallbackImage ? [fallbackImage] : []),
-        [fallbackImage]
-    );
+    const images = useMemo(() => {
+        const main = merchant.explorerConfig?.heroImageUrl;
+        const extras = merchant.explorerConfig?.heroImageUrls ?? [];
+        const all = main ? [main, ...extras] : extras;
+        return all.filter((url): url is string => Boolean(url));
+    }, [
+        merchant.explorerConfig?.heroImageUrl,
+        merchant.explorerConfig?.heroImageUrls,
+    ]);
 
     const { currentIndex, scrollContainerRef } = useSlideCarousel({
         slideCount: images.length,
@@ -72,46 +85,100 @@ export function ExplorerDetail({ merchant, onClose }: ExplorerDetailProps) {
         setNeedsReadMore(el.scrollHeight > el.clientHeight);
     }, [description, isDescriptionExpanded]);
 
-    const handleShare = useCallback(async () => {
-        if (!navigator.share) return;
-        try {
-            await navigator.share({
-                title: merchant.name,
-                url: `${window.location.origin}/explorer`,
-            });
-        } catch {
-            // User cancelled or share failed — ignore
+    // Merge token lets the merchant SDK link the wallet identity to its
+    // per-merchant anonymous session on arrival. Fetched via the shared
+    // queryOptions — only runs when a wallet session exists; otherwise the
+    // title link falls back to plain UTMs.
+    const { data: mergeToken } = useQuery({
+        ...mergeTokenQueryOptions({ merchantId: merchant.id }),
+        enabled: !!walletAddress,
+    });
+
+    const brandLinkUrl = useMemo(() => {
+        const url = new URL(`https://${merchant.domain}`);
+        url.searchParams.set("utm_source", "frak");
+        url.searchParams.set("utm_medium", "explorer");
+        url.searchParams.set("utm_campaign", merchant.id);
+        if (mergeToken) url.searchParams.set("fmt", mergeToken);
+        return url.toString();
+    }, [merchant.domain, merchant.id, mergeToken]);
+
+    const shareUrl = useMemo(() => {
+        const baseUrl = `https://${merchant.domain}`;
+        return (
+            buildSharingLink({
+                clientId: clientId ?? undefined,
+                merchantId: merchant.id,
+                wallet: walletAddress,
+                baseUrl,
+            }) ?? baseUrl
+        );
+    }, [clientId, walletAddress, merchant.domain, merchant.id]);
+
+    const { mutate: triggerSharing, canShare } = useShareLink(
+        shareUrl,
+        {
+            // Reuse the global sharing strings so iOS / Android show the
+            // same branded subject + body across every entry point.
+            // `productName` is interpolated into `sharing.title`
+            // ("{{productName}} invite link") to give the share sheet a
+            // recognisable header instead of the raw merchant name.
+            title: t("sharing.title", { productName: merchant.name }),
+            text: t("sharing.text"),
+            // Surface the merchant's logo (preferred) or first hero image so
+            // iOS LinkPresentation + the Android chooser render a branded
+            // preview tile above the activity grid.
+            imageUrl: logoUrl ?? images[0],
+        },
+        {
+            source: "explorer_detail",
+            merchantId: merchant.id,
         }
-    }, [merchant.name]);
+    );
+
+    const handleShare = useCallback(() => {
+        // `canShare` is true on Tauri (routed through the native plugin) and on
+        // web browsers that expose `navigator.share`. No-op elsewhere.
+        if (!canShare) return;
+        triggerSharing();
+    }, [canShare, triggerSharing]);
+
+    const { copied, copy } = useCopyToClipboardWithState();
+
+    const handleCopy = useCallback(() => {
+        copy(shareUrl);
+        trackEvent("sharing_link_copied", {
+            source: "explorer_detail",
+            merchant_id: merchant.id,
+            link: shareUrl,
+        });
+    }, [copy, shareUrl, merchant.id]);
 
     return (
         <DetailSheet style={{ paddingTop: 0 }}>
             <DetailSheetHero height={375} className={styles.heroImageSheet}>
-                {images.length === 1 && (
-                    <img
-                        src={images[0]}
-                        alt={merchant.name}
-                        className={styles.heroImage}
-                    />
-                )}
-
-                {images.length > 1 && (
-                    <div ref={scrollContainerRef} className={styles.heroSlider}>
-                        {images.map((url, index) => (
-                            <div
-                                key={index}
-                                className={styles.heroSlide}
-                                data-index={index}
-                            >
-                                <img
-                                    src={url}
-                                    alt={`${merchant.name} ${index + 1}`}
-                                    className={styles.heroImage}
-                                />
-                            </div>
-                        ))}
-                    </div>
-                )}
+                <div ref={scrollContainerRef} className={styles.heroSlider}>
+                    {images.map((url, index) => (
+                        <div
+                            key={index}
+                            className={styles.heroSlide}
+                            data-index={index}
+                        >
+                            <img
+                                src={url}
+                                alt=""
+                                aria-hidden
+                                className={styles.heroBackground}
+                            />
+                            <div className={styles.heroOverlay} aria-hidden />
+                            <img
+                                src={url}
+                                alt={`${merchant.name}${images.length > 1 ? ` ${index + 1}` : ""}`}
+                                className={styles.heroImage}
+                            />
+                        </div>
+                    ))}
+                </div>
 
                 <DetailSheetActions>
                     <GlassButton
@@ -120,12 +187,14 @@ export function ExplorerDetail({ merchant, onClose }: ExplorerDetailProps) {
                         onClick={onClose}
                         aria-label={t("explorer.detail.close")}
                     />
-                    <GlassButton
-                        as="button"
-                        icon={<ShareIcon width={20} height={20} />}
-                        onClick={handleShare}
-                        aria-label={t("explorer.detail.share")}
-                    />
+                    {canShare && (
+                        <GlassButton
+                            as="button"
+                            icon={<ShareIcon width={20} height={20} />}
+                            onClick={handleShare}
+                            aria-label={t("explorer.detail.share")}
+                        />
+                    )}
                 </DetailSheetActions>
 
                 {rewardSummary.daysRemaining != null &&
@@ -156,7 +225,7 @@ export function ExplorerDetail({ merchant, onClose }: ExplorerDetailProps) {
                     <div className={styles.brandInfo}>
                         <Text as="h1" variant="heading1">
                             <a
-                                href={`https://${merchant.domain}`}
+                                href={brandLinkUrl}
                                 target="_blank"
                                 rel="noopener noreferrer"
                                 className={styles.brandLink}
@@ -236,7 +305,7 @@ export function ExplorerDetail({ merchant, onClose }: ExplorerDetailProps) {
                 </Box>
             </DetailSheetBody>
 
-            <DetailSheetFooter>
+            <DetailSheetFooter className={styles.floatingFooter}>
                 <Button
                     variant="primary"
                     width="full"
@@ -247,6 +316,26 @@ export function ExplorerDetail({ merchant, onClose }: ExplorerDetailProps) {
                     {t("explorer.detail.shareAndEarn")}
                     <CoinsIcon width={16} height={16} />
                 </Button>
+                {!ua.isMobile && (
+                    <Button
+                        variant="ghost"
+                        width="full"
+                        onClick={handleCopy}
+                        size="large"
+                        fontSize="s"
+                    >
+                        {copied ? (
+                            <CheckIcon width={16} height={16} />
+                        ) : (
+                            <CopyIcon width={16} height={16} />
+                        )}
+                        {t(
+                            copied
+                                ? "sharing.btn.copySuccess"
+                                : "sharing.btn.copy"
+                        )}
+                    </Button>
+                )}
             </DetailSheetFooter>
         </DetailSheet>
     );

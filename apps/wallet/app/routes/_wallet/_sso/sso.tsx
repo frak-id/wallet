@@ -11,16 +11,13 @@ import { Spinner } from "@frak-labs/design-system/components/Spinner";
 import { Text } from "@frak-labs/design-system/components/Text";
 import { CircleCheckIcon, LogoFrak } from "@frak-labs/design-system/icons";
 import { createRpcClient } from "@frak-labs/frame-connector";
-import type {
-    OnPairingSuccessCallback,
-    Session,
-    SsoRpcSchema,
-} from "@frak-labs/wallet-shared";
+import type { Session, SsoRpcSchema } from "@frak-labs/wallet-shared";
 import {
     authenticationStore,
     clientIdStore,
     compressedSsoToParams,
     HandleErrors,
+    PairingView,
     sessionStore,
     ssoKey,
     ua,
@@ -30,14 +27,15 @@ import { createFileRoute, redirect } from "@tanstack/react-router";
 import i18next from "i18next";
 import { useCallback, useMemo, useState } from "react";
 import { Trans, useTranslation } from "react-i18next";
-import { type Hex, slice } from "viem";
-import { AuthenticateWithPhone } from "@/module/authentication/component/AuthenticateWithPhone";
+import * as layout from "@/module/authentication/component/authLayout.css";
 import { ButtonAuth } from "@/module/authentication/component/ButtonAuth";
 import * as styles from "@/module/authentication/component/Sso/index.css";
 import { SsoHeader } from "@/module/authentication/component/Sso/SsoHeader";
 import { SsoLoginComponent } from "@/module/authentication/component/Sso/SsoLogin";
 import { SsoRegisterComponent } from "@/module/authentication/component/Sso/SsoRegister";
 import { useDemoLogin } from "@/module/authentication/hook/useDemoLogin";
+import { ContentBlock } from "@/module/common/component/ContentBlock";
+import { PageLayout } from "@/module/common/component/PageLayout";
 import { StepLayout } from "@/module/common/component/StepLayout";
 
 /**
@@ -45,22 +43,6 @@ import { StepLayout } from "@/module/common/component/StepLayout";
  * optional `name` field injected by the wallet-shared store layer.
  */
 type Metadata = SsoMetadata & { name?: string };
-
-/**
- * Format a hex hash for display by truncating the middle.
- */
-function formatHash({
-    hash,
-    format = { start: 2, end: 3 },
-}: {
-    hash: Hex;
-    format?: { start: number; end: number };
-}) {
-    if (!hash) return undefined;
-    const start = slice(hash, 0, format.start);
-    const end = slice(hash, -format.end).replace("0x", "");
-    return `${start}...${end}`;
-}
 
 export const Route = createFileRoute("/_wallet/_sso/sso")({
     component: Sso,
@@ -126,14 +108,9 @@ function Sso() {
     const routeContext = Route.useRouteContext();
 
     /**
-     * Check if we have a redirectUrl
-     */
-    const ssoContext = authenticationStore((state) => state.ssoContext);
-    const hasRedirectUrl = !!ssoContext?.redirectUrl;
-
-    /**
      * The current metadata
      */
+    const ssoContext = authenticationStore((state) => state.ssoContext);
     const currentMetadata = useMemo(
         () => ssoContext?.metadata,
         [ssoContext?.metadata]
@@ -160,6 +137,11 @@ function Sso() {
      * The action error state (from login/register, retryable)
      */
     const [error, setError] = useState<Error | null>(null);
+
+    /**
+     * Current view: initial auth choices or QR-code pairing screen.
+     */
+    const [view, setView] = useState<"choose" | "pairing">("choose");
 
     /**
      * The on success callback
@@ -246,19 +228,6 @@ function Sso() {
     }, []);
 
     /**
-     * Cancel SSO and redirect back
-     */
-    const cancelAndRedirect = useCallback(() => {
-        const initialRedirectUrl =
-            authenticationStore.getState().ssoContext?.redirectUrl;
-        if (initialRedirectUrl) {
-            const redirectUrl = new URL(decodeURIComponent(initialRedirectUrl));
-            redirectUrl.searchParams.set("status", "cancel");
-            window.location.href = redirectUrl.toString();
-        }
-    }, []);
-
-    /**
      * Title shown in the hero — differs depending on whether the user has a
      * previously-registered passkey on this device.
      */
@@ -281,7 +250,7 @@ function Sso() {
                     description={
                         <HandleErrors
                             error={loaderError}
-                            className={styles.errorText}
+                            className={layout.errorText}
                         />
                     }
                     footer={
@@ -336,61 +305,52 @@ function Sso() {
         );
     }
 
+    if (view === "pairing") {
+        return (
+            <PageLayout>
+                <Box className={layout.contentTop}>
+                    <PairingView
+                        title={t("authent.sso.pairing.title")}
+                        description={t("authent.sso.pairing.description")}
+                        onSuccess={onSuccess}
+                    />
+                </Box>
+            </PageLayout>
+        );
+    }
+
     return (
-        <>
-            <SsoHeader />
-            <StepLayout
-                icon={<MerchantIcon metadata={currentMetadata} />}
-                title={title}
-                description={<SsoSubtitle metadata={currentMetadata} />}
-                footer={
-                    <>
-                        {error && (
-                            <HandleErrors
-                                error={error}
-                                className={styles.errorText}
-                            />
-                        )}
-                        {lastAuthenticator && (
-                            <Text
-                                as="p"
-                                variant="caption"
-                                className={styles.previousWallet}
-                            >
-                                <Trans
-                                    i18nKey={"authent.sso.previousWallet"}
-                                    values={{
-                                        wallet: formatHash({
-                                            hash: lastAuthenticator.address,
-                                        }),
-                                    }}
-                                />
-                            </Text>
-                        )}
+        <PageLayout
+            footer={
+                <>
+                    {error && (
+                        <HandleErrors
+                            error={error}
+                            className={layout.errorText}
+                        />
+                    )}
+                    <Box className={layout.actions}>
                         <Actions onSuccess={onSuccess} onError={setError} />
-                        <PhonePairingAction onSuccess={onSuccess} />
-                        <Box as="p" className={styles.disclaimer}>
-                            <Trans
-                                i18nKey={"authent.sso.description"}
-                                values={{
-                                    productName: currentMetadata.name,
-                                }}
-                            />
-                        </Box>
-                        {hasRedirectUrl && (
-                            <Box
-                                as="button"
-                                className={styles.ghostLink}
-                                onClick={cancelAndRedirect}
-                                type="button"
-                            >
-                                {t("authent.sso.cancel")}
-                            </Box>
-                        )}
-                    </>
-                }
-            />
-        </>
+                        <PhonePairingAction
+                            onClick={() => setView("pairing")}
+                        />
+                    </Box>
+                    <Disclaimer metadata={currentMetadata} />
+                </>
+            }
+        >
+            <SsoHeader />
+            <Box className={layout.content}>
+                <ContentBlock
+                    icon={<MerchantIcon metadata={currentMetadata} />}
+                    titleAs="h1"
+                    title={title}
+                    description={<SsoSubtitle metadata={currentMetadata} />}
+                    contentSpacing="l"
+                    textSpacing="m"
+                />
+            </Box>
+        </PageLayout>
     );
 }
 
@@ -401,7 +361,7 @@ function Sso() {
 function MerchantIcon({ metadata }: { metadata: Metadata }) {
     if (metadata.logoUrl) {
         return (
-            <Box className={styles.merchantIcon}>
+            <Box className={layout.heroIcon}>
                 <img
                     src={metadata.logoUrl}
                     alt={metadata.name ?? ""}
@@ -411,8 +371,8 @@ function MerchantIcon({ metadata }: { metadata: Metadata }) {
         );
     }
     return (
-        <Box className={styles.merchantIcon}>
-            <LogoFrak width={36} height={36} />
+        <Box className={layout.heroIcon}>
+            <LogoFrak width={48} height={48} />
         </Box>
     );
 }
@@ -445,6 +405,42 @@ function SsoSubtitle({ metadata }: { metadata: Metadata }) {
                 ),
             }}
         />
+    );
+}
+
+/**
+ * Simplified disclaimer matching the Figma design.
+ */
+function Disclaimer({ metadata }: { metadata: Metadata }) {
+    return (
+        <Text variant="caption" align="center" color="primary">
+            <Trans
+                i18nKey={"authent.sso.description"}
+                values={{
+                    productName: metadata.name,
+                }}
+                components={{
+                    conditionsLink: (
+                        // biome-ignore lint/a11y/useAnchorContent: Trans injects children from i18n
+                        <a
+                            href="https://frak.id/terms"
+                            target="_blank"
+                            rel="noreferrer"
+                            className={styles.disclaimerLink}
+                        />
+                    ),
+                    privacyLink: (
+                        // biome-ignore lint/a11y/useAnchorContent: Trans injects children from i18n
+                        <a
+                            href="https://frak.id/privacy"
+                            target="_blank"
+                            rel="noreferrer"
+                            className={styles.disclaimerLink}
+                        />
+                    ),
+                }}
+            />
+        </Text>
     );
 }
 
@@ -527,11 +523,7 @@ function Actions({
     );
 }
 
-function PhonePairingAction({
-    onSuccess,
-}: {
-    onSuccess: OnPairingSuccessCallback;
-}) {
+function PhonePairingAction({ onClick }: { onClick: () => void }) {
     const { t } = useTranslation();
 
     // Don't show the phone pairing action on mobile devices
@@ -541,10 +533,9 @@ function PhonePairingAction({
 
     return (
         <Box>
-            <AuthenticateWithPhone
-                text={t("authent.sso.btn.new.phone")}
-                onSuccess={onSuccess}
-            />
+            <Button variant="ghost" onClick={onClick}>
+                {t("authent.sso.btn.new.phone")}
+            </Button>
         </Box>
     );
 }

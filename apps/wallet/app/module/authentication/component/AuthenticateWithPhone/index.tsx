@@ -28,6 +28,7 @@ export function AuthenticateWithPhone({
     return (
         <>
             <Button
+                variant="ghost"
                 onClick={() => {
                     setIsPhoneAuthenticated(!isPhoneAuthenticated);
                 }}

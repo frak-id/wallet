@@ -6,7 +6,7 @@ export const ssoHeader = style({
     display: "flex",
     alignItems: "center",
     gap: alias.spacing.xs,
-    // Drives the blue Frak mark via `currentColor` on the inline SVG.
+    paddingInline: alias.spacing.m,
     color: vars.surface.primary,
 });
 

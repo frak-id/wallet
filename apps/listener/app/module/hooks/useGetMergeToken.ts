@@ -1,7 +1,6 @@
-import { authenticatedBackendApi } from "@frak-labs/wallet-shared";
+import { mergeTokenQueryOptions } from "@frak-labs/wallet-shared";
 import { useQuery } from "@tanstack/react-query";
 import { useCallback } from "react";
-import { listenerIdentityKey } from "@/module/queryKeys/identity";
 import { resolvingContextStore } from "@/module/stores/resolvingContextStore";
 
 export function useGetMergeToken() {
@@ -9,24 +8,12 @@ export function useGetMergeToken() {
     const clientId = context?.clientId;
     const merchantId = context?.merchantId;
 
-    const { data, refetch } = useQuery({
-        queryKey: listenerIdentityKey.merge.token(clientId, merchantId),
-        queryFn: async () => {
-            if (!clientId || !merchantId) return null;
-
-            const { data } =
-                await authenticatedBackendApi.user.identity.merge.initiate.post(
-                    {
-                        sourceAnonymousId: clientId,
-                        merchantId,
-                    }
-                );
-            return data?.mergeToken ?? null;
-        },
-        enabled: !!clientId && !!merchantId,
-        staleTime: 5 * 60 * 1000,
-        gcTime: 10 * 60 * 1000,
-    });
+    const { data, refetch } = useQuery(
+        mergeTokenQueryOptions({
+            merchantId,
+            sourceAnonymousId: clientId,
+        })
+    );
 
     return useCallback(async (): Promise<string | undefined> => {
         if (data) return data;

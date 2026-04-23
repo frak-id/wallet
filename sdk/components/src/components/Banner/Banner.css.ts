@@ -1,5 +1,10 @@
 import { base, element } from "@frak-labs/design-system/utils";
 import "@frak-labs/design-system/sprinkles";
+// Pull the InAppBanner vanilla-extract styles into this module's dependency graph
+// so the vanillaExtractInlinePlugin aggregates them into the `cssSource` string
+// injected by <frak-banner> via useLightDomStyles. Without this side-effect import,
+// InAppBanner renders with the `inAppBanner_*` class names but zero matching CSS rules.
+import "@frak-labs/design-system/styles/inAppBanner";
 import { vars } from "@frak-labs/design-system/theme";
 import { alias, brand, fontSize } from "@frak-labs/design-system/tokens";
 import { keyframes, style } from "@vanilla-extract/css";

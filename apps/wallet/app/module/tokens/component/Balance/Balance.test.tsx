@@ -10,6 +10,7 @@ const mockNavigate = vi.fn();
 
 vi.mock("@frak-labs/wallet-shared", () => ({
     useGetUserBalance: () => mockUseGetUserBalance(),
+    trackEvent: vi.fn(),
 }));
 
 vi.mock("react-i18next", () => ({

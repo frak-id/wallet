@@ -80,6 +80,10 @@ export function createIFrameFrakClient({
     // Resolved after first resolved-config is sent to iframe (prevents RPC before context exists)
     const contextSent = new Deferred<void>();
 
+    // Handshake timing: measured from client creation until the iframe
+    // lifecycle manager resolves the `isConnected` promise.
+    const handshakeStartedAt = Date.now();
+
     // Create our debug info gatherer
     const debugInfo = new DebugInfoGatherer(config, iframe);
 
@@ -180,6 +184,38 @@ export function createIFrameFrakClient({
             userAnonymousClientId: getClientId(),
         });
         openPanel.init();
+        openPanel.track("sdk_initialized", {
+            sdkVersion: process.env.SDK_VERSION,
+        });
+
+        // Race the connection against the heartbeat timeout so we can
+        // distinguish "connected" from "timeout" cleanly without touching
+        // the heartbeat plumbing. 30s matches `HEARTBEAT_TIMEOUT`.
+        let settled = false;
+        const timeoutHandle = setTimeout(() => {
+            if (settled) return;
+            settled = true;
+            openPanel?.track("sdk_iframe_handshake_failed", {
+                reason: "timeout",
+            });
+        }, 30_000);
+        lifecycleManager.isConnected
+            .then(() => {
+                if (settled) return;
+                settled = true;
+                clearTimeout(timeoutHandle);
+                openPanel?.track("sdk_iframe_connected", {
+                    handshake_duration_ms: Date.now() - handshakeStartedAt,
+                });
+            })
+            .catch(() => {
+                if (settled) return;
+                settled = true;
+                clearTimeout(timeoutHandle);
+                openPanel?.track("sdk_iframe_handshake_failed", {
+                    reason: "unknown",
+                });
+            });
     }
 
     // Perform the post connection setup
@@ -189,6 +225,7 @@ export function createIFrameFrakClient({
         lifecycleManager,
         configPromise,
         contextSent,
+        openPanel,
     })
         .then(() => debugInfo.updateSetupStatus(true))
         .catch((err) => {
@@ -273,12 +310,14 @@ async function postConnectionSetup({
     lifecycleManager,
     configPromise,
     contextSent,
+    openPanel,
 }: {
     config: FrakWalletSdkConfig;
     rpcClient: SdkRpcClient;
     lifecycleManager: IframeLifecycleManager;
     configPromise: Promise<MerchantConfigResult> | undefined;
     contextSent: Deferred<void>;
+    openPanel: OpenPanel | undefined;
 }): Promise<void> {
     await lifecycleManager.isConnected;
 
@@ -300,6 +339,12 @@ async function postConnectionSetup({
         const allowedDomains = merchantConfig?.allowedDomains ?? [];
         const raw = merchantConfig?.sdkConfig;
 
+        // Per-field merge: backend wins over SDK static config.
+        const mergedAttribution =
+            raw?.attribution || config.attribution
+                ? { ...config.attribution, ...raw?.attribution }
+                : undefined;
+
         sdkConfigStore.setConfig(
             raw
                 ? {
@@ -319,6 +364,7 @@ async function postConnectionSetup({
                       translations: raw.translations,
                       placements: raw.placements,
                       components: raw.components,
+                      attribution: mergedAttribution,
                   }
                 : {
                       isResolved: true,
@@ -330,11 +376,16 @@ async function postConnectionSetup({
                       homepageLink: config.metadata.homepageLink,
                       lang: config.metadata.lang,
                       currency: config.metadata.currency,
+                      attribution: mergedAttribution,
                   }
         );
     };
 
-    // Send the resolved-config lifecycle event to the iframe
+    // Send the resolved-config lifecycle event to the iframe.
+    // This is where we also update SDK-side OpenPanel global props with
+    // `merchantId` + `domain` (first time they are known) so every
+    // subsequent SDK event is merchant-attributed. We pass
+    // `sdkAnonymousId` through so the listener can join SDK funnels.
     let mergeTokenConsumed = false;
     const sendLifecycleConfig = (resolved: SdkResolvedConfig) => {
         const token = mergeTokenConsumed ? undefined : pendingMergeToken;
@@ -351,8 +402,22 @@ async function postConnectionSetup({
                   css: resolved.css,
                   translations: resolved.translations,
                   placements: resolved.placements,
+                  attribution: resolved.attribution,
               }
-            : undefined;
+            : resolved.attribution
+              ? { attribution: resolved.attribution }
+              : undefined;
+
+        const sdkAnonymousId = getClientId();
+
+        if (openPanel) {
+            const current = openPanel.global ?? {};
+            openPanel.setGlobalProperties({
+                ...current,
+                merchantId: resolved.merchantId,
+                domain: resolved.domain ?? "",
+            });
+        }
 
         rpcClient.sendLifecycle({
             clientLifecycle: "resolved-config",
@@ -361,6 +426,7 @@ async function postConnectionSetup({
                 domain: resolved.domain ?? "",
                 allowedDomains: resolved.allowedDomains ?? [],
                 sourceUrl: window.location.href,
+                ...(sdkAnonymousId && { sdkAnonymousId }),
                 ...(token && { pendingMergeToken: token }),
                 ...(sdkConfig && { sdkConfig }),
             },
@@ -412,5 +478,20 @@ async function postConnectionSetup({
         });
     }
 
-    await Promise.allSettled([pushCss(), pushI18n(), pushBackup()]);
+    // Inspect each setup result — a failed CSS/i18n/backup push leaves the
+    // partner UI in a broken-but-connected state (iframe reports
+    // `sdk_iframe_connected`, user sees no modal styles / wrong locale).
+    // Surface it as a distinct handshake reason so dashboards can
+    // distinguish timeout vs. asset-push failures.
+    const results = await Promise.allSettled([
+        pushCss(),
+        pushI18n(),
+        pushBackup(),
+    ]);
+    const hasFailedAssetPush = results.some((r) => r.status === "rejected");
+    if (hasFailedAssetPush) {
+        openPanel?.track("sdk_iframe_handshake_failed", {
+            reason: "asset_push",
+        });
+    }
 }

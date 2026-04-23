@@ -80,6 +80,8 @@ export type { UserReferralStatusType } from "./rpc/userReferralStatus";
 export type { WalletStatusReturnType } from "./rpc/walletStatus";
 // Tracking
 export type {
+    AttributionDefaults,
+    AttributionParams,
     TrackArrivalParams,
     TrackArrivalResult,
     UtmParams,

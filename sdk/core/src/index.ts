@@ -12,6 +12,8 @@ export { type LocalesKey, locales } from "./constants/locales";
 
 // Types
 export type {
+    AttributionDefaults,
+    AttributionParams,
     ClientLifecycleEvent,
     CompressedData,
     Currency,
@@ -100,7 +102,6 @@ export {
     type DeepLinkFallbackOptions,
     decompressJsonFromB64,
     FrakContextManager,
-    type FrakEvent,
     type FullSsoParams,
     findIframeInOpener,
     formatAmount,
@@ -115,6 +116,8 @@ export {
     isFrakDeepLink,
     isInAppBrowser,
     isIOS,
+    type MergeAttributionInput,
+    mergeAttribution,
     redirectToExternalBrowser,
     sdkConfigStore,
     toAndroidIntentUrl,
@@ -122,4 +125,8 @@ export {
     triggerDeepLinkWithFallback,
     withCache,
 } from "./utils";
+export type {
+    SdkEventMap,
+    SdkHandshakeFailureReason,
+} from "./utils/analytics";
 export { computeLegacyProductId } from "./utils/computeLegacyProductId";

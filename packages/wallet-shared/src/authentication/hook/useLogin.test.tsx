@@ -23,10 +23,15 @@ vi.mock("ox", () => ({
     },
 }));
 
-vi.mock("../../common/analytics", () => ({
-    trackAuthInitiated: vi.fn(() => Promise.resolve()),
-    trackAuthCompleted: vi.fn(() => Promise.resolve()),
-}));
+vi.mock("../../common/analytics", async (importOriginal) => {
+    const original =
+        await importOriginal<typeof import("../../common/analytics")>();
+    return {
+        ...original,
+        identifyAuthenticatedUser: vi.fn(),
+        trackEvent: vi.fn(),
+    };
+});
 
 vi.mock("../../common/api/backendClient", () => ({
     authenticatedWalletApi: {
@@ -285,7 +290,7 @@ describe("useLogin", () => {
             "../../stores/authenticationStore"
         );
         const { sessionStore } = await import("../../stores/sessionStore");
-        const { trackAuthInitiated, trackAuthCompleted } = await import(
+        const { identifyAuthenticatedUser } = await import(
             "../../common/analytics"
         );
 
@@ -339,11 +344,7 @@ describe("useLogin", () => {
             expect(result.current.isSuccess).toBe(true);
         });
 
-        expect(trackAuthInitiated).toHaveBeenCalledWith("login", {
-            method: "global",
-        });
-        expect(trackAuthCompleted).toHaveBeenCalledWith(
-            "login",
+        expect(identifyAuthenticatedUser).toHaveBeenCalledWith(
             expect.objectContaining({
                 type: "webauthn",
                 address: mockAddress,

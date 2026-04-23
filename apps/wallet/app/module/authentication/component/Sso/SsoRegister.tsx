@@ -1,5 +1,6 @@
 import { Box } from "@frak-labs/design-system/components/Box";
 import { Button } from "@frak-labs/design-system/components/Button";
+import { FaceIdIcon } from "@frak-labs/design-system/icons";
 import { isUserCancellation } from "@frak-labs/wallet-shared";
 import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
@@ -39,24 +40,12 @@ export function SsoRegisterComponent({
     );
 
     const statusComponent = useMemo(() => {
-        if (isPreviouslyUsedAuthenticatorError) {
-            return <Notice>{t("authent.create.inProgress")}</Notice>;
-        }
-        if (isRegisterInProgress) {
-            return <Notice>{t("authent.create.inProgress")}</Notice>;
-        }
-        if (error && !isCancelledError) {
+        if (error && !isCancelledError && !isPreviouslyUsedAuthenticatorError) {
             return <Notice>{t("authent.create.error")}</Notice>;
         }
 
         return null;
-    }, [
-        isPreviouslyUsedAuthenticatorError,
-        isCancelledError,
-        error,
-        isRegisterInProgress,
-        t,
-    ]);
+    }, [isPreviouslyUsedAuthenticatorError, isCancelledError, error, t]);
 
     const label = isPrimary
         ? t("authent.sso.btn.new.create")
@@ -65,10 +54,14 @@ export function SsoRegisterComponent({
     return (
         <Box>
             <Button
-                variant={isPrimary ? "primary" : "ghost"}
-                disabled={
-                    isRegisterInProgress || isPreviouslyUsedAuthenticatorError
+                variant={isPrimary ? "primary" : "secondary"}
+                icon={
+                    isPrimary ? (
+                        <FaceIdIcon width={24} height={24} />
+                    ) : undefined
                 }
+                loading={isRegisterInProgress}
+                disabled={isPreviouslyUsedAuthenticatorError}
                 onClick={() => {
                     // Reset the error
                     onError(null);

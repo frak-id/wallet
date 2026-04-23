@@ -32,21 +32,60 @@ export const heroSlider = style({
 
 /**
  * Individual slide — fills the carousel viewport.
+ * Acts as the positioning context for the blurred background fill so the
+ * actual hero image can be centered with `object-fit: contain` while still
+ * letting the slide cover the whole 375 px hero area.
  */
 export const heroSlide = style({
+    position: "relative",
     flex: "0 0 100%",
     scrollSnapAlign: "start",
     scrollSnapStop: "always",
     width: "100%",
     height: "100%",
+    overflow: "hidden",
+    backgroundColor: vars.surface.disabled,
 });
 
 /**
- * Hero image — cover the hero area, centered.
+ * Blurred background — the same hero image scaled to cover with a heavy
+ * blur and a translucent overlay so portrait/short images no longer leave
+ * an empty band at the bottom of the hero area.
+ */
+export const heroBackground = style({
+    position: "absolute",
+    inset: 0,
+    width: "100%",
+    height: "100%",
+    objectFit: "cover",
+    filter: "blur(28px) saturate(140%)",
+    transform: "scale(1.2)",
+    opacity: 0.85,
+    pointerEvents: "none",
+});
+
+/**
+ * Subtle dark overlay on top of the blurred background so the centered hero
+ * image keeps enough contrast against busy artwork.
+ */
+export const heroOverlay = style({
+    position: "absolute",
+    inset: 0,
+    backgroundColor: "rgba(0, 0, 0, 0.4)",
+    pointerEvents: "none",
+});
+
+/**
+ * Hero image — centered inside its slide; `contain` avoids cropping while the
+ * blurred background fills any remaining space.
  */
 export const heroImage = style({
+    position: "relative",
+    zIndex: 1,
     width: "100%",
-    objectFit: "cover",
+    height: "100%",
+    objectFit: "contain",
+    objectPosition: "center",
 });
 
 /**
@@ -78,17 +117,42 @@ export const imageCountBadge = style({
     backgroundColor: "rgba(0, 0, 0, 0.7)",
     backdropFilter: "blur(16px)",
     color: vars.text.onAction,
+    zIndex: 1,
 });
 
 /**
  * Body content area.
+ * Extra bottom padding reserves room for the floating footer so the last
+ * section isn't hidden behind the blurred "Partager et gagner" bar.
  */
 export const bodyContent = style({
     display: "flex",
     flexDirection: "column",
     gap: alias.spacing.m,
     margin: 0,
-    paddingBottom: 0,
+    paddingBottom: `calc(96px + env(safe-area-inset-bottom, 0px))`,
+});
+
+/**
+ * Floating footer variant — overrides the sticky DetailSheetFooter so the
+ * primary CTA hovers above content with a frosted-glass backdrop, mirroring
+ * the wallet BottomTabBar aesthetic.
+ */
+export const floatingFooter = style({
+    position: "fixed",
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: "rgba(255, 255, 255, 0.55)",
+    backdropFilter: "blur(18px) saturate(140%)",
+    WebkitBackdropFilter: "blur(18px) saturate(140%)",
+    borderTop: "1px solid rgba(0, 0, 0, 0.04)",
+    zIndex: 3,
+    "@media": {
+        "screen and (min-width: 1024px)": {
+            position: "sticky",
+        },
+    },
 });
 
 /**

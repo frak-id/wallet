@@ -1,72 +1,41 @@
-# SDK Packages Context
+# sdk/ — Compass
 
-## Package Architecture
+Public SDK surface. Dual output (NPM `dist/` + CDN `cdn/`). Build order is **strict**: `rpc → core → legacy → react → components`. Linked via Changesets: `frame-connector`, `core-sdk`, `react-sdk`.
 
+## Package Graph
 ```
-@frak-labs/frame-connector (RPC foundation)
-         |
-@frak-labs/core-sdk (Core functionality)
-         |              \
-@frak-labs/react-sdk    @frak-labs/components
-         |
-@frak-labs/legacy (deprecated, ignored by Knip)
-```
-
-**Build Order:** `rpc -> core -> legacy -> react -> components`
-**Linked Packages (Changesets):** `frame-connector`, `core-sdk`, `react-sdk`
-
-## Build System (tsdown)
-
-Uses array configs for dual output (NPM + CDN).
-
-**NPM Builds:** `dist/` (ESM + CJS + types)
-```typescript
-{ format: ["esm", "cjs"], outDir: "dist", dts: true }
+@frak-labs/frame-connector (packages/rpc) ─── RPC foundation
+           │
+@frak-labs/core-sdk         ─── actions, clients, bundle
+           │              ╲
+@frak-labs/react-sdk      @frak-labs/components (Preact, Web Components)
+           │
+@frak-labs/nexus-sdk (legacy, Knip-ignored, IIFE as NexusSDK)
 ```
 
-**CDN Builds:** `cdn/` (IIFE/ESM, fully bundled)
-```typescript
-{ format: "iife", globalName: "FrakSDK", outDir: "cdn", noExternal: [/.*/] }
-```
+## Build System (tsdown / Rolldown)
+- **NPM**: `{ format: ["esm", "cjs"], outDir: "dist", dts: true }`
+- **CDN**: `{ format: "iife", globalName: "FrakSDK", outDir: "cdn", noExternal: [/.*/] }` — fully self-contained bundle
+- **`development` export condition**: apps in this monorepo consume `src/index.ts` directly (no rebuild in dev loop)
 
-**Development Exports:** Monorepo apps use source directly via `"development"` condition.
-```json
-"exports": {
-  ".": {
-    "development": "./src/index.ts",
-    "import": { "types": "./dist/index.d.ts", "default": "./dist/index.js" }
-  }
-}
-```
+## Non-Obvious Patterns
+- **Build order is a hard requirement** — downstream packages typecheck against upstream build outputs.
+- **CDN `noExternal: [/.*/]`** means every dep (viem, TanStack Query, etc.) ships inside the bundle. Size discipline matters.
+- **Adding a new action is a 4-step sequence** (do not skip):
+  1. Add type in `sdk/core/src/types/rpc/*.ts`, extend `IFrameRpcSchema`
+  2. Implement in `sdk/core/src/actions/<name>.ts` (pure function, `client: FrakClient`)
+  3. Re-export from `sdk/core/src/actions/index.ts`
+  4. Add React hook in `sdk/react/src/hook/use<Name>.ts` (wrap with TanStack Query)
+- **Action pattern**: `client.request({ method, params })` — never call transports directly.
+- **Hook pattern**: `useFrakClient()` + `useQuery`/`useMutation` — never recreate clients.
+- **Legacy is Knip-ignored** — do not add new exports there.
 
-## Patterns
-
-**Action Pattern (Core):**
-```typescript
-async function sendInteraction(client: FrakClient, params: Params): Promise<Result> {
-  return await client.request({ method: "frak_sendInteraction", params: [params.id, params.data] });
-}
-```
-
-**Hook Pattern (React):**
-```typescript
-export function useWalletStatus(options?: UseQueryOptions) {
-  const client = useFrakClient();
-  return useQuery({ queryKey: ["walletStatus"], queryFn: () => watchWalletStatus(client), ...options });
-}
-```
-
-## Adding New Action
-
-1. Define types in `sdk/core/src/types/rpc/*.ts` and add to `IFrameRpcSchema`.
-2. Implement in `sdk/core/src/actions/myAction.ts`.
-3. Export from `sdk/core/src/actions/index.ts`.
-4. Create React hook in `sdk/react/src/hook/useMyAction.ts`.
-
-## Commands
-
+## Quick Commands
 ```bash
-bun run build:sdk        # Build all SDKs sequentially
+bun run build:sdk                       # Builds all SDKs in the correct order
 bun run test --project core-sdk-unit
 bun run test --project react-sdk-unit
 ```
+
+## See Also
+Children `sdk/{core,react,components}/AGENTS.md` · `packages/rpc/` (frame-connector source) · `apps/listener/AGENTS.md` (RPC consumer).

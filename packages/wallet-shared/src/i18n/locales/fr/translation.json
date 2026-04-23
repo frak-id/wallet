@@ -8,17 +8,21 @@
         "sso": {
             "btn": {
                 "new": {
-                    "create": "Utilisez la biométrie pour prouver que vous n'êtes pas un robot",
-                    "login": "Connecter un porte-monnaie existant",
+                    "create": "Utiliser la biométrie",
+                    "login": "Déjà un porte-monnaie existant ?",
                     "phone": "Utiliser un QR code pour me connecter"
                 },
                 "existing": {
                     "create": "Créer un nouveau porte-monnaie",
-                    "login": "Connectez-vous avec votre porte-monnaie"
+                    "login": "Utiliser la biométrie"
                 }
             },
-            "description": "Avant de continuer, assurez-vous que vous utilisez un appareil qui vous appartient.<br /> Frak est une solution permettant à <strong>{{productName}}</strong> de récompenser sa communauté pour l'aide apportée à la promotion de ses offres. <strong>Frak est une solution décentralisée et open-source, qui ne stocke aucune donnée personnelle ou biométrique.</strong><br /> Pour en savoir plus sur <strong>{{productName}}</strong> , veuillez consulter notre politique de confidentialité et nos conditions d'utilisation.",
+            "description": "Frak ne stocke aucune donnée personnelle ou biométrique. En continuant vous acceptez nos <conditionsLink>conditions</conditionsLink> et notre <privacyLink>politique de confidentialité</privacyLink>.",
             "header": { "title": "Connectez-vous avec Frak Wallet" },
+            "pairing": {
+                "title": "Se connecter avec mon mobile",
+                "description": "Scanne ce QR code pour te connecter depuis ton mobile."
+            },
             "recover": "Récupérer le porte-monnaie à partir du fichier",
             "redirect": "Vous serez redirigé vers {{ productName }} dans quelques secondes.",
             "redirectNow": "Rediriger maintenant",
@@ -140,7 +144,8 @@
         },
         "login": {
             "accountCreation": "Création de compte",
-            "button": "Récupérez votre <strong>porte-monnaie</strong>",
+            "button": "Utiliser la biométrie",
+            "title": "Connectez-vous à votre porte-monnaie",
             "recover": "Récupérer le porte-monnaie à partir du fichier",
             "walletsOnDevice": "Porte-monnaies utilisés sur cet appareil",
             "privy": "Connection via Privy",
@@ -293,7 +298,7 @@
             },
             "status": {
                 "idle": "Inactif",
-                "connecting": "Connexion en cours...",
+                "connecting": "Appairage en cours",
                 "paired": "Appairé"
             },
             "signatureRequest": {

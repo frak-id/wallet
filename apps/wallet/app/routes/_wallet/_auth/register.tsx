@@ -1,6 +1,12 @@
-import { authenticatorStorage, useLogin } from "@frak-labs/wallet-shared";
+import {
+    authenticatorStorage,
+    type Flow,
+    startFlow,
+    trackEvent,
+    useLogin,
+} from "@frak-labs/wallet-shared";
 import { createFileRoute, redirect, useNavigate } from "@tanstack/react-router";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { DemoTapZone } from "@/module/authentication/component/DemoTapZone";
 import { useNotificationStatus } from "@/module/notification/hook/useNotificationSetupStatus";
@@ -41,6 +47,7 @@ function RegisterPage() {
     const { t } = useTranslation();
     const navigate = useNavigate();
     const [step, setStep] = useState<FlowStep>("onboarding");
+    const flowRef = useRef<Flow | null>(null);
 
     const openModal = modalStore((s) => s.openModal);
     const closeModal = modalStore((s) => s.closeModal);
@@ -60,6 +67,16 @@ function RegisterPage() {
         }
     }, [referrerData, openModal]);
 
+    // Start the onboarding flow on mount, end as "abandoned" if never succeeded
+    useEffect(() => {
+        const flow = startFlow("onboarding");
+        flowRef.current = flow;
+        return () => {
+            if (!flow.ended) flow.end("abandoned", { last_step: step });
+        };
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+
     const advanceToNotification = useCallback(() => {
         closeModal();
         // Drain logical pending actions (ensure calls) immediately after auth.
@@ -76,15 +93,30 @@ function RegisterPage() {
         useNotificationStatus();
     const { subscribeToPushAsync } = useSubscribeToPushNotification();
 
+    // Fire `notification_opt_in_viewed` once we land on that step
     useEffect(() => {
-        // Skip notification step if denied or already fully subscribed
-        if (
-            step === "notification" &&
-            (permissionStatus === "denied" ||
-                (permissionGranted && hasBackendToken))
-        ) {
-            setStep("welcome");
+        if (step === "notification") {
+            flowRef.current?.track("notification_opt_in_viewed");
         }
+    }, [step]);
+
+    // Auto-skip notification step if already granted or denied
+    useEffect(() => {
+        if (
+            step !== "notification" ||
+            !(
+                permissionStatus === "denied" ||
+                (permissionGranted && hasBackendToken)
+            )
+        )
+            return;
+        flowRef.current?.track("notification_opt_in_resolved", {
+            outcome:
+                permissionStatus === "denied"
+                    ? "auto_skipped_denied"
+                    : "auto_skipped_granted",
+        });
+        setStep("welcome");
     }, [step, permissionStatus, permissionGranted, hasBackendToken]);
 
     const handleOpenKeypass = useCallback(() => {
@@ -93,6 +125,9 @@ function RegisterPage() {
         if (document.activeElement instanceof HTMLElement) {
             document.activeElement.blur();
         }
+        flowRef.current?.track("onboarding_action_clicked", {
+            action: "activate_secure_space",
+        });
         openModal({
             id: "keypass",
             onAuthSuccess: advanceToNotification,
@@ -109,12 +144,29 @@ function RegisterPage() {
                     buttonLabel={t("onboarding.continue")}
                     lastButtonLabel={t("onboarding.activateSecureSpace")}
                     loginLabel={t("onboarding.alreadyHaveAccount")}
-                    onLoginClick={() => login()}
+                    onLoginClick={() => {
+                        flowRef.current?.track("onboarding_action_clicked", {
+                            action: "login",
+                        });
+                        login();
+                    }}
                     isLoginLoading={isLoginLoading}
-                    onRecoveryCodeClick={() =>
-                        navigate({ to: "/recovery-code" })
-                    }
+                    onRecoveryCodeClick={() => {
+                        trackEvent("auth_recovery_code_clicked");
+                        flowRef.current?.track("onboarding_action_clicked", {
+                            action: "recovery_code",
+                        });
+                        navigate({ to: "/recovery-code" });
+                    }}
                     onFinish={handleOpenKeypass}
+                    onSlideViewed={(index) => {
+                        flowRef.current?.track("onboarding_slide_viewed", {
+                            index,
+                            translation_key:
+                                onboardingSlides[index]?.translationKey ??
+                                "unknown",
+                        });
+                    }}
                 >
                     {onboardingSlides.map((slide) => (
                         <Slide key={slide.translationKey} {...slide} />
@@ -123,17 +175,41 @@ function RegisterPage() {
             )}
             {step === "notification" && (
                 <NotificationOptIn
-                    onEnable={() =>
+                    onEnable={() => {
                         subscribeToPushAsync()
-                            .then(() => setStep("welcome"))
-                            .catch(() => setStep("welcome"))
-                    }
-                    onSkip={() => setStep("welcome")}
+                            .then(() => {
+                                flowRef.current?.track(
+                                    "notification_opt_in_resolved",
+                                    { outcome: "enabled" }
+                                );
+                                setStep("welcome");
+                            })
+                            .catch((err: unknown) => {
+                                flowRef.current?.track(
+                                    "notification_opt_in_resolved",
+                                    {
+                                        outcome: "denied",
+                                        reason:
+                                            err instanceof Error
+                                                ? err.message
+                                                : String(err),
+                                    }
+                                );
+                                setStep("welcome");
+                            });
+                    }}
+                    onSkip={() => {
+                        flowRef.current?.track("notification_opt_in_resolved", {
+                            outcome: "skipped",
+                        });
+                        setStep("welcome");
+                    }}
                 />
             )}
             {step === "welcome" && (
                 <Welcome
                     onContinue={async () => {
+                        flowRef.current?.end("succeeded");
                         // Drain navigation actions now that onboarding is done
                         const navigated = await executePendingActions();
                         if (!navigated) {

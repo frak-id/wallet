@@ -14,7 +14,7 @@
  */
 
 import type { ExplorerMerchantItem } from "@frak-labs/backend-elysia/orchestration/schemas";
-import type { RewardHistoryItem } from "@frak-labs/wallet-shared";
+import { type RewardHistoryItem, trackEvent } from "@frak-labs/wallet-shared";
 import { create } from "zustand";
 
 /**
@@ -78,3 +78,41 @@ export const modalStore = create<ModalStore>()((set) => ({
  * Selector: the current modal state (or null).
  */
 export const selectModal = (state: ModalStore) => state.modal;
+
+/**
+ * Auto-tracking subscription — mirrors OpenPanel's page auto-tracking
+ * philosophy. Every modal transition through `ModalOutlet` produces a
+ * `wallet_modal_opened` + `wallet_modal_closed` pair without requiring
+ * any per-modal instrumentation.
+ *
+ * `from_stack = true` means the modal re-appeared because the user closed
+ * a modal stacked on top of it (e.g. close `keypass` to reveal `transfer`
+ * again). Lets dashboards exclude those transitions if they want clean
+ * "new intent" counts.
+ */
+let currentOpenedAt: number | null = null;
+modalStore.subscribe((state, prev) => {
+    const current = state.modal?.id;
+    const previous = prev.modal?.id;
+    if (current === previous) return;
+
+    if (previous && currentOpenedAt !== null) {
+        trackEvent("wallet_modal_closed", {
+            modal: previous,
+            duration_ms: Date.now() - currentOpenedAt,
+        });
+    }
+
+    if (current) {
+        currentOpenedAt = Date.now();
+        // If the new current modal was already in the previous stack,
+        // the user popped back to it rather than opening a fresh one.
+        const fromStack = prev.stack.some((m) => m.id === current);
+        trackEvent("wallet_modal_opened", {
+            modal: current,
+            from_stack: fromStack,
+        });
+    } else {
+        currentOpenedAt = null;
+    }
+});

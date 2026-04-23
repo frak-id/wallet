@@ -1,15 +1,22 @@
-import { HandleErrors } from "@frak-labs/wallet-shared";
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { Box } from "@frak-labs/design-system/components/Box";
+import { Button } from "@frak-labs/design-system/components/Button";
+import { LogoFrak } from "@frak-labs/design-system/icons";
+import {
+    HandleErrors,
+    PairingView,
+    trackEvent,
+    ua,
+} from "@frak-labs/wallet-shared";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useCallback, useState } from "react";
-import { Trans, useTranslation } from "react-i18next";
+import { useTranslation } from "react-i18next";
 import { AuthActions } from "@/module/authentication/component/AuthActions";
-import { AuthenticateWithPhone } from "@/module/authentication/component/AuthenticateWithPhone";
+import * as layout from "@/module/authentication/component/authLayout.css";
 import { DemoTapZone } from "@/module/authentication/component/DemoTapZone";
-import { LoginList } from "@/module/authentication/component/LoginList";
-import { StepLayout } from "@/module/common/component/StepLayout";
+import { ContentBlock } from "@/module/common/component/ContentBlock";
+import { PageLayout } from "@/module/common/component/PageLayout";
 import { PairingInProgress } from "@/module/pairing/component/PairingInProgress";
 import { useExecutePendingActions } from "@/module/pending-actions/hook/useExecutePendingActions";
-import * as styles from "./login.css";
 
 export const Route = createFileRoute("/_wallet/_auth/login")({
     component: LoginPage,
@@ -18,17 +25,15 @@ export const Route = createFileRoute("/_wallet/_auth/login")({
 /**
  * LoginPage
  *
- * Authentication page that allows users to log in using:
- * - WebAuthn passkeys
- * - Phone authentication via QR code
- * - Recovery options
- *
- * @returns {JSX.Element} The rendered login page
+ * Authentication page. Mirrors the SSO layout: centered hero + footer
+ * actions on the default view, and the shared PairingView when the user
+ * chooses to pair via QR code.
  */
 function LoginPage() {
     const { t } = useTranslation();
     const navigate = useNavigate();
     const [error, setError] = useState<Error | null>(null);
+    const [view, setView] = useState<"choose" | "pairing">("choose");
     const { executePendingActions } = useExecutePendingActions();
 
     const handlePostLoginRedirect = useCallback(async () => {
@@ -37,39 +42,77 @@ function LoginPage() {
             navigate({ to: "/wallet", replace: true });
         }
     }, [executePendingActions, navigate]);
+
+    if (view === "pairing") {
+        return (
+            <>
+                <DemoTapZone navigate={navigate} />
+                <PairingInProgress />
+                <PageLayout>
+                    <Box className={layout.contentTop}>
+                        <PairingView
+                            title={t("authent.sso.pairing.title")}
+                            description={t("authent.sso.pairing.description")}
+                            onSuccess={handlePostLoginRedirect}
+                        />
+                    </Box>
+                </PageLayout>
+            </>
+        );
+    }
+
     return (
         <>
             <DemoTapZone navigate={navigate} />
             <PairingInProgress />
-            <StepLayout
-                icon={<span>🔐</span>}
-                title={t("wallet.welcome.title")}
-                description={<Trans i18nKey={"wallet.login.button"} />}
+            <PageLayout
                 footer={
                     <>
-                        <AuthActions
-                            onSuccess={handlePostLoginRedirect}
-                            onError={setError}
-                            loginButtonText={t("wallet.login.button")}
-                        />
-                        <AuthenticateWithPhone
-                            text={t("wallet.login.useQRCode")}
-                            onSuccess={handlePostLoginRedirect}
-                        />
-                        <Link to={"/recovery"} viewTransition>
-                            {t("wallet.login.recover")}
-                        </Link>
-                        <Link to={"/register"} search={{ new: true }}>
-                            {t("wallet.login.accountCreation")}
-                        </Link>
-                        <LoginList />
+                        {error && (
+                            <HandleErrors
+                                error={error}
+                                className={layout.errorText}
+                            />
+                        )}
+                        <Box className={layout.actions}>
+                            <AuthActions
+                                onSuccess={handlePostLoginRedirect}
+                                onError={setError}
+                                loginButtonText="wallet.login.button"
+                            />
+                            {!ua.isMobile && (
+                                <Box>
+                                    <Button
+                                        variant="ghost"
+                                        onClick={() => {
+                                            trackEvent(
+                                                "auth_login_method_selected",
+                                                { method: "qr" }
+                                            );
+                                            setView("pairing");
+                                        }}
+                                    >
+                                        {t("wallet.login.useQRCode")}
+                                    </Button>
+                                </Box>
+                            )}
+                        </Box>
                     </>
                 }
             >
-                {error && (
-                    <HandleErrors error={error} className={styles.errorText} />
-                )}
-            </StepLayout>
+                <Box className={layout.content}>
+                    <ContentBlock
+                        icon={
+                            <Box className={layout.heroIcon}>
+                                <LogoFrak width={48} height={48} />
+                            </Box>
+                        }
+                        titleAs="h1"
+                        title={t("wallet.login.title")}
+                        contentSpacing="l"
+                    />
+                </Box>
+            </PageLayout>
         </>
     );
 }

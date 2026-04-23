@@ -1,12 +1,13 @@
-import type {
-    DisplayEmbeddedWalletParamsType,
-    DisplaySharingPageParamsType,
-    FrakWalletSdkConfig,
-    IFrameRpcSchema,
-    InteractionTypeKey,
-    Language,
-    ModalRpcMetadata,
-    ModalRpcStepsInput,
+import {
+    type DisplayEmbeddedWalletParamsType,
+    type DisplaySharingPageParamsType,
+    type FrakWalletSdkConfig,
+    formatAmount,
+    type IFrameRpcSchema,
+    type InteractionTypeKey,
+    type Language,
+    type ModalRpcMetadata,
+    type ModalRpcStepsInput,
 } from "@frak-labs/core-sdk";
 import type {
     ExtractReturnType,
@@ -137,14 +138,22 @@ export function ListenerUiProvider({ children }: PropsWithChildren) {
         undefined
     );
 
+    const rewardCurrency =
+        currentRequest?.configMetadata?.currency ?? backendSdkConfig?.currency;
     const { data: formattedReward } = useFormattedEstimatedReward({
         merchantId: resolvingContext?.merchantId,
-        currency:
-            currentRequest?.configMetadata?.currency ??
-            backendSdkConfig?.currency,
+        currency: rewardCurrency,
         targetInteraction: currentRequest?.targetInteraction,
         context: currentRequest?.i18n?.context,
     });
+
+    // Fallback when no campaign / reward is available: display a zero amount
+    // formatted with the resolved currency (e.g. "0 €") so the raw
+    // `{{ estimatedReward }}` template is never shown to end users.
+    const estimatedRewardValue = useMemo(
+        () => formattedReward ?? formatAmount(0, rewardCurrency),
+        [formattedReward, rewardCurrency]
+    );
 
     // Track pending clear timeout to prevent flashing on rapid close/open
     const clearTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -275,7 +284,7 @@ export function ListenerUiProvider({ children }: PropsWithChildren) {
             interpolation: {
                 defaultVariables: {
                     ...context,
-                    estimatedReward: formattedReward,
+                    estimatedReward: estimatedRewardValue,
                 },
             },
             // Load both the default and the potentially customized i18n
@@ -301,7 +310,7 @@ export function ListenerUiProvider({ children }: PropsWithChildren) {
         currentRequest,
         resolvingContext?.origin,
         initialI18n,
-        formattedReward,
+        estimatedRewardValue,
         populateI18nResources,
     ]);
 

@@ -5,6 +5,8 @@ import { Box } from "../Box";
 import { textStyles } from "./text.css";
 
 type TextVariant =
+    | "display1"
+    | "display"
     | "heading1"
     | "heading2"
     | "heading3"
@@ -19,6 +21,8 @@ type TextVariant =
     | "tiny";
 
 const defaultTagMap: Record<TextVariant, string> = {
+    display1: "h1",
+    display: "h1",
     heading1: "h1",
     heading2: "h2",
     heading3: "h3",
@@ -34,8 +38,10 @@ const defaultTagMap: Record<TextVariant, string> = {
 };
 
 const defaultWeightMap: Record<TextVariant, Sprinkles["fontWeight"]> = {
+    display1: "bold",
+    display: "bold",
     heading1: "bold",
-    heading2: "bold",
+    heading2: "semiBold",
     heading3: "bold",
     heading4: "bold",
     heading5: "bold",

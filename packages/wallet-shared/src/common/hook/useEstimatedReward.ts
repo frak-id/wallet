@@ -125,6 +125,11 @@ export function selectFormattedReward({
             return currentValue > accValue ? current : acc;
         });
 
+        // A reward of 0 is not worth advertising — callers rely on `undefined`
+        // to hide badges / copy (e.g. explorer card falls back to the description,
+        // listener modal falls back to a locally-formatted "0 €" string).
+        if (getRewardSortValue(best, currencyAmountKey) <= 0) return undefined;
+
         return formatEstimatedReward(best, currency);
     };
 }

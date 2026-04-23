@@ -188,7 +188,11 @@ describe.sequential("ButtonShare", () => {
 
         expect(coreSdk.trackEvent).toHaveBeenCalledWith(
             window.FrakSetup.client,
-            "share_button_clicked"
+            "share_button_clicked",
+            expect.objectContaining({
+                click_action: "sharing-page",
+                has_reward: false,
+            })
         );
     });
 

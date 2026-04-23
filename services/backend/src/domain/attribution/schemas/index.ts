@@ -26,9 +26,13 @@ const ReferralLinkSourceDataSchema = t.Union([
     t.Object({
         type: t.Literal("referral_link"),
         v: t.Literal(2),
-        referrerClientId: t.String(),
         referrerMerchantId: t.String(),
         referralTimestamp: t.Optional(t.Number()),
+        // At least one of referrerClientId / referrerWallet must be present.
+        // Enforced in the handler rather than at the schema level because
+        // TypeBox unions on the same discriminator get brittle to refine.
+        referrerClientId: t.Optional(t.String()),
+        referrerWallet: t.Optional(t.Hex()),
     }),
 ]);
 

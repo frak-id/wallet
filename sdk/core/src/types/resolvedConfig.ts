@@ -1,4 +1,5 @@
 import type { Currency, Language } from "./config";
+import type { AttributionDefaults } from "./tracking";
 
 /**
  * Response from the merchant resolve endpoint
@@ -80,6 +81,12 @@ export type ResolvedSdkConfig = {
     placements?: Record<string, ResolvedPlacement>;
     /** Global component defaults (used when no placement override exists) */
     components?: ResolvedPlacement["components"];
+    /**
+     * Default attribution params applied when building outbound sharing URLs.
+     * Per-call overrides win over these backend defaults; `utm_content` is
+     * intentionally excluded (per-content/per-product, never a merchant default).
+     */
+    attribution?: AttributionDefaults;
 };
 
 /**
@@ -125,4 +132,7 @@ export type SdkResolvedConfig = {
 
     /** Global component defaults (fallback for placement-level overrides) */
     components?: ResolvedPlacement["components"];
+
+    /** Merged attribution defaults: backend > SDK static config */
+    attribution?: AttributionDefaults;
 };

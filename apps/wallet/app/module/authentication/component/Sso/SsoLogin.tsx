@@ -1,5 +1,6 @@
 import { Box } from "@frak-labs/design-system/components/Box";
 import { Button } from "@frak-labs/design-system/components/Button";
+import { FaceIdIcon } from "@frak-labs/design-system/icons";
 import type { PreviousAuthenticatorModel } from "@frak-labs/wallet-shared";
 import { useLogin } from "@frak-labs/wallet-shared";
 import { useTranslation } from "react-i18next";
@@ -34,8 +35,13 @@ export function SsoLoginComponent({
     return (
         <Box>
             <Button
-                variant={isPrimary ? "primary" : "ghost"}
-                disabled={isLoading}
+                variant={isPrimary ? "primary" : "secondary"}
+                icon={
+                    isPrimary ? (
+                        <FaceIdIcon width={24} height={24} />
+                    ) : undefined
+                }
+                loading={isLoading}
                 onClick={() => {
                     // Reset the error
                     onError(null);

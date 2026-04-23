@@ -281,6 +281,35 @@ export const sessionContextMock = new Elysia({ name: "Macro.session" })
                 throw new UnauthorizedError();
             },
         },
+        withOptionalWalletOrSdkAuthent: {
+            async resolve({ headers }) {
+                const walletAuth = headers["x-wallet-auth"];
+                if (walletAuth) {
+                    const walletAuthSession = await (
+                        JwtContextMock.wallet.verify as (
+                            token: string
+                        ) => Promise<unknown>
+                    )(walletAuth);
+                    if (walletAuthSession) {
+                        return { walletSession: walletAuthSession };
+                    }
+                }
+
+                const walletSdkAuth = headers["x-wallet-sdk-auth"];
+                if (walletSdkAuth) {
+                    const walletSdkAuthSession = await (
+                        JwtContextMock.walletSdk.verify as (
+                            token: string
+                        ) => Promise<unknown>
+                    )(walletSdkAuth);
+                    if (walletSdkAuthSession) {
+                        return { walletSession: walletSdkAuthSession };
+                    }
+                }
+
+                return { walletSession: undefined };
+            },
+        },
         withWalletSdkAuthent: {
             async resolve({ headers }) {
                 const walletSdkAuth = headers["x-wallet-sdk-auth"];

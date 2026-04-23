@@ -188,7 +188,7 @@ bun run changeset:release
 
 ### Key Technologies
 - **Frontend**: React 19, TanStack Query, Zustand, Viem, Wagmi, CSS Modules, TanStack Router
-- **Styling**: Lightning CSS for all Vite apps (wallet, listener, business, showcase)
+- **Styling**: Lightning CSS for all Vite apps (wallet, listener, business)
 - **Backend**: Elysia.js, PostgreSQL (Drizzle ORM), MongoDB
 - **Blockchain**: Account Abstraction (ERC-4337), WebAuthn, Multi-chain support, Pimlico, ZeroDev
 - **Infrastructure**: SST v3 (AWS), Pulumi (GCP), hybrid multi-cloud deployment
@@ -208,7 +208,7 @@ bun run changeset:release
 - **CSS Processing**: Lightning CSS (100x faster than PostCSS) for Vite apps with centralized config in `packages/dev-tooling/src/vite.ts`
   - Targets: Chrome 100+, Safari 14+, Firefox 91+, Edge 100+ (baseline-widely-available)
   - Features: CSS nesting, CSS Modules (camelCase), autoprefixing, minification
-  - Apps using Lightning CSS: wallet, listener, business, wallet-ethcc, showcase
+  - Apps using Lightning CSS: wallet, listener, business
 
 ### Package-Specific Commands
 

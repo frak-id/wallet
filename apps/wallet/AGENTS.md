@@ -1,84 +1,35 @@
-# apps/wallet
+# apps/wallet — Compass
 
-**Generated:** 2026-03-19
-**Commit:** 50035fdd0
-**Branch:** feat/vanilla-extract
+TanStack Router SPA user wallet. SSR disabled. Module-based. Service worker mandatory. Tauri mobile/desktop target.
 
-TanStack Router SPA for user wallet. SSR disabled, module-based architecture with service worker.
-
-## Structure
-
-```
-app/
-├── module/           # Feature modules (13 modules)
-│   ├── authentication/ # WebAuthn login/register
-│   ├── biometrics/   # Biometric lock & settings
-│   ├── common/       # Shared components (Header, Nav, Layout)
-│   ├── history/      # Transaction & interaction history
-│   ├── notification/ # Push notification management
-│   ├── pairing/      # Device pairing (QR + WebSocket)
-│   ├── recovery/     # Account recovery flows
-│   ├── recovery-setup/ # Recovery passkey setup wizard
-│   ├── root/         # Root layout & initialization
-│   ├── settings/     # User settings management
-│   ├── stores/       # App-level Zustand stores (recoveryStore)
-│   ├── tokens/       # Token balances, send/receive
-│   └── wallet/       # Core wallet operations
-├── routes/           # TanStack Router file-based routes
-│   └── _wallet/      # Protected wallet routes
-├── styles/           # Global CSS
-└── utils/            # App-level utilities
-```
-
-## Where to Look
-
-| Task | Location |
-|------|----------|
-| Add new feature | `app/module/{feature}/` |
-| Protected routes | `app/routes/_wallet/_protected/` |
-| Global layout | `app/routes/__root.tsx` |
-| Service worker | `app/service-worker.ts` |
-| Route tree (generated) | `app/routeTree.gen.ts` |
-
-## Commands
-
+## Quick Commands
 ```bash
-bun run dev          # Builds SW first, then starts SST dev
-bun run build        # Production build (SW + TanStack Router)
-bun run build:sw     # Service worker only
-bun run typecheck    # TanStack Router typegen runs first
-bun run test         # Unit tests (wallet-unit project)
-bun run test:e2e     # Playwright E2E tests
+bun run dev          # Builds SW first, then SST dev
+bun run build        # SW + TanStack Router build
+bun run build:sw     # Service worker ONLY — MUST run before dev/build or app silently breaks
+bun run typecheck    # TanStack Router typegen runs first (auto)
+bun run test         # wallet-unit project
+bun run test:e2e     # Playwright (19 specs) in tests/specs/
 ```
 
-## Styling (Vanilla Extract Migration)
+## Key Files
+- `app/entry.client.tsx` — PWA / Tauri bootstrap + safe area handling
+- `app/service-worker.ts` — critical for offline + pairing; `bun run build:sw` emits it
+- `app/routes/__root.tsx` — global layout · `app/routes/_wallet/_protected/` — guarded routes
+- `app/module/{authentication,wallet,tokens,pairing,recovery,biometrics,notification,history,settings}/` — features
+- `app/routeTree.gen.ts` — AUTO-GENERATED, never edit · `tests/vitest-fixtures.ts` — test fixtures
+- `src-tauri/` — iOS (TestFlight) + Android (Play Store) shell
 
-Migrating from CSS Modules (`.module.css`) → Vanilla Extract (`.css.ts`). **In progress** — some components still use CSS Modules.
+## Non-Obvious Patterns
+- **SW build is a gate**: forgetting `build:sw` produces a blank app with no useful error.
+- **Dual `@/*` alias**: resolves both `./app/*` AND `../../packages/design-system/src/*` — import collisions can be silent.
+- **Vanilla Extract migration (active)**: new styles go in `.css.ts` + `Box` sprinkles; `.module.css` is legacy. Both coexist.
+- **i18n location surprise**: translations live in `packages/wallet-shared/src/i18n/locales/`; regen types via root `bun run i18n:types`.
+- **Tauri detection** drives WebAuthn RP config in `@frak-labs/app-essentials` — tests must set `isTauri` explicitly.
+- **Business logic lives elsewhere**: ~90% of auth/session/smart-wallet code is in `@frak-labs/wallet-shared` — don't duplicate here.
 
-**New pattern**:
-- Styles in `.css.ts` files using `style()`, `styleVariants()` from `@vanilla-extract/css`
-- Layout via `Box` component with sprinkles props (no manual className for spacing/layout)
-- Semantic tokens: `vars.text.*`, `vars.surface.*`, `vars.border.*` from `@frak-labs/design-system`
-- Responsive: `{ mobile: ..., tablet: ..., desktop: ... }` via sprinkles conditions
-- Vite plugin: `@vanilla-extract/vite-plugin` in `vite.config.ts`
+## Anti-Patterns
+CSS Modules for new code (use Vanilla Extract) · runtime env vars (config is Vite-`define` build-time) · editing `routeTree.gen.ts` · skipping `build:sw`.
 
-**Import resolution**: tsconfig aliases `@/*` to both `./app/*` and `../../packages/design-system/src/*`
-
-## Conventions
-
-- **Module pattern**: Each feature in `app/module/{name}/` with own components, hooks, utils
-- **Route guards**: Use `_wallet` layout for authenticated routes
-- **i18n**: Translations in `@frak-labs/wallet-shared` (`packages/wallet-shared/src/i18n/locales/`), types via `bun run i18n:types` in root
-- **Service Worker**: Must be built before dev/build (`bun run build:sw`)
-- **Tauri**: Mobile/desktop support via `src-tauri/`
-
-## Testing
-
-- **Unit**: Vitest with jsdom, fixtures in `tests/vitest-fixtures.ts`
-- **E2E**: Playwright specs in `tests/specs/`, page objects in `tests/pages/`
-- **Mocks**: WebAuthn, Wagmi, router mocks from `@frak-labs/test-foundation`
-
-## Notes
-
-- PWA detection and safe area handling in `main.tsx`
-- Route typegen is automatic via TanStack Router plugin
+## See Also
+Parent `/AGENTS.md` · siblings `apps/{business,listener,shopify}/AGENTS.md` · `packages/{wallet-shared,design-system,app-essentials}/AGENTS.md`.

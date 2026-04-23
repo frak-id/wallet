@@ -1,0 +1,29 @@
+{
+	"$schema": "https://schemas.wp.org/trunk/block.json",
+	"apiVersion": 3,
+	"name": "frak/banner",
+	"title": "Frak Banner",
+	"description": "Notification banner handling referral success and in-app browser prompts. Auto-hides when not needed.",
+	"category": "widgets",
+	"icon": "megaphone",
+	"keywords": ["frak", "banner", "notification", "referral"],
+	"supports": {
+		"html": false,
+		"align": ["wide", "full"]
+	},
+	"textdomain": "frak",
+	"attributes": {
+		"placement": { "type": "string", "default": "" },
+		"classname": { "type": "string", "default": "" },
+		"interaction": { "type": "string", "default": "" },
+		"referralTitle": { "type": "string", "default": "" },
+		"referralDescription": { "type": "string", "default": "" },
+		"referralCta": { "type": "string", "default": "" },
+		"inappTitle": { "type": "string", "default": "" },
+		"inappDescription": { "type": "string", "default": "" },
+		"inappCta": { "type": "string", "default": "" },
+		"previewMode": { "type": "string", "default": "referral" }
+	},
+	"editorScript": "file:./editor.js",
+	"render": "file:./render.php"
+}

@@ -41,7 +41,8 @@ export function useReferralInteraction({
                 throw new ClientNotFound();
             }
 
-            return referralInteraction(client, { options });
+            const result = await referralInteraction(client, { options });
+            return result ?? null;
         },
         enabled: !!client,
         staleTime: Number.POSITIVE_INFINITY,

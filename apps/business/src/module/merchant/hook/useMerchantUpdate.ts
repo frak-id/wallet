@@ -13,6 +13,7 @@ type EditExplorerInput = {
     enabled?: boolean;
     config?: {
         heroImageUrl?: string;
+        heroImageUrls?: string[];
         description?: string;
     };
 };

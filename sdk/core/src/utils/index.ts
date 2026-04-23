@@ -1,4 +1,5 @@
 export { Deferred } from "@frak-labs/frame-connector";
+export { trackEvent } from "./analytics";
 export { getBackendUrl } from "./backendUrl";
 export { clearAllCache, getCache, withCache } from "./cache";
 export { getClientId } from "./clientId";
@@ -28,6 +29,10 @@ export {
     isIOS,
     redirectToExternalBrowser,
 } from "./inAppBrowser";
+export {
+    type MergeAttributionInput,
+    mergeAttribution,
+} from "./mergeAttribution";
 export { sdkConfigStore } from "./sdkConfigStore";
 export {
     type AppSpecificSsoMetadata,
@@ -35,4 +40,3 @@ export {
     type FullSsoParams,
     generateSsoUrl,
 } from "./sso";
-export { type FrakEvent, trackEvent } from "./trackEvent";

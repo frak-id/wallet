@@ -25,10 +25,12 @@ describe("FrakContextManager", () => {
     });
 
     describe("V2 context", () => {
+        const MERCHANT_ID = "550e8400-e29b-41d4-a716-446655440000";
+        const CLIENT_ID = "550e8400-e29b-41d4-a716-446655440001";
         const v2Context: FrakContextV2 = {
             v: 2,
-            c: "test-client-id-uuid",
-            m: "merchant-uuid-1234",
+            c: CLIENT_ID,
+            m: MERCHANT_ID,
             t: 1709654400,
         };
 
@@ -42,7 +44,7 @@ describe("FrakContextManager", () => {
                 expect(result).not.toMatch(/[+/=]/);
             });
 
-            it("should return undefined when v2 context is missing clientId", () => {
+            it("should return undefined when v2 context has neither clientId nor wallet", () => {
                 const partial = { v: 2 as const, m: "m", t: 123 };
                 const result = FrakContextManager.compress(
                     partial as FrakContextV2
@@ -50,8 +52,35 @@ describe("FrakContextManager", () => {
                 expect(result).toBeUndefined();
             });
 
+            it("should compress v2 context with wallet only (no clientId)", () => {
+                const v2WithWalletOnly: FrakContextV2 = {
+                    v: 2,
+                    m: MERCHANT_ID,
+                    t: 1709654400,
+                    w: "0x1234567890123456789012345678901234567890" as Address,
+                };
+                const result = FrakContextManager.compress(v2WithWalletOnly);
+                expect(result).toBeDefined();
+                const decompressed = FrakContextManager.decompress(result);
+                expect(decompressed).toEqual(v2WithWalletOnly);
+            });
+
+            it("should compress v2 context with both clientId and wallet", () => {
+                const v2Hybrid: FrakContextV2 = {
+                    v: 2,
+                    c: CLIENT_ID,
+                    m: MERCHANT_ID,
+                    t: 1709654400,
+                    w: "0x1234567890123456789012345678901234567890" as Address,
+                };
+                const result = FrakContextManager.compress(v2Hybrid);
+                expect(result).toBeDefined();
+                const decompressed = FrakContextManager.decompress(result);
+                expect(decompressed).toEqual(v2Hybrid);
+            });
+
             it("should return undefined when v2 context is missing merchantId", () => {
-                const partial = { v: 2 as const, c: "c", t: 123 };
+                const partial = { v: 2 as const, c: CLIENT_ID, t: 123 };
                 const result = FrakContextManager.compress(
                     partial as FrakContextV2
                 );
@@ -59,11 +88,45 @@ describe("FrakContextManager", () => {
             });
 
             it("should return undefined when v2 context is missing timestamp", () => {
-                const partial = { v: 2 as const, c: "c", m: "m" };
+                const partial = { v: 2 as const, c: CLIENT_ID, m: MERCHANT_ID };
                 const result = FrakContextManager.compress(
                     partial as FrakContextV2
                 );
                 expect(result).toBeUndefined();
+            });
+
+            it("should reject v2 context with a malformed wallet address", () => {
+                const partial = {
+                    v: 2 as const,
+                    m: MERCHANT_ID,
+                    t: 1709654400,
+                    w: "0xnot-a-valid-address" as Address,
+                };
+                const result = FrakContextManager.compress(
+                    partial as FrakContextV2
+                );
+                // Invalid wallet → falls back to clientId requirement; absent here → undefined
+                expect(result).toBeUndefined();
+            });
+
+            it("should drop a malformed wallet but keep a valid clientId", () => {
+                const hybrid = {
+                    v: 2 as const,
+                    c: CLIENT_ID,
+                    m: MERCHANT_ID,
+                    t: 1709654400,
+                    w: "0xnot-a-valid-address" as Address,
+                };
+                const compressed = FrakContextManager.compress(
+                    hybrid as FrakContextV2
+                );
+                const decompressed = FrakContextManager.decompress(compressed);
+                expect(decompressed).toEqual({
+                    v: 2,
+                    c: CLIENT_ID,
+                    m: MERCHANT_ID,
+                    t: 1709654400,
+                });
             });
         });
 
@@ -73,6 +136,22 @@ describe("FrakContextManager", () => {
                 const decompressed = FrakContextManager.decompress(compressed);
 
                 expect(decompressed).toEqual(v2Context);
+            });
+
+            it("should reject payloads whose header reserved bits are set", async () => {
+                // Craft a valid V2 binary payload then flip a reserved bit
+                // in the header — decompress must refuse to parse it (forward-compat guard).
+                const { encodeFrakContextV2 } = await import(
+                    "./frakContextV2Codec"
+                );
+                const { base64urlEncode } = await import("./compression/b64");
+                const encoded = encodeFrakContextV2(v2Context);
+                expect(encoded).toBeDefined();
+                const tampered = new Uint8Array(encoded as Uint8Array);
+                tampered[0] |= 0x40; // set a reserved bit
+                const payload = base64urlEncode(tampered);
+                const result = FrakContextManager.decompress(payload);
+                expect(result).toBeUndefined();
             });
         });
 
@@ -86,8 +165,8 @@ describe("FrakContextManager", () => {
                 expect(result).toBeDefined();
                 expect(result).toHaveProperty("v", 2);
                 const v2 = result as FrakContextV2;
-                expect(v2.c).toBe("test-client-id-uuid");
-                expect(v2.m).toBe("merchant-uuid-1234");
+                expect(v2.c).toBe(CLIENT_ID);
+                expect(v2.m).toBe(MERCHANT_ID);
                 expect(v2.t).toBe(1709654400);
             });
         });
@@ -120,6 +199,157 @@ describe("FrakContextManager", () => {
                 expect(result).toContain("foo=bar");
                 expect(result).toContain("baz=qux");
                 expect(result).toContain("fCtx=");
+            });
+
+            describe("update with attribution", () => {
+                const url = "https://example.com/product";
+
+                it("should apply default attribution params when attribution is omitted", () => {
+                    const result = FrakContextManager.update({
+                        url,
+                        context: v2Context,
+                    });
+
+                    expect(result).toBeDefined();
+                    expect(result).toContain("fCtx=");
+                    const parsedUrl = new URL(result!);
+                    expect(parsedUrl.searchParams.get("utm_source")).toBe(
+                        "frak"
+                    );
+                    expect(parsedUrl.searchParams.get("utm_medium")).toBe(
+                        "referral"
+                    );
+                    expect(parsedUrl.searchParams.get("utm_campaign")).toBe(
+                        v2Context.m
+                    );
+                    expect(parsedUrl.searchParams.get("via")).toBe("frak");
+                    expect(parsedUrl.searchParams.get("ref")).toBe(v2Context.c);
+                });
+
+                it("should apply default attribution params when attribution is an empty object", () => {
+                    const result = FrakContextManager.update({
+                        url,
+                        context: v2Context,
+                        attribution: {},
+                    });
+
+                    expect(result).toBeDefined();
+                    const parsedUrl = new URL(result!);
+                    expect(parsedUrl.searchParams.get("utm_source")).toBe(
+                        "frak"
+                    );
+                    expect(parsedUrl.searchParams.get("utm_medium")).toBe(
+                        "referral"
+                    );
+                    expect(parsedUrl.searchParams.get("utm_campaign")).toBe(
+                        v2Context.m
+                    );
+                    expect(parsedUrl.searchParams.get("via")).toBe("frak");
+                    expect(parsedUrl.searchParams.get("ref")).toBe(v2Context.c);
+                    expect(
+                        parsedUrl.searchParams.get("utm_content")
+                    ).toBeNull();
+                    expect(parsedUrl.searchParams.get("utm_term")).toBeNull();
+                });
+
+                it("should honor overrides over defaults", () => {
+                    const result = FrakContextManager.update({
+                        url,
+                        context: v2Context,
+                        attribution: {
+                            utmSource: "newsletter",
+                            utmMedium: "email",
+                            utmCampaign: "spring-sale",
+                            utmContent: "hero-banner",
+                            utmTerm: "wallet",
+                            via: "partner",
+                            ref: "alice",
+                        },
+                    });
+
+                    const parsedUrl = new URL(result!);
+                    expect(parsedUrl.searchParams.get("utm_source")).toBe(
+                        "newsletter"
+                    );
+                    expect(parsedUrl.searchParams.get("utm_medium")).toBe(
+                        "email"
+                    );
+                    expect(parsedUrl.searchParams.get("utm_campaign")).toBe(
+                        "spring-sale"
+                    );
+                    expect(parsedUrl.searchParams.get("utm_content")).toBe(
+                        "hero-banner"
+                    );
+                    expect(parsedUrl.searchParams.get("utm_term")).toBe(
+                        "wallet"
+                    );
+                    expect(parsedUrl.searchParams.get("via")).toBe("partner");
+                    expect(parsedUrl.searchParams.get("ref")).toBe("alice");
+                });
+
+                it("should preserve merchant-provided UTMs on the base URL (gap-fill)", () => {
+                    const baseUrl =
+                        "https://example.com/product?utm_source=google&utm_campaign=merchant-spring";
+                    const result = FrakContextManager.update({
+                        url: baseUrl,
+                        context: v2Context,
+                        attribution: {},
+                    });
+
+                    const parsedUrl = new URL(result!);
+                    // Merchant-provided values preserved
+                    expect(parsedUrl.searchParams.get("utm_source")).toBe(
+                        "google"
+                    );
+                    expect(parsedUrl.searchParams.get("utm_campaign")).toBe(
+                        "merchant-spring"
+                    );
+                    // Missing ones filled by Frak defaults
+                    expect(parsedUrl.searchParams.get("utm_medium")).toBe(
+                        "referral"
+                    );
+                    expect(parsedUrl.searchParams.get("ref")).toBe(v2Context.c);
+                });
+
+                it("should skip fields with empty-string overrides", () => {
+                    const result = FrakContextManager.update({
+                        url,
+                        context: v2Context,
+                        attribution: { utmContent: "", utmTerm: "" },
+                    });
+
+                    const parsedUrl = new URL(result!);
+                    expect(parsedUrl.searchParams.has("utm_content")).toBe(
+                        false
+                    );
+                    expect(parsedUrl.searchParams.has("utm_term")).toBe(false);
+                });
+
+                it("should skip context-derived defaults for V1 (no merchantId/clientId)", () => {
+                    const v1Context: FrakContextV1 = {
+                        r: "0x1234567890123456789012345678901234567890" as Address,
+                    };
+                    const result = FrakContextManager.update({
+                        url,
+                        context: v1Context,
+                        attribution: {},
+                    });
+
+                    const parsedUrl = new URL(result!);
+                    // Static defaults still applied
+                    expect(parsedUrl.searchParams.get("utm_source")).toBe(
+                        "frak"
+                    );
+                    expect(parsedUrl.searchParams.get("utm_medium")).toBe(
+                        "referral"
+                    );
+                    expect(parsedUrl.searchParams.get("via")).toBe("frak");
+                    // No derivable values from V1
+                    expect(parsedUrl.searchParams.has("utm_campaign")).toBe(
+                        false
+                    );
+                    expect(parsedUrl.searchParams.has("ref")).toBe(false);
+                });
             });
         });
     });
@@ -416,8 +646,8 @@ describe("FrakContextManager", () => {
             const url = "https://example.com/test";
             const context: FrakContextV2 = {
                 v: 2,
-                c: "client-id",
-                m: "merchant-id",
+                c: "550e8400-e29b-41d4-a716-446655440001",
+                m: "550e8400-e29b-41d4-a716-446655440000",
                 t: 1709654400,
             };
 

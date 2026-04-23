@@ -23,6 +23,7 @@
   {% if block.settings.use_reward %}use-reward{% endif %}
   {% if block.settings.no_reward_text != blank %}no-reward-text="{{ block.settings.no_reward_text }}"{% endif %}
   {% if block.settings.target_interaction != blank %}target-interaction="{{ block.settings.target_interaction }}"{% endif %}
+  {% if request.design_mode and block.settings.enable_preview %}preview="true"{% endif %}
 ></frak-button-share>
 
 {% style %}
@@ -60,6 +61,17 @@
       "id": "target_interaction",
       "label": "Target interaction",
       "info": "Specific interaction type for reward calculation (e.g. custom.customerMeeting)"
+    },
+    {
+      "type": "header",
+      "content": "Theme editor preview"
+    },
+    {
+      "type": "checkbox",
+      "id": "enable_preview",
+      "label": "Show preview in editor",
+      "info": "Render the share button while customizing the theme (mirrors the runtime look; click is disabled).",
+      "default": false
     },
     {
       "type": "select",

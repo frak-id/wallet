@@ -1,6 +1,9 @@
 import { ExplorerCardPreview } from "@frak-labs/ui-preview";
 import type { action } from "app/routes/app.appearance";
-import type { ExplorerSettings } from "app/services.server/backendMerchant";
+import type {
+    ExplorerSettings,
+    MediaFile,
+} from "app/services.server/backendMerchant";
 import type { ShopBrandInfo } from "app/services.server/shop";
 import {
     type FormEvent,
@@ -12,12 +15,14 @@ import {
 import { useTranslation } from "react-i18next";
 import { Form, useFetcher, useNavigation } from "react-router";
 import { ImageUploadField } from "./ImageUploadField";
+import { MultiHeroImagesField } from "./MultiHeroImagesField";
 
 type ExplorerTabProps = {
     initialExplorerSettings: ExplorerSettings | null;
     shopBrand: ShopBrandInfo;
     sdkLogoUrl: string;
     shopName: string;
+    mediaFiles?: MediaFile[];
 };
 
 export function ExplorerTab({
@@ -25,6 +30,7 @@ export function ExplorerTab({
     shopBrand,
     sdkLogoUrl,
     shopName,
+    mediaFiles,
 }: ExplorerTabProps) {
     const fetcher = useFetcher<typeof action>();
     const navigation = useNavigation();
@@ -42,6 +48,7 @@ export function ExplorerTab({
                 initialExplorerSettings?.heroImageUrl ||
                 shopBrand.coverImageUrl ||
                 "",
+            heroImageUrls: initialExplorerSettings?.heroImageUrls ?? [],
             description:
                 initialExplorerSettings?.description ||
                 shopBrand.description ||
@@ -53,6 +60,7 @@ export function ExplorerTab({
     const [enabled, setEnabled] = useState(defaults.enabled);
     const [logoUrl, setLogoUrl] = useState(defaults.logoUrl);
     const [heroImageUrl, setHeroImageUrl] = useState(defaults.heroImageUrl);
+    const [heroImageUrls, setHeroImageUrls] = useState(defaults.heroImageUrls);
     const [description, setDescription] = useState(defaults.description);
 
     const isLoading = navigation.state === "submitting";
@@ -62,8 +70,9 @@ export function ExplorerTab({
             enabled !== defaults.enabled ||
             logoUrl !== defaults.logoUrl ||
             heroImageUrl !== defaults.heroImageUrl ||
+            heroImageUrls.join(",") !== defaults.heroImageUrls.join(",") ||
             description !== defaults.description,
-        [enabled, logoUrl, heroImageUrl, description, defaults]
+        [enabled, logoUrl, heroImageUrl, heroImageUrls, description, defaults]
     );
 
     useEffect(() => {
@@ -92,6 +101,7 @@ export function ExplorerTab({
                 enabled,
                 logoUrl,
                 heroImageUrl,
+                heroImageUrls,
                 description,
                 ...overrides,
             };
@@ -103,7 +113,7 @@ export function ExplorerTab({
                 { method: "post", action: "/app/appearance" }
             );
         },
-        [enabled, logoUrl, heroImageUrl, description, fetcher]
+        [enabled, logoUrl, heroImageUrl, heroImageUrls, description, fetcher]
     );
 
     const handleLogoUploadSuccess = useCallback(
@@ -132,6 +142,7 @@ export function ExplorerTab({
                     enabled,
                     logoUrl,
                     heroImageUrl,
+                    heroImageUrls,
                     description,
                 })}
             />
@@ -154,6 +165,7 @@ export function ExplorerTab({
                         onChange={setLogoUrl}
                         onUploadSuccess={handleLogoUploadSuccess}
                         label={t("appearance.explorer.logoLabel")}
+                        mediaFiles={mediaFiles}
                     />
 
                     <ImageUploadField
@@ -162,6 +174,16 @@ export function ExplorerTab({
                         onChange={setHeroImageUrl}
                         onUploadSuccess={handleHeroUploadSuccess}
                         label={t("appearance.explorer.heroLabel")}
+                        mediaFiles={mediaFiles}
+                    />
+
+                    <MultiHeroImagesField
+                        label={t("appearance.explorer.heroExtrasLabel")}
+                        values={heroImageUrls}
+                        onChange={(next) => {
+                            setHeroImageUrls(next);
+                            autoSave({ heroImageUrls: next });
+                        }}
                     />
 
                     <s-text-area

@@ -34,4 +34,11 @@ export type ButtonShareProps = {
      * @defaultValue `"embedded-wallet"`
      */
     clickAction?: "embedded-wallet" | "share-modal" | "sharing-page";
+    /**
+     * When set, renders the button in preview mode (e.g. Shopify/WP editor).
+     * Skips the client-ready gating so the button is always enabled visually,
+     * and no-ops the click handler so merchants can see the final layout with
+     * their configured copy even when no Frak client is initialized.
+     */
+    preview?: string;
 };

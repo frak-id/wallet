@@ -12,7 +12,8 @@ vi.mock("@frak-labs/wallet-shared", async (importOriginal) => {
         ...actual,
         addLastAuthentication: vi.fn(),
         emitLifecycleEvent: vi.fn(),
-        trackAuthCompleted: vi.fn(),
+        identifyAuthenticatedUser: vi.fn(),
+        trackEvent: vi.fn(),
         sessionStore: {
             getState: vi.fn().mockReturnValue({
                 setSession: vi.fn(),
@@ -29,8 +30,12 @@ describe("ssoHandler", () => {
 
     describe("processSsoCompletion", () => {
         test("should store session and sdkSession in stores", async () => {
-            const { sessionStore, addLastAuthentication, trackAuthCompleted } =
-                await import("@frak-labs/wallet-shared");
+            const {
+                sessionStore,
+                addLastAuthentication,
+                identifyAuthenticatedUser,
+                trackEvent,
+            } = await import("@frak-labs/wallet-shared");
 
             const setSession = vi.fn();
             const setSdkSession = vi.fn();
@@ -39,7 +44,7 @@ describe("ssoHandler", () => {
                 setSdkSession,
             } as any);
             vi.mocked(addLastAuthentication).mockResolvedValue(undefined);
-            vi.mocked(trackAuthCompleted).mockResolvedValue(undefined);
+            vi.mocked(identifyAuthenticatedUser).mockReturnValue(undefined);
 
             const mockSession = {
                 address: "0x123" as `0x${string}`,
@@ -56,10 +61,10 @@ describe("ssoHandler", () => {
             expect(addLastAuthentication).toHaveBeenCalled();
             expect(setSession).toHaveBeenCalled();
             expect(setSdkSession).toHaveBeenCalledWith(mockSdkSession);
-            expect(trackAuthCompleted).toHaveBeenCalledWith(
-                "sso",
+            expect(identifyAuthenticatedUser).toHaveBeenCalledWith(
                 expect.objectContaining({ address: "0x123" })
             );
+            expect(trackEvent).toHaveBeenCalledWith("sso_completed");
         });
 
         test("should handle errors and reject pending request", async () => {
@@ -84,8 +89,11 @@ describe("ssoHandler", () => {
 
     describe("handleSsoComplete", () => {
         test("should call processSsoCompletion and return success", async () => {
-            const { sessionStore, addLastAuthentication, trackAuthCompleted } =
-                await import("@frak-labs/wallet-shared");
+            const {
+                sessionStore,
+                addLastAuthentication,
+                identifyAuthenticatedUser,
+            } = await import("@frak-labs/wallet-shared");
 
             const setSession = vi.fn();
             const setSdkSession = vi.fn();
@@ -94,7 +102,7 @@ describe("ssoHandler", () => {
                 setSdkSession,
             } as any);
             vi.mocked(addLastAuthentication).mockResolvedValue(undefined);
-            vi.mocked(trackAuthCompleted).mockResolvedValue(undefined);
+            vi.mocked(identifyAuthenticatedUser).mockReturnValue(undefined);
 
             const mockSession = {
                 address: "0x456" as `0x${string}`,

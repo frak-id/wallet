@@ -1,5 +1,6 @@
 {
     "name": "frak-labs/magento2-module",
+    "version": "1.0.0",
     "description": "Frak SDK integration for Adobe Commerce / Magento 2",
     "type": "magento2-module",
     "license": "GPL-3.0-only",
@@ -10,7 +11,7 @@
         }
     ],
     "require": {
-        "php": "~8.3.0 || ~8.4.0",
+        "php": "~8.4.0",
         "magento/framework": "^103.0",
         "magento/module-store": "^101.0",
         "magento/module-checkout": "^100.4",

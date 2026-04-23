@@ -2,6 +2,8 @@ import { isAndroid, isTauri } from "@frak-labs/app-essentials/utils/platform";
 import {
     authenticatedBackendApi,
     clientIdStore,
+    setInstallSource,
+    trackEvent,
 } from "@frak-labs/wallet-shared";
 import { useQuery } from "@tanstack/react-query";
 import { pendingActionsStore } from "@/module/pending-actions/stores/pendingActionsStore";
@@ -23,11 +25,32 @@ export function useInstallReferrer() {
     return useQuery<ReferrerData | null>({
         queryKey: ["install-referrer"],
         queryFn: async () => {
-            const { referrer } = await getInstallReferrer();
+            trackEvent("install_referrer_checked");
+            let referrer: string;
+            try {
+                const result = await getInstallReferrer();
+                referrer = result.referrer;
+            } catch (err) {
+                trackEvent("install_referrer_failed", {
+                    error_type: err instanceof Error ? err.name : "unknown",
+                });
+                throw err;
+            }
+
+            if (!referrer || referrer.length === 0) {
+                trackEvent("install_referrer_missing", { reason: "empty" });
+                return null;
+            }
+
             const params = new URLSearchParams(referrer);
             const merchantId = params.get("merchantId");
             const anonymousId = params.get("anonymousId");
-            if (!merchantId || !anonymousId) return null;
+            if (!merchantId || !anonymousId) {
+                trackEvent("install_referrer_missing", {
+                    reason: "missing_params",
+                });
+                return null;
+            }
 
             // Resolve merchant info for display + pending action metadata
             const { data } =
@@ -37,6 +60,11 @@ export function useInstallReferrer() {
             const merchant = data
                 ? { name: data.name, domain: data.domain }
                 : undefined;
+
+            trackEvent("install_referrer_resolved", {
+                has_merchant: Boolean(merchant),
+            });
+            setInstallSource("install_referrer");
 
             // Store ensure action (deduped, persisted, survives crashes)
             pendingActionsStore.getState().addAction({

@@ -392,6 +392,7 @@
             "enabledLabel": "Référencé dans le Frak Explorer",
             "logoLabel": "URL du logo",
             "heroLabel": "URL de l'image de couverture",
+            "heroExtrasLabel": "Images de couverture supplémentaires",
             "descriptionLabel": "Description de la boutique",
             "descriptionPlaceholder": "Décrivez votre boutique pour le Frak Explorer...",
             "save": "Enregistrer",

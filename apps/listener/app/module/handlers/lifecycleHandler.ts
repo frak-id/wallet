@@ -9,6 +9,8 @@ import {
     authenticatedBackendApi,
     clientIdStore,
     emitLifecycleEvent,
+    trackEvent,
+    updateGlobalProperties,
 } from "@frak-labs/wallet-shared";
 import { getI18n } from "react-i18next";
 import {
@@ -122,6 +124,7 @@ function isValidResolvedConfigPayload(data: unknown): data is {
     allowedDomains: string[];
     sourceUrl: string;
     pendingMergeToken?: string;
+    sdkAnonymousId?: string;
     sdkConfig?: ResolvedSdkConfig;
 } {
     if (!data || typeof data !== "object") return false;
@@ -142,6 +145,7 @@ async function handleResolvedConfig(
         allowedDomains: string[];
         sourceUrl: string;
         pendingMergeToken?: string;
+        sdkAnonymousId?: string;
         sdkConfig?: ResolvedSdkConfig;
     },
     context: RpcRequestContext
@@ -188,6 +192,14 @@ async function handleResolvedConfig(
         ...(iframeClientId && { clientId: iframeClientId }),
     });
 
+    // Stitch SDK ↔ listener funnels: if the SDK propagated its persistent
+    // anonymous id through the resolved-config payload, expose it as a
+    // global OpenPanel property so every listener event is joinable with
+    // the corresponding SDK events.
+    if (data.sdkAnonymousId) {
+        updateGlobalProperties({ sdk_anonymous_id: data.sdkAnonymousId });
+    }
+
     store.setBackendConfig(data.merchantId, data.sdkConfig);
 
     // Identity merge — only allowed for verified trust (origin in allowedDomains)
@@ -200,13 +212,41 @@ async function handleResolvedConfig(
         const targetAnonymousId =
             iframeClientId ?? clientIdStore.getState().clientId;
         if (targetAnonymousId) {
+            // `fmt` token is produced by the in-app-browser escape flow
+            // (see `InAppBrowserToast`). Tagging the merge outcome with
+            // source="inapp_redirect" lets us compute merge success rate
+            // for users who bounced out of in-app browsers.
+            const startedAt = Date.now();
+            trackEvent("identity_ensure_executed", {
+                source: "inapp_redirect",
+            });
             authenticatedBackendApi.user.identity.merge.execute
                 .post({
                     mergeToken: data.pendingMergeToken,
                     targetAnonymousId,
                     merchantId: data.merchantId,
                 })
+                .then(({ error }) => {
+                    if (error) {
+                        trackEvent("identity_ensure_failed", {
+                            source: "inapp_redirect",
+                            error_type:
+                                (error as { value?: { code?: string } })?.value
+                                    ?.code ?? "unknown",
+                        });
+                        return;
+                    }
+                    trackEvent("identity_ensure_succeeded", {
+                        source: "inapp_redirect",
+                        duration_ms: Date.now() - startedAt,
+                    });
+                })
                 .catch((error) => {
+                    trackEvent("identity_ensure_failed", {
+                        source: "inapp_redirect",
+                        error_type:
+                            error instanceof Error ? error.name : "unknown",
+                    });
                     console.warn("Unable to merge client identities", error);
                 });
         }

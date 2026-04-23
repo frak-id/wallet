@@ -1,6 +1,6 @@
 import { Button } from "@frak-labs/design-system/components/Button";
 import { Spinner } from "@frak-labs/design-system/components/Spinner";
-import { sessionStore, trackGenericEvent } from "@frak-labs/wallet-shared";
+import { sessionStore, trackEvent } from "@frak-labs/wallet-shared";
 import { useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
 import { LogOut } from "lucide-react";
@@ -45,7 +45,7 @@ export function Logout() {
 
     const handleLogout = async () => {
         setIsLoggingOut(true);
-        trackGenericEvent("logout");
+        trackEvent("logout");
         // Unsubscribe from push notifications before clearing session (needs auth)
         await notificationAdapter.unsubscribe().catch(() => {});
         // Session deletion

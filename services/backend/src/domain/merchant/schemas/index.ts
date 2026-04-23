@@ -3,6 +3,10 @@ import type { Static } from "elysia";
 
 export const ExplorerConfigSchema = t.Object({
     heroImageUrl: t.Optional(t.String({ format: "uri", maxLength: 2048 })),
+    // Up to 4 additional hero images. The wallet slider renders them after heroImageUrl.
+    heroImageUrls: t.Optional(
+        t.Array(t.String({ format: "uri", maxLength: 2048 }), { maxItems: 4 })
+    ),
     logoUrl: t.Optional(t.String({ format: "uri", maxLength: 2048 })),
     description: t.Optional(t.String({ maxLength: 1000 })),
 });
@@ -86,6 +90,15 @@ export const PlacementSchema = t.Object({
 
 const PlacementIdSchema = t.String({ pattern: "^[a-zA-Z0-9_-]{3,16}$" });
 
+const AttributionDefaultsSchema = t.Object({
+    utmSource: t.Optional(t.String({ maxLength: 200 })),
+    utmMedium: t.Optional(t.String({ maxLength: 200 })),
+    utmCampaign: t.Optional(t.String({ maxLength: 200 })),
+    utmTerm: t.Optional(t.String({ maxLength: 200 })),
+    via: t.Optional(t.String({ maxLength: 200 })),
+    ref: t.Optional(t.String({ maxLength: 200 })),
+});
+
 export const SdkConfigSchema = t.Object({
     name: t.Optional(t.Union([t.String({ maxLength: 200 }), t.Null()])),
     logoUrl: t.Optional(
@@ -114,6 +127,7 @@ export const SdkConfigSchema = t.Object({
             t.Null(),
         ])
     ),
+    attribution: t.Optional(t.Union([AttributionDefaultsSchema, t.Null()])),
 });
 export type SdkConfig = Static<typeof SdkConfigSchema>;
 export type Placement = Static<typeof PlacementSchema>;

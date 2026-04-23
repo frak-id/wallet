@@ -9,6 +9,7 @@ import {
     deleteMerchantMedia,
     type ExplorerSettings,
     getMerchantExplorerSettings,
+    listMerchantMedia,
     updateMerchantExplorerSettings,
     uploadMerchantMedia,
 } from "app/services.server/backendMerchant";
@@ -46,6 +47,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
         theme,
         explorerSettings,
         shopBrand,
+        mediaFiles,
     ] = await Promise.all([
         getI18nCustomizations(context),
         getAppearanceMetafield(context),
@@ -55,6 +57,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
         getMainThemeId(context),
         getMerchantExplorerSettings(context, request),
         shopBrandInfo(context),
+        listMerchantMedia(context, request),
     ]);
 
     return data({
@@ -66,6 +69,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
         themeId: theme.id,
         explorerSettings,
         shopBrand,
+        mediaFiles,
     });
 };
 
@@ -245,6 +249,7 @@ export default function AppearancePage() {
         firstProduct,
         explorerSettings,
         shopBrand,
+        mediaFiles,
     } = useLoaderData<typeof loader>();
     const rootData = useRouteLoaderData<typeof appLoader>("routes/app");
     const shopName = rootData?.shop?.name ?? "My Store";
@@ -281,6 +286,7 @@ export default function AppearancePage() {
                     <CustomizationsTab
                         initialCustomizations={customizations}
                         initialAppearanceMetafield={appearanceMetafield}
+                        mediaFiles={mediaFiles}
                     />
                 );
             case 1:
@@ -290,6 +296,7 @@ export default function AppearancePage() {
                         shopBrand={shopBrand}
                         sdkLogoUrl={appearanceMetafield.logoUrl || ""}
                         shopName={shopName}
+                        mediaFiles={mediaFiles}
                     />
                 );
             case 2:

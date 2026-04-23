@@ -1,145 +1,38 @@
-# Shared Packages Context
+# packages/ — Compass
 
-## Package Overview
+Shared workspace packages. Workspace protocol (`workspace:*`). Most are source-only (consumed via `development` export condition); only `rpc` has a public NPM build.
 
-| Package | Purpose |
-|---------|---------|
-| `wallet-shared` | Shared code for wallet + listener ONLY |
-| `design-system` | Vanilla Extract design system (replaces ui) |
-| `ui` | Radix-based component library (being replaced by design-system) |
-| `app-essentials` | Core blockchain + WebAuthn config |
-| `client` | Elysia Eden Treaty API client |
-| `dev-tooling` | Vite configs, Lightning CSS |
-| `rpc` | Published as @frak-labs/frame-connector |
-| `test-foundation` | Vitest shared setup + mocks |
-
-## packages/wallet-shared/
-
-Shared between wallet and listener apps only. 201 files, 15 domains.
-
-**Key Exports:**
-- `src/stores/` - Zustand stores (sessionStore, walletStore, authenticationStore, clientIdStore)
-- `src/wallet/smartWallet/` - Smart wallet logic
-- `src/authentication/` - WebAuthn flows
-
-**Store Pattern:**
-```typescript
-export const sessionStore = create<SessionStore>()(
-  persist(
-    (set) => ({
-      session: null,
-      setSession: (session) => set({ session }),
-      clearSession: () => set({ session: null }),
-    }),
-    { name: "frak_session_store" }
-  )
-);
-
-// CRITICAL: Individual selectors
-const session = sessionStore((s) => s.session);
-```
-
-## packages/design-system/
-
-Vanilla Extract design system. 28 components, semantic tokens, sprinkles. Replaces `packages/ui`.
-
-**Key Files:**
-- `src/tokens.css.ts` — Brand colors, scale, typography, semantic light/dark
-- `src/theme.css.ts` — Theme contract (`vars.*`)
-- `src/sprinkles.css.ts` — Responsive conditions (mobile/tablet/desktop)
-- `src/components/Box/` — Core polymorphic layout primitive
-
-**Usage:**
-```typescript
-import { Box } from "@frak-labs/design-system/components/Box";
-import { vars } from "@frak-labs/design-system/theme.css";
-```
-
-See `packages/design-system/AGENTS.md` for full component list and patterns.
-
-## packages/ui/
-
-Radix-based component library. 22 components, 95 TS/TSX files.
-
-**Structure:**
-```
-component/
-├── Button/
-├── Dialog/
-├── Input/
-└── ...
-```
-
-**Usage:**
-```typescript
-import { Button } from "@frak-labs/ui/component/Button";
-```
-
-## packages/app-essentials/
-
-Core blockchain configuration. Consumed by backend (10), business (7), wallet (5).
-
-**Key Files:**
-- `src/blockchain/connector/` - FrakSmartWallet connector
-- `src/blockchain/provider/` - Wagmi config
-
-**Multi-Chain Support:**
-```typescript
-export const wagmiConfig = createConfig({
-  chains: [arbitrum, base, polygon],
-  transports: {
-    [arbitrum.id]: http(RPC_URL_ARBITRUM),
-    [base.id]: http(RPC_URL_BASE),
-    [polygon.id]: http(RPC_URL_POLYGON),
-  },
-});
-```
-
-## packages/client/
-
-Elysia Eden Treaty API client for type-safe backend communication.
-
-## packages/test-foundation/
-
-Shared test setup and mocks for 10 Vitest projects.
-
-**Setup Files:**
-- `shared-setup.ts` - Browser API mocks
-- `react-setup.ts` - BigInt serialization
-- `wallet-mocks.ts` - Wagmi, WebAuthn, IndexedDB mocks
-- `apps-setup.ts` - Environment variables
-
-**Fixtures:**
-```typescript
-test("my test", async ({
-  mockAddress,
-  mockSession,
-  queryClient,
-  queryWrapper,
-  freshSessionStore,
-  mockBackendAPI,
-}) => {
-  // Test implementation
-});
-```
-
-## packages/dev-tooling/
-
-Vite and CSS configuration.
-
-**Exports:**
-- `lightningCssConfig` - Centralized Lightning CSS settings
-- `onwarn()` - Rollup warning suppression
-- `getSandboxEnv()` - Atelier sandbox environment config
-
-**Lightning CSS Config:**
-- CSS Modules with camelCase
-- Browser targets: Chrome 100+, Safari 14+, Firefox 91+, Edge 100+
-- Native CSS nesting support
-
-## Testing
-
+## Quick Commands
 ```bash
-bun run test --project wallet-unit
-bun run test --project wallet-shared-unit
+bun run test --project wallet-shared-unit   # or wallet-unit, business-unit, core-sdk-unit, ...
+bun run typecheck                           # runs across all packages from root
 ```
+
+## Package Matrix
+| Package | Purpose | Consumers (workspace) |
+|---------|---------|------------------------|
+| `wallet-shared` | Shared state/flows (auth, smart wallet, pairing) | wallet, listener ONLY |
+| `design-system` | Vanilla Extract tokens + 28 components + Box | wallet, sdk/components |
+| `ui` | Radix + CSS Modules (legacy, being replaced) | business, shopify |
+| `app-essentials` | ABIs, addresses, viem provider, WebAuthn RP | backend, business, wallet, listener, wallet-shared, sdk/components |
+| `rpc` (published as `@frak-labs/frame-connector`) | Iframe/postMessage RPC | all SDKs, listener |
+| `client` | Elysia Eden Treaty client | wallet, business, shopify |
+| `dev-tooling` | Centralised Vite + Lightning CSS configs | business, listener, sdk/legacy |
+| `test-foundation` | Vitest shared config + mocks + fixtures | all 10 Vitest projects |
+| `ui-preview` | Embedded preview widgets | business, shopify |
+
+## Non-Obvious Patterns
+- **`wallet-shared` scope rule**: STRICTLY wallet+listener. Not business/backend/shopify. AlertDialog is knowingly duplicated with `packages/ui`.
+- **`ui` is deprecated**: do not add components; migrate consumers to `design-system`.
+- **`development` export condition** everywhere: apps use `src/index.ts` directly in dev — no build step needed in the monorepo.
+- **Subpath exports are explicit**: wildcard re-exports forbidden. Public API is locked per-package.
+- **`test-foundation` setup order matters**: `shared-setup → react-setup → RTL → wallet-mocks → apps-setup → project-setup`. Breaking the order breaks hoisting-safe mocks.
+- **`app-essentials` is workspace-only** (not published). Only runtime dep: `viem`.
+- **Lightning CSS targets** (for CSS Modules apps) are centralised in `dev-tooling` — Chrome 100+, Safari 14+, Firefox 91+, Edge 100+.
+- **Zustand rule**: individual selectors mandatory everywhere.
+
+## Anti-Patterns
+Adding to `packages/ui` · importing `wallet-shared` from business/backend/shopify · wildcard exports · hardcoded chain IDs/addresses (use `app-essentials`) · creating new Vitest configs (extend `test-foundation/vitest.shared`).
+
+## See Also
+Parent `/AGENTS.md` · children `packages/{wallet-shared,design-system,ui,app-essentials,test-foundation}/AGENTS.md` · `sdk/AGENTS.md`.

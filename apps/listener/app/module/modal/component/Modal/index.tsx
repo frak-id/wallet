@@ -7,6 +7,7 @@ import {
     LogoFrakWithName,
     OriginPairingState,
     prefixModalCss,
+    trackEvent,
     WalletModal,
 } from "@frak-labs/wallet-shared";
 import { cx } from "class-variance-authority";
@@ -79,10 +80,22 @@ export function ListenerModal({
     }, [clearRequest]);
 
     /**
-     * Method to close the modal
+     * Method to close the modal on error.
+     *
+     * Emits `modal_step_error` for genuine errors; `clientAborted` is a
+     * user-initiated dismiss and is tracked via `modal_dismissed` elsewhere.
      */
     const onError = useCallback(
         (reason?: string, code: number = RpcErrorCodes.serverError) => {
+            if (code !== RpcErrorCodes.clientAborted) {
+                const state = modalStore.getState();
+                const step = state.steps?.[state.currentStep]?.key ?? "unknown";
+                trackEvent("modal_step_error", {
+                    step,
+                    reason: reason ?? "unknown",
+                    recoverable: false,
+                });
+            }
             emitter({
                 error: {
                     code,
@@ -313,6 +326,24 @@ function CurrentModalStepComponent({
     onError: (reason?: string) => void;
 }) {
     const currentStep = modalStore(selectCurrentStep);
+    const currentStepIndex = modalStore((s) => s.currentStep);
+    const totalSteps = modalStore((s) => s.steps?.length ?? 0);
+
+    // Emit modal_step_viewed on every step transition. Step completion is
+    // inferred from the next step's _viewed event (or modal_dismissed with
+    // last_step) so we don't need a dedicated _completed event.
+    useEffect(() => {
+        if (!currentStep) return;
+        const stepKey =
+            currentStep.key === "final" && currentStep.params.action?.key
+                ? currentStep.params.action.key
+                : currentStep.key;
+        trackEvent("modal_step_viewed", {
+            step: stepKey,
+            index: currentStepIndex,
+            total: totalSteps,
+        });
+    }, [currentStep, currentStepIndex, totalSteps]);
 
     /**
      * Return the right modal depending on the state

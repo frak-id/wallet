@@ -1,7 +1,9 @@
-import { useCallback, useEffect } from "react";
+import { useCallback, useEffect, useMemo } from "react";
 import { useDropzone } from "react-dropzone";
 import { useFetcher } from "react-router";
 import styles from "./index.module.css";
+
+type MediaFile = { type: string; url: string };
 
 type ImageUploadFieldProps = {
     type: "logo" | "hero";
@@ -10,6 +12,7 @@ type ImageUploadFieldProps = {
     onUploadSuccess: (url: string) => void;
     label: string;
     placeholder?: string;
+    mediaFiles?: MediaFile[];
 };
 
 const imageAccept = {
@@ -32,6 +35,7 @@ export function ImageUploadField({
     onUploadSuccess,
     label,
     placeholder = "https://...",
+    mediaFiles,
 }: ImageUploadFieldProps) {
     const mediaFetcher = useFetcher();
 
@@ -140,6 +144,15 @@ export function ImageUploadField({
                 {isUploadSuccess && (
                     <p className={styles.success}>Image uploaded</p>
                 )}
+                <ExistingFilePicker
+                    type={type}
+                    currentValue={value}
+                    mediaFiles={mediaFiles}
+                    onPick={(url) => {
+                        onChange(url);
+                        onUploadSuccess(url);
+                    }}
+                />
             </div>
         </div>
     );
@@ -150,4 +163,48 @@ function getUploadErrorMessage(data: unknown): string | null {
     const d = data as { success?: boolean; error?: string };
     if (d.success === false && d.error) return d.error;
     return null;
+}
+
+function ExistingFilePicker({
+    type,
+    currentValue,
+    mediaFiles,
+    onPick,
+}: {
+    type: "logo" | "hero";
+    currentValue: string;
+    mediaFiles?: MediaFile[];
+    onPick: (url: string) => void;
+}) {
+    // Show files matching the same type (logo → logo, hero → hero or hero-{variant}),
+    // excluding the file currently selected in the input.
+    const pickableFiles = useMemo(() => {
+        if (!mediaFiles?.length) return [];
+        return mediaFiles.filter((f) => {
+            if (f.url === currentValue) return false;
+            if (type === "logo") return f.type === "logo";
+            return f.type === "hero" || f.type.startsWith("hero-");
+        });
+    }, [mediaFiles, type, currentValue]);
+
+    if (!pickableFiles.length) return null;
+
+    return (
+        <div className={styles.existingFiles}>
+            <p className={styles.existingFilesLabel}>Use an existing image:</p>
+            <div className={styles.existingFilesList}>
+                {pickableFiles.map((file) => (
+                    <button
+                        key={file.url}
+                        type="button"
+                        className={styles.existingFileButton}
+                        onClick={() => onPick(file.url)}
+                        title={`Use ${file.type} image`}
+                    >
+                        <img src={file.url} alt={file.type} loading="lazy" />
+                    </button>
+                ))}
+            </div>
+        </div>
+    );
 }

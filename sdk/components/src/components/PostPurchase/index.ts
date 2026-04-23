@@ -33,6 +33,8 @@ registerWebComponent(
         "referrerText",
         "refereeText",
         "ctaText",
+        "preview",
+        "previewVariant",
     ],
     {
         shadow: false,

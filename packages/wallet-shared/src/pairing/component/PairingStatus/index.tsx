@@ -1,9 +1,10 @@
 import { Spinner } from "@frak-labs/design-system/components/Spinner";
+import { Stack } from "@frak-labs/design-system/components/Stack";
+import { Text } from "@frak-labs/design-system/components/Text";
 import type { TFunction } from "i18next";
 import { Check } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import type { BasePairingState } from "../../types";
-import styles from "./index.module.css";
 
 export function PairingStatus({
     status,
@@ -13,7 +14,7 @@ export function PairingStatus({
     const { t } = useTranslation();
     const statusDetails = getStatusDetails(t, status);
 
-    return <span className={styles.pairingStatus}>{statusDetails}</span>;
+    return statusDetails;
 }
 
 function getStatusDetails(t: TFunction, status: BasePairingState["status"]) {
@@ -22,17 +23,21 @@ function getStatusDetails(t: TFunction, status: BasePairingState["status"]) {
             return t("wallet.pairing.status.idle");
         case "connecting":
             return (
-                <span className={styles.pairingStatus__connecting}>
+                <Stack space="xs" align="center">
                     <Spinner />
-                    {t("wallet.pairing.status.connecting")}
-                </span>
+                    <Text variant="bodySmall" weight="medium">
+                        {t("wallet.pairing.status.connecting")}
+                    </Text>
+                </Stack>
             );
         case "paired":
             return (
-                <span className={styles.pairingStatus__paired}>
+                <Stack space="xs" align="center">
                     <Check color="green" size={16} />
-                    {t("wallet.pairing.status.paired")}
-                </span>
+                    <Text variant="bodySmall" weight="medium">
+                        {t("wallet.pairing.status.paired")}
+                    </Text>
+                </Stack>
             );
     }
 }

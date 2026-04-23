@@ -8,18 +8,22 @@
         "sso": {
             "btn": {
                 "new": {
-                    "create": "Use biometrics to prove you're not a robot",
-                    "login": "Connect an existing wallet",
+                    "create": "Use biometrics",
+                    "login": "Already have an existing wallet?",
                     "phone": "Use a QR code to connect"
                 },
                 "existing": {
                     "create": "Create a new wallet",
-                    "login": "Connect with your wallet"
+                    "login": "Use biometrics"
                 }
             },
-            "description": "Before continuing, please make sure you are using a device that belongs to you.<br />Frak is a solution allowing <strong>{{productName}}</strong> to reward its community for the help provided in promoting its offers. <strong>Frak is a decentralized and open-source solution, which does not store any personal or biometric data.</strong><br />To learn more about <strong>{{productName}}</strong>, please review our Privacy Policy and Terms of Use.",
+            "description": "Frak does not store any personal or biometric data. By continuing you accept our <conditionsLink>terms</conditionsLink> and our <privacyLink>privacy policy</privacyLink>.",
             "header": {
                 "title": "Login with Frak Wallet"
+            },
+            "pairing": {
+                "title": "Sign in with my mobile",
+                "description": "Scan this QR code to sign in from your mobile."
             },
             "recover": "Recover wallet from file",
             "redirect": "You will be redirected to {{ productName }} in a few seconds.",
@@ -142,7 +146,8 @@
         },
         "login": {
             "accountCreation": "Account creation",
-            "button": "Recover your <strong>wallet</strong>",
+            "button": "Use biometrics",
+            "title": "Log in to your wallet",
             "recover": "Recover wallet from file",
             "walletsOnDevice": "Wallets used on this device",
             "privy": "Connect via Privy",
@@ -295,7 +300,7 @@
             },
             "status": {
                 "idle": "Idle",
-                "connecting": "Connecting...",
+                "connecting": "Pairing in progress",
                 "paired": "Paired"
             },
             "signatureRequest": {

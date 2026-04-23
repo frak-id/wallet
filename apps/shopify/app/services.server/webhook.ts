@@ -112,8 +112,9 @@ async function deleteStaleBackendWebhooks(
     backendUrl: string
 ): Promise<void> {
     const edges = await fetchAllOrdersWebhooks(context.admin.graphql);
-    const staleWebhooks = edges.filter((webhook) =>
-        webhook.node.endpoint.callbackUrl?.includes(backendUrl) ?? false
+    const staleWebhooks = edges.filter(
+        (webhook) =>
+            webhook.node.endpoint.callbackUrl?.includes(backendUrl) ?? false
     );
     if (staleWebhooks.length === 0) {
         return;

@@ -1,4 +1,4 @@
-import { type InteractionTypeKey, trackEvent } from "@frak-labs/core-sdk";
+import type { InteractionTypeKey } from "@frak-labs/core-sdk";
 import { useEffect, useMemo, useState } from "preact/hooks";
 import { useClientReady } from "@/hooks/useClientReady";
 import { usePlacement } from "@/hooks/usePlacement";
@@ -152,10 +152,6 @@ export function ButtonWallet({
                 disabled={!isClientReady}
                 class={buttonClass}
                 onClick={() => {
-                    trackEvent(
-                        window.FrakSetup.client,
-                        "wallet_button_clicked"
-                    );
                     openWalletModal(resolvedTargetInteraction, placementId);
                 }}
             >

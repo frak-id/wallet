@@ -3,8 +3,14 @@
  * Tests pairing launch with QR code display and state management
  */
 
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import {
+    cleanup,
+    fireEvent,
+    render,
+    screen,
+    waitFor,
+} from "@testing-library/react";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { LaunchPairing } from "./index";
 
 // Mock react-i18next
@@ -28,11 +34,11 @@ vi.mock("cuer", () => ({
     ),
 }));
 
-// Mock PairingCode and PairingStatus
-vi.mock("../PairingCode", () => ({
-    PairingCode: ({ code, theme }: { code: string; theme?: string }) => (
-        <div data-testid="pairing-code" data-code={code} data-theme={theme}>
-            {code}
+// Mock CodeInput and PairingStatus
+vi.mock("../../../common/component/CodeInput", () => ({
+    CodeInput: ({ value }: { value?: string; mode?: string }) => (
+        <div data-testid="pairing-code" data-code={value ?? ""}>
+            {value}
         </div>
     ),
 }));
@@ -47,7 +53,7 @@ vi.mock("../PairingStatus", () => ({
 
 // Mock analytics
 vi.mock("../../../common/analytics", () => ({
-    trackAuthInitiated: vi.fn(),
+    trackEvent: vi.fn(),
 }));
 
 // Mock pairing client
@@ -89,6 +95,10 @@ describe("LaunchPairing", () => {
         };
     });
 
+    afterEach(() => {
+        cleanup();
+    });
+
     describe("initialization", () => {
         it("should call initiatePairing on mount", () => {
             render(<LaunchPairing />);
@@ -96,14 +106,12 @@ describe("LaunchPairing", () => {
             expect(mockInitiatePairing).toHaveBeenCalledTimes(1);
         });
 
-        it("should call trackAuthInitiated on mount", async () => {
-            const { trackAuthInitiated } = await import(
-                "../../../common/analytics"
-            );
+        it("emits pairing_initiated on mount", async () => {
+            const { trackEvent } = await import("../../../common/analytics");
             render(<LaunchPairing />);
 
-            expect(vi.mocked(trackAuthInitiated)).toHaveBeenCalledWith(
-                "pairing"
+            expect(vi.mocked(trackEvent)).toHaveBeenCalledWith(
+                "pairing_initiated"
             );
         });
 
@@ -181,18 +189,6 @@ describe("LaunchPairing", () => {
             expect(pairingCode).toBeInTheDocument();
             expect(pairingCode).toHaveAttribute("data-code", "123456");
         });
-
-        it("should use light theme by default", () => {
-            mockPairingState.pairing = {
-                id: "pairing-123",
-                code: "123456",
-            };
-
-            render(<LaunchPairing />);
-
-            const pairingCode = screen.getByTestId("pairing-code");
-            expect(pairingCode).toHaveAttribute("data-theme", "light");
-        });
     });
 
     describe("pairing status display", () => {
@@ -264,7 +260,7 @@ describe("LaunchPairing", () => {
             });
         });
 
-        it("should use dark theme when fullscreen is active", async () => {
+        it("should render the pairing code in both views when fullscreen is active", async () => {
             mockPairingState.pairing = {
                 id: "pairing-123",
                 code: "123456",
@@ -279,10 +275,7 @@ describe("LaunchPairing", () => {
 
             await waitFor(() => {
                 const pairingCodes = screen.getAllByTestId("pairing-code");
-                const darkCode = pairingCodes.find(
-                    (code) => code.getAttribute("data-theme") === "dark"
-                );
-                expect(darkCode).toBeInTheDocument();
+                expect(pairingCodes.length).toBeGreaterThan(1);
             });
         });
     });

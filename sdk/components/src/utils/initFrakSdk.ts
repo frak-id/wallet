@@ -1,5 +1,5 @@
 import * as coreSdkIndex from "@frak-labs/core-sdk";
-import { setupClient, withCache } from "@frak-labs/core-sdk";
+import { setupClient, trackEvent, withCache } from "@frak-labs/core-sdk";
 import * as coreSdkActions from "@frak-labs/core-sdk/actions";
 import { openWalletModal } from "../components/ButtonWallet/utils";
 import { dispatchClientReadyEvent } from "./clientReady";
@@ -26,7 +26,20 @@ export function initFrakSdk(): Promise<void> {
     return withCache(() => doInit(), {
         cacheKey: "frak-sdk-init",
         cacheTime: Number.POSITIVE_INFINITY,
-    }).catch(() => {});
+    }).catch((err: unknown) => {
+        // No client yet means the per-client OpenPanel instance isn't
+        // available. Fall back to `window.FrakSetup?.client` — it may have
+        // been populated by a prior doInit() run even if this one failed.
+        trackEvent(window.FrakSetup?.client, "sdk_init_failed", {
+            reason:
+                err instanceof Error
+                    ? err.message
+                    : typeof err === "string"
+                      ? err
+                      : "unknown",
+            config_missing: !window.FrakSetup?.config,
+        });
+    });
 }
 
 /**

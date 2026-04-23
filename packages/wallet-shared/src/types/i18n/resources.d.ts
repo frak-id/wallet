@@ -39,6 +39,60 @@ interface Resources {
                     title: "Authentication";
                 };
             };
+            sharingPage: {
+                card: {
+                    amount: "{{estimatedReward}}";
+                    label: "Credited to your account";
+                    tagline1: "Earn {{estimatedReward}},";
+                    tagline2: "on every purchase!";
+                };
+                confirmation: {
+                    benefits: {
+                        cashout: {
+                            description: "Transfer your earnings directly to your bank account in 3 clicks.";
+                            title: "Cash out whenever you want";
+                        };
+                        notify: {
+                            description: "Receive a notification when a purchase is made thanks to you.";
+                            title: "Get notified as soon as you earn";
+                        };
+                        wallet: {
+                            description: "No email, no password, no form. Simple, fast and secure.";
+                            title: "Your wallet secured in 10 seconds";
+                        };
+                    };
+                    cardPopupDescription: "A purchase was made through your link. {{estimatedReward}} has been transferred to your wallet.";
+                    cardPopupTitle: "You just won {{estimatedReward}}! 🎉";
+                    cta: "Collect my {{estimatedReward}}";
+                    shareAgain: "Share again";
+                    subtitle: "Install the Frak app, official partner of {{productName}}, and track your earnings in real time.";
+                    title: "Thank you for sharing!\nDon't miss out on your {{estimatedReward}}.";
+                };
+                dismiss: "Later";
+                faq: {
+                    a1: "Anyone can become an ambassador by sharing products through their unique link.";
+                    a2: "Your earnings depend on the brand's reward program and the number of purchases made through your link.";
+                    a3: "Your earnings are credited as soon as a purchase is confirmed through your sharing link.";
+                    a4: "Yes, everyone can create their own sharing link and become an ambassador too.";
+                    a5: "Frak enables brands to reward their community for word-of-mouth, in a transparent and decentralized way.";
+                    q1: 'Who can become an "ambassador"?';
+                    q2: "How much can I earn?";
+                    q3: "When do I get paid?";
+                    q4: 'Can my friends also become "ambassadors"?';
+                    q5: "Why do brands use Frak?";
+                    title: "Frequently asked questions";
+                };
+                reward: {
+                    tagline: "You earn a reward every time a friend makes a purchase through your link.";
+                    title: "Share with your friends";
+                };
+                steps: {
+                    "1": "Share in 1 click. A personal link is automatically generated with each share.";
+                    "2": "Earn on every purchase. Every order placed through your link earns you cash.";
+                    "3": "Collect your earnings in the app. Install FRAK to collect your earnings.";
+                    title: "";
+                };
+            };
             wallet: {
                 loggedIn: {
                     onboarding: {
@@ -66,17 +120,21 @@ interface Resources {
                 btn: {
                     existing: {
                         create: "Create a new wallet";
-                        login: "Connect with your wallet";
+                        login: "Use biometrics";
                     };
                     "new": {
-                        create: "Use biometrics to prove you're not a robot";
-                        login: "Connect an existing wallet";
+                        create: "Use biometrics";
+                        login: "Already have an existing wallet?";
                         phone: "Use a QR code to connect";
                     };
                 };
-                description: "Before continuing, please make sure you are using a device that belongs to you.<br />Frak is a solution allowing <strong>{{productName}}</strong> to reward its community for the help provided in promoting its offers. <strong>Frak is a decentralized and open-source solution, which does not store any personal or biometric data.</strong><br />To learn more about <strong>{{productName}}</strong>, please review our Privacy Policy and Terms of Use.";
+                description: "Frak does not store any personal or biometric data. By continuing you accept our <conditionsLink>terms</conditionsLink> and our <privacyLink>privacy policy</privacyLink>.";
                 header: {
                     title: "Login with Frak Wallet";
+                };
+                pairing: {
+                    description: "Scan this QR code to sign in from your mobile.";
+                    title: "Sign in with my mobile";
                 };
                 previousWallet: "Your wallet: <strong>{{wallet}}</strong>";
                 recover: "Recover wallet from file";
@@ -151,7 +209,8 @@ interface Resources {
         };
         explorer: {
             card: {
-                badge: "Up to {{amount}}€";
+                badge: "Up to {{amount}}";
+                until: "Until {{date}}";
             };
             detail: {
                 close: "Close";
@@ -162,16 +221,18 @@ interface Resources {
                 immediate: "Immediate";
                 instructions: "Instructions";
                 legal: "<termsLink>{{merchantName}}'s terms and conditions</termsLink> and <termsLink>FRAK's terms and conditions</termsLink> apply.";
+                pendingDays: "{{count}} day";
+                pendingDays_other: "{{count}} days";
                 readMore: "Read more";
                 refereeReward: "Reward as referee";
                 referrerReward: "Reward as referrer";
-                rewardPerReferral: "{{amount}}€ per referral";
+                rewardPerReferral: "{{amount}} per referral";
                 share: "Share";
                 shareAndEarn: "Share and earn";
                 step1Description: "A personal link is automatically generated with each share.";
                 step1Title: "Share a product with your friends";
                 step2Description: "Every order made through your link on {{name}} earns you cash directly in your wallet.";
-                step2Title: "Earn {{amount}}€ for every purchase you help generate";
+                step2Title: "Earn {{amount}} for every purchase you help generate";
                 step3Description: "In one click, transfer your earnings to your bank account.";
                 step3Title: "Collect your earnings in your wallet";
             };
@@ -187,11 +248,11 @@ interface Resources {
             description: "Paste it when opening the app. It will let you claim your rewards once logged in.";
             download: "Download the app";
             error: "Failed to generate code. Please refresh.";
-            infoDescription: "When opening the app, tap 'I have a recovery code'.";
+            infoDescription: 'When opening the app, tap <1>"I have a recovery code"</1>.';
             infoTitle: "Code valid for 3 days";
             loading: "Generating your code...";
             processing: "Setting up your wallet...";
-            title: "Copy this code";
+            title: "Don't lose your {{estimatedReward}}!\nCopy this code";
         };
         "mobile-sso": {
             appNotFound: "Frak Wallet app not found";
@@ -450,13 +511,13 @@ interface Resources {
             activateNotifications: "<strong>Enable notifications</strong> <br /> to be notified when your gains are paid";
             activateNotificationsRationale: "<strong>Enable notifications</strong> <br /> We need your permission to notify you when gains are paid";
             inAppBrowser: {
-                title: "Open in your browser";
-                description: "For a better experience, open this page in your default browser.";
-                cta: "Open browser";
                 clickToOpen: "Tap to open in your browser.";
                 clipboardAlert: "This browser doesn't support all features needed.\n\nThe link has been copied to your clipboard.\n\nTo continue:\n1. Open Safari\n2. Tap the address bar\n3. Paste and go";
                 clipboardManualAlert: "This browser doesn't support all features needed.\n\nAutomatic copy failed.\n\nCopy this link manually:\n{{url}}\n\nThen:\n1. Open Safari\n2. Tap the address bar\n3. Paste and go";
+                cta: "Open browser";
+                description: "For a better experience, open this page in your default browser.";
                 dismiss: "Dismiss inapp browser warning";
+                title: "Open in your browser";
                 warning: "You're using an embedded browser. Your experience may be degraded. Tap to open in your browser.";
             };
             installWebApp: "<strong>Install wallet on home screen</strong> <br /> to find your gains at any time";
@@ -466,9 +527,10 @@ interface Resources {
             };
             login: {
                 accountCreation: "Account creation";
-                button: "Recover your <strong>wallet</strong>";
+                button: "Use biometrics";
                 privy: "Connect via Privy";
                 recover: "Recover wallet from file";
+                title: "Log in to your wallet";
                 useQRCode: "Use QR code to connect";
                 walletsOnDevice: "Wallets used on this device";
             };
@@ -542,7 +604,7 @@ interface Resources {
                     title: "Signature request";
                 };
                 status: {
-                    connecting: "Connecting...";
+                    connecting: "Pairing in progress";
                     idle: "Idle";
                     paired: "Paired";
                 };

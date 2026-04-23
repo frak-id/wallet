@@ -4,9 +4,9 @@ import type {
     SendTransactionModalStepType,
 } from "@frak-labs/core-sdk";
 import { useDisplayModal } from "@frak-labs/react-sdk";
-import { Button } from "@frak-labs/ui/component/Button";
 import { BadgeCheck } from "lucide-react";
 import { encodeFunctionData, zeroAddress } from "viem";
+import { Button } from "@/module/common/component/Button";
 import { Panel } from "@/module/common/component/Panel";
 
 export function SendTransaction() {
@@ -19,7 +19,7 @@ export function SendTransaction() {
     } = useDisplayModal();
 
     return (
-        <Panel variant={"primary"}>
+        <Panel>
             <h2>Send transaction</h2>
 
             <p>

@@ -1,10 +1,10 @@
 import type { ReactNode } from "react";
-import styles from "./index.module.css";
+import { inner, main } from "./index.css";
 
 export function MainLayout({ children }: { children: ReactNode }) {
     return (
-        <main className={styles.main}>
-            <div className={styles.inner}>{children}</div>
+        <main className={main}>
+            <div className={inner}>{children}</div>
         </main>
     );
 }

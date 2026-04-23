@@ -1,10 +1,11 @@
 // Components
 
+// Utils
+export { buildSharingLink } from "./buildSharingLink";
 export type { PostShareConfirmationProps } from "./component/PostShareConfirmation";
 export { PostShareConfirmation } from "./component/PostShareConfirmation";
 export type { SharingPageProps } from "./component/SharingPage";
 export { SharingPage } from "./component/SharingPage";
-
 // Hooks
 export { useShareLink } from "./hooks/useShareLink";
 // Icons

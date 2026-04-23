@@ -54,15 +54,15 @@ function trackArrivalIfValid(
 
     if (isV2Context(frakContext)) {
         trackEvent(client, "user_referred_started", {
-            properties: {
-                referrerClientId: frakContext.c,
-                walletStatus: walletStatus?.key,
-            },
+            referrerClientId: frakContext.c,
+            referrerWallet: frakContext.w,
+            walletStatus: walletStatus?.key,
         });
         sendInteraction(client, {
             type: "arrival",
             referrerClientId: frakContext.c,
             referrerMerchantId: frakContext.m,
+            referrerWallet: frakContext.w,
             referralTimestamp: frakContext.t,
             landingUrl,
         });
@@ -71,10 +71,8 @@ function trackArrivalIfValid(
 
     if (isV1Context(frakContext)) {
         trackEvent(client, "user_referred_started", {
-            properties: {
-                referrer: frakContext.r,
-                walletStatus: walletStatus?.key,
-            },
+            referrer: frakContext.r,
+            walletStatus: walletStatus?.key,
         });
         sendInteraction(client, {
             type: "arrival",
@@ -89,16 +87,23 @@ function trackArrivalIfValid(
 
 /**
  * Build a V2 context representing the current user for URL replacement.
- * @returns A V2 context, or null if clientId or merchantId is unavailable
+ *
+ * Emits both `c` (anonymous clientId) and `w` (wallet) when available — wallet
+ * is the preferred identity signal and takes attribution precedence downstream.
+ * Returns null when neither identifier is available.
  */
-function buildCurrentUserContext(merchantId: string): FrakContextV2 | null {
+function buildCurrentUserContext(
+    merchantId: string,
+    wallet?: WalletStatusReturnType["wallet"]
+): FrakContextV2 | null {
     const clientId = getClientId();
-    if (!clientId) return null;
+    if (!clientId && !wallet) return null;
     return {
         v: 2,
-        c: clientId,
         m: merchantId,
         t: Math.floor(Date.now() / 1000),
+        ...(clientId ? { c: clientId } : {}),
+        ...(wallet ? { w: wallet } : {}),
     };
 }
 
@@ -111,7 +116,14 @@ function isSelfReferral(
     walletStatus?: WalletStatusReturnType
 ): boolean {
     if (isV2Context(frakContext)) {
-        return getClientId() === frakContext.c;
+        // Wallet match takes precedence — it's the strongest signal we have.
+        if (frakContext.w && walletStatus?.wallet) {
+            return isAddressEqual(frakContext.w, walletStatus.wallet);
+        }
+        if (frakContext.c) {
+            return getClientId() === frakContext.c;
+        }
+        return false;
     }
     if (isV1Context(frakContext) && walletStatus?.wallet) {
         return isAddressEqual(frakContext.r, walletStatus.wallet);
@@ -168,7 +180,7 @@ export function processReferral(
 
     const replaceContext =
         options?.alwaysAppendUrl && contextMerchantId
-            ? buildCurrentUserContext(contextMerchantId)
+            ? buildCurrentUserContext(contextMerchantId, walletStatus?.wallet)
             : null;
 
     FrakContextManager.replaceUrl({
@@ -177,9 +189,7 @@ export function processReferral(
     });
 
     trackEvent(client, "user_referred_completed", {
-        properties: {
-            status: "success",
-        },
+        status: "success",
     });
 
     return "success";
