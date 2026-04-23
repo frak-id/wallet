@@ -1,0 +1,13 @@
+# Automatically generated - DO NOT EDIT!
+
+"$schema" = "../../schemas/schema.json"
+
+[[permission]]
+identifier = "allow-set-recovery-hint"
+description = "Enables the set_recovery_hint command without any pre-configured scope."
+commands.allow = ["set_recovery_hint"]
+
+[[permission]]
+identifier = "deny-set-recovery-hint"
+description = "Denies the set_recovery_hint command without any pre-configured scope."
+commands.deny = ["set_recovery_hint"]

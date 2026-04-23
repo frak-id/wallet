@@ -110,6 +110,27 @@ The app is configured with Associated Domains for WebAuthn:
 
 This allows the app to share WebAuthn credentials with the web domain.
 
+#### iCloud Key-Value Storage (recovery hint)
+
+The app uses `NSUbiquitousKeyValueStore` via `tauri-plugin-recovery-hint` to persist a tiny hint (last authenticator id, wallet, login timestamp) that survives uninstall and syncs across the user's Apple devices.
+
+Required entitlements in `gen/apple/app_iOS/app_iOS.entitlements`:
+
+```xml
+<key>com.apple.developer.ubiquity-kvstore-identifier</key>
+<string>$(TeamIdentifierPrefix)id.frak.wallet</string>
+
+<key>keychain-access-groups</key>
+<array>
+    <string>$(AppIdentifierPrefix)id.frak.wallet</string>
+</array>
+```
+
+Required Apple Developer Portal configuration on the `id.frak.wallet` App ID:
+1. Enable the **iCloud** capability.
+2. Enable **Key-value storage** (no container needed — uses the App ID).
+3. Regenerate and re-download the provisioning profile.
+
 #### Code Signing
 
 - **Bundle ID**: `id.frak.wallet`
@@ -139,6 +160,7 @@ Android-specific Tauri plugins:
 - `tauri-plugin-webauthn`: Native WebAuthn support
 - `tauri-plugin-share`: File sharing (used for recovery file downloads)
 - `tauri-plugin-fs`: File system access
+- `tauri-plugin-recovery-hint`: Persistent recovery hint via Block Store (survives uninstall)
 
 #### Build Configuration
 

@@ -1,0 +1,13 @@
+# Automatically generated - DO NOT EDIT!
+
+"$schema" = "../../schemas/schema.json"
+
+[[permission]]
+identifier = "allow-clear-recovery-hint"
+description = "Enables the clear_recovery_hint command without any pre-configured scope."
+commands.allow = ["clear_recovery_hint"]
+
+[[permission]]
+identifier = "deny-clear-recovery-hint"
+description = "Denies the clear_recovery_hint command without any pre-configured scope."
+commands.deny = ["clear_recovery_hint"]

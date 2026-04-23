@@ -73,6 +73,13 @@ targets:
           - webcredentials:wallet.frak.id
           - applinks:wallet.frak.id
           - applinks:wallet-dev.frak.id
+        # iCloud Key-Value storage — tauri-plugin-recovery-hint uses this to
+        # persist a tiny recovery hint that survives uninstall.
+        com.apple.developer.ubiquity-kvstore-identifier: $(TeamIdentifierPrefix)$(CFBundleIdentifier)
+        # Keychain access group — fallback used by tauri-plugin-recovery-hint
+        # when iCloud KV is unavailable (iCloud-synced keychain item).
+        keychain-access-groups:
+          - $(AppIdentifierPrefix)id.frak.wallet
         # development here is correct — Xcode overrides to "production" when
         # exporting with --export-method app-store-connect (CI workflow).
         aps-environment: development

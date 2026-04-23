@@ -9,7 +9,15 @@ type AuthDemoFlow = FlowEvents<"auth_demo">;
 
 type StandaloneAuthEvents = {
     // Pre-flow clicks on the login screen
-    auth_login_method_selected: { method: "passkey" | "qr" };
+    auth_login_method_selected: {
+        method: "passkey" | "qr" | "register_redirect";
+        /**
+         * When method="passkey": did the user tap the pre-filled "use my
+         * account 0x…" shortcut ("existing"), or the generic "connect
+         * another account" button ("another")? Absent for QR / redirect.
+         */
+        origin?: "existing" | "another";
+    };
     auth_recovery_code_clicked: undefined;
     // Post-auth side-effects
     user_logged_in: undefined;

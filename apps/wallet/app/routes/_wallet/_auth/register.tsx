@@ -1,9 +1,9 @@
 import {
     authenticatorStorage,
     type Flow,
+    recoveryHintStorage,
     startFlow,
     trackEvent,
-    useLogin,
 } from "@frak-labs/wallet-shared";
 import { createFileRoute, redirect, useNavigate } from "@tanstack/react-router";
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -30,9 +30,21 @@ export const Route = createFileRoute("/_wallet/_auth/register")({
         const search = new URLSearchParams(location.search);
         if (search.has("new")) return;
 
-        // If the user already has passkeys stored, redirect to login
+        // If the user already has passkeys stored locally, redirect to login
         const previousAuthenticators = await authenticatorStorage.getAll();
         if (previousAuthenticators.length > 0) {
+            throw redirect({
+                to: "/login",
+                replace: true,
+            });
+        }
+
+        // Fresh install with no local state — still try the cross-platform
+        // recovery hint (iCloud KV / Block Store). If we find one, the user
+        // previously had a wallet on this Apple/Google account and should go
+        // through the login flow instead of registering a new one.
+        const hint = await recoveryHintStorage.get();
+        if (hint.lastAuthenticatorId && hint.lastWallet) {
             throw redirect({
                 to: "/login",
                 replace: true,
@@ -85,9 +97,10 @@ function RegisterPage() {
         setStep("notification");
     }, [closeModal, executePendingActions]);
 
-    const { login, isLoading: isLoginLoading } = useLogin({
-        onSuccess: advanceToNotification,
-    });
+    // NOTE: login is intentionally NOT performed on the register page.
+    // When the user taps "Already have an account?", we route them to
+    // /login so the dedicated login UX (existing-account shortcut,
+    // connect another account, QR pairing) can take over.
 
     const { permissionStatus, permissionGranted, hasBackendToken } =
         useNotificationStatus();
@@ -148,9 +161,8 @@ function RegisterPage() {
                         flowRef.current?.track("onboarding_action_clicked", {
                             action: "login",
                         });
-                        login();
+                        navigate({ to: "/login" });
                     }}
-                    isLoginLoading={isLoginLoading}
                     onRecoveryCodeClick={() => {
                         trackEvent("auth_recovery_code_clicked");
                         flowRef.current?.track("onboarding_action_clicked", {
