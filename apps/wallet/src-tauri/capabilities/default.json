@@ -15,6 +15,7 @@
         "install-referrer:allow-get-install-referrer",
         "frak-webauthn:default",
         "frak-share:default",
-        "clipboard-manager:allow-read-text"
+        "clipboard-manager:allow-read-text",
+        "recovery-hint:default"
     ]
 }

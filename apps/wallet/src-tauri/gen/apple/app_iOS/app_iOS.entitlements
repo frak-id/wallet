@@ -11,5 +11,11 @@
 		<string>applinks:wallet.frak.id</string>
 		<string>applinks:wallet-dev.frak.id</string>
 	</array>
+	<key>com.apple.developer.ubiquity-kvstore-identifier</key>
+	<string>$(TeamIdentifierPrefix)$(CFBundleIdentifier)</string>
+	<key>keychain-access-groups</key>
+	<array>
+		<string>$(AppIdentifierPrefix)id.frak.wallet</string>
+	</array>
 </dict>
 </plist>
