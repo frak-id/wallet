@@ -63,6 +63,59 @@ describe("Identity Merge Routes API", () => {
             });
         });
 
+        it("should accept wallet auth without sourceAnonymousId", async () => {
+            const expiresAt = new Date(Date.now() + 60 * 60 * 1000);
+            mockInitiateMerge.mockResolvedValue({
+                success: true,
+                mergeToken: "wallet-merge-token",
+                expiresAt,
+            });
+            JwtContextMock.wallet.verify.mockResolvedValueOnce({
+                address: "0xWalletAddress",
+            } as never);
+
+            const response = await identityMergeRoutes.handle(
+                new Request("http://localhost/merge/initiate", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "x-wallet-auth": "valid-wallet-jwt",
+                    },
+                    body: JSON.stringify({
+                        merchantId: "550e8400-e29b-41d4-a716-446655440000",
+                    }),
+                })
+            );
+
+            expect(response.status).toBe(200);
+            const data = await response.json();
+            expect(data.mergeToken).toBe("wallet-merge-token");
+            expect(mockInitiateMerge).toHaveBeenCalledWith({
+                sourceAnonymousId: undefined,
+                sourceWalletAddress: "0xWalletAddress",
+                merchantId: "550e8400-e29b-41d4-a716-446655440000",
+            });
+        });
+
+        it("should return 400 when neither wallet auth nor sourceAnonymousId is provided", async () => {
+            const response = await identityMergeRoutes.handle(
+                new Request("http://localhost/merge/initiate", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify({
+                        merchantId: "550e8400-e29b-41d4-a716-446655440000",
+                    }),
+                })
+            );
+
+            expect(response.status).toBe(400);
+            const data = await response.json();
+            expect(data.code).toBe("MISSING_SOURCE_IDENTITY");
+            expect(mockInitiateMerge).not.toHaveBeenCalled();
+        });
+
         it("should return 400 when source identity not found", async () => {
             mockInitiateMerge.mockResolvedValue({
                 success: false,

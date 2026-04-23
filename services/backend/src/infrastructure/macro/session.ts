@@ -1,6 +1,15 @@
 import { JwtContext } from "@backend-infrastructure";
 import { isRunningLocally } from "@frak-labs/app-essentials";
 import { Elysia, status, t } from "elysia";
+import type {
+    StaticWalletSdkTokenDto,
+    StaticWalletTokenDto,
+} from "../../domain/auth/models/WalletSessionDto";
+
+type OptionalWalletSession =
+    | StaticWalletTokenDto
+    | StaticWalletSdkTokenDto
+    | undefined;
 
 /**
  * Some default auth cookies props
@@ -58,6 +67,33 @@ export const sessionContext = new Elysia({
                 }
 
                 return status(401, "Unauthorized");
+            },
+        },
+        withOptionalWalletOrSdkAuthent: {
+            async resolve({
+                headers,
+            }): Promise<{ walletSession: OptionalWalletSession }> {
+                const walletAuth = headers["x-wallet-auth"];
+                if (walletAuth) {
+                    const walletAuthSession =
+                        await JwtContext.wallet.verify(walletAuth);
+                    if (walletAuthSession) {
+                        return { walletSession: walletAuthSession };
+                    }
+                }
+
+                const walletSdkAuth = headers["x-wallet-sdk-auth"];
+                if (walletSdkAuth) {
+                    const walletSdkAuthSession =
+                        await JwtContext.walletSdk.verify(walletSdkAuth);
+                    if (walletSdkAuthSession) {
+                        return { walletSession: walletSdkAuthSession };
+                    }
+                }
+
+                // No auth or invalid auth — return undefined session rather
+                // than 401 so the route can decide how to react.
+                return { walletSession: undefined };
             },
         },
         withWalletSdkAuthent: {

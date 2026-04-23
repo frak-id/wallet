@@ -1,7 +1,9 @@
 import { log } from "@backend-infrastructure";
+import type { Address } from "viem";
 import type { IdentityRepository } from "../../domain/identity/repositories/IdentityRepository";
 import type { AnonymousMergeService } from "../../domain/identity/services/AnonymousMergeService";
 import type { IdentityOrchestrator } from "./IdentityOrchestrator";
+import type { IdentityNode } from "./types";
 import { WalletConflictError } from "./types";
 
 type InitiateMergeResult =
@@ -20,36 +22,60 @@ export class AnonymousMergeOrchestrator {
     ) {}
 
     /**
-     * Initiate anonymous identity merge by generating a JWT token
+     * Initiate an identity merge by generating a JWT token bound to a source
+     * identity group and merchant.
      *
-     * IMPORTANT: This auto-creates the source identity if it doesn't exist yet.
-     * This is necessary because the SDK generates clientId on first page load,
-     * but the identity group is only created when user performs an action
-     * (tracking, auth, etc.). Without this, merge token generation would fail
-     * with "Source not found" error.
+     * Supports two source shapes:
+     *  1. Anonymous fingerprint (existing flow) — partner site SDK hands off
+     *     its `clientId` across browser contexts (e.g. in-app → external).
+     *  2. Authenticated wallet (explorer flow) — wallet app mints a token
+     *     representing the wallet identity so the merchant SDK can link the
+     *     wallet into its per-merchant anonymous group on arrival.
      *
-     * Pattern matches: /track/arrival, /wallet/auth/register, /wallet/auth/login
-     * All use identityOrchestrator.resolveAndAssociate() to create-or-get identity.
+     * IMPORTANT: Auto-creates the source identity group when only an
+     * anonymous fingerprint is provided. This is necessary because the SDK
+     * generates `clientId` on first page load, but the identity group is
+     * only created when the user performs an action (tracking, auth, etc.).
+     * Pattern matches: /track/arrival, /wallet/auth/register, /wallet/auth/login.
      */
     async initiateMerge(params: {
-        sourceAnonymousId: string;
         merchantId: string;
+        sourceAnonymousId?: string;
+        sourceWalletAddress?: Address;
     }): Promise<InitiateMergeResult> {
-        const { sourceAnonymousId, merchantId } = params;
+        const { sourceAnonymousId, sourceWalletAddress, merchantId } = params;
 
-        // Create source identity if it doesn't exist (idempotent)
-        // Same pattern as /track/arrival and auth endpoints
+        if (!sourceAnonymousId && !sourceWalletAddress) {
+            return {
+                success: false,
+                error: "sourceAnonymousId or sourceWalletAddress is required",
+                code: "MISSING_SOURCE_IDENTITY",
+            };
+        }
+
+        // Build source identity nodes. Wallet nodes are merchant-agnostic;
+        // anonymous fingerprints are scoped to the merchant.
+        const identityNodes: IdentityNode[] = [];
+        if (sourceWalletAddress) {
+            identityNodes.push({ type: "wallet", value: sourceWalletAddress });
+        }
+        if (sourceAnonymousId) {
+            identityNodes.push({
+                type: "anonymous_fingerprint",
+                value: sourceAnonymousId,
+                merchantId,
+            });
+        }
+
+        // resolveAndAssociate is idempotent and also merges the wallet ↔
+        // anon-fingerprint groups when both are provided (e.g. wallet app
+        // has both values in its context).
         const { finalGroupId: sourceGroupId } =
-            await this.identityOrchestrator.resolveAndAssociate([
-                {
-                    type: "anonymous_fingerprint",
-                    value: sourceAnonymousId,
-                    merchantId,
-                },
-            ]);
+            await this.identityOrchestrator.resolveAndAssociate(identityNodes);
 
         return this.anonymousMergeService.generateToken({
             sourceAnonymousId,
+            sourceWalletAddress,
             merchantId,
             sourceGroupId,
         });

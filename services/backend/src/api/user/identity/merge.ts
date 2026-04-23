@@ -1,17 +1,30 @@
-import { rateLimitMiddleware } from "@backend-infrastructure";
+import { rateLimitMiddleware, sessionContext } from "@backend-infrastructure";
 import { t } from "@backend-utils";
 import { Elysia, status } from "elysia";
 import { OrchestrationContext } from "../../../orchestration/context";
 
 export const identityMergeRoutes = new Elysia({ prefix: "/merge" })
+    .use(sessionContext)
     .use(rateLimitMiddleware({ windowMs: 60_000, maxRequests: 20 }))
     .post(
         "/initiate",
-        async ({ body }) => {
+        async ({ body, walletSession }) => {
+            // Wallet session (when the wallet app authenticates) supplies the
+            // source wallet identity. Anonymous SDK callers supply
+            // `sourceAnonymousId` in the body. At least one is required.
+            if (!walletSession && !body.sourceAnonymousId) {
+                return status(400, {
+                    success: false as const,
+                    error: "sourceAnonymousId is required when no wallet session is provided",
+                    code: "MISSING_SOURCE_IDENTITY",
+                });
+            }
+
             const result =
                 await OrchestrationContext.orchestrators.anonymousMerge.initiateMerge(
                     {
                         sourceAnonymousId: body.sourceAnonymousId,
+                        sourceWalletAddress: walletSession?.address,
                         merchantId: body.merchantId,
                     }
                 );
@@ -30,8 +43,11 @@ export const identityMergeRoutes = new Elysia({ prefix: "/merge" })
             };
         },
         {
+            // Wallet auth is optional here — anonymous SDK callers still hit
+            // this route without a session.
+            withOptionalWalletOrSdkAuthent: true,
             body: t.Object({
-                sourceAnonymousId: t.String(),
+                sourceAnonymousId: t.Optional(t.String()),
                 merchantId: t.String({ format: "uuid" }),
             }),
             response: {

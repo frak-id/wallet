@@ -28,6 +28,7 @@ import {
     clientIdStore,
     estimatedRewardsQueryOptions,
     formatEstimatedReward,
+    mergeTokenQueryOptions,
     sessionStore,
     trackEvent,
     ua,
@@ -84,13 +85,23 @@ export function ExplorerDetail({ merchant, onClose }: ExplorerDetailProps) {
         setNeedsReadMore(el.scrollHeight > el.clientHeight);
     }, [description, isDescriptionExpanded]);
 
+    // Merge token lets the merchant SDK link the wallet identity to its
+    // per-merchant anonymous session on arrival. Fetched via the shared
+    // queryOptions — only runs when a wallet session exists; otherwise the
+    // title link falls back to plain UTMs.
+    const { data: mergeToken } = useQuery({
+        ...mergeTokenQueryOptions({ merchantId: merchant.id }),
+        enabled: !!walletAddress,
+    });
+
     const brandLinkUrl = useMemo(() => {
         const url = new URL(`https://${merchant.domain}`);
         url.searchParams.set("utm_source", "frak");
         url.searchParams.set("utm_medium", "explorer");
         url.searchParams.set("utm_campaign", merchant.id);
+        if (mergeToken) url.searchParams.set("fmt", mergeToken);
         return url.toString();
-    }, [merchant.domain, merchant.id]);
+    }, [merchant.domain, merchant.id, mergeToken]);
 
     const shareUrl = useMemo(() => {
         const baseUrl = `https://${merchant.domain}`;

@@ -1,4 +1,5 @@
 import { JwtContext, log } from "@backend-infrastructure";
+import type { Address } from "viem";
 import type { IdentityRepository } from "../repositories/IdentityRepository";
 
 type GenerateTokenResult =
@@ -10,7 +11,8 @@ type ValidateTokenResult =
           success: true;
           sourceGroupId: string;
           sourceMerchantId: string;
-          sourceAnonymousId: string;
+          sourceAnonymousId?: string;
+          sourceWalletAddress?: Address;
       }
     | { success: false; error: string; code: string };
 
@@ -18,22 +20,30 @@ export class AnonymousMergeService {
     constructor(private readonly identityRepository: IdentityRepository) {}
 
     /**
-     * Generate a merge token for the source anonymous identity
+     * Generate a merge token for the source identity.
      *
-     * @param sourceGroupId - Pre-resolved identity group ID from orchestrator
+     * @param sourceGroupId - Pre-resolved identity group ID from orchestrator.
+     *   This is the only claim that drives runtime behavior on `execute`.
+     * @param sourceAnonymousId - Anonymous fingerprint value (logging only).
+     * @param sourceWalletAddress - Source wallet address (logging only).
      *
-     * NOTE: This service was simplified to receive sourceGroupId directly
-     * instead of looking it up. The orchestrator handles identity creation
-     * via identityOrchestrator.resolveAndAssociate() before calling this.
-     * This separates concerns: orchestrator handles identity lifecycle,
-     * service handles token generation.
+     * NOTE: The orchestrator handles identity creation via
+     * `identityOrchestrator.resolveAndAssociate()` before calling this,
+     * which keeps concerns split: orchestrator owns identity lifecycle,
+     * service owns token generation.
      */
     async generateToken(params: {
-        sourceAnonymousId: string;
         merchantId: string;
         sourceGroupId: string;
+        sourceAnonymousId?: string;
+        sourceWalletAddress?: Address;
     }): Promise<GenerateTokenResult> {
-        const { sourceAnonymousId, merchantId, sourceGroupId } = params;
+        const {
+            sourceAnonymousId,
+            sourceWalletAddress,
+            merchantId,
+            sourceGroupId,
+        } = params;
 
         // Generate the JWT (60-min expiration is configured in JwtContext)
         const expiresAt = new Date(Date.now() + 60 * 60 * 1000);
@@ -42,6 +52,7 @@ export class AnonymousMergeService {
             sourceGroupId,
             sourceMerchantId: merchantId,
             sourceAnonymousId,
+            sourceWalletAddress,
         });
 
         log.info(
@@ -99,6 +110,7 @@ export class AnonymousMergeService {
             sourceGroupId: tokenPayload.sourceGroupId,
             sourceMerchantId: tokenPayload.sourceMerchantId,
             sourceAnonymousId: tokenPayload.sourceAnonymousId,
+            sourceWalletAddress: tokenPayload.sourceWalletAddress,
         };
     }
 }
