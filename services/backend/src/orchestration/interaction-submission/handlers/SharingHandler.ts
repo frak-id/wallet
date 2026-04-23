@@ -38,13 +38,10 @@ export class SharingHandler
         input: SharingInput,
         context: HandlerContext
     ): Promise<CreateReferralLinkPayload> {
-        // Fialsafe check, should be validated in validateContext
-        if (!context.identity.walletAddress) {
-            throw new Error("Wallet address required for sharing interaction");
-        }
-
         return {
-            sharerWallet: context.identity.walletAddress as Address,
+            ...(context.identity.walletAddress && {
+                sharerWallet: context.identity.walletAddress as Address,
+            }),
             merchantId: input.merchantId,
             ...(input.sharingTimestamp !== undefined && {
                 sharingTimestamp: input.sharingTimestamp,
@@ -57,11 +54,5 @@ export class SharingHandler
 
     async postProcess(): Promise<SharingExtra> {
         return {};
-    }
-
-    validateContext(_input: SharingInput, context: HandlerContext): void {
-        if (!context.identity.walletAddress) {
-            throw new Error("Wallet address required for sharing interaction");
-        }
     }
 }
