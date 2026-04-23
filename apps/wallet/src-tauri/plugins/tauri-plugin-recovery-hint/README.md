@@ -50,20 +50,35 @@ user is signed into iCloud.
 2. Enable **Key-value storage** (no container needed — uses the App ID).
 3. Regenerate the provisioning profile.
 
-Storage limits: 1 MB total / 1 KB per value / 1024 keys. Our payload is
-well under 256 B so we're nowhere near those caps.
+Storage limits: 1 MB total per app / 1024 keys max (per-value cap is
+implicit via the total quota). Our payload is well under 256 B so we're
+nowhere near those caps.
 
-### Android — Google Block Store
+### Android — Google Block Store (+ SharedPreferences fallback)
 
-**Survives:** uninstall on the same device, and new-device setup when the
-user restores from Google Backup. Requires Google Play Services (present
-on all non-CN Android devices).
+**Primary backend:** Block Store. Survives uninstall on the same device,
+and new-device setup when the user restores from Google Backup. Requires
+Google Play Services.
 
 Already wired via `play-services-auth-blockstore` in the plugin's Android
-`build.gradle.kts`. No manifest changes required. Entries are encrypted
-by default. Cloud backup is enabled via `setShouldBackupToCloud(true)`.
+`build.gradle.kts`. Entries are encrypted by default. Cloud backup is
+gated on `isEndToEndEncryptionAvailable()` (Android 9+ with a screen lock)
+so we never ship the hint to Google without end-to-end encryption — the
+hint is non-sensitive but there's no reason to relax that.
 
-Storage limits: 16 KB per entry. We write < 256 B.
+Storage limits: 16 entries max / 4 KB per entry. We write < 256 B.
+
+**Fallback:** plain SharedPreferences, written to `frak.wallet.recovery_hint`
+and opted into **Android Auto Backup** + **Device-to-Device transfer** via
+`android:allowBackup="true"` plus `res/xml/backup_rules.xml` and
+`res/xml/data_extraction_rules.xml` in the app shell. This gives
+uninstall-survival on devices without Google Play Services (Huawei,
+Amazon Fire, custom ROMs) and complements Block Store's own restore path
+on the primary code path.
+
+The plugin detects Block Store availability at init via
+`GoogleApiAvailability.isGooglePlayServicesAvailable()` and transparently
+falls back when the service is missing or needs an update.
 
 ## Security notes
 

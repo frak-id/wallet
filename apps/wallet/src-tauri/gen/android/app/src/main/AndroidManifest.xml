@@ -6,6 +6,9 @@
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
         android:theme="@style/Theme.app.Splash"
+        android:allowBackup="true"
+        android:fullBackupContent="@xml/backup_rules"
+        android:dataExtractionRules="@xml/data_extraction_rules"
         android:usesCleartextTraffic="${usesCleartextTraffic}">
         <!-- Asset statements for WebAuthn Digital Asset Links verification -->
         <meta-data android:name="asset_statements" android:resource="@string/asset_statements" />

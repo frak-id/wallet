@@ -62,10 +62,12 @@ class FrakSharePlugin(activity: Activity) : Plugin(activity) {
         // apps (Messages, WhatsApp, Slack, ...) parse it out and render a
         // link preview. Keep the body + url order because most apps truncate
         // long bodies and we always want the link to survive.
+        // JSObject.getString() returns non-null with an empty-string default,
+        // so we branch on has* rather than null-check.
         val shareBody = when {
-            hasText && hasUrl -> "${text}\n${url}"
-            hasUrl -> url!!
-            else -> text!!
+            hasText && hasUrl -> "$text\n$url"
+            hasUrl -> url
+            else -> text
         }
 
         val thumbnailUri: Uri? = if (!imageUrl.isNullOrEmpty()) {
@@ -88,7 +90,7 @@ class FrakSharePlugin(activity: Activity) : Plugin(activity) {
                 // image as the preview tile. `FLAG_GRANT_READ_URI_PERMISSION`
                 // is required so the chooser (running in a different process)
                 // can read from our FileProvider.
-                clipData = ClipData.newRawUri(title ?: "", thumbnailUri)
+                clipData = ClipData.newRawUri(title, thumbnailUri)
                 addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
             }
         }

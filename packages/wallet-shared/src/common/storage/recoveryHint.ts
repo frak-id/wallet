@@ -24,6 +24,10 @@ const INVOKE_GET = "plugin:recovery-hint|get_recovery_hint";
 const INVOKE_SET = "plugin:recovery-hint|set_recovery_hint";
 const INVOKE_CLEAR = "plugin:recovery-hint|clear_recovery_hint";
 
+// The Rust plugin is gated behind `#[cfg(mobile)]` and the app only ships an
+// iOS + Android Tauri bundle, so `isTauri()` is the right guard — there's no
+// Tauri desktop target that would reject with "command not found".
+
 async function tauriInvoke<T>(cmd: string, args?: unknown): Promise<T> {
     const { invoke } = await import("@tauri-apps/api/core");
     return invoke<T>(cmd, args as Record<string, unknown> | undefined);
@@ -53,7 +57,12 @@ export const recoveryHintStorage = {
         try {
             const current = await recoveryHintStorage.get();
             const merged: RecoveryHint = { ...current, ...hint };
-            await tauriInvoke<void>(INVOKE_SET, { hint: merged });
+            // Args are passed flat (top-level) because the native plugins
+            // decode via `parseArgs(RecoveryHintArgs)` which expects the
+            // payload at the root of the invoke payload — matching the
+            // convention used by the sibling `frak-share` / `frak-webauthn`
+            // plugins.
+            await tauriInvoke<void>(INVOKE_SET, merged);
         } catch (err) {
             console.warn("recoveryHintStorage.set failed", err);
         }
