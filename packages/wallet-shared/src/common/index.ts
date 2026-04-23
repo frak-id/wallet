@@ -89,8 +89,8 @@ export { sdkKey } from "./queryKeys/sdk";
 // Storage
 export { authenticatorStorage } from "./storage/authenticators";
 export type { PreviousAuthenticatorModel } from "./storage/PreviousAuthenticatorModel";
-export { recoveryHintStorage } from "./storage/recoveryHint";
 export type { RecoveryHint } from "./storage/recoveryHint";
+export { recoveryHintStorage } from "./storage/recoveryHint";
 export { emitLifecycleEvent } from "./utils/lifecycleEvents";
 export { prefixModalCss } from "./utils/prefixModalCss";
 // Utils

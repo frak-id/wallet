@@ -149,7 +149,9 @@
             "recover": "Récupérer le porte-monnaie à partir du fichier",
             "walletsOnDevice": "Porte-monnaies utilisés sur cet appareil",
             "privy": "Connection via Privy",
-            "useQRCode": "Utiliser un QR code pour me connecter"
+            "useQRCode": "Utiliser un QR code pour me connecter",
+            "useMyAccount": "Utiliser mon compte <strong>{{address}}</strong>",
+            "anotherAccount": "Se connecter avec un autre compte"
         },
         "notifications": {
             "noNotifications": "Aucune notifications"

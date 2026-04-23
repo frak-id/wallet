@@ -527,10 +527,12 @@ interface Resources {
             };
             login: {
                 accountCreation: "Account creation";
+                anotherAccount: "Connect another account";
                 button: "Use biometrics";
                 privy: "Connect via Privy";
                 recover: "Recover wallet from file";
                 title: "Log in to your wallet";
+                useMyAccount: "Use my account <strong>{{address}}</strong>";
                 useQRCode: "Use QR code to connect";
                 walletsOnDevice: "Wallets used on this device";
             };
