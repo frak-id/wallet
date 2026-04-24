@@ -29,6 +29,10 @@ type MergeResult = {
     migratedReferralLinksReferrer: number;
     migratedReferralLinksReferee: number;
     deletedConflictingReferralLinks: number;
+    // Rows whose referrer and referee both belonged to the merge set before
+    // the referrer/referee updates were applied. Left alone, they would have
+    // become `(anchor, anchor)` self-loops (see deleteSelfLoopCandidatesInTrx).
+    deletedSelfLoopReferralLinks: number;
 };
 
 type BatchMergeResult = MergeResult & {
@@ -55,6 +59,7 @@ export class IdentityMergeService {
                 migratedReferralLinksReferrer: 0,
                 migratedReferralLinksReferee: 0,
                 deletedConflictingReferralLinks: 0,
+                deletedSelfLoopReferralLinks: 0,
                 mergedGroupIds: [],
                 previouslyMergedGroupIds: [],
             };
@@ -114,6 +119,15 @@ export class IdentityMergeService {
                     inArray(touchpointsTable.identityGroupId, mergingGroupIds)
                 )
                 .returning({ id: touchpointsTable.id });
+            // Self-loop guard: delete any referral_links row where BOTH
+            // endpoints are in the merge set. Left alone, the referrer/referee
+            // updates below would collapse the row to `(anchor, anchor)`,
+            // creating a self-referral that breaks chain walkers and reward
+            // distribution. Covers anchor↔merging in both directions and
+            // merging_i↔merging_j pairs. Must run BEFORE the updates.
+            const deletedSelfLoops =
+                await this.deleteSelfLoopCandidatesInTrx(trx, allGroupIds);
+
 
             const migratedReferrerResult = await trx
                 .update(referralLinksTable)
@@ -179,6 +193,7 @@ export class IdentityMergeService {
                 migratedReferralLinksReferrer: migratedReferrerResult.length,
                 migratedReferralLinksReferee: migratedRefereeResult.length,
                 deletedConflictingReferralLinks: deletedConflicts,
+                deletedSelfLoopReferralLinks: deletedSelfLoops,
                 mergedGroupIds: mergingGroupIds,
                 previouslyMergedGroupIds,
             };
@@ -282,6 +297,16 @@ export class IdentityMergeService {
                 .where(eq(touchpointsTable.identityGroupId, mergingGroupId))
                 .returning({ id: touchpointsTable.id });
 
+            // Self-loop guard — see mergeMultipleGroups for the full rationale.
+            // Must run BEFORE the referrer/referee updates that would otherwise
+            // collapse `(anchor, merging)` or `(merging, anchor)` rows to
+            // `(anchor, anchor)`.
+            const deletedSelfLoops =
+                await this.deleteSelfLoopCandidatesInTrx(trx, [
+                    anchorGroupId,
+                    mergingGroupId,
+                ]);
+
             const migratedReferrerResult = await trx
                 .update(referralLinksTable)
                 .set({ referrerIdentityGroupId: anchorGroupId })
@@ -344,6 +369,7 @@ export class IdentityMergeService {
                 migratedReferralLinksReferrer: migratedReferrerResult.length,
                 migratedReferralLinksReferee: migratedRefereeResult.length,
                 deletedConflictingReferralLinks: deletedConflicts,
+                deletedSelfLoopReferralLinks: deletedSelfLoops,
             };
 
             log.info(
@@ -444,6 +470,44 @@ export class IdentityMergeService {
         }
 
         return deleted;
+    }
+
+    /**
+     * Delete referral_links rows that would collapse to a self-loop
+     * (`referrer = referee`) once identity groups are merged.
+     *
+     * Covers two classes of rows:
+     *  - `(anchor, merging)` / `(merging, anchor)` in either scope — the
+     *    referrer/referee update steps would flip the orphan endpoint to
+     *    `anchor`, producing `(anchor, anchor)`.
+     *  - `(merging_i, merging_j)` when more than one group is merging at once
+     *    (from `mergeMultipleGroups`) — both endpoints become `anchor`.
+     *
+     * Must run BEFORE the referrer/referee migrations in the transaction.
+     * Self-loops break chain-walker termination logic (path guard still works
+     * but an extra hop is wasted) and, worse, would cause the reward pipeline
+     * to credit users as their own referrer via `findReferrerForReferee`.
+     */
+    private async deleteSelfLoopCandidatesInTrx(
+        trx: Parameters<Parameters<typeof db.transaction>[0]>[0],
+        allGroupIds: string[]
+    ): Promise<number> {
+        const result = await trx
+            .delete(referralLinksTable)
+            .where(
+                and(
+                    inArray(
+                        referralLinksTable.referrerIdentityGroupId,
+                        allGroupIds
+                    ),
+                    inArray(
+                        referralLinksTable.refereeIdentityGroupId,
+                        allGroupIds
+                    )
+                )
+            )
+            .returning({ id: referralLinksTable.id });
+        return result.length;
     }
 
     private async updateAnchorMergedGroupsInTrx(

@@ -81,6 +81,14 @@ export const referralLinksTable = pgTable(
             "referral_links_scope_merchant_check",
             sql`("scope" = 'merchant' AND "merchant_id" IS NOT NULL) OR ("scope" = 'cross_merchant' AND "merchant_id" IS NULL)`
         ),
+        // Self-loops are meaningless (a user cannot refer themselves) and
+        // break chain-walker termination plus the reward pipeline's
+        // `findReferrerForReferee`. Enforced at the DB as defence-in-depth
+        // against bugs in write paths like `IdentityMergeService`.
+        check(
+            "referral_links_no_self_loop_check",
+            sql`"referrer_identity_group_id" <> "referee_identity_group_id"`
+        ),
         // One referrer per user per merchant for scope='merchant'.
         uniqueIndex("referral_links_merchant_referee_unique")
             .on(table.merchantId, table.refereeIdentityGroupId)
