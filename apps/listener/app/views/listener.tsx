@@ -1,9 +1,10 @@
 import type { FrakLifecycleEvent } from "@frak-labs/core-sdk";
 import { createRpcListener } from "@frak-labs/frame-connector";
+import i18next from "i18next";
 import { useEffect } from "react";
 import { ListenerUiRenderer } from "@/module/component/ListenerUiRenderer";
 import {
-    createClientLifecycleHandler,
+    clientLifecycleHandler,
     emitConnected,
 } from "@/module/handlers/lifecycleHandler";
 import {
@@ -74,18 +75,28 @@ function ListenerContent() {
             return;
         }
 
-        // Track if we're ready to handle requests
-        let isReady = false;
-        const setReadyToHandleRequest = () => {
-            if (isReady) return;
-            isReady = true;
-            emitConnected();
+        // Emit `iframeLifecycle: "connected"` as soon as i18n is initialized
+        // so the partner UX contract — "if I emit ready, a click on a
+        // modal-triggering button must just work" — is honored. i18n is
+        // normally ready by the time this effect runs (resources are bundled,
+        // init is effectively synchronous), but we still subscribe to the
+        // event in case we lost the race.
+        //
+        // `emitConnected` is also wired up as the heartbeat callback below:
+        // calling it multiple times is safe because
+        // `iframeLifecycle: "connected"` is idempotent on the SDK side
+        // (`isConnectedDeferred.resolve` only triggers once, telemetry has
+        // its own `settled` flag). That's why we purposely do not guard these
+        // emits — the heartbeat is the recovery path if our first emit races
+        // the SDK's message-listener attach, or if version skew during a
+        // deployment leaves us talking to an SDK that only pings.
+        const emitWhenI18nReady = () => {
+            if (i18next.isInitialized) {
+                emitConnected();
+                return;
+            }
+            i18next.on("initialized", emitConnected);
         };
-
-        // Create lifecycle handler
-        const clientLifecycleHandler = createClientLifecycleHandler(
-            setReadyToHandleRequest
-        );
 
         // Create the listener with combined schema (IFrame + SSO)
         // This listener handles:
@@ -139,8 +150,12 @@ function ListenerContent() {
         // Register SSO handlers (SsoRpcSchema)
         listener.handle("sso_complete", handleSsoComplete);
 
+        // All handlers are wired up — signal readiness to the SDK.
+        emitWhenI18nReady();
+
         // On cleanup, destroy the listener
         return () => {
+            i18next.off("initialized", emitConnected);
             listener.cleanup();
         };
     }, [

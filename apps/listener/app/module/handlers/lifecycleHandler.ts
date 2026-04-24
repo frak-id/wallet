@@ -23,67 +23,67 @@ import { mapI18nConfig } from "@/module/utils/i18nMapper";
 import { processSsoCompletion } from "./ssoHandler";
 
 /**
- * Create a client lifecycle handler for the RPC listener
+ * Client lifecycle handler for the RPC listener.
  *
- * @param setReadyToHandleRequest - Callback to signal wallet is ready
- * @returns Lifecycle handler function
+ * Heartbeats trigger an `emitConnected()` — this is the fallback discovery
+ * path for the SDK (the primary push path is the `emitConnected()` call in the
+ * React effect on mount). Both paths emit the same idempotent
+ * `iframeLifecycle: "connected"` event.
  */
-export const createClientLifecycleHandler =
-    (
-        setReadyToHandleRequest: () => void
-    ): LifecycleHandler<FrakLifecycleEvent> =>
-    async (messageEvent, context) => {
-        if (!("clientLifecycle" in messageEvent)) return;
-        const { clientLifecycle: event, data } = messageEvent;
+export const clientLifecycleHandler: LifecycleHandler<
+    FrakLifecycleEvent
+> = async (messageEvent, context) => {
+    if (!("clientLifecycle" in messageEvent)) return;
+    const { clientLifecycle: event, data } = messageEvent;
 
-        switch (event) {
-            case "modal-css": {
-                const style = document.createElement("link");
-                style.rel = "stylesheet";
-                style.href = data.cssLink;
-                document.head.appendChild(style);
-                return;
-            }
-
-            case "modal-i18n": {
-                const override = data.i18n;
-                if (
-                    !override ||
-                    typeof override !== "object" ||
-                    Object.keys(override).length === 0
-                ) {
-                    return;
-                }
-                // Get the current i18n instance
-                const i18n = getI18n();
-                // Type assertion is safe here because we validate it's an object above
-                await mapI18nConfig(override, i18n);
-                return;
-            }
-
-            case "restore-backup": {
-                await handleRestoreBackup(data.backup, context);
-                return;
-            }
-
-            case "heartbeat": {
-                // Tell that we are rdy to handle request
-                setReadyToHandleRequest();
-                return;
-            }
-
-            case "resolved-config": {
-                await handleResolvedConfig(data, context);
-                return;
-            }
-
-            case "sso-redirect-complete": {
-                // Handle SSO redirect completion from SDK
-                await handleSsoRedirectComplete(data);
-                return;
-            }
+    switch (event) {
+        case "modal-css": {
+            const style = document.createElement("link");
+            style.rel = "stylesheet";
+            style.href = data.cssLink;
+            document.head.appendChild(style);
+            return;
         }
-    };
+
+        case "modal-i18n": {
+            const override = data.i18n;
+            if (
+                !override ||
+                typeof override !== "object" ||
+                Object.keys(override).length === 0
+            ) {
+                return;
+            }
+            // Get the current i18n instance
+            const i18n = getI18n();
+            // Type assertion is safe here because we validate it's an object above
+            await mapI18nConfig(override, i18n);
+            return;
+        }
+
+        case "restore-backup": {
+            await handleRestoreBackup(data.backup, context);
+            return;
+        }
+
+        case "heartbeat": {
+            // Fallback discovery path: SDK is polling until it hears back.
+            emitConnected();
+            return;
+        }
+
+        case "resolved-config": {
+            await handleResolvedConfig(data, context);
+            return;
+        }
+
+        case "sso-redirect-complete": {
+            // Handle SSO redirect completion from SDK
+            await handleSsoRedirectComplete(data);
+            return;
+        }
+    }
+};
 
 /**
  * Emit the "connected" lifecycle event so the SDK knows we're alive.
