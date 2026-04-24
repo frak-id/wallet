@@ -26,18 +26,16 @@ export class ReferralCodeRedemptionOrchestrator {
      * last resort.
      *
      * Rules:
-     *  - `NOT_FOUND` — the code does not exist (active or revoked).
+     *  - `NOT_FOUND` — the code does not exist, or has been revoked.
      *  - `SELF_REFERRAL` — the owner of the code is the caller.
      *  - `ALREADY_REDEEMED` — the caller already has a cross-merchant
      *    referrer (first redemption wins, no switching).
      *  - `WOULD_CYCLE` — inserting the edge would close a cycle anywhere in
      *    the referral graph (scope-agnostic check).
      *
-     * Lookup is scoped to `findByCode` (any row) rather than
-     * `findActiveByOwner` so that rotating a shared code does NOT break past
-     * redemptions AND a link still resolves if the code was shared while
-     * active and redeemed only after rotation (the FK captures the exact
-     * code row the redemption was for).
+     * Revoked codes are not redeemable. Existing `referral_links` rows that
+     * point to a now-revoked code via `referral_code_id` are preserved —
+     * revocation only blocks future redemptions.
      */
     async redeem(params: {
         code: string;
@@ -59,19 +57,6 @@ export class ReferralCodeRedemptionOrchestrator {
                 success: false,
                 error: "Cannot redeem your own referral code",
                 code: "SELF_REFERRAL",
-            };
-        }
-
-        const existing = await this.referralLinkRepository.findByReferee({
-            merchantId: null,
-            refereeIdentityGroupId,
-            scope: "cross_merchant",
-        });
-        if (existing) {
-            return {
-                success: false,
-                error: "A cross-merchant referrer is already registered",
-                code: "ALREADY_REDEEMED",
             };
         }
 

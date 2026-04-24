@@ -23,7 +23,6 @@ describe("ReferralCodeService.suggestWithStem", () => {
             findByCode: vi.fn(),
             create: vi.fn(),
             revokeActiveByOwner: vi.fn(),
-            deleteExpiredRevoked: vi.fn(),
         }) as unknown as ReferralCodeRepository & {
             filterAvailableCandidates: ReturnType<typeof vi.fn>;
         };
@@ -201,7 +200,6 @@ describe("ReferralCodeService.issue", () => {
             findByCode: vi.fn(),
             create: vi.fn(),
             revokeActiveByOwner: vi.fn(),
-            deleteExpiredRevoked: vi.fn(),
         }) as unknown as ReferralCodeRepository & {
             findActiveByOwner: ReturnType<typeof vi.fn>;
             create: ReturnType<typeof vi.fn>;

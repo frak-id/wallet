@@ -71,11 +71,8 @@ export const ReferralLinkScopeSchema = t.Union([
 ]);
 export type ReferralLinkScope = Static<typeof ReferralLinkScopeSchema>;
 
-// 'coupon' is reserved for the future merchant coupon feature (order rebate
-// + referral registration). Not used by Phase 1 referral-code redemption.
 export const ReferralLinkSourceSchema = t.Union([
     t.Literal("link"),
     t.Literal("code"),
-    t.Literal("coupon"),
 ]);
 export type ReferralLinkSource = Static<typeof ReferralLinkSourceSchema>;

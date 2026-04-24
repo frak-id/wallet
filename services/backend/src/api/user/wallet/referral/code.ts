@@ -31,34 +31,6 @@ const suggestIdentityLimit = createIdentityRateLimit({
 
 const tooManyRequests = () => status(429, "Too Many Requests");
 
-const getActiveRoute = new Elysia().use(sessionContext).get(
-    "",
-    async ({ walletSession }) => {
-        const ownerIdentityGroupId = await resolveWalletIdentityGroup(
-            walletSession.address
-        );
-        const active =
-            await ReferralCodeContext.services.referralCode.findActiveByOwner(
-                ownerIdentityGroupId
-            );
-
-        return {
-            code: active?.code ?? null,
-            createdAt: active?.createdAt.toISOString() ?? null,
-        };
-    },
-    {
-        withWalletAuthent: true,
-        response: {
-            401: t.String(),
-            200: t.Object({
-                code: t.Union([t.String(), t.Null()]),
-                createdAt: t.Union([t.String(), t.Null()]),
-            }),
-        },
-    }
-);
-
 const issueRoute = new Elysia()
     .use(sessionContext)
     .use(rateLimitMiddleware({ windowMs: 60_000, maxRequests: 5 }))
@@ -257,7 +229,6 @@ const suggestRoute = new Elysia()
     );
 
 export const referralCodeRoutes = new Elysia({ prefix: "/code" })
-    .use(getActiveRoute)
     .use(issueRoute)
     .use(revokeRoute)
     .use(redeemRoute)

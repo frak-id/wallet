@@ -24,9 +24,11 @@ export class ReferralLinkRepository {
     });
 
     /**
-     * Insert a referral link row. If a row already exists for the same
-     * (scope, merchantId, referee) combination, returns null — "first
-     * referrer wins" is the product rule.
+     * Insert a referral link row. Returns null when a unique constraint
+     * rejects the insert — the partial-unique indexes on `referral_links`
+     * enforce "first referrer wins" per-merchant (scope=merchant) and once
+     * globally (scope=cross_merchant). Callers map null to their own
+     * already-exists error code.
      *
      * Callers may omit `scope` / `source` — the schema defaults to
      * `scope='merchant'` and `source='link'`, which matches the existing
@@ -35,20 +37,10 @@ export class ReferralLinkRepository {
     async create(
         link: Omit<ReferralLinkInsert, "id" | "createdAt">
     ): Promise<ReferralLinkSelect | null> {
-        const scope = link.scope ?? "merchant";
-
-        const existing = await this.findByReferee({
-            merchantId: link.merchantId ?? null,
-            refereeIdentityGroupId: link.refereeIdentityGroupId,
-            scope,
-        });
-        if (existing) {
-            return null;
-        }
-
         const [result] = await db
             .insert(referralLinksTable)
             .values(link)
+            .onConflictDoNothing()
             .returning();
         return result ?? null;
     }
@@ -103,23 +95,34 @@ export class ReferralLinkRepository {
      * exist. This is the "erase by direct" rule: a per-merchant referrer
      * (set via touchpoint / referral link) takes precedence for that
      * merchant's reward distribution.
+     *
+     * Single query — scans both scopes in one pass and orders merchant rows
+     * first so `LIMIT 1` picks the winner. Hot path: runs on every reward
+     * event.
      */
     async findReferrerForReferee(
         merchantId: string,
         refereeIdentityGroupId: string
     ): Promise<ReferralLinkSelect | null> {
-        const merchantReferrer = await this.findByReferee({
-            merchantId,
-            refereeIdentityGroupId,
-            scope: "merchant",
-        });
-        if (merchantReferrer) return merchantReferrer;
-
-        return this.findByReferee({
-            merchantId: null,
-            refereeIdentityGroupId,
-            scope: "cross_merchant",
-        });
+        const [result] = await db
+            .select()
+            .from(referralLinksTable)
+            .where(
+                and(
+                    eq(
+                        referralLinksTable.refereeIdentityGroupId,
+                        refereeIdentityGroupId
+                    ),
+                    sql`(
+                        ("scope" = 'merchant' AND "merchant_id" = ${merchantId}::uuid)
+                        OR "scope" = 'cross_merchant'
+                    )`,
+                    sql`("expires_at" IS NULL OR "expires_at" > now())`
+                )
+            )
+            .orderBy(sql`("scope" = 'merchant') DESC`)
+            .limit(1);
+        return result ?? null;
     }
 
     /**

@@ -51,7 +51,7 @@ Therefore the natural home for the relationship is the existing `referral_links`
 | `install` interaction type | Deferred. Added only when the influencer-payout feature is built. |
 | Integration approach | Blend at the data layer: extend `referral_links` with `scope` + `source` rather than creating a parallel table. |
 | Terminology | `scope: 'merchant' \| 'cross_merchant'`. Drop "super referrer" — it's just a referrer with cross-merchant scope. |
-| Revocation grace period | Revoked rows remain redeemable for **14 days** and block re-issuance of the same 6-char string; a daily cron (`cleanupExpiredRevokedReferralCodes`) deletes them afterwards, freeing the string for reuse. |
+| Revocation behaviour | Revoke = archive. The revoked row stays in place (preserves `referral_links.referral_code_id` back-pointers for historical redemptions) but the code string stops resolving immediately and its 6-char value becomes available to any other user who claims it. No grace window, no cleanup cron. |
 | Rate limits | Every write route stacks IP + identity-group buckets. `/code/redeem` capped at **10 req/min/IP** plus 5/hour/identity. See [API > Rate limits](#rate-limits). |
 | Status endpoint scope | Global: single `GET /user/wallet/referral/status?merchantId=<optional>` returns owned code + cross-merchant referrer + merchant referrer in one payload. |
 
@@ -78,15 +78,13 @@ referral_codes {
 UNIQUE INDEX (code)                                         WHERE revoked_at IS NULL
 UNIQUE INDEX (owner_identity_group_id)                      WHERE revoked_at IS NULL
 
-// Supporting indexes:
-INDEX (owner_identity_group_id)
 ```
 
 Notes:
 
 - Partial unique on `code WHERE revoked_at IS NULL` keeps history addressable by `id` / FK while guaranteeing only one *active* row may hold a given code.
 - Partial unique on `owner_identity_group_id WHERE revoked_at IS NULL` enforces "one active code per owner" without preventing rotation history.
-- Revoked rows stay redeemable (and block re-issuance of the same 6-char string) for **14 days** — the grace period. A daily cleanup cron deletes rows whose `revoked_at` predates the window; the string becomes available for a fresh owner afterwards. Enforced in `ReferralCodeRepository.create` by widening the collision check to `revoked_at IS NULL OR revoked_at > now() - interval '14 days'`.
+- Revoked rows are archived-only. `findByCode` filters `WHERE revoked_at IS NULL`, so a revoked code stops resolving immediately. The row is kept so historical `referral_links.referral_code_id` pointers remain valid for future analytics / influencer-payout attribution. After revoke, the same 6-char string becomes claimable by a fresh owner — the partial unique `code WHERE revoked_at IS NULL` allows the re-issuance.
 
 ### Extended: `referral_links` (existing `attribution` domain)
 
@@ -186,17 +184,16 @@ class ReferralCodeService {
   // 409 if owner already has an active code.
   issue(ownerIdentityGroupId: string): Promise<{ code: string; createdAt: Date }>;
 
-  // Set revoked_at on active row; no replacement. Returns void.
-  // During the 14-day grace window the code stays redeemable against its
-  // original owner; callers that want a fresh code issue one separately
-  // (frontend composes revoke + issue).
+  // Set revoked_at on active row; no replacement. Returns void. After revoke
+  // the code stops resolving immediately (findByCode filters revoked rows),
+  // and the 6-char value is immediately claimable by a fresh owner.
   revoke(ownerIdentityGroupId: string): Promise<void>;
 
   // Active row only, null if owner never issued or revoked.
   findActiveByOwner(ownerIdentityGroupId: string): Promise<ReferralCodeSelect | null>;
 
-  // Any row matching the code — active OR revoked — used during redemption to
-  // preserve the referrer relationship even if the code was revoked afterwards.
+  // Active row only. Revoked codes do not resolve — revoke = no more
+  // redemptions. Historical referral_links rows retain their referral_code_id.
   findByCode(code: string): Promise<ReferralCodeSelect | null>;
 
   // Return up to `count` available 6-char codes that contain the 3- or
@@ -416,7 +413,7 @@ POST /user/wallet/referral/code/issue  { code: "QUEN42" }  → { code, createdAt
 
 **Owner — swap to a new code**
 ```
-DELETE /user/wallet/referral/code            → 204 (old code stays redeemable for 14 days)
+DELETE /user/wallet/referral/code            → 204 (code stops resolving immediately; 6-char string is reusable)
 POST   /user/wallet/referral/code/issue      → { code, createdAt }   // or with `{ code }` for a picked one
 ```
 
@@ -453,8 +450,8 @@ Designed into the schema. Untouched in Phase 1 code.
 Resolved from the initial open questions:
 
 1. **Status endpoint scope** — broadened to `GET /user/wallet/referral/status`. Returns owned code + cross-merchant referrer unconditionally, plus merchant-scoped referrer when `?merchantId=<uuid>` is supplied. One-stop shop for the wallet Settings UI.
-2. **Revocation behaviour** — revoked codes stay valid for 14 days (the grace window). During that window, redemption still succeeds and resolves to the original owner; the same 6-char string is blocked from re-issuance. A daily cron (`cleanupExpiredRevokedReferralCodes`) deletes rows past the window and frees the string for reuse.
+2. **Revocation behaviour** — revoke = archive. The row stays for historical FK integrity (`referral_links.referral_code_id`) but `findByCode` filters it out, so no new redemptions resolve. The 6-char string is immediately claimable by a fresh owner via the partial unique `code WHERE revoked_at IS NULL`. No grace window, no cleanup cron.
 3. **Redemption rate limit** — 10 req/min/IP paired with a per-identity bucket of 5/hour/identity. The per-identity bucket (via `createIdentityRateLimit` in `infrastructure/rateLimit/identityRateLimit.ts`) is also applied to `POST /code/issue` and `DELETE /code` at 5/hour each.
-4. **Rotation route dropped** — `POST /code/rotate` is gone. Composition of `DELETE /code` then `POST /code/issue` covers the use case without sacrificing anything: the 14-day grace window preserves continuity for outstanding shares, and the service-level `rotate` was never atomic anyway.
+4. **Rotation route dropped** — `POST /code/rotate` is gone. Composition of `DELETE /code` then `POST /code/issue` covers the use case. The atomicity gap is minor: an owner briefly has no active code between the two calls, during which their old code no longer resolves.
 
 Routes moved from `/user/wallet/referral-code/*` to `/user/wallet/referral/{code/*,status}` to make room for the broader status endpoint.

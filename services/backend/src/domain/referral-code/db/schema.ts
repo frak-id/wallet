@@ -1,6 +1,5 @@
 import { sql } from "drizzle-orm";
 import {
-    index,
     pgTable,
     timestamp,
     uniqueIndex,
@@ -29,7 +28,6 @@ export const referralCodesTable = pgTable(
         uniqueIndex("referral_codes_owner_active_idx")
             .on(table.ownerIdentityGroupId)
             .where(sql`"revoked_at" IS NULL`),
-        index("referral_codes_owner_idx").on(table.ownerIdentityGroupId),
     ]
 );
 
