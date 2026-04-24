@@ -7,5 +7,12 @@ export type {
 } from "./events";
 export { MutexCron } from "./mutexCron";
 export { processCss, processScopedCss } from "./processCss";
+export {
+    CANDIDATE_BATCH_SIZE,
+    CODE_ALPHABET,
+    CODE_LENGTH,
+    generateCandidates,
+    generateCode,
+} from "./sixDigitCode";
 
 export { type TokenAmount, t } from "./typebox/typeSystem";

@@ -28,10 +28,11 @@ export const merchantReferralStatusRoute = new Elysia().get(
 
         // Check if the user has a referral link as referee for this merchant
         const referralLink =
-            await AttributionContext.repositories.referralLink.findByReferee(
+            await AttributionContext.repositories.referralLink.findByReferee({
                 merchantId,
-                identityGroupId
-            );
+                refereeIdentityGroupId: identityGroupId,
+                scope: "merchant",
+            });
 
         return {
             isReferred: referralLink !== null,

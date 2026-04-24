@@ -9,6 +9,10 @@ export {
 export { ReferralLinkRepository } from "./repositories/ReferralLinkRepository";
 export { TouchpointRepository } from "./repositories/TouchpointRepository";
 export {
+    type ReferralLinkScope,
+    ReferralLinkScopeSchema,
+    type ReferralLinkSource,
+    ReferralLinkSourceSchema,
     type TouchpointSource,
     type TouchpointSourceData,
     TouchpointSourceDataSchema,

@@ -1,5 +1,5 @@
 import { db, log } from "@backend-infrastructure";
-import { and, eq, inArray } from "drizzle-orm";
+import { and, eq, inArray, sql } from "drizzle-orm";
 import {
     referralLinksTable,
     touchpointsTable,
@@ -364,33 +364,86 @@ export class IdentityMergeService {
         anchorGroupId: string,
         mergingGroupId: string
     ): Promise<number> {
-        const anchorRefereeLinks = await trx
+        // Merchant-scoped conflicts: the anchor already has a referrer for
+        // some merchants, so merging's referee rows on those same merchants
+        // would violate the partial unique on (merchant_id, referee) after
+        // the referee migration.
+        const anchorMerchantRefereeLinks = await trx
             .select({ merchantId: referralLinksTable.merchantId })
             .from(referralLinksTable)
-            .where(
-                eq(referralLinksTable.refereeIdentityGroupId, anchorGroupId)
-            );
-
-        const anchorMerchantIds = anchorRefereeLinks.map((l) => l.merchantId);
-
-        if (anchorMerchantIds.length === 0) {
-            return 0;
-        }
-
-        const deletedResult = await trx
-            .delete(referralLinksTable)
             .where(
                 and(
                     eq(
                         referralLinksTable.refereeIdentityGroupId,
-                        mergingGroupId
+                        anchorGroupId
                     ),
-                    inArray(referralLinksTable.merchantId, anchorMerchantIds)
+                    eq(referralLinksTable.scope, "merchant")
+                )
+            );
+
+        const anchorMerchantIds = anchorMerchantRefereeLinks
+            .map((l) => l.merchantId)
+            .filter((id): id is string => id !== null);
+
+        let deleted = 0;
+
+        if (anchorMerchantIds.length > 0) {
+            const deletedMerchantResult = await trx
+                .delete(referralLinksTable)
+                .where(
+                    and(
+                        eq(
+                            referralLinksTable.refereeIdentityGroupId,
+                            mergingGroupId
+                        ),
+                        eq(referralLinksTable.scope, "merchant"),
+                        // `inArray` rejects nullable columns in the current
+                        // Drizzle version; raw-SQL snippet keeps the same
+                        // semantics without losing the NOT NULL implication.
+                        sql`${referralLinksTable.merchantId} IN (${sql.join(
+                            anchorMerchantIds.map((id) => sql`${id}::uuid`),
+                            sql`, `
+                        )})`
+                    )
+                )
+                .returning({ id: referralLinksTable.id });
+            deleted += deletedMerchantResult.length;
+        }
+
+        // Cross-merchant conflict: the `(referee) WHERE scope='cross_merchant'`
+        // partial unique allows only one row per user; drop the merging row
+        // if the anchor already has one.
+        const [anchorCrossMerchant] = await trx
+            .select({ id: referralLinksTable.id })
+            .from(referralLinksTable)
+            .where(
+                and(
+                    eq(
+                        referralLinksTable.refereeIdentityGroupId,
+                        anchorGroupId
+                    ),
+                    eq(referralLinksTable.scope, "cross_merchant")
                 )
             )
-            .returning({ id: referralLinksTable.id });
+            .limit(1);
 
-        return deletedResult.length;
+        if (anchorCrossMerchant) {
+            const deletedCrossResult = await trx
+                .delete(referralLinksTable)
+                .where(
+                    and(
+                        eq(
+                            referralLinksTable.refereeIdentityGroupId,
+                            mergingGroupId
+                        ),
+                        eq(referralLinksTable.scope, "cross_merchant")
+                    )
+                )
+                .returning({ id: referralLinksTable.id });
+            deleted += deletedCrossResult.length;
+        }
+
+        return deleted;
     }
 
     private async updateAnchorMergedGroupsInTrx(

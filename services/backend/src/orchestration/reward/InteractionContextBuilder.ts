@@ -1,4 +1,5 @@
 import type { Address } from "viem";
+import type { ReferralLinkRepository } from "../../domain/attribution/repositories/ReferralLinkRepository";
 import type { AttributionService } from "../../domain/attribution/services/AttributionService";
 import type { PurchaseContext } from "../../domain/campaign";
 import type { IdentityRepository } from "../../domain/identity";
@@ -16,7 +17,8 @@ import type {
 export class InteractionContextBuilder {
     constructor(
         private readonly attributionService: AttributionService,
-        private readonly identityRepository: IdentityRepository
+        private readonly identityRepository: IdentityRepository,
+        private readonly referralLinkRepository: ReferralLinkRepository
     ) {}
 
     async build(
@@ -30,12 +32,26 @@ export class InteractionContextBuilder {
             merchantId,
         });
 
-        // Get the referrer identity group
-        const referrerIdentityGroup = attribution.referrerIdentity
-            ? await this.identityRepository.findGroupByIdentity(
-                  attribution.referrerIdentity
-              )
+        // Touchpoint-derived referrer (merchant-scoped arrival attribution)
+        // takes precedence; cross-merchant referrers (referral-code
+        // redemptions) act as the fallback referrer-of-last-resort.
+        const touchpointReferrerId = attribution.referrerIdentity
+            ? ((
+                  await this.identityRepository.findGroupByIdentity(
+                      attribution.referrerIdentity
+                  )
+              )?.id ?? null)
             : null;
+
+        const referrerIdentityGroupId =
+            touchpointReferrerId ??
+            (
+                await this.referralLinkRepository.findReferrerForReferee(
+                    merchantId,
+                    identityGroupId
+                )
+            )?.referrerIdentityGroupId ??
+            null;
 
         const { trigger, typeContext } = this.buildTypeSpecific(interaction);
 
@@ -46,7 +62,7 @@ export class InteractionContextBuilder {
                 attribution: {
                     source: attribution.source,
                     touchpointId: attribution.touchpointId,
-                    referrerIdentityGroupId: referrerIdentityGroup?.id ?? null,
+                    referrerIdentityGroupId,
                 },
                 user: {
                     identityGroupId,

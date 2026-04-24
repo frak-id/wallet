@@ -60,3 +60,22 @@ export const TouchpointSourceDataSchema = t.Union([
     DirectSourceDataSchema,
 ]);
 export type TouchpointSourceData = Static<typeof TouchpointSourceDataSchema>;
+
+// =============================================================================
+// REFERRAL LINK SCHEMAS
+// =============================================================================
+
+export const ReferralLinkScopeSchema = t.Union([
+    t.Literal("merchant"),
+    t.Literal("cross_merchant"),
+]);
+export type ReferralLinkScope = Static<typeof ReferralLinkScopeSchema>;
+
+// 'coupon' is reserved for the future merchant coupon feature (order rebate
+// + referral registration). Not used by Phase 1 referral-code redemption.
+export const ReferralLinkSourceSchema = t.Union([
+    t.Literal("link"),
+    t.Literal("code"),
+    t.Literal("coupon"),
+]);
+export type ReferralLinkSource = Static<typeof ReferralLinkSourceSchema>;

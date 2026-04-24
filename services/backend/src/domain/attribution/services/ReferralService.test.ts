@@ -59,9 +59,11 @@ describe("ReferralService", () => {
         it("should block when referee already has a referrer", async () => {
             repository.findByReferee.mockResolvedValue({
                 id: "existing-link",
+                scope: "merchant",
                 merchantId,
                 referrerIdentityGroupId: groupB,
                 refereeIdentityGroupId: groupC,
+                source: "link",
             });
 
             const result = await service.registerReferral({
@@ -86,7 +88,6 @@ describe("ReferralService", () => {
 
             expect(result.registered).toBe(false);
             expect(repository.wouldCreateCycle).toHaveBeenCalledWith(
-                merchantId,
                 groupA,
                 groupB
             );
@@ -112,9 +113,11 @@ describe("ReferralService", () => {
             repository.wouldCreateCycle.mockResolvedValue(false);
             repository.create.mockResolvedValue({
                 id: "new-link",
+                scope: "merchant",
                 merchantId,
                 referrerIdentityGroupId: groupA,
                 refereeIdentityGroupId: groupB,
+                source: "link",
             });
 
             const result = await service.registerReferral({
@@ -125,9 +128,11 @@ describe("ReferralService", () => {
 
             expect(result.registered).toBe(true);
             expect(repository.create).toHaveBeenCalledWith({
+                scope: "merchant",
                 merchantId,
                 referrerIdentityGroupId: groupA,
                 refereeIdentityGroupId: groupB,
+                source: "link",
             });
         });
 

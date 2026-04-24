@@ -32,6 +32,7 @@ import {
     purchaseItemsTable,
     purchasesTable,
 } from "../../domain/purchases/db/schema";
+import { referralCodesTable } from "../../domain/referral-code/db/schema";
 import {
     assetLogsTable,
     interactionLogsTable,
@@ -63,6 +64,7 @@ export const db = drizzle({
         identityGroupsTable,
         identityNodesTable,
         installCodesTable,
+        referralCodesTable,
         merchantsTable,
         merchantAdminsTable,
         merchantOwnershipTransfersTable,

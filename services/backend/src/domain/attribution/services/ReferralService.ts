@@ -24,10 +24,11 @@ export class ReferralService {
             return { registered: false };
         }
 
-        const existing = await this.repository.findByReferee(
-            params.merchantId,
-            params.refereeIdentityGroupId
-        );
+        const existing = await this.repository.findByReferee({
+            merchantId: params.merchantId,
+            refereeIdentityGroupId: params.refereeIdentityGroupId,
+            scope: "merchant",
+        });
 
         if (existing) {
             log.debug(
@@ -48,7 +49,6 @@ export class ReferralService {
         // No depth ceiling — CTE explores the full chain with path-based
         // cycle detection to guarantee termination
         const wouldCycle = await this.repository.wouldCreateCycle(
-            params.merchantId,
             params.referrerIdentityGroupId,
             params.refereeIdentityGroupId
         );
@@ -65,9 +65,11 @@ export class ReferralService {
         }
 
         const created = await this.repository.create({
+            scope: "merchant",
             merchantId: params.merchantId,
             referrerIdentityGroupId: params.referrerIdentityGroupId,
             refereeIdentityGroupId: params.refereeIdentityGroupId,
+            source: "link",
         });
 
         if (!created) {

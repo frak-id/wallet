@@ -5,6 +5,7 @@ import { IdentityContext } from "../domain/identity/context";
 import { MerchantContext } from "../domain/merchant/context";
 import { NotificationContext } from "../domain/notifications/context";
 import { PurchasesContext } from "../domain/purchases/context";
+import { ReferralCodeContext } from "../domain/referral-code/context";
 import { RewardsContext } from "../domain/rewards/context";
 import { WalletContext } from "../domain/wallet/context";
 import { pricingRepository } from "../infrastructure/pricing/PricingRepository";
@@ -25,6 +26,7 @@ import { PurchaseLinkingOrchestrator } from "./PurchaseLinkingOrchestrator";
 import { PurchaseWebhookOrchestrator } from "./PurchaseWebhookOrchestrator";
 import { RewardExpirationOrchestrator } from "./RewardExpirationOrchestrator";
 import { RewardHistoryOrchestrator } from "./RewardHistoryOrchestrator";
+import { ReferralCodeRedemptionOrchestrator } from "./referral-code";
 import { InteractionContextBuilder } from "./reward";
 import { SettlementOrchestrator } from "./SettlementOrchestrator";
 import { WebhookResolverOrchestrator } from "./WebhookResolverOrchestrator";
@@ -48,7 +50,8 @@ const identityOrchestrator = new IdentityOrchestrator(
 
 const interactionContextBuilder = new InteractionContextBuilder(
     AttributionContext.services.attribution,
-    IdentityContext.repositories.identity
+    IdentityContext.repositories.identity,
+    AttributionContext.repositories.referralLink
 );
 
 const notificationOrchestrator = new NotificationOrchestrator(
@@ -128,6 +131,12 @@ const anonymousMergeOrchestrator = new AnonymousMergeOrchestrator(
     identityOrchestrator
 );
 
+const referralCodeRedemptionOrchestrator =
+    new ReferralCodeRedemptionOrchestrator(
+        ReferralCodeContext.services.referralCode,
+        AttributionContext.repositories.referralLink
+    );
+
 export namespace OrchestrationContext {
     export const orchestrators = {
         explorer: explorerOrchestrator,
@@ -144,5 +153,6 @@ export namespace OrchestrationContext {
         rewardHistory: rewardHistoryOrchestrator,
         settlement: settlementOrchestrator,
         webhookResolver: webhookResolverOrchestrator,
+        referralCodeRedemption: referralCodeRedemptionOrchestrator,
     };
 }
