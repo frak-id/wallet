@@ -1,9 +1,8 @@
-import { sessionContext } from "@backend-infrastructure";
+import { identityContext } from "@backend-infrastructure";
 import { t } from "@backend-utils";
-import { Elysia } from "elysia";
+import { Elysia, status } from "elysia";
 import { AttributionContext } from "../../../../domain/attribution/context";
 import { ReferralCodeContext } from "../../../../domain/referral-code/context";
-import { resolveWalletIdentityGroup } from "./identity";
 
 /**
  * Global referral status for the authenticated wallet. One-stop shop for
@@ -14,13 +13,10 @@ import { resolveWalletIdentityGroup } from "./identity";
  * included; without it, only the cross-merchant referrer (and the owned
  * code) are returned.
  */
-export const referralStatusRoute = new Elysia().use(sessionContext).get(
+export const referralStatusRoute = new Elysia().use(identityContext).get(
     "/status",
-    async ({ walletSession, query }) => {
-        const identityGroupId = await resolveWalletIdentityGroup(
-            walletSession.address
-        );
-
+    async ({ identityGroupId, query }) => {
+        if (!identityGroupId) return status(401, "Unauthorized");
         const [ownedCode, crossMerchantLink, merchantLink] = await Promise.all([
             ReferralCodeContext.services.referralCode.findActiveByOwner(
                 identityGroupId
@@ -60,7 +56,7 @@ export const referralStatusRoute = new Elysia().use(sessionContext).get(
         };
     },
     {
-        withWalletAuthent: true,
+        withAuthedIdentity: true,
         query: t.Object({
             merchantId: t.Optional(t.String({ format: "uuid" })),
         }),

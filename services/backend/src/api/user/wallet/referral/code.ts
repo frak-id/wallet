@@ -1,52 +1,36 @@
-import {
-    createIdentityRateLimit,
-    rateLimitMiddleware,
-    sessionContext,
-} from "@backend-infrastructure";
+import { identityContext, rateLimitMiddleware } from "@backend-infrastructure";
 import { t } from "@backend-utils";
 import { Elysia, status } from "elysia";
 import { ReferralCodeContext } from "../../../../domain/referral-code/context";
 import { OrchestrationContext } from "../../../../orchestration/context";
-import { resolveWalletIdentityGroup } from "./identity";
 
-// Per-identity rate limits — complement the IP-based limits below so that a
-// single user cannot burn through budget across different networks. Tuned
-// for genuine user actions; not a DDoS defence (IP limits cover that).
-const issueIdentityLimit = createIdentityRateLimit({
-    windowMs: 60 * 60_000,
-    maxRequests: 5,
-});
-const revokeIdentityLimit = createIdentityRateLimit({
-    windowMs: 60 * 60_000,
-    maxRequests: 5,
-});
-const redeemIdentityLimit = createIdentityRateLimit({
-    windowMs: 60 * 60_000,
-    maxRequests: 5,
-});
-const suggestIdentityLimit = createIdentityRateLimit({
-    windowMs: 60 * 60_000,
-    maxRequests: 20,
-});
-
-const tooManyRequests = () => status(429, "Too Many Requests");
+// Every write route stacks an IP bucket (DDoS defence) with an identity
+// bucket (prevents a single user fanning out across networks). The identity
+// bucket reads `identityGroupId` resolved by `identityContext`.
+// biome-ignore lint/suspicious/noExplicitAny: Elysia's scoped-plugin context type does not carry plugin-resolved fields through to `onBeforeHandle`.
+const identityKey = (ctx: any): string | null => {
+    const id = ctx.identityGroupId as string | null | undefined;
+    return id ? `identity:${id}` : null;
+};
 
 const issueRoute = new Elysia()
-    .use(sessionContext)
+    .use(identityContext)
     .use(rateLimitMiddleware({ windowMs: 60_000, maxRequests: 5 }))
+    .use(
+        rateLimitMiddleware({
+            windowMs: 60 * 60_000,
+            maxRequests: 5,
+            keyExtractor: identityKey,
+        })
+    )
     .post(
         "/issue",
-        async ({ walletSession, body }) => {
-            const ownerIdentityGroupId = await resolveWalletIdentityGroup(
-                walletSession.address
-            );
-            if (!issueIdentityLimit.consume(ownerIdentityGroupId)) {
-                return tooManyRequests();
-            }
-
+        async ({ identityGroupId, body }) => {
+            // `withAuthedIdentity` guarantees identityGroupId is set.
+            if (!identityGroupId) return status(401, "Unauthorized");
             const result =
                 await ReferralCodeContext.services.referralCode.issue({
-                    ownerIdentityGroupId,
+                    ownerIdentityGroupId: identityGroupId,
                     preferredCode: body?.code,
                 });
 
@@ -72,7 +56,7 @@ const issueRoute = new Elysia()
             };
         },
         {
-            withWalletAuthent: true,
+            withAuthedIdentity: true,
             body: t.Optional(
                 t.Object({
                     code: t.Optional(
@@ -97,24 +81,26 @@ const issueRoute = new Elysia()
     );
 
 const revokeRoute = new Elysia()
-    .use(sessionContext)
+    .use(identityContext)
     .use(rateLimitMiddleware({ windowMs: 60_000, maxRequests: 5 }))
+    .use(
+        rateLimitMiddleware({
+            windowMs: 60 * 60_000,
+            maxRequests: 5,
+            keyExtractor: identityKey,
+        })
+    )
     .delete(
         "",
-        async ({ walletSession }) => {
-            const ownerIdentityGroupId = await resolveWalletIdentityGroup(
-                walletSession.address
-            );
-            if (!revokeIdentityLimit.consume(ownerIdentityGroupId)) {
-                return tooManyRequests();
-            }
+        async ({ identityGroupId }) => {
+            if (!identityGroupId) return status(401, "Unauthorized");
             await ReferralCodeContext.services.referralCode.revoke({
-                ownerIdentityGroupId,
+                ownerIdentityGroupId: identityGroupId,
             });
             return status(204);
         },
         {
-            withWalletAuthent: true,
+            withAuthedIdentity: true,
             response: {
                 401: t.String(),
                 429: t.String(),
@@ -126,23 +112,24 @@ const revokeRoute = new Elysia()
 // Redemption is a write that affects a globally-unique row; pair a
 // moderate per-IP bucket with a tight per-identity bucket.
 const redeemRoute = new Elysia()
-    .use(sessionContext)
+    .use(identityContext)
     .use(rateLimitMiddleware({ windowMs: 60_000, maxRequests: 10 }))
+    .use(
+        rateLimitMiddleware({
+            windowMs: 60 * 60_000,
+            maxRequests: 5,
+            keyExtractor: identityKey,
+        })
+    )
     .post(
         "/redeem",
-        async ({ walletSession, body }) => {
-            const refereeIdentityGroupId = await resolveWalletIdentityGroup(
-                walletSession.address
-            );
-            if (!redeemIdentityLimit.consume(refereeIdentityGroupId)) {
-                return tooManyRequests();
-            }
-
+        async ({ identityGroupId, body }) => {
+            if (!identityGroupId) return status(401, "Unauthorized");
             const result =
                 await OrchestrationContext.orchestrators.referralCodeRedemption.redeem(
                     {
                         code: body.code,
-                        refereeIdentityGroupId,
+                        refereeIdentityGroupId: identityGroupId,
                     }
                 );
 
@@ -159,7 +146,7 @@ const redeemRoute = new Elysia()
             };
         },
         {
-            withWalletAuthent: true,
+            withAuthedIdentity: true,
             body: t.Object({
                 code: t.String({ minLength: 6, maxLength: 6 }),
             }),
@@ -179,18 +166,18 @@ const redeemRoute = new Elysia()
 // or end placement). Read-ish but exposes availability state of a tiny
 // slice of the namespace, so still rate-limited.
 const suggestRoute = new Elysia()
-    .use(sessionContext)
+    .use(identityContext)
     .use(rateLimitMiddleware({ windowMs: 60_000, maxRequests: 10 }))
+    .use(
+        rateLimitMiddleware({
+            windowMs: 60 * 60_000,
+            maxRequests: 20,
+            keyExtractor: identityKey,
+        })
+    )
     .get(
         "/suggest",
-        async ({ walletSession, query }) => {
-            const identityGroupId = await resolveWalletIdentityGroup(
-                walletSession.address
-            );
-            if (!suggestIdentityLimit.consume(identityGroupId)) {
-                return tooManyRequests();
-            }
-
+        async ({ query }) => {
             const result =
                 await ReferralCodeContext.services.referralCode.suggestWithStem(
                     {
@@ -210,7 +197,7 @@ const suggestRoute = new Elysia()
             return { suggestions: result.suggestions };
         },
         {
-            withWalletAuthent: true,
+            withAuthedIdentity: true,
             query: t.Object({
                 stem: t.String({ minLength: 3, maxLength: 4 }),
                 count: t.Optional(

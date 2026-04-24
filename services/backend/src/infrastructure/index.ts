@@ -17,8 +17,8 @@ export {
     AdminWalletsRepository,
     adminWalletsRepository,
 } from "./keys/AdminWalletsRepository";
-// Session macro
-export { sessionContext } from "./macro";
+// Session + identity macros
+export { identityContext, sessionContext } from "./macro";
 // Events
 export { eventEmitter } from "./messaging/events";
 // Database
@@ -29,10 +29,6 @@ export {
     pricingRepository,
     type TokenPrice,
 } from "./pricing/PricingRepository";
-export {
-    createIdentityRateLimit,
-    type IdentityRateLimiter,
-} from "./rateLimit/identityRateLimit";
 // Rate limiting
 export { getClientIp } from "./rateLimit/ipExtraction";
 export {

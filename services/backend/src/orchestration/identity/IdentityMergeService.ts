@@ -125,9 +125,10 @@ export class IdentityMergeService {
             // creating a self-referral that breaks chain walkers and reward
             // distribution. Covers anchor↔merging in both directions and
             // merging_i↔merging_j pairs. Must run BEFORE the updates.
-            const deletedSelfLoops =
-                await this.deleteSelfLoopCandidatesInTrx(trx, allGroupIds);
-
+            const deletedSelfLoops = await this.deleteSelfLoopCandidatesInTrx(
+                trx,
+                allGroupIds
+            );
 
             const migratedReferrerResult = await trx
                 .update(referralLinksTable)
@@ -301,11 +302,10 @@ export class IdentityMergeService {
             // Must run BEFORE the referrer/referee updates that would otherwise
             // collapse `(anchor, merging)` or `(merging, anchor)` rows to
             // `(anchor, anchor)`.
-            const deletedSelfLoops =
-                await this.deleteSelfLoopCandidatesInTrx(trx, [
-                    anchorGroupId,
-                    mergingGroupId,
-                ]);
+            const deletedSelfLoops = await this.deleteSelfLoopCandidatesInTrx(
+                trx,
+                [anchorGroupId, mergingGroupId]
+            );
 
             const migratedReferrerResult = await trx
                 .update(referralLinksTable)

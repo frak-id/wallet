@@ -88,28 +88,55 @@ setInterval(() => {
     }
 }, 5 * 60_000).unref();
 
-export function rateLimitMiddleware(config?: Partial<RateLimitConfig>) {
-    const finalConfig = { ...defaultConfig, ...config };
+type KeyExtractor = (ctx: {
+    request: Request;
+    headers: Record<string, string | undefined>;
+    server: { requestIP?: (req: Request) => { address: string } | null } | null;
+    // Resolved values from upstream plugins / macros (e.g. identityContext)
+    // are not statically known here; callers type-cast when consuming.
+    [key: string]: unknown;
+}) => string | null;
+
+type RateLimitOptions = Partial<RateLimitConfig> & {
+    /**
+     * Rate-limit key extractor. Default: client IP (DDoS defence).
+     * Return `null` to skip the bucket for this request (useful when the key
+     * depends on an upstream-resolved value that is legitimately absent —
+     * e.g. identity-based buckets on anonymous routes).
+     */
+    keyExtractor?: KeyExtractor;
+};
+
+const ipKeyExtractor: KeyExtractor = ({ request, headers, server }) => {
+    const ip = getClientIp({
+        request,
+        headers: headers as Record<string, string | undefined>,
+        server: server as {
+            requestIP?: (req: Request) => { address: string } | null;
+        } | null,
+    });
+    if (!ip) {
+        log.warn("Rate limit: could not resolve client IP, allowing");
+        return null;
+    }
+    return `ip:${ip}`;
+};
+
+export function rateLimitMiddleware(config?: RateLimitOptions) {
+    const { keyExtractor = ipKeyExtractor, ...configOverrides } = config ?? {};
+    const finalConfig = { ...defaultConfig, ...configOverrides };
     const store = new InMemoryRateLimitStore();
     stores.push(store);
 
     return new Elysia({ name: "Middleware.rateLimit", seed: finalConfig })
-        .onBeforeHandle(({ request, headers, server }) => {
-            const ip = getClientIp({
-                request,
-                headers,
-                server: server as {
-                    requestIP?: (req: Request) => { address: string } | null;
-                } | null,
-            });
-            if (!ip) {
-                log.warn("Rate limit: could not resolve client IP, allowing");
-                return;
-            }
-
-            const allowed = store.consume(ip, finalConfig);
+        .onBeforeHandle((ctx) => {
+            const key = keyExtractor(
+                ctx as unknown as Parameters<KeyExtractor>[0]
+            );
+            if (key === null) return;
+            const allowed = store.consume(key, finalConfig);
             if (!allowed) {
-                log.warn({ ip }, "Rate limit exceeded");
+                log.warn({ key }, "Rate limit exceeded");
                 return status(429, "Too Many Requests");
             }
         })
