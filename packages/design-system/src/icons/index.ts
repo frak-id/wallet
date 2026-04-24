@@ -1,4 +1,5 @@
 export { ArrowLeftIcon } from "./ArrowLeftIcon";
+export { BankIcon } from "./BankIcon";
 export { BarChartIcon } from "./BarChartIcon";
 export { BellIcon } from "./BellIcon";
 export { CalendarIcon } from "./CalendarIcon";
@@ -27,6 +28,7 @@ export { LogoFrakWithName } from "./LogoFrakWithName";
 export { PeopleIcon } from "./PeopleIcon";
 export { PersonIcon } from "./PersonIcon";
 export { ProfileIcon } from "./ProfileIcon";
+export { SafetyIcon } from "./SafetyIcon";
 export { ShareIcon } from "./ShareIcon";
 export { ShieldIcon } from "./ShieldIcon";
 export { StarIcon } from "./StarIcon";

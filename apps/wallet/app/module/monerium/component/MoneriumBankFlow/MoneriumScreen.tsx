@@ -41,7 +41,7 @@ export function MoneriumScreen({
     const { t } = useTranslation();
 
     return (
-        <DetailSheet>
+        <DetailSheet className={styles.sheetSurface}>
             {/* Top bar: left icon + optional top-right slot */}
             <Box
                 paddingX={"m"}
@@ -73,9 +73,9 @@ export function MoneriumScreen({
             <Box
                 display={"flex"}
                 flexDirection={"column"}
-                gap={"l"}
+                gap={"m"}
                 flexGrow={1}
-                paddingX={"xl"}
+                paddingX={"m"}
                 paddingY={"m"}
             >
                 {children}

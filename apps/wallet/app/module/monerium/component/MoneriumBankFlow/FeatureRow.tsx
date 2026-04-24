@@ -10,23 +10,23 @@ type FeatureRowProps = {
 };
 
 /**
- * A row displaying an icon circle, a bold title, and a description.
- * Used across all Monerium onboarding screens.
+ * A row displaying a filled icon next to a bold title and a description,
+ * rendered flush inside the enclosing elevated card.
  */
 export function FeatureRow({ icon, title, description }: FeatureRowProps) {
     return (
-        <Box display={"flex"} alignItems={"flex-start"} gap={"m"}>
-            <Box className={styles.featureIcon}>{icon}</Box>
+        <Box className={styles.featureCell}>
+            <Box className={styles.featureIconSlot}>{icon}</Box>
             <Box
                 display={"flex"}
                 flexDirection={"column"}
                 gap={"xxs"}
                 flexGrow={1}
             >
-                <Text variant="bodySmall" weight="bold">
+                <Text variant="body" weight="medium">
                     {title}
                 </Text>
-                <Text variant="caption" color="secondary">
+                <Text variant="bodySmall" color="secondary">
                     {description}
                 </Text>
             </Box>

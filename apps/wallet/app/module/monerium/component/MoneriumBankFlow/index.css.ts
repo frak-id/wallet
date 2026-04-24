@@ -3,6 +3,21 @@ import { alias } from "@frak-labs/design-system/tokens";
 import { style } from "@vanilla-extract/css";
 
 /**
+ * Paints the whole Monerium `DetailSheet` with `surface.background2` so the
+ * white elevated feature card stands out the way Figma shows it. Overrides
+ * both the overlay's mobile background and the `DetailSheet` container's
+ * desktop (`>=1024px`) `surface.background` rule.
+ */
+export const sheetSurface = style({
+    backgroundColor: vars.surface.background2,
+    "@media": {
+        "screen and (min-width: 1024px)": {
+            backgroundColor: vars.surface.background2,
+        },
+    },
+});
+
+/**
  * Circular close button (top-left of each monerium screen).
  */
 export const closeButton = style({
@@ -20,17 +35,32 @@ export const closeButton = style({
 });
 
 /**
- * 40×40 icon circle for feature rows.
+ * Feature cell used inside the info/kyc card. Each cell stacks flush
+ * (no gap between them) inside the surrounding card; the 12px vertical
+ * padding provides the inter-row rhythm and 16px horizontal padding
+ * matches the Figma spec.
  */
-export const featureIcon = style({
-    width: "40px",
-    height: "40px",
-    borderRadius: alias.cornerRadius.full,
-    backgroundColor: vars.surface.secondary,
+export const featureCell = style({
+    display: "flex",
+    alignItems: "flex-start",
+    gap: alias.spacing.m,
+    paddingInline: alias.spacing.m,
+    paddingBlock: alias.spacing.s,
+    width: "100%",
+});
+
+/**
+ * Icon slot for a feature cell. No background bubble — the icon is
+ * rendered directly (filled glyph in the primary icon color). The 2px
+ * top/bottom inset matches Figma's `py-[2px]` on the Left column so
+ * the icon optically aligns with the title row.
+ */
+export const featureIconSlot = style({
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
-    color: vars.icon.tertiary,
+    paddingBlock: "2px",
+    color: vars.icon.primary,
     flexShrink: 0,
 });
 
