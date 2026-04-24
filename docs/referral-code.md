@@ -51,6 +51,9 @@ Therefore the natural home for the relationship is the existing `referral_links`
 | `install` interaction type | Deferred. Added only when the influencer-payout feature is built. |
 | Integration approach | Blend at the data layer: extend `referral_links` with `scope` + `source` rather than creating a parallel table. |
 | Terminology | `scope: 'merchant' \| 'cross_merchant'`. Drop "super referrer" — it's just a referrer with cross-merchant scope. |
+| Revocation grace period | Revoked rows remain redeemable for **14 days** and block re-issuance of the same 6-char string; a daily cron (`cleanupExpiredRevokedReferralCodes`) deletes them afterwards, freeing the string for reuse. |
+| Rate limits | Every write route stacks IP + identity-group buckets. `/code/redeem` capped at **10 req/min/IP** plus 5/hour/identity. See [API > Rate limits](#rate-limits). |
+| Status endpoint scope | Global: single `GET /user/wallet/referral/status?merchantId=<optional>` returns owned code + cross-merchant referrer + merchant referrer in one payload. |
 
 ---
 
@@ -83,6 +86,7 @@ Notes:
 
 - Partial unique on `code WHERE revoked_at IS NULL` keeps history addressable by `id` / FK while guaranteeing only one *active* row may hold a given code.
 - Partial unique on `owner_identity_group_id WHERE revoked_at IS NULL` enforces "one active code per owner" without preventing rotation history.
+- Revoked rows stay redeemable (and block re-issuance of the same 6-char string) for **14 days** — the grace period. A daily cleanup cron deletes rows whose `revoked_at` predates the window; the string becomes available for a fresh owner afterwards. Enforced in `ReferralCodeRepository.create` by widening the collision check to `revoked_at IS NULL OR revoked_at > now() - interval '14 days'`.
 
 ### Extended: `referral_links` (existing `attribution` domain)
 
@@ -130,9 +134,9 @@ Notes:
 services/backend/src/domain/referral-code/
 ├── db/schema.ts                         # referral_codes
 ├── repositories/
-│   └── ReferralCodeRepository.ts        # batch-candidate insert, lookup, rotate, revoke
+│   └── ReferralCodeRepository.ts        # batch-candidate insert, lookup, revoke
 ├── services/
-│   └── ReferralCodeService.ts           # issue / rotate / revoke / findActive* / findByCode
+│   └── ReferralCodeService.ts           # issue / revoke / findActive* / findByCode
 ├── schemas/index.ts                     # Elysia/TypeBox request/response schemas
 ├── context.ts                           # ReferralCodeContext singletons
 └── index.ts                             # public exports
@@ -182,18 +186,24 @@ class ReferralCodeService {
   // 409 if owner already has an active code.
   issue(ownerIdentityGroupId: string): Promise<{ code: string; createdAt: Date }>;
 
-  // Transactional: mark current row revoked, insert new.
-  rotate(ownerIdentityGroupId: string): Promise<{ code: string; createdAt: Date }>;
-
   // Set revoked_at on active row; no replacement. Returns void.
+  // During the 14-day grace window the code stays redeemable against its
+  // original owner; callers that want a fresh code issue one separately
+  // (frontend composes revoke + issue).
   revoke(ownerIdentityGroupId: string): Promise<void>;
 
   // Active row only, null if owner never issued or revoked.
   findActiveByOwner(ownerIdentityGroupId: string): Promise<ReferralCodeSelect | null>;
 
   // Any row matching the code — active OR revoked — used during redemption to
-  // preserve the referrer relationship even if the code was rotated afterwards.
+  // preserve the referrer relationship even if the code was revoked afterwards.
   findByCode(code: string): Promise<ReferralCodeSelect | null>;
+
+  // Return up to `count` available 6-char codes that contain the 3- or
+  // 4-char stem. Digit-only fills are preferred; letter-filled fallback is
+  // appended when the digit namespace is too dense. Fill is placed at the
+  // start or end of the stem only — no middle insertion.
+  suggestWithStem(params: { stem: string; count?: number }): Promise<SuggestResult>;
 }
 ```
 
@@ -357,20 +367,63 @@ Every current reader of `referral_links`:
 
 ---
 
-## API (`src/api/user/wallet/referral-code/`)
+## API (`src/api/user/wallet/referral/`)
 
-All routes wallet-authenticated (existing `authMacro`). Rate-limited via existing `rateLimitMiddleware`.
+All routes wallet-authenticated. Rate-limited with two complementary
+buckets (see [Rate limits](#rate-limits)).
 
-| Method | Path | Purpose | Body | Response | Rate limit |
-| --- | --- | --- | --- | --- | --- |
-| `GET` | `/user/wallet/referral-code` | Current owner's active code | — | `{ code?: string; createdAt?: string }` | default |
-| `POST` | `/user/wallet/referral-code/issue` | Issue a code (opt-in) | — | `{ code; createdAt }` · 409 if active exists | 5 / min |
-| `POST` | `/user/wallet/referral-code/rotate` | Archive current, issue new | — | `{ code; createdAt }` | 5 / min |
-| `DELETE` | `/user/wallet/referral-code` | Revoke active | — | `204` | 5 / min |
-| `POST` | `/user/wallet/referral-code/redeem` | Redeem someone else's code | `{ code }` | `{ success: true }` or `400 { code: 'NOT_FOUND' \| 'SELF_REFERRAL' \| 'ALREADY_REDEEMED' \| 'WOULD_CYCLE' }` | 10 / min |
-| `GET` | `/user/wallet/referral-code/status` | Does this user have a cross-merchant referrer? | — | `{ hasReferrer: bool; scope?: 'cross_merchant' }` | default |
+| Method | Path | Purpose | Body | Response |
+| --- | --- | --- | --- | --- |
+| `GET` | `/user/wallet/referral/code` | Current owner's active code | — | `{ code: string \| null; createdAt: string \| null }` |
+| `POST` | `/user/wallet/referral/code/issue` | Issue a code (opt-in). Body optional: omit to get a random code, or pass `{ code }` to claim a specific one (typically one from `/code/suggest`). | `{ code?: string }` | `{ code; createdAt }` · `409 ALREADY_ACTIVE` if already owning a code · `409 CODE_UNAVAILABLE` if the requested code is taken · `400 INVALID_CODE_LENGTH \| INVALID_CODE_CHARS` |
+| `DELETE` | `/user/wallet/referral/code` | Revoke active | — | `204` |
+| `POST` | `/user/wallet/referral/code/redeem` | Redeem someone else's code | `{ code }` | `{ success: true }` or `400 { code: 'NOT_FOUND' \| 'SELF_REFERRAL' \| 'ALREADY_REDEEMED' \| 'WOULD_CYCLE' }` |
+| `GET` | `/user/wallet/referral/code/suggest?stem=XXXX&count=N` | Suggest available codes containing a 3 or 4-char stem (digit-fill preferred, start/end placement only) | — | `{ suggestions: string[] }` or `400 { code: 'INVALID_STEM_LENGTH' \| 'INVALID_STEM_CHARS' }` |
+| `GET` | `/user/wallet/referral/status?merchantId=<uuid>` | Global referral view for this wallet | — | `{ ownedCode; crossMerchantReferrer; merchantReferrer }` (each `\| null`; `merchantReferrer` only populated when `merchantId` is provided) |
 
 Error responses follow the existing 400-with-coded-body convention from `installCode.ts`.
+
+### Rate limits
+
+Every write route stacks two complementary buckets:
+
+- **Per-IP** via the existing `rateLimitMiddleware` — DDoS defence, unchanged shape.
+- **Per-identity** via `createIdentityRateLimit` (new in `infrastructure/rateLimit/identityRateLimit.ts`) keyed on the caller's identity-group id — prevents a single user from fanning out across networks.
+
+| Route | IP bucket | Identity bucket |
+| --- | --- | --- |
+| `POST /code/issue` | 5 / min | 5 / hour |
+| `DELETE /code` | 5 / min | 5 / hour |
+| `POST /code/redeem` | 10 / min | 5 / hour |
+| `GET /code/suggest` | 10 / min | 20 / hour |
+
+Read routes (`GET /code`, `GET /status`) are unlimited — safe to poll.
+
+### Frontend flows
+
+**Owner — random code**
+```
+POST /user/wallet/referral/code/issue        → { code, createdAt }
+```
+
+**Owner — personalised code (suggestion-driven)**
+```
+GET  /user/wallet/referral/code/suggest?stem=QUEN  → { suggestions: ["QUEN42", "23QUEN", …] }
+(user picks one)
+POST /user/wallet/referral/code/issue  { code: "QUEN42" }  → { code, createdAt }
+                                                           → 409 CODE_UNAVAILABLE if someone claimed it first (TOCTOU window)
+```
+
+**Owner — swap to a new code**
+```
+DELETE /user/wallet/referral/code            → 204 (old code stays redeemable for 14 days)
+POST   /user/wallet/referral/code/issue      → { code, createdAt }   // or with `{ code }` for a picked one
+```
+
+**Referee — accepting a code**
+```
+POST /user/wallet/referral/code/redeem  { code: "QUEN42" }  → { success: true }
+```
 
 ---
 
@@ -395,9 +448,13 @@ Designed into the schema. Untouched in Phase 1 code.
 
 ---
 
-## Open questions (deferred)
+## Decisions log (follow-up round)
 
-1. Should `GET /user/wallet/referral-code/status` also surface a merchant-scoped referrer, or stay focused on cross-merchant? Needs product input.
-2. Revoking a code: do prior redemptions remain valid? Assumed **yes** in this design (referral link row survives; `referral_code_id` still resolvable). Confirm.
-3. Rate-limit budget for `/redeem` vs the 594 M code space — 10/min/IP is generous; consider per-identity-group bucket too.
-4. Rotation UX expectation: does the new code replace the old immediately in SDKs / share links? UI work out of scope for this doc.
+Resolved from the initial open questions:
+
+1. **Status endpoint scope** — broadened to `GET /user/wallet/referral/status`. Returns owned code + cross-merchant referrer unconditionally, plus merchant-scoped referrer when `?merchantId=<uuid>` is supplied. One-stop shop for the wallet Settings UI.
+2. **Revocation behaviour** — revoked codes stay valid for 14 days (the grace window). During that window, redemption still succeeds and resolves to the original owner; the same 6-char string is blocked from re-issuance. A daily cron (`cleanupExpiredRevokedReferralCodes`) deletes rows past the window and frees the string for reuse.
+3. **Redemption rate limit** — 10 req/min/IP paired with a per-identity bucket of 5/hour/identity. The per-identity bucket (via `createIdentityRateLimit` in `infrastructure/rateLimit/identityRateLimit.ts`) is also applied to `POST /code/issue` and `DELETE /code` at 5/hour each.
+4. **Rotation route dropped** — `POST /code/rotate` is gone. Composition of `DELETE /code` then `POST /code/issue` covers the use case without sacrificing anything: the 14-day grace window preserves continuity for outstanding shares, and the service-level `rotate` was never atomic anyway.
+
+Routes moved from `/user/wallet/referral-code/*` to `/user/wallet/referral/{code/*,status}` to make room for the broader status endpoint.

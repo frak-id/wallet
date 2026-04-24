@@ -29,6 +29,10 @@ export {
     pricingRepository,
     type TokenPrice,
 } from "./pricing/PricingRepository";
+export {
+    createIdentityRateLimit,
+    type IdentityRateLimiter,
+} from "./rateLimit/identityRateLimit";
 // Rate limiting
 export { getClientIp } from "./rateLimit/ipExtraction";
 export {

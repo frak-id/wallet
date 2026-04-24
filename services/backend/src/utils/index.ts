@@ -10,7 +10,9 @@ export { processCss, processScopedCss } from "./processCss";
 export {
     CANDIDATE_BATCH_SIZE,
     CODE_ALPHABET,
+    CODE_DIGIT_ALPHABET,
     CODE_LENGTH,
+    CODE_LETTER_ALPHABET,
     generateCandidates,
     generateCode,
 } from "./sixDigitCode";

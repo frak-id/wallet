@@ -1,26 +1,48 @@
 import { db } from "@backend-infrastructure";
-import { CANDIDATE_BATCH_SIZE, generateCandidates } from "@backend-utils";
-import { and, eq, isNull, sql } from "drizzle-orm";
+import { generateCandidates } from "@backend-utils";
+import { and, eq, inArray, isNull, lt, or, sql } from "drizzle-orm";
 import { type ReferralCodeSelect, referralCodesTable } from "../db/schema";
+
+/**
+ * Revoked codes stay redeemable for this long after revocation. Lets
+ * existing shares keep working when an influencer rotates, and blocks
+ * the same code string from being re-issued during the grace window.
+ *
+ * After the window elapses, the cleanup cron deletes the row; the string
+ * becomes available again for a fresh owner to claim.
+ */
+export const REVOKED_CODE_GRACE_DAYS = 14;
+
+const gracePeriodSql = sql`now() - interval '${sql.raw(
+    String(REVOKED_CODE_GRACE_DAYS)
+)} days'`;
 
 export class ReferralCodeRepository {
     /**
-     * Insert a new active referral code for the given owner.
+     * Insert a new active referral code for the given owner. Tries the
+     * caller-supplied `candidates` in order and returns the first one that
+     * passes the collision check; returns `null` if none do.
      *
-     * Reuses the shared 6-digit candidate batch primitive (same alphabet /
-     * length / collision-resistance pattern as install_codes). The partial
-     * unique on `owner_identity_group_id WHERE revoked_at IS NULL` is the
-     * final guarantee that a single owner can never hold two active rows; if
-     * that invariant is violated (concurrent issue), `null` is returned.
+     * Two modes:
+     *  - **Random** (default): pass the full batch of `generateCandidates()`.
+     *    Statistically never returns null against the 887M namespace.
+     *  - **Specific claim**: pass `[userPickedCode]`. Returns null when the
+     *    pick collides with an active row or an in-grace revoked row — the
+     *    service maps that to `CODE_UNAVAILABLE`.
+     *
+     * The in-grace check here prevents a fresh owner from inheriting an
+     * influencer's recently-shared string while the grace window is active.
      */
     async create(params: {
         ownerIdentityGroupId: string;
+        candidates?: string[];
     }): Promise<ReferralCodeSelect | null> {
         const { ownerIdentityGroupId } = params;
+        const candidates = params.candidates ?? generateCandidates();
+        if (candidates.length === 0) return null;
 
-        const candidates = generateCandidates();
         const values = sql.join(
-            candidates.map((c) => sql`(${c}::text)`),
+            candidates.map((c) => sql`(${c.toUpperCase()}::text)`),
             sql`, `
         );
 
@@ -37,7 +59,11 @@ export class ReferralCodeRepository {
             FROM candidates c
             WHERE NOT EXISTS (
                 SELECT 1 FROM referral_codes rc
-                WHERE rc.code = c.code AND rc.revoked_at IS NULL
+                WHERE rc.code = c.code
+                  AND (
+                      rc.revoked_at IS NULL
+                      OR rc.revoked_at > ${gracePeriodSql}
+                  )
             )
             LIMIT 1
             ON CONFLICT DO NOTHING
@@ -45,11 +71,7 @@ export class ReferralCodeRepository {
         `);
 
         const row = [...result][0];
-        if (!row) {
-            throw new Error(
-                `Failed to generate unique referral code from ${CANDIDATE_BATCH_SIZE} candidates`
-            );
-        }
+        if (!row) return null;
 
         return {
             id: row.id,
@@ -61,18 +83,31 @@ export class ReferralCodeRepository {
     }
 
     /**
-     * Lookup a referral code by its 6-char value (case-insensitive), across
-     * BOTH active and revoked rows. Callers that need active-only must check
-     * `revokedAt === null`.
+     * Lookup a referral code for redemption.
      *
-     * Looking up revoked codes on purpose: when a user redeems a code, we
-     * want the FK in `referral_links.referral_code_id` to resolve even if
-     * the owner has since rotated their active code.
+     * Returns a row when:
+     *  - an active row exists (revoked_at IS NULL), OR
+     *  - a row revoked within the grace period exists.
+     *
+     * When both coexist (new owner issued after an old one was revoked but
+     * before cleanup ran — shouldn't happen because `create` blocks it, but
+     * defensive), the active row wins.
      */
     async findByCode(code: string): Promise<ReferralCodeSelect | null> {
-        const result = await db.query.referralCodesTable.findFirst({
-            where: eq(referralCodesTable.code, code.toUpperCase()),
-        });
+        const [result] = await db
+            .select()
+            .from(referralCodesTable)
+            .where(
+                and(
+                    eq(referralCodesTable.code, code.toUpperCase()),
+                    or(
+                        isNull(referralCodesTable.revokedAt),
+                        sql`${referralCodesTable.revokedAt} > ${gracePeriodSql}`
+                    )
+                )
+            )
+            .orderBy(sql`${referralCodesTable.revokedAt} IS NULL DESC`)
+            .limit(1);
         return result ?? null;
     }
 
@@ -112,5 +147,50 @@ export class ReferralCodeRepository {
             )
             .returning();
         return result ?? null;
+    }
+
+    /**
+     * Purge rows whose revocation predates the grace period. Intended to be
+     * called from a daily cleanup cron. Returns the number of deleted rows.
+     */
+    async deleteExpiredRevoked(): Promise<number> {
+        const cutoff = new Date(
+            Date.now() - REVOKED_CODE_GRACE_DAYS * 24 * 60 * 60 * 1000
+        );
+        const result = await db
+            .delete(referralCodesTable)
+            .where(lt(referralCodesTable.revokedAt, cutoff))
+            .returning({ id: referralCodesTable.id });
+        return result.length;
+    }
+
+    /**
+     * Given an array of candidate 6-char strings, return the subset that is
+     * currently *available* — neither an active row nor a row revoked within
+     * the grace window. Single DB round-trip.
+     *
+     * Order of the input is preserved in the output so callers can drive a
+     * preference (e.g. digit-filled candidates first).
+     */
+    async filterAvailableCandidates(candidates: string[]): Promise<string[]> {
+        if (candidates.length === 0) return [];
+
+        const normalized = candidates.map((c) => c.toUpperCase());
+
+        const takenRows = await db
+            .select({ code: referralCodesTable.code })
+            .from(referralCodesTable)
+            .where(
+                and(
+                    inArray(referralCodesTable.code, normalized),
+                    or(
+                        isNull(referralCodesTable.revokedAt),
+                        sql`${referralCodesTable.revokedAt} > ${gracePeriodSql}`
+                    )
+                )
+            );
+
+        const taken = new Set(takenRows.map((r) => r.code));
+        return normalized.filter((c) => !taken.has(c));
     }
 }
