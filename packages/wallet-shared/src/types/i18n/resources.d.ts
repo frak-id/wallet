@@ -354,8 +354,10 @@ interface Resources {
                 };
             };
             callback: {
-                failed: "Failed to complete authentication";
-                noCode: "No authorization code received";
+                cancelledDescription: "You can reconnect to Monerium whenever you're ready.";
+                cancelledTitle: "Connection cancelled";
+                errorDescription: "Something went wrong while connecting to Monerium. Please try again in a moment.";
+                errorTitle: "Connection failed";
                 tryAgain: "Try again";
             };
             completeSetup: "Complete setup";

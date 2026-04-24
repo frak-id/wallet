@@ -557,8 +557,10 @@
             "amountInvalid": "Amount must be greater than 0"
         },
         "callback": {
-            "noCode": "No authorization code received",
-            "failed": "Failed to complete authentication",
+            "cancelledTitle": "Connection cancelled",
+            "cancelledDescription": "You can reconnect to Monerium whenever you're ready.",
+            "errorTitle": "Connection failed",
+            "errorDescription": "Something went wrong while connecting to Monerium. Please try again in a moment.",
             "tryAgain": "Try again"
         },
         "bankFlow": {
