@@ -78,7 +78,7 @@ export const assetLogsTable = pgTable(
             .default("pending"),
         statusChangedAt: timestamp("status_changed_at").defaultNow().notNull(),
 
-        touchpointId: uuid("touchpoint_id"),
+        referralLinkId: uuid("referral_link_id"),
         interactionLogId: uuid("interaction_log_id"),
 
         onchainTxHash: customHex("onchain_tx_hash").$type<Hex>(),

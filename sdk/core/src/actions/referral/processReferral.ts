@@ -49,9 +49,6 @@ function trackArrivalIfValid(
     frakContext: FrakContext,
     walletStatus?: WalletStatusReturnType
 ): boolean {
-    const landingUrl =
-        typeof window !== "undefined" ? window.location.href : undefined;
-
     if (isV2Context(frakContext)) {
         trackEvent(client, "user_referred_started", {
             referrerClientId: frakContext.c,
@@ -64,7 +61,6 @@ function trackArrivalIfValid(
             referrerMerchantId: frakContext.m,
             referrerWallet: frakContext.w,
             referralTimestamp: frakContext.t,
-            landingUrl,
         });
         return true;
     }
@@ -77,7 +73,6 @@ function trackArrivalIfValid(
         sendInteraction(client, {
             type: "arrival",
             referrerWallet: frakContext.r,
-            landingUrl,
         });
         return true;
     }

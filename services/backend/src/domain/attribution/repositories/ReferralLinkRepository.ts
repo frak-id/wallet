@@ -1,4 +1,4 @@
-import { and, eq, sql } from "drizzle-orm";
+import { and, eq, inArray, sql } from "drizzle-orm";
 import { LRUCache } from "lru-cache";
 import { db } from "../../../infrastructure/persistence/postgres";
 import {
@@ -31,8 +31,8 @@ export class ReferralLinkRepository {
      * already-exists error code.
      *
      * Callers may omit `scope` / `source` — the schema defaults to
-     * `scope='merchant'` and `source='link'`, which matches the existing
-     * touchpoint-driven referral flow.
+     * `scope='merchant'` and `source='link'`, which matches the arrival-link
+     * referral flow driven by `ArrivalHandler`.
      */
     async create(
         link: Omit<ReferralLinkInsert, "id" | "createdAt">
@@ -43,6 +43,23 @@ export class ReferralLinkRepository {
             .onConflictDoNothing()
             .returning();
         return result ?? null;
+    }
+
+    async findById(id: string): Promise<ReferralLinkSelect | null> {
+        const [result] = await db
+            .select()
+            .from(referralLinksTable)
+            .where(eq(referralLinksTable.id, id))
+            .limit(1);
+        return result ?? null;
+    }
+
+    async findManyByIds(ids: string[]): Promise<ReferralLinkSelect[]> {
+        if (ids.length === 0) return [];
+        return db
+            .select()
+            .from(referralLinksTable)
+            .where(inArray(referralLinksTable.id, ids));
     }
 
     /**
@@ -93,8 +110,8 @@ export class ReferralLinkRepository {
      *
      * Merchant-scoped referrer shadows the cross-merchant one when both
      * exist. This is the "erase by direct" rule: a per-merchant referrer
-     * (set via touchpoint / referral link) takes precedence for that
-     * merchant's reward distribution.
+     * (set via referral link) takes precedence for that merchant's reward
+     * distribution.
      *
      * Single query — scans both scopes in one pass and orders merchant rows
      * first so `LIMIT 1` picks the winner. Hot path: runs on every reward

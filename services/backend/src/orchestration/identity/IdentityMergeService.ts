@@ -1,9 +1,6 @@
 import { db, log } from "@backend-infrastructure";
 import { and, eq, inArray, sql } from "drizzle-orm";
-import {
-    referralLinksTable,
-    touchpointsTable,
-} from "../../domain/attribution/db/schema";
+import { referralLinksTable } from "../../domain/attribution/db/schema";
 import {
     identityGroupsTable,
     identityNodesTable,
@@ -25,7 +22,6 @@ type MergeResult = {
     migratedPurchaseClaims: number;
     migratedInteractionLogs: number;
     migratedAssetLogs: number;
-    migratedTouchpoints: number;
     migratedReferralLinksReferrer: number;
     migratedReferralLinksReferee: number;
     deletedConflictingReferralLinks: number;
@@ -55,7 +51,6 @@ export class IdentityMergeService {
                 migratedPurchaseClaims: 0,
                 migratedInteractionLogs: 0,
                 migratedAssetLogs: 0,
-                migratedTouchpoints: 0,
                 migratedReferralLinksReferrer: 0,
                 migratedReferralLinksReferee: 0,
                 deletedConflictingReferralLinks: 0,
@@ -112,13 +107,6 @@ export class IdentityMergeService {
                 .where(inArray(assetLogsTable.identityGroupId, mergingGroupIds))
                 .returning({ id: assetLogsTable.id });
 
-            const migratedTouchpointsResult = await trx
-                .update(touchpointsTable)
-                .set({ identityGroupId: anchorGroupId })
-                .where(
-                    inArray(touchpointsTable.identityGroupId, mergingGroupIds)
-                )
-                .returning({ id: touchpointsTable.id });
             // Self-loop guard: delete any referral_links row where BOTH
             // endpoints are in the merge set. Left alone, the referrer/referee
             // updates below would collapse the row to `(anchor, anchor)`,
@@ -190,7 +178,6 @@ export class IdentityMergeService {
                 migratedPurchaseClaims: migratedPurchaseClaimsResult.length,
                 migratedInteractionLogs: migratedInteractionLogsResult.length,
                 migratedAssetLogs: migratedAssetLogsResult.length,
-                migratedTouchpoints: migratedTouchpointsResult.length,
                 migratedReferralLinksReferrer: migratedReferrerResult.length,
                 migratedReferralLinksReferee: migratedRefereeResult.length,
                 deletedConflictingReferralLinks: deletedConflicts,
@@ -292,12 +279,6 @@ export class IdentityMergeService {
                 .where(eq(assetLogsTable.identityGroupId, mergingGroupId))
                 .returning({ id: assetLogsTable.id });
 
-            const migratedTouchpointsResult = await trx
-                .update(touchpointsTable)
-                .set({ identityGroupId: anchorGroupId })
-                .where(eq(touchpointsTable.identityGroupId, mergingGroupId))
-                .returning({ id: touchpointsTable.id });
-
             // Self-loop guard — see mergeMultipleGroups for the full rationale.
             // Must run BEFORE the referrer/referee updates that would otherwise
             // collapse `(anchor, merging)` or `(merging, anchor)` rows to
@@ -365,7 +346,6 @@ export class IdentityMergeService {
                 migratedPurchaseClaims: migratedPurchaseClaimsResult.length,
                 migratedInteractionLogs: migratedInteractionLogsResult.length,
                 migratedAssetLogs: migratedAssetLogsResult.length,
-                migratedTouchpoints: migratedTouchpointsResult.length,
                 migratedReferralLinksReferrer: migratedReferrerResult.length,
                 migratedReferralLinksReferee: migratedRefereeResult.length,
                 deletedConflictingReferralLinks: deletedConflicts,

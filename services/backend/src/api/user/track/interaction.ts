@@ -64,7 +64,7 @@ function buildTypeSpecificResponse(
     switch (type) {
         case "arrival":
             return {
-                touchpointId: result.touchpointId,
+                referralLinkId: result.referralLinkId,
             };
         case "sharing":
             return {};

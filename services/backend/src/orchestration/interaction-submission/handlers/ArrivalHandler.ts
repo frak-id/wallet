@@ -1,7 +1,6 @@
 import type { Address } from "viem";
 import { isAddress } from "viem";
-import type { TouchpointSourceData } from "../../../domain/attribution";
-import type { AttributionService } from "../../../domain/attribution/services/AttributionService";
+import type { ReferralService } from "../../../domain/attribution";
 import { IdentityContext } from "../../../domain/identity";
 import type {
     InteractionType,
@@ -15,16 +14,10 @@ export type ArrivalInput = {
     referrerClientId?: string;
     referrerMerchantId?: string;
     referralTimestamp?: number;
-    landingUrl?: string;
-    utmSource?: string;
-    utmMedium?: string;
-    utmCampaign?: string;
-    utmTerm?: string;
-    utmContent?: string;
 };
 
 export type ArrivalExtra = {
-    touchpointId: string;
+    referralLinkId: string | null;
 };
 
 /**
@@ -56,7 +49,7 @@ export class ArrivalHandler
     implements
         InteractionHandler<ArrivalInput, ReferralArrivalPayload, ArrivalExtra>
 {
-    constructor(private readonly attributionService: AttributionService) {}
+    constructor(private readonly referralService: ReferralService) {}
 
     getInteractionType(_input: ArrivalInput): InteractionType {
         return "referral";
@@ -67,7 +60,15 @@ export class ArrivalHandler
         payload: ReferralArrivalPayload,
         _context: HandlerContext
     ): string {
-        return `referral:${payload.touchpointId ?? Date.now()}`;
+        // Invariant: only reached when `shouldCreateInteractionLog` returned
+        // true — i.e. `referralRegistered === true` — which the discriminated
+        // union on `ReferralArrivalPayload` ties to a non-null `referralLinkId`.
+        if (!payload.referralLinkId) {
+            throw new Error(
+                "Invariant violated: buildExternalEventId called without referralLinkId"
+            );
+        }
+        return `referral:${payload.referralLinkId}`;
     }
 
     async buildPayload(
@@ -75,28 +76,39 @@ export class ArrivalHandler
         context: HandlerContext
     ): Promise<ReferralArrivalPayload> {
         const referrer = normalizeReferrer(input);
-        const sourceData = this.buildSourceData(input, referrer);
         const referrerIdentityGroupId =
             await this.resolveReferrerGroupId(referrer);
 
-        const { touchpoint, referralRegistered } =
-            await this.attributionService.recordTouchpoint({
-                identityGroupId: context.identity.identityGroupId,
-                merchantId: input.merchantId,
-                source: sourceData.type,
-                sourceData,
-                landingUrl: input.landingUrl,
-                referrerIdentityGroupId,
-            });
-
-        return {
+        const base = {
             referrerWallet: referrer.wallet,
             referrerClientId: referrer.clientId,
             referrerMerchantId: referrer.merchantId,
             referralTimestamp: referrer.timestamp,
-            landingUrl: input.landingUrl,
-            touchpointId: touchpoint.id,
-            referralRegistered,
+        };
+
+        if (referrerIdentityGroupId) {
+            const result = await this.referralService.registerReferral({
+                merchantId: input.merchantId,
+                referrerIdentityGroupId,
+                refereeIdentityGroupId: context.identity.identityGroupId,
+                sourceData:
+                    referrer.timestamp !== undefined
+                        ? { type: "link", sharedAt: referrer.timestamp }
+                        : { type: "link" },
+            });
+            if (result.registered) {
+                return {
+                    ...base,
+                    referralRegistered: true,
+                    referralLinkId: result.link.id,
+                };
+            }
+        }
+
+        return {
+            ...base,
+            referralRegistered: false,
+            referralLinkId: null,
         };
     }
 
@@ -106,61 +118,23 @@ export class ArrivalHandler
         payload: ReferralArrivalPayload
     ): Promise<ArrivalExtra> {
         return {
-            touchpointId: payload?.touchpointId ?? "",
+            referralLinkId: payload.referralLinkId,
         };
     }
 
     /**
-     * `referralRegistered === true` is only ever set by `AttributionService`
-     * when the touchpoint source is `referral_link` AND a referrer identity
-     * group was resolved — so it already implies a valid referral source.
+     * Only persist an interaction log when a *new* referral edge was created.
+     * Subsequent clicks from the same referrer-referee pair, organic visits,
+     * and self-referrals all return `referralRegistered=false` and are
+     * intentionally not logged — the dashboard's "first interaction" query
+     * leans on this row, so it must mark the genuine starting point of the
+     * relationship.
      */
     shouldCreateInteractionLog(
         _input: ArrivalInput,
         payload: ReferralArrivalPayload
     ): boolean {
         return payload.referralRegistered === true;
-    }
-
-    private buildSourceData(
-        input: ArrivalInput,
-        referrer: NormalizedReferrer
-    ): TouchpointSourceData {
-        // V2: merchantId + at least one sharer identifier (clientId or wallet).
-        if (referrer.merchantId && (referrer.clientId || referrer.wallet)) {
-            return {
-                type: "referral_link",
-                v: 2,
-                referrerMerchantId: referrer.merchantId,
-                referralTimestamp: referrer.timestamp,
-                ...(referrer.clientId && {
-                    referrerClientId: referrer.clientId,
-                }),
-                ...(referrer.wallet && { referrerWallet: referrer.wallet }),
-            };
-        }
-
-        // V1 legacy: wallet-only (no merchantId embedded).
-        if (referrer.wallet) {
-            return {
-                type: "referral_link",
-                v: 1,
-                referrerWallet: referrer.wallet,
-            };
-        }
-
-        if (input.utmSource || input.utmMedium || input.utmCampaign) {
-            return {
-                type: "paid_ad",
-                utmSource: input.utmSource,
-                utmMedium: input.utmMedium,
-                utmCampaign: input.utmCampaign,
-                utmTerm: input.utmTerm,
-                utmContent: input.utmContent,
-            };
-        }
-
-        return { type: "direct" };
     }
 
     /**

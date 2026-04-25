@@ -49,8 +49,6 @@ const identityOrchestrator = new IdentityOrchestrator(
 );
 
 const interactionContextBuilder = new InteractionContextBuilder(
-    AttributionContext.services.attribution,
-    IdentityContext.repositories.identity,
     AttributionContext.repositories.referralLink
 );
 
@@ -108,7 +106,7 @@ const rewardHistoryOrchestrator = new RewardHistoryOrchestrator(
     WalletContext.repositories.balances,
     pricingRepository,
     RewardsContext.services.rewardHistory,
-    AttributionContext.repositories.touchpoint,
+    AttributionContext.repositories.referralLink,
     RewardsContext.repositories.interactionLog
 );
 
@@ -122,7 +120,7 @@ const explorerOrchestrator = new ExplorerOrchestrator();
 
 const interactionSubmissionOrchestrator = new InteractionSubmissionOrchestrator(
     RewardsContext.repositories.interactionLog,
-    AttributionContext.services.attribution
+    AttributionContext.services.referral
 );
 
 const anonymousMergeOrchestrator = new AnonymousMergeOrchestrator(

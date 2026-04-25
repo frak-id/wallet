@@ -4,7 +4,6 @@ import {
     clientIdStore,
 } from "@frak-labs/wallet-shared";
 import { useMutation } from "@tanstack/react-query";
-import { extractUtmParams } from "@/module/common/utmParams";
 import { resolvingContextStore } from "../stores/resolvingContextStore";
 
 export type SendInteractionInput =
@@ -30,14 +29,9 @@ export function useSendInteraction() {
             }
             if (!resolvedMerchantId) return;
 
-            const enrichedParams =
-                interaction.type === "arrival" && interaction.landingUrl
-                    ? enrichArrivalWithUtm(interaction)
-                    : interaction;
-
             try {
                 await authenticatedBackendApi.user.track.interaction.post({
-                    ...enrichedParams,
+                    ...interaction,
                     merchantId: resolvedMerchantId,
                 });
             } catch (error) {
@@ -61,20 +55,4 @@ function normalizeInteractionInput(input: SendInteractionInput): {
     }
 
     return { interaction: input };
-}
-
-function enrichArrivalWithUtm(
-    params: Extract<SendInteractionParamsType, { type: "arrival" }>
-): SendInteractionParamsType {
-    const utmParams = extractUtmParams(params.landingUrl);
-    if (!utmParams) return params;
-
-    return {
-        ...params,
-        utmSource: utmParams.source,
-        utmMedium: utmParams.medium,
-        utmCampaign: utmParams.campaign,
-        utmTerm: utmParams.term,
-        utmContent: utmParams.content,
-    };
 }

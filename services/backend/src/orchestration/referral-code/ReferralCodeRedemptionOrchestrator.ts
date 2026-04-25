@@ -78,7 +78,7 @@ export class ReferralCodeRedemptionOrchestrator {
             referrerIdentityGroupId: referralCode.ownerIdentityGroupId,
             refereeIdentityGroupId,
             source: "code",
-            referralCodeId: referralCode.id,
+            sourceData: { type: "code", codeId: referralCode.id },
         });
 
         if (!created) {

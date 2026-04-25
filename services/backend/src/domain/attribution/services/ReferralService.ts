@@ -1,5 +1,7 @@
 import { log } from "@backend-infrastructure";
+import type { ReferralLinkSelect } from "../db/schema";
 import type { ReferralLinkRepository } from "../repositories/ReferralLinkRepository";
+import type { ReferralLinkSourceData } from "../schemas";
 
 type ReferralChainMember = {
     identityGroupId: string;
@@ -8,6 +10,10 @@ type ReferralChainMember = {
 
 const DEFAULT_MAX_CHAIN_DEPTH = 5;
 
+export type RegisterReferralResult =
+    | { registered: true; link: ReferralLinkSelect }
+    | { registered: false; existingReferrer?: string };
+
 export class ReferralService {
     constructor(private readonly repository: ReferralLinkRepository) {}
 
@@ -15,7 +21,8 @@ export class ReferralService {
         merchantId: string;
         referrerIdentityGroupId: string;
         refereeIdentityGroupId: string;
-    }): Promise<{ registered: boolean; existingReferrer?: string }> {
+        sourceData?: ReferralLinkSourceData;
+    }): Promise<RegisterReferralResult> {
         if (params.referrerIdentityGroupId === params.refereeIdentityGroupId) {
             log.debug(
                 { merchantId: params.merchantId },
@@ -70,6 +77,7 @@ export class ReferralService {
             referrerIdentityGroupId: params.referrerIdentityGroupId,
             refereeIdentityGroupId: params.refereeIdentityGroupId,
             source: "link",
+            sourceData: params.sourceData,
         });
 
         if (!created) {
@@ -85,7 +93,7 @@ export class ReferralService {
             "Referral link registered"
         );
 
-        return { registered: true };
+        return { registered: true, link: created };
     }
 
     async getReferralChain(params: {

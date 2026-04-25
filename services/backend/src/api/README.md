@@ -32,7 +32,7 @@ src/
 The user API is organized hierarchically to support the user journey from anonymous tracking to wallet-connected user:
 
 #### `/user/track` - Tracking (anonymous OK)
-- `POST /user/track/arrival` - Record touchpoint when user arrives via referral link
+- `POST /user/track/interaction` - Record an arrival, sharing, or custom interaction (registers a referral edge when an arrival carries a resolvable referrer)
 
 #### `/user/identity` - Identity Resolution (future)
 - `POST /user/identity/resolve` - Anonymous ID → identity group

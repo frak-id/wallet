@@ -1,7 +1,6 @@
 import { and, count, eq, inArray, min, type SQL, sql } from "drizzle-orm";
 import type { Static } from "elysia";
 import { type Address, getAddress } from "viem";
-import { touchpointsTable } from "../domain/attribution/db/schema";
 import { identityNodesTable } from "../domain/identity/db/schema";
 import { merchantsTable } from "../domain/merchant/db/schema";
 import {
@@ -79,22 +78,12 @@ export class MemberQueryOrchestrator {
                         sql<number>`COALESCE(SUM(${usdRewardsExpr}), 0)`.as(
                             "total_rewards_usd"
                         ),
-                    firstInteraction: min(touchpointsTable.createdAt).as(
+                    firstInteraction: min(interactionLogsTable.createdAt).as(
                         "first_interaction"
                     ),
                 })
                 .from(identityNodesTable)
                 .innerJoin(
-                    touchpointsTable,
-                    and(
-                        eq(
-                            touchpointsTable.identityGroupId,
-                            identityNodesTable.groupId
-                        ),
-                        inArray(touchpointsTable.merchantId, merchantIds)
-                    )
-                )
-                .leftJoin(
                     interactionLogsTable,
                     and(
                         eq(
@@ -146,27 +135,17 @@ export class MemberQueryOrchestrator {
                     sql<number>`ROUND(COALESCE(SUM(${usdRewardsExpr}), 0)::NUMERIC, 2)`.as(
                         "total_rewards_usd"
                     ),
-                firstInteraction: min(touchpointsTable.createdAt).as(
+                firstInteraction: min(interactionLogsTable.createdAt).as(
                     "first_interaction"
                 ),
                 merchantIdsAgg: sql<
                     string[]
-                >`ARRAY_AGG(DISTINCT ${touchpointsTable.merchantId})`.as(
+                >`ARRAY_AGG(DISTINCT ${interactionLogsTable.merchantId})`.as(
                     "merchant_ids"
                 ),
             })
             .from(identityNodesTable)
             .innerJoin(
-                touchpointsTable,
-                and(
-                    eq(
-                        touchpointsTable.identityGroupId,
-                        identityNodesTable.groupId
-                    ),
-                    inArray(touchpointsTable.merchantId, merchantIds)
-                )
-            )
-            .leftJoin(
                 interactionLogsTable,
                 and(
                     eq(
@@ -261,22 +240,12 @@ export class MemberQueryOrchestrator {
                         sql<number>`COALESCE(SUM(${usdRewardsExpr}), 0)`.as(
                             "total_rewards_usd"
                         ),
-                    firstInteraction: min(touchpointsTable.createdAt).as(
+                    firstInteraction: min(interactionLogsTable.createdAt).as(
                         "first_interaction"
                     ),
                 })
                 .from(identityNodesTable)
                 .innerJoin(
-                    touchpointsTable,
-                    and(
-                        eq(
-                            touchpointsTable.identityGroupId,
-                            identityNodesTable.groupId
-                        ),
-                        inArray(touchpointsTable.merchantId, merchantIds)
-                    )
-                )
-                .leftJoin(
                     interactionLogsTable,
                     and(
                         eq(
@@ -376,7 +345,7 @@ export class MemberQueryOrchestrator {
                 filter.firstInteractionTimestamp.min * 1000
             );
             conditions.push(
-                sql`MIN(${touchpointsTable.createdAt}) >= ${minDate}`
+                sql`MIN(${interactionLogsTable.createdAt}) >= ${minDate}`
             );
         }
         if (filter?.firstInteractionTimestamp?.max !== undefined) {
@@ -384,7 +353,7 @@ export class MemberQueryOrchestrator {
                 filter.firstInteractionTimestamp.max * 1000
             );
             conditions.push(
-                sql`MIN(${touchpointsTable.createdAt}) <= ${maxDate}`
+                sql`MIN(${interactionLogsTable.createdAt}) <= ${maxDate}`
             );
         }
 
@@ -404,9 +373,9 @@ export class MemberQueryOrchestrator {
             case "totalRewardsUsd":
                 return sql`COALESCE(SUM(${usdRewardsExpr}), 0) ${direction}`;
             case "firstInteractionTimestamp":
-                return sql`MIN(${touchpointsTable.createdAt}) ${direction}`;
+                return sql`MIN(${interactionLogsTable.createdAt}) ${direction}`;
             default:
-                return sql`MIN(${touchpointsTable.createdAt}) ${direction}`;
+                return sql`MIN(${interactionLogsTable.createdAt}) ${direction}`;
         }
     }
 

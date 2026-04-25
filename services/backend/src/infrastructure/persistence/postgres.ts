@@ -2,10 +2,7 @@ import { drizzle } from "drizzle-orm/postgres-js";
 import postgres from "postgres";
 // Import schemas directly from db/schema.ts files to avoid pulling in
 // domain contexts (which eagerly instantiate services and repositories)
-import {
-    referralLinksTable,
-    touchpointsTable,
-} from "../../domain/attribution/db/schema";
+import { referralLinksTable } from "../../domain/attribution/db/schema";
 import { campaignRulesTable } from "../../domain/campaign/db/schema";
 import {
     identityGroupsTable,
@@ -60,7 +57,6 @@ export const db = drizzle({
     schema: {
         campaignRulesTable,
         referralLinksTable,
-        touchpointsTable,
         identityGroupsTable,
         identityNodesTable,
         installCodesTable,

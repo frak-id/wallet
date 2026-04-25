@@ -11,18 +11,12 @@ import type { Address } from "viem";
 export type SendInteractionParamsType =
     | {
           type: "arrival";
-          /** Sharer wallet address. Accepted in both V1 (legacy, wallet-only) and V2 (authenticated sharer) contexts. */
+          /** Sharer wallet address. Accepted in both wallet-only legacy contexts and merchant-context (V2) contexts. */
           referrerWallet?: Address;
           referrerClientId?: string;
           referrerMerchantId?: string;
           /** Epoch seconds timestamp from the referral link creation */
           referralTimestamp?: number;
-          landingUrl?: string;
-          utmSource?: string;
-          utmMedium?: string;
-          utmCampaign?: string;
-          utmTerm?: string;
-          utmContent?: string;
       }
     | {
           type: "sharing";

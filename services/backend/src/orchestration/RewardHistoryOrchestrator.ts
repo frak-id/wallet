@@ -1,7 +1,7 @@
 import type { TokenMetadata, TokenPrice } from "@backend-infrastructure";
 import type { Address } from "viem";
-import type { TouchpointRepository } from "../domain/attribution/repositories/TouchpointRepository";
-import type { TouchpointSourceData } from "../domain/attribution/schemas";
+import type { ReferralLinkRepository } from "../domain/attribution/repositories/ReferralLinkRepository";
+import type { ReferralLinkSourceData } from "../domain/attribution/schemas";
 import type { IdentityRepository } from "../domain/identity";
 import type { PurchaseRepository } from "../domain/purchases/repositories/PurchaseRepository";
 import type { AssetLogRepository } from "../domain/rewards/repositories/AssetLogRepository";
@@ -24,7 +24,7 @@ export class RewardHistoryOrchestrator {
         readonly balancesRepository: BalancesRepository,
         readonly pricingRepository: PricingRepository,
         readonly rewardHistoryService: RewardHistoryService,
-        readonly touchpointRepository: TouchpointRepository,
+        readonly referralLinkRepository: ReferralLinkRepository,
         readonly interactionLogRepository: InteractionLogRepository
     ) {}
 
@@ -173,43 +173,52 @@ export class RewardHistoryOrchestrator {
         );
     }
 
+    /**
+     * Map referrer-recipient asset logs back to the originating sharing
+     * event's purchase id (i.e. "this reward came from your share of
+     * purchase X").
+     *
+     * Resolution path: asset_log → referral_links.sourceData.sharedAt →
+     * create_referral_link interaction with matching `sharingTimestamp` →
+     * payload.purchaseId.
+     *
+     * Only `source='link'` referral edges carry a `sharedAt` timestamp; code
+     * redemptions and links without an embedded share timestamp are
+     * intentionally skipped.
+     */
     private async buildReferrerPurchaseIdMap(
         assetLogs: readonly DetailedAssetLog[]
     ): Promise<Map<string, string>> {
         const referrerLogs = assetLogs.filter(
-            (log) => log.recipientType === "referrer" && log.touchpointId
+            (log) => log.recipientType === "referrer" && log.referralLinkId
         );
 
         if (referrerLogs.length === 0) return new Map();
 
-        const touchpointMap = await this.fetchTouchpointMap(referrerLogs);
-        const groupedLogs = this.groupLogsByTimestamp(
-            referrerLogs,
-            touchpointMap
-        );
+        const linkMap = await this.fetchReferralLinkMap(referrerLogs);
+        const groupedLogs = this.groupLogsByTimestamp(referrerLogs, linkMap);
         if (groupedLogs.size === 0) return new Map();
 
         const payloadsByGroup = await this.fetchSharingPayloads(groupedLogs);
         return this.mapLogsToPurchaseIds(groupedLogs, payloadsByGroup);
     }
 
-    private async fetchTouchpointMap(logs: readonly DetailedAssetLog[]) {
-        const touchpointIds = [
+    private async fetchReferralLinkMap(logs: readonly DetailedAssetLog[]) {
+        const linkIds = [
             ...new Set(
                 logs
-                    .map((log) => log.touchpointId)
+                    .map((log) => log.referralLinkId)
                     .filter((id): id is string => id !== null)
             ),
         ];
-        const touchpoints =
-            await this.touchpointRepository.findByIds(touchpointIds);
-        return new Map(touchpoints.map((tp) => [tp.id, tp]));
+        const links = await this.referralLinkRepository.findManyByIds(linkIds);
+        return new Map(links.map((link) => [link.id, link]));
     }
 
     private groupLogsByTimestamp(
         logs: readonly DetailedAssetLog[],
-        touchpointMap: ReturnType<
-            RewardHistoryOrchestrator["fetchTouchpointMap"]
+        linkMap: ReturnType<
+            RewardHistoryOrchestrator["fetchReferralLinkMap"]
         > extends Promise<infer R>
             ? R
             : never
@@ -220,19 +229,18 @@ export class RewardHistoryOrchestrator {
         >();
 
         for (const log of logs) {
-            if (!log.touchpointId) continue;
-            const touchpoint = touchpointMap.get(log.touchpointId);
-            if (!touchpoint) continue;
+            if (!log.referralLinkId) continue;
+            const link = linkMap.get(log.referralLinkId);
+            if (!link) continue;
 
-            const sourceData = touchpoint.sourceData as TouchpointSourceData;
-            if (sourceData.type !== "referral_link") continue;
-            if (!("v" in sourceData) || sourceData.v !== 2) continue;
-            if (!sourceData.referralTimestamp) continue;
+            const sourceData = link.sourceData as ReferralLinkSourceData | null;
+            if (!sourceData || sourceData.type !== "link") continue;
+            if (!sourceData.sharedAt) continue;
 
             const key = `${log.identityGroupId}:${log.merchantId}`;
             const group = grouped.get(key) ?? { logs: [], timestamps: [] };
             group.logs.push(log);
-            group.timestamps.push(sourceData.referralTimestamp);
+            group.timestamps.push(sourceData.sharedAt);
             grouped.set(key, group);
         }
 

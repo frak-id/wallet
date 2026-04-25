@@ -73,7 +73,9 @@ describe("ReferralService", () => {
             });
 
             expect(result.registered).toBe(false);
-            expect(result.existingReferrer).toBe(groupB);
+            if (!result.registered) {
+                expect(result.existingReferrer).toBe(groupB);
+            }
         });
 
         it("should block when link would create a direct cycle (A→B→A)", async () => {
@@ -124,6 +126,7 @@ describe("ReferralService", () => {
                 merchantId,
                 referrerIdentityGroupId: groupA,
                 refereeIdentityGroupId: groupB,
+                sourceData: { type: "link", sharedAt: 1709654400 },
             });
 
             expect(result.registered).toBe(true);
@@ -133,6 +136,7 @@ describe("ReferralService", () => {
                 referrerIdentityGroupId: groupA,
                 refereeIdentityGroupId: groupB,
                 source: "link",
+                sourceData: { type: "link", sharedAt: 1709654400 },
             });
         });
 

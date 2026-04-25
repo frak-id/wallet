@@ -21,7 +21,6 @@ export type GroupWeight = {
     assetsCount: number;
     referralsCount: number;
     interactionsCount: number;
-    touchpointsCount: number;
 };
 
 export class WalletConflictError extends Error {

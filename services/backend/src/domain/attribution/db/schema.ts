@@ -12,39 +12,8 @@ import {
 import type {
     ReferralLinkScope,
     ReferralLinkSource,
-    TouchpointSource,
-    TouchpointSourceData,
+    ReferralLinkSourceData,
 } from "../schemas/index";
-
-export const TouchpointSources = [
-    "referral_link",
-    "organic",
-    "paid_ad",
-    "direct",
-] as const;
-
-export const touchpointsTable = pgTable(
-    "touchpoints",
-    {
-        id: uuid("id").primaryKey().defaultRandom(),
-        identityGroupId: uuid("identity_group_id").notNull(),
-        merchantId: uuid("merchant_id").notNull(),
-        source: text("source").$type<TouchpointSource>().notNull(),
-        sourceData: jsonb("source_data")
-            .$type<TouchpointSourceData>()
-            .notNull(),
-        landingUrl: text("landing_url"),
-        createdAt: timestamp("created_at").defaultNow().notNull(),
-        expiresAt: timestamp("expires_at"),
-    },
-    (table) => [
-        index("touchpoints_identity_merchant_idx").on(
-            table.identityGroupId,
-            table.merchantId
-        ),
-        index("touchpoints_expires_at_idx").on(table.expiresAt),
-    ]
-);
 
 export const referralLinksTable = pgTable(
     "referral_links",
@@ -61,16 +30,16 @@ export const referralLinksTable = pgTable(
         merchantId: uuid("merchant_id"),
         referrerIdentityGroupId: uuid("referrer_identity_group_id").notNull(),
         refereeIdentityGroupId: uuid("referee_identity_group_id").notNull(),
-        // Origin of the relationship (analytics / debugging only — does not
-        // affect lookup semantics). Reserved value 'coupon' is unused in
-        // Phase 1; it will land with merchant coupon codes.
+        // Origin of the relationship. `link` = shared-link click,
+        // `code` = referral-code redemption. Drives the shape of `sourceData`.
         source: text("source")
             .$type<ReferralLinkSource>()
             .notNull()
             .default("link"),
-        // FK to referral_codes.id when source='code'. Kept nullable for
-        // link / coupon rows.
-        referralCodeId: uuid("referral_code_id"),
+        // Per-source metadata. Discriminated by `source`:
+        //   - source='link' → { type: 'link', sharedAt?: number }
+        //   - source='code' → { type: 'code', codeId: uuid }
+        sourceData: jsonb("source_data").$type<ReferralLinkSourceData>(),
         createdAt: timestamp("created_at").defaultNow().notNull(),
         // Phase 2 hook — unused today. When set, readers must filter
         // `expiresAt IS NULL OR expiresAt > now()`.

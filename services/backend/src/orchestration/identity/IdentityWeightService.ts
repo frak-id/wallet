@@ -2,10 +2,7 @@ import { db } from "@backend-infrastructure";
 import { count, eq, or } from "drizzle-orm";
 import { LRUCache } from "lru-cache";
 import type { Address } from "viem";
-import {
-    referralLinksTable,
-    touchpointsTable,
-} from "../../domain/attribution/db/schema";
+import { referralLinksTable } from "../../domain/attribution/db/schema";
 import type { IdentityRepository } from "../../domain/identity/repositories/IdentityRepository";
 import {
     assetLogsTable,
@@ -36,13 +33,11 @@ export class IdentityWeightService {
             assetsResult,
             referralsResult,
             interactionsResult,
-            touchpointsResult,
         ] = await Promise.all([
             this.identityRepository.getWalletForGroup(groupId),
             this.countAssets(groupId),
             this.countReferrals(groupId),
             this.countInteractions(groupId),
-            this.countTouchpoints(groupId),
         ]);
 
         const weight: GroupWeight = {
@@ -52,7 +47,6 @@ export class IdentityWeightService {
             assetsCount: assetsResult,
             referralsCount: referralsResult,
             interactionsCount: interactionsResult,
-            touchpointsCount: touchpointsResult,
         };
 
         this.weightCache.set(groupId, weight);
@@ -85,14 +79,6 @@ export class IdentityWeightService {
             .select({ value: count() })
             .from(interactionLogsTable)
             .where(eq(interactionLogsTable.identityGroupId, groupId));
-        return result?.value ?? 0;
-    }
-
-    private async countTouchpoints(groupId: string): Promise<number> {
-        const [result] = await db
-            .select({ value: count() })
-            .from(touchpointsTable)
-            .where(eq(touchpointsTable.identityGroupId, groupId));
         return result?.value ?? 0;
     }
 
@@ -217,7 +203,6 @@ export class IdentityWeightService {
             [weight1.assetsCount, weight2.assetsCount],
             [weight1.referralsCount, weight2.referralsCount],
             [weight1.interactionsCount, weight2.interactionsCount],
-            [weight1.touchpointsCount, weight2.touchpointsCount],
         ];
 
         for (const [val1, val2] of comparisons) {

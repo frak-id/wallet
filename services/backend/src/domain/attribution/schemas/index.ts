@@ -2,66 +2,6 @@ import { t } from "@backend-utils";
 import type { Static } from "elysia";
 
 // =============================================================================
-// TOUCHPOINT SOURCE SCHEMAS
-// =============================================================================
-
-export const TouchpointSourceSchema = t.Union([
-    t.Literal("referral_link"),
-    t.Literal("organic"),
-    t.Literal("paid_ad"),
-    t.Literal("direct"),
-]);
-export type TouchpointSource = Static<typeof TouchpointSourceSchema>;
-
-// =============================================================================
-// TOUCHPOINT SOURCE DATA SCHEMAS (Discriminated Union)
-// =============================================================================
-
-const ReferralLinkSourceDataSchema = t.Union([
-    t.Object({
-        type: t.Literal("referral_link"),
-        v: t.Union([t.Literal(1), t.Undefined(), t.Null()]),
-        referrerWallet: t.Hex(),
-    }),
-    t.Object({
-        type: t.Literal("referral_link"),
-        v: t.Literal(2),
-        referrerMerchantId: t.String(),
-        referralTimestamp: t.Optional(t.Number()),
-        // At least one of referrerClientId / referrerWallet must be present.
-        // Enforced in the handler rather than at the schema level because
-        // TypeBox unions on the same discriminator get brittle to refine.
-        referrerClientId: t.Optional(t.String()),
-        referrerWallet: t.Optional(t.Hex()),
-    }),
-]);
-
-const OrganicSourceDataSchema = t.Object({
-    type: t.Literal("organic"),
-});
-
-const PaidAdSourceDataSchema = t.Object({
-    type: t.Literal("paid_ad"),
-    utmSource: t.Optional(t.String()),
-    utmMedium: t.Optional(t.String()),
-    utmCampaign: t.Optional(t.String()),
-    utmTerm: t.Optional(t.String()),
-    utmContent: t.Optional(t.String()),
-});
-
-const DirectSourceDataSchema = t.Object({
-    type: t.Literal("direct"),
-});
-
-export const TouchpointSourceDataSchema = t.Union([
-    ReferralLinkSourceDataSchema,
-    OrganicSourceDataSchema,
-    PaidAdSourceDataSchema,
-    DirectSourceDataSchema,
-]);
-export type TouchpointSourceData = Static<typeof TouchpointSourceDataSchema>;
-
-// =============================================================================
 // REFERRAL LINK SCHEMAS
 // =============================================================================
 
@@ -76,3 +16,33 @@ export const ReferralLinkSourceSchema = t.Union([
     t.Literal("code"),
 ]);
 export type ReferralLinkSource = Static<typeof ReferralLinkSourceSchema>;
+
+// =============================================================================
+// REFERRAL LINK SOURCE DATA (Discriminated Union)
+// =============================================================================
+//
+// Per-source metadata captured at the moment the referral edge was created.
+//   - `link`: arrival from a shared link click. `sharedAt` is the
+//     referrer's link-creation timestamp embedded in the share URL — used
+//     to join back to the originating `create_referral_link` interaction
+//     (e.g. for "this reward came from your share of purchase X").
+//   - `code`: arrival from redeeming a referral code. `codeId` points to
+//     the `referral_codes` row that was redeemed.
+
+const LinkSourceDataSchema = t.Object({
+    type: t.Literal("link"),
+    sharedAt: t.Optional(t.Number()),
+});
+
+const CodeSourceDataSchema = t.Object({
+    type: t.Literal("code"),
+    codeId: t.String({ format: "uuid" }),
+});
+
+export const ReferralLinkSourceDataSchema = t.Union([
+    LinkSourceDataSchema,
+    CodeSourceDataSchema,
+]);
+export type ReferralLinkSourceData = Static<
+    typeof ReferralLinkSourceDataSchema
+>;
