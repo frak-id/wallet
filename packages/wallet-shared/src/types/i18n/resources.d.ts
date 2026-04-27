@@ -738,7 +738,7 @@ interface Resources {
                 amountLessThanBalance: "Amount must be less than balance";
                 amountPositive: "Amount must be positive";
                 amountToSend: "Amount to send";
-                backToWallet: "Back to wallet page";
+                sendTitle: "Transfer to a crypto wallet";
             };
             transferEmpty: {
                 description: "Share products with your friends to start earning money.";

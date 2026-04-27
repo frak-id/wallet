@@ -7,6 +7,7 @@ import { Text } from "@frak-labs/design-system/components/Text";
 import { CloseIcon } from "@frak-labs/design-system/icons";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
+import { FieldLabel } from "@/module/common/component/Field";
 import {
     type IbanEntry,
     ibanStore,
@@ -149,17 +150,9 @@ export function MoneriumTransferIbanScreen() {
                 </Text>
 
                 <Stack space="xs">
-                    <Box paddingX="m">
-                        <Text
-                            variant="bodySmall"
-                            weight="medium"
-                            color="secondary"
-                        >
-                            {t(
-                                "monerium.bankFlow.transfer.ibanManager.nameLabel"
-                            )}
-                        </Text>
-                    </Box>
+                    <FieldLabel>
+                        {t("monerium.bankFlow.transfer.ibanManager.nameLabel")}
+                    </FieldLabel>
                     <Input
                         variant="bare"
                         length="big"
@@ -175,17 +168,9 @@ export function MoneriumTransferIbanScreen() {
                 </Stack>
 
                 <Stack space="xs">
-                    <Box paddingX="m">
-                        <Text
-                            variant="bodySmall"
-                            weight="medium"
-                            color="secondary"
-                        >
-                            {t(
-                                "monerium.bankFlow.transfer.ibanManager.ibanLabel"
-                            )}
-                        </Text>
-                    </Box>
+                    <FieldLabel>
+                        {t("monerium.bankFlow.transfer.ibanManager.ibanLabel")}
+                    </FieldLabel>
                     <Input
                         variant="bare"
                         length="big"

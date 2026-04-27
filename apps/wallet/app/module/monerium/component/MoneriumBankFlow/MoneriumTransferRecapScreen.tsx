@@ -5,6 +5,7 @@ import { Text } from "@frak-labs/design-system/components/Text";
 import { BankIcon, CloseIcon } from "@frak-labs/design-system/icons";
 import { useCallback, useEffect, useRef } from "react";
 import { useTranslation } from "react-i18next";
+import { FieldLabel } from "@/module/common/component/Field";
 import { useMoneriumOfframp } from "@/module/monerium/hooks/useMoneriumOfframp";
 import {
     ibanStore,
@@ -174,15 +175,9 @@ export function MoneriumTransferRecapScreen({
                 </Card>
 
                 <Box display={"flex"} flexDirection={"column"} gap={"xs"}>
-                    <Box paddingX={"m"}>
-                        <Text
-                            variant="bodySmall"
-                            weight="medium"
-                            color="secondary"
-                        >
-                            {t("monerium.bankFlow.transfer.recap.addNote")}
-                        </Text>
-                    </Box>
+                    <FieldLabel>
+                        {t("monerium.bankFlow.transfer.recap.addNote")}
+                    </FieldLabel>
                     <Input
                         variant="bare"
                         length="big"

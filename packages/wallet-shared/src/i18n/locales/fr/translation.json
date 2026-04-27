@@ -230,7 +230,7 @@
             "amountLessThanBalance": "Le montant doit être inférieur au solde",
             "amountPositive": "Le montant doit être positif",
             "amountToSend": "Montant à envoyer",
-            "backToWallet": "Retour au porte-monnaie"
+            "sendTitle": "Transférer vers un crypto wallet"
         },
         "welcome": {
             "title": "Bienvenue dans Frak 🎉",
