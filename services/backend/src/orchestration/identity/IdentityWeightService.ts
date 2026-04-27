@@ -1,4 +1,5 @@
 import { db } from "@backend-infrastructure";
+import { HttpError } from "@backend-utils";
 import { count, eq, or } from "drizzle-orm";
 import { LRUCache } from "lru-cache";
 import type { Address } from "viem";
@@ -126,7 +127,8 @@ export class IdentityWeightService {
         );
 
         if (uniqueWallets.size > 1) {
-            throw new Error(
+            throw HttpError.conflict(
+                "WALLET_CONFLICT",
                 `Cannot merge groups with different wallets: ${[...uniqueWallets].join(", ")}`
             );
         }
@@ -165,7 +167,8 @@ export class IdentityWeightService {
     } | null {
         if (weight1.hasWallet && weight2.hasWallet) {
             if (weight1.wallet !== weight2.wallet) {
-                throw new Error(
+                throw HttpError.conflict(
+                    "WALLET_CONFLICT",
                     `Cannot merge groups with different wallets: ${weight1.wallet} vs ${weight2.wallet}`
                 );
             }

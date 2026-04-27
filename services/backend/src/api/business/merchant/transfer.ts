@@ -112,19 +112,6 @@ export const merchantTransferRoutes = new Elysia({
                         pendingTransfer.fromWallet,
                         pendingTransfer.toWallet
                     )
-                    .then((roleResult) => {
-                        if (!roleResult.success) {
-                            log.warn(
-                                {
-                                    merchantId,
-                                    fromWallet: pendingTransfer.fromWallet,
-                                    toWallet: pendingTransfer.toWallet,
-                                    error: roleResult.error,
-                                },
-                                "Failed to transfer bank roles after ownership change"
-                            );
-                        }
-                    })
                     .catch((error) => {
                         log.error(
                             {
@@ -136,7 +123,7 @@ export const merchantTransferRoutes = new Elysia({
                                         ? error.message
                                         : String(error),
                             },
-                            "Error transferring bank roles after ownership change"
+                            "Failed to transfer bank roles after ownership change"
                         );
                     });
             }

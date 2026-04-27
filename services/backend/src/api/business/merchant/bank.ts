@@ -63,19 +63,15 @@ export const merchantBankRoutes = new Elysia({
                 return status(403, "Access denied");
             }
 
-            const result =
+            const { rolesGranted, rolesRevoked } =
                 await CampaignBankContext.services.campaignBank.syncBankRoles(
                     merchantId
                 );
 
-            if (!result.success) {
-                return status(400, result.error);
-            }
-
             return {
                 success: true,
-                rolesGranted: result.rolesGranted,
-                rolesRevoked: result.rolesRevoked,
+                rolesGranted,
+                rolesRevoked,
             };
         },
         {
@@ -86,7 +82,8 @@ export const merchantBankRoutes = new Elysia({
                     rolesGranted: t.Boolean(),
                     rolesRevoked: t.Boolean(),
                 }),
-                400: t.String(),
+                400: t.ErrorResponse,
+                404: t.ErrorResponse,
                 401: t.String(),
                 403: t.String(),
             },
@@ -109,18 +106,14 @@ export const merchantBankRoutes = new Elysia({
                 return status(403, "Access denied");
             }
 
-            const result =
+            const { bankAddress } =
                 await CampaignBankContext.services.campaignBank.deployAndSetupBank(
                     merchantId
                 );
 
-            if (!result.success) {
-                return status(400, result.error);
-            }
-
             return {
                 success: true,
-                bankAddress: result.bankAddress,
+                bankAddress,
             };
         },
         {
@@ -130,7 +123,8 @@ export const merchantBankRoutes = new Elysia({
                     success: t.Boolean(),
                     bankAddress: t.Hex(),
                 }),
-                400: t.String(),
+                400: t.ErrorResponse,
+                404: t.ErrorResponse,
                 401: t.String(),
                 403: t.String(),
             },

@@ -1,9 +1,8 @@
 import { createHash } from "node:crypto";
-import { t } from "@backend-utils";
+import { HttpError, t } from "@backend-utils";
 import { Elysia, status } from "elysia";
 import { MediaContext } from "../../../domain/media";
 import type { ImageType } from "../../../domain/media/services/ImageProcessingService";
-import { ImageValidationError } from "../../../domain/media/services/ImageProcessingService";
 import { MerchantContext } from "../../../domain/merchant";
 import { businessSessionContext } from "../middleware/session";
 
@@ -33,12 +32,6 @@ const mediaTypePattern = /^(logo|hero(-[a-zA-Z0-9_-]+)?)$/;
 function generateContentHash(buffer: Buffer | Uint8Array): string {
     return createHash("sha256").update(buffer).digest("hex").slice(0, 8);
 }
-
-const MediaErrorSchema = t.Object({
-    success: t.Literal(false),
-    error: t.String(),
-    code: t.String(),
-});
 
 export const merchantMediaRoutes = new Elysia({
     prefix: "/:merchantId/media",
@@ -77,11 +70,10 @@ export const merchantMediaRoutes = new Elysia({
                     image.type as (typeof acceptedMimeTypes)[number]
                 )
             ) {
-                return status(400, {
-                    success: false as const,
-                    error: `Invalid image type: ${image.type}. Accepted: ${acceptedMimeTypes.join(", ")}`,
-                    code: "invalid_mime_type",
-                });
+                throw HttpError.badRequest(
+                    "INVALID_MIME_TYPE",
+                    `Invalid image type: ${image.type}. Accepted: ${acceptedMimeTypes.join(", ")}`
+                );
             }
 
             // Determine storage key + processing constraints
@@ -90,55 +82,43 @@ export const merchantMediaRoutes = new Elysia({
             const isHeroExtra = type === "hero-extra";
             const processingType: ImageType = isHeroExtra ? "hero" : type;
 
-            // Process image (validate dimensions + resize + compress to WebP)
-            try {
-                const processed =
-                    await MediaContext.services.imageProcessing.process(
-                        image,
-                        processingType
-                    );
-
-                const storageType = isHeroExtra
-                    ? `hero-${generateContentHash(processed.buffer)}`
-                    : type;
-
-                // Reject duplicate hero-extra uploads (same content → same hash)
-                if (isHeroExtra) {
-                    const exists =
-                        await MediaContext.repositories.mediaStorage.exists({
-                            merchantId,
-                            type: storageType,
-                        });
-                    if (exists) {
-                        return status(400, {
-                            success: false as const,
-                            error: "This image is already uploaded",
-                            code: "duplicate_image",
-                        });
-                    }
-                }
-
-                // Upload to RustFS bucket
-                const url = await MediaContext.repositories.mediaStorage.upload(
-                    {
-                        merchantId,
-                        type: storageType,
-                        body: processed.buffer,
-                        contentType: processed.contentType,
-                    }
+            // Process image (validate dimensions + resize + compress to WebP).
+            // ImageProcessingService throws HttpError directly on validation
+            // failure; Elysia handles it via toResponse().
+            const processed =
+                await MediaContext.services.imageProcessing.process(
+                    image,
+                    processingType
                 );
 
-                return { url, type: storageType };
-            } catch (e) {
-                if (e instanceof ImageValidationError) {
-                    return status(400, {
-                        success: false as const,
-                        error: e.message,
-                        code: e.code,
+            const storageType = isHeroExtra
+                ? `hero-${generateContentHash(processed.buffer)}`
+                : type;
+
+            // Reject duplicate hero-extra uploads (same content → same hash)
+            if (isHeroExtra) {
+                const exists =
+                    await MediaContext.repositories.mediaStorage.exists({
+                        merchantId,
+                        type: storageType,
                     });
+                if (exists) {
+                    throw HttpError.conflict(
+                        "DUPLICATE_IMAGE",
+                        "This image is already uploaded"
+                    );
                 }
-                throw e;
             }
+
+            // Upload to RustFS bucket
+            const url = await MediaContext.repositories.mediaStorage.upload({
+                merchantId,
+                type: storageType,
+                body: processed.buffer,
+                contentType: processed.contentType,
+            });
+
+            return { url, type: storageType };
         },
         {
             params: t.Object({
@@ -152,7 +132,8 @@ export const merchantMediaRoutes = new Elysia({
             }),
             response: {
                 200: t.Object({ url: t.String(), type: t.String() }),
-                400: MediaErrorSchema,
+                400: t.ErrorResponse,
+                409: t.ErrorResponse,
                 401: t.String(),
                 403: t.String(),
                 404: t.String(),
@@ -178,11 +159,10 @@ export const merchantMediaRoutes = new Elysia({
 
             // Validate type pattern: logo, hero, or hero-{variant}
             if (!mediaTypePattern.test(type)) {
-                return status(400, {
-                    success: false as const,
-                    error: `Invalid media type: ${type}`,
-                    code: "invalid_media_type",
-                });
+                throw HttpError.badRequest(
+                    "INVALID_MEDIA_TYPE",
+                    `Invalid media type: ${type}`
+                );
             }
 
             await MediaContext.repositories.mediaStorage.delete({
@@ -199,7 +179,7 @@ export const merchantMediaRoutes = new Elysia({
             }),
             response: {
                 200: t.Object({ success: t.Literal(true) }),
-                400: MediaErrorSchema,
+                400: t.ErrorResponse,
                 401: t.String(),
                 403: t.String(),
             },

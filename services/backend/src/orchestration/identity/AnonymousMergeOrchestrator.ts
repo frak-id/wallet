@@ -5,7 +5,6 @@ import type { IdentityRepository } from "../../domain/identity/repositories/Iden
 import type { AnonymousMergeService } from "../../domain/identity/services/AnonymousMergeService";
 import type { IdentityOrchestrator } from "./IdentityOrchestrator";
 import type { IdentityNode } from "./types";
-import { WalletConflictError } from "./types";
 export class AnonymousMergeOrchestrator {
     constructor(
         private readonly anonymousMergeService: AnonymousMergeService,
@@ -105,47 +104,29 @@ export class AnonymousMergeOrchestrator {
                 "Target anonymous identity not found"
             );
         }
-        // 3. Delegate to IdentityOrchestrator.associate() which handles:
-        //    - Idempotency (same group → no-op)
-        //    - Wallet conflict detection (throws WalletConflictError)
-        //    - Weight-based anchor determination
-        //    - Merge execution and cache invalidation
-        try {
-            const { finalGroupId, merged } =
-                await this.identityOrchestrator.associate(
+        // Delegate to IdentityOrchestrator.associate() which handles
+        // idempotency, wallet conflict detection (throws HttpError), weight-
+        // based anchor determination, merge execution, and cache invalidation.
+        const { finalGroupId, merged } =
+            await this.identityOrchestrator.associate(
+                sourceGroupId,
+                targetGroup.id
+            );
+
+        if (merged) {
+            log.info(
+                {
                     sourceGroupId,
-                    targetGroup.id
-                );
-
-            if (merged) {
-                log.info(
-                    {
-                        sourceGroupId,
-                        targetGroupId: targetGroup.id,
-                        finalGroupId,
-                    },
-                    "Anonymous identity groups merged successfully"
-                );
-            }
-
-            return {
-                finalGroupId,
-                merged,
-            };
-        } catch (error) {
-            if (error instanceof WalletConflictError) {
-                log.warn(
-                    {
-                        sourceGroupId,
-                        targetGroupId: targetGroup.id,
-                        sourceWallet: error.sourceWallet,
-                        targetWallet: error.targetWallet,
-                    },
-                    "Attempted to merge groups with different wallets"
-                );
-                throw HttpError.conflict(error.code, error.message);
-            }
-            throw error;
+                    targetGroupId: targetGroup.id,
+                    finalGroupId,
+                },
+                "Anonymous identity groups merged successfully"
+            );
         }
+
+        return {
+            finalGroupId,
+            merged,
+        };
     }
 }
