@@ -16,6 +16,7 @@ import { customHex } from "../../../utils/drizzle/customTypes";
 import type {
     AssetStatus,
     AssetType,
+    CancellationReason,
     InteractionType,
     RecipientType,
 } from "../schemas";
@@ -90,6 +91,17 @@ export const assetLogsTable = pgTable(
         createdAt: timestamp("created_at").defaultNow().notNull(),
         settledAt: timestamp("settled_at"),
         expiresAt: timestamp("expires_at"),
+        /**
+         * Timestamp at which a locked reward becomes eligible for settlement.
+         * NULL means no lockup (immediately available, preserves legacy behaviour).
+         */
+        availableAt: timestamp("available_at"),
+        /**
+         * Set when status transitions to `cancelled`. Companion to `cancellationReason`.
+         */
+        cancelledAt: timestamp("cancelled_at"),
+        cancellationReason: text("cancellation_reason")
+            .$type<CancellationReason>(),
     },
     (table) => [
         index("asset_logs_identity_group_idx").on(table.identityGroupId),
@@ -116,6 +128,11 @@ export const assetLogsTable = pgTable(
         index("asset_logs_processing_status_changed_idx")
             .on(table.statusChangedAt)
             .where(sql`"status" = 'processing'`),
+        index("asset_logs_pending_available_idx")
+            .on(table.availableAt)
+            .where(
+                sql`"status" = 'pending' AND "available_at" IS NOT NULL`
+            ),
     ]
 );
 

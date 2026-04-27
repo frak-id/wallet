@@ -7,6 +7,7 @@ import {
     isNotNull,
     isNull,
     lt,
+    lte,
     or,
     sql,
 } from "drizzle-orm";
@@ -23,6 +24,7 @@ import {
 } from "../db/schema";
 import type {
     AssetStatus,
+    CancellationReason,
     CreateAssetLogParams,
     DetailedAssetLog,
     InteractionType,
@@ -35,6 +37,15 @@ export class AssetLogRepository {
     private calculateExpiresAt(expirationDays?: number): Date {
         const days = expirationDays ?? DEFAULT_EXPIRATION_DAYS;
         return new Date(Date.now() + days * 24 * 60 * 60 * 1000);
+    }
+
+    /**
+     * Compute the timestamp at which a locked reward becomes claimable.
+     * Returns `null` when the reward should be available immediately.
+     */
+    private calculateAvailableAt(lockupDays?: number): Date | null {
+        if (!lockupDays || lockupDays <= 0) return null;
+        return new Date(Date.now() + lockupDays * 24 * 60 * 60 * 1000);
     }
 
     async createBatch(
@@ -57,6 +68,7 @@ export class AssetLogRepository {
             status: "pending" as const,
             statusChangedAt: new Date(),
             expiresAt: this.calculateExpiresAt(p.expirationDays),
+            availableAt: this.calculateAvailableAt(p.lockupDays),
         }));
 
         return db.insert(assetLogsTable).values(inserts).returning();
@@ -78,6 +90,11 @@ export class AssetLogRepository {
                     or(
                         isNull(assetLogsTable.expiresAt),
                         gt(assetLogsTable.expiresAt, now)
+                    ),
+                    // Exclude rewards still inside their lockup window.
+                    or(
+                        isNull(assetLogsTable.availableAt),
+                        lte(assetLogsTable.availableAt, now)
                     )
                 )
             )
@@ -89,6 +106,73 @@ export class AssetLogRepository {
         }
 
         return query;
+    }
+
+    /**
+     * Cancel a batch of reward entries, recording the reason and timestamp.
+     * Returns the affected rows so callers (e.g. RewardCancellationOrchestrator)
+     * can restore campaign budget for the cancelled amounts.
+     *
+     * Only applies to non-terminal statuses (`pending`, `processing`) so that
+     * already-settled rewards on-chain are never silently flipped.
+     */
+    async cancelBatch(
+        ids: string[],
+        reason: CancellationReason
+    ): Promise<
+        { id: string; campaignRuleId: string | null; amount: string }[]
+    > {
+        if (ids.length === 0) return [];
+
+        const now = new Date();
+        return db
+            .update(assetLogsTable)
+            .set({
+                status: "cancelled",
+                statusChangedAt: now,
+                cancelledAt: now,
+                cancellationReason: reason,
+            })
+            .where(
+                and(
+                    inArray(assetLogsTable.id, ids),
+                    inArray(assetLogsTable.status, ["pending", "processing"])
+                )
+            )
+            .returning({
+                id: assetLogsTable.id,
+                campaignRuleId: assetLogsTable.campaignRuleId,
+                amount: assetLogsTable.amount,
+            });
+    }
+
+    /**
+     * Find still-cancellable reward entries (status `pending`) tied to the given
+     * interaction log IDs. Used by RewardCancellationOrchestrator to discover
+     * rewards triggered by a now-refunded purchase.
+     *
+     * Locked rewards (`availableAt > now`) are the primary target, but we also
+     * include any `pending` rewards that haven't yet been picked up by the
+     * settlement cron — the lockup window is the protection envelope, not the
+     * sole signal of cancellability.
+     */
+    async findCancellableByInteractionLogs(
+        interactionLogIds: string[]
+    ): Promise<AssetLogSelect[]> {
+        if (interactionLogIds.length === 0) return [];
+
+        return db
+            .select()
+            .from(assetLogsTable)
+            .where(
+                and(
+                    inArray(
+                        assetLogsTable.interactionLogId,
+                        interactionLogIds
+                    ),
+                    eq(assetLogsTable.status, "pending")
+                )
+            );
     }
 
     async updateStatusBatch(

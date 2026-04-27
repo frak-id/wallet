@@ -115,4 +115,29 @@ export class InteractionLogRepository {
 
         return result;
     }
+
+    /**
+     * Find purchase interaction log(s) for a given purchase. The same purchase
+     * (merchantId + externalId) is recorded under a unique `externalEventId`,
+     * so this returns at most one row — still typed as an array to leave room
+     * for future replays.
+     */
+    async findPurchaseInteractionsByExternalId(params: {
+        merchantId: string;
+        externalId: string;
+    }): Promise<InteractionLogSelect[]> {
+        return db
+            .select()
+            .from(interactionLogsTable)
+            .where(
+                and(
+                    eq(interactionLogsTable.merchantId, params.merchantId),
+                    eq(interactionLogsTable.type, "purchase"),
+                    eq(
+                        interactionLogsTable.externalEventId,
+                        `purchase:${params.externalId}`
+                    )
+                )
+            );
+    }
 }

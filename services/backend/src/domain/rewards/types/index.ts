@@ -3,12 +3,19 @@ import type { Address, Hex } from "viem";
 import type {
     AssetStatus,
     AssetType,
+    CancellationReason,
     InteractionType,
     RecipientType,
 } from "../schemas";
 
 export { InteractionTypeSchema } from "../schemas";
-export type { AssetStatus, AssetType, InteractionType, RecipientType };
+export type {
+    AssetStatus,
+    AssetType,
+    CancellationReason,
+    InteractionType,
+    RecipientType,
+};
 
 // =============================================================================
 // DETAILED ASSET LOG (joined view for reward history)
@@ -136,4 +143,9 @@ export type CreateAssetLogParams = {
     interactionLogId: string;
     chainDepth?: number;
     expirationDays?: number;
+    /**
+     * Number of days the reward stays locked before it becomes claimable.
+     * `0` or `undefined` means no lockup.
+     */
+    lockupDays?: number;
 };

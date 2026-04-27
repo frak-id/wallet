@@ -14,6 +14,8 @@ export {
     AssetStatusSchema,
     type AssetType,
     AssetTypeSchema,
+    type CancellationReason,
+    CancellationReasonSchema,
     type InteractionType,
     InteractionTypeSchema,
     type RecipientType,
