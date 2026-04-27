@@ -1,11 +1,9 @@
 import { Box } from "@frak-labs/design-system/components/Box";
 import { Card } from "@frak-labs/design-system/components/Card";
-import { Inline } from "@frak-labs/design-system/components/Inline";
 import { Input } from "@frak-labs/design-system/components/Input";
-import { Stack } from "@frak-labs/design-system/components/Stack";
 import { Text } from "@frak-labs/design-system/components/Text";
-import { CloseIcon, TransferIcon } from "@frak-labs/design-system/icons";
-import { useCallback, useEffect } from "react";
+import { BankIcon, CloseIcon } from "@frak-labs/design-system/icons";
+import { useCallback, useEffect, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { useMoneriumOfframp } from "@/module/monerium/hooks/useMoneriumOfframp";
 import {
@@ -54,13 +52,22 @@ export function MoneriumTransferRecapScreen({
 
     const errorMessage = isError && error ? error.message : null;
 
-    // Pre-fill the note with a localized default on first visit
+    // Pre-fill once on mount. Reads `note` via `getState()` so the effect
+    // doesn't re-seed when the user clears the field through the × button.
+    // `defaultNote` deliberately omitted from deps — language switches mid-flow
+    // shouldn't overwrite a user-typed note.
     const defaultNote = t("monerium.bankFlow.transfer.recap.defaultNote");
     useEffect(() => {
-        if (note.length === 0) {
+        if (moneriumFlowStore.getState().note.length === 0) {
             setNote(defaultNote);
         }
-    }, [defaultNote, note.length, setNote]);
+    }, [setNote]);
+
+    const noteInputRef = useRef<HTMLInputElement>(null);
+    const handleClearNote = useCallback(() => {
+        setNote("");
+        noteInputRef.current?.focus();
+    }, [setNote]);
 
     const handleBackToAmount = useCallback(() => {
         reset();
@@ -76,7 +83,7 @@ export function MoneriumTransferRecapScreen({
                 memo: note,
             });
         } catch {
-            // Error is exposed via `isError` / `error`, no rethrow needed.
+            // surfaced via `isError` / `error`
         }
     }, [amount, note, placeOrder, selectedIban]);
 
@@ -89,7 +96,6 @@ export function MoneriumTransferRecapScreen({
         [onClose, reset]
     );
 
-    // Guard: if no IBAN is selected, go back to the amount screen
     if (!selectedIban) {
         goTo("transfer-amount");
         return null;
@@ -100,13 +106,18 @@ export function MoneriumTransferRecapScreen({
             <MoneriumScreen
                 onClose={handleBackToAmount}
                 leftIcon="back"
+                title={t("monerium.bankFlow.transfer.recap.title")}
                 topRight={
                     <button
                         type="button"
                         className={styles.linkButton}
                         onClick={onClose}
                     >
-                        <Text variant="bodySmall" color="action">
+                        <Text
+                            variant="bodySmall"
+                            color="action"
+                            weight="semiBold"
+                        >
                             {t("monerium.bankFlow.transfer.recap.cancel")}
                         </Text>
                     </button>
@@ -116,87 +127,99 @@ export function MoneriumTransferRecapScreen({
                 ctaLoading={isPending}
                 ctaDisabled={isPending}
             >
-                <Stack space="l">
-                    <Text variant="heading2" align="center">
-                        {t("monerium.bankFlow.transfer.recap.title")}
-                    </Text>
-
-                    {/* Amount row */}
-                    <Card variant="elevated" padding="default">
-                        <Stack space="xs">
-                            <Text variant="label" color="secondary">
-                                {t(
-                                    "monerium.bankFlow.transfer.recap.amountLabel"
-                                )}
+                <Card variant="elevated" padding="none">
+                    <Box className={styles.recapRow}>
+                        <Text
+                            variant="bodySmall"
+                            weight="medium"
+                            color="secondary"
+                        >
+                            {t("monerium.bankFlow.transfer.recap.amountLabel")}
+                        </Text>
+                        <Text
+                            variant="bodySmall"
+                            weight="medium"
+                            color="primary"
+                        >
+                            {amount} €
+                        </Text>
+                    </Box>
+                    <Box className={styles.recapRow}>
+                        <Text
+                            variant="bodySmall"
+                            weight="medium"
+                            color="secondary"
+                        >
+                            {t(
+                                "monerium.bankFlow.transfer.recap.beneficiaryLabel"
+                            )}
+                        </Text>
+                        <Box display={"flex"} alignItems={"center"} gap={"xxs"}>
+                            <Box
+                                color={"primary"}
+                                display={"flex"}
+                                alignItems={"center"}
+                            >
+                                <BankIcon width={16} height={16} />
+                            </Box>
+                            <Text
+                                variant="bodySmall"
+                                weight="medium"
+                                color="primary"
+                            >
+                                IBAN {maskIban(selectedIban.iban)}
                             </Text>
-                            <Text variant="heading3">{amount} €</Text>
-                        </Stack>
-                    </Card>
+                        </Box>
+                    </Box>
+                </Card>
 
-                    {/* Beneficiary row */}
-                    <Card variant="elevated" padding="default">
-                        <Inline space="m" alignY="center">
-                            <Box className={styles.cardIconBubble}>
-                                <TransferIcon width={20} height={20} />
-                            </Box>
-                            <Box flexGrow={1}>
-                                <Text variant="label" color="secondary">
-                                    {t(
-                                        "monerium.bankFlow.transfer.recap.beneficiaryLabel"
-                                    )}
-                                </Text>
-                                <Text variant="body" weight="semiBold">
-                                    {selectedIban.name}
-                                </Text>
-                                <Text variant="bodySmall" color="secondary">
-                                    {maskIban(selectedIban.iban)}
-                                </Text>
-                            </Box>
-                        </Inline>
-                    </Card>
-
-                    {/* Note input */}
-                    <Stack space="xs">
-                        <Text variant="label" color="secondary">
+                <Box display={"flex"} flexDirection={"column"} gap={"xs"}>
+                    <Box paddingX={"m"}>
+                        <Text
+                            variant="bodySmall"
+                            weight="medium"
+                            color="secondary"
+                        >
                             {t("monerium.bankFlow.transfer.recap.addNote")}
                         </Text>
-                        <Input
-                            length="big"
-                            value={note}
-                            onChange={(e) => setNote(e.target.value)}
-                            disabled={isPending}
-                            rightSection={
-                                note.length > 0 ? (
-                                    <button
-                                        type="button"
-                                        className={styles.linkButton}
-                                        onClick={() => setNote("")}
-                                        aria-label={t("common.close")}
-                                    >
-                                        <Box
-                                            color="tertiary"
-                                            display="flex"
-                                            alignItems="center"
-                                        >
-                                            <CloseIcon width={14} height={14} />
-                                        </Box>
-                                    </button>
-                                ) : null
-                            }
-                        />
-                    </Stack>
+                    </Box>
+                    <Input
+                        variant="bare"
+                        length="big"
+                        ref={noteInputRef}
+                        value={note}
+                        onChange={(e) => setNote(e.target.value)}
+                        disabled={isPending}
+                        aria-label={t(
+                            "monerium.bankFlow.transfer.recap.addNote"
+                        )}
+                        rightSection={
+                            note.length > 0 ? (
+                                <button
+                                    type="button"
+                                    className={styles.noteClearButton}
+                                    onClick={handleClearNote}
+                                    aria-label={t("common.close")}
+                                >
+                                    <CloseIcon width={24} height={24} />
+                                </button>
+                            ) : null
+                        }
+                    />
+                </Box>
 
-                    {/* Warning */}
-                    <Text variant="caption" color="secondary" align="center">
-                        {t("monerium.bankFlow.transfer.recap.warning")}
+                {/* Pushes the warning to the bottom of the body. */}
+                <Box flexGrow={1} />
+
+                <Text variant="caption" color="secondary" align="center">
+                    {t("monerium.bankFlow.transfer.recap.warning")}
+                </Text>
+
+                {errorMessage ? (
+                    <Text variant="bodySmall" color="error" align="center">
+                        {errorMessage}
                     </Text>
-
-                    {errorMessage ? (
-                        <Text variant="bodySmall" color="error" align="center">
-                            {errorMessage}
-                        </Text>
-                    ) : null}
-                </Stack>
+                ) : null}
             </MoneriumScreen>
             <MoneriumTransferSuccessModal
                 open={isSuccess}

@@ -1,4 +1,3 @@
-import { Box } from "@frak-labs/design-system/components/Box";
 import { Text } from "@frak-labs/design-system/components/Text";
 import { useTranslation } from "react-i18next";
 import { moneriumStore } from "@/module/monerium/store/moneriumStore";
@@ -24,17 +23,13 @@ export function MoneriumSuccessScreen({ onClose }: MoneriumSuccessScreenProps) {
     return (
         <MoneriumScreen
             onClose={onClose}
+            title={t("monerium.bankFlow.success.title")}
             ctaLabel={t("monerium.bankFlow.success.cta")}
             ctaOnClick={handleContinue}
         >
-            <Box display={"flex"} flexDirection={"column"} gap={"s"}>
-                <Text variant="heading1">
-                    {t("monerium.bankFlow.success.title")}
-                </Text>
-                <Text variant="body" color="secondary">
-                    {t("monerium.bankFlow.success.description")}
-                </Text>
-            </Box>
+            <Text variant="body" color="secondary">
+                {t("monerium.bankFlow.success.description")}
+            </Text>
         </MoneriumScreen>
     );
 }

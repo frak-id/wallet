@@ -1,5 +1,5 @@
-import { Box } from "@frak-labs/design-system/components/Box";
 import { Card } from "@frak-labs/design-system/components/Card";
+import { Stack } from "@frak-labs/design-system/components/Stack";
 import { Text } from "@frak-labs/design-system/components/Text";
 import {
     BankIcon,
@@ -92,24 +92,22 @@ export function MoneriumConnectScreen({
     return (
         <MoneriumScreen
             onClose={onClose}
+            title={t(config.titleKey)}
             ctaLabel={t(config.ctaKey)}
             ctaOnClick={handleConnect}
             ctaLoading={isConnecting}
         >
-            {/* Title + description */}
-            <Box display={"flex"} flexDirection={"column"} gap={"s"}>
-                <Text variant="heading1">{t(config.titleKey)}</Text>
+            <Stack space="m">
                 <Text variant="body" color="secondary">
                     {t(config.descriptionKey)}
                 </Text>
                 <Text variant="body" color="secondary">
                     {t(config.noticeKey)}
                 </Text>
-            </Box>
+            </Stack>
 
-            {/* Feature card — white elevated surface with flush-stacked rows */}
             <Card variant="elevated" padding="none">
-                <Box display={"flex"} flexDirection={"column"}>
+                <Stack space="none">
                     {config.features.map((feature) => (
                         <FeatureRow
                             key={feature.titleKey}
@@ -118,7 +116,7 @@ export function MoneriumConnectScreen({
                             description={t(feature.descriptionKey)}
                         />
                     ))}
-                </Box>
+                </Stack>
             </Card>
         </MoneriumScreen>
     );

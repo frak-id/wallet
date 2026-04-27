@@ -318,10 +318,10 @@ interface Resources {
                     amount: {
                         continue: "Continue";
                         ibanEmpty: "No IBAN saved";
-                        ibanLabel: "Recipient";
+                        ibanLabel: "IBAN";
                         insufficientBalance: "Insufficient balance";
                         modify: "Edit";
-                        title: "Transfer my earnings";
+                        title: "Amount to transfer";
                         totalBalance: "Total balance";
                         walletLabel: "Frak Wallet";
                     };

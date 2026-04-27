@@ -1,12 +1,11 @@
 import { vars } from "@frak-labs/design-system/theme";
-import { alias } from "@frak-labs/design-system/tokens";
+import { alias, fontSize } from "@frak-labs/design-system/tokens";
 import { style } from "@vanilla-extract/css";
 
 /**
- * Paints the whole Monerium `DetailSheet` with `surface.background2` so the
- * white elevated feature card stands out the way Figma shows it. Overrides
- * both the overlay's mobile background and the `DetailSheet` container's
- * desktop (`>=1024px`) `surface.background` rule.
+ * Repaints the `DetailSheet` with `surface.background2` so the white
+ * elevated cards stand out as Figma shows. Overrides both the mobile
+ * overlay bg and the desktop (>=1024px) `surface.background` rule.
  */
 export const sheetSurface = style({
     backgroundColor: vars.surface.background2,
@@ -18,42 +17,23 @@ export const sheetSurface = style({
 });
 
 /**
- * Circular close button (top-left of each monerium screen).
+ * Body wrapper. Vertical padding intentionally omitted — the toolbar
+ * already contributes `pb-xs` and the footer owns its own spacing.
  */
-export const closeButton = style({
-    width: "36px",
-    height: "36px",
-    borderRadius: alias.cornerRadius.full,
-    backgroundColor: vars.surface.secondary,
-    border: "none",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    cursor: "pointer",
-    color: vars.icon.secondary,
-    padding: 0,
+export const bodyStack = style({
+    paddingInline: alias.spacing.m,
+    flexGrow: 1,
 });
 
-/**
- * Feature cell used inside the info/kyc card. Each cell stacks flush
- * (no gap between them) inside the surrounding card; the 12px vertical
- * padding provides the inter-row rhythm and 16px horizontal padding
- * matches the Figma spec.
- */
 export const featureCell = style({
-    display: "flex",
-    alignItems: "flex-start",
-    gap: alias.spacing.m,
     paddingInline: alias.spacing.m,
     paddingBlock: alias.spacing.s,
     width: "100%",
 });
 
 /**
- * Icon slot for a feature cell. No background bubble — the icon is
- * rendered directly (filled glyph in the primary icon color). The 2px
- * top/bottom inset matches Figma's `py-[2px]` on the Left column so
- * the icon optically aligns with the title row.
+ * The 2px block padding optically aligns the icon with the title row,
+ * matching Figma's `py-[2px]` on the cell's Left column.
  */
 export const featureIconSlot = style({
     display: "flex",
@@ -65,31 +45,80 @@ export const featureIconSlot = style({
 });
 
 /**
- * Large, centered, bare-bones amount input. Uses the native mobile numeric
- * keypad via `inputMode="decimal"`. No border, no background — the field blends
- * into the screen so the focus is on the value.
+ * 12/16 padding instead of the `Card` recipe's 16/16 default — Figma
+ * specifies a tighter cell so each row sits at ~62px tall.
+ */
+export const transferCellPadding = style({
+    paddingBlock: alias.spacing.s,
+    paddingInline: alias.spacing.m,
+});
+
+/**
+ * `position: relative` so the centered switcher disc can absolute-pos
+ * over the gap between the two cards.
+ */
+export const cardsStack = style({
+    position: "relative",
+    display: "flex",
+    flexDirection: "column",
+    gap: alias.spacing.xs,
+});
+
+export const switcherIcon = style({
+    position: "absolute",
+    top: "50%",
+    left: "50%",
+    transform: "translate(-50%, -50%)",
+    width: "32px",
+    height: "32px",
+    pointerEvents: "none",
+    zIndex: 1,
+});
+
+export const switcherDisc = style({
+    width: "32px",
+    height: "32px",
+    borderRadius: alias.cornerRadius.full,
+    backgroundColor: vars.surface.background2,
+    color: vars.icon.secondary,
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+});
+
+export const amountSection = style({
+    paddingTop: "26px",
+});
+
+/**
+ * Width is set inline via `style={{ width: \`${len}ch\` }}` so the input
+ * grows with the typed value across all targets (`field-sizing: content`
+ * is Safari 17.4+ / Chrome 123+, below our baseline). `tabular-nums`
+ * makes digits uniform-width so the `ch` approximation stays accurate.
+ * `caretColor: text.action` keeps the native cursor visible in brand blue.
  */
 export const amountInput = style({
-    width: "100%",
     border: "none",
     outline: "none",
     backgroundColor: "transparent",
     color: vars.text.primary,
-    fontSize: "56px",
+    fontSize: fontSize["5xl"],
     lineHeight: "1",
     fontWeight: 700,
-    textAlign: "center",
+    textAlign: "left",
     padding: 0,
+    margin: 0,
     fontFamily: "inherit",
-    caretColor: vars.text.primary,
+    fontVariantNumeric: "tabular-nums",
+    caretColor: vars.text.action,
     "::placeholder": {
         color: vars.text.disabled,
     },
 });
 
 /**
- * Unstyled button that behaves like an inline text link (e.g. "Modifier",
- * "Annuler"). Relies on surrounding Text wrapping for color.
+ * Unstyled button reset for toolbar slots / inline actions. Lets the
+ * surrounding `Text` component fully control the look.
  */
 export const linkButton = style({
     background: "none",
@@ -99,35 +128,38 @@ export const linkButton = style({
     font: "inherit",
     color: "inherit",
     cursor: "pointer",
-    textDecoration: "underline",
 });
 
-/**
- * Error variant of the wallet balance card — red tinted background + border.
- */
-export const walletCardError = style({
-    backgroundColor: vars.surface.error,
-    border: `1px solid ${vars.border.error}`,
+export const recapRow = style({
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: alias.spacing.m,
+    paddingBlock: alias.spacing.s,
+    paddingInline: alias.spacing.m,
+    width: "100%",
+    minHeight: "49px",
 });
 
-/**
- * Round 40×40 icon bubble used inside beneficiary / wallet cards.
- */
-export const cardIconBubble = style({
-    width: "40px",
-    height: "40px",
-    borderRadius: alias.cornerRadius.full,
-    backgroundColor: vars.surface.secondary,
+export const noteClearButton = style({
+    flexShrink: 0,
+    width: "24px",
+    height: "24px",
+    border: "none",
+    background: "transparent",
+    padding: 0,
+    margin: 0,
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
-    color: vars.icon.tertiary,
-    flexShrink: 0,
+    cursor: "pointer",
+    color: vars.icon.secondary,
 });
 
-/**
- * Row inside the IBAN manager — selectable card row with radio affordance.
- */
+export const walletCardError = style({
+    backgroundColor: vars.surface.error,
+});
+
 export const ibanRow = style({
     width: "100%",
     textAlign: "left",
@@ -137,4 +169,15 @@ export const ibanRow = style({
     cursor: "pointer",
     font: "inherit",
     color: "inherit",
+});
+
+/**
+ * Hits `text.action` directly because the design-system has no
+ * `border.action` token (its `border.focus` resolves to grey-400, which
+ * vanishes against a white card on `surface.background2`). `outline`
+ * (not `border`) avoids any layout shift between selected states.
+ */
+export const ibanCardSelected = style({
+    outline: `1.5px solid ${vars.text.action}`,
+    outlineOffset: "-1.5px",
 });

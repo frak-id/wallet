@@ -598,10 +598,10 @@
             },
             "transfer": {
                 "amount": {
-                    "title": "Transfer my earnings",
+                    "title": "Amount to transfer",
                     "walletLabel": "Frak Wallet",
                     "totalBalance": "Total balance",
-                    "ibanLabel": "Recipient",
+                    "ibanLabel": "IBAN",
                     "ibanEmpty": "No IBAN saved",
                     "modify": "Edit",
                     "continue": "Continue",

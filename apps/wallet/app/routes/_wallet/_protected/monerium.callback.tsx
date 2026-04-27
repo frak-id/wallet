@@ -47,7 +47,7 @@ function Outcome({
             ctaLabel={t("monerium.callback.tryAgain")}
             ctaOnClick={onRetry}
         >
-            <Box display={"flex"} flexDirection={"column"} gap={"s"}>
+            <Box paddingTop={"m"}>
                 <Text variant="heading1">
                     {t(
                         isCancelled
@@ -84,10 +84,9 @@ function MoneriumCallback() {
             codeVerifier: string;
         }) => {
             const tokens = await exchangeCodeForTokens(code, codeVerifier);
-            // Only set tokens here — the verifier is cleared in `onSuccess`
-            // so the subscribed selector doesn't flip `isMissingVerifier`
-            // true before react-query flags `isSuccess`, which would flash
-            // the error screen between token exchange and redirect.
+            // Verifier cleared in `onSuccess` — clearing it here would flip
+            // the subscribed selector before react-query flags `isSuccess`
+            // and flash the error screen during the redirect.
             moneriumStore
                 .getState()
                 .setTokens(
@@ -97,11 +96,9 @@ function MoneriumCallback() {
                 );
         },
         onSuccess: () => {
-            // Re-open the bank-flow modal so `useMoneriumFlowSync` can
-            // route the user to the correct post-connect screen
-            // (Account Ready / KYC / Wallet link). The modal store is
-            // in-memory, so a full-page reload would wipe it — use SPA
-            // navigation instead to preserve it.
+            // Re-open the bank flow so `useMoneriumFlowSync` routes to the
+            // right post-connect screen. SPA nav (not `window.location`)
+            // because the modal store is in-memory.
             modalStore.getState().openModal({ id: "moneriumBankFlow" });
             navigate({ to: "/wallet", replace: true });
             moneriumStore.getState().setPendingCodeVerifier(null);
@@ -123,15 +120,8 @@ function MoneriumCallback() {
     const goToProfile = () => navigate({ to: "/profile", replace: true });
     const goToWallet = () => navigate({ to: "/wallet", replace: true });
 
-    // Spinner states, in order:
-    //   1. Mutation is in-flight (`isPending`) or already succeeded
-    //      (`isSuccess`, before the /wallet redirect completes)
-    //   2. Initial mount before the effect fires: we have both the code
-    //      and verifier and no error yet — the exchange is about to start
-    //
-    // Error states fall through when `code` is present but either no
-    // verifier is available (tab reload cleared storage) or the exchange
-    // itself failed.
+    // Spinner while the exchange is in-flight, just succeeded (before the
+    // redirect lands), or about to start (initial mount with code + verifier).
     const isExchangingCode =
         isPending ||
         isSuccess ||
