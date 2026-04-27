@@ -265,6 +265,7 @@ export class BatchRewardOrchestrator {
                 interactionLogId,
                 chainDepth: reward.chainDepth,
                 expirationDays: reward.expirationDays,
+                lockupDays: reward.lockupDays,
             });
         }
 

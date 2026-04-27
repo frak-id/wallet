@@ -29,6 +29,8 @@ export type DetailedAssetLog = {
     recipientType: RecipientType;
     createdAt: Date;
     settledAt: Date | null;
+    availableAt: Date | null;
+    cancellationReason: CancellationReason | null;
     onchainTxHash: Hex | null;
     interactionType: InteractionType | null;
     interactionPayload: InteractionPayload | null;

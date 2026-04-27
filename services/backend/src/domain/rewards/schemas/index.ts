@@ -87,6 +87,10 @@ export const RewardHistoryItemSchema = t.Object({
     txHash: t.Optional(t.String()),
     createdAt: t.Date(),
     settledAt: t.Optional(t.Date()),
+    /** Timestamp at which a locked reward becomes claimable. Undefined when no lockup. */
+    availableAt: t.Optional(t.Date()),
+    /** Reason a `cancelled` reward was cancelled. Undefined for non-cancelled rewards. */
+    cancellationReason: t.Optional(CancellationReasonSchema),
     purchase: t.Optional(PurchaseInfoSchema),
 });
 export type RewardHistoryItem = Static<typeof RewardHistoryItemSchema>;

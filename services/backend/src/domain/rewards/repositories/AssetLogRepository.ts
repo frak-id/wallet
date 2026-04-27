@@ -365,6 +365,8 @@ export class AssetLogRepository {
                 recipientType: assetLogsTable.recipientType,
                 createdAt: assetLogsTable.createdAt,
                 settledAt: assetLogsTable.settledAt,
+                availableAt: assetLogsTable.availableAt,
+                cancellationReason: assetLogsTable.cancellationReason,
                 onchainTxHash: assetLogsTable.onchainTxHash,
                 interactionType: interactionLogsTable.type,
                 interactionPayload: interactionLogsTable.payload,
