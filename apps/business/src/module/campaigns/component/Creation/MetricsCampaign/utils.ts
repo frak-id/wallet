@@ -12,7 +12,13 @@ export type RewardFormState = {
     deperditionPerLevel: number;
     maxDepth: number;
     referralOnly: boolean;
+    /** Days a reward stays locked before settlement. 0 disables. */
+    lockupDays: number;
 };
+
+export const DEFAULT_LOCKUP_DAYS = 14;
+export const MIN_LOCKUP_DAYS = 0;
+export const MAX_LOCKUP_DAYS = 30;
 
 export const DEFAULT_REWARD_STATE: RewardFormState = {
     cac: 0,
@@ -21,6 +27,7 @@ export const DEFAULT_REWARD_STATE: RewardFormState = {
     deperditionPerLevel: 80,
     maxDepth: 5,
     referralOnly: true,
+    lockupDays: DEFAULT_LOCKUP_DAYS,
 };
 
 const FRAK_COMMISSION_PERCENT = 20;
@@ -128,6 +135,7 @@ export function updateRuleWithRewards(
     return {
         ...existingRule,
         rewards,
+        defaultLockupDays: rewardState.lockupDays,
     };
 }
 
@@ -179,6 +187,7 @@ export function extractFormStateFromRule(
         referralOnly:
             hasReferralCondition ||
             (Array.isArray(rule.conditions) && rule.conditions.length === 0),
+        lockupDays: rule.defaultLockupDays ?? DEFAULT_LOCKUP_DAYS,
     };
 }
 

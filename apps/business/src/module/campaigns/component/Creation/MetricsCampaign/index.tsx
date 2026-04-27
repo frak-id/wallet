@@ -20,6 +20,7 @@ import { CacInput } from "./CacInput";
 import { ChainingConfig } from "./ChainingConfig";
 import { DistributionSlider } from "./DistributionSlider";
 import styles from "./index.module.css";
+import { LockupConfig } from "./LockupConfig";
 import { TriggerSelector } from "./TriggerSelector";
 import {
     DEFAULT_REWARD_STATE,
@@ -55,6 +56,7 @@ function formValuesToDraft(
         deperditionPerLevel: values.deperditionPerLevel,
         maxDepth: values.maxDepth,
         referralOnly: values.referralOnly,
+        lockupDays: values.lockupDays,
     });
 
     return {
@@ -170,6 +172,17 @@ export function MetricsCampaign() {
 
                     <Panel title="Referral Chain">
                         <ChainingConfig />
+                    </Panel>
+
+                    <Panel title="Reward lockup">
+                        <p className={styles.panelDescription}>
+                            Rewards stay locked for a grace period after a
+                            purchase before being settled on-chain. This
+                            protects the campaign budget against refunds and
+                            late self-referral detections. Set to 0 to settle
+                            immediately.
+                        </p>
+                        <LockupConfig />
                     </Panel>
 
                     <Actions
