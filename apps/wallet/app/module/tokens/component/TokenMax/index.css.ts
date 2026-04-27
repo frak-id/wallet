@@ -1,12 +1,15 @@
-import { alias, fontSize } from "@frak-labs/design-system/tokens";
+import { vars } from "@frak-labs/design-system/theme";
+import { alias, brand, fontSize } from "@frak-labs/design-system/tokens";
 import { style } from "@vanilla-extract/css";
 
 export const tokenMaxButton = style({
-    margin: `0 0 -3px ${alias.spacing.s}`,
-    padding: `${alias.spacing.s} ${alias.spacing.s}`,
-    backgroundColor: "var(--frak-token-max-background-color)",
+    paddingBlock: alias.spacing.xxs,
+    paddingInline: alias.spacing.xs,
+    backgroundColor: vars.surface.secondary,
     border: "none",
+    borderRadius: alias.cornerRadius.s,
     fontSize: fontSize.xs,
     cursor: "pointer",
-    color: "var(--frak-token-max-color)",
+    color: vars.text.action,
+    fontWeight: brand.typography.fontWeight.semiBold,
 });
