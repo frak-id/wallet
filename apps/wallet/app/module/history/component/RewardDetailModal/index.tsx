@@ -38,7 +38,7 @@ export function RewardDetailModal({ item, onClose }: RewardDetailModalProps) {
             <DetailSheetBody className={styles.body}>
                 <GlassButton
                     as="button"
-                    icon={<CloseIcon />}
+                    icon={<CloseIcon width={22} height={22} />}
                     onClick={onClose}
                     aria-label={t("common.close")}
                 />

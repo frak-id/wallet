@@ -183,7 +183,7 @@ export function ExplorerDetail({ merchant, onClose }: ExplorerDetailProps) {
                 <DetailSheetActions>
                     <GlassButton
                         as="button"
-                        icon={<CloseIcon />}
+                        icon={<CloseIcon width={22} height={22} />}
                         onClick={onClose}
                         aria-label={t("explorer.detail.close")}
                     />

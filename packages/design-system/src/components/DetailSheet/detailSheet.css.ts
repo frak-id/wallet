@@ -58,7 +58,7 @@ export const footerStyle = style({
     bottom: 0,
     zIndex: 2,
     flexShrink: 0,
-    padding: `${alias.spacing.m} ${alias.spacing.xl}`,
+    padding: `${alias.spacing.m}`,
     paddingBottom: `max(${alias.spacing.xl}, env(safe-area-inset-bottom))`,
     backgroundColor: vars.surface.background2,
     display: "flex",
