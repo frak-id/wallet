@@ -1,19 +1,11 @@
 import { log } from "@backend-infrastructure";
+import { HttpError } from "@backend-utils";
 import type { Address } from "viem";
 import type { IdentityRepository } from "../../domain/identity/repositories/IdentityRepository";
 import type { AnonymousMergeService } from "../../domain/identity/services/AnonymousMergeService";
 import type { IdentityOrchestrator } from "./IdentityOrchestrator";
 import type { IdentityNode } from "./types";
 import { WalletConflictError } from "./types";
-
-type InitiateMergeResult =
-    | { success: true; mergeToken: string; expiresAt: Date }
-    | { success: false; error: string; code: string };
-
-type ExecuteMergeResult =
-    | { success: true; finalGroupId: string; merged: boolean }
-    | { success: false; error: string; code: string };
-
 export class AnonymousMergeOrchestrator {
     constructor(
         private readonly anonymousMergeService: AnonymousMergeService,
@@ -42,15 +34,14 @@ export class AnonymousMergeOrchestrator {
         merchantId: string;
         sourceAnonymousId?: string;
         sourceWalletAddress?: Address;
-    }): Promise<InitiateMergeResult> {
+    }): Promise<{ mergeToken: string; expiresAt: Date }> {
         const { sourceAnonymousId, sourceWalletAddress, merchantId } = params;
 
         if (!sourceAnonymousId && !sourceWalletAddress) {
-            return {
-                success: false,
-                error: "sourceAnonymousId or sourceWalletAddress is required",
-                code: "MISSING_SOURCE_IDENTITY",
-            };
+            throw HttpError.badRequest(
+                "MISSING_SOURCE_IDENTITY",
+                "sourceAnonymousId or sourceWalletAddress is required"
+            );
         }
 
         // Build source identity nodes. Wallet nodes are merchant-agnostic;
@@ -92,21 +83,15 @@ export class AnonymousMergeOrchestrator {
         mergeToken: string;
         targetAnonymousId: string;
         merchantId: string;
-    }): Promise<ExecuteMergeResult> {
+    }): Promise<{ finalGroupId: string; merged: boolean }> {
         const { mergeToken, targetAnonymousId, merchantId } = params;
 
         // 1. Validate the token
-        const validation = await this.anonymousMergeService.validateToken({
-            mergeToken,
-            merchantId,
-        });
-
-        if (!validation.success) {
-            return validation;
-        }
-
-        const { sourceGroupId } = validation;
-
+        const { sourceGroupId } =
+            await this.anonymousMergeService.validateToken({
+                mergeToken,
+                merchantId,
+            });
         // 2. Resolve target group
         const targetGroup = await this.identityRepository.findGroupByIdentity({
             type: "anonymous_fingerprint",
@@ -115,13 +100,11 @@ export class AnonymousMergeOrchestrator {
         });
 
         if (!targetGroup) {
-            return {
-                success: false,
-                error: "Target anonymous identity not found",
-                code: "TARGET_NOT_FOUND",
-            };
+            throw HttpError.notFound(
+                "TARGET_NOT_FOUND",
+                "Target anonymous identity not found"
+            );
         }
-
         // 3. Delegate to IdentityOrchestrator.associate() which handles:
         //    - Idempotency (same group → no-op)
         //    - Wallet conflict detection (throws WalletConflictError)
@@ -146,7 +129,6 @@ export class AnonymousMergeOrchestrator {
             }
 
             return {
-                success: true,
                 finalGroupId,
                 merged,
             };
@@ -161,11 +143,7 @@ export class AnonymousMergeOrchestrator {
                     },
                     "Attempted to merge groups with different wallets"
                 );
-                return {
-                    success: false,
-                    error: error.message,
-                    code: error.code,
-                };
+                throw HttpError.conflict(error.code, error.message);
             }
             throw error;
         }

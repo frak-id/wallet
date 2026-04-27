@@ -67,21 +67,13 @@ export const merchantTransferRoutes = new Elysia({
         async ({ params: { merchantId }, body, request }) => {
             const origin = request.headers.get("origin") ?? "";
 
-            const result =
-                await MerchantContext.services.ownershipTransfer.initiateTransfer(
-                    {
-                        merchantId,
-                        message: body.message,
-                        signature: body.signature,
-                        toWallet: body.toWallet,
-                        requestOrigin: origin,
-                    }
-                );
-
-            if (!result.success) {
-                return status(400, result.error);
-            }
-
+            await MerchantContext.services.ownershipTransfer.initiateTransfer({
+                merchantId,
+                message: body.message,
+                signature: body.signature,
+                toWallet: body.toWallet,
+                requestOrigin: origin,
+            });
             return { success: true };
         },
         {
@@ -107,20 +99,12 @@ export const merchantTransferRoutes = new Elysia({
                     merchantId
                 );
 
-            const result =
-                await MerchantContext.services.ownershipTransfer.acceptTransfer(
-                    {
-                        merchantId,
-                        message: body.message,
-                        signature: body.signature,
-                        requestOrigin: origin,
-                    }
-                );
-
-            if (!result.success) {
-                return status(400, result.error);
-            }
-
+            await MerchantContext.services.ownershipTransfer.acceptTransfer({
+                merchantId,
+                message: body.message,
+                signature: body.signature,
+                requestOrigin: origin,
+            });
             if (pendingTransfer) {
                 CampaignBankContext.services.campaignBank
                     .transferBankRoles(
@@ -178,17 +162,10 @@ export const merchantTransferRoutes = new Elysia({
                 return status(401, "Authentication required");
             }
 
-            const result =
-                await MerchantContext.services.ownershipTransfer.cancelTransfer(
-                    {
-                        merchantId,
-                        wallet: businessSession.wallet,
-                    }
-                );
-
-            if (!result.success) {
-                return status(400, result.error);
-            }
+            await MerchantContext.services.ownershipTransfer.cancelTransfer({
+                merchantId,
+                wallet: businessSession.wallet,
+            });
 
             return { success: true };
         },

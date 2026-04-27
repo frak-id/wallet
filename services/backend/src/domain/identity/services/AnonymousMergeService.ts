@@ -1,20 +1,7 @@
 import { JwtContext, log } from "@backend-infrastructure";
+import { HttpError } from "@backend-utils";
 import type { Address } from "viem";
 import type { IdentityRepository } from "../repositories/IdentityRepository";
-
-type GenerateTokenResult =
-    | { success: true; mergeToken: string; expiresAt: Date }
-    | { success: false; error: string; code: string };
-
-type ValidateTokenResult =
-    | {
-          success: true;
-          sourceGroupId: string;
-          sourceMerchantId: string;
-          sourceAnonymousId?: string;
-          sourceWalletAddress?: Address;
-      }
-    | { success: false; error: string; code: string };
 
 export class AnonymousMergeService {
     constructor(private readonly identityRepository: IdentityRepository) {}
@@ -37,7 +24,7 @@ export class AnonymousMergeService {
         sourceGroupId: string;
         sourceAnonymousId?: string;
         sourceWalletAddress?: Address;
-    }): Promise<GenerateTokenResult> {
+    }): Promise<{ mergeToken: string; expiresAt: Date }> {
         const {
             sourceAnonymousId,
             sourceWalletAddress,
@@ -60,7 +47,7 @@ export class AnonymousMergeService {
             "Anonymous merge token generated"
         );
 
-        return { success: true, mergeToken, expiresAt };
+        return { mergeToken, expiresAt };
     }
 
     /**
@@ -69,27 +56,30 @@ export class AnonymousMergeService {
     async validateToken(params: {
         mergeToken: string;
         merchantId: string;
-    }): Promise<ValidateTokenResult> {
+    }): Promise<{
+        sourceGroupId: string;
+        sourceMerchantId: string;
+        sourceAnonymousId?: string;
+        sourceWalletAddress?: Address;
+    }> {
         const { mergeToken, merchantId } = params;
 
         // Verify JWT signature and extract claims
         const tokenPayload = await JwtContext.anonymousMerge.verify(mergeToken);
 
         if (!tokenPayload) {
-            return {
-                success: false,
-                error: "Invalid or expired merge token",
-                code: "TOKEN_INVALID",
-            };
+            throw HttpError.unauthorized(
+                "TOKEN_INVALID",
+                "Invalid or expired merge token"
+            );
         }
 
         // Check merchant matches
         if (tokenPayload.sourceMerchantId !== merchantId) {
-            return {
-                success: false,
-                error: "Token merchant does not match request",
-                code: "MERCHANT_MISMATCH",
-            };
+            throw HttpError.badRequest(
+                "MERCHANT_MISMATCH",
+                "Token merchant does not match request"
+            );
         }
 
         // Verify source group still exists
@@ -98,15 +88,13 @@ export class AnonymousMergeService {
         );
 
         if (!sourceGroup) {
-            return {
-                success: false,
-                error: "Source identity group no longer exists",
-                code: "SOURCE_NOT_FOUND",
-            };
+            throw HttpError.notFound(
+                "SOURCE_NOT_FOUND",
+                "Source identity group no longer exists"
+            );
         }
 
         return {
-            success: true,
             sourceGroupId: tokenPayload.sourceGroupId,
             sourceMerchantId: tokenPayload.sourceMerchantId,
             sourceAnonymousId: tokenPayload.sourceAnonymousId,

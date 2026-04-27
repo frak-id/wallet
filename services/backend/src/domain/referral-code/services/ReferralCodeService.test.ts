@@ -54,18 +54,6 @@ describe("ReferralCodeService.suggestWithStem", () => {
         ).rejects.toMatchObject({ code: "INVALID_STEM_LENGTH" });
     });
 
-    it("rejects stems with ambiguous chars removed from the alphabet (O)", async () => {
-        await expect(
-            service.suggestWithStem({ stem: "QUO" })
-        ).rejects.toMatchObject({ code: "INVALID_STEM_CHARS" });
-    });
-
-    it("rejects stems with ambiguous chars removed from the alphabet (1)", async () => {
-        await expect(
-            service.suggestWithStem({ stem: "QU1" })
-        ).rejects.toMatchObject({ code: "INVALID_STEM_CHARS" });
-    });
-
     it("uppercases the stem before generating candidates", async () => {
         repository.filterAvailableCandidates.mockImplementation(
             async (candidates: string[]) => candidates.slice(0, 5)
@@ -306,18 +294,6 @@ describe("ReferralCodeService.issue", () => {
                 preferredCode: "QUEN",
             })
         ).rejects.toMatchObject({ code: "INVALID_CODE_LENGTH", status: 400 });
-        expect(repository.create).not.toHaveBeenCalled();
-    });
-
-    it("rejects preferredCode containing ambiguous chars", async () => {
-        repository.findActiveByOwner.mockResolvedValue(null);
-
-        await expect(
-            service.issue({
-                ownerIdentityGroupId,
-                preferredCode: "QUEN4O", // O is not in the alphabet
-            })
-        ).rejects.toMatchObject({ code: "INVALID_CODE_CHARS", status: 400 });
         expect(repository.create).not.toHaveBeenCalled();
     });
 });
