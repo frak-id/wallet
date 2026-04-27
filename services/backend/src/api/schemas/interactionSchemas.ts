@@ -9,12 +9,6 @@ const ArrivalSubmissionSchema = t.Object({
     referrerClientId: t.Optional(t.String({ format: "uuid" })),
     referrerMerchantId: t.Optional(t.String({ format: "uuid" })),
     referralTimestamp: t.Optional(t.Number()),
-    landingUrl: t.Optional(t.String()),
-    utmSource: t.Optional(t.String()),
-    utmMedium: t.Optional(t.String()),
-    utmCampaign: t.Optional(t.String()),
-    utmTerm: t.Optional(t.String()),
-    utmContent: t.Optional(t.String()),
 });
 
 const SharingSubmissionSchema = t.Object({
@@ -42,12 +36,12 @@ export type InteractionSubmission = Static<typeof InteractionSubmissionSchema>;
 /**
  * Validate arrival referrer fields beyond what TypeBox can express.
  *
- * Catches malformed payloads that would otherwise silently downgrade to a
- * `paid_ad` / `direct` touchpoint at the handler level. Rules:
- *   - No referrer fields at all → OK (organic / paid / direct).
- *   - Wallet-only → V1 legacy: wallet must be a valid {@link Address}.
- *   - Any V2 signal (clientId or wallet alongside merchantId) → must include
- *     `referrerMerchantId` plus at least one valid identifier.
+ * Catches malformed payloads. Rules:
+ *   - No referrer fields at all → OK (organic visit, no referral edge created).
+ *   - Wallet-only legacy → wallet must be a valid {@link Address}.
+ *   - Merchant-context (any signal alongside `referrerMerchantId`) → must
+ *     include `referrerMerchantId` plus at least one valid identifier
+ *     (`referrerWallet` or `referrerClientId`).
  *
  * Returns a human-readable error message when invalid, or null when OK.
  */
@@ -62,14 +56,14 @@ export function validateArrivalReferrer(input: {
 
     if (!hasWallet && !hasClientId && !hasMerchantId) return null;
 
-    // V1 legacy: wallet only, no merchantId.
+    // Wallet-only legacy: wallet alone, no merchantId.
     if (hasWallet && !hasClientId && !hasMerchantId) {
         return isAddress(input.referrerWallet ?? "")
             ? null
             : "referrerWallet must be a valid Ethereum address";
     }
 
-    // V2: merchantId is mandatory once any V2-style signal is present.
+    // Merchant-context: merchantId is mandatory once any merchant-context signal is present.
     if (!hasMerchantId) {
         return "referrerMerchantId is required alongside referrerClientId or referrerWallet";
     }

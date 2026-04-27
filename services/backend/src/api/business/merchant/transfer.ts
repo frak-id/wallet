@@ -3,7 +3,7 @@ import { t } from "@backend-utils";
 import { Elysia, status } from "elysia";
 import { CampaignBankContext } from "../../../domain/campaign-bank";
 import { MerchantContext } from "../../../domain/merchant";
-import { MerchantIdParamSchema, SuccessResponseSchema } from "../../schemas";
+import { MerchantIdParamSchema } from "../../schemas";
 import { businessSessionContext } from "../middleware/session";
 
 export const merchantTransferRoutes = new Elysia({
@@ -67,22 +67,14 @@ export const merchantTransferRoutes = new Elysia({
         async ({ params: { merchantId }, body, request }) => {
             const origin = request.headers.get("origin") ?? "";
 
-            const result =
-                await MerchantContext.services.ownershipTransfer.initiateTransfer(
-                    {
-                        merchantId,
-                        message: body.message,
-                        signature: body.signature,
-                        toWallet: body.toWallet,
-                        requestOrigin: origin,
-                    }
-                );
-
-            if (!result.success) {
-                return status(400, result.error);
-            }
-
-            return { success: true };
+            await MerchantContext.services.ownershipTransfer.initiateTransfer({
+                merchantId,
+                message: body.message,
+                signature: body.signature,
+                toWallet: body.toWallet,
+                requestOrigin: origin,
+            });
+            return status(204);
         },
         {
             params: MerchantIdParamSchema,
@@ -92,7 +84,7 @@ export const merchantTransferRoutes = new Elysia({
                 toWallet: t.Hex(),
             }),
             response: {
-                200: SuccessResponseSchema,
+                204: t.Void(),
                 400: t.String(),
             },
         }
@@ -107,20 +99,12 @@ export const merchantTransferRoutes = new Elysia({
                     merchantId
                 );
 
-            const result =
-                await MerchantContext.services.ownershipTransfer.acceptTransfer(
-                    {
-                        merchantId,
-                        message: body.message,
-                        signature: body.signature,
-                        requestOrigin: origin,
-                    }
-                );
-
-            if (!result.success) {
-                return status(400, result.error);
-            }
-
+            await MerchantContext.services.ownershipTransfer.acceptTransfer({
+                merchantId,
+                message: body.message,
+                signature: body.signature,
+                requestOrigin: origin,
+            });
             if (pendingTransfer) {
                 CampaignBankContext.services.campaignBank
                     .transferBankRoles(
@@ -128,19 +112,6 @@ export const merchantTransferRoutes = new Elysia({
                         pendingTransfer.fromWallet,
                         pendingTransfer.toWallet
                     )
-                    .then((roleResult) => {
-                        if (!roleResult.success) {
-                            log.warn(
-                                {
-                                    merchantId,
-                                    fromWallet: pendingTransfer.fromWallet,
-                                    toWallet: pendingTransfer.toWallet,
-                                    error: roleResult.error,
-                                },
-                                "Failed to transfer bank roles after ownership change"
-                            );
-                        }
-                    })
                     .catch((error) => {
                         log.error(
                             {
@@ -152,12 +123,12 @@ export const merchantTransferRoutes = new Elysia({
                                         ? error.message
                                         : String(error),
                             },
-                            "Error transferring bank roles after ownership change"
+                            "Failed to transfer bank roles after ownership change"
                         );
                     });
             }
 
-            return { success: true };
+            return status(204);
         },
         {
             params: MerchantIdParamSchema,
@@ -166,7 +137,7 @@ export const merchantTransferRoutes = new Elysia({
                 signature: t.Hex(),
             }),
             response: {
-                200: SuccessResponseSchema,
+                204: t.Void(),
                 400: t.String(),
             },
         }
@@ -178,24 +149,17 @@ export const merchantTransferRoutes = new Elysia({
                 return status(401, "Authentication required");
             }
 
-            const result =
-                await MerchantContext.services.ownershipTransfer.cancelTransfer(
-                    {
-                        merchantId,
-                        wallet: businessSession.wallet,
-                    }
-                );
+            await MerchantContext.services.ownershipTransfer.cancelTransfer({
+                merchantId,
+                wallet: businessSession.wallet,
+            });
 
-            if (!result.success) {
-                return status(400, result.error);
-            }
-
-            return { success: true };
+            return status(204);
         },
         {
             params: MerchantIdParamSchema,
             response: {
-                200: SuccessResponseSchema,
+                204: t.Void(),
                 400: t.String(),
                 401: t.String(),
             },

@@ -1,4 +1,3 @@
-import "./attribution";
 import "./expiration";
 import "./pairing";
 import "./installCode";

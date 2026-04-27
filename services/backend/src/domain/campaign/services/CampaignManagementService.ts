@@ -1,3 +1,4 @@
+import { HttpError } from "@backend-utils";
 import type { CampaignRuleInsert, CampaignRuleSelect } from "../db/schema";
 import type { CampaignRuleRepository } from "../repositories/CampaignRuleRepository";
 import type { CampaignStatus } from "../schemas";
@@ -22,10 +23,6 @@ type CampaignUpdateInput = {
     priority?: number;
 };
 
-type CampaignResult<T = CampaignRuleSelect> =
-    | { success: true; campaign: T }
-    | { success: false; error: string };
-
 type StatusTransition = {
     from: CampaignStatus[];
     to: CampaignStatus;
@@ -43,8 +40,8 @@ export class CampaignManagementService {
         private readonly campaignRuleRepository: CampaignRuleRepository
     ) {}
 
-    async create(input: CampaignCreateInput): Promise<CampaignResult> {
-        const campaign = await this.campaignRuleRepository.create({
+    async create(input: CampaignCreateInput): Promise<CampaignRuleSelect> {
+        return this.campaignRuleRepository.create({
             merchantId: input.merchantId,
             name: input.name,
             rule: input.rule,
@@ -54,36 +51,40 @@ export class CampaignManagementService {
             priority: input.priority ?? 0,
             status: "draft",
         });
-
-        return { success: true, campaign };
     }
 
     async update(
         campaignId: string,
         input: CampaignUpdateInput
-    ): Promise<CampaignResult> {
+    ): Promise<CampaignRuleSelect> {
         const campaign = await this.campaignRuleRepository.findById(campaignId);
         if (!campaign) {
-            return { success: false, error: "Campaign not found" };
+            throw HttpError.notFound(
+                "CAMPAIGN_NOT_FOUND",
+                "Campaign not found"
+            );
         }
 
         if (campaign.status === "archived") {
-            return { success: false, error: "Cannot edit archived campaigns" };
+            throw HttpError.conflict(
+                "CAMPAIGN_ARCHIVED",
+                "Cannot edit archived campaigns"
+            );
         }
 
         const isDraft = campaign.status === "draft";
 
         if (!isDraft && input.rule) {
-            return {
-                success: false,
-                error: "Cannot modify rule definition after publishing. Only name, budget, and expiration can be changed.",
-            };
+            throw HttpError.badRequest(
+                "RULE_LOCKED",
+                "Cannot modify rule definition after publishing. Only name, budget, and expiration can be changed."
+            );
         }
 
         if (input.rule) {
             const validationError = this.validateRuleDefinition(input.rule);
             if (validationError) {
-                return { success: false, error: validationError };
+                throw HttpError.badRequest("INVALID_RULE", validationError);
             }
         }
 
@@ -104,7 +105,7 @@ export class CampaignManagementService {
         ) as Parameters<typeof this.campaignRuleRepository.update>[1];
 
         if (Object.keys(cleanUpdates).length === 0) {
-            return { success: true, campaign };
+            return campaign;
         }
 
         const updated = await this.campaignRuleRepository.update(
@@ -113,47 +114,54 @@ export class CampaignManagementService {
         );
 
         if (!updated) {
-            return { success: false, error: "Failed to update campaign" };
+            throw HttpError.internal(
+                "UPDATE_FAILED",
+                "Failed to update campaign"
+            );
         }
 
-        return { success: true, campaign: updated };
+        return updated;
     }
 
-    async publish(campaignId: string): Promise<CampaignResult> {
+    async publish(campaignId: string): Promise<CampaignRuleSelect> {
         return this.transitionStatus(campaignId, "publish");
     }
 
-    async pause(campaignId: string): Promise<CampaignResult> {
+    async pause(campaignId: string): Promise<CampaignRuleSelect> {
         return this.transitionStatus(campaignId, "pause");
     }
 
-    async resume(campaignId: string): Promise<CampaignResult> {
+    async resume(campaignId: string): Promise<CampaignRuleSelect> {
         return this.transitionStatus(campaignId, "resume");
     }
 
-    async archive(campaignId: string): Promise<CampaignResult> {
+    async archive(campaignId: string): Promise<CampaignRuleSelect> {
         return this.transitionStatus(campaignId, "archive");
     }
 
-    async delete(campaignId: string): Promise<CampaignResult<null>> {
+    async delete(campaignId: string): Promise<void> {
         const campaign = await this.campaignRuleRepository.findById(campaignId);
         if (!campaign) {
-            return { success: false, error: "Campaign not found" };
+            throw HttpError.notFound(
+                "CAMPAIGN_NOT_FOUND",
+                "Campaign not found"
+            );
         }
 
         if (campaign.status !== "draft") {
-            return {
-                success: false,
-                error: "Only draft campaigns can be deleted. Use archive for published campaigns.",
-            };
+            throw HttpError.conflict(
+                "NOT_DRAFT",
+                "Only draft campaigns can be deleted. Use archive for published campaigns."
+            );
         }
 
         const deleted = await this.campaignRuleRepository.delete(campaignId);
         if (!deleted) {
-            return { success: false, error: "Failed to delete campaign" };
+            throw HttpError.internal(
+                "DELETE_FAILED",
+                "Failed to delete campaign"
+            );
         }
-
-        return { success: true, campaign: null };
     }
 
     async getById(campaignId: string): Promise<CampaignRuleSelect | null> {
@@ -176,32 +184,38 @@ export class CampaignManagementService {
     private async transitionStatus(
         campaignId: string,
         action: keyof typeof VALID_TRANSITIONS
-    ): Promise<CampaignResult> {
+    ): Promise<CampaignRuleSelect> {
         const campaign = await this.campaignRuleRepository.findById(campaignId);
         if (!campaign) {
-            return { success: false, error: "Campaign not found" };
+            throw HttpError.notFound(
+                "CAMPAIGN_NOT_FOUND",
+                "Campaign not found"
+            );
         }
 
         const transition = VALID_TRANSITIONS[action];
         if (!transition) {
-            return { success: false, error: `Unknown action: ${action}` };
+            throw HttpError.badRequest(
+                "UNKNOWN_ACTION",
+                `Unknown action: ${action}`
+            );
         }
 
         if (!transition.from.includes(campaign.status)) {
-            return {
-                success: false,
-                error: `Cannot ${action} campaign with status '${campaign.status}'. Valid from statuses: ${transition.from.join(", ")}`,
-            };
+            throw HttpError.conflict(
+                "INVALID_TRANSITION",
+                `Cannot ${action} campaign with status '${campaign.status}'. Valid from statuses: ${transition.from.join(", ")}`
+            );
         }
 
         if (action === "publish") {
-            let validationError = this.validateForPublish(campaign);
-            if (validationError) {
-                return { success: false, error: validationError };
+            const publishError = this.validateForPublish(campaign);
+            if (publishError) {
+                throw HttpError.badRequest("PUBLISH_INVALID", publishError);
             }
-            validationError = this.validateRuleDefinition(campaign.rule);
-            if (validationError) {
-                return { success: false, error: validationError };
+            const ruleError = this.validateRuleDefinition(campaign.rule);
+            if (ruleError) {
+                throw HttpError.badRequest("INVALID_RULE", ruleError);
             }
         }
 
@@ -223,10 +237,13 @@ export class CampaignManagementService {
         }
 
         if (!updated) {
-            return { success: false, error: `Failed to ${action} campaign` };
+            throw HttpError.internal(
+                "TRANSITION_FAILED",
+                `Failed to ${action} campaign`
+            );
         }
 
-        return { success: true, campaign: updated };
+        return updated;
     }
 
     private validateRuleDefinition(

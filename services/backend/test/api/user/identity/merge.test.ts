@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { HttpError } from "../../../../src/utils/httpError";
 import { JwtContextMock } from "../../../mock/common";
 
 // Mock the OrchestrationContext using vi.hoisted for proper hoisting
@@ -117,11 +118,12 @@ describe("Identity Merge Routes API", () => {
         });
 
         it("should return 400 when source identity not found", async () => {
-            mockInitiateMerge.mockResolvedValue({
-                success: false,
-                error: "Source anonymous identity not found",
-                code: "SOURCE_NOT_FOUND",
-            });
+            mockInitiateMerge.mockRejectedValue(
+                HttpError.notFound(
+                    "SOURCE_NOT_FOUND",
+                    "Source anonymous identity not found"
+                )
+            );
 
             const response = await identityMergeRoutes.handle(
                 new Request("http://localhost/merge/initiate", {
@@ -136,7 +138,7 @@ describe("Identity Merge Routes API", () => {
                 })
             );
 
-            expect(response.status).toBe(400);
+            expect(response.status).toBe(404);
             const data = await response.json();
             expect(data).toEqual({
                 success: false,
@@ -149,7 +151,6 @@ describe("Identity Merge Routes API", () => {
     describe("POST /identity/merge/execute", () => {
         it("should merge groups successfully", async () => {
             mockExecuteMerge.mockResolvedValue({
-                success: true,
                 finalGroupId: "770e8400-e29b-41d4-a716-446655440000",
                 merged: true,
             });
@@ -171,7 +172,6 @@ describe("Identity Merge Routes API", () => {
             expect(response.status).toBe(200);
             const data = await response.json();
             expect(data).toEqual({
-                success: true,
                 finalGroupId: "770e8400-e29b-41d4-a716-446655440000",
                 merged: true,
             });
@@ -179,7 +179,6 @@ describe("Identity Merge Routes API", () => {
 
         it("should return merged=false when groups are already the same", async () => {
             mockExecuteMerge.mockResolvedValue({
-                success: true,
                 finalGroupId: "770e8400-e29b-41d4-a716-446655440000",
                 merged: false,
             });
@@ -204,11 +203,12 @@ describe("Identity Merge Routes API", () => {
         });
 
         it("should return 401 when token is invalid", async () => {
-            mockExecuteMerge.mockResolvedValue({
-                success: false,
-                error: "Invalid or expired merge token",
-                code: "TOKEN_INVALID",
-            });
+            mockExecuteMerge.mockRejectedValue(
+                HttpError.unauthorized(
+                    "TOKEN_INVALID",
+                    "Invalid or expired merge token"
+                )
+            );
 
             const response = await identityMergeRoutes.handle(
                 new Request("http://localhost/merge/execute", {
@@ -230,11 +230,9 @@ describe("Identity Merge Routes API", () => {
         });
 
         it("should return 401 when token is expired", async () => {
-            mockExecuteMerge.mockResolvedValue({
-                success: false,
-                error: "Token has expired",
-                code: "TOKEN_EXPIRED",
-            });
+            mockExecuteMerge.mockRejectedValue(
+                HttpError.unauthorized("TOKEN_EXPIRED", "Token has expired")
+            );
 
             const response = await identityMergeRoutes.handle(
                 new Request("http://localhost/merge/execute", {
@@ -256,11 +254,12 @@ describe("Identity Merge Routes API", () => {
         });
 
         it("should return 400 when target identity not found", async () => {
-            mockExecuteMerge.mockResolvedValue({
-                success: false,
-                error: "Target anonymous identity not found",
-                code: "TARGET_NOT_FOUND",
-            });
+            mockExecuteMerge.mockRejectedValue(
+                HttpError.notFound(
+                    "TARGET_NOT_FOUND",
+                    "Target anonymous identity not found"
+                )
+            );
 
             const response = await identityMergeRoutes.handle(
                 new Request("http://localhost/merge/execute", {
@@ -276,17 +275,18 @@ describe("Identity Merge Routes API", () => {
                 })
             );
 
-            expect(response.status).toBe(400);
+            expect(response.status).toBe(404);
             const data = await response.json();
             expect(data.code).toBe("TARGET_NOT_FOUND");
         });
 
         it("should return 400 when merchant mismatch", async () => {
-            mockExecuteMerge.mockResolvedValue({
-                success: false,
-                error: "Token merchant does not match request",
-                code: "MERCHANT_MISMATCH",
-            });
+            mockExecuteMerge.mockRejectedValue(
+                HttpError.badRequest(
+                    "MERCHANT_MISMATCH",
+                    "Token merchant does not match request"
+                )
+            );
 
             const response = await identityMergeRoutes.handle(
                 new Request("http://localhost/merge/execute", {
@@ -308,11 +308,12 @@ describe("Identity Merge Routes API", () => {
         });
 
         it("should return 400 when wallet conflict", async () => {
-            mockExecuteMerge.mockResolvedValue({
-                success: false,
-                error: "Cannot merge identities linked to different wallets",
-                code: "WALLET_CONFLICT",
-            });
+            mockExecuteMerge.mockRejectedValue(
+                HttpError.conflict(
+                    "WALLET_CONFLICT",
+                    "Cannot merge identities linked to different wallets"
+                )
+            );
 
             const response = await identityMergeRoutes.handle(
                 new Request("http://localhost/merge/execute", {
@@ -328,7 +329,7 @@ describe("Identity Merge Routes API", () => {
                 })
             );
 
-            expect(response.status).toBe(400);
+            expect(response.status).toBe(409);
             const data = await response.json();
             expect(data.code).toBe("WALLET_CONFLICT");
         });

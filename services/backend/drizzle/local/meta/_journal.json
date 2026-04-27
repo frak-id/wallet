@@ -113,6 +113,13 @@
             "when": 1776269063056,
             "tag": "0015_hesitant_zombie",
             "breakpoints": true
+        },
+        {
+            "idx": 16,
+            "version": "7",
+            "when": 1777283501438,
+            "tag": "0016_silky_the_hood",
+            "breakpoints": true
         }
     ]
 }

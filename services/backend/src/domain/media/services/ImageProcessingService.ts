@@ -1,3 +1,4 @@
+import { HttpError } from "@backend-utils";
 import sharp from "sharp";
 
 /**
@@ -32,17 +33,8 @@ type ProcessedImage = {
     contentType: string;
 };
 
-/**
- * Structured validation error thrown when an image doesn't meet constraints
- */
-export class ImageValidationError extends Error {
-    constructor(
-        readonly code: string,
-        message: string
-    ) {
-        super(message);
-    }
-}
+// Image validation errors are surfaced as 400 HttpError instances so Elysia
+// returns a typed `t.ErrorResponse` body without bespoke handler wiring.
 
 /**
  * Service for validating and processing merchant images
@@ -52,7 +44,7 @@ export class ImageValidationError extends Error {
 export class ImageProcessingService {
     /**
      * Process an uploaded image file
-     *  @throws {ImageValidationError} if the image doesn't meet constraints
+     *  @throws {HttpError} (400) if the image doesn't meet constraints
      */
     async process(file: File, type: ImageType): Promise<ProcessedImage> {
         const arrayBuffer = await file.arrayBuffer();
@@ -74,16 +66,16 @@ export class ImageProcessingService {
         const height = metadata.height;
 
         if (!width || !height) {
-            throw new ImageValidationError(
-                "invalid_image",
+            throw HttpError.badRequest(
+                "INVALID_IMAGE",
                 "Could not read image dimensions"
             );
         }
 
         // Check minimum size
         if (width < constraints.minWidth || height < constraints.minHeight) {
-            throw new ImageValidationError(
-                "image_too_small",
+            throw HttpError.badRequest(
+                "IMAGE_TOO_SMALL",
                 `Image must be at least ${constraints.minWidth}×${constraints.minHeight}px (got ${width}×${height}px)`
             );
         }
@@ -93,8 +85,8 @@ export class ImageProcessingService {
         if (ratio < constraints.minRatio || ratio > constraints.maxRatio) {
             const minLabel = formatRatio(constraints.minRatio);
             const maxLabel = formatRatio(constraints.maxRatio);
-            throw new ImageValidationError(
-                "invalid_aspect_ratio",
+            throw HttpError.badRequest(
+                "INVALID_ASPECT_RATIO",
                 `Image aspect ratio must be between ${minLabel} and ${maxLabel} (got ${formatRatio(ratio)})`
             );
         }

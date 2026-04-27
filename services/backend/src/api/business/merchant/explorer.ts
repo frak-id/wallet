@@ -5,7 +5,7 @@ import {
     MerchantContext,
 } from "../../../domain/merchant";
 import { OrchestrationContext } from "../../../orchestration";
-import { MerchantIdParamSchema, SuccessResponseSchema } from "../../schemas";
+import { MerchantIdParamSchema } from "../../schemas";
 import { businessSessionContext } from "../middleware/session";
 
 export const merchantExplorerRoutes = new Elysia({
@@ -40,7 +40,7 @@ export const merchantExplorerRoutes = new Elysia({
 
             OrchestrationContext.orchestrators.explorer.invalidateCache();
 
-            return { success: true };
+            return status(204);
         },
         {
             params: MerchantIdParamSchema,
@@ -49,7 +49,7 @@ export const merchantExplorerRoutes = new Elysia({
                 config: t.Optional(ExplorerConfigSchema),
             }),
             response: {
-                200: SuccessResponseSchema,
+                204: t.Void(),
                 401: t.String(),
                 403: t.String(),
             },

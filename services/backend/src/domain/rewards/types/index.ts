@@ -25,7 +25,7 @@ export type DetailedAssetLog = {
     onchainTxHash: Hex | null;
     interactionType: InteractionType | null;
     interactionPayload: InteractionPayload | null;
-    touchpointId: string | null;
+    referralLinkId: string | null;
     identityGroupId: string;
     merchantId: string;
     merchantName: string;
@@ -39,16 +39,22 @@ export type DetailedAssetLog = {
 
 /**
  * Payload for referral arrival interaction.
+ *
+ * Discriminated on `referralRegistered`:
+ *  - `true` → a new referral_links row was inserted; `referralLinkId` is
+ *    guaranteed non-null and points to that row.
+ *  - `false` → the referral was rejected (self-referral, cycle, duplicate,
+ *    or no referrer resolvable); no link id is carried.
  */
 export type ReferralArrivalPayload = {
     referrerWallet?: Address;
     referrerClientId?: string;
     referrerMerchantId?: string;
     referralTimestamp?: number;
-    landingUrl?: string;
-    touchpointId: string;
-    referralRegistered: boolean;
-};
+} & (
+    | { referralRegistered: true; referralLinkId: string }
+    | { referralRegistered: false; referralLinkId: null }
+);
 
 /**
  * Payload for create referral link interaction (user shares their link).
@@ -56,7 +62,6 @@ export type ReferralArrivalPayload = {
 export type CreateReferralLinkPayload = {
     sharerWallet?: Address;
     merchantId: string;
-    touchpointId?: string;
     sharingTimestamp?: number;
     purchaseId?: string;
 };
@@ -127,7 +132,7 @@ export type CreateAssetLogParams = {
     tokenAddress?: Address;
     recipientType: RecipientType;
     recipientWallet?: Address;
-    touchpointId?: string;
+    referralLinkId?: string;
     interactionLogId: string;
     chainDepth?: number;
     expirationDays?: number;

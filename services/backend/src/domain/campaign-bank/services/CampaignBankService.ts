@@ -1,16 +1,9 @@
 import { log } from "@backend-infrastructure";
+import { HttpError } from "@backend-utils";
 import { currentStablecoinsList } from "@frak-labs/app-essentials";
 import type { Address } from "viem";
 import type { MerchantRepository } from "../../merchant/repositories/MerchantRepository";
 import type { CampaignBankRepository } from "../repositories/CampaignBankRepository";
-
-type DeployAndSetupResult =
-    | { success: true; bankAddress: Address }
-    | { success: false; error: string };
-
-type SyncRolesResult =
-    | { success: true; rolesGranted: boolean; rolesRevoked: boolean }
-    | { success: false; error: string };
 
 export class CampaignBankService {
     constructor(
@@ -20,14 +13,17 @@ export class CampaignBankService {
 
     async deployAndSetupBank(
         merchantId: string
-    ): Promise<DeployAndSetupResult> {
+    ): Promise<{ bankAddress: Address }> {
         const merchant = await this.merchantRepository.findById(merchantId);
         if (!merchant) {
-            return { success: false, error: "Merchant not found" };
+            throw HttpError.notFound(
+                "MERCHANT_NOT_FOUND",
+                "Merchant not found"
+            );
         }
 
         if (merchant.bankAddress) {
-            return { success: true, bankAddress: merchant.bankAddress };
+            return { bankAddress: merchant.bankAddress };
         }
 
         try {
@@ -58,7 +54,7 @@ export class CampaignBankService {
                 "Campaign bank deployed and configured"
             );
 
-            return { success: true, bankAddress };
+            return { bankAddress };
         } catch (error) {
             log.error(
                 {
@@ -68,28 +64,28 @@ export class CampaignBankService {
                 },
                 "Failed to deploy campaign bank"
             );
-            return {
-                success: false,
-                error:
-                    error instanceof Error
-                        ? error.message
-                        : "Failed to deploy bank",
-            };
+            // Hide raw blockchain error from clients; the cause is logged above.
+            throw HttpError.internal(
+                "DEPLOY_BANK_FAILED",
+                "Failed to deploy bank"
+            );
         }
     }
 
-    async syncBankRoles(merchantId: string): Promise<SyncRolesResult> {
+    async syncBankRoles(
+        merchantId: string
+    ): Promise<{ rolesGranted: boolean; rolesRevoked: boolean }> {
         const merchant = await this.merchantRepository.findById(merchantId);
         if (!merchant) {
-            return { success: false, error: "Merchant not found" };
+            throw HttpError.notFound(
+                "MERCHANT_NOT_FOUND",
+                "Merchant not found"
+            );
         }
 
         if (!merchant.bankAddress) {
-            const deployResult = await this.deployAndSetupBank(merchantId);
-            if (!deployResult.success) {
-                return { success: false, error: deployResult.error };
-            }
-            return { success: true, rolesGranted: true, rolesRevoked: false };
+            await this.deployAndSetupBank(merchantId);
+            return { rolesGranted: true, rolesRevoked: false };
         }
 
         const hasRole = await this.campaignBankRepository.hasManagerRole(
@@ -98,7 +94,7 @@ export class CampaignBankService {
         );
 
         if (hasRole) {
-            return { success: true, rolesGranted: false, rolesRevoked: false };
+            return { rolesGranted: false, rolesRevoked: false };
         }
 
         try {
@@ -117,7 +113,7 @@ export class CampaignBankService {
                 "Manager role granted during sync"
             );
 
-            return { success: true, rolesGranted: true, rolesRevoked: false };
+            return { rolesGranted: true, rolesRevoked: false };
         } catch (error) {
             log.error(
                 {
@@ -127,13 +123,10 @@ export class CampaignBankService {
                 },
                 "Failed to sync bank roles"
             );
-            return {
-                success: false,
-                error:
-                    error instanceof Error
-                        ? error.message
-                        : "Failed to sync roles",
-            };
+            throw HttpError.internal(
+                "SYNC_ROLES_FAILED",
+                "Failed to sync roles"
+            );
         }
     }
 
@@ -141,10 +134,13 @@ export class CampaignBankService {
         merchantId: string,
         fromWallet: Address,
         toWallet: Address
-    ): Promise<SyncRolesResult> {
+    ): Promise<{ rolesGranted: boolean; rolesRevoked: boolean }> {
         const merchant = await this.merchantRepository.findById(merchantId);
         if (!merchant) {
-            return { success: false, error: "Merchant not found" };
+            throw HttpError.notFound(
+                "MERCHANT_NOT_FOUND",
+                "Merchant not found"
+            );
         }
 
         if (!merchant.bankAddress) {
@@ -152,7 +148,7 @@ export class CampaignBankService {
                 { merchantId },
                 "No bank address found during ownership transfer"
             );
-            return { success: true, rolesGranted: false, rolesRevoked: false };
+            return { rolesGranted: false, rolesRevoked: false };
         }
 
         let rolesRevoked = false;
@@ -200,7 +196,7 @@ export class CampaignBankService {
                 "Bank roles transferred for ownership change"
             );
 
-            return { success: true, rolesGranted, rolesRevoked };
+            return { rolesGranted, rolesRevoked };
         } catch (error) {
             log.error(
                 {
@@ -212,13 +208,10 @@ export class CampaignBankService {
                 },
                 "Failed to transfer bank roles"
             );
-            return {
-                success: false,
-                error:
-                    error instanceof Error
-                        ? error.message
-                        : "Failed to transfer roles",
-            };
+            throw HttpError.internal(
+                "TRANSFER_ROLES_FAILED",
+                "Failed to transfer roles"
+            );
         }
     }
 

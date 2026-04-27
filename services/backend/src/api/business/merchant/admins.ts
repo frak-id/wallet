@@ -1,7 +1,7 @@
 import { t } from "@backend-utils";
 import { Elysia, status } from "elysia";
 import { MerchantContext } from "../../../domain/merchant";
-import { MerchantIdParamSchema, SuccessResponseSchema } from "../../schemas";
+import { MerchantIdParamSchema } from "../../schemas";
 import { businessSessionContext } from "../middleware/session";
 
 export const merchantAdminsRoutes = new Elysia({
@@ -154,7 +154,7 @@ export const merchantAdminsRoutes = new Elysia({
                 return status(404, "Admin not found");
             }
 
-            return { success: true };
+            return status(204);
         },
         {
             params: t.Object({
@@ -162,7 +162,7 @@ export const merchantAdminsRoutes = new Elysia({
                 wallet: t.Hex(),
             }),
             response: {
-                200: SuccessResponseSchema,
+                204: t.Void(),
                 401: t.String(),
                 403: t.String(),
                 404: t.String(),

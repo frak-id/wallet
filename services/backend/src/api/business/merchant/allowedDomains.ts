@@ -1,7 +1,7 @@
 import { t } from "@backend-utils";
 import { Elysia, status } from "elysia";
 import { MerchantContext } from "../../../domain/merchant";
-import { MerchantIdParamSchema, SuccessResponseSchema } from "../../schemas";
+import { MerchantIdParamSchema } from "../../schemas";
 import { businessSessionContext } from "../middleware/session";
 
 const domainRegex =
@@ -48,7 +48,7 @@ export const merchantAllowedDomainsRoutes = new Elysia()
                 updated.domain
             );
 
-            return { success: true };
+            return status(204);
         },
         {
             params: MerchantIdParamSchema,
@@ -56,7 +56,7 @@ export const merchantAllowedDomainsRoutes = new Elysia()
                 domain: t.String({ minLength: 1 }),
             }),
             response: {
-                200: SuccessResponseSchema,
+                204: t.Void(),
                 400: t.String(),
                 401: t.String(),
                 403: t.String(),
@@ -103,7 +103,7 @@ export const merchantAllowedDomainsRoutes = new Elysia()
                 merchant.domain
             );
 
-            return { success: true };
+            return status(204);
         },
         {
             params: MerchantIdParamSchema,
@@ -111,7 +111,7 @@ export const merchantAllowedDomainsRoutes = new Elysia()
                 domain: t.String({ minLength: 1 }),
             }),
             response: {
-                200: SuccessResponseSchema,
+                204: t.Void(),
                 401: t.String(),
                 403: t.String(),
                 404: t.String(),

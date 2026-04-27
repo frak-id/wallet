@@ -3,8 +3,8 @@ import {
     rateLimitMiddleware,
     sessionContext,
 } from "@backend-infrastructure";
-import { t } from "@backend-utils";
-import { Elysia, status } from "elysia";
+import { HttpError, t } from "@backend-utils";
+import { Elysia } from "elysia";
 import { OrchestrationContext } from "../../../orchestration/context";
 import { buildIdentityNodes } from "../track/sdkIdentity";
 
@@ -33,11 +33,10 @@ export const identityEnsureRoutes = new Elysia({ prefix: "/ensure" })
             const anonymousId = bodyAnonymousId || headers["x-frak-client-id"];
 
             if (!anonymousId) {
-                return status(400, {
-                    success: false as const,
-                    error: "anonymousId must be provided in body or via x-frak-client-id header",
-                    code: "MISSING_ANONYMOUS_ID",
-                });
+                throw HttpError.badRequest(
+                    "MISSING_ANONYMOUS_ID",
+                    "anonymousId must be provided in body or via x-frak-client-id header"
+                );
             }
 
             // Build identity nodes for both wallet and anonymous fingerprint
@@ -48,11 +47,10 @@ export const identityEnsureRoutes = new Elysia({ prefix: "/ensure" })
             });
 
             if (identityNodes.length < 2) {
-                return status(400, {
-                    success: false as const,
-                    error: "Could not build both identity nodes",
-                    code: "INCOMPLETE_IDENTITY",
-                });
+                throw HttpError.badRequest(
+                    "INCOMPLETE_IDENTITY",
+                    "Could not build both identity nodes"
+                );
             }
 
             // Resolve and associate — idempotent, cheap when already linked

@@ -10,6 +10,7 @@ export type { CustomInteractionContext as CustomContext };
 export type InteractionContextResult = {
     trigger: CampaignTrigger;
     context: Omit<RuleContext, "time">;
+    referralLinkId: string | null;
 };
 
 export type TypeSpecificContextResult = {

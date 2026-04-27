@@ -8,4 +8,3 @@ export type {
     IdentityNode,
     ResolveResult,
 } from "./types";
-export { WalletConflictError } from "./types";

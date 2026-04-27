@@ -51,14 +51,12 @@ export type TrackArrivalParams = {
     referrerMerchantId?: string;
     /** Epoch seconds timestamp from the referral link creation */
     referralTimestamp?: number;
-    landingUrl?: string;
-    utmParams?: UtmParams;
 };
 
 export type TrackArrivalResult = {
     success: boolean;
     identityGroupId?: string;
-    touchpointId?: string;
+    referralLinkId?: string;
     error?: string;
 };
 

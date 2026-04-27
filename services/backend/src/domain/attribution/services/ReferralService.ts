@@ -1,5 +1,7 @@
 import { log } from "@backend-infrastructure";
+import type { ReferralLinkSelect } from "../db/schema";
 import type { ReferralLinkRepository } from "../repositories/ReferralLinkRepository";
+import type { ReferralLinkSourceData } from "../schemas";
 
 type ReferralChainMember = {
     identityGroupId: string;
@@ -8,6 +10,10 @@ type ReferralChainMember = {
 
 const DEFAULT_MAX_CHAIN_DEPTH = 5;
 
+export type RegisterReferralResult =
+    | { registered: true; link: ReferralLinkSelect }
+    | { registered: false; existingReferrer?: string };
+
 export class ReferralService {
     constructor(private readonly repository: ReferralLinkRepository) {}
 
@@ -15,7 +21,8 @@ export class ReferralService {
         merchantId: string;
         referrerIdentityGroupId: string;
         refereeIdentityGroupId: string;
-    }): Promise<{ registered: boolean; existingReferrer?: string }> {
+        sourceData?: ReferralLinkSourceData;
+    }): Promise<RegisterReferralResult> {
         if (params.referrerIdentityGroupId === params.refereeIdentityGroupId) {
             log.debug(
                 { merchantId: params.merchantId },
@@ -24,10 +31,11 @@ export class ReferralService {
             return { registered: false };
         }
 
-        const existing = await this.repository.findByReferee(
-            params.merchantId,
-            params.refereeIdentityGroupId
-        );
+        const existing = await this.repository.findByReferee({
+            merchantId: params.merchantId,
+            refereeIdentityGroupId: params.refereeIdentityGroupId,
+            scope: "merchant",
+        });
 
         if (existing) {
             log.debug(
@@ -48,7 +56,6 @@ export class ReferralService {
         // No depth ceiling — CTE explores the full chain with path-based
         // cycle detection to guarantee termination
         const wouldCycle = await this.repository.wouldCreateCycle(
-            params.merchantId,
             params.referrerIdentityGroupId,
             params.refereeIdentityGroupId
         );
@@ -65,9 +72,12 @@ export class ReferralService {
         }
 
         const created = await this.repository.create({
+            scope: "merchant",
             merchantId: params.merchantId,
             referrerIdentityGroupId: params.referrerIdentityGroupId,
             refereeIdentityGroupId: params.refereeIdentityGroupId,
+            source: "link",
+            sourceData: params.sourceData,
         });
 
         if (!created) {
@@ -83,7 +93,7 @@ export class ReferralService {
             "Referral link registered"
         );
 
-        return { registered: true };
+        return { registered: true, link: created };
     }
 
     async getReferralChain(params: {

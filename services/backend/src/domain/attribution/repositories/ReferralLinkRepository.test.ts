@@ -118,7 +118,6 @@ describe("ReferralLinkRepository", () => {
             mockExecute.mockResolvedValue([{ would_cycle: true }]);
 
             const result = await repository.wouldCreateCycle(
-                merchantId,
                 groupA, // referrer
                 groupB // referee
             );
@@ -133,7 +132,6 @@ describe("ReferralLinkRepository", () => {
             mockExecute.mockResolvedValue([{ would_cycle: true }]);
 
             const result = await repository.wouldCreateCycle(
-                merchantId,
                 groupC, // referrer
                 groupA // referee
             );
@@ -146,11 +144,7 @@ describe("ReferralLinkRepository", () => {
 
             mockExecute.mockResolvedValue([{ would_cycle: false }]);
 
-            const result = await repository.wouldCreateCycle(
-                merchantId,
-                groupA,
-                groupC
-            );
+            const result = await repository.wouldCreateCycle(groupA, groupC);
 
             expect(result).toBe(false);
         });
@@ -160,11 +154,7 @@ describe("ReferralLinkRepository", () => {
 
             mockExecute.mockResolvedValue([{ would_cycle: false }]);
 
-            const result = await repository.wouldCreateCycle(
-                merchantId,
-                groupA,
-                groupB
-            );
+            const result = await repository.wouldCreateCycle(groupA, groupB);
 
             expect(result).toBe(false);
         });
@@ -174,11 +164,7 @@ describe("ReferralLinkRepository", () => {
 
             mockExecute.mockResolvedValue([]);
 
-            const result = await repository.wouldCreateCycle(
-                merchantId,
-                groupA,
-                groupB
-            );
+            const result = await repository.wouldCreateCycle(groupA, groupB);
 
             expect(result).toBe(false);
         });
@@ -189,8 +175,8 @@ describe("ReferralLinkRepository", () => {
             mockExecute.mockResolvedValue([{ would_cycle: false }]);
 
             // Two calls should both hit DB
-            await repository.wouldCreateCycle(merchantId, groupA, groupB);
-            await repository.wouldCreateCycle(merchantId, groupA, groupB);
+            await repository.wouldCreateCycle(groupA, groupB);
+            await repository.wouldCreateCycle(groupA, groupB);
 
             expect(mockExecute).toHaveBeenCalledTimes(2);
         });

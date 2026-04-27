@@ -50,14 +50,11 @@ describe("Airtable Route API", () => {
                 })
             );
 
-            expect(response.status).toBe(200);
+            expect(response.status).toBe(204);
             expect(mockRepository.processRequest).toHaveBeenCalledWith(
                 "demo_request",
                 requestBody
             );
-
-            const data = await response.json();
-            expect(data).toEqual({ success: true });
         });
 
         it("should process valid simulation table submission when all fields are provided", async () => {
@@ -87,14 +84,11 @@ describe("Airtable Route API", () => {
                 })
             );
 
-            expect(response.status).toBe(200);
+            expect(response.status).toBe(204);
             expect(mockRepository.processRequest).toHaveBeenCalledWith(
                 "simulation",
                 requestBody
             );
-
-            const data = await response.json();
-            expect(data).toEqual({ success: true });
         });
 
         it("should process demo_request submission without optional url field", async () => {
@@ -123,7 +117,7 @@ describe("Airtable Route API", () => {
                 })
             );
 
-            expect(response.status).toBe(200);
+            expect(response.status).toBe(204);
             expect(mockRepository.processRequest).toHaveBeenCalledWith(
                 "demo_request",
                 requestBody
@@ -156,7 +150,7 @@ describe("Airtable Route API", () => {
                 })
             );
 
-            expect(response.status).toBe(200);
+            expect(response.status).toBe(204);
             expect(mockRepository.processRequest).toHaveBeenCalledWith(
                 "simulation",
                 requestBody
@@ -283,14 +277,11 @@ describe("Airtable Route API", () => {
                 })
             );
 
-            expect(response.status).toBe(200);
+            expect(response.status).toBe(204);
             expect(mockRepository.processRequest).toHaveBeenCalledWith(
                 "newsletter",
                 requestBody
             );
-
-            const data = await response.json();
-            expect(data).toEqual({ success: true });
         });
 
         it("should return 409 when repository throws 'already exists' error", async () => {
@@ -471,7 +462,7 @@ describe("Airtable Route API", () => {
                 })
             );
 
-            expect(response.status).toBe(200);
+            expect(response.status).toBe(204);
             expect(mockRepository.processRequest).toHaveBeenCalledWith(
                 "simulation",
                 requestBody
@@ -507,7 +498,7 @@ describe("Airtable Route API", () => {
                 })
             );
 
-            expect(response1.status).toBe(200);
+            expect(response1.status).toBe(204);
 
             // Test with simulation schema
             const simulationBody = {
@@ -528,7 +519,7 @@ describe("Airtable Route API", () => {
                 })
             );
 
-            expect(response2.status).toBe(200);
+            expect(response2.status).toBe(204);
         });
     });
 });

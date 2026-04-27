@@ -1,5 +1,5 @@
 import { eventEmitter, log } from "@backend-infrastructure";
-import type { AttributionService } from "../../domain/attribution/services/AttributionService";
+import type { ReferralService } from "../../domain/attribution";
 import type { InteractionLogRepository } from "../../domain/rewards/repositories/InteractionLogRepository";
 import type {
     InteractionPayload,
@@ -38,10 +38,10 @@ export class InteractionSubmissionOrchestrator {
 
     constructor(
         private readonly interactionLogRepository: InteractionLogRepository,
-        attributionService: AttributionService
+        referralService: ReferralService
     ) {
         this.handlers = {
-            arrival: new ArrivalHandler(attributionService),
+            arrival: new ArrivalHandler(referralService),
             sharing: new SharingHandler(),
             custom: new CustomHandler(),
         };

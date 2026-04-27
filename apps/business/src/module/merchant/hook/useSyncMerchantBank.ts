@@ -12,7 +12,6 @@ export function useSyncMerchantBank({ merchantId }: { merchantId: string }) {
             if (isDemoMode) {
                 await new Promise((resolve) => setTimeout(resolve, 500));
                 return {
-                    success: true,
                     rolesGranted: true,
                     rolesRevoked: false,
                 };

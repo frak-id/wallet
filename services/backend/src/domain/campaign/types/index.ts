@@ -46,12 +46,7 @@ export type PurchaseContext = {
 };
 
 type AttributionContext = {
-    source: "referral_link" | "organic" | "paid_ad" | "direct" | null;
-    touchpointId: string | null;
     referrerIdentityGroupId: string | null;
-    utmSource?: string;
-    utmMedium?: string;
-    utmCampaign?: string;
 };
 
 type UserRewardHistory = {

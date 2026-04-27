@@ -43,7 +43,6 @@ export const purchasesTable = pgTable(
         createdAt: timestamp("created_at").defaultNow(),
         updatedAt: timestamp("updated_at").defaultNow(),
         identityGroupId: uuid("identity_group_id"),
-        // TODO: Phase 3 - Add touchpointId for attribution
     },
     (table) => [
         uniqueIndex("purchases_external_id_webhook_idx").on(

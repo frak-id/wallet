@@ -143,12 +143,13 @@ export class BatchRewardOrchestrator {
 
             const time = buildTimeContext(interaction.createdAt);
 
-            const { trigger, context } = await this.contextBuilder.build(
-                interaction,
-                merchantId,
-                interaction.identityGroupId,
-                walletAddress
-            );
+            const { trigger, context, referralLinkId } =
+                await this.contextBuilder.build(
+                    interaction,
+                    merchantId,
+                    interaction.identityGroupId,
+                    walletAddress
+                );
 
             const evaluationResult = await this.ruleEngineService.evaluateRules(
                 {
@@ -163,14 +164,11 @@ export class BatchRewardOrchestrator {
             let rewardsCreated = 0;
 
             if (evaluationResult.rewards.length > 0) {
-                const touchpointId =
-                    context.attribution?.touchpointId ?? undefined;
-
                 const assetParams = await this.buildAssetLogParams(
                     evaluationResult.rewards,
                     merchantId,
                     interaction.id,
-                    touchpointId
+                    referralLinkId ?? undefined
                 );
 
                 const createdAssets =
@@ -228,7 +226,7 @@ export class BatchRewardOrchestrator {
         rewards: CalculatedReward[],
         merchantId: string,
         interactionLogId: string,
-        touchpointId: string | undefined
+        referralLinkId: string | undefined
     ): Promise<CreateAssetLogParams[]> {
         const hasTokenTypeWithoutToken = rewards.some(
             (r) => r.type === "token" && !r.token
@@ -263,7 +261,7 @@ export class BatchRewardOrchestrator {
                 amount: reward.amount,
                 tokenAddress: resolvedToken,
                 recipientType: reward.recipient as RecipientType,
-                touchpointId,
+                referralLinkId,
                 interactionLogId,
                 chainDepth: reward.chainDepth,
                 expirationDays: reward.expirationDays,
