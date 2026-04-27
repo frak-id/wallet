@@ -1,4 +1,5 @@
 import { t } from "@backend-utils";
+import { REWARD_LOCKUP } from "@frak-labs/app-essentials/constants/rewards";
 import type { Static, TSchema } from "elysia";
 import { DistributionStatusSchema } from "../../campaign-bank/schemas";
 import {
@@ -97,7 +98,6 @@ const FixedRewardDefinitionSchema = t.Object({
     token: t.Optional(t.Hex()),
     description: t.Optional(t.String()),
     chaining: t.Optional(RewardChainingSchema),
-    lockupSeconds: t.Optional(t.Number({ minimum: 0, maximum: 2_592_000 })),
 });
 export type FixedRewardDefinition = Static<typeof FixedRewardDefinitionSchema>;
 
@@ -115,7 +115,6 @@ const PercentageRewardDefinitionSchema = t.Object({
     token: t.Optional(t.Hex()),
     description: t.Optional(t.String()),
     chaining: t.Optional(RewardChainingSchema),
-    lockupSeconds: t.Optional(t.Number({ minimum: 0, maximum: 2_592_000 })),
 });
 export type PercentageRewardDefinition = Static<
     typeof PercentageRewardDefinitionSchema
@@ -130,7 +129,6 @@ const TieredRewardDefinitionSchema = t.Object({
     token: t.Optional(t.Hex()),
     description: t.Optional(t.String()),
     chaining: t.Optional(RewardChainingSchema),
-    lockupSeconds: t.Optional(t.Number({ minimum: 0, maximum: 2_592_000 })),
 });
 export type TieredRewardDefinition = Static<
     typeof TieredRewardDefinitionSchema
@@ -149,12 +147,11 @@ export const CampaignRuleDefinitionSchema = t.Object({
     rewards: t.Array(RewardDefinitionSchema),
     pendingRewardExpirationDays: t.Optional(t.Number()),
     /**
-     * Number of seconds a reward stays locked before settlement. Used as a
-     * default for any reward that does not specify its own `lockupSeconds`.
-     * Range: 0 to 2_592_000 (30 days). `0` disables the lockup.
+     * Number of seconds a reward stays locked before settlement. `0`
+     * disables the lockup. Range capped by `REWARD_LOCKUP.MAX_SECONDS`.
      */
     defaultLockupSeconds: t.Optional(
-        t.Number({ minimum: 0, maximum: 2_592_000 })
+        t.Number({ minimum: 0, maximum: REWARD_LOCKUP.MAX_SECONDS })
     ),
     maxRewardsPerUser: t.Optional(t.Number()),
     merchantMaxRewardsPerUser: t.Optional(t.Number()),

@@ -1,3 +1,4 @@
+import { REWARD_LOCKUP } from "@frak-labs/app-essentials/constants/rewards";
 import type {
     CampaignGoal,
     CampaignRuleDefinition,
@@ -16,15 +17,12 @@ export type RewardFormState = {
     lockupDays: number;
 };
 
-export const DEFAULT_LOCKUP_DAYS = 14;
-export const MIN_LOCKUP_DAYS = 0;
-export const MAX_LOCKUP_DAYS = 30;
-/**
- * The backend stores the lockup as `defaultLockupSeconds` for granularity
- * (a future merchant-config UI could expose hours/minutes). The dashboard
- * exposes whole days for now and converts at this boundary.
- */
-const SECONDS_PER_DAY = 86_400;
+export const {
+    DEFAULT_DAYS: DEFAULT_LOCKUP_DAYS,
+    MIN_DAYS: MIN_LOCKUP_DAYS,
+    MAX_DAYS: MAX_LOCKUP_DAYS,
+    SECONDS_PER_DAY,
+} = REWARD_LOCKUP;
 
 export const DEFAULT_REWARD_STATE: RewardFormState = {
     cac: 0,

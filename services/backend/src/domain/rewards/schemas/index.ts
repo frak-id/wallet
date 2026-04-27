@@ -31,15 +31,16 @@ export const AssetStatusSchema = t.Union([
 export type AssetStatus = Static<typeof AssetStatusSchema>;
 
 /**
- * Reason a reward was moved to the `cancelled` status.
+ * Reason a reward was moved to a terminal non-settled status.
  *
- * `refund` / `partial_refund` -> the upstream purchase was refunded during the lockup window.
+ * `refund` -> the upstream purchase was refunded (full or partial).
+ * `expired` -> the reward sat in `pending` past `expires_at` without being settled.
  * `self_referral_detected` -> a late identity merge revealed the referrer and referee share an identity.
  * `manual` -> cancelled via admin tool / support action.
  */
 export const CancellationReasonSchema = t.Union([
     t.Literal("refund"),
-    t.Literal("partial_refund"),
+    t.Literal("expired"),
     t.Literal("self_referral_detected"),
     t.Literal("manual"),
 ]);

@@ -5,10 +5,9 @@ import type {
     PurchaseItemInsert,
     PurchaseRepository,
 } from "../domain/purchases";
-import type { PurchaseStatus } from "../domain/purchases/schemas";
 import type { IdentityNode, IdentityOrchestrator } from "./identity";
 import type { PurchaseInteractionCreator } from "./PurchaseInteractionCreator";
-import type { RewardCancellationOrchestrator } from "./RewardCancellationOrchestrator";
+import type { RewardLifecycleOrchestrator } from "./RewardLifecycleOrchestrator";
 
 type UpsertPurchaseParams = {
     purchase: PurchaseInsert;
@@ -32,7 +31,7 @@ export class PurchaseWebhookOrchestrator {
         private readonly purchaseClaimRepository: PurchaseClaimRepository,
         private readonly purchaseInteractionCreator: PurchaseInteractionCreator,
         private readonly identityOrchestrator: IdentityOrchestrator,
-        private readonly rewardCancellationOrchestrator: RewardCancellationOrchestrator
+        private readonly rewardLifecycleOrchestrator: RewardLifecycleOrchestrator
     ) {}
 
     async upsertPurchase({
@@ -41,15 +40,13 @@ export class PurchaseWebhookOrchestrator {
         merchantId,
         clientId,
     }: UpsertPurchaseParams): Promise<UpsertPurchaseResult> {
-        // Refunds and cancellations cancel any pending rewards still inside the
-        // lockup window (or otherwise un-settled) and restore the campaign budget.
-        // The platform-level handlers fold partial refunds into the unified
-        // `refunded` status before reaching here, so we always emit `reason: 'refund'`.
-        if (isRefundOrCancel(purchase.status)) {
-            await this.rewardCancellationOrchestrator.cancelForRefund({
+        // Refunds and cancellations cancel any pending rewards triggered by
+        // this purchase (only those still inside the lockup window are still
+        // `pending`) and restore the campaign budget.
+        if (purchase.status === "refunded" || purchase.status === "cancelled") {
+            await this.rewardLifecycleOrchestrator.cancelForRefund({
                 merchantId,
                 externalId: purchase.externalId,
-                reason: "refund",
             });
         }
 
@@ -214,8 +211,4 @@ export class PurchaseWebhookOrchestrator {
             pendingClaim: false,
         };
     }
-}
-
-function isRefundOrCancel(status: PurchaseStatus | null | undefined): boolean {
-    return status === "refunded" || status === "cancelled";
 }

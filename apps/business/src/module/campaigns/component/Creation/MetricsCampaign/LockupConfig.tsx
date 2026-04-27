@@ -7,7 +7,12 @@ import {
     FormLabel,
 } from "@/module/forms/Form";
 import styles from "./index.module.css";
-import { DEFAULT_LOCKUP_DAYS, MAX_LOCKUP_DAYS, MIN_LOCKUP_DAYS } from "./utils";
+import {
+    DEFAULT_LOCKUP_DAYS,
+    MAX_LOCKUP_DAYS,
+    MIN_LOCKUP_DAYS,
+    type RewardFormState,
+} from "./utils";
 
 /**
  * Reward lockup grace period (in days). During this window, rewards stay
@@ -18,7 +23,7 @@ import { DEFAULT_LOCKUP_DAYS, MAX_LOCKUP_DAYS, MIN_LOCKUP_DAYS } from "./utils";
  * `0` disables the lockup so rewards settle on the next cron tick.
  */
 export function LockupConfig() {
-    const { control, setValue } = useFormContext();
+    const { control } = useFormContext<RewardFormState>();
 
     return (
         <FormField
@@ -26,7 +31,6 @@ export function LockupConfig() {
             name="lockupDays"
             render={({ field }) => {
                 const value = field.value ?? DEFAULT_LOCKUP_DAYS;
-                const isDisabled = value === 0;
                 return (
                     <FormItem>
                         <FormLabel>Reward lockup (days)</FormLabel>
@@ -39,23 +43,12 @@ export function LockupConfig() {
                                 className={styles.chaining__input}
                                 value={value}
                                 onChange={(e) =>
-                                    setValue(
-                                        "lockupDays",
-                                        Math.min(
-                                            MAX_LOCKUP_DAYS,
-                                            Math.max(
-                                                MIN_LOCKUP_DAYS,
-                                                parseInt(e.target.value, 10) ||
-                                                    0
-                                            )
-                                        ),
-                                        { shouldDirty: true }
-                                    )
+                                    field.onChange(Number(e.target.value) || 0)
                                 }
                             />
                         </FormControl>
                         <FormDescription>
-                            {isDisabled
+                            {value === 0
                                 ? "Disabled — rewards settle on the next cron tick."
                                 : `Rewards stay pending for ${value} day${value === 1 ? "" : "s"} after a purchase, then settle on-chain. Refunds during this window cancel the reward and restore the campaign budget.`}
                         </FormDescription>

@@ -6,6 +6,7 @@ import {
     interactionLogsTable,
 } from "../db/schema";
 import type { CreateReferralLinkPayload, InteractionType } from "../types";
+import { purchaseExternalEventId } from "../utils";
 
 export class InteractionLogRepository {
     async createIdempotent(
@@ -117,16 +118,14 @@ export class InteractionLogRepository {
     }
 
     /**
-     * Find purchase interaction log(s) for a given purchase. The same purchase
-     * (merchantId + externalId) is recorded under a unique `externalEventId`,
-     * so this returns at most one row — still typed as an array to leave room
-     * for future replays.
+     * Find the purchase interaction log for a given purchase. The unique
+     * `(merchantId, type, externalEventId)` index guarantees at most one row.
      */
-    async findPurchaseInteractionsByExternalId(params: {
+    async findPurchaseInteractionByExternalId(params: {
         merchantId: string;
         externalId: string;
-    }): Promise<InteractionLogSelect[]> {
-        return db
+    }): Promise<InteractionLogSelect | null> {
+        const [row] = await db
             .select()
             .from(interactionLogsTable)
             .where(
@@ -135,9 +134,11 @@ export class InteractionLogRepository {
                     eq(interactionLogsTable.type, "purchase"),
                     eq(
                         interactionLogsTable.externalEventId,
-                        `purchase:${params.externalId}`
+                        purchaseExternalEventId(params.externalId)
                     )
                 )
-            );
+            )
+            .limit(1);
+        return row ?? null;
     }
 }

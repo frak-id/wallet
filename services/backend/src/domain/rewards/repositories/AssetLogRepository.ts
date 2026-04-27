@@ -109,14 +109,19 @@ export class AssetLogRepository {
     }
 
     /**
-     * Cancel a batch of reward entries, recording the reason and timestamp.
-     * Returns the affected rows so callers (e.g. RewardCancellationOrchestrator)
-     * can restore campaign budget for the cancelled amounts.
+     * Move a batch of `pending` rewards to a terminal non-settled state and
+     * record the reason. The reason determines the resulting status:
      *
-     * Only applies to non-terminal statuses (`pending`, `processing`) so that
-     * already-settled rewards on-chain are never silently flipped.
+     * - `"expired"` -> status `expired`
+     * - any other reason -> status `cancelled`
+     *
+     * Only `pending` rewards are touched: rewards that already moved to
+     * `processing` are mid-settlement and must not be flipped from underneath
+     * the on-chain transaction.
+     *
+     * Returns the affected rows so callers can restore campaign budget.
      */
-    async cancelBatch(
+    async terminateRewardsBatch(
         ids: string[],
         reason: CancellationReason
     ): Promise<
@@ -125,10 +130,13 @@ export class AssetLogRepository {
         if (ids.length === 0) return [];
 
         const now = new Date();
+        const status: AssetStatus =
+            reason === "expired" ? "expired" : "cancelled";
+
         return db
             .update(assetLogsTable)
             .set({
-                status: "cancelled",
+                status,
                 statusChangedAt: now,
                 cancelledAt: now,
                 cancellationReason: reason,
@@ -136,7 +144,7 @@ export class AssetLogRepository {
             .where(
                 and(
                     inArray(assetLogsTable.id, ids),
-                    inArray(assetLogsTable.status, ["pending", "processing"])
+                    eq(assetLogsTable.status, "pending")
                 )
             )
             .returning({
@@ -260,34 +268,24 @@ export class AssetLogRepository {
         return results.length;
     }
 
-    async expirePendingRewards(): Promise<
-        { campaignRuleId: string; amount: string }[]
-    > {
-        const now = new Date();
-
-        const results = await db
-            .update(assetLogsTable)
-            .set({
-                status: "expired",
-                statusChangedAt: now,
-            })
+    /**
+     * Find IDs of `pending` rewards whose `expires_at` is in the past.
+     * Returned in stable order so a partial failure can be retried safely.
+     */
+    async findExpiredPendingRewardIds(): Promise<string[]> {
+        const rows = await db
+            .select({ id: assetLogsTable.id })
+            .from(assetLogsTable)
             .where(
                 and(
                     eq(assetLogsTable.status, "pending"),
                     isNotNull(assetLogsTable.expiresAt),
                     isNotNull(assetLogsTable.campaignRuleId),
-                    lt(assetLogsTable.expiresAt, now)
+                    lt(assetLogsTable.expiresAt, new Date())
                 )
             )
-            .returning({
-                campaignRuleId: assetLogsTable.campaignRuleId,
-                amount: assetLogsTable.amount,
-            });
-
-        return results.filter(
-            (r): r is { campaignRuleId: string; amount: string } =>
-                r.campaignRuleId !== null
-        );
+            .orderBy(assetLogsTable.id);
+        return rows.map((r) => r.id);
     }
 
     async findByIdentityGroups(

@@ -49,16 +49,7 @@ function formValuesToDraft(
     values: MetricsFormValues,
     currentDraft: CampaignDraft
 ): CampaignDraft {
-    const updatedRule = updateRuleWithRewards(currentDraft.rule, {
-        cac: values.cac,
-        ratio: values.ratio,
-        chainingEnabled: values.chainingEnabled,
-        deperditionPerLevel: values.deperditionPerLevel,
-        maxDepth: values.maxDepth,
-        referralOnly: values.referralOnly,
-        lockupDays: values.lockupDays,
-    });
-
+    const updatedRule = updateRuleWithRewards(currentDraft.rule, values);
     return {
         ...currentDraft,
         referralOnly: values.referralOnly,

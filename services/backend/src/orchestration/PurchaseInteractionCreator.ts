@@ -1,6 +1,7 @@
 import { eventEmitter, log } from "@backend-infrastructure";
 import type { InteractionLogRepository } from "../domain/rewards/repositories/InteractionLogRepository";
 import type { PurchasePayload } from "../domain/rewards/types";
+import { purchaseExternalEventId } from "../domain/rewards/utils";
 
 type PurchaseInteractionParams = {
     purchaseId: string;
@@ -51,7 +52,7 @@ export class PurchaseInteractionCreator {
             purchaseId: params.purchaseId,
         };
 
-        const externalEventId = `purchase:${params.externalId}`;
+        const externalEventId = purchaseExternalEventId(params.externalId);
         const interactionLog =
             await this.interactionLogRepository.createIdempotent({
                 type: "purchase",

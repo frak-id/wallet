@@ -206,9 +206,6 @@ export class RewardCalculator {
                 continue;
             }
 
-            // Per-reward override > rule-level default > undefined (no lockup).
-            const lockupSeconds = reward.lockupSeconds ?? defaultLockupSeconds;
-
             if (reward.recipient === "referrer" && reward.chaining) {
                 if (!referralChain || referralChain.length === 0) {
                     errors.push(
@@ -226,7 +223,7 @@ export class RewardCalculator {
                     rewardType: reward.type,
                     description: reward.description,
                     expirationDays,
-                    lockupSeconds,
+                    lockupSeconds: defaultLockupSeconds,
                 });
                 calculated.push(...chainedRewards);
                 continue;
@@ -251,7 +248,7 @@ export class RewardCalculator {
                 campaignRuleId,
                 description: reward.description,
                 expirationDays,
-                lockupSeconds,
+                lockupSeconds: defaultLockupSeconds,
             });
         }
 

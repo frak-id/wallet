@@ -144,7 +144,12 @@ function mapFinancialStatus(
     if (financialStatus === "paid") {
         return "confirmed";
     }
-    if (financialStatus === "refunded") {
+    // Treat partial and full refunds the same: any refund voids attribution
+    // and triggers reward cancellation for rewards still in their lockup window.
+    if (
+        financialStatus === "refunded" ||
+        financialStatus === "partially_refunded"
+    ) {
         return "refunded";
     }
     if (financialStatus === "voided") {
