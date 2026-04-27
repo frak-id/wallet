@@ -63,7 +63,6 @@ export const identityMergeRoutes = new Elysia({ prefix: "/merge" })
                 );
 
             return {
-                success: true as const,
                 finalGroupId: result.finalGroupId,
                 merged: result.merged,
             };
@@ -76,7 +75,6 @@ export const identityMergeRoutes = new Elysia({ prefix: "/merge" })
             }),
             response: {
                 200: t.Object({
-                    success: t.Literal(true),
                     finalGroupId: t.String({ format: "uuid" }),
                     merged: t.Boolean(),
                 }),

@@ -32,8 +32,6 @@ export {
     MerchantCampaignParamSchema,
     type MerchantIdParam,
     MerchantIdParamSchema,
-    type SuccessResponse,
-    SuccessResponseSchema,
 } from "./commonApiSchemas";
 export {
     type InteractionSubmission,

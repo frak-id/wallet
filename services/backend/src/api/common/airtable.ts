@@ -43,9 +43,7 @@ export const airtableRoutes = new Elysia({ name: "Routes.airtable" })
             try {
                 await airtableRepository.processRequest(tableType, body);
 
-                return {
-                    success: true,
-                };
+                return status(204);
             } catch (err) {
                 log.error({ err }, "Airtable operation failed:");
 
@@ -69,9 +67,7 @@ export const airtableRoutes = new Elysia({ name: "Routes.airtable" })
                 table: t.String(),
             }),
             response: {
-                200: t.Object({
-                    success: t.Boolean(),
-                }),
+                204: t.Void(),
                 400: t.String(),
                 409: t.String(),
                 500: t.String(),

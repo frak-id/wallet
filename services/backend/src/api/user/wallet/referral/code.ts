@@ -93,7 +93,7 @@ export const referralCodeRoutes = new Elysia({ prefix: "/code" })
                     refereeIdentityGroupId: identityGroupId,
                 }
             );
-            return { success: true as const };
+            return status(204);
         },
         {
             withAuthedIdentity: true,
@@ -101,11 +101,9 @@ export const referralCodeRoutes = new Elysia({ prefix: "/code" })
                 code: t.String({ minLength: 6, maxLength: 6 }),
             }),
             response: {
+                204: t.Void(),
                 401: t.String(),
                 429: t.String(),
-                200: t.Object({
-                    success: t.Literal(true),
-                }),
                 400: t.ErrorResponse,
                 404: t.ErrorResponse,
                 409: t.ErrorResponse,

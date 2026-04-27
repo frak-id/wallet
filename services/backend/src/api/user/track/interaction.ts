@@ -44,7 +44,6 @@ export const trackInteractionRoute = new Elysia().post(
             );
 
         return {
-            success: true,
             identityGroupId,
             interactionLogId: result.interactionLog?.id ?? null,
             isDuplicate: result.isDuplicate,

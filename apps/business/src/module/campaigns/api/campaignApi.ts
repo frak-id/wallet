@@ -154,19 +154,17 @@ export async function deleteCampaign({
 }: {
     merchantId: string;
     campaignId: string;
-}): Promise<{ success: true }> {
-    const { data, error } = await authenticatedBackendApi
+}): Promise<void> {
+    const { error } = await authenticatedBackendApi
         .merchant({ merchantId })
         .campaigns({ campaignId })
         .delete();
 
-    if (!data || error) {
+    if (error) {
         throw new Error(
             `Failed to delete campaign: ${error?.toString() ?? "Unknown error"}`
         );
     }
-
-    return { success: true };
 }
 
 function extractErrorMessage(error: unknown): string {

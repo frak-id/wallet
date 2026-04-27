@@ -151,7 +151,6 @@ describe("Identity Merge Routes API", () => {
     describe("POST /identity/merge/execute", () => {
         it("should merge groups successfully", async () => {
             mockExecuteMerge.mockResolvedValue({
-                success: true,
                 finalGroupId: "770e8400-e29b-41d4-a716-446655440000",
                 merged: true,
             });
@@ -173,7 +172,6 @@ describe("Identity Merge Routes API", () => {
             expect(response.status).toBe(200);
             const data = await response.json();
             expect(data).toEqual({
-                success: true,
                 finalGroupId: "770e8400-e29b-41d4-a716-446655440000",
                 merged: true,
             });
@@ -181,7 +179,6 @@ describe("Identity Merge Routes API", () => {
 
         it("should return merged=false when groups are already the same", async () => {
             mockExecuteMerge.mockResolvedValue({
-                success: true,
                 finalGroupId: "770e8400-e29b-41d4-a716-446655440000",
                 merged: false,
             });

@@ -3,7 +3,7 @@ import { t } from "@backend-utils";
 import { Elysia, status } from "elysia";
 import { CampaignBankContext } from "../../../domain/campaign-bank";
 import { MerchantContext } from "../../../domain/merchant";
-import { MerchantIdParamSchema, SuccessResponseSchema } from "../../schemas";
+import { MerchantIdParamSchema } from "../../schemas";
 import { businessSessionContext } from "../middleware/session";
 
 export const merchantTransferRoutes = new Elysia({
@@ -74,7 +74,7 @@ export const merchantTransferRoutes = new Elysia({
                 toWallet: body.toWallet,
                 requestOrigin: origin,
             });
-            return { success: true };
+            return status(204);
         },
         {
             params: MerchantIdParamSchema,
@@ -84,7 +84,7 @@ export const merchantTransferRoutes = new Elysia({
                 toWallet: t.Hex(),
             }),
             response: {
-                200: SuccessResponseSchema,
+                204: t.Void(),
                 400: t.String(),
             },
         }
@@ -128,7 +128,7 @@ export const merchantTransferRoutes = new Elysia({
                     });
             }
 
-            return { success: true };
+            return status(204);
         },
         {
             params: MerchantIdParamSchema,
@@ -137,7 +137,7 @@ export const merchantTransferRoutes = new Elysia({
                 signature: t.Hex(),
             }),
             response: {
-                200: SuccessResponseSchema,
+                204: t.Void(),
                 400: t.String(),
             },
         }
@@ -154,12 +154,12 @@ export const merchantTransferRoutes = new Elysia({
                 wallet: businessSession.wallet,
             });
 
-            return { success: true };
+            return status(204);
         },
         {
             params: MerchantIdParamSchema,
             response: {
-                200: SuccessResponseSchema,
+                204: t.Void(),
                 400: t.String(),
                 401: t.String(),
             },

@@ -170,7 +170,7 @@ export const merchantMediaRoutes = new Elysia({
                 type,
             });
 
-            return { success: true };
+            return status(204);
         },
         {
             params: t.Object({
@@ -178,7 +178,7 @@ export const merchantMediaRoutes = new Elysia({
                 type: t.String(),
             }),
             response: {
-                200: t.Object({ success: t.Literal(true) }),
+                204: t.Void(),
                 400: t.ErrorResponse,
                 401: t.String(),
                 403: t.String(),

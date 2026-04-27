@@ -69,7 +69,6 @@ export const merchantBankRoutes = new Elysia({
                 );
 
             return {
-                success: true,
                 rolesGranted,
                 rolesRevoked,
             };
@@ -78,7 +77,6 @@ export const merchantBankRoutes = new Elysia({
             params: MerchantIdParamSchema,
             response: {
                 200: t.Object({
-                    success: t.Boolean(),
                     rolesGranted: t.Boolean(),
                     rolesRevoked: t.Boolean(),
                 }),
@@ -112,7 +110,6 @@ export const merchantBankRoutes = new Elysia({
                 );
 
             return {
-                success: true,
                 bankAddress,
             };
         },
@@ -120,7 +117,6 @@ export const merchantBankRoutes = new Elysia({
             params: MerchantIdParamSchema,
             response: {
                 200: t.Object({
-                    success: t.Boolean(),
                     bankAddress: t.Hex(),
                 }),
                 400: t.ErrorResponse,

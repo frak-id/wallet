@@ -22,7 +22,6 @@ import {
     CampaignUpdateBodySchema,
     MerchantCampaignParamSchema,
     MerchantIdParamSchema,
-    SuccessResponseSchema,
 } from "../../schemas";
 import { businessSessionContext } from "../middleware/session";
 
@@ -527,12 +526,12 @@ export const merchantCampaignsRoutes = new Elysia({
 
             await CampaignContext.services.management.delete(campaignId);
 
-            return { success: true };
+            return status(204);
         },
         {
             params: MerchantCampaignParamSchema,
             response: {
-                200: SuccessResponseSchema,
+                204: t.Void(),
                 400: t.ErrorResponse,
                 409: t.ErrorResponse,
                 401: t.String(),
