@@ -52,7 +52,7 @@ Therefore the natural home for the relationship is the existing `referral_links`
 | Integration approach | Blend at the data layer: extend `referral_links` with `scope` + `source` rather than creating a parallel table. |
 | Terminology | `scope: 'merchant' \| 'cross_merchant'`. Drop "super referrer" — it's just a referrer with cross-merchant scope. |
 | Revocation behaviour | Revoke = archive. The revoked row stays in place (preserves `referral_links.referral_code_id` back-pointers for historical redemptions) but the code string stops resolving immediately and its 6-char value becomes available to any other user who claims it. No grace window, no cleanup cron. |
-| Rate limits | Every write route stacks IP + identity-group buckets. `/code/redeem` capped at **10 req/min/IP** plus 5/hour/identity. See [API > Rate limits](#rate-limits). |
+| Rate limits | Single shared bucket pair on `/code/*`: 10 req/min/IP + 10 req/min/identity-group. See [API > Rate limits](#rate-limits). |
 | Status endpoint scope | Global: single `GET /user/wallet/referral/status?merchantId=<optional>` returns owned code + cross-merchant referrer + merchant referrer in one payload. |
 
 ---
@@ -382,17 +382,17 @@ Error responses follow the existing 400-with-coded-body convention from `install
 
 ### Rate limits
 
-Every write route stacks two complementary buckets:
+A single shared rate limit applies to every `/code/*` route, stacking two
+complementary buckets:
 
-- **Per-IP** via the existing `rateLimitMiddleware` — DDoS defence, unchanged shape.
-- **Per-identity** via `createIdentityRateLimit` (new in `infrastructure/rateLimit/identityRateLimit.ts`) keyed on the caller's identity-group id — prevents a single user from fanning out across networks.
+- **Per-IP** via `rateLimitMiddleware` — DDoS defence — **10 req/min**.
+- **Per-identity** keyed on the caller's identity-group id (via the same
+  middleware with a `keyExtractor`) — prevents a single user fanning out
+  across networks — **10 req/min**.
 
-| Route | IP bucket | Identity bucket |
-| --- | --- | --- |
-| `POST /code/issue` | 5 / min | 5 / hour |
-| `DELETE /code` | 5 / min | 5 / hour |
-| `POST /code/redeem` | 10 / min | 5 / hour |
-| `GET /code/suggest` | 10 / min | 20 / hour |
+Hoisting both buckets to the parent `Elysia({ prefix: "/code" })` instance
+guarantees a single shared store across the four routes (no Elysia plugin
+dedup surprises) and trims the per-route boilerplate.
 
 Read routes (`GET /code`, `GET /status`) are unlimited — safe to poll.
 
@@ -451,7 +451,7 @@ Resolved from the initial open questions:
 
 1. **Status endpoint scope** — broadened to `GET /user/wallet/referral/status`. Returns owned code + cross-merchant referrer unconditionally, plus merchant-scoped referrer when `?merchantId=<uuid>` is supplied. One-stop shop for the wallet Settings UI.
 2. **Revocation behaviour** — revoke = archive. The row stays for historical FK integrity (`referral_links.referral_code_id`) but `findByCode` filters it out, so no new redemptions resolve. The 6-char string is immediately claimable by a fresh owner via the partial unique `code WHERE revoked_at IS NULL`. No grace window, no cleanup cron.
-3. **Redemption rate limit** — 10 req/min/IP paired with a per-identity bucket of 5/hour/identity. The per-identity bucket (via `createIdentityRateLimit` in `infrastructure/rateLimit/identityRateLimit.ts`) is also applied to `POST /code/issue` and `DELETE /code` at 5/hour each.
+3. **Rate limits** — simplified to a single shared bucket pair on `/code/*`: 10 req/min/IP + 10 req/min/identity-group. Hoisted to the parent `Elysia({ prefix: "/code" })` so all four routes share one store, with no Elysia plugin-dedup edge cases.
 4. **Rotation route dropped** — `POST /code/rotate` is gone. Composition of `DELETE /code` then `POST /code/issue` covers the use case. The atomicity gap is minor: an owner briefly has no active code between the two calls, during which their old code no longer resolves.
 
 Routes moved from `/user/wallet/referral-code/*` to `/user/wallet/referral/{code/*,status}` to make room for the broader status endpoint.

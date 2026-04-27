@@ -3,6 +3,7 @@ import {
     CODE_ALPHABET,
     CODE_DIGIT_ALPHABET,
     CODE_LENGTH,
+    STEM_ALPHABET
 } from "@backend-utils";
 import type { ReferralCodeSelect } from "../db/schema";
 import type { ReferralCodeRepository } from "../repositories/ReferralCodeRepository";
@@ -33,10 +34,10 @@ const ALLOWED_STEM_LENGTHS: ReadonlySet<number> = new Set([3, 4]);
 const DEFAULT_SUGGEST_COUNT = 10;
 const MAX_SUGGEST_COUNT = 20;
 
-// Pool size per preference tier — tuned so that even when half the digit
-// namespace is dense (e.g. 4-char stem, 128 digit placements) we still
-// gather enough candidates to fill the request.
-const POOL_MULTIPLIER = 6;
+// Pool size per preference tier — at 3x the requested count we keep
+// enough candidates to absorb the availability filter without exploding
+// the namespace probe.
+const POOL_MULTIPLIER = 3;
 
 export class ReferralCodeService {
     constructor(
@@ -54,8 +55,7 @@ export class ReferralCodeService {
      *    the user to pick another.
      *
      * Always fails with `ALREADY_ACTIVE` if the owner already has an active
-     * code; the owner must `revoke` first (the 14-day grace window keeps
-     * the old code redeemable in the meantime).
+     * code; the owner must `revoke` first.
      */
     async issue(params: {
         ownerIdentityGroupId: string;
@@ -179,7 +179,7 @@ export class ReferralCodeService {
             };
         }
         for (const ch of stem) {
-            if (!CODE_ALPHABET.includes(ch)) {
+            if (!STEM_ALPHABET.includes(ch)) {
                 return {
                     success: false,
                     error: `stem contains invalid character: ${ch}`,

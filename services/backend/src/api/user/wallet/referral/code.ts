@@ -4,22 +4,22 @@ import { Elysia, status } from "elysia";
 import { ReferralCodeContext } from "../../../../domain/referral-code/context";
 import { OrchestrationContext } from "../../../../orchestration/context";
 
-// Every write route stacks an IP bucket (DDoS defence) with an identity
-// bucket (prevents a single user fanning out across networks). The identity
-// bucket reads `identityGroupId` resolved by `identityContext`.
+// Single shared rate limit for all /code/* routes: per-IP (DDoS defence)
+// + per-identity (prevents a single user fanning out across networks).
+// Identity bucket reads `identityGroupId` resolved by `identityContext`.
 // biome-ignore lint/suspicious/noExplicitAny: Elysia's scoped-plugin context type does not carry plugin-resolved fields through to `onBeforeHandle`.
 const identityKey = (ctx: any): string | null => {
     const id = ctx.identityGroupId as string | null | undefined;
     return id ? `identity:${id}` : null;
 };
 
-const issueRoute = new Elysia()
+export const referralCodeRoutes = new Elysia({ prefix: "/code" })
     .use(identityContext)
-    .use(rateLimitMiddleware({ windowMs: 60_000, maxRequests: 5 }))
+    .use(rateLimitMiddleware({ windowMs: 60_000, maxRequests: 10 }))
     .use(
         rateLimitMiddleware({
-            windowMs: 60 * 60_000,
-            maxRequests: 5,
+            windowMs: 60_000,
+            maxRequests: 10,
             keyExtractor: identityKey,
         })
     )
@@ -78,17 +78,6 @@ const issueRoute = new Elysia()
                 409: t.ErrorResponse,
             },
         }
-    );
-
-const revokeRoute = new Elysia()
-    .use(identityContext)
-    .use(rateLimitMiddleware({ windowMs: 60_000, maxRequests: 5 }))
-    .use(
-        rateLimitMiddleware({
-            windowMs: 60 * 60_000,
-            maxRequests: 5,
-            keyExtractor: identityKey,
-        })
     )
     .delete(
         "",
@@ -107,19 +96,6 @@ const revokeRoute = new Elysia()
                 204: t.Void(),
             },
         }
-    );
-
-// Redemption is a write that affects a globally-unique row; pair a
-// moderate per-IP bucket with a tight per-identity bucket.
-const redeemRoute = new Elysia()
-    .use(identityContext)
-    .use(rateLimitMiddleware({ windowMs: 60_000, maxRequests: 10 }))
-    .use(
-        rateLimitMiddleware({
-            windowMs: 60 * 60_000,
-            maxRequests: 5,
-            keyExtractor: identityKey,
-        })
     )
     .post(
         "/redeem",
@@ -159,21 +135,6 @@ const redeemRoute = new Elysia()
                 400: t.ErrorResponse,
             },
         }
-    );
-
-// Personalised-code helper: user types a 3-4 char stem, server proposes
-// available 6-char codes containing it (digit-fill preferred, random start
-// or end placement). Read-ish but exposes availability state of a tiny
-// slice of the namespace, so still rate-limited.
-const suggestRoute = new Elysia()
-    .use(identityContext)
-    .use(rateLimitMiddleware({ windowMs: 60_000, maxRequests: 10 }))
-    .use(
-        rateLimitMiddleware({
-            windowMs: 60 * 60_000,
-            maxRequests: 20,
-            keyExtractor: identityKey,
-        })
     )
     .get(
         "/suggest",
@@ -214,9 +175,3 @@ const suggestRoute = new Elysia()
             },
         }
     );
-
-export const referralCodeRoutes = new Elysia({ prefix: "/code" })
-    .use(issueRoute)
-    .use(revokeRoute)
-    .use(redeemRoute)
-    .use(suggestRoute);

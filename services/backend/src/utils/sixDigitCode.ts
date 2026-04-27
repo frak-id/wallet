@@ -14,6 +14,7 @@ import { customAlphabet } from "nanoid";
 export const CODE_LETTER_ALPHABET = "ABCDEFGHJKMNPQRSTUVWXYZ";
 export const CODE_DIGIT_ALPHABET = "23456789";
 export const CODE_ALPHABET = `${CODE_LETTER_ALPHABET}${CODE_DIGIT_ALPHABET}`;
+export const STEM_ALPHABET = `${CODE_LETTER_ALPHABET}${CODE_DIGIT_ALPHABET}0O1IL`;
 export const CODE_LENGTH = 6;
 export const CANDIDATE_BATCH_SIZE = 50;
 

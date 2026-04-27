@@ -113,6 +113,13 @@
             "when": 1776269055712,
             "tag": "0015_familiar_silver_fox",
             "breakpoints": true
+        },
+        {
+            "idx": 16,
+            "version": "7",
+            "when": 1777283510113,
+            "tag": "0016_pretty_nextwave",
+            "breakpoints": true
         }
     ]
 }

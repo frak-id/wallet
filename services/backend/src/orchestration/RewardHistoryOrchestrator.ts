@@ -217,11 +217,9 @@ export class RewardHistoryOrchestrator {
 
     private groupLogsByTimestamp(
         logs: readonly DetailedAssetLog[],
-        linkMap: ReturnType<
-            RewardHistoryOrchestrator["fetchReferralLinkMap"]
-        > extends Promise<infer R>
-            ? R
-            : never
+        linkMap: Awaited<
+            ReturnType<RewardHistoryOrchestrator["fetchReferralLinkMap"]>
+        >
     ): Map<string, { logs: DetailedAssetLog[]; timestamps: number[] }> {
         const grouped = new Map<
             string,
