@@ -100,8 +100,9 @@ export const assetLogsTable = pgTable(
          * Set when status transitions to `cancelled`. Companion to `cancellationReason`.
          */
         cancelledAt: timestamp("cancelled_at"),
-        cancellationReason: text("cancellation_reason")
-            .$type<CancellationReason>(),
+        cancellationReason: text(
+            "cancellation_reason"
+        ).$type<CancellationReason>(),
     },
     (table) => [
         index("asset_logs_identity_group_idx").on(table.identityGroupId),
@@ -130,9 +131,7 @@ export const assetLogsTable = pgTable(
             .where(sql`"status" = 'processing'`),
         index("asset_logs_pending_available_idx")
             .on(table.availableAt)
-            .where(
-                sql`"status" = 'pending' AND "available_at" IS NOT NULL`
-            ),
+            .where(sql`"status" = 'pending' AND "available_at" IS NOT NULL`),
     ]
 );
 

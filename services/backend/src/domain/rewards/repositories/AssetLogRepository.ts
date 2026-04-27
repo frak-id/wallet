@@ -166,10 +166,7 @@ export class AssetLogRepository {
             .from(assetLogsTable)
             .where(
                 and(
-                    inArray(
-                        assetLogsTable.interactionLogId,
-                        interactionLogIds
-                    ),
+                    inArray(assetLogsTable.interactionLogId, interactionLogIds),
                     eq(assetLogsTable.status, "pending")
                 )
             );

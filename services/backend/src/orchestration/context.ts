@@ -24,6 +24,7 @@ import { NotificationOrchestrator } from "./NotificationOrchestrator";
 import { PurchaseInteractionCreator } from "./PurchaseInteractionCreator";
 import { PurchaseLinkingOrchestrator } from "./PurchaseLinkingOrchestrator";
 import { PurchaseWebhookOrchestrator } from "./PurchaseWebhookOrchestrator";
+import { RewardCancellationOrchestrator } from "./RewardCancellationOrchestrator";
 import { RewardExpirationOrchestrator } from "./RewardExpirationOrchestrator";
 import { RewardHistoryOrchestrator } from "./RewardHistoryOrchestrator";
 import { ReferralCodeRedemptionOrchestrator } from "./referral-code";
@@ -78,11 +79,18 @@ const purchaseLinkingOrchestrator = new PurchaseLinkingOrchestrator(
     purchaseInteractionCreator
 );
 
+const rewardCancellationOrchestrator = new RewardCancellationOrchestrator(
+    RewardsContext.repositories.assetLog,
+    RewardsContext.repositories.interactionLog,
+    CampaignContext.repositories.campaignRule
+);
+
 const purchaseWebhookOrchestrator = new PurchaseWebhookOrchestrator(
     PurchasesContext.repositories.purchase,
     PurchasesContext.repositories.purchaseClaim,
     purchaseInteractionCreator,
-    identityOrchestrator
+    identityOrchestrator,
+    rewardCancellationOrchestrator
 );
 
 const settlementOrchestrator = new SettlementOrchestrator(
@@ -147,6 +155,7 @@ export namespace OrchestrationContext {
         notification: notificationOrchestrator,
         purchaseLinking: purchaseLinkingOrchestrator,
         purchaseWebhook: purchaseWebhookOrchestrator,
+        rewardCancellation: rewardCancellationOrchestrator,
         rewardExpiration: rewardExpirationOrchestrator,
         rewardHistory: rewardHistoryOrchestrator,
         settlement: settlementOrchestrator,
