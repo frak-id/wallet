@@ -81,4 +81,23 @@ describe("Back", () => {
 
         expect(screen.getByText("Custom back text")).toBeInTheDocument();
     });
+
+    it("falls back to a generic accessible name when no children (link)", () => {
+        render(<Back href="/previous" />);
+
+        // i18n returns the key in tests; we just need an aria-label present.
+        const link = screen.getByRole("link");
+        expect(link).toHaveAttribute("aria-label");
+        expect(link.getAttribute("aria-label")?.length ?? 0).toBeGreaterThan(0);
+    });
+
+    it("falls back to a generic accessible name when no children (button)", () => {
+        render(<Back onClick={() => {}} />);
+
+        const button = screen.getByRole("button");
+        expect(button).toHaveAttribute("aria-label");
+        expect(button.getAttribute("aria-label")?.length ?? 0).toBeGreaterThan(
+            0
+        );
+    });
 });
