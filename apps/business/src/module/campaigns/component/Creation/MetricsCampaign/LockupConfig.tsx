@@ -42,9 +42,12 @@ export function LockupConfig() {
                                 step={1}
                                 className={styles.chaining__input}
                                 value={value}
-                                onChange={(e) =>
-                                    field.onChange(Number(e.target.value) || 0)
-                                }
+                                onChange={(e) => {
+                                    const n = e.target.valueAsNumber;
+                                    field.onChange(
+                                        Number.isFinite(n) ? n : 0
+                                    );
+                                }}
                             />
                         </FormControl>
                         <FormDescription>

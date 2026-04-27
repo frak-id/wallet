@@ -2101,22 +2101,6 @@
                     "concurrently": false,
                     "method": "btree",
                     "with": {}
-                },
-                "asset_logs_pending_available_idx": {
-                    "name": "asset_logs_pending_available_idx",
-                    "columns": [
-                        {
-                            "expression": "available_at",
-                            "isExpression": false,
-                            "asc": true,
-                            "nulls": "last"
-                        }
-                    ],
-                    "isUnique": false,
-                    "where": "\"status\" = 'pending' AND \"available_at\" IS NOT NULL",
-                    "concurrently": false,
-                    "method": "btree",
-                    "with": {}
                 }
             },
             "foreignKeys": {},

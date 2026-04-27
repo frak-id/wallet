@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 import type { CampaignRuleRepository } from "../domain/campaign/repositories/CampaignRuleRepository";
-import type { AssetLogSelect, InteractionLogSelect } from "../domain/rewards";
+import type { InteractionLogSelect } from "../domain/rewards";
 import type { AssetLogRepository } from "../domain/rewards/repositories/AssetLogRepository";
 import type { InteractionLogRepository } from "../domain/rewards/repositories/InteractionLogRepository";
 import { RewardLifecycleOrchestrator } from "./RewardLifecycleOrchestrator";
@@ -16,9 +16,8 @@ vi.mock("@backend-infrastructure", () => ({
 
 const buildOrchestrator = () => {
     const assetLog = {
-        findCancellableByInteractionLogs: vi.fn(),
-        findExpiredPendingRewardIds: vi.fn(),
-        terminateRewardsBatch: vi.fn(),
+        cancelPendingByInteractionLogs: vi.fn(),
+        expirePendingPastDeadline: vi.fn(),
     } as unknown as AssetLogRepository;
 
     const interactionLog = {
@@ -42,14 +41,6 @@ const purchaseInteraction = {
     id: "interaction-1",
 } as InteractionLogSelect;
 
-const pendingReward = (overrides?: Partial<AssetLogSelect>): AssetLogSelect =>
-    ({
-        id: "asset-1",
-        campaignRuleId: "campaign-1",
-        amount: "100",
-        ...overrides,
-    }) as AssetLogSelect;
-
 describe("RewardLifecycleOrchestrator", () => {
     describe("cancelForRefund", () => {
         it("returns empty result when no purchase interaction exists", async () => {
@@ -69,9 +60,8 @@ describe("RewardLifecycleOrchestrator", () => {
                 budgetRestoredByCampaign: {},
             });
             expect(
-                assetLog.findCancellableByInteractionLogs
+                assetLog.cancelPendingByInteractionLogs
             ).not.toHaveBeenCalled();
-            expect(assetLog.terminateRewardsBatch).not.toHaveBeenCalled();
             expect(campaignRule.restoreBudgetsBatch).not.toHaveBeenCalled();
         });
 
@@ -82,7 +72,7 @@ describe("RewardLifecycleOrchestrator", () => {
                 interactionLog.findPurchaseInteractionByExternalId
             ).mockResolvedValue(purchaseInteraction);
             vi.mocked(
-                assetLog.findCancellableByInteractionLogs
+                assetLog.cancelPendingByInteractionLogs
             ).mockResolvedValue([]);
 
             const result = await orchestrator.cancelForRefund({
@@ -91,33 +81,18 @@ describe("RewardLifecycleOrchestrator", () => {
             });
 
             expect(result.affectedCount).toBe(0);
-            expect(assetLog.terminateRewardsBatch).not.toHaveBeenCalled();
             expect(campaignRule.restoreBudgetsBatch).not.toHaveBeenCalled();
         });
 
         it("cancels pending rewards with reason 'refund' and restores budget", async () => {
             const { orchestrator, assetLog, interactionLog, campaignRule } =
                 buildOrchestrator();
-            const cancellable = [
-                pendingReward({ id: "asset-1", amount: "100" }),
-                pendingReward({
-                    id: "asset-2",
-                    campaignRuleId: "campaign-1",
-                    amount: "25",
-                }),
-                pendingReward({
-                    id: "asset-3",
-                    campaignRuleId: "campaign-2",
-                    amount: "10",
-                }),
-            ];
             vi.mocked(
                 interactionLog.findPurchaseInteractionByExternalId
             ).mockResolvedValue(purchaseInteraction);
             vi.mocked(
-                assetLog.findCancellableByInteractionLogs
-            ).mockResolvedValue(cancellable);
-            vi.mocked(assetLog.terminateRewardsBatch).mockResolvedValue([
+                assetLog.cancelPendingByInteractionLogs
+            ).mockResolvedValue([
                 { id: "asset-1", campaignRuleId: "campaign-1", amount: "100" },
                 { id: "asset-2", campaignRuleId: "campaign-1", amount: "25" },
                 { id: "asset-3", campaignRuleId: "campaign-2", amount: "10" },
@@ -133,12 +108,8 @@ describe("RewardLifecycleOrchestrator", () => {
             });
 
             expect(
-                assetLog.findCancellableByInteractionLogs
-            ).toHaveBeenCalledWith(["interaction-1"]);
-            expect(assetLog.terminateRewardsBatch).toHaveBeenCalledWith(
-                ["asset-1", "asset-2", "asset-3"],
-                "refund"
-            );
+                assetLog.cancelPendingByInteractionLogs
+            ).toHaveBeenCalledWith(["interaction-1"], "refund");
             expect(campaignRule.restoreBudgetsBatch).toHaveBeenCalled();
             expect(result.affectedCount).toBe(3);
             expect(result.budgetRestoredByCampaign).toEqual({
@@ -146,52 +117,24 @@ describe("RewardLifecycleOrchestrator", () => {
                 "campaign-2": 10,
             });
         });
-
-        it("returns empty result when terminate finds nothing to flip (race with settlement)", async () => {
-            const { orchestrator, assetLog, interactionLog, campaignRule } =
-                buildOrchestrator();
-            vi.mocked(
-                interactionLog.findPurchaseInteractionByExternalId
-            ).mockResolvedValue(purchaseInteraction);
-            vi.mocked(
-                assetLog.findCancellableByInteractionLogs
-            ).mockResolvedValue([pendingReward()]);
-            // Between find and update, the reward moved to `processing`.
-            vi.mocked(assetLog.terminateRewardsBatch).mockResolvedValue([]);
-
-            const result = await orchestrator.cancelForRefund({
-                merchantId: "m1",
-                externalId: "order-42",
-            });
-
-            expect(result.affectedCount).toBe(0);
-            expect(campaignRule.restoreBudgetsBatch).not.toHaveBeenCalled();
-        });
     });
 
     describe("expireOverdueRewards", () => {
         it("returns empty result when no rewards have expired", async () => {
             const { orchestrator, assetLog, campaignRule } =
                 buildOrchestrator();
-            vi.mocked(assetLog.findExpiredPendingRewardIds).mockResolvedValue(
-                []
-            );
+            vi.mocked(assetLog.expirePendingPastDeadline).mockResolvedValue([]);
 
             const result = await orchestrator.expireOverdueRewards();
 
             expect(result.affectedCount).toBe(0);
-            expect(assetLog.terminateRewardsBatch).not.toHaveBeenCalled();
             expect(campaignRule.restoreBudgetsBatch).not.toHaveBeenCalled();
         });
 
         it("flips expired rewards with reason 'expired' and restores budget", async () => {
             const { orchestrator, assetLog, campaignRule } =
                 buildOrchestrator();
-            vi.mocked(assetLog.findExpiredPendingRewardIds).mockResolvedValue([
-                "asset-9",
-                "asset-10",
-            ]);
-            vi.mocked(assetLog.terminateRewardsBatch).mockResolvedValue([
+            vi.mocked(assetLog.expirePendingPastDeadline).mockResolvedValue([
                 { id: "asset-9", campaignRuleId: "campaign-3", amount: "5" },
                 { id: "asset-10", campaignRuleId: "campaign-3", amount: "8" },
             ]);
@@ -201,10 +144,7 @@ describe("RewardLifecycleOrchestrator", () => {
 
             const result = await orchestrator.expireOverdueRewards();
 
-            expect(assetLog.terminateRewardsBatch).toHaveBeenCalledWith(
-                ["asset-9", "asset-10"],
-                "expired"
-            );
+            expect(assetLog.expirePendingPastDeadline).toHaveBeenCalled();
             expect(result.affectedCount).toBe(2);
             expect(result.budgetRestoredByCampaign).toEqual({
                 "campaign-3": 13,

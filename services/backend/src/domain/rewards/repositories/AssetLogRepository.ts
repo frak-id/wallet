@@ -109,31 +109,32 @@ export class AssetLogRepository {
     }
 
     /**
-     * Move a batch of `pending` rewards to a terminal non-settled state and
-     * record the reason. The reason determines the resulting status:
+     * Atomically move every still-`pending` reward tied to the given
+     * interaction logs to a terminal non-settled state and record the reason.
+     * Used by the refund flow to cancel rewards triggered by a now-refunded
+     * purchase.
      *
-     * - `"expired"` -> status `expired`
-     * - any other reason -> status `cancelled`
+     * Skipped rows:
+     *  - rewards already in `processing`/`settled` (lockup window has passed
+     *    — must not be flipped from underneath the on-chain transaction);
+     *  - rewards without a `campaignRuleId` (campaign was deleted — nothing
+     *    to restore, ignore gracefully).
      *
-     * Only `pending` rewards are touched: rewards that already moved to
-     * `processing` are mid-settlement and must not be flipped from underneath
-     * the on-chain transaction.
-     *
-     * Returns the affected rows so callers can restore campaign budget.
+     * Single SQL round-trip; eliminates the find-then-update race window.
      */
-    async terminateRewardsBatch(
-        ids: string[],
+    async cancelPendingByInteractionLogs(
+        interactionLogIds: string[],
         reason: CancellationReason
     ): Promise<
-        { id: string; campaignRuleId: string | null; amount: string }[]
+        { id: string; campaignRuleId: string; amount: string }[]
     > {
-        if (ids.length === 0) return [];
+        if (interactionLogIds.length === 0) return [];
 
         const now = new Date();
         const status: AssetStatus =
             reason === "expired" ? "expired" : "cancelled";
 
-        return db
+        const rows = await db
             .update(assetLogsTable)
             .set({
                 status,
@@ -143,8 +144,9 @@ export class AssetLogRepository {
             })
             .where(
                 and(
-                    inArray(assetLogsTable.id, ids),
-                    eq(assetLogsTable.status, "pending")
+                    inArray(assetLogsTable.interactionLogId, interactionLogIds),
+                    eq(assetLogsTable.status, "pending"),
+                    isNotNull(assetLogsTable.campaignRuleId)
                 )
             )
             .returning({
@@ -152,32 +154,9 @@ export class AssetLogRepository {
                 campaignRuleId: assetLogsTable.campaignRuleId,
                 amount: assetLogsTable.amount,
             });
-    }
 
-    /**
-     * Find still-cancellable reward entries (status `pending`) tied to the given
-     * interaction log IDs. Used by RewardCancellationOrchestrator to discover
-     * rewards triggered by a now-refunded purchase.
-     *
-     * Locked rewards (`availableAt > now`) are the primary target, but we also
-     * include any `pending` rewards that haven't yet been picked up by the
-     * settlement cron — the lockup window is the protection envelope, not the
-     * sole signal of cancellability.
-     */
-    async findCancellableByInteractionLogs(
-        interactionLogIds: string[]
-    ): Promise<AssetLogSelect[]> {
-        if (interactionLogIds.length === 0) return [];
-
-        return db
-            .select()
-            .from(assetLogsTable)
-            .where(
-                and(
-                    inArray(assetLogsTable.interactionLogId, interactionLogIds),
-                    eq(assetLogsTable.status, "pending")
-                )
-            );
+        // `campaignRuleId` is non-null thanks to the WHERE clause.
+        return rows as { id: string; campaignRuleId: string; amount: string }[];
     }
 
     async updateStatusBatch(
@@ -269,23 +248,39 @@ export class AssetLogRepository {
     }
 
     /**
-     * Find IDs of `pending` rewards whose `expires_at` is in the past.
-     * Returned in stable order so a partial failure can be retried safely.
+     * Atomically expire every `pending` reward whose `expires_at` deadline
+     * has passed and that still has a campaign attached. Returns the
+     * affected rows so the caller can restore the corresponding campaign
+     * budgets. Single SQL round-trip; no find-then-update race.
      */
-    async findExpiredPendingRewardIds(): Promise<string[]> {
+    async expirePendingPastDeadline(): Promise<
+        { id: string; campaignRuleId: string; amount: string }[]
+    > {
+        const now = new Date();
         const rows = await db
-            .select({ id: assetLogsTable.id })
-            .from(assetLogsTable)
+            .update(assetLogsTable)
+            .set({
+                status: "expired",
+                statusChangedAt: now,
+                cancelledAt: now,
+                cancellationReason: "expired",
+            })
             .where(
                 and(
                     eq(assetLogsTable.status, "pending"),
                     isNotNull(assetLogsTable.expiresAt),
                     isNotNull(assetLogsTable.campaignRuleId),
-                    lt(assetLogsTable.expiresAt, new Date())
+                    lt(assetLogsTable.expiresAt, now)
                 )
             )
-            .orderBy(assetLogsTable.id);
-        return rows.map((r) => r.id);
+            .returning({
+                id: assetLogsTable.id,
+                campaignRuleId: assetLogsTable.campaignRuleId,
+                amount: assetLogsTable.amount,
+            });
+
+        // `campaignRuleId` is non-null thanks to the WHERE clause.
+        return rows as { id: string; campaignRuleId: string; amount: string }[];
     }
 
     async findByIdentityGroups(

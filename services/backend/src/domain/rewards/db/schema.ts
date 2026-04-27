@@ -129,9 +129,6 @@ export const assetLogsTable = pgTable(
         index("asset_logs_processing_status_changed_idx")
             .on(table.statusChangedAt)
             .where(sql`"status" = 'processing'`),
-        index("asset_logs_pending_available_idx")
-            .on(table.availableAt)
-            .where(sql`"status" = 'pending' AND "available_at" IS NOT NULL`),
     ]
 );
 

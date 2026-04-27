@@ -26,11 +26,9 @@ const emptyResult = (): LifecycleResult => ({
  * Owns the post-creation lifecycle of `pending` rewards: refund-driven
  * cancellation and natural expiration.
  *
- * Both flows share the same primitive:
- *  1. discover the affected reward IDs (predicate-based for expiration,
- *     interaction-based for refunds);
- *  2. flip them to a terminal non-settled state with a recorded reason;
- *  3. restore the campaign budget for the released amounts.
+ * Both flows reduce to one atomic UPDATE…RETURNING in `AssetLogRepository`
+ * that flips the eligible rows to a terminal non-settled state, plus a
+ * `restoreBudgetsBatch` call for the released amounts.
  *
  * `processing` and `settled` rewards are out of bounds — the only safety
  * window for a refund is the lockup period configured on the campaign.
@@ -63,24 +61,16 @@ export class RewardLifecycleOrchestrator {
             return emptyResult();
         }
 
-        const cancellable =
-            await this.assetLogRepository.findCancellableByInteractionLogs([
-                interaction.id,
-            ]);
-
-        if (cancellable.length === 0) {
-            log.debug(
-                params,
-                "Refund cancellation: no pending rewards to cancel (already settled or cancelled)"
+        const terminated =
+            await this.assetLogRepository.cancelPendingByInteractionLogs(
+                [interaction.id],
+                "refund"
             );
-            return emptyResult();
-        }
 
-        return this.terminate(
-            cancellable.map((r) => r.id),
-            "refund",
-            { ...params, scope: "refund" }
-        );
+        return this.finalize(terminated, "refund", {
+            ...params,
+            scope: "refund",
+        });
     }
 
     /**
@@ -88,27 +78,17 @@ export class RewardLifecycleOrchestrator {
      * restore their campaigns' budget. Driven by the daily expiration cron.
      */
     async expireOverdueRewards(): Promise<LifecycleResult> {
-        const expiredIds =
-            await this.assetLogRepository.findExpiredPendingRewardIds();
-
-        if (expiredIds.length === 0) {
-            return emptyResult();
-        }
-
-        return this.terminate(expiredIds, "expired", { scope: "expiration" });
+        const terminated =
+            await this.assetLogRepository.expirePendingPastDeadline();
+        return this.finalize(terminated, "expired", { scope: "expiration" });
     }
 
-    /** Shared finalisation: terminate rewards and restore budget. */
-    private async terminate(
-        ids: string[],
+    /** Restore campaign budgets and emit a structured log. */
+    private async finalize(
+        terminated: { campaignRuleId: string; amount: string }[],
         reason: CancellationReason,
         logCtx: Record<string, unknown>
     ): Promise<LifecycleResult> {
-        const terminated = await this.assetLogRepository.terminateRewardsBatch(
-            ids,
-            reason
-        );
-
         if (terminated.length === 0) {
             return emptyResult();
         }
