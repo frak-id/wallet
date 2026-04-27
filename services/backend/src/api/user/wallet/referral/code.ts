@@ -1,7 +1,7 @@
 import { identityContext, rateLimitMiddleware } from "@backend-infrastructure";
 import { t } from "@backend-utils";
 import { Elysia, status } from "elysia";
-import { ReferralCodeContext } from "../../../../domain/referral-code/context";
+import { ReferralCodeContext } from "../../../../domain/referral-code";
 import { OrchestrationContext } from "../../../../orchestration/context";
 
 // Single shared rate limit for all /code/* routes: per-IP (DDoS defence)
@@ -23,36 +23,22 @@ export const referralCodeRoutes = new Elysia({ prefix: "/code" })
             keyExtractor: identityKey,
         })
     )
+    // Domain code throws `HttpError` from `@backend-utils`; Elysia auto-maps
+    // it to the HTTP response via `error.toResponse()` — no `.error()` /
+    // `.onError` wiring needed here.
     .post(
         "/issue",
         async ({ identityGroupId, body }) => {
             // `withAuthedIdentity` guarantees identityGroupId is set.
             if (!identityGroupId) return status(401, "Unauthorized");
-            const result =
+            const created =
                 await ReferralCodeContext.services.referralCode.issue({
                     ownerIdentityGroupId: identityGroupId,
                     preferredCode: body?.code,
                 });
-
-            if (!result.success) {
-                // ALREADY_ACTIVE / CODE_UNAVAILABLE — both are conflicts on
-                // the same underlying resource. Validation failures on a
-                // user-supplied code are 400.
-                const statusCode =
-                    result.code === "INVALID_CODE_LENGTH" ||
-                    result.code === "INVALID_CODE_CHARS"
-                        ? 400
-                        : 409;
-                return status(statusCode, {
-                    success: false as const,
-                    error: result.error,
-                    code: result.code,
-                });
-            }
-
             return {
-                code: result.code.code,
-                createdAt: result.code.createdAt.toISOString(),
+                code: created.code,
+                createdAt: created.createdAt.toISOString(),
             };
         },
         {
@@ -101,25 +87,13 @@ export const referralCodeRoutes = new Elysia({ prefix: "/code" })
         "/redeem",
         async ({ identityGroupId, body }) => {
             if (!identityGroupId) return status(401, "Unauthorized");
-            const result =
-                await OrchestrationContext.orchestrators.referralCodeRedemption.redeem(
-                    {
-                        code: body.code,
-                        refereeIdentityGroupId: identityGroupId,
-                    }
-                );
-
-            if (!result.success) {
-                return status(400, {
-                    success: false as const,
-                    error: result.error,
-                    code: result.code,
-                });
-            }
-
-            return {
-                success: true as const,
-            };
+            await OrchestrationContext.orchestrators.referralCodeRedemption.redeem(
+                {
+                    code: body.code,
+                    refereeIdentityGroupId: identityGroupId,
+                }
+            );
+            return { success: true as const };
         },
         {
             withAuthedIdentity: true,
@@ -133,29 +107,22 @@ export const referralCodeRoutes = new Elysia({ prefix: "/code" })
                     success: t.Literal(true),
                 }),
                 400: t.ErrorResponse,
+                404: t.ErrorResponse,
+                409: t.ErrorResponse,
             },
         }
     )
     .get(
         "/suggest",
         async ({ query }) => {
-            const result =
+            const suggestions =
                 await ReferralCodeContext.services.referralCode.suggestWithStem(
                     {
                         stem: query.stem,
                         count: query.count,
                     }
                 );
-
-            if (!result.success) {
-                return status(400, {
-                    success: false as const,
-                    error: result.error,
-                    code: result.code,
-                });
-            }
-
-            return { suggestions: result.suggestions };
+            return { suggestions };
         },
         {
             withAuthedIdentity: true,

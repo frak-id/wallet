@@ -1,4 +1,1 @@
-export {
-    type RedemptionResult,
-    ReferralCodeRedemptionOrchestrator,
-} from "./ReferralCodeRedemptionOrchestrator";
+export { ReferralCodeRedemptionOrchestrator } from "./ReferralCodeRedemptionOrchestrator";

@@ -3,28 +3,11 @@ import {
     CODE_ALPHABET,
     CODE_DIGIT_ALPHABET,
     CODE_LENGTH,
-    STEM_ALPHABET
+    HttpError,
+    STEM_ALPHABET,
 } from "@backend-utils";
 import type { ReferralCodeSelect } from "../db/schema";
 import type { ReferralCodeRepository } from "../repositories/ReferralCodeRepository";
-
-type IssueErrorCode =
-    | "ALREADY_ACTIVE"
-    | "INVALID_CODE_LENGTH"
-    | "INVALID_CODE_CHARS"
-    | "CODE_UNAVAILABLE";
-
-type IssueResult =
-    | { success: true; code: ReferralCodeSelect }
-    | { success: false; error: string; code: IssueErrorCode };
-
-type SuggestResult =
-    | { success: true; suggestions: string[] }
-    | {
-          success: false;
-          error: string;
-          code: "INVALID_STEM_LENGTH" | "INVALID_STEM_CHARS";
-      };
 
 // User may only supply 3- or 4-char stems. Anything shorter leaks too
 // little personalisation; anything longer leaves too small a fill space
@@ -60,34 +43,31 @@ export class ReferralCodeService {
     async issue(params: {
         ownerIdentityGroupId: string;
         preferredCode?: string;
-    }): Promise<IssueResult> {
+    }): Promise<ReferralCodeSelect> {
         const existing = await this.referralCodeRepository.findActiveByOwner(
             params.ownerIdentityGroupId
         );
         if (existing) {
-            return {
-                success: false,
-                error: "An active referral code already exists for this user",
-                code: "ALREADY_ACTIVE",
-            };
+            throw HttpError.conflict(
+                "ALREADY_ACTIVE",
+                "An active referral code already exists for this user"
+            );
         }
 
         const preferredCode = params.preferredCode?.toUpperCase();
         if (preferredCode !== undefined) {
             if (preferredCode.length !== CODE_LENGTH) {
-                return {
-                    success: false,
-                    error: `code must be exactly ${CODE_LENGTH} characters`,
-                    code: "INVALID_CODE_LENGTH",
-                };
+                throw HttpError.badRequest(
+                    "INVALID_CODE_LENGTH",
+                    `code must be exactly ${CODE_LENGTH} characters`
+                );
             }
             for (const ch of preferredCode) {
-                if (!CODE_ALPHABET.includes(ch)) {
-                    return {
-                        success: false,
-                        error: `code contains invalid character: ${ch}`,
-                        code: "INVALID_CODE_CHARS",
-                    };
+                if (!STEM_ALPHABET.includes(ch)) {
+                    throw HttpError.badRequest(
+                        "INVALID_CODE_CHARS",
+                        `code contains invalid character: ${ch}`
+                    );
                 }
             }
         }
@@ -98,16 +78,16 @@ export class ReferralCodeService {
         });
         if (!created) {
             if (preferredCode) {
-                return {
-                    success: false,
-                    error: "Requested code is not available",
-                    code: "CODE_UNAVAILABLE",
-                };
+                throw HttpError.conflict(
+                    "CODE_UNAVAILABLE",
+                    "Requested code is not available"
+                );
             }
             // Random mode with 50 candidates against 887M namespace — this
             // branch is statistically unreachable outside of a compromised
             // RNG or catastrophic DB state.
-            throw new Error(
+            throw HttpError.internal(
+                "CODE_GENERATION_FAILED",
                 "Failed to issue referral code: no free candidate among the generated batch"
             );
         }
@@ -121,7 +101,7 @@ export class ReferralCodeService {
             "Referral code issued"
         );
 
-        return { success: true, code: created };
+        return created;
     }
 
     /**
@@ -168,23 +148,21 @@ export class ReferralCodeService {
     async suggestWithStem(params: {
         stem: string;
         count?: number;
-    }): Promise<SuggestResult> {
+    }): Promise<string[]> {
         const stem = params.stem.toUpperCase();
 
         if (!ALLOWED_STEM_LENGTHS.has(stem.length)) {
-            return {
-                success: false,
-                error: "stem must be exactly 3 or 4 characters",
-                code: "INVALID_STEM_LENGTH",
-            };
+            throw HttpError.badRequest(
+                "INVALID_STEM_LENGTH",
+                "stem must be exactly 3 or 4 characters"
+            );
         }
         for (const ch of stem) {
             if (!STEM_ALPHABET.includes(ch)) {
-                return {
-                    success: false,
-                    error: `stem contains invalid character: ${ch}`,
-                    code: "INVALID_STEM_CHARS",
-                };
+                throw HttpError.badRequest(
+                    "INVALID_STEM_CHARS",
+                    `stem contains invalid character: ${ch}`
+                );
             }
         }
 
@@ -226,10 +204,7 @@ export class ReferralCodeService {
             "Referral code suggestions generated"
         );
 
-        return {
-            success: true,
-            suggestions: suggestions.slice(0, count),
-        };
+        return suggestions.slice(0, count);
     }
 }
 

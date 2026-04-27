@@ -1,3 +1,4 @@
+import { HttpError } from "@backend-utils";
 import { afterAll, beforeEach, describe, expect, it, vi } from "vitest";
 import type { ReferralCodeRepository } from "../repositories/ReferralCodeRepository";
 import { ReferralCodeService } from "./ReferralCodeService";
@@ -38,36 +39,31 @@ describe("ReferralCodeService.suggestWithStem", () => {
     });
 
     it("rejects stems shorter than 3 chars", async () => {
-        const result = await service.suggestWithStem({ stem: "QU" });
-        expect(result.success).toBe(false);
-        if (!result.success) {
-            expect(result.code).toBe("INVALID_STEM_LENGTH");
-        }
+        await expect(
+            service.suggestWithStem({ stem: "QU" })
+        ).rejects.toMatchObject({
+            code: "INVALID_STEM_LENGTH",
+            status: 400,
+        });
         expect(repository.filterAvailableCandidates).not.toHaveBeenCalled();
     });
 
     it("rejects stems longer than 4 chars", async () => {
-        const result = await service.suggestWithStem({ stem: "QUENTI" });
-        expect(result.success).toBe(false);
-        if (!result.success) {
-            expect(result.code).toBe("INVALID_STEM_LENGTH");
-        }
+        await expect(
+            service.suggestWithStem({ stem: "QUENTI" })
+        ).rejects.toMatchObject({ code: "INVALID_STEM_LENGTH" });
     });
 
     it("rejects stems with ambiguous chars removed from the alphabet (O)", async () => {
-        const result = await service.suggestWithStem({ stem: "QUO" });
-        expect(result.success).toBe(false);
-        if (!result.success) {
-            expect(result.code).toBe("INVALID_STEM_CHARS");
-        }
+        await expect(
+            service.suggestWithStem({ stem: "QUO" })
+        ).rejects.toMatchObject({ code: "INVALID_STEM_CHARS" });
     });
 
     it("rejects stems with ambiguous chars removed from the alphabet (1)", async () => {
-        const result = await service.suggestWithStem({ stem: "QU1" });
-        expect(result.success).toBe(false);
-        if (!result.success) {
-            expect(result.code).toBe("INVALID_STEM_CHARS");
-        }
+        await expect(
+            service.suggestWithStem({ stem: "QU1" })
+        ).rejects.toMatchObject({ code: "INVALID_STEM_CHARS" });
     });
 
     it("uppercases the stem before generating candidates", async () => {
@@ -75,16 +71,13 @@ describe("ReferralCodeService.suggestWithStem", () => {
             async (candidates: string[]) => candidates.slice(0, 5)
         );
 
-        const result = await service.suggestWithStem({
+        const suggestions = await service.suggestWithStem({
             stem: "quen",
             count: 5,
         });
-        expect(result.success).toBe(true);
-        if (result.success) {
-            for (const suggestion of result.suggestions) {
-                expect(suggestion).toContain("QUEN");
-                expect(suggestion).toHaveLength(6);
-            }
+        for (const suggestion of suggestions) {
+            expect(suggestion).toContain("QUEN");
+            expect(suggestion).toHaveLength(6);
         }
     });
 
@@ -94,19 +87,17 @@ describe("ReferralCodeService.suggestWithStem", () => {
             async (candidates: string[]) => candidates
         );
 
-        const result = await service.suggestWithStem({
+        const suggestions = await service.suggestWithStem({
             stem: "QUEN",
             count: 10,
         });
-        expect(result.success).toBe(true);
-        if (!result.success) return;
 
         const digitsOnly = /^[23456789]+$/;
 
         // First suggestions in the ordered array should be digit-filled
         // (preference semantics). Each 6-char candidate has either a 2-char
         // prefix or 2-char suffix of pure digits surrounding the QUEN stem.
-        const firstFive = result.suggestions.slice(0, 5);
+        const firstFive = suggestions.slice(0, 5);
         for (const suggestion of firstFive) {
             expect(suggestion).toContain("QUEN");
             const fill = suggestion.replace("QUEN", "");
@@ -125,15 +116,13 @@ describe("ReferralCodeService.suggestWithStem", () => {
                 })
         );
 
-        const result = await service.suggestWithStem({
+        const suggestions = await service.suggestWithStem({
             stem: "QUEN",
             count: 5,
         });
-        expect(result.success).toBe(true);
-        if (!result.success) return;
 
-        expect(result.suggestions.length).toBeGreaterThan(0);
-        for (const suggestion of result.suggestions) {
+        expect(suggestions.length).toBeGreaterThan(0);
+        for (const suggestion of suggestions) {
             const fill = suggestion.replace("QUEN", "");
             expect(fill).toMatch(/[A-Z]/);
         }
@@ -144,14 +133,11 @@ describe("ReferralCodeService.suggestWithStem", () => {
             async (candidates: string[]) => candidates
         );
 
-        const result = await service.suggestWithStem({
+        const suggestions = await service.suggestWithStem({
             stem: "QUE",
             count: 999,
         });
-        expect(result.success).toBe(true);
-        if (result.success) {
-            expect(result.suggestions.length).toBeLessThanOrEqual(20);
-        }
+        expect(suggestions.length).toBeLessThanOrEqual(20);
     });
 
     it("defaults count to 10 when omitted", async () => {
@@ -159,12 +145,9 @@ describe("ReferralCodeService.suggestWithStem", () => {
             async (candidates: string[]) => candidates
         );
 
-        const result = await service.suggestWithStem({ stem: "QUE" });
-        expect(result.success).toBe(true);
-        if (result.success) {
-            expect(result.suggestions.length).toBeLessThanOrEqual(10);
-            expect(result.suggestions.length).toBeGreaterThan(0);
-        }
+        const suggestions = await service.suggestWithStem({ stem: "QUE" });
+        expect(suggestions.length).toBeLessThanOrEqual(10);
+        expect(suggestions.length).toBeGreaterThan(0);
     });
 
     it("places fill characters only at the start or end of the stem", async () => {
@@ -172,14 +155,12 @@ describe("ReferralCodeService.suggestWithStem", () => {
             async (candidates: string[]) => candidates
         );
 
-        const result = await service.suggestWithStem({
+        const suggestions = await service.suggestWithStem({
             stem: "QUE",
             count: 15,
         });
-        expect(result.success).toBe(true);
-        if (!result.success) return;
 
-        for (const suggestion of result.suggestions) {
+        for (const suggestion of suggestions) {
             // The stem must sit at index 0 (suffix fill) or at index fillLen
             // (prefix fill) — never in the middle.
             const stemStart = suggestion.indexOf("QUE");
@@ -217,7 +198,7 @@ describe("ReferralCodeService.issue", () => {
         );
     });
 
-    it("returns ALREADY_ACTIVE when the owner already has an active code", async () => {
+    it("throws ALREADY_ACTIVE when the owner already has an active code", async () => {
         repository.findActiveByOwner.mockResolvedValue({
             id: "code-1",
             code: "AAAAAA",
@@ -226,11 +207,12 @@ describe("ReferralCodeService.issue", () => {
             revokedAt: null,
         });
 
-        const result = await service.issue({ ownerIdentityGroupId });
-        expect(result.success).toBe(false);
-        if (!result.success) {
-            expect(result.code).toBe("ALREADY_ACTIVE");
-        }
+        await expect(
+            service.issue({ ownerIdentityGroupId })
+        ).rejects.toBeInstanceOf(HttpError);
+        await expect(
+            service.issue({ ownerIdentityGroupId })
+        ).rejects.toMatchObject({ code: "ALREADY_ACTIVE", status: 409 });
         expect(repository.create).not.toHaveBeenCalled();
     });
 
@@ -244,8 +226,8 @@ describe("ReferralCodeService.issue", () => {
             revokedAt: null,
         });
 
-        const result = await service.issue({ ownerIdentityGroupId });
-        expect(result.success).toBe(true);
+        const created = await service.issue({ ownerIdentityGroupId });
+        expect(created.code).toBe("R4ND0M");
         // No candidates argument — repo falls back to generateCandidates().
         expect(repository.create).toHaveBeenCalledWith({
             ownerIdentityGroupId,
@@ -263,11 +245,11 @@ describe("ReferralCodeService.issue", () => {
             revokedAt: null,
         });
 
-        const result = await service.issue({
+        const created = await service.issue({
             ownerIdentityGroupId,
             preferredCode: "QUEN42",
         });
-        expect(result.success).toBe(true);
+        expect(created.code).toBe("QUEN42");
         expect(repository.create).toHaveBeenCalledWith({
             ownerIdentityGroupId,
             candidates: ["QUEN42"],
@@ -294,18 +276,16 @@ describe("ReferralCodeService.issue", () => {
         });
     });
 
-    it("returns CODE_UNAVAILABLE when preferredCode collides", async () => {
+    it("throws CODE_UNAVAILABLE when preferredCode collides", async () => {
         repository.findActiveByOwner.mockResolvedValue(null);
         repository.create.mockResolvedValue(null);
 
-        const result = await service.issue({
-            ownerIdentityGroupId,
-            preferredCode: "QUEN42",
-        });
-        expect(result.success).toBe(false);
-        if (!result.success) {
-            expect(result.code).toBe("CODE_UNAVAILABLE");
-        }
+        await expect(
+            service.issue({
+                ownerIdentityGroupId,
+                preferredCode: "QUEN42",
+            })
+        ).rejects.toMatchObject({ code: "CODE_UNAVAILABLE", status: 409 });
     });
 
     it("throws when random issue exhausts the candidate batch (unreachable branch)", async () => {
@@ -320,28 +300,24 @@ describe("ReferralCodeService.issue", () => {
     it("rejects preferredCode with wrong length", async () => {
         repository.findActiveByOwner.mockResolvedValue(null);
 
-        const result = await service.issue({
-            ownerIdentityGroupId,
-            preferredCode: "QUEN",
-        });
-        expect(result.success).toBe(false);
-        if (!result.success) {
-            expect(result.code).toBe("INVALID_CODE_LENGTH");
-        }
+        await expect(
+            service.issue({
+                ownerIdentityGroupId,
+                preferredCode: "QUEN",
+            })
+        ).rejects.toMatchObject({ code: "INVALID_CODE_LENGTH", status: 400 });
         expect(repository.create).not.toHaveBeenCalled();
     });
 
     it("rejects preferredCode containing ambiguous chars", async () => {
         repository.findActiveByOwner.mockResolvedValue(null);
 
-        const result = await service.issue({
-            ownerIdentityGroupId,
-            preferredCode: "QUEN4O", // O is not in the alphabet
-        });
-        expect(result.success).toBe(false);
-        if (!result.success) {
-            expect(result.code).toBe("INVALID_CODE_CHARS");
-        }
+        await expect(
+            service.issue({
+                ownerIdentityGroupId,
+                preferredCode: "QUEN4O", // O is not in the alphabet
+            })
+        ).rejects.toMatchObject({ code: "INVALID_CODE_CHARS", status: 400 });
         expect(repository.create).not.toHaveBeenCalled();
     });
 });

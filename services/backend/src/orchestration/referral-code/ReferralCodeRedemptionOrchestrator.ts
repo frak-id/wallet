@@ -1,18 +1,7 @@
 import { log } from "@backend-infrastructure";
+import { HttpError } from "@backend-utils";
 import type { ReferralLinkRepository } from "../../domain/attribution/repositories/ReferralLinkRepository";
 import type { ReferralCodeService } from "../../domain/referral-code/services/ReferralCodeService";
-
-export type RedemptionResult =
-    | { success: true; referrerIdentityGroupId: string }
-    | {
-          success: false;
-          error: string;
-          code:
-              | "NOT_FOUND"
-              | "SELF_REFERRAL"
-              | "ALREADY_REDEEMED"
-              | "WOULD_CYCLE";
-      };
 
 export class ReferralCodeRedemptionOrchestrator {
     constructor(
@@ -25,13 +14,13 @@ export class ReferralCodeRedemptionOrchestrator {
      * `referral_links` row that feeds the reward pipeline as the referrer of
      * last resort.
      *
-     * Rules:
-     *  - `NOT_FOUND` — the code does not exist, or has been revoked.
-     *  - `SELF_REFERRAL` — the owner of the code is the caller.
-     *  - `ALREADY_REDEEMED` — the caller already has a cross-merchant
+     * Throws {@link HttpError} on:
+     *  - 404 `NOT_FOUND` — code does not exist or has been revoked.
+     *  - 400 `SELF_REFERRAL` — owner of the code is the caller.
+     *  - 409 `WOULD_CYCLE` — inserting the edge would close a cycle anywhere
+     *    in the referral graph (scope-agnostic check).
+     *  - 409 `ALREADY_REDEEMED` — caller already has a cross-merchant
      *    referrer (first redemption wins, no switching).
-     *  - `WOULD_CYCLE` — inserting the edge would close a cycle anywhere in
-     *    the referral graph (scope-agnostic check).
      *
      * Revoked codes are not redeemable. Existing `referral_links` rows that
      * point to a now-revoked code via `referral_code_id` are preserved —
@@ -40,24 +29,19 @@ export class ReferralCodeRedemptionOrchestrator {
     async redeem(params: {
         code: string;
         refereeIdentityGroupId: string;
-    }): Promise<RedemptionResult> {
+    }): Promise<{ referrerIdentityGroupId: string }> {
         const { code, refereeIdentityGroupId } = params;
 
         const referralCode = await this.referralCodeService.findByCode(code);
         if (!referralCode) {
-            return {
-                success: false,
-                error: "Referral code not found",
-                code: "NOT_FOUND",
-            };
+            throw HttpError.notFound("NOT_FOUND", "Referral code not found");
         }
 
         if (referralCode.ownerIdentityGroupId === refereeIdentityGroupId) {
-            return {
-                success: false,
-                error: "Cannot redeem your own referral code",
-                code: "SELF_REFERRAL",
-            };
+            throw HttpError.badRequest(
+                "SELF_REFERRAL",
+                "Cannot redeem your own referral code"
+            );
         }
 
         const wouldCycle = await this.referralLinkRepository.wouldCreateCycle(
@@ -65,11 +49,10 @@ export class ReferralCodeRedemptionOrchestrator {
             refereeIdentityGroupId
         );
         if (wouldCycle) {
-            return {
-                success: false,
-                error: "Redemption would create a referral cycle",
-                code: "WOULD_CYCLE",
-            };
+            throw HttpError.conflict(
+                "WOULD_CYCLE",
+                "Redemption would create a referral cycle"
+            );
         }
 
         const created = await this.referralLinkRepository.create({
@@ -82,13 +65,12 @@ export class ReferralCodeRedemptionOrchestrator {
         });
 
         if (!created) {
-            // The partial-unique race winner got there first — treat as
-            // already-redeemed rather than an error.
-            return {
-                success: false,
-                error: "A cross-merchant referrer is already registered",
-                code: "ALREADY_REDEEMED",
-            };
+            // Partial-unique race winner got there first — surface as
+            // already-redeemed rather than a generic error.
+            throw HttpError.conflict(
+                "ALREADY_REDEEMED",
+                "A cross-merchant referrer is already registered"
+            );
         }
 
         log.info(
@@ -101,7 +83,6 @@ export class ReferralCodeRedemptionOrchestrator {
         );
 
         return {
-            success: true,
             referrerIdentityGroupId: referralCode.ownerIdentityGroupId,
         };
     }
