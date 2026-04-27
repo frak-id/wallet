@@ -97,7 +97,7 @@ const FixedRewardDefinitionSchema = t.Object({
     token: t.Optional(t.Hex()),
     description: t.Optional(t.String()),
     chaining: t.Optional(RewardChainingSchema),
-    lockupDays: t.Optional(t.Number({ minimum: 0, maximum: 30 })),
+    lockupSeconds: t.Optional(t.Number({ minimum: 0, maximum: 2_592_000 })),
 });
 export type FixedRewardDefinition = Static<typeof FixedRewardDefinitionSchema>;
 
@@ -115,7 +115,7 @@ const PercentageRewardDefinitionSchema = t.Object({
     token: t.Optional(t.Hex()),
     description: t.Optional(t.String()),
     chaining: t.Optional(RewardChainingSchema),
-    lockupDays: t.Optional(t.Number({ minimum: 0, maximum: 30 })),
+    lockupSeconds: t.Optional(t.Number({ minimum: 0, maximum: 2_592_000 })),
 });
 export type PercentageRewardDefinition = Static<
     typeof PercentageRewardDefinitionSchema
@@ -130,7 +130,7 @@ const TieredRewardDefinitionSchema = t.Object({
     token: t.Optional(t.Hex()),
     description: t.Optional(t.String()),
     chaining: t.Optional(RewardChainingSchema),
-    lockupDays: t.Optional(t.Number({ minimum: 0, maximum: 30 })),
+    lockupSeconds: t.Optional(t.Number({ minimum: 0, maximum: 2_592_000 })),
 });
 export type TieredRewardDefinition = Static<
     typeof TieredRewardDefinitionSchema
@@ -149,11 +149,13 @@ export const CampaignRuleDefinitionSchema = t.Object({
     rewards: t.Array(RewardDefinitionSchema),
     pendingRewardExpirationDays: t.Optional(t.Number()),
     /**
-     * Number of days a reward stays locked before settlement. Used as a default
-     * for any reward that does not specify its own `lockupDays`.
-     * Range: 0-30. `0` disables the lockup.
+     * Number of seconds a reward stays locked before settlement. Used as a
+     * default for any reward that does not specify its own `lockupSeconds`.
+     * Range: 0 to 2_592_000 (30 days). `0` disables the lockup.
      */
-    defaultLockupDays: t.Optional(t.Number({ minimum: 0, maximum: 30 })),
+    defaultLockupSeconds: t.Optional(
+        t.Number({ minimum: 0, maximum: 2_592_000 })
+    ),
     maxRewardsPerUser: t.Optional(t.Number()),
     merchantMaxRewardsPerUser: t.Optional(t.Number()),
 });
@@ -163,7 +165,7 @@ export type CampaignRuleDefinition = {
     conditions: RuleConditions;
     rewards: RewardDefinition[];
     pendingRewardExpirationDays?: number;
-    defaultLockupDays?: number;
+    defaultLockupSeconds?: number;
     maxRewardsPerUser?: number;
     merchantMaxRewardsPerUser?: number;
 };

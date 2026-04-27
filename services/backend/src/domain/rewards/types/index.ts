@@ -146,8 +146,9 @@ export type CreateAssetLogParams = {
     chainDepth?: number;
     expirationDays?: number;
     /**
-     * Number of days the reward stays locked before it becomes claimable.
-     * `0` or `undefined` means no lockup.
+     * Number of seconds the reward stays locked before it becomes claimable.
+     * `0` or `undefined` means no lockup. Stored as seconds so the unit lines
+     * up with `BudgetConfigItem.durationInSeconds` and fits comfortably in int4.
      */
-    lockupDays?: number;
+    lockupSeconds?: number;
 };

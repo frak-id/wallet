@@ -19,6 +19,12 @@ export type RewardFormState = {
 export const DEFAULT_LOCKUP_DAYS = 14;
 export const MIN_LOCKUP_DAYS = 0;
 export const MAX_LOCKUP_DAYS = 30;
+/**
+ * The backend stores the lockup as `defaultLockupSeconds` for granularity
+ * (a future merchant-config UI could expose hours/minutes). The dashboard
+ * exposes whole days for now and converts at this boundary.
+ */
+const SECONDS_PER_DAY = 86_400;
 
 export const DEFAULT_REWARD_STATE: RewardFormState = {
     cac: 0,
@@ -135,7 +141,7 @@ export function updateRuleWithRewards(
     return {
         ...existingRule,
         rewards,
-        defaultLockupDays: rewardState.lockupDays,
+        defaultLockupSeconds: rewardState.lockupDays * SECONDS_PER_DAY,
     };
 }
 
@@ -187,7 +193,10 @@ export function extractFormStateFromRule(
         referralOnly:
             hasReferralCondition ||
             (Array.isArray(rule.conditions) && rule.conditions.length === 0),
-        lockupDays: rule.defaultLockupDays ?? DEFAULT_LOCKUP_DAYS,
+        lockupDays:
+            rule.defaultLockupSeconds !== undefined
+                ? Math.round(rule.defaultLockupSeconds / SECONDS_PER_DAY)
+                : DEFAULT_LOCKUP_DAYS,
     };
 }
 

@@ -43,9 +43,9 @@ export class AssetLogRepository {
      * Compute the timestamp at which a locked reward becomes claimable.
      * Returns `null` when the reward should be available immediately.
      */
-    private calculateAvailableAt(lockupDays?: number): Date | null {
-        if (!lockupDays || lockupDays <= 0) return null;
-        return new Date(Date.now() + lockupDays * 24 * 60 * 60 * 1000);
+    private calculateAvailableAt(lockupSeconds?: number): Date | null {
+        if (!lockupSeconds || lockupSeconds <= 0) return null;
+        return new Date(Date.now() + lockupSeconds * 1000);
     }
 
     async createBatch(
@@ -68,7 +68,7 @@ export class AssetLogRepository {
             status: "pending" as const,
             statusChangedAt: new Date(),
             expiresAt: this.calculateExpiresAt(p.expirationDays),
-            availableAt: this.calculateAvailableAt(p.lockupDays),
+            availableAt: this.calculateAvailableAt(p.lockupSeconds),
         }));
 
         return db.insert(assetLogsTable).values(inserts).returning();

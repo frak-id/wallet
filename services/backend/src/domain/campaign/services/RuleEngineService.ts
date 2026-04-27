@@ -215,7 +215,7 @@ export class RuleEngineService {
             campaign.id,
             referralChain,
             campaign.rule.pendingRewardExpirationDays,
-            campaign.rule.defaultLockupDays
+            campaign.rule.defaultLockupSeconds
         );
 
         if (calculated.length === 0) {

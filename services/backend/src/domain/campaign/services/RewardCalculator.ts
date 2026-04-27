@@ -123,7 +123,7 @@ function distributeChainedRewards(params: {
     rewardType: "token";
     description?: string;
     expirationDays?: number;
-    lockupDays?: number;
+    lockupSeconds?: number;
 }): CalculatedReward[] {
     const rewards: CalculatedReward[] = [];
     let remainingAmount = params.totalAmount;
@@ -153,7 +153,7 @@ function distributeChainedRewards(params: {
                 description: params.description,
                 chainDepth: member.depth,
                 expirationDays: params.expirationDays,
-                lockupDays: params.lockupDays,
+                lockupSeconds: params.lockupSeconds,
             });
         }
     }
@@ -190,7 +190,7 @@ export class RewardCalculator {
         campaignRuleId: string,
         referralChain?: ReferralChainMember[],
         expirationDays?: number,
-        defaultLockupDays?: number
+        defaultLockupSeconds?: number
     ): {
         calculated: CalculatedReward[];
         errors: string[];
@@ -207,7 +207,7 @@ export class RewardCalculator {
             }
 
             // Per-reward override > rule-level default > undefined (no lockup).
-            const lockupDays = reward.lockupDays ?? defaultLockupDays;
+            const lockupSeconds = reward.lockupSeconds ?? defaultLockupSeconds;
 
             if (reward.recipient === "referrer" && reward.chaining) {
                 if (!referralChain || referralChain.length === 0) {
@@ -226,7 +226,7 @@ export class RewardCalculator {
                     rewardType: reward.type,
                     description: reward.description,
                     expirationDays,
-                    lockupDays,
+                    lockupSeconds,
                 });
                 calculated.push(...chainedRewards);
                 continue;
@@ -251,7 +251,7 @@ export class RewardCalculator {
                 campaignRuleId,
                 description: reward.description,
                 expirationDays,
-                lockupDays,
+                lockupSeconds,
             });
         }
 

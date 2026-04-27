@@ -96,8 +96,8 @@ export type CalculatedReward = {
     description?: string;
     chainDepth?: number;
     expirationDays?: number;
-    /** Days the reward stays locked before settlement. 0/undefined = no lockup. */
-    lockupDays?: number;
+    /** Seconds the reward stays locked before settlement. 0/undefined = no lockup. */
+    lockupSeconds?: number;
 };
 
 export type EvaluationResult = {
