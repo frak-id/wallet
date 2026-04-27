@@ -1,5 +1,5 @@
 import { log } from "@backend-infrastructure";
-import { t, validateBodyHmac } from "@backend-utils";
+import { HttpError, t, validateBodyHmac } from "@backend-utils";
 import { Elysia } from "elysia";
 import type { PurchaseStatus } from "../../../../domain/purchases";
 import type {
@@ -21,7 +21,7 @@ export const magentoWebhook = new Elysia()
     })
     .onBeforeHandle(({ headers }) => {
         if (!headers["x-hmac-sha256"]) {
-            throw new Error("Missing HMAC signature");
+            throw HttpError.badRequest("WEBHOOK_ERROR", "Missing HMAC signature");
         }
     })
     .post(
@@ -30,7 +30,7 @@ export const magentoWebhook = new Elysia()
             const webhookData = JSON.parse(body) as MagentoOrderWebhookDto;
 
             if (!merchantId) {
-                throw new Error("Missing merchant identifier");
+                throw HttpError.badRequest("WEBHOOK_ERROR", "Missing merchant identifier");
             }
 
             const resolved =
@@ -39,7 +39,7 @@ export const magentoWebhook = new Elysia()
                 );
             if (!resolved) {
                 log.warn({ merchantId }, "Webhook not found");
-                throw new Error("Webhook not found");
+                throw HttpError.badRequest("WEBHOOK_ERROR", "Webhook not found");
             }
 
             validateBodyHmac({

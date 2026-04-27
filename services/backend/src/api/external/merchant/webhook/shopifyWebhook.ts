@@ -1,5 +1,5 @@
 import { log } from "@backend-infrastructure";
-import { t, validateBodyHmac } from "@backend-utils";
+import { HttpError, t, validateBodyHmac } from "@backend-utils";
 import { isRunningInProd } from "@frak-labs/app-essentials";
 import { Elysia } from "elysia";
 import type { PurchaseStatus } from "../../../../domain/purchases";
@@ -27,7 +27,7 @@ export const shopifyWebhook = new Elysia()
     })
     .onBeforeHandle(({ headers }) => {
         if (headers["x-shopify-test"] && isRunningInProd) {
-            throw new Error("Shopify test aren't accepted in production");
+            throw HttpError.badRequest("WEBHOOK_ERROR", "Shopify test aren't accepted in production");
         }
         if (
             headers["x-shopify-api-version"] !== "2024-10" &&
@@ -42,10 +42,10 @@ export const shopifyWebhook = new Elysia()
             );
         }
         if (!headers["x-shopify-order-id"]) {
-            throw new Error("Missing order id");
+            throw HttpError.badRequest("WEBHOOK_ERROR", "Missing order id");
         }
         if (!headers["x-shopify-topic"]?.startsWith("orders/")) {
-            throw new Error("Unsupported shopify topic");
+            throw HttpError.badRequest("WEBHOOK_ERROR", "Unsupported shopify topic");
         }
     })
     .post(
@@ -58,14 +58,14 @@ export const shopifyWebhook = new Elysia()
                 webhookData?.id !==
                 Number.parseInt(headers["x-shopify-order-id"] ?? "0", 10)
             ) {
-                throw new Error("Order id mismatch");
+                throw HttpError.badRequest("WEBHOOK_ERROR", "Order id mismatch");
             }
             if (headers["x-shopify-test"] !== webhookData?.test) {
-                throw new Error("Test field mismatch");
+                throw HttpError.badRequest("WEBHOOK_ERROR", "Test field mismatch");
             }
 
             if (!merchantId) {
-                throw new Error("Missing merchant identifier");
+                throw HttpError.badRequest("WEBHOOK_ERROR", "Missing merchant identifier");
             }
 
             const resolved =
@@ -74,7 +74,7 @@ export const shopifyWebhook = new Elysia()
                 );
             if (!resolved) {
                 log.warn({ merchantId }, "Webhook not found");
-                throw new Error("Webhook not found");
+                throw HttpError.badRequest("WEBHOOK_ERROR", "Webhook not found");
             }
 
             validateBodyHmac({

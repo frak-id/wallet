@@ -1,5 +1,5 @@
 import { log } from "@backend-infrastructure";
-import { t, validateBodyHmac } from "@backend-utils";
+import { HttpError, t, validateBodyHmac } from "@backend-utils";
 import { Elysia } from "elysia";
 import type { PurchaseStatus } from "../../../../domain/purchases";
 import type { WooCommerceOrderUpdateWebhookDto } from "../../../../domain/purchases/dto/WooCommerceWebhook";
@@ -21,10 +21,10 @@ export const wooCommerceWebhook = new Elysia().post(
                 log.info({ merchantId }, "WC webhook ping acknowledged");
                 return "ok";
             }
-            throw new Error("Missing signature");
+            throw HttpError.badRequest("WEBHOOK_ERROR", "Missing signature");
         }
         if (headers["x-wc-webhook-resource"] !== "order") {
-            throw new Error("Unsupported woo commerce webhook");
+            throw HttpError.badRequest("WEBHOOK_ERROR", "Unsupported woo commerce webhook");
         }
 
         const webhookData = JSON.parse(
@@ -32,7 +32,7 @@ export const wooCommerceWebhook = new Elysia().post(
         ) as WooCommerceOrderUpdateWebhookDto;
 
         if (!merchantId) {
-            throw new Error("Missing merchant identifier");
+            throw HttpError.badRequest("WEBHOOK_ERROR", "Missing merchant identifier");
         }
 
         const resolved =
@@ -41,7 +41,7 @@ export const wooCommerceWebhook = new Elysia().post(
             );
         if (!resolved) {
             log.warn({ merchantId }, "Webhook not found");
-            throw new Error("Webhook not found");
+            throw HttpError.badRequest("WEBHOOK_ERROR", "Webhook not found");
         }
 
         validateBodyHmac({
