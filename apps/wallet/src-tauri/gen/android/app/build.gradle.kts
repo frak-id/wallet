@@ -26,6 +26,7 @@ val appVariant = (project.findProperty("appVariant") as? String) ?: "prod"
 val isDevVariant = appVariant == "dev"
 val appName = if (isDevVariant) "Frak Wallet Dev" else "Frak Wallet"
 val appLinkHost = if (isDevVariant) "wallet-dev.frak.id" else "wallet.frak.id"
+val deepLinkScheme = if (isDevVariant) "frakwallet-dev" else "frakwallet"
 
 android {
     compileSdk = 36
@@ -48,6 +49,7 @@ android {
             """[{\"include\": \"https://$appLinkHost/.well-known/assetlinks.json\"}]"""
         )
         manifestPlaceholders["appLinkHost"] = appLinkHost
+        manifestPlaceholders["deepLinkScheme"] = deepLinkScheme
     }
     signingConfigs {
         create("release") {
