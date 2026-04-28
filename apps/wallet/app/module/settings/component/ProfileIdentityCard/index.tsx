@@ -1,17 +1,25 @@
 import { Box } from "@frak-labs/design-system/components/Box";
 import { Card } from "@frak-labs/design-system/components/Card";
+import { Inline } from "@frak-labs/design-system/components/Inline";
 import { Text } from "@frak-labs/design-system/components/Text";
-import { CheckIcon, CopyIcon } from "@frak-labs/design-system/icons";
 import {
+    CheckCircleFilledIcon,
+    CheckIcon,
+    CopyIcon,
+} from "@frak-labs/design-system/icons";
+import {
+    getTargetPairingClient,
     selectEcdsaSession,
     selectWebauthnSession,
     sessionStore,
+    useGetActivePairings,
 } from "@frak-labs/wallet-shared";
 import { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useHydrated } from "remix-utils/use-hydrated";
 import { type Hex, slice, toHex } from "viem";
 import { useConnection } from "wagmi";
+import { useStore } from "zustand";
 import * as styles from "./index.css";
 
 function formatHash({
@@ -25,6 +33,33 @@ function formatHash({
     const start = slice(hash, 0, format.start);
     const end = slice(hash, -format.end).replace("0x", "");
     return `${start}...${end}`;
+}
+
+function CurrentDeviceRow({ deviceLabel }: { deviceLabel: string }) {
+    const { t } = useTranslation();
+    return (
+        <Inline
+            space="s"
+            align="space-between"
+            alignY="center"
+            paddingX="m"
+            paddingY="s"
+        >
+            <Text as="span" variant="label" color="secondary">
+                {deviceLabel}
+            </Text>
+            <Inline space="xxs" alignY="center">
+                <Text as="span" variant="label" color="success">
+                    {t("wallet.profile.currentDeviceConnected")}
+                </Text>
+                <CheckCircleFilledIcon
+                    width={16}
+                    height={16}
+                    className={styles.deviceStatusIcon}
+                />
+            </Inline>
+        </Inline>
+    );
 }
 
 function IdentityRow({
@@ -104,6 +139,20 @@ export function ProfileIdentityCard() {
     const { address } = useConnection();
     const webauthnWallet = sessionStore(selectWebauthnSession);
     const ecdsaWallet = sessionStore(selectEcdsaSession);
+    const pairingClient = getTargetPairingClient();
+    const wsStatus = useStore(pairingClient.store, (s) => s.status);
+    const { data: pairings } = useGetActivePairings();
+
+    const currentDeviceLabel = useMemo(() => {
+        if (wsStatus !== "paired" || !pairings?.length) return null;
+        const mostRecent = pairings.reduce((latest, p) =>
+            new Date(p.lastActiveAt).getTime() >
+            new Date(latest.lastActiveAt).getTime()
+                ? p
+                : latest
+        );
+        return mostRecent.targetName;
+    }, [pairings, wsStatus]);
 
     const authenticatorValue = useMemo(() => {
         if (!webauthnWallet) return null;
@@ -149,6 +198,9 @@ export function ProfileIdentityCard() {
 
     return (
         <Card padding="none" className={styles.card}>
+            {currentDeviceLabel ? (
+                <CurrentDeviceRow deviceLabel={currentDeviceLabel} />
+            ) : null}
             {webauthnWallet && authenticatorValue ? (
                 <IdentityRow
                     label={t("common.authenticator")}

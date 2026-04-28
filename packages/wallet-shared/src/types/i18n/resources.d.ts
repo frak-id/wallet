@@ -563,11 +563,12 @@ interface Resources {
                     title: "Pairing information";
                 };
                 list: {
-                    createdAt: "Created at :";
+                    createdAt: "Created at";
                     delete: "Delete device";
-                    lastActive: "Last active :";
-                    origin: "Origin :";
-                    target: "Target :";
+                    empty: "No connected devices";
+                    lastActive: "Last active";
+                    origin: "Origin";
+                    target: "Target";
                     title: "Connected devices";
                 };
                 loading: {
@@ -650,9 +651,11 @@ interface Resources {
             };
             profile: {
                 biometricPrompt: "Require {{biometryLabel}} at every app launch";
+                currentDeviceConnected: "Connected";
                 helpSupport: "Help & support";
                 lastConnection: "Last connection";
                 manageAction: "Manage";
+                managePairings: "Manage paired devices";
                 notificationSettings: "Notification settings";
                 pageTitle: "Profil";
                 privacyPolicy: "Privacy Policy";

@@ -32,13 +32,14 @@ export const rowContent = style({
     display: "flex",
     flexDirection: "column",
     gap: alias.spacing.m,
-    padding: alias.spacing.m,
+    padding: `${alias.spacing.s} ${alias.spacing.m}`,
 });
 
 export const value = style({
     overflow: "hidden",
     textOverflow: "ellipsis",
     whiteSpace: "nowrap",
+    color: vars.text.primary,
 });
 
 export const valueRow = style({
@@ -49,5 +50,10 @@ export const valueRow = style({
 
 export const copyIcon = style({
     color: vars.icon.primary,
+    flexShrink: 0,
+});
+
+export const deviceStatusIcon = style({
+    color: vars.icon.success,
     flexShrink: 0,
 });

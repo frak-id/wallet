@@ -1,4 +1,5 @@
 import { render, screen } from "@testing-library/react";
+import type * as React from "react";
 import { vi } from "vitest";
 import { describe, expect, test } from "@/tests/vitest-fixtures";
 
@@ -9,6 +10,8 @@ vi.mock("react-i18next", () => ({
                 ({
                     "wallet.profile.pageTitle": "Profil",
                     "wallet.profile.lastConnection": "Dernière connexion",
+                    "wallet.profile.managePairings":
+                        "Gérer les appareils connectés",
                 }) as Record<string, string>
             )[key] ??
             fallback ??
@@ -37,8 +40,15 @@ vi.mock("@/module/settings/component/PrivateKey", () => ({
     PrivateKey: () => null,
 }));
 
-vi.mock("@/module/pairing/component/PairingList", () => ({
-    PairingList: () => null,
+vi.mock("@/module/common/component/InfoCard", () => ({
+    InfoCard: ({ children }: { children: React.ReactNode }) => (
+        <div data-testid="info-card">{children}</div>
+    ),
+    InfoRow: ({ label, to }: { label: string; to?: string }) => (
+        <div data-testid="info-row" data-to={to}>
+            {label}
+        </div>
+    ),
 }));
 
 describe("ProfilePage", () => {
@@ -60,6 +70,9 @@ describe("ProfilePage", () => {
         ).toBeInTheDocument();
         expect(screen.getByText("identity-card")).toBeInTheDocument();
         expect(screen.getByText("preferences-card")).toBeInTheDocument();
+        expect(
+            screen.getByText("Gérer les appareils connectés")
+        ).toBeInTheDocument();
         expect(screen.getByText("links-card")).toBeInTheDocument();
         expect(screen.getByText("Version 1.0.1")).toBeInTheDocument();
         expect(screen.getByText("FRAK Labs")).toBeInTheDocument();

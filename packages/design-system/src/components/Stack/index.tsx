@@ -43,6 +43,8 @@ const justifyToFlexJustify: Record<StackJustify, JustifyContent> = {
 export type StackProps = {
     space: ResponsiveSpace;
     padding?: ResponsiveSpace;
+    paddingX?: ResponsiveSpace;
+    paddingY?: ResponsiveSpace;
     align?: StackAlign;
     justify?: StackJustify;
     as?: ValidStackElement;
@@ -53,6 +55,8 @@ export type StackProps = {
 export function Stack({
     space,
     padding,
+    paddingX,
+    paddingY,
     align,
     justify,
     as = "div",
@@ -66,6 +70,8 @@ export function Stack({
             flexDirection="column"
             gap={space}
             padding={padding}
+            paddingX={paddingX}
+            paddingY={paddingY}
             alignItems={align ? alignToFlexAlign[align] : undefined}
             justifyContent={justify ? justifyToFlexJustify[justify] : undefined}
             textAlign={align ? alignToTextAlign[align] : undefined}

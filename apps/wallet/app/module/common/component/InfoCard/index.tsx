@@ -1,6 +1,7 @@
 import { Box } from "@frak-labs/design-system/components/Box";
 import { Card } from "@frak-labs/design-system/components/Card";
 import { Text } from "@frak-labs/design-system/components/Text";
+import { Link } from "@tanstack/react-router";
 import type { ComponentType, ReactNode, SVGProps } from "react";
 import * as styles from "./index.css";
 
@@ -28,7 +29,8 @@ export function InfoCard({
 /**
  * A row inside an InfoCard.
  * - With `icon`: renders an icon left of the label
- * - With `href`: renders as a link (`<a>`)
+ * - With `href`: renders as an external link (`<a>` with target="_blank")
+ * - With `to`: renders as a TanStack Router `<Link>` for internal navigation
  * - With `action`: renders a static row with a right-side action element
  */
 export function InfoRow({
@@ -38,6 +40,7 @@ export function InfoRow({
     labelVariant = "body",
     labelWeight = "medium",
     href,
+    to,
     action,
     align = "center",
 }: {
@@ -47,6 +50,7 @@ export function InfoRow({
     labelVariant?: "body" | "bodySmall";
     labelWeight?: "regular" | "medium" | "semiBold" | "bold";
     href?: string;
+    to?: string;
     action?: ReactNode;
     align?: "center" | "top";
 }) {
@@ -69,6 +73,14 @@ export function InfoRow({
             </Text>
         </Box>
     );
+
+    if (to) {
+        return (
+            <Link to={to} className={rowClass}>
+                {content}
+            </Link>
+        );
+    }
 
     if (href) {
         const isMailto = href.startsWith("mailto:");

@@ -90,7 +90,9 @@
             "privacyPolicy": "Politique de confidentialité",
             "helpSupport": "Aide & support",
             "rateApp": "Noter l'application",
-            "lastConnection": "Dernière connexion"
+            "managePairings": "Gérer les appareils connectés",
+            "lastConnection": "Dernière connexion",
+            "currentDeviceConnected": "Connecté"
         },
         "transferToBank": "Transférer vers ma banque",
         "transferEmpty": {
@@ -328,11 +330,12 @@
             "reconnect": "Se reconnecter",
             "list": {
                 "title": "Appareils connectés",
-                "origin": "Origine :",
-                "target": "Cible :",
-                "createdAt": "Créé le :",
-                "lastActive": "Dernière activité :",
-                "delete": "Supprimer l'appareil"
+                "origin": "Origine",
+                "target": "Cible",
+                "createdAt": "Créé le",
+                "lastActive": "Dernière activité",
+                "delete": "Supprimer l'appareil",
+                "empty": "Aucun appareil connecté"
             }
         },
         "inAppBrowser": {

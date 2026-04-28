@@ -26,6 +26,8 @@ const alignYToFlexAlign: Record<InlineAlignY, AlignItems> = {
 export type InlineProps = {
     space: ResponsiveSpace;
     padding?: ResponsiveSpace;
+    paddingX?: ResponsiveSpace;
+    paddingY?: ResponsiveSpace;
     align?: InlineAlign;
     alignY?: InlineAlignY;
     fill?: boolean;
@@ -37,6 +39,8 @@ export type InlineProps = {
 export function Inline({
     space,
     padding,
+    paddingX,
+    paddingY,
     align,
     alignY,
     fill,
@@ -51,6 +55,8 @@ export function Inline({
             flexWrap={fill ? undefined : wrap ? "wrap" : "nowrap"}
             gap={space}
             padding={padding}
+            paddingX={paddingX}
+            paddingY={paddingY}
             justifyContent={align ? alignToJustifyContent[align] : undefined}
             alignItems={alignY ? alignYToFlexAlign[alignY] : undefined}
             className={fill ? styles.fill : undefined}
