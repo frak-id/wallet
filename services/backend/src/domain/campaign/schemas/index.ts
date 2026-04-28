@@ -1,4 +1,5 @@
 import { t } from "@backend-utils";
+import { REWARD_LOCKUP } from "@frak-labs/app-essentials/constants/rewards";
 import type { Static, TSchema } from "elysia";
 import { DistributionStatusSchema } from "../../campaign-bank/schemas";
 import {
@@ -145,6 +146,13 @@ export const CampaignRuleDefinitionSchema = t.Object({
     conditions: RuleConditionsSchema,
     rewards: t.Array(RewardDefinitionSchema),
     pendingRewardExpirationDays: t.Optional(t.Number()),
+    /**
+     * Number of seconds a reward stays locked before settlement. `0`
+     * disables the lockup. Range capped by `REWARD_LOCKUP.MAX_SECONDS`.
+     */
+    defaultLockupSeconds: t.Optional(
+        t.Number({ minimum: 0, maximum: REWARD_LOCKUP.MAX_SECONDS })
+    ),
     maxRewardsPerUser: t.Optional(t.Number()),
     merchantMaxRewardsPerUser: t.Optional(t.Number()),
 });
@@ -154,6 +162,7 @@ export type CampaignRuleDefinition = {
     conditions: RuleConditions;
     rewards: RewardDefinition[];
     pendingRewardExpirationDays?: number;
+    defaultLockupSeconds?: number;
     maxRewardsPerUser?: number;
     merchantMaxRewardsPerUser?: number;
 };

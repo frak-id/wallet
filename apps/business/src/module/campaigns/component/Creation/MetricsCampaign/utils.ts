@@ -1,3 +1,4 @@
+import { REWARD_LOCKUP } from "@frak-labs/app-essentials/constants/rewards";
 import type {
     CampaignGoal,
     CampaignRuleDefinition,
@@ -12,6 +13,8 @@ export type RewardFormState = {
     deperditionPerLevel: number;
     maxDepth: number;
     referralOnly: boolean;
+    /** Days a reward stays locked before settlement. 0 disables. */
+    lockupDays: number;
 };
 
 export const DEFAULT_REWARD_STATE: RewardFormState = {
@@ -21,6 +24,7 @@ export const DEFAULT_REWARD_STATE: RewardFormState = {
     deperditionPerLevel: 80,
     maxDepth: 5,
     referralOnly: true,
+    lockupDays: REWARD_LOCKUP.DEFAULT_DAYS,
 };
 
 const FRAK_COMMISSION_PERCENT = 20;
@@ -128,6 +132,8 @@ export function updateRuleWithRewards(
     return {
         ...existingRule,
         rewards,
+        defaultLockupSeconds:
+            rewardState.lockupDays * REWARD_LOCKUP.SECONDS_PER_DAY,
     };
 }
 
@@ -179,6 +185,12 @@ export function extractFormStateFromRule(
         referralOnly:
             hasReferralCondition ||
             (Array.isArray(rule.conditions) && rule.conditions.length === 0),
+        lockupDays:
+            rule.defaultLockupSeconds !== undefined
+                ? Math.round(
+                      rule.defaultLockupSeconds / REWARD_LOCKUP.SECONDS_PER_DAY
+                  )
+                : DEFAULT_LOCKUP_DAYS,
     };
 }
 

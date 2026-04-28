@@ -7,6 +7,7 @@ import type {
 } from "../domain/purchases";
 import type { IdentityNode, IdentityOrchestrator } from "./identity";
 import type { PurchaseInteractionCreator } from "./PurchaseInteractionCreator";
+import type { RewardLifecycleOrchestrator } from "./RewardLifecycleOrchestrator";
 
 type UpsertPurchaseParams = {
     purchase: PurchaseInsert;
@@ -29,7 +30,8 @@ export class PurchaseWebhookOrchestrator {
         private readonly purchaseRepository: PurchaseRepository,
         private readonly purchaseClaimRepository: PurchaseClaimRepository,
         private readonly purchaseInteractionCreator: PurchaseInteractionCreator,
-        private readonly identityOrchestrator: IdentityOrchestrator
+        private readonly identityOrchestrator: IdentityOrchestrator,
+        private readonly rewardLifecycleOrchestrator: RewardLifecycleOrchestrator
     ) {}
 
     async upsertPurchase({
@@ -38,6 +40,23 @@ export class PurchaseWebhookOrchestrator {
         merchantId,
         clientId,
     }: UpsertPurchaseParams): Promise<UpsertPurchaseResult> {
+        // Refunded/cancelled purchases never produce active rewards. We still
+        // run the full identity-resolution + interaction-creation flow so the
+        // webhook is recorded for audit + idempotency, but the resulting
+        // interaction is born already cancelled. A pre-existing interaction
+        // (e.g. a `confirmed` webhook landed first) is voided atomically here
+        // and any pending rewards inside the lockup window are cancelled +
+        // budget restored.
+        const isCancelled =
+            purchase.status === "refunded" || purchase.status === "cancelled";
+
+        if (isCancelled) {
+            await this.rewardLifecycleOrchestrator.cancelForRefund({
+                merchantId,
+                externalId: purchase.externalId,
+            });
+        }
+
         // Check if a claim exists for this purchase
         const claim = await this.purchaseClaimRepository.findByPurchaseKey({
             merchantId,
@@ -71,6 +90,7 @@ export class PurchaseWebhookOrchestrator {
                 purchaseItems,
                 merchantId,
                 clientId,
+                cancelled: isCancelled,
             });
         }
 
@@ -125,6 +145,7 @@ export class PurchaseWebhookOrchestrator {
             })),
             identityGroupId,
             merchantId,
+            cancelled: isCancelled,
         });
 
         return {
@@ -146,8 +167,10 @@ export class PurchaseWebhookOrchestrator {
         purchaseItems: PurchaseItemInsert[];
         merchantId: string;
         clientId: string;
+        cancelled: boolean;
     }): Promise<UpsertPurchaseResult> {
-        const { purchase, purchaseItems, merchantId, clientId } = params;
+        const { purchase, purchaseItems, merchantId, clientId, cancelled } =
+            params;
 
         // Resolve anonymous fingerprint to an identity group
         const identityNode: IdentityNode = {
@@ -178,6 +201,7 @@ export class PurchaseWebhookOrchestrator {
             })),
             identityGroupId,
             merchantId,
+            cancelled,
         });
 
         log.info(

@@ -69,6 +69,8 @@ export class RewardHistoryService {
             txHash: log.onchainTxHash ?? undefined,
             createdAt: log.createdAt,
             settledAt: log.settledAt ?? undefined,
+            availableAt: log.availableAt ?? undefined,
+            cancellationReason: log.cancellationReason ?? undefined,
             purchase: this.extractPurchaseInfo(
                 log,
                 purchaseAmounts,

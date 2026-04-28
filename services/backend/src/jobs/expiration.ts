@@ -11,11 +11,11 @@ CronRegistry.register(
             logger.debug("Starting reward expiration job");
 
             const result =
-                await OrchestrationContext.orchestrators.rewardExpiration.expireAndRestoreBudgets();
+                await OrchestrationContext.orchestrators.rewardLifecycle.expireOverdueRewards();
 
             logger.info(
                 {
-                    expiredCount: result.expiredCount,
+                    expiredCount: result.affectedCount,
                     campaignsAffected: Object.keys(
                         result.budgetRestoredByCampaign
                     ).length,

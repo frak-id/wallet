@@ -14,6 +14,8 @@ export {
     AssetStatusSchema,
     type AssetType,
     AssetTypeSchema,
+    type CancellationReason,
+    CancellationReasonSchema,
     type InteractionType,
     InteractionTypeSchema,
     type RecipientType,
@@ -37,3 +39,5 @@ export type {
 } from "./types";
 
 export { buildAttestation } from "./types";
+
+export { purchaseExternalEventId } from "./utils";

@@ -204,6 +204,13 @@
             "when": 1777283497204,
             "tag": "0028_wide_major_mapleleaf",
             "breakpoints": true
+        },
+        {
+            "idx": 29,
+            "version": "7",
+            "when": 1777358133663,
+            "tag": "0029_complete_zarek",
+            "breakpoints": true
         }
     ]
 }

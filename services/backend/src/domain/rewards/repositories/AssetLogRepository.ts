@@ -7,6 +7,7 @@ import {
     isNotNull,
     isNull,
     lt,
+    lte,
     or,
     sql,
 } from "drizzle-orm";
@@ -23,6 +24,7 @@ import {
 } from "../db/schema";
 import type {
     AssetStatus,
+    CancellationReason,
     CreateAssetLogParams,
     DetailedAssetLog,
     InteractionType,
@@ -37,12 +39,35 @@ export class AssetLogRepository {
         return new Date(Date.now() + days * 24 * 60 * 60 * 1000);
     }
 
+    /**
+     * Compute the timestamp at which a locked reward becomes claimable.
+     * Returns `null` when the reward should be available immediately.
+     */
+    private calculateAvailableAt(lockupSeconds?: number): Date | null {
+        if (!lockupSeconds || lockupSeconds <= 0) return null;
+        return new Date(Date.now() + lockupSeconds * 1000);
+    }
+
     async createBatch(
         params: CreateAssetLogParams[]
     ): Promise<AssetLogSelect[]> {
         if (params.length === 0) return [];
 
-        const inserts: AssetLogInsert[] = params.map((p) => ({
+        return db
+            .insert(assetLogsTable)
+            .values(this.buildInserts(params))
+            .returning();
+    }
+
+    /**
+     * Pure mapping from public reward params to the row shape we persist.
+     * Exposed so callers running inside a transaction (e.g.
+     * `BatchRewardOrchestrator.processSingleInteraction`) can reuse the same
+     * derivation rules — expirations, lockup `available_at` — without going
+     * through `createBatch` and breaking the surrounding tx.
+     */
+    buildInserts(params: CreateAssetLogParams[]): AssetLogInsert[] {
+        return params.map((p) => ({
             identityGroupId: p.identityGroupId,
             merchantId: p.merchantId,
             campaignRuleId: p.campaignRuleId,
@@ -57,9 +82,8 @@ export class AssetLogRepository {
             status: "pending" as const,
             statusChangedAt: new Date(),
             expiresAt: this.calculateExpiresAt(p.expirationDays),
+            availableAt: this.calculateAvailableAt(p.lockupSeconds),
         }));
-
-        return db.insert(assetLogsTable).values(inserts).returning();
     }
 
     async findPendingForSettlement(limit?: number): Promise<AssetLogSelect[]> {
@@ -78,6 +102,11 @@ export class AssetLogRepository {
                     or(
                         isNull(assetLogsTable.expiresAt),
                         gt(assetLogsTable.expiresAt, now)
+                    ),
+                    // Exclude rewards still inside their lockup window.
+                    or(
+                        isNull(assetLogsTable.availableAt),
+                        lte(assetLogsTable.availableAt, now)
                     )
                 )
             )
@@ -89,6 +118,55 @@ export class AssetLogRepository {
         }
 
         return query;
+    }
+
+    /**
+     * Atomically move every still-`pending` reward tied to the given
+     * interaction logs to a terminal non-settled state and record the reason.
+     * Used by the refund flow to cancel rewards triggered by a now-refunded
+     * purchase.
+     *
+     * Skipped rows:
+     *  - rewards already in `processing`/`settled` (lockup window has passed
+     *    — must not be flipped from underneath the on-chain transaction);
+     *  - rewards without a `campaignRuleId` (campaign was deleted — nothing
+     *    to restore, ignore gracefully).
+     *
+     * Single SQL round-trip; eliminates the find-then-update race window.
+     */
+    async cancelPendingByInteractionLogs(
+        interactionLogIds: string[],
+        reason: CancellationReason
+    ): Promise<{ id: string; campaignRuleId: string; amount: string }[]> {
+        if (interactionLogIds.length === 0) return [];
+
+        const now = new Date();
+        const status: AssetStatus =
+            reason === "expired" ? "expired" : "cancelled";
+
+        const rows = await db
+            .update(assetLogsTable)
+            .set({
+                status,
+                statusChangedAt: now,
+                cancelledAt: now,
+                cancellationReason: reason,
+            })
+            .where(
+                and(
+                    inArray(assetLogsTable.interactionLogId, interactionLogIds),
+                    eq(assetLogsTable.status, "pending"),
+                    isNotNull(assetLogsTable.campaignRuleId)
+                )
+            )
+            .returning({
+                id: assetLogsTable.id,
+                campaignRuleId: assetLogsTable.campaignRuleId,
+                amount: assetLogsTable.amount,
+            });
+
+        // `campaignRuleId` is non-null thanks to the WHERE clause.
+        return rows as { id: string; campaignRuleId: string; amount: string }[];
     }
 
     async updateStatusBatch(
@@ -179,16 +257,23 @@ export class AssetLogRepository {
         return results.length;
     }
 
-    async expirePendingRewards(): Promise<
-        { campaignRuleId: string; amount: string }[]
+    /**
+     * Atomically expire every `pending` reward whose `expires_at` deadline
+     * has passed and that still has a campaign attached. Returns the
+     * affected rows so the caller can restore the corresponding campaign
+     * budgets. Single SQL round-trip; no find-then-update race.
+     */
+    async expirePendingPastDeadline(): Promise<
+        { id: string; campaignRuleId: string; amount: string }[]
     > {
         const now = new Date();
-
-        const results = await db
+        const rows = await db
             .update(assetLogsTable)
             .set({
                 status: "expired",
                 statusChangedAt: now,
+                cancelledAt: now,
+                cancellationReason: "expired",
             })
             .where(
                 and(
@@ -199,14 +284,13 @@ export class AssetLogRepository {
                 )
             )
             .returning({
+                id: assetLogsTable.id,
                 campaignRuleId: assetLogsTable.campaignRuleId,
                 amount: assetLogsTable.amount,
             });
 
-        return results.filter(
-            (r): r is { campaignRuleId: string; amount: string } =>
-                r.campaignRuleId !== null
-        );
+        // `campaignRuleId` is non-null thanks to the WHERE clause.
+        return rows as { id: string; campaignRuleId: string; amount: string }[];
     }
 
     async findByIdentityGroups(
@@ -281,6 +365,8 @@ export class AssetLogRepository {
                 recipientType: assetLogsTable.recipientType,
                 createdAt: assetLogsTable.createdAt,
                 settledAt: assetLogsTable.settledAt,
+                availableAt: assetLogsTable.availableAt,
+                cancellationReason: assetLogsTable.cancellationReason,
                 onchainTxHash: assetLogsTable.onchainTxHash,
                 interactionType: interactionLogsTable.type,
                 interactionPayload: interactionLogsTable.payload,

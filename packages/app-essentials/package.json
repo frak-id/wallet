@@ -33,6 +33,11 @@
       "types": "./src/utils/platform.ts",
       "import": "./src/utils/platform.ts",
       "default": "./src/utils/platform.ts"
+    },
+    "./constants/rewards": {
+      "types": "./src/constants/rewards.ts",
+      "import": "./src/constants/rewards.ts",
+      "default": "./src/constants/rewards.ts"
     }
   }
 }

@@ -24,8 +24,8 @@ import { NotificationOrchestrator } from "./NotificationOrchestrator";
 import { PurchaseInteractionCreator } from "./PurchaseInteractionCreator";
 import { PurchaseLinkingOrchestrator } from "./PurchaseLinkingOrchestrator";
 import { PurchaseWebhookOrchestrator } from "./PurchaseWebhookOrchestrator";
-import { RewardExpirationOrchestrator } from "./RewardExpirationOrchestrator";
 import { RewardHistoryOrchestrator } from "./RewardHistoryOrchestrator";
+import { RewardLifecycleOrchestrator } from "./RewardLifecycleOrchestrator";
 import { ReferralCodeRedemptionOrchestrator } from "./referral-code";
 import { InteractionContextBuilder } from "./reward";
 import { SettlementOrchestrator } from "./SettlementOrchestrator";
@@ -78,11 +78,18 @@ const purchaseLinkingOrchestrator = new PurchaseLinkingOrchestrator(
     purchaseInteractionCreator
 );
 
+const rewardLifecycleOrchestrator = new RewardLifecycleOrchestrator(
+    RewardsContext.repositories.assetLog,
+    RewardsContext.repositories.interactionLog,
+    CampaignContext.repositories.campaignRule
+);
+
 const purchaseWebhookOrchestrator = new PurchaseWebhookOrchestrator(
     PurchasesContext.repositories.purchase,
     PurchasesContext.repositories.purchaseClaim,
     purchaseInteractionCreator,
-    identityOrchestrator
+    identityOrchestrator,
+    rewardLifecycleOrchestrator
 );
 
 const settlementOrchestrator = new SettlementOrchestrator(
@@ -93,12 +100,6 @@ const settlementOrchestrator = new SettlementOrchestrator(
     RewardsContext.repositories.interactionLog,
     CampaignBankContext.repositories.campaignBank
 );
-
-const rewardExpirationOrchestrator = new RewardExpirationOrchestrator(
-    RewardsContext.repositories.assetLog,
-    CampaignContext.repositories.campaignRule
-);
-
 const rewardHistoryOrchestrator = new RewardHistoryOrchestrator(
     RewardsContext.repositories.assetLog,
     IdentityContext.repositories.identity,
@@ -147,7 +148,7 @@ export namespace OrchestrationContext {
         notification: notificationOrchestrator,
         purchaseLinking: purchaseLinkingOrchestrator,
         purchaseWebhook: purchaseWebhookOrchestrator,
-        rewardExpiration: rewardExpirationOrchestrator,
+        rewardLifecycle: rewardLifecycleOrchestrator,
         rewardHistory: rewardHistoryOrchestrator,
         settlement: settlementOrchestrator,
         webhookResolver: webhookResolverOrchestrator,

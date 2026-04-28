@@ -123,6 +123,7 @@ function distributeChainedRewards(params: {
     rewardType: "token";
     description?: string;
     expirationDays?: number;
+    lockupSeconds?: number;
 }): CalculatedReward[] {
     const rewards: CalculatedReward[] = [];
     let remainingAmount = params.totalAmount;
@@ -152,6 +153,7 @@ function distributeChainedRewards(params: {
                 description: params.description,
                 chainDepth: member.depth,
                 expirationDays: params.expirationDays,
+                lockupSeconds: params.lockupSeconds,
             });
         }
     }
@@ -187,7 +189,8 @@ export class RewardCalculator {
         context: RuleContext,
         campaignRuleId: string,
         referralChain?: ReferralChainMember[],
-        expirationDays?: number
+        expirationDays?: number,
+        defaultLockupSeconds?: number
     ): {
         calculated: CalculatedReward[];
         errors: string[];
@@ -220,6 +223,7 @@ export class RewardCalculator {
                     rewardType: reward.type,
                     description: reward.description,
                     expirationDays,
+                    lockupSeconds: defaultLockupSeconds,
                 });
                 calculated.push(...chainedRewards);
                 continue;
@@ -244,6 +248,7 @@ export class RewardCalculator {
                 campaignRuleId,
                 description: reward.description,
                 expirationDays,
+                lockupSeconds: defaultLockupSeconds,
             });
         }
 
