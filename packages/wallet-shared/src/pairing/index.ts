@@ -42,7 +42,6 @@ export type {
     TargetPairingIdState,
     TargetPairingPendingSignature,
     TargetPairingState,
-    WsCloseCode,
 } from "./types/index";
 
 // Note: Types are not re-exported from the barrel due to naming conflicts

@@ -4,8 +4,8 @@ import { createStore } from "zustand/vanilla";
 import { authenticatedWalletApi } from "../../common/api/backendClient";
 import {
     type BasePairingState,
+    isRetryableCloseCode,
     type OriginIdentityNode,
-    WsCloseCode,
     type WsOriginMessage,
     type WsOriginRequest,
     type WsTargetMessage,
@@ -286,8 +286,7 @@ export abstract class BasePairingClient<
             return;
         }
 
-        const isRetryable = code !== WsCloseCode.NO_CONNECTION_TO_CONNECT_TO;
-        if (!isRetryable) {
+        if (!isRetryableCloseCode(code)) {
             this.setState({
                 status: "idle",
                 closeInfo: { code, reason },

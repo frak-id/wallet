@@ -17,7 +17,7 @@ const EcdsaWalletTokenDto = t.Object({
     address: t.Address(),
     authenticatorId: t.TemplateLiteral([t.Literal("ecdsa-"), t.String()]),
     publicKey: t.Hex(),
-    transports: t.Undefined(),
+    transports: t.Optional(t.Undefined()),
 });
 
 const DistantWebAuthNWalletTokenDto = t.Object({
@@ -28,7 +28,7 @@ const DistantWebAuthNWalletTokenDto = t.Object({
         x: t.Hex(),
         y: t.Hex(),
     }),
-    transports: t.Undefined(),
+    transports: t.Optional(t.Undefined()),
     pairingId: t.String(),
 });
 
