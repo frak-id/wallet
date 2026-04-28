@@ -1,5 +1,9 @@
 import { Button } from "@frak-labs/design-system/components/Button";
+import { Inline } from "@frak-labs/design-system/components/Inline";
 import { Skeleton } from "@frak-labs/design-system/components/Skeleton";
+import { Stack } from "@frak-labs/design-system/components/Stack";
+import { Text } from "@frak-labs/design-system/components/Text";
+import { WarningIcon } from "@frak-labs/design-system/icons";
 import {
     CodeInput,
     getTargetPairingClient,
@@ -9,16 +13,14 @@ import {
     usePairingInfo,
 } from "@frak-labs/wallet-shared";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { AlertCircle } from "lucide-react";
 import { useCallback, useEffect, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { useStore } from "zustand";
-import { Title } from "@/module/common/component/Title";
 import { PairingHeader } from "@/module/pairing/component/PairingHeader";
 import { PairingInfo } from "@/module/pairing/component/PairingInfo";
 import * as styles from "./pairing.css";
 
-export const Route = createFileRoute("/_wallet/_protected/pairing")({
+export const Route = createFileRoute("/_wallet/_protected-modal/pairing")({
     component: PairingPage,
     validateSearch: (search: Record<string, unknown>) => ({
         mode: typeof search.mode === "string" ? search.mode : undefined,
@@ -129,47 +131,45 @@ function PairingPage() {
     // No pairing ID provided
     if (!id) {
         return (
-            <div>
-                <Title size="big" align="center">
+            <Stack space="m">
+                <Text as="h1" variant="heading1" align="center">
                     {t("wallet.pairing.error.title")}
-                </Title>
-                <p className={styles.pairingError}>
-                    <AlertCircle size={24} />
-                    {t("wallet.pairing.error.noCode")}
-                </p>
-            </div>
+                </Text>
+                <Inline space="xs" align="center" alignY="center">
+                    <WarningIcon width={24} height={24} />
+                    <Text as="span">{t("wallet.pairing.error.noCode")}</Text>
+                </Inline>
+            </Stack>
         );
     }
 
     // Error state (invalid/expired pairing ID)
     if (pairingErrorState === "not-found") {
         return (
-            <div>
-                <Title size="big" align="center">
+            <Stack space="m">
+                <Text as="h1" variant="heading1" align="center">
                     {t("wallet.pairing.error.title")}
-                </Title>
-                <p className={styles.pairingError}>
-                    <AlertCircle size={24} />
-                    {t("wallet.pairing.error.notFound")}
-                </p>
-            </div>
+                </Text>
+                <Inline space="xs" align="center" alignY="center">
+                    <WarningIcon width={24} height={24} />
+                    <Text as="span">{t("wallet.pairing.error.notFound")}</Text>
+                </Inline>
+            </Stack>
         );
     }
 
     // Transient error state (network/backend issues)
     if (pairingErrorState === "transient") {
         return (
-            <div>
-                <Title size="big" align="center">
+            <Stack space="m" className={styles.pairingPage}>
+                <Text as="h1" variant="heading1" align="center">
                     {t("wallet.pairing.title")}
-                </Title>
-                <p className={styles.pairingError}>
-                    <AlertCircle size={24} />
-                    {t("error.webauthn.generic")}
-                </p>
-                <div
-                    className={`${styles.pairingButtons} ${styles.pairingButtonsSingle}`}
-                >
+                </Text>
+                <Inline space="xs" align="center" alignY="center">
+                    <WarningIcon width={24} height={24} />
+                    <Text as="span">{t("error.webauthn.generic")}</Text>
+                </Inline>
+                <Stack space="m" className={styles.pairingFooter}>
                     <Button
                         variant="secondary"
                         onClick={() => {
@@ -181,33 +181,54 @@ function PairingPage() {
                     >
                         {t("wallet.pairing.refresh")}
                     </Button>
-                </div>
-            </div>
+                </Stack>
+            </Stack>
         );
     }
 
     // Loading state
     if (!pairingInfo) {
         return (
-            <div>
+            <Stack space="l">
                 <PairingHeader />
                 <Skeleton />
-            </div>
+            </Stack>
         );
     }
 
     return (
-        <div>
-            <PairingHeader />
-            <PairingInfo state={pairingState} id={id} />
-            {shouldShowCode ? (
-                <CodeInput value={pairingInfo.pairingCode} mode="numeric" />
-            ) : (
-                <p className={styles.pairingNoCodeNotice}>
-                    {t("wallet.pairing.noCodeNotice")}
-                </p>
-            )}
-            <div className={styles.pairingButtons}>
+        <Stack space="l" className={styles.pairingPage}>
+            <Stack space="l">
+                <PairingHeader />
+                <PairingInfo
+                    state={pairingState}
+                    originName={pairingInfo.originName}
+                />
+                {shouldShowCode ? (
+                    <Stack space="m" align="center">
+                        <Text variant="body" weight="semiBold" align="center">
+                            {t("wallet.pairing.code")}
+                        </Text>
+                        <CodeInput
+                            value={pairingInfo.pairingCode}
+                            mode="numeric"
+                            fill
+                        />
+                    </Stack>
+                ) : (
+                    <Text as="p" align="center">
+                        {t("wallet.pairing.noCodeNotice")}
+                    </Text>
+                )}
+            </Stack>
+            <Stack space="m" className={styles.pairingFooter}>
+                <Button
+                    onClick={() => {
+                        actionPairing("join");
+                    }}
+                >
+                    {t("wallet.pairing.confirm")}
+                </Button>
                 <Button
                     variant="secondary"
                     onClick={() => {
@@ -216,14 +237,7 @@ function PairingPage() {
                 >
                     {t("wallet.pairing.cancel")}
                 </Button>
-                <Button
-                    onClick={() => {
-                        actionPairing("join");
-                    }}
-                >
-                    {t("wallet.pairing.confirm")}
-                </Button>
-            </div>
-        </div>
+            </Stack>
+        </Stack>
     );
 }

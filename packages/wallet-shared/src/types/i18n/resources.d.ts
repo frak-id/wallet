@@ -551,15 +551,15 @@ interface Resources {
             pairing: {
                 cancel: "Cancel";
                 code: "Check that the code is correct";
-                confirm: "Confirm";
+                confirm: "Confirm the code";
                 error: {
                     noCode: "No pairing code provided";
                     notFound: "Pairing request not found or expired";
                     title: "Invalid pairing request";
                 };
                 info: {
-                    device: "Device:";
-                    status: "Status:";
+                    device: "Device";
+                    status: "Status";
                     title: "Pairing information";
                 };
                 list: {
@@ -622,7 +622,7 @@ interface Resources {
                         retryError: "Error when connecting to partner device";
                     };
                 };
-                text: "You're about to connect this device to your account";
+                text: "You're about to connect a device to your account.";
                 title: "Confirm device pairing";
             };
             password: {

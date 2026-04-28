@@ -262,11 +262,11 @@
         },
         "pairing": {
             "title": "Confirm device pairing",
-            "text": "You're about to connect this device to your account",
+            "text": "You're about to connect a device to your account.",
             "info": {
                 "title": "Pairing information",
-                "status": "Status:",
-                "device": "Device:"
+                "status": "Status",
+                "device": "Device"
             },
             "code": "Check that the code is correct",
             "noCodeNotice": "Confirm this pairing request to continue.",
@@ -279,7 +279,7 @@
                 "title": "Please wait"
             },
             "cancel": "Cancel",
-            "confirm": "Confirm",
+            "confirm": "Confirm the code",
             "pairingInProgress": "Pairing in progress, please authenticate",
             "origin": {
                 "state": {

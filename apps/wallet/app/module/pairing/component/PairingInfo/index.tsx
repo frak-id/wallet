@@ -1,44 +1,43 @@
-import { Stack } from "@frak-labs/design-system/components/Stack";
 import { Text } from "@frak-labs/design-system/components/Text";
-import { usePairingInfo } from "@frak-labs/wallet-shared";
 import type { TargetPairingState } from "@frak-labs/wallet-shared/pairing/types";
-import { Fingerprint } from "lucide-react";
 import { useTranslation } from "react-i18next";
-import { Panel } from "@/module/common/component/Panel";
-import { Title } from "@/module/common/component/Title";
+import { InfoCard, InfoRow } from "@/module/common/component/InfoCard";
 import { PairingStatus } from "@/module/pairing/component/PairingStatus";
 
 export function PairingInfo({
     state,
-    id,
+    originName,
 }: {
     state: TargetPairingState;
-    id: string;
+    originName?: string;
 }) {
     const { t } = useTranslation();
-    const { data: pairingInfo } = usePairingInfo({ id });
 
     return (
-        <Panel size={"small"}>
-            <Title icon={<Fingerprint size={32} />}>
-                {t("wallet.pairing.info.title")}
-            </Title>
-            <Stack as={"ul"} space={"xs"}>
-                <li>
-                    <Text as="span" variant="bodySmall">
-                        {t("wallet.pairing.info.status")}{" "}
-                        <PairingStatus status={state.status} />
-                    </Text>
-                </li>
-                {pairingInfo && (
-                    <li>
-                        <Text as="span" variant="bodySmall">
-                            {t("wallet.pairing.info.device")}{" "}
-                            {pairingInfo?.originName ?? "..."}
+        <InfoCard variant="muted">
+            <InfoRow
+                label={t("wallet.pairing.info.title")}
+                labelVariant="bodySmall"
+                labelColor="secondary"
+            />
+            <InfoRow
+                label={t("wallet.pairing.info.status")}
+                labelVariant="bodySmall"
+                labelColor="secondary"
+                action={<PairingStatus status={state.status} />}
+            />
+            {originName && (
+                <InfoRow
+                    label={t("wallet.pairing.info.device")}
+                    labelVariant="bodySmall"
+                    labelColor="secondary"
+                    action={
+                        <Text as="span" variant="bodySmall" weight="medium">
+                            {originName}
                         </Text>
-                    </li>
-                )}
-            </Stack>
-        </Panel>
+                    }
+                />
+            )}
+        </InfoCard>
     );
 }

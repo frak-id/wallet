@@ -260,14 +260,14 @@
         },
         "pairing": {
             "title": "Confirmation de l'appairage",
-            "text": "Vous êtes sur le point de connecter un appareil à votre compte",
+            "text": "Tu es sur le point de connecter un appareil à ton compte.",
             "info": {
                 "title": "Informations sur l'appairage",
-                "status": "Statut :",
-                "device": "Appareil :"
+                "status": "Statut",
+                "device": "Appareil"
             },
-            "code": "Vérifiez que le code est correct",
-            "noCodeNotice": "Confirmez cette demande d'appairage pour continuer.",
+            "code": "Vérifie que le code est correct",
+            "noCodeNotice": "Confirme cette demande d'appairage pour continuer.",
             "error": {
                 "title": "Requête de connexion invalide",
                 "noCode": "Aucun code de connexion fourni",
@@ -277,7 +277,7 @@
                 "title": "Veuillez patienter"
             },
             "cancel": "Annuler",
-            "confirm": "Confirmer",
+            "confirm": "Confirmer le code",
             "pairingInProgress": "Jumelage en cours, veuillez vous authentifier",
             "origin": {
                 "state": {

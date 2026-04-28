@@ -11,9 +11,15 @@ type IconComponent = ComponentType<SVGProps<SVGSVGElement>>;
 /**
  * Shared card wrapper for grouped rows.
  */
-export function InfoCard({ children }: { children: ReactNode }) {
+export function InfoCard({
+    children,
+    variant,
+}: {
+    children: ReactNode;
+    variant?: "elevated" | "muted" | "secondary";
+}) {
     return (
-        <Card padding="none" className={styles.card}>
+        <Card padding="none" variant={variant} className={styles.card}>
             {children}
         </Card>
     );

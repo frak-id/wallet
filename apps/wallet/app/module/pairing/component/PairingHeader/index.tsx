@@ -1,22 +1,20 @@
-import { Box } from "@frak-labs/design-system/components/Box";
+import { Stack } from "@frak-labs/design-system/components/Stack";
 import { Text } from "@frak-labs/design-system/components/Text";
 import { useTranslation } from "react-i18next";
-import { Title } from "@/module/common/component/Title";
 import { PairingDevices } from "@/module/pairing/component/PairingDevices";
-import * as styles from "./index.css";
 
 export function PairingHeader() {
     const { t } = useTranslation();
 
     return (
-        <Box className={styles.pairingHeader}>
-            <Title size="big" align="center">
+        <Stack space="m">
+            <Text as="h1" variant="heading1">
                 {t("wallet.pairing.title")}
-            </Title>
-            <Text as="p" className={styles.pairingHeaderText}>
+            </Text>
+            <Text as="p" color="secondary">
                 {t("wallet.pairing.text")}
             </Text>
             <PairingDevices />
-        </Box>
+        </Stack>
     );
 }
