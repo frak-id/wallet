@@ -69,10 +69,8 @@ targets:
       path: app_iOS/app_iOS.entitlements
       properties:
         com.apple.developer.associated-domains:
-          - webcredentials:wallet-dev.frak.id
           - webcredentials:wallet.frak.id
           - applinks:wallet.frak.id
-          - applinks:wallet-dev.frak.id
         # iCloud Key-Value storage — tauri-plugin-recovery-hint uses this to
         # persist a tiny recovery hint that survives uninstall.
         com.apple.developer.ubiquity-kvstore-identifier: $(TeamIdentifierPrefix)$(CFBundleIdentifier)

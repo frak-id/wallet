@@ -21,11 +21,6 @@ import {
 import { isProd, normalizedStageName } from "../utils";
 
 /**
- * Wallet display mode: loyalty in prod hides crypto UI, crypto in dev/staging shows full wallet.
- */
-const walletMode = isProd ? "loyalty" : "crypto";
-
-/**
  * Whether the native mobile app is available for install prompts.
  * When false, install CTAs are hidden and the sharing flow stays web-only.
  */
@@ -85,7 +80,6 @@ if (!$dev) {
             ERPC_URL: walletEnv.ERPC_URL,
             FRAK_WALLET_URL: walletEnv.FRAK_WALLET_URL,
             OPEN_PANEL_API_URL: walletEnv.OPEN_PANEL_API_URL,
-            VITE_WALLET_MODE: walletMode,
             IS_APP_AVAILABLE: walletEnv.IS_APP_AVAILABLE,
         },
         // Secrets passed via BuildKit (not stored in layers)
