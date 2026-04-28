@@ -594,11 +594,20 @@ interface Resources {
                 refreshCode: "Code:";
                 refreshReason: "Reason:";
                 signatureRequest: {
+                    banner: {
+                        cta: "Review";
+                        summary: "{{count}} pending request";
+                        summary_other: "{{count}} pending requests";
+                        title: "Another device is waiting for your signature";
+                    };
                     buttons: {
                         reject: "Reject";
                         sign: "Sign";
                     };
                     description: "A device <strongFrom>{{from}}</strongFrom> is requesting your signature";
+                    modal: {
+                        counter: "{{current}} / {{total}}";
+                    };
                     state: {
                         declined: "Declined";
                         error: "Error";

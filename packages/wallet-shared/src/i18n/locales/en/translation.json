@@ -324,6 +324,15 @@
                 "buttons": {
                     "sign": "Sign",
                     "reject": "Reject"
+                },
+                "modal": {
+                    "counter": "{{current}} / {{total}}"
+                },
+                "banner": {
+                    "title": "Another device is waiting for your signature",
+                    "summary": "{{count}} pending request",
+                    "summary_other": "{{count}} pending requests",
+                    "cta": "Review"
                 }
             },
             "refresh": "Retry",

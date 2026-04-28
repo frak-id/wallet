@@ -322,6 +322,15 @@
                 "buttons": {
                     "sign": "Signer",
                     "reject": "Rejeter"
+                },
+                "modal": {
+                    "counter": "{{current}} / {{total}}"
+                },
+                "banner": {
+                    "title": "Un autre appareil attend votre signature",
+                    "summary": "{{count}} demande en attente",
+                    "summary_other": "{{count}} demandes en attente",
+                    "cta": "Voir"
                 }
             },
             "refresh": "Réessayer",

@@ -8,11 +8,11 @@ import {
     CopyIcon,
 } from "@frak-labs/design-system/icons";
 import {
+    getOriginPairingClient,
     getTargetPairingClient,
     selectEcdsaSession,
     selectWebauthnSession,
     sessionStore,
-    useGetActivePairings,
 } from "@frak-labs/wallet-shared";
 import { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -133,26 +133,31 @@ function IdentityRow({
     );
 }
 
+export function PairingIdentityRow() {
+    const wsTargetPartner = useStore(
+        getTargetPairingClient().store,
+        (s) => s.partnerDevice
+    );
+    const originWsPartner = useStore(
+        getOriginPairingClient().store,
+        (s) => s.partnerDevice
+    );
+
+    const currentDeviceLabel = useMemo(() => {
+        return wsTargetPartner ?? originWsPartner ?? null;
+    }, [originWsPartner, wsTargetPartner]);
+
+    if (!currentDeviceLabel) return null;
+
+    return <CurrentDeviceRow deviceLabel={currentDeviceLabel} />;
+}
+
 export function ProfileIdentityCard() {
     const { t } = useTranslation();
     const isHydrated = useHydrated();
     const { address } = useConnection();
     const webauthnWallet = sessionStore(selectWebauthnSession);
     const ecdsaWallet = sessionStore(selectEcdsaSession);
-    const pairingClient = getTargetPairingClient();
-    const wsStatus = useStore(pairingClient.store, (s) => s.status);
-    const { data: pairings } = useGetActivePairings();
-
-    const currentDeviceLabel = useMemo(() => {
-        if (wsStatus !== "paired" || !pairings?.length) return null;
-        const mostRecent = pairings.reduce((latest, p) =>
-            new Date(p.lastActiveAt).getTime() >
-            new Date(latest.lastActiveAt).getTime()
-                ? p
-                : latest
-        );
-        return mostRecent.targetName;
-    }, [pairings, wsStatus]);
 
     const authenticatorValue = useMemo(() => {
         if (!webauthnWallet) return null;
@@ -198,9 +203,7 @@ export function ProfileIdentityCard() {
 
     return (
         <Card padding="none" className={styles.card}>
-            {currentDeviceLabel ? (
-                <CurrentDeviceRow deviceLabel={currentDeviceLabel} />
-            ) : null}
+            <PairingIdentityRow />
             {webauthnWallet && authenticatorValue ? (
                 <IdentityRow
                     label={t("common.authenticator")}
