@@ -11,6 +11,8 @@ version on dispatch.
 
 ## [Unreleased]
 
+## [1.1.2] - 2026-04-28
+
 ### Added
 
 - Auto-update via the standard WordPress "Plugins → Updates" UI without being listed on wordpress.org. The plugin now watches `frak-id/wallet` GitHub releases through [yahnis-elsts/plugin-update-checker](https://github.com/YahnisElsts/plugin-update-checker), filtering by the `wordpress-X.Y.Z` tag namespace and downloading the packaged `frak-integration-X.Y.Z.zip` release asset (with `vendor/` baked in) rather than GitHub's auto-generated source archive. PUC's check runs every 12 h on cron / admin page loads; merchants get the same one-click update flow as wordpress.org-hosted plugins.
@@ -85,7 +87,9 @@ version on dispatch.
 
 - Initial release of the Frak WordPress plugin.
 
-[Unreleased]: https://github.com/frak-id/wallet/compare/wordpress-1.1.1...HEAD
+[Unreleased]: https://github.com/frak-id/wallet/compare/wordpress-1.1.2...HEAD
+
+[1.1.2]: https://github.com/frak-id/wallet/compare/wordpress-1.1.1...wordpress-1.1.2
 
 [1.1.1]: https://github.com/frak-id/wallet/compare/wordpress-1.0.0...wordpress-1.1.1
 
