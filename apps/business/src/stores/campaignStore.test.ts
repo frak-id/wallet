@@ -44,6 +44,7 @@ const mockCampaignDraft: CampaignDraft = {
     },
     priority: 0,
     referralOnly: true,
+    minPurchaseAmount: 0,
 };
 
 describe("campaignStore", () => {

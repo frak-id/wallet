@@ -1,7 +1,7 @@
 import { Switch } from "@frak-labs/ui/component/Switch";
 import { useNavigate } from "@tanstack/react-router";
 import { useMemo } from "react";
-import { useForm } from "react-hook-form";
+import { useForm, useWatch } from "react-hook-form";
 import { Actions } from "@/module/campaigns/component/Actions";
 import { ButtonCancel } from "@/module/campaigns/component/Creation/NewCampaign/ButtonCancel";
 import { useSaveCampaign } from "@/module/campaigns/hook/useSaveCampaign";
@@ -21,6 +21,7 @@ import { ChainingConfig } from "./ChainingConfig";
 import { DistributionSlider } from "./DistributionSlider";
 import styles from "./index.module.css";
 import { LockupConfig } from "./LockupConfig";
+import { MinPurchaseAmount } from "./MinPurchaseAmount";
 import { TriggerSelector } from "./TriggerSelector";
 import {
     DEFAULT_REWARD_STATE,
@@ -53,6 +54,7 @@ function formValuesToDraft(
     return {
         ...currentDraft,
         referralOnly: values.referralOnly,
+        minPurchaseAmount: values.minPurchaseAmount,
         rule: {
             ...updatedRule,
             trigger: values.trigger,
@@ -72,6 +74,14 @@ export function MetricsCampaign() {
         defaultValues,
         values: defaultValues,
     });
+
+    const watchedTrigger = useWatch({
+        control: form.control,
+        name: "trigger",
+    });
+    const goal = campaignStore((s) => s.draft.metadata.goal);
+    const showConditionsPanel =
+        goal === "sales" && watchedTrigger === "purchase";
 
     async function onSubmit(values: MetricsFormValues) {
         const updatedDraft = formValuesToDraft(values, draft);
@@ -164,6 +174,15 @@ export function MetricsCampaign() {
                     <Panel title="Referral Chain">
                         <ChainingConfig />
                     </Panel>
+
+                    {showConditionsPanel && (
+                        <Panel title="Conditions">
+                            <p className={styles.panelDescription}>
+                                Filter which purchases qualify for a reward.
+                            </p>
+                            <MinPurchaseAmount />
+                        </Panel>
+                    )}
 
                     <Panel title="Reward lockup">
                         <p className={styles.panelDescription}>

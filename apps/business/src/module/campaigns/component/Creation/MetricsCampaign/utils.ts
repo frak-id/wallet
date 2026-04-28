@@ -15,6 +15,7 @@ export type RewardFormState = {
     referralOnly: boolean;
     /** Days a reward stays locked before settlement. 0 disables. */
     lockupDays: number;
+    minPurchaseAmount: number;
 };
 
 export const DEFAULT_REWARD_STATE: RewardFormState = {
@@ -25,6 +26,7 @@ export const DEFAULT_REWARD_STATE: RewardFormState = {
     maxDepth: 5,
     referralOnly: true,
     lockupDays: REWARD_LOCKUP.DEFAULT_DAYS,
+    minPurchaseAmount: 0,
 };
 
 const FRAK_COMMISSION_PERCENT = 20;
@@ -167,6 +169,15 @@ export function extractFormStateFromRule(
             ? referrerReward.chaining
             : undefined;
 
+    const minPurchaseAmountFromConditions = Array.isArray(rule.conditions)
+        ? (rule.conditions.find(
+              (c) =>
+                  "field" in c &&
+                  c.field === "purchase.amount" &&
+                  c.operator === "gte"
+          )?.value as number | undefined)
+        : undefined;
+
     const hasReferralCondition = Array.isArray(rule.conditions)
         ? rule.conditions.some(
               (c) =>
@@ -190,7 +201,11 @@ export function extractFormStateFromRule(
                 ? Math.round(
                       rule.defaultLockupSeconds / REWARD_LOCKUP.SECONDS_PER_DAY
                   )
-                : DEFAULT_LOCKUP_DAYS,
+                : REWARD_LOCKUP.DEFAULT_DAYS,
+        minPurchaseAmount:
+            typeof minPurchaseAmountFromConditions === "number"
+                ? minPurchaseAmountFromConditions
+                : 0,
     };
 }
 

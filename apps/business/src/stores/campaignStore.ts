@@ -23,6 +23,7 @@ export type CampaignDraft = {
     };
     priority: number;
     referralOnly: boolean;
+    minPurchaseAmount: number;
 };
 
 const initialDraft: CampaignDraft = {
@@ -42,6 +43,7 @@ const initialDraft: CampaignDraft = {
     scheduled: {},
     priority: 0,
     referralOnly: true,
+    minPurchaseAmount: 0,
 };
 
 type CampaignState = {
@@ -110,6 +112,8 @@ export const REFERRAL_CONDITION = {
     value: true,
 };
 
+export const MIN_PURCHASE_AMOUNT_FIELD = "purchase.amount";
+
 export function buildApiPayload(draft: CampaignDraft) {
     const scheduleConditions = buildScheduleConditions(draft.scheduled);
 
@@ -123,19 +127,44 @@ export function buildApiPayload(draft: CampaignDraft) {
                           c.field === "attribution.referrerIdentityGroupId"
                       )
               )
+              .filter(
+                  (c) =>
+                      !(
+                          "field" in c &&
+                          c.field === MIN_PURCHASE_AMOUNT_FIELD &&
+                          c.operator === "gte"
+                      )
+              )
         : draft.rule.conditions;
 
     const referralConditions =
         (draft.referralOnly ?? true) ? [REFERRAL_CONDITION] : [];
 
+    const minPurchaseConditions: RuleCondition[] =
+        draft.rule.trigger === "purchase" && draft.minPurchaseAmount > 0
+            ? [
+                  {
+                      field: MIN_PURCHASE_AMOUNT_FIELD,
+                      operator: "gte",
+                      value: draft.minPurchaseAmount,
+                  },
+              ]
+            : [];
+
     const allConditions: RuleCondition[] | ConditionGroup = Array.isArray(
         existingConditions
     )
-        ? [...referralConditions, ...existingConditions, ...scheduleConditions]
+        ? [
+              ...referralConditions,
+              ...minPurchaseConditions,
+              ...existingConditions,
+              ...scheduleConditions,
+          ]
         : {
               ...existingConditions,
               conditions: [
                   ...referralConditions,
+                  ...minPurchaseConditions,
                   ...existingConditions.conditions,
                   ...scheduleConditions,
               ],
@@ -213,5 +242,14 @@ export function campaignToDraft(campaign: {
             hasReferralCondition ||
             (Array.isArray(campaign.rule.conditions) &&
                 campaign.rule.conditions.length === 0),
+        minPurchaseAmount:
+            (Array.isArray(campaign.rule.conditions)
+                ? (campaign.rule.conditions.find(
+                      (c) =>
+                          "field" in c &&
+                          c.field === MIN_PURCHASE_AMOUNT_FIELD &&
+                          c.operator === "gte"
+                  )?.value as number | undefined)
+                : undefined) ?? 0,
     };
 }
