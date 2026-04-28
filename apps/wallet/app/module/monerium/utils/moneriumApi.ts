@@ -23,6 +23,13 @@ async function throwApiError(response: Response): Promise<never> {
 }
 
 function getApiBaseUrl(): string {
+    // Dev: proxy via vite (`/monerium-api/*`) since the sandbox doesn't
+    // whitelist localhost origins. The vite proxy target is hard-coded to
+    // `api.monerium.dev` — `bun dev` always hits sandbox regardless of
+    // `moneriumConfig.environment`. Prod builds hit Monerium directly.
+    if (import.meta.env.DEV) {
+        return "/monerium-api";
+    }
     return moneriumConfig.environment === "production"
         ? "https://api.monerium.app"
         : "https://api.monerium.dev";

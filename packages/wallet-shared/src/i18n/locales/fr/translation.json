@@ -90,7 +90,9 @@
             "privacyPolicy": "Politique de confidentialité",
             "helpSupport": "Aide & support",
             "rateApp": "Noter l'application",
-            "lastConnection": "Dernière connexion"
+            "managePairings": "Gérer les appareils connectés",
+            "lastConnection": "Dernière connexion",
+            "currentDeviceConnected": "Connecté"
         },
         "transferToBank": "Transférer vers ma banque",
         "transferEmpty": {
@@ -230,7 +232,7 @@
             "amountLessThanBalance": "Le montant doit être inférieur au solde",
             "amountPositive": "Le montant doit être positif",
             "amountToSend": "Montant à envoyer",
-            "backToWallet": "Retour au porte-monnaie"
+            "sendTitle": "Transférer vers un crypto wallet"
         },
         "welcome": {
             "title": "Bienvenue dans Frak 🎉",
@@ -260,14 +262,14 @@
         },
         "pairing": {
             "title": "Confirmation de l'appairage",
-            "text": "Vous êtes sur le point de connecter un appareil à votre compte",
+            "text": "Tu es sur le point de connecter un appareil à ton compte.",
             "info": {
                 "title": "Informations sur l'appairage",
-                "status": "Statut :",
-                "device": "Appareil :"
+                "status": "Statut",
+                "device": "Appareil"
             },
-            "code": "Vérifiez que le code est correct",
-            "noCodeNotice": "Confirmez cette demande d'appairage pour continuer.",
+            "code": "Vérifie que le code est correct",
+            "noCodeNotice": "Confirme cette demande d'appairage pour continuer.",
             "error": {
                 "title": "Requête de connexion invalide",
                 "noCode": "Aucun code de connexion fourni",
@@ -277,7 +279,7 @@
                 "title": "Veuillez patienter"
             },
             "cancel": "Annuler",
-            "confirm": "Confirmer",
+            "confirm": "Confirmer le code",
             "pairingInProgress": "Jumelage en cours, veuillez vous authentifier",
             "origin": {
                 "state": {
@@ -285,6 +287,7 @@
                     "connecting": "Appareil partenaire pas en ligne",
                     "paired": "Connecté avec le partenaire",
                     "retryError": "Erreur de connexion à l'appareil pairé",
+                    "error": "Connexion refusée par le serveur",
                     "requests": {
                         "connecting": "Ouvrez votre appareil pairé pour procéder à la transaction",
                         "paired": "Attendez que le partenaire signe la transaction"
@@ -295,7 +298,8 @@
                 "state": {
                     "connecting": "Connexion à l'appareil partenaire",
                     "paired": "Connecté avec un autre appareil",
-                    "retryError": "Erreur lors de la connexion à l'appareil partenaire"
+                    "retryError": "Erreur lors de la connexion à l'appareil partenaire",
+                    "error": "Connexion refusée par le serveur"
                 }
             },
             "status": {
@@ -318,18 +322,29 @@
                 "buttons": {
                     "sign": "Signer",
                     "reject": "Rejeter"
+                },
+                "modal": {
+                    "counter": "{{current}} / {{total}}"
+                },
+                "banner": {
+                    "title": "Un autre appareil attend votre signature",
+                    "summary": "{{count}} demande en attente",
+                    "summary_other": "{{count}} demandes en attente",
+                    "cta": "Voir"
                 }
             },
             "refresh": "Réessayer",
             "refreshCode": "Code :",
             "refreshReason": "Raison :",
+            "reconnect": "Se reconnecter",
             "list": {
                 "title": "Appareils connectés",
-                "origin": "Origine :",
-                "target": "Cible :",
-                "createdAt": "Créé le :",
-                "lastActive": "Dernière activité :",
-                "delete": "Supprimer l'appareil"
+                "origin": "Origine",
+                "target": "Cible",
+                "createdAt": "Créé le",
+                "lastActive": "Dernière activité",
+                "delete": "Supprimer l'appareil",
+                "empty": "Aucun appareil connecté"
             }
         },
         "inAppBrowser": {
@@ -554,8 +569,10 @@
             "amountInvalid": "Le montant doit être supérieur à 0"
         },
         "callback": {
-            "noCode": "Aucun code d'autorisation reçu",
-            "failed": "Échec de l'authentification",
+            "cancelledTitle": "Connexion annulée",
+            "cancelledDescription": "Tu peux relancer la connexion à Monerium quand tu le souhaites.",
+            "errorTitle": "Connexion impossible",
+            "errorDescription": "Un problème est survenu lors de la connexion à Monerium. Réessaye dans un instant.",
             "tryAgain": "Réessayer"
         },
         "bankFlow": {
@@ -593,10 +610,10 @@
             },
             "transfer": {
                 "amount": {
-                    "title": "Transférer mes gains",
+                    "title": "Montant à transférer",
                     "walletLabel": "Porte-monnaie Frak",
                     "totalBalance": "Total balance",
-                    "ibanLabel": "Destinataire",
+                    "ibanLabel": "IBAN",
                     "ibanEmpty": "Aucun IBAN enregistré",
                     "modify": "Modifier",
                     "continue": "Continuer",

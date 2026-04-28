@@ -19,14 +19,6 @@ export const MerchantCampaignParamSchema = t.Object({
 export type MerchantCampaignParam = Static<typeof MerchantCampaignParamSchema>;
 
 /**
- * Common success response for mutation endpoints
- */
-export const SuccessResponseSchema = t.Object({
-    success: t.Boolean(),
-});
-export type SuccessResponse = Static<typeof SuccessResponseSchema>;
-
-/**
  * Common header schema for frak client identification
  */
 export const FrakClientIdHeaderSchema = t.Object({

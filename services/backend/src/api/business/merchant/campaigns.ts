@@ -22,7 +22,6 @@ import {
     CampaignUpdateBodySchema,
     MerchantCampaignParamSchema,
     MerchantIdParamSchema,
-    SuccessResponseSchema,
 } from "../../schemas";
 import { businessSessionContext } from "../middleware/session";
 
@@ -249,7 +248,7 @@ export const merchantCampaignsRoutes = new Elysia({
                 merchant?.defaultRewardToken ?? null
             );
 
-            const result = await CampaignContext.services.management.create({
+            const campaign = await CampaignContext.services.management.create({
                 merchantId,
                 name: body.name,
                 rule,
@@ -261,18 +260,15 @@ export const merchantCampaignsRoutes = new Elysia({
                 priority: body.priority,
             });
 
-            if (!result.success) {
-                return status(400, result.error);
-            }
-
-            return formatCampaign(result.campaign, undefined);
+            return formatCampaign(campaign, undefined);
         },
         {
             params: MerchantIdParamSchema,
             body: CampaignCreateBodySchema,
             response: {
                 200: CampaignResponseSchema,
-                400: t.String(),
+                400: t.ErrorResponse,
+                409: t.ErrorResponse,
                 401: t.String(),
                 403: t.String(),
             },
@@ -314,7 +310,7 @@ export const merchantCampaignsRoutes = new Elysia({
                 );
             }
 
-            const result = await CampaignContext.services.management.update(
+            const updated = await CampaignContext.services.management.update(
                 campaignId,
                 {
                     name: body.name,
@@ -330,18 +326,15 @@ export const merchantCampaignsRoutes = new Elysia({
                 }
             );
 
-            if (!result.success) {
-                return status(400, result.error);
-            }
-
-            return formatCampaign(result.campaign, undefined);
+            return formatCampaign(updated, undefined);
         },
         {
             params: MerchantCampaignParamSchema,
             body: CampaignUpdateBodySchema,
             response: {
                 200: CampaignResponseSchema,
-                400: t.String(),
+                400: t.ErrorResponse,
+                409: t.ErrorResponse,
                 401: t.String(),
                 403: t.String(),
                 404: t.String(),
@@ -371,20 +364,17 @@ export const merchantCampaignsRoutes = new Elysia({
                 return status(404, "Campaign not found");
             }
 
-            const result =
+            const updated =
                 await CampaignContext.services.management.publish(campaignId);
 
-            if (!result.success) {
-                return status(400, result.error);
-            }
-
-            return formatCampaign(result.campaign, undefined);
+            return formatCampaign(updated, undefined);
         },
         {
             params: MerchantCampaignParamSchema,
             response: {
                 200: CampaignResponseSchema,
-                400: t.String(),
+                400: t.ErrorResponse,
+                409: t.ErrorResponse,
                 401: t.String(),
                 403: t.String(),
                 404: t.String(),
@@ -414,20 +404,17 @@ export const merchantCampaignsRoutes = new Elysia({
                 return status(404, "Campaign not found");
             }
 
-            const result =
+            const updated =
                 await CampaignContext.services.management.pause(campaignId);
 
-            if (!result.success) {
-                return status(400, result.error);
-            }
-
-            return formatCampaign(result.campaign, undefined);
+            return formatCampaign(updated, undefined);
         },
         {
             params: MerchantCampaignParamSchema,
             response: {
                 200: CampaignResponseSchema,
-                400: t.String(),
+                400: t.ErrorResponse,
+                409: t.ErrorResponse,
                 401: t.String(),
                 403: t.String(),
                 404: t.String(),
@@ -457,20 +444,17 @@ export const merchantCampaignsRoutes = new Elysia({
                 return status(404, "Campaign not found");
             }
 
-            const result =
+            const updated =
                 await CampaignContext.services.management.resume(campaignId);
 
-            if (!result.success) {
-                return status(400, result.error);
-            }
-
-            return formatCampaign(result.campaign, undefined);
+            return formatCampaign(updated, undefined);
         },
         {
             params: MerchantCampaignParamSchema,
             response: {
                 200: CampaignResponseSchema,
-                400: t.String(),
+                400: t.ErrorResponse,
+                409: t.ErrorResponse,
                 401: t.String(),
                 403: t.String(),
                 404: t.String(),
@@ -500,20 +484,17 @@ export const merchantCampaignsRoutes = new Elysia({
                 return status(404, "Campaign not found");
             }
 
-            const result =
+            const updated =
                 await CampaignContext.services.management.archive(campaignId);
 
-            if (!result.success) {
-                return status(400, result.error);
-            }
-
-            return formatCampaign(result.campaign, undefined);
+            return formatCampaign(updated, undefined);
         },
         {
             params: MerchantCampaignParamSchema,
             response: {
                 200: CampaignResponseSchema,
-                400: t.String(),
+                400: t.ErrorResponse,
+                409: t.ErrorResponse,
                 401: t.String(),
                 403: t.String(),
                 404: t.String(),
@@ -543,20 +524,16 @@ export const merchantCampaignsRoutes = new Elysia({
                 return status(404, "Campaign not found");
             }
 
-            const result =
-                await CampaignContext.services.management.delete(campaignId);
+            await CampaignContext.services.management.delete(campaignId);
 
-            if (!result.success) {
-                return status(400, result.error);
-            }
-
-            return { success: true };
+            return status(204);
         },
         {
             params: MerchantCampaignParamSchema,
             response: {
-                200: SuccessResponseSchema,
-                400: t.String(),
+                204: t.Void(),
+                400: t.ErrorResponse,
+                409: t.ErrorResponse,
                 401: t.String(),
                 403: t.String(),
                 404: t.String(),

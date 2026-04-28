@@ -14,8 +14,6 @@ export function useAddAllowedDomain({ merchantId }: { merchantId: string }) {
             if (error) {
                 throw new Error("Failed to add allowed domain");
             }
-
-            return { success: true };
         },
         onSuccess: () => {
             queryClient.invalidateQueries({
@@ -38,8 +36,6 @@ export function useRemoveAllowedDomain({ merchantId }: { merchantId: string }) {
             if (error) {
                 throw new Error("Failed to remove allowed domain");
             }
-
-            return { success: true };
         },
         onSuccess: () => {
             queryClient.invalidateQueries({

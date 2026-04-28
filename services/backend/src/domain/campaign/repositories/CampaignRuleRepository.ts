@@ -319,6 +319,34 @@ export class CampaignRuleRepository {
         });
     }
 
+    /**
+     * Restore campaign budget for a batch of terminated rewards. Sums amounts
+     * per `campaignRuleId` and applies a single restore call per campaign.
+     *
+     * Rewards without a `campaignRuleId` are silently ignored. Returns the
+     * total amount restored per campaign for logging.
+     */
+    async restoreBudgetsBatch(
+        rewards: { campaignRuleId: string | null; amount: string }[]
+    ): Promise<Record<string, number>> {
+        const amountsByCampaign = new Map<string, number>();
+        for (const reward of rewards) {
+            if (!reward.campaignRuleId) continue;
+            const current = amountsByCampaign.get(reward.campaignRuleId) ?? 0;
+            amountsByCampaign.set(
+                reward.campaignRuleId,
+                current + Number.parseFloat(reward.amount)
+            );
+        }
+
+        const restored: Record<string, number> = {};
+        for (const [campaignRuleId, amount] of amountsByCampaign) {
+            await this.restoreBudget(campaignRuleId, amount);
+            restored[campaignRuleId] = amount;
+        }
+        return restored;
+    }
+
     async findByMerchant(merchantId: string): Promise<CampaignRuleSelect[]> {
         return db
             .select()

@@ -36,6 +36,9 @@ export function useGetRewardHistory() {
                     settledAt: item.settledAt
                         ? toTimestamp(item.settledAt)
                         : undefined,
+                    availableAt: item.availableAt
+                        ? toTimestamp(item.availableAt)
+                        : undefined,
                 })),
                 totalCount: data.totalCount,
             };

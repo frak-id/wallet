@@ -1,6 +1,6 @@
 import { rateLimitMiddleware } from "@backend-infrastructure";
-import { t } from "@backend-utils";
-import { Elysia, status } from "elysia";
+import { HttpError, t } from "@backend-utils";
+import { Elysia } from "elysia";
 import { IdentityContext } from "../../../domain/identity/context";
 import { MerchantContext } from "../../../domain/merchant/context";
 
@@ -13,7 +13,6 @@ const installCodeGenerateRoute = new Elysia()
                 merchantId: body.merchantId,
                 anonymousId: body.anonymousId,
             });
-
             return {
                 code: result.code,
                 expiresAt: new Date(result.expiresAt).toISOString(),
@@ -38,35 +37,25 @@ const installCodeResolveRoute = new Elysia()
     .post(
         "/resolve",
         async ({ body }) => {
-            const result = await IdentityContext.services.installCode.resolve({
-                code: body.code,
-            });
-
-            if (!result.success) {
-                return status(400, {
-                    success: false as const,
-                    error: result.error,
-                    code: result.code,
+            const { merchantId, anonymousId } =
+                await IdentityContext.services.installCode.resolve({
+                    code: body.code,
                 });
-            }
 
             const [merchant, identityGroup] = await Promise.all([
-                MerchantContext.repositories.merchant.findById(
-                    result.merchantId
-                ),
+                MerchantContext.repositories.merchant.findById(merchantId),
                 IdentityContext.repositories.identity.findGroupByIdentity({
                     type: "anonymous_fingerprint",
-                    value: result.anonymousId,
-                    merchantId: result.merchantId,
+                    value: anonymousId,
+                    merchantId,
                 }),
             ]);
 
             if (!merchant) {
-                return status(400, {
-                    success: false as const,
-                    error: "Merchant not found",
-                    code: "MERCHANT_NOT_FOUND",
-                });
+                throw HttpError.notFound(
+                    "MERCHANT_NOT_FOUND",
+                    "Merchant not found"
+                );
             }
 
             let hasWallet = false;
@@ -79,8 +68,8 @@ const installCodeResolveRoute = new Elysia()
             }
 
             return {
-                merchantId: result.merchantId,
-                anonymousId: result.anonymousId,
+                merchantId,
+                anonymousId,
                 merchant: {
                     name: merchant.name,
                     domain: merchant.domain,
@@ -102,7 +91,7 @@ const installCodeResolveRoute = new Elysia()
                     }),
                     hasWallet: t.Boolean(),
                 }),
-                400: t.ErrorResponse,
+                404: t.ErrorResponse,
             },
         }
     );

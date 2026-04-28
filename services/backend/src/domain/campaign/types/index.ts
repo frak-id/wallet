@@ -46,12 +46,7 @@ export type PurchaseContext = {
 };
 
 type AttributionContext = {
-    source: "referral_link" | "organic" | "paid_ad" | "direct" | null;
-    touchpointId: string | null;
     referrerIdentityGroupId: string | null;
-    utmSource?: string;
-    utmMedium?: string;
-    utmCampaign?: string;
 };
 
 type UserRewardHistory = {
@@ -101,6 +96,8 @@ export type CalculatedReward = {
     description?: string;
     chainDepth?: number;
     expirationDays?: number;
+    /** Seconds the reward stays locked before settlement. 0/undefined = no lockup. */
+    lockupSeconds?: number;
 };
 
 export type EvaluationResult = {

@@ -76,8 +76,8 @@ export const merchantRegistrationRoutes = new Elysia({ prefix: "/register" })
         async ({ body, request }) => {
             const origin = request.headers.get("origin") ?? "";
 
-            const result = await MerchantContext.services.registration.register(
-                {
+            const { merchantId } =
+                await MerchantContext.services.registration.register({
                     message: body.message,
                     signature: body.signature,
                     domain: body.domain,
@@ -86,40 +86,24 @@ export const merchantRegistrationRoutes = new Elysia({ prefix: "/register" })
                     setupCode: body.setupCode,
                     defaultRewardToken: body.defaultRewardToken,
                     allowedDomains: body.allowedDomains,
-                }
-            );
-
-            if (!result.success) {
-                return status(400, result.error);
-            }
+                });
 
             CampaignBankContext.services.campaignBank
-                .deployAndSetupBank(result.merchantId)
-                .then((bankResult) => {
-                    if (!bankResult.success) {
-                        log.warn(
-                            {
-                                merchantId: result.merchantId,
-                                error: bankResult.error,
-                            },
-                            "Failed to deploy campaign bank during registration"
-                        );
-                    }
-                })
+                .deployAndSetupBank(merchantId)
                 .catch((error) => {
                     log.error(
                         {
-                            merchantId: result.merchantId,
+                            merchantId,
                             error:
                                 error instanceof Error
                                     ? error.message
                                     : String(error),
                         },
-                        "Error deploying campaign bank during registration"
+                        "Failed to deploy campaign bank during registration"
                     );
                 });
 
-            return { merchantId: result.merchantId };
+            return { merchantId };
         },
         {
             body: t.Object({
@@ -135,7 +119,8 @@ export const merchantRegistrationRoutes = new Elysia({ prefix: "/register" })
                 200: t.Object({
                     merchantId: t.String(),
                 }),
-                400: t.String(),
+                400: t.ErrorResponse,
+                409: t.ErrorResponse,
             },
         }
     )

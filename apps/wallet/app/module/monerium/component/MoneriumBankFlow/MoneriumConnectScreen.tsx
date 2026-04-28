@@ -1,8 +1,11 @@
-import { Box } from "@frak-labs/design-system/components/Box";
 import { Card } from "@frak-labs/design-system/components/Card";
+import { Stack } from "@frak-labs/design-system/components/Stack";
 import { Text } from "@frak-labs/design-system/components/Text";
-import { PersonIcon } from "@frak-labs/design-system/icons";
-import { Landmark, ShieldCheck } from "lucide-react";
+import {
+    BankIcon,
+    PersonIcon,
+    SafetyIcon,
+} from "@frak-labs/design-system/icons";
 import type { ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 import { useConnection } from "wagmi";
@@ -27,17 +30,17 @@ type FeatureConfig = {
 
 const infoFeatures: FeatureConfig[] = [
     {
-        icon: <PersonIcon width={20} height={20} />,
+        icon: <PersonIcon width={24} height={24} />,
         titleKey: "monerium.bankFlow.info.feature1Title",
         descriptionKey: "monerium.bankFlow.info.feature1Description",
     },
     {
-        icon: <Landmark size={20} />,
+        icon: <BankIcon width={24} height={24} />,
         titleKey: "monerium.bankFlow.info.feature2Title",
         descriptionKey: "monerium.bankFlow.info.feature2Description",
     },
     {
-        icon: <ShieldCheck size={20} />,
+        icon: <SafetyIcon width={24} height={24} />,
         titleKey: "monerium.bankFlow.info.feature3Title",
         descriptionKey: "monerium.bankFlow.info.feature3Description",
     },
@@ -45,7 +48,7 @@ const infoFeatures: FeatureConfig[] = [
 
 const kycFeatures: FeatureConfig[] = [
     {
-        icon: <PersonIcon width={20} height={20} />,
+        icon: <PersonIcon width={24} height={24} />,
         titleKey: "monerium.bankFlow.kyc.featureTitle",
         descriptionKey: "monerium.bankFlow.kyc.featureDescription",
     },
@@ -89,24 +92,22 @@ export function MoneriumConnectScreen({
     return (
         <MoneriumScreen
             onClose={onClose}
+            title={t(config.titleKey)}
             ctaLabel={t(config.ctaKey)}
             ctaOnClick={handleConnect}
             ctaLoading={isConnecting}
         >
-            {/* Title + description */}
-            <Box display={"flex"} flexDirection={"column"} gap={"s"}>
-                <Text variant="heading1">{t(config.titleKey)}</Text>
+            <Stack space="m">
                 <Text variant="body" color="secondary">
                     {t(config.descriptionKey)}
                 </Text>
                 <Text variant="body" color="secondary">
                     {t(config.noticeKey)}
                 </Text>
-            </Box>
+            </Stack>
 
-            {/* Feature card */}
-            <Card variant="muted" padding="default">
-                <Box display={"flex"} flexDirection={"column"} gap={"l"}>
+            <Card variant="elevated" padding="none">
+                <Stack space="none">
                     {config.features.map((feature) => (
                         <FeatureRow
                             key={feature.titleKey}
@@ -115,7 +116,7 @@ export function MoneriumConnectScreen({
                             description={t(feature.descriptionKey)}
                         />
                     ))}
-                </Box>
+                </Stack>
             </Card>
         </MoneriumScreen>
     );

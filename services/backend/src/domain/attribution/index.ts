@@ -3,16 +3,16 @@ export {
     type ReferralLinkInsert,
     type ReferralLinkSelect,
     referralLinksTable,
-    TouchpointSources,
-    touchpointsTable,
 } from "./db/schema";
 export { ReferralLinkRepository } from "./repositories/ReferralLinkRepository";
-export { TouchpointRepository } from "./repositories/TouchpointRepository";
 export {
-    type TouchpointSource,
-    type TouchpointSourceData,
-    TouchpointSourceDataSchema,
-    TouchpointSourceSchema,
+    type ReferralLinkEndReason,
+    ReferralLinkEndReasonSchema,
+    type ReferralLinkScope,
+    ReferralLinkScopeSchema,
+    type ReferralLinkSource,
+    type ReferralLinkSourceData,
+    ReferralLinkSourceDataSchema,
+    ReferralLinkSourceSchema,
 } from "./schemas/index";
-export { AttributionService } from "./services/AttributionService";
 export { ReferralService } from "./services/ReferralService";

@@ -1,10 +1,10 @@
 import { log } from "@backend-infrastructure";
+import { HttpError } from "@backend-utils";
 import type { Address } from "viem";
 import type { IdentityRepository } from "../../domain/identity/repositories/IdentityRepository";
 import type { IdentityMergeService } from "./IdentityMergeService";
 import type { IdentityWeightService } from "./IdentityWeightService";
 import type { AssociateResult, IdentityNode, ResolveResult } from "./types";
-import { WalletConflictError } from "./types";
 
 export class IdentityOrchestrator {
     constructor(
@@ -64,7 +64,10 @@ export class IdentityOrchestrator {
             weight2.wallet &&
             weight1.wallet !== weight2.wallet
         ) {
-            throw new WalletConflictError(weight1.wallet, weight2.wallet);
+            throw HttpError.conflict(
+                "WALLET_CONFLICT",
+                `Cannot merge identities linked to different wallets: ${weight1.wallet} ↔ ${weight2.wallet}`
+            );
         }
 
         const { anchorGroupId, mergingGroupId } =

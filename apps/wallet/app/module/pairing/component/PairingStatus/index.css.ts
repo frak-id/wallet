@@ -1,13 +1,8 @@
-import { brand } from "@frak-labs/design-system/tokens";
+import { vars } from "@frak-labs/design-system/theme";
 import { style } from "@vanilla-extract/css";
 
-export const pairingStatus = style({
-    display: "inline-block",
-});
-
-export const statusInline = style({
-    display: "flex",
+export const iconWarning = style({
+    display: "inline-flex",
     alignItems: "center",
-    justifyContent: "center",
-    gap: brand.scale[100],
+    color: vars.icon.warning,
 });

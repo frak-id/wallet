@@ -1,6 +1,6 @@
 import type { Address } from "viem";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import type { AttributionService } from "../../../domain/attribution/services/AttributionService";
+import type { ReferralService } from "../../../domain/attribution";
 import type { HandlerContext } from "../types";
 import { ArrivalHandler } from "./ArrivalHandler";
 
@@ -20,20 +20,17 @@ vi.mock("../../../domain/identity", () => ({
 const validWallet = "0x1234567890123456789012345678901234567890" as Address;
 const otherWallet = "0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa" as Address;
 
-function makeHandler(
-    recordTouchpointImpl?: Parameters<AttributionService["recordTouchpoint"]>[0]
-) {
-    const recordTouchpoint = vi.fn().mockResolvedValue({
-        touchpoint: { id: "tp-123" },
-        referralRegistered: true,
+function makeHandler() {
+    const registerReferral = vi.fn().mockResolvedValue({
+        registered: true,
+        link: { id: "link-123" },
     });
-    const attributionService = {
-        recordTouchpoint,
-    } as unknown as AttributionService;
+    const referralService = {
+        registerReferral,
+    } as unknown as ReferralService;
     return {
-        handler: new ArrivalHandler(attributionService),
-        recordTouchpoint,
-        params: recordTouchpointImpl,
+        handler: new ArrivalHandler(referralService),
+        registerReferral,
     };
 }
 
@@ -48,9 +45,9 @@ describe("ArrivalHandler", () => {
         findGroupByIdentity.mockReset();
     });
 
-    describe("buildSourceData", () => {
-        it("emits V2 source_data with both clientId and wallet when both are valid", async () => {
-            const { handler, recordTouchpoint } = makeHandler();
+    describe("registerReferral wiring", () => {
+        it("forwards sharedAt sourceData when referralTimestamp is present", async () => {
+            const { handler, registerReferral } = makeHandler();
             findGroupByIdentity.mockResolvedValue({ id: "group-referrer" });
 
             await handler.buildPayload(
@@ -64,93 +61,60 @@ describe("ArrivalHandler", () => {
                 ctx
             );
 
-            const call = recordTouchpoint.mock.calls[0][0];
-            expect(call.sourceData).toEqual({
-                type: "referral_link",
-                v: 2,
-                referrerMerchantId: "merchant-referrer",
-                referralTimestamp: 1709654400,
-                referrerClientId: "client-xyz",
-                referrerWallet: validWallet,
+            expect(registerReferral).toHaveBeenCalledWith({
+                merchantId: "merchant-1",
+                referrerIdentityGroupId: "group-referrer",
+                refereeIdentityGroupId: "group-receiver",
+                sourceData: { type: "link", sharedAt: 1709654400 },
             });
         });
 
-        it("emits V2 source_data with wallet only when clientId is missing", async () => {
-            const { handler, recordTouchpoint } = makeHandler();
+        it("omits sharedAt when referralTimestamp is missing", async () => {
+            const { handler, registerReferral } = makeHandler();
             findGroupByIdentity.mockResolvedValue({ id: "group-referrer" });
+
+            await handler.buildPayload(
+                {
+                    merchantId: "merchant-1",
+                    referrerWallet: validWallet,
+                },
+                ctx
+            );
+
+            expect(registerReferral).toHaveBeenCalledWith({
+                merchantId: "merchant-1",
+                referrerIdentityGroupId: "group-referrer",
+                refereeIdentityGroupId: "group-receiver",
+                sourceData: { type: "link" },
+            });
+        });
+
+        it("does not call registerReferral when no referrer is provided", async () => {
+            const { handler, registerReferral } = makeHandler();
+
+            await handler.buildPayload({ merchantId: "merchant-1" }, ctx);
+
+            expect(registerReferral).not.toHaveBeenCalled();
+        });
+
+        it("does not call registerReferral when referrer cannot be resolved", async () => {
+            const { handler, registerReferral } = makeHandler();
+            findGroupByIdentity.mockResolvedValue(null);
 
             await handler.buildPayload(
                 {
                     merchantId: "merchant-1",
                     referrerMerchantId: "merchant-referrer",
-                    referrerWallet: validWallet,
+                    referrerClientId: "client-xyz",
                 },
                 ctx
             );
 
-            expect(recordTouchpoint.mock.calls[0][0].sourceData).toMatchObject({
-                type: "referral_link",
-                v: 2,
-                referrerWallet: validWallet,
-            });
-            expect(
-                recordTouchpoint.mock.calls[0][0].sourceData
-            ).not.toHaveProperty("referrerClientId");
+            expect(registerReferral).not.toHaveBeenCalled();
         });
 
-        it("emits V1 source_data when only a valid wallet is provided (no merchantId)", async () => {
-            const { handler, recordTouchpoint } = makeHandler();
-            findGroupByIdentity.mockResolvedValue({ id: "group-referrer" });
-
-            await handler.buildPayload(
-                {
-                    merchantId: "merchant-1",
-                    referrerWallet: validWallet,
-                },
-                ctx
-            );
-
-            expect(recordTouchpoint.mock.calls[0][0].sourceData).toEqual({
-                type: "referral_link",
-                v: 1,
-                referrerWallet: validWallet,
-            });
-        });
-
-        it("downgrades to paid_ad when only UTM fields are present", async () => {
-            const { handler, recordTouchpoint } = makeHandler();
-
-            await handler.buildPayload(
-                {
-                    merchantId: "merchant-1",
-                    utmSource: "google",
-                    utmCampaign: "spring",
-                },
-                ctx
-            );
-
-            expect(recordTouchpoint.mock.calls[0][0].sourceData).toEqual({
-                type: "paid_ad",
-                utmSource: "google",
-                utmMedium: undefined,
-                utmCampaign: "spring",
-                utmTerm: undefined,
-                utmContent: undefined,
-            });
-        });
-
-        it("falls through to direct when nothing is present", async () => {
-            const { handler, recordTouchpoint } = makeHandler();
-
-            await handler.buildPayload({ merchantId: "merchant-1" }, ctx);
-
-            expect(recordTouchpoint.mock.calls[0][0].sourceData).toEqual({
-                type: "direct",
-            });
-        });
-
-        it("ignores malformed wallet (invalid hex) and falls back cleanly", async () => {
-            const { handler, recordTouchpoint } = makeHandler();
+        it("ignores malformed wallet (invalid hex) and falls back to clientId path", async () => {
+            const { handler, registerReferral } = makeHandler();
             findGroupByIdentity.mockResolvedValue({ id: "group-referrer" });
 
             await handler.buildPayload(
@@ -163,19 +127,18 @@ describe("ArrivalHandler", () => {
                 ctx
             );
 
-            const sourceData = recordTouchpoint.mock.calls[0][0].sourceData;
-            expect(sourceData).toMatchObject({
-                type: "referral_link",
-                v: 2,
-                referrerClientId: "client-xyz",
+            expect(findGroupByIdentity).toHaveBeenCalledWith({
+                type: "anonymous_fingerprint",
+                value: "client-xyz",
+                merchantId: "merchant-referrer",
             });
-            expect(sourceData).not.toHaveProperty("referrerWallet");
+            expect(registerReferral).toHaveBeenCalled();
         });
     });
 
     describe("resolveReferrerGroupId", () => {
         it("uses wallet lookup first when a valid wallet is present", async () => {
-            const { handler, recordTouchpoint } = makeHandler();
+            const { handler } = makeHandler();
             findGroupByIdentity.mockResolvedValue({ id: "group-wallet" });
 
             await handler.buildPayload(
@@ -188,21 +151,17 @@ describe("ArrivalHandler", () => {
                 ctx
             );
 
-            // First call should have been wallet lookup
             expect(findGroupByIdentity).toHaveBeenCalledWith({
                 type: "wallet",
                 value: validWallet,
             });
-            expect(
-                recordTouchpoint.mock.calls[0][0].referrerIdentityGroupId
-            ).toBe("group-wallet");
         });
 
         it("falls back to anonymous_fingerprint when wallet lookup returns null", async () => {
-            const { handler, recordTouchpoint } = makeHandler();
+            const { handler, registerReferral } = makeHandler();
             findGroupByIdentity
-                .mockResolvedValueOnce(null) // wallet lookup misses
-                .mockResolvedValueOnce({ id: "group-anon" }); // fingerprint hit
+                .mockResolvedValueOnce(null)
+                .mockResolvedValueOnce({ id: "group-anon" });
 
             await handler.buildPayload(
                 {
@@ -223,32 +182,16 @@ describe("ArrivalHandler", () => {
                 value: "client-xyz",
                 merchantId: "merchant-referrer",
             });
-            expect(
-                recordTouchpoint.mock.calls[0][0].referrerIdentityGroupId
-            ).toBe("group-anon");
-        });
-
-        it("returns undefined when neither identifier resolves", async () => {
-            const { handler, recordTouchpoint } = makeHandler();
-            findGroupByIdentity.mockResolvedValue(null);
-
-            await handler.buildPayload(
-                {
-                    merchantId: "merchant-1",
-                    referrerMerchantId: "merchant-referrer",
-                    referrerClientId: "client-xyz",
-                },
-                ctx
+            expect(registerReferral).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    referrerIdentityGroupId: "group-anon",
+                })
             );
-
-            expect(
-                recordTouchpoint.mock.calls[0][0].referrerIdentityGroupId
-            ).toBeUndefined();
         });
     });
 
     describe("buildPayload output shape", () => {
-        it("forwards the validated wallet (not the raw input) into the payload", async () => {
+        it("returns the link id and registered flag from registerReferral", async () => {
             const { handler } = makeHandler();
             findGroupByIdentity.mockResolvedValue({ id: "group-x" });
 
@@ -259,7 +202,6 @@ describe("ArrivalHandler", () => {
                     referrerClientId: "client-xyz",
                     referrerWallet: validWallet,
                     referralTimestamp: 1709654400,
-                    landingUrl: "https://site.com/x",
                 },
                 ctx
             );
@@ -269,8 +211,7 @@ describe("ArrivalHandler", () => {
                 referrerClientId: "client-xyz",
                 referrerMerchantId: "merchant-referrer",
                 referralTimestamp: 1709654400,
-                landingUrl: "https://site.com/x",
-                touchpointId: "tp-123",
+                referralLinkId: "link-123",
                 referralRegistered: true,
             });
         });
@@ -292,6 +233,26 @@ describe("ArrivalHandler", () => {
             expect(payload.referrerWallet).toBeUndefined();
             expect(payload.referrerClientId).toBe("client-xyz");
         });
+
+        it("returns null link id and registered=false when registration fails (duplicate)", async () => {
+            findGroupByIdentity.mockResolvedValue({ id: "group-referrer" });
+            const reg = vi.fn().mockResolvedValue({ registered: false });
+            const handler = new ArrivalHandler({
+                registerReferral: reg,
+            } as unknown as ReferralService);
+
+            const payload = await handler.buildPayload(
+                {
+                    merchantId: "merchant-1",
+                    referrerWallet: validWallet,
+                },
+                ctx
+            );
+
+            expect(payload.referralLinkId).toBeNull();
+            expect(payload.referralRegistered).toBe(false);
+            expect(reg).toHaveBeenCalled();
+        });
     });
 
     describe("shouldCreateInteractionLog", () => {
@@ -302,7 +263,7 @@ describe("ArrivalHandler", () => {
                     { merchantId: "m" },
                     {
                         referrerWallet: otherWallet,
-                        touchpointId: "t",
+                        referralLinkId: "link-1",
                         referralRegistered: true,
                     }
                 )
@@ -313,7 +274,7 @@ describe("ArrivalHandler", () => {
                     { merchantId: "m" },
                     {
                         referrerWallet: otherWallet,
-                        touchpointId: "t",
+                        referralLinkId: null,
                         referralRegistered: false,
                     }
                 )

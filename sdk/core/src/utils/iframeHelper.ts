@@ -1,4 +1,5 @@
 import type { FrakWalletSdkConfig } from "../types";
+import { getBackendUrl } from "./backendUrl";
 import { getClientId } from "./clientId";
 
 /**
@@ -57,6 +58,12 @@ export function createIframe({
     const walletUrl =
         config?.walletUrl ?? walletBaseUrl ?? "https://wallet.frak.id";
     const clientId = getClientId();
+
+    // Preconnect to the wallet + backend origins so the handshake doesn't pay
+    // for a cold DNS/TLS round-trip on partner sites that didn't warm them.
+    preconnect(walletUrl);
+    preconnect(getBackendUrl(walletUrl));
+
     iframe.src = `${walletUrl}/listener?clientId=${encodeURIComponent(clientId)}`;
 
     return new Promise((resolve) => {
@@ -146,5 +153,27 @@ export function findIframeInOpener(pathname = "/listener"): Window | null {
             error
         );
         return null;
+    }
+}
+
+/**
+ * Inject a `<link rel="preconnect">` for the given origin. Idempotent — browsers
+ * de-duplicate preconnects per origin automatically, but we also guard on a data
+ * attribute to avoid spamming the <head> in SPA re-inits.
+ */
+function preconnect(url: string): void {
+    if (typeof document === "undefined") return;
+    try {
+        const origin = new URL(url).origin;
+        const selector = `link[rel="preconnect"][data-frak-preconnect="${origin}"]`;
+        if (document.head.querySelector(selector)) return;
+        const link = document.createElement("link");
+        link.rel = "preconnect";
+        link.href = origin;
+        link.crossOrigin = "";
+        link.dataset.frakPreconnect = origin;
+        document.head.appendChild(link);
+    } catch {
+        // Invalid URL — nothing to preconnect.
     }
 }

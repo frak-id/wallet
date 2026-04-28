@@ -38,7 +38,7 @@ export function RewardDetailModal({ item, onClose }: RewardDetailModalProps) {
             <DetailSheetBody className={styles.body}>
                 <GlassButton
                     as="button"
-                    icon={<CloseIcon />}
+                    icon={<CloseIcon width={22} height={22} />}
                     onClick={onClose}
                     aria-label={t("common.close")}
                 />
@@ -239,7 +239,7 @@ function StatusRow({
                         {t("reward.detail.pendingValidation")}
                     </Text>
                 </Box>
-                {item.settledAt && (
+                {item.availableAt && (
                     <InfoRow
                         labelVariant="bodySmall"
                         labelColor="secondary"
@@ -252,7 +252,7 @@ function StatusRow({
                                     height={16}
                                 />
                                 <Text variant="bodySmall" weight="medium">
-                                    {formatDateShort(item.settledAt, locale)}
+                                    {formatDateShort(item.availableAt, locale)}
                                 </Text>
                             </Inline>
                         }

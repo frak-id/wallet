@@ -55,9 +55,9 @@ constructor(repo?: IdentityRepository) { this.repo = repo ?? new IdentityReposit
 ## Non-Obvious Patterns
 - **Use `{Domain}Context.services.*` everywhere** — never `new Service()` in API handlers.
 - **Drizzle schemas live per-domain** (`src/domain/*/db/schema.ts`) — no central `schema.ts`. Not every domain has one (e.g. `wallet`, `campaign-bank`, `media` are DB-less).
+- **DB Migration generation are always human generated** - Never generate or write drizzle migration, it will be done by the db team.
 - **WebAuthn credentials live in libSQL/Turso** (`src/domain/auth/db/schema.ts` uses `sqliteTable`, `drizzle-libsql.config.ts`). Append-only, shared across environments. PostgreSQL backs every other domain.
 - **Macro pattern** = reusable Elysia middleware (auth, rate limit, CORS) in `src/infrastructure/macro/`.
-- **Migrations deploy as `KubernetesJob`** BEFORE the backend `KubernetesService` — skipping this breaks the pod.
 - **Path aliases**: `@backend-utils`, `@backend-infrastructure/*`, `@backend-domain/*` (see tsconfig).
 - **BFF split**: `src/api/{user,business,external,common}` — pick the right one by consumer, not by feature.
 - **Blockchain via viem + permissionless + ox**; Pimlico/ZeroDev for ERC-4337 bundler/paymaster.

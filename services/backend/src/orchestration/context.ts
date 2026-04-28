@@ -5,6 +5,7 @@ import { IdentityContext } from "../domain/identity/context";
 import { MerchantContext } from "../domain/merchant/context";
 import { NotificationContext } from "../domain/notifications/context";
 import { PurchasesContext } from "../domain/purchases/context";
+import { ReferralCodeContext } from "../domain/referral-code/context";
 import { RewardsContext } from "../domain/rewards/context";
 import { WalletContext } from "../domain/wallet/context";
 import { pricingRepository } from "../infrastructure/pricing/PricingRepository";
@@ -23,8 +24,9 @@ import { NotificationOrchestrator } from "./NotificationOrchestrator";
 import { PurchaseInteractionCreator } from "./PurchaseInteractionCreator";
 import { PurchaseLinkingOrchestrator } from "./PurchaseLinkingOrchestrator";
 import { PurchaseWebhookOrchestrator } from "./PurchaseWebhookOrchestrator";
-import { RewardExpirationOrchestrator } from "./RewardExpirationOrchestrator";
 import { RewardHistoryOrchestrator } from "./RewardHistoryOrchestrator";
+import { RewardLifecycleOrchestrator } from "./RewardLifecycleOrchestrator";
+import { ReferralCodeRedemptionOrchestrator } from "./referral-code";
 import { InteractionContextBuilder } from "./reward";
 import { SettlementOrchestrator } from "./SettlementOrchestrator";
 import { WebhookResolverOrchestrator } from "./WebhookResolverOrchestrator";
@@ -38,7 +40,9 @@ const identityWeightService = new IdentityWeightService(
     IdentityContext.repositories.identity
 );
 
-const identityMergeService = new IdentityMergeService();
+const identityMergeService = new IdentityMergeService(
+    AttributionContext.repositories.referralLink
+);
 
 const identityOrchestrator = new IdentityOrchestrator(
     IdentityContext.repositories.identity,
@@ -47,8 +51,7 @@ const identityOrchestrator = new IdentityOrchestrator(
 );
 
 const interactionContextBuilder = new InteractionContextBuilder(
-    AttributionContext.services.attribution,
-    IdentityContext.repositories.identity
+    AttributionContext.repositories.referralLink
 );
 
 const notificationOrchestrator = new NotificationOrchestrator(
@@ -77,11 +80,18 @@ const purchaseLinkingOrchestrator = new PurchaseLinkingOrchestrator(
     purchaseInteractionCreator
 );
 
+const rewardLifecycleOrchestrator = new RewardLifecycleOrchestrator(
+    RewardsContext.repositories.assetLog,
+    RewardsContext.repositories.interactionLog,
+    CampaignContext.repositories.campaignRule
+);
+
 const purchaseWebhookOrchestrator = new PurchaseWebhookOrchestrator(
     PurchasesContext.repositories.purchase,
     PurchasesContext.repositories.purchaseClaim,
     purchaseInteractionCreator,
-    identityOrchestrator
+    identityOrchestrator,
+    rewardLifecycleOrchestrator
 );
 
 const settlementOrchestrator = new SettlementOrchestrator(
@@ -92,12 +102,6 @@ const settlementOrchestrator = new SettlementOrchestrator(
     RewardsContext.repositories.interactionLog,
     CampaignBankContext.repositories.campaignBank
 );
-
-const rewardExpirationOrchestrator = new RewardExpirationOrchestrator(
-    RewardsContext.repositories.assetLog,
-    CampaignContext.repositories.campaignRule
-);
-
 const rewardHistoryOrchestrator = new RewardHistoryOrchestrator(
     RewardsContext.repositories.assetLog,
     IdentityContext.repositories.identity,
@@ -105,7 +109,7 @@ const rewardHistoryOrchestrator = new RewardHistoryOrchestrator(
     WalletContext.repositories.balances,
     pricingRepository,
     RewardsContext.services.rewardHistory,
-    AttributionContext.repositories.touchpoint,
+    AttributionContext.repositories.referralLink,
     RewardsContext.repositories.interactionLog
 );
 
@@ -119,7 +123,7 @@ const explorerOrchestrator = new ExplorerOrchestrator();
 
 const interactionSubmissionOrchestrator = new InteractionSubmissionOrchestrator(
     RewardsContext.repositories.interactionLog,
-    AttributionContext.services.attribution
+    AttributionContext.services.referral
 );
 
 const anonymousMergeOrchestrator = new AnonymousMergeOrchestrator(
@@ -127,6 +131,12 @@ const anonymousMergeOrchestrator = new AnonymousMergeOrchestrator(
     IdentityContext.repositories.identity,
     identityOrchestrator
 );
+
+const referralCodeRedemptionOrchestrator =
+    new ReferralCodeRedemptionOrchestrator(
+        ReferralCodeContext.services.referralCode,
+        AttributionContext.repositories.referralLink
+    );
 
 export namespace OrchestrationContext {
     export const orchestrators = {
@@ -140,9 +150,10 @@ export namespace OrchestrationContext {
         notification: notificationOrchestrator,
         purchaseLinking: purchaseLinkingOrchestrator,
         purchaseWebhook: purchaseWebhookOrchestrator,
-        rewardExpiration: rewardExpirationOrchestrator,
+        rewardLifecycle: rewardLifecycleOrchestrator,
         rewardHistory: rewardHistoryOrchestrator,
         settlement: settlementOrchestrator,
         webhookResolver: webhookResolverOrchestrator,
+        referralCodeRedemption: referralCodeRedemptionOrchestrator,
     };
 }

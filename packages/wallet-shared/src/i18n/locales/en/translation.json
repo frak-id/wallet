@@ -92,7 +92,9 @@
             "privacyPolicy": "Privacy Policy",
             "helpSupport": "Help & support",
             "rateApp": "Rate the app",
-            "lastConnection": "Last connection"
+            "managePairings": "Manage paired devices",
+            "lastConnection": "Last connection",
+            "currentDeviceConnected": "Connected"
         },
         "transferToBank": "Transfer to my bank",
         "transferEmpty": {
@@ -232,7 +234,7 @@
             "amountLessThanBalance": "Amount must be less than balance",
             "amountPositive": "Amount must be positive",
             "amountToSend": "Amount to send",
-            "backToWallet": "Back to wallet page"
+            "sendTitle": "Transfer to a crypto wallet"
         },
         "welcome": {
             "title": "Welcome in your wallet",
@@ -262,11 +264,11 @@
         },
         "pairing": {
             "title": "Confirm device pairing",
-            "text": "You're about to connect this device to your account",
+            "text": "You're about to connect a device to your account.",
             "info": {
                 "title": "Pairing information",
-                "status": "Status:",
-                "device": "Device:"
+                "status": "Status",
+                "device": "Device"
             },
             "code": "Check that the code is correct",
             "noCodeNotice": "Confirm this pairing request to continue.",
@@ -279,7 +281,7 @@
                 "title": "Please wait"
             },
             "cancel": "Cancel",
-            "confirm": "Confirm",
+            "confirm": "Confirm the code",
             "pairingInProgress": "Pairing in progress, please authenticate",
             "origin": {
                 "state": {
@@ -287,6 +289,7 @@
                     "connecting": "Paired device not online",
                     "paired": "Connected with partner",
                     "retryError": "Error when connecting to the paired device",
+                    "error": "Connection rejected by the server",
                     "requests": {
                         "connecting": "Open your paired device to proceed to the transaction",
                         "paired": "Wait for partner to process signature"
@@ -297,7 +300,8 @@
                 "state": {
                     "connecting": "Connecting to partner device",
                     "paired": "Connected with other device",
-                    "retryError": "Error when connecting to partner device"
+                    "retryError": "Error when connecting to partner device",
+                    "error": "Connection rejected by the server"
                 }
             },
             "status": {
@@ -320,18 +324,29 @@
                 "buttons": {
                     "sign": "Sign",
                     "reject": "Reject"
+                },
+                "modal": {
+                    "counter": "{{current}} / {{total}}"
+                },
+                "banner": {
+                    "title": "Another device is waiting for your signature",
+                    "summary": "{{count}} pending request",
+                    "summary_other": "{{count}} pending requests",
+                    "cta": "Review"
                 }
             },
             "refresh": "Retry",
             "refreshCode": "Code:",
             "refreshReason": "Reason:",
+            "reconnect": "Reconnect",
             "list": {
                 "title": "Connected devices",
-                "origin": "Origin :",
-                "target": "Target :",
-                "createdAt": "Created at :",
-                "lastActive": "Last active :",
-                "delete": "Delete device"
+                "origin": "Origin",
+                "target": "Target",
+                "createdAt": "Created at",
+                "lastActive": "Last active",
+                "delete": "Delete device",
+                "empty": "No connected devices"
             }
         },
         "inAppBrowser": {
@@ -557,8 +572,10 @@
             "amountInvalid": "Amount must be greater than 0"
         },
         "callback": {
-            "noCode": "No authorization code received",
-            "failed": "Failed to complete authentication",
+            "cancelledTitle": "Connection cancelled",
+            "cancelledDescription": "You can reconnect to Monerium whenever you're ready.",
+            "errorTitle": "Connection failed",
+            "errorDescription": "Something went wrong while connecting to Monerium. Please try again in a moment.",
             "tryAgain": "Try again"
         },
         "bankFlow": {
@@ -596,10 +613,10 @@
             },
             "transfer": {
                 "amount": {
-                    "title": "Transfer my earnings",
+                    "title": "Amount to transfer",
                     "walletLabel": "Frak Wallet",
                     "totalBalance": "Total balance",
-                    "ibanLabel": "Recipient",
+                    "ibanLabel": "IBAN",
                     "ibanEmpty": "No IBAN saved",
                     "modify": "Edit",
                     "continue": "Continue",

@@ -119,6 +119,22 @@ const resolveMoneriumRoute = (params: DeepLinkParams): Route => {
 };
 
 /**
+ * Resolve a pairing deep link. Aliased under both `pair` and `pairing`
+ * actions to support QR codes encoding `/pair` (legacy/docs) or `/pairing`
+ * (current QR generators).
+ */
+const resolvePairRoute = (params: DeepLinkParams): Route =>
+    params.id && params.id.length > 0 && params.id.length <= 128
+        ? {
+              to: "/pairing",
+              search: {
+                  id: params.id,
+                  mode: params.mode ?? "embedded",
+              },
+          }
+        : { to: "/wallet" };
+
+/**
  * Action → route resolver map.
  *
  * Each entry maps a deep link action name to a function that builds
@@ -126,16 +142,8 @@ const resolveMoneriumRoute = (params: DeepLinkParams): Route => {
  * cognitive complexity limit.
  */
 const routeResolvers: Record<string, (params: DeepLinkParams) => Route> = {
-    pair: (params) =>
-        params.id && params.id.length > 0 && params.id.length <= 128
-            ? {
-                  to: "/pairing",
-                  search: {
-                      id: params.id,
-                      mode: params.mode ?? "embedded",
-                  },
-              }
-            : { to: "/wallet" },
+    pair: resolvePairRoute,
+    pairing: resolvePairRoute,
     install: (params) => {
         const search: Record<string, string> = {};
         if (params.m) search.m = params.m;

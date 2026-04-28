@@ -16,6 +16,7 @@ import { customHex } from "../../../utils/drizzle/customTypes";
 import type {
     AssetStatus,
     AssetType,
+    CancellationReason,
     InteractionType,
     RecipientType,
 } from "../schemas";
@@ -31,6 +32,13 @@ export const interactionLogsTable = pgTable(
         externalEventId: text("external_event_id"),
         payload: jsonb("payload").$type<InteractionPayload>().notNull(),
         processedAt: timestamp("processed_at"),
+        /**
+         * Set when the interaction is voided (e.g. its underlying purchase
+         * was refunded/cancelled). Cancelled interactions are skipped by the
+         * reward calculator and treated as terminal — no rewards will be
+         * minted from them. Companion to `asset_logs.cancellation_reason`.
+         */
+        cancelledAt: timestamp("cancelled_at"),
         createdAt: timestamp("created_at").defaultNow().notNull(),
     },
     (table) => [
@@ -48,7 +56,7 @@ export const interactionLogsTable = pgTable(
         index("interaction_logs_unprocessed_idx")
             .on(table.createdAt)
             .where(
-                sql`"processed_at" IS NULL AND "identity_group_id" IS NOT NULL`
+                sql`"processed_at" IS NULL AND "cancelled_at" IS NULL AND "identity_group_id" IS NOT NULL`
             ),
     ]
 );
@@ -78,7 +86,7 @@ export const assetLogsTable = pgTable(
             .default("pending"),
         statusChangedAt: timestamp("status_changed_at").defaultNow().notNull(),
 
-        touchpointId: uuid("touchpoint_id"),
+        referralLinkId: uuid("referral_link_id"),
         interactionLogId: uuid("interaction_log_id"),
 
         onchainTxHash: customHex("onchain_tx_hash").$type<Hex>(),
@@ -90,6 +98,18 @@ export const assetLogsTable = pgTable(
         createdAt: timestamp("created_at").defaultNow().notNull(),
         settledAt: timestamp("settled_at"),
         expiresAt: timestamp("expires_at"),
+        /**
+         * Timestamp at which a locked reward becomes eligible for settlement.
+         * NULL means no lockup (immediately available, preserves legacy behaviour).
+         */
+        availableAt: timestamp("available_at"),
+        /**
+         * Set when status transitions to `cancelled`. Companion to `cancellationReason`.
+         */
+        cancelledAt: timestamp("cancelled_at"),
+        cancellationReason: text(
+            "cancellation_reason"
+        ).$type<CancellationReason>(),
     },
     (table) => [
         index("asset_logs_identity_group_idx").on(table.identityGroupId),

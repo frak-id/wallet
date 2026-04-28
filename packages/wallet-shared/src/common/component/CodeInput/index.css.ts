@@ -8,6 +8,10 @@ export const container = style({
     gap: alias.spacing.m,
 });
 
+export const containerFill = style({
+    width: "100%",
+});
+
 export const pasteButton = style({
     alignSelf: "center",
 });
@@ -37,6 +41,12 @@ export const digitInput = style({
 
 export const digitInputError = style({
     background: vars.surface.error,
+});
+
+export const digitInputFill = style({
+    width: "auto",
+    flex: "1 0 0",
+    minWidth: 0,
 });
 
 export const digitInputReadOnly = style({

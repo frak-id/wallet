@@ -1,4 +1,5 @@
-import { alias, fontSize } from "@frak-labs/design-system/tokens";
+import { vars } from "@frak-labs/design-system/theme";
+import { alias, brand, fontSize } from "@frak-labs/design-system/tokens";
 import { style } from "@vanilla-extract/css";
 
 export const demoAccount = style({
@@ -7,12 +8,11 @@ export const demoAccount = style({
     justifyContent: "center",
     marginBottom: alias.spacing.s,
     padding: `${alias.spacing.s} ${alias.spacing.m}`,
-    borderRadius: "var(--frak-radius-s)",
-    background: "var(--color-wallet-overlay-light)",
-    backdropFilter: "blur(80px)",
-    color: "var(--frak-color-white)",
+    borderRadius: alias.cornerRadius.s,
+    backgroundColor: vars.surface.secondary,
+    color: vars.text.primary,
     fontSize: fontSize.s,
-    fontWeight: "var(--brand-fontweight-bold)",
+    fontWeight: brand.typography.fontWeight.bold,
 });
 
 export const demoAccountParagraph = style({

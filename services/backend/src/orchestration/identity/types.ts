@@ -21,15 +21,4 @@ export type GroupWeight = {
     assetsCount: number;
     referralsCount: number;
     interactionsCount: number;
-    touchpointsCount: number;
 };
-
-export class WalletConflictError extends Error {
-    readonly code = "WALLET_CONFLICT" as const;
-    constructor(
-        readonly sourceWallet: Address,
-        readonly targetWallet: Address
-    ) {
-        super("Cannot merge identities linked to different wallets");
-    }
-}

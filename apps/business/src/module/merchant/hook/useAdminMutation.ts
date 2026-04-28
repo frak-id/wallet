@@ -31,16 +31,14 @@ export function useAdminMutation({ action }: AdminMutationOptions) {
 
                 return data;
             } else {
-                const { data, error } = await authenticatedBackendApi
+                const { error } = await authenticatedBackendApi
                     .merchant({ merchantId: args.merchantId })
                     .admins({ wallet: args.wallet })
                     .delete();
 
-                if (!data || error) {
+                if (error) {
                     throw new Error("Failed to remove admin");
                 }
-
-                return data;
             }
         },
         onSuccess: (_data, args) => {

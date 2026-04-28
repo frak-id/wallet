@@ -47,7 +47,7 @@ function InnerTargetPairingState() {
         return null;
 
     return (
-        <StatusBoxWallet status={status} title={text}>
+        <StatusBoxWallet status={status} title={text} client={client}>
             <PairingDropdown>
                 <SignatureRequestList
                     requests={Array.from(state.pendingSignatures.values())}
@@ -84,6 +84,11 @@ function getStatusDetails(
             return {
                 status: "error",
                 text: t("wallet.pairing.target.state.retryError"),
+            };
+        case "error":
+            return {
+                status: "error",
+                text: t("wallet.pairing.target.state.error"),
             };
         default: {
             const exhaustiveCheck: never = state.status;

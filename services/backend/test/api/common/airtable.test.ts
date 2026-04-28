@@ -1,7 +1,15 @@
+import { Elysia } from "elysia";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 // Import the route AFTER setting up the mock (mocked in vitest-setup.ts)
 import { airtableRoutes } from "../../../src/api/common/airtable";
+import { noContentPatch } from "../../../src/utils";
+
+// Wrap the routes with `noContentPatch` because Bun rejects
+// `new Response("", { status: 204 })`. The patch is normally applied at the
+// root app in `src/index.ts`, but tests call routes in isolation.
+// See `src/utils/elysiaNoContentPatch.ts` for context.
+const app = new Elysia().use(noContentPatch).use(airtableRoutes);
 
 // The airtableRoutes instance has a decorator "airtableRepository" which is a mock instance
 // We'll access it using type assertions to get around Elysia's type complexity
@@ -42,7 +50,7 @@ describe("Airtable Route API", () => {
                 country: "US",
             };
 
-            const response = await airtableRoutes.handle(
+            const response = await app.handle(
                 new Request("http://localhost/airtable?table=demo_request", {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
@@ -50,14 +58,11 @@ describe("Airtable Route API", () => {
                 })
             );
 
-            expect(response.status).toBe(200);
+            expect(response.status).toBe(204);
             expect(mockRepository.processRequest).toHaveBeenCalledWith(
                 "demo_request",
                 requestBody
             );
-
-            const data = await response.json();
-            expect(data).toEqual({ success: true });
         });
 
         it("should process valid simulation table submission when all fields are provided", async () => {
@@ -79,7 +84,7 @@ describe("Airtable Route API", () => {
                 channels: ["twitter", "facebook"],
             };
 
-            const response = await airtableRoutes.handle(
+            const response = await app.handle(
                 new Request("http://localhost/airtable?table=simulation", {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
@@ -87,14 +92,11 @@ describe("Airtable Route API", () => {
                 })
             );
 
-            expect(response.status).toBe(200);
+            expect(response.status).toBe(204);
             expect(mockRepository.processRequest).toHaveBeenCalledWith(
                 "simulation",
                 requestBody
             );
-
-            const data = await response.json();
-            expect(data).toEqual({ success: true });
         });
 
         it("should process demo_request submission without optional url field", async () => {
@@ -115,7 +117,7 @@ describe("Airtable Route API", () => {
                 country: "UK",
             };
 
-            const response = await airtableRoutes.handle(
+            const response = await app.handle(
                 new Request("http://localhost/airtable?table=demo_request", {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
@@ -123,7 +125,7 @@ describe("Airtable Route API", () => {
                 })
             );
 
-            expect(response.status).toBe(200);
+            expect(response.status).toBe(204);
             expect(mockRepository.processRequest).toHaveBeenCalledWith(
                 "demo_request",
                 requestBody
@@ -148,7 +150,7 @@ describe("Airtable Route API", () => {
                 channels: ["instagram"],
             };
 
-            const response = await airtableRoutes.handle(
+            const response = await app.handle(
                 new Request("http://localhost/airtable?table=simulation", {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
@@ -156,7 +158,7 @@ describe("Airtable Route API", () => {
                 })
             );
 
-            expect(response.status).toBe(200);
+            expect(response.status).toBe(204);
             expect(mockRepository.processRequest).toHaveBeenCalledWith(
                 "simulation",
                 requestBody
@@ -175,7 +177,7 @@ describe("Airtable Route API", () => {
                 country: "US",
             };
 
-            const response = await airtableRoutes.handle(
+            const response = await app.handle(
                 new Request("http://localhost/airtable", {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
@@ -200,7 +202,7 @@ describe("Airtable Route API", () => {
                 country: "US",
             };
 
-            const response = await airtableRoutes.handle(
+            const response = await app.handle(
                 new Request(
                     "http://localhost/airtable?table=invalid_table_name",
                     {
@@ -230,7 +232,7 @@ describe("Airtable Route API", () => {
                 country: "US",
             };
 
-            const response = await airtableRoutes.handle(
+            const response = await app.handle(
                 new Request("http://localhost/airtable?table=demo_request", {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
@@ -250,7 +252,7 @@ describe("Airtable Route API", () => {
                 // Missing many required fields; matches no union variant
             };
 
-            const response = await airtableRoutes.handle(
+            const response = await app.handle(
                 new Request("http://localhost/airtable?table=demo_request", {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
@@ -275,7 +277,7 @@ describe("Airtable Route API", () => {
                 email: "subscriber@example.com",
             };
 
-            const response = await airtableRoutes.handle(
+            const response = await app.handle(
                 new Request("http://localhost/airtable?table=newsletter", {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
@@ -283,14 +285,11 @@ describe("Airtable Route API", () => {
                 })
             );
 
-            expect(response.status).toBe(200);
+            expect(response.status).toBe(204);
             expect(mockRepository.processRequest).toHaveBeenCalledWith(
                 "newsletter",
                 requestBody
             );
-
-            const data = await response.json();
-            expect(data).toEqual({ success: true });
         });
 
         it("should return 409 when repository throws 'already exists' error", async () => {
@@ -309,7 +308,7 @@ describe("Airtable Route API", () => {
                 country: "US",
             };
 
-            const response = await airtableRoutes.handle(
+            const response = await app.handle(
                 new Request("http://localhost/airtable?table=demo_request", {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
@@ -341,7 +340,7 @@ describe("Airtable Route API", () => {
                 country: "US",
             };
 
-            const response = await airtableRoutes.handle(
+            const response = await app.handle(
                 new Request("http://localhost/airtable?table=demo_request", {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
@@ -374,7 +373,7 @@ describe("Airtable Route API", () => {
                 country: "US",
             };
 
-            const response = await airtableRoutes.handle(
+            const response = await app.handle(
                 new Request("http://localhost/airtable?table=demo_request", {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
@@ -405,7 +404,7 @@ describe("Airtable Route API", () => {
                 country: "US",
             };
 
-            const response = await airtableRoutes.handle(
+            const response = await app.handle(
                 new Request("http://localhost/airtable?table=demo_request", {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
@@ -430,7 +429,7 @@ describe("Airtable Route API", () => {
                 country: "US",
             };
 
-            const response = await airtableRoutes.handle(
+            const response = await app.handle(
                 new Request("http://localhost/airtable?table=", {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
@@ -463,7 +462,7 @@ describe("Airtable Route API", () => {
                 channels: ["email", "social", "search"],
             };
 
-            const response = await airtableRoutes.handle(
+            const response = await app.handle(
                 new Request("http://localhost/airtable?table=simulation", {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
@@ -471,7 +470,7 @@ describe("Airtable Route API", () => {
                 })
             );
 
-            expect(response.status).toBe(200);
+            expect(response.status).toBe(204);
             expect(mockRepository.processRequest).toHaveBeenCalledWith(
                 "simulation",
                 requestBody
@@ -499,7 +498,7 @@ describe("Airtable Route API", () => {
                 country: "US",
             };
 
-            const response1 = await airtableRoutes.handle(
+            const response1 = await app.handle(
                 new Request("http://localhost/airtable?table=demo_request", {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
@@ -507,7 +506,7 @@ describe("Airtable Route API", () => {
                 })
             );
 
-            expect(response1.status).toBe(200);
+            expect(response1.status).toBe(204);
 
             // Test with simulation schema
             const simulationBody = {
@@ -520,7 +519,7 @@ describe("Airtable Route API", () => {
                 channels: ["email"],
             };
 
-            const response2 = await airtableRoutes.handle(
+            const response2 = await app.handle(
                 new Request("http://localhost/airtable?table=simulation", {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
@@ -528,7 +527,7 @@ describe("Airtable Route API", () => {
                 })
             );
 
-            expect(response2.status).toBe(200);
+            expect(response2.status).toBe(204);
         });
     });
 });

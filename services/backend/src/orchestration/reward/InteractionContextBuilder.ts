@@ -1,7 +1,6 @@
 import type { Address } from "viem";
-import type { AttributionService } from "../../domain/attribution/services/AttributionService";
+import type { ReferralLinkRepository } from "../../domain/attribution/repositories/ReferralLinkRepository";
 import type { PurchaseContext } from "../../domain/campaign";
-import type { IdentityRepository } from "../../domain/identity";
 import type { InteractionLogSelect } from "../../domain/rewards/db/schema";
 import type {
     CustomPayload,
@@ -15,8 +14,7 @@ import type {
 
 export class InteractionContextBuilder {
     constructor(
-        private readonly attributionService: AttributionService,
-        private readonly identityRepository: IdentityRepository
+        private readonly referralLinkRepository: ReferralLinkRepository
     ) {}
 
     async build(
@@ -25,17 +23,14 @@ export class InteractionContextBuilder {
         identityGroupId: string,
         walletAddress: Address | null
     ): Promise<InteractionContextResult> {
-        const attribution = await this.attributionService.attributeConversion({
-            identityGroupId,
-            merchantId,
-        });
-
-        // Get the referrer identity group
-        const referrerIdentityGroup = attribution.referrerIdentity
-            ? await this.identityRepository.findGroupByIdentity(
-                  attribution.referrerIdentity
-              )
-            : null;
+        // Single source of truth for the direct referrer: `referral_links`.
+        // Merchant-scoped edges shadow cross-merchant edges via the
+        // `findReferrerForReferee` ordering.
+        const referrerLink =
+            await this.referralLinkRepository.findReferrerForReferee(
+                merchantId,
+                identityGroupId
+            );
 
         const { trigger, typeContext } = this.buildTypeSpecific(interaction);
 
@@ -44,15 +39,15 @@ export class InteractionContextBuilder {
             context: {
                 ...typeContext,
                 attribution: {
-                    source: attribution.source,
-                    touchpointId: attribution.touchpointId,
-                    referrerIdentityGroupId: referrerIdentityGroup?.id ?? null,
+                    referrerIdentityGroupId:
+                        referrerLink?.referrerIdentityGroupId ?? null,
                 },
                 user: {
                     identityGroupId,
                     walletAddress,
                 },
             },
+            referralLinkId: referrerLink?.id ?? null,
         };
     }
 

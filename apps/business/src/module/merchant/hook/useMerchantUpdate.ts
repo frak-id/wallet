@@ -57,8 +57,6 @@ export function useMerchantUpdate({
                     throw new Error("Failed to update SDK settings");
                 }
             }
-
-            return { success: true };
         },
         onSuccess: () => {
             queryClient.invalidateQueries({

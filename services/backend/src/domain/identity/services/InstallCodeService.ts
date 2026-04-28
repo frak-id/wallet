@@ -1,13 +1,6 @@
 import { log } from "@backend-infrastructure";
+import { HttpError } from "@backend-utils";
 import type { InstallCodeRepository } from "../repositories/InstallCodeRepository";
-
-type ResolveResult =
-    | {
-          success: true;
-          merchantId: string;
-          anonymousId: string;
-      }
-    | { success: false; error: string; code: string };
 
 export class InstallCodeService {
     constructor(
@@ -31,21 +24,21 @@ export class InstallCodeService {
         };
     }
 
-    async resolve(params: { code: string }): Promise<ResolveResult> {
+    async resolve(params: {
+        code: string;
+    }): Promise<{ merchantId: string; anonymousId: string }> {
         const installCode = await this.installCodeRepository.findByCode(
             params.code
         );
 
         if (!installCode) {
-            return {
-                success: false,
-                error: "Invalid or expired install code",
-                code: "CODE_NOT_FOUND",
-            };
+            throw HttpError.notFound(
+                "CODE_NOT_FOUND",
+                "Invalid or expired install code"
+            );
         }
 
         return {
-            success: true,
             merchantId: installCode.merchantId,
             anonymousId: installCode.anonymousId,
         };

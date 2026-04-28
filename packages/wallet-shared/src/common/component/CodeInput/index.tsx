@@ -28,6 +28,8 @@ type CodeInputProps = {
     pasteLabel?: string;
     /** Error message — renders red borders + message below inputs */
     error?: string;
+    /** When true, cells flex-grow to fill the row width (instead of fixed 41px) */
+    fill?: boolean;
 };
 
 /**
@@ -44,6 +46,7 @@ export function CodeInput({
     digitLabel,
     pasteLabel,
     error,
+    fill,
 }: CodeInputProps) {
     const readOnly = value !== undefined;
     const [digits, setDigits] = useState<string[]>(() =>
@@ -167,11 +170,12 @@ export function CodeInput({
           ? "numeric"
           : "text";
     const placeholder = readOnly ? undefined : mode === "numeric" ? "0" : "A";
-    const digitClassName = `${styles.digitInput}${error ? ` ${styles.digitInputError}` : ""}${readOnly ? ` ${styles.digitInputReadOnly}` : ""}`;
+    const digitClassName = `${styles.digitInput}${error ? ` ${styles.digitInputError}` : ""}${readOnly ? ` ${styles.digitInputReadOnly}` : ""}${fill ? ` ${styles.digitInputFill}` : ""}`;
+    const containerClassName = `${styles.container}${fill ? ` ${styles.containerFill}` : ""}`;
 
     return (
         <>
-            <div className={styles.container}>
+            <div className={containerClassName}>
                 {digits.map((digit, index) => (
                     <input
                         key={index}

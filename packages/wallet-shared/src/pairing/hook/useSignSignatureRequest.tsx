@@ -36,10 +36,13 @@ export function useSignSignatureRequest({
             } catch (error) {
                 console.warn("Failed to sign signature request", error);
                 client.sendSignatureResponse(request.id, {
-                    reason:
-                        error instanceof Error
-                            ? error.message
-                            : "Unknown error",
+                    reason: {
+                        code: "user-declined",
+                        detail:
+                            error instanceof Error
+                                ? error.message
+                                : "Unknown error",
+                    },
                 });
                 throw error;
             }
@@ -58,7 +61,7 @@ export function useDeclineSignatureRequest({
     return useCallback(
         (request: TargetPairingPendingSignature) => {
             client.sendSignatureResponse(request.id, {
-                reason: "Declined",
+                reason: { code: "user-declined", detail: "Declined" },
             });
         },
         [client]

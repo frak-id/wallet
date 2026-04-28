@@ -1,28 +1,36 @@
 import { Box } from "@frak-labs/design-system/components/Box";
+import { Inline } from "@frak-labs/design-system/components/Inline";
+import { Stack } from "@frak-labs/design-system/components/Stack";
 import { Text } from "@frak-labs/design-system/components/Text";
-import { Laptop, Smartphone } from "lucide-react";
+import {
+    ConnectIcon,
+    LaptopIcon,
+    MobileIcon,
+} from "@frak-labs/design-system/icons";
 import * as styles from "./index.css";
 
 export function PairingDevices() {
     return (
-        <Box className={styles.devices}>
-            <Box className={styles.device}>
+        <Inline space="m" align="center" alignY="top">
+            <Stack space="xs" align="center">
                 <Box className={styles.deviceIcon}>
-                    <Smartphone className={styles.deviceIconSvg} />
+                    <MobileIcon className={styles.deviceIconSvg} />
                 </Box>
                 <Text as="span" variant="caption">
                     Mobile
                 </Text>
+            </Stack>
+            <Box className={styles.connector}>
+                <ConnectIcon className={styles.connectorIcon} />
             </Box>
-            <Box className={styles.connector} />
-            <Box className={styles.device}>
+            <Stack space="xs" align="center">
                 <Box className={styles.deviceIcon}>
-                    <Laptop className={styles.deviceIconSvg} />
+                    <LaptopIcon className={styles.deviceIconSvg} />
                 </Box>
                 <Text as="span" variant="caption">
                     Desktop
                 </Text>
-            </Box>
-        </Box>
+            </Stack>
+        </Inline>
     );
 }

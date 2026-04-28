@@ -1,6 +1,7 @@
 import { eventEmitter, log } from "@backend-infrastructure";
 import type { InteractionLogRepository } from "../domain/rewards/repositories/InteractionLogRepository";
 import type { PurchasePayload } from "../domain/rewards/types";
+import { purchaseExternalEventId } from "../domain/rewards/utils";
 
 type PurchaseInteractionParams = {
     purchaseId: string;
@@ -16,6 +17,14 @@ type PurchaseInteractionParams = {
     }[];
     identityGroupId: string;
     merchantId: string;
+    /**
+     * When `true`, the interaction is born already cancelled (e.g. the source
+     * purchase arrived as `refunded`/`cancelled`, or a late SDK claim landed
+     * on a purchase that was refunded in the meantime). The reward calculator
+     * skips cancelled interactions, so no rewards will ever be minted from
+     * them — we still create the row for audit/idempotency.
+     */
+    cancelled?: boolean;
 };
 
 /**
@@ -32,7 +41,9 @@ export class PurchaseInteractionCreator {
 
     /**
      * Build a purchase payload and create an idempotent interaction log.
-     * Emits `newInteraction` when a new interaction is created.
+     * Emits `newInteraction` only when a fresh, non-cancelled interaction is
+     * created (cancelled interactions never produce rewards, so waking the
+     * reward cron is wasted work).
      * @returns The interaction log ID, or null if it already existed (duplicate).
      */
     async create(params: PurchaseInteractionParams): Promise<string | null> {
@@ -51,7 +62,7 @@ export class PurchaseInteractionCreator {
             purchaseId: params.purchaseId,
         };
 
-        const externalEventId = `purchase:${params.externalId}`;
+        const externalEventId = purchaseExternalEventId(params.externalId);
         const interactionLog =
             await this.interactionLogRepository.createIdempotent({
                 type: "purchase",
@@ -59,6 +70,7 @@ export class PurchaseInteractionCreator {
                 merchantId: params.merchantId,
                 externalEventId,
                 payload,
+                cancelledAt: params.cancelled ? new Date() : null,
             });
 
         if (!interactionLog) {
@@ -69,15 +81,20 @@ export class PurchaseInteractionCreator {
             return null;
         }
 
-        eventEmitter.emit("newInteraction", { type: "purchase" });
+        if (!params.cancelled) {
+            eventEmitter.emit("newInteraction", { type: "purchase" });
+        }
 
         log.info(
             {
                 purchaseId: params.purchaseId,
                 identityGroupId: params.identityGroupId,
                 interactionLogId: interactionLog.id,
+                cancelled: params.cancelled === true,
             },
-            "Purchase interaction created"
+            params.cancelled
+                ? "Purchase interaction created (cancelled — source purchase refunded/cancelled)"
+                : "Purchase interaction created"
         );
 
         return interactionLog.id;

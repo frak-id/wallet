@@ -1,11 +1,17 @@
 import { isRunningInProd } from "@frak-labs/app-essentials";
+import { Box } from "@frak-labs/design-system/components/Box";
 import { Spinner } from "@frak-labs/design-system/components/Spinner";
+import { Text } from "@frak-labs/design-system/components/Text";
 import { useMutation } from "@tanstack/react-query";
-import { createFileRoute, redirect } from "@tanstack/react-router";
+import { createFileRoute, redirect, useNavigate } from "@tanstack/react-router";
 import { useEffect, useRef } from "react";
 import { useTranslation } from "react-i18next";
+import { DetailOverlay } from "@/module/common/component/DetailOverlay";
+import { MoneriumScreen } from "@/module/monerium/component/MoneriumBankFlow/MoneriumScreen";
 import { moneriumStore } from "@/module/monerium/store/moneriumStore";
 import { exchangeCodeForTokens } from "@/module/monerium/utils/moneriumApi";
+import { modalStore } from "@/module/stores/modalStore";
+import * as styles from "./monerium.callback.css";
 
 export const Route = createFileRoute("/_wallet/_protected/monerium/callback")({
     beforeLoad: () => {
@@ -17,15 +23,59 @@ export const Route = createFileRoute("/_wallet/_protected/monerium/callback")({
     validateSearch: (search: Record<string, unknown>) => ({
         code: (search.code as string) || undefined,
         state: (search.state as string) || undefined,
+        error: (search.error as string) || undefined,
     }),
 });
 
-function MoneriumCallback() {
-    const { t } = useTranslation();
-    const { code } = Route.useSearch();
-    const hasStartedRef = useRef(false);
+type OutcomeKind = "cancelled" | "error";
 
-    const { mutate, isError, error } = useMutation({
+function Outcome({
+    kind,
+    onRetry,
+    onClose,
+}: {
+    kind: OutcomeKind;
+    onRetry: () => void;
+    onClose: () => void;
+}) {
+    const { t } = useTranslation();
+    const isCancelled = kind === "cancelled";
+
+    return (
+        <MoneriumScreen
+            onClose={onClose}
+            ctaLabel={t("monerium.callback.tryAgain")}
+            ctaOnClick={onRetry}
+        >
+            <Box paddingTop={"m"}>
+                <Text variant="heading1">
+                    {t(
+                        isCancelled
+                            ? "monerium.callback.cancelledTitle"
+                            : "monerium.callback.errorTitle"
+                    )}
+                </Text>
+                <Text variant="body" color="secondary">
+                    {t(
+                        isCancelled
+                            ? "monerium.callback.cancelledDescription"
+                            : "monerium.callback.errorDescription"
+                    )}
+                </Text>
+            </Box>
+        </MoneriumScreen>
+    );
+}
+
+function MoneriumCallback() {
+    const navigate = useNavigate();
+    const { code, error } = Route.useSearch();
+    const hasStartedRef = useRef(false);
+    const pendingCodeVerifier = moneriumStore(
+        (state) => state.pendingCodeVerifier
+    );
+
+    const { mutate, isPending, isError, isSuccess } = useMutation({
         mutationFn: async ({
             code,
             codeVerifier,
@@ -34,7 +84,9 @@ function MoneriumCallback() {
             codeVerifier: string;
         }) => {
             const tokens = await exchangeCodeForTokens(code, codeVerifier);
-
+            // Verifier cleared in `onSuccess` — clearing it here would flip
+            // the subscribed selector before react-query flags `isSuccess`
+            // and flash the error screen during the redirect.
             moneriumStore
                 .getState()
                 .setTokens(
@@ -42,77 +94,60 @@ function MoneriumCallback() {
                     tokens.refresh_token,
                     tokens.expires_in
                 );
-
-            moneriumStore.getState().setPendingCodeVerifier(null);
         },
         onSuccess: () => {
-            window.location.replace("/wallet");
+            // Re-open the bank flow so `useMoneriumFlowSync` routes to the
+            // right post-connect screen. SPA nav (not `window.location`)
+            // because the modal store is in-memory.
+            modalStore.getState().openModal({ id: "moneriumBankFlow" });
+            navigate({ to: "/wallet", replace: true });
+            moneriumStore.getState().setPendingCodeVerifier(null);
+        },
+        onError: (err) => {
+            console.error("Monerium callback token exchange failed", err);
         },
     });
 
     useEffect(() => {
         if (hasStartedRef.current) return;
-
         if (!code) return;
-
-        const codeVerifier = moneriumStore.getState().pendingCodeVerifier;
-        if (!codeVerifier) return;
+        if (!pendingCodeVerifier) return;
 
         hasStartedRef.current = true;
-        mutate({ code, codeVerifier });
-    }, [code, mutate]);
+        mutate({ code, codeVerifier: pendingCodeVerifier });
+    }, [code, pendingCodeVerifier, mutate]);
 
-    if (!code) {
-        return (
-            <div
-                style={{
-                    display: "flex",
-                    flexDirection: "column",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    gap: "1rem",
-                    padding: "2rem",
-                    minHeight: "50vh",
-                }}
-            >
-                <p>{t("monerium.callback.noCode")}</p>
-                <button
-                    type={"button"}
-                    onClick={() => window.location.replace("/wallet")}
-                >
-                    {t("monerium.callback.tryAgain")}
-                </button>
-            </div>
-        );
-    }
+    const goToProfile = () => navigate({ to: "/profile", replace: true });
+    const goToWallet = () => navigate({ to: "/wallet", replace: true });
 
-    if (isError) {
-        return (
-            <div
-                style={{
-                    display: "flex",
-                    flexDirection: "column",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    gap: "1rem",
-                    padding: "2rem",
-                    minHeight: "50vh",
-                }}
-            >
-                <p>
-                    {error instanceof Error
-                        ? error.message
-                        : t("monerium.callback.failed")}
-                </p>
-                <button
-                    type={"button"}
-                    onClick={() => window.location.replace("/wallet")}
-                >
-                    {t("monerium.callback.tryAgain")}
-                </button>
-            </div>
-        );
-    }
+    // Spinner while the exchange is in-flight, just succeeded (before the
+    // redirect lands), or about to start (initial mount with code + verifier).
+    const isExchangingCode =
+        isPending ||
+        isSuccess ||
+        (Boolean(code) && Boolean(pendingCodeVerifier) && !isError);
 
-    return <Spinner />;
+    return (
+        <DetailOverlay onClose={goToWallet}>
+            {({ handleClose }) => {
+                if (isExchangingCode) {
+                    return (
+                        <div className={styles.spinnerWrap}>
+                            <Spinner />
+                        </div>
+                    );
+                }
+
+                const isCancelled = !code && Boolean(error);
+
+                return (
+                    <Outcome
+                        kind={isCancelled ? "cancelled" : "error"}
+                        onRetry={goToProfile}
+                        onClose={handleClose}
+                    />
+                );
+            }}
+        </DetailOverlay>
+    );
 }

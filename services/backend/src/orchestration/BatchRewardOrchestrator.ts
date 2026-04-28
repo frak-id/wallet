@@ -1,16 +1,23 @@
 import { eventEmitter, log } from "@backend-infrastructure";
+import { and, eq, isNull } from "drizzle-orm";
 import type { Address } from "viem";
 import type { ReferralService } from "../domain/attribution";
 import { buildTimeContext, type CalculatedReward } from "../domain/campaign";
 import type { RuleEngineService } from "../domain/campaign/services/RuleEngineService";
 import type { MerchantRepository } from "../domain/merchant/repositories/MerchantRepository";
-import type { InteractionLogSelect } from "../domain/rewards/db/schema";
+import {
+    type AssetLogSelect,
+    assetLogsTable,
+    type InteractionLogSelect,
+    interactionLogsTable,
+} from "../domain/rewards/db/schema";
 import type { AssetLogRepository } from "../domain/rewards/repositories/AssetLogRepository";
 import type { InteractionLogRepository } from "../domain/rewards/repositories/InteractionLogRepository";
 import type {
     CreateAssetLogParams,
     RecipientType,
 } from "../domain/rewards/types";
+import { db } from "../infrastructure/persistence/postgres";
 import type { IdentityOrchestrator } from "./identity";
 import type { InteractionContextBuilder } from "./reward";
 
@@ -26,6 +33,8 @@ type BatchProcessResult = {
 type ProcessSingleResult = {
     success: boolean;
     rewardsCreated: number;
+    /** True when the interaction was already cancelled by a concurrent refund. */
+    cancelled?: boolean;
     error?: string;
 };
 
@@ -63,7 +72,6 @@ export class BatchRewardOrchestrator {
             errors: [],
         };
 
-        const processedIds: string[] = [];
         const interactionsByMerchant = this.groupByMerchant(interactions);
 
         for (const [
@@ -77,7 +85,6 @@ export class BatchRewardOrchestrator {
                 );
 
                 if (processResult.success) {
-                    processedIds.push(interaction.id);
                     result.processedCount++;
                     result.rewardsCreated += processResult.rewardsCreated;
                 } else if (processResult.error) {
@@ -87,12 +94,6 @@ export class BatchRewardOrchestrator {
                     });
                 }
             }
-        }
-
-        if (processedIds.length > 0) {
-            await this.interactionLogRepository.markProcessedBatch(
-                processedIds
-            );
         }
 
         log.info(
@@ -143,12 +144,13 @@ export class BatchRewardOrchestrator {
 
             const time = buildTimeContext(interaction.createdAt);
 
-            const { trigger, context } = await this.contextBuilder.build(
-                interaction,
-                merchantId,
-                interaction.identityGroupId,
-                walletAddress
-            );
+            const { trigger, context, referralLinkId } =
+                await this.contextBuilder.build(
+                    interaction,
+                    merchantId,
+                    interaction.identityGroupId,
+                    walletAddress
+                );
 
             const evaluationResult = await this.ruleEngineService.evaluateRules(
                 {
@@ -160,26 +162,84 @@ export class BatchRewardOrchestrator {
                 (args) => this.referralService.getReferralChain(args)
             );
 
-            let rewardsCreated = 0;
+            const assetParams =
+                evaluationResult.rewards.length > 0
+                    ? await this.buildAssetLogParams(
+                          evaluationResult.rewards,
+                          merchantId,
+                          interaction.id,
+                          referralLinkId ?? undefined
+                      )
+                    : [];
 
-            if (evaluationResult.rewards.length > 0) {
-                const touchpointId =
-                    context.attribution?.touchpointId ?? undefined;
+            // Atomically: lock the interaction, verify it isn't cancelled, then
+            // insert the asset_logs and mark it processed. The `FOR UPDATE`
+            // serializes against `cancelPurchaseInteractionByExternalId` so a
+            // concurrent refund either:
+            //  - blocks until this commits, then sees the freshly-inserted
+            //    pending rewards and cancels them, or
+            //  - wins the race, in which case we observe `cancelledAt` here
+            //    and skip insertion entirely (still marking processed so the
+            //    cron never picks this row up again).
+            const txOutcome = await db.transaction(async (tx) => {
+                const [fresh] = await tx
+                    .select({
+                        id: interactionLogsTable.id,
+                        cancelledAt: interactionLogsTable.cancelledAt,
+                    })
+                    .from(interactionLogsTable)
+                    .where(
+                        and(
+                            eq(interactionLogsTable.id, interaction.id),
+                            isNull(interactionLogsTable.processedAt)
+                        )
+                    )
+                    .for("update")
+                    .limit(1);
 
-                const assetParams = await this.buildAssetLogParams(
-                    evaluationResult.rewards,
-                    merchantId,
-                    interaction.id,
-                    touchpointId
-                );
+                if (!fresh) {
+                    // Another worker beat us to processing this row.
+                    return {
+                        cancelled: false,
+                        createdAssets: [] as AssetLogSelect[],
+                    };
+                }
 
-                const createdAssets =
-                    await this.assetLogRepository.createBatch(assetParams);
-                rewardsCreated = createdAssets.length;
+                if (fresh.cancelledAt) {
+                    // Refund landed mid-flight — mark processed so the cron
+                    // skips this row forever, and skip reward insertion.
+                    await tx
+                        .update(interactionLogsTable)
+                        .set({ processedAt: new Date() })
+                        .where(eq(interactionLogsTable.id, interaction.id));
+                    return {
+                        cancelled: true,
+                        createdAssets: [] as AssetLogSelect[],
+                    };
+                }
 
+                let createdAssets: AssetLogSelect[] = [];
+                if (assetParams.length > 0) {
+                    createdAssets = await tx
+                        .insert(assetLogsTable)
+                        .values(
+                            this.assetLogRepository.buildInserts(assetParams)
+                        )
+                        .returning();
+                }
+
+                await tx
+                    .update(interactionLogsTable)
+                    .set({ processedAt: new Date() })
+                    .where(eq(interactionLogsTable.id, interaction.id));
+
+                return { cancelled: false, createdAssets };
+            });
+
+            if (txOutcome.createdAssets.length > 0) {
                 try {
                     await this.sendRewardPendingNotifications(
-                        createdAssets,
+                        txOutcome.createdAssets,
                         merchantId
                     );
                 } catch (error) {
@@ -196,13 +256,20 @@ export class BatchRewardOrchestrator {
                     interactionType: interaction.type,
                     merchantId,
                     trigger,
-                    rewardsCreated,
+                    rewardsCreated: txOutcome.createdAssets.length,
+                    cancelled: txOutcome.cancelled,
                     budgetExceeded: evaluationResult.budgetExceeded,
                 },
-                "Processed interaction rewards"
+                txOutcome.cancelled
+                    ? "Skipped reward creation — interaction cancelled mid-flight"
+                    : "Processed interaction rewards"
             );
 
-            return { success: true, rewardsCreated };
+            return {
+                success: true,
+                rewardsCreated: txOutcome.createdAssets.length,
+                cancelled: txOutcome.cancelled,
+            };
         } catch (error) {
             const errorMessage =
                 error instanceof Error ? error.message : String(error);
@@ -228,7 +295,7 @@ export class BatchRewardOrchestrator {
         rewards: CalculatedReward[],
         merchantId: string,
         interactionLogId: string,
-        touchpointId: string | undefined
+        referralLinkId: string | undefined
     ): Promise<CreateAssetLogParams[]> {
         const hasTokenTypeWithoutToken = rewards.some(
             (r) => r.type === "token" && !r.token
@@ -263,10 +330,11 @@ export class BatchRewardOrchestrator {
                 amount: reward.amount,
                 tokenAddress: resolvedToken,
                 recipientType: reward.recipient as RecipientType,
-                touchpointId,
+                referralLinkId,
                 interactionLogId,
                 chainDepth: reward.chainDepth,
                 expirationDays: reward.expirationDays,
+                lockupSeconds: reward.lockupSeconds,
             });
         }
 

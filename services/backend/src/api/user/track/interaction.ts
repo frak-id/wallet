@@ -44,7 +44,6 @@ export const trackInteractionRoute = new Elysia().post(
             );
 
         return {
-            success: true,
             identityGroupId,
             interactionLogId: result.interactionLog?.id ?? null,
             isDuplicate: result.isDuplicate,
@@ -64,7 +63,7 @@ function buildTypeSpecificResponse(
     switch (type) {
         case "arrival":
             return {
-                touchpointId: result.touchpointId,
+                referralLinkId: result.referralLinkId,
             };
         case "sharing":
             return {};

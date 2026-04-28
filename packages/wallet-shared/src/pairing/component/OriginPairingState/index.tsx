@@ -51,7 +51,7 @@ function InnerOriginPairingState({ type }: OriginPairingStateProps) {
         throw new Error(`Invalid type: ${type}`);
     }
 
-    return <Component status={status} title={text} />;
+    return <Component status={status} title={text} client={client} />;
 }
 
 function getStatusDetails(
@@ -97,6 +97,11 @@ function getStatusDetails(
             return {
                 status: "error",
                 text: t("wallet.pairing.origin.state.retryError"),
+            };
+        case "error":
+            return {
+                status: "error",
+                text: t("wallet.pairing.origin.state.error"),
             };
         default: {
             const exhaustiveCheck: never = state.status;

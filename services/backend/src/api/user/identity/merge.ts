@@ -1,6 +1,6 @@
 import { rateLimitMiddleware, sessionContext } from "@backend-infrastructure";
-import { t } from "@backend-utils";
-import { Elysia, status } from "elysia";
+import { HttpError, t } from "@backend-utils";
+import { Elysia } from "elysia";
 import { OrchestrationContext } from "../../../orchestration/context";
 
 export const identityMergeRoutes = new Elysia({ prefix: "/merge" })
@@ -13,11 +13,10 @@ export const identityMergeRoutes = new Elysia({ prefix: "/merge" })
             // source wallet identity. Anonymous SDK callers supply
             // `sourceAnonymousId` in the body. At least one is required.
             if (!walletSession && !body.sourceAnonymousId) {
-                return status(400, {
-                    success: false as const,
-                    error: "sourceAnonymousId is required when no wallet session is provided",
-                    code: "MISSING_SOURCE_IDENTITY",
-                });
+                throw HttpError.badRequest(
+                    "MISSING_SOURCE_IDENTITY",
+                    "sourceAnonymousId is required when no wallet session is provided"
+                );
             }
 
             const result =
@@ -28,14 +27,6 @@ export const identityMergeRoutes = new Elysia({ prefix: "/merge" })
                         merchantId: body.merchantId,
                     }
                 );
-
-            if (!result.success) {
-                return status(400, {
-                    success: false as const,
-                    error: result.error,
-                    code: result.code,
-                });
-            }
 
             return {
                 mergeToken: result.mergeToken,
@@ -71,23 +62,7 @@ export const identityMergeRoutes = new Elysia({ prefix: "/merge" })
                     }
                 );
 
-            if (!result.success) {
-                // Use 401 for token-related errors
-                const statusCode =
-                    result.code === "TOKEN_INVALID" ||
-                    result.code === "TOKEN_EXPIRED"
-                        ? 401
-                        : 400;
-
-                return status(statusCode, {
-                    success: false as const,
-                    error: result.error,
-                    code: result.code,
-                });
-            }
-
             return {
-                success: true as const,
                 finalGroupId: result.finalGroupId,
                 merged: result.merged,
             };
@@ -100,7 +75,6 @@ export const identityMergeRoutes = new Elysia({ prefix: "/merge" })
             }),
             response: {
                 200: t.Object({
-                    success: t.Literal(true),
                     finalGroupId: t.String({ format: "uuid" }),
                     merged: t.Boolean(),
                 }),

@@ -112,7 +112,6 @@ describe("processReferral", () => {
                 referrerMerchantId: "merchant-uuid",
                 referrerWallet: undefined,
                 referralTimestamp: 1709654400,
-                landingUrl: "https://example.com/test",
             });
         });
 
@@ -161,7 +160,6 @@ describe("processReferral", () => {
                 referrerMerchantId: "merchant-uuid",
                 referrerWallet,
                 referralTimestamp: 1709654400,
-                landingUrl: "https://example.com/test",
             });
         });
 

@@ -1,3 +1,5 @@
+import { vars } from "@frak-labs/design-system/theme";
+import { alias } from "@frak-labs/design-system/tokens";
 import { keyframes, style } from "@vanilla-extract/css";
 
 const pulse = keyframes({
@@ -15,14 +17,14 @@ export const buttonAuth = style({
     overflow: "hidden",
     background: "linear-gradient(135deg, #425dad 0%, #2d3561 100%)",
     border: "none",
-    borderRadius: "var(--frak-button-border-radius)",
+    borderRadius: alias.cornerRadius.l,
     boxShadow:
         "0 25px 50px -12px rgba(76, 99, 210, 0.25), 0 0 0 1px rgba(255, 255, 255, 0.1)",
     transition: "all 0.3s ease",
     cursor: "pointer",
-    color: "var(--frak-color-white)",
+    color: vars.text.onAction,
     transform: "translateY(0)",
-    padding: "var(--frak-spacing-l)",
+    padding: alias.spacing.l,
     width: "100%",
     selectors: {
         "&:hover": {

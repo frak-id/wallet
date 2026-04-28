@@ -1,15 +1,9 @@
 import { db } from "@backend-infrastructure";
+import { CANDIDATE_BATCH_SIZE, generateCandidates } from "@backend-utils";
 import { and, eq, gt, lt, sql } from "drizzle-orm";
-import { customAlphabet } from "nanoid";
 import { installCodesTable } from "../db/schema";
 
-// Excludes ambiguous characters: 0/O, 1/I/L
-const CODE_ALPHABET = "ABCDEFGHJKMNPQRSTUVWXYZ23456789";
-const CODE_LENGTH = 6;
 const CODE_TTL_HOURS = 72;
-const CANDIDATE_BATCH_SIZE = 50;
-
-const generateCode = customAlphabet(CODE_ALPHABET, CODE_LENGTH);
 
 type InstallCodeSelect = typeof installCodesTable.$inferSelect;
 
@@ -20,9 +14,7 @@ export class InstallCodeRepository {
     }): Promise<InstallCodeSelect> {
         const { merchantId, anonymousId } = params;
 
-        const candidates = Array.from({ length: CANDIDATE_BATCH_SIZE }, () =>
-            generateCode()
-        );
+        const candidates = generateCandidates();
 
         const values = sql.join(
             candidates.map((c) => sql`(${c}::text)`),

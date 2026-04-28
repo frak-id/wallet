@@ -1,6 +1,10 @@
 export { PairingContext } from "./context";
 export { pairingSignatureRequestTable, pairingTable } from "./db/schema";
 export type {
+    SignatureRejectCode,
+    SignatureRejectReason,
+} from "./dto/SignatureRejectReason";
+export type {
     WsDirectMessageResponse,
     WsPairingCreatedResponse,
     WsPingRequest,

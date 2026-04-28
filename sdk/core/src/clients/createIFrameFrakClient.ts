@@ -254,7 +254,7 @@ function setupHeartbeat(
     rpcClient: SdkRpcClient,
     lifecycleManager: IframeLifecycleManager
 ) {
-    const HEARTBEAT_INTERVAL = 1_000; // Send heartbeat every 100ms until we are connected
+    const HEARTBEAT_INTERVAL = 250; // Fallback discovery ping until we are connected
     const HEARTBEAT_TIMEOUT = 30_000; // 30 seconds timeout
     let heartbeatInterval: NodeJS.Timeout;
     let timeoutId: NodeJS.Timeout;

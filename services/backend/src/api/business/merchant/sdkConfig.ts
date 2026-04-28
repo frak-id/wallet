@@ -1,7 +1,7 @@
 import { t } from "@backend-utils";
 import { Elysia, status } from "elysia";
 import { MerchantContext, SdkConfigSchema } from "../../../domain/merchant";
-import { MerchantIdParamSchema, SuccessResponseSchema } from "../../schemas";
+import { MerchantIdParamSchema } from "../../schemas";
 import { businessSessionContext } from "../middleware/session";
 
 const SdkConfigResponseSchema = t.Object({
@@ -108,13 +108,13 @@ export const merchantSdkConfigRoutes = new Elysia({
                 merchant.domain
             );
 
-            return { success: true };
+            return status(204);
         },
         {
             params: MerchantIdParamSchema,
             body: SdkConfigSchema,
             response: {
-                200: SuccessResponseSchema,
+                204: t.Void(),
                 401: t.String(),
                 403: t.String(),
                 404: t.String(),

@@ -1,7 +1,8 @@
 import { Box } from "@frak-labs/design-system/components/Box";
 import { Button } from "@frak-labs/design-system/components/Button";
+import { Inline } from "@frak-labs/design-system/components/Inline";
 import { Input } from "@frak-labs/design-system/components/Input";
-import { Text } from "@frak-labs/design-system/components/Text";
+import { Stack } from "@frak-labs/design-system/components/Stack";
 import type {
     BalanceItem,
     Flow,
@@ -24,12 +25,15 @@ import { erc20Abi, parseUnits } from "viem";
 import { useWriteContract } from "wagmi";
 import { useBiometricConfirm } from "@/module/biometrics";
 import { Back } from "@/module/common/component/Back";
+import { FieldError, FieldLabel } from "@/module/common/component/Field";
+import { Title } from "@/module/common/component/Title";
 import { TokenMax } from "@/module/tokens/component/TokenMax";
 import { TokenModalList } from "@/module/tokens/component/TokenModalList";
 import { TransactionError } from "@/module/tokens/component/TransactionError";
 import { TransactionSuccess } from "@/module/tokens/component/TransactionSuccess";
 import { getUpdatedToken } from "@/module/tokens/utils/getUpdatedToken";
 import { validateAmount } from "@/module/tokens/utils/validateAmount";
+import * as styles from "./tokens.send.css";
 
 type SendSearchParams = {
     to?: string;
@@ -57,11 +61,11 @@ const AddressInput = function AddressInput({
     const { t } = useTranslation();
 
     return (
-        <Box display={"flex"} flexDirection={"column"} gap={"xs"}>
-            <Text variant="label" color="secondary">
-                {t("common.to")}
-            </Text>
+        <Stack space="xs">
+            <FieldLabel>{t("common.to")}</FieldLabel>
             <Input
+                variant="bare"
+                length="big"
                 type={"text"}
                 id={"toAddress"}
                 aria-label={t("common.enterAddress")}
@@ -76,11 +80,9 @@ const AddressInput = function AddressInput({
                 })}
             />
             {errors.toAddress && (
-                <Text variant="caption" color="error">
-                    {errors.toAddress.message}
-                </Text>
+                <FieldError>{errors.toAddress.message}</FieldError>
             )}
-        </Box>
+        </Stack>
     );
 };
 
@@ -116,18 +118,21 @@ const AmountInput = function AmountInput({
     );
 
     return (
-        <Box display={"flex"} flexDirection={"column"} gap={"xs"}>
-            <Box
-                display={"flex"}
-                alignItems={"center"}
-                justifyContent={"space-between"}
+        <Stack space="xs">
+            <Inline
+                space="m"
+                alignY="center"
+                align="space-between"
+                wrap={false}
             >
-                <Text variant="label" color="secondary">
+                <FieldLabel>
                     {t("common.balance")}: {selectedToken.amount}
-                </Text>
+                </FieldLabel>
                 <TokenMax onClick={handleMaxClick} />
-            </Box>
+            </Inline>
             <Input
+                variant="bare"
+                length="big"
                 leftSection={
                     <TokenModalList
                         token={selectedToken}
@@ -146,12 +151,8 @@ const AmountInput = function AmountInput({
                 })}
                 aria-invalid={errors.amount ? "true" : "false"}
             />
-            {errors.amount && (
-                <Text variant="caption" color="error">
-                    {errors.amount.message}
-                </Text>
-            )}
-        </Box>
+            {errors.amount && <FieldError>{errors.amount.message}</FieldError>}
+        </Stack>
     );
 };
 
@@ -287,46 +288,54 @@ function TokensSendPage() {
     );
 
     return (
-        <>
-            <Back href={"/wallet"}>{t("wallet.tokens.backToWallet")}</Back>
-            <form onSubmit={handleSubmit(onSubmit)}>
-                <Box
-                    display={"flex"}
-                    flexDirection={"column"}
-                    gap={"l"}
-                    paddingTop={"m"}
-                >
+        <Box className={styles.pageContainer}>
+            <Stack space="m">
+                <Back href={"/wallet"} />
+                <Title size="page">{t("wallet.tokens.sendTitle")}</Title>
+            </Stack>
+
+            <Box
+                as="form"
+                onSubmit={handleSubmit(onSubmit)}
+                display={"flex"}
+                flexDirection={"column"}
+                justifyContent={"space-between"}
+                gap={"l"}
+                flexGrow={1}
+                paddingTop={"m"}
+            >
+                <Stack space="l">
                     <AddressInput register={register} errors={errors} />
 
                     {selectedToken && (
-                        <>
-                            <AmountInput
-                                register={register}
-                                errors={errors}
-                                selectedToken={selectedToken}
-                                setValue={setValue}
-                                setSelectedToken={setSelectedToken}
-                                resetField={resetField}
-                            />
-
-                            <Button
-                                type={"submit"}
-                                disabled={isPending || isConfirming}
-                            >
-                                {t("common.send")}
-                            </Button>
-
-                            <TransactionStatus
-                                isSuccess={isSuccess}
-                                isError={isError}
-                                hash={hash}
-                                error={error}
-                            />
-                        </>
+                        <AmountInput
+                            register={register}
+                            errors={errors}
+                            selectedToken={selectedToken}
+                            setValue={setValue}
+                            setSelectedToken={setSelectedToken}
+                            resetField={resetField}
+                        />
                     )}
-                </Box>
-            </form>
-        </>
+
+                    <TransactionStatus
+                        isSuccess={isSuccess}
+                        isError={isError}
+                        hash={hash}
+                        error={error}
+                    />
+                </Stack>
+
+                {selectedToken && (
+                    <Button
+                        type={"submit"}
+                        disabled={isPending || isConfirming}
+                    >
+                        {t("common.send")}
+                    </Button>
+                )}
+            </Box>
+        </Box>
     );
 }
 

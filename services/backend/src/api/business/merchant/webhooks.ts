@@ -9,7 +9,6 @@ import {
 } from "../../../domain/purchases";
 import {
     MerchantIdParamSchema,
-    SuccessResponseSchema,
     WebhookStatusResponseSchema,
 } from "../../schemas";
 import { businessSessionContext } from "../middleware/session";
@@ -114,7 +113,7 @@ export const merchantWebhooksRoutes = new Elysia({
                 })
                 .execute();
 
-            return { success: true };
+            return status(204);
         },
         {
             params: MerchantIdParamSchema,
@@ -123,7 +122,7 @@ export const merchantWebhooksRoutes = new Elysia({
                 platform: WebhookPlatformSchema,
             }),
             response: {
-                200: SuccessResponseSchema,
+                204: t.Void(),
                 401: t.String(),
                 403: t.String(),
             },
@@ -170,12 +169,12 @@ export const merchantWebhooksRoutes = new Elysia({
                 .where(eq(merchantWebhooksTable.merchantId, merchantId))
                 .execute();
 
-            return { success: true };
+            return status(204);
         },
         {
             params: MerchantIdParamSchema,
             response: {
-                200: SuccessResponseSchema,
+                204: t.Void(),
                 401: t.String(),
                 403: t.String(),
                 404: t.String(),

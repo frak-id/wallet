@@ -197,6 +197,34 @@
             "when": 1776269066772,
             "tag": "0027_luxuriant_zuras",
             "breakpoints": true
+        },
+        {
+            "idx": 28,
+            "version": "7",
+            "when": 1777283497204,
+            "tag": "0028_wide_major_mapleleaf",
+            "breakpoints": true
+        },
+        {
+            "idx": 29,
+            "version": "7",
+            "when": 1777358133663,
+            "tag": "0029_complete_zarek",
+            "breakpoints": true
+        },
+        {
+            "idx": 30,
+            "version": "7",
+            "when": 1777358932502,
+            "tag": "0030_good_thunderbird",
+            "breakpoints": true
+        },
+        {
+            "idx": 31,
+            "version": "7",
+            "when": 1777359724884,
+            "tag": "0031_narrow_kinsey_walden",
+            "breakpoints": true
         }
     ]
 }

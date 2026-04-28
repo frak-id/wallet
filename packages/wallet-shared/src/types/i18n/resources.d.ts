@@ -318,10 +318,10 @@ interface Resources {
                     amount: {
                         continue: "Continue";
                         ibanEmpty: "No IBAN saved";
-                        ibanLabel: "Recipient";
+                        ibanLabel: "IBAN";
                         insufficientBalance: "Insufficient balance";
                         modify: "Edit";
-                        title: "Transfer my earnings";
+                        title: "Amount to transfer";
                         totalBalance: "Total balance";
                         walletLabel: "Frak Wallet";
                     };
@@ -354,8 +354,10 @@ interface Resources {
                 };
             };
             callback: {
-                failed: "Failed to complete authentication";
-                noCode: "No authorization code received";
+                cancelledDescription: "You can reconnect to Monerium whenever you're ready.";
+                cancelledTitle: "Connection cancelled";
+                errorDescription: "Something went wrong while connecting to Monerium. Please try again in a moment.";
+                errorTitle: "Connection failed";
                 tryAgain: "Try again";
             };
             completeSetup: "Complete setup";
@@ -549,23 +551,24 @@ interface Resources {
             pairing: {
                 cancel: "Cancel";
                 code: "Check that the code is correct";
-                confirm: "Confirm";
+                confirm: "Confirm the code";
                 error: {
                     noCode: "No pairing code provided";
                     notFound: "Pairing request not found or expired";
                     title: "Invalid pairing request";
                 };
                 info: {
-                    device: "Device:";
-                    status: "Status:";
+                    device: "Device";
+                    status: "Status";
                     title: "Pairing information";
                 };
                 list: {
-                    createdAt: "Created at :";
+                    createdAt: "Created at";
                     delete: "Delete device";
-                    lastActive: "Last active :";
-                    origin: "Origin :";
-                    target: "Target :";
+                    empty: "No connected devices";
+                    lastActive: "Last active";
+                    origin: "Origin";
+                    target: "Target";
                     title: "Connected devices";
                 };
                 loading: {
@@ -575,6 +578,7 @@ interface Resources {
                 origin: {
                     state: {
                         connecting: "Paired device not online";
+                        error: "Connection rejected by the server";
                         idle: "Pairing logic initialisation";
                         paired: "Connected with partner";
                         requests: {
@@ -585,15 +589,25 @@ interface Resources {
                     };
                 };
                 pairingInProgress: "Pairing in progress, please authenticate";
+                reconnect: "Reconnect";
                 refresh: "Retry";
                 refreshCode: "Code:";
                 refreshReason: "Reason:";
                 signatureRequest: {
+                    banner: {
+                        cta: "Review";
+                        summary: "{{count}} pending request";
+                        summary_other: "{{count}} pending requests";
+                        title: "Another device is waiting for your signature";
+                    };
                     buttons: {
                         reject: "Reject";
                         sign: "Sign";
                     };
                     description: "A device <strongFrom>{{from}}</strongFrom> is requesting your signature";
+                    modal: {
+                        counter: "{{current}} / {{total}}";
+                    };
                     state: {
                         declined: "Declined";
                         error: "Error";
@@ -613,11 +627,12 @@ interface Resources {
                 target: {
                     state: {
                         connecting: "Connecting to partner device";
+                        error: "Connection rejected by the server";
                         paired: "Connected with other device";
                         retryError: "Error when connecting to partner device";
                     };
                 };
-                text: "You're about to connect this device to your account";
+                text: "You're about to connect a device to your account.";
                 title: "Confirm device pairing";
             };
             password: {
@@ -645,9 +660,11 @@ interface Resources {
             };
             profile: {
                 biometricPrompt: "Require {{biometryLabel}} at every app launch";
+                currentDeviceConnected: "Connected";
                 helpSupport: "Help & support";
                 lastConnection: "Last connection";
                 manageAction: "Manage";
+                managePairings: "Manage paired devices";
                 notificationSettings: "Notification settings";
                 pageTitle: "Profil";
                 privacyPolicy: "Privacy Policy";
@@ -736,7 +753,7 @@ interface Resources {
                 amountLessThanBalance: "Amount must be less than balance";
                 amountPositive: "Amount must be positive";
                 amountToSend: "Amount to send";
-                backToWallet: "Back to wallet page";
+                sendTitle: "Transfer to a crypto wallet";
             };
             transferEmpty: {
                 description: "Share products with your friends to start earning money.";

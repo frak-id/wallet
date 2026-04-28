@@ -1,15 +1,11 @@
 import { viemClient } from "@backend-infrastructure";
+import { HttpError } from "@backend-utils";
 import type { Address, Hex } from "viem";
 import { keccak256, toHex } from "viem";
 import { verifyMessage } from "viem/actions";
 import { parseSiweMessage, validateSiweMessage } from "viem/siwe";
 import type { DnsCheckRepository } from "../../../infrastructure/dns/DnsCheckRepository";
 import type { MerchantRepository } from "../repositories/MerchantRepository";
-
-type RegistrationResult =
-    | { success: true; merchantId: string }
-    | { success: false; error: string };
-
 export class MerchantRegistrationService {
     constructor(
         private readonly merchantRepository: MerchantRepository,
@@ -25,7 +21,7 @@ export class MerchantRegistrationService {
         setupCode?: string;
         defaultRewardToken: Address;
         allowedDomains?: string[];
-    }): Promise<RegistrationResult> {
+    }): Promise<{ merchantId: string }> {
         const siweResult = await this.verifySiweMessage({
             message: params.message,
             signature: params.signature,
@@ -33,7 +29,7 @@ export class MerchantRegistrationService {
             domain: params.domain,
         });
         if (!siweResult.valid) {
-            return { success: false, error: siweResult.error };
+            throw HttpError.badRequest("SIWE_INVALID", siweResult.error);
         }
 
         const wallet = siweResult.wallet;
@@ -44,10 +40,10 @@ export class MerchantRegistrationService {
         const existingMerchant =
             await this.merchantRepository.findByDomain(normalizedDomain);
         if (existingMerchant) {
-            return {
-                success: false,
-                error: "Merchant already registered for this domain",
-            };
+            throw HttpError.conflict(
+                "DOMAIN_ALREADY_REGISTERED",
+                "Merchant already registered for this domain"
+            );
         }
 
         const isDnsValid = await this.dnsCheckRepository.isValidDomain({
@@ -56,10 +52,10 @@ export class MerchantRegistrationService {
             setupCode: params.setupCode,
         });
         if (!isDnsValid) {
-            return {
-                success: false,
-                error: "DNS verification failed - TXT record not found or invalid",
-            };
+            throw HttpError.badRequest(
+                "DNS_VERIFICATION_FAILED",
+                "DNS verification failed - TXT record not found or invalid"
+            );
         }
 
         const productId = this.computeProductId(normalizedDomain);
@@ -76,7 +72,7 @@ export class MerchantRegistrationService {
             }),
         });
 
-        return { success: true, merchantId: merchant.id };
+        return { merchantId: merchant.id };
     }
 
     async verifySiweMessage(params: {

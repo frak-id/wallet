@@ -148,6 +148,14 @@ export class PurchaseLinkingOrchestrator {
             merged = true;
         }
 
+        // Honour the persisted purchase status: a refund/cancel webhook may
+        // have arrived between the original webhook and this late SDK claim,
+        // in which case the stored purchase is already terminal. The
+        // interaction is still recorded (for audit + idempotency) but born
+        // cancelled so the reward calculator skips it.
+        const isCancelled =
+            purchase.status === "refunded" || purchase.status === "cancelled";
+
         // Create the interaction now that we have a claimed identity.
         // The webhook stored the purchase data but deferred interaction
         // creation until a claim arrived.
@@ -169,6 +177,7 @@ export class PurchaseLinkingOrchestrator {
             })),
             identityGroupId: finalIdentityGroupId,
             merchantId,
+            cancelled: isCancelled,
         });
 
         if (interactionLogId) {
@@ -177,8 +186,11 @@ export class PurchaseLinkingOrchestrator {
                     purchaseId: purchase.id,
                     interactionLogId,
                     identityGroupId: finalIdentityGroupId,
+                    cancelled: isCancelled,
                 },
-                "Late-claim: created interaction for existing purchase"
+                isCancelled
+                    ? "Late-claim: created cancelled interaction for refunded/cancelled purchase"
+                    : "Late-claim: created interaction for existing purchase"
             );
         }
 

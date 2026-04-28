@@ -1,12 +1,17 @@
 import { Spinner } from "@frak-labs/design-system/components/Spinner";
 import { RefreshCcw } from "lucide-react";
-import { type PropsWithChildren, useMemo } from "react";
+import type { PropsWithChildren } from "react";
 import { useTranslation } from "react-i18next";
 import { useStore } from "zustand";
-import { getTargetPairingClient } from "../../clients/store";
+import type { BasePairingClient } from "../../clients/base";
 import styles from "./index.module.css";
 
 type Status = "success" | "waiting" | "loading" | "error";
+
+// Loose alias — we only need access to .store/.reset/.reconnect, the generics
+// are unused here so we accept any subclass.
+// biome-ignore lint/suspicious/noExplicitAny: structural client prop
+type AnyPairingClient = BasePairingClient<any, any, any>;
 
 /**
  * StatusBoxWallet is a component that displays a status icon and a title.
@@ -19,17 +24,19 @@ type Status = "success" | "waiting" | "loading" | "error";
 export function StatusBoxWallet({
     status,
     title,
+    client,
     children,
 }: PropsWithChildren<{
     status: Status;
     title: string;
+    client?: AnyPairingClient;
 }>) {
     return (
         <div className={styles.statusBoxWalletContainer}>
             <div className={styles.statusBox}>
                 <InnerStatusBox status={status} title={title} />
             </div>
-            <StatusBoxRetry />
+            {client && <StatusBoxRetry client={client} />}
             {children}
         </div>
     );
@@ -46,17 +53,19 @@ export function StatusBoxWallet({
 export function StatusBoxModal({
     status,
     title,
+    client,
     children,
 }: PropsWithChildren<{
     status: Status;
     title: string;
+    client?: AnyPairingClient;
 }>) {
     return (
         <div className={styles.statusBoxModalContainer}>
             <div className={styles.statusBox}>
                 <InnerStatusBox status={status} title={title} />
             </div>
-            <StatusBoxRetry />
+            {client && <StatusBoxRetry client={client} />}
             {children}
         </div>
     );
@@ -73,17 +82,19 @@ export function StatusBoxModal({
 export function StatusBoxWalletEmbedded({
     status,
     title,
+    client,
     children,
 }: PropsWithChildren<{
     status: Status;
     title: string;
+    client?: AnyPairingClient;
 }>) {
     return (
         <div className={styles.statusBoxWalletEmbeddedContainer}>
             <div className={styles.statusBox}>
                 <InnerStatusBox status={status} title={title} />
             </div>
-            <StatusBoxRetry />
+            {client && <StatusBoxRetry client={client} />}
             {children}
         </div>
     );
@@ -93,24 +104,35 @@ export function StatusBoxWalletEmbedded({
  * StatusBoxRefresh is a component that displays a refresh button.
  * It is used to refresh the pairing process.
  */
-function StatusBoxRetry() {
-    const client = useMemo(() => getTargetPairingClient(), []);
+function StatusBoxRetry({ client }: { client: AnyPairingClient }) {
     const state = useStore(client.store);
     const { t } = useTranslation();
     const code = state.closeInfo?.code;
     const reason = state.closeInfo?.reason;
 
-    if (state.status !== "retry-error") return null;
+    if (state.status !== "retry-error" && state.status !== "error") return null;
+
+    const isFatal = state.status === "error";
+    const onClick = () => {
+        if (isFatal) {
+            client.reset();
+        } else {
+            client.reconnect();
+        }
+    };
+    const label = isFatal
+        ? t("wallet.pairing.reconnect")
+        : t("wallet.pairing.refresh");
 
     return (
         <>
             <button
                 type="button"
                 className={styles.statusBox__retry}
-                onClick={() => client.reconnect()}
+                onClick={onClick}
             >
                 <RefreshCcw size={12} />
-                {t("wallet.pairing.refresh")}
+                {label}
             </button>
             {(code || reason) && (
                 <p className={styles.statusBox__retryText}>

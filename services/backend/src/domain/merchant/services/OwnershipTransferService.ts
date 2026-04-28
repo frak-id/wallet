@@ -1,11 +1,10 @@
 import { viemClient } from "@backend-infrastructure";
+import { HttpError } from "@backend-utils";
 import { type Address, type Hex, isAddressEqual } from "viem";
 import { verifyMessage } from "viem/actions";
 import { parseSiweMessage, validateSiweMessage } from "viem/siwe";
 import type { MerchantOwnershipTransferRepository } from "../repositories/MerchantOwnershipTransferRepository";
 import type { MerchantRepository } from "../repositories/MerchantRepository";
-
-type TransferResult = { success: true } | { success: false; error: string };
 
 export class OwnershipTransferService {
     constructor(
@@ -19,12 +18,15 @@ export class OwnershipTransferService {
         signature: Hex;
         toWallet: Address;
         requestOrigin: string;
-    }): Promise<TransferResult> {
+    }): Promise<void> {
         const merchant = await this.merchantRepository.findById(
             params.merchantId
         );
         if (!merchant) {
-            return { success: false, error: "Merchant not found" };
+            throw HttpError.notFound(
+                "MERCHANT_NOT_FOUND",
+                "Merchant not found"
+            );
         }
 
         const siweResult = await this.verifySiweMessage({
@@ -37,21 +39,21 @@ export class OwnershipTransferService {
             ),
         });
         if (!siweResult.valid) {
-            return { success: false, error: siweResult.error };
+            throw HttpError.badRequest("SIWE_INVALID", siweResult.error);
         }
 
         if (!isAddressEqual(siweResult.wallet, merchant.ownerWallet)) {
-            return {
-                success: false,
-                error: "Only the current owner can initiate transfer",
-            };
+            throw HttpError.forbidden(
+                "OWNER_ONLY",
+                "Only the current owner can initiate transfer"
+            );
         }
 
         if (isAddressEqual(params.toWallet, merchant.ownerWallet)) {
-            return {
-                success: false,
-                error: "Cannot transfer to the same owner",
-            };
+            throw HttpError.conflict(
+                "SAME_OWNER",
+                "Cannot transfer to the same owner"
+            );
         }
 
         await this.transferRepository.create({
@@ -59,8 +61,6 @@ export class OwnershipTransferService {
             fromWallet: merchant.ownerWallet,
             toWallet: params.toWallet,
         });
-
-        return { success: true };
     }
 
     async acceptTransfer(params: {
@@ -68,15 +68,15 @@ export class OwnershipTransferService {
         message: string;
         signature: Hex;
         requestOrigin: string;
-    }): Promise<TransferResult> {
+    }): Promise<void> {
         const transfer = await this.transferRepository.findActiveByMerchant(
             params.merchantId
         );
         if (!transfer) {
-            return {
-                success: false,
-                error: "No active transfer found for this merchant",
-            };
+            throw HttpError.notFound(
+                "NO_ACTIVE_TRANSFER",
+                "No active transfer found for this merchant"
+            );
         }
 
         const siweResult = await this.verifySiweMessage({
@@ -86,14 +86,14 @@ export class OwnershipTransferService {
             expectedStatement: this.buildAcceptStatement(params.merchantId),
         });
         if (!siweResult.valid) {
-            return { success: false, error: siweResult.error };
+            throw HttpError.badRequest("SIWE_INVALID", siweResult.error);
         }
 
         if (!isAddressEqual(siweResult.wallet, transfer.toWallet)) {
-            return {
-                success: false,
-                error: "Only the designated new owner can accept transfer",
-            };
+            throw HttpError.forbidden(
+                "NEW_OWNER_ONLY",
+                "Only the designated new owner can accept transfer"
+            );
         }
 
         await this.merchantRepository.updateOwner(
@@ -101,34 +101,36 @@ export class OwnershipTransferService {
             transfer.toWallet
         );
         await this.transferRepository.delete(params.merchantId);
-
-        return { success: true };
     }
 
     async cancelTransfer(params: {
         merchantId: string;
         wallet: Address;
-    }): Promise<TransferResult> {
+    }): Promise<void> {
         const merchant = await this.merchantRepository.findById(
             params.merchantId
         );
         if (!merchant) {
-            return { success: false, error: "Merchant not found" };
+            throw HttpError.notFound(
+                "MERCHANT_NOT_FOUND",
+                "Merchant not found"
+            );
         }
 
         if (!isAddressEqual(params.wallet, merchant.ownerWallet)) {
-            return {
-                success: false,
-                error: "Only the current owner can cancel transfer",
-            };
+            throw HttpError.forbidden(
+                "OWNER_ONLY",
+                "Only the current owner can cancel transfer"
+            );
         }
 
         const deleted = await this.transferRepository.delete(params.merchantId);
         if (!deleted) {
-            return { success: false, error: "No pending transfer to cancel" };
+            throw HttpError.notFound(
+                "NO_PENDING_TRANSFER",
+                "No pending transfer to cancel"
+            );
         }
-
-        return { success: true };
     }
 
     async getPendingTransfer(merchantId: string) {

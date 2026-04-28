@@ -3,12 +3,19 @@ import type { Address, Hex } from "viem";
 import type {
     AssetStatus,
     AssetType,
+    CancellationReason,
     InteractionType,
     RecipientType,
 } from "../schemas";
 
 export { InteractionTypeSchema } from "../schemas";
-export type { AssetStatus, AssetType, InteractionType, RecipientType };
+export type {
+    AssetStatus,
+    AssetType,
+    CancellationReason,
+    InteractionType,
+    RecipientType,
+};
 
 // =============================================================================
 // DETAILED ASSET LOG (joined view for reward history)
@@ -22,10 +29,12 @@ export type DetailedAssetLog = {
     recipientType: RecipientType;
     createdAt: Date;
     settledAt: Date | null;
+    availableAt: Date | null;
+    cancellationReason: CancellationReason | null;
     onchainTxHash: Hex | null;
     interactionType: InteractionType | null;
     interactionPayload: InteractionPayload | null;
-    touchpointId: string | null;
+    referralLinkId: string | null;
     identityGroupId: string;
     merchantId: string;
     merchantName: string;
@@ -39,16 +48,22 @@ export type DetailedAssetLog = {
 
 /**
  * Payload for referral arrival interaction.
+ *
+ * Discriminated on `referralRegistered`:
+ *  - `true` → a new referral_links row was inserted; `referralLinkId` is
+ *    guaranteed non-null and points to that row.
+ *  - `false` → the referral was rejected (self-referral, cycle, duplicate,
+ *    or no referrer resolvable); no link id is carried.
  */
 export type ReferralArrivalPayload = {
     referrerWallet?: Address;
     referrerClientId?: string;
     referrerMerchantId?: string;
     referralTimestamp?: number;
-    landingUrl?: string;
-    touchpointId: string;
-    referralRegistered: boolean;
-};
+} & (
+    | { referralRegistered: true; referralLinkId: string }
+    | { referralRegistered: false; referralLinkId: null }
+);
 
 /**
  * Payload for create referral link interaction (user shares their link).
@@ -56,7 +71,6 @@ export type ReferralArrivalPayload = {
 export type CreateReferralLinkPayload = {
     sharerWallet?: Address;
     merchantId: string;
-    touchpointId?: string;
     sharingTimestamp?: number;
     purchaseId?: string;
 };
@@ -127,8 +141,14 @@ export type CreateAssetLogParams = {
     tokenAddress?: Address;
     recipientType: RecipientType;
     recipientWallet?: Address;
-    touchpointId?: string;
+    referralLinkId?: string;
     interactionLogId: string;
     chainDepth?: number;
     expirationDays?: number;
+    /**
+     * Number of seconds the reward stays locked before it becomes claimable.
+     * `0` or `undefined` means no lockup. Stored as seconds so the unit lines
+     * up with `BudgetConfigItem.durationInSeconds` and fits comfortably in int4.
+     */
+    lockupSeconds?: number;
 };

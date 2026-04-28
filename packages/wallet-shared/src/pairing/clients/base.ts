@@ -2,10 +2,12 @@ import type { Treaty } from "@elysiajs/eden";
 import type { StoreApi } from "zustand/vanilla";
 import { createStore } from "zustand/vanilla";
 import { authenticatedWalletApi } from "../../common/api/backendClient";
+import { sessionStore } from "../../stores/sessionStore";
 import {
     type BasePairingState,
+    classifyClose,
     type OriginIdentityNode,
-    WsCloseCode,
+    type PairingSignatureFailure,
     type WsOriginMessage,
     type WsOriginRequest,
     type WsTargetMessage,
@@ -50,6 +52,13 @@ const RECONNECT_BASE_DELAY_MS = 1_000;
 const RECONNECT_MAX_DELAY_MS = 30_000;
 const RECONNECT_RETRY_BUDGET_MS = 2 * 60 * 1_000; // 2 minutes
 
+/**
+ * Outbound queue cap. Bounded to keep memory in check during prolonged
+ * offline periods; exceeding this rejects pending signature requests with
+ * `connection-lost` so the dApp UI doesn't hang.
+ */
+const MAX_OUTBOUND_QUEUE_SIZE = 10;
+
 function computeBackoffDelay(attempt: number): number {
     const exponentialDelay = Math.min(
         RECONNECT_MAX_DELAY_MS,
@@ -74,6 +83,13 @@ export abstract class BasePairingClient<
      * Used to enforce the time-based retry budget.
      */
     private reconnectBudgetStart: number | null = null;
+
+    /**
+     * Outbound message queue. Filled while the socket is closed/reconnecting,
+     * flushed on `open`. Each entry must carry an `id` so the server can
+     * dedupe in case a message was actually delivered before the close.
+     */
+    private outbound: TRequest[] = [];
 
     /**
      * The Zustand store for the pairing client
@@ -111,11 +127,111 @@ export abstract class BasePairingClient<
     }
 
     /**
-     * Update the state
+     * Update the state via a reducer.
      */
     protected updateState(updater: (state: TState) => TState) {
         this._store.setState(updater);
     }
+
+    /* ---------------------------------------------------------------------- */
+    /*                          Lifecycle primitives                          */
+    /* ---------------------------------------------------------------------- */
+
+    /** Stop the heartbeat ping timer. */
+    private stopHeartbeat() {
+        if (this.pingInterval) {
+            clearInterval(this.pingInterval);
+            this.pingInterval = null;
+        }
+    }
+
+    /** Close the socket (if any) and clear local connection refs. */
+    private closeSocket() {
+        this.connection?.close();
+        this.connection = null;
+        this.stopHeartbeat();
+    }
+
+    /** Reset the Zustand state to its initial shape. */
+    private resetState() {
+        this.setState(this.getInitialState());
+    }
+
+    /**
+     * Reject every in-flight signature request with the given reason.
+     * Subclasses iterate their per-request maps; the base also drops the
+     * outbound queue.
+     *
+     * Default implementation is a no-op for subclasses (e.g. target) that
+     * don't keep promise-bearing requests.
+     */
+    protected rejectAllRequests(_reason: PairingSignatureFailure): void {
+        // Subclasses override.
+    }
+
+    /**
+     * Reject the per-request state associated with a single queued message
+     * that we just had to drop (outbound queue overflow). Subclasses with
+     * promise-bearing request types (e.g. origin's `signature-request`)
+     * override this so we settle ONLY the dropped request rather than
+     * nuking every other in-flight one.
+     */
+    protected rejectDroppedRequest(
+        _message: TRequest,
+        _reason: PairingSignatureFailure
+    ): void {
+        // Subclasses override.
+    }
+
+    /**
+     * Subclass hook fired after the socket is open and the outbound queue
+     * has been flushed. Useful to (re)start the heartbeat after reconnect.
+     */
+    protected onSocketOpen(): void {
+        // Subclasses override.
+    }
+
+    /** Drop the outbound queue and reject in-flight requests. */
+    private rejectPending(reason: PairingSignatureFailure) {
+        this.outbound = [];
+        this.rejectAllRequests(reason);
+    }
+
+    /* ---------------------------------------------------------------------- */
+    /*                          Public surface                                 */
+    /* ---------------------------------------------------------------------- */
+
+    /**
+     * Graceful disconnect. Closes the WS but keeps Zustand state and any
+     * in-flight requests untouched — caller may choose to reconnect later.
+     */
+    disconnect() {
+        this.closeSocket();
+    }
+
+    /**
+     * Hard reset: close the WS, reject any pending requests, clear the
+     * local session token, and put the client back into its initial state.
+     * Used as the recovery action after a non-retryable server rejection
+     * (e.g. 4401 invalid token) so the app can route the user back to a
+     * fresh sign-in flow.
+     */
+    reset() {
+        this.closeSocket();
+        this.rejectPending({
+            code: "connection-lost",
+            detail: "client reset",
+        });
+        this.resetState();
+        sessionStore.getState().clearSession();
+    }
+
+    /** Reconnect to the pairing websocket. Subclass-specific. */
+    abstract reconnect(): void;
+
+    /* ---------------------------------------------------------------------- */
+    /*                          Connection management                          */
+    /* ---------------------------------------------------------------------- */
 
     /**
      * Check WebSocket liveness, cleaning up zombie connections.
@@ -139,9 +255,12 @@ export abstract class BasePairingClient<
         }
 
         console.log("[Pairing] Cleaning up zombie WebSocket connection");
+        // Zombie: socket is CLOSED but no close event fired. Drop the ref
+        // and reset reconnect counters, but DO NOT reset state — the caller
+        // is expected to re-establish the connection silently.
         this.connection = null;
+        this.stopHeartbeat();
         this.resetReconnectState();
-        this.cleanupConnection();
         return false;
     }
 
@@ -162,16 +281,22 @@ export abstract class BasePairingClient<
         this.connection = authenticatedWalletApi.pairings.ws.subscribe({
             query,
         });
-        this.setState({ status: "connecting" } as Partial<TState>);
+
+        // Only flip status to "connecting" if we're not already in a
+        // connected state. Silent reconnects after a transient close keep
+        // status at "paired" so the UI doesn't flicker.
+        if (this.state.status !== "paired") {
+            this.setState({ status: "connecting" } as Partial<TState>);
+        }
 
         this.setupEventListeners();
     }
 
     /**
-     * Force a connection to the pairing websocket, if already open, close it and reconnect
+     * Force a connection to the pairing websocket — if already open, close it
+     * and reconnect.
      */
     protected forceConnect(connectFn: () => void) {
-        // If no connection, directly connect
         if (!this.connection) {
             connectFn();
             return;
@@ -180,30 +305,24 @@ export abstract class BasePairingClient<
         // If connection obj is here, but the ws is closed, cleanup and reconnect
         if (this.connection.ws.readyState === WebSocket.CLOSED) {
             this.connection = null;
-            this.cleanup();
+            this.stopHeartbeat();
             connectFn();
             return;
         }
 
-        // If we already got a onCloseHook, exit
         if (this.onCloseHook) {
             console.warn("Already waiting for WS to close, skipping");
             return;
         }
 
-        // If connection is open, and not in a closed state, close it and save the connectFn in the onCloseHook
         this.connection.close();
         this.onCloseHook = connectFn;
     }
 
-    /**
-     * Reconnect to the pairing websocket
-     */
-    protected abstract reconnect(): void;
+    /* ---------------------------------------------------------------------- */
+    /*                          Event handling                                 */
+    /* ---------------------------------------------------------------------- */
 
-    /**
-     * Setup the event listeners for the pairing websocket
-     */
     protected setupEventListeners() {
         if (!this.connection) return;
 
@@ -211,13 +330,10 @@ export abstract class BasePairingClient<
             "message",
             ({ data }: { data: unknown }) => {
                 console.log("Received message", data);
-                // Ensure the data is a valid message
                 if (!this.isWsMessageData(data)) {
                     console.error("Invalid message received", data);
                     return;
                 }
-
-                // Handle the message
                 this.handleMessage(data);
             },
             {}
@@ -226,6 +342,8 @@ export abstract class BasePairingClient<
         this.connection.on("open", () => {
             console.log("Pairing websocket opened");
             this.resetReconnectState();
+            this.flushOutbound();
+            this.onSocketOpen();
         });
 
         this.connection.on("close", (event: CloseEvent) =>
@@ -244,40 +362,47 @@ export abstract class BasePairingClient<
     protected abstract handleMessage(message: TMessage): void;
 
     /**
-     * Send a message to the pairing websocket
+     * Send a message to the pairing websocket. Queues if the socket isn't
+     * currently open — `flushOutbound` will replay on reconnect.
      */
     protected send(message: TRequest) {
-        this.connection?.send(message);
-    }
-
-    /**
-     * Cleanup the pairing websocket
-     */
-    protected cleanup() {
-        if (this.pingInterval) {
-            clearInterval(this.pingInterval);
-            this.pingInterval = null;
+        if (this.connection?.ws.readyState === WebSocket.OPEN) {
+            this.connection.send(message);
+            return;
         }
 
-        // Reput the state to initial state
-        this.setState(this.getInitialState());
+        if (this.outbound.length >= MAX_OUTBOUND_QUEUE_SIZE) {
+            // Drop the OLDEST message (most likely the user has given up on it)
+            // to make room for the new one. Reject only that specific request,
+            // not every other in-flight signature — the rest are still alive.
+            const dropped = this.outbound.shift();
+            console.warn(
+                "[Pairing] Outbound queue overflow — dropping oldest message"
+            );
+            if (dropped) {
+                this.rejectDroppedRequest(dropped, {
+                    code: "connection-lost",
+                    detail: "outbound queue overflow",
+                });
+            }
+        }
+        this.outbound.push(message);
     }
 
-    /**
-     * Lightweight cleanup that only clears the ping interval without
-     * resetting store state. Used by isAlive() to avoid a UI flash
-     * (idle → connecting) when recovering from a zombie connection.
-     */
-    protected cleanupConnection() {
-        if (this.pingInterval) {
-            clearInterval(this.pingInterval);
-            this.pingInterval = null;
+    private flushOutbound() {
+        if (!this.connection) return;
+        while (
+            this.outbound.length > 0 &&
+            this.connection.ws.readyState === WebSocket.OPEN
+        ) {
+            const next = this.outbound.shift();
+            if (next) this.connection.send(next);
         }
     }
 
     private handleClose({ code, reason }: CloseEvent) {
         console.log("Pairing websocket closed", { code, reason });
-        this.cleanup();
+        this.stopHeartbeat();
         this.connection = null;
 
         if (this.onCloseHook) {
@@ -286,8 +411,12 @@ export abstract class BasePairingClient<
             return;
         }
 
-        const isRetryable = code !== WsCloseCode.NO_CONNECTION_TO_CONNECT_TO;
-        if (!isRetryable) {
+        const cls = classifyClose(code);
+
+        if (cls === "silent" || cls === "normal") {
+            // Drop back to idle without UI feedback. No requests should be
+            // in flight at this point in normal flows; if there are, the
+            // caller is responsible for cancelling them.
             this.setState({
                 status: "idle",
                 closeInfo: { code, reason },
@@ -296,6 +425,25 @@ export abstract class BasePairingClient<
             return;
         }
 
+        if (cls === "fatal") {
+            // Non-retryable error — surface it so the user sees what went wrong
+            // and can take action (typically a manual refresh / re-auth).
+            this.rejectPending({
+                code: "connection-lost",
+                detail: reason || `ws-${code}`,
+            });
+            this.setState({
+                ...this.getInitialState(),
+                status: "error",
+                closeInfo: { code, reason },
+            } as Partial<TState>);
+            this.resetReconnectState();
+            return;
+        }
+
+        // cls === "transient" — silent reconnect with backoff.
+        // CRITICAL: do NOT touch signatureRequests, partnerDevice, or
+        // pairingIdState here. Pending requests must survive the reconnect.
         if (this.reconnectBudgetStart === null) {
             this.reconnectBudgetStart = Date.now();
         }
@@ -305,7 +453,12 @@ export abstract class BasePairingClient<
             console.warn(
                 `Reconnect budget exhausted after ${Math.round(elapsed / 1000)}s`
             );
+            this.rejectPending({
+                code: "connection-lost",
+                detail: `retry budget exhausted (${reason || `ws-${code}`})`,
+            });
             this.setState({
+                ...this.getInitialState(),
                 status: "retry-error",
                 closeInfo: { code, reason },
             } as Partial<TState>);
@@ -315,10 +468,11 @@ export abstract class BasePairingClient<
 
         const delay = computeBackoffDelay(this.reconnectRetryCount);
         this.reconnectRetryCount++;
-
-        setTimeout(() => {
-            this.reconnect();
-        }, delay);
+        // Surface the close info so the UI can opt into showing a banner,
+        // but DO NOT change `status` — keep it whatever it was so transient
+        // drops are invisible to the user.
+        this.setState({ closeInfo: { code, reason } } as Partial<TState>);
+        setTimeout(() => this.reconnect(), delay);
     }
 
     private resetReconnectState() {
@@ -326,15 +480,11 @@ export abstract class BasePairingClient<
         this.reconnectBudgetStart = null;
     }
 
-    /**
-     * Disconnect from the pairing websocket
-     */
-    disconnect() {
-        this.connection?.close();
-        this.cleanup();
-    }
-
     protected isWsMessageData(data: unknown): data is TMessage {
         return typeof data === "object" && data !== null && "type" in data;
     }
 }
+
+// Re-export so subclasses can throw / wrap typed signature errors without
+// pulling them from a separate path.
+export { PairingSignatureError } from "../types";

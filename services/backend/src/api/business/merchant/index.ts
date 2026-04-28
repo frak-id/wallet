@@ -5,7 +5,6 @@ import {
     MerchantDetailResponseSchema,
     MerchantIdParamSchema,
     MyMerchantsResponseSchema,
-    SuccessResponseSchema,
 } from "../../schemas";
 import { businessSessionContext } from "../middleware/session";
 import { merchantAdminsRoutes } from "./admins";
@@ -167,7 +166,7 @@ export const merchantRoutes = new Elysia({ prefix: "/merchant" })
                 updated.domain
             );
 
-            return { success: true };
+            return status(204);
         },
         {
             params: MerchantIdParamSchema,
@@ -176,7 +175,7 @@ export const merchantRoutes = new Elysia({ prefix: "/merchant" })
                 defaultRewardToken: t.Optional(t.Hex()),
             }),
             response: {
-                200: SuccessResponseSchema,
+                204: t.Void(),
                 401: t.String(),
                 403: t.String(),
                 404: t.String(),

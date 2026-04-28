@@ -114,25 +114,28 @@ function buildJwtContext<const Schema extends TSchema | undefined = undefined>({
     const key =
         typeof secret === "string" ? new TextEncoder().encode(secret) : secret;
 
-    // Get the validator for the given schema
+    // Validate the user's schema directly and pass the JWT-spec claims as
+    // additional accepted properties via `validators`. This matches the
+    // canonical @elysiajs/jwt pattern and — unlike `t.Composite`/`t.Intersect`
+    // — it preserves discriminated-union members (variant-specific fields
+    // would be silently dropped otherwise).
     const validator = schema
-        ? getSchemaValidator(
-              t.Composite([
-                  schema,
-                  t.Partial(
-                      t.Object({
-                          iss: t.String(),
-                          sub: t.String(),
-                          aud: t.Union([t.String(), t.Array(t.String())]),
-                          jti: t.String(),
-                          nbf: t.Number(),
-                          exp: t.Number(),
-                          iat: t.Number(),
-                      })
-                  ),
-              ]),
-              { modules: t.Module({}) }
-          )
+        ? getSchemaValidator(schema, {
+              modules: t.Module({}),
+              validators: [
+                  t.Object({
+                      iss: t.Optional(t.String()),
+                      sub: t.Optional(t.String()),
+                      aud: t.Optional(
+                          t.Union([t.String(), t.Array(t.String())])
+                      ),
+                      jti: t.Optional(t.String()),
+                      nbf: t.Optional(t.Number()),
+                      exp: t.Optional(t.Number()),
+                      iat: t.Optional(t.Number()),
+                  }),
+              ],
+          })
         : undefined;
 
     type JwtPayload = UnwrapSchema<Schema, Record<string, string | number>> &

@@ -2,6 +2,7 @@ import { existsSync, readFileSync } from "node:fs";
 import { homedir } from "node:os";
 import { join } from "node:path";
 import { log } from "@backend-infrastructure";
+import { noContentPatch } from "@backend-utils";
 import { cors } from "@elysiajs/cors";
 import { isRunningInProd, isRunningLocally } from "@frak-labs/app-essentials";
 import { Elysia } from "elysia";
@@ -28,6 +29,7 @@ const app = new Elysia({
         idleTimeout: 300,
     },
 })
+    .use(noContentPatch)
     .onStart(async () => {
         OrchestrationContext.orchestrators.notification.registerListeners();
         CronRegistry.start();

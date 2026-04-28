@@ -30,6 +30,22 @@ export const AssetStatusSchema = t.Union([
 ]);
 export type AssetStatus = Static<typeof AssetStatusSchema>;
 
+/**
+ * Reason a reward was moved to a terminal non-settled status.
+ *
+ * `refund` -> the upstream purchase was refunded (full or partial).
+ * `expired` -> the reward sat in `pending` past `expires_at` without being settled.
+ * `self_referral_detected` -> a late identity merge revealed the referrer and referee share an identity.
+ * `manual` -> cancelled via admin tool / support action.
+ */
+export const CancellationReasonSchema = t.Union([
+    t.Literal("refund"),
+    t.Literal("expired"),
+    t.Literal("self_referral_detected"),
+    t.Literal("manual"),
+]);
+export type CancellationReason = Static<typeof CancellationReasonSchema>;
+
 export const AssetTypeSchema = t.Literal("token");
 export type AssetType = Static<typeof AssetTypeSchema>;
 
@@ -72,6 +88,10 @@ export const RewardHistoryItemSchema = t.Object({
     txHash: t.Optional(t.String()),
     createdAt: t.Date(),
     settledAt: t.Optional(t.Date()),
+    /** Timestamp at which a locked reward becomes claimable. Undefined when no lockup. */
+    availableAt: t.Optional(t.Date()),
+    /** Reason a `cancelled` reward was cancelled. Undefined for non-cancelled rewards. */
+    cancellationReason: t.Optional(CancellationReasonSchema),
     purchase: t.Optional(PurchaseInfoSchema),
 });
 export type RewardHistoryItem = Static<typeof RewardHistoryItemSchema>;

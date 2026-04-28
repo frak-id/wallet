@@ -1,4 +1,5 @@
 import type { Hex } from "viem";
+import type { SignatureRejectReason } from "./SignatureRejectReason";
 
 /**
  * When a pairing is initiated by the origin
@@ -62,20 +63,23 @@ export type WsSignatureResponseRequest = {
         signature: Hex;
     };
 };
-
 /**
- * When the target send a signature rejection
- *  from target
+ * When either side sends a signature rejection / cancellation.
+ *
+ * Bidirectional: target uses it to decline a sign prompt, origin uses it
+ * to cancel a request the user dismissed before signing. Server's response
+ * is symmetric — delete the DB row, forward to the OPPOSITE topic.
  */
 export type WsSignatureRejectRequest = {
     type: "signature-reject";
     payload: {
-        // The pairing id
-        pairingId: string;
         // The id of the request
         id: string;
-        // The reason of the rejection
-        reason: string;
+        // The reason of the rejection (typed)
+        reason: SignatureRejectReason;
+        // Optional pairing id (target must include it; origin can omit it,
+        // server resolves it from the wallet token)
+        pairingId?: string;
     };
 };
 
