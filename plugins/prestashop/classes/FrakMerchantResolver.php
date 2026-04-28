@@ -66,11 +66,7 @@ class FrakMerchantResolver
 
     public static function currentHost(): string
     {
-        $domain = Tools::getShopDomain(false, true);
-        $domain = strtolower((string) $domain);
-        $domain = preg_replace('#^https?://#', '', $domain) ?? '';
-        $domain = preg_replace('#^www\.#', '', $domain) ?? '';
-        return rtrim($domain, '/');
+        return FrakUtils::currentHost();
     }
 
     /** @return array{id:string,name:string,domain:string,resolved_at:int}|null */

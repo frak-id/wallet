@@ -5,8 +5,10 @@ if (!defined('_PS_VERSION_')) {
 }
 
 require_once __DIR__ . '/vendor/autoload.php';
+require_once __DIR__ . '/classes/FrakUtils.php';
 require_once __DIR__ . '/classes/FrakMerchantResolver.php';
 require_once __DIR__ . '/classes/FrakWebhookHelper.php';
+require_once __DIR__ . '/classes/FrakComponentRenderer.php';
 
 class FrakIntegration extends Module
 {
@@ -91,24 +93,7 @@ class FrakIntegration extends Module
 
     public function hookDisplayProductAdditionalInfo()
     {
-        if (!Configuration::get('FRAK_SHARING_BUTTON_ENABLED')) {
-            return;
-        }
-
-        $sharing_button_style = Configuration::get('FRAK_SHARING_BUTTON_STYLE');
-        $sharing_button_classname = 'btn btn-secondary'; // Default value
-
-        if ($sharing_button_style === 'primary') {
-            $sharing_button_classname = 'btn btn-primary';
-        } elseif ($sharing_button_style === 'custom') {
-            $sharing_button_classname = Configuration::get('FRAK_SHARING_BUTTON_CUSTOM_STYLE');
-        }
-
-        $this->context->smarty->assign([
-            'button_text' => Configuration::get('FRAK_SHARING_BUTTON_TEXT'),
-            'sharing_button_classname' => $sharing_button_classname,
-        ]);
-        return $this->display(__FILE__, 'views/templates/hook/sharingButton.tpl');
+        return FrakComponentRenderer::shareButton(['placement' => 'product']);
     }
 
     public function hookActionOrderStatusUpdate($params)
@@ -163,19 +148,16 @@ class FrakIntegration extends Module
     public function hookDisplayOrderConfirmation($params)
     {
         $order = $params['order'];
-
         if (!$order) {
-            // No order found, do nothing
             return;
         }
 
-        $this->context->smarty->assign([
-            'customer_id' => $order->id_customer,
-            'order_id' => $order->id,
-            'token' => $order->secure_key,
+        return FrakComponentRenderer::postPurchase([
+            'placement' => 'order-confirmation',
+            'customerId' => (string) $order->id_customer,
+            'orderId' => (string) $order->id,
+            'token' => $order->secure_key . '_' . $order->id,
         ]);
-
-        return $this->display(__FILE__, 'views/templates/hook/orderConfirmation.tpl');
     }
 
 
