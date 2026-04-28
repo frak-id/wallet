@@ -8,6 +8,7 @@
  * Requires PHP: 8.0
  * Author: Frak-Labs
  * Author URI: https://frak.id
+ * Update URI: https://github.com/frak-id/wallet/releases?q=wordpress+plugin&expanded=true
  * License: GPL-3.0-only
  * License URI: https://www.gnu.org/licenses/gpl-3.0.html
  * Text Domain: frak
