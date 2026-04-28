@@ -67,7 +67,6 @@ function PairingPage() {
         id,
     });
     const hasPairingCode = Boolean(pairingInfo?.pairingCode?.trim());
-    const shouldShowCode = mode !== "embedded" && hasPairingCode;
     const pairingErrorState = getPairingErrorState(
         isPairingError,
         pairingError
@@ -204,7 +203,7 @@ function PairingPage() {
                     state={pairingState}
                     originName={pairingInfo.originName}
                 />
-                {shouldShowCode ? (
+                {hasPairingCode ? (
                     <Stack space="m" align="center">
                         <Text variant="body" weight="semiBold" align="center">
                             {t("wallet.pairing.code")}
