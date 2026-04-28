@@ -169,9 +169,8 @@ export function MetricsCampaign() {
                         <p className={styles.panelDescription}>
                             Rewards stay locked for a grace period after a
                             purchase before being settled on-chain. This
-                            protects the campaign budget against refunds and
-                            late self-referral detections. Set to 0 to settle
-                            immediately.
+                            protects the campaign budget against refunds. Set to
+                            0 to settle immediately.
                         </p>
                         <LockupConfig />
                     </Panel>

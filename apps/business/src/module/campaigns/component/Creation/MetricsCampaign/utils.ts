@@ -17,13 +17,6 @@ export type RewardFormState = {
     lockupDays: number;
 };
 
-export const {
-    DEFAULT_DAYS: DEFAULT_LOCKUP_DAYS,
-    MIN_DAYS: MIN_LOCKUP_DAYS,
-    MAX_DAYS: MAX_LOCKUP_DAYS,
-    SECONDS_PER_DAY,
-} = REWARD_LOCKUP;
-
 export const DEFAULT_REWARD_STATE: RewardFormState = {
     cac: 0,
     ratio: 90,
@@ -31,7 +24,7 @@ export const DEFAULT_REWARD_STATE: RewardFormState = {
     deperditionPerLevel: 80,
     maxDepth: 5,
     referralOnly: true,
-    lockupDays: DEFAULT_LOCKUP_DAYS,
+    lockupDays: REWARD_LOCKUP.DEFAULT_DAYS,
 };
 
 const FRAK_COMMISSION_PERCENT = 20;
@@ -139,7 +132,8 @@ export function updateRuleWithRewards(
     return {
         ...existingRule,
         rewards,
-        defaultLockupSeconds: rewardState.lockupDays * SECONDS_PER_DAY,
+        defaultLockupSeconds:
+            rewardState.lockupDays * REWARD_LOCKUP.SECONDS_PER_DAY,
     };
 }
 
@@ -193,7 +187,9 @@ export function extractFormStateFromRule(
             (Array.isArray(rule.conditions) && rule.conditions.length === 0),
         lockupDays:
             rule.defaultLockupSeconds !== undefined
-                ? Math.round(rule.defaultLockupSeconds / SECONDS_PER_DAY)
+                ? Math.round(
+                      rule.defaultLockupSeconds / REWARD_LOCKUP.SECONDS_PER_DAY
+                  )
                 : DEFAULT_LOCKUP_DAYS,
     };
 }

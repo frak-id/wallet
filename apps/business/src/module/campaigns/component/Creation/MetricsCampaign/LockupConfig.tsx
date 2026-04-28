@@ -1,3 +1,4 @@
+import { REWARD_LOCKUP } from "@frak-labs/app-essentials/constants/rewards";
 import { useFormContext } from "react-hook-form";
 import {
     FormControl,
@@ -7,12 +8,7 @@ import {
     FormLabel,
 } from "@/module/forms/Form";
 import styles from "./index.module.css";
-import {
-    DEFAULT_LOCKUP_DAYS,
-    MAX_LOCKUP_DAYS,
-    MIN_LOCKUP_DAYS,
-    type RewardFormState,
-} from "./utils";
+import type { RewardFormState } from "./utils";
 
 /**
  * Reward lockup grace period (in days). During this window, rewards stay
@@ -30,30 +26,28 @@ export function LockupConfig() {
             control={control}
             name="lockupDays"
             render={({ field }) => {
-                const value = field.value ?? DEFAULT_LOCKUP_DAYS;
+                const value = field.value ?? REWARD_LOCKUP.DEFAULT_DAYS;
                 return (
                     <FormItem>
                         <FormLabel>Reward lockup (days)</FormLabel>
                         <FormControl>
                             <input
                                 type="number"
-                                min={MIN_LOCKUP_DAYS}
-                                max={MAX_LOCKUP_DAYS}
+                                min={REWARD_LOCKUP.MIN_DAYS}
+                                max={REWARD_LOCKUP.MAX_DAYS}
                                 step={1}
                                 className={styles.chaining__input}
                                 value={value}
                                 onChange={(e) => {
                                     const n = e.target.valueAsNumber;
-                                    field.onChange(
-                                        Number.isFinite(n) ? n : 0
-                                    );
+                                    field.onChange(Number.isFinite(n) ? n : 0);
                                 }}
                             />
                         </FormControl>
                         <FormDescription>
                             {value === 0
-                                ? "Disabled — rewards settle on the next cron tick."
-                                : `Rewards stay pending for ${value} day${value === 1 ? "" : "s"} after a purchase, then settle on-chain. Refunds during this window cancel the reward and restore the campaign budget.`}
+                                ? "Disabled — rewards settle in a few minutes."
+                                : `Rewards stay pending for ${value} day${value === 1 ? "" : "s"} after a purchase, then settle. Refunds during this window cancel the reward and restore the campaign budget.`}
                         </FormDescription>
                     </FormItem>
                 );
