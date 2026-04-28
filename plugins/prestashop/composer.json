@@ -1,24 +1,49 @@
 {
+    "name": "frak-labs/prestashop-module",
+    "version": "1.0.0",
+    "description": "Frak SDK integration for PrestaShop",
+    "type": "prestashop-module",
+    "license": "GPL-3.0-only",
     "require": {
-        "kornrunner/keccak": "^1.1",
-        "simplito/elliptic-php": "^1.0"
+        "php": ">=8.1"
+    },
+    "require-dev": {
+        "phpunit/phpunit": "^10 || ^11",
+        "phpstan/phpstan": "^2.0",
+        "squizlabs/php_codesniffer": "^3.11"
     },
     "autoload": {
+        "classmap": ["classes/"]
+    },
+    "autoload-dev": {
         "psr-4": {
-            "Simplito\\Elliptic\\": "vendor/simplito/elliptic-php/lib/",
-            "kornrunner\\Keccak\\": "vendor/kornrunner/keccak/src/"
+            "FrakLabs\\PrestaShop\\Test\\": "test/"
         }
+    },
+    "scripts": {
+        "build": "./build.sh",
+        "test": "phpunit",
+        "analyse": "phpstan analyse",
+        "cs": "phpcs",
+        "cs-fix": "phpcbf"
+    },
+    "scripts-descriptions": {
+        "build": "Build project artifact.",
+        "test": "Run unit tests.",
+        "analyse": "Run static analysis.",
+        "cs": "Check coding standard.",
+        "cs-fix": "Fix coding standard violations."
     },
     "config": {
         "autoloader-suffix": "Frak",
         "preferred-install": "dist",
-        "prepend-autoloader": false
-    },  
-    "scripts": {
-        "build": "./bundle_1.sh"
-    },
-    "scripts-descriptions": {
-        "build": "Build project artifact."
-    },
-    "type": "prestashop-module"
+        "prepend-autoloader": false,
+        "platform": {
+            "php": "8.1.0"
+        },
+        "allow-plugins": {
+            "dealerdirect/phpcodesniffer-composer-installer": true,
+            "phpstan/extension-installer": true
+        }
+    }
 }

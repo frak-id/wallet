@@ -1,9 +1,11 @@
 <?php
+
 if (!defined('_PS_VERSION_')) {
     exit;
 }
 
 require_once __DIR__ . '/vendor/autoload.php';
+require_once __DIR__ . '/classes/FrakMerchantResolver.php';
 require_once __DIR__ . '/classes/FrakWebhookHelper.php';
 
 class FrakIntegration extends Module
@@ -31,18 +33,17 @@ class FrakIntegration extends Module
 
     public function install()
     {
-        if (parent::install() &&
+        if (
+            parent::install() &&
             $this->registerHook('header') &&
-            $this->registerHook('displayFooter') &&
             $this->registerHook('displayProductAdditionalInfo') &&
             $this->registerHook('displayOrderConfirmation') &&
-            $this->registerHook('actionOrderStatusUpdate')) {
+            $this->registerHook('actionOrderStatusUpdate')
+        ) {
             Configuration::updateValue('FRAK_SHOP_NAME', Configuration::get('PS_SHOP_NAME'));
             Configuration::updateValue('FRAK_LOGO_URL', $this->context->link->getMediaLink(_PS_IMG_ . Configuration::get('PS_LOGO')));
             Configuration::updateValue('FRAK_MODAL_LNG', 'default');
             Configuration::updateValue('FRAK_MODAL_I18N', '{}', true);
-            Configuration::updateValue('FRAK_FLOATING_BUTTON_ENABLED', true);
-            Configuration::updateValue('FRAK_FLOATING_BUTTON_POSITION', 'right');
             Configuration::updateValue('FRAK_SHARING_BUTTON_ENABLED', true);
             Configuration::updateValue('FRAK_SHARING_BUTTON_TEXT', 'Share with Frak');
             return true;
@@ -52,23 +53,24 @@ class FrakIntegration extends Module
 
     public function uninstall()
     {
-        if (parent::uninstall() &&
+        if (
+            parent::uninstall() &&
             $this->unregisterHook('header') &&
-            $this->unregisterHook('displayFooter') &&
             $this->unregisterHook('displayOrderConfirmation') &&
-            $this->unregisterHook('displayProductAdditionalInfo')) {
+            $this->unregisterHook('displayProductAdditionalInfo')
+        ) {
             Configuration::deleteByName('FRAK_SHOP_NAME');
             Configuration::deleteByName('FRAK_LOGO_URL');
             Configuration::deleteByName('FRAK_MODAL_LNG');
             Configuration::deleteByName('FRAK_MODAL_I18N');
-            Configuration::deleteByName('FRAK_FLOATING_BUTTON_ENABLED');
-            Configuration::deleteByName('FRAK_FLOATING_BUTTON_POSITION');
             Configuration::deleteByName('FRAK_SHARING_BUTTON_ENABLED');
             Configuration::deleteByName('FRAK_SHARING_BUTTON_TEXT');
             Configuration::deleteByName('FRAK_SHARING_BUTTON_STYLE');
             Configuration::deleteByName('FRAK_SHARING_BUTTON_CUSTOM_STYLE');
             Configuration::deleteByName('FRAK_WEBHOOK_SECRET');
             Configuration::deleteByName('FRAK_WEBHOOK_LOGS');
+            Configuration::deleteByName(FrakMerchantResolver::CONFIG_KEY);
+            Configuration::deleteByName(FrakMerchantResolver::NEGATIVE_CACHE_KEY);
             return true;
         }
         return false;
@@ -81,19 +83,9 @@ class FrakIntegration extends Module
             'logo_url' => Configuration::get('FRAK_LOGO_URL'),
             'modal_lng' => Configuration::get('FRAK_MODAL_LNG'),
             'modal_i18n' => Configuration::get('FRAK_MODAL_I18N'),
-            'floating_button_position' => Configuration::get('FRAK_FLOATING_BUTTON_POSITION')
         ]);
 
         return $this->display(__FILE__, 'views/templates/hook/head.tpl');
-    }
-
-
-    public function hookDisplayFooter()
-    {
-        if (!Configuration::get('FRAK_FLOATING_BUTTON_ENABLED')) {
-            return;
-        }
-        return $this->display(__FILE__, 'views/templates/hook/floatingButton.tpl');
     }
 
     public function hookDisplayProductAdditionalInfo()
@@ -123,9 +115,9 @@ class FrakIntegration extends Module
         $order_id = $params['id_order'];
         $token = $params['cart']->secure_key;
         $new_status = $params['newOrderStatus'];
-        
+
         PrestaShopLogger::addLog('FrakIntegration: Order status update triggered for order ' . $order_id . ' with status ID: ' . $new_status->id . ' (' . $new_status->name . ')', 1);
-        
+
         // The different statuses that we send to the webhook
         $status_map = [
             (int)Configuration::get('PS_OS_WS_PAYMENT') => 'confirmed',
@@ -154,10 +146,10 @@ class FrakIntegration extends Module
         }
 
         PrestaShopLogger::addLog('FrakIntegration: Triggering webhook for order ' . $order_id . ' with status: ' . $webhook_status, 1);
-        
+
         // Send the webhook
         $result = FrakWebhookHelper::send($order_id, $webhook_status, $token);
-        
+
         if ($result && isset($result['success'])) {
             if ($result['success']) {
                 PrestaShopLogger::addLog('FrakIntegration: Webhook sent successfully for order ' . $order_id, 1);

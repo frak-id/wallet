@@ -2,18 +2,6 @@
     <h3><i class="icon icon-toggle-on"></i> {l s='Buttons' mod='frakintegration'}</h3>
     <form id="module_form_buttons" class="defaultForm form-horizontal" action="{$form_action}" method="post">
         <div class="form-group">
-            <label class="control-label col-lg-3">{l s='Enable Floating Button' mod='frakintegration'}</label>
-            <div class="col-lg-9">
-                <span class="switch prestashop-switch fixed-width-lg">
-                    <input type="radio" name="FRAK_FLOATING_BUTTON_ENABLED" id="FRAK_FLOATING_BUTTON_ENABLED_on" value="1" {if $floating_button_enabled}checked="checked"{/if}>
-                    <label for="FRAK_FLOATING_BUTTON_ENABLED_on">{l s='Yes' mod='frakintegration'}</label>
-                    <input type="radio" name="FRAK_FLOATING_BUTTON_ENABLED" id="FRAK_FLOATING_BUTTON_ENABLED_off" value="0" {if !$floating_button_enabled}checked="checked"{/if}>
-                    <label for="FRAK_FLOATING_BUTTON_ENABLED_off">{l s='No' mod='frakintegration'}</label>
-                    <a class="slide-button btn"></a>
-                </span>
-            </div>
-        </div>
-        <div class="form-group">
             <label class="control-label col-lg-3">{l s='Enable Sharing Button' mod='frakintegration'}</label>
             <div class="col-lg-9">
                 <span class="switch prestashop-switch fixed-width-lg">
@@ -45,15 +33,6 @@
             <label class="control-label col-lg-3">{l s='Custom CSS Class' mod='frakintegration'}</label>
             <div class="col-lg-9">
                 <input type="text" name="FRAK_SHARING_BUTTON_CUSTOM_STYLE" value="{if isset($sharing_button_custom_style)}{$sharing_button_custom_style}{/if}" />
-            </div>
-        </div>
-        <div class="form-group">
-            <label class="control-label col-lg-3">{l s='Floating Button Position' mod='frakintegration'}</label>
-            <div class="col-lg-9">
-                <select name="FRAK_FLOATING_BUTTON_POSITION">
-                    <option value="right" {if $floating_button_position == 'right'}selected="selected"{/if}>{l s='Right' mod='frakintegration'}</option>
-                    <option value="left" {if $floating_button_position == 'left'}selected="selected"{/if}>{l s='Left' mod='frakintegration'}</option>
-                </select>
             </div>
         </div>
         <div class="panel-footer">
@@ -196,10 +175,10 @@
         <div class="form-group">
             <label class="control-label col-lg-3">{l s='Manage Webhook' mod='frakintegration'}</label>
             <div class="col-lg-9">
-                <a id="open-webhook-popup" href="#" class="btn btn-default">
-                    <i class="icon-cog"></i> {l s='Create Webhook' mod='frakintegration'}
-                </a>
-                <a href="{$frak_product_url}" target="_blank" class="btn btn-default">
+                <button type="submit" name="refreshFrakMerchant" class="btn btn-default">
+                    <i class="icon-refresh"></i> {l s='Refresh Merchant' mod='frakintegration'}
+                </button>
+                <a href="{$frak_dashboard_url}" target="_blank" class="btn btn-default">
                     <i class="icon-external-link"></i> {l s='Manage on Frak' mod='frakintegration'}
                 </a>
             </div>
@@ -208,7 +187,7 @@
     <div class="panel-footer">
         <h4>Info</h4>
         <p>Domain: {$domain}</p>
-        <p>Product ID: {$product_id}</p>
+        <p>Merchant: {if $merchant_resolved}<code>{$merchant_id}</code>{if $merchant_name} &mdash; {$merchant_name}{/if}{else}<span class="text-danger">{l s='Not resolved — register the shop in the Frak dashboard' mod='frakintegration'}</span>{/if}</p>
         <p>Webhook URL: <code>{$webhook_url}</code></p>
     </div>
 </div>
@@ -371,39 +350,6 @@
             }
         });
 
-        const productId = '{$product_id}';
-        const webhookSecret = '{$webhook_secret}';
-
-        if (!document.getElementById('open-webhook-popup')) {
-            return;
-        }
-
-        document.getElementById('open-webhook-popup').addEventListener('click', function(e) {
-            e.preventDefault();
-
-            const createUrl = new URL("https://business.frak.id");
-            createUrl.pathname = "/embedded/purchase-tracker";
-            createUrl.searchParams.append("pid", productId);
-            createUrl.searchParams.append("s", webhookSecret);
-            createUrl.searchParams.append("p", "custom");
-
-            const openedWindow = window.open(
-                createUrl.href,
-                "frak-business",
-                "menubar=no,status=no,scrollbars=no,fullscreen=no,width=500,height=800"
-            );
-
-            if (openedWindow) {
-                openedWindow.focus();
-
-                const timer = setInterval(() => {
-                    if (openedWindow.closed) {
-                        clearInterval(timer);
-                        setTimeout(() => window.location.reload(), 1000);
-                    }
-                }, 500);
-            }
-        });
 
         // Logo preview functionality
         const logoUrlInput = document.getElementById('logo_url_input');

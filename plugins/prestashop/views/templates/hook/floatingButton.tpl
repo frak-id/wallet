@@ -1,1 +1,0 @@
-<frak-button-wallet use-reward></frak-button-wallet>

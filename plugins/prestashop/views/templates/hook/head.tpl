@@ -24,7 +24,6 @@
     config: { walletUrl: 'https://wallet.frak.id', metadata: { name: '{$shop_name}', lang, logoUrl }, customizations: { i18n }, domain: window.location.host },
     modalConfig: { login: { allowSso: true, ssoMetadata: { logoUrl, homepageLink: window.location.host } } },
     modalShareConfig: { link: window.location.href },
-    modalWalletConfig: { metadata: { position: '{$floating_button_position}' } },
   };
 
   // If we got an order data in the page, handle that 

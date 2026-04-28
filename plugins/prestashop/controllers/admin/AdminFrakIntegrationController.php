@@ -1,5 +1,6 @@
 <?php
 
+require_once _PS_MODULE_DIR_ . 'frakintegration/classes/FrakMerchantResolver.php';
 require_once _PS_MODULE_DIR_ . 'frakintegration/classes/FrakWebhookHelper.php';
 
 class AdminFrakIntegrationController extends ModuleAdminController
@@ -14,23 +15,21 @@ class AdminFrakIntegrationController extends ModuleAdminController
 
     public function renderView()
     {
-        $productId = FrakWebhookHelper::getProductId();
+        $merchant = FrakMerchantResolver::getRecord();
         $modal_i18n_raw = Configuration::get('FRAK_MODAL_I18N');
         $modal_i18n = json_decode($modal_i18n_raw, true);
 
         if (json_last_error() !== JSON_ERROR_NONE) {
             $modal_i18n = [];
         }
-        
+
         // Get webhook debugging information
         $webhookLogs = FrakWebhookHelper::getWebhookLogs(10);
         $webhookStats = FrakWebhookHelper::getWebhookStats();
-        
+
         $this->context->smarty->assign([
             'module_dir' => $this->module->getPathUri(),
             'form_action' => $this->context->link->getAdminLink('AdminFrakIntegration'),
-            'floating_button_enabled' => Configuration::get('FRAK_FLOATING_BUTTON_ENABLED'),
-            'floating_button_position' => Configuration::get('FRAK_FLOATING_BUTTON_POSITION'),
             'sharing_button_enabled' => Configuration::get('FRAK_SHARING_BUTTON_ENABLED'),
             'sharing_button_text' => Configuration::get('FRAK_SHARING_BUTTON_TEXT'),
             'sharing_button_style' => Configuration::get('FRAK_SHARING_BUTTON_STYLE'),
@@ -39,11 +38,13 @@ class AdminFrakIntegrationController extends ModuleAdminController
             'logo_url' => Configuration::get('FRAK_LOGO_URL'),
             'modal_lng' => Configuration::get('FRAK_MODAL_LNG'),
             'modal_i18n' => $modal_i18n,
-            'webhook_status' => $this->getWebhookStatus($productId),
+            'webhook_status' => $merchant !== null && !empty(Configuration::get('FRAK_WEBHOOK_SECRET')),
             'webhook_secret' => Configuration::get('FRAK_WEBHOOK_SECRET'),
-            'frak_product_url' => 'https://business.frak.id/product/' . $productId,
-            'domain' => Tools::getShopDomain(true, true),
-            'product_id' => $productId,
+            'frak_dashboard_url' => 'https://business.frak.id/',
+            'domain' => FrakMerchantResolver::currentHost(),
+            'merchant_id' => $merchant['id'] ?? '',
+            'merchant_name' => $merchant['name'] ?? '',
+            'merchant_resolved' => $merchant !== null,
             'webhook_logs' => $webhookLogs,
             'webhook_stats' => $webhookStats,
             'webhook_url' => FrakWebhookHelper::getWebhookUrl(),
@@ -55,15 +56,11 @@ class AdminFrakIntegrationController extends ModuleAdminController
     public function postProcess()
     {
         if (Tools::isSubmit('submitFrakButtons')) {
-            $floatingButtonEnabled = (bool)Tools::getValue('FRAK_FLOATING_BUTTON_ENABLED');
-            $floatingButtonPosition = strval(Tools::getValue('FRAK_FLOATING_BUTTON_POSITION'));
             $sharingButtonEnabled = (bool)Tools::getValue('FRAK_SHARING_BUTTON_ENABLED');
             $sharingButtonText = strval(Tools::getValue('FRAK_SHARING_BUTTON_TEXT'));
             $sharingButtonStyle = strval(Tools::getValue('FRAK_SHARING_BUTTON_STYLE'));
             $sharingButtonCustomStyle = strval(Tools::getValue('FRAK_SHARING_BUTTON_CUSTOM_STYLE'));
 
-            Configuration::updateValue('FRAK_FLOATING_BUTTON_ENABLED', $floatingButtonEnabled);
-            Configuration::updateValue('FRAK_FLOATING_BUTTON_POSITION', $floatingButtonPosition);
             Configuration::updateValue('FRAK_SHARING_BUTTON_ENABLED', $sharingButtonEnabled);
             Configuration::updateValue('FRAK_SHARING_BUTTON_TEXT', $sharingButtonText);
             Configuration::updateValue('FRAK_SHARING_BUTTON_STYLE', $sharingButtonStyle);
@@ -81,7 +78,7 @@ class AdminFrakIntegrationController extends ModuleAdminController
                 $modalI18n = [];
             }
 
-            $filteredModalI18n = array_filter($modalI18n, function($value) {
+            $filteredModalI18n = array_filter($modalI18n, function ($value) {
                 return $value !== '';
             });
 
@@ -100,9 +97,9 @@ class AdminFrakIntegrationController extends ModuleAdminController
                 $uploadedFile = $_FILES['FRAK_LOGO_FILE'];
                 $allowedExtensions = ['jpg', 'jpeg', 'png', 'gif', 'svg'];
                 $maxFileSize = 2 * 1024 * 1024; // 2MB
-                
+
                 $fileExtension = strtolower(pathinfo($uploadedFile['name'], PATHINFO_EXTENSION));
-                
+
                 if (!in_array($fileExtension, $allowedExtensions)) {
                     $this->errors[] = $this->l('Invalid file format. Only JPG, PNG, GIF, SVG files are allowed.');
                 } elseif ($uploadedFile['size'] > $maxFileSize) {
@@ -113,11 +110,11 @@ class AdminFrakIntegrationController extends ModuleAdminController
                     if (!is_dir($uploadsDir)) {
                         mkdir($uploadsDir, 0755, true);
                     }
-                    
+
                     // Generate unique filename
                     $filename = 'logo_' . uniqid() . '.' . $fileExtension;
                     $targetPath = $uploadsDir . $filename;
-                    
+
                     if (move_uploaded_file($uploadedFile['tmp_name'], $targetPath)) {
                         // Generate the URL for the uploaded file using proper module URL
                         $logoUrl = $this->context->link->getBaseLink() . 'modules/frakintegration/uploads/' . $filename;
@@ -138,7 +135,7 @@ class AdminFrakIntegrationController extends ModuleAdminController
                 Configuration::updateValue('FRAK_MODAL_LNG', $modalLng);
                 Configuration::updateValue('FRAK_MODAL_I18N', $modalI18nJson, true);
                 $this->confirmations[] = $this->l('Modal settings updated');
-                
+
                 // If a file was uploaded, redirect to refresh the form with the new URL
                 if (isset($_FILES['FRAK_LOGO_FILE']) && $_FILES['FRAK_LOGO_FILE']['error'] == UPLOAD_ERR_OK) {
                     Tools::redirectAdmin($this->context->link->getAdminLink('AdminFrakIntegration') . '&conf=4');
@@ -164,6 +161,16 @@ class AdminFrakIntegrationController extends ModuleAdminController
             FrakWebhookHelper::clearWebhookLogs();
             $this->confirmations[] = $this->l('Webhook logs cleared');
         }
+
+        if (Tools::isSubmit('refreshFrakMerchant')) {
+            FrakMerchantResolver::invalidate();
+            $merchant = FrakMerchantResolver::getRecord();
+            if ($merchant !== null) {
+                $this->confirmations[] = $this->l('Merchant resolved') . ': ' . $merchant['id'];
+            } else {
+                $this->errors[] = $this->l('Merchant not resolved for the current domain. Register the shop in the Frak dashboard.');
+            }
+        }
     }
 
     private function isLocalFile($url)
@@ -171,7 +178,7 @@ class AdminFrakIntegrationController extends ModuleAdminController
         // Check if the URL is a local file uploaded to the module directory
         $moduleUploadPath = _PS_MODULE_DIR_ . 'frakintegration/uploads/';
         $baseUrl = $this->context->link->getBaseLink();
-        
+
         // Check if URL starts with our base URL and contains our module path
         if (strpos($url, $baseUrl . 'modules/frakintegration/uploads/') === 0) {
             // Extract filename from URL
@@ -179,54 +186,7 @@ class AdminFrakIntegrationController extends ModuleAdminController
             $absolutePath = $moduleUploadPath . $filename;
             return file_exists($absolutePath);
         }
-        
+
         return false;
-    }
-
-    private function getWebhookStatus($productId)
-    {
-        $url = 'https://backend.frak.id/business/product/' . $productId . '/oracleWebhook/status';
-        PrestaShopLogger::addLog('FrakIntegration: Checking webhook status for URL: ' . $url, 1);
-
-        $ch = curl_init($url);
-
-        if ($ch === false) {
-            PrestaShopLogger::addLog('FrakIntegration: Failed to initialize cURL.', 3);
-            return false;
-        }
-
-        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-        curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 5);
-        curl_setopt($ch, CURLOPT_TIMEOUT, 10);
-
-        $response = curl_exec($ch);
-        $http_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-        $curl_errno = curl_errno($ch);
-        $curl_error = curl_error($ch);
-
-        curl_close($ch);
-
-        if ($curl_errno > 0) {
-            PrestaShopLogger::addLog('FrakIntegration: cURL error: ' . $curl_error . ' (errno: ' . $curl_errno . ')', 3);
-            return false;
-        }
-
-        if ($http_code !== 200) {
-            PrestaShopLogger::addLog('FrakIntegration: Received HTTP status code: ' . $http_code, 3);
-            PrestaShopLogger::addLog('FrakIntegration: Response: ' . $response, 1);
-            return false;
-        }
-
-        $data = json_decode($response, true);
-
-        if (json_last_error() !== JSON_ERROR_NONE) {
-            PrestaShopLogger::addLog('FrakIntegration: Failed to decode JSON. Error: ' . json_last_error_msg(), 3);
-            PrestaShopLogger::addLog('FrakIntegration: Raw response: ' . $response, 1);
-            return false;
-        }
-
-        $status = isset($data['setup']) && $data['setup'] === true;
-
-        return $status;
     }
 }

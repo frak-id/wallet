@@ -1,0 +1,21 @@
+parameters:
+    level: 0
+    bootstrapFiles:
+        - phpstan-stubs.php
+    paths:
+        - frakintegration.php
+        - classes
+        - controllers
+    excludePaths:
+        - vendor
+        - test
+        - build (?)
+        - dist (?)
+    # PrestaShop core helpers (Configuration, Tools, Context, Order, …) are not loaded
+    # during analysis. The base classes Module / ModuleAdminController are stubbed in
+    # phpstan-stubs.php so `extends` parses; everything else is silenced via patterns.
+    ignoreErrors:
+        - '#unknown class#'
+        - '#not found\.#'
+        - '#undefined (constant|method)#'
+        - '#Access to (an )?undefined (static )?(method|property|constant)#'
