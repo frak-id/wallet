@@ -24,7 +24,10 @@ export const wooCommerceWebhook = new Elysia().post(
             throw HttpError.badRequest("WEBHOOK_ERROR", "Missing signature");
         }
         if (headers["x-wc-webhook-resource"] !== "order") {
-            throw HttpError.badRequest("WEBHOOK_ERROR", "Unsupported woo commerce webhook");
+            throw HttpError.badRequest(
+                "WEBHOOK_ERROR",
+                "Unsupported woo commerce webhook"
+            );
         }
 
         const webhookData = JSON.parse(
@@ -32,7 +35,10 @@ export const wooCommerceWebhook = new Elysia().post(
         ) as WooCommerceOrderUpdateWebhookDto;
 
         if (!merchantId) {
-            throw HttpError.badRequest("WEBHOOK_ERROR", "Missing merchant identifier");
+            throw HttpError.badRequest(
+                "WEBHOOK_ERROR",
+                "Missing merchant identifier"
+            );
         }
 
         const resolved =

@@ -33,6 +33,7 @@ export class InteractionLogRepository {
     }): Promise<InteractionLogSelect[]> {
         const conditions = [
             isNull(interactionLogsTable.processedAt),
+            isNull(interactionLogsTable.cancelledAt),
             isNotNull(interactionLogsTable.identityGroupId),
         ];
 
@@ -56,18 +57,6 @@ export class InteractionLogRepository {
             .where(inArray(interactionLogsTable.id, ids));
 
         return new Map(rows.map((r) => [r.id, r.type]));
-    }
-
-    async markProcessedBatch(ids: string[]): Promise<number> {
-        if (ids.length === 0) return 0;
-
-        const results = await db
-            .update(interactionLogsTable)
-            .set({ processedAt: new Date() })
-            .where(inArray(interactionLogsTable.id, ids))
-            .returning({ id: interactionLogsTable.id });
-
-        return results.length;
     }
 
     /**
@@ -118,16 +107,27 @@ export class InteractionLogRepository {
     }
 
     /**
-     * Find the purchase interaction log for a given purchase. The unique
+     * Atomically void the purchase interaction tied to an external order id
+     * (e.g. when its underlying purchase is refunded/cancelled). The unique
      * `(merchantId, type, externalEventId)` index guarantees at most one row.
+     *
+     * Returns the affected interaction (now `cancelled_at` set), or `null` when
+     * no matching interaction exists OR it was already cancelled. The caller
+     * uses the returned id to cascade the cancellation to any pending rewards.
+     *
+     * The single UPDATE acquires a row lock that serializes against the cron's
+     * `SELECT ... FOR UPDATE` in `BatchRewardOrchestrator`, so a concurrent
+     * reward calculation is forced to either commit before this update
+     * proceeds (then the caller cancels the freshly-inserted pending rewards)
+     * or be skipped entirely once the row is marked cancelled.
      */
-    async findPurchaseInteractionByExternalId(params: {
+    async cancelPurchaseInteractionByExternalId(params: {
         merchantId: string;
         externalId: string;
     }): Promise<InteractionLogSelect | null> {
         const [row] = await db
-            .select()
-            .from(interactionLogsTable)
+            .update(interactionLogsTable)
+            .set({ cancelledAt: new Date() })
             .where(
                 and(
                     eq(interactionLogsTable.merchantId, params.merchantId),
@@ -135,10 +135,11 @@ export class InteractionLogRepository {
                     eq(
                         interactionLogsTable.externalEventId,
                         purchaseExternalEventId(params.externalId)
-                    )
+                    ),
+                    isNull(interactionLogsTable.cancelledAt)
                 )
             )
-            .limit(1);
+            .returning();
         return row ?? null;
     }
 }

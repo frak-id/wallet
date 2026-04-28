@@ -21,7 +21,7 @@ const buildOrchestrator = () => {
     } as unknown as AssetLogRepository;
 
     const interactionLog = {
-        findPurchaseInteractionByExternalId: vi.fn(),
+        cancelPurchaseInteractionByExternalId: vi.fn(),
     } as unknown as InteractionLogRepository;
 
     const campaignRule = {
@@ -43,11 +43,11 @@ const purchaseInteraction = {
 
 describe("RewardLifecycleOrchestrator", () => {
     describe("cancelForRefund", () => {
-        it("returns empty result when no purchase interaction exists", async () => {
+        it("returns empty result when no active purchase interaction exists", async () => {
             const { orchestrator, assetLog, interactionLog, campaignRule } =
                 buildOrchestrator();
             vi.mocked(
-                interactionLog.findPurchaseInteractionByExternalId
+                interactionLog.cancelPurchaseInteractionByExternalId
             ).mockResolvedValue(null);
 
             const result = await orchestrator.cancelForRefund({
@@ -60,16 +60,43 @@ describe("RewardLifecycleOrchestrator", () => {
                 budgetRestoredByCampaign: {},
             });
             expect(
+                interactionLog.cancelPurchaseInteractionByExternalId
+            ).toHaveBeenCalledWith({
+                merchantId: "m1",
+                externalId: "order-42",
+            });
+            expect(
                 assetLog.cancelPendingByInteractionLogs
             ).not.toHaveBeenCalled();
             expect(campaignRule.restoreBudgetsBatch).not.toHaveBeenCalled();
         });
 
-        it("returns empty result when no pending rewards remain (idempotent)", async () => {
+        it("returns empty result when interaction was already cancelled (idempotent)", async () => {
+            const { orchestrator, assetLog, interactionLog, campaignRule } =
+                buildOrchestrator();
+            // Repository contract: returns null when no row matched the
+            // `cancelled_at IS NULL` precondition (already cancelled).
+            vi.mocked(
+                interactionLog.cancelPurchaseInteractionByExternalId
+            ).mockResolvedValue(null);
+
+            const result = await orchestrator.cancelForRefund({
+                merchantId: "m1",
+                externalId: "order-42",
+            });
+
+            expect(result.affectedCount).toBe(0);
+            expect(
+                assetLog.cancelPendingByInteractionLogs
+            ).not.toHaveBeenCalled();
+            expect(campaignRule.restoreBudgetsBatch).not.toHaveBeenCalled();
+        });
+
+        it("returns empty result when no pending rewards remained at cancel time", async () => {
             const { orchestrator, assetLog, interactionLog, campaignRule } =
                 buildOrchestrator();
             vi.mocked(
-                interactionLog.findPurchaseInteractionByExternalId
+                interactionLog.cancelPurchaseInteractionByExternalId
             ).mockResolvedValue(purchaseInteraction);
             vi.mocked(
                 assetLog.cancelPendingByInteractionLogs
@@ -81,6 +108,9 @@ describe("RewardLifecycleOrchestrator", () => {
             });
 
             expect(result.affectedCount).toBe(0);
+            expect(
+                assetLog.cancelPendingByInteractionLogs
+            ).toHaveBeenCalledWith(["interaction-1"], "refund");
             expect(campaignRule.restoreBudgetsBatch).not.toHaveBeenCalled();
         });
 
@@ -88,7 +118,7 @@ describe("RewardLifecycleOrchestrator", () => {
             const { orchestrator, assetLog, interactionLog, campaignRule } =
                 buildOrchestrator();
             vi.mocked(
-                interactionLog.findPurchaseInteractionByExternalId
+                interactionLog.cancelPurchaseInteractionByExternalId
             ).mockResolvedValue(purchaseInteraction);
             vi.mocked(
                 assetLog.cancelPendingByInteractionLogs

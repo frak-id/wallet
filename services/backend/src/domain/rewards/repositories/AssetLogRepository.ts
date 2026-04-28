@@ -53,7 +53,21 @@ export class AssetLogRepository {
     ): Promise<AssetLogSelect[]> {
         if (params.length === 0) return [];
 
-        const inserts: AssetLogInsert[] = params.map((p) => ({
+        return db
+            .insert(assetLogsTable)
+            .values(this.buildInserts(params))
+            .returning();
+    }
+
+    /**
+     * Pure mapping from public reward params to the row shape we persist.
+     * Exposed so callers running inside a transaction (e.g.
+     * `BatchRewardOrchestrator.processSingleInteraction`) can reuse the same
+     * derivation rules — expirations, lockup `available_at` — without going
+     * through `createBatch` and breaking the surrounding tx.
+     */
+    buildInserts(params: CreateAssetLogParams[]): AssetLogInsert[] {
+        return params.map((p) => ({
             identityGroupId: p.identityGroupId,
             merchantId: p.merchantId,
             campaignRuleId: p.campaignRuleId,
@@ -70,8 +84,6 @@ export class AssetLogRepository {
             expiresAt: this.calculateExpiresAt(p.expirationDays),
             availableAt: this.calculateAvailableAt(p.lockupSeconds),
         }));
-
-        return db.insert(assetLogsTable).values(inserts).returning();
     }
 
     async findPendingForSettlement(limit?: number): Promise<AssetLogSelect[]> {
@@ -125,9 +137,7 @@ export class AssetLogRepository {
     async cancelPendingByInteractionLogs(
         interactionLogIds: string[],
         reason: CancellationReason
-    ): Promise<
-        { id: string; campaignRuleId: string; amount: string }[]
-    > {
+    ): Promise<{ id: string; campaignRuleId: string; amount: string }[]> {
         if (interactionLogIds.length === 0) return [];
 
         const now = new Date();

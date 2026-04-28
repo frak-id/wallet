@@ -21,7 +21,10 @@ export const magentoWebhook = new Elysia()
     })
     .onBeforeHandle(({ headers }) => {
         if (!headers["x-hmac-sha256"]) {
-            throw HttpError.badRequest("WEBHOOK_ERROR", "Missing HMAC signature");
+            throw HttpError.badRequest(
+                "WEBHOOK_ERROR",
+                "Missing HMAC signature"
+            );
         }
     })
     .post(
@@ -30,7 +33,10 @@ export const magentoWebhook = new Elysia()
             const webhookData = JSON.parse(body) as MagentoOrderWebhookDto;
 
             if (!merchantId) {
-                throw HttpError.badRequest("WEBHOOK_ERROR", "Missing merchant identifier");
+                throw HttpError.badRequest(
+                    "WEBHOOK_ERROR",
+                    "Missing merchant identifier"
+                );
             }
 
             const resolved =
@@ -39,7 +45,10 @@ export const magentoWebhook = new Elysia()
                 );
             if (!resolved) {
                 log.warn({ merchantId }, "Webhook not found");
-                throw HttpError.badRequest("WEBHOOK_ERROR", "Webhook not found");
+                throw HttpError.badRequest(
+                    "WEBHOOK_ERROR",
+                    "Webhook not found"
+                );
             }
 
             validateBodyHmac({

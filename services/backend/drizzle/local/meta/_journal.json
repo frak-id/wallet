@@ -120,6 +120,13 @@
             "when": 1777283501438,
             "tag": "0016_silky_the_hood",
             "breakpoints": true
+        },
+        {
+            "idx": 17,
+            "version": "7",
+            "when": 1777358051158,
+            "tag": "0017_worthless_photon",
+            "breakpoints": true
         }
     ]
 }

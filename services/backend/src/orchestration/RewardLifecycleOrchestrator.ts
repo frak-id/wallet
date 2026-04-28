@@ -26,9 +26,13 @@ const emptyResult = (): LifecycleResult => ({
  * Owns the post-creation lifecycle of `pending` rewards: refund-driven
  * cancellation and natural expiration.
  *
- * Both flows reduce to one atomic UPDATE…RETURNING in `AssetLogRepository`
- * that flips the eligible rows to a terminal non-settled state, plus a
- * `restoreBudgetsBatch` call for the released amounts.
+ * For refunds we void in two atomic UPDATE…RETURNINGs:
+ *  1. `interaction_logs.cancelled_at` so the reward calculator can never
+ *     spawn fresh rewards from this interaction (and locks the row, so a
+ *     concurrent cron run blocks until it commits or sees the cancellation).
+ *  2. `asset_logs` rows still in the `pending` lockup window flip to a
+ *     terminal non-settled state, plus `restoreBudgetsBatch` for the
+ *     released amounts.
  *
  * `processing` and `settled` rewards are out of bounds — the only safety
  * window for a refund is the lockup period configured on the campaign.
@@ -43,32 +47,38 @@ export class RewardLifecycleOrchestrator {
     /**
      * Cancel any pending rewards triggered by a now-refunded purchase and
      * restore each affected campaign's budget. Idempotent: a second call
-     * after all rewards are already cancelled returns an empty result.
+     * after the interaction is already cancelled returns an empty result.
+     *
+     * Safe to invoke even when no purchase interaction exists yet (refund
+     * webhook arrived before any claim/identity resolution): the downstream
+     * orchestrators inspect the persisted purchase status and create the
+     * matching cancelled interaction themselves.
      */
     async cancelForRefund(
         params: CancelForRefundParams
     ): Promise<LifecycleResult> {
-        const interaction =
-            await this.interactionLogRepository.findPurchaseInteractionByExternalId(
+        const cancelledInteraction =
+            await this.interactionLogRepository.cancelPurchaseInteractionByExternalId(
                 params
             );
 
-        if (!interaction) {
+        if (!cancelledInteraction) {
             log.debug(
                 params,
-                "Refund cancellation: no purchase interaction found, nothing to cancel"
+                "Refund cancellation: no active purchase interaction to void"
             );
             return emptyResult();
         }
 
         const terminated =
             await this.assetLogRepository.cancelPendingByInteractionLogs(
-                [interaction.id],
+                [cancelledInteraction.id],
                 "refund"
             );
 
         return this.finalize(terminated, "refund", {
             ...params,
+            interactionLogId: cancelledInteraction.id,
             scope: "refund",
         });
     }

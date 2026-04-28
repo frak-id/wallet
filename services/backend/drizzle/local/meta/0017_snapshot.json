@@ -1,5 +1,5 @@
 {
-    "id": "d2c46d58-025c-4d9f-8f46-6986dc1b95bb",
+    "id": "8ea4cc08-03ad-4aae-9640-7222409311cb",
     "prevId": "5fcf4abf-8a11-4e38-80b5-8f58b915757f",
     "version": "7",
     "dialect": "postgresql",
@@ -2157,6 +2157,12 @@
                     "primaryKey": false,
                     "notNull": false
                 },
+                "cancelled_at": {
+                    "name": "cancelled_at",
+                    "type": "timestamp",
+                    "primaryKey": false,
+                    "notNull": false
+                },
                 "created_at": {
                     "name": "created_at",
                     "type": "timestamp",
@@ -2265,7 +2271,7 @@
                         }
                     ],
                     "isUnique": false,
-                    "where": "\"processed_at\" IS NULL AND \"identity_group_id\" IS NOT NULL",
+                    "where": "\"processed_at\" IS NULL AND \"cancelled_at\" IS NULL AND \"identity_group_id\" IS NOT NULL",
                     "concurrently": false,
                     "method": "btree",
                     "with": {}

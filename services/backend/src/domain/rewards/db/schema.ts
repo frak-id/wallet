@@ -32,6 +32,13 @@ export const interactionLogsTable = pgTable(
         externalEventId: text("external_event_id"),
         payload: jsonb("payload").$type<InteractionPayload>().notNull(),
         processedAt: timestamp("processed_at"),
+        /**
+         * Set when the interaction is voided (e.g. its underlying purchase
+         * was refunded/cancelled). Cancelled interactions are skipped by the
+         * reward calculator and treated as terminal — no rewards will be
+         * minted from them. Companion to `asset_logs.cancellation_reason`.
+         */
+        cancelledAt: timestamp("cancelled_at"),
         createdAt: timestamp("created_at").defaultNow().notNull(),
     },
     (table) => [
@@ -49,7 +56,7 @@ export const interactionLogsTable = pgTable(
         index("interaction_logs_unprocessed_idx")
             .on(table.createdAt)
             .where(
-                sql`"processed_at" IS NULL AND "identity_group_id" IS NOT NULL`
+                sql`"processed_at" IS NULL AND "cancelled_at" IS NULL AND "identity_group_id" IS NOT NULL`
             ),
     ]
 );

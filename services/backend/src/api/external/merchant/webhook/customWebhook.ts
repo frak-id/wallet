@@ -19,7 +19,10 @@ export const customWebhook = new Elysia()
     })
     .onBeforeHandle(({ headers }) => {
         if (headers["x-test"] && isRunningInProd) {
-            throw HttpError.badRequest("WEBHOOK_ERROR", "Purchase test aren't accepted in production");
+            throw HttpError.badRequest(
+                "WEBHOOK_ERROR",
+                "Purchase test aren't accepted in production"
+            );
         }
     })
     .post(
@@ -31,7 +34,10 @@ export const customWebhook = new Elysia()
             }
 
             if (!merchantId) {
-                throw HttpError.badRequest("WEBHOOK_ERROR", "Missing merchant identifier");
+                throw HttpError.badRequest(
+                    "WEBHOOK_ERROR",
+                    "Missing merchant identifier"
+                );
             }
 
             const resolved =
@@ -40,7 +46,10 @@ export const customWebhook = new Elysia()
                 );
             if (!resolved) {
                 log.warn({ merchantId }, "Webhook not found");
-                throw HttpError.badRequest("WEBHOOK_ERROR", "Webhook not found");
+                throw HttpError.badRequest(
+                    "WEBHOOK_ERROR",
+                    "Webhook not found"
+                );
             }
 
             validateBodyHmac({

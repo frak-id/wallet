@@ -27,7 +27,10 @@ export const shopifyWebhook = new Elysia()
     })
     .onBeforeHandle(({ headers }) => {
         if (headers["x-shopify-test"] && isRunningInProd) {
-            throw HttpError.badRequest("WEBHOOK_ERROR", "Shopify test aren't accepted in production");
+            throw HttpError.badRequest(
+                "WEBHOOK_ERROR",
+                "Shopify test aren't accepted in production"
+            );
         }
         if (
             headers["x-shopify-api-version"] !== "2024-10" &&
@@ -45,7 +48,10 @@ export const shopifyWebhook = new Elysia()
             throw HttpError.badRequest("WEBHOOK_ERROR", "Missing order id");
         }
         if (!headers["x-shopify-topic"]?.startsWith("orders/")) {
-            throw HttpError.badRequest("WEBHOOK_ERROR", "Unsupported shopify topic");
+            throw HttpError.badRequest(
+                "WEBHOOK_ERROR",
+                "Unsupported shopify topic"
+            );
         }
     })
     .post(
@@ -58,14 +64,23 @@ export const shopifyWebhook = new Elysia()
                 webhookData?.id !==
                 Number.parseInt(headers["x-shopify-order-id"] ?? "0", 10)
             ) {
-                throw HttpError.badRequest("WEBHOOK_ERROR", "Order id mismatch");
+                throw HttpError.badRequest(
+                    "WEBHOOK_ERROR",
+                    "Order id mismatch"
+                );
             }
             if (headers["x-shopify-test"] !== webhookData?.test) {
-                throw HttpError.badRequest("WEBHOOK_ERROR", "Test field mismatch");
+                throw HttpError.badRequest(
+                    "WEBHOOK_ERROR",
+                    "Test field mismatch"
+                );
             }
 
             if (!merchantId) {
-                throw HttpError.badRequest("WEBHOOK_ERROR", "Missing merchant identifier");
+                throw HttpError.badRequest(
+                    "WEBHOOK_ERROR",
+                    "Missing merchant identifier"
+                );
             }
 
             const resolved =
@@ -74,7 +89,10 @@ export const shopifyWebhook = new Elysia()
                 );
             if (!resolved) {
                 log.warn({ merchantId }, "Webhook not found");
-                throw HttpError.badRequest("WEBHOOK_ERROR", "Webhook not found");
+                throw HttpError.badRequest(
+                    "WEBHOOK_ERROR",
+                    "Webhook not found"
+                );
             }
 
             validateBodyHmac({
