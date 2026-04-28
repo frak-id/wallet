@@ -6,6 +6,8 @@ parameters:
         - frakintegration.php
         - classes
         - controllers
+        - sql
+        - upgrade
     excludePaths:
         - vendor
         - test
@@ -17,5 +19,4 @@ parameters:
     ignoreErrors:
         - '#unknown class#'
         - '#not found\.#'
-        - '#undefined (constant|method)#'
-        - '#Access to (an )?undefined (static )?(method|property|constant)#'
+        - '#undefined (static )?(constant|method|property)#'

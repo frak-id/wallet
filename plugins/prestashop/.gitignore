@@ -32,3 +32,8 @@ Thumbs.db
 .env
 .env.*
 !.env.example
+
+# Runtime uploads (only the .htaccess security stub is tracked; admin
+# controller calls mkdir() lazily on first logo upload).
+uploads/*
+!uploads/.htaccess

@@ -16,6 +16,11 @@
     <rule ref="PSR1.Files.SideEffects">
         <exclude-pattern>frakintegration.php</exclude-pattern>
         <exclude-pattern>controllers/admin/AdminFrakIntegrationController.php</exclude-pattern>
+        <!-- sql/{install,uninstall}.php and upgrade/install-X.Y.Z.php declare -->
+        <!-- top-level `$sql` / `function` symbols alongside the standard PrestaShop -->
+        <!-- `if (!defined('_PS_VERSION_')) exit;` guard — same shape as the module entry-point. -->
+        <exclude-pattern>sql/*.php</exclude-pattern>
+        <exclude-pattern>upgrade/*.php</exclude-pattern>
     </rule>
 
     <!--
@@ -34,6 +39,8 @@
     <file>frakintegration.php</file>
     <file>classes</file>
     <file>controllers</file>
+    <file>sql</file>
+    <file>upgrade</file>
 
     <exclude-pattern>vendor/*</exclude-pattern>
     <exclude-pattern>test/*</exclude-pattern>

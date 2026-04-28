@@ -41,10 +41,14 @@
  *      now-obsolete `FRAK_SETTINGS_VERSION` row. The full v0.0.4 set is
  *      enumerated below; floating-button keys were missing from the
  *      legacy in-class sweep.
+ *   7. Admin tab: register a `ps_tab` row for `AdminFrakIntegration` so the
+ *      configuration page surfaces as a sidebar entry under "Modules" and
+ *      gets wired into PrestaShop's standard Permissions panel.
  *
  * @param Module $module The FrakIntegration module instance, supplied by
  *                       PrestaShop's upgrade dispatcher.
  */
+
 if (!defined('_PS_VERSION_')) {
     exit;
 }
@@ -118,6 +122,26 @@ function upgrade_module_1_0_1($module)
     ];
     foreach ($deprecated as $key) {
         Configuration::deleteByName($key);
+    }
+
+    // 7. Register the admin Tab. Idempotent — skips when a row already exists
+    //    (e.g. on a partial upgrade re-run). Sits under Modules so the
+    //    operational tooling (queue health, drain queue, refresh merchant)
+    //    is one click away for daily ops, and gates per-employee access via
+    //    the standard Permissions panel.
+    if ((int) Tab::getIdFromClassName('AdminFrakIntegration') === 0) {
+        $tab = new Tab();
+        $tab->active = 1;
+        $tab->class_name = 'AdminFrakIntegration';
+        $tab->name = [];
+        foreach (Language::getLanguages(true) as $lang) {
+            $tab->name[$lang['id_lang']] = $module->l('Frak');
+        }
+        $tab->id_parent = (int) Tab::getIdFromClassName('AdminParentModulesSf');
+        $tab->module = $module->name;
+        if (!$tab->add()) {
+            return false;
+        }
     }
 
     return true;

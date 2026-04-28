@@ -1,12 +1,5 @@
 <?php
 
-require_once _PS_MODULE_DIR_ . 'frakintegration/classes/FrakUtils.php';
-require_once _PS_MODULE_DIR_ . 'frakintegration/classes/FrakMerchantResolver.php';
-require_once _PS_MODULE_DIR_ . 'frakintegration/classes/FrakWebhookHelper.php';
-require_once _PS_MODULE_DIR_ . 'frakintegration/classes/FrakWebhookQueue.php';
-require_once _PS_MODULE_DIR_ . 'frakintegration/classes/FrakWebhookCron.php';
-require_once _PS_MODULE_DIR_ . 'frakintegration/classes/FrakPlacementRegistry.php';
-
 class AdminFrakIntegrationController extends ModuleAdminController
 {
     public function __construct()
@@ -15,6 +8,23 @@ class AdminFrakIntegrationController extends ModuleAdminController
         $this->display = 'view';
         parent::__construct();
         $this->meta_title = $this->l('Frak Integration');
+    }
+
+    /**
+     * Register the per-route admin assets. Loaded only on this controller's
+     * page — PrestaShop's `setMedia()` is scoped per-controller, so the JS does
+     * not leak into other admin views.
+     *
+     * Inline `<script>` previously lived in `configure.tpl`; extracting to a
+     * static file lets browsers cache it across admin renders and removes the
+     * `unsafe-inline` requirement from any merchant-side Content-Security-Policy.
+     *
+     * @param bool $isNewTheme PrestaShop signature passthrough (unused here).
+     */
+    public function setMedia($isNewTheme = false)
+    {
+        parent::setMedia($isNewTheme);
+        $this->addJS($this->module->getPathUri() . 'views/js/admin.js');
     }
 
     public function renderView()
@@ -124,6 +134,7 @@ class AdminFrakIntegrationController extends ModuleAdminController
             $this->processBrandFields();
             $this->processWebhookSecret();
             $this->processPlacementToggles();
+            $this->clearStorefrontCaches();
         }
 
         if (Tools::isSubmit('refreshFrakMerchant')) {
@@ -144,33 +155,15 @@ class AdminFrakIntegrationController extends ModuleAdminController
     {
         $shopName = strval(Tools::getValue('FRAK_SHOP_NAME'));
         $logoUrl = strval(Tools::getValue('FRAK_LOGO_URL'));
+        $baseUrl = $this->context->link->getBaseLink();
 
-        if (isset($_FILES['FRAK_LOGO_FILE']) && $_FILES['FRAK_LOGO_FILE']['error'] == UPLOAD_ERR_OK) {
-            $uploadedFile = $_FILES['FRAK_LOGO_FILE'];
-            $allowedExtensions = ['jpg', 'jpeg', 'png', 'gif', 'svg'];
-            $maxFileSize = 2 * 1024 * 1024; // 2MB
-
-            $fileExtension = strtolower(pathinfo($uploadedFile['name'], PATHINFO_EXTENSION));
-
-            if (!in_array($fileExtension, $allowedExtensions)) {
-                $this->errors[] = $this->l('Invalid file format. Only JPG, PNG, GIF, SVG files are allowed.');
-            } elseif ($uploadedFile['size'] > $maxFileSize) {
-                $this->errors[] = $this->l('File size exceeds 2MB limit.');
+        if (isset($_FILES['FRAK_LOGO_FILE']) && $_FILES['FRAK_LOGO_FILE']['error'] === UPLOAD_ERR_OK) {
+            $result = FrakLogoUploader::processUpload($_FILES['FRAK_LOGO_FILE'], $baseUrl);
+            if (isset($result['url'])) {
+                $logoUrl = $result['url'];
+                $this->confirmations[] = $this->l('Logo uploaded successfully');
             } else {
-                $uploadsDir = _PS_MODULE_DIR_ . 'frakintegration/uploads/';
-                if (!is_dir($uploadsDir)) {
-                    mkdir($uploadsDir, 0755, true);
-                }
-
-                $filename = 'logo_' . uniqid() . '.' . $fileExtension;
-                $targetPath = $uploadsDir . $filename;
-
-                if (move_uploaded_file($uploadedFile['tmp_name'], $targetPath)) {
-                    $logoUrl = $this->context->link->getBaseLink() . 'modules/frakintegration/uploads/' . $filename;
-                    $this->confirmations[] = $this->l('Logo uploaded successfully');
-                } else {
-                    $this->errors[] = $this->l('Failed to upload logo file');
-                }
+                $this->errors[] = $this->translateLogoError((string) ($result['error'] ?? ''));
             }
         }
 
@@ -178,7 +171,7 @@ class AdminFrakIntegrationController extends ModuleAdminController
             $this->errors[] = $this->l('Invalid Shop Name');
             return;
         }
-        if (!$logoUrl || empty($logoUrl) || (!Validate::isUrl($logoUrl) && !$this->isLocalFile($logoUrl))) {
+        if (!$logoUrl || empty($logoUrl) || (!Validate::isUrl($logoUrl) && !FrakLogoUploader::isLocalUrl($logoUrl, $baseUrl))) {
             $this->errors[] = $this->l('Invalid Logo URL');
             return;
         }
@@ -186,6 +179,27 @@ class AdminFrakIntegrationController extends ModuleAdminController
         Configuration::updateValue('FRAK_SHOP_NAME', $shopName);
         Configuration::updateValue('FRAK_LOGO_URL', $logoUrl);
         $this->confirmations[] = $this->l('Brand settings updated');
+    }
+
+    /**
+     * Map a {@see FrakLogoUploader} error code to a translated user-facing
+     * message. Kept on the controller (not the helper) so the helper stays
+     * i18n-agnostic and unit-testable without bootstrapping PrestaShop.
+     */
+    private function translateLogoError(string $code): string
+    {
+        switch ($code) {
+            case FrakLogoUploader::ERROR_INVALID_FORMAT:
+                return $this->l('Invalid file format. Only JPG, PNG, GIF, SVG files are allowed.');
+            case FrakLogoUploader::ERROR_MIME_MISMATCH:
+                return $this->l('File contents do not match the declared image extension. Re-export the logo from your image editor and try again.');
+            case FrakLogoUploader::ERROR_TOO_LARGE:
+                return $this->l('File size exceeds 2MB limit.');
+            case FrakLogoUploader::ERROR_MOVE_FAILED:
+                return $this->l('Failed to upload logo file');
+            default:
+                return $this->l('Unknown logo upload error');
+        }
     }
 
     /**
@@ -273,20 +287,38 @@ class AdminFrakIntegrationController extends ModuleAdminController
         );
     }
 
-    private function isLocalFile($url)
+    /**
+     * Flush the storefront caches so the next request regenerates the head
+     * template with the freshly-saved brand / merchant config. Without this,
+     * shops behind a Smarty cache or a third-party page cache (LiteSpeed,
+     * Hyper Cache, PageCache Ultimate, …) keep serving the previous
+     * `window.FrakSetup` payload until the cache TTL expires — could be
+     * hours, which feels like the Save button silently failed.
+     *
+     * Mirrors WordPress's `Frak_Admin::clear_caches()` (which fans out to
+     * five known page-cache plugins). PrestaShop has a more standardised
+     * surface: the built-in `Tools::clear*Cache()` calls cover Smarty + the
+     * XML descriptor / media manifests, and the public `actionClearCache`
+     * hook propagates to well-behaved third-party cache modules without the
+     * plugin needing to know each one by name.
+     *
+     * Scoped to the settings-save path — maintenance buttons (Refresh
+     * Merchant, Drain Queue) do not change frontend-visible config and skip
+     * the flush to keep their own latency low.
+     */
+    private function clearStorefrontCaches(): void
     {
-        // Check if the URL is a local file uploaded to the module directory
-        $moduleUploadPath = _PS_MODULE_DIR_ . 'frakintegration/uploads/';
-        $baseUrl = $this->context->link->getBaseLink();
-
-        // Check if URL starts with our base URL and contains our module path
-        if (strpos($url, $baseUrl . 'modules/frakintegration/uploads/') === 0) {
-            // Extract filename from URL
-            $filename = basename($url);
-            $absolutePath = $moduleUploadPath . $filename;
-            return file_exists($absolutePath);
+        if (method_exists('Tools', 'clearSmartyCache')) {
+            Tools::clearSmartyCache();
         }
-
-        return false;
+        if (method_exists('Tools', 'clearXMLCache')) {
+            Tools::clearXMLCache();
+        }
+        if (class_exists('Media') && method_exists('Media', 'clearCache')) {
+            Media::clearCache();
+        }
+        if (class_exists('Hook') && method_exists('Hook', 'exec')) {
+            Hook::exec('actionClearCache');
+        }
     }
 }

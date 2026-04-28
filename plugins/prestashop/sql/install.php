@@ -22,6 +22,7 @@
  *     ({@see FrakWebhookQueue::truncateError()}); using LONGTEXT would invite
  *     adversarial backend responses to bloat the row.
  */
+
 if (!defined('_PS_VERSION_')) {
     exit;
 }

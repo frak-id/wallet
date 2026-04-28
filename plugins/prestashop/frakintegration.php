@@ -5,17 +5,20 @@ if (!defined('_PS_VERSION_')) {
 }
 
 require_once __DIR__ . '/vendor/autoload.php';
-require_once __DIR__ . '/classes/FrakUtils.php';
-require_once __DIR__ . '/classes/FrakMerchantResolver.php';
-require_once __DIR__ . '/classes/FrakWebhookHelper.php';
-require_once __DIR__ . '/classes/FrakComponentRenderer.php';
-require_once __DIR__ . '/classes/FrakWebhookQueue.php';
-require_once __DIR__ . '/classes/FrakWebhookCron.php';
-require_once __DIR__ . '/classes/FrakOrderResolver.php';
-require_once __DIR__ . '/classes/FrakPlacementRegistry.php';
 
 class FrakIntegration extends Module
 {
+    /**
+     * Always-on plumbing hooks. Display hooks are owned by
+     * `FrakPlacementRegistry` and registered via `distinctHooks()`.
+     *
+     * - `header`: SDK config injection on every front-office request.
+     * - `actionOrderStatusPostUpdate`: post-commit order status webhook trigger.
+     *   Pre-commit `actionOrderStatusUpdate` raced under multistore / high
+     *   load (PrestaShop docs explicitly recommend post-commit).
+     */
+    private const CORE_HOOKS = ['header', 'actionOrderStatusPostUpdate'];
+
     public function __construct()
     {
         $this->name = 'frakintegration';
@@ -51,19 +54,11 @@ class FrakIntegration extends Module
         if (!parent::install()) {
             return false;
         }
-        if (!$this->registerHook('header')) {
-            return false;
-        }
-        // Post-commit hook so the order status row is durable before we
-        // dispatch — mirrors the Magento sister plugin and the PrestaShop
-        // docs' explicit recommendation. The pre-commit `actionOrderStatusUpdate`
-        // raced under multistore / high load.
-        if (!$this->registerHook('actionOrderStatusPostUpdate')) {
-            return false;
-        }
-        // Display hooks are driven by the placement registry so adding /
-        // removing surfaces is a single edit in `FrakPlacementRegistry::PLACEMENTS`.
-        foreach (FrakPlacementRegistry::distinctHooks() as $hook) {
+        // Always-on plumbing hooks (CORE_HOOKS) plus every placement-driven
+        // display hook from `FrakPlacementRegistry::distinctHooks()`. One loop
+        // = one place to add/remove a hook on the install path — keeps the
+        // install / uninstall / upgrade chains in lock-step.
+        foreach (array_merge(self::CORE_HOOKS, FrakPlacementRegistry::distinctHooks()) as $hook) {
             if (!$this->registerHook($hook)) {
                 return false;
             }
@@ -97,6 +92,10 @@ class FrakIntegration extends Module
         // for the legacy product / order surfaces, opt-in for the new auxiliary
         // surfaces — keeps existing storefronts visually unchanged on upgrade.
         FrakPlacementRegistry::seedDefaults();
+
+        if (!$this->registerAdminTab()) {
+            return false;
+        }
         return true;
     }
 
@@ -105,15 +104,10 @@ class FrakIntegration extends Module
         if (!parent::uninstall()) {
             return false;
         }
-        if (!$this->unregisterHook('header')) {
-            return false;
-        }
-        if (!$this->unregisterHook('actionOrderStatusPostUpdate')) {
-            return false;
-        }
-        // Symmetric with install(); keeps the hook chain readable, even though
-        // parent::uninstall() already truncates the module's ps_hook_module rows.
-        foreach (FrakPlacementRegistry::distinctHooks() as $hook) {
+        // Symmetric with install(); `parent::uninstall()` already truncates
+        // the module's `ps_hook_module` rows but the explicit chain keeps test
+        // teardown deterministic and surfaces failures clearly.
+        foreach (array_merge(self::CORE_HOOKS, FrakPlacementRegistry::distinctHooks()) as $hook) {
             if (!$this->unregisterHook($hook)) {
                 return false;
             }
@@ -134,7 +128,55 @@ class FrakIntegration extends Module
         foreach ($sql as $query) {
             Db::getInstance()->execute($query);
         }
+        $this->unregisterAdminTab();
         return true;
+    }
+
+    /**
+     * Register the admin sidebar entry pointing at `AdminFrakIntegrationController`.
+     *
+     * Idempotent — checks for an existing Tab row by `class_name` first so
+     * re-running after a partial install never duplicates the entry. Fall-back
+     * parent is the top-level (`id_parent = 0`) on PS installs that lack
+     * `AdminParentModulesSf` (extremely old / customised back-offices).
+     *
+     * Sits under “Modules” in the sidebar (sibling of Module Manager): the page
+     * surfaces operational tooling (queue health, Drain queue, Refresh merchant)
+     * that benefits from one-click access for daily ops, not just one-time
+     * configuration. The Tab also wires the controller into PrestaShop's
+     * standard Permissions panel so shop admins can grant/revoke per-employee
+     * access without code changes.
+     */
+    private function registerAdminTab(): bool
+    {
+        if ((int) Tab::getIdFromClassName('AdminFrakIntegration') > 0) {
+            return true;
+        }
+        $tab = new Tab();
+        $tab->active = 1;
+        $tab->class_name = 'AdminFrakIntegration';
+        $tab->name = [];
+        foreach (Language::getLanguages(true) as $lang) {
+            $tab->name[$lang['id_lang']] = $this->l('Frak');
+        }
+        $tab->id_parent = (int) Tab::getIdFromClassName('AdminParentModulesSf');
+        $tab->module = $this->name;
+        return (bool) $tab->add();
+    }
+
+    /**
+     * Drop the admin sidebar entry. Idempotent — a missing Tab is treated as
+     * already-uninstalled (returns true) so partial uninstalls do not block
+     * the rest of the cleanup chain.
+     */
+    private function unregisterAdminTab(): bool
+    {
+        $idTab = (int) Tab::getIdFromClassName('AdminFrakIntegration');
+        if ($idTab <= 0) {
+            return true;
+        }
+        $tab = new Tab($idTab);
+        return (bool) $tab->delete();
     }
 
     public function hookHeader()

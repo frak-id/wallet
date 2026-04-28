@@ -10,6 +10,7 @@
  *
  * Idempotent (`DROP TABLE IF EXISTS`) so re-running on a partial uninstall is a no-op.
  */
+
 if (!defined('_PS_VERSION_')) {
     exit;
 }
