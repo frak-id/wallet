@@ -318,10 +318,10 @@ interface Resources {
                     amount: {
                         continue: "Continue";
                         ibanEmpty: "No IBAN saved";
-                        ibanLabel: "Recipient";
+                        ibanLabel: "IBAN";
                         insufficientBalance: "Insufficient balance";
                         modify: "Edit";
-                        title: "Transfer my earnings";
+                        title: "Amount to transfer";
                         totalBalance: "Total balance";
                         walletLabel: "Frak Wallet";
                     };
@@ -354,8 +354,10 @@ interface Resources {
                 };
             };
             callback: {
-                failed: "Failed to complete authentication";
-                noCode: "No authorization code received";
+                cancelledDescription: "You can reconnect to Monerium whenever you're ready.";
+                cancelledTitle: "Connection cancelled";
+                errorDescription: "Something went wrong while connecting to Monerium. Please try again in a moment.";
+                errorTitle: "Connection failed";
                 tryAgain: "Try again";
             };
             completeSetup: "Complete setup";
@@ -736,7 +738,7 @@ interface Resources {
                 amountLessThanBalance: "Amount must be less than balance";
                 amountPositive: "Amount must be positive";
                 amountToSend: "Amount to send";
-                backToWallet: "Back to wallet page";
+                sendTitle: "Transfer to a crypto wallet";
             };
             transferEmpty: {
                 description: "Share products with your friends to start earning money.";

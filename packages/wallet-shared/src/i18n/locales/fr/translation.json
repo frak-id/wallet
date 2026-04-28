@@ -230,7 +230,7 @@
             "amountLessThanBalance": "Le montant doit être inférieur au solde",
             "amountPositive": "Le montant doit être positif",
             "amountToSend": "Montant à envoyer",
-            "backToWallet": "Retour au porte-monnaie"
+            "sendTitle": "Transférer vers un crypto wallet"
         },
         "welcome": {
             "title": "Bienvenue dans Frak 🎉",
@@ -554,8 +554,10 @@
             "amountInvalid": "Le montant doit être supérieur à 0"
         },
         "callback": {
-            "noCode": "Aucun code d'autorisation reçu",
-            "failed": "Échec de l'authentification",
+            "cancelledTitle": "Connexion annulée",
+            "cancelledDescription": "Tu peux relancer la connexion à Monerium quand tu le souhaites.",
+            "errorTitle": "Connexion impossible",
+            "errorDescription": "Un problème est survenu lors de la connexion à Monerium. Réessaye dans un instant.",
             "tryAgain": "Réessayer"
         },
         "bankFlow": {
@@ -593,10 +595,10 @@
             },
             "transfer": {
                 "amount": {
-                    "title": "Transférer mes gains",
+                    "title": "Montant à transférer",
                     "walletLabel": "Porte-monnaie Frak",
                     "totalBalance": "Total balance",
-                    "ibanLabel": "Destinataire",
+                    "ibanLabel": "IBAN",
                     "ibanEmpty": "Aucun IBAN enregistré",
                     "modify": "Modifier",
                     "continue": "Continuer",

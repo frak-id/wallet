@@ -3,6 +3,7 @@ import { Text } from "@frak-labs/design-system/components/Text";
 import { ArrowLeftIcon } from "@frak-labs/design-system/icons";
 import { Link } from "@tanstack/react-router";
 import type { PropsWithChildren, ReactNode } from "react";
+import { useTranslation } from "react-i18next";
 import { GlassButton } from "@/module/common/component/GlassButton";
 import * as styles from "./index.css";
 
@@ -21,15 +22,20 @@ export function Back({
     disabled,
     icon = <ArrowLeftIcon />,
 }: PropsWithChildren<BackProps>) {
+    const { t } = useTranslation();
+    // Use the visible children as label when it's a plain string; otherwise
+    // fall back to a generic "Back" string so icon-only renders still have
+    // an accessible name.
+    const ariaLabel =
+        typeof children === "string" ? children : t("common.back");
+
     if (href) {
         return (
             <Box>
                 <Link
                     to={href}
                     aria-disabled={disabled}
-                    aria-label={
-                        typeof children === "string" ? children : undefined
-                    }
+                    aria-label={ariaLabel}
                     viewTransition
                     className={styles.actionButton}
                 >
@@ -58,6 +64,7 @@ export function Back({
                 onClick={onClick}
                 disabled={disabled}
                 aria-disabled={disabled}
+                aria-label={ariaLabel}
             >
                 <GlassButton
                     icon={icon}

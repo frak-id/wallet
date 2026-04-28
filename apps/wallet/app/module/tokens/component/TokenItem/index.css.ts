@@ -1,5 +1,7 @@
+import { vars } from "@frak-labs/design-system/theme";
 import {
     alias,
+    brand,
     easing,
     fontSize,
     transition,
@@ -9,7 +11,7 @@ import { style } from "@vanilla-extract/css";
 export const tokenItem = style({
     display: "flex",
     alignItems: "center",
-    gap: "var(--frak-spacing-s)",
+    gap: alias.spacing.xs,
     fontSize: fontSize.m,
 });
 
@@ -17,18 +19,18 @@ export const tokenButton = style({
     all: "unset",
     display: "flex",
     alignItems: "center",
-    gap: "var(--frak-spacing-s)",
+    gap: alias.spacing.xs,
     padding: `${alias.spacing.xs} ${alias.spacing.s}`,
-    borderRadius: "var(--frak-radius-s)",
+    borderRadius: alias.cornerRadius.s,
     cursor: "pointer",
     transition: `background ${transition.base} ${easing.inOut}`,
     selectors: {
         "&:hover": {
-            backgroundColor: "var(--frak-token-item-hover-color)",
+            backgroundColor: vars.surface.secondaryHover,
         },
     },
 });
 
 export const tokenAmount = style({
-    fontWeight: "var(--brand-fontweight-bold)",
+    fontWeight: brand.typography.fontWeight.bold,
 });

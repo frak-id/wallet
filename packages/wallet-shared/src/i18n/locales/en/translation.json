@@ -232,7 +232,7 @@
             "amountLessThanBalance": "Amount must be less than balance",
             "amountPositive": "Amount must be positive",
             "amountToSend": "Amount to send",
-            "backToWallet": "Back to wallet page"
+            "sendTitle": "Transfer to a crypto wallet"
         },
         "welcome": {
             "title": "Welcome in your wallet",
@@ -557,8 +557,10 @@
             "amountInvalid": "Amount must be greater than 0"
         },
         "callback": {
-            "noCode": "No authorization code received",
-            "failed": "Failed to complete authentication",
+            "cancelledTitle": "Connection cancelled",
+            "cancelledDescription": "You can reconnect to Monerium whenever you're ready.",
+            "errorTitle": "Connection failed",
+            "errorDescription": "Something went wrong while connecting to Monerium. Please try again in a moment.",
             "tryAgain": "Try again"
         },
         "bankFlow": {
@@ -596,10 +598,10 @@
             },
             "transfer": {
                 "amount": {
-                    "title": "Transfer my earnings",
+                    "title": "Amount to transfer",
                     "walletLabel": "Frak Wallet",
                     "totalBalance": "Total balance",
-                    "ibanLabel": "Recipient",
+                    "ibanLabel": "IBAN",
                     "ibanEmpty": "No IBAN saved",
                     "modify": "Edit",
                     "continue": "Continue",

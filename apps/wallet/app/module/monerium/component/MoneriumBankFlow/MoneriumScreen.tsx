@@ -4,14 +4,18 @@ import {
     DetailSheet,
     DetailSheetFooter,
 } from "@frak-labs/design-system/components/DetailSheet";
+import { Stack } from "@frak-labs/design-system/components/Stack";
 import { ArrowLeftIcon, CloseIcon } from "@frak-labs/design-system/icons";
 import type { ReactNode } from "react";
 import { useTranslation } from "react-i18next";
+import { GlassButton } from "@/module/common/component/GlassButton";
+import { Title } from "@/module/common/component/Title";
 import * as styles from "./index.css";
 
 type MoneriumScreenProps = {
     onClose: () => void;
     children: ReactNode;
+    title?: string;
     ctaLabel?: string;
     ctaOnClick?: () => void;
     ctaLoading?: boolean;
@@ -31,6 +35,7 @@ type MoneriumScreenProps = {
 export function MoneriumScreen({
     onClose,
     children,
+    title,
     ctaLabel,
     ctaOnClick,
     ctaLoading,
@@ -41,8 +46,7 @@ export function MoneriumScreen({
     const { t } = useTranslation();
 
     return (
-        <DetailSheet>
-            {/* Top bar: left icon + optional top-right slot */}
+        <DetailSheet className={styles.sheetSurface}>
             <Box
                 paddingX={"m"}
                 paddingTop={"m"}
@@ -50,38 +54,35 @@ export function MoneriumScreen({
                 alignItems={"center"}
                 justifyContent={"space-between"}
             >
-                <button
-                    type="button"
+                <GlassButton
+                    as="button"
                     aria-label={
                         leftIcon === "back"
                             ? t("common.back")
                             : t("common.close")
                     }
-                    className={styles.closeButton}
                     onClick={onClose}
-                >
-                    {leftIcon === "back" ? (
-                        <ArrowLeftIcon width={16} height={16} />
-                    ) : (
-                        <CloseIcon width={16} height={16} />
-                    )}
-                </button>
+                    icon={
+                        leftIcon === "back" ? (
+                            <ArrowLeftIcon width={22} height={22} />
+                        ) : (
+                            <CloseIcon width={22} height={22} />
+                        )
+                    }
+                />
                 {topRight ? <Box>{topRight}</Box> : null}
             </Box>
 
-            {/* Scrollable content */}
-            <Box
-                display={"flex"}
-                flexDirection={"column"}
-                gap={"l"}
-                flexGrow={1}
-                paddingX={"xl"}
-                paddingY={"m"}
-            >
-                {children}
-            </Box>
+            {title ? (
+                <Box paddingX={"m"} paddingTop={"m"} paddingBottom={"xs"}>
+                    <Title size="page">{title}</Title>
+                </Box>
+            ) : null}
 
-            {/* Sticky CTA */}
+            <Stack space="m" className={styles.bodyStack}>
+                {children}
+            </Stack>
+
             {ctaLabel && ctaOnClick ? (
                 <DetailSheetFooter>
                     <Button

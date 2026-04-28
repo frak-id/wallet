@@ -158,6 +158,12 @@ export default defineConfig(
                         secure: false, // Allow self-signed certs in dev
                         ws: true, // Proxy websockets if needed
                     },
+                    // Monerium sandbox doesn't whitelist localhost origins.
+                    "/monerium-api": {
+                        target: "https://api.monerium.dev",
+                        changeOrigin: true,
+                        rewrite: (path) => path.replace(/^\/monerium-api/, ""),
+                    },
                 },
                 watch: {
                     // Tell vite to ignore watching `src-tauri`

@@ -1,9 +1,10 @@
 import { Box } from "@frak-labs/design-system/components/Box";
+import { Button } from "@frak-labs/design-system/components/Button";
 import { Card } from "@frak-labs/design-system/components/Card";
 import { Inline } from "@frak-labs/design-system/components/Inline";
 import { Stack } from "@frak-labs/design-system/components/Stack";
 import { Text } from "@frak-labs/design-system/components/Text";
-import { TransferIcon, WalletIcon } from "@frak-labs/design-system/icons";
+import { ArrowDownIcon } from "@frak-labs/design-system/icons";
 import { useGetUserBalance } from "@frak-labs/wallet-shared";
 import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
@@ -29,6 +30,14 @@ function parseAmount(value: string): number {
     if (normalized.length === 0) return 0;
     const parsed = Number.parseFloat(normalized);
     return Number.isFinite(parsed) ? parsed : 0;
+}
+
+function SwitcherIcon() {
+    return (
+        <Box className={styles.switcherDisc}>
+            <ArrowDownIcon width={20} height={20} />
+        </Box>
+    );
 }
 
 /**
@@ -70,61 +79,55 @@ export function MoneriumTransferAmountScreen({
     return (
         <MoneriumScreen
             onClose={onClose}
+            leftIcon="back"
+            title={t("monerium.bankFlow.transfer.amount.title")}
             ctaLabel={t("monerium.bankFlow.transfer.amount.continue")}
             ctaOnClick={() => goTo("transfer-recap")}
             ctaDisabled={!canContinue}
         >
-            <Stack space="l">
-                <Text variant="heading2" align="center">
-                    {t("monerium.bankFlow.transfer.amount.title")}
-                </Text>
-
-                {/* Wallet source card */}
+            <Box className={styles.cardsStack}>
                 <Card
                     variant="elevated"
-                    padding="default"
-                    className={
-                        isInsufficient ? styles.walletCardError : undefined
-                    }
+                    padding="none"
+                    className={`${styles.transferCellPadding}${
+                        isInsufficient ? ` ${styles.walletCardError}` : ""
+                    }`}
                 >
-                    <Inline space="m" alignY="center">
-                        <Box className={styles.cardIconBubble}>
-                            <WalletIcon width={20} height={20} />
-                        </Box>
-                        <Box flexGrow={1}>
-                            <Text variant="label" color="secondary">
-                                {t(
-                                    "monerium.bankFlow.transfer.amount.walletLabel"
-                                )}
-                            </Text>
-                            <Text
-                                variant="body"
-                                weight="semiBold"
-                                color={isInsufficient ? "error" : "primary"}
-                            >
-                                {isInsufficient
-                                    ? t(
-                                          "monerium.bankFlow.transfer.amount.insufficientBalance"
-                                      )
-                                    : `${t("monerium.bankFlow.transfer.amount.totalBalance")} ${eureBalance} €`}
-                            </Text>
-                        </Box>
-                    </Inline>
+                    <Stack space="xxs">
+                        <Text variant="body" weight="medium">
+                            {t("monerium.bankFlow.transfer.amount.walletLabel")}
+                        </Text>
+                        <Text
+                            variant="bodySmall"
+                            color={isInsufficient ? "error" : "secondary"}
+                        >
+                            {`${t("monerium.bankFlow.transfer.amount.totalBalance")} : ${eureBalance}€`}
+                        </Text>
+                    </Stack>
                 </Card>
 
-                {/* Beneficiary IBAN card */}
-                <Card variant="elevated" padding="default">
-                    <Inline space="m" alignY="center">
-                        <Box className={styles.cardIconBubble}>
-                            <TransferIcon width={20} height={20} />
-                        </Box>
-                        <Box flexGrow={1}>
-                            <Text variant="label" color="secondary">
+                <Box className={styles.switcherIcon}>
+                    <SwitcherIcon />
+                </Box>
+
+                <Card
+                    variant="elevated"
+                    padding="none"
+                    className={styles.transferCellPadding}
+                >
+                    <Inline
+                        space="m"
+                        alignY="center"
+                        align="space-between"
+                        wrap={false}
+                    >
+                        <Stack space="xxs">
+                            <Text variant="body" weight="medium">
                                 {t(
                                     "monerium.bankFlow.transfer.amount.ibanLabel"
                                 )}
                             </Text>
-                            <Text variant="body" weight="semiBold">
+                            <Text variant="bodySmall" color="secondary">
                                 {selectedIban
                                     ? selectedIban.name ||
                                       maskIban(selectedIban.iban)
@@ -132,27 +135,21 @@ export function MoneriumTransferAmountScreen({
                                           "monerium.bankFlow.transfer.amount.ibanEmpty"
                                       )}
                             </Text>
-                        </Box>
-                        <button
-                            type="button"
-                            className={styles.linkButton}
+                        </Stack>
+                        <Button
+                            variant="secondary"
+                            size="small"
+                            width="auto"
                             onClick={() => goTo("transfer-iban")}
                         >
-                            <Text variant="bodySmall" color="action">
-                                {t("monerium.bankFlow.transfer.amount.modify")}
-                            </Text>
-                        </button>
+                            {t("monerium.bankFlow.transfer.amount.modify")}
+                        </Button>
                     </Inline>
                 </Card>
+            </Box>
 
-                {/* Amount input — large, centered, native numeric keypad */}
-                <Box
-                    display="flex"
-                    alignItems="baseline"
-                    justifyContent="center"
-                    gap="xs"
-                    paddingY="xl"
-                >
+            <Stack space="xs" align="center" className={styles.amountSection}>
+                <Inline space="xs" alignY="center" wrap={false}>
                     <Box
                         as="input"
                         autoFocus
@@ -162,14 +159,26 @@ export function MoneriumTransferAmountScreen({
                         value={amount}
                         onChange={handleAmountInput}
                         className={styles.amountInput}
+                        // `ch`-based width tracks the typed value's length
+                        // — works everywhere, no `field-sizing` dependency.
+                        style={{
+                            width: `${Math.max((amount || "0").length, 1)}ch`,
+                        }}
                         aria-label={t(
                             "monerium.bankFlow.transfer.amount.title"
                         )}
                     />
-                    <Text variant="heading2" color="primary">
+                    <Text variant="display" weight="bold" color="primary">
                         €
                     </Text>
-                </Box>
+                </Inline>
+                {isInsufficient ? (
+                    <Text variant="caption" color="error">
+                        {t(
+                            "monerium.bankFlow.transfer.amount.insufficientBalance"
+                        )}
+                    </Text>
+                ) : null}
             </Stack>
         </MoneriumScreen>
     );
