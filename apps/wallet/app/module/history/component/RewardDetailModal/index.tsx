@@ -239,7 +239,7 @@ function StatusRow({
                         {t("reward.detail.pendingValidation")}
                     </Text>
                 </Box>
-                {item.settledAt && (
+                {item.availableAt && (
                     <InfoRow
                         labelVariant="bodySmall"
                         labelColor="secondary"
@@ -252,7 +252,7 @@ function StatusRow({
                                     height={16}
                                 />
                                 <Text variant="bodySmall" weight="medium">
-                                    {formatDateShort(item.settledAt, locale)}
+                                    {formatDateShort(item.availableAt, locale)}
                                 </Text>
                             </Inline>
                         }

@@ -8,10 +8,11 @@ export type {
 
 export type RewardHistoryItem = Omit<
     BackendRewardHistoryItem,
-    "createdAt" | "settledAt"
+    "createdAt" | "settledAt" | "availableAt"
 > & {
     createdAt: number;
     settledAt?: number;
+    availableAt?: number;
 };
 
 export type MerchantInfo = RewardHistoryItem["merchant"];
