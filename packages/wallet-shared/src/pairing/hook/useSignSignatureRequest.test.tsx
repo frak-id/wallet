@@ -134,7 +134,7 @@ describe("useSignSignatureRequest", () => {
 
         expect(mockClient.sendSignatureResponse).toHaveBeenCalledWith(
             mockRequest.id,
-            { reason: "User cancelled" }
+            { reason: { code: "user-declined", detail: "User cancelled" } }
         );
         expect(consoleWarnSpy).toHaveBeenCalledWith(
             "Failed to sign signature request",
@@ -175,7 +175,7 @@ describe("useSignSignatureRequest", () => {
 
         expect(mockClient.sendSignatureResponse).toHaveBeenCalledWith(
             mockRequest.id,
-            { reason: "Unknown error" }
+            { reason: { code: "user-declined", detail: "Unknown error" } }
         );
 
         consoleWarnSpy.mockRestore();
@@ -207,7 +207,7 @@ describe("useDeclineSignatureRequest", () => {
 
         expect(mockClient.sendSignatureResponse).toHaveBeenCalledWith(
             mockRequest.id,
-            { reason: "Declined" }
+            { reason: { code: "user-declined", detail: "Declined" } }
         );
     });
 
@@ -246,10 +246,10 @@ describe("useDeclineSignatureRequest", () => {
 
         expect(mockClient.sendSignatureResponse).toHaveBeenCalledTimes(2);
         expect(mockClient.sendSignatureResponse).toHaveBeenCalledWith("req-1", {
-            reason: "Declined",
+            reason: { code: "user-declined", detail: "Declined" },
         });
         expect(mockClient.sendSignatureResponse).toHaveBeenCalledWith("req-2", {
-            reason: "Declined",
+            reason: { code: "user-declined", detail: "Declined" },
         });
     });
 });

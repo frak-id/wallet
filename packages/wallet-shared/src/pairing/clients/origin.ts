@@ -3,23 +3,34 @@ import type { Hex } from "viem";
 import { identifyAuthenticatedUser, trackEvent } from "../../common/analytics";
 import { getSafeSession } from "../../common/utils/safeSession";
 import { sessionStore } from "../../stores/sessionStore";
-import type {
-    OriginIdentityNode,
-    OriginPairingState,
-    WsOriginMessage,
-    WsOriginRequest,
+import {
+    type OriginIdentityNode,
+    type OriginPairingState,
+    PairingSignatureError,
+    type PairingSignatureFailure,
+    type SignatureRejectReason,
+    type WsOriginMessage,
+    type WsOriginRequest,
 } from "../types";
 import { BasePairingClient } from "./base";
 
 export type OnPairingSuccessCallback = () => void | Promise<void>;
 
+const PING_INTERVAL_MS = 5_000;
+const MAX_UNANSWERED_PINGS = 5;
+
 /**
- * A pairing client for an origin device (likely desktop, the one responsible to create a pairing)
+ * Pairing client for the origin device (typically a desktop initiating pairing).
  *
- * - mechanism to empty the signature map?
- * - should be auto created if we have a current session of type `distant-webauthn`
- * - we should also abstract the signer of the wagmi provider, to change the signature payload
- * - should expose some stuff that could be useful on the UI (like pairing step, if we got an answer to our latest `ping`, amount of pending signature etc)
+ * Lifecycle:
+ *  - `initiatePairing` opens a fresh WS to create a new pairing.
+ *  - `reconnect` resumes an existing distant-webauthn session.
+ *  - `sendSignatureRequest` returns a Promise that resolves with the
+ *    target's signature, or rejects with a typed `PairingSignatureError`.
+ *
+ * In-flight signature promises survive transient WS closes (network blips,
+ * mobile suspends, server restarts). Only fatal closes — auth failures,
+ * protocol errors, retry-budget exhaustion — reject pending promises.
  */
 export class OriginPairingClient extends BasePairingClient<
     WsOriginRequest,
@@ -81,53 +92,44 @@ export class OriginPairingClient extends BasePairingClient<
         // Reset stale ping state from previous connection
         this.pendingPings = 0;
 
-        // Launch the WS connection
         this.connect({
             wallet: session.token,
         });
-
-        // Start the ping interval
-        this.startPingInterval();
     }
 
-    private static readonly SIGNATURE_TIMEOUT_MS = 10 * 60 * 1_000; // 10 minutes
-
+    /**
+     * Send a signature request to the paired target device.
+     *
+     * The returned promise resolves with the signature, or rejects with a
+     * typed `PairingSignatureError` (use `cause` to render UX). Pending
+     * requests survive transient reconnects — they're only rejected when
+     * the connection is permanently lost or the target/server explicitly
+     * rejects (declined, cancelled, expired, …).
+     *
+     * If the WS isn't open right now, the request is queued in the base
+     * outbound buffer and flushed when reconnect succeeds. The server
+     * dedupes on the request `id` (which doubles as the idempotency key).
+     */
     async sendSignatureRequest(request: Hex, context?: object): Promise<Hex> {
-        // Fail fast if we're not actually connected to the partner device.
-        // Without this guard, the request would silently sit in the queue and
-        // resolve only after a 10-minute timeout (because `this.send` becomes
-        // a no-op once the websocket is closed).
+        // Reject up-front in states where reconnect won't bring us back
+        // (idle = no session yet; error/retry-error = user must take action).
+        const status = this.state.status;
         if (
-            this.state.status !== "paired" &&
-            this.state.status !== "connecting"
+            status === "idle" ||
+            status === "error" ||
+            status === "retry-error"
         ) {
-            throw new Error(
-                `Pairing not connected (status: ${this.state.status}). ` +
-                    "Reconnect the partner device before requesting a signature."
+            throw new PairingSignatureError(
+                "connection-lost",
+                `Pairing not connected (status: ${status})`
             );
         }
 
-        return new Promise((resolve, reject) => {
+        return new Promise<Hex>((resolve, reject) => {
             const id = nanoid(16);
 
-            const timer = setTimeout(() => {
-                this.removeSignatureRequest(id);
-                reject(
-                    new Error("Signature request timed out after 10 minutes")
-                );
-            }, OriginPairingClient.SIGNATURE_TIMEOUT_MS);
-
             const signatureRequests = new Map(this.state.signatureRequests);
-            signatureRequests.set(id, {
-                resolve: (value: Hex) => {
-                    clearTimeout(timer);
-                    resolve(value);
-                },
-                reject: (reason: unknown) => {
-                    clearTimeout(timer);
-                    reject(reason);
-                },
-            });
+            signatureRequests.set(id, { resolve, reject });
             this.setState({ signatureRequests });
 
             this.send({
@@ -139,6 +141,94 @@ export class OriginPairingClient extends BasePairingClient<
                 },
             });
         });
+    }
+
+    /**
+     * Cancel an in-flight signature request because the origin user dismissed
+     * the dApp modal / withdrew consent. The pending promise rejects with
+     * `cause: "user-cancelled"` and a `signature-reject` message is sent to
+     * the server so the target's UI clears.
+     */
+    cancelSignatureRequest(id: string, detail?: string): boolean {
+        const pending = this.state.signatureRequests.get(id);
+        if (!pending) return false;
+
+        const reason: SignatureRejectReason = {
+            code: "user-cancelled",
+            ...(detail ? { detail } : {}),
+        };
+        this.send({ type: "signature-reject", payload: { id, reason } });
+        pending.reject(new PairingSignatureError(reason.code, reason.detail));
+        this.removeSignatureRequest(id);
+        return true;
+    }
+
+    /**
+     * Cancel every in-flight signature request — convenience for moments
+     * where the origin user clearly abandoned the flow (closed the dApp
+     * modal, navigated away, etc.). Sends `signature-reject` for each,
+     * settles every pending promise, and returns the count cancelled.
+     */
+    cancelAllSignatureRequests(detail?: string): number {
+        const requests = this.state.signatureRequests;
+        if (requests.size === 0) return 0;
+
+        const reason: SignatureRejectReason = {
+            code: "user-cancelled",
+            ...(detail ? { detail } : {}),
+        };
+        const error = new PairingSignatureError(reason.code, reason.detail);
+        const count = requests.size;
+
+        for (const [id, pending] of requests) {
+            this.send({ type: "signature-reject", payload: { id, reason } });
+            pending.reject(error);
+        }
+
+        this.setState({ signatureRequests: new Map() });
+        return count;
+    }
+
+    /**
+     * Override of base hook — reject every pending signature promise.
+     * Called from base `reset()` and from `handleClose` on fatal /
+     * retry-budget-exhausted closes.
+     */
+    protected override rejectAllRequests(
+        reason: PairingSignatureFailure
+    ): void {
+        const requests = this.state.signatureRequests;
+        if (requests.size === 0) return;
+
+        for (const { reject } of requests.values()) {
+            reject(new PairingSignatureError(reason.code, reason.detail));
+        }
+        this.setState({ signatureRequests: new Map() });
+    }
+
+    /**
+     * Override of base hook — when a single `signature-request` is dropped
+     * because the outbound queue overflowed, reject ONLY that request's
+     * pending promise. Other in-flight signatures stay alive.
+     */
+    protected override rejectDroppedRequest(
+        message: WsOriginRequest,
+        reason: PairingSignatureFailure
+    ): void {
+        if (message.type !== "signature-request") return;
+        const id = message.payload.id;
+        const pending = this.state.signatureRequests.get(id);
+        if (!pending) return;
+        pending.reject(new PairingSignatureError(reason.code, reason.detail));
+        this.removeSignatureRequest(id);
+    }
+
+    /**
+     * Override of base hook — (re)start the heartbeat after every successful
+     * open, including silent reconnects.
+     */
+    protected override onSocketOpen(): void {
+        this.startPingInterval();
     }
 
     private removeSignatureRequest(id: string) {
@@ -160,6 +250,7 @@ export class OriginPairingClient extends BasePairingClient<
                     code: message.payload.pairingCode,
                 },
             });
+            return;
         }
 
         if (message.type === "signature-response") {
@@ -178,7 +269,10 @@ export class OriginPairingClient extends BasePairingClient<
                 message.payload.id
             );
             if (request) {
-                request.reject(message.payload.reason);
+                const reason = message.payload.reason;
+                request.reject(
+                    new PairingSignatureError(reason.code, reason.detail)
+                );
                 this.removeSignatureRequest(message.payload.id);
             }
             return;
@@ -224,26 +318,26 @@ export class OriginPairingClient extends BasePairingClient<
     }
 
     /**
-     * Start the ping interval
+     * Start the ping interval (called from `onSocketOpen`).
      */
-    protected startPingInterval() {
+    private startPingInterval() {
         if (this.pingInterval) {
             clearInterval(this.pingInterval);
         }
 
         this.pingInterval = setInterval(() => {
-            // If we got more than 5 pending pings, close the connection
-            if (this.pendingPings > 5) {
+            // If we got more than MAX_UNANSWERED_PINGS pending pings, force-close.
+            // The base class's `handleClose` will treat the resulting code as
+            // transient and silently reconnect (heartbeat-driven liveness check).
+            if (this.pendingPings > MAX_UNANSWERED_PINGS) {
                 this.connection?.close();
                 this.connection = null;
-                // And reset the ping counter
                 this.pendingPings = 0;
                 return;
             }
 
-            // Send a ping
             this.send({ type: "ping" });
             this.pendingPings++;
-        }, 5_000);
+        }, PING_INTERVAL_MS);
     }
 }

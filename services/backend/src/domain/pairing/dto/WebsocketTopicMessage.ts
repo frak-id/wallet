@@ -1,5 +1,6 @@
 import type { Hex } from "viem";
 import type { StaticWalletTokenDto } from "../../auth/models/WalletSessionDto";
+import type { SignatureRejectReason } from "./SignatureRejectReason";
 
 /**
  * When the origin send the request to the target
@@ -59,14 +60,19 @@ export type WsSignatureResponse = {
 };
 
 /**
- * When the target send a signature rejection
+ * When a signature request is terminated.
+ *
+ * Sent in three scenarios:
+ *   - Target declined a prompt: target → server → origin
+ *   - Origin cancelled its own request: origin → server → target
+ *   - Server-side TTL expiry: server → origin and/or target
  */
 export type WsSignatureReject = {
     type: "signature-reject";
     payload: {
         pairingId: string;
         id: string;
-        reason: string;
+        reason: SignatureRejectReason;
     };
 };
 

@@ -1,6 +1,8 @@
 import type { Hex } from "viem";
 import { getSafeSession } from "../../common/utils/safeSession";
 import type {
+    PairingSignatureFailure,
+    SignatureRejectReason,
     TargetPairingState,
     WsTargetMessage,
     WsTargetRequest,
@@ -8,7 +10,14 @@ import type {
 import { BasePairingClient } from "./base";
 
 /**
- * The pairing client for a target device, the one responding to the pairing requests
+ * Pairing client for a target device — the wallet performing the
+ * biometric signature on the user's behalf.
+ *
+ * The client maintains a Map of pending signature requests (`pendingSignatures`)
+ * and exposes UI hooks via the Zustand store. Requests survive transient
+ * WS closes — only fatal closes (auth failure, retry budget exhausted)
+ * clear them, and even then the server will replay anything still alive
+ * upon successful reconnection.
  */
 export class TargetPairingClient extends BasePairingClient<
     WsTargetRequest,
@@ -76,6 +85,17 @@ export class TargetPairingClient extends BasePairingClient<
     }
 
     /**
+     * Override of base hook — drop every pending signature on a fatal close.
+     * No promises to reject on this side: the wallet UI just clears the prompts.
+     */
+    protected override rejectAllRequests(
+        _reason: PairingSignatureFailure
+    ): void {
+        if (this.state.pendingSignatures.size === 0) return;
+        this.setState({ pendingSignatures: new Map() });
+    }
+
+    /**
      * Handle a message from the pairing server
      */
     protected override handleMessage(message: WsTargetMessage) {
@@ -88,7 +108,8 @@ export class TargetPairingClient extends BasePairingClient<
                 },
             });
             this.updateState((state) => {
-                state.pairingIdState.set(message.payload.pairingId, {
+                const pairingIdState = new Map(state.pairingIdState);
+                pairingIdState.set(message.payload.pairingId, {
                     name:
                         state.pairingIdState.get(message.payload.pairingId)
                             ?.name ?? "",
@@ -96,6 +117,7 @@ export class TargetPairingClient extends BasePairingClient<
                 });
                 return {
                     ...state,
+                    pairingIdState,
                     status: "paired",
                 };
             });
@@ -105,12 +127,14 @@ export class TargetPairingClient extends BasePairingClient<
         // Handle partner connected
         if (message.type === "partner-connected") {
             this.updateState((state) => {
-                state.pairingIdState.set(message.payload.pairingId, {
+                const pairingIdState = new Map(state.pairingIdState);
+                pairingIdState.set(message.payload.pairingId, {
                     name: message.payload.deviceName,
                     lastLive: Date.now(),
                 });
                 return {
                     ...state,
+                    pairingIdState,
                     status: "paired",
                     partnerDevice: message.payload.deviceName,
                 };
@@ -122,21 +146,39 @@ export class TargetPairingClient extends BasePairingClient<
         if (message.type === "signature-request") {
             const request = message.payload;
             this.updateState((state) => {
-                state.pendingSignatures.set(request.id, {
+                const pendingSignatures = new Map(state.pendingSignatures);
+                pendingSignatures.set(request.id, {
                     id: request.id,
                     pairingId: request.pairingId,
                     request: request.request,
                     context: request.context,
                     from: request.partnerDeviceName,
                 });
-                state.pairingIdState.set(request.pairingId, {
+                const pairingIdState = new Map(state.pairingIdState);
+                pairingIdState.set(request.pairingId, {
                     name: request.partnerDeviceName,
                     lastLive: Date.now(),
                 });
                 return {
                     ...state,
+                    pendingSignatures,
+                    pairingIdState,
                     status: "paired",
                 };
+            });
+            return;
+        }
+
+        // Handle signature-reject coming from server (origin cancelled or
+        // server-side TTL expired). The wallet UI just removes the request from
+        // `pendingSignatures`.
+        if (message.type === "signature-reject") {
+            const id = message.payload.id;
+            if (!this.state.pendingSignatures.has(id)) return;
+            this.updateState((state) => {
+                const pendingSignatures = new Map(state.pendingSignatures);
+                pendingSignatures.delete(id);
+                return { ...state, pendingSignatures };
             });
             return;
         }
@@ -147,7 +189,7 @@ export class TargetPairingClient extends BasePairingClient<
      */
     sendSignatureResponse(
         requestId: string,
-        response: { signature: Hex } | { reason: string }
+        response: { signature: Hex } | { reason: SignatureRejectReason }
     ) {
         const request = this.state.pendingSignatures.get(requestId);
         if (!request) {
@@ -178,8 +220,9 @@ export class TargetPairingClient extends BasePairingClient<
         }
 
         this.updateState((state) => {
-            state.pendingSignatures.delete(requestId);
-            return state;
+            const pendingSignatures = new Map(state.pendingSignatures);
+            pendingSignatures.delete(requestId);
+            return { ...state, pendingSignatures };
         });
     }
 }

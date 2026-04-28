@@ -3,11 +3,13 @@ import { RpcErrorCodes } from "@frak-labs/frame-connector";
 import {
     Drawer,
     DrawerContent,
+    getOriginPairingClient,
     InAppBrowserToast,
     LogoFrakWithName,
     OriginPairingState,
     prefixModalCss,
     trackEvent,
+    useCancelAllSignatureRequests,
     WalletModal,
 } from "@frak-labs/wallet-shared";
 import { cx } from "class-variance-authority";
@@ -59,6 +61,9 @@ export function ListenerModal({
     const [logoFailed, setLogoFailed] = useState(false);
     const getMergeToken = useGetMergeToken();
     const parentUrl = resolvingContextStore((s) => s.context?.sourceUrl);
+    const cancelAllSignatures = useCancelAllSignatureRequests({
+        client: getOriginPairingClient(),
+    });
 
     useEffect(() => {
         setLogoFailed(false);
@@ -87,7 +92,12 @@ export function ListenerModal({
      */
     const onError = useCallback(
         (reason?: string, code: number = RpcErrorCodes.serverError) => {
-            if (code !== RpcErrorCodes.clientAborted) {
+            if (code === RpcErrorCodes.clientAborted) {
+                // User dismissed mid-flow — settle any in-flight signature on
+                // the origin pairing client so the target wallet's prompt
+                // clears immediately instead of waiting for the server's TTL.
+                cancelAllSignatures("modal dismissed");
+            } else {
                 const state = modalStore.getState();
                 const step = state.steps?.[state.currentStep]?.key ?? "unknown";
                 trackEvent("modal_step_error", {
@@ -106,7 +116,7 @@ export function ListenerModal({
             });
             onClose();
         },
-        [onClose, emitter]
+        [onClose, emitter, cancelAllSignatures]
     );
 
     /**
