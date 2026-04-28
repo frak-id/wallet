@@ -112,10 +112,11 @@ class Frak_Component_Renderer {
 	 *
 	 * @param array<string, mixed> $attrs   Map of camelCase attribute keys.
 	 * @param string               $wrapper Pre-escaped wrapper attributes (typically from `get_block_wrapper_attributes()`); empty emits the web component without a surrounding div.
+	 * @param bool                 $preview When true emit a bare `preview` HTML attribute on the web component so it bypasses backend RPC gates and renders its preview state. Used by the Elementor widget when rendering inside the editor iframe — the Gutenberg path injects `preview` from JS instead.
 	 * @return string
 	 */
-	public static function banner( array $attrs, string $wrapper = '' ): string {
-		return self::render( 'frak-banner', self::BANNER_ATTRS, self::merge_classnames( $attrs ), $wrapper );
+	public static function banner( array $attrs, string $wrapper = '', bool $preview = false ): string {
+		return self::render( 'frak-banner', self::BANNER_ATTRS, self::merge_classnames( $attrs ), $wrapper, $preview );
 	}
 
 	/**
@@ -123,10 +124,11 @@ class Frak_Component_Renderer {
 	 *
 	 * @param array<string, mixed> $attrs   Map of camelCase attribute keys.
 	 * @param string               $wrapper Pre-escaped wrapper attributes; empty emits the component bare.
+	 * @param bool                 $preview When true emit the bare `preview` HTML attribute (Elementor editor render path).
 	 * @return string
 	 */
-	public static function share_button( array $attrs, string $wrapper = '' ): string {
-		return self::render( 'frak-button-share', self::SHARE_BUTTON_ATTRS, self::apply_share_button_style( self::merge_classnames( $attrs ) ), $wrapper );
+	public static function share_button( array $attrs, string $wrapper = '', bool $preview = false ): string {
+		return self::render( 'frak-button-share', self::SHARE_BUTTON_ATTRS, self::apply_share_button_style( self::merge_classnames( $attrs ) ), $wrapper, $preview );
 	}
 
 	/**
@@ -207,9 +209,10 @@ class Frak_Component_Renderer {
 	 *
 	 * @param array<string, mixed> $attrs   Map of camelCase attribute keys.
 	 * @param string               $wrapper Pre-escaped wrapper attributes; empty emits the component bare.
+	 * @param bool                 $preview When true emit the bare `preview` HTML attribute (Elementor editor render path).
 	 * @return string
 	 */
-	public static function post_purchase( array $attrs, string $wrapper = '' ): string {
+	public static function post_purchase( array $attrs, string $wrapper = '', bool $preview = false ): string {
 		$show_products = self::should_show_products( $attrs );
 		$html_attrs    = self::build_html_attrs( self::POST_PURCHASE_ATTRS, self::merge_classnames( $attrs ) );
 
@@ -238,7 +241,7 @@ class Frak_Component_Renderer {
 			}
 		}
 
-		return self::wrap( 'frak-post-purchase', $html_attrs, $wrapper );
+		return self::wrap( 'frak-post-purchase', $html_attrs, $wrapper, $preview );
 	}
 
 	/**
@@ -321,10 +324,11 @@ class Frak_Component_Renderer {
 	 * @param array<string,string> $map     Block-attr => HTML-attr map.
 	 * @param array<string, mixed> $attrs   Block attribute values.
 	 * @param string               $wrapper Wrapper attributes string.
+	 * @param bool                 $preview Whether to emit a bare `preview` attribute on the web component.
 	 * @return string
 	 */
-	private static function render( string $tag, array $map, array $attrs, string $wrapper ): string {
-		return self::wrap( $tag, self::build_html_attrs( $map, $attrs ), $wrapper );
+	private static function render( string $tag, array $map, array $attrs, string $wrapper, bool $preview = false ): string {
+		return self::wrap( $tag, self::build_html_attrs( $map, $attrs ), $wrapper, $preview );
 	}
 
 	/**
@@ -369,12 +373,21 @@ class Frak_Component_Renderer {
 	 * `<div {wrapper}>` (block path). When empty the bare web component is
 	 * emitted (shortcode / widget path).
 	 *
+	 * `$preview = true` prepends a bare `preview` HTML attribute so the web
+	 * component renders its preview state. Emitting it bare (rather than
+	 * `preview="true"`) matches the convention used elsewhere for boolean
+	 * HTML attributes — see {@see BOOLEAN_HTML_ATTRS}.
+	 *
 	 * @param string   $tag        Web component tag name.
 	 * @param string[] $html_attrs Already-escaped attribute pairs.
 	 * @param string   $wrapper    Wrapper attributes (pre-escaped by WordPress).
+	 * @param bool     $preview    Whether to emit a bare `preview` attribute on the web component.
 	 * @return string
 	 */
-	private static function wrap( string $tag, array $html_attrs, string $wrapper ): string {
+	private static function wrap( string $tag, array $html_attrs, string $wrapper, bool $preview = false ): string {
+		if ( $preview ) {
+			array_unshift( $html_attrs, 'preview' );
+		}
 		$attr_string   = implode( ' ', $html_attrs );
 		$attr_fragment = '' !== $attr_string ? ' ' . $attr_string : '';
 

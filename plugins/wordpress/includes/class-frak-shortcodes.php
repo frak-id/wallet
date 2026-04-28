@@ -168,6 +168,13 @@ class Frak_Shortcodes {
 	 *     `wp_is_serving_rest_request()` on WP 6.5+; falls back to the
 	 *     `REST_REQUEST` constant on older cores.
 	 *
+	 * Elementor's editor / preview iframe is whitelisted even when the request
+	 * looks REST-y — the editor renders shortcode content via its own iframe
+	 * pipeline and merchants legitimately need the markup back to preview
+	 * `<frak-X>` components inside Elementor's HTML / Shortcode widget.
+	 * {@see Frak_Elementor::is_editor_context()} only fires when Elementor is
+	 * actively rendering the editor, so headless consumers stay protected.
+	 *
 	 * The SDK is not loaded in any of these contexts (see
 	 * {@see Frak_Frontend::enqueue_scripts()}, which only runs on
 	 * `wp_enqueue_scripts`), so emitting the markup there would never render a
@@ -182,7 +189,11 @@ class Frak_Shortcodes {
 		if ( function_exists( 'is_embed' ) && is_embed() ) {
 			return false;
 		}
-		if ( function_exists( 'wp_is_serving_rest_request' ) ? wp_is_serving_rest_request() : ( defined( 'REST_REQUEST' ) && REST_REQUEST ) ) {
+		$is_rest = function_exists( 'wp_is_serving_rest_request' ) ? wp_is_serving_rest_request() : ( defined( 'REST_REQUEST' ) && REST_REQUEST );
+		if ( $is_rest ) {
+			if ( class_exists( 'Frak_Elementor' ) && Frak_Elementor::is_editor_context() ) {
+				return true;
+			}
 			return false;
 		}
 		return true;

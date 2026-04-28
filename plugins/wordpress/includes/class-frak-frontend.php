@@ -76,8 +76,13 @@ class Frak_Frontend {
 	 * Shape matches the current SDK contract (see @frak-labs/components):
 	 *   window.FrakSetup = { config: FrakWalletSdkConfig };
 	 *
-	 * Only the site-level metadata (name + logoUrl) is emitted — every other
-	 * knob is either SDK-default or merchant-dashboard driven.
+	 * Site-level metadata (name + logoUrl) is always emitted. Inside the
+	 * Elementor editor / preview iframe (detected via
+	 * {@see Frak_Elementor::is_editor_context()}) we additionally flip
+	 * `waitForBackendConfig` off so the live `<frak-X preview>` web components
+	 * render immediately even on local dev where the merchant dashboard hasn't
+	 * registered the domain yet — same trick the Gutenberg editor uses (see
+	 * {@see Frak_Blocks::generate_editor_config_script()}).
 	 *
 	 * @return string
 	 */
@@ -96,7 +101,11 @@ class Frak_Frontend {
 			}
 		);
 
-		$config      = array( 'metadata' => $metadata );
+		$config = array( 'metadata' => $metadata );
+		if ( class_exists( 'Frak_Elementor' ) && Frak_Elementor::is_editor_context() ) {
+			$config['waitForBackendConfig'] = false;
+		}
+
 		$config_json = wp_json_encode( $config, JSON_UNESCAPED_SLASHES );
 
 		return sprintf(

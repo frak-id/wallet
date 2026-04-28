@@ -33,6 +33,12 @@ class Frak_Plugin {
 		// Widgets register their `widgets_init` callback here so the factory is
 		// wired on `plugins_loaded` — avoids an `init → widgets_init` chain.
 		Frak_Widgets::init();
+		// Elementor integration registers `elementor/widgets/register` and
+		// `elementor/elements/categories_registered` hooks. The class itself
+		// no-ops when Elementor isn't active so this is safe to call
+		// unconditionally — it only adds an extra hook registration when
+		// `did_action( 'elementor/loaded' )` is positive.
+		Frak_Elementor::init();
 	}
 
 	/**
