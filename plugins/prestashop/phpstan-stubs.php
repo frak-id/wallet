@@ -27,3 +27,26 @@ if (!class_exists('ModuleAdminController')) {
         }
     }
 }
+
+if (!class_exists('Controller')) {
+    class Controller
+    {
+        public function init()
+        {
+        }
+    }
+}
+
+if (!class_exists('ModuleFrontController')) {
+    class ModuleFrontController extends Controller
+    {
+        public $auth = false;
+        public $guestAllowed = true;
+        public $display_header = false;
+        public $display_footer = false;
+        public $display_column_left = false;
+        public $display_column_right = false;
+        public $ssl = false;
+        public $module;
+    }
+}

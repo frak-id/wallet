@@ -74,12 +74,17 @@ class FrakComponentRenderer
     /**
      * Post-purchase: camelCase attr key => kebab-case HTML attribute name.
      *
-     * `customerId`, `orderId`, `token` are listed alongside the public
-     * SDK attrs because the PrestaShop `displayOrderConfirmation` hook
-     * supplies them directly from the resolved Order object — no
-     * separate context-resolution helper is needed (unlike the WP plugin,
-     * which extracts them from the WC endpoint via
-     * `Frak_WooCommerce::get_post_purchase_data()`).
+     * `customerId`, `orderId`, `token` are listed alongside the public SDK
+     * attrs because the PrestaShop hooks (`displayOrderConfirmation` /
+     * `displayOrderDetail`) already supply them via {@see FrakOrderResolver}
+     * — no per-render endpoint resolution required (unlike WP, which has
+     * to resolve `is_wc_endpoint_url()` from inside the renderer).
+     *
+     * `products` carries the JSON-stringified line-item list emitted by
+     * {@see FrakOrderResolver::getPostPurchaseData()}; preact-custom-element
+     * only delivers attribute values as strings, so the SDK parses it back
+     * into an array on mount. The renderer treats the value as opaque —
+     * caller is responsible for `json_encode()`-ing before passing it in.
      *
      * @var array<string, string>
      */
@@ -96,6 +101,7 @@ class FrakComponentRenderer
         'customerId' => 'customer-id',
         'orderId' => 'order-id',
         'token' => 'token',
+        'products' => 'products',
     ];
 
     /**
@@ -139,15 +145,53 @@ class FrakComponentRenderer
 
     /**
      * Render `<frak-post-purchase>` with the supplied attributes. The
-     * caller (typically the `displayOrderConfirmation` hook) supplies
-     * `customerId`, `orderId`, `token` directly — no endpoint resolution
-     * required.
+     * caller (typically the `displayOrderConfirmation` /
+     * `displayOrderDetail` hooks) resolves `customerId`, `orderId`, `token`,
+     * and the optional `products` JSON via {@see FrakOrderResolver} before
+     * calling — no endpoint detection needed inside the renderer.
      *
      * @param array<string, mixed> $attrs Map of camelCase attribute keys.
      */
     public static function postPurchase(array $attrs = []): string
     {
         return self::render('frak-post-purchase', self::POST_PURCHASE_ATTRS, $attrs);
+    }
+
+    /**
+     * Build the inline `<script>` that fires `trackPurchaseStatus` once the
+     * Frak SDK client is ready. Mirrors WordPress's
+     * `Frak_WooCommerce::render_purchase_tracker_for_order()` one-liner.
+     *
+     * Emits the script alongside the `<frak-post-purchase>` component so
+     * attribution still works when the component is missing — the SDK is
+     * idempotent on `(customerId, orderId, token)`, so the duplicate call
+     * (script + component-mount) is intentional. Keeps tracking working
+     * when either surface is missing (template override removed the
+     * component, or component present but SDK still warming).
+     *
+     * Pre-check (`if FrakSetup.core.trackPurchaseStatus`) covers the case
+     * where the SDK bootstrapped before this inline script ran; the
+     * `frak:client` listener covers the inverse race.
+     *
+     * Inline emission is intentional over `Media::addJsDef` + a static JS
+     * file: zero HTTP requests, no global var pollution, no Asset Manager
+     * overhead, and the payload is already per-request data that CCC
+     * cannot cache anyway.
+     *
+     * @param array{customerId: string, orderId: string, token: string} $context Resolved order context.
+     */
+    public static function purchaseTrackerScript(array $context): string
+    {
+        $payload = json_encode($context, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
+        if (!is_string($payload)) {
+            return '';
+        }
+        return sprintf(
+            '<script>(function(p){var f=function(){var s=window.FrakSetup;'
+            . 'if(s&&s.core&&s.core.trackPurchaseStatus){s.core.trackPurchaseStatus(p);return true;}'
+            . 'return false;};if(!f())window.addEventListener("frak:client",f,{once:true});})(%s);</script>',
+            $payload
+        );
     }
 
     /**

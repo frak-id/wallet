@@ -46,7 +46,7 @@ Rendered automatically on `displayOrderConfirmation` via `FrakComponentRenderer:
 
 ### Order status → Frak webhook
 
-`hookActionOrderStatusUpdate` maps PrestaShop's `OrderState` ids to Frak's webhook status:
+`hookActionOrderStatusPostUpdate` maps PrestaShop's `OrderState` ids to Frak's webhook status:
 
 | Trigger                                                    | Frak status |
 | ---------------------------------------------------------- | ----------- |
@@ -56,7 +56,17 @@ Rendered automatically on `displayOrderConfirmation` via `FrakComponentRenderer:
 | `PS_OS_SHIPPING`, `PS_OS_PREPARATION`                      | (skipped)   |
 | any other state                                            | `pending`   |
 
-Each delivery is HMAC-SHA256 signed against the `FRAK_WEBHOOK_SECRET` and POSTed to `https://backend.frak.id/ext/merchant/{merchantId}/webhook/prestashop`. Delivery attempts are logged to **Advanced Parameters → Logs** with the `FrakIntegration` prefix.
+Each delivery is HMAC-SHA256 signed (base64-encoded raw digest, `x-hmac-sha256` header) against the `FRAK_WEBHOOK_SECRET` and POSTed to `https://backend.frak.id/ext/merchant/{merchantId}/webhook/custom`. The hook attempts a synchronous send with tight timeouts (5 s request / 3 s connect); any failure (network, non-2xx, timeout) lands in the `frak_webhook_queue` table and is retried by a cron drainer with exponential backoff (5 min → 24 h, 5 attempts) so order-status transitions never block the merchant for more than a few seconds. Delivery attempts are logged to **Advanced Parameters → Logs** with the `FrakIntegration` prefix.
+
+### Retry cron
+
+Failed webhook deliveries are persisted to a custom `{prefix}frak_webhook_queue` table and drained by a token-guarded front controller exposed at:
+
+```
+https://{shop}/index.php?fc=module&module=frakintegration&controller=cron&token={FRAK_CRON_TOKEN}
+```
+
+The exact URL is shown on the module configuration page. Wire it into a 5-minute cron — either via the official `ps_cronjobs` module or a server-level cron entry (`*/5 * * * * curl -fs '<URL>'`). The token is generated on install with `bin2hex(random_bytes(32))` and stored under `Configuration::FRAK_CRON_TOKEN`; comparison goes through `hash_equals` to be timing-safe. To rotate, delete the configuration row and reinstall the module.
 
 ## Development
 

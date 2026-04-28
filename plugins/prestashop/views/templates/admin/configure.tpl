@@ -116,6 +116,19 @@
                 </p>
             </div>
         </div>
+        {if $cron_url}
+            <div class="form-group">
+                <label class="control-label col-lg-3">{l s='Retry Cron' mod='frakintegration'}</label>
+                <div class="col-lg-9">
+                    <p class="form-control-static">
+                        <code style="word-break: break-all;">{$cron_url|escape:'html':'UTF-8'}</code>
+                    </p>
+                    <p class="help-block">
+                        {l s='Failed webhook deliveries are queued and retried with exponential backoff (5 min → 24 h, 5 attempts). Wire this URL into a cron that runs every 5 min — either via the official ps_cronjobs module, or as a server-level cron job (e.g. */5 * * * * curl -fs <URL>). The token in the URL gates access; rotate it by deleting FRAK_CRON_TOKEN and reinstalling the module.' mod='frakintegration'}
+                    </p>
+                </div>
+            </div>
+        {/if}
         <div class="panel-footer">
             <button type="submit" name="submitFrakWebhook" class="btn btn-primary">
                 <i class="process-icon-save"></i> {l s='Save Secret' mod='frakintegration'}

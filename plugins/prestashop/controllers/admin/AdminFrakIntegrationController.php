@@ -28,6 +28,7 @@ class AdminFrakIntegrationController extends ModuleAdminController
             'webhook_secret' => Configuration::get('FRAK_WEBHOOK_SECRET'),
             'webhook_url' => FrakWebhookHelper::getWebhookUrl(),
             'webhook_secret_configured' => !empty(Configuration::get('FRAK_WEBHOOK_SECRET')),
+            'cron_url' => $this->buildCronUrl(),
             'frak_dashboard_url' => 'https://business.frak.id/',
             'frak_docs_url' => 'https://docs.frak.id/components/frak-setup',
             'domain' => FrakUtils::currentHost(),
@@ -40,6 +41,27 @@ class AdminFrakIntegrationController extends ModuleAdminController
         ]);
 
         return $this->context->smarty->fetch($this->getTemplatePath() . 'configure.tpl');
+    }
+
+    /**
+     * Build the public URL the merchant copy-pastes into their server cron.
+     * Returns an empty string when the cron token has not been provisioned yet
+     * (shouldn't happen on a fresh install, but the guard keeps the admin
+     * page renderable on broken upgrades). The token is exposed verbatim
+     * because the merchant needs to invoke the URL from outside the admin
+     * session — we already gate read access to it behind admin auth on this
+     * page.
+     */
+    private function buildCronUrl(): string
+    {
+        $token = (string) Configuration::get('FRAK_CRON_TOKEN');
+        if ($token === '') {
+            return '';
+        }
+        $base = $this->context->link->getBaseLink(null, true);
+        return rtrim($base, '/')
+            . '/index.php?fc=module&module=frakintegration&controller=cron&token='
+            . rawurlencode($token);
     }
 
     public function postProcess()

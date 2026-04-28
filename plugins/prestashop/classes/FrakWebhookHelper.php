@@ -5,21 +5,32 @@
  *
  * Resolves the Frak merchant for the current shop, signs the payload with
  * HMAC-SHA256 keyed on `FRAK_WEBHOOK_SECRET`, and POSTs to the merchant
- * endpoint that mirrors the WordPress contract:
- *   `POST /ext/merchant/{merchantId}/webhook/prestashop`
+ * webhook endpoint that mirrors the Magento / WooCommerce contract:
+ *   `POST /ext/merchant/{merchantId}/webhook/custom`
+ *
+ * The signature is the **base64 encoding of the raw HMAC-SHA256 digest**
+ * (`base64_encode(hash_hmac('sha256', $body, $secret, true))`) — matching
+ * `validateBodyHmac` in `services/backend/src/utils/bodyHmac.ts`, which
+ * decodes the `x-hmac-sha256` header via `Buffer.from(sig, 'base64')`.
+ * Sending the default hex digest produces signatures that are 88 bytes
+ * after base64-decoding (vs the expected 32-byte raw digest) and fail
+ * verification — see commit history for the original hex regression.
  *
  * Delivery logs are emitted via `PrestaShopLogger::addLog()` (the platform-
- * native log surface, visible under Advanced Parameters > Logs). The previous
- * Configuration-backed log ring + stats card are gone — they duplicated the
- * native logger and were the moral equivalent of the WordPress plugin's
- * removed PHP webhook dispatcher (delivery + logging now happen in WC's own
- * pipeline).
+ * native log surface, visible under Advanced Parameters > Logs). The
+ * caller (`hookActionOrderStatusPostUpdate`) wraps every send in try/catch
+ * and enqueues failures into `frak_webhook_queue` (see `FrakWebhookQueue`)
+ * so the order-status transaction commits in <50 ms even when the Frak
+ * backend is unreachable; the cron drainer (`FrakWebhookCron`) then
+ * retries with exponential backoff.
  */
 class FrakWebhookHelper
 {
-    private const PLATFORM_SEGMENT = 'prestashop';
-    private const REQUEST_TIMEOUT = 30;
-    private const CONNECT_TIMEOUT = 10;
+    private const PLATFORM_SEGMENT = 'custom';
+    /** Tight per-request timeout: the hook caller absorbs this latency on the merchant checkout path. */
+    private const REQUEST_TIMEOUT = 5;
+    /** Connect timeout kept tighter than the request timeout to fail fast on dead backends. */
+    private const CONNECT_TIMEOUT = 3;
 
     public static function getWebhookUrl(): ?string
     {
@@ -29,6 +40,22 @@ class FrakWebhookHelper
         }
 
         return 'https://backend.frak.id/ext/merchant/' . rawurlencode($merchant_id) . '/webhook/' . self::PLATFORM_SEGMENT;
+    }
+
+    /**
+     * Compute the `x-hmac-sha256` header value for a JSON body.
+     *
+     * Public + static so the unit suite can pin the format without needing the
+     * full PrestaShop bootstrap. The backend (`validateBodyHmac` in
+     * `services/backend/src/utils/bodyHmac.ts`) decodes the header via
+     * `Buffer.from(sig, 'base64')` and compares against `CryptoHasher` output, so
+     * we MUST emit `base64_encode(hash_hmac('sha256', \$body, \$secret, true))`.
+     * The default `hash_hmac()` return value is hex — sending it produces a
+     * 64-byte buffer after base64-decode and fails verification.
+     */
+    public static function signBody(string $body, string $secret): string
+    {
+        return base64_encode(hash_hmac('sha256', $body, $secret, true));
     }
 
     public static function send($order_id, $status, $token)
@@ -124,8 +151,7 @@ class FrakWebhookHelper
         if ($body === false) {
             throw new Exception('Failed to encode webhook payload as JSON');
         }
-
-        $signature = hash_hmac('sha256', $body, $secret);
+        $signature = self::signBody($body, $secret);
 
         $start_time = microtime(true);
         $ch = curl_init($url);
