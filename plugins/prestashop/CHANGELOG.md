@@ -25,8 +25,14 @@ version on dispatch.
 ### Changed
 
 - **Admin form**: collapsed the two separate Save buttons (Brand / Webhook) into a single “Save Settings” submit that also persists placement toggles. Refresh Merchant + Drain Queue moved to a dedicated “Maintenance” panel because they are stateful operations, not config writes.
-- **Hook registration**: `install()` / `uninstall()` / `ensureSettingsMigrated()` now drive their hook lists from `FrakPlacementRegistry::distinctHooks()` instead of hard-coded chains. Removes the “forget to register a hook in three different places” failure mode.
-- **Settings schema bumped to v3**: existing installs auto-seed the new placement defaults and pick up the auxiliary hook registrations on first request after upgrade. Pre-existing placement choices are preserved (`seedDefaults()` skips rows that already exist).
+- **PrestaShop module file layout**: schema lifecycle moved to `sql/install.php` + `sql/uninstall.php`; legacy-options sweep + cron-token provisioning + hook migration moved to `upgrade/install-1.0.1.php` (auto-discovered by PrestaShop on version bump). `index.php` directory-listing stubs added in every shipped directory; `override/` committed as an empty placeholder so the source tree mirrors the released zip layout.
+- **Hook registration**: `install()` / `uninstall()` / `upgrade/install-1.0.1.php` now drive their hook lists from `FrakPlacementRegistry::distinctHooks()` instead of hard-coded chains. Removes the “forget to register a hook in three different places” failure mode.
+- **Native PrestaShop versioning replaces `FRAK_SETTINGS_VERSION`**: PrestaShop's own `ps_module.version` is now the single source of truth for migration state. Existing v0.0.4 installs run `upgrade/install-1.0.1.php` once (auto-dispatched on first admin load after the version bump), which fixes two gaps the previous in-class sweep missed: the `FRAK_FLOATING_BUTTON_ENABLED` / `FRAK_FLOATING_BUTTON_POSITION` rows and the `displayFooter` hook registration.
+
+### Removed
+
+- `FrakIntegration::ensureSettingsMigrated()` + `cleanupLegacyOptions()` + `ensureCronTokenExists()` + `migrateOrderStatusHook()` and the `SETTINGS_VERSION` constant. Migration logic is now in `upgrade/install-1.0.1.php`, dispatched by PrestaShop's native upgrade discovery.
+- `FrakWebhookQueue::createTable()` / `dropTable()`. Schema lifecycle lives in `sql/install.php` / `sql/uninstall.php` — single source of truth.
 
 ### Fixed
 

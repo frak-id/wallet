@@ -19,8 +19,8 @@
  *
  * Adding a new placement is a single-line entry here plus a matching
  * `hookXxx()` callback on `FrakIntegration`. Removing one is symmetric (drop
- * the entry; bump `SETTINGS_VERSION` so the install path
- * `Configuration::deleteByName()`s the dead row).
+ * the entry; add an `upgrade/install-X.Y.Z.php` script that calls
+ * `Configuration::deleteByName()` for the dead row).
  *
  * Mirrors how WordPress lets merchants drop blocks/shortcodes/widgets/Elementor
  * widgets anywhere — PrestaShop's hook system is closer to the WP "widget

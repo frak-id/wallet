@@ -16,23 +16,6 @@ require_once __DIR__ . '/classes/FrakPlacementRegistry.php';
 
 class FrakIntegration extends Module
 {
-    /**
-     * Settings schema version. Bumped whenever the install path persists
-     * something that an existing install also needs to provision — see
-     * `ensureSettingsMigrated()`. Mirrors WordPress's `Frak_Settings::CURRENT_VERSION`.
-     *
-     * - v1 → v2: drop legacy modal/share-button option rows AND introduce the
-     *   async webhook retry queue (`frak_webhook_queue` table + `FRAK_CRON_TOKEN`
-     *   + `actionOrderStatusPostUpdate` hook). v2 was never released, so the
-     *   queue/cron provisioning shipped under the same version bump.
-     * - v2 → v3: introduce the placement registry. Existing installs auto-seed
-     *   the new `FRAK_PLACEMENT_*` Configuration rows from
-     *   `FrakPlacementRegistry::seedDefaults()` and pick up the new auxiliary
-     *   hook surfaces (`displayTop`, `displayHome`, `displayFooterBefore`,
-     *   `displayShoppingCart`) without disturbing pre-existing placements.
-     */
-    private const SETTINGS_VERSION = 3;
-
     public function __construct()
     {
         $this->name = 'frakintegration';
@@ -52,12 +35,6 @@ class FrakIntegration extends Module
         $this->description = $this->l('Integrates Frak services with PrestaShop.');
 
         $this->confirmUninstall = $this->l('Are you sure you want to uninstall?');
-
-        // One-shot upgrade hook: PrestaShop's install() only fires on fresh
-        // installs, so the legacy-options sweep needs a per-request guard for
-        // shops upgrading from an older zip. Configuration::get() hits a static
-        // cache after the first call so the no-op path is essentially free.
-        $this->ensureSettingsMigrated();
 
         // Smarty function plugins ({frak_banner}, {frak_share_button},
         // {frak_post_purchase}) are scoped to the front-office Smarty instance.
@@ -100,16 +77,26 @@ class FrakIntegration extends Module
 
         // Async webhook infrastructure: queue table + per-shop cron token.
         // Both must be in place before any order status transition can happen,
-        // otherwise enqueue() / the cron URL would silently fail.
-        FrakWebhookQueue::createTable();
-        self::ensureCronTokenExists();
+        // otherwise enqueue() / the cron URL would silently fail. Schema lives
+        // in `sql/install.php` so the install lifecycle is discoverable from the
+        // standard PrestaShop module layout. The cron token gates the front
+        // controller via `hash_equals`; rotating it would break any merchant cron
+        // job already wired against the displayed URL, so the value is generated
+        // only when missing — keeps re-installs after a partial uninstall safe.
+        include __DIR__ . '/sql/install.php';
+        foreach ($sql as $query) {
+            if (!Db::getInstance()->execute($query)) {
+                return false;
+            }
+        }
+        if ((string) Configuration::get('FRAK_CRON_TOKEN') === '') {
+            Configuration::updateValue('FRAK_CRON_TOKEN', bin2hex(random_bytes(32)));
+        }
 
         // Seed every placement’s on/off flag with its declared default. Opt-out
         // for the legacy product / order surfaces, opt-in for the new auxiliary
         // surfaces — keeps existing storefronts visually unchanged on upgrade.
         FrakPlacementRegistry::seedDefaults();
-
-        self::cleanupLegacyOptions();
         return true;
     }
 
@@ -140,107 +127,14 @@ class FrakIntegration extends Module
         Configuration::deleteByName(FrakMerchantResolver::CONFIG_KEY);
         Configuration::deleteByName(FrakMerchantResolver::NEGATIVE_CACHE_KEY);
         FrakPlacementRegistry::clearAll();
-        FrakWebhookQueue::dropTable();
-        self::cleanupLegacyOptions();
+        // Schema teardown lives in `sql/uninstall.php` for symmetry with install.
+        // SQL errors are swallowed: uninstall is best-effort and PrestaShop already
+        // truncated `ps_hook_module` via `parent::uninstall()` regardless.
+        include __DIR__ . '/sql/uninstall.php';
+        foreach ($sql as $query) {
+            Db::getInstance()->execute($query);
+        }
         return true;
-    }
-
-    /**
-     * Run the deprecated-options sweep at most once per `SETTINGS_VERSION`.
-     * Mirrors `Frak_Settings::migrate()` in the WordPress plugin.
-     *
-     * Beyond the legacy-options sweep, every upgrade also (idempotently)
-     * provisions the async webhook infrastructure: existing installs that
-     * predate v3 do not have the `frak_webhook_queue` table or the
-     * `FRAK_CRON_TOKEN` row, and they also still have the old
-     * `actionOrderStatusUpdate` hook registered — we swap to the
-     * post-commit hook here so the order-status transaction commits before
-     * we dispatch.
-     */
-    private function ensureSettingsMigrated(): void
-    {
-        $current = (int) Configuration::get('FRAK_SETTINGS_VERSION');
-        if ($current >= self::SETTINGS_VERSION) {
-            return;
-        }
-        self::cleanupLegacyOptions();
-
-        // Async webhook stack (v1 → v2). Idempotent (CREATE TABLE IF NOT EXISTS,
-        // hash_equals-comparable token only generated when missing).
-        FrakWebhookQueue::createTable();
-        self::ensureCronTokenExists();
-        $this->migrateOrderStatusHook();
-
-        // Placement registry (v2 → v3). Register the auxiliary hooks added by
-        // the registry so an upgraded shop has them on `ps_hook_module`, then
-        // seed each placement’s default — `seedDefaults()` skips rows that
-        // already exist so merchant choices on pre-existing placements are
-        // preserved across upgrades.
-        foreach (FrakPlacementRegistry::distinctHooks() as $hook) {
-            $this->registerHook($hook);
-        }
-        FrakPlacementRegistry::seedDefaults();
-
-        Configuration::updateValue('FRAK_SETTINGS_VERSION', self::SETTINGS_VERSION);
-    }
-
-    /**
-     * Wipe the option rows that an earlier iteration of the module persisted
-     * but no longer consumes:
-     *   - FRAK_MODAL_LNG / FRAK_MODAL_I18N: SDK i18n + language are now
-     *     backend-driven via business.frak.id.
-     *   - FRAK_SHARING_BUTTON_*: render decisions and copy live in the
-     *     business dashboard's per-merchant placement config; the hook now
-     *     emits <frak-button-share placement="product"> unconditionally.
-     *   - FRAK_WEBHOOK_LOGS: replaced by PrestaShopLogger entries (already
-     *     wired from FrakWebhookHelper::send() / hookActionOrderStatusUpdate).
-     *
-     * Mirrors WordPress's Frak_Settings::DEPRECATED_LEGACY_OPTIONS sweep so
-     * upgraded shops do not carry stale rows in ps_configuration.
-     */
-    private static function cleanupLegacyOptions(): void
-    {
-        $deprecated = [
-            'FRAK_MODAL_LNG',
-            'FRAK_MODAL_I18N',
-            'FRAK_SHARING_BUTTON_ENABLED',
-            'FRAK_SHARING_BUTTON_TEXT',
-            'FRAK_SHARING_BUTTON_STYLE',
-            'FRAK_SHARING_BUTTON_CUSTOM_STYLE',
-            'FRAK_WEBHOOK_LOGS',
-        ];
-        foreach ($deprecated as $key) {
-            Configuration::deleteByName($key);
-        }
-    }
-
-    /**
-     * Generate a 64-char hex cron token if not already set. The token gates
-     * `controllers/front/cron.php` via `hash_equals` so naive timing attacks
-     * cannot reveal it byte-by-byte. Idempotent: a non-empty existing value
-     * is preserved (rotating the token would break any cron job the merchant
-     * has already wired up).
-     */
-    private static function ensureCronTokenExists(): void
-    {
-        $existing = (string) Configuration::get('FRAK_CRON_TOKEN');
-        if ($existing !== '') {
-            return;
-        }
-        Configuration::updateValue('FRAK_CRON_TOKEN', bin2hex(random_bytes(32)));
-    }
-
-    /**
-     * Migrate from the pre-commit `actionOrderStatusUpdate` hook (raced under
-     * multistore / high load) to the post-commit `actionOrderStatusPostUpdate`.
-     * Both calls are no-ops on a fresh install (the install() path already
-     * registered the new hook); on an upgrade they re-shape the existing
-     * `ps_hook_module` rows.
-     */
-    private function migrateOrderStatusHook(): void
-    {
-        $this->unregisterHook('actionOrderStatusUpdate');
-        $this->registerHook('actionOrderStatusPostUpdate');
     }
 
     public function hookHeader()

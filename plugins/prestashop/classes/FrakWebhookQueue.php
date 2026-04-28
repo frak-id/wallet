@@ -53,42 +53,6 @@ class FrakWebhookQueue
     public const BACKOFF_SECONDS = [300, 900, 3600, 21600, 86400];
 
     /**
-     * Create the table. Idempotent — safe to call from `install()` and from
-     * the migrator on every upgrade until `FRAK_QUEUE_VERSION` matches
-     * `QUEUE_VERSION`.
-     */
-    public static function createTable(): bool
-    {
-        $sql = 'CREATE TABLE IF NOT EXISTS `' . _DB_PREFIX_ . self::TABLE . '` (
-            `id_frak_webhook_queue` INT(11) UNSIGNED NOT NULL AUTO_INCREMENT,
-            `id_order` INT(11) UNSIGNED NOT NULL,
-            `status` VARCHAR(32) NOT NULL,
-            `token` VARCHAR(255) NOT NULL,
-            `attempts` INT(11) UNSIGNED NOT NULL DEFAULT 0,
-            `next_retry_at` DATETIME NOT NULL,
-            `last_error` TEXT DEFAULT NULL,
-            `state` ENUM("pending","success","failed") NOT NULL DEFAULT "pending",
-            `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-            `updated_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-            PRIMARY KEY (`id_frak_webhook_queue`),
-            KEY `idx_due` (`state`, `next_retry_at`),
-            KEY `idx_order` (`id_order`)
-        ) ENGINE=' . _MYSQL_ENGINE_ . ' DEFAULT CHARSET=utf8mb4;';
-
-        return (bool) Db::getInstance()->execute($sql);
-    }
-
-    /**
-     * Drop the table on uninstall. Symmetric with `createTable()`.
-     */
-    public static function dropTable(): bool
-    {
-        return (bool) Db::getInstance()->execute(
-            'DROP TABLE IF EXISTS `' . _DB_PREFIX_ . self::TABLE . '`'
-        );
-    }
-
-    /**
      * Enqueue a failed delivery for retry. The row starts in `pending` state
      * with `next_retry_at = NOW()` so the next cron tick picks it up.
      *
