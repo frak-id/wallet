@@ -10,37 +10,34 @@ class AdminFrakIntegrationController extends ModuleAdminController
         $this->meta_title = $this->l('Frak Integration');
     }
 
-    /**
-     * Register the per-route admin assets. Loaded only on this controller's
-     * page — PrestaShop's `setMedia()` is scoped per-controller, so the JS does
-     * not leak into other admin views.
-     *
-     * Inline `<script>` previously lived in `configure.tpl`; extracting to a
-     * static file lets browsers cache it across admin renders and removes the
-     * `unsafe-inline` requirement from any merchant-side Content-Security-Policy.
-     *
-     * @param bool $isNewTheme PrestaShop signature passthrough (unused here).
-     */
-    public function setMedia($isNewTheme = false)
-    {
-        parent::setMedia($isNewTheme);
-        $this->addJS($this->module->getPathUri() . 'views/js/admin.js');
-    }
-
     public function renderView()
     {
         $merchant = FrakMerchantResolver::getRecord();
-        $shop_name = Configuration::get('FRAK_SHOP_NAME');
-        $logo_url = Configuration::get('FRAK_LOGO_URL');
+
+        // Batch the brand + webhook lookups in one Configuration::getMultiple
+        // call. Each individual `Configuration::get` hits the autoload cache,
+        // but a single batched call collapses the (already fast) lookups
+        // into one hashmap walk and matches the PrestaShop best-practice for
+        // module settings reads (see ps_wirepayment).
+        $config = Configuration::getMultiple([
+            'FRAK_SHOP_NAME',
+            'FRAK_LOGO_URL',
+            'FRAK_WEBHOOK_SECRET',
+            'PS_SHOP_NAME',
+        ]);
+        $shop_name = $config['FRAK_SHOP_NAME'] ?? '';
+        $logo_url = $config['FRAK_LOGO_URL'] ?? '';
+        $webhook_secret = $config['FRAK_WEBHOOK_SECRET'] ?? '';
+        $ps_shop_name = $config['PS_SHOP_NAME'] ?? '';
 
         $this->context->smarty->assign([
             'module_dir' => $this->module->getPathUri(),
             'form_action' => $this->context->link->getAdminLink('AdminFrakIntegration'),
-            'shop_name' => $shop_name ?: Configuration::get('PS_SHOP_NAME'),
+            'shop_name' => $shop_name ?: $ps_shop_name,
             'logo_url' => $logo_url,
-            'webhook_secret' => Configuration::get('FRAK_WEBHOOK_SECRET'),
+            'webhook_secret' => $webhook_secret,
             'webhook_url' => FrakWebhookHelper::getWebhookUrl(),
-            'webhook_secret_configured' => !empty(Configuration::get('FRAK_WEBHOOK_SECRET')),
+            'webhook_secret_configured' => !empty($webhook_secret),
             'cron_url' => $this->buildCronUrl(),
             'frak_dashboard_url' => 'https://business.frak.id/',
             'frak_docs_url' => 'https://docs.frak.id/components/frak-setup',
@@ -86,8 +83,9 @@ class AdminFrakIntegrationController extends ModuleAdminController
      * template) so the Smarty file stays declarative.
      *
      * Each placement entry carries its current enabled state alongside its
-     * static metadata so the template's `<input type="checkbox">` can wire
-     * `checked` from `enabled` without re-reading Configuration.
+     * static metadata. The enabled values are pulled from the in-memory
+     * placement map ({@see FrakPlacementRegistry::getEnabledMap()}) which
+     * is decoded from the bundled storage row exactly once per request.
      *
      * @return array<string, array{label: string, items: array<int, array<string, mixed>>}>
      */
@@ -104,6 +102,10 @@ class AdminFrakIntegrationController extends ModuleAdminController
             $groups[$component] = ['label' => $label, 'items' => []];
         }
 
+        // Fetch the enabled map once — `isEnabled()` would re-decode it per
+        // call, this skips the loop overhead.
+        $enabled_map = FrakPlacementRegistry::getEnabledMap();
+
         foreach (FrakPlacementRegistry::PLACEMENTS as $id => $placement) {
             $component = $placement['component'];
             if (!isset($groups[$component])) {
@@ -116,7 +118,7 @@ class AdminFrakIntegrationController extends ModuleAdminController
                 'description' => $this->l($placement['description']),
                 'hook' => $placement['hook'],
                 'placement_attr' => $placement['placement_attr'],
-                'enabled' => FrakPlacementRegistry::isEnabled($id),
+                'enabled' => $enabled_map[$id] ?? $placement['default'],
             ];
         }
 
@@ -134,7 +136,6 @@ class AdminFrakIntegrationController extends ModuleAdminController
             $this->processBrandFields();
             $this->processWebhookSecret();
             $this->processPlacementToggles();
-            $this->clearStorefrontCaches();
         }
 
         if (Tools::isSubmit('refreshFrakMerchant')) {
@@ -155,15 +156,33 @@ class AdminFrakIntegrationController extends ModuleAdminController
     {
         $shopName = strval(Tools::getValue('FRAK_SHOP_NAME'));
         $logoUrl = strval(Tools::getValue('FRAK_LOGO_URL'));
-        $baseUrl = $this->context->link->getBaseLink();
 
-        if (isset($_FILES['FRAK_LOGO_FILE']) && $_FILES['FRAK_LOGO_FILE']['error'] === UPLOAD_ERR_OK) {
-            $result = FrakLogoUploader::processUpload($_FILES['FRAK_LOGO_FILE'], $baseUrl);
-            if (isset($result['url'])) {
-                $logoUrl = $result['url'];
-                $this->confirmations[] = $this->l('Logo uploaded successfully');
+        if (isset($_FILES['FRAK_LOGO_FILE']) && $_FILES['FRAK_LOGO_FILE']['error'] == UPLOAD_ERR_OK) {
+            $uploadedFile = $_FILES['FRAK_LOGO_FILE'];
+            $allowedExtensions = ['jpg', 'jpeg', 'png', 'gif', 'svg'];
+            $maxFileSize = 2 * 1024 * 1024; // 2MB
+
+            $fileExtension = strtolower(pathinfo($uploadedFile['name'], PATHINFO_EXTENSION));
+
+            if (!in_array($fileExtension, $allowedExtensions)) {
+                $this->errors[] = $this->l('Invalid file format. Only JPG, PNG, GIF, SVG files are allowed.');
+            } elseif ($uploadedFile['size'] > $maxFileSize) {
+                $this->errors[] = $this->l('File size exceeds 2MB limit.');
             } else {
-                $this->errors[] = $this->translateLogoError((string) ($result['error'] ?? ''));
+                $uploadsDir = _PS_MODULE_DIR_ . 'frakintegration/uploads/';
+                if (!is_dir($uploadsDir)) {
+                    mkdir($uploadsDir, 0755, true);
+                }
+
+                $filename = 'logo_' . uniqid() . '.' . $fileExtension;
+                $targetPath = $uploadsDir . $filename;
+
+                if (move_uploaded_file($uploadedFile['tmp_name'], $targetPath)) {
+                    $logoUrl = $this->context->link->getBaseLink() . 'modules/frakintegration/uploads/' . $filename;
+                    $this->confirmations[] = $this->l('Logo uploaded successfully');
+                } else {
+                    $this->errors[] = $this->l('Failed to upload logo file');
+                }
             }
         }
 
@@ -171,7 +190,7 @@ class AdminFrakIntegrationController extends ModuleAdminController
             $this->errors[] = $this->l('Invalid Shop Name');
             return;
         }
-        if (!$logoUrl || empty($logoUrl) || (!Validate::isUrl($logoUrl) && !FrakLogoUploader::isLocalUrl($logoUrl, $baseUrl))) {
+        if (!$logoUrl || empty($logoUrl) || (!Validate::isUrl($logoUrl) && !$this->isLocalFile($logoUrl))) {
             $this->errors[] = $this->l('Invalid Logo URL');
             return;
         }
@@ -179,27 +198,6 @@ class AdminFrakIntegrationController extends ModuleAdminController
         Configuration::updateValue('FRAK_SHOP_NAME', $shopName);
         Configuration::updateValue('FRAK_LOGO_URL', $logoUrl);
         $this->confirmations[] = $this->l('Brand settings updated');
-    }
-
-    /**
-     * Map a {@see FrakLogoUploader} error code to a translated user-facing
-     * message. Kept on the controller (not the helper) so the helper stays
-     * i18n-agnostic and unit-testable without bootstrapping PrestaShop.
-     */
-    private function translateLogoError(string $code): string
-    {
-        switch ($code) {
-            case FrakLogoUploader::ERROR_INVALID_FORMAT:
-                return $this->l('Invalid file format. Only JPG, PNG, GIF, SVG files are allowed.');
-            case FrakLogoUploader::ERROR_MIME_MISMATCH:
-                return $this->l('File contents do not match the declared image extension. Re-export the logo from your image editor and try again.');
-            case FrakLogoUploader::ERROR_TOO_LARGE:
-                return $this->l('File size exceeds 2MB limit.');
-            case FrakLogoUploader::ERROR_MOVE_FAILED:
-                return $this->l('Failed to upload logo file');
-            default:
-                return $this->l('Unknown logo upload error');
-        }
     }
 
     /**
@@ -220,6 +218,10 @@ class AdminFrakIntegrationController extends ModuleAdminController
             return;
         }
         Configuration::updateValue('FRAK_WEBHOOK_SECRET', $submittedSecret);
+        // Reset the helper's per-request memo so the new secret takes effect
+        // immediately if any subsequent action in the same request triggers
+        // a webhook (e.g. saving + draining the queue).
+        FrakWebhookHelper::resetCache();
         $this->confirmations[] = $this->l('Webhook secret updated');
     }
 
@@ -228,27 +230,39 @@ class AdminFrakIntegrationController extends ModuleAdminController
      * lists every registered placement; an unchecked checkbox is absent from
      * `$_POST`, so we treat "missing" as "disabled" instead of "leave alone"
      * — otherwise the merchant could never turn a placement off.
+     *
+     * Writes go through {@see FrakPlacementRegistry::setEnabledMap()} which
+     * collapses every placement update into a single bundled-row write
+     * (single round-trip vs the N writes a per-row layout would need).
      */
     private function processPlacementToggles(): void
     {
-        $changed = 0;
-        foreach (FrakPlacementRegistry::PLACEMENTS as $placement) {
-            $key = $placement['config_key'];
+        $updates = [];
+        foreach (FrakPlacementRegistry::PLACEMENTS as $id => $placement) {
+            $form_key = $placement['config_key'];
             // The rendered form emits a hidden `<input name="…__present" value="1">`
             // alongside each checkbox so we can distinguish "form did not include
             // this placement" (do nothing) from "checkbox unchecked" (write 0).
-            if (!Tools::getIsset($key . '__present')) {
+            if (!Tools::getIsset($form_key . '__present')) {
                 continue;
             }
-            $next = Tools::getValue($key) ? '1' : '0';
-            $current = (string) Configuration::get($key);
-            if ($next === $current) {
-                continue;
-            }
-            Configuration::updateValue($key, $next);
-            $changed++;
+            $updates[$id] = (bool) Tools::getValue($form_key);
         }
-        if ($changed > 0) {
+        if (empty($updates)) {
+            return;
+        }
+        $current = FrakPlacementRegistry::getEnabledMap();
+        $changed = false;
+        foreach ($updates as $id => $value) {
+            if (($current[$id] ?? null) !== $value) {
+                $changed = true;
+                break;
+            }
+        }
+        if (!$changed) {
+            return;
+        }
+        if (FrakPlacementRegistry::setEnabledMap($updates)) {
             $this->confirmations[] = $this->l('Placement settings updated');
         }
     }
@@ -262,6 +276,9 @@ class AdminFrakIntegrationController extends ModuleAdminController
     private function processMerchantRefresh(): void
     {
         FrakMerchantResolver::invalidate();
+        // Drop the helper's URL memo too — the URL is derived from the
+        // merchant id and would otherwise be stale within the same request.
+        FrakWebhookHelper::resetCache();
         $merchant = FrakMerchantResolver::getRecord();
         if ($merchant !== null) {
             $this->confirmations[] = $this->l('Merchant resolved') . ': ' . $merchant['id'];
@@ -279,6 +296,10 @@ class AdminFrakIntegrationController extends ModuleAdminController
     private function processDrainQueue(): void
     {
         $stats = FrakWebhookCron::run();
+        if (!empty($stats['skipped'])) {
+            $this->errors[] = $this->l('Webhook queue drainer is already running. Try again in a few minutes.');
+            return;
+        }
         $this->confirmations[] = sprintf(
             $this->l('Webhook queue drained: %1$d processed (%2$d success, %3$d failure)'),
             (int) $stats['processed'],
@@ -287,38 +308,20 @@ class AdminFrakIntegrationController extends ModuleAdminController
         );
     }
 
-    /**
-     * Flush the storefront caches so the next request regenerates the head
-     * template with the freshly-saved brand / merchant config. Without this,
-     * shops behind a Smarty cache or a third-party page cache (LiteSpeed,
-     * Hyper Cache, PageCache Ultimate, …) keep serving the previous
-     * `window.FrakSetup` payload until the cache TTL expires — could be
-     * hours, which feels like the Save button silently failed.
-     *
-     * Mirrors WordPress's `Frak_Admin::clear_caches()` (which fans out to
-     * five known page-cache plugins). PrestaShop has a more standardised
-     * surface: the built-in `Tools::clear*Cache()` calls cover Smarty + the
-     * XML descriptor / media manifests, and the public `actionClearCache`
-     * hook propagates to well-behaved third-party cache modules without the
-     * plugin needing to know each one by name.
-     *
-     * Scoped to the settings-save path — maintenance buttons (Refresh
-     * Merchant, Drain Queue) do not change frontend-visible config and skip
-     * the flush to keep their own latency low.
-     */
-    private function clearStorefrontCaches(): void
+    private function isLocalFile($url)
     {
-        if (method_exists('Tools', 'clearSmartyCache')) {
-            Tools::clearSmartyCache();
+        // Check if the URL is a local file uploaded to the module directory
+        $moduleUploadPath = _PS_MODULE_DIR_ . 'frakintegration/uploads/';
+        $baseUrl = $this->context->link->getBaseLink();
+
+        // Check if URL starts with our base URL and contains our module path
+        if (strpos($url, $baseUrl . 'modules/frakintegration/uploads/') === 0) {
+            // Extract filename from URL
+            $filename = basename($url);
+            $absolutePath = $moduleUploadPath . $filename;
+            return file_exists($absolutePath);
         }
-        if (method_exists('Tools', 'clearXMLCache')) {
-            Tools::clearXMLCache();
-        }
-        if (class_exists('Media') && method_exists('Media', 'clearCache')) {
-            Media::clearCache();
-        }
-        if (class_exists('Hook') && method_exists('Hook', 'exec')) {
-            Hook::exec('actionClearCache');
-        }
+
+        return false;
     }
 }

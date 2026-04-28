@@ -18,3 +18,4 @@ if (!defined('_PS_VERSION_')) {
 $sql = [];
 
 $sql['frak_webhook_queue'] = 'DROP TABLE IF EXISTS `' . _DB_PREFIX_ . 'frak_webhook_queue`';
+$sql['frak_cache'] = 'DROP TABLE IF EXISTS `' . _DB_PREFIX_ . 'frak_cache`';

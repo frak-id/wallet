@@ -23,27 +23,44 @@
  *   1. Hooks: drop the unused `displayFooter` (legacy floating-button surface)
  *      and the racy `actionOrderStatusUpdate` (replaced by post-commit
  *      `actionOrderStatusPostUpdate`).
- *   2. Hooks: register the post-commit order hook + every distinct hook
- *      in `FrakPlacementRegistry::distinctHooks()` so existing installs
- *      gain the auxiliary placement surfaces (`displayTop`, `displayHome`,
- *      `displayShoppingCart`, `displayOrderDetail`).
- *   3. Schema: provision the `frak_webhook_queue` table via `sql/install.php`
- *      (CREATE TABLE IF NOT EXISTS — safe re-entry on partial upgrades).
+ *   2. Hooks: register every plumbing + placement hook the current
+ *      architecture dispatches: `actionOrderStatusPostUpdate`,
+ *      `actionFrontControllerSetMedia` (asset-pipeline integration), plus
+ *      every distinct hook in `FrakPlacementRegistry::distinctHooks()` so
+ *      existing installs gain the auxiliary placement surfaces (`displayTop`,
+ *      `displayHome`, `displayShoppingCart`, `displayOrderDetail`).
+ *   3. Schema: provision the `frak_webhook_queue` and `frak_cache` tables
+ *      via `sql/install.php` (CREATE TABLE IF NOT EXISTS — safe re-entry
+ *      on partial upgrades). `frak_cache` backs {@see FrakCache} and
+ *      replaces the autoloaded `FRAK_MERCHANT` / negative-cache
+ *      Configuration rows the resolver previously bloated `ps_configuration`
+ *      with.
  *   4. Cron: generate `FRAK_CRON_TOKEN` if missing (existing tokens are
  *      preserved verbatim — rotating would break any merchant cron job
  *      already wired to the URL).
- *   5. Placements: seed every `FRAK_PLACEMENT_*` Configuration row with
- *      its declared default — `seedDefaults()` skips rows that already
- *      exist, so any merchant choices on pre-existing placements survive
- *      the upgrade.
- *   6. Cleanup: wipe deprecated Configuration rows (modal i18n, share-button
- *      copy/style, floating-button toggles, webhook log ring) plus the
- *      now-obsolete `FRAK_SETTINGS_VERSION` row. The full v0.0.4 set is
- *      enumerated below; floating-button keys were missing from the
- *      legacy in-class sweep.
- *   7. Admin tab: register a `ps_tab` row for `AdminFrakIntegration` so the
- *      configuration page surfaces as a sidebar entry under "Modules" and
- *      gets wired into PrestaShop's standard Permissions panel.
+ *   5. Placements: seed every placement's enable flag in the bundled
+ *      `FRAK_PLACEMENTS` Configuration row. `seedDefaults()` no-ops when
+ *      the row already exists.
+ *   6. Defensive sweep: any pre-1.0.1 dev shop carrying the unreleased
+ *      per-placement `FRAK_PLACEMENT_*` rows has them folded into the
+ *      bundled storage (preserves merchant choices) and the legacy rows
+ *      deleted. Production v0.0.4 shops never had these rows, so the
+ *      sweep is a no-op for them.
+ *   7. Defensive sweep: any pre-1.0.1 dev shop carrying the unreleased
+ *      `FRAK_MERCHANT` / `FRAK_MERCHANT_UNRESOLVED_AT` Configuration rows
+ *      has them deleted — the resolver re-fetches on first miss against
+ *      the new `frak_cache` backing store.
+ *   8. Cleanup: wipe deprecated Configuration rows (modal i18n,
+ *      share-button copy/style, floating-button toggles, webhook log
+ *      ring) plus the now-obsolete `FRAK_SETTINGS_VERSION` row. The full
+ *      v0.0.4 set is enumerated below; floating-button keys were missing
+ *      from the legacy in-class sweep.
+ *   9. Admin tab: register a `ps_tab` row for `AdminFrakIntegration` so
+ *      the configuration page surfaces as a sidebar entry under "Modules"
+ *      and gets wired into PrestaShop's standard Permissions panel.
+ *
+ * Idempotent on every step — re-running on a partial-upgrade install is a
+ * no-op.
  *
  * @param Module $module The FrakIntegration module instance, supplied by
  *                       PrestaShop's upgrade dispatcher.
@@ -64,19 +81,28 @@ function upgrade_module_1_0_1($module)
     $module->unregisterHook('displayFooter');
     $module->unregisterHook('actionOrderStatusUpdate');
 
-    // 2. Register the post-commit order hook + every distinct hook required
-    //    by the placement registry. `registerHook()` is idempotent on
-    //    `(module, hook)`, so calling it for hooks already registered (e.g.
-    //    `header`, `displayProductAdditionalInfo`, `displayOrderConfirmation`
-    //    on a v0.0.4 install) is a no-op.
-    $module->registerHook('actionOrderStatusPostUpdate');
-    foreach (FrakPlacementRegistry::distinctHooks() as $hook) {
+    // 2. Register the plumbing + placement hooks the current architecture
+    //    dispatches. `registerHook()` is idempotent on `(module, hook)`, so
+    //    calling it for hooks already registered (e.g. `header`,
+    //    `displayProductAdditionalInfo`, `displayOrderConfirmation` on a
+    //    v0.0.4 install) is a no-op.
+    //
+    //    `actionFrontControllerSetMedia` is the asset-pipeline hook the
+    //    SDK script registers through — adding it here brings v0.0.4
+    //    upgrades onto the new `registerJavascript` path without a
+    //    reinstall.
+    $core_hooks = [
+        'header',
+        'actionFrontControllerSetMedia',
+        'actionOrderStatusPostUpdate',
+    ];
+    foreach (array_merge($core_hooks, FrakPlacementRegistry::distinctHooks()) as $hook) {
         $module->registerHook($hook);
     }
 
-    // 3. Provision the webhook retry queue table. Idempotent — `sql/install.php`
-    //    uses `CREATE TABLE IF NOT EXISTS`, so re-running on a partial upgrade
-    //    is a no-op.
+    // 3. Provision the webhook retry queue + cache tables. Idempotent —
+    //    `sql/install.php` uses `CREATE TABLE IF NOT EXISTS`, so re-running
+    //    on a partial upgrade is a no-op.
     include __DIR__ . '/../sql/install.php';
     foreach ($sql as $query) {
         if (!Db::getInstance()->execute($query)) {
@@ -91,11 +117,56 @@ function upgrade_module_1_0_1($module)
         Configuration::updateValue('FRAK_CRON_TOKEN', bin2hex(random_bytes(32)));
     }
 
-    // 5. Seed placement defaults. `seedDefaults()` checks `Configuration::hasKey()`
-    //    per row, so any merchant choices already present survive the upgrade.
+    // 5. Seed placement defaults into the bundled `FRAK_PLACEMENTS` row.
+    //    No-ops when the row already exists (e.g. a re-run upgrade) so
+    //    merchant choices on previously-stored placements survive.
     FrakPlacementRegistry::seedDefaults();
 
-    // 6. Wipe deprecated Configuration rows. Audit baseline:
+    // 6. Defensive sweep: fold any pre-1.0.1 per-placement rows into the
+    //    bundled storage row. The unreleased 1.0.x iteration of this module
+    //    stored placement toggles in N separate `FRAK_PLACEMENT_*` rows;
+    //    1.0.1 collapses them into a single `FRAK_PLACEMENTS` JSON row to
+    //    keep the autoloaded `ps_configuration` payload small. Production
+    //    v0.0.4 shops never had these rows; dev shops that ran 1.0.x
+    //    locally do — this sweep migrates their choices verbatim then
+    //    deletes the legacy rows.
+    $stored_map = FrakPlacementRegistry::loadStoredMap();
+    $migrated = false;
+    foreach (FrakPlacementRegistry::PLACEMENTS as $id => $placement) {
+        $legacy_key = $placement['config_key'] ?? null;
+        if ($legacy_key === null || !Configuration::hasKey($legacy_key)) {
+            continue;
+        }
+        if (!array_key_exists($id, $stored_map)) {
+            $row = Configuration::get($legacy_key);
+            $stored_map[$id] = ($row === false || $row === null || $row === '')
+                ? $placement['default']
+                : (bool) $row;
+            $migrated = true;
+        }
+        Configuration::deleteByName($legacy_key);
+    }
+    if ($migrated) {
+        $encoded = json_encode($stored_map);
+        if ($encoded === false) {
+            return false;
+        }
+        Configuration::updateValue(FrakPlacementRegistry::STORAGE_KEY, $encoded);
+    }
+
+    // 7. Defensive sweep: drop pre-1.0.1 merchant cache Configuration
+    //    rows. The resolver now reads from `frak_cache:merchant:{host}` /
+    //    `frak_cache:merchant_unresolved:{host}` — a fresh `getRecord()`
+    //    after the upgrade re-resolves and writes to the new backing
+    //    store. Skipping the data migration is safe because merchant
+    //    UUIDs are immutable per domain (no risk of a different id
+    //    resolving for the same host) and the resolver pays one HTTP
+    //    round-trip on the first miss. As with step 6, production v0.0.4
+    //    shops never had these rows.
+    Configuration::deleteByName('FRAK_MERCHANT');
+    Configuration::deleteByName('FRAK_MERCHANT_UNRESOLVED_AT');
+
+    // 8. Wipe deprecated Configuration rows. Audit baseline:
     //    `https://github.com/frak-id/prestashop-plugin/blob/v0.0.4/frakintegration.php`
     //    (uninstall path enumerates every legacy key the module ever wrote).
     //    `FRAK_SETTINGS_VERSION` is purged here — PrestaShop's native
@@ -124,7 +195,7 @@ function upgrade_module_1_0_1($module)
         Configuration::deleteByName($key);
     }
 
-    // 7. Register the admin Tab. Idempotent — skips when a row already exists
+    // 9. Register the admin Tab. Idempotent — skips when a row already exists
     //    (e.g. on a partial upgrade re-run). Sits under Modules so the
     //    operational tooling (queue health, drain queue, refresh merchant)
     //    is one click away for daily ops, and gates per-employee access via

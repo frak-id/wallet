@@ -12,18 +12,39 @@ class FrakIntegration extends Module
      * Always-on plumbing hooks. Display hooks are owned by
      * `FrakPlacementRegistry` and registered via `distinctHooks()`.
      *
-     * - `header`: SDK config injection on every front-office request.
-     * - `actionOrderStatusPostUpdate`: post-commit order status webhook trigger.
-     *   Pre-commit `actionOrderStatusUpdate` raced under multistore / high
-     *   load (PrestaShop docs explicitly recommend post-commit).
+     * - `actionFrontControllerSetMedia`: SDK script + JS def injection.
+     *   Replaces the legacy `header` hook + raw `<script>` tag in
+     *   `head.tpl` so the SDK goes through PrestaShop's native asset
+     *   manager (CCC-aware, deduped across modules, defer-attribute
+     *   capable). Mirrors the WordPress sibling's
+     *   `wp_enqueue_script(..., strategy:defer, in_footer:true)` pattern.
+     * - `header`: minimal — emits resource hints (DNS-prefetch /
+     *   preconnect) and the inline FrakSetup config block. Resource
+     *   hints MUST live in `<head>` to be effective.
+     * - `actionOrderStatusPostUpdate`: post-commit order status webhook
+     *   trigger. Pre-commit `actionOrderStatusUpdate` raced under
+     *   multistore / high load (PrestaShop docs explicitly recommend
+     *   post-commit).
      */
-    private const CORE_HOOKS = ['header', 'actionOrderStatusPostUpdate'];
+    private const CORE_HOOKS = [
+        'header',
+        'actionFrontControllerSetMedia',
+        'actionOrderStatusPostUpdate',
+    ];
+
+    /**
+     * Idempotency flag for {@see registerSmartyPlugins()}. Set on first
+     * registration so subsequent module instantiations within the same
+     * request short-circuit. Mirrors WordPress's
+     * `Frak_Plugin::init()`-runs-once pattern.
+     */
+    private static bool $smartyRegistered = false;
 
     public function __construct()
     {
         $this->name = 'frakintegration';
         $this->tab = 'front_office_features';
-        $this->version = '1.0.0';
+        $this->version = '1.0.1';
         $this->author = 'Frak';
         $this->need_instance = 0;
         $this->ps_versions_compliancy = [
@@ -40,10 +61,12 @@ class FrakIntegration extends Module
         $this->confirmUninstall = $this->l('Are you sure you want to uninstall?');
 
         // Smarty function plugins ({frak_banner}, {frak_share_button},
-        // {frak_post_purchase}) are scoped to the front-office Smarty instance.
-        // Registering them on every module instantiation is cheap (one map
-        // insert per plugin) and keeps the templates working from any theme
-        // file or CMS page without merchant-side bootstrap.
+        // {frak_post_purchase}) are scoped to the front-office Smarty
+        // instance. Registration is gated on a static flag so the
+        // unregister/register pair runs at most once per request — PS news
+        // up the module class multiple times per request (header hook,
+        // dispatch, admin link), and re-registering the three plugins on
+        // every instantiation was wasted work.
         if (!defined('_PS_ADMIN_DIR_')) {
             $this->registerSmartyPlugins();
         }
@@ -70,14 +93,16 @@ class FrakIntegration extends Module
         Configuration::updateValue('FRAK_SHOP_NAME', Configuration::get('PS_SHOP_NAME'));
         Configuration::updateValue('FRAK_LOGO_URL', $this->context->link->getMediaLink(_PS_IMG_ . Configuration::get('PS_LOGO')));
 
-        // Async webhook infrastructure: queue table + per-shop cron token.
-        // Both must be in place before any order status transition can happen,
-        // otherwise enqueue() / the cron URL would silently fail. Schema lives
-        // in `sql/install.php` so the install lifecycle is discoverable from the
-        // standard PrestaShop module layout. The cron token gates the front
-        // controller via `hash_equals`; rotating it would break any merchant cron
-        // job already wired against the displayed URL, so the value is generated
-        // only when missing — keeps re-installs after a partial uninstall safe.
+        // Async webhook infrastructure: queue + cache tables + per-shop cron
+        // token. Both tables must be in place before any order status
+        // transition can happen, otherwise enqueue() / merchant resolution /
+        // the cron URL would silently fail. Schema lives in
+        // `sql/install.php` so the install lifecycle is discoverable from
+        // the standard PrestaShop module layout. The cron token gates the
+        // front controller via `hash_equals`; rotating it would break any
+        // merchant cron job already wired against the displayed URL, so the
+        // value is generated only when missing — keeps re-installs after a
+        // partial uninstall safe.
         include __DIR__ . '/sql/install.php';
         foreach ($sql as $query) {
             if (!Db::getInstance()->execute($query)) {
@@ -88,14 +113,11 @@ class FrakIntegration extends Module
             Configuration::updateValue('FRAK_CRON_TOKEN', bin2hex(random_bytes(32)));
         }
 
-        // Seed every placement’s on/off flag with its declared default. Opt-out
-        // for the legacy product / order surfaces, opt-in for the new auxiliary
-        // surfaces — keeps existing storefronts visually unchanged on upgrade.
+        // Seed the bundled placements row with each placement's declared
+        // default. Opt-out for the legacy product / order surfaces, opt-in
+        // for the new auxiliary surfaces — keeps existing storefronts
+        // visually unchanged on upgrade.
         FrakPlacementRegistry::seedDefaults();
-
-        if (!$this->registerAdminTab()) {
-            return false;
-        }
         return true;
     }
 
@@ -118,8 +140,12 @@ class FrakIntegration extends Module
         Configuration::deleteByName('FRAK_WEBHOOK_SECRET');
         Configuration::deleteByName('FRAK_SETTINGS_VERSION');
         Configuration::deleteByName('FRAK_CRON_TOKEN');
-        Configuration::deleteByName(FrakMerchantResolver::CONFIG_KEY);
-        Configuration::deleteByName(FrakMerchantResolver::NEGATIVE_CACHE_KEY);
+        // Pre-1.0.1 dev-only Configuration rows — the resolver reads from
+        // the `frak_cache` table now, but we still sweep these so a dev
+        // shop that ran an unreleased iteration of the module locally
+        // doesn't leave orphaned rows behind.
+        Configuration::deleteByName(FrakMerchantResolver::LEGACY_CONFIG_KEY);
+        Configuration::deleteByName(FrakMerchantResolver::LEGACY_NEGATIVE_CACHE_KEY);
         FrakPlacementRegistry::clearAll();
         // Schema teardown lives in `sql/uninstall.php` for symmetry with install.
         // SQL errors are swallowed: uninstall is best-effort and PrestaShop already
@@ -128,57 +154,20 @@ class FrakIntegration extends Module
         foreach ($sql as $query) {
             Db::getInstance()->execute($query);
         }
-        $this->unregisterAdminTab();
         return true;
     }
 
     /**
-     * Register the admin sidebar entry pointing at `AdminFrakIntegrationController`.
+     * Front-office `<head>` hook — kept minimal. Emits resource hints
+     * (`dns-prefetch` + `preconnect`) so the browser warms the TLS
+     * handshake to `cdn.jsdelivr.net` while parsing continues, plus the
+     * inline `window.FrakSetup` config block (kept inline so the SDK reads
+     * a non-empty config when it runs from the deferred script tag).
      *
-     * Idempotent — checks for an existing Tab row by `class_name` first so
-     * re-running after a partial install never duplicates the entry. Fall-back
-     * parent is the top-level (`id_parent = 0`) on PS installs that lack
-     * `AdminParentModulesSf` (extremely old / customised back-offices).
-     *
-     * Sits under “Modules” in the sidebar (sibling of Module Manager): the page
-     * surfaces operational tooling (queue health, Drain queue, Refresh merchant)
-     * that benefits from one-click access for daily ops, not just one-time
-     * configuration. The Tab also wires the controller into PrestaShop's
-     * standard Permissions panel so shop admins can grant/revoke per-employee
-     * access without code changes.
+     * The SDK script tag itself lives in
+     * {@see hookActionFrontControllerSetMedia()} — outside the `<head>`
+     * dispatch path, in PrestaShop's native asset pipeline.
      */
-    private function registerAdminTab(): bool
-    {
-        if ((int) Tab::getIdFromClassName('AdminFrakIntegration') > 0) {
-            return true;
-        }
-        $tab = new Tab();
-        $tab->active = 1;
-        $tab->class_name = 'AdminFrakIntegration';
-        $tab->name = [];
-        foreach (Language::getLanguages(true) as $lang) {
-            $tab->name[$lang['id_lang']] = $this->l('Frak');
-        }
-        $tab->id_parent = (int) Tab::getIdFromClassName('AdminParentModulesSf');
-        $tab->module = $this->name;
-        return (bool) $tab->add();
-    }
-
-    /**
-     * Drop the admin sidebar entry. Idempotent — a missing Tab is treated as
-     * already-uninstalled (returns true) so partial uninstalls do not block
-     * the rest of the cleanup chain.
-     */
-    private function unregisterAdminTab(): bool
-    {
-        $idTab = (int) Tab::getIdFromClassName('AdminFrakIntegration');
-        if ($idTab <= 0) {
-            return true;
-        }
-        $tab = new Tab($idTab);
-        return (bool) $tab->delete();
-    }
-
     public function hookHeader()
     {
         $shop_name = Configuration::get('FRAK_SHOP_NAME');
@@ -192,6 +181,43 @@ class FrakIntegration extends Module
         return $this->display(__FILE__, 'views/templates/hook/head.tpl');
     }
 
+    /**
+     * Register the SDK external script via PrestaShop's native asset
+     * manager. Runs on every front-office request (the hook fires before
+     * the controller renders), so the `<script>` ends up in the position
+     * the asset manager picks (typically bottom-of-body) with the `defer`
+     * attribute we requested.
+     *
+     * Why `actionFrontControllerSetMedia` instead of inline `<script>` in
+     * `head.tpl`:
+     *   - PrestaShop's CCC (Combine, Compress, Cache) pipeline is asset-
+     *     manager aware: registered remote scripts are deduped if another
+     *     module asks for the same URL, and the merchant retains control
+     *     via `Performance → CCC`.
+     *   - `priority => 200` runs the SDK after PrestaShop's own scripts so
+     *     the inline `window.FrakSetup` block from `head.tpl` is guaranteed
+     *     to be evaluated before the deferred SDK boots.
+     *   - Mirrors the WordPress sibling's
+     *     `wp_enqueue_script('frak-sdk', ..., strategy:defer, in_footer:true)`
+     *     ({@see plugins/wordpress/includes/class-frak-frontend.php}).
+     */
+    public function hookActionFrontControllerSetMedia()
+    {
+        if (!isset($this->context->controller) || !method_exists($this->context->controller, 'registerJavascript')) {
+            return;
+        }
+        $this->context->controller->registerJavascript(
+            'frak-sdk',
+            'https://cdn.jsdelivr.net/npm/@frak-labs/components',
+            [
+                'server' => 'remote',
+                'position' => 'bottom',
+                'priority' => 200,
+                'attribute' => 'defer',
+            ]
+        );
+    }
+
     public function hookDisplayProductAdditionalInfo($params = [])
     {
         return $this->dispatchHook('displayProductAdditionalInfo', is_array($params) ? $params : []);
@@ -199,14 +225,29 @@ class FrakIntegration extends Module
 
     /**
      * Post-commit order status hook. Maps the new state to a Frak status,
-     * attempts a synchronous dispatch with tight timeouts, and on any failure
-     * enqueues the order id into `frak_webhook_queue` for cron retry.
+     * attempts a synchronous dispatch with tight timeouts, and on any
+     * failure enqueues the order id into `frak_webhook_queue` for cron
+     * retry.
      *
-     * The synchronous attempt keeps happy-path latency low (one HTTP round
-     * trip on the merchant's checkout path) while bounding the worst case to
-     * the 5 s request / 3 s connect timeouts in `FrakWebhookHelper`. Failures
-     * never block the merchant for more than a few seconds and are guaranteed
-     * to be retried by the cron drainer.
+     * Hot-path order matters here:
+     *   1. Cheap guards first (params shape, status object).
+     *   2. Skip-list check via batched `Configuration::getMultiple()` —
+     *      single autoload-cache hit instead of 7 separate lookups for the
+     *      `PS_OS_*` ids. Most state transitions on a busy shop go through
+     *      `preparation → shipping`, both of which are skipped, so this
+     *      path returns before paying for an `Order` instantiation.
+     *   3. Order load + secure key + customer (only on transitions we
+     *      actually deliver).
+     *   4. Synchronous dispatch with the pre-loaded `Order` passed in so
+     *      `FrakWebhookHelper::send()` doesn't re-load it from the DB —
+     *      single object, single round-trip per delivery.
+     *
+     * Logging dropped to error-only on the happy path. The previous
+     * 5-rows-per-transition spam ("Triggered" / "Started" / "Sent
+     * successfully") wrote to `ps_log` synchronously and contained zero
+     * actionable information; failures still log via {@see FrakLogger}
+     * (which forwards `LEVEL_ERROR` to `PrestaShopLogger`) so the
+     * Advanced Parameters → Logs surface keeps the same failure trail.
      */
     public function hookActionOrderStatusPostUpdate($params)
     {
@@ -217,52 +258,67 @@ class FrakIntegration extends Module
             return;
         }
 
+        // Batch the `PS_OS_*` lookup so we pay one Configuration::getMultiple
+        // round-trip instead of seven. The autoload cache makes individual
+        // calls cheap, but skipping a few hashmap lookups in the hot path is
+        // free if we're touching the autoload cache anyway.
+        $os_ids = Configuration::getMultiple([
+            'PS_OS_WS_PAYMENT',
+            'PS_OS_PAYMENT',
+            'PS_OS_DELIVERED',
+            'PS_OS_CANCELED',
+            'PS_OS_REFUND',
+            'PS_OS_SHIPPING',
+            'PS_OS_PREPARATION',
+        ]);
+
+        $skip_status_codes = [
+            (int) ($os_ids['PS_OS_SHIPPING'] ?? 0),
+            (int) ($os_ids['PS_OS_PREPARATION'] ?? 0),
+        ];
+
+        // Skip BEFORE loading the Order — `preparation` and `shipping`
+        // transitions are common on a busy shop and we don't want to pay
+        // an `Order` instantiation just to throw the result away.
+        if (in_array((int) $new_status->id, $skip_status_codes, true)) {
+            return;
+        }
+
         $order = new Order($order_id);
         if (!Validate::isLoadedObject($order)) {
-            PrestaShopLogger::addLog('FrakIntegration: order ' . $order_id . ' not loadable in postUpdate hook', 2);
+            FrakLogger::warning('order ' . $order_id . ' not loadable in postUpdate hook');
             return;
         }
 
         $token = (string) $order->secure_key;
 
-        PrestaShopLogger::addLog('FrakIntegration: Order status update triggered for order ' . $order_id . ' with status ID: ' . $new_status->id . ' (' . $new_status->name . ')', 1);
-
         $status_map = [
-            (int) Configuration::get('PS_OS_WS_PAYMENT') => 'confirmed',
-            (int) Configuration::get('PS_OS_PAYMENT') => 'confirmed',
-            (int) Configuration::get('PS_OS_DELIVERED') => 'confirmed',
-            (int) Configuration::get('PS_OS_CANCELED') => 'cancelled',
-            (int) Configuration::get('PS_OS_REFUND') => 'refunded',
+            (int) ($os_ids['PS_OS_WS_PAYMENT'] ?? 0) => 'confirmed',
+            (int) ($os_ids['PS_OS_PAYMENT'] ?? 0) => 'confirmed',
+            (int) ($os_ids['PS_OS_DELIVERED'] ?? 0) => 'confirmed',
+            (int) ($os_ids['PS_OS_CANCELED'] ?? 0) => 'cancelled',
+            (int) ($os_ids['PS_OS_REFUND'] ?? 0) => 'refunded',
         ];
-
-        $skip_status_codes = [
-            (int) Configuration::get('PS_OS_SHIPPING'),
-            (int) Configuration::get('PS_OS_PREPARATION'),
-        ];
-
-        if (in_array((int) $new_status->id, $skip_status_codes, true)) {
-            PrestaShopLogger::addLog('FrakIntegration: Skipping webhook for order ' . $order_id . ' with status: ' . $new_status->id, 1);
-            return;
-        }
 
         $webhook_status = $status_map[(int) $new_status->id] ?? 'pending';
 
-        PrestaShopLogger::addLog('FrakIntegration: Triggering webhook for order ' . $order_id . ' with status: ' . $webhook_status, 1);
-
         // First attempt is synchronous so the happy path completes in one round-trip.
-        // Any failure (network, non-2xx, exception) lands in the retry queue and the
-        // cron drainer takes over with exponential backoff.
-        $result = FrakWebhookHelper::send($order_id, $webhook_status, $token);
+        // Pass the already-loaded `Order` so `FrakWebhookHelper::send()` skips the
+        // duplicate `new Order($id)` round-trip. Any failure (network, non-2xx,
+        // exception) lands in the retry queue and the cron drainer takes over with
+        // exponential backoff.
+        $result = FrakWebhookHelper::send($order_id, $webhook_status, $token, $order);
 
         if (is_array($result) && !empty($result['success'])) {
-            PrestaShopLogger::addLog('FrakIntegration: Webhook sent successfully for order ' . $order_id, 1);
             return;
         }
 
         $error = is_array($result) && isset($result['error'])
             ? (string) $result['error']
             : 'Unknown webhook error';
-        PrestaShopLogger::addLog('FrakIntegration: Webhook failed for order ' . $order_id . ', enqueuing for retry: ' . $error, 3);
+        FrakLogger::error(
+            'Webhook failed for order ' . $order_id . ', enqueuing for retry: ' . $error
+        );
         FrakWebhookQueue::enqueue($order_id, $webhook_status, $token, $error);
     }
 
@@ -409,11 +465,16 @@ class FrakIntegration extends Module
 
     /**
      * Generic placement dispatcher — looks up every placement registered
-     * for `$hook`, gates each on its `FRAK_PLACEMENT_*` Configuration toggle,
-     * and concatenates the rendered markup. The component-specific render
-     * paths still live on `FrakComponentRenderer` (banner / share button) or
-     * the local `renderPostPurchase()` helper (post-purchase + tracker
-     * script + Smarty wrapper); this method is just the routing layer.
+     * for `$hook`, gates each on its bundled-storage flag, and concatenates
+     * the rendered markup. The component-specific render paths still live
+     * on `FrakComponentRenderer` (banner / share button) or the local
+     * `renderPostPurchase()` helper (post-purchase + tracker script +
+     * Smarty wrapper); this method is just the routing layer.
+     *
+     * `FrakPlacementRegistry::isEnabled()` resolves through a per-request
+     * static cache, so a page firing multiple display hooks (e.g. a
+     * product page with `displayTop` + `displayProductAdditionalInfo` +
+     * `displayShoppingCart`) only decodes the bundled storage row once.
      *
      * @param array<string, mixed> $params Hook parameters forwarded by PrestaShop.
      */
@@ -458,10 +519,14 @@ class FrakIntegration extends Module
      *
      * The Smarty instance can be unavailable in CLI / install contexts —
      * we guard with an existence check so a missing context does not blow
-     * up the bootstrap.
+     * up the bootstrap. Idempotent across instantiations within the same
+     * request via the {@see self::$smartyRegistered} static flag.
      */
     private function registerSmartyPlugins(): void
     {
+        if (self::$smartyRegistered) {
+            return;
+        }
         if (!isset($this->context) || !isset($this->context->smarty)) {
             return;
         }
@@ -470,20 +535,21 @@ class FrakIntegration extends Module
             return;
         }
         // `registerPlugin` throws when called twice for the same name on the
-        // same Smarty instance — guard with `unregisterPlugin` so repeated
-        // module instantiations within the same request stay idempotent.
-        $names = ['frak_banner', 'frak_share_button', 'frak_post_purchase'];
+        // same Smarty instance — guard with `unregisterPlugin` so the first
+        // module instantiation in the request stays robust against any
+        // earlier registration (e.g. another plugin claiming the same name).
         $callbacks = [
             'frak_banner' => [self::class, 'smartyFunctionBanner'],
             'frak_share_button' => [self::class, 'smartyFunctionShareButton'],
             'frak_post_purchase' => [self::class, 'smartyFunctionPostPurchase'],
         ];
-        foreach ($names as $name) {
+        foreach ($callbacks as $name => $callback) {
             if (method_exists($smarty, 'unregisterPlugin')) {
                 @$smarty->unregisterPlugin('function', $name);
             }
-            $smarty->registerPlugin('function', $name, $callbacks[$name]);
+            $smarty->registerPlugin('function', $name, $callback);
         }
+        self::$smartyRegistered = true;
     }
 
     /**

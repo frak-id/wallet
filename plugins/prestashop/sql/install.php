@@ -10,17 +10,28 @@
  * the install lifecycle discoverable without grepping the main module class.
  *
  * Idempotent (`CREATE TABLE IF NOT EXISTS`) so re-running on a partial install
- * never throws — the upgrade flow at `upgrade/install-1.0.1.php` re-runs this
- * to provision the queue on shops upgrading from v0.0.4.
+ * never throws — the upgrade flow re-runs this to provision new tables on shops
+ * upgrading from earlier versions.
  *
- * Schema rationale (mirrored on FrakWebhookQueue):
- *   - `idx_due` (state, next_retry_at): cron drainer's hot path.
- *   - `idx_order`: dedupe lookups by source order id.
- *   - `state` ENUM matches `FrakWebhookQueue::STATE_*` constants — drift here
- *     would silently fail `markSuccess` / `markFailure` updates.
- *   - 8 KB `last_error` cap (TEXT) is enforced at the application layer
- *     ({@see FrakWebhookQueue::truncateError()}); using LONGTEXT would invite
- *     adversarial backend responses to bloat the row.
+ * Schema rationale:
+ *
+ * - `frak_webhook_queue` (mirrored on FrakWebhookQueue):
+ *     - `idx_due` (state, next_retry_at): cron drainer's hot path.
+ *     - `idx_order`: dedupe lookups by source order id.
+ *     - `state` ENUM matches `FrakWebhookQueue::STATE_*` constants — drift here
+ *       would silently fail `markSuccess` / `markFailure` updates.
+ *     - 8 KB `last_error` cap (TEXT) is enforced at the application layer
+ *       ({@see FrakWebhookQueue::truncateError()}); using LONGTEXT would invite
+ *       adversarial backend responses to bloat the row.
+ *
+ * - `frak_cache` — generic key/value/TTL store backing
+ *   {@see FrakCache}. Replaces the autoloaded `FRAK_MERCHANT` /
+ *   `FRAK_MERCHANT_UNRESOLVED_AT` Configuration rows so cold caches stop
+ *   bloating the per-request `ps_configuration` autoload payload. Also
+ *   hosts the cron drainer's overlap-prevention lock (`cron:webhook_drainer`).
+ *     - PRIMARY KEY on `cache_key` for O(1) get/set.
+ *     - `idx_expires` indexes the lazy-eviction predicate so the
+ *       `expires_at <= NOW()` cleanup in `acquireLock()` is bounded.
  */
 
 if (!defined('_PS_VERSION_')) {
@@ -43,4 +54,13 @@ $sql['frak_webhook_queue'] = 'CREATE TABLE IF NOT EXISTS `' . _DB_PREFIX_ . 'fra
     PRIMARY KEY (`id_frak_webhook_queue`),
     KEY `idx_due` (`state`, `next_retry_at`),
     KEY `idx_order` (`id_order`)
+) ENGINE=' . _MYSQL_ENGINE_ . ' DEFAULT CHARSET=utf8mb4;';
+
+$sql['frak_cache'] = 'CREATE TABLE IF NOT EXISTS `' . _DB_PREFIX_ . 'frak_cache` (
+    `cache_key` VARCHAR(190) NOT NULL,
+    `cache_value` MEDIUMTEXT NOT NULL,
+    `expires_at` DATETIME DEFAULT NULL,
+    `updated_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    PRIMARY KEY (`cache_key`),
+    KEY `idx_expires` (`expires_at`)
 ) ENGINE=' . _MYSQL_ENGINE_ . ' DEFAULT CHARSET=utf8mb4;';
