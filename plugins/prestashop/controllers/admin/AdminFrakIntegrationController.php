@@ -1,5 +1,6 @@
 <?php
 
+require_once _PS_MODULE_DIR_ . 'frakintegration/classes/FrakUtils.php';
 require_once _PS_MODULE_DIR_ . 'frakintegration/classes/FrakMerchantResolver.php';
 require_once _PS_MODULE_DIR_ . 'frakintegration/classes/FrakWebhookHelper.php';
 
@@ -16,45 +17,26 @@ class AdminFrakIntegrationController extends ModuleAdminController
     public function renderView()
     {
         $merchant = FrakMerchantResolver::getRecord();
-        $modal_i18n_raw = Configuration::get('FRAK_MODAL_I18N');
-        $modal_i18n = json_decode($modal_i18n_raw, true);
+        $shop_name = Configuration::get('FRAK_SHOP_NAME');
+        $logo_url = Configuration::get('FRAK_LOGO_URL');
 
-        if (json_last_error() !== JSON_ERROR_NONE) {
-            $modal_i18n = [];
-        }
-
-        // Webhook stats / logs panel removed — PrestaShopLogger is the canonical
-        // delivery log surface (Advanced Parameters > Logs). The next commit
-        // rewrites the admin template; for now keep empty placeholders so the
-        // legacy Smarty variables stay harmless.
         $this->context->smarty->assign([
             'module_dir' => $this->module->getPathUri(),
             'form_action' => $this->context->link->getAdminLink('AdminFrakIntegration'),
-            'sharing_button_enabled' => Configuration::get('FRAK_SHARING_BUTTON_ENABLED'),
-            'sharing_button_text' => Configuration::get('FRAK_SHARING_BUTTON_TEXT'),
-            'sharing_button_style' => Configuration::get('FRAK_SHARING_BUTTON_STYLE'),
-            'sharing_button_custom_style' => Configuration::get('FRAK_SHARING_BUTTON_CUSTOM_STYLE'),
-            'shop_name' => Configuration::get('FRAK_SHOP_NAME'),
-            'logo_url' => Configuration::get('FRAK_LOGO_URL'),
-            'modal_lng' => Configuration::get('FRAK_MODAL_LNG'),
-            'modal_i18n' => $modal_i18n,
-            'webhook_status' => $merchant !== null && !empty(Configuration::get('FRAK_WEBHOOK_SECRET')),
+            'shop_name' => $shop_name ?: Configuration::get('PS_SHOP_NAME'),
+            'logo_url' => $logo_url,
             'webhook_secret' => Configuration::get('FRAK_WEBHOOK_SECRET'),
+            'webhook_url' => FrakWebhookHelper::getWebhookUrl(),
+            'webhook_secret_configured' => !empty(Configuration::get('FRAK_WEBHOOK_SECRET')),
             'frak_dashboard_url' => 'https://business.frak.id/',
-            'domain' => FrakMerchantResolver::currentHost(),
+            'frak_docs_url' => 'https://docs.frak.id/components/frak-setup',
+            'domain' => FrakUtils::currentHost(),
             'merchant_id' => $merchant['id'] ?? '',
             'merchant_name' => $merchant['name'] ?? '',
             'merchant_resolved' => $merchant !== null,
-            'webhook_logs' => [],
-            'webhook_stats' => [
-                'total_attempts' => 0,
-                'successful' => 0,
-                'failed' => 0,
-                'success_rate' => 0,
-                'avg_response_time' => 0,
-                'last_attempt' => null,
-            ],
-            'webhook_url' => FrakWebhookHelper::getWebhookUrl(),
+            'merchant_dashboard_url' => $merchant !== null
+                ? 'https://business.frak.id/merchant/' . $merchant['id']
+                : 'https://business.frak.id/',
         ]);
 
         return $this->context->smarty->fetch($this->getTemplatePath() . 'configure.tpl');
