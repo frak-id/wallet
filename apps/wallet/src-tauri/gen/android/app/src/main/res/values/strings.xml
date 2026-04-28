@@ -1,9 +1,4 @@
 <resources>
-    <string name="app_name">Frak Wallet</string>
-    <string name="main_activity_title">Frak Wallet</string>
-    <string name="asset_statements" translatable="false">
-[{
-\"include\": \"https://wallet.frak.id/.well-known/assetlinks.json\"
-}]
-    </string>
+    <!-- app_name, main_activity_title, asset_statements are injected per-variant
+         from app/build.gradle.kts via resValue (driven by the appVariant property). -->
 </resources>
