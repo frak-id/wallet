@@ -287,6 +287,7 @@
                     "connecting": "Paired device not online",
                     "paired": "Connected with partner",
                     "retryError": "Error when connecting to the paired device",
+                    "error": "Connection rejected by the server",
                     "requests": {
                         "connecting": "Open your paired device to proceed to the transaction",
                         "paired": "Wait for partner to process signature"
@@ -297,7 +298,8 @@
                 "state": {
                     "connecting": "Connecting to partner device",
                     "paired": "Connected with other device",
-                    "retryError": "Error when connecting to partner device"
+                    "retryError": "Error when connecting to partner device",
+                    "error": "Connection rejected by the server"
                 }
             },
             "status": {
@@ -325,6 +327,7 @@
             "refresh": "Retry",
             "refreshCode": "Code:",
             "refreshReason": "Reason:",
+            "reconnect": "Reconnect",
             "list": {
                 "title": "Connected devices",
                 "origin": "Origin :",

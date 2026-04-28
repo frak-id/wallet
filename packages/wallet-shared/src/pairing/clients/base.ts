@@ -2,9 +2,11 @@ import type { Treaty } from "@elysiajs/eden";
 import type { StoreApi } from "zustand/vanilla";
 import { createStore } from "zustand/vanilla";
 import { authenticatedWalletApi } from "../../common/api/backendClient";
+import { sessionStore } from "../../stores/sessionStore";
 import {
     type BasePairingState,
     isRetryableCloseCode,
+    isSilentCloseCode,
     type OriginIdentityNode,
     type WsOriginMessage,
     type WsOriginRequest,
@@ -199,7 +201,7 @@ export abstract class BasePairingClient<
     /**
      * Reconnect to the pairing websocket
      */
-    protected abstract reconnect(): void;
+    abstract reconnect(): void;
 
     /**
      * Setup the event listeners for the pairing websocket
@@ -286,9 +288,22 @@ export abstract class BasePairingClient<
             return;
         }
 
-        if (!isRetryableCloseCode(code)) {
+        if (isSilentCloseCode(code)) {
+            // Expected non-error termination (e.g. wallet has no pairings yet).
+            // Drop back to idle without any UI feedback.
             this.setState({
                 status: "idle",
+                closeInfo: { code, reason },
+            } as Partial<TState>);
+            this.resetReconnectState();
+            return;
+        }
+
+        if (!isRetryableCloseCode(code)) {
+            // Non-retryable error — surface it so the user sees what went wrong
+            // and can take action (typically a manual refresh / re-auth).
+            this.setState({
+                status: "error",
                 closeInfo: { code, reason },
             } as Partial<TState>);
             this.resetReconnectState();
@@ -331,6 +346,18 @@ export abstract class BasePairingClient<
     disconnect() {
         this.connection?.close();
         this.cleanup();
+    }
+
+    /**
+     * Hard reset: disconnect the WS, clear the local session token, and put
+     * the client back into its initial state. Used as the recovery action
+     * after a non-retryable server rejection (e.g. 4401 invalid token) so the
+     * app can route the user back to a fresh sign-in flow.
+     */
+    reset() {
+        this.connection?.close();
+        this.cleanup();
+        sessionStore.getState().clearSession();
     }
 
     protected isWsMessageData(data: unknown): data is TMessage {

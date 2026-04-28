@@ -58,7 +58,7 @@ vi.mock("../../../common/analytics", () => ({
 
 // Mock pairing client
 let mockPairingState: {
-    status: "idle" | "connecting" | "paired" | "retry-error";
+    status: "idle" | "connecting" | "paired" | "retry-error" | "error";
     pairing?: { id: string; code: string } | null;
     partnerDevice?: string | null;
 } = {
@@ -307,8 +307,8 @@ describe("LaunchPairing", () => {
 
         it("should handle all pairing states", () => {
             const states: Array<
-                "idle" | "connecting" | "paired" | "retry-error"
-            > = ["idle", "connecting", "paired", "retry-error"];
+                "idle" | "connecting" | "paired" | "retry-error" | "error"
+            > = ["idle", "connecting", "paired", "retry-error", "error"];
 
             states.forEach((state) => {
                 mockPairingState.status = state;

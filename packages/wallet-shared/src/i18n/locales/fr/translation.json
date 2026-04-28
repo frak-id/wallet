@@ -285,6 +285,7 @@
                     "connecting": "Appareil partenaire pas en ligne",
                     "paired": "Connecté avec le partenaire",
                     "retryError": "Erreur de connexion à l'appareil pairé",
+                    "error": "Connexion refusée par le serveur",
                     "requests": {
                         "connecting": "Ouvrez votre appareil pairé pour procéder à la transaction",
                         "paired": "Attendez que le partenaire signe la transaction"
@@ -295,7 +296,8 @@
                 "state": {
                     "connecting": "Connexion à l'appareil partenaire",
                     "paired": "Connecté avec un autre appareil",
-                    "retryError": "Erreur lors de la connexion à l'appareil partenaire"
+                    "retryError": "Erreur lors de la connexion à l'appareil partenaire",
+                    "error": "Connexion refusée par le serveur"
                 }
             },
             "status": {
@@ -323,6 +325,7 @@
             "refresh": "Réessayer",
             "refreshCode": "Code :",
             "refreshReason": "Raison :",
+            "reconnect": "Se reconnecter",
             "list": {
                 "title": "Appareils connectés",
                 "origin": "Origine :",

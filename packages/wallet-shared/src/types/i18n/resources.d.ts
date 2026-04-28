@@ -577,6 +577,7 @@ interface Resources {
                 origin: {
                     state: {
                         connecting: "Paired device not online";
+                        error: "Connection rejected by the server";
                         idle: "Pairing logic initialisation";
                         paired: "Connected with partner";
                         requests: {
@@ -587,6 +588,7 @@ interface Resources {
                     };
                 };
                 pairingInProgress: "Pairing in progress, please authenticate";
+                reconnect: "Reconnect";
                 refresh: "Retry";
                 refreshCode: "Code:";
                 refreshReason: "Reason:";
@@ -615,6 +617,7 @@ interface Resources {
                 target: {
                     state: {
                         connecting: "Connecting to partner device";
+                        error: "Connection rejected by the server";
                         paired: "Connected with other device";
                         retryError: "Error when connecting to partner device";
                     };

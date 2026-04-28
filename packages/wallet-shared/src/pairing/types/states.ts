@@ -2,7 +2,7 @@ import type { Hex } from "viem";
 
 export type BasePairingState = {
     partnerDevice: string | null;
-    status: "idle" | "connecting" | "paired" | "retry-error";
+    status: "idle" | "connecting" | "paired" | "retry-error" | "error";
     closeInfo?: {
         code: number;
         reason: string;

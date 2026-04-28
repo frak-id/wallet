@@ -93,6 +93,20 @@ export class OriginPairingClient extends BasePairingClient<
     private static readonly SIGNATURE_TIMEOUT_MS = 10 * 60 * 1_000; // 10 minutes
 
     async sendSignatureRequest(request: Hex, context?: object): Promise<Hex> {
+        // Fail fast if we're not actually connected to the partner device.
+        // Without this guard, the request would silently sit in the queue and
+        // resolve only after a 10-minute timeout (because `this.send` becomes
+        // a no-op once the websocket is closed).
+        if (
+            this.state.status !== "paired" &&
+            this.state.status !== "connecting"
+        ) {
+            throw new Error(
+                `Pairing not connected (status: ${this.state.status}). ` +
+                    "Reconnect the partner device before requesting a signature."
+            );
+        }
+
         return new Promise((resolve, reject) => {
             const id = nanoid(16);
 

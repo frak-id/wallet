@@ -26,3 +26,16 @@ const RETRYABLE_CLOSE_CODES: ReadonlySet<number> = new Set([
 export function isRetryableCloseCode(code: number): boolean {
     return RETRYABLE_CLOSE_CODES.has(code);
 }
+
+/**
+ * Close codes that represent an expected, non-error termination. These should
+ * silently transition the client back to `idle` with no UI feedback.
+ *
+ *   4444 NO_CONNECTION_TO_CONNECT_TO — wallet has no active pairings yet
+ *     (sent on target wallet reconnect when there is nothing to subscribe to)
+ */
+const SILENT_CLOSE_CODES: ReadonlySet<number> = new Set([4444]);
+
+export function isSilentCloseCode(code: number): boolean {
+    return SILENT_CLOSE_CODES.has(code);
+}

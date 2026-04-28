@@ -35,7 +35,7 @@ vi.mock("../../../stores/sessionStore", () => ({
 
 // Mock pairing client store
 let mockPairingState: {
-    status: "idle" | "connecting" | "paired" | "retry-error";
+    status: "idle" | "connecting" | "paired" | "retry-error" | "error";
     signatureRequests: Map<string, unknown>;
 } = {
     status: "idle",

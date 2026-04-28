@@ -20,7 +20,7 @@ vi.mock("react-i18next", () => ({
 
 // Mock pairing client store
 let mockStoreState: {
-    status: "idle" | "connecting" | "paired" | "retry-error";
+    status: "idle" | "connecting" | "paired" | "retry-error" | "error";
     closeInfo?: { code?: number; reason?: string } | null;
 } = {
     status: "idle",
@@ -28,6 +28,7 @@ let mockStoreState: {
 };
 
 const mockReconnect = vi.fn();
+const mockReset = vi.fn();
 
 // Create a proper Zustand store mock
 const createMockStore = () => ({
@@ -42,12 +43,13 @@ const createMockStore = () => ({
 
 const mockStore = createMockStore();
 
-vi.mock("../../clients/store", () => ({
-    getTargetPairingClient: vi.fn(() => ({
-        store: mockStore,
-        reconnect: mockReconnect,
-    })),
-}));
+const mockClient: any = {
+    get store() {
+        return mockStore;
+    },
+    reconnect: mockReconnect,
+    reset: mockReset,
+};
 
 vi.mock("@frak-labs/design-system/components/Spinner", () => ({
     Spinner: () => <div data-testid="spinner">Loading</div>,
@@ -171,7 +173,13 @@ describe("PairingStatusBox", () => {
             // Change to non-retry-error status
             mockStoreState.status = "idle";
 
-            render(<StatusBoxWallet status="waiting" title="Idle" />);
+            render(
+                <StatusBoxWallet
+                    status="waiting"
+                    title="Idle"
+                    client={mockClient}
+                />
+            );
 
             expect(
                 screen.queryByText("wallet.pairing.refresh")
@@ -184,7 +192,13 @@ describe("PairingStatusBox", () => {
                 closeInfo: null,
             };
 
-            render(<StatusBoxWallet status="error" title="Error" />);
+            render(
+                <StatusBoxWallet
+                    status="error"
+                    title="Error"
+                    client={mockClient}
+                />
+            );
 
             expect(
                 screen.getByText("wallet.pairing.refresh")
@@ -197,7 +211,13 @@ describe("PairingStatusBox", () => {
                 closeInfo: null,
             };
 
-            render(<StatusBoxWallet status="error" title="Error" />);
+            render(
+                <StatusBoxWallet
+                    status="error"
+                    title="Error"
+                    client={mockClient}
+                />
+            );
 
             const retryButton = screen.getByText("wallet.pairing.refresh");
             fireEvent.click(retryButton);
@@ -214,7 +234,13 @@ describe("PairingStatusBox", () => {
                 },
             };
 
-            render(<StatusBoxWallet status="error" title="Error" />);
+            render(
+                <StatusBoxWallet
+                    status="error"
+                    title="Error"
+                    client={mockClient}
+                />
+            );
 
             expect(
                 screen.getByText(/wallet.pairing.refreshCode.*1000/)
@@ -230,7 +256,13 @@ describe("PairingStatusBox", () => {
                 },
             };
 
-            render(<StatusBoxWallet status="error" title="Error" />);
+            render(
+                <StatusBoxWallet
+                    status="error"
+                    title="Error"
+                    client={mockClient}
+                />
+            );
 
             expect(
                 screen.getByText(
@@ -248,7 +280,13 @@ describe("PairingStatusBox", () => {
                 },
             };
 
-            render(<StatusBoxWallet status="error" title="Error" />);
+            render(
+                <StatusBoxWallet
+                    status="error"
+                    title="Error"
+                    client={mockClient}
+                />
+            );
 
             expect(
                 screen.getByText(/wallet.pairing.refreshCode.*1001/)
