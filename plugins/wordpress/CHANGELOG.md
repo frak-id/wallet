@@ -11,6 +11,12 @@ version on dispatch.
 
 ## [Unreleased]
 
+### Changed
+
+- `frak/banner`: added a **Disabled** option to the *Editor preview → Preview mode* dropdown. Selecting it swaps the live `<frak-banner preview>` for an empty block wrapper — the block stays selectable via canvas hover and List View so the inspector remains reachable, but no preview UI clutters the canvas. Use case: a banner placed in a header/footer template part that would otherwise show its preview on every post in Gutenberg. Editor-only — frontend rendering and `Frak_Component_Renderer::banner()` output are unchanged.
+
+- `frak/banner`, `frak/post-purchase`, `frak/share-button`: added Gutenberg `spacing.margin` support so merchants can adjust the block-level margin between Frak blocks and surrounding content from the right-sidebar **Styles** panel. Mirrored in `includes/blocks-manifest.php` (the source of truth on WP 6.7+). Color/typography/padding/border supports were intentionally **not** opted into: the SDK web components (`<frak-banner>`, `<frak-post-purchase>`, `<frak-button-share>`) ship hardcoded vanilla-extract styles whose class-level specificity overrides values inherited from the wrapper `<div>`, so enabling those controls would either no-op (color, fontSize) or paint a misleading frame around the already-styled component (background, padding, border). Revisit once the SDK exposes themable CSS custom properties on those components.
+
 ## [1.1.2] - 2026-04-28
 
 ### Added

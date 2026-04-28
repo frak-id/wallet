@@ -9,7 +9,10 @@
 	"keywords": ["frak", "post purchase", "thank you", "reward", "referral"],
 	"supports": {
 		"html": false,
-		"align": ["wide", "full"]
+		"align": ["wide", "full"],
+		"spacing": {
+			"margin": true
+		}
 	},
 	"textdomain": "frak",
 	"attributes": {

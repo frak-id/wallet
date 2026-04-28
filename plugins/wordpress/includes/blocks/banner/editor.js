@@ -11,6 +11,12 @@
 	const PREVIEW_MODES = [
 		{ label: __( 'Referral success', 'frak' ), value: 'referral' },
 		{ label: __( 'In-app browser prompt', 'frak' ), value: 'inapp' },
+		// `none` swaps the live `<frak-banner preview>` for a static Placeholder
+		// in the canvas. Editor-only — frontend rendering is unaffected because
+		// `previewMode` isn't in `Frak_Component_Renderer::BANNER_ATTRS`. Use case:
+		// a banner placed in a header/footer template part shows up on every post
+		// in Gutenberg, which is noisy when editing unrelated content.
+		{ label: __( 'Disabled', 'frak' ), value: 'none' },
 	];
 
 	// Drop empty strings so `<frak-banner>` only sees attributes the merchant
@@ -117,28 +123,33 @@
 						} )
 					)
 				),
-				// Render the real `<frak-banner>` web component with `preview` so it
-				// short-circuits the in-app / referral-event detection and renders
-				// immediately in the editor iframe. We re-key on `previewMode` so the
-				// element remounts cleanly when merchants toggle the preview variant.
-				el(
-					'div',
-					{ ...blockProps, ref: hostRef },
-					el( 'frak-banner', {
-						key: attributes.previewMode || 'referral',
-						preview: 'true',
-						'preview-mode': attr( attributes.previewMode ) || 'referral',
-						placement: attr( attributes.placement ),
-						classname: attr( attributes.classname ),
-						interaction: attr( attributes.interaction ),
-						'referral-title': attr( attributes.referralTitle ),
-						'referral-description': attr( attributes.referralDescription ),
-						'referral-cta': attr( attributes.referralCta ),
-						'inapp-title': attr( attributes.inappTitle ),
-						'inapp-description': attr( attributes.inappDescription ),
-						'inapp-cta': attr( attributes.inappCta ),
-					} )
-				)
+				// When previewing is disabled, emit just the bare block wrapper so
+				// the block stays selectable (canvas hover, List View) while taking
+				// no visible space — frontend rendering is unaffected because
+				// `previewMode` isn't in `Frak_Component_Renderer::BANNER_ATTRS`.
+				// Otherwise render the real `<frak-banner preview>` web component
+				// so merchants get a faithful preview. Re-keying on `previewMode`
+				// makes React swap the subtree cleanly when merchants toggle modes.
+				attributes.previewMode === 'none'
+					? el( 'div', { ...blockProps, ref: hostRef } )
+					: el(
+						'div',
+						{ ...blockProps, ref: hostRef },
+						el( 'frak-banner', {
+							key: attributes.previewMode || 'referral',
+							preview: 'true',
+							'preview-mode': attr( attributes.previewMode ) || 'referral',
+							placement: attr( attributes.placement ),
+							classname: attr( attributes.classname ),
+							interaction: attr( attributes.interaction ),
+							'referral-title': attr( attributes.referralTitle ),
+							'referral-description': attr( attributes.referralDescription ),
+							'referral-cta': attr( attributes.referralCta ),
+							'inapp-title': attr( attributes.inappTitle ),
+							'inapp-description': attr( attributes.inappDescription ),
+							'inapp-cta': attr( attributes.inappCta ),
+						} )
+					)
 			);
 		},
 		save() {

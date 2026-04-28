@@ -27,8 +27,11 @@ return array(
 		'icon'         => 'megaphone',
 		'keywords'     => array( 'frak', 'banner', 'notification', 'referral' ),
 		'supports'     => array(
-			'html'  => false,
-			'align' => array( 'wide', 'full' ),
+			'html'                => false,
+			'align'               => array( 'wide', 'full' ),
+			'spacing'             => array(
+				'margin' => true,
+			),
 		),
 		'textdomain'   => 'frak',
 		'attributes'   => array(
@@ -86,8 +89,11 @@ return array(
 		'icon'         => 'cart',
 		'keywords'     => array( 'frak', 'post purchase', 'thank you', 'reward', 'referral' ),
 		'supports'     => array(
-			'html'  => false,
-			'align' => array( 'wide', 'full' ),
+			'html'                => false,
+			'align'               => array( 'wide', 'full' ),
+			'spacing'             => array(
+				'margin' => true,
+			),
 		),
 		'textdomain'   => 'frak',
 		'attributes'   => array(
@@ -145,8 +151,11 @@ return array(
 		'icon'         => 'share',
 		'keywords'     => array( 'frak', 'share', 'reward', 'referral' ),
 		'supports'     => array(
-			'html'  => false,
-			'align' => array( 'left', 'center', 'right' ),
+			'html'                => false,
+			'align'               => array( 'left', 'center', 'right' ),
+			'spacing'             => array(
+				'margin' => true,
+			),
 		),
 		'textdomain'   => 'frak',
 		'attributes'   => array(
