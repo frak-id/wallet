@@ -8,13 +8,16 @@
  * endpoint that mirrors the WordPress contract:
  *   `POST /ext/merchant/{merchantId}/webhook/prestashop`
  *
- * The Configuration-backed log ring is intentionally simple — moving it to
- * a dedicated table is a known follow-up once the major cleanup pass lands.
+ * Delivery logs are emitted via `PrestaShopLogger::addLog()` (the platform-
+ * native log surface, visible under Advanced Parameters > Logs). The previous
+ * Configuration-backed log ring + stats card are gone — they duplicated the
+ * native logger and were the moral equivalent of the WordPress plugin's
+ * removed PHP webhook dispatcher (delivery + logging now happen in WC's own
+ * pipeline).
  */
 class FrakWebhookHelper
 {
     private const PLATFORM_SEGMENT = 'prestashop';
-    private const LOG_RING_SIZE = 50;
     private const REQUEST_TIMEOUT = 30;
     private const CONNECT_TIMEOUT = 10;
 
@@ -37,15 +40,6 @@ class FrakWebhookHelper
             $payload = self::buildOrderPayload($order_id, $status, $token);
             $result = self::dispatch($payload);
 
-            self::logWebhookAttempt(
-                (int) $order_id,
-                (string) $status,
-                $result['http_code'],
-                $result['response'],
-                $result['execution_time'],
-                null
-            );
-
             PrestaShopLogger::addLog(
                 'FrakIntegration: Webhook sent successfully. HTTP Code: ' . $result['http_code']
                 . ', Response: ' . $result['response']
@@ -58,102 +52,8 @@ class FrakWebhookHelper
             $execution_time = round((microtime(true) - $start_time) * 1000, 2);
             PrestaShopLogger::addLog('FrakIntegration: Webhook failed for order ' . $order_id . ': ' . $e->getMessage() . ', Time: ' . $execution_time . 'ms', 3);
 
-            self::logWebhookAttempt((int) $order_id, (string) $status, 0, '', $execution_time, $e->getMessage());
-
             return ['success' => false, 'error' => $e->getMessage(), 'execution_time' => $execution_time];
         }
-    }
-
-    public static function testWebhook()
-    {
-        $start_time = microtime(true);
-        PrestaShopLogger::addLog('FrakIntegration: Testing webhook connectivity', 1);
-
-        try {
-            $payload = [
-                'test' => true,
-                'timestamp' => time(),
-                'domain' => FrakMerchantResolver::currentHost(),
-            ];
-            $result = self::dispatch($payload);
-
-            PrestaShopLogger::addLog('FrakIntegration: Webhook test completed. HTTP Code: ' . $result['http_code'] . ', Time: ' . $result['execution_time'] . 'ms', 1);
-
-            return [
-                'success' => true,
-                'http_code' => $result['http_code'],
-                'response' => $result['response'],
-                'execution_time' => $result['execution_time'],
-                'error' => null,
-            ];
-        } catch (Exception $e) {
-            $execution_time = round((microtime(true) - $start_time) * 1000, 2);
-            PrestaShopLogger::addLog('FrakIntegration: Webhook test failed: ' . $e->getMessage() . ', Time: ' . $execution_time . 'ms', 3);
-
-            return [
-                'success' => false,
-                'http_code' => 0,
-                'response' => '',
-                'execution_time' => $execution_time,
-                'error' => $e->getMessage(),
-            ];
-        }
-    }
-
-    public static function getWebhookLogs($limit = 20)
-    {
-        $logs = Configuration::get('FRAK_WEBHOOK_LOGS');
-        if (!$logs) {
-            return [];
-        }
-
-        $decoded = json_decode($logs, true);
-        if (!is_array($decoded)) {
-            return [];
-        }
-
-        return array_slice($decoded, 0, $limit);
-    }
-
-    public static function getWebhookStats()
-    {
-        $logs = self::getWebhookLogs(self::LOG_RING_SIZE);
-
-        if (empty($logs)) {
-            return [
-                'total_attempts' => 0,
-                'successful' => 0,
-                'failed' => 0,
-                'success_rate' => 0,
-                'avg_response_time' => 0,
-                'last_attempt' => null,
-            ];
-        }
-
-        $total_attempts = count($logs);
-        $successful = count(array_filter($logs, function ($log) {
-            return $log['success'];
-        }));
-        $failed = $total_attempts - $successful;
-        $success_rate = $total_attempts > 0 ? round(($successful / $total_attempts) * 100, 1) : 0;
-
-        $total_time = array_sum(array_column($logs, 'execution_time'));
-        $avg_response_time = $total_attempts > 0 ? round($total_time / $total_attempts, 2) : 0;
-
-        return [
-            'total_attempts' => $total_attempts,
-            'successful' => $successful,
-            'failed' => $failed,
-            'success_rate' => $success_rate,
-            'avg_response_time' => $avg_response_time,
-            'last_attempt' => $logs[0]['timestamp'] ?? null,
-        ];
-    }
-
-    public static function clearWebhookLogs(): void
-    {
-        Configuration::updateValue('FRAK_WEBHOOK_LOGS', '');
-        PrestaShopLogger::addLog('FrakIntegration: Webhook logs cleared', 1);
     }
 
     /**
@@ -264,32 +164,5 @@ class FrakWebhookHelper
             'response' => is_string($response) ? $response : '',
             'execution_time' => $execution_time,
         ];
-    }
-
-    private static function logWebhookAttempt(int $order_id, string $status, int $http_code, string $response, float $execution_time, ?string $error): void
-    {
-        $data = [
-            'order_id' => $order_id,
-            'status' => pSQL($status),
-            'http_code' => $http_code,
-            'response' => pSQL(substr($response, 0, 1000)),
-            'execution_time' => $execution_time,
-            'error' => $error ? pSQL(substr($error, 0, 500)) : null,
-            'timestamp' => date('Y-m-d H:i:s'),
-            'webhook_url' => pSQL((string) self::getWebhookUrl()),
-            'success' => $error === null && $http_code >= 200 && $http_code < 300 ? 1 : 0,
-        ];
-
-        $existing_logs = Configuration::get('FRAK_WEBHOOK_LOGS');
-        $logs = $existing_logs ? json_decode($existing_logs, true) : [];
-
-        if (!is_array($logs)) {
-            $logs = [];
-        }
-
-        array_unshift($logs, $data);
-        $logs = array_slice($logs, 0, self::LOG_RING_SIZE);
-
-        Configuration::updateValue('FRAK_WEBHOOK_LOGS', json_encode($logs));
     }
 }

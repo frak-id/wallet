@@ -12,6 +12,14 @@ require_once __DIR__ . '/classes/FrakComponentRenderer.php';
 
 class FrakIntegration extends Module
 {
+    /**
+     * Settings schema version. Bump when a `cleanupLegacyOptions()`
+     * sweep needs to run on existing installs (e.g. dropping an option
+     * row that an older release persisted). Mirrors WordPress's
+     * `Frak_Settings::CURRENT_VERSION`.
+     */
+    private const SETTINGS_VERSION = 2;
+
     public function __construct()
     {
         $this->name = 'frakintegration';
@@ -31,6 +39,12 @@ class FrakIntegration extends Module
         $this->description = $this->l('Integrates Frak services with PrestaShop.');
 
         $this->confirmUninstall = $this->l('Are you sure you want to uninstall?');
+
+        // One-shot upgrade hook: PrestaShop's install() only fires on fresh
+        // installs, so the legacy-options sweep needs a per-request guard for
+        // shops upgrading from an older zip. Configuration::get() hits a static
+        // cache after the first call so the no-op path is essentially free.
+        self::ensureSettingsMigrated();
     }
 
     public function install()
@@ -42,12 +56,12 @@ class FrakIntegration extends Module
             $this->registerHook('displayOrderConfirmation') &&
             $this->registerHook('actionOrderStatusUpdate')
         ) {
+            // Seed sane defaults from the PrestaShop shop record. Anything else
+            // (i18n, modal language, share-button copy/style) is now resolved by
+            // the SDK against business.frak.id once the merchant is registered.
             Configuration::updateValue('FRAK_SHOP_NAME', Configuration::get('PS_SHOP_NAME'));
             Configuration::updateValue('FRAK_LOGO_URL', $this->context->link->getMediaLink(_PS_IMG_ . Configuration::get('PS_LOGO')));
-            Configuration::updateValue('FRAK_MODAL_LNG', 'default');
-            Configuration::updateValue('FRAK_MODAL_I18N', '{}', true);
-            Configuration::updateValue('FRAK_SHARING_BUTTON_ENABLED', true);
-            Configuration::updateValue('FRAK_SHARING_BUTTON_TEXT', 'Share with Frak');
+            self::cleanupLegacyOptions();
             return true;
         }
         return false;
@@ -63,19 +77,58 @@ class FrakIntegration extends Module
         ) {
             Configuration::deleteByName('FRAK_SHOP_NAME');
             Configuration::deleteByName('FRAK_LOGO_URL');
-            Configuration::deleteByName('FRAK_MODAL_LNG');
-            Configuration::deleteByName('FRAK_MODAL_I18N');
-            Configuration::deleteByName('FRAK_SHARING_BUTTON_ENABLED');
-            Configuration::deleteByName('FRAK_SHARING_BUTTON_TEXT');
-            Configuration::deleteByName('FRAK_SHARING_BUTTON_STYLE');
-            Configuration::deleteByName('FRAK_SHARING_BUTTON_CUSTOM_STYLE');
             Configuration::deleteByName('FRAK_WEBHOOK_SECRET');
-            Configuration::deleteByName('FRAK_WEBHOOK_LOGS');
+            Configuration::deleteByName('FRAK_SETTINGS_VERSION');
             Configuration::deleteByName(FrakMerchantResolver::CONFIG_KEY);
             Configuration::deleteByName(FrakMerchantResolver::NEGATIVE_CACHE_KEY);
+            self::cleanupLegacyOptions();
             return true;
         }
         return false;
+    }
+
+    /**
+     * Run the deprecated-options sweep at most once per `SETTINGS_VERSION`.
+     * Mirrors `Frak_Settings::migrate()` in the WordPress plugin.
+     */
+    private static function ensureSettingsMigrated(): void
+    {
+        $current = (int) Configuration::get('FRAK_SETTINGS_VERSION');
+        if ($current >= self::SETTINGS_VERSION) {
+            return;
+        }
+        self::cleanupLegacyOptions();
+        Configuration::updateValue('FRAK_SETTINGS_VERSION', self::SETTINGS_VERSION);
+    }
+
+    /**
+     * Wipe the option rows that an earlier iteration of the module persisted
+     * but no longer consumes:
+     *   - FRAK_MODAL_LNG / FRAK_MODAL_I18N: SDK i18n + language are now
+     *     backend-driven via business.frak.id.
+     *   - FRAK_SHARING_BUTTON_*: render decisions and copy live in the
+     *     business dashboard's per-merchant placement config; the hook now
+     *     emits <frak-button-share placement="product"> unconditionally.
+     *   - FRAK_WEBHOOK_LOGS: replaced by PrestaShopLogger entries (already
+     *     wired from FrakWebhookHelper::send() / hookActionOrderStatusUpdate).
+     *
+     * Mirrors WordPress's Frak_Settings::DEPRECATED_LEGACY_OPTIONS sweep so
+     * upgraded shops do not carry stale rows in ps_configuration.
+     */
+    private static function cleanupLegacyOptions(): void
+    {
+        $deprecated = [
+            'FRAK_MODAL_LNG',
+            'FRAK_MODAL_I18N',
+            'FRAK_SHARING_BUTTON_ENABLED',
+            'FRAK_SHARING_BUTTON_TEXT',
+            'FRAK_SHARING_BUTTON_STYLE',
+            'FRAK_SHARING_BUTTON_CUSTOM_STYLE',
+            'FRAK_WEBHOOK_LOGS',
+        ];
+        foreach ($deprecated as $key) {
+            Configuration::deleteByName($key);
+        }
     }
 
     public function hookHeader()
