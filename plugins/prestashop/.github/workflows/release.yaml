@@ -1,0 +1,53 @@
+name: Create Plugin Release
+
+on:
+  push:
+    tags:
+      - 'v*' # Trigger on version tags
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '7.4'
+          extensions: mbstring, xml, zip
+          tools: composer
+
+      - name: Install Composer dependencies
+        run: composer install --no-dev --prefer-dist
+
+      - name: Update version
+        run: |
+          VERSION=$(echo "${{ github.ref_name }}" | sed 's/v//')
+          sed -i "s|<version><!\[CDATA\[.*\]\]></version>|<version><![CDATA[$VERSION]]></version>|g" config.xml
+          sed -i "s/VERSION=\".*\"/VERSION=\"$VERSION\"/" bundle_1.sh
+          echo "Updated versions to $VERSION"
+
+      - name: Make bundle script executable
+        run: chmod +x bundle_1.sh
+
+      - name: Create plugin bundle
+        id: bundle
+        run: ./bundle_1.sh
+
+      - name: Get bundle filename
+        id: get_filename
+        run: |
+          VERSION=$(echo "${{ github.ref_name }}" | sed 's/v//')
+          echo "filename=frakintegration-v${VERSION}.zip" >> $GITHUB_OUTPUT
+
+      - name: Create Release
+        id: create_release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: ${{ steps.get_filename.outputs.filename }}
+          generate_release_notes: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
