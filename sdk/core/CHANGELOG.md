@@ -1,5 +1,15 @@
 # @frak-labs/core-sdk
 
+## 1.0.2
+
+### Patch Changes
+
+- [#156](https://github.com/frak-id/wallet/pull/156) [`33c2534`](https://github.com/frak-id/wallet/commit/33c2534b06b781a1d0c975b8ab400e9497eeac51) Thanks [@KONFeature](https://github.com/KONFeature)! - Cut the iframe handshake duration by emitting readiness from the listener as soon as RPC handlers are wired up, instead of waiting for a polled heartbeat.
+
+  - SDK heartbeat drops from 1000 ms to 250 ms and is now a fallback discovery ping only (kept as a safety net for SDK/listener version skew during deployments).
+  - SDK now injects `<link rel="preconnect">` hints for the wallet and backend origins before appending the iframe, so cold-cache partner sites don't pay the DNS/TLS round-trip on the handshake.
+  - No public API changes. `createIFrameFrakClient`, `setupClient`, `waitForConnection`, and `waitForSetup` keep the exact same contract — they just resolve sooner.
+
 ## 1.0.1
 
 ### Patch Changes
