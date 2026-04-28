@@ -17,6 +17,11 @@ const DEBUG = JSON.stringify(false);
 const isProd = process.env.STAGE?.includes("prod") ?? false;
 const isSandbox = !!process.env.ATELIER_SANDBOX_ID;
 
+// Mobile deep-link scheme — must match the wallet variant the listener pairs with:
+// prod listener (wallet.frak.id) opens the prod wallet (id.frak.wallet) via frakwallet://,
+// dev listener (wallet-dev.frak.id) opens the dev wallet (id.frak.wallet.dev) via frakwallet-dev://.
+const deepLinkScheme = isProd ? "frakwallet://" : "frakwallet-dev://";
+
 export default defineConfig(async () => {
     const sandboxEnv = await getSandboxEnv();
 
@@ -69,6 +74,7 @@ export default defineConfig(async () => {
             "process.env.IS_APP_AVAILABLE": JSON.stringify(
                 process.env.IS_APP_AVAILABLE ?? "true"
             ),
+            "process.env.DEEP_LINK_SCHEME": JSON.stringify(deepLinkScheme),
         },
         plugins: [
             react(),

@@ -27,6 +27,9 @@ const buildDefine = {
     ),
     "process.env.OPEN_PANEL_SDK_CLIENT_ID": JSON.stringify(opClientId),
     "process.env.SDK_VERSION": JSON.stringify(sdkVersion),
+    // Default mobile deep-link scheme baked into the published NPM/CDN bundle.
+    // In-monorepo dev consumers (listener-dev) override this via their own Vite `define`.
+    "process.env.DEEP_LINK_SCHEME": JSON.stringify("frakwallet://"),
 };
 
 // Stub rrweb to avoid bundling it — @openpanel/web statically imports `record`

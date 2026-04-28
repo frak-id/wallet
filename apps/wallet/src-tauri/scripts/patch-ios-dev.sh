@@ -29,8 +29,10 @@ sed_i 's|^(  bundleIdPrefix: )id\.frak\.wallet$|\1id.frak.wallet.dev|'
 sed_i 's|^(      PRODUCT_NAME: )Frak Wallet$|\1Frak Wallet Dev|'
 sed_i 's|^(      PRODUCT_BUNDLE_IDENTIFIER: )id\.frak\.wallet$|\1id.frak.wallet.dev|'
 
-# 2. CFBundleURLName (URL types registry name; scheme stays "frakwallet" — see PR notes)
+# 2. URL types: CFBundleURLName + custom scheme (frakwallet → frakwallet-dev).
+#    Listener-dev (Vite `define`) generates frakwallet-dev:// links targeting this variant.
 sed_i 's|^(          - CFBundleURLName: )id\.frak\.wallet$|\1id.frak.wallet.dev|'
+sed_i 's|^(              - )frakwallet$|\1frakwallet-dev|'
 
 # 3. Keychain access group reference
 sed_i 's|^(          - \$\(AppIdentifierPrefix\)id\.frak\.wallet)$|\1.dev|'
