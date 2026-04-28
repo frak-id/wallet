@@ -12,6 +12,7 @@ require_once __DIR__ . '/classes/FrakComponentRenderer.php';
 require_once __DIR__ . '/classes/FrakWebhookQueue.php';
 require_once __DIR__ . '/classes/FrakWebhookCron.php';
 require_once __DIR__ . '/classes/FrakOrderResolver.php';
+require_once __DIR__ . '/classes/FrakPlacementRegistry.php';
 
 class FrakIntegration extends Module
 {
@@ -24,8 +25,13 @@ class FrakIntegration extends Module
      *   async webhook retry queue (`frak_webhook_queue` table + `FRAK_CRON_TOKEN`
      *   + `actionOrderStatusPostUpdate` hook). v2 was never released, so the
      *   queue/cron provisioning shipped under the same version bump.
+     * - v2 → v3: introduce the placement registry. Existing installs auto-seed
+     *   the new `FRAK_PLACEMENT_*` Configuration rows from
+     *   `FrakPlacementRegistry::seedDefaults()` and pick up the new auxiliary
+     *   hook surfaces (`displayTop`, `displayHome`, `displayFooterBefore`,
+     *   `displayShoppingCart`) without disturbing pre-existing placements.
      */
-    private const SETTINGS_VERSION = 2;
+    private const SETTINGS_VERSION = 3;
 
     public function __construct()
     {
@@ -52,64 +58,91 @@ class FrakIntegration extends Module
         // shops upgrading from an older zip. Configuration::get() hits a static
         // cache after the first call so the no-op path is essentially free.
         $this->ensureSettingsMigrated();
+
+        // Smarty function plugins ({frak_banner}, {frak_share_button},
+        // {frak_post_purchase}) are scoped to the front-office Smarty instance.
+        // Registering them on every module instantiation is cheap (one map
+        // insert per plugin) and keeps the templates working from any theme
+        // file or CMS page without merchant-side bootstrap.
+        if (!defined('_PS_ADMIN_DIR_')) {
+            $this->registerSmartyPlugins();
+        }
     }
 
     public function install()
     {
-        if (
-            parent::install() &&
-            $this->registerHook('header') &&
-            $this->registerHook('displayProductAdditionalInfo') &&
-            $this->registerHook('displayOrderConfirmation') &&
-            // Post-commit hook so the order status row is durable before we
-            // dispatch — mirrors the Magento sister plugin and the PrestaShop
-            // docs' explicit recommendation. The pre-commit `actionOrderStatusUpdate`
-            // raced under multistore / high load.
-            $this->registerHook('actionOrderStatusPostUpdate') &&
-            $this->registerHook('displayOrderDetail')
-        ) {
-            // Seed sane defaults from the PrestaShop shop record. Anything else
-            // (i18n, modal language, share-button copy/style) is now resolved by
-            // the SDK against business.frak.id once the merchant is registered.
-            Configuration::updateValue('FRAK_SHOP_NAME', Configuration::get('PS_SHOP_NAME'));
-            Configuration::updateValue('FRAK_LOGO_URL', $this->context->link->getMediaLink(_PS_IMG_ . Configuration::get('PS_LOGO')));
-
-            // Async webhook infrastructure: queue table + per-shop cron token.
-            // Both must be in place before any order status transition can happen,
-            // otherwise enqueue() / the cron URL would silently fail.
-            FrakWebhookQueue::createTable();
-            self::ensureCronTokenExists();
-
-            self::cleanupLegacyOptions();
-            return true;
+        if (!parent::install()) {
+            return false;
         }
-        return false;
+        if (!$this->registerHook('header')) {
+            return false;
+        }
+        // Post-commit hook so the order status row is durable before we
+        // dispatch — mirrors the Magento sister plugin and the PrestaShop
+        // docs' explicit recommendation. The pre-commit `actionOrderStatusUpdate`
+        // raced under multistore / high load.
+        if (!$this->registerHook('actionOrderStatusPostUpdate')) {
+            return false;
+        }
+        // Display hooks are driven by the placement registry so adding /
+        // removing surfaces is a single edit in `FrakPlacementRegistry::PLACEMENTS`.
+        foreach (FrakPlacementRegistry::distinctHooks() as $hook) {
+            if (!$this->registerHook($hook)) {
+                return false;
+            }
+        }
+
+        // Seed sane defaults from the PrestaShop shop record. Anything else
+        // (i18n, modal language, share-button copy/style) is now resolved by
+        // the SDK against business.frak.id once the merchant is registered.
+        Configuration::updateValue('FRAK_SHOP_NAME', Configuration::get('PS_SHOP_NAME'));
+        Configuration::updateValue('FRAK_LOGO_URL', $this->context->link->getMediaLink(_PS_IMG_ . Configuration::get('PS_LOGO')));
+
+        // Async webhook infrastructure: queue table + per-shop cron token.
+        // Both must be in place before any order status transition can happen,
+        // otherwise enqueue() / the cron URL would silently fail.
+        FrakWebhookQueue::createTable();
+        self::ensureCronTokenExists();
+
+        // Seed every placement’s on/off flag with its declared default. Opt-out
+        // for the legacy product / order surfaces, opt-in for the new auxiliary
+        // surfaces — keeps existing storefronts visually unchanged on upgrade.
+        FrakPlacementRegistry::seedDefaults();
+
+        self::cleanupLegacyOptions();
+        return true;
     }
 
     public function uninstall()
     {
-        if (
-            parent::uninstall() &&
-            $this->unregisterHook('header') &&
-            $this->unregisterHook('displayOrderConfirmation') &&
-            $this->unregisterHook('displayProductAdditionalInfo') &&
-            // Symmetric with install(); keeps the hook chain readable, even though
-            // parent::uninstall() already truncates the module's ps_hook_module rows.
-            $this->unregisterHook('actionOrderStatusPostUpdate') &&
-            $this->unregisterHook('displayOrderDetail')
-        ) {
-            Configuration::deleteByName('FRAK_SHOP_NAME');
-            Configuration::deleteByName('FRAK_LOGO_URL');
-            Configuration::deleteByName('FRAK_WEBHOOK_SECRET');
-            Configuration::deleteByName('FRAK_SETTINGS_VERSION');
-            Configuration::deleteByName('FRAK_CRON_TOKEN');
-            Configuration::deleteByName(FrakMerchantResolver::CONFIG_KEY);
-            Configuration::deleteByName(FrakMerchantResolver::NEGATIVE_CACHE_KEY);
-            FrakWebhookQueue::dropTable();
-            self::cleanupLegacyOptions();
-            return true;
+        if (!parent::uninstall()) {
+            return false;
         }
-        return false;
+        if (!$this->unregisterHook('header')) {
+            return false;
+        }
+        if (!$this->unregisterHook('actionOrderStatusPostUpdate')) {
+            return false;
+        }
+        // Symmetric with install(); keeps the hook chain readable, even though
+        // parent::uninstall() already truncates the module's ps_hook_module rows.
+        foreach (FrakPlacementRegistry::distinctHooks() as $hook) {
+            if (!$this->unregisterHook($hook)) {
+                return false;
+            }
+        }
+
+        Configuration::deleteByName('FRAK_SHOP_NAME');
+        Configuration::deleteByName('FRAK_LOGO_URL');
+        Configuration::deleteByName('FRAK_WEBHOOK_SECRET');
+        Configuration::deleteByName('FRAK_SETTINGS_VERSION');
+        Configuration::deleteByName('FRAK_CRON_TOKEN');
+        Configuration::deleteByName(FrakMerchantResolver::CONFIG_KEY);
+        Configuration::deleteByName(FrakMerchantResolver::NEGATIVE_CACHE_KEY);
+        FrakPlacementRegistry::clearAll();
+        FrakWebhookQueue::dropTable();
+        self::cleanupLegacyOptions();
+        return true;
     }
 
     /**
@@ -137,6 +170,16 @@ class FrakIntegration extends Module
         FrakWebhookQueue::createTable();
         self::ensureCronTokenExists();
         $this->migrateOrderStatusHook();
+
+        // Placement registry (v2 → v3). Register the auxiliary hooks added by
+        // the registry so an upgraded shop has them on `ps_hook_module`, then
+        // seed each placement’s default — `seedDefaults()` skips rows that
+        // already exist so merchant choices on pre-existing placements are
+        // preserved across upgrades.
+        foreach (FrakPlacementRegistry::distinctHooks() as $hook) {
+            $this->registerHook($hook);
+        }
+        FrakPlacementRegistry::seedDefaults();
 
         Configuration::updateValue('FRAK_SETTINGS_VERSION', self::SETTINGS_VERSION);
     }
@@ -213,9 +256,9 @@ class FrakIntegration extends Module
         return $this->display(__FILE__, 'views/templates/hook/head.tpl');
     }
 
-    public function hookDisplayProductAdditionalInfo()
+    public function hookDisplayProductAdditionalInfo($params = [])
     {
-        return FrakComponentRenderer::shareButton(['placement' => 'product']);
+        return $this->dispatchHook('displayProductAdditionalInfo', is_array($params) ? $params : []);
     }
 
     /**
@@ -289,7 +332,7 @@ class FrakIntegration extends Module
 
     public function hookDisplayOrderConfirmation($params)
     {
-        return $this->renderPostPurchase($params['order'] ?? null, 'order-confirmation');
+        return $this->dispatchHook('displayOrderConfirmation', is_array($params) ? $params : []);
     }
 
     /**
@@ -302,7 +345,7 @@ class FrakIntegration extends Module
      */
     public function hookDisplayOrderDetail($params)
     {
-        return $this->renderPostPurchase($params['order'] ?? null, 'view-order');
+        return $this->dispatchHook('displayOrderDetail', is_array($params) ? $params : []);
     }
 
     /**
@@ -355,5 +398,165 @@ class FrakIntegration extends Module
     public function getContent()
     {
         Tools::redirectAdmin($this->context->link->getAdminLink('AdminFrakIntegration'));
+    }
+
+    /**
+     * Front-office banner above the storefront content. Driven by the
+     * `banner_top` placement — disabled by default to avoid changing the
+     * storefront on upgrade.
+     */
+    public function hookDisplayTop($params = [])
+    {
+        return $this->dispatchHook('displayTop', is_array($params) ? $params : []);
+    }
+
+    /**
+     * Homepage-only banner. Driven by the `banner_home` placement.
+     */
+    public function hookDisplayHome($params = [])
+    {
+        return $this->dispatchHook('displayHome', is_array($params) ? $params : []);
+    }
+
+    /**
+     * Cart summary share button. Driven by the `share_cart` placement —
+     * useful for “share your cart” referral flows.
+     */
+    public function hookDisplayShoppingCart($params = [])
+    {
+        return $this->dispatchHook('displayShoppingCart', is_array($params) ? $params : []);
+    }
+
+    /**
+     * Generic placement dispatcher — looks up every placement registered
+     * for `$hook`, gates each on its `FRAK_PLACEMENT_*` Configuration toggle,
+     * and concatenates the rendered markup. The component-specific render
+     * paths still live on `FrakComponentRenderer` (banner / share button) or
+     * the local `renderPostPurchase()` helper (post-purchase + tracker
+     * script + Smarty wrapper); this method is just the routing layer.
+     *
+     * @param array<string, mixed> $params Hook parameters forwarded by PrestaShop.
+     */
+    private function dispatchHook(string $hook, array $params = []): string
+    {
+        $output = '';
+        foreach (FrakPlacementRegistry::forHook($hook) as $id => $placement) {
+            if (!FrakPlacementRegistry::isEnabled($id)) {
+                continue;
+            }
+            switch ($placement['component']) {
+                case FrakPlacementRegistry::COMPONENT_BANNER:
+                    $output .= FrakComponentRenderer::banner([
+                        'placement' => $placement['placement_attr'],
+                    ]);
+                    break;
+                case FrakPlacementRegistry::COMPONENT_SHARE_BUTTON:
+                    $output .= FrakComponentRenderer::shareButton([
+                        'placement' => $placement['placement_attr'],
+                    ]);
+                    break;
+                case FrakPlacementRegistry::COMPONENT_POST_PURCHASE:
+                    $output .= $this->renderPostPurchase(
+                        $params['order'] ?? null,
+                        $placement['placement_attr']
+                    );
+                    break;
+            }
+        }
+        return $output;
+    }
+
+    /**
+     * Register the three Smarty function plugins so theme files and CMS
+     * pages can drop `<frak-X>` components anywhere via
+     * `{frak_banner}`, `{frak_share_button}`, `{frak_post_purchase}`.
+     *
+     * Smarty plugins are scoped per-Smarty-instance and registered lazily;
+     * we re-register on every module instantiation because the cost is
+     * negligible (three array writes) and PrestaShop instantiates the module
+     * per-request anyway via the `header` hook.
+     *
+     * The Smarty instance can be unavailable in CLI / install contexts —
+     * we guard with an existence check so a missing context does not blow
+     * up the bootstrap.
+     */
+    private function registerSmartyPlugins(): void
+    {
+        if (!isset($this->context) || !isset($this->context->smarty)) {
+            return;
+        }
+        $smarty = $this->context->smarty;
+        if (!is_object($smarty) || !method_exists($smarty, 'registerPlugin')) {
+            return;
+        }
+        // `registerPlugin` throws when called twice for the same name on the
+        // same Smarty instance — guard with `unregisterPlugin` so repeated
+        // module instantiations within the same request stay idempotent.
+        $names = ['frak_banner', 'frak_share_button', 'frak_post_purchase'];
+        $callbacks = [
+            'frak_banner' => [self::class, 'smartyFunctionBanner'],
+            'frak_share_button' => [self::class, 'smartyFunctionShareButton'],
+            'frak_post_purchase' => [self::class, 'smartyFunctionPostPurchase'],
+        ];
+        foreach ($names as $name) {
+            if (method_exists($smarty, 'unregisterPlugin')) {
+                @$smarty->unregisterPlugin('function', $name);
+            }
+            $smarty->registerPlugin('function', $name, $callbacks[$name]);
+        }
+    }
+
+    /**
+     * `{frak_banner placement="home" referral_title="..."}` Smarty handler.
+     *
+     * Snake-cases attribute keys at the boundary so merchants can write
+     * naturally-readable templates (`referral_title` over `referralTitle`)
+     * — mirrors the WordPress shortcode contract.
+     *
+     * @param array<string, mixed> $params Smarty-supplied attribute pairs.
+     * @param mixed                $smarty Smarty instance (unused).
+     */
+    public static function smartyFunctionBanner(array $params, $smarty): string
+    {
+        unset($smarty);
+        return FrakComponentRenderer::banner(
+            FrakComponentRenderer::snakeKeysToCamel($params)
+        );
+    }
+
+    /**
+     * `{frak_share_button text="Share & earn" use_reward=1}` Smarty handler.
+     *
+     * @param array<string, mixed> $params Smarty-supplied attribute pairs.
+     * @param mixed                $smarty Smarty instance (unused).
+     */
+    public static function smartyFunctionShareButton(array $params, $smarty): string
+    {
+        unset($smarty);
+        return FrakComponentRenderer::shareButton(
+            FrakComponentRenderer::snakeKeysToCamel($params)
+        );
+    }
+
+    /**
+     * `{frak_post_purchase variant="referrer" cta_text="Earn"}` Smarty handler.
+     *
+     * Emits the bare `<frak-post-purchase>` markup. Order context
+     * (`customer-id` / `order-id` / `token`) is NOT auto-injected here —
+     * the auto-render hooks (`displayOrderConfirmation`,
+     * `displayOrderDetail`) own that path through `renderPostPurchase()`.
+     * Templates that need a tracker on a non-order endpoint should pass the
+     * triple explicitly via `customer_id`, `order_id`, `token` parameters
+     * (snake_case keys are normalised to camelCase before render).
+     *
+     * @param array<string, mixed> $params Smarty-supplied attribute pairs.
+     * @param mixed                $smarty Smarty instance (unused).
+     */
+    public static function smartyFunctionPostPurchase(array $params, $smarty): string
+    {
+        unset($smarty);
+        return FrakComponentRenderer::postPurchase(
+            FrakComponentRenderer::snakeKeysToCamel($params)
+        );
     }
 }

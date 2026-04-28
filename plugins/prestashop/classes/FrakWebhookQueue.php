@@ -184,6 +184,81 @@ class FrakWebhookQueue
     }
 
     /**
+     * Snapshot of queue health for the admin observability panel.
+     *
+     * Single round-trip to MySQL via a `GROUP BY state` aggregation so the
+     * admin page render stays well under the typical 50 ms front-page
+     * budget even when the queue has thousands of rows. The latest-error
+     * lookup is a separate small query (LIMIT 1, ordered by updated_at)
+     * because we only need its timestamp + truncated message, not a full
+     * table scan.
+     *
+     * Returns zeroes / nulls when the table is missing (the schema migrator
+     * has not run yet) so the admin page still renders during a partial
+     * upgrade.
+     *
+     * @return array{pending:int,failed:int,success:int,oldest_pending_at:?string,last_error:?string,last_error_at:?string}
+     */
+    public static function stats(): array
+    {
+        $defaults = [
+            'pending' => 0,
+            'failed' => 0,
+            'success' => 0,
+            'oldest_pending_at' => null,
+            'last_error' => null,
+            'last_error_at' => null,
+        ];
+
+        $db = Db::getInstance();
+        $table = _DB_PREFIX_ . self::TABLE;
+
+        $rows = $db->executeS(
+            'SELECT `state`, COUNT(*) AS `cnt`, MIN(`next_retry_at`) AS `oldest`'
+            . ' FROM `' . $table . '`'
+            . ' GROUP BY `state`'
+        );
+        if (!is_array($rows)) {
+            return $defaults;
+        }
+
+        $stats = $defaults;
+        foreach ($rows as $row) {
+            $state = isset($row['state']) ? (string) $row['state'] : '';
+            $count = isset($row['cnt']) ? (int) $row['cnt'] : 0;
+            switch ($state) {
+                case self::STATE_PENDING:
+                    $stats['pending'] = $count;
+                    $stats['oldest_pending_at'] = isset($row['oldest']) ? (string) $row['oldest'] : null;
+                    break;
+                case self::STATE_FAILED:
+                    $stats['failed'] = $count;
+                    break;
+                case self::STATE_SUCCESS:
+                    $stats['success'] = $count;
+                    break;
+            }
+        }
+
+        // Most recent failure (parked or pending) for the admin error
+        // surface. Joins on `last_error IS NOT NULL` so successful retries
+        // (which clear `last_error` via `markSuccess`) are skipped.
+        $latest = $db->getRow(
+            'SELECT `last_error`, `updated_at`'
+            . ' FROM `' . $table . '`'
+            . ' WHERE `last_error` IS NOT NULL AND `last_error` <> ""'
+            . ' ORDER BY `updated_at` DESC'
+            . ' LIMIT 1'
+        );
+        if (is_array($latest)) {
+            $stats['last_error'] = isset($latest['last_error']) ? (string) $latest['last_error'] : null;
+            $stats['last_error_at'] = isset($latest['updated_at']) ? (string) $latest['updated_at'] : null;
+        }
+
+        return $stats;
+    }
+
+    /**
      * Truncate the error column so we never overflow MySQL's TEXT limit
      * (~65 KB) on adversarial backend responses. 8 KB is plenty for a stack
      * trace + a reasonable response body.

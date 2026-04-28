@@ -1,11 +1,16 @@
 {*
    Frak admin settings — backend-driven configuration baseline.
 
-   Mirrors the WordPress plugin's `admin/views/settings-page.php` layout:
-   one Website Information section + one Purchase Tracking / Webhook
-   Configuration section. Modal i18n / language / share-button copy/style
-   panels were removed in commit 3 — those settings now live in the Frak
-   business dashboard and are resolved by the SDK at runtime.
+   Layout mirrors the WordPress plugin's `admin/views/settings-page.php`:
+   one Website Information section, one Purchase Tracking / Webhook
+   Configuration section, one Component Placements section listing every
+   placement registered by `FrakPlacementRegistry`, and one Webhook Queue
+   Health panel reading `FrakWebhookQueue::stats()`.
+
+   The brand + webhook secret + placement toggles share a single `<form>`
+   so the merchant gets one Save button; the explicit operations (Refresh
+   Merchant, Drain queue) submit to small dedicated forms because they are
+   stateful actions, not config writes.
 *}
 
 <div class="frak-links" style="margin-bottom: 16px;">
@@ -14,9 +19,10 @@
     <a href="{$frak_dashboard_url}" target="_blank" rel="noopener">🎯 {l s='Dashboard' mod='frakintegration'}</a>
 </div>
 
-<div class="panel">
-    <h3><i class="icon icon-info-circle"></i> {l s='Website Information' mod='frakintegration'}</h3>
-    <form id="frak_brand_form" class="defaultForm form-horizontal" action="{$form_action}" method="post" enctype="multipart/form-data">
+<form id="frak_settings_form" class="defaultForm form-horizontal" action="{$form_action}" method="post" enctype="multipart/form-data">
+
+    <div class="panel">
+        <h3><i class="icon icon-info-circle"></i> {l s='Website Information' mod='frakintegration'}</h3>
         <div class="form-group">
             <label class="control-label col-lg-3">{l s='Shop Name' mod='frakintegration'}</label>
             <div class="col-lg-9">
@@ -57,21 +63,14 @@
                 </div>
             </div>
         </div>
-        <div class="panel-footer">
-            <button type="submit" name="submitFrakModal" class="btn btn-default pull-right">
-                <i class="process-icon-save"></i> {l s='Save' mod='frakintegration'}
-            </button>
-        </div>
-    </form>
-</div>
+    </div>
 
-<div class="panel">
-    <h3><i class="icon icon-cogs"></i> {l s='Purchase Tracking' mod='frakintegration'}</h3>
-    <p class="help-block">
-        {l s='Order updates are delivered to Frak via an HMAC-SHA256 signed webhook. Generate the secret in your Frak business dashboard, paste it below, then make sure the merchant record below shows as resolved.' mod='frakintegration'}
-    </p>
+    <div class="panel">
+        <h3><i class="icon icon-cogs"></i> {l s='Purchase Tracking' mod='frakintegration'}</h3>
+        <p class="help-block">
+            {l s='Order updates are delivered to Frak via an HMAC-SHA256 signed webhook. Generate the secret in your Frak business dashboard, paste it below, then make sure the merchant record below shows as resolved.' mod='frakintegration'}
+        </p>
 
-    <form id="frak_webhook_form" class="defaultForm form-horizontal" action="{$form_action}" method="post">
         <div class="form-group">
             <label class="control-label col-lg-3">{l s='Webhook Secret' mod='frakintegration'}</label>
             <div class="col-lg-9">
@@ -124,23 +123,133 @@
                         <code style="word-break: break-all;">{$cron_url|escape:'html':'UTF-8'}</code>
                     </p>
                     <p class="help-block">
-                        {l s='Failed webhook deliveries are queued and retried with exponential backoff (5 min → 24 h, 5 attempts). Wire this URL into a cron that runs every 5 min — either via the official ps_cronjobs module, or as a server-level cron job (e.g. */5 * * * * curl -fs <URL>). The token in the URL gates access; rotate it by deleting FRAK_CRON_TOKEN and reinstalling the module.' mod='frakintegration'}
+                        {l s='Failed webhook deliveries are queued and retried with exponential backoff (5 min → 24 h, 5 attempts). Wire this URL into a cron that runs every 5 min — either via the official ps_cronjobs module, or as a server-level cron job (e.g. */5 * * * * curl -fs <URL>). The token in the URL gates access; rotate it by deleting FRAK_CRON_TOKEN and reinstalling the module.' mod='frakintegration'}
                     </p>
                 </div>
             </div>
         {/if}
-        <div class="panel-footer">
-            <button type="submit" name="submitFrakWebhook" class="btn btn-primary">
-                <i class="process-icon-save"></i> {l s='Save Secret' mod='frakintegration'}
-            </button>
-            <button type="submit" name="refreshFrakMerchant" class="btn btn-default">
-                <i class="icon-refresh"></i> {l s='Refresh Merchant' mod='frakintegration'}
-            </button>
-            <a href="{$merchant_dashboard_url|escape:'html':'UTF-8'}" target="_blank" rel="noopener" class="btn btn-default">
-                <i class="icon-external-link"></i> {l s='Manage on Frak' mod='frakintegration'}
-            </a>
+    </div>
+
+    {if !empty($placement_groups)}
+        <div class="panel">
+            <h3><i class="icon icon-puzzle-piece"></i> {l s='Component Placements' mod='frakintegration'}</h3>
+            <p class="help-block">
+                {l s='Pick which Frak components render automatically on which storefront surfaces. The legacy product / order placements are on by default; the auxiliary surfaces (cart, top banner, homepage banner, footer banner) are off by default to keep upgrades visually unchanged.' mod='frakintegration'}
+                <br>
+                {l s='Need a custom placement? Drop one of the Smarty function plugins anywhere in your theme: {frak_banner placement="hero"}, {frak_share_button text="Share & earn"}, {frak_post_purchase variant="referrer"}.' mod='frakintegration'}
+            </p>
+
+            {foreach from=$placement_groups key=component item=group}
+                <fieldset style="margin-top: 16px; padding: 12px 16px; border: 1px solid #e0e0e0; border-radius: 4px;">
+                    <legend style="font-size: 14px; font-weight: 600; padding: 0 8px;">{$group.label|escape:'html':'UTF-8'}</legend>
+                    {foreach from=$group.items item=item}
+                        <div class="form-group" style="margin-bottom: 8px;">
+                            <div class="col-lg-12">
+                                {* Hidden marker so the controller can distinguish "checkbox unchecked" from "form did not include this placement" — see processPlacementToggles() in AdminFrakIntegrationController.php. *}
+                                <input type="hidden" name="{$item.config_key|escape:'html':'UTF-8'}__present" value="1" />
+                                <label style="font-weight: normal; cursor: pointer;">
+                                    <input type="checkbox"
+                                           name="{$item.config_key|escape:'html':'UTF-8'}"
+                                           value="1"
+                                           {if $item.enabled}checked="checked"{/if} />
+                                    <strong>{$item.label|escape:'html':'UTF-8'}</strong>
+                                </label>
+                                <p class="help-block" style="margin: 4px 0 0 22px; font-size: 12px;">
+                                    {$item.description|escape:'html':'UTF-8'}
+                                    <br>
+                                    <small style="color: #888;">
+                                        {l s='Hook:' mod='frakintegration'} <code>{$item.hook|escape:'html':'UTF-8'}</code>
+                                        &nbsp;·&nbsp;
+                                        {l s='Placement:' mod='frakintegration'} <code>{$item.placement_attr|escape:'html':'UTF-8'}</code>
+                                    </small>
+                                </p>
+                            </div>
+                        </div>
+                    {/foreach}
+                </fieldset>
+            {/foreach}
         </div>
-    </form>
+    {/if}
+
+    <div class="panel-footer">
+        <button type="submit" name="submitFrakSettings" class="btn btn-primary">
+            <i class="process-icon-save"></i> {l s='Save Settings' mod='frakintegration'}
+        </button>
+    </div>
+</form>
+
+{*
+   Auxiliary action buttons. Each lives in its own small <form> because they
+   represent stateful operations (force a network round-trip, drain the
+   queue) rather than config writes — keeping them out of the main Save form
+   prevents accidental triggers on every submit.
+*}
+<div class="panel">
+    <h3><i class="icon icon-bolt"></i> {l s='Maintenance' mod='frakintegration'}</h3>
+    <div class="row">
+        <div class="col-lg-6">
+            <h4>{l s='Merchant resolver' mod='frakintegration'}</h4>
+            <p class="help-block">
+                {l s='Force a fresh GET /user/merchant/resolve round-trip — invalidates the per-domain cache and the negative cache. Use after a domain rename or right after registering the shop on the dashboard.' mod='frakintegration'}
+            </p>
+            <form action="{$form_action}" method="post" style="display: inline;">
+                <button type="submit" name="refreshFrakMerchant" class="btn btn-default">
+                    <i class="icon-refresh"></i> {l s='Refresh Merchant' mod='frakintegration'}
+                </button>
+                <a href="{$merchant_dashboard_url|escape:'html':'UTF-8'}" target="_blank" rel="noopener" class="btn btn-default">
+                    <i class="icon-external-link"></i> {l s='Manage on Frak' mod='frakintegration'}
+                </a>
+            </form>
+        </div>
+
+        <div class="col-lg-6">
+            <h4>{l s='Webhook queue' mod='frakintegration'}</h4>
+            <table class="table" style="margin-bottom: 12px;">
+                <tbody>
+                    <tr>
+                        <th style="width: 50%;">{l s='Pending' mod='frakintegration'}</th>
+                        <td>
+                            <code>{$queue_stats.pending|escape:'html':'UTF-8'}</code>
+                            {if $queue_stats.oldest_pending_at}
+                                <br><small style="color: #888;">
+                                    {l s='Next attempt:' mod='frakintegration'} {$queue_stats.oldest_pending_at|escape:'html':'UTF-8'}
+                                </small>
+                            {/if}
+                        </td>
+                    </tr>
+                    <tr>
+                        <th>{l s='Delivered' mod='frakintegration'}</th>
+                        <td><code>{$queue_stats.success|escape:'html':'UTF-8'}</code></td>
+                    </tr>
+                    <tr>
+                        <th>{l s='Parked (failed)' mod='frakintegration'}</th>
+                        <td>
+                            <code>{$queue_stats.failed|escape:'html':'UTF-8'}</code>
+                            {if $queue_stats.failed > 0}
+                                &nbsp;<span class="label label-danger">{l s='Investigate logs' mod='frakintegration'}</span>
+                            {/if}
+                        </td>
+                    </tr>
+                    {if $queue_stats.last_error}
+                        <tr>
+                            <th>{l s='Last error' mod='frakintegration'}</th>
+                            <td>
+                                <small style="color: #b94a48; word-break: break-word;">{$queue_stats.last_error|truncate:200:'…':true|escape:'html':'UTF-8'}</small>
+                                {if $queue_stats.last_error_at}
+                                    <br><small style="color: #888;">{$queue_stats.last_error_at|escape:'html':'UTF-8'}</small>
+                                {/if}
+                            </td>
+                        </tr>
+                    {/if}
+                </tbody>
+            </table>
+            <form action="{$form_action}" method="post" style="display: inline;">
+                <button type="submit" name="drainFrakQueue" class="btn btn-default">
+                    <i class="icon-bolt"></i> {l s='Drain queue now' mod='frakintegration'}
+                </button>
+            </form>
+        </div>
+    </div>
 </div>
 
 <script>

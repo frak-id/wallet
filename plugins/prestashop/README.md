@@ -29,20 +29,45 @@ The Frak Integration page is reachable from **Modules → Module Manager → Fra
 
 - **Brand**: shop name + logo URL (defaults to PS_SHOP_NAME + PS_LOGO). Surfaced to the SDK as `metadata.{name,logoUrl}`.
 - **Webhook Secret**: the HMAC signing key copied from the Frak business dashboard. Outbound order webhooks are rejected by the backend without a matching secret.
+- **Component Placements**: one checkbox per registered placement (share button on product / cart, banner at top / homepage, post-purchase on order confirmation / order detail). Lets merchants opt placements in or out without editing code or theme files.
 - **Merchant**: read-only display of the resolved Frak merchant UUID + the shop's normalized domain.
-- **Refresh Merchant**: invalidates the cached resolver record and forces a fresh `GET /user/merchant/resolve` round-trip — use after a domain rename or after registering the shop on the dashboard for the first time.
+- **Maintenance → Refresh Merchant**: invalidates the cached resolver record and forces a fresh `GET /user/merchant/resolve` round-trip — use after a domain rename or after registering the shop on the dashboard for the first time.
+- **Maintenance → Webhook queue**: pending / delivered / parked counts pulled from `FrakWebhookQueue::stats()`, the next-attempt timestamp for the oldest pending row, and the most recent error message. The companion **Drain queue now** button calls `FrakWebhookCron::run()` synchronously — useful before the cron URL is wired up, or to flush a backlog after fixing a backend outage.
 
 The SDK pulls everything else (i18n strings, modal language, share-button copy) from the Frak business dashboard once the merchant is registered, so the module's configuration surface is intentionally minimal.
 
 ## Components
 
-### `<frak-button-share>` — Product page share CTA
+Three Frak web components are available: `<frak-button-share>`, `<frak-banner>`, and `<frak-post-purchase>`. Each one can be auto-rendered on a configurable set of PrestaShop hooks (the **Component Placements** section in the admin), or dropped into any `.tpl` file / CMS page via Smarty function plugins.
 
-Rendered automatically on `displayProductAdditionalInfo` via `FrakComponentRenderer::shareButton(['placement' => 'product'])`. Picks up Bootstrap's `btn btn-secondary` classes from the theme by default; the merchant tunes copy and behaviour from the Frak business dashboard.
+### Auto-render placements
 
-### `<frak-post-purchase>` — Order confirmation card
+| Component | Placement id | PrestaShop hook | Default | `placement` attr |
+| --- | --- | --- | --- | --- |
+| `<frak-button-share>` | `share_product` | `displayProductAdditionalInfo` | enabled | `product` |
+| `<frak-button-share>` | `share_cart` | `displayShoppingCart` | disabled | `cart` |
+| `<frak-banner>` | `banner_top` | `displayTop` | disabled | `top` |
+| `<frak-banner>` | `banner_home` | `displayHome` | disabled | `home` |
+| `<frak-post-purchase>` | `post_purchase_confirmation` | `displayOrderConfirmation` | enabled | `order-confirmation` |
+| `<frak-post-purchase>` | `post_purchase_detail` | `displayOrderDetail` | enabled | `view-order` |
 
-Rendered automatically on `displayOrderConfirmation` via `FrakComponentRenderer::postPurchase(...)`. The hook hands `customerId`, `orderId`, and `token` (`secure_key_orderId`) directly to the renderer — no client-side data resolution needed.
+Adding / removing a placement is a single edit in [`classes/FrakPlacementRegistry.php`](classes/FrakPlacementRegistry.php) plus a matching `hookXxx()` callback in [`frakintegration.php`](frakintegration.php) that delegates to `dispatchHook()`.
+
+### Smarty function plugins
+
+Theme files and CMS pages can drop Frak components anywhere via three Smarty function plugins registered by the module:
+
+```smarty
+{frak_banner placement="hero" referral_title="Welcome back!"}
+{frak_share_button text="Share & earn" use_reward=1 placement="sidebar"}
+{frak_post_purchase variant="referrer" cta_text="Earn rewards"}
+```
+
+Snake_case attribute keys are normalised to camelCase at the boundary so templates read naturally. The post-purchase variant emits the bare `<frak-post-purchase>` markup — order context (`customer-id` / `order-id` / `token`) is only auto-injected when the auto-render hooks (`displayOrderConfirmation`, `displayOrderDetail`) fire; pass the triple explicitly (`customer_id`, `order_id`, `token`) when calling the Smarty function on a non-order endpoint.
+
+### Post-purchase order-context resolution
+
+On the auto-render order hooks, `<frak-post-purchase>` receives `customerId`, `orderId`, and `token` (`secure_key_orderId`) resolved by `FrakOrderResolver::getPostPurchaseData()` — no client-side data resolution needed. The same call pulls up to 6 line items (title / image URL / product link) and forwards them as a JSON-encoded `products` attribute so the SDK can paint product cards out of the box.
 
 ### Order status → Frak webhook
 

@@ -195,6 +195,44 @@ class FrakComponentRenderer
     }
 
     /**
+     * Normalise snake_case array keys to camelCase.
+     *
+     * Smarty function plugins receive their parameters as an associative
+     * array keyed by the literal attribute name written in the template
+     * (`{frak_banner referral_title="..."}` → `['referral_title' => ...]`).
+     * The renderer + per-component attribute maps use camelCase (`referralTitle`)
+     * so callers normalise at the boundary via this helper before invoking
+     * `banner()` / `shareButton()` / `postPurchase()`.
+     *
+     * Keys without underscores are passed through unchanged so camelCase
+     * input (e.g. a hook callback already using the renderer's expected
+     * shape) still works.
+     *
+     * Mirrors `Frak_Component_Renderer::snake_keys_to_camel()` in the
+     * WordPress plugin so both surfaces accept the same input shapes.
+     *
+     * @param array<string, mixed> $attrs Arbitrary attribute map.
+     * @return array<string, mixed>
+     */
+    public static function snakeKeysToCamel(array $attrs): array
+    {
+        $normalized = [];
+        foreach ($attrs as $key => $value) {
+            if (strpos((string) $key, '_') === false) {
+                $normalized[$key] = $value;
+                continue;
+            }
+            $parts = explode('_', (string) $key);
+            $camel_key = (string) array_shift($parts);
+            foreach ($parts as $part) {
+                $camel_key .= ucfirst($part);
+            }
+            $normalized[$camel_key] = $value;
+        }
+        return $normalized;
+    }
+
+    /**
      * Prepend Bootstrap button-style classes onto `classname` based on the
      * caller-supplied `buttonStyle` preset. A missing or empty
      * `buttonStyle` falls back to `secondary` so every render path picks

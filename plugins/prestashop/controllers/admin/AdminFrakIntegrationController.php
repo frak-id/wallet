@@ -3,6 +3,9 @@
 require_once _PS_MODULE_DIR_ . 'frakintegration/classes/FrakUtils.php';
 require_once _PS_MODULE_DIR_ . 'frakintegration/classes/FrakMerchantResolver.php';
 require_once _PS_MODULE_DIR_ . 'frakintegration/classes/FrakWebhookHelper.php';
+require_once _PS_MODULE_DIR_ . 'frakintegration/classes/FrakWebhookQueue.php';
+require_once _PS_MODULE_DIR_ . 'frakintegration/classes/FrakWebhookCron.php';
+require_once _PS_MODULE_DIR_ . 'frakintegration/classes/FrakPlacementRegistry.php';
 
 class AdminFrakIntegrationController extends ModuleAdminController
 {
@@ -38,6 +41,8 @@ class AdminFrakIntegrationController extends ModuleAdminController
             'merchant_dashboard_url' => $merchant !== null
                 ? 'https://business.frak.id/merchant/' . $merchant['id']
                 : 'https://business.frak.id/',
+            'placement_groups' => $this->buildPlacementGroups(),
+            'queue_stats' => FrakWebhookQueue::stats(),
         ]);
 
         return $this->context->smarty->fetch($this->getTemplatePath() . 'configure.tpl');
@@ -64,79 +69,208 @@ class AdminFrakIntegrationController extends ModuleAdminController
             . rawurlencode($token);
     }
 
-    public function postProcess()
+    /**
+     * Group registered placements by component so the template renders one
+     * `<fieldset>` per component (Banner / Share button / Post-purchase) with
+     * its toggles inside. The grouping is computed here (rather than in the
+     * template) so the Smarty file stays declarative.
+     *
+     * Each placement entry carries its current enabled state alongside its
+     * static metadata so the template's `<input type="checkbox">` can wire
+     * `checked` from `enabled` without re-reading Configuration.
+     *
+     * @return array<string, array{label: string, items: array<int, array<string, mixed>>}>
+     */
+    private function buildPlacementGroups(): array
     {
-        if (Tools::isSubmit('submitFrakModal')) {
-            $shopName = strval(Tools::getValue('FRAK_SHOP_NAME'));
-            $logoUrl = strval(Tools::getValue('FRAK_LOGO_URL'));
+        $component_labels = [
+            FrakPlacementRegistry::COMPONENT_SHARE_BUTTON => $this->l('Share button'),
+            FrakPlacementRegistry::COMPONENT_BANNER => $this->l('Banner'),
+            FrakPlacementRegistry::COMPONENT_POST_PURCHASE => $this->l('Post-purchase card'),
+        ];
 
-            // Handle optional logo upload first — a successful upload overrides
-            // the typed-in URL so the merchant can paste a placeholder + drop a
-            // file in one round-trip.
-            if (isset($_FILES['FRAK_LOGO_FILE']) && $_FILES['FRAK_LOGO_FILE']['error'] == UPLOAD_ERR_OK) {
-                $uploadedFile = $_FILES['FRAK_LOGO_FILE'];
-                $allowedExtensions = ['jpg', 'jpeg', 'png', 'gif', 'svg'];
-                $maxFileSize = 2 * 1024 * 1024; // 2MB
-
-                $fileExtension = strtolower(pathinfo($uploadedFile['name'], PATHINFO_EXTENSION));
-
-                if (!in_array($fileExtension, $allowedExtensions)) {
-                    $this->errors[] = $this->l('Invalid file format. Only JPG, PNG, GIF, SVG files are allowed.');
-                } elseif ($uploadedFile['size'] > $maxFileSize) {
-                    $this->errors[] = $this->l('File size exceeds 2MB limit.');
-                } else {
-                    $uploadsDir = _PS_MODULE_DIR_ . 'frakintegration/uploads/';
-                    if (!is_dir($uploadsDir)) {
-                        mkdir($uploadsDir, 0755, true);
-                    }
-
-                    $filename = 'logo_' . uniqid() . '.' . $fileExtension;
-                    $targetPath = $uploadsDir . $filename;
-
-                    if (move_uploaded_file($uploadedFile['tmp_name'], $targetPath)) {
-                        $logoUrl = $this->context->link->getBaseLink() . 'modules/frakintegration/uploads/' . $filename;
-                        $this->confirmations[] = $this->l('Logo uploaded successfully');
-                    } else {
-                        $this->errors[] = $this->l('Failed to upload logo file');
-                    }
-                }
-            }
-
-            if (!$shopName || empty($shopName) || !Validate::isGenericName($shopName)) {
-                $this->errors[] = $this->l('Invalid Shop Name');
-            } elseif (!$logoUrl || empty($logoUrl) || (!Validate::isUrl($logoUrl) && !$this->isLocalFile($logoUrl))) {
-                $this->errors[] = $this->l('Invalid Logo URL');
-            } elseif (empty($this->errors)) {
-                Configuration::updateValue('FRAK_SHOP_NAME', $shopName);
-                Configuration::updateValue('FRAK_LOGO_URL', $logoUrl);
-                $this->confirmations[] = $this->l('Brand settings updated');
-
-                if (isset($_FILES['FRAK_LOGO_FILE']) && $_FILES['FRAK_LOGO_FILE']['error'] == UPLOAD_ERR_OK) {
-                    Tools::redirectAdmin($this->context->link->getAdminLink('AdminFrakIntegration') . '&conf=4');
-                }
-            }
+        $groups = [];
+        foreach ($component_labels as $component => $label) {
+            $groups[$component] = ['label' => $label, 'items' => []];
         }
 
-        if (Tools::isSubmit('submitFrakWebhook')) {
-            // The webhook secret is owned by the Frak business dashboard (single
-            // source of truth, stored on `merchantWebhooksTable.hookSignatureKey`).
-            // The admin pastes it here so outbound HMAC signatures match what the
-            // backend verifies. An empty submission clears the row and disables
-            // dispatch — mirrors the WordPress plugin's pattern.
-            $submittedSecret = strval(Tools::getValue('FRAK_WEBHOOK_SECRET'));
-            Configuration::updateValue('FRAK_WEBHOOK_SECRET', $submittedSecret);
-            $this->confirmations[] = $this->l('Webhook secret updated');
+        foreach (FrakPlacementRegistry::PLACEMENTS as $id => $placement) {
+            $component = $placement['component'];
+            if (!isset($groups[$component])) {
+                continue;
+            }
+            $groups[$component]['items'][] = [
+                'id' => $id,
+                'config_key' => $placement['config_key'],
+                'label' => $this->l($placement['label']),
+                'description' => $this->l($placement['description']),
+                'hook' => $placement['hook'],
+                'placement_attr' => $placement['placement_attr'],
+                'enabled' => FrakPlacementRegistry::isEnabled($id),
+            ];
+        }
+
+        // Strip empty groups so the template does not render orphaned
+        // headings (e.g. if a future component has no placements yet).
+        return array_filter(
+            $groups,
+            static fn (array $group): bool => !empty($group['items'])
+        );
+    }
+
+    public function postProcess()
+    {
+        if (Tools::isSubmit('submitFrakSettings')) {
+            $this->processBrandFields();
+            $this->processWebhookSecret();
+            $this->processPlacementToggles();
         }
 
         if (Tools::isSubmit('refreshFrakMerchant')) {
-            FrakMerchantResolver::invalidate();
-            $merchant = FrakMerchantResolver::getRecord();
-            if ($merchant !== null) {
-                $this->confirmations[] = $this->l('Merchant resolved') . ': ' . $merchant['id'];
+            $this->processMerchantRefresh();
+        }
+
+        if (Tools::isSubmit('drainFrakQueue')) {
+            $this->processDrainQueue();
+        }
+    }
+
+    /**
+     * Persist the brand-section fields (shop name + logo URL/file). A
+     * successful file upload replaces the typed-in URL so the merchant can
+     * paste a placeholder + drop a file in one round-trip.
+     */
+    private function processBrandFields(): void
+    {
+        $shopName = strval(Tools::getValue('FRAK_SHOP_NAME'));
+        $logoUrl = strval(Tools::getValue('FRAK_LOGO_URL'));
+
+        if (isset($_FILES['FRAK_LOGO_FILE']) && $_FILES['FRAK_LOGO_FILE']['error'] == UPLOAD_ERR_OK) {
+            $uploadedFile = $_FILES['FRAK_LOGO_FILE'];
+            $allowedExtensions = ['jpg', 'jpeg', 'png', 'gif', 'svg'];
+            $maxFileSize = 2 * 1024 * 1024; // 2MB
+
+            $fileExtension = strtolower(pathinfo($uploadedFile['name'], PATHINFO_EXTENSION));
+
+            if (!in_array($fileExtension, $allowedExtensions)) {
+                $this->errors[] = $this->l('Invalid file format. Only JPG, PNG, GIF, SVG files are allowed.');
+            } elseif ($uploadedFile['size'] > $maxFileSize) {
+                $this->errors[] = $this->l('File size exceeds 2MB limit.');
             } else {
-                $this->errors[] = $this->l('Merchant not resolved for the current domain. Register the shop in the Frak dashboard.');
+                $uploadsDir = _PS_MODULE_DIR_ . 'frakintegration/uploads/';
+                if (!is_dir($uploadsDir)) {
+                    mkdir($uploadsDir, 0755, true);
+                }
+
+                $filename = 'logo_' . uniqid() . '.' . $fileExtension;
+                $targetPath = $uploadsDir . $filename;
+
+                if (move_uploaded_file($uploadedFile['tmp_name'], $targetPath)) {
+                    $logoUrl = $this->context->link->getBaseLink() . 'modules/frakintegration/uploads/' . $filename;
+                    $this->confirmations[] = $this->l('Logo uploaded successfully');
+                } else {
+                    $this->errors[] = $this->l('Failed to upload logo file');
+                }
             }
         }
+
+        if (!$shopName || empty($shopName) || !Validate::isGenericName($shopName)) {
+            $this->errors[] = $this->l('Invalid Shop Name');
+            return;
+        }
+        if (!$logoUrl || empty($logoUrl) || (!Validate::isUrl($logoUrl) && !$this->isLocalFile($logoUrl))) {
+            $this->errors[] = $this->l('Invalid Logo URL');
+            return;
+        }
+
+        Configuration::updateValue('FRAK_SHOP_NAME', $shopName);
+        Configuration::updateValue('FRAK_LOGO_URL', $logoUrl);
+        $this->confirmations[] = $this->l('Brand settings updated');
+    }
+
+    /**
+     * Persist the webhook secret. Empty submissions clear the row and disable
+     * dispatch — mirrors the WordPress plugin's pattern. The secret is owned
+     * by the Frak business dashboard (single source of truth, stored on
+     * `merchantWebhooksTable.hookSignatureKey`); the admin pastes it here so
+     * outbound HMAC signatures match what the backend verifies.
+     */
+    private function processWebhookSecret(): void
+    {
+        if (!Tools::getIsset('FRAK_WEBHOOK_SECRET')) {
+            return;
+        }
+        $submittedSecret = strval(Tools::getValue('FRAK_WEBHOOK_SECRET'));
+        $previousSecret = (string) Configuration::get('FRAK_WEBHOOK_SECRET');
+        if ($submittedSecret === $previousSecret) {
+            return;
+        }
+        Configuration::updateValue('FRAK_WEBHOOK_SECRET', $submittedSecret);
+        $this->confirmations[] = $this->l('Webhook secret updated');
+    }
+
+    /**
+     * Persist placement on/off toggles from the rendered checkboxes. The form
+     * lists every registered placement; an unchecked checkbox is absent from
+     * `$_POST`, so we treat "missing" as "disabled" instead of "leave alone"
+     * — otherwise the merchant could never turn a placement off.
+     */
+    private function processPlacementToggles(): void
+    {
+        $changed = 0;
+        foreach (FrakPlacementRegistry::PLACEMENTS as $placement) {
+            $key = $placement['config_key'];
+            // The rendered form emits a hidden `<input name="…__present" value="1">`
+            // alongside each checkbox so we can distinguish "form did not include
+            // this placement" (do nothing) from "checkbox unchecked" (write 0).
+            if (!Tools::getIsset($key . '__present')) {
+                continue;
+            }
+            $next = Tools::getValue($key) ? '1' : '0';
+            $current = (string) Configuration::get($key);
+            if ($next === $current) {
+                continue;
+            }
+            Configuration::updateValue($key, $next);
+            $changed++;
+        }
+        if ($changed > 0) {
+            $this->confirmations[] = $this->l('Placement settings updated');
+        }
+    }
+
+    /**
+     * Force-refresh the cached merchant resolver record. Wired to the
+     * "Refresh Merchant" button — invalidates the per-domain cache and the
+     * negative cache, then re-queries `GET /user/merchant/resolve` so a
+     * domain rename / fresh registration shows up immediately.
+     */
+    private function processMerchantRefresh(): void
+    {
+        FrakMerchantResolver::invalidate();
+        $merchant = FrakMerchantResolver::getRecord();
+        if ($merchant !== null) {
+            $this->confirmations[] = $this->l('Merchant resolved') . ': ' . $merchant['id'];
+            return;
+        }
+        $this->errors[] = $this->l('Merchant not resolved for the current domain. Register the shop in the Frak dashboard.');
+    }
+
+    /**
+     * Synchronous drainer trigger — wired to the "Drain now" button on the
+     * queue health panel. Handy when the cron URL has not been wired up yet,
+     * or when the merchant wants to flush a build-up after fixing a backend
+     * outage without waiting for the next cron tick.
+     */
+    private function processDrainQueue(): void
+    {
+        $stats = FrakWebhookCron::run();
+        $this->confirmations[] = sprintf(
+            $this->l('Webhook queue drained: %1$d processed (%2$d success, %3$d failure)'),
+            (int) $stats['processed'],
+            (int) $stats['success'],
+            (int) $stats['failure']
+        );
     }
 
     private function isLocalFile($url)
