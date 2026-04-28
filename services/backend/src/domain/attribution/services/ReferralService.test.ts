@@ -196,16 +196,19 @@ describe("ReferralService", () => {
     });
 
     describe("removeReferrer", () => {
-        it("returns removed:false when nothing active to remove", async () => {
+        it("throws 404 NO_REFERRER when nothing active to remove", async () => {
             repository.removeReferrer.mockResolvedValue(null);
 
-            const result = await service.removeReferrer({
-                merchantId: null,
-                refereeIdentityGroupId: groupA,
-                scope: "cross_merchant",
+            await expect(
+                service.removeReferrer({
+                    merchantId: null,
+                    refereeIdentityGroupId: groupA,
+                    scope: "cross_merchant",
+                })
+            ).rejects.toMatchObject({
+                status: 404,
+                code: "NO_REFERRER",
             });
-
-            expect(result.removed).toBe(false);
             expect(repository.removeReferrer).toHaveBeenCalledWith({
                 merchantId: null,
                 refereeIdentityGroupId: groupA,
@@ -233,14 +236,21 @@ describe("ReferralService", () => {
                 scope: "cross_merchant",
             });
 
-            expect(result.removed).toBe(true);
-            if (result.removed) {
-                expect(result.link).toEqual(removedLink);
-            }
+            expect(result).toEqual(removedLink);
         });
 
         it("forwards a custom reason (e.g. 'merged')", async () => {
-            repository.removeReferrer.mockResolvedValue(null);
+            const removedLink = {
+                id: "link-2",
+                scope: "merchant",
+                merchantId,
+                referrerIdentityGroupId: groupB,
+                refereeIdentityGroupId: groupA,
+                source: "link",
+                removedAt: new Date(),
+                endReason: "merged",
+            };
+            repository.removeReferrer.mockResolvedValue(removedLink);
 
             await service.removeReferrer({
                 merchantId,
