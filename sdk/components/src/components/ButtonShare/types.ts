@@ -30,10 +30,15 @@ export type ButtonShareProps = {
      */
     targetInteraction?: InteractionTypeKey;
     /**
-     * Which UI to open on click
-     * @defaultValue `"embedded-wallet"`
+     * Which UI to open on click.
+     *
+     * Legacy values (e.g. `"share-modal"`) are accepted at runtime and
+     * gracefully route to the full-page sharing UI — the modal-flow
+     * share path was retired in favour of `displaySharingPage`.
+     *
+     * @defaultValue `"sharing-page"`
      */
-    clickAction?: "embedded-wallet" | "share-modal" | "sharing-page";
+    clickAction?: "embedded-wallet" | "sharing-page";
     /**
      * When set, renders the button in preview mode (e.g. Shopify/WP editor).
      * Skips the client-ready gating so the button is always enabled visually,

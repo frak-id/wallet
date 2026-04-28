@@ -18,7 +18,7 @@ class Frak_WooCommerce {
 	 * `<frak-post-purchase products>` HTML attribute. Big carts would
 	 * otherwise serialise to multi-kilobyte attribute values — the sharing
 	 * page UI also gets cluttered past ~6 items. Consumers can override via
-	 * the `$cap` argument on {@see get_order_products()}.
+	 * the `$cap` argument on {@see get_post_purchase_data()}.
 	 *
 	 * @var int
 	 */
@@ -43,24 +43,41 @@ class Frak_WooCommerce {
 	}
 
 	/**
-	 * Resolve the WooCommerce order context for the current request.
+	 * Resolve all server-side data needed by `<frak-post-purchase>` in a
+	 * single pass: WooCommerce order context (customer / order / token) plus
+	 * optional product line-items for the SDK's sharing-page UI.
 	 *
-	 * Supports two order-scoped endpoints:
-	 *   - `order-received` (post-checkout thank-you page): public, guarded
-	 *     by the `key` query arg matching the stored order key — the same
-	 *     anti-enumeration check WooCommerce's own template performs.
-	 *   - `view-order` (My Account → Orders → View): authenticated, guarded
-	 *     by the `view_order` meta capability (current user must own the
-	 *     order, or be a shop manager).
+	 * Replaces the previous `get_order_context()` + `get_order_products()`
+	 * pair which both internally re-resolved the same `WC_Order`. The renderer
+	 * now calls this once per post-purchase render, halving the WC order
+	 * lookup cost (one `is_wc_endpoint_url()` + one `wc_get_order()` instead
+	 * of two each).
 	 *
-	 * Returns null on any other endpoint or when the guard fails.
+	 * Endpoint guards (URL-key match on `order-received`, `view_order` cap on
+	 * `view-order`) live in {@see resolve_current_order()}; this method
+	 * returns null on any non-order endpoint or guard failure.
 	 *
-	 * Shared by the `frak/post-purchase` block (to auto-inject HTML
-	 * attributes) and {@see render_purchase_tracker()} (for its payload).
+	 * Returned shape:
+	 *   - `context`  : map of HTML attribute name → value (always present)
+	 *   - `products` : list of {@see SharingPageProduct}-shaped arrays, or
+	 *                  `null` when products were not requested / the order has
+	 *                  zero resolvable line items.
 	 *
-	 * @return array<string, string>|null Map of HTML attribute name → value.
+	 * Each product entry contains:
+	 *   - `title`    : line-item name (variation-aware, falls back to product name)
+	 *   - `imageUrl` : `medium`-size featured image URL (omitted when missing)
+	 *   - `link`     : product permalink (omitted when missing)
+	 *
+	 * Variation products inherit their parent's image when no variation-
+	 * specific image is set — standard WooCommerce behaviour.
+	 *
+	 * @param bool $with_products Whether to extract product line items.
+	 * @param int  $cap            Max products to include (default {@see DEFAULT_PRODUCT_CAP}).
+	 *                              Caller-overridable because attribute serialisation
+	 *                              cost scales linearly with the cap.
+	 * @return array{context: array<string, string>, products: array<int, array{title: string, imageUrl?: string, link?: string}>|null}|null
 	 */
-	public static function get_order_context() {
+	public static function get_post_purchase_data( bool $with_products = true, int $cap = self::DEFAULT_PRODUCT_CAP ) {
 		$order = self::resolve_current_order();
 		if ( ! $order ) {
 			return null;
@@ -69,45 +86,29 @@ class Frak_WooCommerce {
 		$order_id = $order->get_id();
 
 		return array(
-			'customer-id' => (string) $order->get_user_id(),
-			'order-id'    => (string) $order_id,
-			'token'       => $order->get_order_key() . '_' . $order_id,
+			'context'  => array(
+				'customer-id' => (string) $order->get_user_id(),
+				'order-id'    => (string) $order_id,
+				'token'       => $order->get_order_key() . '_' . $order_id,
+			),
+			'products' => $with_products ? self::extract_order_products( $order, $cap ) : null,
 		);
 	}
 
 	/**
-	 * Resolve the line items for the current request as a list of
+	 * Extract line items from a resolved {@see WC_Order} as a list of
 	 * {@see SharingPageProduct}-shaped associative arrays.
 	 *
-	 * Mirrors the endpoint + capability guards from {@see get_order_context()}
-	 * so this only ever returns data on the WooCommerce `order-received`
-	 * (post-checkout) and `view-order` (My Account) endpoints. Returns
-	 * null when:
-	 *   - the request is not on a recognised order endpoint;
-	 *   - the URL key / `view_order` capability check fails;
+	 * Returns null when:
 	 *   - the order has zero line items;
 	 *   - none of the line items resolve to a real {@see WC_Product}
 	 *     (rare, but possible for orders whose products were deleted).
 	 *
-	 * Each entry contains:
-	 *   - `title`    : line-item name (variation-aware, falls back to product name)
-	 *   - `imageUrl` : `medium`-size featured image URL (omitted when missing)
-	 *   - `link`     : product permalink (omitted when missing)
-	 *
-	 * Variation products inherit their parent's image when no variation-
-	 * specific image is set — standard WooCommerce behaviour.
-	 *
-	 * @param int $cap Maximum number of products to return. Caller-overridable
-	 *                 because attribute serialisation costs scale linearly
-	 *                 with the cap; defaults to {@see DEFAULT_PRODUCT_CAP}.
+	 * @param WC_Order $order Resolved order.
+	 * @param int      $cap   Max products to include.
 	 * @return array<int, array{title: string, imageUrl?: string, link?: string}>|null
 	 */
-	public static function get_order_products( $cap = self::DEFAULT_PRODUCT_CAP ) {
-		$order = self::resolve_current_order();
-		if ( ! $order ) {
-			return null;
-		}
-
+	private static function extract_order_products( $order, int $cap ) {
 		$items = $order->get_items();
 		if ( empty( $items ) ) {
 			return null;
@@ -153,8 +154,8 @@ class Frak_WooCommerce {
 
 	/**
 	 * Resolve the current request's WooCommerce order with the same endpoint
-	 * + capability guards used by both {@see get_order_context()} and
-	 * {@see get_order_products()}. Returns null on any other endpoint or when
+	 * + capability guards used by {@see get_post_purchase_data()}. Returns null
+	 * on any other endpoint or when the guard fails.
 	 * the guard fails.
 	 *
 	 *   - `order-received` (post-checkout thank-you page): public, guarded
@@ -219,7 +220,7 @@ class Frak_WooCommerce {
 	 *
 	 * WooCommerce has already run its own endpoint + capability checks before
 	 * firing these actions, so we trust the `$order_id` argument and skip the
-	 * URL-key / `view_order` guard that {@see get_order_context()} performs.
+	 * URL-key / `view_order` guard that {@see resolve_current_order()} performs.
 	 *
 	 * @param int $order_id Order ID provided by the WooCommerce action.
 	 */

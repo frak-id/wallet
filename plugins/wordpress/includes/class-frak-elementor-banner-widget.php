@@ -71,6 +71,7 @@ class Frak_Elementor_Banner_Widget extends Frak_Elementor_Widget_Base {
 			'inappTitle',
 			'inappDescription',
 			'inappCta',
+			'previewMode',
 			'placement',
 			'interaction',
 			'classname',
@@ -78,8 +79,10 @@ class Frak_Elementor_Banner_Widget extends Frak_Elementor_Widget_Base {
 	}
 
 	/**
-	 * Register the panel controls. Three sections matching the block's
-	 * inspector: Referral mode, In-app browser mode, Advanced.
+	 * Register the panel controls. Four sections matching the Gutenberg
+	 * block's inspector: Referral mode, In-app browser mode, Editor preview,
+	 * Advanced — plus the shared Style → Spacing section from
+	 * {@see Frak_Elementor_Widget_Base::register_style_controls()}.
 	 */
 	protected function register_controls(): void {
 		$this->start_controls_section(
@@ -93,24 +96,27 @@ class Frak_Elementor_Banner_Widget extends Frak_Elementor_Widget_Base {
 		$this->add_control(
 			'referralTitle',
 			array(
-				'label' => esc_html__( 'Title', 'frak' ),
-				'type'  => \Elementor\Controls_Manager::TEXT,
+				'label'   => esc_html__( 'Title', 'frak' ),
+				'type'    => \Elementor\Controls_Manager::TEXT,
+				'dynamic' => array( 'active' => true ),
 			)
 		);
 
 		$this->add_control(
 			'referralDescription',
 			array(
-				'label' => esc_html__( 'Description', 'frak' ),
-				'type'  => \Elementor\Controls_Manager::TEXTAREA,
+				'label'   => esc_html__( 'Description', 'frak' ),
+				'type'    => \Elementor\Controls_Manager::TEXTAREA,
+				'dynamic' => array( 'active' => true ),
 			)
 		);
 
 		$this->add_control(
 			'referralCta',
 			array(
-				'label' => esc_html__( 'CTA label', 'frak' ),
-				'type'  => \Elementor\Controls_Manager::TEXT,
+				'label'   => esc_html__( 'CTA label', 'frak' ),
+				'type'    => \Elementor\Controls_Manager::TEXT,
+				'dynamic' => array( 'active' => true ),
 			)
 		);
 
@@ -127,24 +133,56 @@ class Frak_Elementor_Banner_Widget extends Frak_Elementor_Widget_Base {
 		$this->add_control(
 			'inappTitle',
 			array(
-				'label' => esc_html__( 'Title', 'frak' ),
-				'type'  => \Elementor\Controls_Manager::TEXT,
+				'label'   => esc_html__( 'Title', 'frak' ),
+				'type'    => \Elementor\Controls_Manager::TEXT,
+				'dynamic' => array( 'active' => true ),
 			)
 		);
 
 		$this->add_control(
 			'inappDescription',
 			array(
-				'label' => esc_html__( 'Description', 'frak' ),
-				'type'  => \Elementor\Controls_Manager::TEXTAREA,
+				'label'   => esc_html__( 'Description', 'frak' ),
+				'type'    => \Elementor\Controls_Manager::TEXTAREA,
+				'dynamic' => array( 'active' => true ),
 			)
 		);
 
 		$this->add_control(
 			'inappCta',
 			array(
-				'label' => esc_html__( 'CTA label', 'frak' ),
-				'type'  => \Elementor\Controls_Manager::TEXT,
+				'label'   => esc_html__( 'CTA label', 'frak' ),
+				'type'    => \Elementor\Controls_Manager::TEXT,
+				'dynamic' => array( 'active' => true ),
+			)
+		);
+
+		$this->end_controls_section();
+
+		$this->start_controls_section(
+			'frak_editor_preview_section',
+			array(
+				'label' => esc_html__( 'Editor preview', 'frak' ),
+				'tab'   => \Elementor\Controls_Manager::TAB_CONTENT,
+			)
+		);
+
+		// SELECT defaults match the Gutenberg `frak/banner` block.json
+		// (`previewMode: 'referral'`) so unconfigured widgets paint the same
+		// preview state across both editors. The renderer also carries a
+		// `PREVIEW_DEFAULT_ATTRS` backstop for the same value, so a saved
+		// instance with an empty string still resolves to `referral`.
+		$this->add_control(
+			'previewMode',
+			array(
+				'label'       => esc_html__( 'Preview mode', 'frak' ),
+				'type'        => \Elementor\Controls_Manager::SELECT,
+				'default'     => 'referral',
+				'options'     => array(
+					'referral' => esc_html__( 'Referral success', 'frak' ),
+					'inapp'    => esc_html__( 'In-app browser prompt', 'frak' ),
+				),
+				'description' => esc_html__( 'Only affects the editor preview — at runtime the mode is picked from the request context.', 'frak' ),
 			)
 		);
 
@@ -164,6 +202,7 @@ class Frak_Elementor_Banner_Widget extends Frak_Elementor_Widget_Base {
 				'label'       => esc_html__( 'Placement ID', 'frak' ),
 				'type'        => \Elementor\Controls_Manager::TEXT,
 				'description' => esc_html__( 'Backend placement identifier (optional).', 'frak' ),
+				'dynamic'     => array( 'active' => true ),
 			)
 		);
 
@@ -173,28 +212,43 @@ class Frak_Elementor_Banner_Widget extends Frak_Elementor_Widget_Base {
 				'label'       => esc_html__( 'Interaction filter', 'frak' ),
 				'type'        => \Elementor\Controls_Manager::TEXT,
 				'description' => esc_html__( 'e.g. "purchase" to limit rewards to a specific interaction.', 'frak' ),
+				'dynamic'     => array( 'active' => true ),
 			)
 		);
 
 		$this->add_control(
 			'classname',
 			array(
-				'label' => esc_html__( 'CSS class name', 'frak' ),
-				'type'  => \Elementor\Controls_Manager::TEXT,
+				'label'   => esc_html__( 'CSS class name', 'frak' ),
+				'type'    => \Elementor\Controls_Manager::TEXT,
+				'dynamic' => array( 'active' => true ),
 			)
 		);
 
 		$this->end_controls_section();
+
+		$this->register_style_controls();
 	}
 
 	/**
 	 * Delegate to the shared renderer.
+	 *
+	 * `previewMode` is editor-only — it sets the `<frak-banner preview-mode="…">`
+	 * companion attribute that tells the web component which preview state to
+	 * paint. Outside the editor (`$preview = false`) it's stripped before the
+	 * renderer call so it never leaks as an unknown HTML attribute.
 	 *
 	 * @param array<string, mixed> $attrs   Filtered renderer attributes.
 	 * @param bool                 $preview Whether the bare `preview` attribute should be emitted.
 	 * @return string
 	 */
 	protected function render_component( array $attrs, bool $preview ): string {
-		return Frak_Component_Renderer::banner( $attrs, '', $preview );
+		$preview_overrides = array();
+		if ( $preview && ! empty( $attrs['previewMode'] ) ) {
+			$preview_overrides['preview-mode'] = (string) $attrs['previewMode'];
+		}
+		unset( $attrs['previewMode'] );
+
+		return Frak_Component_Renderer::banner( $attrs, '', $preview, $preview_overrides );
 	}
 }

@@ -39,13 +39,12 @@ export async function openSharingPage(
         window.FrakSetup.client,
         {
             ...(options?.link && { link: options.link }),
-            ...(options?.products &&
-                options.products.length > 0 && {
-                    products: options.products,
-                }),
-            metadata: {
-                ...(targetInteraction && { targetInteraction }),
-            },
+            ...(options?.products?.length && {
+                products: options.products,
+            }),
+            ...(targetInteraction && {
+                metadata: { targetInteraction },
+            }),
         },
         placement
     );

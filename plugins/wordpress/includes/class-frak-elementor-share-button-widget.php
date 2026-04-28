@@ -93,6 +93,7 @@ class Frak_Elementor_Share_Button_Widget extends Frak_Elementor_Widget_Base {
 				'type'        => \Elementor\Controls_Manager::TEXT,
 				'default'     => esc_html__( 'Share and earn!', 'frak' ),
 				'description' => esc_html__( 'Use {REWARD} to inject the reward amount at runtime.', 'frak' ),
+				'dynamic'     => array( 'active' => true ),
 			)
 		);
 
@@ -132,6 +133,7 @@ class Frak_Elementor_Share_Button_Widget extends Frak_Elementor_Widget_Base {
 				'condition' => array(
 					'useReward' => 'yes',
 				),
+				'dynamic'   => array( 'active' => true ),
 			)
 		);
 
@@ -166,14 +168,16 @@ class Frak_Elementor_Share_Button_Widget extends Frak_Elementor_Widget_Base {
 				'label'       => esc_html__( 'Placement ID', 'frak' ),
 				'type'        => \Elementor\Controls_Manager::TEXT,
 				'description' => esc_html__( 'Backend placement identifier (optional).', 'frak' ),
+				'dynamic'     => array( 'active' => true ),
 			)
 		);
 
 		$this->add_control(
 			'targetInteraction',
 			array(
-				'label' => esc_html__( 'Target interaction', 'frak' ),
-				'type'  => \Elementor\Controls_Manager::TEXT,
+				'label'   => esc_html__( 'Target interaction', 'frak' ),
+				'type'    => \Elementor\Controls_Manager::TEXT,
+				'dynamic' => array( 'active' => true ),
 			)
 		);
 
@@ -183,10 +187,13 @@ class Frak_Elementor_Share_Button_Widget extends Frak_Elementor_Widget_Base {
 				'label'       => esc_html__( 'CSS class name', 'frak' ),
 				'type'        => \Elementor\Controls_Manager::TEXT,
 				'description' => esc_html__( 'Additional classes appended after the button-style preset.', 'frak' ),
+				'dynamic'     => array( 'active' => true ),
 			)
 		);
 
 		$this->end_controls_section();
+
+		$this->register_style_controls();
 	}
 
 	/**

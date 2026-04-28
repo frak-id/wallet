@@ -8,9 +8,13 @@
  * so block / shortcode / sidebar widget / Elementor widget surfaces emit
  * byte-identical HTML.
  *
- * Gated on `did_action( 'elementor/loaded' )` (see {@see init()}). Without
- * Elementor active the entire integration is a no-op so the merchant pays no
- * per-request cost when running classic / Gutenberg only.
+ * Registration is wired through the canonical `elementor/loaded` action so
+ * boot order between Elementor and this plugin doesn't matter — when
+ * Elementor is absent the action never fires and the integration is a
+ * no-op, so merchants without Elementor pay no per-request cost. When
+ * Elementor has already booted by the time {@see init()} runs (typical for
+ * `plugins_loaded@10` after Elementor's `plugins_loaded@0`) we register
+ * synchronously to avoid a one-tick deferral.
  *
  * The SDK itself loads through the standard {@see Frak_Frontend::enqueue_scripts()}
  * pipeline because Elementor's preview iframe loads the actual frontend page
@@ -36,15 +40,27 @@ class Frak_Elementor {
 	/**
 	 * Wire the Elementor hooks.
 	 *
-	 * Called once from {@see Frak_Plugin::boot()}. Bails when Elementor isn't
-	 * active so dropping Elementor never breaks the plugin and merchants
-	 * without Elementor pay no per-request cost.
+	 * Called once from {@see Frak_Plugin::boot()}. Registration is gated
+	 * through the `elementor/loaded` action, which fires during Elementor's
+	 * own bootstrap on `plugins_loaded`. Hooking the action covers the case
+	 * where Elementor loads after this plugin (alphabetical plugin order), and
+	 * the `did_action()` short-circuit covers the typical case where Elementor
+	 * has already booted by the time we run.
 	 */
 	public static function init() {
-		if ( ! did_action( 'elementor/loaded' ) ) {
+		if ( did_action( 'elementor/loaded' ) ) {
+			self::register_hooks();
 			return;
 		}
+		add_action( 'elementor/loaded', array( __CLASS__, 'register_hooks' ) );
+	}
 
+	/**
+	 * Register the category + widget hooks. Split out from {@see init()} so
+	 * it can be invoked synchronously when Elementor has already booted, or
+	 * deferred to the `elementor/loaded` action when it hasn't.
+	 */
+	public static function register_hooks() {
 		add_action( 'elementor/elements/categories_registered', array( __CLASS__, 'register_category' ) );
 		add_action( 'elementor/widgets/register', array( __CLASS__, 'register_widgets' ) );
 	}

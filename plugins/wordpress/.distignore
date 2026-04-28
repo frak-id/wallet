@@ -33,6 +33,8 @@ phpunit.xml
 
 # Static analysis
 phpstan.neon
+phpstan-bootstrap.php
+phpstan-elementor-stubs.php
 phpcs.xml.dist
 
 # Documentation source files

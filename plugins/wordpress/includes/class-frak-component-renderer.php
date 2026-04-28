@@ -108,15 +108,43 @@ class Frak_Component_Renderer {
 	);
 
 	/**
+	 * Tag-specific HTML attributes injected alongside the bare `preview` flag
+	 * when {@see wrap()} is called with `$preview = true`.
+	 *
+	 * `<frak-banner>` and `<frak-post-purchase>` both ship two preview
+	 * variants (referral / in-app, referrer / referee) and require an explicit
+	 * `preview-mode` / `preview-variant` HTML attribute to know which to
+	 * paint — without it the component waits for a runtime context that
+	 * never arrives in the editor iframe and renders blank. The Gutenberg
+	 * editor scripts inject these defaults from JS (see
+	 * `includes/blocks/banner/editor.js` + `includes/blocks/post-purchase/editor.js`);
+	 * we mirror them here so every PHP-rendered preview surface (Elementor
+	 * today, future REST / page-builder integrations tomorrow) gets the same
+	 * out-of-the-box behaviour. `<frak-button-share>` is intentionally absent
+	 * — `preview` alone is enough for it.
+	 *
+	 * @var array<string, array<string, string>>
+	 */
+	private const PREVIEW_DEFAULT_ATTRS = array(
+		'frak-banner'        => array(
+			'preview-mode' => 'referral',
+		),
+		'frak-post-purchase' => array(
+			'preview-variant' => 'referrer',
+		),
+	);
+
+	/**
 	 * Render `<frak-banner>` with the supplied attributes.
 	 *
-	 * @param array<string, mixed> $attrs   Map of camelCase attribute keys.
-	 * @param string               $wrapper Pre-escaped wrapper attributes (typically from `get_block_wrapper_attributes()`); empty emits the web component without a surrounding div.
-	 * @param bool                 $preview When true emit a bare `preview` HTML attribute on the web component so it bypasses backend RPC gates and renders its preview state. Used by the Elementor widget when rendering inside the editor iframe — the Gutenberg path injects `preview` from JS instead.
+	 * @param array<string, mixed>  $attrs             Map of camelCase attribute keys.
+	 * @param string                $wrapper           Pre-escaped wrapper attributes (typically from `get_block_wrapper_attributes()`); empty emits the web component without a surrounding div.
+	 * @param bool                  $preview           When true emit a bare `preview` HTML attribute on the web component so it bypasses backend RPC gates and renders its preview state. Used by the Elementor widget when rendering inside the editor iframe — the Gutenberg path injects `preview` from JS instead.
+	 * @param array<string, string> $preview_overrides Optional companion attributes that override {@see PREVIEW_DEFAULT_ATTRS}. Currently used to forward the merchant-selected `preview-mode` from the Elementor widget's *Editor preview* SELECT control. Ignored when `$preview = false`.
 	 * @return string
 	 */
-	public static function banner( array $attrs, string $wrapper = '', bool $preview = false ): string {
-		return self::render( 'frak-banner', self::BANNER_ATTRS, self::merge_classnames( $attrs ), $wrapper, $preview );
+	public static function banner( array $attrs, string $wrapper = '', bool $preview = false, array $preview_overrides = array() ): string {
+		return self::render( 'frak-banner', self::BANNER_ATTRS, self::merge_classnames( $attrs ), $wrapper, $preview, $preview_overrides );
 	}
 
 	/**
@@ -207,33 +235,36 @@ class Frak_Component_Renderer {
 	 * Identical auto-injection logic to the previous in-render-file code, just
 	 * centralised here so the shortcode and widget surfaces benefit too.
 	 *
-	 * @param array<string, mixed> $attrs   Map of camelCase attribute keys.
-	 * @param string               $wrapper Pre-escaped wrapper attributes; empty emits the component bare.
-	 * @param bool                 $preview When true emit the bare `preview` HTML attribute (Elementor editor render path).
+	 * @param array<string, mixed>  $attrs             Map of camelCase attribute keys.
+	 * @param string                $wrapper           Pre-escaped wrapper attributes; empty emits the component bare.
+	 * @param bool                  $preview           When true emit the bare `preview` HTML attribute (Elementor editor render path).
+	 * @param array<string, string> $preview_overrides Optional companion attributes that override {@see PREVIEW_DEFAULT_ATTRS}. Currently used to forward the merchant-selected `preview-variant` from the Elementor widget's *Editor preview* SELECT control. Ignored when `$preview = false`.
 	 * @return string
 	 */
-	public static function post_purchase( array $attrs, string $wrapper = '', bool $preview = false ): string {
+	public static function post_purchase( array $attrs, string $wrapper = '', bool $preview = false, array $preview_overrides = array() ): string {
 		$show_products = self::should_show_products( $attrs );
 		$html_attrs    = self::build_html_attrs( self::POST_PURCHASE_ATTRS, self::merge_classnames( $attrs ) );
 
 		if ( class_exists( 'Frak_WooCommerce' ) ) {
-			$context = Frak_WooCommerce::get_order_context();
-			if ( null !== $context ) {
-				foreach ( $context as $html_attr => $value ) {
+			// Single-pass resolution: one `is_wc_endpoint_url()` + one
+			// `wc_get_order()` covers both the context (customer/order/token)
+			// and the optional product gallery, instead of resolving the
+			// order twice when both pieces are needed.
+			$data = Frak_WooCommerce::get_post_purchase_data( $show_products );
+			if ( null !== $data ) {
+				foreach ( $data['context'] as $html_attr => $value ) {
 					$html_attrs[] = sprintf( '%s="%s"', esc_attr( $html_attr ), esc_attr( $value ) );
 				}
-			}
 
-			// Forward order line items to the SDK so the sharing page can show
-			// product cards. Sent as a JSON-stringified attribute because
-			// `preact-custom-element` only delivers attribute values as strings;
-			// the component parses it back into an array on mount. Skipped when
-			// `showProducts` is explicitly disabled, when the request is not on
-			// an order endpoint, or when the order has no resolvable products.
-			if ( $show_products ) {
-				$products = Frak_WooCommerce::get_order_products();
-				if ( null !== $products ) {
-					$json = wp_json_encode( $products, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE );
+				// Forward order line items to the SDK so the sharing page can
+				// show product cards. Sent as a JSON-stringified attribute
+				// because `preact-custom-element` only delivers attribute
+				// values as strings; the component parses it back into an
+				// array on mount. Skipped when `showProducts` is explicitly
+				// disabled, when the request is not on an order endpoint, or
+				// when the order has no resolvable products.
+				if ( null !== $data['products'] ) {
+					$json = wp_json_encode( $data['products'], JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE );
 					if ( is_string( $json ) ) {
 						$html_attrs[] = sprintf( 'products="%s"', esc_attr( $json ) );
 					}
@@ -241,7 +272,7 @@ class Frak_Component_Renderer {
 			}
 		}
 
-		return self::wrap( 'frak-post-purchase', $html_attrs, $wrapper, $preview );
+		return self::wrap( 'frak-post-purchase', $html_attrs, $wrapper, $preview, $preview_overrides );
 	}
 
 	/**
@@ -320,15 +351,16 @@ class Frak_Component_Renderer {
 	/**
 	 * Internal: build the escaped attribute pairs then wrap.
 	 *
-	 * @param string               $tag     Web component tag name.
-	 * @param array<string,string> $map     Block-attr => HTML-attr map.
-	 * @param array<string, mixed> $attrs   Block attribute values.
-	 * @param string               $wrapper Wrapper attributes string.
-	 * @param bool                 $preview Whether to emit a bare `preview` attribute on the web component.
+	 * @param string                $tag               Web component tag name.
+	 * @param array<string,string>  $map               Block-attr => HTML-attr map.
+	 * @param array<string, mixed>  $attrs             Block attribute values.
+	 * @param string                $wrapper           Wrapper attributes string.
+	 * @param bool                  $preview           Whether to emit a bare `preview` attribute on the web component.
+	 * @param array<string, string> $preview_overrides Optional companion attributes that override {@see PREVIEW_DEFAULT_ATTRS}. Ignored when `$preview = false`.
 	 * @return string
 	 */
-	private static function render( string $tag, array $map, array $attrs, string $wrapper, bool $preview = false ): string {
-		return self::wrap( $tag, self::build_html_attrs( $map, $attrs ), $wrapper, $preview );
+	private static function render( string $tag, array $map, array $attrs, string $wrapper, bool $preview = false, array $preview_overrides = array() ): string {
+		return self::wrap( $tag, self::build_html_attrs( $map, $attrs ), $wrapper, $preview, $preview_overrides );
 	}
 
 	/**
@@ -373,20 +405,39 @@ class Frak_Component_Renderer {
 	 * `<div {wrapper}>` (block path). When empty the bare web component is
 	 * emitted (shortcode / widget path).
 	 *
-	 * `$preview = true` prepends a bare `preview` HTML attribute so the web
-	 * component renders its preview state. Emitting it bare (rather than
-	 * `preview="true"`) matches the convention used elsewhere for boolean
-	 * HTML attributes — see {@see BOOLEAN_HTML_ATTRS}.
+	 * `$preview = true` prepends `preview="true"` plus any tag-specific
+	 * companion attributes from {@see PREVIEW_DEFAULT_ATTRS} so the web
+	 * component renders its preview state without waiting for a runtime
+	 * context. The string-valued `"true"` is intentional: every component
+	 * (`<frak-banner>`, `<frak-post-purchase>`, `<frak-button-share>`)
+	 * computes `isPreview = !!preview` against the prop value, and a bare
+	 * `preview` HTML attribute deserialises to an empty string in the DOM
+	 * — falsy under `!!`. Matches what the Gutenberg `editor.js` paths
+	 * (`includes/blocks/banner/editor.js`, `…/post-purchase/editor.js`,
+	 * `…/share-button/editor.js`) already emit (`preview: 'true'`).
 	 *
-	 * @param string   $tag        Web component tag name.
-	 * @param string[] $html_attrs Already-escaped attribute pairs.
-	 * @param string   $wrapper    Wrapper attributes (pre-escaped by WordPress).
-	 * @param bool     $preview    Whether to emit a bare `preview` attribute on the web component.
+	 * Caller-supplied `$preview_overrides` take precedence over the per-tag
+	 * defaults so the Elementor widget can forward the merchant's *Editor
+	 * preview* SELECT choice (e.g. `preview-mode → inapp`) while unconfigured
+	 * surfaces still render the default referral / referrer variant.
+	 *
+	 * @param string                $tag               Web component tag name.
+	 * @param string[]              $html_attrs        Already-escaped attribute pairs.
+	 * @param string                $wrapper           Wrapper attributes (pre-escaped by WordPress).
+	 * @param bool                  $preview           Whether to emit `preview="true"` on the web component.
+	 * @param array<string, string> $preview_overrides Caller-supplied companion attributes that override the per-tag defaults from {@see PREVIEW_DEFAULT_ATTRS}. Ignored when `$preview = false`.
 	 * @return string
 	 */
-	private static function wrap( string $tag, array $html_attrs, string $wrapper, bool $preview = false ): string {
+	private static function wrap( string $tag, array $html_attrs, string $wrapper, bool $preview = false, array $preview_overrides = array() ): string {
 		if ( $preview ) {
-			array_unshift( $html_attrs, 'preview' );
+			$defaults  = isset( self::PREVIEW_DEFAULT_ATTRS[ $tag ] ) ? self::PREVIEW_DEFAULT_ATTRS[ $tag ] : array();
+			$effective = array_merge( $defaults, $preview_overrides );
+
+			$preview_pairs = array( 'preview="true"' );
+			foreach ( $effective as $attr_name => $attr_value ) {
+				$preview_pairs[] = sprintf( '%s="%s"', esc_attr( $attr_name ), esc_attr( (string) $attr_value ) );
+			}
+			$html_attrs = array_merge( $preview_pairs, $html_attrs );
 		}
 		$attr_string   = implode( ' ', $html_attrs );
 		$attr_fragment = '' !== $attr_string ? ' ' . $attr_string : '';

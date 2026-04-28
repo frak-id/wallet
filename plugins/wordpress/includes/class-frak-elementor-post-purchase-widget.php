@@ -76,6 +76,7 @@ class Frak_Elementor_Post_Purchase_Widget extends Frak_Elementor_Widget_Base {
 			'variant',
 			'sharingUrl',
 			'showProducts',
+			'previewVariant',
 			'placement',
 			'merchantId',
 			'classname',
@@ -83,8 +84,10 @@ class Frak_Elementor_Post_Purchase_Widget extends Frak_Elementor_Widget_Base {
 	}
 
 	/**
-	 * Register the panel controls. Three sections matching the block's
-	 * inspector: Copy, Behaviour, Advanced.
+	 * Register the panel controls. Four sections matching the Gutenberg
+	 * block's inspector: Copy, Behaviour, Editor preview, Advanced — plus
+	 * the shared Style → Spacing section from
+	 * {@see Frak_Elementor_Widget_Base::register_style_controls()}.
 	 */
 	protected function register_controls(): void {
 		$this->start_controls_section(
@@ -98,8 +101,9 @@ class Frak_Elementor_Post_Purchase_Widget extends Frak_Elementor_Widget_Base {
 		$this->add_control(
 			'badgeText',
 			array(
-				'label' => esc_html__( 'Badge text', 'frak' ),
-				'type'  => \Elementor\Controls_Manager::TEXT,
+				'label'   => esc_html__( 'Badge text', 'frak' ),
+				'type'    => \Elementor\Controls_Manager::TEXT,
+				'dynamic' => array( 'active' => true ),
 			)
 		);
 
@@ -109,6 +113,7 @@ class Frak_Elementor_Post_Purchase_Widget extends Frak_Elementor_Widget_Base {
 				'label'       => esc_html__( 'Referrer message', 'frak' ),
 				'type'        => \Elementor\Controls_Manager::TEXTAREA,
 				'description' => esc_html__( 'Shown to buyers who were not referred. Use {REWARD} for the reward amount.', 'frak' ),
+				'dynamic'     => array( 'active' => true ),
 			)
 		);
 
@@ -118,6 +123,7 @@ class Frak_Elementor_Post_Purchase_Widget extends Frak_Elementor_Widget_Base {
 				'label'       => esc_html__( 'Referee message', 'frak' ),
 				'type'        => \Elementor\Controls_Manager::TEXTAREA,
 				'description' => esc_html__( 'Shown to buyers who came from a referral link. Use {REWARD} for the reward amount.', 'frak' ),
+				'dynamic'     => array( 'active' => true ),
 			)
 		);
 
@@ -127,6 +133,7 @@ class Frak_Elementor_Post_Purchase_Widget extends Frak_Elementor_Widget_Base {
 				'label'       => esc_html__( 'CTA label', 'frak' ),
 				'type'        => \Elementor\Controls_Manager::TEXT,
 				'description' => esc_html__( 'Use {REWARD} to inject the reward amount.', 'frak' ),
+				'dynamic'     => array( 'active' => true ),
 			)
 		);
 
@@ -160,6 +167,7 @@ class Frak_Elementor_Post_Purchase_Widget extends Frak_Elementor_Widget_Base {
 				'label'       => esc_html__( 'Sharing URL', 'frak' ),
 				'type'        => \Elementor\Controls_Manager::TEXT,
 				'description' => esc_html__( 'Defaults to the merchant domain if left empty.', 'frak' ),
+				'dynamic'     => array( 'active' => true ),
 			)
 		);
 
@@ -179,6 +187,35 @@ class Frak_Elementor_Post_Purchase_Widget extends Frak_Elementor_Widget_Base {
 		$this->end_controls_section();
 
 		$this->start_controls_section(
+			'frak_editor_preview_section',
+			array(
+				'label' => esc_html__( 'Editor preview', 'frak' ),
+				'tab'   => \Elementor\Controls_Manager::TAB_CONTENT,
+			)
+		);
+
+		// SELECT defaults match the Gutenberg `frak/post-purchase` block.json
+		// (`previewVariant: 'referrer'`) so unconfigured widgets paint the
+		// same preview state across both editors. The renderer also carries
+		// a `PREVIEW_DEFAULT_ATTRS` backstop for the same value, so a saved
+		// instance with an empty string still resolves to `referrer`.
+		$this->add_control(
+			'previewVariant',
+			array(
+				'label'       => esc_html__( 'Preview variant', 'frak' ),
+				'type'        => \Elementor\Controls_Manager::SELECT,
+				'default'     => 'referrer',
+				'options'     => array(
+					'referrer' => esc_html__( 'Referrer (invite to share)', 'frak' ),
+					'referee'  => esc_html__( 'Referee (congratulations)', 'frak' ),
+				),
+				'description' => esc_html__( 'Only affects the editor preview — at runtime the variant is picked from the referral status.', 'frak' ),
+			)
+		);
+
+		$this->end_controls_section();
+
+		$this->start_controls_section(
 			'frak_advanced_section',
 			array(
 				'label' => esc_html__( 'Advanced', 'frak' ),
@@ -189,8 +226,9 @@ class Frak_Elementor_Post_Purchase_Widget extends Frak_Elementor_Widget_Base {
 		$this->add_control(
 			'placement',
 			array(
-				'label' => esc_html__( 'Placement ID', 'frak' ),
-				'type'  => \Elementor\Controls_Manager::TEXT,
+				'label'   => esc_html__( 'Placement ID', 'frak' ),
+				'type'    => \Elementor\Controls_Manager::TEXT,
+				'dynamic' => array( 'active' => true ),
 			)
 		);
 
@@ -200,24 +238,34 @@ class Frak_Elementor_Post_Purchase_Widget extends Frak_Elementor_Widget_Base {
 				'label'       => esc_html__( 'Merchant ID override', 'frak' ),
 				'type'        => \Elementor\Controls_Manager::TEXT,
 				'description' => esc_html__( 'Leave empty to use the merchant ID from the global config.', 'frak' ),
+				'dynamic'     => array( 'active' => true ),
 			)
 		);
 
 		$this->add_control(
 			'classname',
 			array(
-				'label' => esc_html__( 'CSS class name', 'frak' ),
-				'type'  => \Elementor\Controls_Manager::TEXT,
+				'label'   => esc_html__( 'CSS class name', 'frak' ),
+				'type'    => \Elementor\Controls_Manager::TEXT,
+				'dynamic' => array( 'active' => true ),
 			)
 		);
 
 		$this->end_controls_section();
+
+		$this->register_style_controls();
 	}
 
 	/**
 	 * Delegate to the shared renderer. Coerces the `showProducts` SWITCHER
 	 * value into a real boolean so the renderer's `should_show_products()`
 	 * gate matches the block path exactly.
+	 *
+	 * `previewVariant` is editor-only — it sets the
+	 * `<frak-post-purchase preview-variant="…">` companion attribute that tells
+	 * the web component which preview state to paint. Outside the editor
+	 * (`$preview = false`) it's stripped before the renderer call so it never
+	 * leaks as an unknown HTML attribute.
 	 *
 	 * @param array<string, mixed> $attrs   Filtered renderer attributes.
 	 * @param bool                 $preview Whether the bare `preview` attribute should be emitted.
@@ -227,6 +275,13 @@ class Frak_Elementor_Post_Purchase_Widget extends Frak_Elementor_Widget_Base {
 		if ( array_key_exists( 'showProducts', $attrs ) ) {
 			$attrs['showProducts'] = self::switcher_to_bool( $attrs['showProducts'] );
 		}
-		return Frak_Component_Renderer::post_purchase( $attrs, '', $preview );
+
+		$preview_overrides = array();
+		if ( $preview && ! empty( $attrs['previewVariant'] ) ) {
+			$preview_overrides['preview-variant'] = (string) $attrs['previewVariant'];
+		}
+		unset( $attrs['previewVariant'] );
+
+		return Frak_Component_Renderer::post_purchase( $attrs, '', $preview, $preview_overrides );
 	}
 }

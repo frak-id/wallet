@@ -101,6 +101,14 @@ if ( ! class_exists( '\Elementor\Widget_Base' ) ) {
 		 */
 		protected function add_control( $id, $args = array() ) {
 		}
+
+		/**
+		 * @param string               $id   Control identifier.
+		 * @param array<string, mixed> $args Control arguments.
+		 * @return void
+		 */
+		protected function add_responsive_control( $id, $args = array() ) {
+		}
 	}
 }
 
@@ -110,10 +118,12 @@ if ( ! class_exists( '\Elementor\Controls_Manager' ) ) {
 	 */
 	class Controls_Manager {
 		const TAB_CONTENT = 'content';
+		const TAB_STYLE   = 'style';
 		const TEXT        = 'text';
 		const TEXTAREA    = 'textarea';
 		const SELECT      = 'select';
 		const SWITCHER    = 'switcher';
+		const DIMENSIONS  = 'dimensions';
 	}
 }
 

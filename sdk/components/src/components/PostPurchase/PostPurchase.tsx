@@ -309,17 +309,24 @@ export function PostPurchase({
         return sanitized.length > 0 ? sanitized : undefined;
     }, [products]);
 
-    // Open the full-page sharing UI on click. The sharing page already
-    // renders a product card section when `products` is provided — see
-    // `apps/listener/.../sharing/component/SharingPage`. The post-purchase
-    // card uses this flow (rather than the modal-flow share) specifically
-    // because product cards only exist on the full-page surface.
-    const handleShare = useCallback(() => {
+    // Click handler — opens the full-page sharing UI. The sharing page
+    // already renders a product card section when `products` is provided
+    // (see `apps/listener/.../sharing/component/SharingPage`); the
+    // post-purchase card uses this flow rather than the modal-flow share
+    // because product cards only exist on the full-page surface. Memoised
+    // as a whole so the `<button onClick>` ref stays stable across renders
+    // and the click-tracking + share call live in one named callback.
+    const handleClick = useCallback(() => {
+        if (!resolvedVariant) return;
+        trackEvent(window.FrakSetup?.client, "post_purchase_clicked", {
+            placement: placementId,
+            variant: resolvedVariant,
+        });
         openSharingPage(undefined, placementId, {
             link: resolvedSharingUrl,
             products: parsedProducts,
         });
-    }, [placementId, resolvedSharingUrl, parsedProducts]);
+    }, [resolvedVariant, placementId, resolvedSharingUrl, parsedProducts]);
 
     // Bail conditions
     if (!isPreview && (!shouldRender || isHidden)) return null;
@@ -342,22 +349,7 @@ export function PostPurchase({
                             type="button"
                             className={`${cta} button`}
                             disabled={!isPreview && !isClientReady}
-                            onClick={
-                                isPreview
-                                    ? undefined
-                                    : () => {
-                                          if (!resolvedVariant) return;
-                                          trackEvent(
-                                              window.FrakSetup?.client,
-                                              "post_purchase_clicked",
-                                              {
-                                                  placement: placementId,
-                                                  variant: resolvedVariant,
-                                              }
-                                          );
-                                          handleShare();
-                                      }
-                            }
+                            onClick={isPreview ? undefined : handleClick}
                         >
                             {texts.cta}
                             <svg

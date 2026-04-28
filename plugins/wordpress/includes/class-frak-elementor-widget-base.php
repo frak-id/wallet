@@ -122,4 +122,46 @@ abstract class Frak_Elementor_Widget_Base extends \Elementor\Widget_Base {
 	protected static function switcher_to_bool( $value ): bool {
 		return 'yes' === $value;
 	}
+
+	/**
+	 * Register a shared Style → Spacing section exposing a responsive
+	 * `margin` control. Mirrors the `spacing.margin` block support enabled
+	 * on the matching Gutenberg blocks (see `block.json` for each block) so
+	 * the merchant can adjust the block-level margin between the Frak
+	 * widget and surrounding content from Elementor's native Style tab.
+	 *
+	 * Color/typography/padding/border are intentionally NOT exposed: the
+	 * SDK web components ship hardcoded vanilla-extract styles whose
+	 * class-level specificity overrides values inherited from the wrapper,
+	 * so those controls would either no-op or paint a misleading frame
+	 * around the already-styled component. Same trade-off documented in
+	 * the Gutenberg block CHANGELOG entry.
+	 *
+	 * Concrete widgets call this from `register_controls()` after their
+	 * Content-tab sections so the Style tab appears in its idiomatic
+	 * position in the panel.
+	 */
+	protected function register_style_controls(): void {
+		$this->start_controls_section(
+			'frak_style_section',
+			array(
+				'label' => esc_html__( 'Spacing', 'frak' ),
+				'tab'   => \Elementor\Controls_Manager::TAB_STYLE,
+			)
+		);
+
+		$this->add_responsive_control(
+			'frak_margin',
+			array(
+				'label'      => esc_html__( 'Margin', 'frak' ),
+				'type'       => \Elementor\Controls_Manager::DIMENSIONS,
+				'size_units' => array( 'px', 'em', 'rem', '%' ),
+				'selectors'  => array(
+					'{{WRAPPER}}' => 'margin-block-start: {{TOP}}{{UNIT}}; margin-inline-end: {{RIGHT}}{{UNIT}}; margin-block-end: {{BOTTOM}}{{UNIT}}; margin-inline-start: {{LEFT}}{{UNIT}};',
+				),
+			)
+		);
+
+		$this->end_controls_section();
+	}
 }

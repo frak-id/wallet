@@ -10,7 +10,6 @@
 
 	const CLICK_ACTIONS = [
 		{ label: __( 'Sharing page', 'frak' ), value: 'sharing-page' },
-		{ label: __( 'Share modal', 'frak' ), value: 'share-modal' },
 		{ label: __( 'Embedded wallet', 'frak' ), value: 'embedded-wallet' },
 	];
 
