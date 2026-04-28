@@ -1,4 +1,4 @@
-import { and, eq, inArray, sql } from "drizzle-orm";
+import { and, eq, inArray, isNull, sql } from "drizzle-orm";
 import { LRUCache } from "lru-cache";
 import { db } from "../../../infrastructure/persistence/postgres";
 import {
@@ -6,22 +6,39 @@ import {
     type ReferralLinkSelect,
     referralLinksTable,
 } from "../db/schema";
+import type { ReferralLinkEndReason } from "../schemas/index";
 
 type ReferralChainItem = {
     identityGroupId: string;
     depth: number;
 };
 
+// Active-row predicate reused everywhere we read referral_links. Forget the
+// soft-delete check and the chain walker silently includes inactive edges.
+const isActive = sql`"removed_at" IS NULL`;
+
 export class ReferralLinkRepository {
     /**
-     * Cache full chain results keyed by merchant:start:maxDepth.
-     * Only used for findChain (read path during reward distribution),
-     * NOT for wouldCreateCycle (write path — needs fresh data).
+     * Cache full chain results keyed by `merchant:start:maxDepth`.
+     *
+     * Used only by `findChain` (read path during reward distribution),
+     * NOT by `wouldCreateCycle` (write path — needs fresh data).
+     *
+     * Invalidation: `create` and `removeReferrer` flush the entire cache.
+     * Per-key invalidation would require a reverse index from
+     * `(referrer, referee)` to all chain keys that include them — not worth
+     * the bookkeeping for an event that's rare relative to reads. Bulk
+     * mutations done outside the repository (e.g. `IdentityMergeService`)
+     * remain bounded by the TTL.
      */
     private readonly chainCache = new LRUCache<string, ReferralChainItem[]>({
         max: 1024,
         ttl: 10 * 60 * 1000,
     });
+
+    clearChainCache(): void {
+        this.chainCache.clear();
+    }
 
     /**
      * Insert a referral link row. Returns null when a unique constraint
@@ -42,6 +59,7 @@ export class ReferralLinkRepository {
             .values(link)
             .onConflictDoNothing()
             .returning();
+        if (result) this.chainCache.clear();
         return result ?? null;
     }
 
@@ -68,7 +86,8 @@ export class ReferralLinkRepository {
      * - `scope='merchant'` requires a non-null `merchantId`.
      * - `scope='cross_merchant'` ignores `merchantId` entirely.
      *
-     * Both queries honour the `expiresAt` Phase 2 hook.
+     * Soft-deleted (`removed_at IS NOT NULL`) rows are excluded. Use
+     * `findById` / `findManyByIds` to retrieve historical (inactive) rows.
      */
     async findByReferee(params: {
         merchantId: string | null;
@@ -97,7 +116,7 @@ export class ReferralLinkRepository {
                               merchantId as string
                           )
                         : sql`"merchant_id" IS NULL`,
-                    sql`("expires_at" IS NULL OR "expires_at" > now())`
+                    isActive
                 )
             )
             .limit(1);
@@ -115,7 +134,8 @@ export class ReferralLinkRepository {
      *
      * Single query — scans both scopes in one pass and orders merchant rows
      * first so `LIMIT 1` picks the winner. Hot path: runs on every reward
-     * event.
+     * event. Inactive rows (`removed_at IS NOT NULL`) are filtered out via
+     * the shared `isActive` predicate.
      */
     async findReferrerForReferee(
         merchantId: string,
@@ -134,7 +154,7 @@ export class ReferralLinkRepository {
                         ("scope" = 'merchant' AND "merchant_id" = ${merchantId}::uuid)
                         OR "scope" = 'cross_merchant'
                     )`,
-                    sql`("expires_at" IS NULL OR "expires_at" > now())`
+                    isActive
                 )
             )
             .orderBy(sql`("scope" = 'merchant') DESC`)
@@ -151,7 +171,7 @@ export class ReferralLinkRepository {
      * merchant) are preferred over cross-merchant links. `LATERAL` +
      * `LIMIT 1` keeps the chain linear and deterministic.
      *
-     * `expires_at` is honoured for Phase 2 forward compatibility.
+     * Soft-deleted rows are excluded via `removed_at IS NULL`.
      */
     async findChain(
         merchantId: string,
@@ -179,7 +199,7 @@ export class ReferralLinkRepository {
                           (scope = 'merchant' AND merchant_id = ${merchantId}::uuid)
                           OR scope = 'cross_merchant'
                       )
-                      AND (expires_at IS NULL OR expires_at > now())
+                      AND removed_at IS NULL
                     ORDER BY (scope = 'merchant') DESC
                     LIMIT 1
                 ) anchor
@@ -199,7 +219,7 @@ export class ReferralLinkRepository {
                           (rl.scope = 'merchant' AND rl.merchant_id = ${merchantId}::uuid)
                           OR rl.scope = 'cross_merchant'
                       )
-                      AND (rl.expires_at IS NULL OR rl.expires_at > now())
+                      AND rl.removed_at IS NULL
                       AND NOT rl.referrer_identity_group_id = ANY(c.path)
                     ORDER BY (rl.scope = 'merchant') DESC
                     LIMIT 1
@@ -237,7 +257,7 @@ export class ReferralLinkRepository {
                     ARRAY[referee_identity_group_id, referrer_identity_group_id] AS path
                 FROM referral_links
                 WHERE referee_identity_group_id = ${referrerIdentityGroupId}
-                  AND (expires_at IS NULL OR expires_at > now())
+                  AND removed_at IS NULL
 
                 UNION ALL
 
@@ -246,7 +266,7 @@ export class ReferralLinkRepository {
                     c.path || rl.referrer_identity_group_id
                 FROM referral_links rl
                 INNER JOIN chain c ON rl.referee_identity_group_id = c.identity_group_id
-                WHERE (rl.expires_at IS NULL OR rl.expires_at > now())
+                WHERE rl.removed_at IS NULL
                   AND NOT rl.referrer_identity_group_id = ANY(c.path)
             )
             SELECT EXISTS (
@@ -256,5 +276,51 @@ export class ReferralLinkRepository {
         `);
 
         return [...result][0]?.would_cycle ?? false;
+    }
+
+    /**
+     * Soft-delete the active referral link for the given (referee, scope,
+     * merchantId). Sets `removed_at = now()` and stamps `end_reason` so the
+     * lifecycle is reconstructible from the row alone (audit trail) without
+     * losing FK pointers used by `asset_logs.referral_link_id` or by the
+     * referee’s historical attribution.
+     *
+     * Returns the soft-deleted row, or null when there is nothing active to
+     * remove (lets callers map to a 404).
+     */
+    async removeReferrer(params: {
+        merchantId: string | null;
+        refereeIdentityGroupId: string;
+        scope: "merchant" | "cross_merchant";
+        reason: ReferralLinkEndReason;
+    }): Promise<ReferralLinkSelect | null> {
+        const { merchantId, refereeIdentityGroupId, scope, reason } = params;
+
+        if (scope === "merchant" && !merchantId) {
+            return null;
+        }
+
+        const [result] = await db
+            .update(referralLinksTable)
+            .set({ removedAt: new Date(), endReason: reason })
+            .where(
+                and(
+                    eq(referralLinksTable.scope, scope),
+                    eq(
+                        referralLinksTable.refereeIdentityGroupId,
+                        refereeIdentityGroupId
+                    ),
+                    scope === "merchant"
+                        ? eq(
+                              referralLinksTable.merchantId,
+                              merchantId as string
+                          )
+                        : isNull(referralLinksTable.merchantId),
+                    isNull(referralLinksTable.removedAt)
+                )
+            )
+            .returning();
+        if (result) this.chainCache.clear();
+        return result ?? null;
     }
 }

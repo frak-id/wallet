@@ -18,6 +18,22 @@ export const ReferralLinkSourceSchema = t.Union([
 export type ReferralLinkSource = Static<typeof ReferralLinkSourceSchema>;
 
 // =============================================================================
+// REFERRAL LINK END REASON
+// =============================================================================
+//
+// Set together with `removed_at` when an active referral link transitions to
+// inactive. Drives analytics ("how many referrals are user-revoked vs
+// merge-cleanup") and lets us reconstruct lifecycle.
+//
+//   - `removed` : end-user revoked the attribution (DELETE /referral/redemption).
+//   - `merged`  : `IdentityMergeService` collapsed the row during a merge.
+export const ReferralLinkEndReasonSchema = t.Union([
+    t.Literal("removed"),
+    t.Literal("merged"),
+]);
+export type ReferralLinkEndReason = Static<typeof ReferralLinkEndReasonSchema>;
+
+// =============================================================================
 // REFERRAL LINK SOURCE DATA (Discriminated Union)
 // =============================================================================
 //

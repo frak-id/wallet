@@ -1,7 +1,8 @@
 import { log } from "@backend-infrastructure";
+import { HttpError } from "@backend-utils";
 import type { ReferralLinkSelect } from "../db/schema";
 import type { ReferralLinkRepository } from "../repositories/ReferralLinkRepository";
-import type { ReferralLinkSourceData } from "../schemas";
+import type { ReferralLinkEndReason, ReferralLinkSourceData } from "../schemas";
 
 type ReferralChainMember = {
     identityGroupId: string;
@@ -106,5 +107,51 @@ export class ReferralService {
             params.identityGroupId,
             params.maxDepth ?? DEFAULT_MAX_CHAIN_DEPTH
         );
+    }
+
+    /**
+     * Soft-delete the active referral link for the given (referee, scope,
+     * merchantId). Used by the wallet `DELETE /referral/redemption` endpoint
+     * to let end-users revoke a previously-redeemed referral code or a
+     * previously-clicked share link, while keeping the row around as audit.
+     *
+     * `reason` defaults to `'removed'` (user action). The other accepted
+     * value is `'merged'`, set by `IdentityMergeService` when collapsing
+     * conflicting/self-loop rows during an identity merge.
+     */
+    async removeReferrer(params: {
+        merchantId: string | null;
+        refereeIdentityGroupId: string;
+        scope: "merchant" | "cross_merchant";
+        reason?: ReferralLinkEndReason;
+    }): Promise<ReferralLinkSelect> {
+        const reason = params.reason ?? "removed";
+        const removed = await this.repository.removeReferrer({
+            merchantId: params.merchantId,
+            refereeIdentityGroupId: params.refereeIdentityGroupId,
+            scope: params.scope,
+            reason,
+        });
+
+        if (!removed) {
+            throw new HttpError({
+                status: 404,
+                code: "NO_REFERRER",
+                message: "No active referrer to revoke",
+            });
+        }
+
+        log.debug(
+            {
+                linkId: removed.id,
+                scope: params.scope,
+                merchantId: params.merchantId,
+                refereeId: params.refereeIdentityGroupId,
+                reason,
+            },
+            "Referral link soft-removed"
+        );
+
+        return removed;
     }
 }

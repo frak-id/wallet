@@ -40,7 +40,9 @@ const identityWeightService = new IdentityWeightService(
     IdentityContext.repositories.identity
 );
 
-const identityMergeService = new IdentityMergeService();
+const identityMergeService = new IdentityMergeService(
+    AttributionContext.repositories.referralLink
+);
 
 const identityOrchestrator = new IdentityOrchestrator(
     IdentityContext.repositories.identity,

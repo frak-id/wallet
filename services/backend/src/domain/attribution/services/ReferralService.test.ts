@@ -22,11 +22,13 @@ describe("ReferralService", () => {
             create: vi.fn(),
             findChain: vi.fn(),
             wouldCreateCycle: vi.fn(),
+            removeReferrer: vi.fn(),
         }) as unknown as ReferralLinkRepository & {
             findByReferee: ReturnType<typeof vi.fn>;
             create: ReturnType<typeof vi.fn>;
             findChain: ReturnType<typeof vi.fn>;
             wouldCreateCycle: ReturnType<typeof vi.fn>;
+            removeReferrer: ReturnType<typeof vi.fn>;
         };
 
     const merchantId = "merchant-1";
@@ -190,6 +192,69 @@ describe("ReferralService", () => {
                 groupC,
                 3
             );
+        });
+    });
+
+    describe("removeReferrer", () => {
+        it("returns removed:false when nothing active to remove", async () => {
+            repository.removeReferrer.mockResolvedValue(null);
+
+            const result = await service.removeReferrer({
+                merchantId: null,
+                refereeIdentityGroupId: groupA,
+                scope: "cross_merchant",
+            });
+
+            expect(result.removed).toBe(false);
+            expect(repository.removeReferrer).toHaveBeenCalledWith({
+                merchantId: null,
+                refereeIdentityGroupId: groupA,
+                scope: "cross_merchant",
+                reason: "removed",
+            });
+        });
+
+        it("returns the row on success and defaults reason to 'removed'", async () => {
+            const removedLink = {
+                id: "link-1",
+                scope: "cross_merchant",
+                merchantId: null,
+                referrerIdentityGroupId: groupB,
+                refereeIdentityGroupId: groupA,
+                source: "code",
+                removedAt: new Date(),
+                endReason: "removed",
+            };
+            repository.removeReferrer.mockResolvedValue(removedLink);
+
+            const result = await service.removeReferrer({
+                merchantId: null,
+                refereeIdentityGroupId: groupA,
+                scope: "cross_merchant",
+            });
+
+            expect(result.removed).toBe(true);
+            if (result.removed) {
+                expect(result.link).toEqual(removedLink);
+            }
+        });
+
+        it("forwards a custom reason (e.g. 'merged')", async () => {
+            repository.removeReferrer.mockResolvedValue(null);
+
+            await service.removeReferrer({
+                merchantId,
+                refereeIdentityGroupId: groupA,
+                scope: "merchant",
+                reason: "merged",
+            });
+
+            expect(repository.removeReferrer).toHaveBeenCalledWith({
+                merchantId,
+                refereeIdentityGroupId: groupA,
+                scope: "merchant",
+                reason: "merged",
+            });
         });
     });
 });

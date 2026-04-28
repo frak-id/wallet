@@ -6,6 +6,8 @@ export {
 } from "./db/schema";
 export { ReferralLinkRepository } from "./repositories/ReferralLinkRepository";
 export {
+    type ReferralLinkEndReason,
+    ReferralLinkEndReasonSchema,
     type ReferralLinkScope,
     ReferralLinkScopeSchema,
     type ReferralLinkSource,

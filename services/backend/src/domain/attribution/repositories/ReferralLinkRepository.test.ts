@@ -14,8 +14,9 @@ vi.mock("@backend-infrastructure", () => ({
  * Mock the DB layer. db.execute returns T[] directly with postgres-js.
  * vi.hoisted ensures mockExecute is available when vi.mock is hoisted.
  */
-const { mockExecute } = vi.hoisted(() => ({
+const { mockExecute, mockReturning } = vi.hoisted(() => ({
     mockExecute: vi.fn(),
+    mockReturning: vi.fn(),
 }));
 
 vi.mock("../../../infrastructure/persistence/postgres", () => ({
@@ -25,8 +26,10 @@ vi.mock("../../../infrastructure/persistence/postgres", () => ({
         where: vi.fn().mockReturnThis(),
         limit: vi.fn().mockResolvedValue([]),
         insert: vi.fn().mockReturnThis(),
+        update: vi.fn().mockReturnThis(),
+        set: vi.fn().mockReturnThis(),
         values: vi.fn().mockReturnThis(),
-        returning: vi.fn().mockResolvedValue([]),
+        returning: mockReturning,
         execute: mockExecute,
     },
 }));
@@ -38,6 +41,8 @@ describe("ReferralLinkRepository", () => {
 
     beforeEach(() => {
         mockExecute.mockReset();
+        mockReturning.mockReset();
+        mockReturning.mockResolvedValue([]);
     });
 
     const merchantId = "merchant-1";
@@ -74,22 +79,20 @@ describe("ReferralLinkRepository", () => {
             expect(chain).toEqual([]);
         });
 
-        it("should cache chain results for repeated calls", async () => {
+        it("caches chain results across calls with same key", async () => {
             const repository = new ReferralLinkRepository();
 
             mockExecute.mockResolvedValue([
                 { identity_group_id: groupB, depth: 1 },
             ]);
 
-            // First call — hits DB
             await repository.findChain(merchantId, groupA, 5);
-            // Second call — should use cache
             await repository.findChain(merchantId, groupA, 5);
 
             expect(mockExecute).toHaveBeenCalledTimes(1);
         });
 
-        it("should not share cache across different maxDepth", async () => {
+        it("does not share cache across different maxDepth", async () => {
             const repository = new ReferralLinkRepository();
 
             mockExecute
@@ -179,6 +182,108 @@ describe("ReferralLinkRepository", () => {
             await repository.wouldCreateCycle(groupA, groupB);
 
             expect(mockExecute).toHaveBeenCalledTimes(2);
+        });
+    });
+
+    describe("removeReferrer", () => {
+        it("returns the soft-deleted row on success", async () => {
+            const repository = new ReferralLinkRepository();
+            const removedRow = {
+                id: "link-1",
+                scope: "cross_merchant",
+                merchantId: null,
+                referrerIdentityGroupId: groupA,
+                refereeIdentityGroupId: groupB,
+                source: "code",
+                sourceData: null,
+                createdAt: new Date(),
+                removedAt: new Date(),
+                endReason: "removed",
+            };
+            mockReturning.mockResolvedValueOnce([removedRow]);
+
+            const result = await repository.removeReferrer({
+                merchantId: null,
+                refereeIdentityGroupId: groupB,
+                scope: "cross_merchant",
+                reason: "removed",
+            });
+
+            expect(result).toEqual(removedRow);
+        });
+
+        it("clears the chain cache on successful removal", async () => {
+            const repository = new ReferralLinkRepository();
+            // Prime the chain cache.
+            mockExecute.mockResolvedValue([
+                { identity_group_id: groupB, depth: 1 },
+            ]);
+            await repository.findChain(merchantId, groupA, 5);
+            expect(mockExecute).toHaveBeenCalledTimes(1);
+
+            // Soft-delete a row — cache must drop.
+            mockReturning.mockResolvedValueOnce([{ id: "link-1" }]);
+            await repository.removeReferrer({
+                merchantId: null,
+                refereeIdentityGroupId: groupB,
+                scope: "cross_merchant",
+                reason: "removed",
+            });
+
+            // Same findChain call should re-hit DB.
+            await repository.findChain(merchantId, groupA, 5);
+            expect(mockExecute).toHaveBeenCalledTimes(2);
+        });
+
+        it("does NOT clear the chain cache when no row was removed", async () => {
+            const repository = new ReferralLinkRepository();
+            mockExecute.mockResolvedValue([
+                { identity_group_id: groupB, depth: 1 },
+            ]);
+            await repository.findChain(merchantId, groupA, 5);
+            expect(mockExecute).toHaveBeenCalledTimes(1);
+
+            // No active row — returning [] from db.update.
+            mockReturning.mockResolvedValueOnce([]);
+            await repository.removeReferrer({
+                merchantId: null,
+                refereeIdentityGroupId: groupB,
+                scope: "cross_merchant",
+                reason: "removed",
+            });
+
+            // Cache still warm — second findChain hits cache.
+            await repository.findChain(merchantId, groupA, 5);
+            expect(mockExecute).toHaveBeenCalledTimes(1);
+        });
+
+        it("returns null when no active row to remove", async () => {
+            const repository = new ReferralLinkRepository();
+            mockReturning.mockResolvedValueOnce([]);
+
+            const result = await repository.removeReferrer({
+                merchantId,
+                refereeIdentityGroupId: groupB,
+                scope: "merchant",
+                reason: "removed",
+            });
+
+            expect(result).toBeNull();
+        });
+
+        it("returns null when scope='merchant' but merchantId is null (defensive)", async () => {
+            const repository = new ReferralLinkRepository();
+
+            const result = await repository.removeReferrer({
+                merchantId: null,
+                refereeIdentityGroupId: groupB,
+                scope: "merchant",
+                reason: "removed",
+            });
+
+            expect(result).toBeNull();
+            // No DB call attempted — short-circuited.
+            expect(mockReturning).not.toHaveBeenCalled();
         });
     });
 });

@@ -1,6 +1,7 @@
 import { db, log } from "@backend-infrastructure";
-import { and, eq, inArray, sql } from "drizzle-orm";
+import { and, eq, inArray, isNull, sql } from "drizzle-orm";
 import { referralLinksTable } from "../../domain/attribution/db/schema";
+import type { ReferralLinkRepository } from "../../domain/attribution/repositories/ReferralLinkRepository";
 import {
     identityGroupsTable,
     identityNodesTable,
@@ -24,11 +25,11 @@ type MergeResult = {
     migratedAssetLogs: number;
     migratedReferralLinksReferrer: number;
     migratedReferralLinksReferee: number;
-    deletedConflictingReferralLinks: number;
+    softDeletedConflictingReferralLinks: number;
     // Rows whose referrer and referee both belonged to the merge set before
     // the referrer/referee updates were applied. Left alone, they would have
-    // become `(anchor, anchor)` self-loops (see deleteSelfLoopCandidatesInTrx).
-    deletedSelfLoopReferralLinks: number;
+    // become `(anchor, anchor)` self-loops (see softDeleteSelfLoopCandidatesInTrx).
+    softDeletedSelfLoopReferralLinks: number;
 };
 
 type BatchMergeResult = MergeResult & {
@@ -37,6 +38,10 @@ type BatchMergeResult = MergeResult & {
 };
 
 export class IdentityMergeService {
+    constructor(
+        private readonly referralLinkRepository: ReferralLinkRepository
+    ) {}
+
     async mergeMultipleGroups(params: {
         anchorGroupId: string;
         mergingGroupIds: string[];
@@ -53,14 +58,14 @@ export class IdentityMergeService {
                 migratedAssetLogs: 0,
                 migratedReferralLinksReferrer: 0,
                 migratedReferralLinksReferee: 0,
-                deletedConflictingReferralLinks: 0,
-                deletedSelfLoopReferralLinks: 0,
+                softDeletedConflictingReferralLinks: 0,
+                softDeletedSelfLoopReferralLinks: 0,
                 mergedGroupIds: [],
                 previouslyMergedGroupIds: [],
             };
         }
 
-        return db.transaction(async (trx) => {
+        const result = await db.transaction(async (trx) => {
             const allGroupIds = [anchorGroupId, ...mergingGroupIds];
             const lockedGroups = await trx
                 .select()
@@ -107,32 +112,41 @@ export class IdentityMergeService {
                 .where(inArray(assetLogsTable.identityGroupId, mergingGroupIds))
                 .returning({ id: assetLogsTable.id });
 
-            // Self-loop guard: delete any referral_links row where BOTH
-            // endpoints are in the merge set. Left alone, the referrer/referee
-            // updates below would collapse the row to `(anchor, anchor)`,
-            // creating a self-referral that breaks chain walkers and reward
-            // distribution. Covers anchor↔merging in both directions and
-            // merging_i↔merging_j pairs. Must run BEFORE the updates.
-            const deletedSelfLoops = await this.deleteSelfLoopCandidatesInTrx(
-                trx,
-                allGroupIds
-            );
+            // Self-loop guard: any referral_links row where BOTH endpoints
+            // are in the merge set would collapse to `(anchor, anchor)` once
+            // the bulk referrer/referee updates run — violating the
+            // `referral_links_no_self_loop_check` CHECK constraint and
+            // breaking chain walkers / reward distribution. Active rows are
+            // soft-deleted with `end_reason='merged'` (audit preserved);
+            // already-soft-deleted rows are skipped because the bulk updates
+            // below also filter `removed_at IS NULL`, so they keep their
+            // original endpoints and pose no CHECK risk. Must run BEFORE the
+            // referrer/referee updates.
+            const softDeletedSelfLoops =
+                await this.softDeleteSelfLoopCandidatesInTrx(trx, allGroupIds);
 
             const migratedReferrerResult = await trx
                 .update(referralLinksTable)
                 .set({ referrerIdentityGroupId: anchorGroupId })
                 .where(
-                    inArray(
-                        referralLinksTable.referrerIdentityGroupId,
-                        mergingGroupIds
+                    and(
+                        inArray(
+                            referralLinksTable.referrerIdentityGroupId,
+                            mergingGroupIds
+                        ),
+                        // Only re-anchor active rows. Soft-deleted rows are
+                        // immutable history — they keep their original
+                        // referrer pointer (now referencing a deleted group)
+                        // for audit, and are invisible to all live readers.
+                        isNull(referralLinksTable.removedAt)
                     )
                 )
                 .returning({ id: referralLinksTable.id });
 
-            let deletedConflicts = 0;
+            let softDeletedConflicts = 0;
             for (const mergingGroupId of mergingGroupIds) {
-                deletedConflicts +=
-                    await this.deleteConflictingRefereeLinksInTrx(
+                softDeletedConflicts +=
+                    await this.softDeleteConflictingRefereeLinksInTrx(
                         trx,
                         anchorGroupId,
                         mergingGroupId
@@ -143,9 +157,13 @@ export class IdentityMergeService {
                 .update(referralLinksTable)
                 .set({ refereeIdentityGroupId: anchorGroupId })
                 .where(
-                    inArray(
-                        referralLinksTable.refereeIdentityGroupId,
-                        mergingGroupIds
+                    and(
+                        inArray(
+                            referralLinksTable.refereeIdentityGroupId,
+                            mergingGroupIds
+                        ),
+                        // Same rationale as the referrer update.
+                        isNull(referralLinksTable.removedAt)
                     )
                 )
                 .returning({ id: referralLinksTable.id });
@@ -180,8 +198,8 @@ export class IdentityMergeService {
                 migratedAssetLogs: migratedAssetLogsResult.length,
                 migratedReferralLinksReferrer: migratedReferrerResult.length,
                 migratedReferralLinksReferee: migratedRefereeResult.length,
-                deletedConflictingReferralLinks: deletedConflicts,
-                deletedSelfLoopReferralLinks: deletedSelfLoops,
+                softDeletedConflictingReferralLinks: softDeletedConflicts,
+                softDeletedSelfLoopReferralLinks: softDeletedSelfLoops,
                 mergedGroupIds: mergingGroupIds,
                 previouslyMergedGroupIds,
             };
@@ -193,6 +211,10 @@ export class IdentityMergeService {
 
             return result;
         });
+
+        this.referralLinkRepository.clearChainCache();
+
+        return result;
     }
 
     private async updateAnchorMergedGroupsBatchInTrx(
@@ -234,7 +256,7 @@ export class IdentityMergeService {
     }): Promise<MergeResult> {
         const { anchorGroupId, mergingGroupId } = params;
 
-        return db.transaction(async (trx) => {
+        const result = await db.transaction(async (trx) => {
             const [lockedGroups] = await Promise.all([
                 trx
                     .select()
@@ -283,24 +305,28 @@ export class IdentityMergeService {
             // Must run BEFORE the referrer/referee updates that would otherwise
             // collapse `(anchor, merging)` or `(merging, anchor)` rows to
             // `(anchor, anchor)`.
-            const deletedSelfLoops = await this.deleteSelfLoopCandidatesInTrx(
-                trx,
-                [anchorGroupId, mergingGroupId]
-            );
+            const softDeletedSelfLoops =
+                await this.softDeleteSelfLoopCandidatesInTrx(trx, [
+                    anchorGroupId,
+                    mergingGroupId,
+                ]);
 
             const migratedReferrerResult = await trx
                 .update(referralLinksTable)
                 .set({ referrerIdentityGroupId: anchorGroupId })
                 .where(
-                    eq(
-                        referralLinksTable.referrerIdentityGroupId,
-                        mergingGroupId
+                    and(
+                        eq(
+                            referralLinksTable.referrerIdentityGroupId,
+                            mergingGroupId
+                        ),
+                        isNull(referralLinksTable.removedAt)
                     )
                 )
                 .returning({ id: referralLinksTable.id });
 
-            const deletedConflicts =
-                await this.deleteConflictingRefereeLinksInTrx(
+            const softDeletedConflicts =
+                await this.softDeleteConflictingRefereeLinksInTrx(
                     trx,
                     anchorGroupId,
                     mergingGroupId
@@ -310,9 +336,12 @@ export class IdentityMergeService {
                 .update(referralLinksTable)
                 .set({ refereeIdentityGroupId: anchorGroupId })
                 .where(
-                    eq(
-                        referralLinksTable.refereeIdentityGroupId,
-                        mergingGroupId
+                    and(
+                        eq(
+                            referralLinksTable.refereeIdentityGroupId,
+                            mergingGroupId
+                        ),
+                        isNull(referralLinksTable.removedAt)
                     )
                 )
                 .returning({ id: referralLinksTable.id });
@@ -348,8 +377,8 @@ export class IdentityMergeService {
                 migratedAssetLogs: migratedAssetLogsResult.length,
                 migratedReferralLinksReferrer: migratedReferrerResult.length,
                 migratedReferralLinksReferee: migratedRefereeResult.length,
-                deletedConflictingReferralLinks: deletedConflicts,
-                deletedSelfLoopReferralLinks: deletedSelfLoops,
+                softDeletedConflictingReferralLinks: softDeletedConflicts,
+                softDeletedSelfLoopReferralLinks: softDeletedSelfLoops,
             };
 
             log.info(
@@ -363,17 +392,36 @@ export class IdentityMergeService {
 
             return result;
         });
+
+        // See `mergeMultipleGroups` for the rationale.
+        this.referralLinkRepository.clearChainCache();
+
+        return result;
     }
 
-    private async deleteConflictingRefereeLinksInTrx(
+    /**
+     * Soft-delete the merging group's active referee links that would
+     * conflict with anchor's active referee links once the bulk referee
+     * update runs.
+     *
+     * Soft-delete (vs hard-delete) preserves the audit trail with
+     * `end_reason='merged'`; the partial unique indexes on `referral_links`
+     * already filter `removed_at IS NULL`, so the post-update state cleanly
+     * satisfies them.
+     *
+     * Conflicts are looked up against ANCHOR's ACTIVE rows only — anchor's
+     * own soft-deleted rows do not occupy a uniqueness slot under the new
+     * partial uniques, so they should not trigger removal of merging's
+     * active rows.
+     */
+    private async softDeleteConflictingRefereeLinksInTrx(
         trx: Parameters<Parameters<typeof db.transaction>[0]>[0],
         anchorGroupId: string,
         mergingGroupId: string
     ): Promise<number> {
-        // Merchant-scoped conflicts: the anchor already has a referrer for
-        // some merchants, so merging's referee rows on those same merchants
-        // would violate the partial unique on (merchant_id, referee) after
-        // the referee migration.
+        const now = new Date();
+
+        // Merchant-scoped conflicts: only ACTIVE anchor rows count.
         const anchorMerchantRefereeLinks = await trx
             .select({ merchantId: referralLinksTable.merchantId })
             .from(referralLinksTable)
@@ -383,7 +431,8 @@ export class IdentityMergeService {
                         referralLinksTable.refereeIdentityGroupId,
                         anchorGroupId
                     ),
-                    eq(referralLinksTable.scope, "merchant")
+                    eq(referralLinksTable.scope, "merchant"),
+                    isNull(referralLinksTable.removedAt)
                 )
             );
 
@@ -391,11 +440,12 @@ export class IdentityMergeService {
             .map((l) => l.merchantId)
             .filter((id): id is string => id !== null);
 
-        let deleted = 0;
+        let softDeleted = 0;
 
         if (anchorMerchantIds.length > 0) {
-            const deletedMerchantResult = await trx
-                .delete(referralLinksTable)
+            const softDeletedMerchantResult = await trx
+                .update(referralLinksTable)
+                .set({ removedAt: now, endReason: "merged" })
                 .where(
                     and(
                         eq(
@@ -403,6 +453,8 @@ export class IdentityMergeService {
                             mergingGroupId
                         ),
                         eq(referralLinksTable.scope, "merchant"),
+                        // Only mark active rows; idempotent if re-run.
+                        isNull(referralLinksTable.removedAt),
                         // `inArray` rejects nullable columns in the current
                         // Drizzle version; raw-SQL snippet keeps the same
                         // semantics without losing the NOT NULL implication.
@@ -413,12 +465,10 @@ export class IdentityMergeService {
                     )
                 )
                 .returning({ id: referralLinksTable.id });
-            deleted += deletedMerchantResult.length;
+            softDeleted += softDeletedMerchantResult.length;
         }
 
-        // Cross-merchant conflict: the `(referee) WHERE scope='cross_merchant'`
-        // partial unique allows only one row per user; drop the merging row
-        // if the anchor already has one.
+        // Cross-merchant conflict: only ACTIVE anchor rows count.
         const [anchorCrossMerchant] = await trx
             .select({ id: referralLinksTable.id })
             .from(referralLinksTable)
@@ -428,52 +478,62 @@ export class IdentityMergeService {
                         referralLinksTable.refereeIdentityGroupId,
                         anchorGroupId
                     ),
-                    eq(referralLinksTable.scope, "cross_merchant")
+                    eq(referralLinksTable.scope, "cross_merchant"),
+                    isNull(referralLinksTable.removedAt)
                 )
             )
             .limit(1);
 
         if (anchorCrossMerchant) {
-            const deletedCrossResult = await trx
-                .delete(referralLinksTable)
+            const softDeletedCrossResult = await trx
+                .update(referralLinksTable)
+                .set({ removedAt: now, endReason: "merged" })
                 .where(
                     and(
                         eq(
                             referralLinksTable.refereeIdentityGroupId,
                             mergingGroupId
                         ),
-                        eq(referralLinksTable.scope, "cross_merchant")
+                        eq(referralLinksTable.scope, "cross_merchant"),
+                        isNull(referralLinksTable.removedAt)
                     )
                 )
                 .returning({ id: referralLinksTable.id });
-            deleted += deletedCrossResult.length;
+            softDeleted += softDeletedCrossResult.length;
         }
 
-        return deleted;
+        return softDeleted;
     }
 
     /**
-     * Delete referral_links rows that would collapse to a self-loop
+     * Soft-delete referral_links rows that would collapse to a self-loop
      * (`referrer = referee`) once identity groups are merged.
      *
      * Covers two classes of rows:
      *  - `(anchor, merging)` / `(merging, anchor)` in either scope — the
      *    referrer/referee update steps would flip the orphan endpoint to
      *    `anchor`, producing `(anchor, anchor)`.
-     *  - `(merging_i, merging_j)` when more than one group is merging at once
-     *    (from `mergeMultipleGroups`) — both endpoints become `anchor`.
+     *  - `(merging_i, merging_j)` when more than one group is merging at
+     *    once (from `mergeMultipleGroups`) — both endpoints become `anchor`.
+     *
+     * Only ACTIVE rows are touched. Soft-deleted rows in the same shape are
+     * left alone: the bulk referrer/referee updates also filter
+     * `removed_at IS NULL`, so they retain their original endpoints (no
+     * CHECK violation, audit preserved).
      *
      * Must run BEFORE the referrer/referee migrations in the transaction.
-     * Self-loops break chain-walker termination logic (path guard still works
-     * but an extra hop is wasted) and, worse, would cause the reward pipeline
-     * to credit users as their own referrer via `findReferrerForReferee`.
+     * Self-loops break chain-walker termination logic (path guard still
+     * works but an extra hop is wasted) and, worse, would cause the reward
+     * pipeline to credit users as their own referrer via
+     * `findReferrerForReferee`.
      */
-    private async deleteSelfLoopCandidatesInTrx(
+    private async softDeleteSelfLoopCandidatesInTrx(
         trx: Parameters<Parameters<typeof db.transaction>[0]>[0],
         allGroupIds: string[]
     ): Promise<number> {
         const result = await trx
-            .delete(referralLinksTable)
+            .update(referralLinksTable)
+            .set({ removedAt: new Date(), endReason: "merged" })
             .where(
                 and(
                     inArray(
@@ -483,7 +543,8 @@ export class IdentityMergeService {
                     inArray(
                         referralLinksTable.refereeIdentityGroupId,
                         allGroupIds
-                    )
+                    ),
+                    isNull(referralLinksTable.removedAt)
                 )
             )
             .returning({ id: referralLinksTable.id });

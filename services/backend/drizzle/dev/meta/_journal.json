@@ -211,6 +211,20 @@
             "when": 1777358133663,
             "tag": "0029_complete_zarek",
             "breakpoints": true
+        },
+        {
+            "idx": 30,
+            "version": "7",
+            "when": 1777358932502,
+            "tag": "0030_good_thunderbird",
+            "breakpoints": true
+        },
+        {
+            "idx": 31,
+            "version": "7",
+            "when": 1777359724884,
+            "tag": "0031_narrow_kinsey_walden",
+            "breakpoints": true
         }
     ]
 }

@@ -10,6 +10,7 @@ import {
     uuid,
 } from "drizzle-orm/pg-core";
 import type {
+    ReferralLinkEndReason,
     ReferralLinkScope,
     ReferralLinkSource,
     ReferralLinkSourceData,
@@ -41,9 +42,17 @@ export const referralLinksTable = pgTable(
         //   - source='code' → { type: 'code', codeId: uuid }
         sourceData: jsonb("source_data").$type<ReferralLinkSourceData>(),
         createdAt: timestamp("created_at").defaultNow().notNull(),
-        // Phase 2 hook — unused today. When set, readers must filter
-        // `expiresAt IS NULL OR expiresAt > now()`.
-        expiresAt: timestamp("expires_at"),
+        // User-driven (or system-driven) soft-delete marker. When set, the row
+        // is treated as inactive by all read paths and partial uniques, while
+        // staying physically present so the audit trail and downstream FKs
+        // (`asset_logs.referral_link_id`, `referral_codes` lookups) survive.
+        // Set by `ReferralLinkRepository.removeReferrer` and by
+        // `IdentityMergeService` when collapsing conflicting/self-loop rows.
+        removedAt: timestamp("removed_at"),
+        // Companion to `removedAt`. Discriminates why the row went inactive,
+        // see `ReferralLinkEndReason` for the value catalogue. Always NULL
+        // while `removedAt` is NULL.
+        endReason: text("end_reason").$type<ReferralLinkEndReason>(),
     },
     (table) => [
         check(
@@ -58,15 +67,20 @@ export const referralLinksTable = pgTable(
             "referral_links_no_self_loop_check",
             sql`"referrer_identity_group_id" <> "referee_identity_group_id"`
         ),
-        // One referrer per user per merchant for scope='merchant'.
+        // One ACTIVE referrer per user per merchant for scope='merchant'.
+        // `removed_at IS NULL` lets a user revoke their merchant-scope
+        // referrer (e.g. for a previously-clicked share link) and pick up a
+        // new one without losing history.
         uniqueIndex("referral_links_merchant_referee_unique")
             .on(table.merchantId, table.refereeIdentityGroupId)
-            .where(sql`"scope" = 'merchant'`),
-        // One cross-merchant referrer per user (global referrer of last
-        // resort — first redemption wins).
+            .where(sql`"scope" = 'merchant' AND "removed_at" IS NULL`),
+        // One ACTIVE cross-merchant referrer per user (global referrer of
+        // last resort). The `removed_at IS NULL` guard supports the
+        // remove + re-redeem flow (UserC entered code A, removed it, then
+        // entered code B — both rows preserved, only the latest is active).
         uniqueIndex("referral_links_cross_merchant_referee_unique")
             .on(table.refereeIdentityGroupId)
-            .where(sql`"scope" = 'cross_merchant'`),
+            .where(sql`"scope" = 'cross_merchant' AND "removed_at" IS NULL`),
         index("referral_links_referrer_idx").on(table.referrerIdentityGroupId),
         index("referral_links_referee_idx").on(table.refereeIdentityGroupId),
     ]
