@@ -162,12 +162,14 @@ class FrakComponentRenderer
      * Frak SDK client is ready. Mirrors WordPress's
      * `Frak_WooCommerce::render_purchase_tracker_for_order()` one-liner.
      *
-     * Emits the script alongside the `<frak-post-purchase>` component so
-     * attribution still works when the component is missing — the SDK is
-     * idempotent on `(customerId, orderId, token)`, so the duplicate call
-     * (script + component-mount) is intentional. Keeps tracking working
-     * when either surface is missing (template override removed the
-     * component, or component present but SDK still warming).
+     * Designed to be emitted on every order-page hook dispatch — independent
+     * of whether the visible `<frak-post-purchase>` component placement is
+     * enabled. The component itself ALSO calls `trackPurchaseStatus` on
+     * mount when present; the SDK is idempotent on the
+     * `(customerId, orderId, token)` triple so the duplicate call when both
+     * surfaces fire is intentional and safe. Decoupling the tracker from the
+     * component means disabling the visible card via the placement registry
+     * never breaks attribution.
      *
      * Pre-check (`if FrakSetup.core.trackPurchaseStatus`) covers the case
      * where the SDK bootstrapped before this inline script ran; the

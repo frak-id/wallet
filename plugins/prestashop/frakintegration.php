@@ -226,7 +226,9 @@ class FrakIntegration extends Module
 
     public function hookDisplayOrderConfirmation($params)
     {
-        return $this->dispatchHook('displayOrderConfirmation', is_array($params) ? $params : []);
+        $params = is_array($params) ? $params : [];
+        $tracker = $this->renderPurchaseTracker($params['order'] ?? null);
+        return $tracker . $this->dispatchHook('displayOrderConfirmation', $params);
     }
 
     /**
@@ -239,16 +241,25 @@ class FrakIntegration extends Module
      */
     public function hookDisplayOrderDetail($params)
     {
-        return $this->dispatchHook('displayOrderDetail', is_array($params) ? $params : []);
+        $params = is_array($params) ? $params : [];
+        $tracker = $this->renderPurchaseTracker($params['order'] ?? null);
+        return $tracker . $this->dispatchHook('displayOrderDetail', $params);
     }
 
     /**
-     * Shared body for the order-confirmation and order-detail hooks. Resolves
-     * the SDK context + product list once via {@see FrakOrderResolver}, then
-     * builds the `<frak-post-purchase>` markup and the inline tracker
-     * `<script>`. The two are concatenated and handed to the Smarty wrapper
-     * partial so themes can override the surrounding markup without breaking
-     * the component contract.
+     * Render the opt-in `<frak-post-purchase>` card for the order-confirmation
+     * and order-detail hooks. Resolves the SDK context + product list once via
+     * {@see FrakOrderResolver}, builds the component markup, and hands it to
+     * the Smarty wrapper partial so themes can override the surrounding markup
+     * without breaking the component contract.
+     *
+     * The inline tracker `<script>` is NOT emitted from here — it is fired
+     * independently by {@see renderPurchaseTracker()} on every order-page hook
+     * dispatch so attribution keeps working even when the merchant disables
+     * the post-purchase placement toggle. Mirrors the WordPress sibling, which
+     * fires the tracker unconditionally on `woocommerce_thankyou` /
+     * `woocommerce_view_order` regardless of whether the post-purchase block
+     * is placed.
      *
      * Returns an empty string on missing / unloaded orders so the hook is a
      * no-op for malformed dispatches (PrestaShop generally guarantees a valid
@@ -259,7 +270,7 @@ class FrakIntegration extends Module
      * loaded successfully — catches deleted-order edge cases that surfaced
      * in production for both Magento and WordPress siblings.
      *
-     * @param mixed  $order     Resolved Order object from the hook params.
+     * @param mixed  $order      Resolved Order object from the hook params.
      * @param string $placement  Placement identifier forwarded to the SDK.
      */
     private function renderPostPurchase($order, string $placement): string
@@ -281,11 +292,44 @@ class FrakIntegration extends Module
             }
         }
 
-        $html = FrakComponentRenderer::postPurchase($attrs)
-            . FrakComponentRenderer::purchaseTrackerScript($data['context']);
+        $html = FrakComponentRenderer::postPurchase($attrs);
 
         $this->context->smarty->assign('frak_post_purchase_html', $html);
         return $this->display(__FILE__, 'views/templates/hook/post-purchase.tpl');
+    }
+
+    /**
+     * Always-on inline tracker for the order-confirmation and order-detail
+     * hooks. Emits the `<script>` that calls `trackPurchaseStatus` once the
+     * SDK client is ready, regardless of whether the visible
+     * `<frak-post-purchase>` component placement is enabled — so disabling
+     * the card via the placement registry never breaks attribution.
+     *
+     * Mirrors WordPress's `Frak_WooCommerce::render_purchase_tracker_for_order`
+     * which fires unconditionally on `woocommerce_thankyou` /
+     * `woocommerce_view_order`. Both plugins emit the same
+     * `(customerId, orderId, token)` payload so the backend has one contract
+     * to maintain.
+     *
+     * The `<frak-post-purchase>` component (when present) ALSO calls
+     * `trackPurchaseStatus` on mount; the SDK is idempotent on the
+     * `(customerId, orderId, token)` triple so the duplicate call when both
+     * surfaces fire is intentional and safe.
+     *
+     * Returns an empty string on missing / unloaded orders so the hook is a
+     * no-op for malformed dispatches — same guard shape as
+     * {@see renderPostPurchase()}.
+     *
+     * @param mixed $order Resolved Order object from the hook params.
+     */
+    private function renderPurchaseTracker($order): string
+    {
+        if (!$order || !Validate::isLoadedObject($order)) {
+            return '';
+        }
+        return FrakComponentRenderer::purchaseTrackerScript(
+            FrakOrderResolver::getContext($order)
+        );
     }
 
 

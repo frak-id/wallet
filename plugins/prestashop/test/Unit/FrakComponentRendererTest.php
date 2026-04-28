@@ -112,4 +112,24 @@ final class FrakComponentRendererTest extends TestCase
         $this->assertStringNotContainsString('referral-title=""', $html);
         $this->assertStringNotContainsString('inapp-cta=""', $html);
     }
+
+    public function testPurchaseTrackerScriptEmitsTrackPurchaseStatusCall(): void
+    {
+        // The tracker is emitted independently of the post-purchase component
+        // placement so attribution survives the merchant disabling the visible
+        // card. The script must be self-contained (no external deps) and
+        // resilient to SDK boot-order races (`frak:client` listener fallback).
+        $script = FrakComponentRenderer::purchaseTrackerScript([
+            'customerId' => '42',
+            'orderId' => '999',
+            'token' => 'abc_999',
+        ]);
+
+        $this->assertStringStartsWith('<script>', $script);
+        $this->assertStringContainsString('trackPurchaseStatus', $script);
+        $this->assertStringContainsString('"customerId":"42"', $script);
+        $this->assertStringContainsString('"orderId":"999"', $script);
+        $this->assertStringContainsString('"token":"abc_999"', $script);
+        $this->assertStringContainsString('frak:client', $script);
+    }
 }
