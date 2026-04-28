@@ -78,11 +78,12 @@ class FrakIntegration extends Module
 
     public function hookHeader()
     {
+        $shop_name = Configuration::get('FRAK_SHOP_NAME');
+        $logo_url = Configuration::get('FRAK_LOGO_URL');
+
         $this->context->smarty->assign([
-            'shop_name' => Configuration::get('FRAK_SHOP_NAME'),
-            'logo_url' => Configuration::get('FRAK_LOGO_URL'),
-            'modal_lng' => Configuration::get('FRAK_MODAL_LNG'),
-            'modal_i18n' => Configuration::get('FRAK_MODAL_I18N'),
+            'shop_name' => $shop_name ?: Configuration::get('PS_SHOP_NAME'),
+            'logo_url' => $logo_url,
         ]);
 
         return $this->display(__FILE__, 'views/templates/hook/head.tpl');
