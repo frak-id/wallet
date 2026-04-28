@@ -22,7 +22,9 @@ DIST_DIR="dist"
 # Resolve version
 VERSION="${1:-${VERSION:-}}"
 if [ -z "$VERSION" ]; then
-  VERSION=$(grep -E '"version"\s*:' composer.json | head -n1 | sed -E 's/.*"version"\s*:\s*"([^"]+)".*/\1/')
+  # Use composer to read the canonical "version" field from composer.json.
+  # Avoids portability issues with grep/sed `\s` between BSD (macOS) and GNU.
+  VERSION=$(composer config version 2>/dev/null || true)
 fi
 if [ -z "$VERSION" ]; then
   echo "::error::Unable to resolve module version (pass as arg, VERSION env var, or add to composer.json)"

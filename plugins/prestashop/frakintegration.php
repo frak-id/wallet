@@ -73,7 +73,10 @@ class FrakIntegration extends Module
             parent::uninstall() &&
             $this->unregisterHook('header') &&
             $this->unregisterHook('displayOrderConfirmation') &&
-            $this->unregisterHook('displayProductAdditionalInfo')
+            $this->unregisterHook('displayProductAdditionalInfo') &&
+            // Symmetric with install(); keeps the hook chain readable, even though
+            // parent::uninstall() already truncates the module's ps_hook_module rows.
+            $this->unregisterHook('actionOrderStatusUpdate')
         ) {
             Configuration::deleteByName('FRAK_SHOP_NAME');
             Configuration::deleteByName('FRAK_LOGO_URL');

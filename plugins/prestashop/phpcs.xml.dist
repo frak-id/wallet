@@ -8,6 +8,29 @@
         <exclude name="PSR1.Classes.ClassDeclaration.MissingNamespace"/>
     </rule>
 
+    <!--
+        Module entry-point files must mix `require_once` (vendor autoload + PrestaShop
+        version guards) with class declarations. PSR-1 disallows that combo, but every
+        PrestaShop module on the marketplace ships with the same shape — cannot be helped.
+    -->
+    <rule ref="PSR1.Files.SideEffects">
+        <exclude-pattern>frakintegration.php</exclude-pattern>
+        <exclude-pattern>controllers/admin/AdminFrakIntegrationController.php</exclude-pattern>
+    </rule>
+
+    <!--
+        Default Generic.Files.LineLength warning threshold (120) is too tight for the
+        `PrestaShopLogger::addLog(…)` calls and merchant webhook URLs. Raise to 200 so
+        the long inline strings stop tripping the warning channel without forcing
+        unreadable line wraps in tightly-packed log statements.
+    -->
+    <rule ref="Generic.Files.LineLength">
+        <properties>
+            <property name="lineLimit" value="200"/>
+            <property name="absoluteLineLimit" value="0"/>
+        </properties>
+    </rule>
+
     <file>frakintegration.php</file>
     <file>classes</file>
     <file>controllers</file>

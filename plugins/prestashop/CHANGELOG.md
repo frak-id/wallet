@@ -11,11 +11,8 @@ version on dispatch.
 
 ## [Unreleased]
 
-## [1.0.0] - 2026-03-26
-
 ### Added
 
 - Initial release of the Frak PrestaShop module.
 
-[unreleased]: https://github.com/frak-id/wallet/compare/prestashop-1.0.0...HEAD
-[1.0.0]: https://github.com/frak-id/wallet/releases/tag/prestashop-1.0.0
+[unreleased]: https://github.com/frak-id/wallet/commits/main/plugins/prestashop

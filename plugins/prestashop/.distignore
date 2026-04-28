@@ -34,6 +34,7 @@ phpunit.xml
 # Static analysis
 phpstan.neon
 phpstan.neon.dist
+phpstan-stubs.php
 phpcs.xml
 phpcs.xml.dist
 
