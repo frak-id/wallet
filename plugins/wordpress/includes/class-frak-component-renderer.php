@@ -115,7 +115,7 @@ class Frak_Component_Renderer {
 	 * @return string
 	 */
 	public static function banner( array $attrs, string $wrapper = '' ): string {
-		return self::render( 'frak-banner', self::BANNER_ATTRS, $attrs, $wrapper );
+		return self::render( 'frak-banner', self::BANNER_ATTRS, self::merge_classnames( $attrs ), $wrapper );
 	}
 
 	/**
@@ -126,7 +126,7 @@ class Frak_Component_Renderer {
 	 * @return string
 	 */
 	public static function share_button( array $attrs, string $wrapper = '' ): string {
-		return self::render( 'frak-button-share', self::SHARE_BUTTON_ATTRS, self::apply_share_button_style( $attrs ), $wrapper );
+		return self::render( 'frak-button-share', self::SHARE_BUTTON_ATTRS, self::apply_share_button_style( self::merge_classnames( $attrs ) ), $wrapper );
 	}
 
 	/**
@@ -157,6 +157,39 @@ class Frak_Component_Renderer {
 	}
 
 	/**
+	 * Merge Gutenberg's standard `className` (capital N — populated by the
+	 * Advanced → "Additional CSS Class(es)" panel) into our SDK-side
+	 * `classname` (lowercase) attribute so the merchant's class lands on the
+	 * inner web component DOM alongside the BEM hooks
+	 * (`.frak-banner__title`, `.frak-banner__cta`, etc.) where merchant theme
+	 * CSS can actually target it. The wrapper `<div>` keeps the class too via
+	 * {@see get_block_wrapper_attributes()} — duplication is intentional so
+	 * descendant selectors like `.merchant-class .frak-banner__title { … }`
+	 * match regardless of which scope the merchant aimed at.
+	 *
+	 * Pre-existing posts that set the legacy `classname` attribute via the
+	 * (now-removed) inspector field keep working: both values are joined and
+	 * forwarded.
+	 *
+	 * `className` is unset from the returned array so it doesn't leak to the
+	 * web component as an unknown HTML attribute.
+	 *
+	 * @param array<string, mixed> $attrs Raw camelCase attribute map.
+	 * @return array<string, mixed>
+	 */
+	private static function merge_classnames( array $attrs ): array {
+		$wp_class = isset( $attrs['className'] ) ? trim( (string) $attrs['className'] ) : '';
+		$legacy   = isset( $attrs['classname'] ) ? trim( (string) $attrs['classname'] ) : '';
+		unset( $attrs['className'] );
+
+		if ( '' === $wp_class ) {
+			return $attrs;
+		}
+		$attrs['classname'] = '' === $legacy ? $wp_class : $wp_class . ' ' . $legacy;
+		return $attrs;
+	}
+
+	/**
 	 * Render `<frak-post-purchase>` with the supplied attributes.
 	 *
 	 * When the current request is on a WooCommerce order endpoint the
@@ -177,7 +210,8 @@ class Frak_Component_Renderer {
 	 * @return string
 	 */
 	public static function post_purchase( array $attrs, string $wrapper = '' ): string {
-		$html_attrs = self::build_html_attrs( self::POST_PURCHASE_ATTRS, $attrs );
+		$show_products = self::should_show_products( $attrs );
+		$html_attrs    = self::build_html_attrs( self::POST_PURCHASE_ATTRS, self::merge_classnames( $attrs ) );
 
 		if ( class_exists( 'Frak_WooCommerce' ) ) {
 			$context = Frak_WooCommerce::get_order_context();
@@ -186,9 +220,67 @@ class Frak_Component_Renderer {
 					$html_attrs[] = sprintf( '%s="%s"', esc_attr( $html_attr ), esc_attr( $value ) );
 				}
 			}
+
+			// Forward order line items to the SDK so the sharing page can show
+			// product cards. Sent as a JSON-stringified attribute because
+			// `preact-custom-element` only delivers attribute values as strings;
+			// the component parses it back into an array on mount. Skipped when
+			// `showProducts` is explicitly disabled, when the request is not on
+			// an order endpoint, or when the order has no resolvable products.
+			if ( $show_products ) {
+				$products = Frak_WooCommerce::get_order_products();
+				if ( null !== $products ) {
+					$json = wp_json_encode( $products, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE );
+					if ( is_string( $json ) ) {
+						$html_attrs[] = sprintf( 'products="%s"', esc_attr( $json ) );
+					}
+				}
+			}
 		}
 
 		return self::wrap( 'frak-post-purchase', $html_attrs, $wrapper );
+	}
+
+	/**
+	 * Whether order products should be auto-injected into the rendered
+	 * `<frak-post-purchase>` markup. Defaults to true — merchants opt out by
+	 * setting the block attribute / shortcode parameter / widget field to a
+	 * recognisable falsy value.
+	 *
+	 * Returns true when the key is missing, null, or an empty string so the
+	 * default-on behaviour survives older block instances saved before this
+	 * attribute existed and shortcodes that pass `show_products=""`. String
+	 * inputs are trimmed + lower-cased before matching against the falsy set
+	 * `{0, false, no, off}` so trailing whitespace from copy-paste does not
+	 * silently flip the toggle.
+	 *
+	 * @param array<string, mixed> $attrs Block attribute values.
+	 * @return bool
+	 */
+	private static function should_show_products( array $attrs ): bool {
+		if ( ! array_key_exists( 'showProducts', $attrs ) ) {
+			return true;
+		}
+		$value = $attrs['showProducts'];
+		// Treat null and the empty string as "unset" so they preserve the
+		// default-true behaviour rather than silently disabling products.
+		if ( null === $value ) {
+			return true;
+		}
+		if ( false === $value ) {
+			return false;
+		}
+		if ( is_string( $value ) ) {
+			$normalised = strtolower( trim( $value ) );
+			if ( '' === $normalised ) {
+				return true;
+			}
+			return ! in_array( $normalised, array( '0', 'false', 'no', 'off' ), true );
+		}
+		if ( is_int( $value ) ) {
+			return 0 !== $value;
+		}
+		return (bool) $value;
 	}
 
 	/**

@@ -116,12 +116,6 @@
 							label: __( 'Target interaction', 'frak' ),
 							value: attributes.targetInteraction,
 							onChange: setter( 'targetInteraction' ),
-						} ),
-						el( TextControl, {
-							label: __( 'CSS class name', 'frak' ),
-							help: __( 'Additional classes appended after the button-style preset.', 'frak' ),
-							value: attributes.classname,
-							onChange: setter( 'classname' ),
 						} )
 					)
 				),
@@ -134,7 +128,7 @@
 					el( 'frak-button-share', {
 						preview: 'true',
 						text: attr( attributes.text ),
-						classname: attr( composeClassname( attributes.buttonStyle, attributes.classname ) ),
+					classname: attr( composeClassname( attributes.buttonStyle, [ attributes.className, attributes.classname ].filter( Boolean ).join( ' ' ).trim() ) ),
 						placement: attr( attributes.placement ),
 						'click-action': attr( attributes.clickAction ),
 						// Boolean HTML attribute: spread the key in only when truthy so

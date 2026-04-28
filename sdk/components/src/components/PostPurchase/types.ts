@@ -1,3 +1,5 @@
+import type { SharingPageProduct } from "@frak-labs/core-sdk";
+
 /**
  * Props for the {@link PostPurchase} component.
  * @inline
@@ -58,6 +60,20 @@ export type PostPurchaseProps = {
      * Use `{REWARD}` as placeholder for the reward amount.
      */
     ctaText?: string;
+    /**
+     * Optional product cards forwarded to the sharing page when the user
+     * clicks the CTA. Accepts either a real {@link SharingPageProduct}
+     * array (when set imperatively via the JS property,
+     * `el.products = [...]`) or a JSON-stringified array (when set as an
+     * HTML attribute, `<frak-post-purchase products='[...]'>`). The HTML
+     * attribute path is required for server-rendered surfaces — e.g.
+     * WooCommerce / Magento plugins — because `preact-custom-element`
+     * delivers attribute values as raw strings.
+     *
+     * Empty arrays / unparseable strings are treated as "no products" so
+     * the sharing page renders without the product card section.
+     */
+    products?: SharingPageProduct[] | string;
     /**
      * When set, renders the card in preview mode (e.g. Shopify/WP editor).
      * Bypasses the client-ready / RPC gates that normally hide the card

@@ -25,6 +25,7 @@
 		"referrerText": { "type": "string", "default": "" },
 		"refereeText": { "type": "string", "default": "" },
 		"ctaText": { "type": "string", "default": "" },
+		"showProducts": { "type": "boolean", "default": true },
 		"previewVariant": { "type": "string", "default": "referrer" }
 	},
 	"editorScript": "file:./editor.js",

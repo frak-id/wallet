@@ -115,11 +115,6 @@
 							help: __( 'e.g. "purchase" to limit rewards to a specific interaction.', 'frak' ),
 							value: attributes.interaction,
 							onChange: setter( 'interaction' ),
-						} ),
-						el( TextControl, {
-							label: __( 'CSS class name', 'frak' ),
-							value: attributes.classname,
-							onChange: setter( 'classname' ),
 						} )
 					)
 				),
@@ -140,7 +135,7 @@
 							preview: 'true',
 							'preview-mode': attr( attributes.previewMode ) || 'referral',
 							placement: attr( attributes.placement ),
-							classname: attr( attributes.classname ),
+							classname: attr( [ attributes.className, attributes.classname ].filter( Boolean ).join( ' ' ).trim() ),
 							interaction: attr( attributes.interaction ),
 							'referral-title': attr( attributes.referralTitle ),
 							'referral-description': attr( attributes.referralDescription ),

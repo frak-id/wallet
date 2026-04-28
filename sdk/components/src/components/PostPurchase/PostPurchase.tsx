@@ -1,6 +1,7 @@
 import type {
     EstimatedReward,
     GetMerchantInformationReturnType,
+    SharingPageProduct,
     UserReferralStatusType,
 } from "@frak-labs/core-sdk";
 import { trackEvent } from "@frak-labs/core-sdk";
@@ -15,7 +16,13 @@ import { Columns } from "@frak-labs/design-system/components/Columns";
 import { Stack } from "@frak-labs/design-system/components/Stack";
 import { LogoFrak } from "@frak-labs/design-system/icons";
 import { FrakRpcError, RpcErrorCodes } from "@frak-labs/frame-connector";
-import { useEffect, useMemo, useRef, useState } from "preact/hooks";
+import {
+    useCallback,
+    useEffect,
+    useMemo,
+    useRef,
+    useState,
+} from "preact/hooks";
 import { useClientReady } from "@/hooks/useClientReady";
 import { useGlobalComponents } from "@/hooks/useGlobalComponents";
 import { useLightDomStyles } from "@/hooks/useLightDomStyles";
@@ -24,7 +31,7 @@ import {
     applyRewardPlaceholder,
     formatEstimatedReward,
 } from "@/utils/formatReward";
-import { useShareModal } from "../ButtonShare/hooks/useShareModal";
+import { openSharingPage } from "@/utils/sharingPage";
 import { GiftIcon } from "../icons/GiftIcon";
 import {
     badge,
@@ -80,6 +87,79 @@ function resolvePostPurchaseContext(
 }
 
 /**
+ * Whether `value` is a syntactically valid URL with an `http(s):` scheme.
+ *
+ * Used to gate `imageUrl` / `link` fields coming from the public `products`
+ * prop — the listener-side sharing-page builder calls `new URL(...)` on the
+ * incoming product link, and a `javascript:` URL would be a XSS sink in any
+ * consumer that binds the value to an `href`.
+ */
+function isHttpUrl(value: string): boolean {
+    try {
+        const parsed = new URL(value);
+        return parsed.protocol === "http:" || parsed.protocol === "https:";
+    } catch {
+        return false;
+    }
+}
+
+/**
+ * Coerce a raw `products` prop value into a candidate array suitable for
+ * per-item normalisation, or null when it cannot be reduced to one.
+ *
+ * Surfaces that set the prop via the JS property (`el.products = [...]`)
+ * deliver a real array; surfaces that bind it as an HTML attribute
+ * (WP / Magento server-render) deliver a JSON-stringified array. Anything
+ * else (truthy non-array non-string, JSON parse failure, JSON that decodes
+ * to a non-array) is treated as "no products" so the share still works
+ * without the product card section.
+ */
+function coerceProductCandidates(
+    products: SharingPageProduct[] | string | undefined
+): unknown[] | null {
+    if (!products) return null;
+    if (Array.isArray(products)) return products;
+    if (typeof products !== "string") return null;
+    try {
+        const parsed = JSON.parse(products) as unknown;
+        return Array.isArray(parsed) ? parsed : null;
+    } catch {
+        return null;
+    }
+}
+
+/**
+ * Normalise one untrusted candidate into a {@link SharingPageProduct}, or
+ * return null when the candidate has no usable title.
+ *
+ * The `products` prop is a public API boundary (merchants can set it
+ * server-side via WP/Magento or imperatively from arbitrary JS). Each entry
+ * is validated structurally so a malformed `link` reaching `new URL(...)`
+ * downstream would not crash the sharing-page builder, and so a
+ * `javascript:` URL cannot slip through as `imageUrl` / `link`.
+ */
+function normalizeProductCandidate(
+    candidate: unknown
+): SharingPageProduct | null {
+    if (!candidate || typeof candidate !== "object") return null;
+    const item = candidate as Record<string, unknown>;
+    const title = typeof item.title === "string" ? item.title.trim() : "";
+    if (title === "") return null;
+
+    const entry: SharingPageProduct = { title };
+    if (typeof item.imageUrl === "string" && isHttpUrl(item.imageUrl)) {
+        entry.imageUrl = item.imageUrl;
+    }
+    if (typeof item.link === "string" && isHttpUrl(item.link)) {
+        entry.link = item.link;
+    }
+    if (typeof item.utmContent === "string" && item.utmContent !== "") {
+        entry.utmContent = item.utmContent;
+    }
+    return entry;
+}
+
+/**
  * Post-purchase card component.
  *
  * Renders an inline card on the merchant's thank-you / order-status page
@@ -122,6 +202,7 @@ export function PostPurchase({
     ctaText: propCtaText,
     preview,
     previewVariant,
+    products,
 }: PostPurchaseProps) {
     const isPreview = !!preview;
     const { shouldRender, isHidden, isClientReady } = useClientReady();
@@ -278,12 +359,39 @@ export function PostPurchase({
         context?.reward,
     ]);
 
-    // Reuse shared share-modal hook (includes error tracking + debug info)
-    const { handleShare } = useShareModal(
-        undefined,
-        placementId,
-        resolvedSharingUrl
-    );
+    // Parse + sanitize the `products` prop. Surfaces that set the prop via
+    // the JS property (`el.products = [...]`) deliver a real array; surfaces
+    // that bind it as an HTML attribute (WP / Magento server-render) deliver
+    // a JSON-stringified array. We treat both as untrusted public-API input:
+    // each entry is normalised to a {@link SharingPageProduct} with a
+    // non-empty string `title`, and `imageUrl` / `link` are kept only when
+    // they parse as `http(s)://` URLs — otherwise downstream
+    // `new URL(...)` calls in the sharing-page builder would crash, and a
+    // `javascript:` link would be a XSS sink in any consumer that binds the
+    // value to an `href`. Unparseable / empty payloads are silently dropped
+    // so the share still works without the product card section.
+    const parsedProducts = useMemo<SharingPageProduct[] | undefined>(() => {
+        const candidates = coerceProductCandidates(products);
+        if (!candidates) return undefined;
+        const sanitized: SharingPageProduct[] = [];
+        for (const candidate of candidates) {
+            const entry = normalizeProductCandidate(candidate);
+            if (entry) sanitized.push(entry);
+        }
+        return sanitized.length > 0 ? sanitized : undefined;
+    }, [products]);
+
+    // Open the full-page sharing UI on click. The sharing page already
+    // renders a product card section when `products` is provided — see
+    // `apps/listener/.../sharing/component/SharingPage`. The post-purchase
+    // card uses this flow (rather than the modal-flow share) specifically
+    // because product cards only exist on the full-page surface.
+    const handleShare = useCallback(() => {
+        openSharingPage(undefined, placementId, {
+            link: resolvedSharingUrl,
+            products: parsedProducts,
+        });
+    }, [placementId, resolvedSharingUrl, parsedProducts]);
 
     // Bail conditions
     if (!isPreview && (!shouldRender || isHidden)) return null;

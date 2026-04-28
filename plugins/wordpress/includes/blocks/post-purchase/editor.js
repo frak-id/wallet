@@ -5,7 +5,7 @@
 	const el = element.createElement;
 	const { Fragment, useEffect, useRef } = element;
 	const { InspectorControls, useBlockProps } = blockEditor;
-	const { PanelBody, TextControl, TextareaControl, SelectControl } = components;
+	const { PanelBody, TextControl, TextareaControl, SelectControl, ToggleControl } = components;
 	const { __ } = i18n;
 
 	const VARIANTS = [
@@ -105,6 +105,12 @@
 							help: __( 'Defaults to the merchant domain if left empty.', 'frak' ),
 							value: attributes.sharingUrl,
 							onChange: setter( 'sharingUrl' ),
+						} ),
+						el( ToggleControl, {
+							label: __( 'Show purchased products', 'frak' ),
+							help: __( 'When enabled, the sharing page shows cards for the items in this order so referees can share specific products. Auto-injected from the WooCommerce order \u2014 takes effect on the live thank-you / view-order page.', 'frak' ),
+							checked: attributes.showProducts !== false,
+							onChange: setter( 'showProducts' ),
 						} )
 					),
 					el(
@@ -120,11 +126,6 @@
 							help: __( 'Leave empty to use the merchant ID from the global config.', 'frak' ),
 							value: attributes.merchantId,
 							onChange: setter( 'merchantId' ),
-						} ),
-						el( TextControl, {
-							label: __( 'CSS class name', 'frak' ),
-							value: attributes.classname,
-							onChange: setter( 'classname' ),
 						} )
 					)
 				),
@@ -140,7 +141,7 @@
 						key: attributes.previewVariant || 'referrer',
 						preview: 'true',
 						'preview-variant': attr( attributes.previewVariant ) || 'referrer',
-						classname: attr( attributes.classname ),
+						classname: attr( [ attributes.className, attributes.classname ].filter( Boolean ).join( ' ' ).trim() ),
 						placement: attr( attributes.placement ),
 						variant: attr( attributes.variant ),
 						'merchant-id': attr( attributes.merchantId ),
