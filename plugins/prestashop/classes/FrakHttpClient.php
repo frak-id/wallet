@@ -48,11 +48,21 @@ class FrakHttpClient
      * Build (or return the memoised) shared HttpClient. Subsequent calls
      * within the same request return the warm instance — TLS state pooled
      * across the resolver + webhook helper.
+     *
+     * Throws when PrestaShop's bundled Symfony HttpClient is not loadable
+     * (see {@see isAvailable()}). Callers (`FrakWebhookHelper::send()` and
+     * `FrakMerchantResolver::resolve()`) already wrap their HTTP entry
+     * points in `try/catch (Exception)` so the failure surfaces as a
+     * queue `last_error` row + a `PrestaShopLogger` entry rather than a
+     * white-screen fatal.
      */
     public static function getInstance(): \Symfony\Contracts\HttpClient\HttpClientInterface
     {
         if (self::$client !== null) {
             return self::$client;
+        }
+        if (!self::isAvailable()) {
+            throw new Exception(self::missingDependencyMessage());
         }
         self::$client = \Symfony\Component\HttpClient\HttpClient::create([
             'timeout' => self::TIMEOUT,
@@ -60,6 +70,42 @@ class FrakHttpClient
             'http_version' => '2.0',
         ]);
         return self::$client;
+    }
+
+    /**
+     * Whether `\Symfony\Component\HttpClient\HttpClient` is loadable via
+     * the registered autoloaders. The merchant zip ships only the plugin's
+     * classmap (composer.json no longer requires `symfony/http-client`); we
+     * rely on PrestaShop 8.1+ bundling `symfony/symfony` 4.x with the
+     * HttpClient component, which PS's autoloader exposes under the
+     * `Symfony\Component\HttpClient` PSR-4 prefix.
+     *
+     * Used by:
+     *   - {@see getInstance()}                — runtime guard.
+     *   - {@see FrakInstaller::install()}     — fail fast on fresh installs.
+     *   - `upgrade/install-1.0.1.php`         — fail fast on upgrades.
+     *
+     * `class_exists()` triggers the autoload chain, so a missing class
+     * reliably returns `false` instead of a fatal — PHP's autoload is
+     * lazy by design.
+     */
+    public static function isAvailable(): bool
+    {
+        return class_exists(\Symfony\Component\HttpClient\HttpClient::class);
+    }
+
+    /**
+     * Centralised error string surfaced when {@see isAvailable()} returns
+     * false. Public + static so the install / upgrade / runtime paths show
+     * the merchant the same diagnostic regardless of which code path
+     * detected the missing dependency.
+     */
+    public static function missingDependencyMessage(): string
+    {
+        return 'Frak requires Symfony HttpClient, normally bundled with PrestaShop 8.1+'
+            . ' via the symfony/symfony package. Class \\Symfony\\Component\\HttpClient\\HttpClient'
+            . ' was not found in the autoloader — verify that your PrestaShop installation is'
+            . ' intact and ships its standard symfony/* vendor packages.';
     }
 
     /**

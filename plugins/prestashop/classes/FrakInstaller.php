@@ -4,8 +4,8 @@
  * Install / uninstall orchestration for the Frak PrestaShop module.
  *
  * Owns the hook chain, schema lifecycle (sql/install.php + sql/uninstall.php
- * + Symfony Cache + Lock infrastructure tables via {@see FrakDb}), default
- * seeding, and cron-token provisioning. Symmetric uninstall.
+ * — webhook queue + key/value cache table), default seeding, and cron-token
+ * provisioning. Symmetric uninstall.
  *
  * Extracted from `FrakIntegration::install()` / `uninstall()` so the Module
  * bootstrap stays a thin router. Mirrors the WordPress sibling's split
@@ -64,6 +64,17 @@ class FrakInstaller
      */
     public static function install(Module $module): bool
     {
+        // Fail fast if PrestaShop's bundled Symfony HttpClient is not
+        // loadable. The merchant zip no longer requires `symfony/http-client`
+        // (CHANGELOG: "shared-hosting diet") and we rely on PS 8.1+ shipping
+        // it via `symfony/symfony` 4.x. Surfacing the error here means a
+        // misconfigured PS install rejects the module at upload time instead
+        // of silently failing on the first webhook fire.
+        if (!FrakHttpClient::isAvailable()) {
+            $module->_errors[] = FrakHttpClient::missingDependencyMessage();
+            return false;
+        }
+
         // Always-on plumbing hooks (CORE_HOOKS) plus every placement-driven
         // display hook from `FrakPlacementRegistry::distinctHooks()`. One loop
         // = one place to add/remove a hook on the install path — keeps the

@@ -173,8 +173,9 @@ class FrakIntegration extends Module
      * get the cron wired up automatically without copy-pasting the URL.
      *
      * Both code paths are idempotent against `FrakWebhookCron::run()`'s
-     * Symfony Lock, so a merchant who runs BOTH `ps_cronjobs` and a
-     * server-level cron against the URL never double-drains.
+     * MySQL `GET_LOCK` advisory lock (see {@see FrakLock}), so a merchant
+     * who runs BOTH `ps_cronjobs` and a server-level cron against the URL
+     * never double-drains.
      *
      * The handler is a no-op return so `ps_cronjobs` doesn't render any
      * Frak output through its own admin UI.
@@ -192,8 +193,8 @@ class FrakIntegration extends Module
      *
      * Merchants who need the 5-minute backoff cadence can still wire a
      * server-level cron against the URL-token controller instead; the two
-     * paths share the same drainer and the Symfony Lock makes them safe to
-     * run in parallel.
+     * paths share the same drainer and {@see FrakLock}'s advisory lock makes
+     * them safe to run in parallel.
      *
      * @return array{hour:int,day:int,month:int,day_of_week:int}
      */

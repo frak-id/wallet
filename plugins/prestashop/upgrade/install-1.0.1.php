@@ -72,6 +72,18 @@ if (!defined('_PS_VERSION_')) {
 
 function upgrade_module_1_0_1($module)
 {
+    // Fail fast if PrestaShop's bundled Symfony HttpClient is not
+    // loadable. The merchant zip no longer requires `symfony/http-client`
+    // and we rely on PS 8.1+ shipping it via `symfony/symfony` 4.x. Aborting
+    // the upgrade keeps the previous-version install intact (PrestaShop
+    // does not roll forward `ps_module.version` until the script returns
+    // true) so the merchant can recover by restoring a working PS install
+    // before retrying.
+    if (!FrakHttpClient::isAvailable()) {
+        $module->_errors[] = FrakHttpClient::missingDependencyMessage();
+        return false;
+    }
+
     // 1. Drop hooks that the new architecture no longer dispatches. PrestaShop
     //    already prunes `ps_hook_module` on `parent::uninstall()` — this is
     //    only the upgrade path, so we drop them explicitly.
@@ -149,8 +161,8 @@ function upgrade_module_1_0_1($module)
     //     timeline a shop joined.
     $index_check = 'SELECT COUNT(*) AS cnt FROM information_schema.statistics'
         . ' WHERE table_schema = DATABASE()'
-        . ' AND table_name = "' . _DB_PREFIX_ . FrakWebhookQueue::TABLE . '"'
-        . ' AND index_name = "idx_updated"';
+        . " AND table_name = '" . _DB_PREFIX_ . FrakWebhookQueue::TABLE . "'"
+        . " AND index_name = 'idx_updated'";
     $row = Db::getInstance()->getRow($index_check);
     if (is_array($row) && (int) ($row['cnt'] ?? 0) === 0) {
         Db::getInstance()->execute(

@@ -58,7 +58,7 @@ class FrakWebhookHelper
     /**
      * Resolved webhook URL for the current shop, or null when the merchant
      * is unresolved. Memoised because `FrakMerchantResolver::getId()`
-     * itself caches via the Symfony Cache pool, but the URL string concat
+     * itself caches via {@see FrakCache}, but the URL string concat
      * is cheap to skip on the cron drainer's 25-row hot loop.
      */
     public static function getWebhookUrl(): ?string
