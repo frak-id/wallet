@@ -7,20 +7,12 @@ export const Route = createFileRoute("/embedded/_layout/mint")({
         // Required parameters
         const d = search.d as string | undefined;
         const sc = search.sc as string | undefined;
-        const pt = search.pt as string | undefined;
 
         // Optional parameters
         const n = search.n as string | undefined;
         const c = search.c as string | undefined;
         const sd = search.sd as string | undefined;
 
-        return {
-            n,
-            d: d ?? "",
-            sc: sc ?? "",
-            pt: pt ?? "",
-            c,
-            sd,
-        };
+        return { d, sc, n, c, sd };
     },
 });

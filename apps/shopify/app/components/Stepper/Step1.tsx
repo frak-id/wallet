@@ -17,6 +17,16 @@ import { CollapsibleStep } from "./CollapsibleStep";
  */
 const maxRefreshRetries = 10;
 
+/**
+ * Map shop preferred currency to its matching Frak stablecoin.
+ * Defaults to EURe when the currency is unknown.
+ */
+const currencyToStablecoin = {
+    usd: "usdc",
+    eur: "eure",
+    gbp: "gbpe",
+} as const;
+
 export function Step1({
     onboardingData,
 }: {
@@ -41,11 +51,15 @@ export function Step1({
             walletStatus?.wallet,
             rootData?.shop?.domain,
             rootData?.shop?.name,
+            rootData?.shop?.preferredCurrency,
+            rootData?.shop?.myshopifyDomain,
         ],
         queryFn: async () => {
-            if (!walletStatus?.wallet) return null;
+            const wallet = walletStatus?.wallet;
+            const domain = rootData?.shop?.domain;
+            if (!wallet || !domain) return null;
 
-            const url = `/api/mint?walletAddress=${encodeURIComponent(walletStatus.wallet)}`;
+            const url = `/api/mint?walletAddress=${encodeURIComponent(wallet)}`;
             const response = await fetch(url);
 
             if (!response.ok) {
@@ -59,19 +73,22 @@ export function Step1({
             );
             mintUrl.pathname = "/embedded/mint";
             mintUrl.searchParams.append("sc", setupCode);
-            mintUrl.searchParams.append("d", rootData?.shop?.domain ?? "");
-            mintUrl.searchParams.append("n", rootData?.shop?.name ?? "");
-            mintUrl.searchParams.append("pt", "webshop,referral,purchase");
-            if (rootData?.shop?.myshopifyDomain) {
-                mintUrl.searchParams.append(
-                    "sd",
-                    rootData.shop.myshopifyDomain
-                );
+            mintUrl.searchParams.append("d", domain);
+            mintUrl.searchParams.append(
+                "c",
+                currencyToStablecoin[rootData?.shop?.preferredCurrency ?? "eur"]
+            );
+            if (rootData?.shop?.name) {
+                mintUrl.searchParams.append("n", rootData.shop.name);
+            }
+            const myshopifyDomain = rootData?.shop?.myshopifyDomain;
+            if (myshopifyDomain && myshopifyDomain !== domain) {
+                mintUrl.searchParams.append("sd", myshopifyDomain);
             }
 
             return mintUrl.toString();
         },
-        enabled: !!walletStatus?.wallet,
+        enabled: !!walletStatus?.wallet && !!rootData?.shop?.domain,
     });
 
     // Track opened popup and retry state
