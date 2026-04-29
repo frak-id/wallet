@@ -150,23 +150,6 @@ class FrakIntegration extends Module
     }
 
     /**
-     * Homepage-only banner. Driven by the `banner_home` placement.
-     */
-    public function hookDisplayHome($params = [])
-    {
-        return FrakDisplayDispatcher::dispatch($this, 'displayHome', $params);
-    }
-
-    /**
-     * Cart summary share button. Driven by the `share_cart` placement —
-     * useful for "share your cart" referral flows.
-     */
-    public function hookDisplayShoppingCart($params = [])
-    {
-        return FrakDisplayDispatcher::dispatch($this, 'displayShoppingCart', $params);
-    }
-
-    /**
      * Cron-job hook invoked by `ps_cronjobs` when it is installed and
      * enabled. Drains the webhook retry queue, mirroring what the
      * URL-token front controller does — so merchants on `ps_cronjobs`

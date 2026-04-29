@@ -73,8 +73,6 @@ final class FrakPlacementRegistryTest extends TestCase
         $this->assertContains('displayOrderConfirmation', $hooks);
         $this->assertContains('displayOrderDetail', $hooks);
         $this->assertContains('displayTop', $hooks);
-        $this->assertContains('displayHome', $hooks);
-        $this->assertContains('displayShoppingCart', $hooks);
     }
 
     public function testForHookFiltersToMatchingPlacements(): void
@@ -101,12 +99,10 @@ final class FrakPlacementRegistryTest extends TestCase
         $this->assertTrue(FrakPlacementRegistry::PLACEMENTS['post_purchase_detail']['default']);
     }
 
-    public function testNewAuxiliarySurfacesAreOptIn(): void
+    public function testAuxiliaryBannerSurfaceIsOptIn(): void
     {
-        // New surfaces are opt-in so upgrades do not change the storefront
-        // until the merchant explicitly enables them.
-        $this->assertFalse(FrakPlacementRegistry::PLACEMENTS['share_cart']['default']);
+        // The auxiliary top-banner surface is opt-in so upgrades do not
+        // change the storefront until the merchant explicitly enables it.
         $this->assertFalse(FrakPlacementRegistry::PLACEMENTS['banner_top']['default']);
-        $this->assertFalse(FrakPlacementRegistry::PLACEMENTS['banner_home']['default']);
     }
 }

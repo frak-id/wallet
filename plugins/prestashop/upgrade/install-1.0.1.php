@@ -28,7 +28,7 @@
  *      `actionFrontControllerSetMedia` (asset-pipeline integration), plus
  *      every distinct hook in `FrakPlacementRegistry::distinctHooks()` so
  *      existing installs gain the auxiliary placement surfaces (`displayTop`,
- *      `displayHome`, `displayShoppingCart`, `displayOrderDetail`).
+ *      `displayOrderDetail`).
     *   3. Schema: provision the `frak_webhook_queue` table and the new
     *      key/value `frak_cache` table via `sql/install.php` (CREATE TABLE
     *      IF NOT EXISTS — safe re-entry on partial upgrades). Drop the
@@ -121,8 +121,14 @@ function upgrade_module_1_0_1($module)
     //    `displayFooter` was the legacy floating-button surface (removed).
     //    `actionOrderStatusUpdate` raced under multistore / high load —
     //    superseded by the post-commit variant, see `frakintegration.php`.
+    //    `displayHome` / `displayShoppingCart` were placement surfaces in an
+    //    unreleased 1.0.1 dev iteration that never shipped — production
+    //    v0.0.4 shops never had them, so the unregister is a no-op there;
+    //    dev shops on intermediate builds have the stale rows cleaned up.
     $module->unregisterHook('displayFooter');
     $module->unregisterHook('actionOrderStatusUpdate');
+    $module->unregisterHook('displayHome');
+    $module->unregisterHook('displayShoppingCart');
 
     // 2. Register the plumbing + placement hooks the current architecture
     //    dispatches. `registerHook()` is idempotent on `(module, hook)`, so

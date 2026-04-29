@@ -11,7 +11,7 @@
  *
  * `FrakPlacementRegistry::isEnabled()` resolves through a per-request static
  * cache, so a page firing multiple display hooks (e.g. a product page with
- * `displayTop` + `displayProductAdditionalInfo` + `displayShoppingCart`)
+ * `displayTop` + `displayProductAdditionalInfo`)
  * only decodes the bundled storage row once.
  *
  * Extracted from `FrakIntegration::dispatchHook()` so the Module bootstrap

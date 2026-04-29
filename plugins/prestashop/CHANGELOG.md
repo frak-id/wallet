@@ -93,8 +93,7 @@ version on dispatch.
 
 ### Added
 
-- **Banner component is now reachable**: previously `FrakComponentRenderer::banner()` existed but no PrestaShop hook ever invoked it. New auto-render placements expose it on `displayTop` and `displayHome` (both opt-in by default).
-- **Auxiliary share-button placement**: opt-in `displayShoppingCart` placement so merchants can ship a “share your cart” referral CTA.
+- **Banner component is now reachable**: previously `FrakComponentRenderer::banner()` existed but no PrestaShop hook ever invoked it. New auto-render placement exposes it on `displayTop` (opt-in by default).
 - **Placement registry** (`FrakPlacementRegistry`): single source of truth mapping each component × hook tuple to a `FRAK_PLACEMENT_*` Configuration toggle. Adding / removing a storefront surface is now a one-line registry edit — the install / uninstall / migration / dispatch paths read from the same list. Mirrors the WordPress plugin’s flexibility (block / shortcode / widget / Elementor) using PrestaShop’s native hook + Smarty surfaces instead of a block editor.
 - **Smarty function plugins** (`{frak_banner}`, `{frak_share_button}`, `{frak_post_purchase}`): merchants can drop Frak components anywhere in their `.tpl` files or CMS pages without forking the module. Snake_case attribute keys are normalised to camelCase at the boundary so templates read naturally (`{frak_banner referral_title="..."}`). Mirrors WordPress’s `[frak_*]` shortcodes byte-for-byte.
 - **Renderer**: `FrakComponentRenderer::snakeKeysToCamel()` public helper used by the Smarty boundary (and any future surface that arrives with snake_case input).

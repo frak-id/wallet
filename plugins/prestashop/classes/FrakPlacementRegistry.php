@@ -71,10 +71,10 @@ class FrakPlacementRegistry
      * `hook` prefix so we keep the canonical PrestaShop names here.
      *
      * `default` controls whether the placement is opt-in (`false`) or
-     * opt-out (`true`) on a fresh install. The current product/order
-     * placements are opt-out (existing module behaviour); the new auxiliary
-     * surfaces (cart, top banner, customer-account) are opt-in so we don't
-     * change merchants' storefronts on upgrade without their consent.
+     * opt-out (`true`) on a fresh install. The product / order placements
+     * are opt-out (existing module behaviour); the auxiliary top-banner
+     * surface is opt-in so we don't change merchants' storefronts on
+     * upgrade without their consent.
      *
      * `placement_attr` is forwarded as the `placement="..."` HTML attribute
      * on the rendered web component. The Frak business dashboard keys
@@ -108,15 +108,6 @@ class FrakPlacementRegistry
             'label' => 'Share button on product pages',
             'description' => 'Renders the share-and-earn button under each product\'s additional info block.',
         ],
-        'share_cart' => [
-            'component' => self::COMPONENT_SHARE_BUTTON,
-            'hook' => 'displayShoppingCart',
-            'config_key' => 'FRAK_PLACEMENT_SHARE_CART',
-            'default' => false,
-            'placement_attr' => 'cart',
-            'label' => 'Share button on the shopping cart',
-            'description' => 'Adds the share button to the cart summary. Useful for "share your cart" referral flows.',
-        ],
 
         // Banner ———————————————————————————————————————————————————————
         'banner_top' => [
@@ -127,15 +118,6 @@ class FrakPlacementRegistry
             'placement_attr' => 'top',
             'label' => 'Banner at the top of every page',
             'description' => 'Renders the referral / in-app browser banner above the storefront content. Auto-hides when the SDK has nothing to surface.',
-        ],
-        'banner_home' => [
-            'component' => self::COMPONENT_BANNER,
-            'hook' => 'displayHome',
-            'config_key' => 'FRAK_PLACEMENT_BANNER_HOME',
-            'default' => false,
-            'placement_attr' => 'home',
-            'label' => 'Banner on the homepage',
-            'description' => 'Renders the banner inside the home page hook only — keeps the rest of the storefront unchanged.',
         ],
 
         // Post-purchase ————————————————————————————————————————————————
