@@ -9,7 +9,7 @@
  * those are key-value rows, not schema.
  *
  * Cache + Lock tables (`frak_cache_items`, `frak_lock_keys`) are dropped via
- * {@see FrakDb::dropInfrastructureTables()} from `uninstall()` — kept out of
+ * {@see FrakInfra::dropInfrastructureTables()} from `uninstall()` — kept out of
  * this file because the table names are owned by the Symfony adapters that
  * created them, not by this manifest.
  *
@@ -22,4 +22,4 @@ if (!defined('_PS_VERSION_')) {
 
 $sql = [];
 
-$sql['frak_webhook_queue'] = 'DROP TABLE IF EXISTS `' . _DB_PREFIX_ . 'frak_webhook_queue`';
+$sql[FrakWebhookQueue::TABLE] = 'DROP TABLE IF EXISTS `' . _DB_PREFIX_ . FrakWebhookQueue::TABLE . '`';

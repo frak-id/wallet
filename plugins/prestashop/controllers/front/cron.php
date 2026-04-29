@@ -45,7 +45,7 @@ class FrakIntegrationCronModuleFrontController extends ModuleFrontController
 
     public function postProcess()
     {
-        $expected = (string) Configuration::get('FRAK_CRON_TOKEN');
+        $expected = FrakConfig::getCronToken();
         $provided = (string) Tools::getValue('token');
 
         if ($expected === '' || !hash_equals($expected, $provided)) {

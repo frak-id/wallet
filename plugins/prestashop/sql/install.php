@@ -31,7 +31,7 @@
  * Cache + Lock tables (`frak_cache_items`, `frak_lock_keys`) are NOT defined
  * here — Symfony Cache (`DoctrineDbalAdapter`) and Symfony Lock
  * (`DoctrineDbalStore`) own their own schema and provision the tables via
- * `createTable()` on first use. {@see FrakDb::createInfrastructureTables()}
+ * `createTable()` on first use. {@see FrakInfra::createInfrastructureTables()}
  * runs that bootstrap from the install / upgrade path so the tables exist
  * before any merchant resolution or cron tick fires.
  */
@@ -42,11 +42,10 @@ if (!defined('_PS_VERSION_')) {
 
 $sql = [];
 
-$sql['frak_webhook_queue'] = 'CREATE TABLE IF NOT EXISTS `' . _DB_PREFIX_ . 'frak_webhook_queue` (
+$sql[FrakWebhookQueue::TABLE] = 'CREATE TABLE IF NOT EXISTS `' . _DB_PREFIX_ . FrakWebhookQueue::TABLE . '` (
     `id_frak_webhook_queue` INT(11) UNSIGNED NOT NULL AUTO_INCREMENT,
     `id_order` INT(11) UNSIGNED NOT NULL,
     `status` VARCHAR(32) NOT NULL,
-    `token` VARCHAR(255) NOT NULL,
     `attempts` INT(11) UNSIGNED NOT NULL DEFAULT 0,
     `next_retry_at` DATETIME NOT NULL,
     `last_error` TEXT DEFAULT NULL,

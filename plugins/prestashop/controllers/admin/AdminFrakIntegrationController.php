@@ -35,27 +35,19 @@ class AdminFrakIntegrationController extends ModuleAdminController
     {
         $merchant = FrakMerchantResolver::getRecord();
 
-        // Batch the brand + webhook lookups in one Configuration::getMultiple
-        // call. Each individual `Configuration::get` hits the autoload cache,
-        // but a single batched call collapses the (already fast) lookups
-        // into one hashmap walk and matches the PrestaShop best-practice for
-        // module settings reads (see ps_wirepayment).
-        $config = Configuration::getMultiple([
-            'FRAK_SHOP_NAME',
-            'FRAK_LOGO_URL',
-            'FRAK_WEBHOOK_SECRET',
-            'PS_SHOP_NAME',
-        ]);
-        $shop_name = $config['FRAK_SHOP_NAME'] ?? '';
-        $logo_url = $config['FRAK_LOGO_URL'] ?? '';
-        $webhook_secret = $config['FRAK_WEBHOOK_SECRET'] ?? '';
-        $ps_shop_name = $config['PS_SHOP_NAME'] ?? '';
+        // Brand bundle + webhook secret read in one batched lookup via
+        // {@see FrakConfig}. Each individual `Configuration::get` hits the
+        // autoload cache, but the batched call collapses three (already
+        // fast) lookups into one hashmap walk and keeps the FRAK_* key
+        // strings out of the controller.
+        $brand = FrakConfig::getBrand();
+        $webhook_secret = FrakConfig::getWebhookSecret();
 
         $this->context->smarty->assign([
             'module_dir' => $this->module->getPathUri(),
             'form_action' => $this->context->link->getAdminLink('AdminFrakIntegration'),
-            'shop_name' => $shop_name ?: $ps_shop_name,
-            'logo_url' => $logo_url,
+            'shop_name' => $brand['name'],
+            'logo_url' => $brand['logoUrl'],
             'webhook_secret' => $webhook_secret,
             'webhook_url' => FrakWebhookHelper::getWebhookUrl(),
             'webhook_secret_configured' => !empty($webhook_secret),
@@ -88,7 +80,7 @@ class AdminFrakIntegrationController extends ModuleAdminController
      */
     private function buildCronUrl(): string
     {
-        $token = (string) Configuration::get('FRAK_CRON_TOKEN');
+        $token = FrakConfig::getCronToken();
         if ($token === '') {
             return '';
         }
@@ -196,33 +188,19 @@ class AdminFrakIntegrationController extends ModuleAdminController
     {
         $shopName = strval(Tools::getValue('FRAK_SHOP_NAME'));
         $logoUrl = strval(Tools::getValue('FRAK_LOGO_URL'));
+        $baseUrl = $this->context->link->getBaseLink();
 
-        if (isset($_FILES['FRAK_LOGO_FILE']) && $_FILES['FRAK_LOGO_FILE']['error'] == UPLOAD_ERR_OK) {
-            $uploadedFile = $_FILES['FRAK_LOGO_FILE'];
-            $allowedExtensions = ['jpg', 'jpeg', 'png', 'gif', 'svg'];
-            $maxFileSize = 2 * 1024 * 1024; // 2MB
-
-            $fileExtension = strtolower(pathinfo($uploadedFile['name'], PATHINFO_EXTENSION));
-
-            if (!in_array($fileExtension, $allowedExtensions)) {
-                $this->errors[] = $this->l('Invalid file format. Only JPG, PNG, GIF, SVG files are allowed.');
-            } elseif ($uploadedFile['size'] > $maxFileSize) {
-                $this->errors[] = $this->l('File size exceeds 2MB limit.');
-            } else {
-                $uploadsDir = _PS_MODULE_DIR_ . 'frakintegration/uploads/';
-                if (!is_dir($uploadsDir)) {
-                    mkdir($uploadsDir, 0755, true);
-                }
-
-                $filename = 'logo_' . uniqid() . '.' . $fileExtension;
-                $targetPath = $uploadsDir . $filename;
-
-                if (move_uploaded_file($uploadedFile['tmp_name'], $targetPath)) {
-                    $logoUrl = $this->context->link->getBaseLink() . 'modules/frakintegration/uploads/' . $filename;
-                    $this->confirmations[] = $this->l('Logo uploaded successfully');
-                } else {
-                    $this->errors[] = $this->l('Failed to upload logo file');
-                }
+        // File upload is delegated to {@see FrakLogoUploader} so the validation
+        // gates (extension allowlist, MIME match, SVG sniff, size cap) are
+        // unit-testable without bootstrapping PrestaShop. Stable error codes
+        // map to translated strings here at the controller boundary.
+        if (isset($_FILES['FRAK_LOGO_FILE']) && $_FILES['FRAK_LOGO_FILE']['error'] === UPLOAD_ERR_OK) {
+            $result = FrakLogoUploader::processUpload($_FILES['FRAK_LOGO_FILE'], $baseUrl);
+            if (isset($result['error'])) {
+                $this->errors[] = $this->mapLogoUploadError($result['error']);
+            } elseif (isset($result['url'])) {
+                $logoUrl = $result['url'];
+                $this->confirmations[] = $this->l('Logo uploaded successfully');
             }
         }
 
@@ -230,14 +208,35 @@ class AdminFrakIntegrationController extends ModuleAdminController
             $this->errors[] = $this->l('Invalid Shop Name');
             return;
         }
-        if (!$logoUrl || (!Validate::isUrl($logoUrl) && !$this->isLocalFile($logoUrl))) {
+        if (!$logoUrl || (!Validate::isUrl($logoUrl) && !FrakLogoUploader::isLocalUrl($logoUrl, $baseUrl))) {
             $this->errors[] = $this->l('Invalid Logo URL');
             return;
         }
 
-        Configuration::updateValue('FRAK_SHOP_NAME', $shopName);
-        Configuration::updateValue('FRAK_LOGO_URL', $logoUrl);
+        FrakConfig::setShopName($shopName);
+        FrakConfig::setLogoUrl($logoUrl);
         $this->confirmations[] = $this->l('Brand settings updated');
+    }
+
+    /**
+     * Map a {@see FrakLogoUploader} error code to a translated user-facing
+     * message. Lives on the controller because the helper is intentionally
+     * i18n-agnostic (so it stays unit-testable without bootstrapping the
+     * PrestaShop translation layer).
+     */
+    private function mapLogoUploadError(string $code): string
+    {
+        switch ($code) {
+            case FrakLogoUploader::ERROR_INVALID_FORMAT:
+                return $this->l('Invalid file format. Only JPG, PNG, GIF, SVG files are allowed.');
+            case FrakLogoUploader::ERROR_TOO_LARGE:
+                return $this->l('File size exceeds 2MB limit.');
+            case FrakLogoUploader::ERROR_MIME_MISMATCH:
+                return $this->l('Logo file content does not match its declared format.');
+            case FrakLogoUploader::ERROR_MOVE_FAILED:
+            default:
+                return $this->l('Failed to upload logo file');
+        }
     }
 
     /**
@@ -249,15 +248,15 @@ class AdminFrakIntegrationController extends ModuleAdminController
      */
     private function processWebhookSecret(): void
     {
-        if (!Tools::getIsset('FRAK_WEBHOOK_SECRET')) {
+        if (!Tools::getIsset(FrakConfig::WEBHOOK_SECRET)) {
             return;
         }
-        $submittedSecret = strval(Tools::getValue('FRAK_WEBHOOK_SECRET'));
-        $previousSecret = (string) Configuration::get('FRAK_WEBHOOK_SECRET');
+        $submittedSecret = strval(Tools::getValue(FrakConfig::WEBHOOK_SECRET));
+        $previousSecret = FrakConfig::getWebhookSecret();
         if ($submittedSecret === $previousSecret) {
             return;
         }
-        Configuration::updateValue('FRAK_WEBHOOK_SECRET', $submittedSecret);
+        FrakConfig::setWebhookSecret($submittedSecret);
         // Reset the helper's per-request memo so the new secret takes effect
         // immediately if any subsequent action in the same request triggers
         // a webhook (e.g. saving + draining the queue).
@@ -346,22 +345,5 @@ class AdminFrakIntegrationController extends ModuleAdminController
             (int) $stats['success'],
             (int) $stats['failure']
         );
-    }
-
-    private function isLocalFile($url)
-    {
-        // Check if the URL is a local file uploaded to the module directory
-        $moduleUploadPath = _PS_MODULE_DIR_ . 'frakintegration/uploads/';
-        $baseUrl = $this->context->link->getBaseLink();
-
-        // Check if URL starts with our base URL and contains our module path
-        if (strpos($url, $baseUrl . 'modules/frakintegration/uploads/') === 0) {
-            // Extract filename from URL
-            $filename = basename($url);
-            $absolutePath = $moduleUploadPath . $filename;
-            return file_exists($absolutePath);
-        }
-
-        return false;
     }
 }

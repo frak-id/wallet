@@ -6,7 +6,7 @@
  * Looks up every placement registered for a given hook, gates each on its
  * bundled-storage flag, and concatenates the rendered markup. The
  * component-specific render paths still live on {@see FrakComponentRenderer}
- * (banner / share button) or {@see FrakOrderHooks::renderPostPurchase()}
+ * (banner / share button) or {@see FrakOrderRender::postPurchase()}
  * (post-purchase + Smarty wrapper); this class is just the routing layer.
  *
  * `FrakPlacementRegistry::isEnabled()` resolves through a per-request static
@@ -21,7 +21,7 @@ class FrakDisplayDispatcher
 {
     /**
      * @param Module               $module FrakIntegration instance — forwarded to
-     *                                     {@see FrakOrderHooks::renderPostPurchase()}
+     *                                     {@see FrakOrderRender::postPurchase()}
      *                                     so it can call `$module->display()` and
      *                                     `$module->context->smarty->assign()`.
      * @param string               $hook   PrestaShop hook name, e.g. `displayTop`.
@@ -46,7 +46,7 @@ class FrakDisplayDispatcher
                     ]);
                     break;
                 case FrakPlacementRegistry::COMPONENT_POST_PURCHASE:
-                    $output .= FrakOrderHooks::renderPostPurchase(
+                    $output .= FrakOrderRender::postPurchase(
                         $module,
                         $params['order'] ?? null,
                         $placement['placement_attr']

@@ -72,6 +72,24 @@ class FrakComponentRenderer
     ];
 
     /**
+     * `json_encode` flags used everywhere we embed JSON inside an HTML or JS
+     * payload (component attrs, `window.FrakSetup` blob, post-purchase product
+     * list, tracker payload, …):
+     *
+     *   - `JSON_UNESCAPED_SLASHES`: the default escapes `/` as `\/` which
+     *     bloats URLs and isn't required for valid JSON — unescaped slashes
+     *     are still valid inside both HTML attribute values and JS string
+     *     literals.
+     *   - `JSON_UNESCAPED_UNICODE`: encode non-ASCII characters as themselves
+     *     instead of `\uXXXX` escapes. UTF-8 is the canonical browser charset
+     *     and emitting raw unicode keeps the payload compact (and grep-able).
+     *
+     * Public so {@see FrakFrontend}, {@see FrakOrderRender}, and any future
+     * caller that emits JSON-into-HTML uses the same encoding contract.
+     */
+    public const JSON_FLAGS = JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE;
+
+    /**
      * Post-purchase: camelCase attr key => kebab-case HTML attribute name.
      *
      * `customerId`, `orderId`, `token` are listed alongside the public SDK
@@ -184,7 +202,7 @@ class FrakComponentRenderer
      */
     public static function purchaseTrackerScript(array $context): string
     {
-        $payload = json_encode($context, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
+        $payload = json_encode($context, self::JSON_FLAGS);
         if (!is_string($payload)) {
             return '';
         }

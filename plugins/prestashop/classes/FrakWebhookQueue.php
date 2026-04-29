@@ -28,7 +28,7 @@
  *   - Cleaner result hydration: `fetchAllAssociative()` /
  *     `fetchAssociative()` return well-typed array shapes.
  *   - Single shared connection with the Symfony Cache + Lock infra
- *     ({@see FrakDb::connection()}), so the per-request DB connection
+ *     ({@see FrakInfra::connection()}), so the per-request DB connection
  *     count stays at PS native + 1.
  *
  * Backoff schedule mirrors the Magento sister plugin
@@ -65,20 +65,22 @@ class FrakWebhookQueue
      * picks it up after the first backoff window — the synchronous call from
      * the hook already counts as one attempt.
      *
+     * The opaque webhook token is NOT stored on the row — the cron drainer
+     * derives it from the loaded `Order` via
+     * {@see FrakOrderResolver::getWebhookPayload()} so the source-of-truth
+     * for the token shape lives in one resolver.
+     *
      * @param int    $order_id Source PrestaShop order id (idempotency anchor).
      * @param string $status   Mapped Frak status: pending|confirmed|cancelled|refunded.
-     * @param string $token    Cart `secure_key` — preserved verbatim because the
-     *                         payload builder appends `_{order_id}` at send time.
      * @param string $error    The error message that triggered the enqueue. Stored
      *                         so the cron drainer's first attempt has a paper
      *                         trail even if the retry succeeds.
      */
-    public static function enqueue(int $order_id, string $status, string $token, string $error = ''): bool
+    public static function enqueue(int $order_id, string $status, string $error = ''): bool
     {
-        $affected = FrakDb::connection()->insert(_DB_PREFIX_ . self::TABLE, [
+        $affected = FrakInfra::connection()->insert(_DB_PREFIX_ . self::TABLE, [
             'id_order' => $order_id,
             'status' => $status,
-            'token' => $token,
             'attempts' => 0,
             'next_retry_at' => date('Y-m-d H:i:s', time() + self::BACKOFF_SECONDS[0]),
             'last_error' => self::truncateError($error),
@@ -103,7 +105,7 @@ class FrakWebhookQueue
             . ' ORDER BY `next_retry_at` ASC'
             . ' LIMIT ' . max(1, $limit);
 
-        return FrakDb::connection()->fetchAllAssociative($sql, [
+        return FrakInfra::connection()->fetchAllAssociative($sql, [
             'state' => FrakWebhookState::Pending->value,
             'max_attempts' => self::MAX_ATTEMPTS,
         ]);
@@ -114,7 +116,7 @@ class FrakWebhookQueue
      */
     public static function markSuccess(int $id): bool
     {
-        $affected = FrakDb::connection()->update(
+        $affected = FrakInfra::connection()->update(
             _DB_PREFIX_ . self::TABLE,
             ['state' => FrakWebhookState::Success->value, 'last_error' => null],
             ['id_frak_webhook_queue' => $id]
@@ -137,7 +139,7 @@ class FrakWebhookQueue
         $is_final = $attempts >= self::MAX_ATTEMPTS;
         $delay = self::BACKOFF_SECONDS[min($attempts - 1, count(self::BACKOFF_SECONDS) - 1)];
 
-        $affected = FrakDb::connection()->update(
+        $affected = FrakInfra::connection()->update(
             _DB_PREFIX_ . self::TABLE,
             [
                 'attempts' => $attempts,
@@ -190,7 +192,7 @@ class FrakWebhookQueue
             'last_error_at' => null,
         ];
 
-        $conn = FrakDb::connection();
+        $conn = FrakInfra::connection();
         $table = _DB_PREFIX_ . self::TABLE;
 
         try {

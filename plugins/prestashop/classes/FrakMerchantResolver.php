@@ -11,14 +11,14 @@
  *   - Short negative cache (5 min) on 4xx/5xx so unresolved or staging
  *     domains do not hammer the backend between webhook retries.
  *
- * Storage: Symfony Cache pool ({@see FrakDb::cache()}), namespaced under
+ * Storage: Symfony Cache pool ({@see FrakInfra::cache()}), namespaced under
  * `merchant:` and `merchant_unresolved:`. PSR-6 keys live in the shared
  * `frak_cache_items` table outside `ps_configuration` so cold merchant
  * data never bloats the per-request autoload payload — PrestaShop has no
  * `autoload=no` flag (unlike WordPress's `update_option(..., false)`), so
  * a custom backing store is the only way to keep cold config cold.
  *
- * HTTP: shares the {@see FrakDb::httpClient()} instance with
+ * HTTP: shares the {@see FrakHttpClient} singleton with
  * {@see FrakWebhookHelper} so the TLS handshake against `backend.frak.id`
  * is reused when a single order transition first resolves the merchant
  * and then dispatches the webhook on the same request.
@@ -34,9 +34,6 @@ class FrakMerchantResolver
     public const NEGATIVE_CACHE_PREFIX = 'merchant_unresolved.';
     /** Negative-cache TTL in seconds. Mirrors the WP plugin (5 minutes). */
     public const NEGATIVE_CACHE_TTL = 300;
-    public const RESOLVE_URL = 'https://backend.frak.id/user/merchant/resolve';
-    /** Connect + total request timeout in seconds for the resolver call. */
-    private const REQUEST_TIMEOUT = 5;
 
     public static function getId(): ?string
     {
@@ -76,7 +73,7 @@ class FrakMerchantResolver
         if ($host === '') {
             return;
         }
-        $cache = FrakDb::cache();
+        $cache = FrakInfra::cache();
         $cache->deleteItem(self::CACHE_KEY_PREFIX . self::sanitizeKey($host));
         $cache->deleteItem(self::NEGATIVE_CACHE_PREFIX . self::sanitizeKey($host));
     }
@@ -89,10 +86,10 @@ class FrakMerchantResolver
     /** @return array{id:string,name:string,domain:string,resolved_at:int}|null */
     private static function resolve(string $host): ?array
     {
-        $url = self::RESOLVE_URL . '?domain=' . rawurlencode($host);
+        $url = FrakUrls::MERCHANT_RESOLVE . '?domain=' . rawurlencode($host);
 
         try {
-            $response = FrakDb::httpClient(self::REQUEST_TIMEOUT)->request('GET', $url, [
+            $response = FrakHttpClient::getInstance()->request('GET', $url, [
                 'headers' => ['Accept' => 'application/json'],
             ]);
             $http_code = $response->getStatusCode();
@@ -120,7 +117,7 @@ class FrakMerchantResolver
             'resolved_at' => time(),
         ];
 
-        $cache = FrakDb::cache();
+        $cache = FrakInfra::cache();
         $key = self::sanitizeKey($host);
         $item = $cache->getItem(self::CACHE_KEY_PREFIX . $key);
         $item->set($record);
@@ -135,7 +132,7 @@ class FrakMerchantResolver
 
     private static function readCachedRecord(string $host): ?array
     {
-        $item = FrakDb::cache()->getItem(self::CACHE_KEY_PREFIX . self::sanitizeKey($host));
+        $item = FrakInfra::cache()->getItem(self::CACHE_KEY_PREFIX . self::sanitizeKey($host));
         if (!$item->isHit()) {
             return null;
         }
@@ -148,15 +145,15 @@ class FrakMerchantResolver
 
     private static function isNegativeCacheActive(string $host): bool
     {
-        return FrakDb::cache()->hasItem(self::NEGATIVE_CACHE_PREFIX . self::sanitizeKey($host));
+        return FrakInfra::cache()->hasItem(self::NEGATIVE_CACHE_PREFIX . self::sanitizeKey($host));
     }
 
     private static function markUnresolved(string $host): void
     {
-        $item = FrakDb::cache()->getItem(self::NEGATIVE_CACHE_PREFIX . self::sanitizeKey($host));
+        $item = FrakInfra::cache()->getItem(self::NEGATIVE_CACHE_PREFIX . self::sanitizeKey($host));
         $item->set(true);
         $item->expiresAfter(self::NEGATIVE_CACHE_TTL);
-        FrakDb::cache()->save($item);
+        FrakInfra::cache()->save($item);
     }
 
     /**

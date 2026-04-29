@@ -16,7 +16,8 @@ require_once __DIR__ . '/vendor/autoload.php';
  *
  *   - {@see FrakInstaller}        : install / uninstall lifecycle.
  *   - {@see FrakFrontend}         : `header` + `actionFrontControllerSetMedia`.
- *   - {@see FrakOrderHooks}       : `actionOrderStatusPostUpdate` + tracker / post-purchase render helpers.
+ *   - {@see FrakOrderWebhook}     : `actionOrderStatusPostUpdate` (server-side webhook + retry queue).
+ *   - {@see FrakOrderRender}      : tracker `<script>` + post-purchase Smarty wrapper for order pages.
  *   - {@see FrakDisplayDispatcher}: placement-driven `display*` hooks.
  *   - {@see FrakSmartyPlugins}    : `{frak_banner|share_button|post_purchase}`.
  *
@@ -92,7 +93,7 @@ class FrakIntegration extends Module
      */
     public function hookActionOrderStatusPostUpdate($params)
     {
-        FrakOrderHooks::onStatusUpdate(is_array($params) ? $params : []);
+        FrakOrderWebhook::onStatusUpdate($params);
     }
 
     /**
@@ -100,7 +101,7 @@ class FrakIntegration extends Module
      */
     public function hookDisplayProductAdditionalInfo($params = [])
     {
-        return FrakDisplayDispatcher::dispatch($this, 'displayProductAdditionalInfo', is_array($params) ? $params : []);
+        return FrakDisplayDispatcher::dispatch($this, 'displayProductAdditionalInfo', $params);
     }
 
     /**
@@ -108,8 +109,7 @@ class FrakIntegration extends Module
      */
     public function hookDisplayOrderConfirmation($params)
     {
-        $params = is_array($params) ? $params : [];
-        $tracker = FrakOrderHooks::renderPurchaseTracker($params['order'] ?? null);
+        $tracker = FrakOrderRender::purchaseTracker($params['order'] ?? null);
         return $tracker . FrakDisplayDispatcher::dispatch($this, 'displayOrderConfirmation', $params);
     }
 
@@ -123,8 +123,7 @@ class FrakIntegration extends Module
      */
     public function hookDisplayOrderDetail($params)
     {
-        $params = is_array($params) ? $params : [];
-        $tracker = FrakOrderHooks::renderPurchaseTracker($params['order'] ?? null);
+        $tracker = FrakOrderRender::purchaseTracker($params['order'] ?? null);
         return $tracker . FrakDisplayDispatcher::dispatch($this, 'displayOrderDetail', $params);
     }
 
@@ -135,7 +134,7 @@ class FrakIntegration extends Module
      */
     public function hookDisplayTop($params = [])
     {
-        return FrakDisplayDispatcher::dispatch($this, 'displayTop', is_array($params) ? $params : []);
+        return FrakDisplayDispatcher::dispatch($this, 'displayTop', $params);
     }
 
     /**
@@ -143,7 +142,7 @@ class FrakIntegration extends Module
      */
     public function hookDisplayHome($params = [])
     {
-        return FrakDisplayDispatcher::dispatch($this, 'displayHome', is_array($params) ? $params : []);
+        return FrakDisplayDispatcher::dispatch($this, 'displayHome', $params);
     }
 
     /**
@@ -152,7 +151,7 @@ class FrakIntegration extends Module
      */
     public function hookDisplayShoppingCart($params = [])
     {
-        return FrakDisplayDispatcher::dispatch($this, 'displayShoppingCart', is_array($params) ? $params : []);
+        return FrakDisplayDispatcher::dispatch($this, 'displayShoppingCart', $params);
     }
 
     /**

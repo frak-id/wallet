@@ -30,9 +30,7 @@ class FrakFrontend
         // pair is the only Configuration data the front-office head needs;
         // everything else lives in the bundled placement row or the Symfony
         // Cache pool.
-        $config = Configuration::getMultiple(['FRAK_SHOP_NAME', 'FRAK_LOGO_URL', 'PS_SHOP_NAME']);
-        $shop_name = ($config['FRAK_SHOP_NAME'] ?? '') ?: ($config['PS_SHOP_NAME'] ?? '');
-        $logo_url = $config['FRAK_LOGO_URL'] ?? '';
+        $brand = FrakConfig::getBrand();
 
         // Bypass Smarty: the head fragment is 3 lines of HTML and 2 escaped
         // values, both of which `json_encode` produces JS-safe string
@@ -40,8 +38,8 @@ class FrakFrontend
         // Avoiding the Smarty parser/render saves a real-but-small amount of
         // CPU on every front-office request — measurable in flame graphs on
         // high-traffic shops.
-        $shop_name_js = json_encode((string) $shop_name, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
-        $logo_url_js = json_encode((string) $logo_url, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
+        $shop_name_js = json_encode($brand['name'], FrakComponentRenderer::JSON_FLAGS);
+        $logo_url_js = json_encode($brand['logoUrl'], FrakComponentRenderer::JSON_FLAGS);
         if ($shop_name_js === false) {
             $shop_name_js = '""';
         }
@@ -49,8 +47,8 @@ class FrakFrontend
             $logo_url_js = '""';
         }
 
-        return '<link rel="dns-prefetch" href="https://cdn.jsdelivr.net">'
-            . '<link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>'
+        return '<link rel="dns-prefetch" href="' . FrakUrls::CDN_BASE . '">'
+            . '<link rel="preconnect" href="' . FrakUrls::CDN_BASE . '" crossorigin>'
             . '<script>window.FrakSetup=Object.assign(window.FrakSetup||{},{config:{metadata:{'
             . 'name:' . $shop_name_js . ','
             . 'logoUrl:' . $logo_url_js
@@ -95,7 +93,7 @@ class FrakFrontend
         }
         $context->controller->registerJavascript(
             'frak-sdk',
-            'https://cdn.jsdelivr.net/npm/@frak-labs/components',
+            FrakUrls::SDK_SCRIPT,
             [
                 'server' => 'remote',
                 'position' => 'bottom',

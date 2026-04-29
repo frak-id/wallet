@@ -61,8 +61,90 @@ class FrakOrderResolver
         return [
             'customerId' => (string) $order->id_customer,
             'orderId' => (string) $order->id,
-            'token' => $order->secure_key . '_' . $order->id,
+            'token' => self::buildToken($order),
         ];
+    }
+
+    /**
+     * Server-side webhook payload for `POST /ext/merchant/{id}/webhook/custom`.
+     *
+     * Single-pass extraction of every field the backend's `customWebhook` DTO
+     * expects: order id + customer + status + opaque token + currency + total +
+     * line items. Centralised here (rather than on {@see FrakWebhookHelper})
+     * so PrestaShop entity knowledge — `Order::getProducts()`, `Customer`,
+     * `Currency` — lives in one resolver, and the webhook helper stays a
+     * pure transport class.
+     *
+     * Fail-loud on missing customer / currency / line items: malformed orders
+     * shouldn't silently dispatch a partial payload to the backend. The hook
+     * caller catches and routes the exception into the retry queue.
+     *
+     * @param Order  $order  Loaded PrestaShop order object.
+     * @param string $status Mapped Frak status (`pending|confirmed|cancelled|refunded`).
+     * @return array{id:int,customerId:int,status:string,token:string,currency:string,totalPrice:float,items:array<int,array{productId:int,quantity:int,price:float,name:string,title:string}>}
+     */
+    public static function getWebhookPayload($order, string $status): array
+    {
+        if (!Validate::isLoadedObject($order)) {
+            throw new Exception('Order not loaded');
+        }
+
+        $customer = new Customer($order->id_customer);
+        if (!Validate::isLoadedObject($customer)) {
+            throw new Exception('Customer not found for order: ' . $order->id);
+        }
+
+        $currency = new Currency($order->id_currency);
+        if (!Validate::isLoadedObject($currency)) {
+            throw new Exception('Currency not found for order: ' . $order->id);
+        }
+
+        $products = $order->getProducts();
+        if (empty($products)) {
+            throw new Exception('No products found for order: ' . $order->id);
+        }
+
+        $items = [];
+        foreach ($products as $product) {
+            $items[] = [
+                'productId' => $product['product_id'],
+                'quantity' => $product['product_quantity'],
+                'price' => $product['unit_price_tax_incl'],
+                'name' => $product['product_name'],
+                'title' => $product['product_name'],
+            ];
+        }
+
+        return [
+            'id' => (int) $order->id,
+            'customerId' => (int) $customer->id,
+            'status' => $status,
+            'token' => self::buildToken($order),
+            'currency' => $currency->iso_code,
+            'totalPrice' => $order->total_paid_tax_incl,
+            'items' => $items,
+        ];
+    }
+
+    /**
+     * Build the opaque per-order token used by both the SDK component
+     * (`<frak-post-purchase token="…">`) and the backend webhook payload.
+     *
+     * Format: `{secure_key}_{orderId}` — the cart `secure_key` is
+     * PrestaShop's per-cart MD5 anti-tamper handle; appending the order id
+     * matches the WordPress / Magento siblings' contract so the backend
+     * has a single token shape across all three plugins.
+     *
+     * Centralised here so {@see getContext()} (SDK component) and
+     * {@see getWebhookPayload()} (backend webhook) cannot drift on the
+     * concatenation order — a regression that would silently break
+     * attribution for the affected channel.
+     *
+     * @param Order $order Loaded PrestaShop order object.
+     */
+    private static function buildToken($order): string
+    {
+        return $order->secure_key . '_' . $order->id;
     }
 
     /**

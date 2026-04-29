@@ -33,7 +33,7 @@
     *      `sql/install.php` (CREATE TABLE IF NOT EXISTS — safe re-entry on
     *      partial upgrades), and provision the Symfony Cache / Lock tables
     *      (`frak_cache_items`, `frak_lock_keys`) via
-    *      {@see FrakDb::createInfrastructureTables()}. The cache backs
+    *      {@see FrakInfra::createInfrastructureTables()}. The cache backs
     *      {@see FrakMerchantResolver} and replaces the autoloaded
     *      `FRAK_MERCHANT` / negative-cache Configuration rows the resolver
     *      previously bloated `ps_configuration` with.
@@ -111,7 +111,7 @@ function upgrade_module_1_0_1($module)
     // Provision the Symfony Cache + Lock tables via their own DBAL
     // `createTable()` adapters. Both wrap the underlying CREATE TABLE in
     // an IF NOT EXISTS guard so re-runs on partial upgrades are no-ops.
-    FrakDb::createInfrastructureTables();
+    FrakInfra::createInfrastructureTables();
 
     // 3b. Defensive index addition. `CREATE TABLE IF NOT EXISTS` is a
     //     no-op on shops that already provisioned `frak_webhook_queue`
@@ -123,12 +123,12 @@ function upgrade_module_1_0_1($module)
     //     timeline a shop joined.
     $index_check = 'SELECT COUNT(*) AS cnt FROM information_schema.statistics'
         . ' WHERE table_schema = DATABASE()'
-        . ' AND table_name = "' . _DB_PREFIX_ . 'frak_webhook_queue"'
+        . ' AND table_name = "' . _DB_PREFIX_ . FrakWebhookQueue::TABLE . '"'
         . ' AND index_name = "idx_updated"';
     $row = Db::getInstance()->getRow($index_check);
     if (is_array($row) && (int) ($row['cnt'] ?? 0) === 0) {
         Db::getInstance()->execute(
-            'ALTER TABLE `' . _DB_PREFIX_ . 'frak_webhook_queue`'
+            'ALTER TABLE `' . _DB_PREFIX_ . FrakWebhookQueue::TABLE . '`'
             . ' ADD KEY `idx_updated` (`updated_at`)'
         );
     }
@@ -146,9 +146,7 @@ function upgrade_module_1_0_1($module)
     // 4. Generate the cron token if missing. Existing tokens are preserved
     //    verbatim — rotating would invalidate any cron job the merchant has
     //    already wired up against the displayed URL.
-    if ((string) Configuration::get('FRAK_CRON_TOKEN') === '') {
-        Configuration::updateValue('FRAK_CRON_TOKEN', bin2hex(random_bytes(32)));
-    }
+    FrakConfig::ensureCronToken();
 
     // 5. Seed placement defaults into the bundled `FRAK_PLACEMENTS` row.
     //    No-ops when the row already exists (e.g. a re-run upgrade) so

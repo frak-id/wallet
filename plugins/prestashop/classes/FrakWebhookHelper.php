@@ -27,7 +27,7 @@
  *
  * Per-request memo: secret + webhook URL are looked up at most once via
  * `self::$secretCache` / `self::$urlCache`. The HttpClient itself lives
- * on {@see FrakDb::httpClient()} so the resolver and the helper share
+ * on {@see FrakHttpClient} so the resolver and the helper share
  * one connection pool — TLS state warmed by an earlier resolver call
  * carries over to the immediately-following webhook send.
  *
@@ -38,10 +38,6 @@
  */
 class FrakWebhookHelper
 {
-    private const PLATFORM_SEGMENT = 'custom';
-    /** Tight per-request timeout: the hook caller absorbs this latency on the merchant checkout path. */
-    private const REQUEST_TIMEOUT = 5;
-
     /**
      * Per-request memo for `Configuration::get('FRAK_WEBHOOK_SECRET')`.
      * `null` means "not yet looked up"; empty string means "looked up,
@@ -55,7 +51,7 @@ class FrakWebhookHelper
      */
     private static ?string $urlCache = null;
 
-    // HttpClient lives on FrakDb::httpClient() — see class docblock for
+    // HttpClient lives on FrakHttpClient::getInstance() — see class docblock for
     // the rationale (shared with FrakMerchantResolver for TLS reuse).
 
     /**
@@ -74,8 +70,7 @@ class FrakWebhookHelper
             self::$urlCache = '';
             return null;
         }
-        $url = 'https://backend.frak.id/ext/merchant/' . rawurlencode($merchant_id)
-            . '/webhook/' . self::PLATFORM_SEGMENT;
+        $url = FrakUrls::WEBHOOK_MERCHANT_PREFIX . rawurlencode($merchant_id) . FrakUrls::WEBHOOK_PATH_SUFFIX;
         self::$urlCache = $url;
         return $url;
     }
@@ -97,25 +92,34 @@ class FrakWebhookHelper
     }
 
     /**
-     * Single-shot send. `$order_id` + `$status` + `$token` are the canonical
-     * inputs (the cron drainer only has those, since the queue row carries
-     * ids and a token rather than a serialised Order). Callers that already
-     * have the `Order` object loaded — typically the order-status hook —
-     * may pass it as the optional fourth argument to skip the duplicate
-     * `new Order($id)` round-trip on the merchant's checkout path.
+     * Single-shot webhook send. The order-status hook calls this with the
+     * already-loaded `Order` so we skip the duplicate `new Order($id)`
+     * round-trip on the merchant's checkout path; the cron drainer's path
+     * (`sendBatch()`) loads the order itself per row.
+     *
+     * Payload building is delegated to {@see FrakOrderResolver::getWebhookPayload()}
+     * so PrestaShop entity knowledge (Order / Customer / Currency / line items)
+     * lives in one resolver instead of being split between the resolver and the
+     * webhook helper. The opaque token is derived from the loaded `Order`
+     * inside the resolver — the helper no longer needs it as a parameter.
      *
      * @param int|string $order_id
      * @param string     $status
-     * @param string     $token
      * @param Order|null $order Optional pre-loaded order to avoid re-fetching.
      * @return array{success:bool,http_code?:int,response?:string,error?:string,execution_time?:float}
      */
-    public static function send($order_id, $status, $token, $order = null)
+    public static function send($order_id, $status, $order = null)
     {
         $start_time = microtime(true);
 
         try {
-            $payload = self::buildOrderPayload((int) $order_id, (string) $status, (string) $token, $order);
+            if ($order === null || !Validate::isLoadedObject($order)) {
+                $order = new Order((int) $order_id);
+                if (!Validate::isLoadedObject($order)) {
+                    throw new Exception('Order not found: ' . (int) $order_id);
+                }
+            }
+            $payload = FrakOrderResolver::getWebhookPayload($order, (string) $status);
             $result = self::dispatch($payload);
 
             return [
@@ -151,7 +155,7 @@ class FrakWebhookHelper
      * Result map is keyed by the caller-supplied `id` (the queue row id).
      * Each entry has the same shape as {@see send()}'s return value.
      *
-     * @param array<int, array{id:int,order_id:int,status:string,token:string}> $entries
+     * @param array<int, array{id:int,order_id:int,status:string}> $entries
      * @return array<int, array{success:bool,http_code?:int,response?:string,error?:string}>
      */
     public static function sendBatch(array $entries): array
@@ -184,7 +188,7 @@ class FrakWebhookHelper
         // Kick off every request as a non-blocking ResponseInterface. We
         // map (response → row id) so the stream() loop below can route
         // each completion back to the queue row that originated it.
-        $client = FrakDb::httpClient(self::REQUEST_TIMEOUT);
+        $client = FrakHttpClient::getInstance();
         $responses = [];
         $response_to_id = [];
         $build_errors = [];
@@ -192,11 +196,11 @@ class FrakWebhookHelper
         foreach ($entries as $entry) {
             $row_id = (int) $entry['id'];
             try {
-                $payload = self::buildOrderPayload(
-                    (int) $entry['order_id'],
-                    (string) $entry['status'],
-                    (string) $entry['token']
-                );
+                $order = new Order((int) $entry['order_id']);
+                if (!Validate::isLoadedObject($order)) {
+                    throw new Exception('Order not found: ' . (int) $entry['order_id']);
+                }
+                $payload = FrakOrderResolver::getWebhookPayload($order, (string) $entry['status']);
                 $body = json_encode($payload);
                 if ($body === false) {
                     throw new Exception('Failed to encode webhook payload as JSON');
@@ -273,7 +277,7 @@ class FrakWebhookHelper
     public static function getCachedSecret(): string
     {
         if (self::$secretCache === null) {
-            $secret = (string) Configuration::get('FRAK_WEBHOOK_SECRET');
+            $secret = FrakConfig::getWebhookSecret();
             self::$secretCache = $secret;
         }
         return self::$secretCache;
@@ -290,64 +294,6 @@ class FrakWebhookHelper
         self::$urlCache = null;
     }
 
-    /**
-     * Build the order payload sent to the merchant webhook endpoint.
-     *
-     * `$preloaded` lets the caller hand in an already-loaded `Order` to
-     * skip the `new Order($id)` round-trip — used by the order-status hook
-     * which already has the object in scope. The cron drainer doesn't
-     * have it (only the row id is persisted) and falls through to the
-     * default load.
-     *
-     * @return array{id:int,customerId:int,status:string,token:string,currency:string,totalPrice:float,items:array<int,array{productId:int,quantity:int,price:float,name:string,title:string}>}
-     */
-    private static function buildOrderPayload(int $order_id, string $status, string $token, $preloaded = null): array
-    {
-        if ($preloaded !== null && Validate::isLoadedObject($preloaded)) {
-            $order = $preloaded;
-        } else {
-            $order = new Order($order_id);
-            if (!Validate::isLoadedObject($order)) {
-                throw new Exception('Order not found: ' . $order_id);
-            }
-        }
-
-        $customer = new Customer($order->id_customer);
-        if (!Validate::isLoadedObject($customer)) {
-            throw new Exception('Customer not found for order: ' . $order_id);
-        }
-
-        $currency = new Currency($order->id_currency);
-        if (!Validate::isLoadedObject($currency)) {
-            throw new Exception('Currency not found for order: ' . $order_id);
-        }
-
-        $products = $order->getProducts();
-        if (empty($products)) {
-            throw new Exception('No products found for order: ' . $order_id);
-        }
-
-        $items = [];
-        foreach ($products as $product) {
-            $items[] = [
-                'productId' => $product['product_id'],
-                'quantity' => $product['product_quantity'],
-                'price' => $product['unit_price_tax_incl'],
-                'name' => $product['product_name'],
-                'title' => $product['product_name'],
-            ];
-        }
-
-        return [
-            'id' => $order_id,
-            'customerId' => $customer->id,
-            'status' => $status,
-            'token' => $token . '_' . $order_id,
-            'currency' => $currency->iso_code,
-            'totalPrice' => $order->total_paid_tax_incl,
-            'items' => $items,
-        ];
-    }
 
     /**
      * POST a JSON payload to the merchant webhook endpoint with HMAC signing.
@@ -378,7 +324,7 @@ class FrakWebhookHelper
         $start_time = microtime(true);
 
         try {
-            $response = FrakDb::httpClient(self::REQUEST_TIMEOUT)->request('POST', $url, [
+            $response = FrakHttpClient::getInstance()->request('POST', $url, [
                 'headers' => [
                     'Content-Type' => 'application/json',
                     'x-hmac-sha256' => $signature,

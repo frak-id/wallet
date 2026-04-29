@@ -14,7 +14,7 @@
  * idempotent: rows are state-machine tracked, so an aborted run resumes
  * cleanly on the next tick.
  *
- * **Concurrency lock:** acquired via Symfony Lock ({@see FrakDb::lockFactory()})
+ * **Concurrency lock:** acquired via Symfony Lock ({@see FrakInfra::lockFactory()})
  * with a 5-minute TTL. If a previous tick is still running (slow backend +
  * multiple rows can push a tick beyond the 5-min cron interval), the new
  * tick early-returns instead of double-sending rows whose state hasn't
@@ -44,7 +44,7 @@ class FrakWebhookCron
      */
     public const BATCH_SIZE = 25;
 
-    /** Lock key used by {@see FrakDb::lockFactory()} to gate concurrent runs. */
+    /** Lock key used by {@see FrakInfra::lockFactory()} to gate concurrent runs. */
     public const LOCK_KEY = 'cron.webhook_drainer';
 
     /**
@@ -63,7 +63,7 @@ class FrakWebhookCron
     {
         $stats = ['processed' => 0, 'success' => 0, 'failure' => 0];
 
-        $lock = FrakDb::lockFactory()->createLock(self::LOCK_KEY, self::LOCK_TTL);
+        $lock = FrakInfra::lockFactory()->createLock(self::LOCK_KEY, self::LOCK_TTL);
         if (!$lock->acquire()) {
             FrakLogger::warning('cron drainer skipped — previous tick still running');
             return $stats + ['skipped' => true];
@@ -86,7 +86,6 @@ class FrakWebhookCron
                     'id' => $id,
                     'order_id' => (int) $row['id_order'],
                     'status' => (string) $row['status'],
-                    'token' => (string) $row['token'],
                 ];
                 $row_index[$id] = $row;
             }
@@ -131,23 +130,11 @@ class FrakWebhookCron
             return $stats;
         } finally {
             $lock->release();
-            // Opportunistic GC of the Symfony Cache + Lock tables. Both
-            // adapters expose `prune()` as a DELETE on indexed `expires_at`
-            // — cheap, idempotent, and bounds the table size over time so
-            // long-running shops don't accumulate dead rows from
-            // negative-cache entries (5-min TTL) or expired locks. Once
-            // per cron tick (every ~5 min) is the right cadence: more often
-            // would be wasted work, less often risks unbounded growth on
-            // shops with a high webhook-failure rate.
-            FrakDb::cache()->prune();
-            // The Symfony Lock store also exposes `prune()` since 5.4 —
-            // wrapped in a method_exists guard so the module survives on
-            // older Symfony minors that PrestaShop's vendor bundle might
-            // still pin against in edge cases.
-            $lockStore = FrakDb::lockStore();
-            if (method_exists($lockStore, 'prune')) {
-                $lockStore->prune();
-            }
+            // Opportunistic GC of the Cache + Lock tables — once per cron
+            // tick. Centralised on {@see FrakInfra::housekeeping()} so the
+            // Lock-store-`prune`-availability guard lives next to the Lock
+            // store factory, not at the cron call site.
+            FrakInfra::housekeeping();
             // Force-flush so the cron log shows up immediately even when
             // the front controller bails before PHP's natural shutdown.
             FrakLogger::flush();

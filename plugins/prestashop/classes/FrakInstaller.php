@@ -70,9 +70,8 @@ class FrakInstaller
         // Seed sane defaults from the PrestaShop shop record. Anything else
         // (i18n, modal language, share-button copy/style) is now resolved by
         // the SDK against business.frak.id once the merchant is registered.
-        Configuration::updateValue('FRAK_SHOP_NAME', Configuration::get('PS_SHOP_NAME'));
-        Configuration::updateValue(
-            'FRAK_LOGO_URL',
+        FrakConfig::setShopName((string) Configuration::get('PS_SHOP_NAME'));
+        FrakConfig::setLogoUrl(
             $module->context->link->getMediaLink(_PS_IMG_ . Configuration::get('PS_LOGO'))
         );
 
@@ -91,15 +90,14 @@ class FrakInstaller
                 return false;
             }
         }
-        FrakDb::createInfrastructureTables();
+        FrakInfra::createInfrastructureTables();
 
         // The cron token gates the front controller via `hash_equals`;
-        // rotating it would break any merchant cron job already wired against
-        // the displayed URL, so the value is generated only when missing —
-        // keeps re-installs after a partial uninstall safe.
-        if ((string) Configuration::get('FRAK_CRON_TOKEN') === '') {
-            Configuration::updateValue('FRAK_CRON_TOKEN', bin2hex(random_bytes(32)));
-        }
+        // rotating would break any merchant cron job already wired against
+        // the displayed URL, so {@see FrakConfig::ensureCronToken()} only
+        // generates a fresh token when one isn't configured — keeps
+        // re-installs after a partial uninstall safe.
+        FrakConfig::ensureCronToken();
 
         // Seed the bundled placements row with each placement's declared
         // default. Opt-out for the legacy product / order surfaces, opt-in
@@ -128,15 +126,15 @@ class FrakInstaller
             }
         }
 
-        Configuration::deleteByName('FRAK_SHOP_NAME');
-        Configuration::deleteByName('FRAK_LOGO_URL');
-        Configuration::deleteByName('FRAK_WEBHOOK_SECRET');
+        Configuration::deleteByName(FrakConfig::SHOP_NAME);
+        Configuration::deleteByName(FrakConfig::LOGO_URL);
+        Configuration::deleteByName(FrakConfig::WEBHOOK_SECRET);
         Configuration::deleteByName('FRAK_SETTINGS_VERSION');
-        Configuration::deleteByName('FRAK_CRON_TOKEN');
+        Configuration::deleteByName(FrakConfig::CRON_TOKEN);
         FrakPlacementRegistry::clearAll();
 
         // Schema teardown: webhook queue via sql/uninstall.php, Symfony Cache
-        // + Lock tables via FrakDb. SQL errors are swallowed: uninstall is
+        // + Lock tables via FrakInfra. SQL errors are swallowed: uninstall is
         // best-effort and PrestaShop already truncated `ps_hook_module` via
         // `parent::uninstall()` regardless.
         $sql = [];
@@ -144,7 +142,7 @@ class FrakInstaller
         foreach ($sql as $query) {
             Db::getInstance()->execute($query);
         }
-        FrakDb::dropInfrastructureTables();
+        FrakInfra::dropInfrastructureTables();
 
         return true;
     }
