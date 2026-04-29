@@ -118,7 +118,7 @@ final class FrakPlacementRegistryTest extends TestCase
         $this->assertContains('displayProductAdditionalInfo', $hooks);
         $this->assertContains('displayOrderConfirmation', $hooks);
         $this->assertContains('displayOrderDetail', $hooks);
-        $this->assertContains('displayTop', $hooks);
+        $this->assertContains('displayNavFullWidth', $hooks);
     }
 
     public function testForHookFiltersToMatchingPlacements(): void

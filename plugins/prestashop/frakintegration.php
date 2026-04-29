@@ -163,12 +163,14 @@ class FrakIntegration extends Module
 
     /**
      * Front-office banner above the storefront content. Driven by the
-     * `banner_top` placement — disabled by default to avoid changing the
-     * storefront on upgrade.
+     * `banner_top` placement — wired to `displayNavFullWidth` (full-width
+     * slot below the header in PrestaShop's classic layout) so the banner
+     * spans the viewport instead of squeezing into the cramped `.col-md-10`
+     * column the `displayTop` hook renders inside.
      */
-    public function hookDisplayTop($params = [])
+    public function hookDisplayNavFullWidth($params = [])
     {
-        return FrakDisplayDispatcher::dispatch($this, 'displayTop', $params);
+        return FrakDisplayDispatcher::dispatch($this, 'displayNavFullWidth', $params);
     }
 
     /**

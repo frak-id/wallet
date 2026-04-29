@@ -11,6 +11,9 @@ version on dispatch.
 
 ## [Unreleased]
 
+### Fixed
+
+- **Banner top placement no longer crammed into the header column on the classic theme**: the `banner_top` placement was wired to `displayTop`, which the classic theme renders inside `.col-md-10` next to the desktop logo (`themes/classic/templates/_partials/header.tpl:72-74`) — the banner ended up squeezed between the logo and the search bar instead of spanning the viewport. Switched to `displayNavFullWidth` (rendered as a direct child of `<header>` per the same template, line 86) so the banner reaches the full page width. `upgrade/install-1.0.3.php` unregisters the legacy `displayTop` subscription and registers `displayNavFullWidth` on existing installs; fresh installs pick up the new hook directly via `FrakPlacementRegistry::distinctHooks()`.
 ## [1.0.2] - 2026-04-29
 
 ### Fixed
