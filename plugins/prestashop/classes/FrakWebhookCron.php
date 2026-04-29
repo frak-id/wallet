@@ -119,7 +119,7 @@ class FrakWebhookCron
                 $stats['failure']++;
 
                 $is_final = $next_attempt >= FrakWebhookQueue::MAX_ATTEMPTS;
-                $level = $is_final ? FrakLogger::LEVEL_ERROR : FrakLogger::LEVEL_WARNING;
+                $level = $is_final ? FrakLogLevel::Error : FrakLogLevel::Warning;
                 FrakLogger::log(
                     'cron retry ' . $next_attempt . '/' . FrakWebhookQueue::MAX_ATTEMPTS
                     . ' failed for queue row ' . $id . ' (order ' . $order_id . '): ' . $error
@@ -131,6 +131,23 @@ class FrakWebhookCron
             return $stats;
         } finally {
             $lock->release();
+            // Opportunistic GC of the Symfony Cache + Lock tables. Both
+            // adapters expose `prune()` as a DELETE on indexed `expires_at`
+            // — cheap, idempotent, and bounds the table size over time so
+            // long-running shops don't accumulate dead rows from
+            // negative-cache entries (5-min TTL) or expired locks. Once
+            // per cron tick (every ~5 min) is the right cadence: more often
+            // would be wasted work, less often risks unbounded growth on
+            // shops with a high webhook-failure rate.
+            FrakDb::cache()->prune();
+            // The Symfony Lock store also exposes `prune()` since 5.4 —
+            // wrapped in a method_exists guard so the module survives on
+            // older Symfony minors that PrestaShop's vendor bundle might
+            // still pin against in edge cases.
+            $lockStore = FrakDb::lockStore();
+            if (method_exists($lockStore, 'prune')) {
+                $lockStore->prune();
+            }
             // Force-flush so the cron log shows up immediately even when
             // the front controller bails before PHP's natural shutdown.
             FrakLogger::flush();

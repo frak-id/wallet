@@ -17,12 +17,11 @@
  *   - Files in `_PS_CACHE_DIR_/frak/` cost a single `file_put_contents`
  *     append at request end regardless of how many lines were buffered.
  *
- * Severity escalation:
- *   - `error` (3) and `critical` (4) entries STILL get forwarded to
- *     `PrestaShopLogger` so they remain visible under
- *     `Advanced Parameters → Logs` — that's where merchants and support
- *     look first when debugging a webhook failure.
- *   - `info` (1) and `warning` (2) entries land in the file only.
+ * Severity is typed as {@see FrakLogLevel}: `Error` / `Critical` entries
+ * forward to `PrestaShopLogger` so they remain visible under
+ * `Advanced Parameters → Logs`; `Info` / `Warning` stay file-only. The
+ * escalation cut lives on the enum itself (`escalatesToPrestaShopLogger`)
+ * so adding a new severity tier is a one-place edit.
  *
  * The buffer is flushed via a registered `shutdown_function` (covers the
  * normal request lifecycle) and is also flushed manually by the cron
@@ -30,15 +29,10 @@
  */
 class FrakLogger
 {
-    public const LEVEL_INFO = 1;
-    public const LEVEL_WARNING = 2;
-    public const LEVEL_ERROR = 3;
-    public const LEVEL_CRITICAL = 4;
-
     /**
-     * In-memory buffer. Each entry: `{message: string, level: int, ts: int}`.
+     * In-memory buffer. Each entry: `{message, level, ts}`.
      *
-     * @var array<int, array{message:string,level:int,ts:int}>
+     * @var array<int, array{message:string,level:FrakLogLevel,ts:int}>
      */
     private static array $buffer = [];
 
@@ -46,11 +40,12 @@ class FrakLogger
     private static bool $shutdownRegistered = false;
 
     /**
-     * Buffer a log message for batch flush. The `$level` argument matches
-     * `PrestaShopLogger::addLog()` severity numbering (1=info, 2=warning,
-     * 3=error, 4=critical).
+     * Buffer a log message for batch flush. Severity is a {@see FrakLogLevel}
+     * case; the int value handed to `PrestaShopLogger::addLog()` lives on
+     * the enum so PHP-int constants and PS severity numbers can never
+     * drift apart.
      */
-    public static function log(string $message, int $level = self::LEVEL_INFO): void
+    public static function log(string $message, FrakLogLevel $level = FrakLogLevel::Info): void
     {
         if (!self::$shutdownRegistered) {
             // Registered exactly once per request. Idempotent re-entry guard
@@ -68,24 +63,24 @@ class FrakLogger
         // Forward errors / criticals to PrestaShopLogger immediately so they
         // surface in the admin UI without waiting for the buffer to flush —
         // the merchant-debugging surface needs to see failures live.
-        if ($level >= self::LEVEL_ERROR && class_exists('PrestaShopLogger')) {
-            PrestaShopLogger::addLog($message, $level);
+        if ($level->escalatesToPrestaShopLogger() && class_exists('PrestaShopLogger')) {
+            PrestaShopLogger::addLog($message, $level->value);
         }
     }
 
     public static function info(string $message): void
     {
-        self::log($message, self::LEVEL_INFO);
+        self::log($message, FrakLogLevel::Info);
     }
 
     public static function warning(string $message): void
     {
-        self::log($message, self::LEVEL_WARNING);
+        self::log($message, FrakLogLevel::Warning);
     }
 
     public static function error(string $message): void
     {
-        self::log($message, self::LEVEL_ERROR);
+        self::log($message, FrakLogLevel::Error);
     }
 
     /**
@@ -119,7 +114,7 @@ class FrakLogger
             $lines[] = sprintf(
                 '[%s] [%s] %s',
                 date('Y-m-d H:i:s', $entry['ts']),
-                self::levelLabel($entry['level']),
+                $entry['level']->label(),
                 $entry['message']
             );
         }
@@ -136,7 +131,7 @@ class FrakLogger
      * Drain the buffer for inspection (used by tests). Empties the buffer
      * as a side-effect to mirror `flush()` semantics.
      *
-     * @return array<int, array{message:string,level:int,ts:int}>
+     * @return array<int, array{message:string,level:FrakLogLevel,ts:int}>
      */
     public static function drainForTesting(): array
     {
@@ -158,20 +153,5 @@ class FrakLogger
     public static function isShutdownRegisteredForTesting(): bool
     {
         return self::$shutdownRegistered;
-    }
-
-    private static function levelLabel(int $level): string
-    {
-        switch ($level) {
-            case self::LEVEL_CRITICAL:
-                return 'CRIT';
-            case self::LEVEL_ERROR:
-                return 'ERR ';
-            case self::LEVEL_WARNING:
-                return 'WARN';
-            case self::LEVEL_INFO:
-            default:
-                return 'INFO';
-        }
     }
 }

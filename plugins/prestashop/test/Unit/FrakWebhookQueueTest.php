@@ -5,8 +5,10 @@ declare(strict_types=1);
 namespace FrakLabs\PrestaShop\Test\Unit;
 
 use FrakWebhookQueue;
+use FrakWebhookState;
 use PHPUnit\Framework\TestCase;
 
+require_once __DIR__ . '/../../classes/FrakWebhookState.php';
 require_once __DIR__ . '/../../classes/FrakWebhookQueue.php';
 
 /**
@@ -49,13 +51,28 @@ final class FrakWebhookQueueTest extends TestCase
         $this->assertSame(86400, FrakWebhookQueue::nextBackoffSeconds(99));
     }
 
-    public function testStateConstantsMatchSchemaEnum(): void
+    public function testStateEnumValuesMatchSchemaEnum(): void
     {
         // The CREATE TABLE statement uses ENUM('pending','success','failed').
-        // Constants and schema must agree so `markSuccess` / `markFailure`
-        // updates aren't rejected by MySQL.
-        $this->assertSame('pending', FrakWebhookQueue::STATE_PENDING);
-        $this->assertSame('success', FrakWebhookQueue::STATE_SUCCESS);
-        $this->assertSame('failed', FrakWebhookQueue::STATE_FAILED);
+        // Backed-string enum values must agree so `markSuccess` /
+        // `markFailure` updates aren't rejected by MySQL.
+        $this->assertSame('pending', FrakWebhookState::Pending->value);
+        $this->assertSame('success', FrakWebhookState::Success->value);
+        $this->assertSame('failed', FrakWebhookState::Failed->value);
+    }
+
+    public function testStateEnumIsExhaustive(): void
+    {
+        // Pin the case set so a future addition (e.g. a `Cancelled` state)
+        // forces an explicit test update + a matching SQL ENUM migration.
+        // Drift here would silently fail `tryFrom` round-trips in
+        // `FrakWebhookQueue::stats()`.
+        $this->assertSame(
+            ['pending', 'success', 'failed'],
+            array_map(
+                static fn (FrakWebhookState $case): string => $case->value,
+                FrakWebhookState::cases()
+            )
+        );
     }
 }

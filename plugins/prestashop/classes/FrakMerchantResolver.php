@@ -18,6 +18,11 @@
  * `autoload=no` flag (unlike WordPress's `update_option(..., false)`), so
  * a custom backing store is the only way to keep cold config cold.
  *
+ * HTTP: shares the {@see FrakDb::httpClient()} instance with
+ * {@see FrakWebhookHelper} so the TLS handshake against `backend.frak.id`
+ * is reused when a single order transition first resolves the merchant
+ * and then dispatches the webhook on the same request.
+ *
  * Mirrors the WordPress `Frak_Merchant` contract so the two plugins stay
  * conceptually aligned (same record shape, same invalidation triggers).
  */
@@ -32,16 +37,6 @@ class FrakMerchantResolver
     public const RESOLVE_URL = 'https://backend.frak.id/user/merchant/resolve';
     /** Connect + total request timeout in seconds for the resolver call. */
     private const REQUEST_TIMEOUT = 5;
-
-    /**
-     * Configuration keys carried by an unreleased pre-1.0.1 iteration of the
-     * module. v1.0.0 / v1.0.1 never shipped, so production v0.0.4 shops
-     * never wrote these rows — but local dev shops mid-migration might,
-     * and the uninstall + upgrade paths sweep them defensively. Kept as
-     * named constants so the cleanup sites are stringly-typed-drift-proof.
-     */
-    public const LEGACY_CONFIG_KEY = 'FRAK_MERCHANT';
-    public const LEGACY_NEGATIVE_CACHE_KEY = 'FRAK_MERCHANT_UNRESOLVED_AT';
 
     public static function getId(): ?string
     {
@@ -70,28 +65,20 @@ class FrakMerchantResolver
     }
 
     /**
-     * Drop any cached merchant record. Called by:
-     *   - The admin "Refresh" button.
-     *   - The webhook dispatcher when the backend replies with an error
-     *     indicating the cached UUID no longer maps to a live merchant.
-     *
-     * Sweeps both the current-host cache entries and the legacy
-     * Configuration rows so a partial-upgrade install doesn't end up with
-     * two competing sources of truth.
+     * Drop the cached merchant record + negative-cache sentinel for the
+     * current host. Called by the admin "Refresh" button and by the
+     * webhook dispatcher when the backend signals the cached UUID no
+     * longer maps to a live merchant.
      */
     public static function invalidate(): void
     {
         $host = self::currentHost();
-        if ($host !== '') {
-            $cache = FrakDb::cache();
-            $cache->deleteItem(self::CACHE_KEY_PREFIX . self::sanitizeKey($host));
-            $cache->deleteItem(self::NEGATIVE_CACHE_PREFIX . self::sanitizeKey($host));
+        if ($host === '') {
+            return;
         }
-        // Pre-1.0.1 dev rows — safe no-op when already cleared by the
-        // upgrade migrator. Keeps "Refresh Merchant" idempotent on dev
-        // shops that haven't run the upgrade yet.
-        Configuration::deleteByName(self::LEGACY_CONFIG_KEY);
-        Configuration::deleteByName(self::LEGACY_NEGATIVE_CACHE_KEY);
+        $cache = FrakDb::cache();
+        $cache->deleteItem(self::CACHE_KEY_PREFIX . self::sanitizeKey($host));
+        $cache->deleteItem(self::NEGATIVE_CACHE_PREFIX . self::sanitizeKey($host));
     }
 
     public static function currentHost(): string
@@ -105,10 +92,7 @@ class FrakMerchantResolver
         $url = self::RESOLVE_URL . '?domain=' . rawurlencode($host);
 
         try {
-            $response = \Symfony\Component\HttpClient\HttpClient::create([
-                'timeout' => self::REQUEST_TIMEOUT,
-                'max_duration' => self::REQUEST_TIMEOUT,
-            ])->request('GET', $url, [
+            $response = FrakDb::httpClient(self::REQUEST_TIMEOUT)->request('GET', $url, [
                 'headers' => ['Accept' => 'application/json'],
             ]);
             $http_code = $response->getStatusCode();

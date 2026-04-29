@@ -40,6 +40,18 @@ class FrakIntegration extends Module
      */
     private static bool $smartyRegistered = false;
 
+    /**
+     * Per-request memo of the `PS_OS_*` order-state ids. Populated lazily
+     * on the first {@see hookActionOrderStatusPostUpdate()} call. The
+     * underlying values are immutable per shop (set once at install,
+     * never edited at runtime), so caching across N transitions in the
+     * same request collapses N × 7 autoload-cache walks into a single
+     * `Configuration::getMultiple()` round-trip.
+     *
+     * @var array<string, mixed>|null
+     */
+    private static ?array $orderStatusIds = null;
+
     public function __construct()
     {
         $this->name = 'frakintegration';
@@ -144,12 +156,6 @@ class FrakIntegration extends Module
         Configuration::deleteByName('FRAK_WEBHOOK_SECRET');
         Configuration::deleteByName('FRAK_SETTINGS_VERSION');
         Configuration::deleteByName('FRAK_CRON_TOKEN');
-        // Pre-1.0.1 dev-only Configuration rows — the resolver reads from
-        // the Symfony Cache pool now, but we still sweep these so a dev
-        // shop that ran an unreleased iteration of the module locally
-        // doesn't leave orphaned rows behind.
-        Configuration::deleteByName(FrakMerchantResolver::LEGACY_CONFIG_KEY);
-        Configuration::deleteByName(FrakMerchantResolver::LEGACY_NEGATIVE_CACHE_KEY);
         FrakPlacementRegistry::clearAll();
         // Schema teardown: webhook queue via sql/uninstall.php, Symfony
         // Cache + Lock tables via FrakDb. SQL errors are swallowed:
@@ -292,19 +298,22 @@ class FrakIntegration extends Module
             return;
         }
 
-        // Batch the `PS_OS_*` lookup so we pay one Configuration::getMultiple
-        // round-trip instead of seven. The autoload cache makes individual
-        // calls cheap, but skipping a few hashmap lookups in the hot path is
-        // free if we're touching the autoload cache anyway.
-        $os_ids = Configuration::getMultiple([
-            'PS_OS_WS_PAYMENT',
-            'PS_OS_PAYMENT',
-            'PS_OS_DELIVERED',
-            'PS_OS_CANCELED',
-            'PS_OS_REFUND',
-            'PS_OS_SHIPPING',
-            'PS_OS_PREPARATION',
-        ]);
+        // First-call hydration of the `PS_OS_*` map. The values are
+        // immutable per shop, so we memoise across every order transition
+        // in the same request — collapses every subsequent transition's
+        // 7 autoload-cache walks down to zero.
+        if (self::$orderStatusIds === null) {
+            self::$orderStatusIds = Configuration::getMultiple([
+                'PS_OS_WS_PAYMENT',
+                'PS_OS_PAYMENT',
+                'PS_OS_DELIVERED',
+                'PS_OS_CANCELED',
+                'PS_OS_REFUND',
+                'PS_OS_SHIPPING',
+                'PS_OS_PREPARATION',
+            ]);
+        }
+        $os_ids = self::$orderStatusIds;
 
         $skip_status_codes = [
             (int) ($os_ids['PS_OS_SHIPPING'] ?? 0),

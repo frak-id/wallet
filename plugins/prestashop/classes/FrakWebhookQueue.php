@@ -46,9 +46,6 @@
 class FrakWebhookQueue
 {
     public const TABLE = 'frak_webhook_queue';
-    public const STATE_PENDING = 'pending';
-    public const STATE_SUCCESS = 'success';
-    public const STATE_FAILED = 'failed';
 
     /** Maximum delivery attempts before the row is parked in `failed`. */
     public const MAX_ATTEMPTS = 5;
@@ -85,7 +82,7 @@ class FrakWebhookQueue
             'attempts' => 0,
             'next_retry_at' => date('Y-m-d H:i:s', time() + self::BACKOFF_SECONDS[0]),
             'last_error' => self::truncateError($error),
-            'state' => self::STATE_PENDING,
+            'state' => FrakWebhookState::Pending->value,
         ]);
         return $affected > 0;
     }
@@ -107,7 +104,7 @@ class FrakWebhookQueue
             . ' LIMIT ' . max(1, $limit);
 
         return FrakDb::connection()->fetchAllAssociative($sql, [
-            'state' => self::STATE_PENDING,
+            'state' => FrakWebhookState::Pending->value,
             'max_attempts' => self::MAX_ATTEMPTS,
         ]);
     }
@@ -119,7 +116,7 @@ class FrakWebhookQueue
     {
         $affected = FrakDb::connection()->update(
             _DB_PREFIX_ . self::TABLE,
-            ['state' => self::STATE_SUCCESS, 'last_error' => null],
+            ['state' => FrakWebhookState::Success->value, 'last_error' => null],
             ['id_frak_webhook_queue' => $id]
         );
         return $affected > 0;
@@ -144,7 +141,7 @@ class FrakWebhookQueue
             _DB_PREFIX_ . self::TABLE,
             [
                 'attempts' => $attempts,
-                'state' => $is_final ? self::STATE_FAILED : self::STATE_PENDING,
+                'state' => ($is_final ? FrakWebhookState::Failed : FrakWebhookState::Pending)->value,
                 'next_retry_at' => date('Y-m-d H:i:s', time() + $delay),
                 'last_error' => self::truncateError($error),
             ],
@@ -210,17 +207,20 @@ class FrakWebhookQueue
 
         $stats = $defaults;
         foreach ($rows as $row) {
-            $state = isset($row['state']) ? (string) $row['state'] : '';
+            $state = FrakWebhookState::tryFrom((string) ($row['state'] ?? ''));
+            if ($state === null) {
+                continue;
+            }
             $count = isset($row['cnt']) ? (int) $row['cnt'] : 0;
             switch ($state) {
-                case self::STATE_PENDING:
+                case FrakWebhookState::Pending:
                     $stats['pending'] = $count;
                     $stats['oldest_pending_at'] = isset($row['oldest']) ? (string) $row['oldest'] : null;
                     break;
-                case self::STATE_FAILED:
+                case FrakWebhookState::Failed:
                     $stats['failed'] = $count;
                     break;
-                case self::STATE_SUCCESS:
+                case FrakWebhookState::Success:
                     $stats['success'] = $count;
                     break;
             }

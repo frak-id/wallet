@@ -5,8 +5,10 @@ declare(strict_types=1);
 namespace FrakLabs\PrestaShop\Test\Unit;
 
 use FrakLogger;
+use FrakLogLevel;
 use PHPUnit\Framework\TestCase;
 
+require_once __DIR__ . '/../../classes/FrakLogLevel.php';
 require_once __DIR__ . '/../../classes/FrakLogger.php';
 
 /**
@@ -25,27 +27,27 @@ final class FrakLoggerTest extends TestCase
         FrakLogger::drainForTesting();
     }
 
-    public function testInfoLogsAreBufferedAtLevelOne(): void
+    public function testInfoLogsAreBufferedAtLevelInfo(): void
     {
         FrakLogger::info('hello');
 
         $drained = FrakLogger::drainForTesting();
         $this->assertCount(1, $drained);
         $this->assertSame('hello', $drained[0]['message']);
-        $this->assertSame(FrakLogger::LEVEL_INFO, $drained[0]['level']);
-        $this->assertSame(1, FrakLogger::LEVEL_INFO);
+        $this->assertSame(FrakLogLevel::Info, $drained[0]['level']);
+        $this->assertSame(1, FrakLogLevel::Info->value);
     }
 
-    public function testWarningLogsLandAtLevelTwo(): void
+    public function testWarningLogsLandAtLevelWarning(): void
     {
         FrakLogger::warning('careful');
 
         $drained = FrakLogger::drainForTesting();
-        $this->assertSame(FrakLogger::LEVEL_WARNING, $drained[0]['level']);
-        $this->assertSame(2, FrakLogger::LEVEL_WARNING);
+        $this->assertSame(FrakLogLevel::Warning, $drained[0]['level']);
+        $this->assertSame(2, FrakLogLevel::Warning->value);
     }
 
-    public function testErrorLogsLandAtLevelThree(): void
+    public function testErrorLogsLandAtLevelError(): void
     {
         // PrestaShopLogger forwarding is best-effort (`class_exists` guard);
         // in unit tests the class doesn't exist so the buffer entry is the
@@ -53,16 +55,31 @@ final class FrakLoggerTest extends TestCase
         FrakLogger::error('boom');
 
         $drained = FrakLogger::drainForTesting();
-        $this->assertSame(FrakLogger::LEVEL_ERROR, $drained[0]['level']);
-        $this->assertSame(3, FrakLogger::LEVEL_ERROR);
+        $this->assertSame(FrakLogLevel::Error, $drained[0]['level']);
+        $this->assertSame(3, FrakLogLevel::Error->value);
     }
 
-    public function testCriticalLevelMatchesPrestaShopLoggerNumbering(): void
+    public function testEnumValuesMatchPrestaShopLoggerNumbering(): void
     {
-        // Level numbers track `PrestaShopLogger::addLog` so the
+        // Backed-int values track `PrestaShopLogger::addLog` so the
         // `class_exists` forwarding in `log()` produces visually identical
         // entries in `Advanced Parameters → Logs`.
-        $this->assertSame(4, FrakLogger::LEVEL_CRITICAL);
+        $this->assertSame(1, FrakLogLevel::Info->value);
+        $this->assertSame(2, FrakLogLevel::Warning->value);
+        $this->assertSame(3, FrakLogLevel::Error->value);
+        $this->assertSame(4, FrakLogLevel::Critical->value);
+    }
+
+    public function testEscalationCutLandsAtError(): void
+    {
+        // The escalation predicate lives on the enum so the file-only vs
+        // PrestaShopLogger-forwarded split is a single-place edit. Pin the
+        // current cut so a future renumbering can't silently flip the
+        // escalation set.
+        $this->assertFalse(FrakLogLevel::Info->escalatesToPrestaShopLogger());
+        $this->assertFalse(FrakLogLevel::Warning->escalatesToPrestaShopLogger());
+        $this->assertTrue(FrakLogLevel::Error->escalatesToPrestaShopLogger());
+        $this->assertTrue(FrakLogLevel::Critical->escalatesToPrestaShopLogger());
     }
 
     public function testBufferOrderIsPreserved(): void

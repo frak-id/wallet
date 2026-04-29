@@ -3,18 +3,26 @@
 /**
  * Shared infrastructure factory.
  *
- * Single source of truth for the Doctrine DBAL connection used by every
- * Frak class that touches MySQL, plus the Symfony Cache pool and Lock
- * factory built on top of that connection.
+ * Single source of truth for the cross-cutting infrastructure objects
+ * every Frak class shares: Doctrine DBAL connection, Symfony Cache pool,
+ * Symfony Lock store + factory, and Symfony HttpClient. Despite the
+ * historical `FrakDb` name the responsibility is broader than DBAL — it's
+ * the module's service registry, kept on a single class so the per-request
+ * memo lives in one place and reset() can wipe it atomically for tests.
  *
- * Why one shared connection:
+ * Why one shared connection / client / pool:
  *   - Cache (`DoctrineDbalAdapter`), Lock (`DoctrineDbalStore`), and the
  *     webhook queue (`FrakWebhookQueue`) all hit the same MySQL instance
  *     PrestaShop is already wired against. A single DBAL connection serves
  *     all three — keeps the per-request connection count to PS native + 1.
+ *   - HttpClient pools TCP / TLS state internally; sharing one client
+ *     between the merchant resolver and the webhook helper means the
+ *     resolver's TLS handshake to `backend.frak.id` warms the connection
+ *     for the immediately-following webhook send when both fire on the
+ *     same order transition.
  *   - Per-request memo on every accessor: callers like the cron drainer
- *     hit `cache()` + `lockFactory()` + DBAL queries dozens of times per
- *     tick; rebuilding the connection / pool would be wasted work.
+ *     hit `cache()` + `lockStore()` + DBAL queries dozens of times per
+ *     tick; rebuilding any of them would be wasted work.
  *
  * Why DBAL 4 + Symfony 6 components:
  *   - PrestaShop 8.1 ships Symfony 4.4 LTS for its core but the autoloader
@@ -51,6 +59,23 @@ class FrakDb
      * Lock factory memo. Same lazy contract as `$cache`.
      */
     private static ?\Symfony\Component\Lock\LockFactory $lockFactory = null;
+
+    /**
+     * Lock store memo. Held separately from the factory so the cron
+     * drainer's `prune()` call can drive GC against the same store the
+     * factory wraps — building a second store would create a duplicate
+     * connection-bound object and split the GC surface in two.
+     */
+    private static ?\Symfony\Component\Lock\Store\DoctrineDbalStore $lockStore = null;
+
+    /**
+     * Shared HttpClient memo. The underlying transport (curl extension
+     * when available, PHP streams otherwise) pools TCP + TLS state across
+     * `request()` calls, so reusing one client across the resolver and
+     * the webhook helper means warm connections to `backend.frak.id`
+     * across the whole request lifecycle.
+     */
+    private static ?\Symfony\Contracts\HttpClient\HttpClientInterface $httpClient = null;
 
     /**
      * Cache namespace prepended to every key. Mirrors WordPress's
@@ -143,12 +168,52 @@ class FrakDb
         if (self::$lockFactory !== null) {
             return self::$lockFactory;
         }
-        $store = new \Symfony\Component\Lock\Store\DoctrineDbalStore(
+        self::$lockFactory = new \Symfony\Component\Lock\LockFactory(self::lockStore());
+        return self::$lockFactory;
+    }
+
+    /**
+     * Symfony Lock store backed by `frak_lock_keys`. Exposed so the cron
+     * drainer can call `prune()` after each tick — the factory itself
+     * doesn't surface the store, but pruning the underlying rows is what
+     * keeps the table bounded across long-running shops.
+     */
+    public static function lockStore(): \Symfony\Component\Lock\Store\DoctrineDbalStore
+    {
+        if (self::$lockStore !== null) {
+            return self::$lockStore;
+        }
+        self::$lockStore = new \Symfony\Component\Lock\Store\DoctrineDbalStore(
             self::connection(),
             ['db_table' => _DB_PREFIX_ . self::LOCK_TABLE]
         );
-        self::$lockFactory = new \Symfony\Component\Lock\LockFactory($store);
-        return self::$lockFactory;
+        return self::$lockStore;
+    }
+
+    /**
+     * Shared Symfony HttpClient. Lazily built so requests that never
+     * touch the network (e.g. an admin page render that doesn't refresh
+     * the merchant resolver) pay nothing.
+     *
+     * Both `timeout` (per-operation) and `max_duration` (full request)
+     * clamp at the same window so a misbehaving backend can't wedge the
+     * cron tick or the order-status hook past its allotted budget.
+     * `http_version => '2.0'` hints curl to attempt HTTP/2 multiplexing
+     * — the Frak backend supports it, and `sendBatch()`'s parallel
+     * requests collapse onto a single TLS connection with multiplexed
+     * streams instead of N parallel handshakes.
+     */
+    public static function httpClient(int $timeout = 5): \Symfony\Contracts\HttpClient\HttpClientInterface
+    {
+        if (self::$httpClient !== null) {
+            return self::$httpClient;
+        }
+        self::$httpClient = \Symfony\Component\HttpClient\HttpClient::create([
+            'timeout' => $timeout,
+            'max_duration' => $timeout,
+            'http_version' => '2.0',
+        ]);
+        return self::$httpClient;
     }
 
     /**
@@ -161,11 +226,7 @@ class FrakDb
     public static function createInfrastructureTables(): void
     {
         self::cache()->createTable();
-        $store = new \Symfony\Component\Lock\Store\DoctrineDbalStore(
-            self::connection(),
-            ['db_table' => _DB_PREFIX_ . self::LOCK_TABLE]
-        );
-        $store->createTable();
+        self::lockStore()->createTable();
     }
 
     /**
@@ -201,5 +262,7 @@ class FrakDb
         self::$connection = null;
         self::$cache = null;
         self::$lockFactory = null;
+        self::$lockStore = null;
+        self::$httpClient = null;
     }
 }

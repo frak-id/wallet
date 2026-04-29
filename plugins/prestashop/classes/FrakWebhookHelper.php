@@ -25,11 +25,11 @@
  *     single `stream()` window which fans out via the underlying transport
  *     (HTTP/2 multiplexing where supported, curl_multi otherwise).
  *
- * Per-request memo: secret + webhook URL + HttpClient instance are looked
- * up at most once via `self::$secretCache` / `self::$urlCache` /
- * `self::$client`. The cron drainer's 25-rows-per-tick loop hits
- * `Configuration::get('FRAK_WEBHOOK_SECRET')` exactly once instead of once
- * per row.
+ * Per-request memo: secret + webhook URL are looked up at most once via
+ * `self::$secretCache` / `self::$urlCache`. The HttpClient itself lives
+ * on {@see FrakDb::httpClient()} so the resolver and the helper share
+ * one connection pool — TLS state warmed by an earlier resolver call
+ * carries over to the immediately-following webhook send.
  *
  * Delivery logs go through {@see FrakLogger} — the buffered file logger —
  * so the previous severity-1 spam on the order-status hook ("Triggered" /
@@ -55,14 +55,8 @@ class FrakWebhookHelper
      */
     private static ?string $urlCache = null;
 
-    /**
-     * Shared HttpClient instance. Built once per request — the underlying
-     * transport (curl extension when available, PHP streams otherwise)
-     * pools connections internally, so reusing the same client across
-     * single-shot sends and batch dispatches lets DNS + TLS state be
-     * shared across calls.
-     */
-    private static ?\Symfony\Contracts\HttpClient\HttpClientInterface $client = null;
+    // HttpClient lives on FrakDb::httpClient() — see class docblock for
+    // the rationale (shared with FrakMerchantResolver for TLS reuse).
 
     /**
      * Resolved webhook URL for the current shop, or null when the merchant
@@ -190,7 +184,7 @@ class FrakWebhookHelper
         // Kick off every request as a non-blocking ResponseInterface. We
         // map (response → row id) so the stream() loop below can route
         // each completion back to the queue row that originated it.
-        $client = self::client();
+        $client = FrakDb::httpClient(self::REQUEST_TIMEOUT);
         $responses = [];
         $response_to_id = [];
         $build_errors = [];
@@ -294,29 +288,6 @@ class FrakWebhookHelper
     {
         self::$secretCache = null;
         self::$urlCache = null;
-        self::$client = null;
-    }
-
-    /**
-     * Lazily build (and memoise) the shared HttpClient. Constructor options
-     * are deliberately conservative — connect + total timeouts both clamp
-     * at `REQUEST_TIMEOUT` so a single misbehaving backend cannot wedge
-     * the cron tick or the order-status hook past the allotted window.
-     *
-     * `max_duration` covers the FULL transaction (connect + TLS + request
-     * + response). Symfony HttpClient maps that onto curl's `CURLOPT_TIMEOUT`
-     * for the curl backend and PHP stream timeouts for the streams backend.
-     */
-    private static function client(): \Symfony\Contracts\HttpClient\HttpClientInterface
-    {
-        if (self::$client !== null) {
-            return self::$client;
-        }
-        self::$client = \Symfony\Component\HttpClient\HttpClient::create([
-            'timeout' => self::REQUEST_TIMEOUT,
-            'max_duration' => self::REQUEST_TIMEOUT,
-        ]);
-        return self::$client;
     }
 
     /**
@@ -407,7 +378,7 @@ class FrakWebhookHelper
         $start_time = microtime(true);
 
         try {
-            $response = self::client()->request('POST', $url, [
+            $response = FrakDb::httpClient(self::REQUEST_TIMEOUT)->request('POST', $url, [
                 'headers' => [
                     'Content-Type' => 'application/json',
                     'x-hmac-sha256' => $signature,

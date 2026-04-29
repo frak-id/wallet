@@ -48,16 +48,12 @@
  *      bundled storage (preserves merchant choices) and the legacy rows
  *      deleted. Production v0.0.4 shops never had these rows, so the
  *      sweep is a no-op for them.
- *   7. Defensive sweep: any pre-1.0.1 dev shop carrying the unreleased
- *      `FRAK_MERCHANT` / `FRAK_MERCHANT_UNRESOLVED_AT` Configuration rows
- *      has them deleted — the resolver re-fetches on first miss against
- *      the new `frak_cache` backing store.
- *   8. Cleanup: wipe deprecated Configuration rows (modal i18n,
- *      share-button copy/style, floating-button toggles, webhook log
- *      ring) plus the now-obsolete `FRAK_SETTINGS_VERSION` row. The full
- *      v0.0.4 set is enumerated below; floating-button keys were missing
- *      from the legacy in-class sweep.
- *   9. Admin tab: register a `ps_tab` row for `AdminFrakIntegration` so
+    *   7. Cleanup: wipe deprecated Configuration rows (modal i18n,
+    *      share-button copy/style, floating-button toggles, webhook log
+    *      ring) plus the now-obsolete `FRAK_SETTINGS_VERSION` row. The full
+    *      v0.0.4 set is enumerated below; floating-button keys were missing
+    *      from the legacy in-class sweep.
+ *   8. Admin tab: register a `ps_tab` row for `AdminFrakIntegration` so
  *      the configuration page surfaces as a sidebar entry under "Modules"
  *      and gets wired into PrestaShop's standard Permissions panel.
  *
@@ -191,19 +187,7 @@ function upgrade_module_1_0_1($module)
         Configuration::updateValue(FrakPlacementRegistry::STORAGE_KEY, $encoded);
     }
 
-    // 7. Defensive sweep: drop pre-1.0.1 merchant cache Configuration
-    //    rows. The resolver now reads from the Symfony Cache pool
-    //    (`frak_cache_items` table) — a fresh `getRecord()` after the
-    //    upgrade re-resolves and writes to the new backing store.
-    //    Skipping the data migration is safe because merchant UUIDs are
-    //    immutable per domain (no risk of a different id resolving for
-    //    the same host) and the resolver pays one HTTP round-trip on the
-    //    first miss. As with step 6, production v0.0.4 shops never had
-    //    these rows.
-    Configuration::deleteByName('FRAK_MERCHANT');
-    Configuration::deleteByName('FRAK_MERCHANT_UNRESOLVED_AT');
-
-    // 8. Wipe deprecated Configuration rows. Audit baseline:
+    // 7. Wipe deprecated Configuration rows. Audit baseline:
     //    `https://github.com/frak-id/prestashop-plugin/blob/v0.0.4/frakintegration.php`
     //    (uninstall path enumerates every legacy key the module ever wrote).
     //    `FRAK_SETTINGS_VERSION` is purged here — PrestaShop's native
@@ -232,7 +216,7 @@ function upgrade_module_1_0_1($module)
         Configuration::deleteByName($key);
     }
 
-    // 9. Register the admin Tab. Idempotent — skips when a row already exists
+    // 8. Register the admin Tab. Idempotent — skips when a row already exists
     //    (e.g. on a partial upgrade re-run). Sits under Modules so the
     //    operational tooling (queue health, drain queue, refresh merchant)
     //    is one click away for daily ops, and gates per-employee access via
