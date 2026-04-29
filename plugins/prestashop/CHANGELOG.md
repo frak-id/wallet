@@ -11,6 +11,8 @@ version on dispatch.
 
 ## [Unreleased]
 
+## [1.0.2] - 2026-04-29
+
 ### Fixed
 
 - **Fatal on order-confirmation / order-detail pages with the post-purchase placement enabled** (`Cannot access protected property FrakIntegration::$context` at `FrakOrderRender.php:98`). `Module::$context` is `protected` in PrestaShop core, so the Smarty assignment in `FrakOrderRender::postPurchase()` could not reach it from outside the Module subclass — the page errored out before any post-purchase markup was emitted. Swapped to `Context::getContext()->smarty->assign(...)` (same request-scoped instance, public API), mirroring the existing `FrakInstaller` workaround for the same visibility constraint. `$module->display(...)` is left untouched (`Module::display()` is public).
@@ -169,6 +171,8 @@ version on dispatch.
 - New `views/templates/hook/post-purchase.tpl` Smarty partial: theme-overridable wrapper for the post-purchase markup. Override path: `themes/<theme>/modules/frakintegration/views/templates/hook/post-purchase.tpl`.
 - New `FrakOrderResolver` class: single-pass extraction of customer/order/token context plus product line items from a resolved `Order`, fail-soft on missing images / deleted products. Sibling of the WordPress `Frak_WooCommerce::get_post_purchase_data()` helper.
 
-[Unreleased]: https://github.com/frak-id/wallet/compare/prestashop-1.0.1...HEAD
+[Unreleased]: https://github.com/frak-id/wallet/compare/prestashop-1.0.2...HEAD
+
+[1.0.2]: https://github.com/frak-id/wallet/compare/prestashop-1.0.1...prestashop-1.0.2
 
 [1.0.1]: https://github.com/frak-id/wallet/releases/tag/prestashop-1.0.1
