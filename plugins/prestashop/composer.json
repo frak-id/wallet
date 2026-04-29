@@ -1,6 +1,6 @@
 {
   "name": "frak-labs/prestashop-module",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "Frak SDK integration for PrestaShop",
   "type": "prestashop-module",
   "license": "GPL-3.0-only",

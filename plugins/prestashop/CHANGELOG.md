@@ -11,9 +11,12 @@ version on dispatch.
 
 ## [Unreleased]
 
+## [1.0.3] - 2026-04-29
+
 ### Fixed
 
 - **Banner top placement no longer crammed into the header column on the classic theme**: the `banner_top` placement was wired to `displayTop`, which the classic theme renders inside `.col-md-10` next to the desktop logo (`themes/classic/templates/_partials/header.tpl:72-74`) — the banner ended up squeezed between the logo and the search bar instead of spanning the viewport. Switched to `displayNavFullWidth` (rendered as a direct child of `<header>` per the same template, line 86) so the banner reaches the full page width. `upgrade/install-1.0.3.php` unregisters the legacy `displayTop` subscription and registers `displayNavFullWidth` on existing installs; fresh installs pick up the new hook directly via `FrakPlacementRegistry::distinctHooks()`.
+
 ## [1.0.2] - 2026-04-29
 
 ### Fixed
@@ -174,7 +177,9 @@ version on dispatch.
 - New `views/templates/hook/post-purchase.tpl` Smarty partial: theme-overridable wrapper for the post-purchase markup. Override path: `themes/<theme>/modules/frakintegration/views/templates/hook/post-purchase.tpl`.
 - New `FrakOrderResolver` class: single-pass extraction of customer/order/token context plus product line items from a resolved `Order`, fail-soft on missing images / deleted products. Sibling of the WordPress `Frak_WooCommerce::get_post_purchase_data()` helper.
 
-[Unreleased]: https://github.com/frak-id/wallet/compare/prestashop-1.0.2...HEAD
+[Unreleased]: https://github.com/frak-id/wallet/compare/prestashop-1.0.3...HEAD
+
+[1.0.3]: https://github.com/frak-id/wallet/compare/prestashop-1.0.2...prestashop-1.0.3
 
 [1.0.2]: https://github.com/frak-id/wallet/compare/prestashop-1.0.1...prestashop-1.0.2
 
