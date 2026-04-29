@@ -4,9 +4,10 @@
  * Order-surface hook handlers for the Frak PrestaShop module.
  *
  * Owns three responsibilities pulled out of the `FrakIntegration` bootstrap:
- *   - `actionOrderStatusPostUpdate`: maps PrestaShop order state ids to
- *     Frak webhook statuses, attempts a synchronous dispatch, falls back
- *     to the retry queue on failure.
+*   - `actionOrderStatusPostUpdate`: maps PrestaShop order state ids to
+*     Frak webhook statuses, defers dispatch to PHP shutdown so the
+*     merchant's request returns first, then falls back to the retry
+*     queue on failure.
  *   - `<frak-post-purchase>` rendering with full order context (Smarty
  *     wrapper for theme overrides).
  *   - Inline `trackPurchaseStatus` script always emitted on order-page
@@ -21,9 +22,9 @@ class FrakOrderHooks
 {
     /**
      * Post-commit order status handler. Maps the new state to a Frak
-     * status, attempts a synchronous dispatch with tight timeouts, and on
-     * any failure enqueues the order id into `frak_webhook_queue` for cron
-     * retry.
+     * status, then defers the actual webhook dispatch to PHP shutdown so
+     * the merchant's request returns BEFORE the outbound HTTP call fires.
+     * Any failure (network, non-2xx, exception) lands in the retry queue.
      *
      * Hot-path order matters here:
      *   1. Cheap guards first (params shape, status object).
@@ -34,9 +35,22 @@ class FrakOrderHooks
      *      path returns before paying for an `Order` instantiation.
      *   3. Order load + secure key + customer (only on transitions we
      *      actually deliver).
-     *   4. Synchronous dispatch with the pre-loaded `Order` passed in so
-     *      `FrakWebhookHelper::send()` doesn't re-load it from the DB —
-     *      single object, single round-trip per delivery.
+     *   4. `register_shutdown_function` schedules the dispatch + queue
+     *      fallback to run AFTER the response is sent. Inside the
+     *      shutdown handler, `fastcgi_finish_request()` (or the LiteSpeed
+     *      equivalent) explicitly closes the FastCGI connection so the
+     *      merchant's browser doesn't wait on the 5 s HTTP timeout. Falls
+     *      back to a synchronous attempt on SAPIs that expose neither
+     *      function (e.g. CLI imports) — same single attempt, just inline.
+     *
+     * Why shutdown rather than mid-hook flush:
+     *   `actionOrderStatusPostUpdate` runs MID-controller, so calling
+     *   `fastcgi_finish_request()` directly here would push a half-built
+     *   response (no template, no headers) to the merchant. Deferring to
+     *   shutdown lets PrestaShop finish rendering naturally; we only
+     *   close the connection once the controller has emitted the full
+     *   response, then run the webhook attempt against the closed
+     *   connection.
      *
      * Logging dropped to error-only on the happy path. The previous
      * 5-rows-per-transition spam ("Triggered" / "Started" / "Sent
@@ -100,25 +114,53 @@ class FrakOrderHooks
 
         $webhook_status = $status_map[(int) $new_status->id] ?? 'pending';
 
-        // First attempt is synchronous so the happy path completes in one
-        // round-trip. Pass the already-loaded `Order` so
-        // `FrakWebhookHelper::send()` skips the duplicate `new Order($id)`
-        // round-trip. Any failure (network, non-2xx, exception) lands in
-        // the retry queue and the cron drainer takes over with exponential
-        // backoff.
-        $result = FrakWebhookHelper::send($order_id, $webhook_status, $token, $order);
+        // Defer the dispatch + queue fallback to PHP shutdown so the
+        // merchant's status-update controller renders + flushes its full
+        // response BEFORE we open the outbound HTTP socket. Inside the
+        // shutdown handler we explicitly close the FastCGI connection so
+        // the browser doesn't sit on the connection for the 5 s request
+        // timeout (PHP-FPM auto-flushes on shutdown, but the explicit
+        // call covers reverse-proxies / FPM versions where the auto-flush
+        // is delayed). On SAPIs without `fastcgi_finish_request` (CLI
+        // imports, mod_php, etc.) we fall back to a plain synchronous
+        // dispatch — same single attempt, just no early connection close.
+        $dispatch = static function () use ($order_id, $webhook_status, $token, $order): void {
+            $result = FrakWebhookHelper::send($order_id, $webhook_status, $token, $order);
+            if (is_array($result) && !empty($result['success'])) {
+                return;
+            }
+            $error = is_array($result) && isset($result['error'])
+                ? (string) $result['error']
+                : 'Unknown webhook error';
+            FrakLogger::error(
+                'Webhook failed for order ' . $order_id . ', enqueuing for retry: ' . $error
+            );
+            FrakWebhookQueue::enqueue($order_id, $webhook_status, $token, $error);
+        };
 
-        if (is_array($result) && !empty($result['success'])) {
+        if (function_exists('fastcgi_finish_request') || function_exists('litespeed_finish_request')) {
+            register_shutdown_function(static function () use ($dispatch): void {
+                if (function_exists('fastcgi_finish_request')) {
+                    fastcgi_finish_request();
+                } elseif (function_exists('litespeed_finish_request')) {
+                    litespeed_finish_request();
+                }
+                try {
+                    $dispatch();
+                } catch (\Throwable $e) {
+                    // Shutdown handlers swallow uncaught throwables silently;
+                    // log explicitly so a runtime issue still surfaces in
+                    // PrestaShopLogger / the queue isn't left in limbo.
+                    FrakLogger::error('Webhook shutdown dispatch crashed: ' . $e->getMessage());
+                    FrakLogger::flush();
+                }
+            });
             return;
         }
 
-        $error = is_array($result) && isset($result['error'])
-            ? (string) $result['error']
-            : 'Unknown webhook error';
-        FrakLogger::error(
-            'Webhook failed for order ' . $order_id . ', enqueuing for retry: ' . $error
-        );
-        FrakWebhookQueue::enqueue($order_id, $webhook_status, $token, $error);
+        // Fallback: SAPI exposes no flush primitive (CLI / mod_php / etc.).
+        // Run inline so the dispatch still happens — same single attempt.
+        $dispatch();
     }
 
     /**

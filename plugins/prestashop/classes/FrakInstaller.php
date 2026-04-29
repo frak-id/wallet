@@ -31,11 +31,20 @@ class FrakInstaller
      * - `actionOrderStatusPostUpdate`: post-commit order status webhook
      *   trigger. Pre-commit `actionOrderStatusUpdate` raced under multistore
      *   / high load (PrestaShop docs explicitly recommend post-commit).
+     * - `actionCronJob`: opt-in auto-registration with the `ps_cronjobs`
+     *   module. When `ps_cronjobs` is installed, it discovers modules
+     *   registered to this hook via `Hook::getHookModuleExecList('actionCronJob')`,
+     *   adds them to its cron table using each module's `getCronFrequency()`,
+     *   and invokes `hookActionCronJob()` on its own tick. The hook is a
+     *   no-op when `ps_cronjobs` is absent — the URL-token cron controller
+     *   keeps working for merchants on plain server cron, so this is purely
+     *   additive (no copy/paste required when `ps_cronjobs` is installed).
      */
     private const CORE_HOOKS = [
         'header',
         'actionFrontControllerSetMedia',
         'actionOrderStatusPostUpdate',
+        'actionCronJob',
     ];
 
     /**

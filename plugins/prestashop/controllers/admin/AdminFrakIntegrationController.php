@@ -60,6 +60,7 @@ class AdminFrakIntegrationController extends ModuleAdminController
             'webhook_url' => FrakWebhookHelper::getWebhookUrl(),
             'webhook_secret_configured' => !empty($webhook_secret),
             'cron_url' => $this->buildCronUrl(),
+            'ps_cronjobs_enabled' => $this->isPsCronjobsEnabled(),
             'frak_dashboard_url' => 'https://business.frak.id/',
             'frak_docs_url' => 'https://docs.frak.id/components/frak-setup',
             'domain' => FrakUtils::currentHost(),
@@ -95,6 +96,24 @@ class AdminFrakIntegrationController extends ModuleAdminController
         return rtrim($base, '/')
             . '/index.php?fc=module&module=frakintegration&controller=cron&token='
             . rawurlencode($token);
+    }
+
+    /**
+     * Detect whether the official `ps_cronjobs` module is installed AND
+     * enabled on the current shop. When true, the module's `actionCronJob`
+     * hook auto-registers the webhook drainer with `ps_cronjobs`'s cron
+     * table — the merchant doesn't need to copy/paste the URL into a
+     * server cron, they just need `ps_cronjobs`'s own cron URL wired up
+     * (which it surfaces in its own admin page).
+     *
+     * Both checks are needed: `Module::isInstalled()` returns true even
+     * for disabled modules, and `Module::isEnabled()` is the de-facto
+     * gate `Hook::getHookModuleExecList()` consults when dispatching
+     * `actionCronJob`. Returning the AND keeps the admin badge honest.
+     */
+    private function isPsCronjobsEnabled(): bool
+    {
+        return Module::isInstalled('ps_cronjobs') && Module::isEnabled('ps_cronjobs');
     }
 
     /**

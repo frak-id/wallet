@@ -119,11 +119,20 @@
             <div class="form-group">
                 <label class="control-label col-lg-3">{l s='Retry Cron' mod='frakintegration'}</label>
                 <div class="col-lg-9">
+                    {if $ps_cronjobs_enabled}
+                        <p class="form-control-static">
+                            <span class="label label-success">{l s='✓ Auto-registered with ps_cronjobs' mod='frakintegration'}</span>
+                        </p>
+                        <p class="help-block">
+                            {l s='The webhook drainer is registered with the ps_cronjobs module and runs on its hourly tick — no further action needed. The URL below is still available if you prefer to wire a server-level cron for sub-hourly cadence (the two paths share the same drainer and are safe to run in parallel).' mod='frakintegration'}
+                        </p>
+                    {else}
+                        <p class="help-block">
+                            {l s='Failed webhook deliveries are queued and retried with exponential backoff (5 min → 24 h, 5 attempts). Wire this URL into a cron that runs every 5 min — either install the official ps_cronjobs module (this module auto-registers itself when ps_cronjobs is present), or run it as a server-level cron job (e.g. */5 * * * * curl -fs <URL>). The token in the URL gates access; rotate it by deleting FRAK_CRON_TOKEN and reinstalling the module.' mod='frakintegration'}
+                        </p>
+                    {/if}
                     <p class="form-control-static">
                         <code style="word-break: break-all;">{$cron_url|escape:'html':'UTF-8'}</code>
-                    </p>
-                    <p class="help-block">
-                        {l s='Failed webhook deliveries are queued and retried with exponential backoff (5 min → 24 h, 5 attempts). Wire this URL into a cron that runs every 5 min — either via the official ps_cronjobs module, or as a server-level cron job (e.g. */5 * * * * curl -fs <URL>). The token in the URL gates access; rotate it by deleting FRAK_CRON_TOKEN and reinstalling the module.' mod='frakintegration'}
                     </p>
                 </div>
             </div>

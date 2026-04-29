@@ -154,4 +154,45 @@ class FrakIntegration extends Module
     {
         return FrakDisplayDispatcher::dispatch($this, 'displayShoppingCart', is_array($params) ? $params : []);
     }
+
+    /**
+     * Cron-job hook invoked by `ps_cronjobs` when it is installed and
+     * enabled. Drains the webhook retry queue, mirroring what the
+     * URL-token front controller does — so merchants on `ps_cronjobs`
+     * get the cron wired up automatically without copy-pasting the URL.
+     *
+     * Both code paths are idempotent against `FrakWebhookCron::run()`'s
+     * Symfony Lock, so a merchant who runs BOTH `ps_cronjobs` and a
+     * server-level cron against the URL never double-drains.
+     *
+     * The handler is a no-op return so `ps_cronjobs` doesn't render any
+     * Frak output through its own admin UI.
+     */
+    public function hookActionCronJob($params = [])
+    {
+        FrakWebhookCron::run();
+    }
+
+    /**
+     * Frequency descriptor read by `ps_cronjobs` when registering this
+     * module's cron job. `-1` is the equivalent of `*` in Unix-cron syntax,
+     * so the schedule is "every hour, every day, every month, every day of
+     * the week" — hourly, the finest granularity `ps_cronjobs` exposes.
+     *
+     * Merchants who need the 5-minute backoff cadence can still wire a
+     * server-level cron against the URL-token controller instead; the two
+     * paths share the same drainer and the Symfony Lock makes them safe to
+     * run in parallel.
+     *
+     * @return array{hour:int,day:int,month:int,day_of_week:int}
+     */
+    public function getCronFrequency(): array
+    {
+        return [
+            'hour' => -1,
+            'day' => -1,
+            'month' => -1,
+            'day_of_week' => -1,
+        ];
+    }
 }
