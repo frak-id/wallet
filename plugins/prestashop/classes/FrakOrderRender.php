@@ -68,8 +68,10 @@ class FrakOrderRender
      * happy).
      *
      * @param Module               $module    FrakIntegration instance — needed for
-     *                                        `$module->display()` (Smarty wrapper) and
-     *                                        `$module->context->smarty->assign()`.
+     *                                        `$module->display()` (Smarty wrapper). Note that
+     *                                        `Module::$context` is `protected`, so the Smarty
+     *                                        assignment goes through the `Context::getContext()`
+     *                                        singleton (same request-scoped instance).
      * @param mixed                $order     Resolved Order object from the hook params.
      * @param string               $placement Placement identifier forwarded to the SDK.
      * @param array<string, mixed> $options   Merchant-tunable component attributes resolved
@@ -95,7 +97,13 @@ class FrakOrderRender
 
         $html = FrakComponentRenderer::postPurchase($attrs);
 
-        $module->context->smarty->assign('frak_post_purchase_html', $html);
+        // `Module::$context` is `protected`, so reach the Smarty engine via
+        // the `Context::getContext()` singleton instead of `$module->context`.
+        // Both point at the same request-scoped instance — the protected
+        // accessor only exists for subclasses to share state with their hook
+        // handlers (mirrors the {@see FrakInstaller} workaround for the same
+        // visibility constraint).
+        Context::getContext()->smarty->assign('frak_post_purchase_html', $html);
         // `$module->getLocalPath() . $module->name . '.php'` resolves to the
         // module bootstrap file. PrestaShop's `Module::display()` uses the
         // first arg only to derive the module slug for template lookups, so

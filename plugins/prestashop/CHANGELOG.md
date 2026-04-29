@@ -11,6 +11,11 @@ version on dispatch.
 
 ## [Unreleased]
 
+### Fixed
+
+- **Fatal on order-confirmation / order-detail pages with the post-purchase placement enabled** (`Cannot access protected property FrakIntegration::$context` at `FrakOrderRender.php:98`). `Module::$context` is `protected` in PrestaShop core, so the Smarty assignment in `FrakOrderRender::postPurchase()` could not reach it from outside the Module subclass — the page errored out before any post-purchase markup was emitted. Swapped to `Context::getContext()->smarty->assign(...)` (same request-scoped instance, public API), mirroring the existing `FrakInstaller` workaround for the same visibility constraint. `$module->display(...)` is left untouched (`Module::display()` is public).
+- **Hardened `FrakInstaller::install()` and `upgrade/install-1.0.1.php` against the same protected-property shape**: both previously wrote to `$module->_errors[]` (protected) on the missing-Symfony-HttpClient guard path, which would have fataled instead of failing gracefully on any PS install missing the bundled HttpClient. Replaced with `PrestaShopLogger::addLog(..., 3)` + `return false`, matching the rest of the plugin's logger-driven error UX (commit 7431109c9). The upgrade-script edit is intentional even though 1.0.1 is published — merchants upgrading from <1.0.1 still execute that script, so the latent fatal needed to go before it could surface in production. Cold path — PS 8.1+ ships HttpClient via `symfony/symfony` 4.x — but the install + upgrade paths now both degrade cleanly.
+
 ## [1.0.1] - 2026-04-29
 
 ### Added

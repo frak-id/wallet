@@ -21,9 +21,10 @@ class FrakDisplayDispatcher
 {
     /**
      * @param Module               $module FrakIntegration instance — forwarded to
-     *                                     {@see FrakOrderRender::postPurchase()}
-     *                                     so it can call `$module->display()` and
-     *                                     `$module->context->smarty->assign()`.
+     *                                     {@see FrakOrderRender::postPurchase()} so it can call
+     *                                     `$module->display()` for the Smarty wrapper. Smarty
+     *                                     assignments go through `Context::getContext()` because
+     *                                     `Module::$context` is `protected`.
      * @param string               $hook   PrestaShop hook name, e.g. `displayTop`.
      * @param array<string, mixed> $params Hook parameters forwarded by PrestaShop.
      */

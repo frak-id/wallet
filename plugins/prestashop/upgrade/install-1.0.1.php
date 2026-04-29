@@ -112,8 +112,16 @@ function upgrade_module_1_0_1($module)
     // does not roll forward `ps_module.version` until the script returns
     // true) so the merchant can recover by restoring a working PS install
     // before retrying.
+    //
+    // `Module::$_errors` is `protected`, so writing to `$module->_errors[]`
+    // from this global-scope upgrade function fatals with `Cannot access
+    // protected property` (same visibility constraint as `Module::$context`,
+    // see `FrakOrderRender::postPurchase()`). Surface the diagnostic via
+    // `PrestaShopLogger` instead — merchants get a generic upgrade failure
+    // in Module Manager and the actionable root cause in Advanced Parameters
+    // → Logs, consistent with the rest of the plugin's logger-driven error UX.
     if (!FrakHttpClient::isAvailable()) {
-        $module->_errors[] = FrakHttpClient::missingDependencyMessage();
+        PrestaShopLogger::addLog('[FrakSDK] ' . FrakHttpClient::missingDependencyMessage(), 3);
         return false;
     }
 
