@@ -244,13 +244,17 @@ class FrakWebhookQueue
         // Most recent failure (parked or pending) for the admin error
         // surface. Filter on `last_error IS NOT NULL` so successful retries
         // (which clear `last_error` via `markSuccess`) are skipped.
+        //
+        // `Db::getRow()` automatically appends `LIMIT 1` to the SQL it
+        // receives — passing one in by hand produces `… LIMIT 1 LIMIT 1`,
+        // which MariaDB rejects with a syntax error. The `ORDER BY
+        // updated_at DESC` is what `idx_updated` covers (see sql/install.php).
         try {
             $latest = $db->getRow(
                 'SELECT `last_error`, `updated_at`'
                 . ' FROM `' . $table . '`'
                 . " WHERE `last_error` IS NOT NULL AND `last_error` <> ''"
                 . ' ORDER BY `updated_at` DESC'
-                . ' LIMIT 1'
             );
         } catch (PrestaShopDatabaseException $e) {
             return $stats;

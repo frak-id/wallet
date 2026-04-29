@@ -70,6 +70,37 @@ if (!defined('_PS_VERSION_')) {
     exit;
 }
 
+// Defensive class loading.
+//
+// PrestaShop's upgrade dispatch may run inside a PHP process where the OLD
+// (v0.0.4) bootstrap was already required earlier in the request — Module
+// Manager listing the module, ModuleManagerBuilder probing it, etc. The OLD
+// `frakintegration.php` calls `require_once __DIR__ . '/vendor/autoload.php'`,
+// which registers a Composer autoloader whose classmap reflects v0.0.4's
+// composer.json (PSR-4 only — no `classes/` mapping; FrakHttpClient and
+// every other 1.0.x class is absent). After the zip extraction replaces the
+// files in place, neither the new bootstrap nor the new `vendor/autoload.php`
+// can re-execute on top of the old ones because `require_once` keys on
+// filesystem path, leaving the v0.0.4 autoloader live in memory. OPcache
+// with `validate_timestamps=0` reproduces the same failure on a fresh
+// request by serving stale bytecode for the bootstrap path.
+//
+// Either way, every Frak class reference below (FrakHttpClient::isAvailable,
+// FrakPlacementRegistry::distinctHooks, FrakWebhookQueue::TABLE,
+// FrakConfig::ensureCronToken, …) would raise a ClassNotFoundError. Side-step
+// the autoloader entirely: explicitly require every Frak class the migrator
+// might touch. `require_once` is a no-op when the autoloader has already
+// resolved the class on a healthy install, so this is free in the happy path.
+$frak_class_files = glob(__DIR__ . '/../classes/*.php');
+if (is_array($frak_class_files)) {
+    foreach ($frak_class_files as $frak_class_file) {
+        if (basename($frak_class_file) === 'index.php') {
+            continue;
+        }
+        require_once $frak_class_file;
+    }
+}
+
 function upgrade_module_1_0_1($module)
 {
     // Fail fast if PrestaShop's bundled Symfony HttpClient is not
