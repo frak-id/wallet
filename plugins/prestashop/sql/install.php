@@ -28,12 +28,14 @@
  *       ({@see FrakWebhookQueue::truncateError()}); using LONGTEXT would invite
  *       adversarial backend responses to bloat the row.
  *
- * Cache + Lock tables (`frak_cache_items`, `frak_lock_keys`) are NOT defined
- * here — Symfony Cache (`DoctrineDbalAdapter`) and Symfony Lock
- * (`DoctrineDbalStore`) own their own schema and provision the tables via
- * `createTable()` on first use. {@see FrakInfra::createInfrastructureTables()}
- * runs that bootstrap from the install / upgrade path so the tables exist
- * before any merchant resolution or cron tick fires.
+ * - `frak_cache` (mirrored on FrakCache):
+ *     - Primary key on `cache_key` for `O(1)` lookup on every read.
+ *     - `idx_expires` covers the `prune()` sweep on `expires_at`.
+ *     - `expires_at` is INT UNSIGNED (unix timestamp) NULLABLE — NULL means
+ *       "no expiry" (used by the merchant resolver's positive cache).
+ *     - `cache_value` is LONGTEXT to comfortably fit JSON-encoded values;
+ *       cached payloads are small (resolver records < 1 KB) but a wide
+ *       column avoids surprises if a future caller stores a larger blob.
  */
 
 if (!defined('_PS_VERSION_')) {
@@ -56,4 +58,12 @@ $sql[FrakWebhookQueue::TABLE] = 'CREATE TABLE IF NOT EXISTS `' . _DB_PREFIX_ . F
     KEY `idx_due` (`state`, `next_retry_at`),
     KEY `idx_order` (`id_order`),
     KEY `idx_updated` (`updated_at`)
+) ENGINE=' . _MYSQL_ENGINE_ . ' DEFAULT CHARSET=utf8mb4;';
+
+$sql[FrakCache::TABLE] = 'CREATE TABLE IF NOT EXISTS `' . _DB_PREFIX_ . FrakCache::TABLE . '` (
+    `cache_key` VARCHAR(191) NOT NULL,
+    `cache_value` LONGTEXT NOT NULL,
+    `expires_at` INT(11) UNSIGNED DEFAULT NULL,
+    PRIMARY KEY (`cache_key`),
+    KEY `idx_expires` (`expires_at`)
 ) ENGINE=' . _MYSQL_ENGINE_ . ' DEFAULT CHARSET=utf8mb4;';

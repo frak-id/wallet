@@ -21,15 +21,16 @@
  *     and a per-row attempt counter; both are awkward to model in a JSON
  *     blob.
  *
- * Why Doctrine DBAL instead of `Db::getInstance()`:
- *   - DBAL parameterised queries replace the manual `pSQL()` plumbing so
- *     SQL injection regressions are structurally precluded — the type
- *     checker enforces that user-supplied data goes through bound params.
- *   - Cleaner result hydration: `fetchAllAssociative()` /
- *     `fetchAssociative()` return well-typed array shapes.
- *   - Single shared connection with the Symfony Cache + Lock infra
- *     ({@see FrakInfra::connection()}), so the per-request DB connection
- *     count stays at PS native + 1.
+ * Why PrestaShop's native `\Db::getInstance()` (post-DIY refactor):
+ *   - The webhook queue is a small surface (5 small CRUD methods + a
+ *     stats aggregation), so the parameterised-query advantage Doctrine
+ *     DBAL gave us doesn't justify the 1.9 MB vendor cost on the merchant
+ *     install. PrestaShop's `Db` class wraps the same PDO/mysqli handle
+ *     PrestaShop already uses, so the per-request connection count stays
+ *     at PS's native one.
+ *   - All free-form strings (`status`, `last_error`) go through `pSQL()`
+ *     to keep the SQL injection surface zero. Numeric columns
+ *     (`id_order`, `attempts`) are cast to `int` at the boundary.
  *
  * Backoff schedule mirrors the Magento sister plugin
  * (`plugins/magento/Model/Retry/CronRetry.php`): 5 m, 15 m, 1 h, 6 h, 24 h,
@@ -78,15 +79,18 @@ class FrakWebhookQueue
      */
     public static function enqueue(int $order_id, string $status, string $error = ''): bool
     {
-        $affected = FrakInfra::connection()->insert(_DB_PREFIX_ . self::TABLE, [
-            'id_order' => $order_id,
-            'status' => $status,
+        return (bool) Db::getInstance()->insert(self::TABLE, [
+            'id_order' => (int) $order_id,
+            'status' => pSQL($status),
             'attempts' => 0,
-            'next_retry_at' => date('Y-m-d H:i:s', time() + self::BACKOFF_SECONDS[0]),
-            'last_error' => self::truncateError($error),
-            'state' => FrakWebhookState::Pending->value,
+            'next_retry_at' => pSQL(date('Y-m-d H:i:s', time() + self::BACKOFF_SECONDS[0])),
+            // html_ok=true: pSQL would otherwise call htmlentitiesUTF8()
+            // which mangles error strings containing `<`, `>`, `&`. We
+            // only need backslash + apostrophe escaping for SQL safety,
+            // which html_ok=true still does.
+            'last_error' => pSQL(self::truncateError($error), true),
+            'state' => pSQL(FrakWebhookState::Pending->value),
         ]);
-        return $affected > 0;
     }
 
     /**
@@ -99,16 +103,14 @@ class FrakWebhookQueue
     public static function due(int $limit = 50): array
     {
         $sql = 'SELECT * FROM `' . _DB_PREFIX_ . self::TABLE . '`'
-            . ' WHERE `state` = :state'
+            . " WHERE `state` = '" . pSQL(FrakWebhookState::Pending->value) . "'"
             . ' AND `next_retry_at` <= NOW()'
-            . ' AND `attempts` < :max_attempts'
+            . ' AND `attempts` < ' . (int) self::MAX_ATTEMPTS
             . ' ORDER BY `next_retry_at` ASC'
-            . ' LIMIT ' . max(1, $limit);
+            . ' LIMIT ' . max(1, (int) $limit);
 
-        return FrakInfra::connection()->fetchAllAssociative($sql, [
-            'state' => FrakWebhookState::Pending->value,
-            'max_attempts' => self::MAX_ATTEMPTS,
-        ]);
+        $rows = Db::getInstance()->executeS($sql);
+        return is_array($rows) ? $rows : [];
     }
 
     /**
@@ -116,12 +118,19 @@ class FrakWebhookQueue
      */
     public static function markSuccess(int $id): bool
     {
-        $affected = FrakInfra::connection()->update(
-            _DB_PREFIX_ . self::TABLE,
-            ['state' => FrakWebhookState::Success->value, 'last_error' => null],
-            ['id_frak_webhook_queue' => $id]
+        return (bool) Db::getInstance()->update(
+            self::TABLE,
+            [
+                'state' => pSQL(FrakWebhookState::Success->value),
+                'last_error' => null,
+            ],
+            '`id_frak_webhook_queue` = ' . (int) $id,
+            0,
+            // null_values=true so `last_error => null` writes a literal NULL
+            // (clears the audit trail on success) instead of the empty
+            // string `''` PS Db's default flow would emit.
+            true
         );
-        return $affected > 0;
     }
 
     /**
@@ -139,17 +148,16 @@ class FrakWebhookQueue
         $is_final = $attempts >= self::MAX_ATTEMPTS;
         $delay = self::BACKOFF_SECONDS[min($attempts - 1, count(self::BACKOFF_SECONDS) - 1)];
 
-        $affected = FrakInfra::connection()->update(
-            _DB_PREFIX_ . self::TABLE,
+        return (bool) Db::getInstance()->update(
+            self::TABLE,
             [
-                'attempts' => $attempts,
-                'state' => ($is_final ? FrakWebhookState::Failed : FrakWebhookState::Pending)->value,
-                'next_retry_at' => date('Y-m-d H:i:s', time() + $delay),
-                'last_error' => self::truncateError($error),
+                'attempts' => (int) $attempts,
+                'state' => pSQL(($is_final ? FrakWebhookState::Failed : FrakWebhookState::Pending)->value),
+                'next_retry_at' => pSQL(date('Y-m-d H:i:s', time() + $delay)),
+                'last_error' => pSQL(self::truncateError($error), true),
             ],
-            ['id_frak_webhook_queue' => $id]
+            '`id_frak_webhook_queue` = ' . (int) $id
         );
-        return $affected > 0;
     }
 
     /**
@@ -177,7 +185,9 @@ class FrakWebhookQueue
      *
      * Returns zeroes / nulls when the table is missing (the schema migrator
      * has not run yet) so the admin page still renders during a partial
-     * upgrade.
+     * upgrade. `Db::executeS()` returns `false` on schema errors in
+     * production; in dev mode it throws `PrestaShopDatabaseException`,
+     * which we catch to keep the panel renderable in both modes.
      *
      * @return array{pending:int,failed:int,success:int,oldest_pending_at:?string,last_error:?string,last_error_at:?string}
      */
@@ -192,18 +202,21 @@ class FrakWebhookQueue
             'last_error_at' => null,
         ];
 
-        $conn = FrakInfra::connection();
+        $db = Db::getInstance();
         $table = _DB_PREFIX_ . self::TABLE;
 
         try {
-            $rows = $conn->fetchAllAssociative(
+            $rows = $db->executeS(
                 'SELECT `state`, COUNT(*) AS `cnt`, MIN(`next_retry_at`) AS `oldest`'
                 . ' FROM `' . $table . '`'
                 . ' GROUP BY `state`'
             );
-        } catch (\Doctrine\DBAL\Exception $e) {
+        } catch (PrestaShopDatabaseException $e) {
             // Table missing or other schema-level failure — return the
             // zero-state snapshot so the admin panel still renders.
+            return $defaults;
+        }
+        if (!is_array($rows)) {
             return $defaults;
         }
 
@@ -231,13 +244,17 @@ class FrakWebhookQueue
         // Most recent failure (parked or pending) for the admin error
         // surface. Filter on `last_error IS NOT NULL` so successful retries
         // (which clear `last_error` via `markSuccess`) are skipped.
-        $latest = $conn->fetchAssociative(
-            'SELECT `last_error`, `updated_at`'
-            . ' FROM `' . $table . '`'
-            . ' WHERE `last_error` IS NOT NULL AND `last_error` <> ""'
-            . ' ORDER BY `updated_at` DESC'
-            . ' LIMIT 1'
-        );
+        try {
+            $latest = $db->getRow(
+                'SELECT `last_error`, `updated_at`'
+                . ' FROM `' . $table . '`'
+                . " WHERE `last_error` IS NOT NULL AND `last_error` <> ''"
+                . ' ORDER BY `updated_at` DESC'
+                . ' LIMIT 1'
+            );
+        } catch (PrestaShopDatabaseException $e) {
+            return $stats;
+        }
         if (is_array($latest)) {
             $stats['last_error'] = isset($latest['last_error']) ? (string) $latest['last_error'] : null;
             $stats['last_error_at'] = isset($latest['updated_at']) ? (string) $latest['updated_at'] : null;

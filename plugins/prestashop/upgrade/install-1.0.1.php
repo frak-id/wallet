@@ -29,31 +29,33 @@
  *      every distinct hook in `FrakPlacementRegistry::distinctHooks()` so
  *      existing installs gain the auxiliary placement surfaces (`displayTop`,
  *      `displayHome`, `displayShoppingCart`, `displayOrderDetail`).
-    *   3. Schema: provision the `frak_webhook_queue` table via
-    *      `sql/install.php` (CREATE TABLE IF NOT EXISTS — safe re-entry on
-    *      partial upgrades), and provision the Symfony Cache / Lock tables
-    *      (`frak_cache_items`, `frak_lock_keys`) via
-    *      {@see FrakInfra::createInfrastructureTables()}. The cache backs
-    *      {@see FrakMerchantResolver} and replaces the autoloaded
-    *      `FRAK_MERCHANT` / negative-cache Configuration rows the resolver
-    *      previously bloated `ps_configuration` with.
- *   4. Cron: generate `FRAK_CRON_TOKEN` if missing (existing tokens are
+    *   3. Schema: provision the `frak_webhook_queue` table and the new
+    *      key/value `frak_cache` table via `sql/install.php` (CREATE TABLE
+    *      IF NOT EXISTS — safe re-entry on partial upgrades). Drop the
+    *      legacy tables left by earlier dev iterations of 1.0.x:
+    *      `frak_cache` (homegrown pre-1.0.1), `frak_cache_items` (Symfony
+    *      Cache `DoctrineDbalAdapter`), `frak_lock_keys` (Symfony Lock
+    *      `DoctrineDbalStore`). The Symfony adapters are gone post-DIY
+    *      refactor; the merchant resolver now uses {@see FrakCache} and
+    *      the cron drainer uses MySQL's `GET_LOCK` ({@see FrakLock}).
+ *   4. (subsumed by step 3 — schema lifecycle is now one block.)
+ *   5. Cron: generate `FRAK_CRON_TOKEN` if missing (existing tokens are
  *      preserved verbatim — rotating would break any merchant cron job
  *      already wired to the URL).
- *   5. Placements: seed every placement's enable flag in the bundled
+ *   6. Placements: seed every placement's enable flag in the bundled
  *      `FRAK_PLACEMENTS` Configuration row. `seedDefaults()` no-ops when
  *      the row already exists.
- *   6. Defensive sweep: any pre-1.0.1 dev shop carrying the unreleased
+ *   7. Defensive sweep: any pre-1.0.1 dev shop carrying the unreleased
  *      per-placement `FRAK_PLACEMENT_*` rows has them folded into the
  *      bundled storage (preserves merchant choices) and the legacy rows
  *      deleted. Production v0.0.4 shops never had these rows, so the
  *      sweep is a no-op for them.
-    *   7. Cleanup: wipe deprecated Configuration rows (modal i18n,
+    *   8. Cleanup: wipe deprecated Configuration rows (modal i18n,
     *      share-button copy/style, floating-button toggles, webhook log
     *      ring) plus the now-obsolete `FRAK_SETTINGS_VERSION` row. The full
     *      v0.0.4 set is enumerated below; floating-button keys were missing
     *      from the legacy in-class sweep.
- *   8. Admin tab: register a `ps_tab` row for `AdminFrakIntegration` so
+ *   9. Admin tab: register a `ps_tab` row for `AdminFrakIntegration` so
  *      the configuration page surfaces as a sidebar entry under "Modules"
  *      and gets wired into PrestaShop's standard Permissions panel.
  *
@@ -108,7 +110,25 @@ function upgrade_module_1_0_1($module)
         $module->registerHook($hook);
     }
 
-    // 3. Provision the webhook retry queue table. Idempotent —
+    // 3. Drop legacy tables BEFORE running `sql/install.php`. The new
+    //    `frak_cache` table shares its name with the homegrown pre-1.0.1
+    //    cache table (different schema), so the drop must run first —
+    //    otherwise the `CREATE TABLE IF NOT EXISTS` in sql/install.php
+    //    would no-op against the legacy schema. `DROP TABLE IF EXISTS`
+    //    keeps each step idempotent on shops that never had the table.
+    //
+    //    Production v0.0.4 shops never had any of these. Dev shops that
+    //    ran an unreleased 1.0.x iteration have `frak_cache_items` +
+    //    `frak_lock_keys` (the Symfony adapters' default table names);
+    //    earlier dev shops carried `frak_cache`. Wipe them all so the
+    //    fresh schema lands on a clean substrate.
+    foreach (['frak_cache', 'frak_cache_items', 'frak_lock_keys'] as $legacy_table) {
+        Db::getInstance()->execute(
+            'DROP TABLE IF EXISTS `' . _DB_PREFIX_ . pSQL($legacy_table) . '`'
+        );
+    }
+
+    // 4. Provision the webhook retry queue table + cache table. Idempotent —
     //    `sql/install.php` uses `CREATE TABLE IF NOT EXISTS`, so re-running
     //    on a partial upgrade is a no-op.
     $sql = [];
@@ -118,15 +138,11 @@ function upgrade_module_1_0_1($module)
             return false;
         }
     }
-    // Provision the Symfony Cache + Lock tables via their own DBAL
-    // `createTable()` adapters. Both wrap the underlying CREATE TABLE in
-    // an IF NOT EXISTS guard so re-runs on partial upgrades are no-ops.
-    FrakInfra::createInfrastructureTables();
 
-    // 3b. Defensive index addition. `CREATE TABLE IF NOT EXISTS` is a
+    // 4b. Defensive index addition. `CREATE TABLE IF NOT EXISTS` is a
     //     no-op on shops that already provisioned `frak_webhook_queue`
-     //    from an earlier dev iteration without `idx_updated`, so we can't
-    //     rely on step 3 to add the index retrospectively. Check
+    //     from an earlier dev iteration without `idx_updated`, so we
+    //     can't rely on step 4 to add the index retrospectively. Check
     //     `information_schema.statistics` and ALTER if the index is
     //     missing — keeps the admin observability panel's "latest error"
     //     lookup off a filesort regardless of which point on the upgrade
@@ -143,27 +159,17 @@ function upgrade_module_1_0_1($module)
         );
     }
 
-    // 3c. Defensive sweep of the legacy `frak_cache` table. Only present
-    //     on dev shops that ran a pre-1.0.1 iteration of the module; the
-    //     migrator now uses Symfony Cache (`frak_cache_items`) + Symfony
-    //     Lock (`frak_lock_keys`) so the homegrown table is dead weight.
-    //     `DROP TABLE IF EXISTS` keeps this idempotent on production
-    //     shops that never had it.
-    Db::getInstance()->execute(
-        'DROP TABLE IF EXISTS `' . _DB_PREFIX_ . 'frak_cache`'
-    );
-
-    // 4. Generate the cron token if missing. Existing tokens are preserved
+    // 5. Generate the cron token if missing. Existing tokens are preserved
     //    verbatim — rotating would invalidate any cron job the merchant has
     //    already wired up against the displayed URL.
     FrakConfig::ensureCronToken();
 
-    // 5. Seed placement defaults into the bundled `FRAK_PLACEMENTS` row.
+    // 6. Seed placement defaults into the bundled `FRAK_PLACEMENTS` row.
     //    No-ops when the row already exists (e.g. a re-run upgrade) so
     //    merchant choices on previously-stored placements survive.
     FrakPlacementRegistry::seedDefaults();
 
-    // 6. Defensive sweep: fold any pre-1.0.1 per-placement rows into the
+    // 7. Defensive sweep: fold any pre-1.0.1 per-placement rows into the
     //    bundled storage row. The unreleased 1.0.x iteration of this module
     //    stored placement toggles in N separate `FRAK_PLACEMENT_*` rows;
     //    1.0.1 collapses them into a single `FRAK_PLACEMENTS` JSON row to
@@ -195,7 +201,7 @@ function upgrade_module_1_0_1($module)
         Configuration::updateValue(FrakPlacementRegistry::STORAGE_KEY, $encoded);
     }
 
-    // 7. Wipe deprecated Configuration rows. Audit baseline:
+    // 8. Wipe deprecated Configuration rows. Audit baseline:
     //    `https://github.com/frak-id/prestashop-plugin/blob/v0.0.4/frakintegration.php`
     //    (uninstall path enumerates every legacy key the module ever wrote).
     //    `FRAK_SETTINGS_VERSION` is purged here — PrestaShop's native
@@ -224,7 +230,7 @@ function upgrade_module_1_0_1($module)
         Configuration::deleteByName($key);
     }
 
-    // 8. Register the admin Tab. Idempotent — skips when a row already exists
+    // 9. Register the admin Tab. Idempotent — skips when a row already exists
     //    (e.g. on a partial upgrade re-run). Sits under Modules so the
     //    operational tooling (queue health, drain queue, refresh merchant)
     //    is one click away for daily ops, and gates per-employee access via

@@ -82,12 +82,11 @@ class FrakInstaller
             $module->context->link->getMediaLink(_PS_IMG_ . Configuration::get('PS_LOGO'))
         );
 
-        // Async webhook infrastructure: queue table (raw SQL via
-        // sql/install.php) + Symfony Cache + Lock tables (provisioned through
-        // their own DBAL adapter `createTable()` calls). Schema must be in
-        // place before any order status transition can happen, otherwise
-        // enqueue() / merchant resolution / the cron URL would silently
-        // fail.
+        // Async webhook infrastructure: queue table + key/value cache table.
+        // `sql/install.php` provisions both via `CREATE TABLE IF NOT EXISTS`.
+        // Schema must be in place before any order status transition can
+        // happen, otherwise enqueue() / merchant resolution / the cron URL
+        // would silently fail.
         // `$sql` is populated by the included file. Declared here so phpstan
         // can see the contract across the include boundary.
         $sql = [];
@@ -97,7 +96,6 @@ class FrakInstaller
                 return false;
             }
         }
-        FrakInfra::createInfrastructureTables();
 
         // The cron token gates the front controller via `hash_equals`;
         // rotating would break any merchant cron job already wired against
@@ -140,16 +138,15 @@ class FrakInstaller
         Configuration::deleteByName(FrakConfig::CRON_TOKEN);
         FrakPlacementRegistry::clearAll();
 
-        // Schema teardown: webhook queue via sql/uninstall.php, Symfony Cache
-        // + Lock tables via FrakInfra. SQL errors are swallowed: uninstall is
-        // best-effort and PrestaShop already truncated `ps_hook_module` via
-        // `parent::uninstall()` regardless.
+        // Schema teardown: webhook queue + cache table via sql/uninstall.php.
+        // SQL errors are swallowed: uninstall is best-effort and PrestaShop
+        // already truncated `ps_hook_module` via `parent::uninstall()`
+        // regardless.
         $sql = [];
         include $module->getLocalPath() . 'sql/uninstall.php';
         foreach ($sql as $query) {
             Db::getInstance()->execute($query);
         }
-        FrakInfra::dropInfrastructureTables();
 
         return true;
     }

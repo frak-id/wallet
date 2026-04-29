@@ -14,13 +14,15 @@
  * idempotent: rows are state-machine tracked, so an aborted run resumes
  * cleanly on the next tick.
  *
- * **Concurrency lock:** acquired via Symfony Lock ({@see FrakInfra::lockFactory()})
- * with a 5-minute TTL. If a previous tick is still running (slow backend +
- * multiple rows can push a tick beyond the 5-min cron interval), the new
- * tick early-returns instead of double-sending rows whose state hasn't
- * been updated yet. The backend is idempotent on
- * `(merchantId, externalId, status)` so concurrent retries are harmless,
- * but skipping the duplicate work saves HTTP attempts and log noise.
+ * **Concurrency lock:** acquired via MySQL `GET_LOCK` ({@see FrakLock}).
+ * Session-scoped — the lock dies with the connection on PHP shutdown,
+ * so a crashed drainer never wedges the queue past its TTL. If a
+ * previous tick is still running (slow backend + multiple rows can push
+ * a tick beyond the 5-min cron interval), the new tick early-returns
+ * instead of double-sending rows whose state hasn't been updated yet.
+ * The backend is idempotent on `(merchantId, externalId, status)` so
+ * concurrent retries are harmless, but skipping the duplicate work saves
+ * HTTP attempts and log noise.
  *
  * **Parallel dispatch:** the drainer dispatches every due row in parallel
  * via {@see FrakWebhookHelper::sendBatch()}. A sequential drain would pay
@@ -45,17 +47,8 @@ class FrakWebhookCron
      */
     public const BATCH_SIZE = 25;
 
-    /** Lock key used by {@see FrakInfra::lockFactory()} to gate concurrent runs. */
+    /** Lock key passed to {@see FrakLock::acquire()} to gate concurrent runs. */
     public const LOCK_KEY = 'cron.webhook_drainer';
-
-    /**
-     * Lock TTL — 5 minutes. Long enough to absorb a slow batch
-     * (BATCH_SIZE × REQUEST_TIMEOUT in the worst case) without releasing
-     * to a duplicate run, short enough that a crashed cron doesn't wedge
-     * the queue for hours. Symfony Lock auto-expires the row after this
-     * window via the `DoctrineDbalStore` GC sweep.
-     */
-    public const LOCK_TTL = 300;
 
     /**
      * @return array{processed:int,success:int,failure:int,skipped?:bool}
@@ -64,8 +57,7 @@ class FrakWebhookCron
     {
         $stats = ['processed' => 0, 'success' => 0, 'failure' => 0];
 
-        $lock = FrakInfra::lockFactory()->createLock(self::LOCK_KEY, self::LOCK_TTL);
-        if (!$lock->acquire()) {
+        if (!FrakLock::acquire(self::LOCK_KEY)) {
             // Previous tick still running. Operationally expected on slow
             // backends; the next tick will pick up where this one would
             // have started, so no log emitted.
@@ -134,11 +126,10 @@ class FrakWebhookCron
 
             return $stats;
         } finally {
-            $lock->release();
-            // Opportunistic GC of the Cache + Lock tables — once per cron
-            // tick. Centralised on {@see FrakInfra::housekeeping()} so the
-            // Lock-store-`prune`-availability guard lives next to the Lock
-            // store factory, not at the cron call site.
+            FrakLock::release(self::LOCK_KEY);
+            // Opportunistic GC of the cache table — once per cron tick.
+            // No lock-store GC anymore: MySQL session locks auto-release
+            // on connection close.
             FrakInfra::housekeeping();
         }
     }

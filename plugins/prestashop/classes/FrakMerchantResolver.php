@@ -11,12 +11,12 @@
  *   - Short negative cache (5 min) on 4xx/5xx so unresolved or staging
  *     domains do not hammer the backend between webhook retries.
  *
- * Storage: Symfony Cache pool ({@see FrakInfra::cache()}), namespaced under
- * `merchant:` and `merchant_unresolved:`. PSR-6 keys live in the shared
- * `frak_cache_items` table outside `ps_configuration` so cold merchant
- * data never bloats the per-request autoload payload — PrestaShop has no
- * `autoload=no` flag (unlike WordPress's `update_option(..., false)`), so
- * a custom backing store is the only way to keep cold config cold.
+ * Storage: tiny key-value cache ({@see FrakCache}), namespaced under
+ * `merchant.` and `merchant_unresolved.` keys. The cache table sits
+ * outside `ps_configuration` so cold merchant data never bloats the
+ * per-request autoload payload — PrestaShop has no `autoload=no` flag
+ * (unlike WordPress's `update_option(..., false)`), so a custom backing
+ * store is the only way to keep cold config cold.
  *
  * HTTP: shares the {@see FrakHttpClient} singleton with
  * {@see FrakWebhookHelper} so the TLS handshake against `backend.frak.id`
@@ -73,9 +73,9 @@ class FrakMerchantResolver
         if ($host === '') {
             return;
         }
-        $cache = FrakInfra::cache();
-        $cache->deleteItem(self::CACHE_KEY_PREFIX . self::sanitizeKey($host));
-        $cache->deleteItem(self::NEGATIVE_CACHE_PREFIX . self::sanitizeKey($host));
+        $key = self::sanitizeKey($host);
+        FrakCache::delete(self::CACHE_KEY_PREFIX . $key);
+        FrakCache::delete(self::NEGATIVE_CACHE_PREFIX . $key);
     }
 
     public static function currentHost(): string
@@ -117,26 +117,19 @@ class FrakMerchantResolver
             'resolved_at' => time(),
         ];
 
-        $cache = FrakInfra::cache();
         $key = self::sanitizeKey($host);
-        $item = $cache->getItem(self::CACHE_KEY_PREFIX . $key);
-        $item->set($record);
-        // No `expiresAfter()` — merchant UUIDs are immutable per domain;
-        // the resolver self-invalidates via the host check in `getRecord()`
-        // and the explicit "Refresh Merchant" admin button.
-        $cache->save($item);
-        $cache->deleteItem(self::NEGATIVE_CACHE_PREFIX . $key);
+        // No TTL — merchant UUIDs are immutable per domain; the resolver
+        // self-invalidates via the host check in `getRecord()` and the
+        // explicit "Refresh Merchant" admin button.
+        FrakCache::set(self::CACHE_KEY_PREFIX . $key, $record);
+        FrakCache::delete(self::NEGATIVE_CACHE_PREFIX . $key);
 
         return $record;
     }
 
     private static function readCachedRecord(string $host): ?array
     {
-        $item = FrakInfra::cache()->getItem(self::CACHE_KEY_PREFIX . self::sanitizeKey($host));
-        if (!$item->isHit()) {
-            return null;
-        }
-        $value = $item->get();
+        $value = FrakCache::get(self::CACHE_KEY_PREFIX . self::sanitizeKey($host));
         if (!is_array($value) || empty($value['id'])) {
             return null;
         }
@@ -145,22 +138,23 @@ class FrakMerchantResolver
 
     private static function isNegativeCacheActive(string $host): bool
     {
-        return FrakInfra::cache()->hasItem(self::NEGATIVE_CACHE_PREFIX . self::sanitizeKey($host));
+        return FrakCache::has(self::NEGATIVE_CACHE_PREFIX . self::sanitizeKey($host));
     }
 
     private static function markUnresolved(string $host): void
     {
-        $item = FrakInfra::cache()->getItem(self::NEGATIVE_CACHE_PREFIX . self::sanitizeKey($host));
-        $item->set(true);
-        $item->expiresAfter(self::NEGATIVE_CACHE_TTL);
-        FrakInfra::cache()->save($item);
+        FrakCache::set(
+            self::NEGATIVE_CACHE_PREFIX . self::sanitizeKey($host),
+            true,
+            self::NEGATIVE_CACHE_TTL
+        );
     }
 
     /**
-     * PSR-6 cache keys can only contain `[A-Za-z0-9_.]` (no dots in some
-     * adapters, no special characters). A shop domain like `shop.example.com`
-     * survives mostly intact; we replace dots with underscores defensively
-     * to keep DoctrineDbalAdapter happy regardless of host quirkiness.
+     * Cache keys are restricted to `[A-Za-z0-9_]` — a shop domain like
+     * `shop.example.com` survives mostly intact, dots just become
+     * underscores. Keeps key strings predictable and short of the
+     * `cache_key VARCHAR(191)` column width even on long subdomains.
      */
     private static function sanitizeKey(string $host): string
     {
