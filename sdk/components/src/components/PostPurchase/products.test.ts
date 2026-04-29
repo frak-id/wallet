@@ -1,8 +1,5 @@
 import { describe, expect, it } from "vitest";
-import {
-    coerceProductCandidates,
-    normalizeProductCandidate,
-} from "./products";
+import { coerceProductCandidates, normalizeProductCandidate } from "./products";
 
 describe("coerceProductCandidates", () => {
     describe("falsy / unsupported inputs", () => {
@@ -26,9 +23,7 @@ describe("coerceProductCandidates", () => {
 
         it("returns null for non-string non-array values (plain object)", () => {
             expect(
-                coerceProductCandidates(
-                    { title: "x" } as unknown as undefined
-                )
+                coerceProductCandidates({ title: "x" } as unknown as undefined)
             ).toBeNull();
         });
 
@@ -137,9 +132,9 @@ describe("normalizeProductCandidate", () => {
         });
 
         it("trims surrounding whitespace from the title", () => {
-            expect(
-                normalizeProductCandidate({ title: "  Hello  " })
-            ).toEqual({ title: "Hello" });
+            expect(normalizeProductCandidate({ title: "  Hello  " })).toEqual({
+                title: "Hello",
+            });
         });
 
         it("preserves internal whitespace and unicode", () => {
@@ -152,14 +147,14 @@ describe("normalizeProductCandidate", () => {
     });
 
     describe("imageUrl gating", () => {
-        it.each(["https://example.com/img.jpg", "http://example.com/img.jpg"])(
-            "keeps an http(s) URL: %s",
-            (url) => {
-                expect(
-                    normalizeProductCandidate({ title: "x", imageUrl: url })
-                ).toEqual({ title: "x", imageUrl: url });
-            }
-        );
+        it.each([
+            "https://example.com/img.jpg",
+            "http://example.com/img.jpg",
+        ])("keeps an http(s) URL: %s", (url) => {
+            expect(
+                normalizeProductCandidate({ title: "x", imageUrl: url })
+            ).toEqual({ title: "x", imageUrl: url });
+        });
 
         it.each([
             ["javascript: scheme", "javascript:alert(1)"],

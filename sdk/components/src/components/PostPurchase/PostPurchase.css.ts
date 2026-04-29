@@ -1,7 +1,7 @@
+import { element } from "@frak-labs/design-system/utils";
 import "@frak-labs/design-system/sprinkles";
 import { vars } from "@frak-labs/design-system/theme";
 import { alias } from "@frak-labs/design-system/tokens";
-import { element } from "@frak-labs/design-system/utils";
 import { style } from "@vanilla-extract/css";
 
 export const card = style({
