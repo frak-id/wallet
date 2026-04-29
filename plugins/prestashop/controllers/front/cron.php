@@ -49,15 +49,9 @@ class FrakIntegrationCronModuleFrontController extends ModuleFrontController
         $provided = (string) Tools::getValue('token');
 
         if ($expected === '' || !hash_equals($expected, $provided)) {
-            // Buffered file log instead of `PrestaShopLogger::addLog`: a
-            // brute-force scan of the cron URL would otherwise spam `ps_log`
-            // (synchronous DB write per attempt). `FrakLogger::warning`
-            // buffers to a per-day rotated file and never escalates below
-            // `LEVEL_ERROR`, so token-probe noise stays out of the admin
-            // log surface entirely. Manual flush since the front controller
-            // exits before PHP's natural shutdown handler fires.
-            FrakLogger::warning('cron rejected — invalid token');
-            FrakLogger::flush();
+            // Token rejection is not logged: bot scans of the cron URL
+            // would otherwise spam `ps_log` with one row per attempt.
+            // The 403 status is the machine-readable signal.
             header('HTTP/1.1 403 Forbidden');
             echo 'forbidden';
             exit;
@@ -75,8 +69,7 @@ class FrakIntegrationCronModuleFrontController extends ModuleFrontController
             );
             exit;
         } catch (Throwable $e) {
-            FrakLogger::error('cron crashed: ' . $e->getMessage());
-            FrakLogger::flush();
+            PrestaShopLogger::addLog('[FrakSDK] Cron crashed: ' . $e->getMessage(), 3);
             header('HTTP/1.1 500 Internal Server Error');
             echo 'cron error';
             exit;

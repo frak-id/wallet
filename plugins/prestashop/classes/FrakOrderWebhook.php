@@ -39,12 +39,11 @@ class FrakOrderWebhook
      *      path returns before paying for an `Order` instantiation.
      *   3. Order load (only on transitions we actually deliver).
      *
-     * Logging dropped to error-only on the happy path. The previous
-     * 5-rows-per-transition spam ("Triggered" / "Started" / "Sent
-     * successfully") wrote to `ps_log` synchronously and contained zero
-     * actionable information; failures still log via {@see FrakLogger}
-     * (which forwards `LEVEL_ERROR` to `PrestaShopLogger`) so the
-     * Advanced Parameters → Logs surface keeps the same failure trail.
+     * Logging is intentionally minimal: only catastrophic shutdown failures
+     * write to `PrestaShopLogger`. Per-webhook delivery failures land in the
+     * retry queue (queryable via the admin observability panel) and only
+     * surface in `Advanced Parameters → Logs` once they reach the parked
+     * state — see {@see FrakWebhookCron::run()}.
      *
      * @param array<string, mixed> $params Hook parameters from PrestaShop.
      */
@@ -77,7 +76,8 @@ class FrakOrderWebhook
 
         $order = new Order($order_id);
         if (!Validate::isLoadedObject($order)) {
-            FrakLogger::warning('order ' . $order_id . ' not loadable in postUpdate hook');
+            // Race against an order deletion between hook fire and load.
+            // No merchant action is possible, so silent return.
             return;
         }
 
@@ -136,7 +136,8 @@ class FrakOrderWebhook
     {
         $order = $params['order'] ?? null;
         if (!($order instanceof Order) || !Validate::isLoadedObject($order)) {
-            FrakLogger::warning('actionOrderSlipAdd received without a loadable Order');
+            // Hook contract violation (PrestaShop never emits without an Order)
+            // or race against deletion. No merchant action possible.
             return;
         }
 
@@ -166,9 +167,9 @@ class FrakOrderWebhook
             $error = is_array($result) && isset($result['error'])
                 ? (string) $result['error']
                 : 'Unknown webhook error';
-            FrakLogger::error(
-                'Webhook failed for order ' . $order_id . ' (' . $webhook_status . '), enqueuing for retry: ' . $error
-            );
+            // No log here: the queue row IS the durable record of the
+            // failure. The merchant-visible signal is the parked-row
+            // log emitted by the cron drainer once retries are exhausted.
             FrakWebhookQueue::enqueue($order_id, $webhook_status, $error);
         };
 
@@ -185,8 +186,10 @@ class FrakOrderWebhook
                     // Shutdown handlers swallow uncaught throwables silently;
                     // log explicitly so a runtime issue still surfaces in
                     // PrestaShopLogger / the queue isn't left in limbo.
-                    FrakLogger::error('Webhook shutdown dispatch crashed: ' . $e->getMessage());
-                    FrakLogger::flush();
+                    PrestaShopLogger::addLog(
+                        '[FrakSDK] Webhook shutdown dispatch crashed: ' . $e->getMessage(),
+                        3
+                    );
                 }
             });
             return;

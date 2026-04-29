@@ -31,10 +31,11 @@
  * one connection pool — TLS state warmed by an earlier resolver call
  * carries over to the immediately-following webhook send.
  *
- * Delivery logs go through {@see FrakLogger} — the buffered file logger —
- * so the previous severity-1 spam on the order-status hook ("Triggered" /
- * "Started" / "Sent successfully") collapses into a single error-only
- * surface that still shows up in `Advanced Parameters → Logs` for failures.
+ * Failure handling: this helper returns a result array on failure rather
+ * than logging. The caller owns the failure response — `FrakOrderWebhook`
+ * persists the row to the retry queue, the cron drainer escalates only
+ * when a row is parked. Single source of truth for the merchant log
+ * surface.
  */
 class FrakWebhookHelper
 {
@@ -129,10 +130,6 @@ class FrakWebhookHelper
             ];
         } catch (Exception $e) {
             $execution_time = round((microtime(true) - $start_time) * 1000, 2);
-            FrakLogger::error(
-                'Webhook failed for order ' . (int) $order_id . ': ' . $e->getMessage()
-                . ' (took ' . $execution_time . 'ms)'
-            );
             return [
                 'success' => false,
                 'error' => $e->getMessage(),

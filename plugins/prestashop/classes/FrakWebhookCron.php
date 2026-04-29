@@ -29,9 +29,10 @@
  * Symfony HttpClient's `stream()` collapses this to ~one round-trip
  * window, fitting well inside the cron interval.
  *
- * Logging goes through {@see FrakLogger} so per-row entries write to a
- * file at request shutdown instead of `ps_log`. Errors still escalate to
- * `PrestaShopLogger` so they remain visible in the admin UI.
+ * Logging is intentionally sparse: only the terminal `parked` state (a row
+ * that exhausted MAX_ATTEMPTS) writes to `PrestaShopLogger`. Transient
+ * failures and per-tick housekeeping are queryable via the queue table
+ * itself — `FrakWebhookQueue::stats()` exposes them on the admin panel.
  *
  * Mirrors `plugins/magento/Model/Retry/CronRetry.php` so the two plugins
  * share the same retry semantics.
@@ -65,7 +66,9 @@ class FrakWebhookCron
 
         $lock = FrakInfra::lockFactory()->createLock(self::LOCK_KEY, self::LOCK_TTL);
         if (!$lock->acquire()) {
-            FrakLogger::warning('cron drainer skipped — previous tick still running');
+            // Previous tick still running. Operationally expected on slow
+            // backends; the next tick will pick up where this one would
+            // have started, so no log emitted.
             return $stats + ['skipped' => true];
         }
 
@@ -104,10 +107,6 @@ class FrakWebhookCron
                 if (is_array($result) && !empty($result['success'])) {
                     FrakWebhookQueue::markSuccess($id);
                     $stats['success']++;
-                    FrakLogger::info(
-                        'cron drained queue row ' . $id . ' (order ' . $order_id
-                        . ') after attempt ' . $next_attempt
-                    );
                     continue;
                 }
 
@@ -118,13 +117,19 @@ class FrakWebhookCron
                 $stats['failure']++;
 
                 $is_final = $next_attempt >= FrakWebhookQueue::MAX_ATTEMPTS;
-                $level = $is_final ? FrakLogLevel::Error : FrakLogLevel::Warning;
-                FrakLogger::log(
-                    'cron retry ' . $next_attempt . '/' . FrakWebhookQueue::MAX_ATTEMPTS
-                    . ' failed for queue row ' . $id . ' (order ' . $order_id . '): ' . $error
-                    . ($is_final ? ' [PARKED]' : ''),
-                    $level
-                );
+                if ($is_final) {
+                    // Terminal failure — the queue row is parked and will
+                    // never retry on its own. Surface to PrestaShopLogger
+                    // so the merchant tech sees it in Advanced Parameters
+                    // → Logs and can investigate (usually a wrong webhook
+                    // secret or an unresolved merchant).
+                    PrestaShopLogger::addLog(
+                        '[FrakSDK] Queue row ' . $id . ' (order ' . $order_id
+                        . ') parked after ' . $next_attempt . '/' . FrakWebhookQueue::MAX_ATTEMPTS
+                        . ' attempts: ' . $error,
+                        3
+                    );
+                }
             }
 
             return $stats;
@@ -135,9 +140,6 @@ class FrakWebhookCron
             // Lock-store-`prune`-availability guard lives next to the Lock
             // store factory, not at the cron call site.
             FrakInfra::housekeeping();
-            // Force-flush so the cron log shows up immediately even when
-            // the front controller bails before PHP's natural shutdown.
-            FrakLogger::flush();
         }
     }
 }
