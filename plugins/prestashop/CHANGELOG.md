@@ -11,6 +11,8 @@ version on dispatch.
 
 ## [Unreleased]
 
+## [1.0.4] - 2026-04-29
+
 ### Fixed
 
 - **Re-install / upgrade resilience overhaul** — closes a series of compounding install-path failure modes that left merchants with broken installs no admin UI could recover from:
@@ -187,7 +189,9 @@ version on dispatch.
 - New `views/templates/hook/post-purchase.tpl` Smarty partial: theme-overridable wrapper for the post-purchase markup. Override path: `themes/<theme>/modules/frakintegration/views/templates/hook/post-purchase.tpl`.
 - New `FrakOrderResolver` class: single-pass extraction of customer/order/token context plus product line items from a resolved `Order`, fail-soft on missing images / deleted products. Sibling of the WordPress `Frak_WooCommerce::get_post_purchase_data()` helper.
 
-[Unreleased]: https://github.com/frak-id/wallet/compare/prestashop-1.0.3...HEAD
+[Unreleased]: https://github.com/frak-id/wallet/compare/prestashop-1.0.4...HEAD
+
+[1.0.4]: https://github.com/frak-id/wallet/compare/prestashop-1.0.3...prestashop-1.0.4
 
 [1.0.3]: https://github.com/frak-id/wallet/compare/prestashop-1.0.2...prestashop-1.0.3
 
