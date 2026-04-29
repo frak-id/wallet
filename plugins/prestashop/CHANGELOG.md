@@ -11,12 +11,28 @@ version on dispatch.
 
 ## [Unreleased]
 
+## [1.0.3] - 2026-04-29
+
+### Fixed
+
+- **Banner top placement no longer crammed into the header column on the classic theme**: the `banner_top` placement was wired to `displayTop`, which the classic theme renders inside `.col-md-10` next to the desktop logo (`themes/classic/templates/_partials/header.tpl:72-74`) — the banner ended up squeezed between the logo and the search bar instead of spanning the viewport. Switched to `displayNavFullWidth` (rendered as a direct child of `<header>` per the same template, line 86) so the banner reaches the full page width. `upgrade/install-1.0.3.php` unregisters the legacy `displayTop` subscription and registers `displayNavFullWidth` on existing installs; fresh installs pick up the new hook directly via `FrakPlacementRegistry::distinctHooks()`.
+
+## [1.0.2] - 2026-04-29
+
+### Fixed
+
+- **Fatal on order-confirmation / order-detail pages with the post-purchase placement enabled** (`Cannot access protected property FrakIntegration::$context` at `FrakOrderRender.php:98`). `Module::$context` is `protected` in PrestaShop core, so the Smarty assignment in `FrakOrderRender::postPurchase()` could not reach it from outside the Module subclass — the page errored out before any post-purchase markup was emitted. Swapped to `Context::getContext()->smarty->assign(...)` (same request-scoped instance, public API), mirroring the existing `FrakInstaller` workaround for the same visibility constraint. `$module->display(...)` is left untouched (`Module::display()` is public).
+- **Hardened `FrakInstaller::install()` and `upgrade/install-1.0.1.php` against the same protected-property shape**: both previously wrote to `$module->_errors[]` (protected) on the missing-Symfony-HttpClient guard path, which would have fataled instead of failing gracefully on any PS install missing the bundled HttpClient. Replaced with `PrestaShopLogger::addLog(..., 3)` + `return false`, matching the rest of the plugin's logger-driven error UX (commit 7431109c9). The upgrade-script edit is intentional even though 1.0.1 is published — merchants upgrading from <1.0.1 still execute that script, so the latent fatal needed to go before it could surface in production. Cold path — PS 8.1+ ships HttpClient via `symfony/symfony` 4.x — but the install + upgrade paths now both degrade cleanly.
+
+## [1.0.1] - 2026-04-29
+
 ### Added
 
 - **Shared-hosting diet: drop `doctrine/dbal` + `symfony/cache` + `symfony/lock` + bundled `symfony/http-client`** — together they shipped ~5 MB / ~700 PHP files in the merchant zip. Replaced with:
+
 - **Per-placement merchant options**: the placement registry now declares an optional `options` schema per placement (currently `buttonStyle` for share-button placements — `primary` / `secondary` / `none` Bootstrap preset — and `classname` for banner placements — free-form CSS class string). Resolved values flow from the bundled `FRAK_PLACEMENTS` storage row through `FrakDisplayDispatcher::dispatch()` straight onto the rendered web component as kebab-case HTML attributes. The admin form (`Component Placements` panel) renders a `<select>` or `<input type="text">` per option next to its toggle; submissions go through `FrakPlacementRegistry::setState()` which validates select choices against the schema and trims / length-caps / regex-validates text inputs (default pattern: CSS-class-safe character set). Bundled storage shape evolved from `{id: bool}` to `{id: {enabled, options}}`; `loadStoredMap()` tolerates the legacy boolean shape on read so dev shops upgrading from a pre-options 1.0.x iteration self-heal on the next admin save. `upgrade/install-1.0.1.php` writes the new shape directly when folding legacy `FRAK_PLACEMENT_*` rows in. Adding a new merchant-tunable option is a single schema entry on the placement (declare `type` / `label` / `default` and — for selects — `choices`).
   - **`FrakCache`** — tiny key/value store backed by a new `frak_cache` table via PrestaShop's native `\Db` (~135 lines). The merchant resolver's positive + negative cache surface (~2 keys per host) didn't justify the Symfony Cache PSR-6 ceremony.
-  - **`FrakLock`** — wrapper around MySQL `GET_LOCK()` / `RELEASE_LOCK()` (~75 lines). Session-scoped advisory lock auto-releases on PHP shutdown, so a crashed cron drainer never wedges the queue past its TTL — strictly better than the Symfony Lock + DBAL store combo it replaces (no `frak_lock_keys` table, no GC sweep, no method_exists guard).
+  - **`FrakLock`** — wrapper around MySQL `GET_LOCK()` / `RELEASE_LOCK()` (~75 lines). Session-scoped advisory lock auto-releases on PHP shutdown, so a crashed cron drainer never wedges the queue past its TTL — strictly better than the Symfony Lock + DBAL store combo it replaces (no `frak_lock_keys` table, no GC sweep, no method\_exists guard).
   - **`FrakWebhookQueue` migrated to `\Db::getInstance()`** — DBAL's `fetchAllAssociative` / `executeStatement` / parameterised inserts swapped for PS's native `executeS` / `insert` / `update`. Free-form strings go through `pSQL($value, html_ok=true)` to keep the SQL injection surface zero; `null_values=true` wired into `update()` so `markSuccess` actually writes a literal `NULL` (instead of an empty string that would leak into the `last_error IS NOT NULL` filter in `stats()`).
   - **`symfony/http-client` moved to `require-dev`** — PrestaShop 8.x ships `symfony/symfony` 4.4 which includes the full HttpClient component (with `stream()`, `max_duration`, `http_version` — verified against `.cache/prestashop-core/`). Plugin code resolves the namespace via PS's autoloader at runtime; PHPStan still sees it via the dev-only require.
   - **`upgrade/install-1.0.1.php` migrator** drops the legacy `frak_cache` (homegrown pre-1.0.1) + `frak_cache_items` (Symfony Cache adapter) + `frak_lock_keys` (Symfony Lock adapter) tables BEFORE running `sql/install.php`, so the new `frak_cache` schema lands on a clean substrate.
@@ -44,26 +60,40 @@ version on dispatch.
   - **Bootstrap `is_array($params) ? $params : []` defensive casts dropped** — PrestaShop hooks always pass arrays per the contract; the casts were paranoid. The `array $params` type hint on `FrakDisplayDispatcher::dispatch()` catches drift loud-and-clear instead of silently no-oping. Bootstrap shrinks from 157 to 153 lines.
 
 - **God-class refactor of `frakintegration.php`**: 651 → 157 lines (76% smaller). Module bootstrap is now a thin router; every `hookXxx()` is a one-line delegator. Logic moved to five surface-based helpers in `classes/`, mirroring the WordPress sibling's `Frak_Frontend` / `Frak_WooCommerce` / `Frak_Shortcodes` split:
-  - `FrakInstaller` — install / uninstall lifecycle (CORE_HOOKS const, hook chain, SQL include, infra-table provisioning, cron token, default seeding). Symmetric uninstall.
+  - `FrakInstaller` — install / uninstall lifecycle (CORE\_HOOKS const, hook chain, SQL include, infra-table provisioning, cron token, default seeding). Symmetric uninstall.
   - `FrakFrontend` — `head()` (resource hints + inline `window.FrakSetup`) and `setMedia($context)` (asset-pipeline SDK script registration).
   - `FrakOrderHooks` — `onStatusUpdate($params)` (status → webhook + retry queue), `renderPurchaseTracker($order)` (always-on tracker script), `renderPostPurchase($module, $order, $placement)` (Smarty-wrapped post-purchase card).
   - `FrakDisplayDispatcher` — `dispatch($module, $hook, $params)` (the placement loop + 3-component switch, replaces the legacy `FrakIntegration::dispatchHook()` private method).
   - `FrakSmartyPlugins` — `register($context)` + the three `{frak_*}` static handlers (idempotency flag moved off the Module class).
 
 - **PrestaShop 8.1+ baseline**: dropped 1.7.x compatibility from `ps_versions_compliancy.min`. Lets the plugin lean on the Symfony components PrestaShop 8 ships natively (HttpClient, Cache, Lock) and on Doctrine DBAL for typed queries.
+
 - **Symfony HttpClient on every outbound HTTP path** (`FrakWebhookHelper`, `FrakMerchantResolver`): replaces hand-rolled cURL handles with `\Symfony\Component\HttpClient\HttpClient::create()`. Single-shot dispatch via `request()`, batch dispatch via `client->stream()` for HTTP/2-multiplexed parallel webhook delivery. Connection pooling, DNS reuse, and TLS session reuse come for free; transport errors raise a typed `TransportExceptionInterface` instead of `curl_errno()` integers. Tight timeouts (`timeout` = `max_duration` = 5 s) clamp the worst case on both the order-status hook and the cron drainer.
+
 - **Doctrine DBAL on the webhook queue** (`FrakWebhookQueue`): replaces raw `Db::getInstance()->execute()` plumbing with `Connection::fetchAllAssociative()` / `insert()` / `update()`. Bound params instead of `pSQL()`, structurally precluding SQL injection drift. Single shared connection with the rest of the Frak infra (cache + lock) via `FrakDb::connection()` so the per-request DB connection count stays at PS native + 1.
+
 - **Symfony Cache + Lock for shared infrastructure** (`classes/FrakDb.php`): single factory exposes the DBAL connection, a PSR-6 `DoctrineDbalAdapter` cache pool backed by `frak_cache_items`, and a `LockFactory` over `DoctrineDbalStore` backed by `frak_lock_keys`. Replaces the homegrown `FrakCache` class (deleted) end-to-end — merchant resolver records + negative cache use the cache pool, cron drainer overlap protection uses the lock factory. Battle-tested abstractions, atomic upserts, automatic GC of expired rows.
+
 - **`FrakWebhookHelper::send()` now accepts an optional pre-loaded `Order`**: `hookActionOrderStatusPostUpdate` already loads the order; passing it through skips the duplicate `new Order($id)` round-trip on the merchant's checkout path.
+
 - **Static request-cache primitives**: `FrakPlacementRegistry::isEnabled()` reads through a per-request memo (one bundled-row decode regardless of how many `display*` hooks fire on a page); `FrakWebhookHelper::getCachedSecret()` / `getWebhookUrl()` cache after first lookup so the cron drainer's 25-row loop hits `Configuration::get('FRAK_WEBHOOK_SECRET')` exactly once.
+
 - **Resource hints in the `<head>`**: `dns-prefetch` + `preconnect` to `cdn.jsdelivr.net` so the browser warms the TLS handshake while parsing continues. Mirrors the WordPress sibling's `wp_resource_hints` filter — saves ~100-300 ms TTFB on first SDK paint over mobile networks.
+
 - **`idx_updated` index on `frak_webhook_queue`**: covers `ORDER BY updated_at DESC LIMIT 1` in `FrakWebhookQueue::stats()` (the admin observability panel's "latest error" lookup). Without the index MySQL falls back to a filesort that scales linearly with row count — noticeable on busy queues. Provisioned by `sql/install.php` on fresh installs; `upgrade/install-1.0.1.php` adds it via `ALTER TABLE` for shops that already created the table from an earlier dev iteration without the index.
+
 - **`FrakUtils::currentHost()` per-request memo**: hosts cannot change within a PHP process, so the result is cached after the first call. Removes repeated `Tools::getShopDomain()` + string-trim cost for callers that touch the helper from multiple paths in one request (resolver, webhook helper URL builder, admin renderer). Bonus: regex pair (`#^https?://#`, `#^www\.#`) replaced with `str_starts_with` + `substr` — same result, no regex engine spin-up.
+
 - **AJAX skip in `hookActionFrontControllerSetMedia`**: `registerJavascript` writes into the asset queue that only the full HTML response materialises. AJAX endpoints (cart updates, search-as-you-type, theme JSON polls) never render the queue, so the registration is wasted work. `if (!empty($this->context->controller->ajax)) return;` short-circuits before touching the asset manager — noticeable on chatty themes that fire dozens of XHRs per page lifecycle.
+
 - **`FrakWebhookState` PHP 8.1 enum**: replaces the integer/string `const` constants on `FrakWebhookQueue` with a backed enum. `FrakWebhookState::Pending` / `Success` / `Failed` mirrors the SQL `ENUM` column — `tryFrom()` round-trips DB rows back into typed cases for `FrakWebhookQueue::stats()` so a future column drift surfaces at the boundary instead of silently mis-routing into the default switch arm.
+
 - **Shared HttpClient on `FrakDb::httpClient()`**: the resolver and the webhook helper now pull from one Symfony HttpClient instance memoised on the shared infrastructure factory. TLS state warmed by an earlier `FrakMerchantResolver::resolve()` call carries over to the immediately-following `FrakWebhookHelper::send()` on the same order transition. `'http_version' => '2.0'` hints curl to attempt HTTP/2 multiplexing, which collapses `sendBatch()`'s 25 parallel handles onto a single TLS connection with multiplexed streams instead of N parallel handshakes.
+
 - **`FrakDb::lockStore()` exposes the underlying lock store** so the cron drainer can call `prune()` on it after each tick. Held separately from `lockFactory()` to avoid building a second connection-bound DoctrineDbalStore that would split the GC surface in two.
+
 - **Cron drainer cache + lock GC** (`FrakWebhookCron::run()` finally block): calls `FrakDb::cache()->prune()` and (when available) `FrakDb::lockStore()->prune()` after every tick. Cheap `DELETE` on indexed `expires_at` keeps the `frak_cache_items` and `frak_lock_keys` tables bounded across long-running shops with high webhook-failure rates that accumulate negative-cache rows + stale locks faster than Symfony's probabilistic GC sweeps them.
+
 - **Static memo of `PS_OS_*` order-state ids** (`frakintegration.php`): the values are immutable per shop, so the first `hookActionOrderStatusPostUpdate()` call hydrates a `private static ?array $orderStatusIds` and every subsequent transition in the same request reads from memory instead of paying for a `Configuration::getMultiple()` round-trip.
 
 ### Changed
@@ -96,8 +126,8 @@ version on dispatch.
 
 - **Banner component is now reachable**: previously `FrakComponentRenderer::banner()` existed but no PrestaShop hook ever invoked it. New auto-render placement exposes it on `displayTop` (opt-in by default).
 - **Placement registry** (`FrakPlacementRegistry`): single source of truth mapping each component × hook tuple to a `FRAK_PLACEMENT_*` Configuration toggle. Adding / removing a storefront surface is now a one-line registry edit — the install / uninstall / migration / dispatch paths read from the same list. Mirrors the WordPress plugin’s flexibility (block / shortcode / widget / Elementor) using PrestaShop’s native hook + Smarty surfaces instead of a block editor.
-- **Smarty function plugins** (`{frak_banner}`, `{frak_share_button}`, `{frak_post_purchase}`): merchants can drop Frak components anywhere in their `.tpl` files or CMS pages without forking the module. Snake_case attribute keys are normalised to camelCase at the boundary so templates read naturally (`{frak_banner referral_title="..."}`). Mirrors WordPress’s `[frak_*]` shortcodes byte-for-byte.
-- **Renderer**: `FrakComponentRenderer::snakeKeysToCamel()` public helper used by the Smarty boundary (and any future surface that arrives with snake_case input).
+- **Smarty function plugins** (`{frak_banner}`, `{frak_share_button}`, `{frak_post_purchase}`): merchants can drop Frak components anywhere in their `.tpl` files or CMS pages without forking the module. Snake\_case attribute keys are normalised to camelCase at the boundary so templates read naturally (`{frak_banner referral_title="..."}`). Mirrors WordPress’s `[frak_*]` shortcodes byte-for-byte.
+- **Renderer**: `FrakComponentRenderer::snakeKeysToCamel()` public helper used by the Smarty boundary (and any future surface that arrives with snake\_case input).
 - **Admin: placement toggles**: one checkbox per registered placement, grouped by component. Reads / writes the `FRAK_PLACEMENT_*` Configuration rows. Hidden `__present` markers let the controller distinguish “unchecked” from “not in form” so toggles can be turned off.
 - **Admin: webhook queue health panel**: surfaces pending / delivered / failed counts, the next-attempt timestamp, and the most recent error from `FrakWebhookQueue::stats()`. New “Drain now” button calls `FrakWebhookCron::run()` synchronously — useful when the cron URL has not been wired up yet, or to flush a backlog after fixing a backend outage.
 - **`FrakWebhookQueue::stats()`**: aggregated `(state, count, oldest_pending_at)` snapshot plus the latest non-empty `last_error` row. Two queries total, indexed lookups only, safe to call on every admin render.
@@ -127,6 +157,7 @@ version on dispatch.
 - **Two dead `Configuration::deleteByName()` calls in `uninstall()`**: the `FrakMerchantResolver::LEGACY_CONFIG_KEY` and `LEGACY_NEGATIVE_CACHE_KEY` constants were removed earlier in the [Unreleased] cycle, but the call sites in `FrakIntegration::uninstall()` were not. Calls would have raised `Undefined constant` on every uninstall. The refactor drops both lines (the keys never shipped to production v0.0.4 shops, see the matching CHANGELOG entry above).
 
 - **Webhook signature format**: send `base64_encode(hash_hmac('sha256', $body, $secret, true))` (raw bytes, base64-encoded) instead of the default hex digest, matching the backend's `Buffer.from(sig, 'base64')` decode in `validateBodyHmac`. Hex signatures decoded to a 64-byte buffer (vs the expected 32-byte raw digest) and silently failed verification on every dispatch.
+
 - **Webhook endpoint URL**: switch from `/ext/merchant/{id}/webhook/prestashop` (which was never registered on the backend and 404’d every request) to `/ext/merchant/{id}/webhook/custom`, the existing route whose DTO already matches the PrestaShop payload shape.
 
 ### Changed
@@ -146,4 +177,10 @@ version on dispatch.
 - New `views/templates/hook/post-purchase.tpl` Smarty partial: theme-overridable wrapper for the post-purchase markup. Override path: `themes/<theme>/modules/frakintegration/views/templates/hook/post-purchase.tpl`.
 - New `FrakOrderResolver` class: single-pass extraction of customer/order/token context plus product line items from a resolved `Order`, fail-soft on missing images / deleted products. Sibling of the WordPress `Frak_WooCommerce::get_post_purchase_data()` helper.
 
-[unreleased]: https://github.com/frak-id/wallet/commits/main/plugins/prestashop
+[Unreleased]: https://github.com/frak-id/wallet/compare/prestashop-1.0.3...HEAD
+
+[1.0.3]: https://github.com/frak-id/wallet/compare/prestashop-1.0.2...prestashop-1.0.3
+
+[1.0.2]: https://github.com/frak-id/wallet/compare/prestashop-1.0.1...prestashop-1.0.2
+
+[1.0.1]: https://github.com/frak-id/wallet/releases/tag/prestashop-1.0.1

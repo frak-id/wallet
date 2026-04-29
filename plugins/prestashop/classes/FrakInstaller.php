@@ -70,8 +70,17 @@ class FrakInstaller
         // it via `symfony/symfony` 4.x. Surfacing the error here means a
         // misconfigured PS install rejects the module at upload time instead
         // of silently failing on the first webhook fire.
+        //
+        // `Module::$_errors` is `protected` so we can't push the message to
+        // the merchant-facing install error dump from this static helper
+        // (`FrakInstaller` is not a Module subclass) — same visibility
+        // constraint as `Module::$context` documented below. Surface the
+        // diagnostic via the standard PS log instead; merchants get a
+        // generic install failure in Module Manager and the actionable
+        // root cause in Advanced Parameters → Logs (consistent with the
+        // rest of the plugin's webhook + cron error UX).
         if (!FrakHttpClient::isAvailable()) {
-            $module->_errors[] = FrakHttpClient::missingDependencyMessage();
+            PrestaShopLogger::addLog('[FrakSDK] ' . FrakHttpClient::missingDependencyMessage(), 3);
             return false;
         }
 

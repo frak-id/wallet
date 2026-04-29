@@ -1,61 +1,63 @@
 {
-    "name": "frak-labs/prestashop-module",
-    "version": "1.0.1",
-    "description": "Frak SDK integration for PrestaShop",
-    "type": "prestashop-module",
-    "license": "GPL-3.0-only",
-    "require": {
-        "php": ">=8.1"
-    },
-    "require-dev": {
-        "phpunit/phpunit": "^10 || ^11",
-        "phpstan/phpstan": "^2.0",
-        "prestashop/php-dev-tools": "^5",
-        "squizlabs/php_codesniffer": "^3.11",
-        "symfony/http-client": "^5.4 || ^6.0 || ^7.0"
-    },
-    "autoload": {
-        "classmap": ["classes/"]
-    },
-    "autoload-dev": {
-        "psr-4": {
-            "FrakLabs\\PrestaShop\\Test\\": "test/"
-        }
-    },
-    "scripts": {
-        "build": "./build.sh",
-        "test": "phpunit",
-        "ps-core:fetch": "test -d .cache/prestashop-core || (git clone --depth 1 --branch 8.2.6 https://github.com/PrestaShop/PrestaShop.git .cache/prestashop-core && composer install --no-dev --no-interaction --no-progress --working-dir=.cache/prestashop-core)",
-        "ps-core:update": [
-            "rm -rf .cache/prestashop-core",
-            "@ps-core:fetch"
-        ],
-        "analyse": [
-            "@ps-core:fetch",
-            "_PS_ROOT_DIR_=$PWD/.cache/prestashop-core phpstan analyse --memory-limit=1G"
-        ],
-        "cs": "phpcs",
-        "cs-fix": "phpcbf"
-    },
-    "scripts-descriptions": {
-        "build": "Build project artifact.",
-        "test": "Run unit tests.",
-        "ps-core:fetch": "Clone PrestaShop 8.2.6 sources into .cache/prestashop-core (idempotent).",
-        "ps-core:update": "Wipe and re-fetch the PrestaShop sources used by PHPStan.",
-        "analyse": "Run static analysis against the cloned PrestaShop surface.",
-        "cs": "Check coding standard.",
-        "cs-fix": "Fix coding standard violations."
-    },
-    "config": {
-        "autoloader-suffix": "Frak",
-        "preferred-install": "dist",
-        "prepend-autoloader": false,
-        "platform": {
-            "php": "8.1.0"
-        },
-        "allow-plugins": {
-            "dealerdirect/phpcodesniffer-composer-installer": true,
-            "phpstan/extension-installer": true
-        }
+  "name": "frak-labs/prestashop-module",
+  "version": "1.0.3",
+  "description": "Frak SDK integration for PrestaShop",
+  "type": "prestashop-module",
+  "license": "GPL-3.0-only",
+  "require": {
+    "php": ">=8.1"
+  },
+  "require-dev": {
+    "phpunit/phpunit": "^10 || ^11",
+    "phpstan/phpstan": "^2.0",
+    "prestashop/php-dev-tools": "^5",
+    "squizlabs/php_codesniffer": "^3.11",
+    "symfony/http-client": "^5.4 || ^6.0 || ^7.0"
+  },
+  "autoload": {
+    "classmap": [
+      "classes/"
+    ]
+  },
+  "autoload-dev": {
+    "psr-4": {
+      "FrakLabs\\PrestaShop\\Test\\": "test/"
     }
+  },
+  "scripts": {
+    "build": "./build.sh",
+    "test": "phpunit",
+    "ps-core:fetch": "test -d .cache/prestashop-core || (git clone --depth 1 --branch 8.2.6 https://github.com/PrestaShop/PrestaShop.git .cache/prestashop-core && composer install --no-dev --no-interaction --no-progress --working-dir=.cache/prestashop-core)",
+    "ps-core:update": [
+      "rm -rf .cache/prestashop-core",
+      "@ps-core:fetch"
+    ],
+    "analyse": [
+      "@ps-core:fetch",
+      "_PS_ROOT_DIR_=$PWD/.cache/prestashop-core phpstan analyse --memory-limit=1G"
+    ],
+    "cs": "phpcs",
+    "cs-fix": "phpcbf"
+  },
+  "scripts-descriptions": {
+    "build": "Build project artifact.",
+    "test": "Run unit tests.",
+    "ps-core:fetch": "Clone PrestaShop 8.2.6 sources into .cache/prestashop-core (idempotent).",
+    "ps-core:update": "Wipe and re-fetch the PrestaShop sources used by PHPStan.",
+    "analyse": "Run static analysis against the cloned PrestaShop surface.",
+    "cs": "Check coding standard.",
+    "cs-fix": "Fix coding standard violations."
+  },
+  "config": {
+    "autoloader-suffix": "Frak",
+    "preferred-install": "dist",
+    "prepend-autoloader": false,
+    "platform": {
+      "php": "8.1.0"
+    },
+    "allow-plugins": {
+      "dealerdirect/phpcodesniffer-composer-installer": true,
+      "phpstan/extension-installer": true
+    }
+  }
 }

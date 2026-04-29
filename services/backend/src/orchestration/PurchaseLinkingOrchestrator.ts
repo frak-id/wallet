@@ -148,6 +148,20 @@ export class PurchaseLinkingOrchestrator {
             merged = true;
         }
 
+        // Persist the resolved identity group on the purchase row whenever
+        // it differs from what's currently stored. Covers two cases:
+        //   1. Webhook arrived first with no claim → row stored with NULL
+        //      identity_group_id; this is the late-claim's chance to attach
+        //      the user.
+        //   2. The merge above produced a new canonical group id that
+        //      supersedes the purchase's previous one.
+        if (purchase.identityGroupId !== finalIdentityGroupId) {
+            await this.purchaseRepository.updateIdentityGroup(
+                purchase.id,
+                finalIdentityGroupId
+            );
+        }
+
         // Honour the persisted purchase status: a refund/cancel webhook may
         // have arrived between the original webhook and this late SDK claim,
         // in which case the stored purchase is already terminal. The

@@ -96,9 +96,7 @@ export class MerchantResolveService {
             ? await this.merchantRepository.findById(id)
             : domain
               ? ((await this.merchantRepository.findByDomain(domain)) ??
-                  (await this.merchantRepository.findByAllowedDomain(
-                      domain
-                  )))
+                (await this.merchantRepository.findByAllowedDomain(domain)))
               : null;
         if (!merchant) return null;
 
