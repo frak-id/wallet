@@ -65,7 +65,9 @@
         "walletInvalid": "Adresse de porte-monnaie invalide",
         "back-to-wallet": "Retour au porte-monnaie",
         "back": "Retour",
+        "clear": "Effacer",
         "close": "Fermer",
+        "or": "ou",
         "share": "Partager"
     },
     "sharing": {
@@ -102,7 +104,16 @@
                 "description": "Crée ton code et commence à le partager à tes proches pour gagner encore plus d'argent.",
                 "cta": "Générer mon code"
             },
-            "enterCode": "Entrer un code de parrainage"
+            "enterCode": "Entrer un code de parrainage",
+            "create": {
+                "title": "Mon code de parrainage",
+                "description": "Dès qu'une personne s'inscrit avec ton code et passe commande sur l'un de nos sites partenaires, vous gagnez de l'argent tous·tes les deux.",
+                "label": "Personnalise ton code",
+                "placeholder": "Ex : LOLA",
+                "hint": "Sélectionne 4 lettres pour générer ton code.",
+                "autoGenerate": "Générer automatiquement",
+                "terms": "En partageant ou en utilisant un code, tu acceptes <termsLink>les conditions générales de FRAK</termsLink>."
+            }
         },
         "transferToBank": "Transférer vers ma banque",
         "transferEmpty": {

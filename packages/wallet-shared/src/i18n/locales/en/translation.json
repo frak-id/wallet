@@ -67,7 +67,9 @@
         "walletInvalid": "Invalid wallet address",
         "back-to-wallet": "Back to Wallet",
         "back": "Back",
+        "clear": "Clear",
         "close": "Close",
+        "or": "or",
         "share": "Share"
     },
     "sharing": {
@@ -104,7 +106,16 @@
                 "description": "Create your code and start sharing it with your loved ones to earn even more money.",
                 "cta": "Generate my code"
             },
-            "enterCode": "Enter a referral code"
+            "enterCode": "Enter a referral code",
+            "create": {
+                "title": "My referral code",
+                "description": "As soon as someone signs up with your code and places an order on one of our partner sites, you both earn money.",
+                "label": "Customize your code",
+                "placeholder": "e.g. LOLA",
+                "hint": "Pick 4 letters to generate your code.",
+                "autoGenerate": "Generate automatically",
+                "terms": "By sharing or using a code, you agree to <termsLink>FRAK's terms and conditions</termsLink>."
+            }
         },
         "transferToBank": "Transfer to my bank",
         "transferEmpty": {

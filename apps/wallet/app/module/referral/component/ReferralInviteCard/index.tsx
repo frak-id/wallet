@@ -5,11 +5,13 @@ import { Inline } from "@frak-labs/design-system/components/Inline";
 import { Stack } from "@frak-labs/design-system/components/Stack";
 import { Text } from "@frak-labs/design-system/components/Text";
 import { ReferralIcon } from "@frak-labs/design-system/icons";
+import { useNavigate } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
 import * as styles from "./index.css";
 
 export function ReferralInviteCard() {
     const { t } = useTranslation();
+    const navigate = useNavigate();
 
     return (
         <Card padding="default" variant="elevated">
@@ -31,9 +33,7 @@ export function ReferralInviteCard() {
                     variant="secondary"
                     size="small"
                     width="full"
-                    onClick={() => {
-                        // TODO: implement referral code generation
-                    }}
+                    onClick={() => navigate({ to: "/profile/referral/create" })}
                 >
                     {t("wallet.referral.invite.cta")}
                 </Button>

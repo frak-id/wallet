@@ -176,6 +176,7 @@ interface Resources {
             balance: "Balance";
             claim: "Claim";
             claimed: "claimed";
+            clear: "Clear";
             close: "Close";
             copied: "Copied!";
             copyAddress: "Copy address";
@@ -183,6 +184,7 @@ interface Resources {
             interactions: "Interactions";
             logout: "Logout";
             notifications: "Notifications";
+            or: "or";
             pending: "pending";
             refresh: "Refresh";
             rewards: "Rewards";
@@ -713,6 +715,15 @@ interface Resources {
                 title: "Recovery setup";
             };
             referral: {
+                create: {
+                    autoGenerate: "Generate automatically";
+                    description: "As soon as someone signs up with your code and places an order on one of our partner sites, you both earn money.";
+                    hint: "Pick 4 letters to generate your code.";
+                    label: "Customize your code";
+                    placeholder: "e.g. LOLA";
+                    terms: "By sharing or using a code, you agree to <termsLink>FRAK's terms and conditions</termsLink>.";
+                    title: "My referral code";
+                };
                 enterCode: "Enter a referral code";
                 invite: {
                     cta: "Generate my code";

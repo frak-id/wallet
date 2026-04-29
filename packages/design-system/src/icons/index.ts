@@ -46,6 +46,7 @@ export { SafetyIcon } from "./SafetyIcon";
 export { SettingsIcon } from "./SettingsIcon";
 export { ShareIcon } from "./ShareIcon";
 export { ShieldIcon } from "./ShieldIcon";
+export { SparklesIcon } from "./SparklesIcon";
 export { StarIcon } from "./StarIcon";
 export { TransferIcon } from "./TransferIcon";
 export { WalletIcon } from "./WalletIcon";
