@@ -1,0 +1,39 @@
+# Build artefacts
+build/
+dist/
+*.zip
+
+# Composer
+composer.phar
+vendor/
+
+# PHP tooling caches
+.phpunit.cache/
+.phpunit.result.cache
+.phpcs.cache
+.cache
+
+# Logs / coverage
+logs/
+coverage/
+*.log
+*.lcov
+
+# Editor / OS
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+*~
+
+# Env
+.env
+.env.*
+!.env.example
+
+# Runtime uploads (only the .htaccess security stub is tracked; admin
+# controller calls mkdir() lazily on first logo upload).
+uploads/*
+!uploads/.htaccess
