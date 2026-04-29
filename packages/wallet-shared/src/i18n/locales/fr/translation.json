@@ -114,10 +114,20 @@
                 "suggestionsLabel": "Choisis ton code",
                 "submitCta": "Valider mon code",
                 "autoGenerate": "Générer automatiquement",
+                "autoConfirmLabel": "Généré pour toi",
+                "searchingCode": "Recherche d'un code disponible",
+                "personalizeCta": "Personnaliser mon code",
                 "errorAlreadyActive": "Tu as déjà un code de parrainage actif.",
                 "errorCodeUnavailable": "Ce code n'est plus disponible, choisis-en un autre.",
                 "errorGeneric": "Une erreur est survenue. Réessaie dans un instant.",
                 "terms": "En partageant ou en utilisant un code, tu acceptes <termsLink>les conditions générales de FRAK</termsLink>."
+            },
+            "share": {
+                "activeSince": "Actif depuis le",
+                "copyCode": "Copier le code",
+                "shareCta": "Partager mon code",
+                "shareText": "Utilise mon code de parrainage {{code}} pour t'inscrire sur Frak.",
+                "modifyCta": "Modifier mon code"
             }
         },
         "transferToBank": "Transférer vers ma banque",

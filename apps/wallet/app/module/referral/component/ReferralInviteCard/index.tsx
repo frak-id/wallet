@@ -9,6 +9,10 @@ import { useNavigate } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
 import * as styles from "./index.css";
 
+/**
+ * Rich invite card shown on the hub when the user has no code yet:
+ * icon + title + description + "Générer mon code" CTA → /create.
+ */
 export function ReferralInviteCard() {
     const { t } = useTranslation();
     const navigate = useNavigate();

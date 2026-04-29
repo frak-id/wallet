@@ -22,17 +22,16 @@ export function CreateReferralCodePage() {
 
     useEffect(() => {
         if (willRedirect) {
-            navigate({ to: "/profile/referral", replace: true });
+            navigate({ to: "/profile/referral/share", replace: true });
         }
     }, [willRedirect, navigate]);
 
     const onIssued = useCallback(
         async (_code: string) => {
-            // TODO: navigate to a confirmation screen showing the issued code.
             await queryClient.invalidateQueries({
                 queryKey: referralKey.status(),
             });
-            navigate({ to: "/profile/referral" });
+            navigate({ to: "/profile/referral/share", replace: true });
         },
         [queryClient, navigate]
     );

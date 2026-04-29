@@ -14,6 +14,7 @@ import {
     useIssueReferralCode,
     useSuggestReferralCodes,
 } from "@frak-labs/wallet-shared";
+import { useNavigate } from "@tanstack/react-router";
 import { type ChangeEvent, type FormEvent, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { OrDivider } from "../OrDivider";
@@ -42,18 +43,17 @@ type ReferralCodeFormProps = {
 };
 
 /**
- * Two-stage code-creation form:
+ * Two-stage stem-driven creation form:
  *   - Stage 1 — user types a 4-letter stem and clicks "Générer mon code".
  *     Fetches a suggestion batch from the backend and shows the picker.
- *     The "ou" divider + "Générer automatiquement" pill below let the
- *     user skip the stem flow entirely.
- *   - Stage 2 — suggestions are visible. Submit button becomes
- *     "Valider mon code" and `issue`s the picked code. The OR divider +
- *     auto-generate pill are hidden so the user has only one path forward.
- *     Clicking the X on the input rewinds to stage 1.
+ *     The "ou" divider + "Générer automatiquement" pill below jumps to the
+ *     dedicated /profile/referral/auto page.
+ *   - Stage 2 — suggestions visible. Submit "Valider mon code" → issue the
+ *     picked code. Clicking the X on the input rewinds to stage 1.
  */
 export function ReferralCodeForm({ onIssued }: ReferralCodeFormProps) {
     const { t } = useTranslation();
+    const navigate = useNavigate();
 
     const [stem, setStem] = useState("");
     const [selectedCode, setSelectedCode] = useState<string | null>(null);
@@ -64,20 +64,9 @@ export function ReferralCodeForm({ onIssued }: ReferralCodeFormProps) {
     const suggestions = suggest.data?.suggestions ?? [];
     const hasSuggestions = suggestions.length > 0;
 
-    // Single `issue` mutation shared by both buttons. `issueSource` tells
-    // us which one fired so we can show the spinner only on the active
-    // button (without spawning two mutation instances that share the same
-    // `onSuccess`).
-    const [issueSource, setIssueSource] = useState<"submit" | "auto" | null>(
-        null
-    );
     const issue = useIssueReferralCode({
         mutations: {
-            onSuccess: ({ code }) => {
-                setIssueSource(null);
-                onIssued?.(code);
-            },
-            onError: () => setIssueSource(null),
+            onSuccess: ({ code }) => onIssued?.(code),
         },
     });
 
@@ -92,7 +81,6 @@ export function ReferralCodeForm({ onIssued }: ReferralCodeFormProps) {
     const handleClear = () => {
         setStem("");
         setSelectedCode(null);
-        setIssueSource(null);
         suggest.reset();
         issue.reset();
     };
@@ -102,7 +90,6 @@ export function ReferralCodeForm({ onIssued }: ReferralCodeFormProps) {
         if (hasSuggestions) {
             // Stage 2: issue the code the user picked.
             if (!selectedCode) return;
-            setIssueSource("submit");
             issue.mutate({ code: selectedCode });
         } else {
             // Stage 1: ask the backend for suggestions from the typed stem.
@@ -112,17 +99,14 @@ export function ReferralCodeForm({ onIssued }: ReferralCodeFormProps) {
     };
 
     const handleAutoGenerate = () => {
-        setIssueSource("auto");
-        issue.mutate({});
+        navigate({ to: "/profile/referral/auto" });
     };
 
     const isAnyMutationPending = suggest.isPending || issue.isPending;
     const submitDisabled = hasSuggestions
         ? !selectedCode || isAnyMutationPending
         : !isValidStem || isAnyMutationPending;
-    const submitLoading =
-        suggest.isPending || (issue.isPending && issueSource === "submit");
-    const autoLoading = issue.isPending && issueSource === "auto";
+    const submitLoading = suggest.isPending || issue.isPending;
     const submitLabel = hasSuggestions
         ? t("wallet.referral.create.submitCta")
         : t("wallet.referral.invite.cta");
@@ -243,7 +227,6 @@ export function ReferralCodeForm({ onIssued }: ReferralCodeFormProps) {
                             size="small"
                             width="full"
                             disabled={isAnyMutationPending}
-                            loading={autoLoading}
                             onClick={handleAutoGenerate}
                         >
                             {t("wallet.referral.create.autoGenerate")}

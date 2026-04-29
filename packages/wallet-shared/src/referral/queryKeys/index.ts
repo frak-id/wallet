@@ -25,4 +25,9 @@ export namespace referralKey {
      * Redeem a 6-char referral code received from another user.
      */
     export const redeem = [base, "code", "redeem"] as const;
+
+    /**
+     * Revoke the authenticated wallet's active referral code.
+     */
+    export const revoke = [base, "code", "revoke"] as const;
 }

@@ -116,10 +116,20 @@
                 "suggestionsLabel": "Choose your code",
                 "submitCta": "Validate my code",
                 "autoGenerate": "Generate automatically",
+                "autoConfirmLabel": "Generated for you",
+                "searchingCode": "Searching for an available code",
+                "personalizeCta": "Customize my code",
                 "errorAlreadyActive": "You already have an active referral code.",
                 "errorCodeUnavailable": "This code is no longer available, please pick another one.",
                 "errorGeneric": "Something went wrong. Please try again.",
                 "terms": "By sharing or using a code, you agree to <termsLink>FRAK's terms and conditions</termsLink>."
+            },
+            "share": {
+                "activeSince": "Active since",
+                "copyCode": "Copy code",
+                "shareCta": "Share my code",
+                "shareText": "Use my referral code {{code}} to sign up on Frak.",
+                "modifyCta": "Modify my code"
             }
         },
         "transferToBank": "Transfer to my bank",

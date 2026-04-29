@@ -716,6 +716,7 @@ interface Resources {
             };
             referral: {
                 create: {
+                    autoConfirmLabel: "Generated for you";
                     autoGenerate: "Generate automatically";
                     description: "As soon as someone signs up with your code and places an order on one of our partner sites, you both earn money.";
                     errorAlreadyActive: "You already have an active referral code.";
@@ -723,7 +724,9 @@ interface Resources {
                     errorGeneric: "Something went wrong. Please try again.";
                     hint: "Pick 4 letters to generate your code.";
                     label: "Customize your code";
+                    personalizeCta: "Customize my code";
                     placeholder: "e.g. LOLA10";
+                    searchingCode: "Searching for an available code";
                     submitCta: "Validate my code";
                     suggestionsLabel: "Choose your code";
                     terms: "By sharing or using a code, you agree to <termsLink>FRAK's terms and conditions</termsLink>.";
@@ -736,6 +739,13 @@ interface Resources {
                     title: "Invite friends";
                 };
                 menuLabel: "Referrals";
+                share: {
+                    activeSince: "Active since";
+                    copyCode: "Copy code";
+                    modifyCta: "Modify my code";
+                    shareCta: "Share my code";
+                    shareText: "Use my referral code {{code}} to sign up on Frak.";
+                };
                 title: "Referrals";
             };
             register: {
