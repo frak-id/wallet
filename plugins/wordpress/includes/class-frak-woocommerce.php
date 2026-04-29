@@ -14,6 +14,17 @@
 class Frak_WooCommerce {
 
 	/**
+	 * Default cap on the number of order line items forwarded to the
+	 * `<frak-post-purchase products>` HTML attribute. Big carts would
+	 * otherwise serialise to multi-kilobyte attribute values — the sharing
+	 * page UI also gets cluttered past ~6 items. Consumers can override via
+	 * the `$cap` argument on {@see get_post_purchase_data()}.
+	 *
+	 * @var int
+	 */
+	private const DEFAULT_PRODUCT_CAP = 6;
+
+	/**
 	 * Register WooCommerce hooks. Called once from {@see Frak_Plugin::init()}.
 	 *
 	 * Tracker registration uses `woocommerce_thankyou` and `woocommerce_view_order`
@@ -32,9 +43,121 @@ class Frak_WooCommerce {
 	}
 
 	/**
-	 * Resolve the WooCommerce order context for the current request.
+	 * Resolve all server-side data needed by `<frak-post-purchase>` in a
+	 * single pass: WooCommerce order context (customer / order / token) plus
+	 * optional product line-items for the SDK's sharing-page UI.
 	 *
-	 * Supports two order-scoped endpoints:
+	 * Replaces the previous `get_order_context()` + `get_order_products()`
+	 * pair which both internally re-resolved the same `WC_Order`. The renderer
+	 * now calls this once per post-purchase render, halving the WC order
+	 * lookup cost (one `is_wc_endpoint_url()` + one `wc_get_order()` instead
+	 * of two each).
+	 *
+	 * Endpoint guards (URL-key match on `order-received`, `view_order` cap on
+	 * `view-order`) live in {@see resolve_current_order()}; this method
+	 * returns null on any non-order endpoint or guard failure.
+	 *
+	 * Returned shape:
+	 *   - `context`  : map of HTML attribute name → value (always present)
+	 *   - `products` : list of {@see SharingPageProduct}-shaped arrays, or
+	 *                  `null` when products were not requested / the order has
+	 *                  zero resolvable line items.
+	 *
+	 * Each product entry contains:
+	 *   - `title`    : line-item name (variation-aware, falls back to product name)
+	 *   - `imageUrl` : `medium`-size featured image URL (omitted when missing)
+	 *   - `link`     : product permalink (omitted when missing)
+	 *
+	 * Variation products inherit their parent's image when no variation-
+	 * specific image is set — standard WooCommerce behaviour.
+	 *
+	 * @param bool $with_products Whether to extract product line items.
+	 * @param int  $cap            Max products to include (default {@see DEFAULT_PRODUCT_CAP}).
+	 *                              Caller-overridable because attribute serialisation
+	 *                              cost scales linearly with the cap.
+	 * @return array{context: array<string, string>, products: array<int, array{title: string, imageUrl?: string, link?: string}>|null}|null
+	 */
+	public static function get_post_purchase_data( bool $with_products = true, int $cap = self::DEFAULT_PRODUCT_CAP ) {
+		$order = self::resolve_current_order();
+		if ( ! $order ) {
+			return null;
+		}
+
+		$order_id = $order->get_id();
+
+		return array(
+			'context'  => array(
+				'customer-id' => (string) $order->get_user_id(),
+				'order-id'    => (string) $order_id,
+				'token'       => $order->get_order_key() . '_' . $order_id,
+			),
+			'products' => $with_products ? self::extract_order_products( $order, $cap ) : null,
+		);
+	}
+
+	/**
+	 * Extract line items from a resolved {@see WC_Order} as a list of
+	 * {@see SharingPageProduct}-shaped associative arrays.
+	 *
+	 * Returns null when:
+	 *   - the order has zero line items;
+	 *   - none of the line items resolve to a real {@see WC_Product}
+	 *     (rare, but possible for orders whose products were deleted).
+	 *
+	 * @param WC_Order $order Resolved order.
+	 * @param int      $cap   Max products to include.
+	 * @return array<int, array{title: string, imageUrl?: string, link?: string}>|null
+	 */
+	private static function extract_order_products( $order, int $cap ) {
+		$items = $order->get_items();
+		if ( empty( $items ) ) {
+			return null;
+		}
+
+		$products = array();
+		$count    = 0;
+		foreach ( $items as $item ) {
+			if ( $count >= $cap ) {
+				break;
+			}
+			if ( ! ( $item instanceof WC_Order_Item_Product ) ) {
+				continue;
+			}
+			$product = $item->get_product();
+			if ( ! $product ) {
+				continue;
+			}
+
+			$entry = array(
+				'title' => (string) $item->get_name(),
+			);
+
+			$image_id = (int) $product->get_image_id();
+			if ( $image_id > 0 ) {
+				$image_url = wp_get_attachment_image_url( $image_id, 'medium' );
+				if ( is_string( $image_url ) && '' !== $image_url ) {
+					$entry['imageUrl'] = $image_url;
+				}
+			}
+
+			$permalink = (string) $product->get_permalink();
+			if ( '' !== $permalink ) {
+				$entry['link'] = $permalink;
+			}
+
+			$products[] = $entry;
+			++$count;
+		}
+
+		return ! empty( $products ) ? $products : null;
+	}
+
+	/**
+	 * Resolve the current request's WooCommerce order with the same endpoint
+	 * + capability guards used by {@see get_post_purchase_data()}. Returns null
+	 * on any other endpoint or when the guard fails.
+	 * the guard fails.
+	 *
 	 *   - `order-received` (post-checkout thank-you page): public, guarded
 	 *     by the `key` query arg matching the stored order key — the same
 	 *     anti-enumeration check WooCommerce's own template performs.
@@ -42,20 +165,14 @@ class Frak_WooCommerce {
 	 *     by the `view_order` meta capability (current user must own the
 	 *     order, or be a shop manager).
 	 *
-	 * Returns null on any other endpoint or when the guard fails.
-	 *
-	 * Shared by the `frak/post-purchase` block (to auto-inject HTML
-	 * attributes) and {@see render_purchase_tracker()} (for its payload).
-	 *
-	 * @return array<string, string>|null Map of HTML attribute name → value.
+	 * @return WC_Order|null
 	 */
-	public static function get_order_context() {
+	private static function resolve_current_order() {
 		if ( ! function_exists( 'is_wc_endpoint_url' ) ) {
 			return null;
 		}
 
 		global $wp;
-		$order = null;
 
 		if ( is_wc_endpoint_url( 'order-received' ) ) {
 			$order_id = isset( $wp->query_vars['order-received'] ) ? absint( $wp->query_vars['order-received'] ) : 0;
@@ -71,8 +188,10 @@ class Frak_WooCommerce {
 			if ( '' === $url_key || $url_key !== $candidate->get_order_key() ) {
 				return null;
 			}
-			$order = $candidate;
-		} elseif ( is_wc_endpoint_url( 'view-order' ) ) {
+			return $candidate;
+		}
+
+		if ( is_wc_endpoint_url( 'view-order' ) ) {
 			$order_id = isset( $wp->query_vars['view-order'] ) ? absint( $wp->query_vars['view-order'] ) : 0;
 			if ( ! $order_id || ! current_user_can( 'view_order', $order_id ) ) {
 				return null;
@@ -81,20 +200,10 @@ class Frak_WooCommerce {
 			if ( ! $candidate ) {
 				return null;
 			}
-			$order = $candidate;
+			return $candidate;
 		}
 
-		if ( ! $order ) {
-			return null;
-		}
-
-		$order_id = $order->get_id();
-
-		return array(
-			'customer-id' => (string) $order->get_user_id(),
-			'order-id'    => (string) $order_id,
-			'token'       => $order->get_order_key() . '_' . $order_id,
-		);
+		return null;
 	}
 
 	/**
@@ -111,7 +220,7 @@ class Frak_WooCommerce {
 	 *
 	 * WooCommerce has already run its own endpoint + capability checks before
 	 * firing these actions, so we trust the `$order_id` argument and skip the
-	 * URL-key / `view_order` guard that {@see get_order_context()} performs.
+	 * URL-key / `view_order` guard that {@see resolve_current_order()} performs.
 	 *
 	 * @param int $order_id Order ID provided by the WooCommerce action.
 	 */

@@ -1,0 +1,53 @@
+<?xml version="1.0"?>
+<ruleset name="Frak PrestaShop Module">
+    <description>Frak PrestaShop Module Coding Standard</description>
+
+    <!-- PSR-12 baseline; PrestaShop's own ruleset can be layered later via prestashop/php-dev-tools. -->
+    <rule ref="PSR12">
+        <!-- PrestaShop modules use root-namespaced classes loaded via Module::install(). PSR-1 namespace requirement does not apply. -->
+        <exclude name="PSR1.Classes.ClassDeclaration.MissingNamespace"/>
+    </rule>
+
+    <!--
+        Module entry-point files must mix `require_once` (vendor autoload + PrestaShop
+        version guards) with class declarations. PSR-1 disallows that combo, but every
+        PrestaShop module on the marketplace ships with the same shape — cannot be helped.
+    -->
+    <rule ref="PSR1.Files.SideEffects">
+        <exclude-pattern>frakintegration.php</exclude-pattern>
+        <exclude-pattern>controllers/admin/AdminFrakIntegrationController.php</exclude-pattern>
+        <!-- sql/{install,uninstall}.php and upgrade/install-X.Y.Z.php declare -->
+        <!-- top-level `$sql` / `function` symbols alongside the standard PrestaShop -->
+        <!-- `if (!defined('_PS_VERSION_')) exit;` guard — same shape as the module entry-point. -->
+        <exclude-pattern>sql/*.php</exclude-pattern>
+        <exclude-pattern>upgrade/*.php</exclude-pattern>
+    </rule>
+
+    <!--
+        Default Generic.Files.LineLength warning threshold (120) is too tight for the
+        `PrestaShopLogger::addLog(…)` calls and merchant webhook URLs. Raise to 200 so
+        the long inline strings stop tripping the warning channel without forcing
+        unreadable line wraps in tightly-packed log statements.
+    -->
+    <rule ref="Generic.Files.LineLength">
+        <properties>
+            <property name="lineLimit" value="200"/>
+            <property name="absoluteLineLimit" value="0"/>
+        </properties>
+    </rule>
+
+    <file>frakintegration.php</file>
+    <file>classes</file>
+    <file>controllers</file>
+    <file>sql</file>
+    <file>upgrade</file>
+
+    <exclude-pattern>vendor/*</exclude-pattern>
+    <exclude-pattern>test/*</exclude-pattern>
+    <exclude-pattern>build/*</exclude-pattern>
+    <exclude-pattern>dist/*</exclude-pattern>
+
+    <arg name="extensions" value="php"/>
+    <arg name="colors"/>
+    <arg value="sp"/>
+</ruleset>

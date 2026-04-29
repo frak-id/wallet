@@ -6,7 +6,6 @@ import * as useRewardHook from "@/hooks/useReward";
 import * as embeddedWalletUtils from "@/utils/embeddedWallet";
 import * as sharingPageUtils from "@/utils/sharingPage";
 import { ButtonShare } from "./ButtonShare";
-import * as useShareModalHook from "./hooks/useShareModal";
 
 // Mock the hooks
 vi.mock("@/hooks/useClientReady", () => ({
@@ -19,14 +18,6 @@ vi.mock("@/hooks/useClientReady", () => ({
 
 vi.mock("@/hooks/useReward", () => ({
     useReward: vi.fn(() => ({ reward: undefined })),
-}));
-
-vi.mock("./hooks/useShareModal", () => ({
-    useShareModal: vi.fn(() => ({
-        handleShare: vi.fn().mockResolvedValue(undefined),
-        isError: false,
-        debugInfo: undefined,
-    })),
 }));
 
 vi.mock("@/utils/embeddedWallet", () => ({
@@ -50,11 +41,6 @@ describe.sequential("ButtonShare", () => {
         });
         vi.mocked(useRewardHook.useReward).mockReturnValue({
             reward: undefined,
-        });
-        vi.mocked(useShareModalHook.useShareModal).mockReturnValue({
-            handleShare: vi.fn().mockResolvedValue(undefined),
-            isError: false,
-            debugInfo: undefined,
         });
     });
 
@@ -162,22 +148,28 @@ describe.sequential("ButtonShare", () => {
         });
     });
 
-    it("should call handleShare when clickAction is share-modal", async () => {
-        const mockHandleShare = vi.fn().mockResolvedValue(undefined);
-        vi.mocked(useShareModalHook.useShareModal).mockReturnValue({
-            handleShare: mockHandleShare,
-            isError: false,
-            debugInfo: undefined,
-        });
-
-        render(<ButtonShare clickAction="share-modal" />);
+    it("should route legacy share-modal clickAction to openSharingPage", async () => {
+        // The `share-modal` value was retired in favour of `displaySharingPage`;
+        // existing merchant configs still ship with that string so the
+        // component must gracefully fall through to the sharing-page UI.
+        render(
+            <ButtonShare
+                // biome-ignore lint/suspicious/noExplicitAny: testing legacy
+                // string value that is no longer in the typed union.
+                clickAction={"share-modal" as any}
+            />
+        );
         const button = screen.getByRole("button");
 
         fireEvent.click(button);
 
         await waitFor(() => {
-            expect(mockHandleShare).toHaveBeenCalledTimes(1);
+            expect(sharingPageUtils.openSharingPage).toHaveBeenCalledWith(
+                undefined,
+                undefined
+            );
         });
+        expect(embeddedWalletUtils.openEmbeddedWallet).not.toHaveBeenCalled();
     });
 
     it("should track event on click", () => {
@@ -196,27 +188,6 @@ describe.sequential("ButtonShare", () => {
         );
     });
 
-    it("should display error message when isError is true", () => {
-        vi.mocked(useShareModalHook.useShareModal).mockReturnValue({
-            handleShare: vi.fn(),
-            isError: true,
-            debugInfo: "Error debug info",
-        });
-
-        render(<ButtonShare />);
-        // ErrorMessage component should be rendered
-        expect(
-            screen.getByText(/Oups ! Nous avons rencontré/)
-        ).toBeInTheDocument();
-    });
-
-    it("should not display error message when isError is false", () => {
-        render(<ButtonShare />);
-        expect(
-            screen.queryByText(/Oups ! Nous avons rencontré/)
-        ).not.toBeInTheDocument();
-    });
-
     it("should pass targetInteraction to useReward hook", () => {
         render(
             <ButtonShare useReward targetInteraction="custom.customerMeeting" />
@@ -228,12 +199,17 @@ describe.sequential("ButtonShare", () => {
         );
     });
 
-    it("should pass targetInteraction to useShareModal hook", () => {
+    it("should forward targetInteraction to openSharingPage", async () => {
         render(<ButtonShare targetInteraction="custom.customerMeeting" />);
+        const button = screen.getByRole("button");
 
-        expect(useShareModalHook.useShareModal).toHaveBeenCalledWith(
-            "custom.customerMeeting",
-            undefined
-        );
+        fireEvent.click(button);
+
+        await waitFor(() => {
+            expect(sharingPageUtils.openSharingPage).toHaveBeenCalledWith(
+                "custom.customerMeeting",
+                undefined
+            );
+        });
     });
 });

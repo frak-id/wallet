@@ -3,11 +3,12 @@
  * Plugin Name: Frak
  * Plugin URI: https://docs.frak.id/components/frak-setup
  * Description: Adds Frak configuration to your WordPress site. Works with classic and block themes; components are available as blocks, shortcodes, and widgets.
- * Version: 1.1.1
+ * Version: 1.1.2
  * Requires at least: 6.4
  * Requires PHP: 8.0
  * Author: Frak-Labs
  * Author URI: https://frak.id
+ * Update URI: https://github.com/frak-id/wallet/releases?q=wordpress+plugin&expanded=true
  * License: GPL-3.0-only
  * License URI: https://www.gnu.org/licenses/gpl-3.0.html
  * Text Domain: frak

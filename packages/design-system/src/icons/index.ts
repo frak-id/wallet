@@ -37,6 +37,8 @@ export { MobileIcon } from "./MobileIcon";
 export { PeopleIcon } from "./PeopleIcon";
 export { PersonIcon } from "./PersonIcon";
 export { ProfileIcon } from "./ProfileIcon";
+export { ProgressCheckIcon } from "./ProgressCheckIcon";
+export { ProgressCheckIconAnimated } from "./ProgressCheckIconAnimated";
 export { SafetyIcon } from "./SafetyIcon";
 export { SettingsIcon } from "./SettingsIcon";
 export { ShareIcon } from "./ShareIcon";

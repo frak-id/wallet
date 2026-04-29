@@ -1,0 +1,35 @@
+services:
+  mysql:
+    container_name: some-mysql
+    image: mysql:5.7
+    platform: linux/amd64 # Force x86_64 architecture for ARM Macs (enables QEMU emulation)
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: admin
+      MYSQL_DATABASE: prestashop
+    networks:
+      - prestashop_network
+  prestashop:
+    container_name: prestashop
+    image: prestashop/prestashop:latest # Latest stable version of the PrestaShop, to see all available images go to ...
+    platform: linux/amd64 # Force x86_64 architecture for ARM Macs (enables QEMU emulation)
+    restart: unless-stopped
+    depends_on:
+      - mysql
+    ports:
+      - 8080:80
+    environment:
+      DB_SERVER: some-mysql
+      DB_NAME: prestashop
+      DB_USER: root
+      DB_PASSWD: admin
+      PS_INSTALL_AUTO: 1
+      PS_DOMAIN: localhost:8080
+      PS_FOLDER_ADMIN: admin4577
+      PS_FOLDER_INSTALL: install4577
+      # demo@prestashop.com
+      # password: prestashop_demo
+    networks:
+      - prestashop_network
+networks:
+    prestashop_network:

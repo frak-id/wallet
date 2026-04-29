@@ -9,7 +9,10 @@
 	"keywords": ["frak", "banner", "notification", "referral"],
 	"supports": {
 		"html": false,
-		"align": ["wide", "full"]
+		"align": ["wide", "full"],
+		"spacing": {
+			"margin": true
+		}
 	},
 	"textdomain": "frak",
 	"attributes": {

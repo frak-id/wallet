@@ -8,8 +8,6 @@ import { useReward } from "@/hooks/useReward";
 import { openEmbeddedWallet } from "@/utils/embeddedWallet";
 import { applyRewardPlaceholder } from "@/utils/formatReward";
 import { openSharingPage } from "@/utils/sharingPage";
-import { ErrorMessage } from "./components/ErrorMessage";
-import { useShareModal } from "./hooks/useShareModal";
 import type { ButtonShareProps } from "./types";
 
 /**
@@ -50,7 +48,7 @@ import type { ButtonShareProps } from "./types";
  * <frak-button-share use-reward text="Share and earn up to {REWARD}!" no-reward-text="Share and earn!" target-interaction="custom.customerMeeting"></frak-button-share>
  * ```
  *
- * @see {@link @frak-labs/core-sdk!actions.modalBuilder | `modalBuilder()`} for more info about the modal display
+ * @see {@link @frak-labs/core-sdk!actions.displaySharingPage | `displaySharingPage()`} for more info about the sharing-page flow
  * @see {@link @frak-labs/core-sdk!actions.getMerchantInformation | `getMerchantInformation()`} for more info about the estimated reward fetching
  */
 export function ButtonShare({
@@ -95,10 +93,6 @@ export function ButtonShare({
         shouldUseReward && isClientReady,
         resolvedTargetInteraction
     );
-    const { handleShare, isError, debugInfo } = useShareModal(
-        resolvedTargetInteraction,
-        placementId
-    );
 
     const btnText = useMemo(() => {
         if (!shouldUseReward) return resolvedText;
@@ -114,7 +108,7 @@ export function ButtonShare({
             : `${resolvedText} ${reward}`;
     }, [shouldUseReward, resolvedText, resolvedNoRewardText, reward]);
 
-    const onClick = useCallback(async () => {
+    const onClick = useCallback(() => {
         if (isPreview) return;
         trackEvent(window.FrakSetup.client, "share_button_clicked", {
             placement: placementId,
@@ -124,15 +118,16 @@ export function ButtonShare({
         });
         if (resolvedClickAction === "embedded-wallet") {
             openEmbeddedWallet(resolvedTargetInteraction, placementId);
-        } else if (resolvedClickAction === "share-modal") {
-            await handleShare();
-        } else {
-            openSharingPage(resolvedTargetInteraction, placementId);
+            return;
         }
+        // Anything else (legacy `share-modal` configs included) routes to
+        // the full-page sharing UI — the modal-flow share path was retired
+        // in favour of `displaySharingPage` so every share surface goes
+        // through the same UI.
+        openSharingPage(resolvedTargetInteraction, placementId);
     }, [
         isPreview,
         resolvedClickAction,
-        handleShare,
         resolvedTargetInteraction,
         placementId,
         reward,
@@ -147,16 +142,13 @@ export function ButtonShare({
         .join(" ");
 
     return (
-        <>
-            <button
-                type={"button"}
-                disabled={!isPreview && !isClientReady}
-                class={buttonClass}
-                onClick={onClick}
-            >
-                {btnText}
-            </button>
-            {isError && <ErrorMessage debugInfo={debugInfo} />}
-        </>
+        <button
+            type={"button"}
+            disabled={!isPreview && !isClientReady}
+            class={buttonClass}
+            onClick={onClick}
+        >
+            {btnText}
+        </button>
     );
 }

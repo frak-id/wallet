@@ -9,7 +9,10 @@
 	"keywords": ["frak", "post purchase", "thank you", "reward", "referral"],
 	"supports": {
 		"html": false,
-		"align": ["wide", "full"]
+		"align": ["wide", "full"],
+		"spacing": {
+			"margin": true
+		}
 	},
 	"textdomain": "frak",
 	"attributes": {
@@ -22,6 +25,7 @@
 		"referrerText": { "type": "string", "default": "" },
 		"refereeText": { "type": "string", "default": "" },
 		"ctaText": { "type": "string", "default": "" },
+		"showProducts": { "type": "boolean", "default": true },
 		"previewVariant": { "type": "string", "default": "referrer" }
 	},
 	"editorScript": "file:./editor.js",

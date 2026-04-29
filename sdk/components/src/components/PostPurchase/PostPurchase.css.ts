@@ -1,3 +1,4 @@
+import { element } from "@frak-labs/design-system/utils";
 import "@frak-labs/design-system/sprinkles";
 import { vars } from "@frak-labs/design-system/theme";
 import { alias } from "@frak-labs/design-system/tokens";
@@ -28,26 +29,29 @@ export const message = style({
     fontWeight: 600,
 });
 
-export const cta = style({
-    display: "inline-flex",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: alias.spacing.xxs,
-    padding: `${alias.spacing.s} ${alias.spacing.m}`,
-    borderRadius: alias.cornerRadius.full,
-    backgroundColor: vars.text.primary,
-    color: vars.text.onAction,
-    fontSize: "12px",
-    fontWeight: "bold",
-    textTransform: "uppercase",
-    cursor: "pointer",
-    selectors: {
-        "&:disabled": {
-            opacity: 0.7,
-            cursor: "default",
+export const cta = style([
+    element.button,
+    {
+        display: "inline-flex",
+        alignItems: "center",
+        justifyContent: "center",
+        gap: alias.spacing.xxs,
+        padding: `${alias.spacing.s} ${alias.spacing.m}`,
+        borderRadius: alias.cornerRadius.full,
+        backgroundColor: vars.text.primary,
+        color: vars.text.onAction,
+        fontSize: "12px",
+        fontWeight: "bold",
+        textTransform: "uppercase",
+        cursor: "pointer",
+        selectors: {
+            "&:disabled": {
+                opacity: 0.7,
+                cursor: "default",
+            },
         },
     },
-});
+]);
 
 export const icon = style({
     margin: "-2px 0",

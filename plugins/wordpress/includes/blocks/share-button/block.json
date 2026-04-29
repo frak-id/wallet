@@ -9,7 +9,10 @@
 	"keywords": ["frak", "share", "reward", "referral"],
 	"supports": {
 		"html": false,
-		"align": ["left", "center", "right"]
+		"align": ["left", "center", "right"],
+		"spacing": {
+			"margin": true
+		}
 	},
 	"textdomain": "frak",
 	"attributes": {

@@ -25,6 +25,18 @@ jobs:
       - name: "🔨 Install dependencies"
         run: bun install --frozen-lockfile
 
+      - name: "🔍 Detect release mode"
+        id: mode
+        run: |
+          # If pending changesets exist, the action will only open the Version Packages PR.
+          # Otherwise, it will run the publish command.
+          if compgen -G ".changeset/*.md" > /dev/null && \
+             [ "$(ls .changeset/*.md 2>/dev/null | grep -v -i '^.changeset/README.md$' | wc -l | tr -d ' ')" != "0" ]; then
+            echo "will_publish=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "will_publish=true" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Create Release Pull Request or Publish to npm
         uses: changesets/action@v1
         id: changesets
@@ -39,6 +51,7 @@ jobs:
 
       - name: "🏷️ Create per-package sdk-{id}-{version} tags"
         id: sdk_tags
+        if: steps.mode.outputs.will_publish == 'true'
         run: |
           declare -A ID_MAP=(
             ["@frak-labs/core-sdk"]="core"
@@ -76,7 +89,7 @@ jobs:
           echo "created_any=${created_any}" >> "$GITHUB_OUTPUT"
 
       - uses: gacts/purge-jsdelivr-cache@v1
-        if: steps.sdk_tags.outputs.created_any == 'true'
+        if: steps.mode.outputs.will_publish == 'true' && steps.sdk_tags.outputs.created_any == 'true'
         with:
           url: |
             https://cdn.jsdelivr.net/npm/@frak-labs/nexus-sdk@latest/dist/bundle/bundle.js

@@ -24,9 +24,21 @@ class Frak_Plugin {
 	 */
 	public static function boot() {
 		add_action( 'init', array( __CLASS__, 'init' ) );
+		// Wire the GitHub-driven auto-updater unconditionally — PUC needs to
+		// register its `pre_set_site_transient_update_plugins` filter in every
+		// context (admin, cron, frontend) so update checks fire reliably from
+		// whichever process WordPress refreshes the transient in. The actual
+		// HTTP work is gated by PUC's 12h cache, so this is cheap per request.
+		Frak_Updater::init();
 		// Widgets register their `widgets_init` callback here so the factory is
 		// wired on `plugins_loaded` — avoids an `init → widgets_init` chain.
 		Frak_Widgets::init();
+		// Elementor integration registers `elementor/widgets/register` and
+		// `elementor/elements/categories_registered` hooks. The class itself
+		// no-ops when Elementor isn't active so this is safe to call
+		// unconditionally — it only adds an extra hook registration when
+		// `did_action( 'elementor/loaded' )` is positive.
+		Frak_Elementor::init();
 	}
 
 	/**

@@ -1,6 +1,7 @@
 import type {
     EstimatedReward,
     GetMerchantInformationReturnType,
+    SharingPageProduct,
     UserReferralStatusType,
 } from "@frak-labs/core-sdk";
 import { trackEvent } from "@frak-labs/core-sdk";
@@ -15,7 +16,13 @@ import { Columns } from "@frak-labs/design-system/components/Columns";
 import { Stack } from "@frak-labs/design-system/components/Stack";
 import { LogoFrak } from "@frak-labs/design-system/icons";
 import { FrakRpcError, RpcErrorCodes } from "@frak-labs/frame-connector";
-import { useEffect, useMemo, useRef, useState } from "preact/hooks";
+import {
+    useCallback,
+    useEffect,
+    useMemo,
+    useRef,
+    useState,
+} from "preact/hooks";
 import { useClientReady } from "@/hooks/useClientReady";
 import { useGlobalComponents } from "@/hooks/useGlobalComponents";
 import { useLightDomStyles } from "@/hooks/useLightDomStyles";
@@ -24,7 +31,7 @@ import {
     applyRewardPlaceholder,
     formatEstimatedReward,
 } from "@/utils/formatReward";
-import { useShareModal } from "../ButtonShare/hooks/useShareModal";
+import { openSharingPage } from "@/utils/sharingPage";
 import { GiftIcon } from "../icons/GiftIcon";
 import {
     badge,
@@ -36,6 +43,7 @@ import {
     icon,
     message,
 } from "./PostPurchase.css";
+import { coerceProductCandidates, normalizeProductCandidate } from "./products";
 import type { PostPurchaseProps } from "./types";
 
 /**
@@ -122,6 +130,7 @@ export function PostPurchase({
     ctaText: propCtaText,
     preview,
     previewVariant,
+    products,
 }: PostPurchaseProps) {
     const isPreview = !!preview;
     const { shouldRender, isHidden, isClientReady } = useClientReady();
@@ -278,12 +287,46 @@ export function PostPurchase({
         context?.reward,
     ]);
 
-    // Reuse shared share-modal hook (includes error tracking + debug info)
-    const { handleShare } = useShareModal(
-        undefined,
-        placementId,
-        resolvedSharingUrl
-    );
+    // Parse + sanitize the `products` prop. Surfaces that set the prop via
+    // the JS property (`el.products = [...]`) deliver a real array; surfaces
+    // that bind it as an HTML attribute (WP / Magento server-render) deliver
+    // a JSON-stringified array. We treat both as untrusted public-API input:
+    // each entry is normalised to a {@link SharingPageProduct} with a
+    // non-empty string `title`, and `imageUrl` / `link` are kept only when
+    // they parse as `http(s)://` URLs — otherwise downstream
+    // `new URL(...)` calls in the sharing-page builder would crash, and a
+    // `javascript:` link would be a XSS sink in any consumer that binds the
+    // value to an `href`. Unparseable / empty payloads are silently dropped
+    // so the share still works without the product card section.
+    const parsedProducts = useMemo<SharingPageProduct[] | undefined>(() => {
+        const candidates = coerceProductCandidates(products);
+        if (!candidates) return undefined;
+        const sanitized: SharingPageProduct[] = [];
+        for (const candidate of candidates) {
+            const entry = normalizeProductCandidate(candidate);
+            if (entry) sanitized.push(entry);
+        }
+        return sanitized.length > 0 ? sanitized : undefined;
+    }, [products]);
+
+    // Click handler — opens the full-page sharing UI. The sharing page
+    // already renders a product card section when `products` is provided
+    // (see `apps/listener/.../sharing/component/SharingPage`); the
+    // post-purchase card uses this flow rather than the modal-flow share
+    // because product cards only exist on the full-page surface. Memoised
+    // as a whole so the `<button onClick>` ref stays stable across renders
+    // and the click-tracking + share call live in one named callback.
+    const handleClick = useCallback(() => {
+        if (!resolvedVariant) return;
+        trackEvent(window.FrakSetup?.client, "post_purchase_clicked", {
+            placement: placementId,
+            variant: resolvedVariant,
+        });
+        openSharingPage(undefined, placementId, {
+            link: resolvedSharingUrl,
+            products: parsedProducts,
+        });
+    }, [resolvedVariant, placementId, resolvedSharingUrl, parsedProducts]);
 
     // Bail conditions
     if (!isPreview && (!shouldRender || isHidden)) return null;
@@ -306,22 +349,7 @@ export function PostPurchase({
                             type="button"
                             className={`${cta} button`}
                             disabled={!isPreview && !isClientReady}
-                            onClick={
-                                isPreview
-                                    ? undefined
-                                    : () => {
-                                          if (!resolvedVariant) return;
-                                          trackEvent(
-                                              window.FrakSetup?.client,
-                                              "post_purchase_clicked",
-                                              {
-                                                  placement: placementId,
-                                                  variant: resolvedVariant,
-                                              }
-                                          );
-                                          handleShare();
-                                      }
-                            }
+                            onClick={isPreview ? undefined : handleClick}
                         >
                             {texts.cta}
                             <svg
