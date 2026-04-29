@@ -51,7 +51,7 @@ Three Frak web components are available: `<frak-button-share>`, `<frak-banner>`,
 | `<frak-post-purchase>` | `post_purchase_confirmation` | `displayOrderConfirmation` | enabled | `order-confirmation` |
 | `<frak-post-purchase>` | `post_purchase_detail` | `displayOrderDetail` | enabled | `view-order` |
 
-Adding / removing a placement is a single edit in [`classes/FrakPlacementRegistry.php`](classes/FrakPlacementRegistry.php) plus a matching `hookXxx()` callback in [`frakintegration.php`](frakintegration.php) that delegates to `dispatchHook()`.
+Adding / removing a placement is a single edit in [`classes/FrakPlacementRegistry.php`](classes/FrakPlacementRegistry.php) plus a matching `hookXxx()` callback in [`frakintegration.php`](frakintegration.php) that delegates to `FrakDisplayDispatcher::dispatch()`.
 
 ### Smarty function plugins
 

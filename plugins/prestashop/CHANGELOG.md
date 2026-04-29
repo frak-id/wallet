@@ -13,6 +13,13 @@ version on dispatch.
 
 ### Added
 
+- **God-class refactor of `frakintegration.php`**: 651 → 157 lines (76% smaller). Module bootstrap is now a thin router; every `hookXxx()` is a one-line delegator. Logic moved to five surface-based helpers in `classes/`, mirroring the WordPress sibling's `Frak_Frontend` / `Frak_WooCommerce` / `Frak_Shortcodes` split:
+  - `FrakInstaller` — install / uninstall lifecycle (CORE_HOOKS const, hook chain, SQL include, infra-table provisioning, cron token, default seeding). Symmetric uninstall.
+  - `FrakFrontend` — `head()` (resource hints + inline `window.FrakSetup`) and `setMedia($context)` (asset-pipeline SDK script registration).
+  - `FrakOrderHooks` — `onStatusUpdate($params)` (status → webhook + retry queue), `renderPurchaseTracker($order)` (always-on tracker script), `renderPostPurchase($module, $order, $placement)` (Smarty-wrapped post-purchase card).
+  - `FrakDisplayDispatcher` — `dispatch($module, $hook, $params)` (the placement loop + 3-component switch, replaces the legacy `FrakIntegration::dispatchHook()` private method).
+  - `FrakSmartyPlugins` — `register($context)` + the three `{frak_*}` static handlers (idempotency flag moved off the Module class).
+
 - **PrestaShop 8.1+ baseline**: dropped 1.7.x compatibility from `ps_versions_compliancy.min`. Lets the plugin lean on the Symfony components PrestaShop 8 ships natively (HttpClient, Cache, Lock) and on Doctrine DBAL for typed queries.
 - **Symfony HttpClient on every outbound HTTP path** (`FrakWebhookHelper`, `FrakMerchantResolver`): replaces hand-rolled cURL handles with `\Symfony\Component\HttpClient\HttpClient::create()`. Single-shot dispatch via `request()`, batch dispatch via `client->stream()` for HTTP/2-multiplexed parallel webhook delivery. Connection pooling, DNS reuse, and TLS session reuse come for free; transport errors raise a typed `TransportExceptionInterface` instead of `curl_errno()` integers. Tight timeouts (`timeout` = `max_duration` = 5 s) clamp the worst case on both the order-status hook and the cron drainer.
 - **Doctrine DBAL on the webhook queue** (`FrakWebhookQueue`): replaces raw `Db::getInstance()->execute()` plumbing with `Connection::fetchAllAssociative()` / `insert()` / `update()`. Bound params instead of `pSQL()`, structurally precluding SQL injection drift. Single shared connection with the rest of the Frak infra (cache + lock) via `FrakDb::connection()` so the per-request DB connection count stays at PS native + 1.
@@ -90,6 +97,8 @@ version on dispatch.
 - `FrakWebhookQueue::createTable()` / `dropTable()`. Schema lifecycle lives in `sql/install.php` / `sql/uninstall.php` — single source of truth.
 
 ### Fixed
+
+- **Two dead `Configuration::deleteByName()` calls in `uninstall()`**: the `FrakMerchantResolver::LEGACY_CONFIG_KEY` and `LEGACY_NEGATIVE_CACHE_KEY` constants were removed earlier in the [Unreleased] cycle, but the call sites in `FrakIntegration::uninstall()` were not. Calls would have raised `Undefined constant` on every uninstall. The refactor drops both lines (the keys never shipped to production v0.0.4 shops, see the matching CHANGELOG entry above).
 
 - **Webhook signature format**: send `base64_encode(hash_hmac('sha256', $body, $secret, true))` (raw bytes, base64-encoded) instead of the default hex digest, matching the backend's `Buffer.from(sig, 'base64')` decode in `validateBodyHmac`. Hex signatures decoded to a 64-byte buffer (vs the expected 32-byte raw digest) and silently failed verification on every dispatch.
 - **Webhook endpoint URL**: switch from `/ext/merchant/{id}/webhook/prestashop` (which was never registered on the backend and 404’d every request) to `/ext/merchant/{id}/webhook/custom`, the existing route whose DTO already matches the PrestaShop payload shape.
