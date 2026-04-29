@@ -40,6 +40,28 @@ class FrakIntegration extends Module
         ];
         $this->bootstrap = true;
 
+        // Admin sidebar entry. PrestaShop's `ModuleTabRegister` runs on
+        // `ModuleManagementEvent::INSTALL` and auto-detects every
+        // `controllers/admin/*Controller.php`; controllers NOT declared in
+        // `$this->tabs` get registered with `visible = 0` (see
+        // `ModuleTabRegister::addUndeclaredTabs()`), which keeps the
+        // configuration page routable through Module Manager → Configure
+        // but hides the entry from the back-office sidebar. Declaring it
+        // here pins `visible = 1` and parents the row under Modules so the
+        // daily-ops shortcut (queue health · Drain queue · Refresh
+        // merchant) is one click away. Mirrors `upgrade/install-1.0.1.php`
+        // step 9 (manual `Tab::add()` for upgraded installs); idempotent
+        // on re-install — `ModuleTabRegister::checkIsValid()` skips when
+        // a row already exists.
+        $this->tabs = [
+            [
+                'class_name' => 'AdminFrakIntegration',
+                'visible' => true,
+                'name' => 'Frak',
+                'parent_class_name' => 'AdminParentModulesSf',
+            ],
+        ];
+
         parent::__construct();
 
         $this->displayName = $this->l('Frak');

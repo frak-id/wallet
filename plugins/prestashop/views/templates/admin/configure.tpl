@@ -154,7 +154,7 @@
                     {foreach from=$group.items item=item}
                         <div class="form-group" style="margin-bottom: 8px;">
                             <div class="col-lg-12">
-                                {* Hidden marker so the controller can distinguish "checkbox unchecked" from "form did not include this placement" — see processPlacementToggles() in AdminFrakIntegrationController.php. *}
+                                {* Hidden marker so the controller can distinguish "checkbox unchecked" from "form did not include this placement" — see processPlacements() in AdminFrakIntegrationController.php. *}
                                 <input type="hidden" name="{$item.config_key|escape:'html':'UTF-8'}__present" value="1" />
                                 <label style="font-weight: normal; cursor: pointer;">
                                     <input type="checkbox"
@@ -172,6 +172,32 @@
                                         {l s='Placement:' mod='frakintegration'} <code>{$item.placement_attr|escape:'html':'UTF-8'}</code>
                                     </small>
                                 </p>
+                                {if !empty($item.options)}
+                                    {* Per-placement merchant-tunable options (e.g. share-button style preset, banner CSS class). Indentation matches the description block above so the inputs read as a sub-section of the placement card. *}
+                                    <div class="frak-placement-options" style="margin: 8px 0 0 22px;">
+                                        {foreach from=$item.options item=option}
+                                            <div class="form-group" style="margin-bottom: 6px;">
+                                                <label class="control-label" style="font-weight: 600; font-size: 12px; display: block; margin-bottom: 2px;">
+                                                    {$option.label|escape:'html':'UTF-8'}
+                                                </label>
+                                                {if $option.type == 'select'}
+                                                    <select name="{$option.name|escape:'html':'UTF-8'}" class="form-control" style="max-width: 320px;">
+                                                        {foreach from=$option.choices item=choice}
+                                                            <option value="{$choice.value|escape:'html':'UTF-8'}" {if $choice.value === $option.value}selected="selected"{/if}>{$choice.label|escape:'html':'UTF-8'}</option>
+                                                        {/foreach}
+                                                    </select>
+                                                {elseif $option.type == 'text'}
+                                                    <input type="text" name="{$option.name|escape:'html':'UTF-8'}" value="{$option.value|escape:'html':'UTF-8'}" class="form-control" style="max-width: 320px;" />
+                                                {/if}
+                                                {if $option.description}
+                                                    <p class="help-block" style="margin: 2px 0 0; font-size: 11px;">
+                                                        {$option.description|escape:'html':'UTF-8'}
+                                                    </p>
+                                                {/if}
+                                            </div>
+                                        {/foreach}
+                                    </div>
+                                {/if}
                             </div>
                         </div>
                     {/foreach}

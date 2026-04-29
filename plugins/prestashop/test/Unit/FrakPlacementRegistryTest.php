@@ -20,14 +20,19 @@ final class FrakPlacementRegistryTest extends TestCase
     public function testEveryPlacementCarriesTheRequiredFields(): void
     {
         // Schema sanity — drift here breaks `dispatchHook()` (component) and
-        // the admin template (label / description / config_key).
+        // the admin template (label / description / config_key). The optional
+        // `options` schema is exercised separately so this test stays readable
+        // when the option set grows.
+        $required = ['component', 'hook', 'config_key', 'default', 'placement_attr', 'label', 'description'];
         foreach (FrakPlacementRegistry::PLACEMENTS as $id => $placement) {
             $this->assertIsString($id);
-            $this->assertSame(
-                ['component', 'hook', 'config_key', 'default', 'placement_attr', 'label', 'description'],
-                array_keys($placement),
-                "Placement '{$id}' is missing one or more required fields"
-            );
+            foreach ($required as $field) {
+                $this->assertArrayHasKey(
+                    $field,
+                    $placement,
+                    "Placement '{$id}' is missing required field '{$field}'"
+                );
+            }
             $this->assertContains(
                 $placement['component'],
                 [
@@ -45,6 +50,47 @@ final class FrakPlacementRegistryTest extends TestCase
             $this->assertIsBool($placement['default']);
             $this->assertNotSame('', $placement['placement_attr']);
             $this->assertNotSame('', $placement['hook']);
+        }
+    }
+
+    public function testPlacementOptionSchemasAreInternallyConsistent(): void
+    {
+        // Per-option schema sanity. Drift here breaks the admin form renderer
+        // (`buildPlacementOptionInputs` reads `type` / `label` / `default`)
+        // AND the writer (`sanitizeOptionUpdates` keys off `type` and the
+        // shape of the matching meta). Walking every declared option keeps
+        // future additions honest without a per-option assertion.
+        $allowed_types = [
+            FrakPlacementRegistry::OPTION_TYPE_SELECT,
+            FrakPlacementRegistry::OPTION_TYPE_TEXT,
+        ];
+
+        foreach (FrakPlacementRegistry::PLACEMENTS as $id => $placement) {
+            $options = $placement['options'] ?? [];
+            if ($options === []) {
+                continue;
+            }
+            foreach ($options as $key => $meta) {
+                $this->assertIsString($key, "Placement '{$id}' option key must be a string");
+                $this->assertNotSame('', $key, "Placement '{$id}' has an empty option key");
+                $this->assertIsArray($meta, "Placement '{$id}' option '{$key}' meta must be an array");
+
+                $this->assertArrayHasKey('type', $meta, "Option '{$id}.{$key}' is missing 'type'");
+                $this->assertContains($meta['type'], $allowed_types, "Option '{$id}.{$key}' has unknown type");
+                $this->assertArrayHasKey('label', $meta, "Option '{$id}.{$key}' is missing 'label'");
+                $this->assertArrayHasKey('default', $meta, "Option '{$id}.{$key}' is missing 'default'");
+
+                if ($meta['type'] === FrakPlacementRegistry::OPTION_TYPE_SELECT) {
+                    $this->assertArrayHasKey('choices', $meta, "Select option '{$id}.{$key}' is missing 'choices'");
+                    $this->assertIsArray($meta['choices'], "Select option '{$id}.{$key}' choices must be a map");
+                    $this->assertNotEmpty($meta['choices'], "Select option '{$id}.{$key}' must declare at least one choice");
+                    $this->assertArrayHasKey(
+                        $meta['default'],
+                        $meta['choices'],
+                        "Select option '{$id}.{$key}' default '{$meta['default']}' is not in its choices"
+                    );
+                }
+            }
         }
     }
 

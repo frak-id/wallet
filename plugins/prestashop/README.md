@@ -51,6 +51,17 @@ Three Frak web components are available: `<frak-button-share>`, `<frak-banner>`,
 
 Adding / removing a placement is a single edit in [`classes/FrakPlacementRegistry.php`](classes/FrakPlacementRegistry.php) plus a matching `hookXxx()` callback in [`frakintegration.php`](frakintegration.php) that delegates to `FrakDisplayDispatcher::dispatch()`.
 
+### Per-placement options
+
+Some auto-rendered placements expose a small set of merchant-tunable options on the configuration page (under the **Component Placements** section, next to each toggle). Available options today:
+
+| Placement | Option | Type | Choices / format | Default |
+| --- | --- | --- | --- | --- |
+| `share_product`, `share_cart` | Button style | select | `primary` / `secondary` / `none` | `secondary` |
+| `banner_top`, `banner_home` | Custom CSS class | text | letters, digits, spaces, dashes, underscores (max 200 chars) | (empty) |
+
+Submitted values are validated by `FrakPlacementRegistry::setState()` (select choices restricted to the schema; text inputs trimmed, length-capped, and regex-validated) and persisted alongside the enable/disable flags in the same bundled `FRAK_PLACEMENTS` Configuration row — one autoloaded row, one decode per request. The dispatcher forwards every resolved option as a renderer attribute on `<frak-button-share>` / `<frak-banner>` / `<frak-post-purchase>`, so adding a new merchant-tunable option is a single schema entry on the placement (declare `type` / `label` / `default` and — for selects — `choices`).
+
 ### Smarty function plugins
 
 Theme files and CMS pages can drop Frak components anywhere via three Smarty function plugins registered by the module:

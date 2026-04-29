@@ -34,22 +34,30 @@ class FrakDisplayDispatcher
             if (!FrakPlacementRegistry::isEnabled($id)) {
                 continue;
             }
+            // Merchant-tunable per-placement options (button style preset, banner
+            // CSS class) flow through the registry as a `{key: value}` map keyed
+            // by the camelCase renderer attribute. Splatting them into the attrs
+            // array means future option additions are zero-touch on this site —
+            // declare the schema entry on the placement and the dispatcher already
+            // forwards it.
+            $options = FrakPlacementRegistry::getOptions($id);
             switch ($placement['component']) {
                 case FrakPlacementRegistry::COMPONENT_BANNER:
-                    $output .= FrakComponentRenderer::banner([
+                    $output .= FrakComponentRenderer::banner(array_merge($options, [
                         'placement' => $placement['placement_attr'],
-                    ]);
+                    ]));
                     break;
                 case FrakPlacementRegistry::COMPONENT_SHARE_BUTTON:
-                    $output .= FrakComponentRenderer::shareButton([
+                    $output .= FrakComponentRenderer::shareButton(array_merge($options, [
                         'placement' => $placement['placement_attr'],
-                    ]);
+                    ]));
                     break;
                 case FrakPlacementRegistry::COMPONENT_POST_PURCHASE:
                     $output .= FrakOrderRender::postPurchase(
                         $module,
                         $params['order'] ?? null,
-                        $placement['placement_attr']
+                        $placement['placement_attr'],
+                        $options
                     );
                     break;
             }

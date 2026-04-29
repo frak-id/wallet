@@ -42,14 +42,16 @@
  *   5. Cron: generate `FRAK_CRON_TOKEN` if missing (existing tokens are
  *      preserved verbatim — rotating would break any merchant cron job
  *      already wired to the URL).
- *   6. Placements: seed every placement's enable flag in the bundled
- *      `FRAK_PLACEMENTS` Configuration row. `seedDefaults()` no-ops when
- *      the row already exists.
+ *   6. Placements: seed every placement's enable flag + option defaults
+ *      in the bundled `FRAK_PLACEMENTS` Configuration row.
+ *      `seedDefaults()` no-ops when the row already exists.
  *   7. Defensive sweep: any pre-1.0.1 dev shop carrying the unreleased
  *      per-placement `FRAK_PLACEMENT_*` rows has them folded into the
- *      bundled storage (preserves merchant choices) and the legacy rows
- *      deleted. Production v0.0.4 shops never had these rows, so the
- *      sweep is a no-op for them.
+ *      bundled storage (preserves merchant choices) via
+ *      `FrakPlacementRegistry::setState()` so the row lands in the
+ *      `{id: {enabled, options}}` shape; the legacy rows are deleted.
+ *      Production v0.0.4 shops never had these rows, so the sweep is a
+ *      no-op for them.
     *   8. Cleanup: wipe deprecated Configuration rows (modal i18n,
     *      share-button copy/style, floating-button toggles, webhook log
     *      ring) plus the now-obsolete `FRAK_SETTINGS_VERSION` row. The full
@@ -121,7 +123,7 @@ function upgrade_module_1_0_1($module)
     //    `displayFooter` was the legacy floating-button surface (removed).
     //    `actionOrderStatusUpdate` raced under multistore / high load —
     //    superseded by the post-commit variant, see `frakintegration.php`.
-    //    `displayHome` / `displayShoppingCart` were placement surfaces in an
+    //    `displayHome` were placement surfaces in an
     //    unreleased 1.0.1 dev iteration that never shipped — production
     //    v0.0.4 shops never had them, so the unregister is a no-op there;
     //    dev shops on intermediate builds have the stale rows cleaned up.
@@ -226,8 +228,14 @@ function upgrade_module_1_0_1($module)
     //    v0.0.4 shops never had these rows; dev shops that ran 1.0.x
     //    locally do — this sweep migrates their choices verbatim then
     //    deletes the legacy rows.
+    //
+    //    Writes go through `FrakPlacementRegistry::setState()` so the bundled
+    //    row lands in the new `{id: {enabled, options}}` shape — schema
+    //    defaults for any options declared on the placement are merged in
+    //    by the writer, so dev shops upgrading from a pre-options iteration
+    //    pick up sensible defaults without a separate pass.
     $stored_map = FrakPlacementRegistry::loadStoredMap();
-    $migrated = false;
+    $update_map = [];
     foreach (FrakPlacementRegistry::PLACEMENTS as $id => $placement) {
         $legacy_key = $placement['config_key'] ?? null;
         if ($legacy_key === null || !Configuration::hasKey($legacy_key)) {
@@ -235,19 +243,16 @@ function upgrade_module_1_0_1($module)
         }
         if (!array_key_exists($id, $stored_map)) {
             $row = Configuration::get($legacy_key);
-            $stored_map[$id] = ($row === false || $row === null || $row === '')
-                ? $placement['default']
-                : (bool) $row;
-            $migrated = true;
+            $update_map[$id] = [
+                'enabled' => ($row === false || $row === null || $row === '')
+                    ? $placement['default']
+                    : (bool) $row,
+            ];
         }
         Configuration::deleteByName($legacy_key);
     }
-    if ($migrated) {
-        $encoded = json_encode($stored_map);
-        if ($encoded === false) {
-            return false;
-        }
-        Configuration::updateValue(FrakPlacementRegistry::STORAGE_KEY, $encoded);
+    if (!empty($update_map) && !FrakPlacementRegistry::setState($update_map)) {
+        return false;
     }
 
     // 8. Wipe deprecated Configuration rows. Audit baseline:
@@ -279,24 +284,12 @@ function upgrade_module_1_0_1($module)
         Configuration::deleteByName($key);
     }
 
-    // 9. Register the admin Tab. Idempotent — skips when a row already exists
-    //    (e.g. on a partial upgrade re-run). Sits under Modules so the
-    //    operational tooling (queue health, drain queue, refresh merchant)
-    //    is one click away for daily ops, and gates per-employee access via
-    //    the standard Permissions panel.
-    if ((int) Tab::getIdFromClassName('AdminFrakIntegration') === 0) {
-        $tab = new Tab();
-        $tab->active = 1;
-        $tab->class_name = 'AdminFrakIntegration';
-        $tab->name = [];
-        foreach (Language::getLanguages(true) as $lang) {
-            $tab->name[$lang['id_lang']] = $module->l('Frak');
-        }
-        $tab->id_parent = (int) Tab::getIdFromClassName('AdminParentModulesSf');
-        $tab->module = $module->name;
-        if (!$tab->add()) {
-            return false;
-        }
+    // 9. Register the admin Tab via the shared helper on FrakInstaller, so
+    //    fresh installs (FrakInstaller::install) and v0.0.4 → v1.0.1
+    //    upgrades end up with byte-identical Tab rows. Idempotent — the
+    //    helper skips when the row already exists (partial-upgrade re-run).
+    if (!FrakInstaller::registerTab($module)) {
+        return false;
     }
 
     return true;

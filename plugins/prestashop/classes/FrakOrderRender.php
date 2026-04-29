@@ -67,13 +67,17 @@ class FrakOrderRender
      * Order object on these hooks, but the guard is cheap and keeps phpstan
      * happy).
      *
-     * @param Module $module    FrakIntegration instance — needed for
-     *                          `$module->display()` (Smarty wrapper) and
-     *                          `$module->context->smarty->assign()`.
-     * @param mixed  $order     Resolved Order object from the hook params.
-     * @param string $placement Placement identifier forwarded to the SDK.
+     * @param Module               $module    FrakIntegration instance — needed for
+     *                                        `$module->display()` (Smarty wrapper) and
+     *                                        `$module->context->smarty->assign()`.
+     * @param mixed                $order     Resolved Order object from the hook params.
+     * @param string               $placement Placement identifier forwarded to the SDK.
+     * @param array<string, mixed> $options   Merchant-tunable component attributes resolved
+     *                                        by {@see FrakPlacementRegistry::getOptions()}.
+     *                                        Empty for post-purchase today; the parameter is
+     *                                        accepted so future schema additions are zero-touch.
      */
-    public static function postPurchase(Module $module, $order, string $placement): string
+    public static function postPurchase(Module $module, $order, string $placement, array $options = []): string
     {
         if (!$order || !Validate::isLoadedObject($order)) {
             return '';
@@ -81,7 +85,7 @@ class FrakOrderRender
 
         $data = FrakOrderResolver::getPostPurchaseData($order);
 
-        $attrs = $data['context'] + ['placement' => $placement];
+        $attrs = array_merge($options, $data['context'], ['placement' => $placement]);
         if ($data['products'] !== null) {
             $products_json = json_encode($data['products'], FrakComponentRenderer::JSON_FLAGS);
             if (is_string($products_json)) {

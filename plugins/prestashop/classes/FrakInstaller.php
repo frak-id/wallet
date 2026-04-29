@@ -89,8 +89,12 @@ class FrakInstaller
         // (i18n, modal language, share-button copy/style) is now resolved by
         // the SDK against business.frak.id once the merchant is registered.
         FrakConfig::setShopName((string) Configuration::get('PS_SHOP_NAME'));
+        // `Module::$context` is `protected`, so reach it through the global
+        // singleton instead of `$module->context`. Both point at the same
+        // request-scoped instance; the protected accessor only exists for
+        // subclasses to share state with their hook handlers.
         FrakConfig::setLogoUrl(
-            $module->context->link->getMediaLink(_PS_IMG_ . Configuration::get('PS_LOGO'))
+            Context::getContext()->link->getMediaLink(_PS_IMG_ . Configuration::get('PS_LOGO'))
         );
 
         // Async webhook infrastructure: queue table + key/value cache table.
@@ -160,5 +164,49 @@ class FrakInstaller
         }
 
         return true;
+    }
+
+    /**
+     * Idempotent admin-Tab registration. Skips when a row already exists
+     * (partial-install retry) so re-running install() never duplicates the
+     * sidebar entry. Sits under Modules so the operational tooling (queue
+     * health, drain queue, refresh merchant) is one click away for daily
+     * ops, and gates per-employee access via PrestaShop's standard
+     * Permissions panel.
+     *
+     * Shared by {@see install()} and `upgrade/install-1.0.1.php` so fresh
+     * installs and v0.0.4 → v1.0.1 upgrades both end up with the same Tab
+     * row.
+     */
+    public static function registerTab(Module $module): bool
+    {
+        if ((int) Tab::getIdFromClassName('AdminFrakIntegration') !== 0) {
+            return true;
+        }
+        $tab = new Tab();
+        $tab->active = 1;
+        $tab->class_name = 'AdminFrakIntegration';
+        $tab->name = [];
+        foreach (Language::getLanguages(true) as $lang) {
+            $tab->name[$lang['id_lang']] = $module->l('Frak');
+        }
+        $tab->id_parent = (int) Tab::getIdFromClassName('AdminParentModulesSf');
+        $tab->module = $module->name;
+        return (bool) $tab->add();
+    }
+
+    /**
+     * Symmetric Tab teardown. Best-effort — a missing or already-deleted
+     * row is treated as success so a partially-installed module can still
+     * uninstall cleanly.
+     */
+    public static function unregisterTab(): bool
+    {
+        $id_tab = (int) Tab::getIdFromClassName('AdminFrakIntegration');
+        if ($id_tab === 0) {
+            return true;
+        }
+        $tab = new Tab($id_tab);
+        return (bool) $tab->delete();
     }
 }

@@ -114,10 +114,16 @@ class AdminFrakIntegrationController extends ModuleAdminController
      * its toggles inside. The grouping is computed here (rather than in the
      * template) so the Smarty file stays declarative.
      *
-     * Each placement entry carries its current enabled state alongside its
-     * static metadata. The enabled values are pulled from the in-memory
-     * placement map ({@see FrakPlacementRegistry::getEnabledMap()}) which
-     * is decoded from the bundled storage row exactly once per request.
+     * Each placement entry carries its current enabled state, the static
+     * metadata (label / description / hook / placement_attr), and a
+     * pre-resolved `options[]` list — each option entry is shaped for the
+     * template to render either a `<select>` (with pre-selected value) or an
+     * `<input type="text">` (with the current value). Resolution happens here
+     * so the template never reaches into the registry's option schema.
+     *
+     * Enabled values + option values are pulled from
+     * {@see FrakPlacementRegistry::getResolvedState()} which decodes the
+     * bundled storage row exactly once per request.
      *
      * @return array<string, array{label: string, items: array<int, array<string, mixed>>}>
      */
@@ -134,15 +140,16 @@ class AdminFrakIntegrationController extends ModuleAdminController
             $groups[$component] = ['label' => $label, 'items' => []];
         }
 
-        // Fetch the enabled map once — `isEnabled()` would re-decode it per
-        // call, this skips the loop overhead.
-        $enabled_map = FrakPlacementRegistry::getEnabledMap();
+        // Fetch the resolved state once — isEnabled() / getOptions() would
+        // re-decode it per call, this skips the loop overhead.
+        $state = FrakPlacementRegistry::getResolvedState();
 
         foreach (FrakPlacementRegistry::PLACEMENTS as $id => $placement) {
             $component = $placement['component'];
             if (!isset($groups[$component])) {
                 continue;
             }
+            $entry = $state[$id] ?? ['enabled' => $placement['default'], 'options' => []];
             $groups[$component]['items'][] = [
                 'id' => $id,
                 'config_key' => $placement['config_key'],
@@ -150,7 +157,12 @@ class AdminFrakIntegrationController extends ModuleAdminController
                 'description' => $this->l($placement['description']),
                 'hook' => $placement['hook'],
                 'placement_attr' => $placement['placement_attr'],
-                'enabled' => $enabled_map[$id] ?? $placement['default'],
+                'enabled' => $entry['enabled'],
+                'options' => $this->buildPlacementOptionInputs(
+                    $placement['config_key'],
+                    $placement['options'] ?? [],
+                    $entry['options']
+                ),
             ];
         }
 
@@ -162,12 +174,64 @@ class AdminFrakIntegrationController extends ModuleAdminController
         );
     }
 
+    /**
+     * Reshape a placement's option schema + resolved values into the
+     * template-ready list. Each entry carries the form input name (computed
+     * from the placement's `config_key` + a stable `__option__<key>` suffix
+     * so the controller can decode them on submit), the input type, the
+     * current value, the merchant-facing label / description, and — for
+     * `select` inputs — the choices map.
+     *
+     * Form input naming uses `__option__` (double underscore, separator
+     * matches the existing `__present` marker) so input names tokenise
+     * cleanly:
+     *   - `FRAK_PLACEMENT_SHARE_PRODUCT__present` → hidden marker
+     *   - `FRAK_PLACEMENT_SHARE_PRODUCT` → enable checkbox
+     *   - `FRAK_PLACEMENT_SHARE_PRODUCT__option__buttonStyle` → option input
+     *
+     * @param string                              $config_key   Placement form-name prefix.
+     * @param array<string, array<string, mixed>> $option_schema Schema from `PLACEMENTS[$id]['options']`.
+     * @param array<string, mixed>                $option_values Resolved values from `getResolvedState()`.
+     * @return array<int, array<string, mixed>>
+     */
+    private function buildPlacementOptionInputs(string $config_key, array $option_schema, array $option_values): array
+    {
+        $inputs = [];
+        foreach ($option_schema as $key => $meta) {
+            $type = (string) ($meta['type'] ?? '');
+            $allowed_types = [FrakPlacementRegistry::OPTION_TYPE_SELECT, FrakPlacementRegistry::OPTION_TYPE_TEXT];
+            if (!in_array($type, $allowed_types, true)) {
+                continue;
+            }
+            $value = $option_values[$key] ?? ($meta['default'] ?? '');
+            $entry = [
+                'name' => $config_key . '__option__' . $key,
+                'type' => $type,
+                'label' => $this->l((string) ($meta['label'] ?? $key)),
+                'description' => isset($meta['description']) ? $this->l((string) $meta['description']) : '',
+                'value' => $value,
+            ];
+            if ($type === FrakPlacementRegistry::OPTION_TYPE_SELECT) {
+                $choices = is_array($meta['choices'] ?? null) ? $meta['choices'] : [];
+                $entry['choices'] = [];
+                foreach ($choices as $choice_value => $choice_label) {
+                    $entry['choices'][] = [
+                        'value' => (string) $choice_value,
+                        'label' => $this->l((string) $choice_label),
+                    ];
+                }
+            }
+            $inputs[] = $entry;
+        }
+        return $inputs;
+    }
+
     public function postProcess()
     {
         if (Tools::isSubmit('submitFrakSettings')) {
             $this->processBrandFields();
             $this->processWebhookSecret();
-            $this->processPlacementToggles();
+            $this->processPlacements();
         }
 
         if (Tools::isSubmit('refreshFrakMerchant')) {
@@ -265,16 +329,19 @@ class AdminFrakIntegrationController extends ModuleAdminController
     }
 
     /**
-     * Persist placement on/off toggles from the rendered checkboxes. The form
-     * lists every registered placement; an unchecked checkbox is absent from
-     * `$_POST`, so we treat "missing" as "disabled" instead of "leave alone"
-     * — otherwise the merchant could never turn a placement off.
+     * Persist placement on/off toggles AND option values from the rendered
+     * form. The form lists every registered placement; an unchecked checkbox
+     * is absent from `$_POST`, so we treat "missing" as "disabled" instead of
+     * "leave alone" — otherwise the merchant could never turn a placement
+     * off. Option inputs are read off matching `__option__<key>` suffixes;
+     * unsubmitted options preserve their stored value (writer-side).
      *
-     * Writes go through {@see FrakPlacementRegistry::setEnabledMap()} which
-     * collapses every placement update into a single bundled-row write
-     * (single round-trip vs the N writes a per-row layout would need).
+     * Writes go through {@see FrakPlacementRegistry::setState()} which
+     * collapses every placement update (enabled flags + option values) into a
+     * single bundled-row write — one round-trip vs the N writes a per-row
+     * layout would need.
      */
-    private function processPlacementToggles(): void
+    private function processPlacements(): void
     {
         $updates = [];
         foreach (FrakPlacementRegistry::PLACEMENTS as $id => $placement) {
@@ -285,23 +352,56 @@ class AdminFrakIntegrationController extends ModuleAdminController
             if (!Tools::getIsset($form_key . '__present')) {
                 continue;
             }
-            $updates[$id] = (bool) Tools::getValue($form_key);
+            $update = ['enabled' => (bool) Tools::getValue($form_key)];
+
+            // Collect any option submissions for this placement. Schema-unknown
+            // keys are dropped by the registry's writer, but iterating the
+            // schema (instead of $_POST) keeps the controller honest — we never
+            // peek at form keys we did not render ourselves.
+            $option_schema = $placement['options'] ?? [];
+            if (!empty($option_schema)) {
+                $option_updates = [];
+                foreach ($option_schema as $option_key => $option_meta) {
+                    $form_option_key = $form_key . '__option__' . $option_key;
+                    if (!Tools::getIsset($form_option_key)) {
+                        continue;
+                    }
+                    $option_updates[$option_key] = Tools::getValue($form_option_key);
+                }
+                if (!empty($option_updates)) {
+                    $update['options'] = $option_updates;
+                }
+            }
+            $updates[$id] = $update;
         }
         if (empty($updates)) {
             return;
         }
-        $current = FrakPlacementRegistry::getEnabledMap();
+
+        // Skip the write when nothing actually changed — a noisy 'updated'
+        // confirmation on every Save would be confusing.
+        $current_state = FrakPlacementRegistry::getResolvedState();
         $changed = false;
-        foreach ($updates as $id => $value) {
-            if (($current[$id] ?? null) !== $value) {
+        foreach ($updates as $id => $update) {
+            $current_entry = $current_state[$id] ?? ['enabled' => null, 'options' => []];
+            if (array_key_exists('enabled', $update) && $current_entry['enabled'] !== $update['enabled']) {
                 $changed = true;
                 break;
+            }
+            if (!empty($update['options'])) {
+                foreach ($update['options'] as $option_key => $option_value) {
+                    $existing = $current_entry['options'][$option_key] ?? null;
+                    if ((string) $existing !== (string) $option_value) {
+                        $changed = true;
+                        break 2;
+                    }
+                }
             }
         }
         if (!$changed) {
             return;
         }
-        if (FrakPlacementRegistry::setEnabledMap($updates)) {
+        if (FrakPlacementRegistry::setState($updates)) {
             $this->confirmations[] = $this->l('Placement settings updated');
         }
     }
