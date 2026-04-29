@@ -98,10 +98,12 @@ The exact URL is shown on the module configuration page. Wire it into a 5-minute
 ```bash
 composer install                             # Install runtime + dev dependencies
 composer run cs                              # PSR-12 coding standard (phpcs)
-composer run analyse                         # Static analysis (phpstan)
+composer run analyse                         # Static analysis (phpstan vs. real PrestaShop 8.2.6)
 composer run test                            # Unit tests (phpunit)
 ./build.sh                                   # Package the module zip into dist/
 ```
+
+PHPStan runs against a real PrestaShop checkout. The `composer analyse` script clones `PrestaShop/PrestaShop@8.2.6` into `.cache/prestashop-core/` on first invocation (and runs `composer install --no-dev` inside that clone) so the analyser sees the actual `Module` / `Configuration` / `Tools` / `Db` / `Order` / … API surface via `prestashop/php-dev-tools`. Subsequent runs are fast — the cache is reused. To roll forward, bump the tag in `composer.json#ps-core:fetch` and run `composer ps-core:update`.
 
 The `test/docker-compose.yaml` file spins a local PrestaShop instance (PrestaShop + MySQL on `localhost:8080`) for manual smoke testing — see the demo credentials in the file.
 

@@ -1,7 +1,8 @@
+includes:
+    - vendor/prestashop/php-dev-tools/phpstan/ps-module-extension.neon
+
 parameters:
     level: 1
-    bootstrapFiles:
-        - phpstan-stubs.php
     paths:
         - frakintegration.php
         - classes
@@ -11,13 +12,12 @@ parameters:
     excludePaths:
         - vendor
         - test
+        - .cache
         - build (?)
         - dist (?)
-    # PrestaShop core surface is declared in `phpstan-stubs.php` (Module,
-    # ModuleAdminController, ModuleFrontController, FrontController,
-    # Configuration, Tools, Validate, Db, Order, Customer, Currency, Image,
-    # Tab, Language, PrestaShopLogger, Hook, Context, Link, Smarty, plus the
-    # `pSQL` global function and PS runtime constants). No `ignoreErrors`
-    # patterns are needed at level 0 — every PS reference resolves through
-    # the stubs. Future bumps to level 1+ may surface real type drift; fix
-    # at the call site rather than re-introducing broad ignore patterns.
+    # PrestaShop core surface comes from `prestashop/php-dev-tools` +
+    # `_PS_ROOT_DIR_` (set by the `composer analyse` script to a freshly cloned
+    # PrestaShop 8.1.7 checkout under `.cache/prestashop-core/`). The
+    # extension's `bootstrap.php` requires PS's composer autoload, which is
+    # why `composer ps-core:fetch` runs `composer install --no-dev` inside the
+    # cloned PS sources before phpstan starts.

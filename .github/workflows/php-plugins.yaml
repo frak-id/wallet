@@ -99,6 +99,14 @@ jobs:
       - uses: actions/checkout@v6
       - uses: shivammathur/setup-php@v2
         with: { php-version: '8.4', tools: 'composer:v2', coverage: none }
+      # Cache the cloned PrestaShop 8.2.6 checkout (sources + vendor) so
+      # subsequent runs skip the ~30 s clone + ~60 s `composer install` step.
+      # The cache key is pinned to the exact PS tag so a tag bump invalidates
+      # the cache automatically.
+      - uses: actions/cache@v4
+        with:
+          path: plugins/prestashop/.cache/prestashop-core
+          key: prestashop-core-8.2.6
       - run: composer install --no-interaction --prefer-dist
       - run: composer run analyse
 
