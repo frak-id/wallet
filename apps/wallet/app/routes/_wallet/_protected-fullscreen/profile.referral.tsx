@@ -1,6 +1,11 @@
-import { createFileRoute } from "@tanstack/react-router";
-import { ReferralPage } from "@/module/referral/component/ReferralPage";
+import { createFileRoute, Outlet } from "@tanstack/react-router";
 
-export const Route = createFileRoute("/_wallet/_protected/profile/referral")({
-    component: ReferralPage,
+export const Route = createFileRoute(
+    "/_wallet/_protected-fullscreen/profile/referral"
+)({
+    component: ReferralLayout,
 });
+
+function ReferralLayout() {
+    return <Outlet />;
+}
