@@ -712,6 +712,16 @@ interface Resources {
                 step4: "Enable recovery on-chain";
                 title: "Recovery setup";
             };
+            referral: {
+                enterCode: "Enter a referral code";
+                invite: {
+                    cta: "Generate my code";
+                    description: "Create your code and start sharing it with your loved ones to earn even more money.";
+                    title: "Invite friends";
+                };
+                menuLabel: "Referrals";
+                title: "Referrals";
+            };
             register: {
                 button: {
                     alreadyRegistered: "You already have a wallet on your device<br />Redirecting to the login page";

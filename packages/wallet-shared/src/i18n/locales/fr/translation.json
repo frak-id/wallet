@@ -94,6 +94,16 @@
             "lastConnection": "Dernière connexion",
             "currentDeviceConnected": "Connecté"
         },
+        "referral": {
+            "title": "Parrainages",
+            "menuLabel": "Parrainages",
+            "invite": {
+                "title": "Inviter des ami·e·s",
+                "description": "Crée ton code et commence à le partager à tes proches pour gagner encore plus d'argent.",
+                "cta": "Générer mon code"
+            },
+            "enterCode": "Entrer un code de parrainage"
+        },
         "transferToBank": "Transférer vers ma banque",
         "transferEmpty": {
             "title": "Tu n'as pas encore d'argent à transférer",

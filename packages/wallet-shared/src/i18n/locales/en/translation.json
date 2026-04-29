@@ -96,6 +96,16 @@
             "lastConnection": "Last connection",
             "currentDeviceConnected": "Connected"
         },
+        "referral": {
+            "title": "Referrals",
+            "menuLabel": "Referrals",
+            "invite": {
+                "title": "Invite friends",
+                "description": "Create your code and start sharing it with your loved ones to earn even more money.",
+                "cta": "Generate my code"
+            },
+            "enterCode": "Enter a referral code"
+        },
         "transferToBank": "Transfer to my bank",
         "transferEmpty": {
             "title": "You don't have any money to transfer yet",
