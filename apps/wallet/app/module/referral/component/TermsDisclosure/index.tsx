@@ -4,7 +4,7 @@ import * as styles from "./index.css";
 
 export function TermsDisclosure() {
     return (
-        <Text variant="caption" color="primary" align="center">
+        <Text as="p" variant="caption" color="primary" align="center">
             <Trans
                 i18nKey="wallet.referral.create.terms"
                 components={{

@@ -718,9 +718,14 @@ interface Resources {
                 create: {
                     autoGenerate: "Generate automatically";
                     description: "As soon as someone signs up with your code and places an order on one of our partner sites, you both earn money.";
+                    errorAlreadyActive: "You already have an active referral code.";
+                    errorCodeUnavailable: "This code is no longer available, please pick another one.";
+                    errorGeneric: "Something went wrong. Please try again.";
                     hint: "Pick 4 letters to generate your code.";
                     label: "Customize your code";
-                    placeholder: "e.g. LOLA";
+                    placeholder: "e.g. LOLA10";
+                    submitCta: "Validate my code";
+                    suggestionsLabel: "Choose your code";
                     terms: "By sharing or using a code, you agree to <termsLink>FRAK's terms and conditions</termsLink>.";
                     title: "My referral code";
                 };

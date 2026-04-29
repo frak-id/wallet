@@ -49,6 +49,15 @@ export {
     authenticatedBackendApi,
     authenticatedWalletApi,
 } from "./api/backendClient";
+export {
+    type ApiError,
+    type ApiErrorBody,
+    type ApiErrorKeyMap,
+    asApiError,
+    getErrorCode,
+    getErrorStatus,
+    resolveApiErrorKey,
+} from "./api/errors";
 // Components
 export { CodeInput } from "./component/CodeInput";
 export {

@@ -7,100 +7,256 @@ import { Text } from "@frak-labs/design-system/components/Text";
 import {
     CheckCircleFilledIcon,
     CloseIcon,
+    SparklesIcon,
 } from "@frak-labs/design-system/icons";
-import { useForm } from "react-hook-form";
+import {
+    resolveApiErrorKey,
+    useIssueReferralCode,
+    useSuggestReferralCodes,
+} from "@frak-labs/wallet-shared";
+import { type ChangeEvent, type FormEvent, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { OrDivider } from "../OrDivider";
 import * as styles from "./index.css";
 
-const CODE_PATTERN = /^[a-zA-Z]{4}$/;
+const STEM_PATTERN = /^[a-zA-Z]{4}$/;
 
-type FormInput = {
-    code: string;
+/**
+ * i18n message keys per backend `HttpError.code`. Backend's `issue`
+ * route returns 409 for two distinct conditions — `ALREADY_ACTIVE`
+ * (this user already has a code) vs. `CODE_UNAVAILABLE` (the picked
+ * suggestion was just claimed by someone else). Map them separately so
+ * the user gets actionable guidance instead of a generic conflict.
+ */
+const ERROR_KEY_MAP = {
+    byCode: {
+        ALREADY_ACTIVE: "wallet.referral.create.errorAlreadyActive",
+        CODE_UNAVAILABLE: "wallet.referral.create.errorCodeUnavailable",
+    },
+    fallback: "wallet.referral.create.errorGeneric",
+} as const;
+
+type ReferralCodeFormProps = {
+    /** Called with the issued 6-char code once the backend confirms creation. */
+    onIssued?: (code: string) => void;
 };
 
-export function ReferralCodeForm() {
+/**
+ * Two-stage code-creation form:
+ *   - Stage 1 — user types a 4-letter stem and clicks "Générer mon code".
+ *     Fetches a suggestion batch from the backend and shows the picker.
+ *     The "ou" divider + "Générer automatiquement" pill below let the
+ *     user skip the stem flow entirely.
+ *   - Stage 2 — suggestions are visible. Submit button becomes
+ *     "Valider mon code" and `issue`s the picked code. The OR divider +
+ *     auto-generate pill are hidden so the user has only one path forward.
+ *     Clicking the X on the input rewinds to stage 1.
+ */
+export function ReferralCodeForm({ onIssued }: ReferralCodeFormProps) {
     const { t } = useTranslation();
 
-    const { register, handleSubmit, watch, setValue } = useForm<FormInput>({
-        mode: "onChange",
-        defaultValues: { code: "" },
+    const [stem, setStem] = useState("");
+    const [selectedCode, setSelectedCode] = useState<string | null>(null);
+
+    const isValidStem = STEM_PATTERN.test(stem);
+
+    const suggest = useSuggestReferralCodes();
+    const suggestions = suggest.data?.suggestions ?? [];
+    const hasSuggestions = suggestions.length > 0;
+
+    // Single `issue` mutation shared by both buttons. `issueSource` tells
+    // us which one fired so we can show the spinner only on the active
+    // button (without spawning two mutation instances that share the same
+    // `onSuccess`).
+    const [issueSource, setIssueSource] = useState<"submit" | "auto" | null>(
+        null
+    );
+    const issue = useIssueReferralCode({
+        mutations: {
+            onSuccess: ({ code }) => {
+                setIssueSource(null);
+                onIssued?.(code);
+            },
+            onError: () => setIssueSource(null),
+        },
     });
 
-    const code = watch("code") ?? "";
-    const hasValue = code.length > 0;
-    const isValid = CODE_PATTERN.test(code);
+    const inputValue = selectedCode ?? stem;
+    const hasValue = inputValue.length > 0;
+
+    const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
+        if (hasSuggestions) return; // input is read-only once suggestions render
+        setStem(e.target.value);
+    };
+
+    const handleClear = () => {
+        setStem("");
+        setSelectedCode(null);
+        setIssueSource(null);
+        suggest.reset();
+        issue.reset();
+    };
+
+    const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
+        e.preventDefault();
+        if (hasSuggestions) {
+            // Stage 2: issue the code the user picked.
+            if (!selectedCode) return;
+            setIssueSource("submit");
+            issue.mutate({ code: selectedCode });
+        } else {
+            // Stage 1: ask the backend for suggestions from the typed stem.
+            if (!isValidStem) return;
+            suggest.mutate({ stem });
+        }
+    };
+
+    const handleAutoGenerate = () => {
+        setIssueSource("auto");
+        issue.mutate({});
+    };
+
+    const isAnyMutationPending = suggest.isPending || issue.isPending;
+    const submitDisabled = hasSuggestions
+        ? !selectedCode || isAnyMutationPending
+        : !isValidStem || isAnyMutationPending;
+    const submitLoading =
+        suggest.isPending || (issue.isPending && issueSource === "submit");
+    const autoLoading = issue.isPending && issueSource === "auto";
+    const submitLabel = hasSuggestions
+        ? t("wallet.referral.create.submitCta")
+        : t("wallet.referral.invite.cta");
+
+    const error = suggest.error ?? issue.error;
+    const errorMessageKey = resolveApiErrorKey(error, ERROR_KEY_MAP);
 
     return (
-        <form
-            onSubmit={handleSubmit(() => {
-                // TODO: persist code and navigate to next referral step
-            })}
-        >
-            <Stack space="xs">
-                <Box className={styles.labelRow}>
-                    <Text
-                        as="label"
-                        variant="bodySmall"
-                        weight="medium"
-                        color="secondary"
-                    >
-                        {t("wallet.referral.create.label")}
-                    </Text>
-                </Box>
-                <Input
-                    variant="bare"
-                    length="big"
-                    aria-label={t("wallet.referral.create.label")}
-                    placeholder={t("wallet.referral.create.placeholder")}
-                    maxLength={4}
-                    autoCapitalize="none"
-                    autoComplete="off"
-                    autoCorrect="off"
-                    spellCheck={false}
-                    rightSection={
-                        hasValue ? (
-                            <Box
-                                as="button"
-                                type="button"
-                                aria-label={t("common.clear")}
-                                className={styles.clearButton}
-                                onClick={() =>
-                                    setValue("code", "", {
-                                        shouldValidate: true,
-                                    })
-                                }
-                            >
-                                <CloseIcon />
-                            </Box>
-                        ) : undefined
-                    }
-                    {...register("code", {
-                        pattern: CODE_PATTERN,
-                    })}
-                />
-                <Box className={styles.hintRow}>
-                    <Inline space="xxs" alignY="center">
-                        {isValid ? (
-                            <CheckCircleFilledIcon
-                                width={12}
-                                height={12}
-                                className={styles.checkIcon}
-                            />
-                        ) : null}
-                        <Text variant="caption" color="tertiary">
-                            {t("wallet.referral.create.hint")}
+        <form onSubmit={handleSubmit}>
+            <Stack space="m">
+                <Stack space="xs">
+                    <Box className={styles.labelRow}>
+                        <Text
+                            as="label"
+                            variant="bodySmall"
+                            weight="medium"
+                            color="secondary"
+                        >
+                            {t("wallet.referral.create.label")}
                         </Text>
-                    </Inline>
-                </Box>
+                    </Box>
+                    <Input
+                        variant="bare"
+                        length="big"
+                        aria-label={t("wallet.referral.create.label")}
+                        placeholder={t("wallet.referral.create.placeholder")}
+                        autoCapitalize="none"
+                        autoComplete="off"
+                        autoCorrect="off"
+                        spellCheck={false}
+                        value={inputValue}
+                        readOnly={hasSuggestions}
+                        onChange={handleChange}
+                        rightSection={
+                            hasValue ? (
+                                <Box
+                                    as="button"
+                                    type="button"
+                                    aria-label={t("common.clear")}
+                                    className={styles.clearButton}
+                                    onClick={handleClear}
+                                >
+                                    <CloseIcon />
+                                </Box>
+                            ) : undefined
+                        }
+                    />
+                    <Box className={styles.hintRow}>
+                        <Inline space="xxs" alignY="center">
+                            {isValidStem ? (
+                                <CheckCircleFilledIcon
+                                    width={12}
+                                    height={12}
+                                    className={styles.checkIcon}
+                                />
+                            ) : null}
+                            <Text variant="caption" color="tertiary">
+                                {t("wallet.referral.create.hint")}
+                            </Text>
+                        </Inline>
+                    </Box>
+                </Stack>
+
+                {hasSuggestions ? (
+                    <Stack space="xs">
+                        <Box className={styles.labelRow}>
+                            <Text
+                                variant="bodySmall"
+                                weight="medium"
+                                color="secondary"
+                            >
+                                {t("wallet.referral.create.suggestionsLabel")}
+                            </Text>
+                        </Box>
+                        <Box as="div" className={styles.suggestionList}>
+                            {suggestions.map((suggestion) => {
+                                const isSelected = suggestion === selectedCode;
+                                return (
+                                    <Box
+                                        key={suggestion}
+                                        as="button"
+                                        type="button"
+                                        aria-pressed={isSelected}
+                                        className={`${styles.suggestionPill}${
+                                            isSelected
+                                                ? ` ${styles.suggestionPillSelected}`
+                                                : ""
+                                        }`}
+                                        onClick={() =>
+                                            setSelectedCode(suggestion)
+                                        }
+                                    >
+                                        {suggestion}
+                                    </Box>
+                                );
+                            })}
+                        </Box>
+                    </Stack>
+                ) : null}
+
                 <Button
                     type="submit"
                     variant="primary"
                     size="large"
                     width="full"
-                    disabled={!isValid}
+                    disabled={submitDisabled}
+                    loading={submitLoading}
                 >
-                    {t("wallet.referral.invite.cta")}
+                    {submitLabel}
                 </Button>
+
+                {hasSuggestions ? null : (
+                    <>
+                        <OrDivider />
+                        <Button
+                            type="button"
+                            variant="secondary"
+                            size="small"
+                            width="full"
+                            disabled={isAnyMutationPending}
+                            loading={autoLoading}
+                            onClick={handleAutoGenerate}
+                        >
+                            {t("wallet.referral.create.autoGenerate")}
+                            <SparklesIcon />
+                        </Button>
+                    </>
+                )}
+
+                {errorMessageKey ? (
+                    <Text variant="caption" color="error" align="center">
+                        {t(errorMessageKey)}
+                    </Text>
+                ) : null}
             </Stack>
         </form>
     );

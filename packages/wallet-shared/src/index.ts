@@ -16,6 +16,8 @@ export * from "./pairing";
 export { setupBigIntSerialization } from "./polyfills/bigint-serialization";
 // Providers
 export * from "./providers";
+// Referral
+export * from "./referral";
 // Sharing
 export * from "./sharing";
 export * from "./stores/authenticationStore";

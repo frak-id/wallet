@@ -1,18 +1,43 @@
 import { Box } from "@frak-labs/design-system/components/Box";
-import { Button } from "@frak-labs/design-system/components/Button";
 import { Stack } from "@frak-labs/design-system/components/Stack";
 import { Text } from "@frak-labs/design-system/components/Text";
-import { SparklesIcon } from "@frak-labs/design-system/icons";
+import { referralKey, useReferralStatus } from "@frak-labs/wallet-shared";
+import { useQueryClient } from "@tanstack/react-query";
+import { useNavigate } from "@tanstack/react-router";
+import { useCallback, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { Back } from "@/module/common/component/Back";
 import { Title } from "@/module/common/component/Title";
-import { OrDivider } from "../OrDivider";
 import { ReferralCodeForm } from "../ReferralCodeForm";
 import { TermsDisclosure } from "../TermsDisclosure";
 import * as styles from "./index.css";
 
 export function CreateReferralCodePage() {
     const { t } = useTranslation();
+    const queryClient = useQueryClient();
+    const navigate = useNavigate();
+
+    const { data: status } = useReferralStatus();
+    const willRedirect = !!status?.ownedCode;
+
+    useEffect(() => {
+        if (willRedirect) {
+            navigate({ to: "/profile/referral", replace: true });
+        }
+    }, [willRedirect, navigate]);
+
+    const onIssued = useCallback(
+        async (_code: string) => {
+            // TODO: navigate to a confirmation screen showing the issued code.
+            await queryClient.invalidateQueries({
+                queryKey: referralKey.status(),
+            });
+            navigate({ to: "/profile/referral" });
+        },
+        [queryClient, navigate]
+    );
+
+    if (willRedirect) return null;
 
     return (
         <Stack space="m" className={styles.page}>
@@ -23,20 +48,7 @@ export function CreateReferralCodePage() {
             <Text variant="body" color="secondary">
                 {t("wallet.referral.create.description")}
             </Text>
-            <ReferralCodeForm />
-            <OrDivider />
-            <Button
-                type="button"
-                variant="secondary"
-                size="small"
-                width="full"
-                onClick={() => {
-                    // TODO: auto-generate a 4-letter code
-                }}
-            >
-                {t("wallet.referral.create.autoGenerate")}
-                <SparklesIcon />
-            </Button>
+            <ReferralCodeForm onIssued={onIssued} />
             <Box className={styles.disclosure}>
                 <TermsDisclosure />
             </Box>
