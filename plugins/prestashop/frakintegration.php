@@ -48,8 +48,8 @@ class FrakIntegration extends Module
         $this->author = 'Frak';
         $this->need_instance = 0;
         $this->ps_versions_compliancy = [
-            'min' => '1.7',
-            'max' => _PS_VERSION_
+            'min' => '8.1.0',
+            'max' => _PS_VERSION_,
         ];
         $this->bootstrap = true;
 
@@ -93,16 +93,16 @@ class FrakIntegration extends Module
         Configuration::updateValue('FRAK_SHOP_NAME', Configuration::get('PS_SHOP_NAME'));
         Configuration::updateValue('FRAK_LOGO_URL', $this->context->link->getMediaLink(_PS_IMG_ . Configuration::get('PS_LOGO')));
 
-        // Async webhook infrastructure: queue + cache tables + per-shop cron
-        // token. Both tables must be in place before any order status
-        // transition can happen, otherwise enqueue() / merchant resolution /
-        // the cron URL would silently fail. Schema lives in
-        // `sql/install.php` so the install lifecycle is discoverable from
-        // the standard PrestaShop module layout. The cron token gates the
-        // front controller via `hash_equals`; rotating it would break any
-        // merchant cron job already wired against the displayed URL, so the
-        // value is generated only when missing — keeps re-installs after a
-        // partial uninstall safe.
+        // Async webhook infrastructure: queue table (raw SQL via
+        // sql/install.php) + Symfony Cache + Lock tables (provisioned
+        // through their own DBAL adapter `createTable()` calls). Schema
+        // must be in place before any order status transition can happen,
+        // otherwise enqueue() / merchant resolution / the cron URL would
+        // silently fail. The cron token gates the front controller via
+        // `hash_equals`; rotating it would break any merchant cron job
+        // already wired against the displayed URL, so the value is
+        // generated only when missing — keeps re-installs after a partial
+        // uninstall safe.
         // `$sql` is populated by the included file. Declared here so
         // phpstan can see the contract across the include boundary.
         $sql = [];
@@ -112,6 +112,7 @@ class FrakIntegration extends Module
                 return false;
             }
         }
+        FrakDb::createInfrastructureTables();
         if ((string) Configuration::get('FRAK_CRON_TOKEN') === '') {
             Configuration::updateValue('FRAK_CRON_TOKEN', bin2hex(random_bytes(32)));
         }
@@ -144,20 +145,22 @@ class FrakIntegration extends Module
         Configuration::deleteByName('FRAK_SETTINGS_VERSION');
         Configuration::deleteByName('FRAK_CRON_TOKEN');
         // Pre-1.0.1 dev-only Configuration rows — the resolver reads from
-        // the `frak_cache` table now, but we still sweep these so a dev
+        // the Symfony Cache pool now, but we still sweep these so a dev
         // shop that ran an unreleased iteration of the module locally
         // doesn't leave orphaned rows behind.
         Configuration::deleteByName(FrakMerchantResolver::LEGACY_CONFIG_KEY);
         Configuration::deleteByName(FrakMerchantResolver::LEGACY_NEGATIVE_CACHE_KEY);
         FrakPlacementRegistry::clearAll();
-        // Schema teardown lives in `sql/uninstall.php` for symmetry with install.
-        // SQL errors are swallowed: uninstall is best-effort and PrestaShop already
-        // truncated `ps_hook_module` via `parent::uninstall()` regardless.
+        // Schema teardown: webhook queue via sql/uninstall.php, Symfony
+        // Cache + Lock tables via FrakDb. SQL errors are swallowed:
+        // uninstall is best-effort and PrestaShop already truncated
+        // `ps_hook_module` via `parent::uninstall()` regardless.
         $sql = [];
         include __DIR__ . '/sql/uninstall.php';
         foreach ($sql as $query) {
             Db::getInstance()->execute($query);
         }
+        FrakDb::dropInfrastructureTables();
         return true;
     }
 
@@ -176,7 +179,7 @@ class FrakIntegration extends Module
     {
         // Single batched read so we touch the autoload cache once. The brand
         // pair is the only Configuration data the front-office head needs;
-        // everything else lives in the bundled placement row or `frak_cache`.
+        // everything else lives in the bundled placement row or the Symfony Cache pool.
         $config = Configuration::getMultiple(['FRAK_SHOP_NAME', 'FRAK_LOGO_URL', 'PS_SHOP_NAME']);
         $shop_name = ($config['FRAK_SHOP_NAME'] ?? '') ?: ($config['PS_SHOP_NAME'] ?? '');
         $logo_url = $config['FRAK_LOGO_URL'] ?? '';

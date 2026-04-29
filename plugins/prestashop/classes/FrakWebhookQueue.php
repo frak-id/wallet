@@ -21,6 +21,16 @@
  *     and a per-row attempt counter; both are awkward to model in a JSON
  *     blob.
  *
+ * Why Doctrine DBAL instead of `Db::getInstance()`:
+ *   - DBAL parameterised queries replace the manual `pSQL()` plumbing so
+ *     SQL injection regressions are structurally precluded — the type
+ *     checker enforces that user-supplied data goes through bound params.
+ *   - Cleaner result hydration: `fetchAllAssociative()` /
+ *     `fetchAssociative()` return well-typed array shapes.
+ *   - Single shared connection with the Symfony Cache + Lock infra
+ *     ({@see FrakDb::connection()}), so the per-request DB connection
+ *     count stays at PS native + 1.
+ *
  * Backoff schedule mirrors the Magento sister plugin
  * (`plugins/magento/Model/Retry/CronRetry.php`): 5 m, 15 m, 1 h, 6 h, 24 h,
  * with `MAX_ATTEMPTS = 5`. Failures past the cap transition to `failed` and
@@ -54,7 +64,9 @@ class FrakWebhookQueue
 
     /**
      * Enqueue a failed delivery for retry. The row starts in `pending` state
-     * with `next_retry_at = NOW()` so the next cron tick picks it up.
+     * with `next_retry_at = NOW() + BACKOFF_SECONDS[0]` so the cron drainer
+     * picks it up after the first backoff window — the synchronous call from
+     * the hook already counts as one attempt.
      *
      * @param int    $order_id Source PrestaShop order id (idempotency anchor).
      * @param string $status   Mapped Frak status: pending|confirmed|cancelled|refunded.
@@ -66,18 +78,16 @@ class FrakWebhookQueue
      */
     public static function enqueue(int $order_id, string $status, string $token, string $error = ''): bool
     {
-        return (bool) Db::getInstance()->insert(self::TABLE, [
+        $affected = FrakDb::connection()->insert(_DB_PREFIX_ . self::TABLE, [
             'id_order' => $order_id,
-            'status' => pSQL($status),
-            'token' => pSQL($token),
+            'status' => $status,
+            'token' => $token,
             'attempts' => 0,
-            // The synchronous call from the hook already counts as one
-            // attempt; the cron drainer should re-try after the first
-            // backoff window (5 m) rather than retry immediately.
             'next_retry_at' => date('Y-m-d H:i:s', time() + self::BACKOFF_SECONDS[0]),
-            'last_error' => pSQL(self::truncateError($error)),
+            'last_error' => self::truncateError($error),
             'state' => self::STATE_PENDING,
         ]);
+        return $affected > 0;
     }
 
     /**
@@ -89,15 +99,17 @@ class FrakWebhookQueue
      */
     public static function due(int $limit = 50): array
     {
-        $sql = 'SELECT * FROM `' . _DB_PREFIX_ . self::TABLE . '`
-            WHERE `state` = "' . pSQL(self::STATE_PENDING) . '"
-              AND `next_retry_at` <= NOW()
-              AND `attempts` < ' . (int) self::MAX_ATTEMPTS . '
-            ORDER BY `next_retry_at` ASC
-            LIMIT ' . max(1, $limit);
+        $sql = 'SELECT * FROM `' . _DB_PREFIX_ . self::TABLE . '`'
+            . ' WHERE `state` = :state'
+            . ' AND `next_retry_at` <= NOW()'
+            . ' AND `attempts` < :max_attempts'
+            . ' ORDER BY `next_retry_at` ASC'
+            . ' LIMIT ' . max(1, $limit);
 
-        $rows = Db::getInstance()->executeS($sql);
-        return is_array($rows) ? $rows : [];
+        return FrakDb::connection()->fetchAllAssociative($sql, [
+            'state' => self::STATE_PENDING,
+            'max_attempts' => self::MAX_ATTEMPTS,
+        ]);
     }
 
     /**
@@ -105,10 +117,12 @@ class FrakWebhookQueue
      */
     public static function markSuccess(int $id): bool
     {
-        return (bool) Db::getInstance()->update(self::TABLE, [
-            'state' => self::STATE_SUCCESS,
-            'last_error' => null,
-        ], '`id_frak_webhook_queue` = ' . (int) $id);
+        $affected = FrakDb::connection()->update(
+            _DB_PREFIX_ . self::TABLE,
+            ['state' => self::STATE_SUCCESS, 'last_error' => null],
+            ['id_frak_webhook_queue' => $id]
+        );
+        return $affected > 0;
     }
 
     /**
@@ -126,12 +140,17 @@ class FrakWebhookQueue
         $is_final = $attempts >= self::MAX_ATTEMPTS;
         $delay = self::BACKOFF_SECONDS[min($attempts - 1, count(self::BACKOFF_SECONDS) - 1)];
 
-        return (bool) Db::getInstance()->update(self::TABLE, [
-            'attempts' => $attempts,
-            'state' => $is_final ? self::STATE_FAILED : self::STATE_PENDING,
-            'next_retry_at' => date('Y-m-d H:i:s', time() + $delay),
-            'last_error' => pSQL(self::truncateError($error)),
-        ], '`id_frak_webhook_queue` = ' . (int) $id);
+        $affected = FrakDb::connection()->update(
+            _DB_PREFIX_ . self::TABLE,
+            [
+                'attempts' => $attempts,
+                'state' => $is_final ? self::STATE_FAILED : self::STATE_PENDING,
+                'next_retry_at' => date('Y-m-d H:i:s', time() + $delay),
+                'last_error' => self::truncateError($error),
+            ],
+            ['id_frak_webhook_queue' => $id]
+        );
+        return $affected > 0;
     }
 
     /**
@@ -174,15 +193,18 @@ class FrakWebhookQueue
             'last_error_at' => null,
         ];
 
-        $db = Db::getInstance();
+        $conn = FrakDb::connection();
         $table = _DB_PREFIX_ . self::TABLE;
 
-        $rows = $db->executeS(
-            'SELECT `state`, COUNT(*) AS `cnt`, MIN(`next_retry_at`) AS `oldest`'
-            . ' FROM `' . $table . '`'
-            . ' GROUP BY `state`'
-        );
-        if (!is_array($rows)) {
+        try {
+            $rows = $conn->fetchAllAssociative(
+                'SELECT `state`, COUNT(*) AS `cnt`, MIN(`next_retry_at`) AS `oldest`'
+                . ' FROM `' . $table . '`'
+                . ' GROUP BY `state`'
+            );
+        } catch (\Doctrine\DBAL\Exception $e) {
+            // Table missing or other schema-level failure — return the
+            // zero-state snapshot so the admin panel still renders.
             return $defaults;
         }
 
@@ -205,9 +227,9 @@ class FrakWebhookQueue
         }
 
         // Most recent failure (parked or pending) for the admin error
-        // surface. Joins on `last_error IS NOT NULL` so successful retries
+        // surface. Filter on `last_error IS NOT NULL` so successful retries
         // (which clear `last_error` via `markSuccess`) are skipped.
-        $latest = $db->getRow(
+        $latest = $conn->fetchAssociative(
             'SELECT `last_error`, `updated_at`'
             . ' FROM `' . $table . '`'
             . ' WHERE `last_error` IS NOT NULL AND `last_error` <> ""'

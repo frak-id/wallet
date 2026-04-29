@@ -29,12 +29,14 @@
  *      every distinct hook in `FrakPlacementRegistry::distinctHooks()` so
  *      existing installs gain the auxiliary placement surfaces (`displayTop`,
  *      `displayHome`, `displayShoppingCart`, `displayOrderDetail`).
- *   3. Schema: provision the `frak_webhook_queue` and `frak_cache` tables
- *      via `sql/install.php` (CREATE TABLE IF NOT EXISTS — safe re-entry
- *      on partial upgrades). `frak_cache` backs {@see FrakCache} and
- *      replaces the autoloaded `FRAK_MERCHANT` / negative-cache
- *      Configuration rows the resolver previously bloated `ps_configuration`
- *      with.
+    *   3. Schema: provision the `frak_webhook_queue` table via
+    *      `sql/install.php` (CREATE TABLE IF NOT EXISTS — safe re-entry on
+    *      partial upgrades), and provision the Symfony Cache / Lock tables
+    *      (`frak_cache_items`, `frak_lock_keys`) via
+    *      {@see FrakDb::createInfrastructureTables()}. The cache backs
+    *      {@see FrakMerchantResolver} and replaces the autoloaded
+    *      `FRAK_MERCHANT` / negative-cache Configuration rows the resolver
+    *      previously bloated `ps_configuration` with.
  *   4. Cron: generate `FRAK_CRON_TOKEN` if missing (existing tokens are
  *      preserved verbatim — rotating would break any merchant cron job
  *      already wired to the URL).
@@ -100,7 +102,7 @@ function upgrade_module_1_0_1($module)
         $module->registerHook($hook);
     }
 
-    // 3. Provision the webhook retry queue + cache tables. Idempotent —
+    // 3. Provision the webhook retry queue table. Idempotent —
     //    `sql/install.php` uses `CREATE TABLE IF NOT EXISTS`, so re-running
     //    on a partial upgrade is a no-op.
     $sql = [];
@@ -110,6 +112,10 @@ function upgrade_module_1_0_1($module)
             return false;
         }
     }
+    // Provision the Symfony Cache + Lock tables via their own DBAL
+    // `createTable()` adapters. Both wrap the underlying CREATE TABLE in
+    // an IF NOT EXISTS guard so re-runs on partial upgrades are no-ops.
+    FrakDb::createInfrastructureTables();
 
     // 3b. Defensive index addition. `CREATE TABLE IF NOT EXISTS` is a
     //     no-op on shops that already provisioned `frak_webhook_queue`
@@ -130,6 +136,16 @@ function upgrade_module_1_0_1($module)
             . ' ADD KEY `idx_updated` (`updated_at`)'
         );
     }
+
+    // 3c. Defensive sweep of the legacy `frak_cache` table. Only present
+    //     on dev shops that ran a pre-1.0.1 iteration of the module; the
+    //     migrator now uses Symfony Cache (`frak_cache_items`) + Symfony
+    //     Lock (`frak_lock_keys`) so the homegrown table is dead weight.
+    //     `DROP TABLE IF EXISTS` keeps this idempotent on production
+    //     shops that never had it.
+    Db::getInstance()->execute(
+        'DROP TABLE IF EXISTS `' . _DB_PREFIX_ . 'frak_cache`'
+    );
 
     // 4. Generate the cron token if missing. Existing tokens are preserved
     //    verbatim — rotating would invalidate any cron job the merchant has
@@ -176,14 +192,14 @@ function upgrade_module_1_0_1($module)
     }
 
     // 7. Defensive sweep: drop pre-1.0.1 merchant cache Configuration
-    //    rows. The resolver now reads from `frak_cache:merchant:{host}` /
-    //    `frak_cache:merchant_unresolved:{host}` — a fresh `getRecord()`
-    //    after the upgrade re-resolves and writes to the new backing
-    //    store. Skipping the data migration is safe because merchant
-    //    UUIDs are immutable per domain (no risk of a different id
-    //    resolving for the same host) and the resolver pays one HTTP
-    //    round-trip on the first miss. As with step 6, production v0.0.4
-    //    shops never had these rows.
+    //    rows. The resolver now reads from the Symfony Cache pool
+    //    (`frak_cache_items` table) — a fresh `getRecord()` after the
+    //    upgrade re-resolves and writes to the new backing store.
+    //    Skipping the data migration is safe because merchant UUIDs are
+    //    immutable per domain (no risk of a different id resolving for
+    //    the same host) and the resolver pays one HTTP round-trip on the
+    //    first miss. As with step 6, production v0.0.4 shops never had
+    //    these rows.
     Configuration::deleteByName('FRAK_MERCHANT');
     Configuration::deleteByName('FRAK_MERCHANT_UNRESOLVED_AT');
 

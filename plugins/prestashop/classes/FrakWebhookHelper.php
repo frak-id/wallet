@@ -20,16 +20,16 @@
  *   - {@see send()} — single-shot, used by `hookActionOrderStatusPostUpdate`
  *     and the unit tests. Takes an optional pre-loaded `Order` so the hook
  *     handler doesn't have to round-trip the DB twice.
- *   - {@see sendBatch()} — parallel via `curl_multi_*`, used by the cron
- *     drainer. 25 sequential 2 s requests collapse to one ~2 s
- *     `curl_multi_select` window, which is the difference between an
- *     overlapping cron run and a single tick that fits inside the 5-min
- *     window.
+ *   - {@see sendBatch()} — parallel via Symfony HttpClient's `stream()`,
+ *     used by the cron drainer. 25 sequential 2 s requests collapse to a
+ *     single `stream()` window which fans out via the underlying transport
+ *     (HTTP/2 multiplexing where supported, curl_multi otherwise).
  *
- * Per-request memo: secret + webhook URL are looked up at most once via
- * `self::$secretCache` / `self::$urlCache`. The cron drainer's
- * 25-rows-per-tick loop now hits `Configuration::get('FRAK_WEBHOOK_SECRET')`
- * exactly once instead of once per row.
+ * Per-request memo: secret + webhook URL + HttpClient instance are looked
+ * up at most once via `self::$secretCache` / `self::$urlCache` /
+ * `self::$client`. The cron drainer's 25-rows-per-tick loop hits
+ * `Configuration::get('FRAK_WEBHOOK_SECRET')` exactly once instead of once
+ * per row.
  *
  * Delivery logs go through {@see FrakLogger} — the buffered file logger —
  * so the previous severity-1 spam on the order-status hook ("Triggered" /
@@ -41,8 +41,6 @@ class FrakWebhookHelper
     private const PLATFORM_SEGMENT = 'custom';
     /** Tight per-request timeout: the hook caller absorbs this latency on the merchant checkout path. */
     private const REQUEST_TIMEOUT = 5;
-    /** Connect timeout kept tighter than the request timeout to fail fast on dead backends. */
-    private const CONNECT_TIMEOUT = 3;
 
     /**
      * Per-request memo for `Configuration::get('FRAK_WEBHOOK_SECRET')`.
@@ -58,10 +56,19 @@ class FrakWebhookHelper
     private static ?string $urlCache = null;
 
     /**
+     * Shared HttpClient instance. Built once per request — the underlying
+     * transport (curl extension when available, PHP streams otherwise)
+     * pools connections internally, so reusing the same client across
+     * single-shot sends and batch dispatches lets DNS + TLS state be
+     * shared across calls.
+     */
+    private static ?\Symfony\Contracts\HttpClient\HttpClientInterface $client = null;
+
+    /**
      * Resolved webhook URL for the current shop, or null when the merchant
      * is unresolved. Memoised because `FrakMerchantResolver::getId()`
-     * itself caches via `FrakCache`, but the URL string concat is cheap to
-     * skip on the cron drainer's 25-row hot loop.
+     * itself caches via the Symfony Cache pool, but the URL string concat
+     * is cheap to skip on the cron drainer's 25-row hot loop.
      */
     public static function getWebhookUrl(): ?string
     {
@@ -137,9 +144,15 @@ class FrakWebhookHelper
     }
 
     /**
-     * Send N webhooks in parallel via `curl_multi_*`. Used by
-     * {@see FrakWebhookCron::run()} to drain the retry queue without
+     * Send N webhooks in parallel via Symfony HttpClient's `stream()`. Used
+     * by {@see FrakWebhookCron::run()} to drain the retry queue without
      * paying N × connect+TLS+request latency sequentially.
+     *
+     * `request()` is non-blocking when called for asynchronous use — the
+     * actual transfer kicks off when `stream()` iterates the response
+     * collection. The underlying curl_multi (or PHP streams fallback)
+     * runs every transfer concurrently, with HTTP/2 multiplexing on
+     * compatible backends collapsing them onto a single TLS connection.
      *
      * Result map is keyed by the caller-supplied `id` (the queue row id).
      * Each entry has the same shape as {@see send()}'s return value.
@@ -153,9 +166,6 @@ class FrakWebhookHelper
             return [];
         }
 
-        // Resolve URL + secret once for the whole batch — the per-request
-        // memos already collapse repeated lookups but this is the canonical
-        // batch-fast-path comment.
         $url = self::getWebhookUrl();
         $secret = self::getCachedSecret();
 
@@ -177,22 +187,12 @@ class FrakWebhookHelper
             return $results;
         }
 
-        // Build the curl handles up front so we can register them all with
-        // curl_multi before the first select() call. A `curl_share_init`
-        // handle pools DNS resolution + SSL session state across the batch:
-        // 25 handles × ~50-100 ms TLS handshake collapses to one TLS
-        // setup + N reused sessions, which is the largest single saving in
-        // the cron drainer's wall time after parallelism. The share handle
-        // lives only for the duration of this batch — cron ticks don't
-        // share connections across each other (PHP process exits between
-        // ticks) so a per-call share handle is the right scope.
-        $multi = curl_multi_init();
-        $share = curl_share_init();
-        if ($share !== false) {
-            curl_share_setopt($share, CURLSHOPT_SHARE, CURL_LOCK_DATA_DNS);
-            curl_share_setopt($share, CURLSHOPT_SHARE, CURL_LOCK_DATA_SSL_SESSION);
-        }
-        $handles = [];
+        // Kick off every request as a non-blocking ResponseInterface. We
+        // map (response → row id) so the stream() loop below can route
+        // each completion back to the queue row that originated it.
+        $client = self::client();
+        $responses = [];
+        $response_to_id = [];
         $build_errors = [];
 
         foreach ($entries as $entry) {
@@ -208,81 +208,67 @@ class FrakWebhookHelper
                     throw new Exception('Failed to encode webhook payload as JSON');
                 }
                 $signature = self::signBody($body, $secret);
-                $ch = self::buildCurlHandle($url, $body, $signature, $share !== false ? $share : null);
-                if ($ch === false) {
-                    throw new Exception('Failed to initialize cURL');
-                }
-                curl_multi_add_handle($multi, $ch);
-                $handles[$row_id] = $ch;
+                $response = $client->request('POST', $url, [
+                    'headers' => [
+                        'Content-Type' => 'application/json',
+                        'x-hmac-sha256' => $signature,
+                    ],
+                    'body' => $body,
+                ]);
+                $responses[] = $response;
+                $response_to_id[spl_object_id($response)] = $row_id;
             } catch (Exception $e) {
                 $build_errors[$row_id] = $e->getMessage();
             }
         }
 
-        // Drive the multi-handle loop. `curl_multi_select` blocks until at
-        // least one transfer needs attention or the timeout fires; the
-        // do/while keeps spinning until every handle resolves. Capped at
-        // REQUEST_TIMEOUT seconds via individual handle timeouts so a stuck
-        // backend can't wedge the cron tick.
-        $running = null;
-        do {
-            $status = curl_multi_exec($multi, $running);
-            if ($running > 0) {
-                curl_multi_select($multi, 1.0);
-            }
-        } while ($running > 0 && $status === CURLM_OK);
+        // Surface build-time failures verbatim — they never made it to
+        // the wire, so the queue row should be retried with the original
+        // error string preserved.
+        foreach ($build_errors as $row_id => $error) {
+            $results[$row_id] = ['success' => false, 'error' => $error];
+        }
 
-        // Collect per-handle results.
-        foreach ($entries as $entry) {
-            $row_id = (int) $entry['id'];
-
-            if (isset($build_errors[$row_id])) {
-                $results[$row_id] = ['success' => false, 'error' => $build_errors[$row_id]];
-                continue;
-            }
-
-            $ch = $handles[$row_id] ?? null;
-            if ($ch === null) {
-                $results[$row_id] = ['success' => false, 'error' => 'cURL handle missing'];
-                continue;
-            }
-
-            $response = curl_multi_getcontent($ch);
-            $http_code = (int) curl_getinfo($ch, CURLINFO_HTTP_CODE);
-            $curl_errno = curl_errno($ch);
-            $curl_error = curl_error($ch);
-
-            curl_multi_remove_handle($multi, $ch);
-            curl_close($ch);
-
-            if ($curl_errno > 0) {
+        // `stream()` iterates response chunks concurrently; we only care
+        // about the `isLast()` chunk (final / failed) per response, since
+        // the request bodies we send are small and the backend's response
+        // bodies fit in a single chunk in practice. Errors during transfer
+        // raise `TransportExceptionInterface` which we catch per-response.
+        foreach ($client->stream($responses) as $response => $chunk) {
+            try {
+                if (!$chunk->isLast()) {
+                    continue;
+                }
+                $row_id = $response_to_id[spl_object_id($response)] ?? null;
+                if ($row_id === null) {
+                    continue;
+                }
+                $http_code = $response->getStatusCode();
+                $content = $response->getContent(false);
+                if ($http_code < 200 || $http_code >= 300) {
+                    $results[$row_id] = [
+                        'success' => false,
+                        'http_code' => $http_code,
+                        'error' => 'HTTP ' . $http_code . ': ' . $content,
+                    ];
+                    continue;
+                }
                 $results[$row_id] = [
-                    'success' => false,
-                    'error' => 'cURL error: ' . $curl_error . ' (errno: ' . $curl_errno . ')',
-                ];
-                continue;
-            }
-
-            if ($http_code < 200 || $http_code >= 300) {
-                $results[$row_id] = [
-                    'success' => false,
+                    'success' => true,
                     'http_code' => $http_code,
-                    'error' => 'HTTP ' . $http_code . ': ' . (is_string($response) ? $response : ''),
+                    'response' => $content,
                 ];
-                continue;
+            } catch (\Symfony\Contracts\HttpClient\Exception\TransportExceptionInterface $e) {
+                $row_id = $response_to_id[spl_object_id($response)] ?? null;
+                if ($row_id !== null) {
+                    $results[$row_id] = [
+                        'success' => false,
+                        'error' => 'Transport error: ' . $e->getMessage(),
+                    ];
+                }
             }
-
-            $results[$row_id] = [
-                'success' => true,
-                'http_code' => $http_code,
-                'response' => is_string($response) ? $response : '',
-            ];
         }
 
-        curl_multi_close($multi);
-        if ($share !== false) {
-            curl_share_close($share);
-        }
         return $results;
     }
 
@@ -308,6 +294,29 @@ class FrakWebhookHelper
     {
         self::$secretCache = null;
         self::$urlCache = null;
+        self::$client = null;
+    }
+
+    /**
+     * Lazily build (and memoise) the shared HttpClient. Constructor options
+     * are deliberately conservative — connect + total timeouts both clamp
+     * at `REQUEST_TIMEOUT` so a single misbehaving backend cannot wedge
+     * the cron tick or the order-status hook past the allotted window.
+     *
+     * `max_duration` covers the FULL transaction (connect + TLS + request
+     * + response). Symfony HttpClient maps that onto curl's `CURLOPT_TIMEOUT`
+     * for the curl backend and PHP stream timeouts for the streams backend.
+     */
+    private static function client(): \Symfony\Contracts\HttpClient\HttpClientInterface
+    {
+        if (self::$client !== null) {
+            return self::$client;
+        }
+        self::$client = \Symfony\Component\HttpClient\HttpClient::create([
+            'timeout' => self::REQUEST_TIMEOUT,
+            'max_duration' => self::REQUEST_TIMEOUT,
+        ]);
+        return self::$client;
     }
 
     /**
@@ -372,7 +381,8 @@ class FrakWebhookHelper
     /**
      * POST a JSON payload to the merchant webhook endpoint with HMAC signing.
      * Sync path — used by {@see send()}. The batch path uses
-     * {@see buildCurlHandle()} directly.
+     * {@see client()} + `stream()` directly so it can dispatch every
+     * request concurrently.
      *
      * @return array{http_code:int,response:string,execution_time:float}
      */
@@ -395,69 +405,34 @@ class FrakWebhookHelper
         $signature = self::signBody($body, $secret);
 
         $start_time = microtime(true);
-        $ch = self::buildCurlHandle($url, $body, $signature);
-        if ($ch === false) {
-            throw new Exception('Failed to initialize cURL');
-        }
 
-        $response = curl_exec($ch);
-        $http_code = (int) curl_getinfo($ch, CURLINFO_HTTP_CODE);
-        $curl_errno = curl_errno($ch);
-        $curl_error = curl_error($ch);
-        curl_close($ch);
+        try {
+            $response = self::client()->request('POST', $url, [
+                'headers' => [
+                    'Content-Type' => 'application/json',
+                    'x-hmac-sha256' => $signature,
+                ],
+                'body' => $body,
+            ]);
+            $http_code = $response->getStatusCode();
+            $content = $response->getContent(false);
+        } catch (\Symfony\Contracts\HttpClient\Exception\TransportExceptionInterface $e) {
+            // Wrap transport-level errors (DNS, connect, TLS, timeout)
+            // into the generic Exception the legacy contract uses so the
+            // surrounding `try/catch` in `send()` continues to work.
+            throw new Exception('Transport error: ' . $e->getMessage(), 0, $e);
+        }
 
         $execution_time = round((microtime(true) - $start_time) * 1000, 2);
 
-        if ($curl_errno > 0) {
-            throw new Exception('cURL error: ' . $curl_error . ' (errno: ' . $curl_errno . ')');
-        }
-
         if ($http_code < 200 || $http_code >= 300) {
-            throw new Exception('HTTP error: ' . $http_code . ', Response: ' . (is_string($response) ? $response : ''));
+            throw new Exception('HTTP error: ' . $http_code . ', Response: ' . $content);
         }
 
         return [
             'http_code' => $http_code,
-            'response' => is_string($response) ? $response : '',
+            'response' => $content,
             'execution_time' => $execution_time,
         ];
-    }
-
-    /**
-     * Build (but do not execute) a curl handle pre-configured for the Frak
-     * merchant webhook contract: POST + JSON body + signed
-     * `x-hmac-sha256` header + tight timeouts.
-     *
-     * Shared by both the sync ({@see dispatch()}) and parallel
-     * ({@see sendBatch()}) paths so the request shape stays in lock-step.
-     *
-     * `$share` is an optional `curl_share_init` handle. The batch path
-     * passes one in so DNS + SSL session state is reused across the 25
-     * handles spawned in a single tick — single-shot callers leave it
-     * `null` since per-call sharing has no benefit.
-     *
-     * @param  \CurlShareHandle|resource|null $share Share handle for
-     *                                                pooled DNS / SSL state.
-     * @return \CurlHandle|resource|false
-     */
-    private static function buildCurlHandle(string $url, string $body, string $signature, $share = null)
-    {
-        $ch = curl_init($url);
-        if ($ch === false) {
-            return false;
-        }
-        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-        curl_setopt($ch, CURLOPT_CUSTOMREQUEST, 'POST');
-        curl_setopt($ch, CURLOPT_POSTFIELDS, $body);
-        curl_setopt($ch, CURLOPT_HTTPHEADER, [
-            'Content-Type: application/json',
-            'x-hmac-sha256: ' . $signature,
-        ]);
-        curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, self::CONNECT_TIMEOUT);
-        curl_setopt($ch, CURLOPT_TIMEOUT, self::REQUEST_TIMEOUT);
-        if ($share !== null) {
-            curl_setopt($ch, CURLOPT_SHARE, $share);
-        }
-        return $ch;
     }
 }

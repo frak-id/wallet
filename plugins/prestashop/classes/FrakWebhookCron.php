@@ -14,7 +14,7 @@
  * idempotent: rows are state-machine tracked, so an aborted run resumes
  * cleanly on the next tick.
  *
- * **Concurrency lock:** acquired via {@see FrakCache::acquireLock()}
+ * **Concurrency lock:** acquired via Symfony Lock ({@see FrakDb::lockFactory()})
  * with a 5-minute TTL. If a previous tick is still running (slow backend +
  * multiple rows can push a tick beyond the 5-min cron interval), the new
  * tick early-returns instead of double-sending rows whose state hasn't
@@ -25,9 +25,9 @@
  * **Parallel dispatch:** the drainer dispatches every due row in parallel
  * via {@see FrakWebhookHelper::sendBatch()}. A sequential drain would pay
  * N × (connect + TLS + request) latency — 25 rows × ~2 s = ~50 s per
- * tick on a slow backend, which can overlap with the next 5-min tick. The
- * `curl_multi_*` batch collapses this to ~one round-trip window, fitting
- * well inside the cron interval.
+ * tick on a slow backend, which can overlap with the next 5-min tick.
+ * Symfony HttpClient's `stream()` collapses this to ~one round-trip
+ * window, fitting well inside the cron interval.
  *
  * Logging goes through {@see FrakLogger} so per-row entries write to a
  * file at request shutdown instead of `ps_log`. Errors still escalate to
@@ -44,14 +44,15 @@ class FrakWebhookCron
      */
     public const BATCH_SIZE = 25;
 
-    /** Lock key used by {@see FrakCache::acquireLock()} to gate concurrent runs. */
-    public const LOCK_KEY = 'cron:webhook_drainer';
+    /** Lock key used by {@see FrakDb::lockFactory()} to gate concurrent runs. */
+    public const LOCK_KEY = 'cron.webhook_drainer';
 
     /**
      * Lock TTL — 5 minutes. Long enough to absorb a slow batch
      * (BATCH_SIZE × REQUEST_TIMEOUT in the worst case) without releasing
      * to a duplicate run, short enough that a crashed cron doesn't wedge
-     * the queue for hours.
+     * the queue for hours. Symfony Lock auto-expires the row after this
+     * window via the `DoctrineDbalStore` GC sweep.
      */
     public const LOCK_TTL = 300;
 
@@ -62,7 +63,8 @@ class FrakWebhookCron
     {
         $stats = ['processed' => 0, 'success' => 0, 'failure' => 0];
 
-        if (!FrakCache::acquireLock(self::LOCK_KEY, self::LOCK_TTL)) {
+        $lock = FrakDb::lockFactory()->createLock(self::LOCK_KEY, self::LOCK_TTL);
+        if (!$lock->acquire()) {
             FrakLogger::warning('cron drainer skipped — previous tick still running');
             return $stats + ['skipped' => true];
         }
@@ -128,7 +130,7 @@ class FrakWebhookCron
 
             return $stats;
         } finally {
-            FrakCache::releaseLock(self::LOCK_KEY);
+            $lock->release();
             // Force-flush so the cron log shows up immediately even when
             // the front controller bails before PHP's natural shutdown.
             FrakLogger::flush();

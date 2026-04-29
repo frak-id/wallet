@@ -1,12 +1,12 @@
 # Frak PrestaShop Module
 
-> Integrates the Frak SDK with PrestaShop 1.7+ / 8.x: rewards-aware share buttons, post-purchase referral surfaces, and HMAC-signed order webhooks for purchase attribution.
+> Integrates the Frak SDK with PrestaShop 8.1+: rewards-aware share buttons, post-purchase referral surfaces, and HMAC-signed order webhooks for purchase attribution.
 
 | Surface           | Value                                              |
 | ----------------- | -------------------------------------------------- |
 | Module slug       | `frakintegration`                                  |
 | Type              | `prestashop-module`                                |
-| PrestaShop        | 1.7.8 → 8.x                                        |
+| PrestaShop        | 8.1+                                               |
 | PHP               | 8.1+ (CI runs 8.4)                                 |
 | Distribution      | Admin uploader (zip, no merchant-side composer)    |
 | License           | GPL-3.0-only                                       |

@@ -11,22 +11,12 @@
  *   - Short negative cache (5 min) on 4xx/5xx so unresolved or staging
  *     domains do not hammer the backend between webhook retries.
  *
- * Storage:
- *   - `FrakCache:merchant:{host}` — JSON-encoded record, no TTL.
- *   - `FrakCache:merchant_unresolved:{host}` — sentinel row with TTL.
- *
- * Why `FrakCache` instead of `Configuration`:
- *   - PrestaShop autoloads the entire `ps_configuration` table on every
- *     request (front + back office + AJAX). Stuffing a JSON-encoded
- *     merchant record there bloats the autoload payload on every page even
- *     though only the webhook helper and the admin UI ever read it.
- *   - PrestaShop has no `autoload=no` flag (unlike WordPress's
- *     `update_option(..., false)` — see {@see Frak_Merchant} in the WP
- *     sibling). A custom table is the only way to keep cold data cold.
- *   - The negative cache is a TTL-bounded sentinel — the dedicated
- *     `expires_at` column on `frak_cache` matches the semantics directly
- *     instead of forcing every reader to compute the elapsed time off a
- *     stored unix timestamp.
+ * Storage: Symfony Cache pool ({@see FrakDb::cache()}), namespaced under
+ * `merchant:` and `merchant_unresolved:`. PSR-6 keys live in the shared
+ * `frak_cache_items` table outside `ps_configuration` so cold merchant
+ * data never bloats the per-request autoload payload — PrestaShop has no
+ * `autoload=no` flag (unlike WordPress's `update_option(..., false)`), so
+ * a custom backing store is the only way to keep cold config cold.
  *
  * Mirrors the WordPress `Frak_Merchant` contract so the two plugins stay
  * conceptually aligned (same record shape, same invalidation triggers).
@@ -34,12 +24,14 @@
 class FrakMerchantResolver
 {
     /** Cache key prefix for the merchant record (suffix is the normalised host). */
-    public const CACHE_KEY_PREFIX = 'merchant:';
+    public const CACHE_KEY_PREFIX = 'merchant.';
     /** Cache key prefix for the negative-cache sentinel. */
-    public const NEGATIVE_CACHE_PREFIX = 'merchant_unresolved:';
+    public const NEGATIVE_CACHE_PREFIX = 'merchant_unresolved.';
     /** Negative-cache TTL in seconds. Mirrors the WP plugin (5 minutes). */
     public const NEGATIVE_CACHE_TTL = 300;
     public const RESOLVE_URL = 'https://backend.frak.id/user/merchant/resolve';
+    /** Connect + total request timeout in seconds for the resolver call. */
+    private const REQUEST_TIMEOUT = 5;
 
     /**
      * Configuration keys carried by an unreleased pre-1.0.1 iteration of the
@@ -91,8 +83,9 @@ class FrakMerchantResolver
     {
         $host = self::currentHost();
         if ($host !== '') {
-            FrakCache::delete(self::CACHE_KEY_PREFIX . $host);
-            FrakCache::delete(self::NEGATIVE_CACHE_PREFIX . $host);
+            $cache = FrakDb::cache();
+            $cache->deleteItem(self::CACHE_KEY_PREFIX . self::sanitizeKey($host));
+            $cache->deleteItem(self::NEGATIVE_CACHE_PREFIX . self::sanitizeKey($host));
         }
         // Pre-1.0.1 dev rows — safe no-op when already cleared by the
         // upgrade migrator. Keeps "Refresh Merchant" idempotent on dev
@@ -111,28 +104,26 @@ class FrakMerchantResolver
     {
         $url = self::RESOLVE_URL . '?domain=' . rawurlencode($host);
 
-        $ch = curl_init($url);
-        if ($ch === false) {
+        try {
+            $response = \Symfony\Component\HttpClient\HttpClient::create([
+                'timeout' => self::REQUEST_TIMEOUT,
+                'max_duration' => self::REQUEST_TIMEOUT,
+            ])->request('GET', $url, [
+                'headers' => ['Accept' => 'application/json'],
+            ]);
+            $http_code = $response->getStatusCode();
+            $body = $response->getContent(false);
+        } catch (\Symfony\Contracts\HttpClient\Exception\TransportExceptionInterface $e) {
             self::markUnresolved($host);
             return null;
         }
 
-        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-        curl_setopt($ch, CURLOPT_HTTPHEADER, ['Accept: application/json']);
-        curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 5);
-        curl_setopt($ch, CURLOPT_TIMEOUT, 5);
-
-        $response = curl_exec($ch);
-        $http_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-        $curl_errno = curl_errno($ch);
-        curl_close($ch);
-
-        if ($curl_errno > 0 || $http_code !== 200 || !is_string($response)) {
+        if ($http_code !== 200 || $body === '') {
             self::markUnresolved($host);
             return null;
         }
 
-        $data = json_decode($response, true);
+        $data = json_decode($body, true);
         if (!is_array($data) || empty($data['merchantId'])) {
             self::markUnresolved($host);
             return null;
@@ -145,30 +136,53 @@ class FrakMerchantResolver
             'resolved_at' => time(),
         ];
 
-        FrakCache::setJson(self::CACHE_KEY_PREFIX . $host, $record);
-        FrakCache::delete(self::NEGATIVE_CACHE_PREFIX . $host);
+        $cache = FrakDb::cache();
+        $key = self::sanitizeKey($host);
+        $item = $cache->getItem(self::CACHE_KEY_PREFIX . $key);
+        $item->set($record);
+        // No `expiresAfter()` — merchant UUIDs are immutable per domain;
+        // the resolver self-invalidates via the host check in `getRecord()`
+        // and the explicit "Refresh Merchant" admin button.
+        $cache->save($item);
+        $cache->deleteItem(self::NEGATIVE_CACHE_PREFIX . $key);
 
         return $record;
     }
 
     private static function readCachedRecord(string $host): ?array
     {
-        $decoded = FrakCache::getJson(self::CACHE_KEY_PREFIX . $host);
-        if (!is_array($decoded) || empty($decoded['id'])) {
+        $item = FrakDb::cache()->getItem(self::CACHE_KEY_PREFIX . self::sanitizeKey($host));
+        if (!$item->isHit()) {
             return null;
         }
-        return $decoded;
+        $value = $item->get();
+        if (!is_array($value) || empty($value['id'])) {
+            return null;
+        }
+        return $value;
     }
 
     private static function isNegativeCacheActive(string $host): bool
     {
-        // `FrakCache::get()` already lazy-evicts expired rows so a non-null
-        // return here means the negative cache is still live.
-        return FrakCache::get(self::NEGATIVE_CACHE_PREFIX . $host) !== null;
+        return FrakDb::cache()->hasItem(self::NEGATIVE_CACHE_PREFIX . self::sanitizeKey($host));
     }
 
     private static function markUnresolved(string $host): void
     {
-        FrakCache::set(self::NEGATIVE_CACHE_PREFIX . $host, '1', self::NEGATIVE_CACHE_TTL);
+        $item = FrakDb::cache()->getItem(self::NEGATIVE_CACHE_PREFIX . self::sanitizeKey($host));
+        $item->set(true);
+        $item->expiresAfter(self::NEGATIVE_CACHE_TTL);
+        FrakDb::cache()->save($item);
+    }
+
+    /**
+     * PSR-6 cache keys can only contain `[A-Za-z0-9_.]` (no dots in some
+     * adapters, no special characters). A shop domain like `shop.example.com`
+     * survives mostly intact; we replace dots with underscores defensively
+     * to keep DoctrineDbalAdapter happy regardless of host quirkiness.
+     */
+    private static function sanitizeKey(string $host): string
+    {
+        return preg_replace('/[^A-Za-z0-9_]/', '_', $host) ?? '';
     }
 }

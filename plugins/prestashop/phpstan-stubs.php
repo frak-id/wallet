@@ -27,10 +27,22 @@
 
 // PrestaShop runtime constants -------------------------------------------
 if (!defined('_PS_VERSION_')) {
-    define('_PS_VERSION_', '8.0.0');
+    define('_PS_VERSION_', '8.1.0');
 }
 if (!defined('_DB_PREFIX_')) {
     define('_DB_PREFIX_', 'ps_');
+}
+if (!defined('_DB_SERVER_')) {
+    define('_DB_SERVER_', 'localhost');
+}
+if (!defined('_DB_NAME_')) {
+    define('_DB_NAME_', 'prestashop');
+}
+if (!defined('_DB_USER_')) {
+    define('_DB_USER_', 'root');
+}
+if (!defined('_DB_PASSWD_')) {
+    define('_DB_PASSWD_', '');
 }
 if (!defined('_PS_IMG_')) {
     define('_PS_IMG_', '/img/');
