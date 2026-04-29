@@ -3,15 +3,20 @@
 /**
  * Server-side order webhook trigger.
  *
- * Owns the `actionOrderStatusPostUpdate` hook body: maps PrestaShop order
- * states to Frak webhook statuses, defers dispatch to PHP shutdown so the
- * merchant's request returns BEFORE the outbound HTTP call fires, and
- * falls back to the retry queue on failure.
+ * Owns two PrestaShop hooks: `actionOrderStatusPostUpdate` (post-commit
+ * status transitions) and `actionOrderSlipAdd` (credit-slip / refund
+ * creation). Both map their PrestaShop trigger to a Frak webhook status,
+ * defer dispatch to PHP shutdown so the merchant's request returns BEFORE
+ * the outbound HTTP call fires, and fall back to the retry queue on
+ * failure.
  *
  * Mirrors WordPress's `Frak_WC_Webhook_Registrar` and Magento's
  * `Observer/OrderStatusUpdateObserver` — same `(merchantId, externalId,
  * status)` idempotency contract on the backend so all three plugins
- * de-duplicate cleanly.
+ * de-duplicate cleanly. Aligns the credit-slip path with the WC backend's
+ * "any non-empty refunds[] -> refunded" rule and Magento's
+ * `sales_order_creditmemo_save_after` -> `refunded` mapping: any refund
+ * (full or partial) voids attribution.
  *
  * Split out from the legacy `FrakOrderHooks` class so server-side webhook
  * orchestration and client-side rendering live in separate translation
@@ -22,33 +27,17 @@ class FrakOrderWebhook
     /**
      * Post-commit order status handler. Maps the new state to a Frak
      * status, then defers the actual webhook dispatch to PHP shutdown so
-     * the merchant's request returns BEFORE the outbound HTTP call fires.
-     * Any failure (network, non-2xx, exception) lands in the retry queue.
+     * the merchant's request returns BEFORE the outbound HTTP call fires
+     * (see {@see deferDispatch()} for the shutdown machinery).
      *
      * Hot-path order matters here:
      *   1. Cheap guards first (params shape, status object).
      *   2. Skip-list check via batched `Configuration::getMultiple()` —
-     *      single autoload-cache hit instead of 7 separate lookups for the
+     *      single autoload-cache hit instead of 9 separate lookups for the
      *      `PS_OS_*` ids. Most state transitions on a busy shop go through
      *      `preparation → shipping`, both of which are skipped, so this
      *      path returns before paying for an `Order` instantiation.
      *   3. Order load (only on transitions we actually deliver).
-     *   4. `register_shutdown_function` schedules the dispatch + queue
-     *      fallback to run AFTER the response is sent. Inside the
-     *      shutdown handler, `fastcgi_finish_request()` (or the LiteSpeed
-     *      equivalent) explicitly closes the FastCGI connection so the
-     *      merchant's browser doesn't wait on the 5 s HTTP timeout. Falls
-     *      back to a synchronous attempt on SAPIs that expose neither
-     *      function (e.g. CLI imports) — same single attempt, just inline.
-     *
-     * Why shutdown rather than mid-hook flush:
-     *   `actionOrderStatusPostUpdate` runs MID-controller, so calling
-     *   `fastcgi_finish_request()` directly here would push a half-built
-     *   response (no template, no headers) to the merchant. Deferring to
-     *   shutdown lets PrestaShop finish rendering naturally; we only
-     *   close the connection once the controller has emitted the full
-     *   response, then run the webhook attempt against the closed
-     *   connection.
      *
      * Logging dropped to error-only on the happy path. The previous
      * 5-rows-per-transition spam ("Triggered" / "Started" / "Sent
@@ -69,7 +58,7 @@ class FrakOrderWebhook
         }
 
         // Batch the `PS_OS_*` lookup so we pay one Configuration::getMultiple
-        // round-trip instead of seven. The autoload cache makes individual
+        // round-trip instead of nine. The autoload cache makes individual
         // calls cheap, but skipping a few hashmap lookups in the hot path is
         // free if we're touching the autoload cache anyway.
         $os_ids = FrakConfig::getOrderStateIds();
@@ -92,26 +81,83 @@ class FrakOrderWebhook
             return;
         }
 
+        // PS_OS_OUTOFSTOCK_PAID is `paid=1, logable=1` per
+        // `install-dev/data/xml/order_state.xml` — the merchant has been paid,
+        // we just can't ship right now. Treating it as `pending` would leave
+        // the reward in limbo until a follow-up state change, so confirm now.
+        // PS_OS_ERROR (payment failure) is treated as `cancelled` rather than
+        // `pending` so a failed-and-abandoned checkout doesn't sit forever in
+        // the merchant's purchase tracker.
         $status_map = [
             ($os_ids['PS_OS_WS_PAYMENT'] ?? 0) => 'confirmed',
             ($os_ids['PS_OS_PAYMENT'] ?? 0) => 'confirmed',
             ($os_ids['PS_OS_DELIVERED'] ?? 0) => 'confirmed',
+            ($os_ids['PS_OS_OUTOFSTOCK_PAID'] ?? 0) => 'confirmed',
             ($os_ids['PS_OS_CANCELED'] ?? 0) => 'cancelled',
+            ($os_ids['PS_OS_ERROR'] ?? 0) => 'cancelled',
             ($os_ids['PS_OS_REFUND'] ?? 0) => 'refunded',
         ];
 
         $webhook_status = $status_map[(int) $new_status->id] ?? 'pending';
 
-        // Defer the dispatch + queue fallback to PHP shutdown so the
-        // merchant's status-update controller renders + flushes its full
-        // response BEFORE we open the outbound HTTP socket. Inside the
-        // shutdown handler we explicitly close the FastCGI connection so
-        // the browser doesn't sit on the connection for the 5 s request
-        // timeout (PHP-FPM auto-flushes on shutdown, but the explicit
-        // call covers reverse-proxies / FPM versions where the auto-flush
-        // is delayed). On SAPIs without `fastcgi_finish_request` (CLI
-        // imports, mod_php, etc.) we fall back to a plain synchronous
-        // dispatch — same single attempt, just no early connection close.
+        self::deferDispatch($order_id, $webhook_status, $order);
+    }
+
+    /**
+     * Credit-slip handler. Fires on `actionOrderSlipAdd`, which PrestaShop
+     * emits whenever a credit slip is generated — full refunds, partial
+     * refunds, shipping-only refunds, and standard returns alike
+     * ({@see PrestaShop\PrestaShop\Adapter\Order\Refund\OrderSlipCreator::createOrderSlip()}).
+     *
+     * Always emits `refunded` regardless of slip type, mirroring the
+     * sister-plugin contract:
+     *   - WC backend: any non-empty `refunds[]` -> `refunded`
+     *     (`services/backend/src/api/external/merchant/webhook/wooCommerceWebhook.ts:142`).
+     *   - Magento: `sales_order_creditmemo_save_after` -> `refunded`
+     *     (`plugins/magento/Observer/OrderStatusUpdateObserver.php`).
+     *   - Shopify backend: `partially_refunded` -> `refunded`.
+     *
+     * Why we don't try to differentiate full vs partial: the backend's
+     * `PurchaseStatusSchema` only carries 4 statuses (pending/confirmed/
+     * cancelled/refunded) and `PurchaseWebhookOrchestrator` collapses both
+     * `refunded` and `cancelled` into the same `cancelForRefund` flow that
+     * voids any pending rewards and restores the campaign budget. Splitting
+     * partial vs full would have no observable effect on attribution.
+     *
+     * The order's current PrestaShop status is irrelevant here: a credit slip
+     * means money has moved back to the customer regardless of whether the
+     * order sits in `Delivered`, `Shipped`, etc. The hook caller already
+     * holds a loaded `Order` so we skip the duplicate `new Order($id)`
+     * round-trip down in `FrakWebhookHelper::send()`.
+     *
+     * @param array<string, mixed> $params Hook parameters from PrestaShop.
+     */
+    public static function onOrderSlipAdd(array $params): void
+    {
+        $order = $params['order'] ?? null;
+        if (!($order instanceof Order) || !Validate::isLoadedObject($order)) {
+            FrakLogger::warning('actionOrderSlipAdd received without a loadable Order');
+            return;
+        }
+
+        self::deferDispatch((int) $order->id, 'refunded', $order);
+    }
+
+    /**
+     * Shared shutdown-deferred dispatcher. Hot-path order matters here:
+     * we run the outbound HTTP request AFTER the merchant's response is
+     * flushed (via `fastcgi_finish_request` / `litespeed_finish_request`)
+     * so the order-status / credit-slip transaction commits in <50 ms even
+     * when the Frak backend is unreachable. Falls back to a synchronous
+     * attempt on SAPIs without flush primitives (CLI imports, mod_php).
+     *
+     * Any failure (network, non-2xx, exception) lands in the retry queue.
+     * The shutdown handler explicitly traps `\Throwable` so a runtime issue
+     * still surfaces in `PrestaShopLogger` instead of being silently
+     * swallowed by PHP's shutdown machinery.
+     */
+    private static function deferDispatch(int $order_id, string $webhook_status, Order $order): void
+    {
         $dispatch = static function () use ($order_id, $webhook_status, $order): void {
             $result = FrakWebhookHelper::send($order_id, $webhook_status, $order);
             if (is_array($result) && !empty($result['success'])) {
@@ -121,7 +167,7 @@ class FrakOrderWebhook
                 ? (string) $result['error']
                 : 'Unknown webhook error';
             FrakLogger::error(
-                'Webhook failed for order ' . $order_id . ', enqueuing for retry: ' . $error
+                'Webhook failed for order ' . $order_id . ' (' . $webhook_status . '), enqueuing for retry: ' . $error
             );
             FrakWebhookQueue::enqueue($order_id, $webhook_status, $error);
         };

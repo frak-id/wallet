@@ -31,6 +31,12 @@ class FrakInstaller
      * - `actionOrderStatusPostUpdate`: post-commit order status webhook
      *   trigger. Pre-commit `actionOrderStatusUpdate` raced under multistore
      *   / high load (PrestaShop docs explicitly recommend post-commit).
+     * - `actionOrderSlipAdd`: credit-slip (refund) webhook trigger. Fires on
+     *   every `OrderSlip` creation — full refunds, partial refunds, and
+     *   standard returns. Aligns the plugin with WC / Magento siblings'
+     *   "any refund voids attribution" rule, since `actionOrderStatusPost
+     *   Update` does NOT fire on partial refunds (the order keeps its
+     *   pre-refund status, only the credit slip is created).
      * - `actionCronJob`: opt-in auto-registration with the `ps_cronjobs`
      *   module. When `ps_cronjobs` is installed, it discovers modules
      *   registered to this hook via `Hook::getHookModuleExecList('actionCronJob')`,
@@ -44,6 +50,7 @@ class FrakInstaller
         'header',
         'actionFrontControllerSetMedia',
         'actionOrderStatusPostUpdate',
+        'actionOrderSlipAdd',
         'actionCronJob',
     ];
 

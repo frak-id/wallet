@@ -57,7 +57,7 @@ class FrakConfig
     /**
      * Cast every `PS_OS_*` order-state id to int in one batched lookup.
      * Used by {@see FrakOrderWebhook::onStatusUpdate()} to map PrestaShop
-     * states to Frak webhook statuses without paying for 7 individual
+     * states to Frak webhook statuses without paying for 9 individual
      * `Configuration::get()` calls.
      *
      * @return array<string, int>
@@ -68,8 +68,10 @@ class FrakConfig
             'PS_OS_WS_PAYMENT',
             'PS_OS_PAYMENT',
             'PS_OS_DELIVERED',
+            'PS_OS_OUTOFSTOCK_PAID',
             'PS_OS_CANCELED',
             'PS_OS_REFUND',
+            'PS_OS_ERROR',
             'PS_OS_SHIPPING',
             'PS_OS_PREPARATION',
         ]);

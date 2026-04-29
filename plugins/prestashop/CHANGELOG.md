@@ -13,6 +13,12 @@ version on dispatch.
 
 ### Added
 
+- **Webhook coverage parity with WC / Magento siblings**:
+  - **New `actionOrderSlipAdd` hook** (`FrakOrderWebhook::onOrderSlipAdd`) emits a `refunded` webhook on every credit slip — full refunds, partial refunds, shipping-only refunds, and standard returns alike. Closes a coverage gap: `actionOrderStatusPostUpdate` does NOT fire on partial refunds (the order keeps its pre-refund status; only the credit slip is created), so the previous implementation silently missed every partial refund. Aligns with the WC backend's `refunds[]` rule, Magento's `sales_order_creditmemo_save_after` mapping, and Shopify's `partially_refunded` collapse — the backend's 4-status taxonomy doesn't differentiate full vs partial refunds, and both `refunded` and `cancelled` collapse into the same `cancelForRefund` flow. The `upgrade/install-1.0.1.php` migrator registers the hook on existing installs.
+  - **`PS_OS_OUTOFSTOCK_PAID` → `confirmed`** (was `pending`): the merchant has been paid (`paid=1, logable=1` per `install-dev/data/xml/order_state.xml`), the only thing missing is shipping. Treating the transition as `pending` left rewards in limbo until a follow-up state change.
+  - **`PS_OS_ERROR` → `cancelled`** (was `pending`): a failed-and-abandoned checkout shouldn't sit forever in the merchant's purchase tracker as `pending`. Routes the transition through `RewardLifecycleOrchestrator::cancelForRefund` immediately.
+  - Shared `FrakOrderWebhook::deferDispatch()` private helper extracted from `onStatusUpdate`; reused by `onOrderSlipAdd` so the shutdown-flush + retry-queue machinery has one implementation across both hooks.
+
 - **Production-grade SoC + deduplication pass** across the `classes/` tree:
   - **`FrakInfra` (renamed from `FrakDb`)** — the class never was just a DBAL factory; the rename matches the broader scope (DBAL connection + Cache pool + Lock factory + Lock store). All 30+ call sites updated.
   - **`FrakHttpClient` extracted from `FrakInfra`** — the Symfony HttpClient has no shared state with the database connection; it now lives on its own class. `FrakMerchantResolver` and `FrakWebhookHelper` both pull from `FrakHttpClient::getInstance()` so TLS state warmed by one carries over to the other (HTTP/2 multiplexing on the same TLS connection).

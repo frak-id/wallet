@@ -71,17 +71,21 @@ On the auto-render order hooks, `<frak-post-purchase>` receives `customerId`, `o
 
 ### Order status → Frak webhook
 
-`hookActionOrderStatusPostUpdate` maps PrestaShop's `OrderState` ids to Frak's webhook status:
+Two PrestaShop hooks feed the Frak webhook pipeline:
 
-| Trigger                                                    | Frak status |
-| ---------------------------------------------------------- | ----------- |
-| `PS_OS_WS_PAYMENT`, `PS_OS_PAYMENT`, `PS_OS_DELIVERED`     | `confirmed` |
-| `PS_OS_CANCELED`                                           | `cancelled` |
-| `PS_OS_REFUND`                                             | `refunded`  |
-| `PS_OS_SHIPPING`, `PS_OS_PREPARATION`                      | (skipped)   |
-| any other state                                            | `pending`   |
+**`hookActionOrderStatusPostUpdate`** maps `OrderState` ids to Frak's webhook status:
 
-Each delivery is HMAC-SHA256 signed (base64-encoded raw digest, `x-hmac-sha256` header) against the `FRAK_WEBHOOK_SECRET` and POSTed to `https://backend.frak.id/ext/merchant/{merchantId}/webhook/custom`. The hook attempts a synchronous send with tight timeouts (5 s request / 3 s connect); any failure (network, non-2xx, timeout) lands in the `frak_webhook_queue` table and is retried by a cron drainer with exponential backoff (5 min → 24 h, 5 attempts) so order-status transitions never block the merchant for more than a few seconds. Delivery attempts are logged to **Advanced Parameters → Logs** with the `FrakIntegration` prefix.
+| Trigger                                                                | Frak status |
+| ---------------------------------------------------------------------- | ----------- |
+| `PS_OS_WS_PAYMENT`, `PS_OS_PAYMENT`, `PS_OS_DELIVERED`, `PS_OS_OUTOFSTOCK_PAID` | `confirmed` |
+| `PS_OS_CANCELED`, `PS_OS_ERROR`                                        | `cancelled` |
+| `PS_OS_REFUND`                                                         | `refunded`  |
+| `PS_OS_SHIPPING`, `PS_OS_PREPARATION`                                  | (skipped)   |
+| any other state                                                        | `pending`   |
+
+**`hookActionOrderSlipAdd`** fires on every credit slip (full or partial refund, shipping-only refund, standard return) and always emits `refunded`. Mirrors the WC backend's `refunds[]` rule and Magento's `sales_order_creditmemo_save_after` mapping — partial refunds void attribution because the backend's 4-status taxonomy (pending / confirmed / cancelled / refunded) does not differentiate full vs partial, and `refunded` and `cancelled` collapse into the same `cancelForRefund` flow that voids pending rewards and restores the campaign budget.
+
+Each delivery is HMAC-SHA256 signed (base64-encoded raw digest, `x-hmac-sha256` header) against the `FRAK_WEBHOOK_SECRET` and POSTed to `https://backend.frak.id/ext/merchant/{merchantId}/webhook/custom`. The hook attempts a synchronous send with tight timeouts (5 s request / 3 s connect); any failure (network, non-2xx, timeout) lands in the `frak_webhook_queue` table and is retried by a cron drainer with exponential backoff (5 min → 24 h, 5 attempts) so order-status transitions never block the merchant for more than a few seconds. Delivery attempts are logged to **Advanced Parameters → Logs** with the `FrakIntegration` prefix.
 
 ### Retry cron
 

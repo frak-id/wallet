@@ -97,6 +97,18 @@ class FrakIntegration extends Module
     }
 
     /**
+     * Credit-slip / refund webhook trigger. Fires on every `OrderSlip`
+     * creation — full refunds, partial refunds, and standard returns alike
+     * — so the Frak backend voids attribution as soon as the merchant
+     * issues any refund. Mirrors the WC backend's `refunds[]` and Magento's
+     * `sales_order_creditmemo_save_after` rules.
+     */
+    public function hookActionOrderSlipAdd($params)
+    {
+        FrakOrderWebhook::onOrderSlipAdd($params);
+    }
+
+    /**
      * Product page — `share_product` placement (share-button on PDP).
      */
     public function hookDisplayProductAdditionalInfo($params = [])

@@ -88,11 +88,21 @@ function upgrade_module_1_0_1($module)
     //    `actionFrontControllerSetMedia` is the asset-pipeline hook the
     //    SDK script registers through — adding it here brings v0.0.4
     //    upgrades onto the new `registerJavascript` path without a
-    //    reinstall.
+    //    reinstall. `actionCronJob` lets `ps_cronjobs` auto-discover the
+    //    webhook drainer via `Hook::getHookModuleExecList('actionCronJob')`,
+    //    matching the hook list in {@see FrakInstaller::CORE_HOOKS}; without
+    //    it, upgraded installs silently lose the `ps_cronjobs` integration
+    //    while fresh installs keep it. `actionOrderSlipAdd` is the credit-
+    //    slip / refund hook — fires on every refund (full + partial) so
+    //    upgraded installs gain partial-refund coverage without a reinstall,
+    //    matching the WC / Magento siblings' "any refund voids attribution"
+    //    contract.
     $core_hooks = [
         'header',
         'actionFrontControllerSetMedia',
         'actionOrderStatusPostUpdate',
+        'actionOrderSlipAdd',
+        'actionCronJob',
     ];
     foreach (array_merge($core_hooks, FrakPlacementRegistry::distinctHooks()) as $hook) {
         $module->registerHook($hook);
