@@ -148,7 +148,7 @@ class FrakPlacementRegistry
                 'buttonStyle' => self::SHARE_BUTTON_STYLE_OPTION,
             ],
         ],
-        
+
         // Banner ———————————————————————————————————————————————————————
         'banner_top' => [
             'component' => self::COMPONENT_BANNER,

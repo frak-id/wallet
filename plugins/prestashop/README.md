@@ -45,7 +45,7 @@ Three Frak web components are available: `<frak-button-share>`, `<frak-banner>`,
 | Component | Placement id | PrestaShop hook | Default | `placement` attr |
 | --- | --- | --- | --- | --- |
 | `<frak-button-share>` | `share_product` | `displayProductAdditionalInfo` | enabled | `product` |
-| `<frak-banner>` | `banner_top` | `displayTop` | disabled | `top` |
+| `<frak-banner>` | `banner_top` | `displayTop` | enabled | `top` |
 | `<frak-post-purchase>` | `post_purchase_confirmation` | `displayOrderConfirmation` | enabled | `order-confirmation` |
 | `<frak-post-purchase>` | `post_purchase_detail` | `displayOrderDetail` | enabled | `view-order` |
 

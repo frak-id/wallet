@@ -145,10 +145,10 @@ final class FrakPlacementRegistryTest extends TestCase
         $this->assertTrue(FrakPlacementRegistry::PLACEMENTS['post_purchase_detail']['default']);
     }
 
-    public function testAuxiliaryBannerSurfaceIsOptIn(): void
+    public function testAuxiliaryBannerSurfaceIsOptOut(): void
     {
-        // The auxiliary top-banner surface is opt-in so upgrades do not
-        // change the storefront until the merchant explicitly enables it.
-        $this->assertFalse(FrakPlacementRegistry::PLACEMENTS['banner_top']['default']);
+        // The auxiliary top-banner surface is on by default so upgrading
+        // shops get banner coverage without an extra opt-in step.
+        $this->assertTrue(FrakPlacementRegistry::PLACEMENTS['banner_top']['default']);
     }
 }
