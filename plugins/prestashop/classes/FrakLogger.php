@@ -145,6 +145,21 @@ class FrakLogger
         return $drained;
     }
 
+    /**
+     * Inspect whether `register_shutdown_function` has already been wired
+     * for this request. Test-only — production code never needs to know,
+     * the contract is "the shutdown handler runs at most once and the
+     * first `log()` call is what triggers registration".
+     *
+     * Pairs with {@see FrakLoggerTest::testShutdownIsRegisteredAtMostOnce}
+     * to assert the gate behaves correctly across multiple `log()` calls
+     * within the same request.
+     */
+    public static function isShutdownRegisteredForTesting(): bool
+    {
+        return self::$shutdownRegistered;
+    }
+
     private static function levelLabel(int $level): string
     {
         switch ($level) {

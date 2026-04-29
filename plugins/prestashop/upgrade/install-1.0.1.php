@@ -103,11 +103,32 @@ function upgrade_module_1_0_1($module)
     // 3. Provision the webhook retry queue + cache tables. Idempotent —
     //    `sql/install.php` uses `CREATE TABLE IF NOT EXISTS`, so re-running
     //    on a partial upgrade is a no-op.
+    $sql = [];
     include __DIR__ . '/../sql/install.php';
     foreach ($sql as $query) {
         if (!Db::getInstance()->execute($query)) {
             return false;
         }
+    }
+
+    // 3b. Defensive index addition. `CREATE TABLE IF NOT EXISTS` is a
+    //     no-op on shops that already provisioned `frak_webhook_queue`
+     //    from an earlier dev iteration without `idx_updated`, so we can't
+    //     rely on step 3 to add the index retrospectively. Check
+    //     `information_schema.statistics` and ALTER if the index is
+    //     missing — keeps the admin observability panel's "latest error"
+    //     lookup off a filesort regardless of which point on the upgrade
+    //     timeline a shop joined.
+    $index_check = 'SELECT COUNT(*) AS cnt FROM information_schema.statistics'
+        . ' WHERE table_schema = DATABASE()'
+        . ' AND table_name = "' . _DB_PREFIX_ . 'frak_webhook_queue"'
+        . ' AND index_name = "idx_updated"';
+    $row = Db::getInstance()->getRow($index_check);
+    if (is_array($row) && (int) ($row['cnt'] ?? 0) === 0) {
+        Db::getInstance()->execute(
+            'ALTER TABLE `' . _DB_PREFIX_ . 'frak_webhook_queue`'
+            . ' ADD KEY `idx_updated` (`updated_at`)'
+        );
     }
 
     // 4. Generate the cron token if missing. Existing tokens are preserved

@@ -98,4 +98,26 @@ final class FrakLoggerTest extends TestCase
         $this->assertGreaterThanOrEqual($before, $drained[0]['ts']);
         $this->assertLessThanOrEqual($after, $drained[0]['ts']);
     }
+
+    public function testShutdownIsRegisteredAtMostOnce(): void
+    {
+        // First `log()` call wires `register_shutdown_function` and flips
+        // the static flag. Subsequent calls must observe the flag as
+        // already set so they don't re-register the handler. We can't
+        // directly observe `register_shutdown_function`'s internal queue
+        // from PHP, but the `if (!self::$shutdownRegistered)` gate is
+        // what enforces the at-most-once contract — verifying the flag
+        // stays set across calls is the highest-fidelity assertion
+        // available in pure-PHP unit tests.
+        FrakLogger::info('first');
+        $afterFirst = FrakLogger::isShutdownRegisteredForTesting();
+
+        FrakLogger::info('second');
+        FrakLogger::warning('third');
+        FrakLogger::error('fourth');
+        $afterMany = FrakLogger::isShutdownRegisteredForTesting();
+
+        $this->assertTrue($afterFirst, 'Flag must be set after the first log() call');
+        $this->assertTrue($afterMany, 'Flag stays set across subsequent log() calls');
+    }
 }

@@ -72,7 +72,7 @@ class FrakIntegration extends Module
         }
     }
 
-    public function install()
+    public function install(): bool
     {
         if (!parent::install()) {
             return false;
@@ -103,6 +103,9 @@ class FrakIntegration extends Module
         // merchant cron job already wired against the displayed URL, so the
         // value is generated only when missing — keeps re-installs after a
         // partial uninstall safe.
+        // `$sql` is populated by the included file. Declared here so
+        // phpstan can see the contract across the include boundary.
+        $sql = [];
         include __DIR__ . '/sql/install.php';
         foreach ($sql as $query) {
             if (!Db::getInstance()->execute($query)) {
@@ -121,7 +124,7 @@ class FrakIntegration extends Module
         return true;
     }
 
-    public function uninstall()
+    public function uninstall(): bool
     {
         if (!parent::uninstall()) {
             return false;
@@ -150,6 +153,7 @@ class FrakIntegration extends Module
         // Schema teardown lives in `sql/uninstall.php` for symmetry with install.
         // SQL errors are swallowed: uninstall is best-effort and PrestaShop already
         // truncated `ps_hook_module` via `parent::uninstall()` regardless.
+        $sql = [];
         include __DIR__ . '/sql/uninstall.php';
         foreach ($sql as $query) {
             Db::getInstance()->execute($query);
@@ -170,15 +174,34 @@ class FrakIntegration extends Module
      */
     public function hookHeader()
     {
-        $shop_name = Configuration::get('FRAK_SHOP_NAME');
-        $logo_url = Configuration::get('FRAK_LOGO_URL');
+        // Single batched read so we touch the autoload cache once. The brand
+        // pair is the only Configuration data the front-office head needs;
+        // everything else lives in the bundled placement row or `frak_cache`.
+        $config = Configuration::getMultiple(['FRAK_SHOP_NAME', 'FRAK_LOGO_URL', 'PS_SHOP_NAME']);
+        $shop_name = ($config['FRAK_SHOP_NAME'] ?? '') ?: ($config['PS_SHOP_NAME'] ?? '');
+        $logo_url = $config['FRAK_LOGO_URL'] ?? '';
 
-        $this->context->smarty->assign([
-            'shop_name' => $shop_name ?: Configuration::get('PS_SHOP_NAME'),
-            'logo_url' => $logo_url,
-        ]);
+        // Bypass Smarty: the head fragment is 3 lines of HTML and 2 escaped
+        // values, both of which `json_encode` produces JS-safe string
+        // literals for (covers `<`, `>`, `'`, `"`, control chars, unicode).
+        // Avoiding the Smarty parser/render saves a real-but-small amount of
+        // CPU on every front-office request — measurable in flame graphs on
+        // high-traffic shops.
+        $shop_name_js = json_encode((string) $shop_name, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
+        $logo_url_js = json_encode((string) $logo_url, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
+        if ($shop_name_js === false) {
+            $shop_name_js = '""';
+        }
+        if ($logo_url_js === false) {
+            $logo_url_js = '""';
+        }
 
-        return $this->display(__FILE__, 'views/templates/hook/head.tpl');
+        return '<link rel="dns-prefetch" href="https://cdn.jsdelivr.net">'
+            . '<link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>'
+            . '<script>window.FrakSetup=Object.assign(window.FrakSetup||{},{config:{metadata:{'
+            . 'name:' . $shop_name_js . ','
+            . 'logoUrl:' . $logo_url_js
+            . '}}});</script>';
     }
 
     /**
@@ -204,6 +227,14 @@ class FrakIntegration extends Module
     public function hookActionFrontControllerSetMedia()
     {
         if (!isset($this->context->controller) || !method_exists($this->context->controller, 'registerJavascript')) {
+            return;
+        }
+        // Skip on AJAX: registerJavascript writes into the asset queue that
+        // only the full HTML response materialises. AJAX endpoints (cart
+        // updates, search-as-you-type, theme JSON polls) never render the
+        // queue, so registering here is wasted work — noticeable on chatty
+        // themes that fire dozens of XHRs per page lifecycle.
+        if (!empty($this->context->controller->ajax)) {
             return;
         }
         $this->context->controller->registerJavascript(

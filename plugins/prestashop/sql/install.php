@@ -18,6 +18,10 @@
  * - `frak_webhook_queue` (mirrored on FrakWebhookQueue):
  *     - `idx_due` (state, next_retry_at): cron drainer's hot path.
  *     - `idx_order`: dedupe lookups by source order id.
+ *     - `idx_updated` (updated_at): drives the admin observability panel's
+ *       "latest error" lookup ({@see FrakWebhookQueue::stats()}'s second
+ *       query orders by `updated_at DESC LIMIT 1`); without the index
+ *       MySQL falls back to a filesort that scales with row count.
  *     - `state` ENUM matches `FrakWebhookQueue::STATE_*` constants — drift here
  *       would silently fail `markSuccess` / `markFailure` updates.
  *     - 8 KB `last_error` cap (TEXT) is enforced at the application layer
@@ -53,7 +57,8 @@ $sql['frak_webhook_queue'] = 'CREATE TABLE IF NOT EXISTS `' . _DB_PREFIX_ . 'fra
     `updated_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     PRIMARY KEY (`id_frak_webhook_queue`),
     KEY `idx_due` (`state`, `next_retry_at`),
-    KEY `idx_order` (`id_order`)
+    KEY `idx_order` (`id_order`),
+    KEY `idx_updated` (`updated_at`)
 ) ENGINE=' . _MYSQL_ENGINE_ . ' DEFAULT CHARSET=utf8mb4;';
 
 $sql['frak_cache'] = 'CREATE TABLE IF NOT EXISTS `' . _DB_PREFIX_ . 'frak_cache` (

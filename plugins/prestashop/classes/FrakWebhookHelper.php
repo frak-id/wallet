@@ -178,8 +178,20 @@ class FrakWebhookHelper
         }
 
         // Build the curl handles up front so we can register them all with
-        // curl_multi before the first select() call.
+        // curl_multi before the first select() call. A `curl_share_init`
+        // handle pools DNS resolution + SSL session state across the batch:
+        // 25 handles × ~50-100 ms TLS handshake collapses to one TLS
+        // setup + N reused sessions, which is the largest single saving in
+        // the cron drainer's wall time after parallelism. The share handle
+        // lives only for the duration of this batch — cron ticks don't
+        // share connections across each other (PHP process exits between
+        // ticks) so a per-call share handle is the right scope.
         $multi = curl_multi_init();
+        $share = curl_share_init();
+        if ($share !== false) {
+            curl_share_setopt($share, CURLSHOPT_SHARE, CURL_LOCK_DATA_DNS);
+            curl_share_setopt($share, CURLSHOPT_SHARE, CURL_LOCK_DATA_SSL_SESSION);
+        }
         $handles = [];
         $build_errors = [];
 
@@ -196,7 +208,7 @@ class FrakWebhookHelper
                     throw new Exception('Failed to encode webhook payload as JSON');
                 }
                 $signature = self::signBody($body, $secret);
-                $ch = self::buildCurlHandle($url, $body, $signature);
+                $ch = self::buildCurlHandle($url, $body, $signature, $share !== false ? $share : null);
                 if ($ch === false) {
                     throw new Exception('Failed to initialize cURL');
                 }
@@ -268,6 +280,9 @@ class FrakWebhookHelper
         }
 
         curl_multi_close($multi);
+        if ($share !== false) {
+            curl_share_close($share);
+        }
         return $results;
     }
 
@@ -416,9 +431,16 @@ class FrakWebhookHelper
      * Shared by both the sync ({@see dispatch()}) and parallel
      * ({@see sendBatch()}) paths so the request shape stays in lock-step.
      *
+     * `$share` is an optional `curl_share_init` handle. The batch path
+     * passes one in so DNS + SSL session state is reused across the 25
+     * handles spawned in a single tick — single-shot callers leave it
+     * `null` since per-call sharing has no benefit.
+     *
+     * @param  \CurlShareHandle|resource|null $share Share handle for
+     *                                                pooled DNS / SSL state.
      * @return \CurlHandle|resource|false
      */
-    private static function buildCurlHandle(string $url, string $body, string $signature)
+    private static function buildCurlHandle(string $url, string $body, string $signature, $share = null)
     {
         $ch = curl_init($url);
         if ($ch === false) {
@@ -433,6 +455,9 @@ class FrakWebhookHelper
         ]);
         curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, self::CONNECT_TIMEOUT);
         curl_setopt($ch, CURLOPT_TIMEOUT, self::REQUEST_TIMEOUT);
+        if ($share !== null) {
+            curl_setopt($ch, CURLOPT_SHARE, $share);
+        }
         return $ch;
     }
 }

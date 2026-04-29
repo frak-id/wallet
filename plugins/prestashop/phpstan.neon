@@ -1,5 +1,5 @@
 parameters:
-    level: 0
+    level: 1
     bootstrapFiles:
         - phpstan-stubs.php
     paths:
@@ -13,10 +13,11 @@ parameters:
         - test
         - build (?)
         - dist (?)
-    # PrestaShop core helpers (Configuration, Tools, Context, Order, …) are not loaded
-    # during analysis. The base classes Module / ModuleAdminController are stubbed in
-    # phpstan-stubs.php so `extends` parses; everything else is silenced via patterns.
-    ignoreErrors:
-        - '#unknown class#'
-        - '#not found\.#'
-        - '#undefined (static )?(constant|method|property)#'
+    # PrestaShop core surface is declared in `phpstan-stubs.php` (Module,
+    # ModuleAdminController, ModuleFrontController, FrontController,
+    # Configuration, Tools, Validate, Db, Order, Customer, Currency, Image,
+    # Tab, Language, PrestaShopLogger, Hook, Context, Link, Smarty, plus the
+    # `pSQL` global function and PS runtime constants). No `ignoreErrors`
+    # patterns are needed at level 0 — every PS reference resolves through
+    # the stubs. Future bumps to level 1+ may surface real type drift; fix
+    # at the call site rather than re-introducing broad ignore patterns.

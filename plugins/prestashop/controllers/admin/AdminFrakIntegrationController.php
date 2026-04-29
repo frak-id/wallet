@@ -10,6 +10,27 @@ class AdminFrakIntegrationController extends ModuleAdminController
         $this->meta_title = $this->l('Frak Integration');
     }
 
+    /**
+     * Register the admin-only static assets used by the Frak configuration
+     * page.
+     *
+     * `views/js/admin.js` carries the live logo-preview wiring (URL input +
+     * file-picker ↔ `<img>` in the side panel). Loading it via `addJS`
+     * gets it cached by the browser across admin page loads (vs the inline
+     * `<script>` it replaced in `configure.tpl`, which was re-shipped on
+     * every render) and removes the `unsafe-inline` requirement merchants
+     * running CSP would otherwise need.
+     *
+     * `setMedia` is scoped per-controller-route by `ModuleAdminController`,
+     * so this fires only when the Frak admin page renders — not on every
+     * back-office page.
+     */
+    public function setMedia($isNewTheme = false): void
+    {
+        parent::setMedia($isNewTheme);
+        $this->addJS($this->module->getPathUri() . 'views/js/admin.js');
+    }
+
     public function renderView()
     {
         $merchant = FrakMerchantResolver::getRecord();
@@ -186,11 +207,11 @@ class AdminFrakIntegrationController extends ModuleAdminController
             }
         }
 
-        if (!$shopName || empty($shopName) || !Validate::isGenericName($shopName)) {
+        if (!$shopName || !Validate::isGenericName($shopName)) {
             $this->errors[] = $this->l('Invalid Shop Name');
             return;
         }
-        if (!$logoUrl || empty($logoUrl) || (!Validate::isUrl($logoUrl) && !$this->isLocalFile($logoUrl))) {
+        if (!$logoUrl || (!Validate::isUrl($logoUrl) && !$this->isLocalFile($logoUrl))) {
             $this->errors[] = $this->l('Invalid Logo URL');
             return;
         }

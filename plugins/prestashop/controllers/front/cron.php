@@ -35,7 +35,7 @@ class FrakIntegrationCronModuleFrontController extends ModuleFrontController
     public $display_column_right = false;
     public $ssl = true;
 
-    public function init()
+    public function init(): void
     {
         // Skip the parent's heavy theme bootstrap (lookups, hooks, etc.) — we
         // only need the module loaded. Calling `Controller::init()` directly
@@ -49,7 +49,15 @@ class FrakIntegrationCronModuleFrontController extends ModuleFrontController
         $provided = (string) Tools::getValue('token');
 
         if ($expected === '' || !hash_equals($expected, $provided)) {
-            PrestaShopLogger::addLog('FrakIntegration: cron rejected — invalid token', 2);
+            // Buffered file log instead of `PrestaShopLogger::addLog`: a
+            // brute-force scan of the cron URL would otherwise spam `ps_log`
+            // (synchronous DB write per attempt). `FrakLogger::warning`
+            // buffers to a per-day rotated file and never escalates below
+            // `LEVEL_ERROR`, so token-probe noise stays out of the admin
+            // log surface entirely. Manual flush since the front controller
+            // exits before PHP's natural shutdown handler fires.
+            FrakLogger::warning('cron rejected — invalid token');
+            FrakLogger::flush();
             header('HTTP/1.1 403 Forbidden');
             echo 'forbidden';
             exit;
@@ -67,7 +75,8 @@ class FrakIntegrationCronModuleFrontController extends ModuleFrontController
             );
             exit;
         } catch (Throwable $e) {
-            PrestaShopLogger::addLog('FrakIntegration: cron crashed: ' . $e->getMessage(), 3);
+            FrakLogger::error('cron crashed: ' . $e->getMessage());
+            FrakLogger::flush();
             header('HTTP/1.1 500 Internal Server Error');
             echo 'cron error';
             exit;
