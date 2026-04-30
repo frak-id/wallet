@@ -862,6 +862,12 @@ interface Resources {
                     step3Description: "In one click, transfer your earnings to your bank account.";
                     step3Title: "Earn money";
                 };
+                invite: {
+                    check1: "Create your referral code";
+                    check2: "Share it with your friends";
+                    check3: "Earn money on every order they place.";
+                    title: "Invite your friends and earn";
+                };
                 notifications: {
                     description: "Enable notifications to track your earnings in real time.";
                     title: "Don't miss any earnings!";

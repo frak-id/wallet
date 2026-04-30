@@ -319,6 +319,12 @@
                 "title": "Don't miss any earnings!",
                 "description": "Enable notifications to track your earnings in real time."
             },
+            "invite": {
+                "title": "Invite your friends and earn",
+                "check1": "Create your referral code",
+                "check2": "Share it with your friends",
+                "check3": "Earn money on every order they place."
+            },
             "detail": {
                 "howItWorks": "How does it work?",
                 "step1Title": "Explore our partner brands",
