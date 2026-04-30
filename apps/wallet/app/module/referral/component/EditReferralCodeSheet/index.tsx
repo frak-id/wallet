@@ -7,6 +7,7 @@ import { useCallback, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { GlassCloseButton } from "@/module/common/component/GlassCloseButton";
 import { Title } from "@/module/common/component/Title";
+import { AutoGenerateReferralCodeBody } from "../AutoGenerateReferralCodeBody";
 import { EditReferralCancelModal } from "../EditReferralCancelModal";
 import { ReferralCodeForm } from "../ReferralCodeForm";
 import * as styles from "./index.css";
@@ -20,6 +21,7 @@ export function EditReferralCodeSheet({ onClose, onSaved }: Props) {
     const { t } = useTranslation();
     const queryClient = useQueryClient();
     const [cancelOpen, setCancelOpen] = useState(false);
+    const [view, setView] = useState<"manual" | "auto">("manual");
 
     const handleIssued = useCallback(async () => {
         await queryClient.invalidateQueries({
@@ -64,11 +66,19 @@ export function EditReferralCodeSheet({ onClose, onSaved }: Props) {
                     </Text>
                 </Stack>
 
-                <ReferralCodeForm
-                    mode="edit"
-                    showAutoGenerate={false}
-                    onIssued={handleIssued}
-                />
+                {view === "manual" ? (
+                    <ReferralCodeForm
+                        mode="edit"
+                        onIssued={handleIssued}
+                        onAutoGenerate={() => setView("auto")}
+                    />
+                ) : (
+                    <AutoGenerateReferralCodeBody
+                        mode="edit"
+                        onIssued={handleIssued}
+                        onPersonalize={() => setView("manual")}
+                    />
+                )}
             </Stack>
 
             <EditReferralCancelModal

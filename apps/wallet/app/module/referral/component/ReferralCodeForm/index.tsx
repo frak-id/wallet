@@ -48,12 +48,12 @@ type ReferralCodeFormProps = {
      */
     mode?: "create" | "edit";
     /**
-     * Show the bottom "ou — Générer automatiquement" affordance when the
-     * suggestions block isn't visible. Default `true`. The edit-flow sheet
-     * sets it to `false` while the auto path doesn't yet support replace
-     * mode.
+     * Click handler for "Générer automatiquement". When omitted, the form
+     * navigates to `/profile/referral/auto` (default for the create page).
+     * Pass a handler to keep the user inside a sheet/modal — typically the
+     * caller flips a local view state that swaps in the auto-flow body.
      */
-    showAutoGenerate?: boolean;
+    onAutoGenerate?: () => void;
 };
 
 /**
@@ -68,7 +68,7 @@ type ReferralCodeFormProps = {
 export function ReferralCodeForm({
     onIssued,
     mode = "create",
-    showAutoGenerate = true,
+    onAutoGenerate,
 }: ReferralCodeFormProps) {
     const { t } = useTranslation();
     const navigate = useNavigate();
@@ -126,6 +126,10 @@ export function ReferralCodeForm({
     };
 
     const handleAutoGenerate = () => {
+        if (onAutoGenerate) {
+            onAutoGenerate();
+            return;
+        }
         navigate({ to: "/profile/referral/auto" });
     };
 
@@ -245,7 +249,7 @@ export function ReferralCodeForm({
                     {submitLabel}
                 </Button>
 
-                {hasSuggestions || !showAutoGenerate ? null : (
+                {hasSuggestions ? null : (
                     <>
                         <OrDivider />
                         <Button

@@ -9,11 +9,38 @@ vi.mock("react-i18next", () => ({
     Trans: ({ children }: { children?: ReactNode }) => <>{children}</>,
 }));
 
-// The form pulls in many side-effectful hooks (suggest / issue / replace).
-// The cancel flow doesn't depend on any of that, so stub the form to a
-// simple marker.
+// The form / auto-body each pull in many side-effectful hooks. Stub them
+// to simple markers and expose their prop callbacks via test-id'd buttons
+// so the view-swap state machine can be exercised in isolation.
 vi.mock("../ReferralCodeForm", () => ({
-    ReferralCodeForm: () => <div data-testid="form-stub" />,
+    ReferralCodeForm: ({ onAutoGenerate }: { onAutoGenerate?: () => void }) => (
+        <div data-testid="form-stub">
+            <button
+                type="button"
+                data-testid="form-auto-trigger"
+                onClick={() => onAutoGenerate?.()}
+            >
+                trigger auto
+            </button>
+        </div>
+    ),
+}));
+vi.mock("../AutoGenerateReferralCodeBody", () => ({
+    AutoGenerateReferralCodeBody: ({
+        onPersonalize,
+    }: {
+        onPersonalize: () => void;
+    }) => (
+        <div data-testid="auto-body-stub">
+            <button
+                type="button"
+                data-testid="auto-personalize-trigger"
+                onClick={onPersonalize}
+            >
+                trigger personalize
+            </button>
+        </div>
+    ),
 }));
 
 const renderSheet = (overrides?: {
@@ -123,5 +150,28 @@ describe.sequential("EditReferralCodeSheet", () => {
         fireEvent.click(continueCta as HTMLButtonElement);
 
         expect(onClose).not.toHaveBeenCalled();
+    });
+
+    it("swaps to the auto-flow body when the form's onAutoGenerate fires", () => {
+        const { sheet } = renderSheet();
+        expect(sheet.getByTestId("form-stub")).toBeTruthy();
+        expect(sheet.queryByTestId("auto-body-stub")).toBeNull();
+
+        fireEvent.click(sheet.getByTestId("form-auto-trigger"));
+
+        expect(sheet.queryByTestId("form-stub")).toBeNull();
+        expect(sheet.getByTestId("auto-body-stub")).toBeTruthy();
+    });
+
+    it("swaps back to the manual form when the auto-body's onPersonalize fires", () => {
+        const { sheet } = renderSheet();
+        // Get into auto view first.
+        fireEvent.click(sheet.getByTestId("form-auto-trigger"));
+        expect(sheet.getByTestId("auto-body-stub")).toBeTruthy();
+
+        fireEvent.click(sheet.getByTestId("auto-personalize-trigger"));
+
+        expect(sheet.queryByTestId("auto-body-stub")).toBeNull();
+        expect(sheet.getByTestId("form-stub")).toBeTruthy();
     });
 });

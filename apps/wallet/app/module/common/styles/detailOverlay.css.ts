@@ -84,7 +84,7 @@ const bottomSheetBase = style({
 // pick up these rounded-corner / max-height styles independently and
 // break the layout.
 globalStyle(`${bottomSheetBase} > *`, {
-    backgroundColor: vars.surface.background,
+    backgroundColor: vars.surface.background2,
     borderTopLeftRadius: alias.cornerRadius.xl,
     borderTopRightRadius: alias.cornerRadius.xl,
     width: "100%",
