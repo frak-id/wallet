@@ -739,6 +739,23 @@ interface Resources {
                     title: "Invite friends";
                 };
                 menuLabel: "Referrals";
+                modify: "Modify";
+                redeem: {
+                    active: "Active";
+                    activeSince: "Activated on";
+                    deleteCta: "Delete active code";
+                    description: "Enter a friend's or creator's code and you'll both benefit.";
+                    errorAlreadyRedeemed: "You already have an active referral code.";
+                    errorCycle: "This code can't be used with your account.";
+                    errorGeneric: "Something went wrong. Please try again.";
+                    errorInvalid: "This code isn't valid.";
+                    errorNotFound: "This code does not exist. Make sure it's correct.";
+                    errorSelf: "You can't use your own code.";
+                    label: "Referral code";
+                    placeholder: "e.g. LOLA10";
+                    submitCta: "Apply the code";
+                    title: "Got a referral code?";
+                };
                 share: {
                     activeSince: "Active since";
                     copiedToast: "Referral code copied";

@@ -36,6 +36,7 @@ export { LockIcon } from "./LockIcon";
 export { LogoFrak } from "./LogoFrak";
 export { LogoFrakWithName } from "./LogoFrakWithName";
 export { MobileIcon } from "./MobileIcon";
+export { PencilIcon } from "./PencilIcon";
 export { PeopleIcon } from "./PeopleIcon";
 export { PersonIcon } from "./PersonIcon";
 export { ProfileIcon } from "./ProfileIcon";

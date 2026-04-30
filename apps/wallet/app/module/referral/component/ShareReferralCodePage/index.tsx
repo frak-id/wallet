@@ -19,9 +19,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Back } from "@/module/common/component/Back";
-import { Title } from "@/module/common/component/Title";
-import { TermsDisclosure } from "../TermsDisclosure";
+import { ReferralPageShell } from "../ReferralPageShell";
 import * as styles from "./index.css";
 
 export function ShareReferralCodePage() {
@@ -102,7 +100,10 @@ export function ShareReferralCodePage() {
     };
 
     return (
-        <Stack space="m" className={styles.page}>
+        <ReferralPageShell
+            title={t("wallet.referral.create.title")}
+            description={t("wallet.referral.create.description")}
+        >
             {showToast ? (
                 <ToastSurface>
                     <ConfirmationTooltip isLeaving={!copied}>
@@ -110,13 +111,6 @@ export function ShareReferralCodePage() {
                     </ConfirmationTooltip>
                 </ToastSurface>
             ) : null}
-            <Stack space="m">
-                <Back href="/profile/referral" />
-                <Title size="page">{t("wallet.referral.create.title")}</Title>
-            </Stack>
-            <Text variant="body" color="secondary">
-                {t("wallet.referral.create.description")}
-            </Text>
 
             {ownedCode ? (
                 <>
@@ -192,10 +186,6 @@ export function ShareReferralCodePage() {
                     </Stack>
                 </>
             ) : null}
-
-            <Box className={styles.disclosure}>
-                <TermsDisclosure />
-            </Box>
-        </Stack>
+        </ReferralPageShell>
     );
 }

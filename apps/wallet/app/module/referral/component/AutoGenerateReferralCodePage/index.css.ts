@@ -2,12 +2,6 @@ import { vars } from "@frak-labs/design-system/theme";
 import { alias } from "@frak-labs/design-system/tokens";
 import { keyframes, style } from "@vanilla-extract/css";
 
-export const page = style({
-    display: "flex",
-    flexDirection: "column",
-    minHeight: "100%",
-});
-
 export const labelRow = style({
     paddingInline: alias.spacing.m,
 });
@@ -43,8 +37,4 @@ export const skeletonBar = style({
     borderRadius: alias.cornerRadius.s,
     backgroundColor: vars.surface.disabled,
     animation: `${skeletonShimmer} 1.4s ease-in-out infinite`,
-});
-
-export const disclosure = style({
-    marginTop: "auto",
 });

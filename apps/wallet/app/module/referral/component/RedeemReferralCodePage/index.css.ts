@@ -2,6 +2,23 @@ import { vars } from "@frak-labs/design-system/theme";
 import { alias } from "@frak-labs/design-system/tokens";
 import { style } from "@vanilla-extract/css";
 
+export const labelRow = style({
+    paddingInline: alias.spacing.m,
+});
+
+export const clearButton = style({
+    display: "inline-flex",
+    alignItems: "center",
+    justifyContent: "center",
+    width: "24px",
+    height: "24px",
+    background: "transparent",
+    border: "none",
+    padding: 0,
+    cursor: "pointer",
+    color: vars.icon.primary,
+});
+
 export const card = style({
     display: "flex",
     flexDirection: "column",
@@ -24,17 +41,9 @@ export const codeLabel = style({
     minWidth: 0,
 });
 
-export const copyButton = style({
-    display: "inline-flex",
-    alignItems: "center",
-    justifyContent: "center",
-    width: "24px",
-    height: "24px",
-    background: "transparent",
-    border: "none",
-    padding: 0,
-    cursor: "pointer",
-    color: vars.icon.primary,
+export const activeIcon = style({
+    color: vars.icon.success,
+    flexShrink: 0,
 });
 
 export const dateValue = style({

@@ -24,9 +24,7 @@ import {
     useState,
 } from "react";
 import { useTranslation } from "react-i18next";
-import { Back } from "@/module/common/component/Back";
-import { Title } from "@/module/common/component/Title";
-import { TermsDisclosure } from "../TermsDisclosure";
+import { ReferralPageShell } from "../ReferralPageShell";
 import * as styles from "./index.css";
 
 /** Backend's stem alphabet stripped of digits + ambiguous chars (I, L, O). */
@@ -159,15 +157,11 @@ export function AutoGenerateReferralCodePage() {
     const errorMessageKey = resolveApiErrorKey(error, ERROR_KEY_MAP);
 
     return (
-        <Stack space="m" className={styles.page}>
-            <Stack space="m">
-                <Back href="/profile/referral/create" />
-                <Title size="page">{t("wallet.referral.create.title")}</Title>
-            </Stack>
-            <Text variant="body" color="secondary">
-                {t("wallet.referral.create.description")}
-            </Text>
-
+        <ReferralPageShell
+            backHref="/profile/referral/create"
+            title={t("wallet.referral.create.title")}
+            description={t("wallet.referral.create.description")}
+        >
             <form onSubmit={handleSubmit}>
                 <Stack space="m">
                     <Stack space="xs">
@@ -261,10 +255,6 @@ export function AutoGenerateReferralCodePage() {
                     ) : null}
                 </Stack>
             </form>
-
-            <Box className={styles.disclosure}>
-                <TermsDisclosure />
-            </Box>
-        </Stack>
+        </ReferralPageShell>
     );
 }

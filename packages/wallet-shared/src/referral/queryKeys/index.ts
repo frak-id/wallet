@@ -30,4 +30,10 @@ export namespace referralKey {
      * Revoke the authenticated wallet's active referral code.
      */
     export const revoke = [base, "code", "revoke"] as const;
+
+    /**
+     * Remove the authenticated wallet's active cross-merchant referrer
+     * (created by redeeming someone else's code).
+     */
+    export const unredeem = [base, "redemption", "delete"] as const;
 }

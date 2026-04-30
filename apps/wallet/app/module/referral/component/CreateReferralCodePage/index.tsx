@@ -1,16 +1,10 @@
-import { Box } from "@frak-labs/design-system/components/Box";
-import { Stack } from "@frak-labs/design-system/components/Stack";
-import { Text } from "@frak-labs/design-system/components/Text";
 import { referralKey, useReferralStatus } from "@frak-labs/wallet-shared";
 import { useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
 import { useCallback, useEffect } from "react";
 import { useTranslation } from "react-i18next";
-import { Back } from "@/module/common/component/Back";
-import { Title } from "@/module/common/component/Title";
 import { ReferralCodeForm } from "../ReferralCodeForm";
-import { TermsDisclosure } from "../TermsDisclosure";
-import * as styles from "./index.css";
+import { ReferralPageShell } from "../ReferralPageShell";
 
 export function CreateReferralCodePage() {
     const { t } = useTranslation();
@@ -39,18 +33,11 @@ export function CreateReferralCodePage() {
     if (willRedirect) return null;
 
     return (
-        <Stack space="m" className={styles.page}>
-            <Stack space="m">
-                <Back href="/profile/referral" />
-                <Title size="page">{t("wallet.referral.create.title")}</Title>
-            </Stack>
-            <Text variant="body" color="secondary">
-                {t("wallet.referral.create.description")}
-            </Text>
+        <ReferralPageShell
+            title={t("wallet.referral.create.title")}
+            description={t("wallet.referral.create.description")}
+        >
             <ReferralCodeForm onIssued={onIssued} />
-            <Box className={styles.disclosure}>
-                <TermsDisclosure />
-            </Box>
-        </Stack>
+        </ReferralPageShell>
     );
 }

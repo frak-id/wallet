@@ -51,6 +51,12 @@ export function InfoRow({
     labelWeight?: "regular" | "medium" | "semiBold" | "bold";
     href?: string;
     to?: string;
+    /**
+     * Right-side slot. On `to` rows the action lives inside the `<Link>`,
+     * so any click in this slot bubbles up and triggers navigation. Use
+     * decorative content (icon + label) here; real buttons that need a
+     * different target should `stopPropagation` or live outside InfoRow.
+     */
     action?: ReactNode;
     align?: "center" | "top";
 }) {
@@ -78,6 +84,7 @@ export function InfoRow({
         return (
             <Link to={to} className={rowClass}>
                 {content}
+                {action ? <Box className={styles.action}>{action}</Box> : null}
             </Link>
         );
     }

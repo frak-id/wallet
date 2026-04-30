@@ -105,6 +105,7 @@
                 "cta": "Générer mon code"
             },
             "enterCode": "Entrer un code de parrainage",
+            "modify": "Modifier",
             "create": {
                 "title": "Mon code de parrainage",
                 "description": "Dès qu'une personne s'inscrit avec ton code et passe commande sur l'un de nos sites partenaires, vous gagnez de l'argent tous·tes les deux.",
@@ -129,6 +130,22 @@
                 "shareCta": "Partager mon code",
                 "shareText": "Utilise mon code de parrainage {{code}} pour t'inscrire sur Frak.",
                 "modifyCta": "Modifier mon code"
+            },
+            "redeem": {
+                "title": "Tu as reçu un code ?",
+                "description": "Entre le code d'un·e ami·e ou d'un·e créateur·rice et profitez-en tous·tes les deux.",
+                "label": "Code de parrainage",
+                "placeholder": "Ex : LOLA10",
+                "submitCta": "Appliquer le code",
+                "active": "Actif",
+                "activeSince": "Activé le",
+                "deleteCta": "Supprimer le code actif",
+                "errorNotFound": "Ce code n'existe pas. Vérifie qu'il est correct.",
+                "errorSelf": "Tu ne peux pas utiliser ton propre code.",
+                "errorCycle": "Ce code n'est pas utilisable avec ton compte.",
+                "errorAlreadyRedeemed": "Tu as déjà appliqué un code de parrainage.",
+                "errorInvalid": "Ce code n'est pas valide.",
+                "errorGeneric": "Une erreur est survenue. Réessaie dans un instant."
             }
         },
         "transferToBank": "Transférer vers ma banque",
