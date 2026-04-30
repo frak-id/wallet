@@ -6,6 +6,7 @@ if (!defined('_PS_VERSION_')) {
 
 require_once __DIR__ . '/vendor/autoload.php';
 
+
 /**
  * Frak PrestaShop module bootstrap.
  *
@@ -80,12 +81,69 @@ class FrakIntegration extends Module
 
     public function install(): bool
     {
-        return parent::install() && FrakInstaller::install($this);
+        // 1. Repair partial-install state from any prior failed attempt
+        //    BEFORE `parent::install()` runs. Without this, `parent::install()`
+        //    can fail with a 1062 duplicate-key error on `authorization_role.slug`,
+        //    `tab.class_name`, or `module.name` because PrestaShop core's
+        //    `ModuleTabRegister` inserts those rows but never removes them on
+        //    uninstall — so a half-uninstalled state blocks every subsequent
+        //    install. Running here also keeps re-installs of a healthy module
+        //    safe: the cleanup is a no-op when no leftovers exist.
+        //    Failure is logged but doesn't abort — the next steps will surface
+        //    the underlying issue with a more actionable error.
+        try {
+            FrakInstaller::cleanLeftovers($this);
+        } catch (\Throwable $e) {
+            PrestaShopLogger::addLog('[FrakSDK] cleanLeftovers (pre-install) failed: ' . $e->getMessage(), 3);
+        }
+
+        // 2. Best-effort install chain. PrestaShop's `parent::install()` can
+        //    fail on a single hook hiccup; running everything to the end with
+        //    aggregated `$ok` keeps the merchant from getting stuck in a
+        //    half-installed state on transient issues.
+        $ok = true;
+        try {
+            $ok = parent::install() && $ok;
+        } catch (\Throwable $e) {
+            PrestaShopLogger::addLog('[FrakSDK] parent::install failed: ' . $e->getMessage(), 3);
+            $ok = false;
+        }
+        try {
+            $ok = FrakInstaller::install($this) && $ok;
+        } catch (\Throwable $e) {
+            PrestaShopLogger::addLog('[FrakSDK] FrakInstaller::install failed: ' . $e->getMessage(), 3);
+            $ok = false;
+        }
+        return $ok;
     }
 
     public function uninstall(): bool
     {
-        return parent::uninstall() && FrakInstaller::uninstall($this);
+        // Best-effort — every step continues regardless of failures so we
+        // never leave the DB in a half-uninstalled state that blocks
+        // re-install with a duplicate-key error on `authorization_role.slug`.
+        // PrestaShop core's `parent::uninstall()` returns `false` on the
+        // first failed sub-step and skips everything after it; wrapping each
+        // step in its own try/catch + accumulating into `$ok` keeps cleanup
+        // marching to the end. The trailing `cleanLeftovers()` is
+        // belt-and-suspenders for the case where the chain above fails
+        // halfway and the merchant doesn't immediately retry.
+        $ok = true;
+        foreach (
+            [
+            'parent::uninstall' => fn(): bool => parent::uninstall(),
+            'FrakInstaller::uninstall' => fn(): bool => FrakInstaller::uninstall($this),
+            'FrakInstaller::cleanLeftovers' => fn(): bool => FrakInstaller::cleanLeftovers($this),
+            ] as $label => $step
+        ) {
+            try {
+                $ok = $step() && $ok;
+            } catch (\Throwable $e) {
+                PrestaShopLogger::addLog('[FrakSDK] uninstall step "' . $label . '" failed: ' . $e->getMessage(), 3);
+                $ok = false;
+            }
+        }
+        return $ok;
     }
 
     public function getContent()
@@ -163,12 +221,14 @@ class FrakIntegration extends Module
 
     /**
      * Front-office banner above the storefront content. Driven by the
-     * `banner_top` placement — disabled by default to avoid changing the
-     * storefront on upgrade.
+     * `banner_top` placement — wired to `displayNavFullWidth` (full-width
+     * slot below the header in PrestaShop's classic layout) so the banner
+     * spans the viewport instead of squeezing into the cramped `.col-md-10`
+     * column the `displayTop` hook renders inside.
      */
-    public function hookDisplayTop($params = [])
+    public function hookDisplayNavFullWidth($params = [])
     {
-        return FrakDisplayDispatcher::dispatch($this, 'displayTop', $params);
+        return FrakDisplayDispatcher::dispatch($this, 'displayNavFullWidth', $params);
     }
 
     /**

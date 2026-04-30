@@ -78,6 +78,16 @@ export class PurchaseRepository {
         });
     }
 
+    async updateIdentityGroup(
+        purchaseId: string,
+        identityGroupId: string
+    ): Promise<void> {
+        await db
+            .update(purchasesTable)
+            .set({ identityGroupId, updatedAt: new Date() })
+            .where(eq(purchasesTable.id, purchaseId));
+    }
+
     async getWebhookByMerchantId(
         merchantId: string
     ): Promise<MerchantWebhook | null> {

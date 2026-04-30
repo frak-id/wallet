@@ -154,7 +154,6 @@ describe.sequential("ButtonShare", () => {
         // component must gracefully fall through to the sharing-page UI.
         render(
             <ButtonShare
-                // biome-ignore lint/suspicious/noExplicitAny: testing legacy
                 // string value that is no longer in the typed union.
                 clickAction={"share-modal" as any}
             />

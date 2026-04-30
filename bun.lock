@@ -532,7 +532,7 @@
     },
     "sdk/components": {
       "name": "@frak-labs/components",
-      "version": "1.0.2",
+      "version": "1.0.3",
       "dependencies": {
         "@frak-labs/core-sdk": "workspace:*",
         "@frak-labs/design-system": "workspace:*",

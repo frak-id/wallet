@@ -1,5 +1,21 @@
 # @frak-labs/components
 
+## 1.0.3
+
+### Patch Changes
+
+- [#159](https://github.com/frak-id/wallet/pull/159) [`3174fc2`](https://github.com/frak-id/wallet/commit/3174fc2544c5d959fc75976b435d591a0e5f228d) Thanks [@KONFeature](https://github.com/KONFeature)! - Fix `<frak-post-purchase>` CTA button not rendering — pull the design-system reset CSS into the component's injected stylesheet by composing `element.button` into the `cta` style. Without it, the browser's native `<button>` rendering overrode the pill styles.
+
+- [#159](https://github.com/frak-id/wallet/pull/159) [`9ddbee4`](https://github.com/frak-id/wallet/commit/9ddbee4a7279beb11532fb6fdaa459db7789d12c) Thanks [@KONFeature](https://github.com/KONFeature)! - `<frak-post-purchase>`: forward an optional `products` array to the full-page sharing UI so referrers see cards for the items they just bought instead of only a generic share screen. Accepts either a `SharingPageProduct[]` (set imperatively, `el.products = [...]`) or a JSON-stringified array (set as an HTML attribute by server-rendered surfaces such as the WordPress / Magento plugins). Each entry is sanitised on the SDK boundary — `title` is required, and `imageUrl` / `link` are kept only when they parse as `http(s)://` URLs — so a malformed `link` cannot crash the listener-side `new URL(...)` call and a `javascript:` URL cannot reach `imageUrl` / `link` consumers downstream.
+
+  Internally, the share CTA now opens via `displaySharingPage` (the full-page sharing flow) instead of `modalBuilder().sharing()` (the modal flow). The full-page surface is the only one that renders product cards; this is also why the modal-flow share keeps working unchanged for `<frak-button-share>`. The `openSharingPage` helper grew an optional third `options?: { link?, products? }` argument so callers can opt in without touching the existing `(targetInteraction, placement)` signature.
+
+- [#159](https://github.com/frak-id/wallet/pull/159) [`eccf0f1`](https://github.com/frak-id/wallet/commit/eccf0f1fd511d71c29fc81c22ccd976820b0d359) Thanks [@KONFeature](https://github.com/KONFeature)! - `<frak-button-share>`: route every share click through the full-page sharing UI (`displaySharingPage`) instead of maintaining a parallel modal-flow path. The internal `useShareModal` hook (along with the `ErrorMessage` UI it powered and the `useCopyToClipboard` helper that supported it) is removed; the `clickAction` prop's TypeScript union no longer accepts `"share-modal"`. Existing merchant configs / legacy stored values that still emit `clickAction="share-modal"` keep working — the runtime branch falls through to `openSharingPage` so the share still opens, just on the full-page surface that already supports product cards. Callers wanting the embedded-wallet modal continue to set `clickAction="embedded-wallet"`; that path is untouched.
+
+  `openSharingPage`: `metadata` is now only emitted when `targetInteraction` is set, mirroring the conditional spread used for `link` and `products` so the helper never sends an empty `metadata: {}` payload.
+
+  `<frak-post-purchase>`: collapse the previous `useCallback(handleShare)` + inline `onClick` arrow (which defeated memoisation) into a single memoised `handleClick` so the click-tracking + `openSharingPage` call live in one named, stable-reference callback.
+
 ## 1.0.2
 
 ### Patch Changes

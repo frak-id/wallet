@@ -152,12 +152,12 @@ class FrakPlacementRegistry
         // Banner ———————————————————————————————————————————————————————
         'banner_top' => [
             'component' => self::COMPONENT_BANNER,
-            'hook' => 'displayTop',
+            'hook' => 'displayNavFullWidth',
             'config_key' => 'FRAK_PLACEMENT_BANNER_TOP',
             'default' => true,
             'placement_attr' => 'top',
-            'label' => 'Banner at the top of every page',
-            'description' => 'Renders the referral / in-app browser banner above the storefront content. Auto-hides when the SDK has nothing to surface.',
+            'label' => 'Banner above the storefront content (full-width)',
+            'description' => 'Renders the referral / in-app browser banner full-width below the header (via the `displayNavFullWidth` hook). Auto-hides when the SDK has nothing to surface.',
             'options' => [
                 'classname' => self::BANNER_CLASSNAME_OPTION,
             ],
