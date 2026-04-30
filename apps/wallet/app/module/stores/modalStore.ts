@@ -35,7 +35,8 @@ export type ModalState =
           merchant?: { name: string; domain: string };
       }
     | { id: "moneriumBankFlow" }
-    | { id: "rewardDetail"; item: RewardHistoryItem };
+    | { id: "rewardDetail"; item: RewardHistoryItem }
+    | { id: "editReferralCode"; onSaved: () => void };
 
 const maxStackDepth = 5;
 

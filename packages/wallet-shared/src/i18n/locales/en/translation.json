@@ -129,9 +129,22 @@
                 "activeSince": "Active since",
                 "copyCode": "Copy code",
                 "copiedToast": "Referral code copied",
+                "savedToast": "New code saved",
                 "shareCta": "Share my code",
                 "shareText": "Use my referral code {{code}} to sign up on Frak.",
                 "modifyCta": "Modify my code"
+            },
+            "edit": {
+                "title": "Edit my code",
+                "attentionTitle": "Heads up",
+                "attentionBody": "Changing your code revokes the previous one. Links you've already shared will stop working.",
+                "cancel": "Cancel",
+                "cancelConfirm": {
+                    "title": "Discard changes",
+                    "description": "Your current code will be kept. Your changes won't be saved.",
+                    "confirmCta": "Discard changes",
+                    "continueCta": "Keep editing"
+                }
             },
             "redeem": {
                 "title": "Got a referral code?",

@@ -127,9 +127,22 @@
                 "activeSince": "Actif depuis le",
                 "copyCode": "Copier le code",
                 "copiedToast": "Code de parrainage copié",
+                "savedToast": "Nouveau code enregistré",
                 "shareCta": "Partager mon code",
                 "shareText": "Utilise mon code de parrainage {{code}} pour t'inscrire sur Frak.",
                 "modifyCta": "Modifier mon code"
+            },
+            "edit": {
+                "title": "Modifier mon code",
+                "attentionTitle": "Attention",
+                "attentionBody": "Changer ton code révoquera l'ancien. Les liens déjà partagés ne fonctionneront plus.",
+                "cancel": "Annuler",
+                "cancelConfirm": {
+                    "title": "Annuler les modifications",
+                    "description": "Ton code actuel sera conservé. Tes modifications ne seront pas enregistrées.",
+                    "confirmCta": "Annuler les modifications",
+                    "continueCta": "Continuer"
+                }
             },
             "redeem": {
                 "title": "Tu as reçu un code ?",

@@ -12,6 +12,7 @@ import {
 import {
     resolveApiErrorKey,
     useIssueReferralCode,
+    useReplaceReferralCode,
     useSuggestReferralCodes,
 } from "@frak-labs/wallet-shared";
 import { useNavigate } from "@tanstack/react-router";
@@ -40,6 +41,19 @@ const ERROR_KEY_MAP = {
 type ReferralCodeFormProps = {
     /** Called with the issued 6-char code once the backend confirms creation. */
     onIssued?: (code: string) => void;
+    /**
+     * `"create"` (default) issues a fresh code via `useIssueReferralCode`.
+     * `"edit"` rotates the user's active code via `useReplaceReferralCode`
+     * (revoke + issue chained).
+     */
+    mode?: "create" | "edit";
+    /**
+     * Show the bottom "ou — Générer automatiquement" affordance when the
+     * suggestions block isn't visible. Default `true`. The edit-flow sheet
+     * sets it to `false` while the auto path doesn't yet support replace
+     * mode.
+     */
+    showAutoGenerate?: boolean;
 };
 
 /**
@@ -51,7 +65,11 @@ type ReferralCodeFormProps = {
  *   - Stage 2 — suggestions visible. Submit "Valider mon code" → issue the
  *     picked code. Clicking the X on the input rewinds to stage 1.
  */
-export function ReferralCodeForm({ onIssued }: ReferralCodeFormProps) {
+export function ReferralCodeForm({
+    onIssued,
+    mode = "create",
+    showAutoGenerate = true,
+}: ReferralCodeFormProps) {
     const { t } = useTranslation();
     const navigate = useNavigate();
 
@@ -64,11 +82,20 @@ export function ReferralCodeForm({ onIssued }: ReferralCodeFormProps) {
     const suggestions = suggest.data?.suggestions ?? [];
     const hasSuggestions = suggestions.length > 0;
 
-    const issue = useIssueReferralCode({
+    // The picked branch is stable for the form's lifetime — the parent
+    // never flips `mode` mid-render, so calling both `useMutation` hooks
+    // and selecting one is safe vs. React's hook-order rules.
+    const issueCreate = useIssueReferralCode({
         mutations: {
             onSuccess: ({ code }) => onIssued?.(code),
         },
     });
+    const issueReplace = useReplaceReferralCode({
+        mutations: {
+            onSuccess: ({ code }) => onIssued?.(code),
+        },
+    });
+    const issue = mode === "edit" ? issueReplace : issueCreate;
 
     const inputValue = selectedCode ?? stem;
     const hasValue = inputValue.length > 0;
@@ -218,7 +245,7 @@ export function ReferralCodeForm({ onIssued }: ReferralCodeFormProps) {
                     {submitLabel}
                 </Button>
 
-                {hasSuggestions ? null : (
+                {hasSuggestions || !showAutoGenerate ? null : (
                     <>
                         <OrDivider />
                         <Button

@@ -10,22 +10,27 @@ import {
     ShareIcon,
 } from "@frak-labs/design-system/icons";
 import {
-    referralKey,
     useCopyToClipboardWithState,
     useReferralStatus,
-    useRevokeReferralCode,
 } from "@frak-labs/wallet-shared";
-import { useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { modalStore } from "@/module/stores/modalStore";
 import { ReferralPageShell } from "../ReferralPageShell";
 import * as styles from "./index.css";
 
+// Toast unmount delay — matches `ConfirmationTooltip`'s 200 ms exit
+// animation plus a small buffer so the fade-out plays before React
+// unmounts. Shared by the copy-toast and saved-toast lifecycles.
+const TOAST_EXIT_MS = 220;
+// Saved-toast visible duration before transitioning to `leaving`.
+const SAVED_TOAST_VISIBLE_MS = 1700;
+
 export function ShareReferralCodePage() {
     const { t, i18n } = useTranslation();
-    const queryClient = useQueryClient();
     const navigate = useNavigate();
+    const openModal = modalStore((s) => s.openModal);
 
     const { data: status } = useReferralStatus();
     const ownedCode = status?.ownedCode ?? null;
@@ -40,20 +45,6 @@ export function ShareReferralCodePage() {
         }
     }, [shouldRedirect, navigate]);
 
-    const revoke = useRevokeReferralCode({
-        mutations: {
-            onSuccess: async () => {
-                await queryClient.invalidateQueries({
-                    queryKey: referralKey.status(),
-                });
-                navigate({
-                    to: "/profile/referral/create",
-                    replace: true,
-                });
-            },
-        },
-    });
-
     const formattedDate = ownedCode
         ? new Intl.DateTimeFormat(i18n.language, {
               day: "2-digit",
@@ -64,7 +55,7 @@ export function ShareReferralCodePage() {
 
     const { copied, copy } = useCopyToClipboardWithState();
     // `copied` flips back to false after the hook's internal 2 s timer.
-    // We keep the toast mounted ~220 ms longer so its exit animation can play.
+    // We keep the toast mounted long enough for the exit animation to play.
     const [showToast, setShowToast] = useState(false);
     useEffect(() => {
         if (copied) {
@@ -72,9 +63,33 @@ export function ShareReferralCodePage() {
             return;
         }
         if (!showToast) return;
-        const timeoutId = window.setTimeout(() => setShowToast(false), 220);
+        const timeoutId = window.setTimeout(
+            () => setShowToast(false),
+            TOAST_EXIT_MS
+        );
         return () => window.clearTimeout(timeoutId);
     }, [copied, showToast]);
+
+    // Saved toast — fired by `EditReferralCodeSheet.onSaved` once a new
+    // code has replaced the old one.
+    const [savedState, setSavedState] = useState<"idle" | "shown" | "leaving">(
+        "idle"
+    );
+    useEffect(() => {
+        if (savedState === "idle") return;
+        const delay =
+            savedState === "shown" ? SAVED_TOAST_VISIBLE_MS : TOAST_EXIT_MS;
+        const next = savedState === "shown" ? "leaving" : "idle";
+        const timeoutId = window.setTimeout(() => setSavedState(next), delay);
+        return () => window.clearTimeout(timeoutId);
+    }, [savedState]);
+
+    const handleEdit = () => {
+        openModal({
+            id: "editReferralCode",
+            onSaved: () => setSavedState("shown"),
+        });
+    };
 
     const handleCopy = () => {
         if (!ownedCode) return;
@@ -108,6 +123,13 @@ export function ShareReferralCodePage() {
                 <ToastSurface>
                     <ConfirmationTooltip isLeaving={!copied}>
                         {t("wallet.referral.share.copiedToast")}
+                    </ConfirmationTooltip>
+                </ToastSurface>
+            ) : null}
+            {savedState !== "idle" ? (
+                <ToastSurface>
+                    <ConfirmationTooltip isLeaving={savedState === "leaving"}>
+                        {t("wallet.referral.share.savedToast")}
                     </ConfirmationTooltip>
                 </ToastSurface>
             ) : null}
@@ -177,9 +199,7 @@ export function ShareReferralCodePage() {
                             variant="ghost"
                             size="small"
                             width="full"
-                            disabled={revoke.isPending}
-                            loading={revoke.isPending}
-                            onClick={() => revoke.mutate()}
+                            onClick={handleEdit}
                         >
                             {t("wallet.referral.share.modifyCta")}
                         </Button>

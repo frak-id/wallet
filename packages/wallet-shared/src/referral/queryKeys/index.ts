@@ -32,6 +32,12 @@ export namespace referralKey {
     export const revoke = [base, "code", "revoke"] as const;
 
     /**
+     * Rotate the authenticated wallet's active referral code (revoke
+     * the old one, then issue the new one).
+     */
+    export const replace = [base, "code", "replace"] as const;
+
+    /**
      * Remove the authenticated wallet's active cross-merchant referrer
      * (created by redeeming someone else's code).
      */

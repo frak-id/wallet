@@ -732,6 +732,18 @@ interface Resources {
                     terms: "By sharing or using a code, you agree to <termsLink>FRAK's terms and conditions</termsLink>.";
                     title: "My referral code";
                 };
+                edit: {
+                    attentionBody: "Changing your code revokes the previous one. Links you've already shared will stop working.";
+                    attentionTitle: "Heads up";
+                    cancel: "Cancel";
+                    cancelConfirm: {
+                        confirmCta: "Discard changes";
+                        continueCta: "Keep editing";
+                        description: "Your current code will be kept. Your changes won't be saved.";
+                        title: "Discard changes";
+                    };
+                    title: "Edit my code";
+                };
                 enterCode: "Enter a referral code";
                 invite: {
                     cta: "Generate my code";
@@ -767,6 +779,7 @@ interface Resources {
                     copiedToast: "Referral code copied";
                     copyCode: "Copy code";
                     modifyCta: "Modify my code";
+                    savedToast: "New code saved";
                     shareCta: "Share my code";
                     shareText: "Use my referral code {{code}} to sign up on Frak.";
                 };
