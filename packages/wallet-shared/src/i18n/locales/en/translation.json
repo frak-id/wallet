@@ -127,6 +127,7 @@
             "share": {
                 "activeSince": "Active since",
                 "copyCode": "Copy code",
+                "copiedToast": "Referral code copied",
                 "shareCta": "Share my code",
                 "shareText": "Use my referral code {{code}} to sign up on Frak.",
                 "modifyCta": "Modify my code"

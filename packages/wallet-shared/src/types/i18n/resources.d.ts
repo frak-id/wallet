@@ -741,6 +741,7 @@ interface Resources {
                 menuLabel: "Referrals";
                 share: {
                     activeSince: "Active since";
+                    copiedToast: "Referral code copied";
                     copyCode: "Copy code";
                     modifyCta: "Modify my code";
                     shareCta: "Share my code";

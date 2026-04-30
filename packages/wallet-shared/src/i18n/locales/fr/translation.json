@@ -125,6 +125,7 @@
             "share": {
                 "activeSince": "Actif depuis le",
                 "copyCode": "Copier le code",
+                "copiedToast": "Code de parrainage copié",
                 "shareCta": "Partager mon code",
                 "shareText": "Utilise mon code de parrainage {{code}} pour t'inscrire sur Frak.",
                 "modifyCta": "Modifier mon code"

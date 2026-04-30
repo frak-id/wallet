@@ -1,7 +1,9 @@
 import { Box } from "@frak-labs/design-system/components/Box";
 import { Button } from "@frak-labs/design-system/components/Button";
+import { ConfirmationTooltip } from "@frak-labs/design-system/components/ConfirmationTooltip";
 import { Stack } from "@frak-labs/design-system/components/Stack";
 import { Text } from "@frak-labs/design-system/components/Text";
+import { ToastSurface } from "@frak-labs/design-system/components/ToastSurface";
 import {
     CalendarIcon,
     CopyIcon,
@@ -9,12 +11,13 @@ import {
 } from "@frak-labs/design-system/icons";
 import {
     referralKey,
+    useCopyToClipboardWithState,
     useReferralStatus,
     useRevokeReferralCode,
 } from "@frak-labs/wallet-shared";
 import { useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Back } from "@/module/common/component/Back";
 import { Title } from "@/module/common/component/Title";
@@ -61,40 +64,52 @@ export function ShareReferralCodePage() {
           }).format(new Date(ownedCode.createdAt))
         : "";
 
-    const handleCopy = async () => {
-        if (!ownedCode) return;
-        try {
-            await navigator.clipboard.writeText(ownedCode.code);
-        } catch {
-            // Clipboard unavailable — silently no-op.
+    const { copied, copy } = useCopyToClipboardWithState();
+    // `copied` flips back to false after the hook's internal 2 s timer.
+    // We keep the toast mounted ~220 ms longer so its exit animation can play.
+    const [showToast, setShowToast] = useState(false);
+    useEffect(() => {
+        if (copied) {
+            setShowToast(true);
+            return;
         }
+        if (!showToast) return;
+        const timeoutId = window.setTimeout(() => setShowToast(false), 220);
+        return () => window.clearTimeout(timeoutId);
+    }, [copied, showToast]);
+
+    const handleCopy = () => {
+        if (!ownedCode) return;
+        copy(ownedCode.code);
     };
 
     const handleShare = async () => {
         if (!ownedCode) return;
-        const shareData = {
-            title: t("wallet.referral.create.title"),
-            text: t("wallet.referral.share.shareText", {
-                code: ownedCode.code,
-            }),
-        };
+        const shareText = t("wallet.referral.share.shareText", {
+            code: ownedCode.code,
+        });
+        // Pass `text` only — combining `title` + `text` makes macOS Safari
+        // treat them as two share items ("2 Images") with auto-rendered
+        // previews instead of a plain text share.
         if (navigator.share) {
-            try {
-                await navigator.share(shareData);
-                return;
-            } catch {
-                // User dismissed or share failed; fall through to clipboard.
-            }
+            // Swallow rejections (the user dismissing the share sheet
+            // throws AbortError); falling through to `copy()` here would
+            // re-fire the "copied" toast they didn't ask for.
+            await navigator.share({ text: shareText }).catch(() => {});
+            return;
         }
-        try {
-            await navigator.clipboard.writeText(shareData.text);
-        } catch {
-            // Last resort no-op on unsupported environments.
-        }
+        copy(shareText);
     };
 
     return (
         <Stack space="m" className={styles.page}>
+            {showToast ? (
+                <ToastSurface>
+                    <ConfirmationTooltip isLeaving={!copied}>
+                        {t("wallet.referral.share.copiedToast")}
+                    </ConfirmationTooltip>
+                </ToastSurface>
+            ) : null}
             <Stack space="m">
                 <Back href="/profile/referral" />
                 <Title size="page">{t("wallet.referral.create.title")}</Title>
