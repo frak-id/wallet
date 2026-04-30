@@ -145,7 +145,13 @@
                 "errorCycle": "Ce code n'est pas utilisable avec ton compte.",
                 "errorAlreadyRedeemed": "Tu as déjà appliqué un code de parrainage.",
                 "errorInvalid": "Ce code n'est pas valide.",
-                "errorGeneric": "Une erreur est survenue. Réessaie dans un instant."
+                "errorGeneric": "Une erreur est survenue. Réessaie dans un instant.",
+                "confirmDelete": {
+                    "title": "Supprimer ce code\nde parrainage ?",
+                    "description": "Tu ne bénéficieras plus des avantages liés à ce code pour tes prochains achats. Tu pourras en ajouter un nouveau à tout moment.",
+                    "confirmCta": "Supprimer le code",
+                    "cancelCta": "Annuler"
+                }
             }
         },
         "transferToBank": "Transférer vers ma banque",

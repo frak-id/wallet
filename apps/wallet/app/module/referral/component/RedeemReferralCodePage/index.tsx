@@ -20,6 +20,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { type ChangeEvent, type FormEvent, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { REDEEMED_CODE_PLACEHOLDER } from "../../constants";
+import { DeleteRedemptionConfirmModal } from "../DeleteRedemptionConfirmModal";
 import { ReferralPageShell } from "../ReferralPageShell";
 import * as styles from "./index.css";
 
@@ -36,6 +37,13 @@ const ERROR_KEY_MAP = {
         400: "wallet.referral.redeem.errorInvalid",
         422: "wallet.referral.redeem.errorInvalid",
     },
+    fallback: "wallet.referral.redeem.errorGeneric",
+} as const;
+
+// Unredeem rarely fails (404 means status is already stale; status
+// invalidation will reconcile). Anything else falls back to the generic
+// message inside the confirm modal.
+const UNREDEEM_ERROR_KEY_MAP = {
     fallback: "wallet.referral.redeem.errorGeneric",
 } as const;
 
@@ -170,9 +178,25 @@ function ActiveRedemption({
     onUnredeemed: () => void;
 }) {
     const { t, i18n } = useTranslation();
+    const [confirmOpen, setConfirmOpen] = useState(false);
     const unredeem = useUnredeemReferralCode({
-        mutations: { onSuccess: onUnredeemed },
+        mutations: {
+            onSuccess: () => {
+                setConfirmOpen(false);
+                onUnredeemed();
+            },
+        },
     });
+
+    const unredeemErrorKey = resolveApiErrorKey(
+        unredeem.error,
+        UNREDEEM_ERROR_KEY_MAP
+    );
+
+    const handleConfirmOpenChange = (next: boolean) => {
+        if (!next) unredeem.reset();
+        setConfirmOpen(next);
+    };
 
     const formattedDate = new Intl.DateTimeFormat(i18n.language, {
         day: "2-digit",
@@ -181,68 +205,73 @@ function ActiveRedemption({
     }).format(new Date(since));
 
     return (
-        <Stack space="m">
-            <Box className={styles.card}>
-                <Box className={styles.row}>
-                    <Text
-                        as="span"
-                        variant="body"
-                        weight="medium"
-                        className={styles.codeLabel}
-                    >
-                        {REDEEMED_CODE_PLACEHOLDER}
-                    </Text>
-                    <Inline space="xxs" alignY="center">
+        <>
+            <Stack space="m">
+                <Box className={styles.card}>
+                    <Box className={styles.row}>
+                        <Text
+                            as="span"
+                            variant="body"
+                            weight="medium"
+                            className={styles.codeLabel}
+                        >
+                            {REDEEMED_CODE_PLACEHOLDER}
+                        </Text>
+                        <Inline space="xxs" alignY="center">
+                            <Text
+                                as="span"
+                                variant="bodySmall"
+                                weight="medium"
+                                color="success"
+                            >
+                                {t("wallet.referral.redeem.active")}
+                            </Text>
+                            <CheckCircleFilledIcon
+                                width={16}
+                                height={16}
+                                className={styles.activeIcon}
+                            />
+                        </Inline>
+                    </Box>
+                    <Box className={styles.row}>
                         <Text
                             as="span"
                             variant="bodySmall"
                             weight="medium"
-                            color="success"
+                            color="secondary"
+                            className={styles.codeLabel}
                         >
-                            {t("wallet.referral.redeem.active")}
+                            {t("wallet.referral.redeem.activeSince")}
                         </Text>
-                        <CheckCircleFilledIcon
-                            width={16}
-                            height={16}
-                            className={styles.activeIcon}
-                        />
-                    </Inline>
-                </Box>
-                <Box className={styles.row}>
-                    <Text
-                        as="span"
-                        variant="bodySmall"
-                        weight="medium"
-                        color="secondary"
-                        className={styles.codeLabel}
-                    >
-                        {t("wallet.referral.redeem.activeSince")}
-                    </Text>
-                    <Box className={styles.dateValue}>
-                        <CalendarIcon
-                            width={16}
-                            height={16}
-                            className={styles.dateIcon}
-                        />
-                        <Text as="span" variant="bodySmall" weight="medium">
-                            {formattedDate}
-                        </Text>
+                        <Box className={styles.dateValue}>
+                            <CalendarIcon
+                                width={16}
+                                height={16}
+                                className={styles.dateIcon}
+                            />
+                            <Text as="span" variant="bodySmall" weight="medium">
+                                {formattedDate}
+                            </Text>
+                        </Box>
                     </Box>
                 </Box>
-            </Box>
-            <Button
-                type="button"
-                variant="destructive"
-                size="large"
-                width="full"
-                loading={unredeem.isPending}
-                disabled={unredeem.isPending}
-                onClick={() => unredeem.mutate()}
-            >
-                {unredeem.isPending
-                    ? null
-                    : t("wallet.referral.redeem.deleteCta")}
-            </Button>
-        </Stack>
+                <Button
+                    type="button"
+                    variant="destructive"
+                    size="large"
+                    width="full"
+                    onClick={() => setConfirmOpen(true)}
+                >
+                    {t("wallet.referral.redeem.deleteCta")}
+                </Button>
+            </Stack>
+            <DeleteRedemptionConfirmModal
+                open={confirmOpen}
+                onOpenChange={handleConfirmOpenChange}
+                onConfirm={() => unredeem.mutate()}
+                isPending={unredeem.isPending}
+                errorMessageKey={unredeemErrorKey}
+            />
+        </>
     );
 }

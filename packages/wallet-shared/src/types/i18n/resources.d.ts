@@ -743,6 +743,12 @@ interface Resources {
                 redeem: {
                     active: "Active";
                     activeSince: "Activated on";
+                    confirmDelete: {
+                        cancelCta: "Cancel";
+                        confirmCta: "Delete the code";
+                        description: "You'll no longer benefit from this code on your future purchases. You can add a new one at any time.";
+                        title: "Delete this\nreferral code?";
+                    };
                     deleteCta: "Delete active code";
                     description: "Enter a friend's or creator's code and you'll both benefit.";
                     errorAlreadyRedeemed: "You already have an active referral code.";
