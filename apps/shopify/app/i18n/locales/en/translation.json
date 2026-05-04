@@ -105,7 +105,8 @@
             "messages": {
                 "connect": "Shopify webhook connected successfully",
                 "disconnect": "Shopify webhook disconnected successfully",
-                "error": "Webhook deletion error",
+                "createError": "Webhook connection error",
+                "deleteError": "Webhook deletion error",
                 "setup": "Frak purchase tracker is setup",
                 "frakSetupError": "Error connecting Frak purchase tracker"
             }

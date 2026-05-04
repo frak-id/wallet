@@ -30,9 +30,12 @@ export function CreateShopifyWebhook() {
             .deletedWebhookSubscriptionId;
 
         if (userErrors?.length > 0) {
-            window.shopify?.toast.show(t("webhook.actions.messages.error"), {
-                isError: true,
-            });
+            window.shopify?.toast.show(
+                t("webhook.actions.messages.createError"),
+                {
+                    isError: true,
+                }
+            );
         }
 
         if (webhook) {
@@ -122,9 +125,12 @@ export function WebhookList({
         const deletedWebhookId = data.deletedWebhookSubscriptionId;
 
         if (userErrors?.length > 0) {
-            window.shopify?.toast.show(t("webhook.actions.messages.error"), {
-                isError: true,
-            });
+            window.shopify?.toast.show(
+                t("webhook.actions.messages.deleteError"),
+                {
+                    isError: true,
+                }
+            );
         }
 
         if (deletedWebhookId) {
