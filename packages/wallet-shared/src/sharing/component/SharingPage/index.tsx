@@ -397,12 +397,12 @@ export function SharingPage({
 
                     <nav className={styles.legalLinks}>
                         <a
-                            href="https://docs.frak.id"
+                            href="https://frak.id/support"
                             target="_blank"
                             rel="noopener noreferrer"
                             className={styles.legalLink}
                         >
-                            Aide
+                            {t("sdk.sharingPage.legal.help")}
                         </a>
                         <a
                             href="https://frak.id/privacy"
@@ -410,7 +410,7 @@ export function SharingPage({
                             rel="noopener noreferrer"
                             className={styles.legalLink}
                         >
-                            Mentions légales
+                            {t("sdk.sharingPage.legal.privacy")}
                         </a>
                         <a
                             href="https://frak.id/terms"
@@ -418,7 +418,7 @@ export function SharingPage({
                             rel="noopener noreferrer"
                             className={styles.legalLink}
                         >
-                            Conditions générales
+                            {t("sdk.sharingPage.legal.terms")}
                         </a>
                     </nav>
                 </main>

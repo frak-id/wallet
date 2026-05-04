@@ -84,6 +84,11 @@
                 "q5": "Pourquoi les marques utilisent-elles Frak ?",
                 "a5": "Frak permet aux marques de récompenser leur communauté pour le bouche-à-oreille, de manière transparente et décentralisée."
             },
+            "legal": {
+                "help": "Aide",
+                "privacy": "Mentions légales",
+                "terms": "Conditions générales"
+            },
             "confirmation": {
                 "title": "Merci pour votre partage !\nNe passez pas à côté de vos {{ estimatedReward }}.",
                 "subtitle": "Installez l'app Frak, partenaire officiel de {{ productName }}, et suivez vos gains en temps réel.",

@@ -83,6 +83,11 @@
                 "q5": "Why do brands use Frak?",
                 "a5": "Frak enables brands to reward their community for word-of-mouth, in a transparent and decentralized way."
             },
+            "legal": {
+                "help": "Help",
+                "privacy": "Privacy notice",
+                "terms": "Terms & conditions"
+            },
             "confirmation": {
                 "title": "Thank you for sharing!\nDon't miss out on your {{ estimatedReward }}.",
                 "subtitle": "Install the Frak app, official partner of {{ productName }}, and track your earnings in real time.",

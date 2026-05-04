@@ -50,6 +50,9 @@ const DEFAULTS: Record<string, string> = {
         "Transfer your earnings directly to your bank account in 3 clicks.",
     "sdk.sharingPage.confirmation.cta": "Collect my reward",
     "sdk.sharingPage.confirmation.shareAgain": "Share again",
+    "sdk.sharingPage.legal.help": "Help",
+    "sdk.sharingPage.legal.privacy": "Privacy notice",
+    "sdk.sharingPage.legal.terms": "Terms & conditions",
 };
 
 function getNestedValue(obj: unknown, path: string[]): string | undefined {
