@@ -34,6 +34,7 @@ class Frak_Admin {
 	public static function init() {
 		add_action( 'admin_menu', array( __CLASS__, 'add_admin_menu' ) );
 		add_action( 'admin_enqueue_scripts', array( __CLASS__, 'enqueue_scripts' ) );
+		add_filter( 'plugin_action_links_' . plugin_basename( FRAK_PLUGIN_FILE ), array( __CLASS__, 'add_plugin_action_links' ) );
 
 		// AJAX handlers for webhook operations.
 		add_action( 'wp_ajax_frak_refresh_merchant', array( __CLASS__, 'ajax_refresh_merchant' ) );
@@ -51,6 +52,26 @@ class Frak_Admin {
 			'frak-settings',
 			array( __CLASS__, 'settings_page' )
 		);
+	}
+
+	/**
+	 * Add a "Settings" quick link to the plugin row on `wp-admin/plugins.php`.
+	 *
+	 * Mirrors the convention used by WooCommerce so operators get a one-click
+	 * jump to the configuration screen from the plugin list rather than hunting
+	 * through `Settings > Frak`.
+	 *
+	 * @param array<int, string> $links Existing action links rendered by core.
+	 * @return array<int, string> Action links with the Settings entry prepended.
+	 */
+	public static function add_plugin_action_links( $links ) {
+		$settings_link = sprintf(
+			'<a href="%s">%s</a>',
+			esc_url( admin_url( 'options-general.php?page=frak-settings' ) ),
+			esc_html__( 'Settings', 'frak' )
+		);
+		array_unshift( $links, $settings_link );
+		return $links;
 	}
 
 	/**

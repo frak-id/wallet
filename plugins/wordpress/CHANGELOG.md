@@ -11,6 +11,10 @@ version on dispatch.
 
 ## [Unreleased]
 
+### Added
+
+- Plugin list quick-link: a **Settings** action link now sits next to *Activate / Deactivate* on `wp-admin/plugins.php`, mirroring the WooCommerce convention. Wired through the standard `plugin_action_links_{basename}` filter inside `Frak_Admin::init()` (admin-only context) and points at the existing `options-general.php?page=frak-settings` slug — zero impact on frontend / cron / WP-CLI request paths.
+
 ## [1.1.3] - 2026-05-04
 
 ### Added
