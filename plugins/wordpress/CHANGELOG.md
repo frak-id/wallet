@@ -11,6 +11,8 @@ version on dispatch.
 
 ## [Unreleased]
 
+## [1.1.3] - 2026-05-04
+
 ### Added
 
 - Native Elementor widget support: Banner, Share Button, and Post-Purchase are now first-class Elementor widgets, surfaced in the panel under a dedicated **Frak** category alongside the existing Gutenberg blocks / `[frak_*]` shortcodes / sidebar widgets.
@@ -116,7 +118,9 @@ version on dispatch.
 
 - Initial release of the Frak WordPress plugin.
 
-[Unreleased]: https://github.com/frak-id/wallet/compare/wordpress-1.1.2...HEAD
+[Unreleased]: https://github.com/frak-id/wallet/compare/wordpress-1.1.3...HEAD
+
+[1.1.3]: https://github.com/frak-id/wallet/compare/wordpress-1.1.2...wordpress-1.1.3
 
 [1.1.2]: https://github.com/frak-id/wallet/compare/wordpress-1.1.1...wordpress-1.1.2
 
