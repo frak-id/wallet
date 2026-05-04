@@ -114,9 +114,6 @@ function StatCardsRow() {
     const openModal = modalStore((s) => s.openModal);
 
     const handlePendingClick = () => {
-        if (document.activeElement instanceof HTMLElement) {
-            document.activeElement.blur();
-        }
         if (totalClaimable <= 0) {
             openModal({ id: "emptyPendingGains" });
         } else {
@@ -126,9 +123,6 @@ function StatCardsRow() {
 
     const handleLifetimeClick = () => {
         if (totalEur <= 0) {
-            if (document.activeElement instanceof HTMLElement) {
-                document.activeElement.blur();
-            }
             openModal({ id: "emptyTransferredGains" });
         }
     };
