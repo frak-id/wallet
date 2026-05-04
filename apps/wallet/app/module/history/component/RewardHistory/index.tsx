@@ -11,7 +11,10 @@ import {
     LockIcon,
 } from "@frak-labs/design-system/icons";
 import { vars } from "@frak-labs/design-system/theme";
-import type { RewardHistoryItem as RewardHistoryItemType } from "@frak-labs/wallet-shared";
+import {
+    formatCurrency,
+    type RewardHistoryItem as RewardHistoryItemType,
+} from "@frak-labs/wallet-shared";
 import { useNavigate } from "@tanstack/react-router";
 import type { TFunction } from "i18next";
 import { useTranslation } from "react-i18next";
@@ -198,17 +201,6 @@ function formatRewardDate(
         month: "long",
     });
     return `${dayMonth}, ${time}`;
-}
-
-function formatCurrency(
-    amount: number,
-    currency: string,
-    locale: string
-): string {
-    return new Intl.NumberFormat(locale, {
-        style: "currency",
-        currency,
-    }).format(amount);
 }
 
 // --- Sub-components ---

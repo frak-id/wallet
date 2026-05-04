@@ -8,14 +8,20 @@ const mockUseGetPendingRewards = vi.fn();
 const mockT = vi.fn((key: string) => key);
 const mockNavigate = vi.fn();
 
-vi.mock("@frak-labs/wallet-shared", () => ({
-    useGetUserBalance: () => mockUseGetUserBalance(),
-    trackEvent: vi.fn(),
-}));
+vi.mock("@frak-labs/wallet-shared", async (importOriginal) => {
+    const actual =
+        await importOriginal<typeof import("@frak-labs/wallet-shared")>();
+    return {
+        ...actual,
+        useGetUserBalance: () => mockUseGetUserBalance(),
+        trackEvent: vi.fn(),
+    };
+});
 
 vi.mock("react-i18next", () => ({
     useTranslation: () => ({
         t: mockT,
+        i18n: { language: "en-US" },
     }),
 }));
 

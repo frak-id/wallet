@@ -16,7 +16,10 @@ import {
     LockIcon,
 } from "@frak-labs/design-system/icons";
 import { vars } from "@frak-labs/design-system/theme";
-import type { RewardHistoryItem } from "@frak-labs/wallet-shared";
+import {
+    formatCurrency,
+    type RewardHistoryItem,
+} from "@frak-labs/wallet-shared";
 import { useTranslation } from "react-i18next";
 import { GlassButton } from "@/module/common/component/GlassButton";
 import { InfoCard, InfoRow } from "@/module/common/component/InfoCard";
@@ -295,17 +298,6 @@ function StatusRow({
 }
 
 // --- Pure formatting helpers ---
-
-function formatCurrency(
-    amount: number,
-    currency: string,
-    locale: string
-): string {
-    return new Intl.NumberFormat(locale, {
-        style: "currency",
-        currency,
-    }).format(amount);
-}
 
 function formatShortDate(timestamp: number, locale: string): string {
     return new Date(timestamp).toLocaleDateString(locale, {
