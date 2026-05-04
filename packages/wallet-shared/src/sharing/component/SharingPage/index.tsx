@@ -19,6 +19,7 @@ import {
 } from "@frak-labs/design-system/icons";
 import { Minus, Plus } from "lucide-react";
 import { Toaster } from "sonner";
+import { MerchantLogo } from "../MerchantLogo";
 import { PostShareConfirmation } from "../PostShareConfirmation";
 import { overlay } from "../shared.css";
 import * as styles from "./sharingPage.css";
@@ -164,13 +165,11 @@ export function SharingPage({
 
                 <header className={styles.header}>
                     <Box display="flex" alignItems="center" gap="m">
-                        {logoUrl && (
-                            <img
-                                src={logoUrl}
-                                alt={appName}
-                                className={styles.merchantLogo}
-                            />
-                        )}
+                        <MerchantLogo
+                            src={logoUrl}
+                            alt={appName}
+                            className={styles.merchantLogo}
+                        />
                         <LogoFrakWithName
                             className={styles.logo}
                             color="#000"
@@ -229,13 +228,11 @@ export function SharingPage({
                                     <br />
                                     {t("sdk.sharingPage.card.tagline2")}
                                 </span>
-                                {logoUrl && (
-                                    <img
-                                        src={logoUrl}
-                                        alt={appName}
-                                        className={styles.creditCardLogo}
-                                    />
-                                )}
+                                <MerchantLogo
+                                    src={logoUrl}
+                                    alt={appName}
+                                    className={styles.creditCardLogo}
+                                />
                             </div>
                         </div>
                     </section>
