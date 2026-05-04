@@ -57,6 +57,18 @@ export const postgresEnv = {
     POSTGRES_SCHEMA: "public",
 };
 
+/**
+ * Env subset consumed by the bootstrap Job (Postgres + libSQL migrations + RustFS bucket provisioning).
+ */
+export const bootstrapEnv = {
+    STAGE: normalizedStageName,
+    ...postgresEnv,
+    LIBSQL_URL: sqldUrl,
+    RUSTFS_ENDPOINT: rustfsEndpoint,
+    RUSTFS_ACCESS_KEY: rustfsAccessKey,
+    RUSTFS_SECRET_KEY: rustfsSecretKey,
+};
+
 export const elysiaEnv = {
     // Global
     STAGE: normalizedStageName,

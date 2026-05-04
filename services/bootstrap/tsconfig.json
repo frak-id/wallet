@@ -1,0 +1,19 @@
+{
+    "compilerOptions": {
+        "target": "esnext",
+        "lib": ["es2023", "esnext"],
+        "module": "esnext",
+        "moduleResolution": "bundler",
+        "types": ["bun-types"],
+        "esModuleInterop": true,
+        "forceConsistentCasingInFileNames": true,
+        "strict": true,
+        "skipLibCheck": true,
+        "noEmit": true,
+        "paths": {
+            "@/*": ["./src/*"]
+        }
+    },
+    "include": ["src/**/*.ts", "drizzle.config.ts", "drizzle-libsql.config.ts"],
+    "exclude": ["**/*.test.ts", "**/*.spec.ts", "drizzle/**"]
+}
