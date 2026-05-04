@@ -3,7 +3,7 @@ Contributors: frak-labs
 Tags: rewards, engagement, web3, ecommerce, woocommerce
 Requires at least: 6.4
 Tested up to: 6.8
-Stable tag: 1.1
+Stable tag: 1.1.2
 Requires PHP: 8.0
 License: GPL-3.0-only
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
@@ -54,7 +54,7 @@ No. The plugin works on both classic and block themes. The SDK is enqueued via t
 Use the matching shortcode. Attribute names are snake_case and mirror the block attributes:
 
 * `[frak_banner placement="top" referral_title="Welcome back!" referral_cta="Claim"]`
-* `[frak_share_button text="Share & earn" use_reward="1" button_style="primary" click_action="share-modal"]`
+* `[frak_share_button text="Share & earn" use_reward="1" button_style="primary" click_action="sharing-page"]`
 * `[frak_post_purchase variant="referrer" cta_text="Share now"]`
 
 = How do I add a Frak component to a classic-theme sidebar or footer? =

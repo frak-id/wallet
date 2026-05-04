@@ -137,11 +137,13 @@ class Frak_Elementor {
 		}
 
 		// Elementor's editor sends widget render requests through admin-ajax
-		// (`action=elementor_ajax`). Detect via $_REQUEST so both POST and GET
-		// flavours match. Read-only check — no nonce needed because we only
+		// (`action=elementor_ajax`). Gate on `wp_doing_ajax()` so a frontend page
+		// load with `?action=elementor_ajax` in the query string can't trick us
+		// into emitting preview-mode HTML / `waitForBackendConfig: false` for
+		// public visitors. Read-only check — no nonce needed because we only
 		// branch rendering behaviour, never mutate state.
 		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only context detection.
-		if ( isset( $_REQUEST['action'] ) && 'elementor_ajax' === $_REQUEST['action'] ) {
+		if ( wp_doing_ajax() && isset( $_REQUEST['action'] ) && 'elementor_ajax' === $_REQUEST['action'] ) {
 			return true;
 		}
 

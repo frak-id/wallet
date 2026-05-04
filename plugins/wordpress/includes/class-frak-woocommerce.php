@@ -156,8 +156,7 @@ class Frak_WooCommerce {
 	 * Resolve the current request's WooCommerce order with the same endpoint
 	 * + capability guards used by {@see get_post_purchase_data()}. Returns null
 	 * on any other endpoint or when the guard fails.
-	 * the guard fails.
-	 *
+	 * Endpoints handled:
 	 *   - `order-received` (post-checkout thank-you page): public, guarded
 	 *     by the `key` query arg matching the stored order key — the same
 	 *     anti-enumeration check WooCommerce's own template performs.
