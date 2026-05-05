@@ -54,6 +54,12 @@ type ReferralCodeFormProps = {
      * caller flips a local view state that swaps in the auto-flow body.
      */
     onAutoGenerate?: () => void;
+    /**
+     * Fired on the first user-driven mutation (any keystroke). Used by the
+     * edit sheet to skip the cancel-confirm modal when the form is pristine.
+     * Optional — create-page consumers don't need to track dirtiness.
+     */
+    onDirty?: () => void;
 };
 
 /**
@@ -69,6 +75,7 @@ export function ReferralCodeForm({
     onIssued,
     mode = "create",
     onAutoGenerate,
+    onDirty,
 }: ReferralCodeFormProps) {
     const { t } = useTranslation();
     const navigate = useNavigate();
@@ -102,6 +109,7 @@ export function ReferralCodeForm({
 
     const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
         if (hasSuggestions) return; // input is read-only once suggestions render
+        onDirty?.();
         setStem(e.target.value);
     };
 

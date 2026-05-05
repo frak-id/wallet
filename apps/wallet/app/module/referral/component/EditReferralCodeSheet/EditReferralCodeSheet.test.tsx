@@ -77,9 +77,13 @@ describe.sequential("EditReferralCodeSheet", () => {
         expect(sheet.getByTestId("form-stub")).toBeTruthy();
     });
 
-    it("does NOT close immediately when the X is clicked — opens the cancel modal", () => {
+    it("does NOT close immediately when the X is clicked on a dirty form — opens the cancel modal", () => {
         const onClose = vi.fn();
         const { sheet } = renderSheet({ onClose });
+
+        // Dirty the sheet first so the close button triggers the modal
+        // instead of the pristine-skip path.
+        fireEvent.click(sheet.getByTestId("form-auto-trigger"));
 
         // The X is the only `common.close` button rendered by the sheet
         // (the cancel modal isn't open yet).
@@ -95,10 +99,25 @@ describe.sequential("EditReferralCodeSheet", () => {
         ).toBe(true);
     });
 
-    it("opens the cancel modal when the Annuler header link is clicked", () => {
+    it("closes the sheet immediately when the X is clicked on a pristine form", () => {
         const onClose = vi.fn();
         const { sheet } = renderSheet({ onClose });
 
+        fireEvent.click(sheet.getByRole("button", { name: "common.close" }));
+
+        expect(onClose).toHaveBeenCalledTimes(1);
+        expect(
+            document.body.textContent?.includes(
+                "wallet.referral.edit.cancelConfirm.title"
+            )
+        ).toBe(false);
+    });
+
+    it("opens the cancel modal when the Annuler header link is clicked on a dirty form", () => {
+        const onClose = vi.fn();
+        const { sheet } = renderSheet({ onClose });
+
+        fireEvent.click(sheet.getByTestId("form-auto-trigger"));
         fireEvent.click(sheet.getByText("wallet.referral.edit.cancel"));
 
         expect(onClose).not.toHaveBeenCalled();
@@ -109,9 +128,26 @@ describe.sequential("EditReferralCodeSheet", () => {
         ).toBe(true);
     });
 
+    it("closes the sheet immediately when the Annuler header link is clicked on a pristine form", () => {
+        const onClose = vi.fn();
+        const { sheet } = renderSheet({ onClose });
+
+        fireEvent.click(sheet.getByText("wallet.referral.edit.cancel"));
+
+        expect(onClose).toHaveBeenCalledTimes(1);
+        expect(
+            document.body.textContent?.includes(
+                "wallet.referral.edit.cancelConfirm.title"
+            )
+        ).toBe(false);
+    });
+
     it("closes the sheet when the cancel modal's confirm CTA is clicked", () => {
         const onClose = vi.fn();
         const { sheet } = renderSheet({ onClose });
+
+        // Dirty the sheet so X opens the modal instead of skipping.
+        fireEvent.click(sheet.getByTestId("form-auto-trigger"));
 
         // Open the cancel modal.
         fireEvent.click(sheet.getByRole("button", { name: "common.close" }));
@@ -135,6 +171,9 @@ describe.sequential("EditReferralCodeSheet", () => {
     it("keeps the sheet open when the cancel modal's continue CTA is clicked", () => {
         const onClose = vi.fn();
         const { sheet } = renderSheet({ onClose });
+
+        // Dirty the sheet so X opens the modal instead of skipping.
+        fireEvent.click(sheet.getByTestId("form-auto-trigger"));
 
         fireEvent.click(sheet.getByRole("button", { name: "common.close" }));
 

@@ -22,6 +22,7 @@ export function EditReferralCodeSheet({ onClose, onSaved }: Props) {
     const queryClient = useQueryClient();
     const [cancelOpen, setCancelOpen] = useState(false);
     const [view, setView] = useState<"manual" | "auto">("manual");
+    const [isDirty, setIsDirty] = useState(false);
 
     const handleIssued = useCallback(async () => {
         await queryClient.invalidateQueries({
@@ -31,7 +32,25 @@ export function EditReferralCodeSheet({ onClose, onSaved }: Props) {
         onClose();
     }, [queryClient, onSaved, onClose]);
 
-    const requestClose = () => setCancelOpen(true);
+    const markDirty = useCallback(() => setIsDirty(true), []);
+
+    const handleSwitchToAuto = () => {
+        setIsDirty(true);
+        setView("auto");
+    };
+
+    const handleSwitchToManual = () => {
+        setIsDirty(true);
+        setView("manual");
+    };
+
+    const handleRequestClose = () => {
+        if (!isDirty) {
+            onClose();
+            return;
+        }
+        setCancelOpen(true);
+    };
 
     const handleConfirmCancel = () => {
         setCancelOpen(false);
@@ -41,12 +60,12 @@ export function EditReferralCodeSheet({ onClose, onSaved }: Props) {
     return (
         <Box className={styles.sheet}>
             <Box className={styles.header}>
-                <GlassCloseButton onClick={requestClose} />
+                <GlassCloseButton onClick={handleRequestClose} />
                 <Box
                     as="button"
                     type="button"
                     className={styles.cancelButton}
-                    onClick={requestClose}
+                    onClick={handleRequestClose}
                 >
                     <Text variant="bodySmall" weight="medium" color="action">
                         {t("wallet.referral.edit.cancel")}
@@ -70,13 +89,14 @@ export function EditReferralCodeSheet({ onClose, onSaved }: Props) {
                     <ReferralCodeForm
                         mode="edit"
                         onIssued={handleIssued}
-                        onAutoGenerate={() => setView("auto")}
+                        onAutoGenerate={handleSwitchToAuto}
+                        onDirty={markDirty}
                     />
                 ) : (
                     <AutoGenerateReferralCodeBody
                         mode="edit"
                         onIssued={handleIssued}
-                        onPersonalize={() => setView("manual")}
+                        onPersonalize={handleSwitchToManual}
                     />
                 )}
             </Stack>
