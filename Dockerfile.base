@@ -35,6 +35,7 @@ COPY apps/shopify/package.json ./apps/shopify/
 # Services
 COPY services/backend/package.json ./services/backend/
 COPY services/credential-sync/package.json ./services/credential-sync/
+COPY services/bootstrap/package.json ./services/bootstrap/
 
 # Packages (only package.json)
 COPY packages/app-essentials/package.json ./packages/app-essentials/

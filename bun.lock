@@ -638,7 +638,6 @@
       "name": "@frak-labs/backend-elysia",
       "version": "0.0.19",
       "dependencies": {
-        "@aws-sdk/client-s3": "^3.1030.0",
         "@bogeychan/elysia-logger": "^0.1.10",
         "@elysiajs/cors": "^1.4.1",
         "@frak-labs/app-essentials": "workspace:*",
@@ -667,8 +666,23 @@
         "@swc/core": "^1.15.24",
         "@types/web-push": "^3.6.4",
         "bun-types": "latest",
-        "drizzle-kit": "^0.31.10",
         "pino-pretty": "^13.1.3",
+        "typescript": "catalog:",
+      },
+    },
+    "services/bootstrap": {
+      "name": "@frak-labs/bootstrap",
+      "version": "0.0.1",
+      "dependencies": {
+        "@aws-sdk/client-s3": "^3.1030.0",
+        "@libsql/client": "^0.17.2",
+        "drizzle-orm": "^0.45.2",
+        "postgres": "^3.4.9",
+      },
+      "devDependencies": {
+        "@swc/core": "^1.15.24",
+        "bun-types": "latest",
+        "drizzle-kit": "^0.31.10",
         "typescript": "catalog:",
       },
     },
@@ -1051,6 +1065,8 @@
     "@frak-labs/app-essentials": ["@frak-labs/app-essentials@workspace:packages/app-essentials"],
 
     "@frak-labs/backend-elysia": ["@frak-labs/backend-elysia@workspace:services/backend"],
+
+    "@frak-labs/bootstrap": ["@frak-labs/bootstrap@workspace:services/bootstrap"],
 
     "@frak-labs/client": ["@frak-labs/client@workspace:packages/client"],
 

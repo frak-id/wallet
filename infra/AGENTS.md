@@ -15,17 +15,18 @@ bun run deploy-gcp:prod     # Pulumi → GCP production (all prod apps live here
 - `sst.config.ts` (root) — SST v3 app config (AWS)
 - `infra/gcp/*.ts` — Pulumi resources per app (backend, wallet, business, listener)
 - `infra/components/KubernetesService.ts` — Deployment + Service + HPA + Ingress + ServiceMonitor
-- `infra/components/KubernetesJob.ts` — one-shot K8s Job (e.g., DB migrations)
+- `infra/components/KubernetesJob.ts` — one-shot K8s Job (e.g., bootstrap migrations + bucket provisioning)
 - `infra/utils.ts` — stage helpers: `isProd`, `isGcp`, `isV2`, `normalizedStageName`
 - `Dockerfile.base` — pre-builds SDK packages once (~3–4 min); app Dockerfiles `FROM` this for cached layers
 - `apps/*/Dockerfile` — multi-stage → `nginx:1.29.1` with pre-compressed gzip
-- `services/backend/{Dockerfile, MigrationDockerfile}`
+- `services/backend/Dockerfile` — backend runtime image
+- `services/bootstrap/Dockerfile` — one-shot bootstrap image (Drizzle migrations + RustFS bucket provisioning)
 
 ## Stages
 `$dev` (local) · `dev` / `prod` (AWS) · `gcp-staging` / `gcp-production` (GCP).
 
 ## Non-Obvious Patterns
-- **Migration Job gate**: `KubernetesJob` (Drizzle migrate) MUST finish before backend `KubernetesService` — enforced by Pulumi `dependsOn`. Skipping = broken pods.
+- **Bootstrap Job gate**: `KubernetesJob` (`services/bootstrap`) runs Drizzle migrations (Postgres + libSQL) AND RustFS bucket provisioning. MUST finish before backend `KubernetesService` — enforced by Pulumi `dependsOn`. Skipping = broken pods.
 - **Listener is path-routed** at `/listener` on the wallet ingress — no standalone service.
 - **Frontend secrets are BUILD-TIME only** (BuildKit `--mount=type=secret`); runtime pod specs must never expose them.
 - **Backend secrets**: GCP Secret Manager → K8s env vars. AWS dev: `sst secret set Key "value"`.
@@ -42,7 +43,7 @@ bun run deploy-gcp:prod     # Pulumi → GCP production (all prod apps live here
 - `tauri-mobile-release.yml` — manual → iOS TestFlight + Android Play Store
 
 ## Anti-Patterns
-Runtime frontend secrets · hardcoded stage names (use `infra/utils.ts`) · skipping migration Job · editing `Dockerfile.base` casually · stage `"prod"`.
+Runtime frontend secrets · hardcoded stage names (use `infra/utils.ts`) · skipping bootstrap Job · editing `Dockerfile.base` casually · stage `"prod"`.
 
 ## See Also
-Parent `/AGENTS.md` · `services/backend/AGENTS.md` (consumer of migration Job) · `apps/*/Dockerfile`.
+Parent `/AGENTS.md` · `services/backend/AGENTS.md` (consumer of bootstrap Job) · `services/bootstrap/` (migrations + bucket provisioning) · `apps/*/Dockerfile`.

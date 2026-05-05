@@ -1,87 +1,36 @@
-import {
-    CreateBucketCommand,
-    DeleteObjectCommand,
-    HeadBucketCommand,
-    HeadObjectCommand,
-    ListObjectsV2Command,
-    PutBucketPolicyCommand,
-    PutObjectCommand,
-    S3Client,
-} from "@aws-sdk/client-s3";
-import { log } from "@backend-infrastructure";
 import { isRunningLocally } from "@frak-labs/app-essentials";
+import { S3Client } from "bun";
 
 /**
- * Repository for storing media objects in RustFS (S3-compatible)
+ * Repository for storing media objects in RustFS (S3-compatible) using Bun's native S3 client.
+ *
+ * Bucket provisioning (creation + public-read policy) is handled by the bootstrap Job
+ * (services/bootstrap). This repository assumes the bucket already exists.
+ *
+ * Cache-Control headers for served objects are configured at the CDN/RustFS gateway layer,
+ * not per-object (Bun's S3Client does not expose Cache-Control on write).
  */
 export class MediaStorageRepository {
     private readonly client: S3Client;
     private readonly bucketName: string;
     private readonly cdnBaseUrl: string;
-    private bucketReady = false;
 
     constructor() {
-        this.client = new S3Client({
-            endpoint: process.env.RUSTFS_ENDPOINT ?? "",
-            region: "europe-west1",
-            forcePathStyle: true,
-            credentials: {
-                accessKeyId: process.env.RUSTFS_ACCESS_KEY ?? "",
-                secretAccessKey: process.env.RUSTFS_SECRET_KEY ?? "",
-            },
-        });
-
         const stage = isRunningLocally ? "local" : (process.env.STAGE ?? "dev");
         this.bucketName = `images-${stage}`;
         this.cdnBaseUrl = process.env.RUSTFS_CDN_BASE_URL ?? "";
+
+        this.client = new S3Client({
+            endpoint: process.env.RUSTFS_ENDPOINT ?? "",
+            region: "europe-west1",
+            bucket: this.bucketName,
+            accessKeyId: process.env.RUSTFS_ACCESS_KEY ?? "",
+            secretAccessKey: process.env.RUSTFS_SECRET_KEY ?? "",
+        });
     }
 
     /**
-     * Ensure the images bucket exists with public read policy
-     */
-    async ensureBucket(): Promise<void> {
-        if (this.bucketReady) return;
-
-        try {
-            await this.client.send(
-                new HeadBucketCommand({ Bucket: this.bucketName })
-            );
-            this.bucketReady = true;
-            return;
-        } catch {
-            // Bucket doesn't exist, create it
-        }
-
-        log.info(`Creating bucket ${this.bucketName}`);
-        await this.client.send(
-            new CreateBucketCommand({ Bucket: this.bucketName })
-        );
-
-        // Apply public read policy for CDN serving
-        const policy = {
-            Version: "2012-10-17",
-            Statement: [
-                {
-                    Effect: "Allow",
-                    Principal: "*",
-                    Action: ["s3:GetObject"],
-                    Resource: [`arn:aws:s3:::${this.bucketName}/*`],
-                },
-            ],
-        };
-        await this.client.send(
-            new PutBucketPolicyCommand({
-                Bucket: this.bucketName,
-                Policy: JSON.stringify(policy),
-            })
-        );
-
-        this.bucketReady = true;
-        log.info(`Bucket ${this.bucketName} created with public read policy`);
-    }
-
-    /**
-     * Upload a processed image to the bucket
+     * Upload a processed image to the bucket.
      *  - Key format: {merchantId}/{type}.webp (or .svg)
      */
     async upload({
@@ -95,21 +44,10 @@ export class MediaStorageRepository {
         body: Buffer | Uint8Array;
         contentType: string;
     }): Promise<string> {
-        await this.ensureBucket();
-
         const extension = contentType === "image/svg+xml" ? "svg" : "webp";
         const key = `${merchantId}/${type}.${extension}`;
 
-        await this.client.send(
-            new PutObjectCommand({
-                Bucket: this.bucketName,
-                Key: key,
-                Body: body,
-                ContentType: contentType,
-                CacheControl:
-                    "public, max-age=86400, stale-while-revalidate=3600",
-            })
-        );
+        await this.client.write(key, body, { type: contentType });
 
         return `${this.cdnBaseUrl}/${this.bucketName}/${key}`;
     }
@@ -125,26 +63,15 @@ export class MediaStorageRepository {
         merchantId: string;
         type: string;
     }): Promise<boolean> {
-        await this.ensureBucket();
-
         for (const ext of ["webp", "svg"]) {
-            try {
-                await this.client.send(
-                    new HeadObjectCommand({
-                        Bucket: this.bucketName,
-                        Key: `${merchantId}/${type}.${ext}`,
-                    })
-                );
-                return true;
-            } catch {
-                // Not found — try next extension
-            }
+            const key = `${merchantId}/${type}.${ext}`;
+            if (await this.client.file(key).exists()) return true;
         }
         return false;
     }
 
     /**
-     * Delete all image variants for a given merchant + type
+     * Delete all image variants for a given merchant + type.
      */
     async delete({
         merchantId,
@@ -153,45 +80,31 @@ export class MediaStorageRepository {
         merchantId: string;
         type: string;
     }): Promise<void> {
-        await this.ensureBucket();
-
-        // Delete both possible extensions (webp + svg)
         await Promise.all(
             ["webp", "svg"].map((ext) =>
-                this.client.send(
-                    new DeleteObjectCommand({
-                        Bucket: this.bucketName,
-                        Key: `${merchantId}/${type}.${ext}`,
-                    })
-                )
+                this.client.delete(`${merchantId}/${type}.${ext}`)
             )
         );
     }
 
     /**
-     * List all media files for a given merchant
+     * List all media files for a given merchant.
      */
     async list({
         merchantId,
     }: {
         merchantId: string;
     }): Promise<{ type: string; url: string }[]> {
-        await this.ensureBucket();
+        const result = await this.client.list({
+            prefix: `${merchantId}/`,
+        });
 
-        const result = await this.client.send(
-            new ListObjectsV2Command({
-                Bucket: this.bucketName,
-                Prefix: `${merchantId}/`,
-            })
-        );
-
-        if (!result.Contents) return [];
+        if (!result.contents) return [];
 
         const files: { type: string; url: string }[] = [];
-        for (const obj of result.Contents) {
-            if (!obj.Key) continue;
+        for (const obj of result.contents) {
             // Match logo, hero, or hero-{variant} (e.g. hero-home, hero-cta)
-            const match = obj.Key.match(
+            const match = obj.key.match(
                 /^[^/]+\/(logo|hero(?:-[a-zA-Z0-9_-]+)?)\.(webp|svg)$/
             );
             if (!match) continue;
@@ -200,7 +113,7 @@ export class MediaStorageRepository {
             if (files.some((f) => f.type === type)) continue;
             files.push({
                 type,
-                url: `${this.cdnBaseUrl}/${this.bucketName}/${obj.Key}`,
+                url: `${this.cdnBaseUrl}/${this.bucketName}/${obj.key}`,
             });
         }
 
