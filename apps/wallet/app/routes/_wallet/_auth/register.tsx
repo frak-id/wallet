@@ -133,11 +133,6 @@ function RegisterPage() {
     }, [step, permissionStatus, permissionGranted, hasBackendToken]);
 
     const handleOpenKeypass = useCallback(() => {
-        // Blur active element before opening drawer to prevent
-        // aria-hidden conflict with focused element inside #root
-        if (document.activeElement instanceof HTMLElement) {
-            document.activeElement.blur();
-        }
         flowRef.current?.track("onboarding_action_clicked", {
             action: "activate_secure_space",
         });

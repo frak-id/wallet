@@ -27,7 +27,9 @@ export function getPlatformInfo() {
  * The SDK keeps its own OpenPanel instance (see `sdk/core/src/utils/trackEvent.ts`).
  */
 export const openPanel =
-    process.env.OPEN_PANEL_API_URL && process.env.OPEN_PANEL_WALLET_CLIENT_ID
+    typeof window !== "undefined" &&
+    process.env.OPEN_PANEL_API_URL &&
+    process.env.OPEN_PANEL_WALLET_CLIENT_ID
         ? new OpenPanel({
               apiUrl: process.env.OPEN_PANEL_API_URL,
               clientId: process.env.OPEN_PANEL_WALLET_CLIENT_ID,

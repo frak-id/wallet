@@ -176,6 +176,7 @@ interface Resources {
             balance: "Balance";
             claim: "Claim";
             claimed: "claimed";
+            clear: "Clear";
             close: "Close";
             copied: "Copied!";
             copyAddress: "Copy address";
@@ -183,6 +184,7 @@ interface Resources {
             interactions: "Interactions";
             logout: "Logout";
             notifications: "Notifications";
+            or: "or";
             pending: "pending";
             refresh: "Refresh";
             rewards: "Rewards";
@@ -712,6 +714,77 @@ interface Resources {
                 step4: "Enable recovery on-chain";
                 title: "Recovery setup";
             };
+            referral: {
+                create: {
+                    autoConfirmLabel: "Generated for you";
+                    autoGenerate: "Generate automatically";
+                    description: "As soon as someone signs up with your code and places an order on one of our partner sites, you both earn money.";
+                    errorAlreadyActive: "You already have an active referral code.";
+                    errorCodeUnavailable: "This code is no longer available, please pick another one.";
+                    errorGeneric: "Something went wrong. Please try again.";
+                    hint: "Pick 4 letters to generate your code.";
+                    label: "Customize your code";
+                    personalizeCta: "Customize my code";
+                    placeholder: "e.g. LOLA10";
+                    searchingCode: "Searching for an available code";
+                    submitCta: "Validate my code";
+                    suggestionsLabel: "Choose your code";
+                    terms: "By sharing or using a code, you agree to <termsLink>FRAK's terms and conditions</termsLink>.";
+                    title: "My referral code";
+                };
+                edit: {
+                    attentionBody: "Changing your code revokes the previous one. Links you've already shared will stop working.";
+                    attentionTitle: "Heads up";
+                    cancel: "Cancel";
+                    cancelConfirm: {
+                        confirmCta: "Discard changes";
+                        continueCta: "Keep editing";
+                        description: "Your current code will be kept. Your changes won't be saved.";
+                        title: "Discard changes";
+                    };
+                    title: "Edit my code";
+                };
+                enterCode: "Enter a referral code";
+                invite: {
+                    cta: "Generate my code";
+                    description: "Create your code and start sharing it with your loved ones to earn even more money.";
+                    title: "Invite friends";
+                };
+                menuLabel: "Referrals";
+                modify: "Modify";
+                redeem: {
+                    active: "Active";
+                    activeSince: "Activated on";
+                    confirmDelete: {
+                        cancelCta: "Cancel";
+                        confirmCta: "Delete the code";
+                        description: "You'll no longer benefit from this code on your future purchases. You can add a new one at any time.";
+                        title: "Delete this\nreferral code?";
+                    };
+                    deleteCta: "Delete active code";
+                    description: "Enter a friend's or creator's code and you'll both benefit.";
+                    errorAlreadyRedeemed: "You already have an active referral code.";
+                    errorCycle: "This code can't be used with your account.";
+                    errorGeneric: "Something went wrong. Please try again.";
+                    errorInvalid: "This code isn't valid.";
+                    errorNotFound: "This code does not exist. Make sure it's correct.";
+                    errorSelf: "You can't use your own code.";
+                    label: "Referral code";
+                    placeholder: "e.g. LOLA10";
+                    submitCta: "Apply the code";
+                    title: "Got a referral code?";
+                };
+                share: {
+                    activeSince: "Active since";
+                    copiedToast: "Referral code copied";
+                    copyCode: "Copy code";
+                    modifyCta: "Modify my code";
+                    savedToast: "New code saved";
+                    shareCta: "Share my code";
+                    shareText: "Use my referral code {{code}} to sign up on Frak.";
+                };
+                title: "Referrals";
+            };
             register: {
                 button: {
                     alreadyRegistered: "You already have a wallet on your device<br />Redirecting to the login page";
@@ -788,6 +861,12 @@ interface Resources {
                     step2Title: "Share an article with your friends";
                     step3Description: "In one click, transfer your earnings to your bank account.";
                     step3Title: "Earn money";
+                };
+                invite: {
+                    check1: "Create your referral code";
+                    check2: "Share it with your friends";
+                    check3: "Earn money on every order they place.";
+                    title: "Invite your friends and earn";
                 };
                 notifications: {
                     description: "Enable notifications to track your earnings in real time.";

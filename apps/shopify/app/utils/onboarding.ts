@@ -9,7 +9,6 @@ import {
     doesThemeHasFrakButton,
     type GetMainThemeIdReturnType,
     getMainThemeId,
-    isCheckoutExtensionActive,
 } from "app/services.server/theme";
 import {
     type GetWebhooksSubscriptionsReturnType,
@@ -28,7 +27,6 @@ export type OnboardingStepData = {
     isThemeHasFrakActivated?: boolean;
     isThemeHasFrakButton?: boolean;
     isThemeHasFrakBanner?: boolean;
-    isCheckoutExtensionActive?: boolean;
     theme?: GetMainThemeIdReturnType;
     firstProduct?: FirstProductPublishedReturnType;
     frakWebhook?: {
@@ -52,7 +50,6 @@ export const stepValidations: StepValidation = {
     5: (data) => Boolean(data?.isThemeHasFrakActivated), // Theme must have Frak activated
     6: (data) => Boolean(data?.isThemeHasFrakButton), // Theme must have Frak button
     7: (data) => Boolean(data?.isThemeHasFrakBanner), // Theme must have Frak banner
-    8: (data) => Boolean(data?.isCheckoutExtensionActive), // Checkout extensibility active on TY/OS pages
 };
 
 /**
@@ -143,16 +140,6 @@ export const stepDataFetchers = {
             return {};
         }
     },
-
-    8: async (context: AuthenticatedContext): Promise<OnboardingStepData> => {
-        try {
-            const active = await isCheckoutExtensionActive(context);
-            return { isCheckoutExtensionActive: active };
-        } catch (error) {
-            console.error("Error fetching checkout extension status:", error);
-            return {};
-        }
-    },
 };
 
 /**
@@ -185,7 +172,6 @@ export async function fetchAllOnboardingData(
             themeData,
             buttonData,
             bannerData,
-            checkoutData,
         ] = await Promise.all([
             stepDataFetchers[1](context),
             stepDataFetchers[2](context),
@@ -194,7 +180,6 @@ export async function fetchAllOnboardingData(
             stepDataFetchers[5](context),
             stepDataFetchers[6](context),
             stepDataFetchers[7](context),
-            stepDataFetchers[8](context),
         ]);
         // Merge all data
         return {
@@ -205,7 +190,6 @@ export async function fetchAllOnboardingData(
             ...themeData,
             ...buttonData,
             ...bannerData,
-            ...checkoutData,
         };
     } catch (error) {
         console.error("Error fetching complete onboarding data:", error);
@@ -281,7 +265,6 @@ export function getOnboardingStatusMessage(validationResult: {
         5: "Theme Activation",
         6: "Share Button",
         7: "Banner",
-        8: "Checkout Extension",
     };
 
     const failedStepNames = validationResult.failedSteps

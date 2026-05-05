@@ -4,6 +4,7 @@ import {
     defaultNS,
     fallbackLng,
     interpolation,
+    recordError,
     resources,
     setupBigIntSerialization,
     supportedLngs,
@@ -19,6 +20,26 @@ import { initSafeAreaInsets } from "./utils/safeArea";
 
 // Setup BigInt serialization polyfill
 setupBigIntSerialization();
+
+// Wire global JS error reporting BEFORE anything else can throw — this
+// catches errors emitted during module evaluation, the i18next init, or
+// async work kicked off below. `recordError` no-ops when OpenPanel is not
+// configured, so it's safe everywhere.
+if (typeof window !== "undefined") {
+    window.addEventListener("error", (event) => {
+        recordError(event.error ?? event.message, {
+            source: "window_error",
+            context: {
+                filename: event.filename,
+                lineno: event.lineno,
+                colno: event.colno,
+            },
+        });
+    });
+    window.addEventListener("unhandledrejection", (event) => {
+        recordError(event.reason, { source: "unhandled_rejection" });
+    });
+}
 
 // Inject Apple Smart App Banner only when the native app is available
 if (process.env.IS_APP_AVAILABLE === "true") {
@@ -122,4 +143,4 @@ async function main() {
     }
 }
 
-main().catch((error) => console.error(error));
+main().catch((error) => recordError(error, { source: "bootstrap" }));

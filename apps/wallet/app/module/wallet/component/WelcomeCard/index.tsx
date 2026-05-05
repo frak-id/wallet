@@ -1,11 +1,14 @@
 import { Box } from "@frak-labs/design-system/components/Box";
 import { Card } from "@frak-labs/design-system/components/Card";
-import { type KeyboardEvent, type MouseEvent, useState } from "react";
+import { useReferralStatus } from "@frak-labs/wallet-shared";
+import { useNavigate } from "@tanstack/react-router";
+import { type KeyboardEvent, type MouseEvent, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { CloseButton } from "@/module/common/component/CloseButton";
 import { useSlideCarousel } from "@/module/common/hook/useSlideCarousel";
 import { modalStore } from "@/module/stores/modalStore";
 import { IntroSlide } from "./component/IntroSlide";
+import { InviteSlide } from "./component/InviteSlide";
 import { NotificationSlide } from "./component/NotificationSlide";
 import { useWelcomeNotificationSlide } from "./hook/useWelcomeNotificationSlide";
 import * as styles from "./index.css";
@@ -13,14 +16,43 @@ import {
     getDismissedSlides,
     persistDismissedSlides,
 } from "./utils/dismissedSlides";
-import type { WelcomeSlide, WelcomeSlideId } from "./utils/types";
+import type {
+    InviteWelcomeSlide,
+    WelcomeSlide,
+    WelcomeSlideId,
+} from "./utils/types";
 
 export function WelcomeCard() {
     const { t } = useTranslation();
+    const navigate = useNavigate();
     const openModal = modalStore((s) => s.openModal);
     const notificationSlide = useWelcomeNotificationSlide();
+    const { data: referralStatus, isPending: isReferralStatusPending } =
+        useReferralStatus();
+    const hasOwnedCode = !!referralStatus?.ownedCode;
     const [dismissedSlides, setDismissedSlides] =
         useState<WelcomeSlideId[]>(getDismissedSlides);
+
+    // Withhold while the query is pending to avoid a flash for users
+    // who already have an ownedCode.
+    const inviteSlide = useMemo<InviteWelcomeSlide | null>(
+        () =>
+            isReferralStatusPending || hasOwnedCode
+                ? null
+                : {
+                      id: "invite",
+                      kind: "invite",
+                      title: t("wallet.welcome.invite.title"),
+                      items: [
+                          t("wallet.welcome.invite.check1"),
+                          t("wallet.welcome.invite.check2"),
+                          t("wallet.welcome.invite.check3"),
+                      ],
+                      onAction: () => navigate({ to: "/profile/referral" }),
+                  },
+        [isReferralStatusPending, hasOwnedCode, navigate, t]
+    );
+
     const slides: WelcomeSlide[] = [
         {
             id: "intro",
@@ -33,6 +65,7 @@ export function WelcomeCard() {
             ],
         },
         ...(notificationSlide ? [notificationSlide] : []),
+        ...(inviteSlide ? [inviteSlide] : []),
     ];
     const visibleSlides = slides.filter(
         (slide) => !dismissedSlides.includes(slide.id)
@@ -120,6 +153,11 @@ export function WelcomeCard() {
                             )}
                             {slide.kind === "intro" ? (
                                 <IntroSlide
+                                    title={slide.title}
+                                    items={slide.items}
+                                />
+                            ) : slide.kind === "invite" ? (
+                                <InviteSlide
                                     title={slide.title}
                                     items={slide.items}
                                 />

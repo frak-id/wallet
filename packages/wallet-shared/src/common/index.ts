@@ -1,7 +1,9 @@
 // Icons
 export { LogoFrakWithName } from "@frak-labs/design-system/icons";
 export type {
+    AppErrorSource,
     AuthEventMap,
+    DiagnosticsEventMap,
     EmbeddedWalletEventMap,
     EventMap,
     Flow,
@@ -26,6 +28,7 @@ export type {
     PairingErrorState,
     PairingEventMap,
     PairingMode,
+    RecordErrorOptions,
     SharingEventMap,
     SharingSource,
     TokensEventMap,
@@ -33,11 +36,13 @@ export type {
     WalletModalEventMap,
 } from "./analytics";
 export {
+    crashlytics,
     extractAuthError,
     getOrCreateSessionId,
     identifyAuthenticatedUser,
     initAnalytics,
     openPanel,
+    recordError,
     setInstallSource,
     setProfileId,
     startFlow,
@@ -49,6 +54,15 @@ export {
     authenticatedBackendApi,
     authenticatedWalletApi,
 } from "./api/backendClient";
+export {
+    type ApiError,
+    type ApiErrorBody,
+    type ApiErrorKeyMap,
+    asApiError,
+    getErrorCode,
+    getErrorStatus,
+    resolveApiErrorKey,
+} from "./api/errors";
 // Components
 export { CodeInput } from "./component/CodeInput";
 export {
@@ -91,6 +105,7 @@ export { authenticatorStorage } from "./storage/authenticators";
 export type { PreviousAuthenticatorModel } from "./storage/PreviousAuthenticatorModel";
 export type { RecoveryHint } from "./storage/recoveryHint";
 export { recoveryHintStorage } from "./storage/recoveryHint";
+export { formatCurrency } from "./utils/formatCurrency";
 export { emitLifecycleEvent } from "./utils/lifecycleEvents";
 export { prefixModalCss } from "./utils/prefixModalCss";
 // Utils

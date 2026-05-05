@@ -1,4 +1,7 @@
-import type { RecoveryFileContent } from "@frak-labs/wallet-shared";
+import {
+    type RecoveryFileContent,
+    recordError,
+} from "@frak-labs/wallet-shared";
 import { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { AccordionRecoveryItem } from "@/module/common/component/AccordionRecoveryItem";
@@ -68,8 +71,10 @@ function TriggerPasswordVerification({
                 recoveryStore.getState().setGuardianAccount(account);
                 recoveryStore.getState().setStep(ACTUAL_STEP + 1);
             } catch (e) {
-                // Password must be wrong
-                console.error(t("wallet.recovery.errorLoading"), e);
+                recordError(e, {
+                    source: "recovery",
+                    context: { step: 3, reason: "invalid_password" },
+                });
                 setError(t("wallet.recovery.invalidPassword"));
             }
         }

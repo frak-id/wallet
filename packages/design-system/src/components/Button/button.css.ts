@@ -69,6 +69,11 @@ export const button = recipe({
                 color: vars.text.action,
                 border: "none",
             },
+            destructive: {
+                backgroundColor: vars.surface.error,
+                color: vars.text.error,
+                border: "none",
+            },
         },
         size: {
             small: {

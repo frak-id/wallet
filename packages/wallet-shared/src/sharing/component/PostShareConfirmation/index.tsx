@@ -11,6 +11,7 @@ import {
     WalletIcon,
 } from "@frak-labs/design-system/icons";
 import type { ReactNode } from "react";
+import { MerchantLogo } from "../MerchantLogo";
 import { overlay } from "../shared.css";
 import * as styles from "./postShareConfirmation.css";
 
@@ -54,13 +55,11 @@ export function PostShareConfirmation({
             >
                 <header className={styles.header}>
                     <Box display="flex" alignItems="center" gap="m">
-                        {logoUrl && (
-                            <img
-                                src={logoUrl}
-                                alt={appName}
-                                className={styles.merchantLogo}
-                            />
-                        )}
+                        <MerchantLogo
+                            src={logoUrl}
+                            alt={appName}
+                            className={styles.merchantLogo}
+                        />
                         <LogoFrakWithName
                             className={styles.logo}
                             color="#000"
@@ -97,15 +96,11 @@ export function PostShareConfirmation({
                                         "sdk.sharingPage.confirmation.cardPopupDescription"
                                     )}
                                 </Text>
-                                {logoUrl && (
-                                    <img
-                                        src={logoUrl}
-                                        alt={appName}
-                                        className={
-                                            styles.phonePopupMerchantLogo
-                                        }
-                                    />
-                                )}
+                                <MerchantLogo
+                                    src={logoUrl}
+                                    alt={appName}
+                                    className={styles.phonePopupMerchantLogo}
+                                />
                             </div>
                         </div>
                     </section>

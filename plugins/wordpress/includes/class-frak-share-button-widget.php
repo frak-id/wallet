@@ -65,7 +65,6 @@ class Frak_Share_Button_Widget extends Frak_Widget_Base {
 				'help'    => __( 'Override what happens when the button is clicked.', 'frak' ),
 				'options' => array(
 					'sharing-page'    => __( 'Sharing page', 'frak' ),
-					'share-modal'     => __( 'Share modal', 'frak' ),
 					'embedded-wallet' => __( 'Embedded wallet', 'frak' ),
 				),
 			),

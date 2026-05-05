@@ -29,7 +29,7 @@ function buildDatabaseUrl(): string {
 const migrationConfig = getMigrationConfig();
 
 export default defineConfig({
-    schema: ["src/domain/*/db/schema.ts"],
+    schema: ["../backend/src/domain/*/db/schema.ts"],
     dialect: "postgresql",
     dbCredentials: {
         url: buildDatabaseUrl(),

@@ -4,6 +4,7 @@ import {
     buildMetafieldValue,
     parseI18nMetafield,
     polishAppearance,
+    stripEmptyEntries,
 } from "./metafields";
 
 /**
@@ -112,6 +113,48 @@ describe("buildMetafieldValue", () => {
             hasEnglishData: false,
         });
         expect(result).toEqual({});
+    });
+});
+
+/* ------------------------------------------------------------------ */
+/*  stripEmptyEntries — guards against persisting empty overrides      */
+/* ------------------------------------------------------------------ */
+
+describe("stripEmptyEntries", () => {
+    it("returns empty object when input is undefined", () => {
+        expect(stripEmptyEntries(undefined)).toEqual({});
+    });
+
+    it("returns empty object when input has no keys", () => {
+        expect(stripEmptyEntries({})).toEqual({});
+    });
+
+    it("drops keys with empty-string values", () => {
+        expect(
+            stripEmptyEntries({
+                "modal.title": "Hello",
+                "modal.body": "",
+                "modal.cta": "Click",
+            })
+        ).toEqual({
+            "modal.title": "Hello",
+            "modal.cta": "Click",
+        });
+    });
+
+    it("returns empty object when every value is empty", () => {
+        expect(
+            stripEmptyEntries({
+                "modal.title": "",
+                "modal.body": "",
+            })
+        ).toEqual({});
+    });
+
+    it("keeps whitespace-only values (still considered an explicit override)", () => {
+        expect(stripEmptyEntries({ "modal.title": " " })).toEqual({
+            "modal.title": " ",
+        });
     });
 });
 

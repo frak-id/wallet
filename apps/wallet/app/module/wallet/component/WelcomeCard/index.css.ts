@@ -3,7 +3,7 @@ import { style, styleVariants } from "@vanilla-extract/css";
 
 export const cardContainer = style({
     overflow: "hidden",
-    borderRadius: alias.cornerRadius.xl,
+    borderRadius: alias.cornerRadius.l,
     position: "relative",
 });
 
@@ -24,6 +24,9 @@ export const slider = styleVariants({
         scrollbarWidth: "none",
         touchAction: "pan-x",
         WebkitOverflowScrolling: "touch",
+        marginRight: `calc(-1 * ${alias.spacing.m})`,
+        paddingRight: alias.spacing.m,
+        scrollPaddingRight: alias.spacing.m,
         selectors: {
             "&::-webkit-scrollbar": {
                 display: "none",
@@ -39,16 +42,16 @@ export const slider = styleVariants({
 
 export const slide = styleVariants({
     multiple: {
-        flex: `0 0 calc(100% - ${alias.spacing.xs})`,
+        flex: `0 0 calc(100% - ${alias.spacing.m} - ${alias.spacing.xs})`,
         overflow: "hidden",
-        borderRadius: alias.cornerRadius.xl,
+        borderRadius: alias.cornerRadius.l,
         scrollSnapAlign: "start",
         scrollSnapStop: "always",
     },
     single: {
         flex: "1 1 100%",
         overflow: "hidden",
-        borderRadius: alias.cornerRadius.xl,
+        borderRadius: alias.cornerRadius.l,
     },
 });
 
@@ -92,8 +95,8 @@ export const logosSection = style({
 
 export const logosImage = style({
     width: "100%",
-    height: "auto",
-    objectFit: "contain",
+    height: "100%",
+    objectFit: "cover",
 });
 
 export const slideText = style({

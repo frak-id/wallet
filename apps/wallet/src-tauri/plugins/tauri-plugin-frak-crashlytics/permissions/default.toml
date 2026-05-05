@@ -1,0 +1,9 @@
+[default]
+description = "Default permissions for the frak-crashlytics plugin"
+permissions = [
+    "allow-set-user-id",
+    "allow-set-key",
+    "allow-log",
+    "allow-record-error",
+    "allow-set-collection-enabled",
+]

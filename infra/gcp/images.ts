@@ -42,25 +42,23 @@ export const elysiaImage = new dockerbuild.Image("elysia-image", {
 });
 
 /**
- * Create the db migration image
+ * Create the bootstrap image (Postgres + libSQL Drizzle migrations + RustFS bucket provisioning)
  */
-export const migrationImage = new dockerbuild.Image("migration-image", {
+export const bootstrapImage = new dockerbuild.Image("bootstrap-image", {
     context: {
         location: $cli.paths.root,
     },
     dockerfile: {
-        location: path.join(
-            $cli.paths.root,
-            "services/backend/MigrationDockerfile"
-        ),
+        location: path.join($cli.paths.root, "services/bootstrap/Dockerfile"),
     },
     platforms: ["linux/amd64"],
     buildArgs: {
         NODE_ENV: "production",
         STAGE: normalizedStageName,
+        BASE_IMAGE: baseImage.ref,
     },
     push: true,
-    tags: getRegistryPath("db-migration"),
+    tags: getRegistryPath("bootstrap"),
 });
 
 export const credentialSyncImage = new dockerbuild.Image(

@@ -12,6 +12,19 @@ function toTimestamp(value: Date | string): number {
     return Number.isNaN(time) ? 0 : time;
 }
 
+/**
+ * Display "settled" rewards as "consumed".
+ *
+ * The backend cannot currently observe the on-chain settled → consumed
+ * transition (no event surfaces back). Until that signal exists we treat
+ * settled rewards as consumed for display purposes.
+ */
+function toDisplayStatus(
+    status: RewardHistoryItem["status"]
+): RewardHistoryItem["status"] {
+    return status === "settled" ? "consumed" : status;
+}
+
 export function useGetRewardHistory() {
     const { address } = useConnection();
 
@@ -32,6 +45,7 @@ export function useGetRewardHistory() {
             return {
                 items: data.items.map((item) => ({
                     ...item,
+                    status: toDisplayStatus(item.status),
                     createdAt: toTimestamp(item.createdAt),
                     settledAt: item.settledAt
                         ? toTimestamp(item.settledAt)

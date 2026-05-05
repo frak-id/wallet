@@ -34,12 +34,6 @@ key = "appearance"
 [extensions.settings]
 
 [[extensions.settings.fields]]
-key = "sharing_url"
-type = "single_line_text_field"
-name = "Sharing URL"
-description = "The URL shared with customers. Falls back to the store's base URL when empty."
-
-[[extensions.settings.fields]]
 key = "message"
 type = "single_line_text_field"
 name = "Heading"
@@ -62,3 +56,9 @@ key = "badge_text"
 type = "single_line_text_field"
 name = "Badge Text"
 description = "Optional pill label above the heading (e.g. 'New'). Leave empty to hide the badge."
+
+[[extensions.settings.fields]]
+key = "sharing_url"
+type = "single_line_text_field"
+name = "Default sharing URL"
+description = "By default, the link of a product in the customer's cart is shared. Use this field to override that with a custom URL for every customer."

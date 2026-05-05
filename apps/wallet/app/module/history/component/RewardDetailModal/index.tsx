@@ -11,14 +11,16 @@ import { Text } from "@frak-labs/design-system/components/Text";
 import {
     CalendarIcon,
     CheckIcon,
-    CloseIcon,
     HourglassIcon,
     LockIcon,
 } from "@frak-labs/design-system/icons";
 import { vars } from "@frak-labs/design-system/theme";
-import type { RewardHistoryItem } from "@frak-labs/wallet-shared";
+import {
+    formatCurrency,
+    type RewardHistoryItem,
+} from "@frak-labs/wallet-shared";
 import { useTranslation } from "react-i18next";
-import { GlassButton } from "@/module/common/component/GlassButton";
+import { GlassCloseButton } from "@/module/common/component/GlassCloseButton";
 import { InfoCard, InfoRow } from "@/module/common/component/InfoCard";
 import { MerchantLogo } from "@/module/history/component/MerchantLogo";
 import * as styles from "./index.css";
@@ -29,19 +31,14 @@ type RewardDetailModalProps = {
 };
 
 export function RewardDetailModal({ item, onClose }: RewardDetailModalProps) {
-    const { t, i18n } = useTranslation();
+    const { i18n } = useTranslation();
     const locale = i18n.language;
 
     return (
         <DetailSheet>
             <DetailSheetHero height={30} className={styles.hero} />
             <DetailSheetBody className={styles.body}>
-                <GlassButton
-                    as="button"
-                    icon={<CloseIcon width={22} height={22} />}
-                    onClick={onClose}
-                    aria-label={t("common.close")}
-                />
+                <GlassCloseButton onClick={onClose} />
                 <DetailHeader item={item} locale={locale} />
                 <DetailCard item={item} locale={locale} />
             </DetailSheetBody>
@@ -295,17 +292,6 @@ function StatusRow({
 }
 
 // --- Pure formatting helpers ---
-
-function formatCurrency(
-    amount: number,
-    currency: string,
-    locale: string
-): string {
-    return new Intl.NumberFormat(locale, {
-        style: "currency",
-        currency,
-    }).format(amount);
-}
 
 function formatShortDate(timestamp: number, locale: string): string {
     return new Date(timestamp).toLocaleDateString(locale, {

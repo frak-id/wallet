@@ -4,6 +4,7 @@ import { RewardDetailModal } from "@/module/history/component/RewardDetailModal"
 import { MoneriumBankFlow } from "@/module/monerium/component/MoneriumBankFlow";
 import { Keypass } from "@/module/onboarding/component/Keypass";
 import { RecoveryCodeSuccessModal } from "@/module/recovery-code/component/RecoveryCodeSuccessModal";
+import { EditReferralCodeSheet } from "@/module/referral/component/EditReferralCodeSheet";
 import { modalStore, selectModal } from "@/module/stores/modalStore";
 import { EmptyPendingGainsModal } from "@/module/tokens/component/EmptyPendingGainsModal";
 import { EmptyTransferModal } from "@/module/tokens/component/EmptyTransferModal";
@@ -85,6 +86,17 @@ export function ModalOutlet() {
                         <RewardDetailModal
                             item={modal.item}
                             onClose={handleClose}
+                        />
+                    )}
+                </DetailOverlay>
+            );
+        case "editReferralCode":
+            return (
+                <DetailOverlay onClose={closeModal} variant="bottomSheet">
+                    {({ handleClose }) => (
+                        <EditReferralCodeSheet
+                            onClose={handleClose}
+                            onSaved={modal.onSaved}
                         />
                     )}
                 </DetailOverlay>

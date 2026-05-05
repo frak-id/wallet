@@ -10,7 +10,7 @@ import {
     HourglassIcon,
     TransferIcon,
 } from "@frak-labs/design-system/icons";
-import { useGetUserBalance } from "@frak-labs/wallet-shared";
+import { formatCurrency, useGetUserBalance } from "@frak-labs/wallet-shared";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { modalStore } from "@/module/stores/modalStore";
@@ -106,16 +106,14 @@ export function Balance() {
 }
 
 function StatCardsRow() {
-    const { t } = useTranslation();
+    const { t, i18n } = useTranslation();
+    const locale = i18n.language;
     const { userBalance } = useGetUserBalance();
     const { totalClaimable } = useGetPendingRewards();
     const totalEur = userBalance?.total?.eurAmount ?? 0;
     const openModal = modalStore((s) => s.openModal);
 
     const handlePendingClick = () => {
-        if (document.activeElement instanceof HTMLElement) {
-            document.activeElement.blur();
-        }
         if (totalClaimable <= 0) {
             openModal({ id: "emptyPendingGains" });
         } else {
@@ -125,9 +123,6 @@ function StatCardsRow() {
 
     const handleLifetimeClick = () => {
         if (totalEur <= 0) {
-            if (document.activeElement instanceof HTMLElement) {
-                document.activeElement.blur();
-            }
             openModal({ id: "emptyTransferredGains" });
         }
     };
@@ -141,7 +136,7 @@ function StatCardsRow() {
                 onClick={handlePendingClick}
             >
                 <StatCard
-                    amount={`${totalClaimable.toFixed(0)}€`}
+                    amount={formatCurrency(totalClaimable, "EUR", locale)}
                     label={t("wallet.stats.pending")}
                     icon={<HourglassIcon width={14} height={14} />}
                 />
@@ -153,7 +148,7 @@ function StatCardsRow() {
                 onClick={handleLifetimeClick}
             >
                 <StatCard
-                    amount={`${totalEur.toFixed(0)}€`}
+                    amount={formatCurrency(totalEur, "EUR", locale)}
                     label={t("wallet.stats.lifetime")}
                     icon={<BarChartIcon width={14} height={14} />}
                     highlighted={totalEur > 0}

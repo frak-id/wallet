@@ -3,7 +3,10 @@ import { Inline } from "@frak-labs/design-system/components/Inline";
 import { Stack } from "@frak-labs/design-system/components/Stack";
 import { Text } from "@frak-labs/design-system/components/Text";
 import { EarningsIcon, PeopleIcon } from "@frak-labs/design-system/icons";
-import type { RewardHistoryItem } from "@frak-labs/wallet-shared";
+import {
+    formatCurrency,
+    type RewardHistoryItem,
+} from "@frak-labs/wallet-shared";
 import { useTranslation } from "react-i18next";
 import { computeHistoryStats } from "@/module/history/utils/computeHistoryStats";
 import * as styles from "./index.css";
@@ -13,10 +16,11 @@ export function HistorySummary({ items }: { items: RewardHistoryItem[] }) {
     const locale = i18n.language;
     const stats = computeHistoryStats(items);
 
-    const formattedTotal = new Intl.NumberFormat(locale, {
-        style: "currency",
-        currency: "EUR",
-    }).format(stats.totalEarningsEur);
+    const formattedTotal = formatCurrency(
+        stats.totalEarningsEur,
+        "EUR",
+        locale
+    );
 
     return (
         <Stack space="xs">

@@ -124,21 +124,20 @@ describe("validateCompleteOnboarding", () => {
         isThemeHasFrakActivated: true,
         isThemeHasFrakButton: true,
         isThemeHasFrakBanner: true,
-        isCheckoutExtensionActive: true,
     };
 
     it("reports complete when all steps pass", () => {
         const result = validateCompleteOnboarding(completeData);
         expect(result.isComplete).toBe(true);
         expect(result.failedSteps).toEqual([]);
-        expect(result.completedSteps).toEqual([1, 2, 3, 4, 5, 6, 7, 8]);
+        expect(result.completedSteps).toEqual([1, 2, 3, 4, 5, 6, 7]);
         expect(result.hasMissedCriticalSteps).toBe(false);
     });
 
     it("reports failed steps correctly", () => {
         const result = validateCompleteOnboarding({});
         expect(result.isComplete).toBe(false);
-        expect(result.failedSteps).toEqual([1, 2, 3, 4, 5, 6, 7, 8]);
+        expect(result.failedSteps).toEqual([1, 2, 3, 4, 5, 6, 7]);
         expect(result.completedSteps).toEqual([]);
     });
 
@@ -181,12 +180,11 @@ describe("getOnboardingStatusMessage", () => {
     it("handles all steps missing", () => {
         const result = getOnboardingStatusMessage({
             isComplete: false,
-            failedSteps: [1, 2, 3, 4, 5, 6, 7, 8],
+            failedSteps: [1, 2, 3, 4, 5, 6, 7],
             completedSteps: [],
         });
         expect(result).toContain("Shop Info");
         expect(result).toContain("Share Button");
         expect(result).toContain("Banner");
-        expect(result).toContain("Checkout Extension");
     });
 });

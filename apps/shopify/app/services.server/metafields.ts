@@ -206,6 +206,20 @@ export async function getI18nCustomizations({
 }
 
 /**
+ * Drop empty-string entries so cleared fields fall back to SDK defaults
+ * instead of persisting an override that the SDK would honour as a valid
+ * (empty) translation.
+ */
+export function stripEmptyEntries(
+    obj?: SingleLanguageI18nCustomizations
+): SingleLanguageI18nCustomizations {
+    if (!obj) return {};
+    return Object.fromEntries(
+        Object.entries(obj).filter(([, v]) => typeof v === "string" && v !== "")
+    );
+}
+
+/**
  * Update the i18n customizations in shop metafields
  */
 export async function updateI18nCustomizations(
@@ -215,15 +229,20 @@ export async function updateI18nCustomizations(
     success: boolean;
     userErrors: Array<{ field: string; message: string }>;
 }> {
-    // Determine if we should store as flat structure (single language) or multi-language
-    const hasFrenchData = Boolean(
-        customizations.fr && Object.keys(customizations.fr).length > 0
-    );
-    const hasEnglishData = Boolean(
-        customizations.en && Object.keys(customizations.en).length > 0
-    );
+    const filtered: I18nCustomizations = {
+        fr: stripEmptyEntries(customizations.fr),
+        en: stripEmptyEntries(customizations.en),
+    };
 
-    const computedValueToStore = buildMetafieldValue(customizations, {
+    const hasFrenchData = Object.keys(filtered.fr ?? {}).length > 0;
+    const hasEnglishData = Object.keys(filtered.en ?? {}).length > 0;
+
+    // All cleared → delete the metafield so the SDK falls back to defaults
+    if (!hasFrenchData && !hasEnglishData) {
+        return writeMetafield(context, MODAL_I18N_KEY, null);
+    }
+
+    const computedValueToStore = buildMetafieldValue(filtered, {
         hasFrenchData,
         hasEnglishData,
     });

@@ -155,7 +155,6 @@ class Frak_Elementor_Share_Button_Widget extends Frak_Elementor_Widget_Base {
 				'default'     => 'sharing-page',
 				'options'     => array(
 					'sharing-page'    => esc_html__( 'Sharing page', 'frak' ),
-					'share-modal'     => esc_html__( 'Share modal', 'frak' ),
 					'embedded-wallet' => esc_html__( 'Embedded wallet', 'frak' ),
 				),
 				'description' => esc_html__( 'Override what happens when the button is clicked.', 'frak' ),

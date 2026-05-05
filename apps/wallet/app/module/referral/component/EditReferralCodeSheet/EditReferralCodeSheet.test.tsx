@@ -1,0 +1,216 @@
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { fireEvent, render, within } from "@testing-library/react";
+import type { ReactNode } from "react";
+import { describe, expect, it, vi } from "vitest";
+import { EditReferralCodeSheet } from "./index";
+
+vi.mock("react-i18next", () => ({
+    useTranslation: () => ({ t: (key: string) => key }),
+    Trans: ({ children }: { children?: ReactNode }) => <>{children}</>,
+}));
+
+// The form / auto-body each pull in many side-effectful hooks. Stub them
+// to simple markers and expose their prop callbacks via test-id'd buttons
+// so the view-swap state machine can be exercised in isolation.
+vi.mock("../ReferralCodeForm", () => ({
+    ReferralCodeForm: ({ onAutoGenerate }: { onAutoGenerate?: () => void }) => (
+        <div data-testid="form-stub">
+            <button
+                type="button"
+                data-testid="form-auto-trigger"
+                onClick={() => onAutoGenerate?.()}
+            >
+                trigger auto
+            </button>
+        </div>
+    ),
+}));
+vi.mock("../AutoGenerateReferralCodeBody", () => ({
+    AutoGenerateReferralCodeBody: ({
+        onPersonalize,
+    }: {
+        onPersonalize: () => void;
+    }) => (
+        <div data-testid="auto-body-stub">
+            <button
+                type="button"
+                data-testid="auto-personalize-trigger"
+                onClick={onPersonalize}
+            >
+                trigger personalize
+            </button>
+        </div>
+    ),
+}));
+
+const renderSheet = (overrides?: {
+    onClose?: () => void;
+    onSaved?: () => void;
+}) => {
+    const onClose = overrides?.onClose ?? vi.fn();
+    const onSaved = overrides?.onSaved ?? vi.fn();
+    const client = new QueryClient({
+        defaultOptions: {
+            queries: { retry: false, gcTime: 0 },
+            mutations: { retry: false },
+        },
+    });
+    const utils = render(
+        <QueryClientProvider client={client}>
+            <EditReferralCodeSheet onClose={onClose} onSaved={onSaved} />
+        </QueryClientProvider>
+    );
+    const sheet = within(utils.container);
+    return { ...utils, sheet, onClose, onSaved };
+};
+
+describe.sequential("EditReferralCodeSheet", () => {
+    it("renders the title, attention block and form", () => {
+        const { sheet } = renderSheet();
+        expect(sheet.getByText("wallet.referral.edit.title")).toBeTruthy();
+        expect(
+            sheet.getByText("wallet.referral.edit.attentionTitle")
+        ).toBeTruthy();
+        expect(
+            sheet.getByText("wallet.referral.edit.attentionBody")
+        ).toBeTruthy();
+        expect(sheet.getByTestId("form-stub")).toBeTruthy();
+    });
+
+    it("does NOT close immediately when the X is clicked on a dirty form — opens the cancel modal", () => {
+        const onClose = vi.fn();
+        const { sheet } = renderSheet({ onClose });
+
+        // Dirty the sheet first so the close button triggers the modal
+        // instead of the pristine-skip path.
+        fireEvent.click(sheet.getByTestId("form-auto-trigger"));
+
+        // The X is the only `common.close` button rendered by the sheet
+        // (the cancel modal isn't open yet).
+        fireEvent.click(sheet.getByRole("button", { name: "common.close" }));
+
+        // onClose must NOT have been called — the cancel-confirm modal opens
+        // first (its title appears in the document via Radix portal).
+        expect(onClose).not.toHaveBeenCalled();
+        expect(
+            document.body.textContent?.includes(
+                "wallet.referral.edit.cancelConfirm.title"
+            )
+        ).toBe(true);
+    });
+
+    it("closes the sheet immediately when the X is clicked on a pristine form", () => {
+        const onClose = vi.fn();
+        const { sheet } = renderSheet({ onClose });
+
+        fireEvent.click(sheet.getByRole("button", { name: "common.close" }));
+
+        expect(onClose).toHaveBeenCalledTimes(1);
+        expect(
+            document.body.textContent?.includes(
+                "wallet.referral.edit.cancelConfirm.title"
+            )
+        ).toBe(false);
+    });
+
+    it("opens the cancel modal when the Annuler header link is clicked on a dirty form", () => {
+        const onClose = vi.fn();
+        const { sheet } = renderSheet({ onClose });
+
+        fireEvent.click(sheet.getByTestId("form-auto-trigger"));
+        fireEvent.click(sheet.getByText("wallet.referral.edit.cancel"));
+
+        expect(onClose).not.toHaveBeenCalled();
+        expect(
+            document.body.textContent?.includes(
+                "wallet.referral.edit.cancelConfirm.title"
+            )
+        ).toBe(true);
+    });
+
+    it("closes the sheet immediately when the Annuler header link is clicked on a pristine form", () => {
+        const onClose = vi.fn();
+        const { sheet } = renderSheet({ onClose });
+
+        fireEvent.click(sheet.getByText("wallet.referral.edit.cancel"));
+
+        expect(onClose).toHaveBeenCalledTimes(1);
+        expect(
+            document.body.textContent?.includes(
+                "wallet.referral.edit.cancelConfirm.title"
+            )
+        ).toBe(false);
+    });
+
+    it("closes the sheet when the cancel modal's confirm CTA is clicked", () => {
+        const onClose = vi.fn();
+        const { sheet } = renderSheet({ onClose });
+
+        // Dirty the sheet so X opens the modal instead of skipping.
+        fireEvent.click(sheet.getByTestId("form-auto-trigger"));
+
+        // Open the cancel modal.
+        fireEvent.click(sheet.getByRole("button", { name: "common.close" }));
+
+        // The modal renders into a Radix portal in document.body. Pick the
+        // confirm CTA by its exact accessible name.
+        const allButtons = Array.from(
+            document.body.querySelectorAll<HTMLButtonElement>("button")
+        );
+        const confirmCta = allButtons.find(
+            (btn) =>
+                btn.textContent ===
+                "wallet.referral.edit.cancelConfirm.confirmCta"
+        );
+        expect(confirmCta).toBeTruthy();
+        fireEvent.click(confirmCta as HTMLButtonElement);
+
+        expect(onClose).toHaveBeenCalledTimes(1);
+    });
+
+    it("keeps the sheet open when the cancel modal's continue CTA is clicked", () => {
+        const onClose = vi.fn();
+        const { sheet } = renderSheet({ onClose });
+
+        // Dirty the sheet so X opens the modal instead of skipping.
+        fireEvent.click(sheet.getByTestId("form-auto-trigger"));
+
+        fireEvent.click(sheet.getByRole("button", { name: "common.close" }));
+
+        const allButtons = Array.from(
+            document.body.querySelectorAll<HTMLButtonElement>("button")
+        );
+        const continueCta = allButtons.find(
+            (btn) =>
+                btn.textContent ===
+                "wallet.referral.edit.cancelConfirm.continueCta"
+        );
+        expect(continueCta).toBeTruthy();
+        fireEvent.click(continueCta as HTMLButtonElement);
+
+        expect(onClose).not.toHaveBeenCalled();
+    });
+
+    it("swaps to the auto-flow body when the form's onAutoGenerate fires", () => {
+        const { sheet } = renderSheet();
+        expect(sheet.getByTestId("form-stub")).toBeTruthy();
+        expect(sheet.queryByTestId("auto-body-stub")).toBeNull();
+
+        fireEvent.click(sheet.getByTestId("form-auto-trigger"));
+
+        expect(sheet.queryByTestId("form-stub")).toBeNull();
+        expect(sheet.getByTestId("auto-body-stub")).toBeTruthy();
+    });
+
+    it("swaps back to the manual form when the auto-body's onPersonalize fires", () => {
+        const { sheet } = renderSheet();
+        // Get into auto view first.
+        fireEvent.click(sheet.getByTestId("form-auto-trigger"));
+        expect(sheet.getByTestId("auto-body-stub")).toBeTruthy();
+
+        fireEvent.click(sheet.getByTestId("auto-personalize-trigger"));
+
+        expect(sheet.queryByTestId("auto-body-stub")).toBeNull();
+        expect(sheet.getByTestId("form-stub")).toBeTruthy();
+    });
+});

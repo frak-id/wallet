@@ -39,12 +39,7 @@ export function Back({
                     viewTransition
                     className={styles.actionButton}
                 >
-                    <GlassButton
-                        icon={icon}
-                        disabled={disabled}
-                        tabIndex={-1}
-                        aria-hidden
-                    />
+                    <GlassButton icon={icon} disabled={disabled} />
                     {children && (
                         <Text as="span" className={styles.actionText}>
                             {children}
@@ -66,12 +61,7 @@ export function Back({
                 aria-disabled={disabled}
                 aria-label={ariaLabel}
             >
-                <GlassButton
-                    icon={icon}
-                    disabled={disabled}
-                    tabIndex={-1}
-                    aria-hidden
-                />
+                <GlassButton icon={icon} disabled={disabled} />
                 {children && (
                     <Text as="span" className={styles.actionText}>
                         {children}

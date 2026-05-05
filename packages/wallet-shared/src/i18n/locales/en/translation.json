@@ -67,7 +67,9 @@
         "walletInvalid": "Invalid wallet address",
         "back-to-wallet": "Back to Wallet",
         "back": "Back",
+        "clear": "Clear",
         "close": "Close",
+        "or": "or",
         "share": "Share"
     },
     "sharing": {
@@ -95,6 +97,77 @@
             "managePairings": "Manage paired devices",
             "lastConnection": "Last connection",
             "currentDeviceConnected": "Connected"
+        },
+        "referral": {
+            "title": "Referrals",
+            "menuLabel": "Referrals",
+            "invite": {
+                "title": "Invite friends",
+                "description": "Create your code and start sharing it with your loved ones to earn even more money.",
+                "cta": "Generate my code"
+            },
+            "enterCode": "Enter a referral code",
+            "modify": "Modify",
+            "create": {
+                "title": "My referral code",
+                "description": "As soon as someone signs up with your code and places an order on one of our partner sites, you both earn money.",
+                "label": "Customize your code",
+                "placeholder": "e.g. LOLA10",
+                "hint": "Pick 4 letters to generate your code.",
+                "suggestionsLabel": "Choose your code",
+                "submitCta": "Validate my code",
+                "autoGenerate": "Generate automatically",
+                "autoConfirmLabel": "Generated for you",
+                "searchingCode": "Searching for an available code",
+                "personalizeCta": "Customize my code",
+                "errorAlreadyActive": "You already have an active referral code.",
+                "errorCodeUnavailable": "This code is no longer available, please pick another one.",
+                "errorGeneric": "Something went wrong. Please try again.",
+                "terms": "By sharing or using a code, you agree to <termsLink>FRAK's terms and conditions</termsLink>."
+            },
+            "share": {
+                "activeSince": "Active since",
+                "copyCode": "Copy code",
+                "copiedToast": "Referral code copied",
+                "savedToast": "New code saved",
+                "shareCta": "Share my code",
+                "shareText": "Use my referral code {{code}} to sign up on Frak.",
+                "modifyCta": "Modify my code"
+            },
+            "edit": {
+                "title": "Edit my code",
+                "attentionTitle": "Heads up",
+                "attentionBody": "Changing your code revokes the previous one. Links you've already shared will stop working.",
+                "cancel": "Cancel",
+                "cancelConfirm": {
+                    "title": "Discard changes",
+                    "description": "Your current code will be kept. Your changes won't be saved.",
+                    "confirmCta": "Discard changes",
+                    "continueCta": "Keep editing"
+                }
+            },
+            "redeem": {
+                "title": "Got a referral code?",
+                "description": "Enter a friend's or creator's code and you'll both benefit.",
+                "label": "Referral code",
+                "placeholder": "e.g. LOLA10",
+                "submitCta": "Apply the code",
+                "active": "Active",
+                "activeSince": "Activated on",
+                "deleteCta": "Delete active code",
+                "errorNotFound": "This code does not exist. Make sure it's correct.",
+                "errorSelf": "You can't use your own code.",
+                "errorCycle": "This code can't be used with your account.",
+                "errorAlreadyRedeemed": "You already have an active referral code.",
+                "errorInvalid": "This code isn't valid.",
+                "errorGeneric": "Something went wrong. Please try again.",
+                "confirmDelete": {
+                    "title": "Delete this\nreferral code?",
+                    "description": "You'll no longer benefit from this code on your future purchases. You can add a new one at any time.",
+                    "confirmCta": "Delete the code",
+                    "cancelCta": "Cancel"
+                }
+            }
         },
         "transferToBank": "Transfer to my bank",
         "transferEmpty": {
@@ -127,7 +200,7 @@
             "wallet": "Wallet",
             "walletDescription": "Transfer to a crypto wallet"
         },
-        "activateNotifications": "<strong>Enable notifications</strong> <br /> to be notified when your gains are paid",
+        "activateNotifications": "Turn on notifs to track your earnings in real time.",
         "activateNotificationsRationale": "<strong>Enable notifications</strong> <br /> We need your permission to notify you when gains are paid",
         "openNotificationSettings": "<strong>Notifications disabled</strong> <br /> Open settings to enable notifications",
         "manageNotifications": "<strong>Manage notifications</strong> <br /> Open settings to control your notifications",
@@ -245,6 +318,12 @@
             "notifications": {
                 "title": "Don't miss any earnings!",
                 "description": "Enable notifications to track your earnings in real time."
+            },
+            "invite": {
+                "title": "Invite your friends and earn",
+                "check1": "Create your referral code",
+                "check2": "Share it with your friends",
+                "check3": "Earn money on every order they place."
             },
             "detail": {
                 "howItWorks": "How does it work?",

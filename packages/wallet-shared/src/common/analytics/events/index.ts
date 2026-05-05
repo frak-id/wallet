@@ -1,4 +1,5 @@
 import type { AuthEventMap } from "./auth";
+import type { DiagnosticsEventMap } from "./diagnostics";
 import type { EmbeddedWalletEventMap } from "./embeddedWallet";
 import type { InstallEventMap } from "./install";
 import type { ListenerMiscEventMap } from "./listener";
@@ -11,6 +12,7 @@ import type { TokensEventMap } from "./tokens";
 import type { ListenerTxEventMap } from "./transaction";
 
 export type { AuthEventMap } from "./auth";
+export type { AppErrorSource, DiagnosticsEventMap } from "./diagnostics";
 export type { EmbeddedWalletEventMap } from "./embeddedWallet";
 export type {
     FlowEndExtras,
@@ -59,4 +61,5 @@ export type EventMap = AuthEventMap &
     NotificationEventMap &
     PairingEventMap &
     TokensEventMap &
-    InstallEventMap;
+    InstallEventMap &
+    DiagnosticsEventMap;

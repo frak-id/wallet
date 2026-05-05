@@ -18,6 +18,7 @@ import {
     compressedSsoToParams,
     HandleErrors,
     PairingView,
+    recordError,
     sessionStore,
     ssoKey,
     ua,
@@ -181,10 +182,10 @@ function Sso() {
                     // Cleanup the client
                     ssoClient.cleanup();
                 } catch (error) {
-                    console.error(
-                        "[SSO] Failed to send completion message via RPC:",
-                        error
-                    );
+                    recordError(error, {
+                        source: "sso",
+                        context: { stage: "rpc_complete" },
+                    });
                 }
             }
         }

@@ -105,25 +105,47 @@ if (is_array($frak_class_files)) {
 
 function upgrade_module_1_0_1($module)
 {
-    // Fail fast if PrestaShop's bundled Symfony HttpClient is not
-    // loadable. The merchant zip no longer requires `symfony/http-client`
-    // and we rely on PS 8.1+ shipping it via `symfony/symfony` 4.x. Aborting
-    // the upgrade keeps the previous-version install intact (PrestaShop
-    // does not roll forward `ps_module.version` until the script returns
-    // true) so the merchant can recover by restoring a working PS install
-    // before retrying.
+    // CRITICAL: never `return false` from this function. PrestaShop's
+    // `Module::runUpgradeModule()` calls `$this->disable()` on any false
+    // return (PS 8.2.6 `classes/module/Module.php:589-637`), which trips
+    // `ModuleTabManagementSubscriber` to `disableTabs()` — net effect: the
+    // module + its admin tab are both disabled, the merchant can't reach
+    // the configuration page, and `ps_module.version` stays stuck at the
+    // last-success version so the next zip upload re-runs the same broken
+    // script. Subsequent upgrade scripts (incl. the 1.0.3 / 1.0.4
+    // convergence guards) NEVER execute. Return false here is therefore
+    // a self-inflicted soft-uninstall.
     //
-    // `Module::$_errors` is `protected`, so writing to `$module->_errors[]`
-    // from this global-scope upgrade function fatals with `Cannot access
-    // protected property` (same visibility constraint as `Module::$context`,
-    // see `FrakOrderRender::postPurchase()`). Surface the diagnostic via
-    // `PrestaShopLogger` instead — merchants get a generic upgrade failure
-    // in Module Manager and the actionable root cause in Advanced Parameters
-    // → Logs, consistent with the rest of the plugin's logger-driven error UX.
+    // Every step below logs critical failures via `PrestaShopLogger` but
+    // always returns true so the upgrade chain marches to the end and
+    // downstream convergence guards get a chance to heal partial state.
+    // The merchant can grep `var/logs/*.log` for the actionable line if
+    // anything went wrong.
     if (!FrakHttpClient::isAvailable()) {
+        // HttpClient absence breaks webhooks + merchant resolver but the
+        // rest of the upgrade (schema, hooks, tab) still applies cleanly,
+        // and the merchant can recover by restoring a working PS install
+        // before the next request.
         PrestaShopLogger::addLog('[FrakSDK] ' . FrakHttpClient::missingDependencyMessage(), 3);
-        return false;
     }
+
+    // 0. Defensive scrub of orphan rows from any prior aborted uninstall.
+    //    Mirrors the same call from {@see FrakIntegration::install()}, but
+    //    PrestaShop's `Module::runUpgradeModule()` NEVER enters `install()`,
+    //    so the install-path cleanup is bypassed entirely on the upgrade
+    //    route. Without this scrub, step 9's `registerTab()` trips a 1062
+    //    on `ps_authorization_role.slug` when a previous uninstall threw
+    //    mid-flight (typical cause: `parent::uninstall()` failing on a
+    //    `$module->context` access) and left orphan
+    //    `ROLE_MOD_TAB_ADMINFRAKINTEGRATION_*` rows behind.
+    //
+    //    `keep_module_row=true` is critical: deleting `ps_module.id_module`
+    //    mid-upgrade detaches the module from PrestaShop's upgrade controller
+    //    (`runUpgradeModule()` keys on the row) and breaks every step after
+    //    this one. The orphan-row scrub above the module delete is exactly
+    //    what the upgrade path needs anyway — the module row itself is
+    //    healthy, only the children are stale.
+    FrakInstaller::cleanLeftovers($module, ['keep_module_row' => true]);
 
     // 1. Drop hooks that the new architecture no longer dispatches. PrestaShop
     //    already prunes `ps_hook_module` on `parent::uninstall()` — this is
@@ -194,7 +216,8 @@ function upgrade_module_1_0_1($module)
     include __DIR__ . '/../sql/install.php';
     foreach ($sql as $query) {
         if (!Db::getInstance()->execute($query)) {
-            return false;
+            PrestaShopLogger::addLog('[FrakSDK] upgrade 1.0.1 step 4 (sql/install.php) returned false', 3);
+            return true;
         }
     }
 
@@ -260,7 +283,8 @@ function upgrade_module_1_0_1($module)
         Configuration::deleteByName($legacy_key);
     }
     if (!empty($update_map) && !FrakPlacementRegistry::setState($update_map)) {
-        return false;
+        PrestaShopLogger::addLog('[FrakSDK] upgrade 1.0.1 step 7 (placement migration setState) returned false', 3);
+        return true;
     }
 
     // 8. Wipe deprecated Configuration rows. Audit baseline:
@@ -297,7 +321,11 @@ function upgrade_module_1_0_1($module)
     //    upgrades end up with byte-identical Tab rows. Idempotent — the
     //    helper skips when the row already exists (partial-upgrade re-run).
     if (!FrakInstaller::registerTab($module)) {
-        return false;
+        // `registerTab()` already logs its own failure context; this line
+        // marks where in the upgrade chain we lost the trail so log
+        // grepping pinpoints the upgrade script versus a fresh install.
+        PrestaShopLogger::addLog('[FrakSDK] upgrade 1.0.1 step 9 (registerTab) returned false', 3);
+        return true;
     }
 
     return true;

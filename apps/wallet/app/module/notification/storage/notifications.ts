@@ -32,7 +32,7 @@ export const notificationStorage = {
             if (err instanceof DOMException && err.name === "NotFoundError") {
                 return [];
             }
-            console.error("Failed to get notifications:", err);
+            console.error("Error while reading notifications", err);
             return [];
         }
     },

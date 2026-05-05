@@ -1,8 +1,8 @@
 import { KubernetesJob } from "../components/KubernetesJob";
 import { KubernetesService } from "../components/KubernetesService";
 import { isProd, normalizedStageName } from "../utils";
-import { elysiaImage, migrationImage } from "./images";
-import { elysiaEnv, postgresEnv } from "./secrets";
+import { bootstrapImage, elysiaImage } from "./images";
+import { bootstrapEnv, elysiaEnv } from "./secrets";
 import { domainName, walletNamespace } from "./utils";
 
 const appLabels = { app: "elysia" };
@@ -19,36 +19,30 @@ const elysiaSecrets = new kubernetes.core.v1.Secret("elysia-secrets", {
     stringData: elysiaEnv,
 });
 
-const dbMigrationSecrets = new kubernetes.core.v1.Secret(
-    "db-migration-secret",
-    {
-        metadata: {
-            name: `db-migration-section-${normalizedStageName}`,
-            namespace: walletNamespace.metadata.name,
-        },
-        type: "Opaque",
-        stringData: {
-            STAGE: normalizedStageName,
-            // Postgres related
-            ...postgresEnv,
-        },
-    }
-);
+const bootstrapSecrets = new kubernetes.core.v1.Secret("bootstrap-secret", {
+    metadata: {
+        name: `bootstrap-secret-${normalizedStageName}`,
+        namespace: walletNamespace.metadata.name,
+    },
+    type: "Opaque",
+    stringData: bootstrapEnv,
+});
 
 /**
- * Create the db migration job
+ * Bootstrap Job: runs Drizzle migrations (Postgres + libSQL) and provisions RustFS buckets.
+ * Backend Service depends on this completing successfully.
  */
-const migrationJob = new KubernetesJob("ElysiaDbMigration", {
+const bootstrapJob = new KubernetesJob("ElysiaBootstrap", {
     namespace: walletNamespace.metadata.name,
     appLabels,
     job: {
         container: {
-            name: "db-migration",
-            image: migrationImage.ref,
+            name: "bootstrap",
+            image: bootstrapImage.ref,
             envFrom: [
                 {
                     secretRef: {
-                        name: dbMigrationSecrets.metadata.name,
+                        name: bootstrapSecrets.metadata.name,
                     },
                 },
             ],
@@ -170,6 +164,6 @@ export const backendInstance = new KubernetesService(
         // },
     },
     {
-        dependsOn: [elysiaImage, elysiaSecrets, migrationJob],
+        dependsOn: [elysiaImage, elysiaSecrets, bootstrapJob],
     }
 );

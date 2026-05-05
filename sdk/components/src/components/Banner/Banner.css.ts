@@ -39,6 +39,8 @@ export const referral = style([
         padding: alias.spacing.m,
         backgroundColor: "#ffffff",
         color: vars.text.primary,
+        border: `${alias.borderWidth.xs} solid ${vars.border.default}`,
+        borderRadius: alias.cornerRadius.m,
     },
 ]);
 

@@ -456,35 +456,3 @@ export async function doesThemeHasFrakBanner(context: AuthenticatedContext) {
     });
 }
 
-/**
- * Check if the checkout Thank You / Order Status pages have extensibility
- * active via the published checkout profile.
- *
- * Uses the `typOspPagesActive` field on `CheckoutProfile` which indicates
- * whether the TY & OS pages are actively using checkout UI extensions.
- */
-export async function isCheckoutExtensionActive(
-    context: AuthenticatedContext
-): Promise<boolean> {
-    try {
-        const response = await context.admin.graphql(`
-query getCheckoutProfile {
-  checkoutProfiles(first: 1, query: "is_published:true") {
-    nodes {
-      id
-      isPublished
-      typOspPagesActive
-    }
-  }
-}`);
-        const {
-            data: { checkoutProfiles },
-        } = await response.json();
-
-        const profile = checkoutProfiles?.nodes?.[0];
-        return !!profile?.typOspPagesActive;
-    } catch (error) {
-        console.error("Error checking checkout extension status:", error);
-        return false;
-    }
-}

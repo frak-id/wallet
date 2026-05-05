@@ -66,11 +66,14 @@ export function useSlideCarousel({
         onIndexChange?.(currentIndex);
     }, [currentIndex, onIndexChange]);
 
-    // Restore scroll position to initialIndex on mount.
+    // Pin the scroll position to `initialIndex` on mount — runs even when
+    // `initialIndex` is 0 to defeat browser scroll restoration (WebKit /
+    // iOS WebView preserve the inner scroll container's `scrollLeft`
+    // across reloads, which would otherwise land the user on whatever
+    // slide they were looking at last).
     // Captured in a ref so the effect dep array stays empty (mount-only).
     const initialIndexRef = useRef(initialIndex);
     useEffect(() => {
-        if (initialIndexRef.current <= 0) return;
         const container = scrollContainerRef.current;
         if (!container) return;
         isProgrammaticScrollRef.current = true;

@@ -46,27 +46,6 @@
   "target": "section",
   "settings": [
     {
-      "type": "select",
-      "id": "interaction",
-      "label": "Target interaction",
-      "info": "Filter rewards by interaction type. Default shows the best reward across all types",
-      "options": [
-        {
-          "value": "default",
-          "label": "Default (best reward)"
-        },
-        {
-          "value": "referral",
-          "label": "Referral"
-        },
-        {
-          "value": "purchase",
-          "label": "Purchase"
-        }
-      ],
-      "default": "default"
-    },
-    {
       "type": "header",
       "content": "Referral banner text"
     },
@@ -119,7 +98,7 @@
       "id": "enable_preview",
       "label": "Show preview in editor",
       "info": "Display a banner preview while customizing the theme",
-      "default": false
+      "default": true
     },
     {
       "type": "select",
@@ -140,7 +119,28 @@
     },
     {
       "type": "header",
-      "content": "Style"
+      "content": "Advanced"
+    },
+    {
+      "type": "select",
+      "id": "interaction",
+      "label": "Target interaction",
+      "info": "Filter rewards by interaction type. Default shows the best reward across all types",
+      "options": [
+        {
+          "value": "default",
+          "label": "Default (best reward)"
+        },
+        {
+          "value": "referral",
+          "label": "Referral"
+        },
+        {
+          "value": "purchase",
+          "label": "Purchase"
+        }
+      ],
+      "default": "default"
     },
     {
       "type": "select",
