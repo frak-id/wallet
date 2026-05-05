@@ -27,19 +27,17 @@ export function WelcomeCard() {
     const navigate = useNavigate();
     const openModal = modalStore((s) => s.openModal);
     const notificationSlide = useWelcomeNotificationSlide();
-    const { data: referralStatus } = useReferralStatus();
+    const { data: referralStatus, isPending: isReferralStatusPending } =
+        useReferralStatus();
     const hasOwnedCode = !!referralStatus?.ownedCode;
     const [dismissedSlides, setDismissedSlides] =
         useState<WelcomeSlideId[]>(getDismissedSlides);
 
-    // Hide the invite slide for users who already have an active referral
-    // code — the prompt is irrelevant once they're opted in. Otherwise it
-    // sits at the end of the carousel (after intro / notifications) until
-    // dismissed. Memoised so the `onAction` reference (and therefore the
-    // Card's click handler identity) stays stable across renders.
+    // Withhold while the query is pending to avoid a flash for users
+    // who already have an ownedCode.
     const inviteSlide = useMemo<InviteWelcomeSlide | null>(
         () =>
-            hasOwnedCode
+            isReferralStatusPending || hasOwnedCode
                 ? null
                 : {
                       id: "invite",
@@ -52,7 +50,7 @@ export function WelcomeCard() {
                       ],
                       onAction: () => navigate({ to: "/profile/referral" }),
                   },
-        [hasOwnedCode, navigate, t]
+        [isReferralStatusPending, hasOwnedCode, navigate, t]
     );
 
     const slides: WelcomeSlide[] = [
