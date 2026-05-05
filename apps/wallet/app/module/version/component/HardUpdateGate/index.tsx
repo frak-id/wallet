@@ -1,11 +1,9 @@
-import { Box } from "@frak-labs/design-system/components/Box";
 import { Button } from "@frak-labs/design-system/components/Button";
 import { Text } from "@frak-labs/design-system/components/Text";
-import { LogoFrakWithName } from "@frak-labs/wallet-shared";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
+import { FullScreenGate } from "@/module/common/component/FullScreenGate";
 import { openNativeStore } from "../../utils/nativeUpdater";
-import * as styles from "./index.css";
 
 type HardUpdateGateProps = {
     currentVersion: string;
@@ -27,27 +25,21 @@ export function HardUpdateGate({
     }
 
     return (
-        <Box
-            padding="l"
-            gap="xl"
-            className={styles.gate}
-            flexDirection="column"
-            alignItems="center"
-            justifyContent="center"
-        >
-            <LogoFrakWithName className={styles.logo} />
-            <Box flexDirection="column" alignItems="center" gap="m">
-                <Text variant="heading1">{t("version.hardUpdate.title")}</Text>
+        <FullScreenGate
+            title={t("version.hardUpdate.title")}
+            description={
                 <Text variant="bodySmall">
                     {t("version.hardUpdate.description", {
                         currentVersion,
                         minVersion,
                     })}
                 </Text>
-            </Box>
-            <Button onClick={handleUpdate} disabled={isOpening}>
-                {t("version.hardUpdate.cta")}
-            </Button>
-        </Box>
+            }
+            action={
+                <Button onClick={handleUpdate} disabled={isOpening}>
+                    {t("version.hardUpdate.cta")}
+                </Button>
+            }
+        />
     );
 }

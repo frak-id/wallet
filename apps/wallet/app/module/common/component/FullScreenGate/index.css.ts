@@ -3,7 +3,7 @@ import { style } from "@vanilla-extract/css";
 export const gate = style({
     position: "fixed",
     inset: 0,
-    zIndex: 10000,
+    zIndex: 9999,
     background: `linear-gradient(
         208deg,
         #1a2a4a 0%,

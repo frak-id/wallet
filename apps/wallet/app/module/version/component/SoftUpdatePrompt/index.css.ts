@@ -1,29 +1,37 @@
+import { vars } from "@frak-labs/design-system/theme";
+import { alias, shadow, zIndex } from "@frak-labs/design-system/tokens";
 import { style } from "@vanilla-extract/css";
 
+/**
+ * Wrapper positioning for the floating soft-update prompt. The Card itself
+ * (background, padding, radius) comes from the design-system; only the
+ * fixed positioning + safe-area handling + responsive max-width live here.
+ */
 export const banner = style({
     position: "fixed",
-    left: "12px",
-    right: "12px",
-    bottom: "calc(env(safe-area-inset-bottom, 0px) + 12px)",
-    zIndex: 9000,
-    padding: "12px 14px",
-    borderRadius: "12px",
-    background: "rgba(15, 26, 46, 0.95)",
-    backdropFilter: "blur(12px)",
-    boxShadow: "0 8px 24px rgba(0, 0, 0, 0.35)",
-    color: "#ffffff",
+    left: alias.spacing.s,
+    right: alias.spacing.s,
+    bottom: `calc(env(safe-area-inset-bottom, 0px) + ${alias.spacing.s})`,
+    zIndex: zIndex.toast,
+    boxShadow: shadow.dialog,
+    "@media": {
+        "(min-width: 768px)": {
+            left: "auto",
+            maxWidth: "420px",
+        },
+    },
 });
 
 export const progressTrack = style({
     width: "100%",
     height: "4px",
-    borderRadius: "999px",
-    background: "rgba(255, 255, 255, 0.16)",
+    borderRadius: alias.cornerRadius.full,
+    background: vars.surface.muted,
     overflow: "hidden",
 });
 
 export const progressBar = style({
     height: "100%",
-    background: "#7aa6ff",
+    background: vars.surface.primary,
     transition: "width 200ms linear",
 });

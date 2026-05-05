@@ -1,5 +1,6 @@
 import { Box } from "@frak-labs/design-system/components/Box";
 import { Button } from "@frak-labs/design-system/components/Button";
+import { Card } from "@frak-labs/design-system/components/Card";
 import { Text } from "@frak-labs/design-system/components/Text";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -43,26 +44,28 @@ export function SoftUpdatePrompt(props: SoftUpdatePromptProps) {
         }
 
         return (
-            <Box className={styles.banner} flexDirection="column" gap="s">
-                <Text variant="bodySmall">
-                    {t("version.softUpdate.available.title")}
-                </Text>
-                <Text variant="bodySmall">
-                    {t("version.softUpdate.available.description")}
-                </Text>
-                <Box flexDirection="row" gap="s" justifyContent="flex-end">
-                    <Button
-                        variant="secondary"
-                        onClick={props.onDismiss}
-                        disabled={busy}
-                    >
-                        {t("version.softUpdate.dismiss")}
-                    </Button>
-                    <Button onClick={handleStart} disabled={busy}>
-                        {t("version.softUpdate.available.cta")}
-                    </Button>
+            <Card variant="elevated" className={styles.banner}>
+                <Box flexDirection="column" gap="s">
+                    <Text variant="bodySmall">
+                        {t("version.softUpdate.available.title")}
+                    </Text>
+                    <Text variant="bodySmall">
+                        {t("version.softUpdate.available.description")}
+                    </Text>
+                    <Box flexDirection="row" gap="s" justifyContent="flex-end">
+                        <Button
+                            variant="secondary"
+                            onClick={props.onDismiss}
+                            disabled={busy}
+                        >
+                            {t("version.softUpdate.dismiss")}
+                        </Button>
+                        <Button onClick={handleStart} disabled={busy}>
+                            {t("version.softUpdate.available.cta")}
+                        </Button>
+                    </Box>
                 </Box>
-            </Box>
+            </Card>
         );
     }
 
@@ -78,17 +81,19 @@ export function SoftUpdatePrompt(props: SoftUpdatePromptProps) {
                 : 0;
 
         return (
-            <Box className={styles.banner} flexDirection="column" gap="s">
-                <Text variant="bodySmall">
-                    {t("version.softUpdate.inProgress.title", { percent })}
-                </Text>
-                <div className={styles.progressTrack}>
-                    <div
-                        className={styles.progressBar}
-                        style={{ width: `${percent}%` }}
-                    />
-                </div>
-            </Box>
+            <Card variant="elevated" className={styles.banner}>
+                <Box flexDirection="column" gap="s">
+                    <Text variant="bodySmall">
+                        {t("version.softUpdate.inProgress.title", { percent })}
+                    </Text>
+                    <div className={styles.progressTrack}>
+                        <div
+                            className={styles.progressBar}
+                            style={{ width: `${percent}%` }}
+                        />
+                    </div>
+                </Box>
+            </Card>
         );
     }
 
@@ -100,15 +105,17 @@ export function SoftUpdatePrompt(props: SoftUpdatePromptProps) {
     }
 
     return (
-        <Box className={styles.banner} flexDirection="column" gap="s">
-            <Text variant="bodySmall">
-                {t("version.softUpdate.downloaded.title")}
-            </Text>
-            <Box flexDirection="row" justifyContent="flex-end">
-                <Button onClick={handleComplete} disabled={busy}>
-                    {t("version.softUpdate.downloaded.cta")}
-                </Button>
+        <Card variant="elevated" className={styles.banner}>
+            <Box flexDirection="column" gap="s">
+                <Text variant="bodySmall">
+                    {t("version.softUpdate.downloaded.title")}
+                </Text>
+                <Box flexDirection="row" justifyContent="flex-end">
+                    <Button onClick={handleComplete} disabled={busy}>
+                        {t("version.softUpdate.downloaded.cta")}
+                    </Button>
+                </Box>
             </Box>
-        </Box>
+        </Card>
     );
 }

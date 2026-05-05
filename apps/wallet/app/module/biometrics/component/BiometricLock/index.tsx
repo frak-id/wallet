@@ -1,7 +1,5 @@
-import { Box } from "@frak-labs/design-system/components/Box";
 import { Button } from "@frak-labs/design-system/components/Button";
 import { Text } from "@frak-labs/design-system/components/Text";
-import { LogoFrakWithName } from "@frak-labs/wallet-shared";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useBiometricAutoLock } from "@/module/biometrics/hooks/useBiometricAutoLock";
@@ -14,7 +12,7 @@ import {
     authenticateWithBiometrics,
     checkBiometricStatus,
 } from "@/module/biometrics/utils/biometrics";
-import * as styles from "./index.css";
+import { FullScreenGate } from "@/module/common/component/FullScreenGate";
 
 export function BiometricLock() {
     const { t } = useTranslation();
@@ -76,27 +74,23 @@ export function BiometricLock() {
     }
 
     return (
-        <Box
-            padding="l"
-            gap="xl"
-            className={styles.lockScreen}
-            flexDirection="column"
-            alignItems="center"
-            justifyContent="center"
-        >
-            <LogoFrakWithName className={styles.lockScreenLogo} />
-            <Box flexDirection="column" alignItems="center" gap="m">
-                <Text variant="heading1">{t("biometrics.locked")}</Text>
-                <Text variant="bodySmall">
-                    {t("biometrics.unlockWith", { type: biometryLabel })}
-                </Text>
-                {error && (
-                    <Text variant="bodySmall">{t("biometrics.error")}</Text>
-                )}
-            </Box>
-            <Button onClick={handleUnlock} disabled={isAuthenticating}>
-                {t("biometrics.unlock")}
-            </Button>
-        </Box>
+        <FullScreenGate
+            title={t("biometrics.locked")}
+            description={
+                <>
+                    <Text variant="bodySmall">
+                        {t("biometrics.unlockWith", { type: biometryLabel })}
+                    </Text>
+                    {error && (
+                        <Text variant="bodySmall">{t("biometrics.error")}</Text>
+                    )}
+                </>
+            }
+            action={
+                <Button onClick={handleUnlock} disabled={isAuthenticating}>
+                    {t("biometrics.unlock")}
+                </Button>
+            }
+        />
     );
 }
