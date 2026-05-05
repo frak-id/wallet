@@ -87,6 +87,19 @@ export class ReferralCodeRepository {
         return result ?? null;
     }
 
+    /**
+     * Lookup a referral code by its primary-key uuid. Unlike `findByCode`,
+     * this does NOT filter on `revokedAt` — historical `referral_links`
+     * rows can point to a code their owner has since rotated, and the
+     * status endpoint still needs to render the original 6-char string.
+     */
+    async findById(id: string): Promise<ReferralCodeSelect | null> {
+        const result = await db.query.referralCodesTable.findFirst({
+            where: eq(referralCodesTable.id, id),
+        });
+        return result ?? null;
+    }
+
     async findActiveByOwner(
         ownerIdentityGroupId: string
     ): Promise<ReferralCodeSelect | null> {

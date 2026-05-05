@@ -35,6 +35,23 @@ export const referralStatusRoute = new Elysia().use(identityContext).get(
                 : Promise.resolve(null),
         ]);
 
+        // Resolve the 6-char code string for code-redemption referrers.
+        // `source='link'` referrers (shared-link clicks) carry no code.
+        // `findById` skips the `revoked_at` filter so a referrer who has
+        // since rotated their code still renders the original string.
+        const [crossMerchantCode, merchantCode] = await Promise.all([
+            crossMerchantLink?.sourceData?.type === "code"
+                ? ReferralCodeContext.repositories.referralCode.findById(
+                      crossMerchantLink.sourceData.codeId
+                  )
+                : Promise.resolve(null),
+            merchantLink?.sourceData?.type === "code"
+                ? ReferralCodeContext.repositories.referralCode.findById(
+                      merchantLink.sourceData.codeId
+                  )
+                : Promise.resolve(null),
+        ]);
+
         return {
             ownedCode: ownedCode
                 ? {
@@ -44,11 +61,13 @@ export const referralStatusRoute = new Elysia().use(identityContext).get(
                 : null,
             crossMerchantReferrer: crossMerchantLink
                 ? {
+                      code: crossMerchantCode?.code ?? null,
                       since: crossMerchantLink.createdAt.toISOString(),
                   }
                 : null,
             merchantReferrer: merchantLink?.merchantId
                 ? {
+                      code: merchantCode?.code ?? null,
                       merchantId: merchantLink.merchantId,
                       since: merchantLink.createdAt.toISOString(),
                   }
@@ -72,12 +91,14 @@ export const referralStatusRoute = new Elysia().use(identityContext).get(
                 ]),
                 crossMerchantReferrer: t.Union([
                     t.Object({
+                        code: t.Union([t.String(), t.Null()]),
                         since: t.String(),
                     }),
                     t.Null(),
                 ]),
                 merchantReferrer: t.Union([
                     t.Object({
+                        code: t.Union([t.String(), t.Null()]),
                         merchantId: t.String(),
                         since: t.String(),
                     }),

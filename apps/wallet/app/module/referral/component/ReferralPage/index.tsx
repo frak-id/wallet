@@ -11,7 +11,6 @@ import { useTranslation } from "react-i18next";
 import { Back } from "@/module/common/component/Back";
 import { InfoCard, InfoRow } from "@/module/common/component/InfoCard";
 import { Title } from "@/module/common/component/Title";
-import { REDEEMED_CODE_PLACEHOLDER } from "../../constants";
 import { ReferralInviteCard } from "../ReferralInviteCard";
 import * as styles from "./index.css";
 
@@ -20,6 +19,7 @@ export function ReferralPage() {
     const { data: status } = useReferralStatus();
     const isStatusLoaded = status !== undefined;
     const hasOwnedCode = !!status?.ownedCode;
+    const redeemedCode = status?.crossMerchantReferrer?.code ?? null;
     const hasRedeemedCode = !!status?.crossMerchantReferrer;
 
     const modifyAction = (
@@ -56,7 +56,10 @@ export function ReferralPage() {
                         {hasRedeemedCode ? (
                             <InfoRow
                                 icon={GiftIcon}
-                                label={REDEEMED_CODE_PLACEHOLDER}
+                                label={
+                                    redeemedCode ??
+                                    t("wallet.referral.redeem.active")
+                                }
                                 to="/profile/referral/redeem"
                                 action={modifyAction}
                             />
