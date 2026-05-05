@@ -56,11 +56,6 @@
             "title": "Ajouter la bannière dans votre thème",
             "description": "Ajoutez la <strong>bannière Frak</strong> pour afficher les promotions de parrainage sur votre boutique",
             "link": "Ajouter la bannière Frak à votre thème"
-        },
-        "step8": {
-            "title": "Configurer l'extension post-achat",
-            "description": "Ajoutez l'extension <strong>Frak Post Purchase</strong> à votre page de remerciement pour encourager le partage après l'achat",
-            "link": "Configurer dans l'éditeur de checkout"
         }
     },
     "pixel": {

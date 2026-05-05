@@ -56,11 +56,6 @@
             "title": "Add the banner in your theme",
             "description": "Add the <strong>Frak Banner</strong> to display referral promotions across your store",
             "link": "Add the Frak Banner to your theme"
-        },
-        "step8": {
-            "title": "Setup the post-purchase checkout extension",
-            "description": "Add the <strong>Frak Post Purchase</strong> extension to your checkout thank-you page to encourage sharing after purchase",
-            "link": "Configure in checkout editor"
         }
     },
     "pixel": {
