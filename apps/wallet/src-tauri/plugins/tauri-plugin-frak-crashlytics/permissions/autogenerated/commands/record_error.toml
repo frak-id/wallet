@@ -1,0 +1,13 @@
+# Automatically generated - DO NOT EDIT!
+
+"$schema" = "../../schemas/schema.json"
+
+[[permission]]
+identifier = "allow-record-error"
+description = "Enables the record_error command without any pre-configured scope."
+commands.allow = ["record_error"]
+
+[[permission]]
+identifier = "deny-record-error"
+description = "Denies the record_error command without any pre-configured scope."
+commands.deny = ["record_error"]
