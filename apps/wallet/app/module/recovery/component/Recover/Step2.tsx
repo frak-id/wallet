@@ -2,7 +2,7 @@ import { Box } from "@frak-labs/design-system/components/Box";
 import { Button } from "@frak-labs/design-system/components/Button";
 import { Stack } from "@frak-labs/design-system/components/Stack";
 import { Text } from "@frak-labs/design-system/components/Text";
-import { useLogin } from "@frak-labs/wallet-shared";
+import { recordError, useLogin } from "@frak-labs/wallet-shared";
 import { useNavigate } from "@tanstack/react-router";
 import { useCallback, useTransition } from "react";
 import { useTranslation } from "react-i18next";
@@ -53,7 +53,7 @@ export function Step2() {
                 });
             }
         } catch (e) {
-            console.error(e);
+            recordError(e, { source: "recovery", context: { step: 2 } });
             recoveryStore.getState().setStep(ACTUAL_STEP + 1);
         }
     }, [fileContent, login, navigate]);

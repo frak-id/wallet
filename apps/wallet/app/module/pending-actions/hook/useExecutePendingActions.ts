@@ -1,6 +1,7 @@
 import {
     authenticatedBackendApi,
     type InstallSource,
+    recordError,
     trackEvent,
 } from "@frak-labs/wallet-shared";
 import type { UseMutationOptions } from "@tanstack/react-query";
@@ -81,10 +82,10 @@ export function useExecutePendingActions(
                             error_type:
                                 err instanceof Error ? err.name : "unknown",
                         });
-                        console.error(
-                            "[PendingActions] Ensure failed, keeping for retry on next launch:",
-                            err
-                        );
+                        recordError(err, {
+                            source: "pending_actions",
+                            context: { action_type: "ensure", source },
+                        });
                     }
                 );
             }

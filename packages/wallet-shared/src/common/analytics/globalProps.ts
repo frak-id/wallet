@@ -1,4 +1,5 @@
 import type { Session } from "../../types/Session";
+import { crashlytics } from "./crashlytics";
 import { getInitProperties, getPlatformInfo, openPanel } from "./openpanel";
 import type { AnalyticsGlobalProperties } from "./types";
 
@@ -13,6 +14,9 @@ const SESSION_ID_STORAGE_KEY = "frak_analytics_session_id";
 const pendingProfileProps: Record<string, unknown> = {};
 
 export function setProfileId(profileId?: string) {
+    // Crashlytics: mirror profile changes so logout (`undefined`) clears
+    // the identifier and the next session starts anonymous.
+    void crashlytics.setUserId(profileId ?? "");
     if (!openPanel) return;
     openPanel.profileId = profileId;
 }
@@ -70,12 +74,23 @@ function getAppVersion(): string | undefined {
  * (platform + iframe flags + session / build).
  */
 export function initAnalytics() {
+    // Crashlytics keys mirror the most useful OpenPanel globals so crash
+    // reports can be filtered by platform / version / runtime context
+    // without round-tripping the OpenPanel dashboard. Run regardless of
+    // openPanel availability — listener may ship without an OpenPanel
+    // client id but we still want crash context.
+    const initProps = getInitProperties();
+    const platformInfo = getPlatformInfo();
+    void crashlytics.setKey("platform", platformInfo.platform);
+    const appVersion = getAppVersion();
+    if (appVersion) void crashlytics.setKey("app_version", appVersion);
+
     if (!openPanel) return;
     openPanel.init();
     updateGlobalProperties({
-        ...getInitProperties(),
+        ...initProps,
         session_id: getOrCreateSessionId(),
-        app_version: getAppVersion(),
+        app_version: appVersion,
     });
 }
 
@@ -85,6 +100,9 @@ export function initAnalytics() {
  * is buffered until the user identifies on login/register.
  */
 export function setInstallSource(source: string) {
+    // Surface install attribution as a crash-report key so we can split
+    // crash rates per acquisition channel.
+    void crashlytics.setKey("install_source", source);
     setProfileProperty("install_source", source);
 }
 
@@ -98,6 +116,13 @@ export function setInstallSource(source: string) {
  * attached explicitly.
  */
 export function identifyAuthenticatedUser(session: Omit<Session, "token">) {
+    // Crashlytics first — wallet address is the canonical user id and
+    // session metadata helps narrow crash reports per auth flow. Runs
+    // independently of openPanel availability.
+    void crashlytics.setUserId(session.address);
+    void crashlytics.setKey("session_type", session.type ?? "webauthn");
+    void crashlytics.setKey("session_src", "pairing");
+
     if (!openPanel) return;
     updateGlobalProperties({
         wallet: session.address,

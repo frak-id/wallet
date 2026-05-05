@@ -1,4 +1,5 @@
 import { isAndroid } from "@frak-labs/app-essentials/utils/platform";
+import { recordError } from "@frak-labs/wallet-shared";
 
 /**
  * Initialize safe area insets for Android/Tauri using native plugin
@@ -40,6 +41,6 @@ export async function initSafeAreaInsets() {
             `${insets.right}px`
         );
     } catch (error) {
-        console.error("Failed to get safe area insets:", error);
+        recordError(error, { source: "safe_area" });
     }
 }

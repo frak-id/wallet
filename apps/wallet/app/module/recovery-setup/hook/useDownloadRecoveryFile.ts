@@ -1,5 +1,8 @@
 import { isAndroid, isTauri } from "@frak-labs/app-essentials/utils/platform";
-import type { RecoveryFileContent } from "@frak-labs/wallet-shared";
+import {
+    type RecoveryFileContent,
+    recordError,
+} from "@frak-labs/wallet-shared";
 import { useMutation } from "@tanstack/react-query";
 import { recoverySetupKey } from "@/module/recovery-setup/queryKeys/recovery-setup";
 
@@ -127,7 +130,10 @@ async function downloadViaTauriShare(
         path: fullPath,
         mime: JSON_MIME_TYPE,
     }).catch((error) => {
-        console.error("Failed to open share sheet:", error);
+        recordError(error, {
+            source: "recovery",
+            context: { stage: "share_sheet" },
+        });
     });
 
     // Allow time for share sheet to open before proceeding

@@ -8,7 +8,11 @@ import type {
     Flow,
     TokensSendAmountBucket,
 } from "@frak-labs/wallet-shared";
-import { startFlow, useGetUserBalance } from "@frak-labs/wallet-shared";
+import {
+    recordError,
+    startFlow,
+    useGetUserBalance,
+} from "@frak-labs/wallet-shared";
 import { createFileRoute } from "@tanstack/react-router";
 import { memo, useCallback, useEffect, useRef, useState } from "react";
 import type {
@@ -281,7 +285,10 @@ function TokensSendPage() {
                     error_type,
                     error_message,
                 });
-                console.error("Transaction failed:", err);
+                recordError(err, {
+                    source: "tokens_send",
+                    context: { token_symbol: tokenSymbol },
+                });
             }
         },
         [selectedToken, writeContractAsync, reset, refetch, confirm]

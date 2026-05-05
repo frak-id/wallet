@@ -1,6 +1,6 @@
 import { Button } from "@frak-labs/design-system/components/Button";
 import { Text } from "@frak-labs/design-system/components/Text";
-import type { WebAuthNWallet } from "@frak-labs/wallet-shared";
+import { recordError, type WebAuthNWallet } from "@frak-labs/wallet-shared";
 import { useCallback } from "react";
 import { useTranslation } from "react-i18next";
 import { AccordionRecoveryItem } from "@/module/common/component/AccordionRecoveryItem";
@@ -28,7 +28,13 @@ export function Step4() {
             file: recoveryFileContent,
         });
         if (!Array.isArray(wallet.publicKey)) {
-            console.error("Invalid wallet public key", wallet.publicKey);
+            recordError(new Error("Invalid wallet public key"), {
+                source: "recovery",
+                context: {
+                    step: 4,
+                    publicKey: String(wallet.publicKey),
+                },
+            });
             return;
         }
         recoveryStore.getState().setNewWallet(wallet as WebAuthNWallet);

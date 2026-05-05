@@ -89,6 +89,7 @@ dependencies = [
  "tauri-plugin-clipboard-manager",
  "tauri-plugin-deep-link",
  "tauri-plugin-fcm",
+ "tauri-plugin-frak-crashlytics",
  "tauri-plugin-frak-share",
  "tauri-plugin-frak-webauthn",
  "tauri-plugin-fs",
@@ -4169,6 +4170,17 @@ dependencies = [
  "tauri",
  "tauri-plugin",
  "thiserror 2.0.17",
+]
+
+[[package]]
+name = "tauri-plugin-frak-crashlytics"
+version = "0.1.0"
+dependencies = [
+ "log",
+ "serde",
+ "serde_json",
+ "tauri",
+ "tauri-plugin",
 ]
 
 [[package]]

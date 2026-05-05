@@ -1,5 +1,5 @@
 import { isTauri } from "@frak-labs/app-essentials/utils/platform";
-import { getSafeSession } from "@frak-labs/wallet-shared";
+import { getSafeSession, recordError } from "@frak-labs/wallet-shared";
 import { pendingActionsStore } from "@/module/pending-actions/stores/pendingActionsStore";
 
 type DeepLinkParams = {
@@ -59,7 +59,7 @@ function parseDeepLink(url: string): DeepLinkParams | null {
 
         return null;
     } catch (error) {
-        console.error("[DeepLink] Failed to parse deep link:", url, error);
+        recordError(error, { source: "deep_link", context: { url } });
         return null;
     }
 }
@@ -219,6 +219,9 @@ export async function initDeepLinks(navigate: NavigateFn): Promise<void> {
             }
         });
     } catch (error) {
-        console.error("[DeepLink] Failed to initialize deep links:", error);
+        recordError(error, {
+            source: "deep_link",
+            context: { stage: "init" },
+        });
     }
 }
