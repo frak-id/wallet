@@ -12,7 +12,6 @@ export type VersionGateState =
     | { kind: "hard_update"; currentVersion: string; minVersion: string }
     | {
           kind: "soft_update";
-          currentVersion: string;
           storeVersion?: string;
       }
     | {
@@ -33,7 +32,11 @@ const minVersionQueryOptions = {
     queryFn: async () => {
         const { data, error } =
             await authenticatedBackendApi.common.version.get();
-        if (error || !data) return null;
+        // Propagate Eden errors so TanStack Query keeps its retry/backoff
+        // semantics; previous `return null` masked failures and silently
+        // disabled the hard-update floor until the next stale window.
+        if (error) throw error;
+        if (!data) throw new Error("Missing version response from backend");
         return data.minVersion;
     },
     staleTime: STALE_TIME_MS,
@@ -112,7 +115,6 @@ export function useVersionGate(): VersionGateState {
     if (native.data?.status === "available") {
         return {
             kind: "soft_update",
-            currentVersion,
             storeVersion: native.data.storeVersion,
         };
     }

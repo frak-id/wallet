@@ -14,9 +14,17 @@ pub use mobile::FrakUpdater;
 ///
 /// `up_to_date`         — current bundle version matches (or exceeds) the
 ///                        latest store / Play release. No prompt needed.
-/// `available`          — a newer version exists in the store. Frontend
-///                        should surface a soft prompt; tapping the CTA
-///                        invokes `start_soft_update`.
+/// `available`          — Android only. Play Core has confirmed a newer
+///                        release is available; the frontend should
+///                        surface a soft prompt and call `start_soft_update`.
+///                        No `store_version` is exposed (Play deliberately
+///                        hides the human-readable name).
+/// `candidate`          — iOS only. iTunes Lookup returned a `store_version`;
+///                        the frontend layer compares it against the
+///                        installed bundle to decide between `available`
+///                        and `up_to_date`. Lifting the comparison out of
+///                        the Swift plugin keeps version semantics in a
+///                        single TS source of truth.
 /// `in_progress`        — Android only. A FLEXIBLE Play update has already
 ///                        been started in this session and is still
 ///                        downloading. Frontend should keep showing the
@@ -31,7 +39,8 @@ pub use mobile::FrakUpdater;
 #[serde(rename_all = "snake_case", tag = "status")]
 pub enum UpdateStatus {
     UpToDate,
-    Available {
+    Available,
+    Candidate {
         store_version: String,
     },
     InProgress {
@@ -77,10 +86,11 @@ pub struct OpenStoreResponse {
 
 /// Frontend-facing command — registered as `plugin:frak-updater|check_update`.
 ///
-/// On iOS the native side hits the iTunes Lookup endpoint, on Android it asks
-/// `AppUpdateManager` whether a Play release is available. Both compare the
-/// installed bundle version internally and only return `available` when an
-/// update is actually newer.
+/// On iOS the native side hits the iTunes Lookup endpoint and returns the
+/// fetched store version as `candidate`; the JS layer compares it against
+/// the installed bundle. On Android the native side asks `AppUpdateManager`
+/// whether a Play release is available and emits `available` directly when
+/// it is, since Play does the comparison server-side.
 #[tauri::command]
 async fn check_update<R: Runtime>(_app: AppHandle<R>) -> Result<CheckUpdateResponse, String> {
     #[cfg(mobile)]

@@ -769,7 +769,9 @@
         "hardUpdate": {
             "title": "Update required",
             "description": "Your version ({{currentVersion}}) is no longer supported. Update to {{minVersion}} or higher to continue using Frak Wallet.",
-            "cta": "Update now"
+            "cta": "Update now",
+            "retry": "Try again",
+            "fallback": "Couldn't open the store automatically. Please update Frak Wallet manually from your device's app store."
         },
         "softUpdate": {
             "available": {

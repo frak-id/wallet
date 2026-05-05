@@ -766,7 +766,9 @@
         "hardUpdate": {
             "title": "Mise à jour requise",
             "description": "Ta version ({{currentVersion}}) n'est plus supportée. Installe la version {{minVersion}} ou plus récente pour continuer à utiliser Frak Wallet.",
-            "cta": "Mettre à jour"
+            "cta": "Mettre à jour",
+            "retry": "Réessayer",
+            "fallback": "Impossible d'ouvrir le store automatiquement. Mets à jour Frak Wallet manuellement depuis le store de ton appareil."
         },
         "softUpdate": {
             "available": {

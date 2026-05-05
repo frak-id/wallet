@@ -2,7 +2,7 @@ import { Box } from "@frak-labs/design-system/components/Box";
 import { Button } from "@frak-labs/design-system/components/Button";
 import { Card } from "@frak-labs/design-system/components/Card";
 import { Text } from "@frak-labs/design-system/components/Text";
-import { useState } from "react";
+import { useMutation } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 import {
     completeNativeSoftUpdate,
@@ -33,40 +33,9 @@ type SoftUpdatePromptProps =
  */
 export function SoftUpdatePrompt(props: SoftUpdatePromptProps) {
     const { t } = useTranslation();
-    const [busy, setBusy] = useState(false);
 
     if (props.mode === "available") {
-        async function handleStart() {
-            if (busy) return;
-            setBusy(true);
-            await startNativeSoftUpdate();
-            setBusy(false);
-        }
-
-        return (
-            <Card variant="elevated" className={styles.banner}>
-                <Box flexDirection="column" gap="s">
-                    <Text variant="bodySmall">
-                        {t("version.softUpdate.available.title")}
-                    </Text>
-                    <Text variant="bodySmall">
-                        {t("version.softUpdate.available.description")}
-                    </Text>
-                    <Box flexDirection="row" gap="s" justifyContent="flex-end">
-                        <Button
-                            variant="secondary"
-                            onClick={props.onDismiss}
-                            disabled={busy}
-                        >
-                            {t("version.softUpdate.dismiss")}
-                        </Button>
-                        <Button onClick={handleStart} disabled={busy}>
-                            {t("version.softUpdate.available.cta")}
-                        </Button>
-                    </Box>
-                </Box>
-            </Card>
-        );
+        return <AvailableBanner onDismiss={props.onDismiss} t={t} />;
     }
 
     if (props.mode === "in_progress") {
@@ -97,12 +66,62 @@ export function SoftUpdatePrompt(props: SoftUpdatePromptProps) {
         );
     }
 
-    async function handleComplete() {
-        if (busy) return;
-        setBusy(true);
-        await completeNativeSoftUpdate();
-        setBusy(false);
-    }
+    return <DownloadedBanner t={t} />;
+}
+
+type Translate = ReturnType<typeof useTranslation>["t"];
+
+/**
+ * `useMutation` (vs a local `useState(busy)`) gives us a real `isPending`,
+ * isolation from unmount races (the `await` resolves after the gate may
+ * have re-rendered), and a uniform retry/error surface across the wallet.
+ */
+function AvailableBanner({
+    onDismiss,
+    t,
+}: {
+    onDismiss: () => void;
+    t: Translate;
+}) {
+    const start = useMutation({
+        mutationKey: ["version", "start-soft-update"],
+        mutationFn: startNativeSoftUpdate,
+    });
+
+    return (
+        <Card variant="elevated" className={styles.banner}>
+            <Box flexDirection="column" gap="s">
+                <Text variant="bodySmall">
+                    {t("version.softUpdate.available.title")}
+                </Text>
+                <Text variant="bodySmall">
+                    {t("version.softUpdate.available.description")}
+                </Text>
+                <Box flexDirection="row" gap="s" justifyContent="flex-end">
+                    <Button
+                        variant="secondary"
+                        onClick={onDismiss}
+                        disabled={start.isPending}
+                    >
+                        {t("version.softUpdate.dismiss")}
+                    </Button>
+                    <Button
+                        onClick={() => start.mutate()}
+                        disabled={start.isPending}
+                    >
+                        {t("version.softUpdate.available.cta")}
+                    </Button>
+                </Box>
+            </Box>
+        </Card>
+    );
+}
+
+function DownloadedBanner({ t }: { t: Translate }) {
+    const complete = useMutation({
+        mutationKey: ["version", "complete-soft-update"],
+        mutationFn: completeNativeSoftUpdate,
+    });
 
     return (
         <Card variant="elevated" className={styles.banner}>
@@ -111,7 +130,10 @@ export function SoftUpdatePrompt(props: SoftUpdatePromptProps) {
                     {t("version.softUpdate.downloaded.title")}
                 </Text>
                 <Box flexDirection="row" justifyContent="flex-end">
-                    <Button onClick={handleComplete} disabled={busy}>
+                    <Button
+                        onClick={() => complete.mutate()}
+                        disabled={complete.isPending}
+                    >
                         {t("version.softUpdate.downloaded.cta")}
                     </Button>
                 </Box>

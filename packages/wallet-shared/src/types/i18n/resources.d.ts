@@ -520,6 +520,8 @@ interface Resources {
       "hardUpdate": {
         "cta": "Update now",
         "description": "Your version ({{currentVersion}}) is no longer supported. Update to {{minVersion}} or higher to continue using Frak Wallet.",
+        "fallback": "Couldn't open the store automatically. Please update Frak Wallet manually from your device's app store.",
+        "retry": "Try again",
         "title": "Update required"
       },
       "softUpdate": {

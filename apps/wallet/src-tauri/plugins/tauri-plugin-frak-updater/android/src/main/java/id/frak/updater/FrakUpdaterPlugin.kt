@@ -204,16 +204,15 @@ class FrakUpdaterPlugin(activity: Activity) : Plugin(activity) {
         }
 
         if (info.updateAvailability() == UpdateAvailability.UPDATE_AVAILABLE) {
-            // `availableVersionCode` is an Int monotonic counter — Play
-            // doesn't expose the human-readable version string for the
-            // available release. We surface the integer as a string so the
-            // frontend has something to display, but the wallet should
-            // primarily rely on `status` for branching.
-            val storeVersion = info.availableVersionCode().toString()
+            // Play Core has already done the comparison server-side; we
+            // intentionally do NOT surface `availableVersionCode` because
+            // it's a monotonic Int with no human-readable mapping (Play
+            // hides the version name for available releases). The frontend
+            // dismissal logic copes with the missing field by keying on a
+            // platform-agnostic constant.
             invoke.resolve(JSObject().apply {
                 put("currentVersion", current)
                 put("status", "available")
-                put("storeVersion", storeVersion)
             })
             return
         }

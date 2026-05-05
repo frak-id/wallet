@@ -1,9 +1,41 @@
 import { isAndroid, isIOS } from "@frak-labs/app-essentials/utils/platform";
+import { isBelow } from "./compareVersions";
 
+/**
+ * Consumer-facing native update status.
+ *
+ * `available.storeVersion` is optional because Android (Play Core) does
+ * not expose a human-readable version string for the pending release —
+ * iOS surfaces the iTunes Lookup version, Android omits the field.
+ */
 export type NativeUpdateStatus =
     | { status: "up_to_date"; currentVersion: string }
     | {
           status: "available";
+          currentVersion: string;
+          storeVersion?: string;
+      }
+    | {
+          status: "in_progress";
+          currentVersion: string;
+          bytesDownloaded: number;
+          totalBytes: number;
+      }
+    | { status: "downloaded"; currentVersion: string }
+    | { status: "unsupported"; currentVersion: string };
+
+/**
+ * Raw shape emitted by the native plugin. iOS reports `candidate` whenever
+ * iTunes Lookup returns a version (no comparison done natively); Android
+ * reports a fully-resolved status enum since Play Core decides availability
+ * server-side. Internal to this module — normalised into `NativeUpdateStatus`
+ * by `checkNativeUpdate` so consumers don't see the platform asymmetry.
+ */
+type RawNativeUpdate =
+    | { status: "up_to_date"; currentVersion: string }
+    | { status: "available"; currentVersion: string }
+    | {
+          status: "candidate";
           currentVersion: string;
           storeVersion: string;
       }
@@ -34,7 +66,27 @@ export async function checkNativeUpdate(): Promise<NativeUpdateStatus> {
         return { status: "unsupported", currentVersion: "" };
     }
     const { invoke } = await import("@tauri-apps/api/core");
-    return invoke<NativeUpdateStatus>("plugin:frak-updater|check_update");
+    const raw = await invoke<RawNativeUpdate>(
+        "plugin:frak-updater|check_update"
+    );
+
+    // iOS hands us the raw iTunes Lookup version; the comparison lives in
+    // TS so version semantics stay in a single source of truth shared with
+    // the hard-update gate (`isBelow` against the backend `minVersion`).
+    if (raw.status === "candidate") {
+        if (isBelow(raw.currentVersion, raw.storeVersion)) {
+            return {
+                status: "available",
+                currentVersion: raw.currentVersion,
+                storeVersion: raw.storeVersion,
+            };
+        }
+        return {
+            status: "up_to_date",
+            currentVersion: raw.currentVersion,
+        };
+    }
+    return raw;
 }
 
 export async function startNativeSoftUpdate(): Promise<boolean> {
