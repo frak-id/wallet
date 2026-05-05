@@ -761,5 +761,27 @@
             "step3Title": "Récupère tes gains dans ton porte-monnaie",
             "step3Description": "En un clic, transfère tes gains vers ton compte bancaire."
         }
+    },
+    "version": {
+        "hardUpdate": {
+            "title": "Mise à jour requise",
+            "description": "Ta version ({{currentVersion}}) n'est plus supportée. Installe la version {{minVersion}} ou plus récente pour continuer à utiliser Frak Wallet.",
+            "cta": "Mettre à jour"
+        },
+        "softUpdate": {
+            "available": {
+                "title": "Une nouvelle version est disponible",
+                "description": "Mets à jour Frak Wallet pour profiter des dernières fonctionnalités et améliorations.",
+                "cta": "Mettre à jour"
+            },
+            "inProgress": {
+                "title": "Téléchargement… {{percent}}%"
+            },
+            "downloaded": {
+                "title": "Mise à jour prête à installer.",
+                "cta": "Redémarrer"
+            },
+            "dismiss": "Plus tard"
+        }
     }
 }

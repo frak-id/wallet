@@ -17,6 +17,7 @@
         "frak-share:default",
         "clipboard-manager:allow-read-text",
         "recovery-hint:default",
-        "frak-crashlytics:default"
+        "frak-crashlytics:default",
+        "frak-updater:default"
     ]
 }

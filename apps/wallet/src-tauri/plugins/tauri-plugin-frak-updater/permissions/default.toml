@@ -1,0 +1,8 @@
+[default]
+description = "Default permissions for the frak-updater plugin"
+permissions = [
+    "allow-check-update",
+    "allow-start-soft-update",
+    "allow-complete-soft-update",
+    "allow-open-store",
+]

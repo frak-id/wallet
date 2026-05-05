@@ -7,6 +7,7 @@ import { ModalOutlet } from "@/module/common/component/ModalOutlet";
 import { PwaInstall } from "@/module/common/component/PwaInstall";
 import { RootProvider } from "@/module/common/provider/RootProvider";
 import { TargetSignatureModal } from "@/module/pairing/component/TargetSignatureModal";
+import { VersionGate } from "@/module/version";
 import { DetectPWA } from "@/module/wallet/component/DetectPWA";
 // Import open panel to ensure it's initialized
 import "@frak-labs/wallet-shared";
@@ -38,6 +39,7 @@ function RootComponent() {
                 </>
             )}
             {process.env.IS_TAURI && <BiometricLock />}
+            {process.env.IS_TAURI && <VersionGate />}
             <Outlet />
             <TargetSignatureModal />
             <ModalOutlet />
