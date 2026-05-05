@@ -33,12 +33,17 @@ export class ReferralCodeRepository {
             sql`, `
         );
 
+        // Raw `db.execute` skips Drizzle's column-mode coercion, so
+        // postgres-js hands back timestamps as ISO strings here (unlike
+        // `db.query.findFirst` calls in this file). Type the columns as
+        // strings and coerce to `Date` ourselves to match the typed-query
+        // shape callers expect.
         const result = await db.execute<{
             id: string;
             code: string;
             owner_identity_group_id: string;
-            created_at: Date;
-            revoked_at: Date | null;
+            created_at: string;
+            revoked_at: string | null;
         }>(sql`
             WITH candidates(code) AS (VALUES ${values})
             INSERT INTO referral_codes (code, owner_identity_group_id)
@@ -61,8 +66,8 @@ export class ReferralCodeRepository {
             id: row.id,
             code: row.code,
             ownerIdentityGroupId: row.owner_identity_group_id,
-            createdAt: row.created_at,
-            revokedAt: row.revoked_at,
+            createdAt: new Date(row.created_at),
+            revokedAt: row.revoked_at ? new Date(row.revoked_at) : null,
         };
     }
 

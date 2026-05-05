@@ -65,7 +65,9 @@
         "walletInvalid": "Adresse de porte-monnaie invalide",
         "back-to-wallet": "Retour au porte-monnaie",
         "back": "Retour",
+        "clear": "Effacer",
         "close": "Fermer",
+        "or": "ou",
         "share": "Partager"
     },
     "sharing": {
@@ -93,6 +95,77 @@
             "managePairings": "Gérer les appareils connectés",
             "lastConnection": "Dernière connexion",
             "currentDeviceConnected": "Connecté"
+        },
+        "referral": {
+            "title": "Parrainages",
+            "menuLabel": "Parrainages",
+            "invite": {
+                "title": "Inviter des ami·e·s",
+                "description": "Crée ton code et commence à le partager à tes proches pour gagner encore plus d'argent.",
+                "cta": "Générer mon code"
+            },
+            "enterCode": "Entrer un code de parrainage",
+            "modify": "Modifier",
+            "create": {
+                "title": "Mon code de parrainage",
+                "description": "Dès qu'une personne s'inscrit avec ton code et passe commande sur l'un de nos sites partenaires, vous gagnez de l'argent tous·tes les deux.",
+                "label": "Personnalise ton code",
+                "placeholder": "Ex : LOLA10",
+                "hint": "Sélectionne 4 lettres pour générer ton code.",
+                "suggestionsLabel": "Choisis ton code",
+                "submitCta": "Valider mon code",
+                "autoGenerate": "Générer automatiquement",
+                "autoConfirmLabel": "Généré pour toi",
+                "searchingCode": "Recherche d'un code disponible",
+                "personalizeCta": "Personnaliser mon code",
+                "errorAlreadyActive": "Tu as déjà un code de parrainage actif.",
+                "errorCodeUnavailable": "Ce code n'est plus disponible, choisis-en un autre.",
+                "errorGeneric": "Une erreur est survenue. Réessaie dans un instant.",
+                "terms": "En partageant ou en utilisant un code, tu acceptes <termsLink>les conditions générales de FRAK</termsLink>."
+            },
+            "share": {
+                "activeSince": "Actif depuis le",
+                "copyCode": "Copier le code",
+                "copiedToast": "Code de parrainage copié",
+                "savedToast": "Nouveau code enregistré",
+                "shareCta": "Partager mon code",
+                "shareText": "Utilise mon code de parrainage {{code}} pour t'inscrire sur Frak.",
+                "modifyCta": "Modifier mon code"
+            },
+            "edit": {
+                "title": "Modifier mon code",
+                "attentionTitle": "Attention",
+                "attentionBody": "Changer ton code révoquera l'ancien. Les liens déjà partagés ne fonctionneront plus.",
+                "cancel": "Annuler",
+                "cancelConfirm": {
+                    "title": "Annuler les modifications",
+                    "description": "Ton code actuel sera conservé. Tes modifications ne seront pas enregistrées.",
+                    "confirmCta": "Annuler les modifications",
+                    "continueCta": "Continuer"
+                }
+            },
+            "redeem": {
+                "title": "Tu as reçu un code ?",
+                "description": "Entre le code d'un·e ami·e ou d'un·e créateur·rice et profitez-en tous·tes les deux.",
+                "label": "Code de parrainage",
+                "placeholder": "Ex : LOLA10",
+                "submitCta": "Appliquer le code",
+                "active": "Actif",
+                "activeSince": "Activé le",
+                "deleteCta": "Supprimer le code actif",
+                "errorNotFound": "Ce code n'existe pas. Vérifie qu'il est correct.",
+                "errorSelf": "Tu ne peux pas utiliser ton propre code.",
+                "errorCycle": "Ce code n'est pas utilisable avec ton compte.",
+                "errorAlreadyRedeemed": "Tu as déjà appliqué un code de parrainage.",
+                "errorInvalid": "Ce code n'est pas valide.",
+                "errorGeneric": "Une erreur est survenue. Réessaie dans un instant.",
+                "confirmDelete": {
+                    "title": "Supprimer ce code\nde parrainage ?",
+                    "description": "Tu ne bénéficieras plus des avantages liés à ce code pour tes prochains achats. Tu pourras en ajouter un nouveau à tout moment.",
+                    "confirmCta": "Supprimer le code",
+                    "cancelCta": "Annuler"
+                }
+            }
         },
         "transferToBank": "Transférer vers ma banque",
         "transferEmpty": {
@@ -243,6 +316,12 @@
             "notifications": {
                 "title": "Ne rate aucun gain !",
                 "description": "Active tes notifs pour suivre tes gains en temps réel."
+            },
+            "invite": {
+                "title": "Invite tes ami·e·s et gagne",
+                "check1": "Crée ton code de parrainage",
+                "check2": "Partage-le avec tes ami·e·s",
+                "check3": "Gagne de l'argent à chaque commande réalisée."
             },
             "detail": {
                 "howItWorks": "Comment ça marche ?",

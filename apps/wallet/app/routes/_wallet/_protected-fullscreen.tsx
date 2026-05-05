@@ -5,11 +5,11 @@ import { pendingActionsStore } from "@/module/pending-actions/stores/pendingActi
 
 /**
  * Protected layout WITHOUT bottom navigation.
- * Use for full-screen modal-like flows (pairing, etc.) that need auth
- * but should not show the tab bar.
+ * Use for any full-screen flow (pairing, referral creation, etc.) that
+ * needs auth but should not show the tab bar.
  */
-export const Route = createFileRoute("/_wallet/_protected-modal")({
-    component: ProtectedModalLayout,
+export const Route = createFileRoute("/_wallet/_protected-fullscreen")({
+    component: ProtectedFullscreenLayout,
     beforeLoad: async ({ location }) => {
         const session = getSafeSession();
         if (!session?.token) {
@@ -29,7 +29,7 @@ export const Route = createFileRoute("/_wallet/_protected-modal")({
     },
 });
 
-function ProtectedModalLayout() {
+function ProtectedFullscreenLayout() {
     return (
         <AppShell navigation={false}>
             <Outlet />

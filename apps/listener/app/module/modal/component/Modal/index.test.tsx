@@ -63,12 +63,17 @@ vi.mock("@frak-labs/wallet-shared", () => ({
     DrawerContent: ({ children }: { children: ReactNode }) => (
         <div>{children}</div>
     ),
+    getOriginPairingClient: () => ({}),
     InAppBrowserToast: () => null,
     LogoFrakWithName: ({ className }: { className?: string }) => (
         <span className={className}>frak-logo</span>
     ),
     OriginPairingState: () => <div>origin-pairing</div>,
     prefixModalCss: (name: string) => `nexus-modal-${name}`,
+    useCancelAllSignatureRequests: () => ({
+        mutate: () => {},
+        isPending: false,
+    }),
     WalletModal: ({ title, text }: { title: ReactNode; text: ReactNode }) => (
         <div>
             <div>{title}</div>

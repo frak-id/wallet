@@ -20,7 +20,7 @@ import { PairingHeader } from "@/module/pairing/component/PairingHeader";
 import { PairingInfo } from "@/module/pairing/component/PairingInfo";
 import * as styles from "./pairing.css";
 
-export const Route = createFileRoute("/_wallet/_protected-modal/pairing")({
+export const Route = createFileRoute("/_wallet/_protected-fullscreen/pairing")({
     component: PairingPage,
     validateSearch: (search: Record<string, unknown>) => ({
         mode: typeof search.mode === "string" ? search.mode : undefined,

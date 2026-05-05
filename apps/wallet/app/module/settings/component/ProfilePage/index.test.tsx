@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { render, within } from "@testing-library/react";
 import type * as React from "react";
 import { vi } from "vitest";
 import { describe, expect, test } from "@/tests/vitest-fixtures";
@@ -12,6 +12,7 @@ vi.mock("react-i18next", () => ({
                     "wallet.profile.lastConnection": "Dernière connexion",
                     "wallet.profile.managePairings":
                         "Gérer les appareils connectés",
+                    "wallet.referral.menuLabel": "Parrainages",
                 }) as Record<string, string>
             )[key] ??
             fallback ??
@@ -23,6 +24,16 @@ vi.mock("react-i18next", () => ({
 vi.mock("@frak-labs/app-essentials", () => ({
     isRunningInProd: true,
 }));
+
+vi.mock("@frak-labs/wallet-shared", async () => {
+    const actual = await vi.importActual<
+        typeof import("@frak-labs/wallet-shared")
+    >("@frak-labs/wallet-shared");
+    return {
+        ...actual,
+        useGetActivePairings: () => ({ data: [{ pairingId: "test" }] }),
+    };
+});
 
 vi.mock("@/module/settings/component/ProfileIdentityCard", () => ({
     ProfileIdentityCard: () => <div>identity-card</div>,
@@ -63,21 +74,25 @@ describe("ProfilePage", () => {
 
         const { ProfilePage } = await import("./index");
 
-        render(<ProfilePage />);
+        const view = within(render(<ProfilePage />).container);
 
         expect(
-            screen.getByRole("heading", { name: "Profil" })
+            view.getByRole("heading", { name: "Profil" })
         ).toBeInTheDocument();
-        expect(screen.getByText("identity-card")).toBeInTheDocument();
-        expect(screen.getByText("preferences-card")).toBeInTheDocument();
+        expect(view.getByText("identity-card")).toBeInTheDocument();
+        expect(view.getByText("preferences-card")).toBeInTheDocument();
+        expect(view.getByText("Parrainages")).toBeInTheDocument();
         expect(
-            screen.getByText("Gérer les appareils connectés")
+            view.getByText("Parrainages").closest("[data-testid='info-row']")
+        ).toHaveAttribute("data-to", "/profile/referral");
+        expect(
+            view.getByText("Gérer les appareils connectés")
         ).toBeInTheDocument();
-        expect(screen.getByText("links-card")).toBeInTheDocument();
-        expect(screen.getByText("Version 1.0.1")).toBeInTheDocument();
-        expect(screen.getByText("FRAK Labs")).toBeInTheDocument();
+        expect(view.getByText("links-card")).toBeInTheDocument();
+        expect(view.getByText("Version 1.0.1")).toBeInTheDocument();
+        expect(view.getByText("FRAK Labs")).toBeInTheDocument();
         expect(
-            screen.getByText("Dernière connexion : 19 mars 2026 à 15:23")
+            view.getByText("Dernière connexion : 19 mars 2026 à 15:23")
         ).toBeInTheDocument();
     });
 
@@ -92,9 +107,9 @@ describe("ProfilePage", () => {
 
         const { ProfilePage } = await import("./index");
 
-        render(<ProfilePage />);
+        const view = within(render(<ProfilePage />).container);
 
-        expect(screen.queryByText("Version UNKNOWN")).not.toBeInTheDocument();
-        expect(screen.getByText("FRAK Labs")).toBeInTheDocument();
+        expect(view.queryByText("Version UNKNOWN")).not.toBeInTheDocument();
+        expect(view.getByText("FRAK Labs")).toBeInTheDocument();
     });
 });

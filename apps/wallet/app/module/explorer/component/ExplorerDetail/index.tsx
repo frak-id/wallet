@@ -16,7 +16,6 @@ import {
     CalendarIcon,
     CheckIcon,
     ClockIcon,
-    CloseIcon,
     CoinsIcon,
     CopyIcon,
     ExternalLinkIcon,
@@ -39,6 +38,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Trans, useTranslation } from "react-i18next";
 import { GlassButton } from "@/module/common/component/GlassButton";
+import { GlassCloseButton } from "@/module/common/component/GlassCloseButton";
 import { InfoCard, InfoRow } from "@/module/common/component/InfoCard";
 import { InstructionList } from "@/module/common/component/InstructionList";
 import { useSlideCarousel } from "@/module/common/hook/useSlideCarousel";
@@ -181,11 +181,9 @@ export function ExplorerDetail({ merchant, onClose }: ExplorerDetailProps) {
                 </div>
 
                 <DetailSheetActions>
-                    <GlassButton
-                        as="button"
-                        icon={<CloseIcon width={22} height={22} />}
+                    <GlassCloseButton
                         onClick={onClose}
-                        aria-label={t("explorer.detail.close")}
+                        label={t("explorer.detail.close")}
                     />
                     {canShare && (
                         <GlassButton

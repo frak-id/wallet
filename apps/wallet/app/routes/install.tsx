@@ -303,7 +303,7 @@ function InstallCodeView({ m: merchantId, a: anonymousId }: InstallSearch) {
                             {copied
                                 ? t("installCode.codeCopied")
                                 : t("installCode.copyCode")}
-                            <CopyIcon />
+                            <CopyIcon width={16} height={16} />
                         </Button>
                     </Stack>
                 )}
