@@ -1,4 +1,5 @@
 import { isAndroid, isIOS } from "@frak-labs/app-essentials/utils/platform";
+import { getInvoke } from "@frak-labs/wallet-shared";
 import { isBelow } from "./compareVersions";
 
 /**
@@ -65,7 +66,7 @@ export async function checkNativeUpdate(): Promise<NativeUpdateStatus> {
     if (!isIOS() && !isAndroid()) {
         return { status: "unsupported", currentVersion: "" };
     }
-    const { invoke } = await import("@tauri-apps/api/core");
+    const invoke = await getInvoke();
     const raw = await invoke<RawNativeUpdate>(
         "plugin:frak-updater|check_update"
     );
@@ -91,7 +92,7 @@ export async function checkNativeUpdate(): Promise<NativeUpdateStatus> {
 
 export async function startNativeSoftUpdate(): Promise<boolean> {
     if (!isIOS() && !isAndroid()) return false;
-    const { invoke } = await import("@tauri-apps/api/core");
+    const invoke = await getInvoke();
     const response = await invoke<StartSoftUpdateResponse>(
         "plugin:frak-updater|start_soft_update"
     );
@@ -104,7 +105,7 @@ export async function startNativeSoftUpdate(): Promise<boolean> {
  */
 export async function completeNativeSoftUpdate(): Promise<boolean> {
     if (!isAndroid()) return false;
-    const { invoke } = await import("@tauri-apps/api/core");
+    const invoke = await getInvoke();
     const response = await invoke<CompleteSoftUpdateResponse>(
         "plugin:frak-updater|complete_soft_update"
     );
@@ -113,7 +114,7 @@ export async function completeNativeSoftUpdate(): Promise<boolean> {
 
 export async function openNativeStore(): Promise<boolean> {
     if (!isIOS() && !isAndroid()) return false;
-    const { invoke } = await import("@tauri-apps/api/core");
+    const invoke = await getInvoke();
     const response = await invoke<OpenStoreResponse>(
         "plugin:frak-updater|open_store"
     );

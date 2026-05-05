@@ -109,6 +109,8 @@ export { formatCurrency } from "./utils/formatCurrency";
 export { emitLifecycleEvent } from "./utils/lifecycleEvents";
 export { prefixModalCss } from "./utils/prefixModalCss";
 // Utils
+// Tauri
+export { getInvoke } from "./tauri";
 export {
     getFromLocalStorage,
     getSafeSdkSession,
