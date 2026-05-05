@@ -21,13 +21,19 @@ export function useSubscribeToPushNotification() {
         },
         onSuccess: (_tokenPayload, _variable, _onMutate, { client }) => {
             client.invalidateQueries({
+                queryKey: notificationKey.push.backendToken,
+            });
+        },
+        // Platform permission/token state (web push or FCM) can change
+        // even when the backend put() fails. Invalidate on settled so the
+        // UI reflects the actual platform state regardless of mutation
+        // success.
+        onSettled: (_data, _error, _variable, _onMutate, { client }) => {
+            client.invalidateQueries({
                 queryKey: notificationKey.push.permission,
             });
             client.invalidateQueries({
                 queryKey: notificationKey.push.localToken,
-            });
-            client.invalidateQueries({
-                queryKey: notificationKey.push.backendToken,
             });
         },
     });
