@@ -1,3 +1,4 @@
+import { recordError } from "@frak-labs/wallet-shared";
 import { notificationStorage } from "@/module/notification/storage/notifications";
 
 declare const self: ServiceWorkerGlobalScope;
@@ -51,7 +52,7 @@ self.addEventListener("push", (event) => {
             ...notificationOptions,
         })
         .catch((error) => {
-            console.error("Error while saving the notification", error);
+            recordError(error, { source: "service_worker" });
         });
 
     // Display notification promise

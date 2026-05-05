@@ -1,7 +1,9 @@
 // Icons
 export { LogoFrakWithName } from "@frak-labs/design-system/icons";
 export type {
+    AppErrorSource,
     AuthEventMap,
+    DiagnosticsEventMap,
     EmbeddedWalletEventMap,
     EventMap,
     Flow,
@@ -26,6 +28,7 @@ export type {
     PairingErrorState,
     PairingEventMap,
     PairingMode,
+    RecordErrorOptions,
     SharingEventMap,
     SharingSource,
     TokensEventMap,
@@ -38,6 +41,7 @@ export {
     identifyAuthenticatedUser,
     initAnalytics,
     openPanel,
+    recordError,
     setInstallSource,
     setProfileId,
     startFlow,

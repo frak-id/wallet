@@ -2,6 +2,7 @@ import { isRunningInProd } from "@frak-labs/app-essentials";
 import { Box } from "@frak-labs/design-system/components/Box";
 import { Spinner } from "@frak-labs/design-system/components/Spinner";
 import { Text } from "@frak-labs/design-system/components/Text";
+import { recordError } from "@frak-labs/wallet-shared";
 import { useMutation } from "@tanstack/react-query";
 import { createFileRoute, redirect, useNavigate } from "@tanstack/react-router";
 import { useEffect, useRef } from "react";
@@ -104,7 +105,7 @@ function MoneriumCallback() {
             moneriumStore.getState().setPendingCodeVerifier(null);
         },
         onError: (err) => {
-            console.error("Monerium callback token exchange failed", err);
+            recordError(err, { source: "monerium_callback" });
         },
     });
 

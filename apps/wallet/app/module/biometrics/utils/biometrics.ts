@@ -1,4 +1,5 @@
 import { isTauri } from "@frak-labs/app-essentials/utils/platform";
+import { recordError } from "@frak-labs/wallet-shared";
 
 type BiometricStatus = {
     isAvailable: boolean;
@@ -23,7 +24,7 @@ function getBiometricModule() {
     if (!biometricModulePromise) {
         biometricModulePromise = import("@tauri-apps/plugin-biometric").catch(
             (error) => {
-                console.error("[Biometrics] Failed to load module:", error);
+                recordError(error, { source: "biometrics" });
                 return null;
             }
         );

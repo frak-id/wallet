@@ -1,3 +1,4 @@
+import { recordError } from "@frak-labs/wallet-shared";
 import { createStore, get, set } from "idb-keyval";
 import type { NotificationModel } from "./NotificationModel";
 
@@ -32,7 +33,7 @@ export const notificationStorage = {
             if (err instanceof DOMException && err.name === "NotFoundError") {
                 return [];
             }
-            console.error("Failed to get notifications:", err);
+            recordError(err, { source: "notifications" });
             return [];
         }
     },

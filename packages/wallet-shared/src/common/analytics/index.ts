@@ -1,7 +1,9 @@
 import { initAnalytics } from "./globalProps";
 
 export type {
+    AppErrorSource,
     AuthEventMap,
+    DiagnosticsEventMap,
     EmbeddedWalletEventMap,
     EventMap,
     FlowEndExtras,
@@ -40,6 +42,8 @@ export {
     updateGlobalProperties,
 } from "./globalProps";
 export { getPlatformInfo, openPanel } from "./openpanel";
+export type { RecordErrorOptions } from "./recordError";
+export { recordError } from "./recordError";
 export type { Flow } from "./startFlow";
 export { startFlow } from "./startFlow";
 export { trackEvent } from "./trackEvent";
