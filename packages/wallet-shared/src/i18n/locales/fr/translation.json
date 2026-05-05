@@ -198,7 +198,7 @@
             "wallet": "Wallet",
             "walletDescription": "Transférer vers un crypto wallet"
         },
-        "activateNotifications": "<strong>Activer les notifications</strong><br /> pour être prévenu du versement de vos gains",
+        "activateNotifications": "Active tes notifs pour suivre tes gains en temps réel.",
         "activateNotificationsRationale": "<strong>Activer les notifications</strong><br /> Nous avons besoin de votre permission pour vous notifier du versement de vos gains",
         "openNotificationSettings": "<strong>Notifications désactivées</strong><br /> Ouvrez les paramètres pour activer les notifications",
         "manageNotifications": "<strong>Gérer les notifications</strong><br /> Ouvrez les paramètres pour contrôler vos notifications",

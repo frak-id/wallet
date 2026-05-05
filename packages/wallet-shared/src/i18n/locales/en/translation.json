@@ -200,7 +200,7 @@
             "wallet": "Wallet",
             "walletDescription": "Transfer to a crypto wallet"
         },
-        "activateNotifications": "<strong>Enable notifications</strong> <br /> to be notified when your gains are paid",
+        "activateNotifications": "Turn on notifs to track your earnings in real time.",
         "activateNotificationsRationale": "<strong>Enable notifications</strong> <br /> We need your permission to notify you when gains are paid",
         "openNotificationSettings": "<strong>Notifications disabled</strong> <br /> Open settings to enable notifications",
         "manageNotifications": "<strong>Manage notifications</strong> <br /> Open settings to control your notifications",
