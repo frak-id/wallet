@@ -19,7 +19,6 @@ import {
 import { useQueryClient } from "@tanstack/react-query";
 import { type ChangeEvent, type FormEvent, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { REDEEMED_CODE_PLACEHOLDER } from "../../constants";
 import { DeleteRedemptionConfirmModal } from "../DeleteRedemptionConfirmModal";
 import { ReferralPageShell } from "../ReferralPageShell";
 import * as styles from "./index.css";
@@ -66,6 +65,7 @@ export function RedeemReferralCodePage() {
         >
             {status === undefined ? null : referrer ? (
                 <ActiveRedemption
+                    code={referrer.code}
                     since={referrer.since}
                     onUnredeemed={invalidateStatus}
                 />
@@ -171,9 +171,11 @@ function RedeemForm({ onRedeemed }: { onRedeemed: () => void }) {
 }
 
 function ActiveRedemption({
+    code,
     since,
     onUnredeemed,
 }: {
+    code: string | null;
     since: string;
     onUnredeemed: () => void;
 }) {
@@ -209,14 +211,16 @@ function ActiveRedemption({
             <Stack space="m">
                 <Box className={styles.card}>
                     <Box className={styles.row}>
-                        <Text
-                            as="span"
-                            variant="body"
-                            weight="medium"
-                            className={styles.codeLabel}
-                        >
-                            {REDEEMED_CODE_PLACEHOLDER}
-                        </Text>
+                        {code ? (
+                            <Text
+                                as="span"
+                                variant="body"
+                                weight="medium"
+                                className={styles.codeLabel}
+                            >
+                                {code}
+                            </Text>
+                        ) : null}
                         <Inline space="xxs" alignY="center">
                             <Text
                                 as="span"
