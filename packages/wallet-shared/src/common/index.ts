@@ -36,6 +36,7 @@ export type {
     WalletModalEventMap,
 } from "./analytics";
 export {
+    crashlytics,
     extractAuthError,
     getOrCreateSessionId,
     identifyAuthenticatedUser,

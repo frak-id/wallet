@@ -1,5 +1,6 @@
 import { initAnalytics } from "./globalProps";
 
+export { crashlytics } from "./crashlytics";
 export type {
     AppErrorSource,
     AuthEventMap,

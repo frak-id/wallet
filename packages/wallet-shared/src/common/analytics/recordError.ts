@@ -1,3 +1,4 @@
+import { crashlytics } from "./crashlytics";
 import type { AppErrorSource } from "./events";
 import { getPlatformInfo } from "./openpanel";
 import { trackEvent } from "./trackEvent";
@@ -60,6 +61,11 @@ export function recordError(
     // dev-tools visibility — `vite-plugin-remove-console` strips it from
     // production bundles, leaving only the OpenPanel emission.
     console.error(`[recordError:${source}]`, error, context);
+
+    // Forward to Firebase Crashlytics on Tauri mobile so native crash
+    // reports and JS-recorded non-fatals share a single dashboard. The
+    // adapter is a no-op outside Tauri so this stays free on web/desktop.
+    crashlytics.recordError(error);
 
     trackEvent("app_error", {
         message: error.message || error.name || "unknown",

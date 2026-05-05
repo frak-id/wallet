@@ -11,7 +11,48 @@ import UIKit
 /// custom keys, breadcrumb logs, and explicit non-fatal errors recorded
 /// from the JS / Rust side.
 class FrakCrashlyticsPlugin: Plugin {
+    /// Filename written by the Rust panic hook (see `panic_hook.rs`).
+    /// Must stay in sync with `PANIC_REPORT_FILENAME` on the Rust side.
+    private let panicReportFilename = "frak.wallet.last_rust_panic.txt"
     private var crashlytics: Crashlytics { Crashlytics.crashlytics() }
+
+    override init() {
+        super.init()
+        forwardPersistedRustPanic()
+    }
+
+    /// Look for a Rust panic report left over from the previous session
+    /// and surface it as a non-fatal Crashlytics issue. Idempotent — the
+    /// file is deleted after a successful read regardless of whether the
+    /// recording itself succeeded so we don't flood the dashboard on
+    /// repeat launches.
+    private func forwardPersistedRustPanic() {
+        guard let cachesDir = FileManager.default.urls(for: .cachesDirectory, in: .userDomainMask).first else {
+            return
+        }
+        let url = cachesDir.appendingPathComponent(panicReportFilename)
+        guard FileManager.default.fileExists(atPath: url.path) else { return }
+        defer { try? FileManager.default.removeItem(at: url) }
+        guard
+            let data = try? Data(contentsOf: url),
+            let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any]
+        else { return }
+        let name = (json["name"] as? String) ?? "RustPanic"
+        let message = (json["message"] as? String) ?? ""
+        let stack = (json["stack"] as? String) ?? ""
+        if !stack.isEmpty {
+            crashlytics.log("[rust panic backtrace from previous session]\n\(stack)")
+        }
+        let nsError = NSError(
+            domain: name,
+            code: 0,
+            userInfo: [
+                NSLocalizedDescriptionKey: message,
+                "stack": stack,
+            ]
+        )
+        crashlytics.record(error: nsError)
+    }
 
     // MARK: - Tauri commands
     // Method names map to snake_case commands in build.rs:

@@ -8,6 +8,8 @@ import app.tauri.annotation.TauriPlugin
 import app.tauri.plugin.Invoke
 import app.tauri.plugin.Plugin
 import com.google.firebase.crashlytics.FirebaseCrashlytics
+import org.json.JSONObject
+import java.io.File
 
 /**
  * Bridges Tauri commands to the FirebaseCrashlytics singleton.
@@ -21,7 +23,44 @@ import com.google.firebase.crashlytics.FirebaseCrashlytics
 @TauriPlugin
 class FrakCrashlyticsPlugin(private val activity: Activity) : Plugin(activity) {
     private val tag = "FrakCrashlyticsPlugin"
+    /** Filename written by the Rust panic hook (see `panic_hook.rs`). Must
+     *  stay in sync with `PANIC_REPORT_FILENAME` on the Rust side. */
+    private val panicReportFilename = "frak.wallet.last_rust_panic.txt"
     private val crashlytics: FirebaseCrashlytics by lazy { FirebaseCrashlytics.getInstance() }
+
+    override fun load(webView: android.webkit.WebView) {
+        super.load(webView)
+        forwardPersistedRustPanic()
+    }
+
+    /**
+     * Look for a Rust panic report left over from the previous session
+     * and surface it as a non-fatal Crashlytics issue. Idempotent — the
+     * file is deleted after a successful read regardless of whether the
+     * recording itself succeeded so we don't flood the dashboard on
+     * repeat launches.
+     */
+    private fun forwardPersistedRustPanic() {
+        try {
+            val file = File(activity.cacheDir, panicReportFilename)
+            if (!file.exists()) return
+            val payload = file.readText(Charsets.UTF_8)
+            // Best-effort delete — we always remove the file even if the
+            // recording below fails so we don't loop reporting the same
+            // panic on every cold start.
+            file.delete()
+            val json = JSONObject(payload)
+            val name = json.optString("name", "RustPanic")
+            val message = json.optString("message", "")
+            val stack = json.optString("stack", "")
+            if (stack.isNotEmpty()) {
+                crashlytics.log("[rust panic backtrace from previous session]\n$stack")
+            }
+            crashlytics.recordException(NonFatalReportedError("$name: $message"))
+        } catch (e: Exception) {
+            Log.w(tag, "forwardPersistedRustPanic failed", e)
+        }
+    }
 
     @Command
     fun setUserId(invoke: Invoke) {
