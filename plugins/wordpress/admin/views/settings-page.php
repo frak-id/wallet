@@ -25,9 +25,12 @@ $wc_logs_url     = $wc_active ? admin_url( 'admin.php?page=wc-status&tab=logs' )
 // builder is active so the merchant knows browser-side tracking is
 // auto-wired to those custom thank-you pages — and so they're nudged
 // to drop the Frak Post-Purchase component on the funnel step for the
-// most resilient attribution path.
-$funnelkit_active = $wc_active && class_exists( 'Frak_Funnel_Compat' ) && Frak_Funnel_Compat::is_funnelkit_active();
-$cartflows_active = $wc_active && class_exists( 'Frak_Funnel_Compat' ) && Frak_Funnel_Compat::is_cartflows_active();
+// most resilient attribution path. `Frak_Funnel_Compat` is loaded via
+// the classmap autoloader on every admin request that hits this page,
+// so we can call its detection helpers directly without a class_exists
+// guard — the WC gate above is the only one that matters.
+$funnelkit_active = $wc_active && Frak_Funnel_Compat::is_funnelkit_active();
+$cartflows_active = $wc_active && Frak_Funnel_Compat::is_cartflows_active();
 ?>
 <div class="wrap">
 	<h1><?php echo esc_html( get_admin_page_title() ); ?></h1>

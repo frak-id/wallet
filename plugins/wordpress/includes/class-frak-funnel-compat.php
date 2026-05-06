@@ -2,9 +2,9 @@
 /**
  * Funnel-builder compatibility layer.
  *
- * Detects FunnelKit (Funnel Builder + One-Click Upsell) and CartFlows
- * thank-you contexts and ensures the inline `trackPurchaseStatus` script
- * fires there, even when those plugins bypass WooCommerce's standard
+ * Detects FunnelKit (Funnel Builder + One-Click Upsell + Aero Checkout)
+ * and CartFlows thank-you contexts and ensures the inline `trackPurchaseStatus`
+ * script fires there, even when those plugins bypass WooCommerce's standard
  * `woocommerce_thankyou` hook.
  *
  * Why this exists:
@@ -25,24 +25,26 @@
  *   - `wp_footer` — late-bound fallback that detects:
  *       * FunnelKit Funnel Builder thank-you steps via
  *         `function_exists('wffn_is_thankyou_page')`.
- *       * CartFlows thank-you steps via `is_singular('cartflows_step')`
- *         + `wcf-step-type` post meta = `thankyou`.
+ *       * CartFlows thank-you steps via `_is_wcf_thankyou_type()` (with a
+ *         direct post-type + `wcf-step-type` meta probe as fallback for
+ *         white-label forks that drop the helper).
  *
  * Idempotency: emission goes through {@see Frak_WooCommerce::render_purchase_tracker_for_order()}
- * which is gated by an internal flag so a single page never outputs the
- * tracker script twice. `woocommerce_thankyou` (when fired by FunnelKit
- * Funnel Builder Lite v3.14+ / Pro #7630) wins and short-circuits the
- * fallback layers; this class fills the gap when the native hook never
- * fires.
+ * which keeps a per-order-id latch so each distinct order id emits at most
+ * once per request — `woocommerce_thankyou`, `woocommerce_view_order`,
+ * `wfocu_custom_purchase_tracking` and the `wp_footer` fallback all funnel
+ * through the same dedupe surface. Different order ids in the same request
+ * still each get their own emission, which matters on WFOCU final TY pages
+ * that can carry both a parent order and a child upsell order.
  *
  * Trust model: callers (FunnelKit / CartFlows) have already gone through
  * their own checkout / order-completion flow before invoking these
- * surfaces — we trust the order id they hand us the same way
- * {@see Frak_WooCommerce::render_purchase_tracker_for_order()} trusts the
- * id passed by `woocommerce_thankyou`. The emitted token is
- * `$order_key . '_' . $order_id` which the backend verifies, so a
- * mismatched id at most produces a token the backend rejects — no
- * attribution leak.
+ * surfaces. For URL-derived order ids (`?wcf-order` / `?wc_order`) we
+ * additionally validate the matching `?wcf-key` / `?key` query var
+ * against `$order->get_order_key()` — defence-in-depth that mirrors
+ * {@see Frak_WooCommerce::resolve_current_order()} and protects against
+ * a buggy custom template that bypasses CartFlows's own
+ * `secure_thank_you_page()` gate.
  *
  * @package Frak_Integration
  */
@@ -77,9 +79,11 @@ class Frak_Funnel_Compat {
 		}
 
 		// `wp_footer` fallback for funnel-step thank-you pages whose render
-		// path doesn't fire `woocommerce_thankyou` at all. Hooked at default
-		// priority so this runs before the SDK is enqueued (which uses
-		// `wp_enqueue_scripts`, fired earlier in the request lifecycle).
+		// path doesn't fire `woocommerce_thankyou` at all. Default priority
+		// (10) runs before WP core's `wp_print_footer_scripts` (priority 20)
+		// so the inline tracker lands ahead of the SDK <script> tag — but the
+		// tracker is self-bootstrapping (synchronous FrakSetup probe + a
+		// one-shot `frak:client` listener fallback) so ordering isn't critical.
 		add_action( 'wp_footer', array( __CLASS__, 'maybe_render_tracker_for_funnel_step' ) );
 	}
 
@@ -111,21 +115,17 @@ class Frak_Funnel_Compat {
 	 * and emits the tracker script.
 	 *
 	 * No-op when:
-	 *   - the tracker has already been emitted earlier in the request
-	 *     (e.g. via `woocommerce_thankyou` — modern FunnelKit re-fires it);
 	 *   - we're not on a recognised funnel-step thank-you page;
-	 *   - the funnel plugin didn't expose a resolvable order id.
+	 *   - the funnel plugin didn't expose a resolvable order id;
+	 *   - the resolved order has already been emitted earlier in the request
+	 *     (handled inside {@see Frak_WooCommerce::render_purchase_tracker_for_order()}'s
+	 *     per-order latch, so we can call it unconditionally here).
 	 */
 	public static function maybe_render_tracker_for_funnel_step() {
-		if ( Frak_WooCommerce::has_emitted_tracker() ) {
-			return;
-		}
-
 		$order_id = self::resolve_funnel_order_id();
 		if ( ! $order_id ) {
 			return;
 		}
-
 		Frak_WooCommerce::render_purchase_tracker_for_order( $order_id );
 	}
 
@@ -172,9 +172,11 @@ class Frak_Funnel_Compat {
 	 * FunnelKit doesn't ship a public helper for this — the canonical path
 	 * is the WooCommerce session (`order_awaiting_payment` is set right
 	 * after the order is placed, and the funnel TY step renders before
-	 * WC clears it). We fall back to the conventional `?wc_order` /
-	 * `?order-received` query vars in case the merchant runs a custom
-	 * step that mutates the URL.
+	 * WC clears it). The session id is tied to the user's WC session so
+	 * no URL-key validation is needed there. We fall back to the standard
+	 * WC `?wc_order=` / `?key=` query vars for redirect-style flows, with
+	 * the key validated against the order to mirror the anti-enumeration
+	 * check in {@see Frak_WooCommerce::resolve_current_order()}.
 	 *
 	 * @return int Order id, or 0 when unresolvable.
 	 */
@@ -185,28 +187,28 @@ class Frak_Funnel_Compat {
 		}
 
 		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only context detection on a public TY page.
-		if ( isset( $_GET['wc_order'] ) ) {
-			// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only context detection on a public TY page.
-			$order_id = absint( wp_unslash( $_GET['wc_order'] ) );
-			if ( $order_id ) {
-				return $order_id;
-			}
+		if ( ! isset( $_GET['wc_order'] ) ) {
+			return 0;
 		}
-
-		return 0;
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only context detection on a public TY page.
+		$order_id = absint( wp_unslash( $_GET['wc_order'] ) );
+		return self::validate_order_id_against_url_key( $order_id, 'key' );
 	}
 
 	/**
 	 * Whether the current request is rendering a CartFlows thank-you step.
 	 *
-	 * CartFlows funnels use a custom `cartflows_step` post type, with the
-	 * step kind stored in the `wcf-step-type` post meta. We match on the
-	 * meta rather than templating because the step template can be
-	 * overridden by themes / child plugins.
+	 * Prefers CartFlows's public `_is_wcf_thankyou_type()` helper which
+	 * encapsulates the post-type + `wcf-step-type` probe (and any future
+	 * detection logic CartFlows adds). Falls back to a direct probe so
+	 * white-label forks that strip the helper still resolve correctly.
 	 *
 	 * @return bool
 	 */
 	private static function is_cartflows_thankyou(): bool {
+		if ( function_exists( '_is_wcf_thankyou_type' ) ) {
+			return (bool) _is_wcf_thankyou_type();
+		}
 		if ( ! is_singular( 'cartflows_step' ) ) {
 			return false;
 		}
@@ -222,29 +224,44 @@ class Frak_Funnel_Compat {
 	 *
 	 * CartFlows exposes the order via a `wcf-order` query var on the
 	 * thank-you redirect URL (set by `Cartflows_Thankyou::set_thankyou_url`),
-	 * with the WooCommerce session as a fallback for in-place renders that
-	 * skip the redirect.
+	 * with `wcf-key` carrying the matching order key. CartFlows's own
+	 * `secure_thank_you_page()` `wp_die`s if either is missing or the key
+	 * doesn't match — by the time this runs in `wp_footer` the user has
+	 * already cleared that gate. We re-validate `wcf-key` against the order
+	 * anyway as defence-in-depth in case a buggy custom template bypasses
+	 * CartFlows's gate. The WC session slot is intentionally not consulted
+	 * here: CartFlows's `[cartflows_order_details]` shortcode (the standard
+	 * TY template) explicitly `unset`s `order_awaiting_payment` before
+	 * `wp_footer` runs, so the slot is dead-code on the canonical render
+	 * path; custom templates that reach us still pass through the same
+	 * `secure_thank_you_page()` gate that requires `wcf-order` + `wcf-key`.
 	 *
 	 * @return int Order id, or 0 when unresolvable.
 	 */
 	private static function cartflows_thankyou_order_id(): int {
 		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only context detection on a public TY page.
-		if ( isset( $_GET['wcf-order'] ) ) {
-			// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only context detection on a public TY page.
-			$order_id = absint( wp_unslash( $_GET['wcf-order'] ) );
-			if ( $order_id ) {
-				return $order_id;
-			}
+		if ( ! isset( $_GET['wcf-order'] ) ) {
+			return 0;
 		}
-
-		return self::wc_session_order_id();
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only context detection on a public TY page.
+		$order_id = absint( wp_unslash( $_GET['wcf-order'] ) );
+		return self::validate_order_id_against_url_key( $order_id, 'wcf-key' );
 	}
 
 	/**
 	 * Pull the order id from the WooCommerce session's
-	 * `order_awaiting_payment` slot. Set by `WC_Checkout::process_checkout()`
-	 * right before payment dispatch and cleared once the order is paid —
-	 * funnel TY steps render inside that window.
+	 * `order_awaiting_payment` slot. Set by `WC_Checkout::create_order()`
+	 * during checkout and cleared on `template_redirect` once the order is
+	 * paid — funnel TY steps render inside that window.
+	 *
+	 * The `function_exists('WC')` guard covers the case where the WC plugin
+	 * is missing/disabled. Beyond that we trust WC's stubs: by `wp_footer`
+	 * time `woocommerce_init` (which boots `WC_Session_Handler`) has fired,
+	 * so `WC()->session` is reliably non-null on the only context that calls
+	 * us. The slot's documented return type is `array|string`; we coerce
+	 * scalar values via `absint()` and reject anything else (e.g. a stray
+	 * array set by a third-party plugin) so a malformed session never
+	 * produces a bogus order id.
 	 *
 	 * @return int Order id, or 0 when no session / no slot value.
 	 */
@@ -252,7 +269,47 @@ class Frak_Funnel_Compat {
 		if ( ! function_exists( 'WC' ) ) {
 			return 0;
 		}
-		return absint( WC()->session->get( 'order_awaiting_payment' ) );
+		$value = WC()->session->get( 'order_awaiting_payment' );
+		return is_scalar( $value ) ? absint( $value ) : 0;
+	}
+
+	/**
+	 * Defence-in-depth: validate that a URL-derived order id is paired with
+	 * the matching order key on the same URL. Mirrors the anti-enumeration
+	 * check {@see Frak_WooCommerce::resolve_current_order()} performs on the
+	 * standard `?key=` query var.
+	 *
+	 * Returns the validated order id, or 0 when the id is missing/invalid,
+	 * the matching `$key_param` query var is absent, or the supplied key
+	 * doesn't match `$order->get_order_key()`. The funnel plugins (CartFlows,
+	 * FunnelKit) already enforce this gate themselves before letting the user
+	 * reach a TY page; this is a second line of defence in case a custom
+	 * template circumvents it.
+	 *
+	 * @param int    $order_id  Resolved order id from the URL (already absint'd).
+	 * @param string $key_param Query-var name carrying the matching order key
+	 *                          (`wcf-key` for CartFlows, `key` for FunnelKit /
+	 *                          standard WC).
+	 * @return int Validated order id, or 0 when validation fails.
+	 */
+	private static function validate_order_id_against_url_key( int $order_id, string $key_param ): int {
+		if ( ! $order_id ) {
+			return 0;
+		}
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only context detection on a public TY page.
+		if ( ! isset( $_GET[ $key_param ] ) ) {
+			return 0;
+		}
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only context detection on a public TY page.
+		$url_key = sanitize_text_field( wp_unslash( $_GET[ $key_param ] ) );
+		if ( '' === $url_key ) {
+			return 0;
+		}
+		$order = wc_get_order( $order_id );
+		if ( ! $order || $url_key !== $order->get_order_key() ) {
+			return 0;
+		}
+		return $order_id;
 	}
 
 	/**
