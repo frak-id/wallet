@@ -30,16 +30,14 @@ export const button = recipe({
                 backgroundColor: vars.surface.primary,
                 color: vars.text.onAction,
                 border: "none",
-                selectors: {
-                    "&:not(:disabled):active": {
-                        backgroundColor: vars.surface.primaryPressed,
-                    },
-                },
                 "@media": {
                     "(hover: hover)": {
                         selectors: {
                             "&:not(:disabled):hover": {
                                 backgroundColor: vars.surface.primaryHover,
+                            },
+                            "&:not(:disabled):active": {
+                                backgroundColor: vars.surface.primaryPressed,
                             },
                         },
                     },
@@ -49,16 +47,14 @@ export const button = recipe({
                 backgroundColor: vars.surface.secondary,
                 color: vars.text.action,
                 border: "none",
-                selectors: {
-                    "&:not(:disabled):active": {
-                        backgroundColor: vars.surface.secondaryPressed,
-                    },
-                },
                 "@media": {
                     "(hover: hover)": {
                         selectors: {
                             "&:not(:disabled):hover": {
                                 backgroundColor: vars.surface.secondaryHover,
+                            },
+                            "&:not(:disabled):active": {
+                                backgroundColor: vars.surface.secondaryPressed,
                             },
                         },
                     },
