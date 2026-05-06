@@ -41,7 +41,8 @@
     "tauri:ios:build:prod": "sst shell -- tauri ios build --export-method app-store-connect",
     "tauri:android:dev": "sst dev tauri android dev",
     "tauri:android:build": "sst shell -- tauri android build",
-    "tauri:version": "./scripts/sync-version.sh"
+    "tauri:version": "./scripts/sync-version.sh",
+    "tauri:icons": "./src-tauri/icons/sources/regenerate.sh"
   },
   "dependencies": {
     "@frak-labs/app-essentials": "workspace:*",

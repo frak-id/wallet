@@ -281,6 +281,18 @@ This updates:
 
 Script: `apps/wallet/scripts/sync-version.sh`
 
+## Icon Regeneration
+
+All platform icons (macOS/Windows/Linux/iOS/Android) are regenerated from the SVG/PNG masters in `apps/wallet/src-tauri/icons/sources/` via a single command:
+
+```bash
+bun run tauri:icons
+```
+
+This runs `bun tauri icon` for the base assets, then overrides the 5 Android adaptive `ic_launcher_foreground.png` densities with a safe-zone-padded white F so the logo renders correctly under any launcher mask.
+
+Script: `apps/wallet/src-tauri/icons/sources/regenerate.sh`
+
 ## Security Considerations
 
 - **CSP (Content Security Policy)**: Configured in `tauri.conf.json` → `app.security.csp`
