@@ -29,6 +29,18 @@ export type WooCommerceOrderUpdateWebhookDto = Readonly<{
         reason?: string;
         total: string;
     }[];
+    // Coupons applied to the order. Forwarded for future analytics use
+    // (campaign-aware reward weighting, code-specific attribution); the
+    // current handler does not read this. Personalised coupon codes can
+    // theoretically embed customer hints (`JOHN-DOE-25`) so we forward only
+    // `id` / `code` / `discount` and drop `discount_tax`, `taxes`, and
+    // `meta_data` at the plugin edge — see the WooCommerce filter in
+    // `Frak_WC_Webhook_Registrar::strip_coupon_lines()`.
+    coupon_lines?: {
+        id: number;
+        code: string;
+        discount: string;
+    }[];
 }>;
 
 export type WooCommerceOrderStatus =

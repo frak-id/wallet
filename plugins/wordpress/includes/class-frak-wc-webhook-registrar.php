@@ -84,6 +84,25 @@ class Frak_WC_Webhook_Registrar {
 	}
 
 	/**
+	 * Register the `woocommerce_webhook_payload` filter that strips outgoing
+	 * order payloads down to the field-set the Frak backend actually consumes.
+	 *
+	 * Split from {@see init()} because webhook delivery happens in EVERY
+	 * request context — the option-update hooks in `init()` only matter for
+	 * admin/CLI/cron (the only contexts that mutate the watched options),
+	 * but the payload filter must also run on the frontend request that
+	 * triggered the order status change (WC dispatches webhooks synchronously
+	 * from `woocommerce_update_order` by default).
+	 *
+	 * Late priority (`99`) so any other plugin filtering the payload sees the
+	 * full WC-built shape; we narrow last so PII added by other filters is
+	 * also dropped before HMAC signing.
+	 */
+	public static function init_payload_filter() {
+		add_filter( 'woocommerce_webhook_payload', array( __CLASS__, 'filter_payload' ), 99, 4 );
+	}
+
+	/**
 	 * Handler for option updates — bridges to {@see self::ensure()} with no
 	 * args so the caller signatures stay compatible with WP's `update_option_*`
 	 * / `add_option_*` hooks (which pass different arg counts).
@@ -350,5 +369,195 @@ class Frak_WC_Webhook_Registrar {
 			)
 		);
 		return isset( $users[0] ) ? (int) $users[0] : 0;
+	}
+
+	/**
+	 * Strip the outgoing webhook payload to the minimum field-set the Frak
+	 * backend (`WooCommerceOrderUpdateWebhookDto`) consumes. Runs BEFORE
+	 * HMAC signing so the trimmed body is what's signed and shipped — the
+	 * receiving end never sees billing/shipping addresses, customer email,
+	 * phone, IP, user agent, payment method, customer notes, or arbitrary
+	 * `meta_data` from other plugins.
+	 *
+	 * Allow-list (not deny-list) by design: any new PII field WC or another
+	 * plugin adds in the future is dropped automatically until it's
+	 * explicitly opted-in here.
+	 *
+	 * Gates:
+	 *   - Only acts on the Frak-owned webhook (id matches stored option), so
+	 *     unrelated webhooks on the store keep their full payload.
+	 *   - Only acts on `order` resources — leaves the `webhook_id=N` ping and
+	 *     any non-order payload alone.
+	 *
+	 * @param mixed      $payload     Payload built by `WC_Webhook::build_payload()`.
+	 * @param string     $resource_name Resource name (e.g. `order`).
+	 * @param int|string $resource_id Resource id.
+	 * @param int|string $webhook_id  Owning `WC_Webhook` id.
+	 * @return mixed Trimmed payload for the Frak webhook, untouched otherwise.
+	 */
+	public static function filter_payload( $payload, $resource_name, $resource_id, $webhook_id ) {
+		unset( $resource_id );
+
+		if ( 'order' !== $resource_name || ! is_array( $payload ) ) {
+			return $payload;
+		}
+
+		$owned_id = (int) get_option( self::OPTION_ID, 0 );
+		if ( ! $owned_id || (int) $webhook_id !== $owned_id ) {
+			return $payload;
+		}
+
+		return self::strip_payload( $payload );
+	}
+
+	/**
+	 * Allow-list projection over a WC order payload, mirroring the backend
+	 * `WooCommerceOrderUpdateWebhookDto` shape. Keeps every field the DTO
+	 * declares (even ones the current handler does not read) so the wire
+	 * shape matches the published contract; drops everything else.
+	 *
+	 * Optional fields are only emitted when present on the source payload —
+	 * we don't materialise empty placeholders that would inflate the body or
+	 * imply meaning the source didn't intend.
+	 *
+	 * @param array<string, mixed> $payload Source WC payload.
+	 * @return array<string, mixed>
+	 */
+	private static function strip_payload( array $payload ): array {
+		$trimmed = array(
+			'id'               => $payload['id'] ?? null,
+			'status'           => $payload['status'] ?? null,
+			'total'            => $payload['total'] ?? null,
+			'currency'         => $payload['currency'] ?? null,
+			'date_created_gmt' => $payload['date_created_gmt'] ?? null,
+			'customer_id'      => $payload['customer_id'] ?? null,
+			'order_key'        => $payload['order_key'] ?? null,
+			'transaction_id'   => $payload['transaction_id'] ?? null,
+			'line_items'       => self::strip_line_items( $payload['line_items'] ?? array() ),
+		);
+
+		foreach ( array( 'date_modified_gmt', 'date_completed_gmt', 'date_paid_gmt' ) as $optional_date ) {
+			if ( isset( $payload[ $optional_date ] ) ) {
+				$trimmed[ $optional_date ] = $payload[ $optional_date ];
+			}
+		}
+
+		if ( isset( $payload['refunds'] ) && is_array( $payload['refunds'] ) ) {
+			$trimmed['refunds'] = self::strip_refunds( $payload['refunds'] );
+		}
+
+		if ( isset( $payload['coupon_lines'] ) && is_array( $payload['coupon_lines'] ) ) {
+			$trimmed['coupon_lines'] = self::strip_coupon_lines( $payload['coupon_lines'] );
+		}
+
+		return $trimmed;
+	}
+
+	/**
+	 * Project line-item entries down to the DTO shape. Drops `sku`,
+	 * `meta_data`, tax breakdowns, variation ids, parent names, and any other
+	 * field WC adds — none are read by the backend handler and `meta_data`
+	 * in particular is a free-form bag that other plugins frequently stuff
+	 * with PII (gift messages, custom-field input, etc.).
+	 *
+	 * @param mixed $items Source `line_items` array (defensive — webhook payloads can be malformed).
+	 * @return array<int, array<string, mixed>>
+	 */
+	private static function strip_line_items( $items ): array {
+		if ( ! is_array( $items ) ) {
+			return array();
+		}
+
+		$stripped = array();
+		foreach ( $items as $item ) {
+			if ( ! is_array( $item ) ) {
+				continue;
+			}
+
+			$entry = array(
+				'id'         => $item['id'] ?? null,
+				'product_id' => $item['product_id'] ?? null,
+				'quantity'   => $item['quantity'] ?? null,
+				'price'      => $item['price'] ?? null,
+				'name'       => $item['name'] ?? null,
+			);
+
+			if ( isset( $item['image'] ) && is_array( $item['image'] ) ) {
+				$image = array();
+				if ( isset( $item['image']['id'] ) ) {
+					$image['id'] = $item['image']['id'];
+				}
+				if ( isset( $item['image']['src'] ) ) {
+					$image['src'] = $item['image']['src'];
+				}
+				$entry['image'] = $image;
+			}
+
+			$stripped[] = $entry;
+		}
+
+		return $stripped;
+	}
+
+	/**
+	 * Project refund entries down to the DTO shape. The backend only inspects
+	 * `refunds.length > 0` to flip the purchase status to `refunded`, but the
+	 * DTO declares `id`, `total`, and an optional `reason`. We keep `id` and
+	 * `total` (numeric/financial, not PII) and only forward `reason` when
+	 * present so unused entries stay slim.
+	 *
+	 * @param array<int, mixed> $refunds Source `refunds` array.
+	 * @return array<int, array<string, mixed>>
+	 */
+	private static function strip_refunds( array $refunds ): array {
+		$stripped = array();
+		foreach ( $refunds as $refund ) {
+			if ( ! is_array( $refund ) ) {
+				continue;
+			}
+
+			$entry = array(
+				'id'    => $refund['id'] ?? null,
+				'total' => $refund['total'] ?? null,
+			);
+			if ( isset( $refund['reason'] ) ) {
+				$entry['reason'] = $refund['reason'];
+			}
+
+			$stripped[] = $entry;
+		}
+
+		return $stripped;
+	}
+
+	/**
+	 * Project coupon-line entries down to the DTO shape. WooCommerce's native
+	 * payload exposes `id` / `code` / `discount` / `discount_tax` / `taxes` /
+	 * `meta_data` per coupon line; we keep `id` / `code` / `discount` and drop
+	 * the rest. Coupon `code` is generally a marketing identifier (`SUMMER20`)
+	 * but personalised codes (`JOHN-DOE-25`) can leak customer hints, so we
+	 * forward verbatim only the fields the backend's published DTO declares —
+	 * `meta_data` in particular is dropped because gift-card / loyalty plugins
+	 * frequently stuff PII (recipient email, gift message) onto coupon line
+	 * meta and the backend has no use for it.
+	 *
+	 * @param array<int, mixed> $coupon_lines Source `coupon_lines` array.
+	 * @return array<int, array<string, mixed>>
+	 */
+	private static function strip_coupon_lines( array $coupon_lines ): array {
+		$stripped = array();
+		foreach ( $coupon_lines as $coupon ) {
+			if ( ! is_array( $coupon ) ) {
+				continue;
+			}
+
+			$stripped[] = array(
+				'id'       => $coupon['id'] ?? null,
+				'code'     => $coupon['code'] ?? null,
+				'discount' => $coupon['discount'] ?? null,
+			);
+		}
+
+		return $stripped;
 	}
 }
