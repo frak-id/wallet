@@ -3,7 +3,7 @@ import { Button } from "@frak-labs/design-system/components/Button";
 import { Card } from "@frak-labs/design-system/components/Card";
 import { IconCircle } from "@frak-labs/design-system/components/IconCircle";
 import { Text } from "@frak-labs/design-system/components/Text";
-import { CheckCircleFilledIcon } from "@frak-labs/design-system/icons";
+import { CheckIcon } from "@frak-labs/design-system/icons";
 import { useMutation } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 import {
@@ -141,7 +141,7 @@ function DownloadedBanner({ t }: { t: Translate }) {
             <Box className={styles.body}>
                 <Box className={styles.successContent}>
                     <IconCircle>
-                        <CheckCircleFilledIcon
+                        <CheckIcon
                             width={24}
                             height={24}
                             className={styles.downloadedIcon}

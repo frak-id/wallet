@@ -78,6 +78,6 @@ export const progressBar = style({
 });
 
 export const downloadedIcon = style({
-    color: vars.icon.success,
+    color: vars.icon.action,
     flexShrink: 0,
 });
