@@ -34,6 +34,7 @@ tauri-plugin-frak-webauthn = { path = "plugins/tauri-plugin-frak-webauthn" }
 tauri-plugin-recovery-hint = { path = "plugins/tauri-plugin-recovery-hint" }
 tauri-plugin-frak-share = { path = "plugins/tauri-plugin-frak-share" }
 tauri-plugin-frak-crashlytics = { path = "plugins/tauri-plugin-frak-crashlytics" }
+tauri-plugin-frak-updater = { path = "plugins/tauri-plugin-frak-updater" }
 tauri-plugin-clipboard-manager = "2"
 
 # Android-only: share + fs plugins for file sharing (needed for recovery file download)

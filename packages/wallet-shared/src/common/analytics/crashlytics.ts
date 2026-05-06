@@ -1,4 +1,5 @@
 import { isTauri } from "@frak-labs/app-essentials/utils/platform";
+import { getInvoke } from "../tauri";
 
 /**
  * Bridge to the local `tauri-plugin-frak-crashlytics` plugin.
@@ -24,7 +25,7 @@ const INVOKE_SET_COLLECTION_ENABLED =
     "plugin:frak-crashlytics|set_collection_enabled";
 
 async function tauriInvoke<T>(cmd: string, args?: unknown): Promise<T> {
-    const { invoke } = await import("@tauri-apps/api/core");
+    const invoke = await getInvoke();
     return invoke<T>(cmd, args as Record<string, unknown> | undefined);
 }
 

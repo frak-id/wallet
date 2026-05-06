@@ -1,4 +1,5 @@
 import { isAndroid, isTauri } from "@frak-labs/app-essentials/utils/platform";
+import { getInvoke } from "@frak-labs/wallet-shared";
 
 type InstallReferrerResult = {
     referrer: string;
@@ -11,7 +12,7 @@ export async function getInstallReferrer(): Promise<InstallReferrerResult> {
         throw new Error("Install referrer is only available on Android");
     }
 
-    const { invoke } = await import("@tauri-apps/api/core");
+    const invoke = await getInvoke();
     return invoke<InstallReferrerResult>(
         "plugin:install-referrer|get_install_referrer"
     );

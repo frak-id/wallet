@@ -91,6 +91,7 @@ dependencies = [
  "tauri-plugin-fcm",
  "tauri-plugin-frak-crashlytics",
  "tauri-plugin-frak-share",
+ "tauri-plugin-frak-updater",
  "tauri-plugin-frak-webauthn",
  "tauri-plugin-fs",
  "tauri-plugin-install-referrer",
@@ -4185,6 +4186,16 @@ dependencies = [
 
 [[package]]
 name = "tauri-plugin-frak-share"
+version = "0.1.0"
+dependencies = [
+ "serde",
+ "serde_json",
+ "tauri",
+ "tauri-plugin",
+]
+
+[[package]]
+name = "tauri-plugin-frak-updater"
 version = "0.1.0"
 dependencies = [
  "serde",

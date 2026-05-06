@@ -151,13 +151,24 @@ class FrakWebauthnPlugin: Plugin, ASAuthorizationControllerDelegate, ASAuthoriza
     @available(iOS 16.0, *)
     private func resolveRegistration(invoke: Invoke, credential: ASAuthorizationPlatformPublicKeyCredentialRegistration) {
         let credentialIdB64 = credential.credentialID.base64URLEncodedString()
+        let attestationData = credential.rawAttestationObject ?? Data()
 
-        let responseObj: JsonObject = [
+        // ASAuthorization doesn't expose the public key in SPKI DER form, so we
+        // reconstruct it from the COSE key embedded in `attestationObject` and
+        // surface it as `publicKey` — matching the Android Credential Manager
+        // response shape and letting the JS bridge stay platform-agnostic.
+        let publicKeyB64 = extractSpkiFromAttestation(attestationData)?
+            .base64URLEncodedString()
+
+        var responseObj: JsonObject = [
             "clientDataJSON": credential.rawClientDataJSON.base64URLEncodedString(),
-            "attestationObject": (credential.rawAttestationObject ?? Data()).base64URLEncodedString(),
+            "attestationObject": attestationData.base64URLEncodedString(),
             "transports": ["internal"] as [String],
             "publicKeyAlgorithm": -7,
         ]
+        if let publicKeyB64 = publicKeyB64 {
+            responseObj["publicKey"] = publicKeyB64
+        }
 
         let result: JsonObject = [
             "id": credentialIdB64,
@@ -193,6 +204,59 @@ class FrakWebauthnPlugin: Plugin, ASAuthorizationControllerDelegate, ASAuthoriza
 
         invoke.resolve(result)
     }
+}
+
+// MARK: - SPKI extraction (P-256)
+//
+// iOS ASAuthorization only exposes the raw `attestationObject` (CBOR). To
+// surface the public key in the same SPKI DER format Android emits we scan
+// for the COSE x/y coordinate markers and prepend the static P-256 SPKI
+// header. Mirrors the byte-scan approach used by Ox's WebAuthn fallback.
+//
+// CBOR encoding reference:
+//   0x21 = CBOR negative int -2 (COSE label for x coordinate)
+//   0x22 = CBOR negative int -3 (COSE label for y coordinate)
+//   0x58 = CBOR byte string with 1-byte length prefix
+//   0x20 = 32 (coordinate byte length for P-256)
+private let p256CoordinateLength: Int = 0x20
+private let cborByteString1ByteLen: UInt8 = 0x58
+private let coseXLabel: UInt8 = 0x21
+private let coseYLabel: UInt8 = 0x22
+
+private let spkiP256Header: [UInt8] = [
+    0x30, 0x59, 0x30, 0x13, 0x06, 0x07, 0x2a, 0x86, 0x48, 0xce, 0x3d, 0x02,
+    0x01, 0x06, 0x08, 0x2a, 0x86, 0x48, 0xce, 0x3d, 0x03, 0x01, 0x07, 0x03,
+    0x42, 0x00,
+]
+
+private func extractSpkiFromAttestation(_ data: Data) -> Data? {
+    guard data.count >= 3 + p256CoordinateLength else { return nil }
+    guard
+        let x = findCoseCoordinate(in: data, label: coseXLabel),
+        let y = findCoseCoordinate(in: data, label: coseYLabel)
+    else { return nil }
+
+    var spki = Data(capacity: spkiP256Header.count + 1 + p256CoordinateLength * 2)
+    spki.append(contentsOf: spkiP256Header)
+    spki.append(0x04) // uncompressed point indicator
+    spki.append(x)
+    spki.append(y)
+    return spki
+}
+
+private func findCoseCoordinate(in data: Data, label: UInt8) -> Data? {
+    let coordLen = p256CoordinateLength
+    let upperBound = data.count - 3 - coordLen
+    guard upperBound >= 0 else { return nil }
+    for i in 0...upperBound {
+        if data[i] == label
+            && data[i + 1] == cborByteString1ByteLen
+            && data[i + 2] == UInt8(coordLen)
+        {
+            return data.subdata(in: (i + 3)..<(i + 3 + coordLen))
+        }
+    }
+    return nil
 }
 
 // MARK: - Base64URL encoding/decoding for Data
