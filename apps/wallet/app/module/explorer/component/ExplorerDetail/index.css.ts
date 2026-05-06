@@ -34,7 +34,7 @@ export const heroSlider = style({
  * Individual slide — fills the carousel viewport.
  * Acts as the positioning context for the blurred background fill so the
  * actual hero image can be centered with `object-fit: contain` while still
- * letting the slide cover the whole 375 px hero area.
+ * letting the slide cover the whole 232 px hero area.
  */
 export const heroSlide = style({
     position: "relative",
