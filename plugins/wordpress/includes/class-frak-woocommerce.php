@@ -25,6 +25,27 @@ class Frak_WooCommerce {
 	private const DEFAULT_PRODUCT_CAP = 6;
 
 	/**
+	 * Idempotency latch — flipped on the first successful tracker emission
+	 * within a request and read by every additional call path so the inline
+	 * `<script id="frak-purchase-tracker-inline">` only ever lands once per
+	 * page render.
+	 *
+	 * Multiple surfaces can race to fire the tracker on the same request:
+	 *   - `woocommerce_thankyou` (this class — primary path)
+	 *   - `woocommerce_view_order` (this class — My Account → View Order)
+	 *   - `wfocu_custom_purchase_tracking` (FunnelKit — see {@see Frak_Funnel_Compat})
+	 *   - `wp_footer` funnel-step fallback ({@see Frak_Funnel_Compat::maybe_render_tracker_for_funnel_step()})
+	 * The backend `trackPurchaseStatus` action is itself idempotent on the
+	 * `(merchantId, orderId, token)` triple, but emitting a duplicate inline
+	 * `<script>` tag would break HTML id-uniqueness and pay a parse cost we
+	 * can avoid. {@see has_emitted_tracker()} surfaces the flag for compat
+	 * layers that need to short-circuit without invoking the renderer.
+	 *
+	 * @var bool
+	 */
+	private static bool $tracker_emitted = false;
+
+	/**
 	 * Register WooCommerce hooks. Called once from {@see Frak_Plugin::init()}.
 	 *
 	 * Tracker registration uses `woocommerce_thankyou` and `woocommerce_view_order`
@@ -206,10 +227,16 @@ class Frak_WooCommerce {
 	}
 
 	/**
-	 * Inline tracker fired from `woocommerce_thankyou` and `woocommerce_view_order`
-	 * — always emits the `trackPurchaseStatus` call so reward attribution works
-	 * even when the merchant has not placed the `frak/post-purchase` block on
-	 * their template.
+	 * Inline tracker entrypoint — always emits the `trackPurchaseStatus`
+	 * call so reward attribution works even when the merchant has not placed
+	 * the `frak/post-purchase` block on their template.
+	 *
+	 * Hooked directly to `woocommerce_thankyou` and `woocommerce_view_order`
+	 * for the standard WC paths, and called by {@see Frak_Funnel_Compat} for
+	 * funnel-builder thank-you pages (FunnelKit / CartFlows). The first call
+	 * latches {@see $tracker_emitted}; subsequent calls within the same
+	 * request short-circuit so a single page never emits two `<script id=
+	 * "frak-purchase-tracker-inline">` tags.
 	 *
 	 * The `frak/post-purchase` block, when present, ALSO fires `trackPurchaseStatus`
 	 * from its `<frak-post-purchase>` web component on mount. The duplicate call
@@ -224,6 +251,10 @@ class Frak_WooCommerce {
 	 * @param int $order_id Order ID provided by the WooCommerce action.
 	 */
 	public static function render_purchase_tracker_for_order( $order_id ) {
+		if ( self::$tracker_emitted ) {
+			return;
+		}
+
 		$order_id = absint( $order_id );
 		if ( ! $order_id ) {
 			return;
@@ -251,5 +282,18 @@ class Frak_WooCommerce {
 		);
 
 		wp_print_inline_script_tag( $script, array( 'id' => 'frak-purchase-tracker-inline' ) );
+		self::$tracker_emitted = true;
+	}
+
+	/**
+	 * Whether the inline tracker has already been emitted in the current
+	 * request. Surface for compat layers (see {@see Frak_Funnel_Compat})
+	 * that need to short-circuit a `wp_footer` fallback when the standard
+	 * `woocommerce_thankyou` path has already fired.
+	 *
+	 * @return bool
+	 */
+	public static function has_emitted_tracker(): bool {
+		return self::$tracker_emitted;
 	}
 }

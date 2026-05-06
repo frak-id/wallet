@@ -94,6 +94,11 @@ class Frak_Plugin {
 
 		if ( $has_wc ) {
 			Frak_WooCommerce::init();
+			// Funnel-builder compatibility (FunnelKit / CartFlows). Self-gates
+			// on `class_exists` for the funnel plugins, so the registration
+			// is a no-op on stores running stock WooCommerce — zero per-request
+			// cost when no funnel builder is active.
+			Frak_Funnel_Compat::init();
 		}
 	}
 }

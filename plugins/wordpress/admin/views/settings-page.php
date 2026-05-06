@@ -21,6 +21,13 @@ $wc_status       = $wc_active && class_exists( 'Frak_WC_Webhook_Registrar' )
 	: null;
 $wc_admin_url    = $wc_active ? admin_url( 'admin.php?page=wc-settings&tab=advanced&section=webhooks' ) : '';
 $wc_logs_url     = $wc_active ? admin_url( 'admin.php?page=wc-status&tab=logs' ) : '';
+// Surface a "FunnelKit / CartFlows detected" notice when a funnel
+// builder is active so the merchant knows browser-side tracking is
+// auto-wired to those custom thank-you pages — and so they're nudged
+// to drop the Frak Post-Purchase component on the funnel step for the
+// most resilient attribution path.
+$funnelkit_active = $wc_active && class_exists( 'Frak_Funnel_Compat' ) && Frak_Funnel_Compat::is_funnelkit_active();
+$cartflows_active = $wc_active && class_exists( 'Frak_Funnel_Compat' ) && Frak_Funnel_Compat::is_cartflows_active();
 ?>
 <div class="wrap">
 	<h1><?php echo esc_html( get_admin_page_title() ); ?></h1>
@@ -129,6 +136,25 @@ $wc_logs_url     = $wc_active ? admin_url( 'admin.php?page=wc-status&tab=logs' )
 				}
 				?>
 			</p>
+
+			<?php if ( $funnelkit_active || $cartflows_active ) : ?>
+				<div class="notice notice-info inline" style="margin: 12px 0;">
+					<p>
+						<strong>
+							<?php
+							if ( $funnelkit_active && $cartflows_active ) {
+								esc_html_e( 'FunnelKit and CartFlows detected.', 'frak' );
+							} elseif ( $funnelkit_active ) {
+								esc_html_e( 'FunnelKit detected.', 'frak' );
+							} else {
+								esc_html_e( 'CartFlows detected.', 'frak' );
+							}
+							?>
+						</strong>
+						<?php esc_html_e( 'Browser-side purchase tracking is auto-wired to funnel-step thank-you pages, including FunnelKit One-Click Upsell offers. For maximum reliability across custom funnel templates, also drop the Frak Post-Purchase block (or the matching shortcode / Elementor widget) on your funnel’s thank-you step — it provides the same attribution call plus a share-and-earn UI.', 'frak' ); ?>
+					</p>
+				</div>
+			<?php endif; ?>
 
 			<!-- Webhook Configuration -->
 			<div class="frak-subsection">

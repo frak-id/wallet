@@ -11,6 +11,15 @@ version on dispatch.
 
 ## [Unreleased]
 
+### Added
+
+- Funnel-builder compatibility layer (`Frak_Funnel_Compat`): detects FunnelKit (Funnel Builder + One-Click Upsell + Aero Checkout) and CartFlows thank-you contexts and ensures the inline `trackPurchaseStatus` script fires there, even when those plugins bypass WooCommerce's standard `woocommerce_thankyou` hook. Without this safety net the WC webhook records the order in `pending_claim` state and **no reward is ever issued** — unlike Shopify (which rides the Frak `clientId` through cart attributes back into the webhook), WooCommerce webhooks are blind to the browser identity, so the browser-side claim is mandatory for reward attribution. New class self-gates on `class_exists` for the funnel plugins, so installs running stock WooCommerce pay zero per-request cost (registration short-circuits before any hook is added).
+  - Layer 1: `wfocu_custom_purchase_tracking` — FunnelKit's canonical tracking action, fires on the standard FunnelKit thank-you AND after every successful WFOCU one-click upsell offer. We resolve the order from the payload's `transaction_id` and re-pull authoritative customer-id / order-key from WooCommerce so the emitted token stays canonical regardless of what FunnelKit hands us.
+  - Layer 2: `wp_footer` fallback gated on `wffn_is_thankyou_page()` (FunnelKit Funnel Builder) and `is_singular('cartflows_step')` + `wcf-step-type` post-meta = `thankyou` (CartFlows). Order id resolved via the WooCommerce session's `order_awaiting_payment` slot (set by `WC_Checkout::process_checkout` and cleared once the order is paid — funnel TY steps render inside that window), with `?wcf-order` / `?wc_order` query-var fallbacks for redirect-style flows.
+  - Layer 3: idempotency latch — `Frak_WooCommerce::render_purchase_tracker_for_order()` now flips an internal `$tracker_emitted` flag on first emission and exits early on subsequent calls, so any combination of `woocommerce_thankyou`, `woocommerce_view_order`, `wfocu_custom_purchase_tracking`, and the `wp_footer` fallback firing on the same request still emits exactly one `<script id="frak-purchase-tracker-inline">` tag. Surfaces via `Frak_WooCommerce::has_emitted_tracker()` for compat layers that need to short-circuit a fallback when the standard path has already fired. Backend `trackPurchaseStatus` is itself idempotent on `(merchantId, orderId, token)` so the latch is purely about HTML hygiene + parse cost, not correctness.
+  - Layer 4: "FunnelKit / CartFlows detected" notice on `Settings → Frak → Purchase Tracking` so the merchant knows browser-side tracking is auto-wired AND is nudged to drop the Frak Post-Purchase block on the funnel step for the most resilient attribution path (the component fires the same call from its own `useEffect`, doubly covering custom templates that overlap neither hook).
+
+
 ## [1.1.4] - 2026-05-04
 
 ### Added
