@@ -34,7 +34,9 @@ const backendServiceName = $dev
     : ((await import("./backend")).backendInstance.service?.metadata?.name ??
       "");
 
-// todo: for now on wallet.gcp-dev.frak.id, to test that up a bit, and we wil llater migrate it to the real wallet.frak.id
+// Stage-scoped wallet hostname: `wallet.frak.id` (prod) vs `wallet-dev.frak.id` (dev).
+// Each ingress feeds a stage-scoped backend whose `.well-known/{aasa,assetlinks}`
+// only advertises the matching wallet bundle (id.frak.wallet[.dev]).
 const subDomain = isProd ? "wallet" : "wallet-dev";
 
 export const walletEnv = {

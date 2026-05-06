@@ -1,9 +1,16 @@
 import type { SendNotificationPayload } from "@backend-domain/notifications";
 import { eventEmitter, log } from "@backend-infrastructure";
 import type { NotificationEvent, NotificationEventItem } from "@backend-utils";
+import { isRunningInProd } from "@frak-labs/app-essentials";
 import type { Address } from "viem";
 import type { MerchantRepository } from "../domain/merchant/repositories/MerchantRepository";
 import type { NotificationsService } from "../domain/notifications/services/NotificationsService";
+
+// Stage-scoped wallet URL: prod backend points users at wallet.frak.id,
+// dev backend points users at wallet-dev.frak.id (matches the dev app variant).
+const walletNotificationUrl = isRunningInProd
+    ? "https://wallet.frak.id/"
+    : "https://wallet-dev.frak.id/";
 
 const notificationMessages = {
     reward_pending: (merchantName: string, rewardCount: number) => ({
@@ -65,7 +72,7 @@ export class NotificationOrchestrator {
                 wallets,
                 payload: {
                     ...payload,
-                    data: { url: "https://wallet.frak.id/" },
+                    data: { url: walletNotificationUrl },
                 },
                 type: "promotional",
                 broadcastId,

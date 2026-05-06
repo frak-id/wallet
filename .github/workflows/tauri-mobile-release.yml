@@ -117,8 +117,11 @@ jobs:
 
           if echo "$LABELS" | jq -r '.[]' | grep -qx 'release:mobile:dev'; then
             echo "stage=dev" >> "$GITHUB_OUTPUT"
-          else
+          elif echo "$LABELS" | jq -r '.[]' | grep -qx 'release:mobile:prod'; then
             echo "stage=prod" >> "$GITHUB_OUTPUT"
+          else
+            echo "::error::Release PR must carry either 'release:mobile:dev' or 'release:mobile:prod' label"
+            exit 1
           fi
 
   prepare:
@@ -265,7 +268,6 @@ jobs:
             "cd apps/wallet && tauri ios build $CONFIG_FLAG --export-method app-store-connect"
         env:
           STAGE: ${{ needs.validate.outputs.stage }}
-          VITE_WALLET_MODE: ${{ needs.validate.outputs.stage == 'prod' && 'loyalty' || 'crypto' }}
           APPLE_API_ISSUER: ${{ secrets.APPSTORE_ISSUER_ID }}
           APPLE_API_KEY: ${{ secrets.APPSTORE_API_KEY_ID }}
           APPLE_API_KEY_PATH: ${{ runner.temp }}/AuthKey.p8
@@ -414,7 +416,6 @@ jobs:
         run: sst shell --stage "$STAGE" --print-logs -- bash -c "cd apps/wallet && tauri android build"
         env:
           STAGE: ${{ needs.validate.outputs.stage }}
-          VITE_WALLET_MODE: ${{ needs.validate.outputs.stage == 'prod' && 'loyalty' || 'crypto' }}
           ORG_GRADLE_PROJECT_appVariant: ${{ needs.validate.outputs.stage }}
 
       # TODO: Graduate from `internal` track to `production` when ready for public release

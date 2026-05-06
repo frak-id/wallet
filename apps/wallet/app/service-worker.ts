@@ -73,8 +73,11 @@ self.addEventListener("notificationclick", (event) => {
     // Close notification
     event.notification.close();
 
-    // Get the url to open
-    const url = event.notification.data?.url || "https://wallet.frak.id/";
+    // Get the url to open. Default falls back to the build-time wallet URL
+    // (prod build → wallet.frak.id, dev build → wallet-dev.frak.id) so the
+    // dev variant never sends users to the prod domain.
+    const url =
+        event.notification.data?.url || `${process.env.FRAK_WALLET_URL}/`;
     event.waitUntil(
         self.clients
             .matchAll({

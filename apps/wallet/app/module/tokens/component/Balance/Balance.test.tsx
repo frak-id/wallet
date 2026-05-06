@@ -29,10 +29,6 @@ vi.mock("@tanstack/react-router", () => ({
     useNavigate: () => mockNavigate,
 }));
 
-vi.mock("@/module/common/utils/walletMode", () => ({
-    isCryptoMode: true,
-}));
-
 vi.mock("@/module/tokens/hooks/useGetPendingRewards", () => ({
     useGetPendingRewards: () => mockUseGetPendingRewards(),
 }));
