@@ -74,9 +74,7 @@ function ErrorComponent({ error }: { error: Error }) {
                     We hit an unexpected error. Please try again.
                 </Text>
             }
-            action={
-                <Button onClick={() => location.reload()}>Reload</Button>
-            }
+            action={<Button onClick={() => location.reload()}>Reload</Button>}
         />
     );
 }

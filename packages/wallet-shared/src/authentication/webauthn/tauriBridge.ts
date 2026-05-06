@@ -10,7 +10,6 @@
  */
 
 import { WebAuthN } from "@frak-labs/app-essentials";
-import { getInvoke } from "../../common/tauri";
 import {
     isAndroid,
     isIOS,
@@ -18,6 +17,7 @@ import {
 } from "@frak-labs/app-essentials/utils/platform";
 import type { WebAuthnP256 } from "ox";
 import { BaseError } from "ox/Errors";
+import { getInvoke } from "../../common/tauri";
 
 // ============================================================================
 // Types matching what the plugin returns (base64url JSON)

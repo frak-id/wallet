@@ -7,6 +7,9 @@
         },
         "sso": {
             "btn": {
+                "continue": "Continuer avec mon porte-monnaie",
+                "useAnother": "Utiliser un autre compte",
+                "backToSession": "Retour à mon porte-monnaie",
                 "new": {
                     "create": "Utiliser la biométrie",
                     "login": "Déjà un porte-monnaie existant ?",
@@ -17,6 +20,7 @@
                     "login": "Utiliser la biométrie"
                 }
             },
+            "continueDescription": "Vous vous connecterez à <strong>{{productName}}</strong> en tant que <strong>{{address}}</strong>.",
             "description": "Frak ne stocke aucune donnée personnelle ou biométrique. En continuant vous acceptez nos <conditionsLink>conditions</conditionsLink> et notre <privacyLink>politique de confidentialité</privacyLink>.",
             "header": { "title": "Connectez-vous avec Frak Wallet" },
             "pairing": {

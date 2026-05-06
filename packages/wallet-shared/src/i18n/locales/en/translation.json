@@ -7,6 +7,9 @@
         },
         "sso": {
             "btn": {
+                "continue": "Continue with my wallet",
+                "useAnother": "Use another account",
+                "backToSession": "Back to my wallet",
                 "new": {
                     "create": "Use biometrics",
                     "login": "Already have an existing wallet?",
@@ -17,6 +20,7 @@
                     "login": "Use biometrics"
                 }
             },
+            "continueDescription": "You'll sign in to <strong>{{productName}}</strong> as <strong>{{address}}</strong>.",
             "description": "Frak does not store any personal or biometric data. By continuing you accept our <conditionsLink>terms</conditionsLink> and our <privacyLink>privacy policy</privacyLink>.",
             "header": {
                 "title": "Login with Frak Wallet"

@@ -31,8 +31,7 @@ export function HardUpdateGate({
     // `opened === false` covers both the resolved-but-rejected case (system
     // refused the URL) and any thrown error after a retry.
     const showFallback =
-        openStore.isError ||
-        (openStore.isSuccess && openStore.data === false);
+        openStore.isError || (openStore.isSuccess && openStore.data === false);
 
     return (
         <FullScreenGate
