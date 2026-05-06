@@ -17,6 +17,8 @@
 #   2. ImageMagick step OVERRIDES the 5 Android adaptive `ic_launcher_foreground.png`
 #      with a safe-zone-padded white F (Tauri's default uses the full Frak icon, which
 #      gets clipped under circular launcher masks).
+#   3. ImageMagick renders the Google Play Console feature graphic (1024×500) to
+#      apps/wallet/src-tauri/icons/store/feature-graphic-1024x500.png.
 #
 # Adaptive background stays as the @color/ic_launcher_background = #0043EF resource
 # defined in res/values/ic_launcher_background.xml — no PNG needed.
@@ -48,9 +50,15 @@ fi
 SOURCES_DIR="$(cd "$(dirname "$0")" && pwd)"
 WALLET_DIR="$(cd "$SOURCES_DIR/../../.." && pwd)"
 ANDROID_RES="$(cd "$SOURCES_DIR/../../gen/android/app/src/main/res" && pwd)"
+STORE_DIR="$SOURCES_DIR/../store"
 
 MANIFEST="$SOURCES_DIR/manifest.json"
 WHITE_SVG="$SOURCES_DIR/frak-white-512x512.svg"
+BG_COLOR="#0043EF"
+# Brand fonts bundled in this directory (OFL, https://github.com/rsms/inter).
+# Inter is the typeface used by the wallet UI (packages/design-system tokens).
+WORDMARK_FONT="$SOURCES_DIR/Inter-Bold.ttf"
+TAGLINE_FONT="$SOURCES_DIR/Inter-Regular.ttf"
 
 # ── Step 1: regenerate every platform asset via Tauri ─────────────────────────
 echo "▶ Running 'bun tauri icon' for all platform assets…"
@@ -84,4 +92,47 @@ for entry in "${DENSITIES[@]}"; do
         -strip PNG32:"$target"
 done
 
+# ── Step 3: Google Play Console feature graphic (1024×500) ───────────────────
+#
+# Composes: solid #0043EF background + white F mark (left) + "Frak Wallet"
+# wordmark + tagline (right). Output is uploaded as the Play Console "Image
+# de présentation".
+#
+# Two-stage pipeline: the SVG must be rasterized to PNG first because this
+# ImageMagick build has no librsvg delegate, and combining SVG load + resize +
+# text annotate in a single `magick` invocation produces broken output (the
+# pre-resize SVG vector data leaks into the composite).
+#
+# Layout: F at +80px from left edge, optically centered (-12px from vertical
+# center to compensate for the heavier bottom bar). Wordmark + tagline as a
+# stacked block to the right of the F.
+
+FEATURE_OUT="$STORE_DIR/feature-graphic-1024x500.png"
+mkdir -p "$STORE_DIR"
+
+for font in "$WORDMARK_FONT" "$TAGLINE_FONT"; do
+    if [[ ! -f "$font" ]]; then
+        echo "error: brand font not found at $font" >&2
+        exit 1
+    fi
+done
+
+TMP_DIR="$(mktemp -d -t frak-feature.XXXXXX)"
+trap 'rm -rf "$TMP_DIR"' EXIT
+TMP_F="$TMP_DIR/f.png"
+
+echo "→ feature graphic: rasterizing F mark…"
+magick -background none -density 600 "$WHITE_SVG" \
+    -resize 360x360 PNG32:"$TMP_F"
+
+echo "→ feature graphic: composing 1024×500 PNG…"
+magick -size 1024x500 "xc:$BG_COLOR" \
+    "$TMP_F" -gravity West -geometry +80-12 -compose over -composite \
+    -font "$WORDMARK_FONT" -fill white -pointsize 80 \
+    -gravity NorthWest -annotate +470+178 "Frak Wallet" \
+    -font "$TAGLINE_FONT" -fill 'rgba(255,255,255,0.85)' -pointsize 28 \
+    -gravity NorthWest -annotate +472+275 "Earn rewards. Secured by passkeys." \
+    -strip -define png:compression-level=9 "$FEATURE_OUT"
+
 echo "✓ All platform icons regenerated"
+echo "  feature graphic: $FEATURE_OUT"
