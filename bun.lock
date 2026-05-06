@@ -155,6 +155,7 @@
         "@elysiajs/eden": "^1.4.9",
         "@frak-labs/app-essentials": "workspace:*",
         "@frak-labs/backend-elysia": "workspace:*",
+        "@frak-labs/components": "workspace:*",
         "@frak-labs/core-sdk": "workspace:*",
         "@frak-labs/react-sdk": "workspace:*",
         "@frak-labs/ui-preview": "workspace:*",

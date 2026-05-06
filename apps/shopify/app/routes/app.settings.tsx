@@ -30,6 +30,11 @@ export default function SettingsIndex() {
             content: t("navigation.settings.theme"),
             url: "/app/settings/theme",
         },
+        {
+            id: "share",
+            content: t("navigation.settings.share"),
+            url: "/app/settings/share",
+        },
     ];
 
     const selectedTab = tabs.findIndex((tab) =>

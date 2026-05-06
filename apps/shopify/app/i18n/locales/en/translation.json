@@ -18,7 +18,8 @@
             "general": "General",
             "pixel": "Application pixel",
             "webhook": "Webhook",
-            "theme": "Theme"
+            "theme": "Theme",
+            "share": "Share Link"
         }
     },
     "stepper": {
@@ -401,5 +402,40 @@
     },
     "settings": {
         "title": "Settings"
+    },
+    "share": {
+        "copy": "Copy",
+        "copied": "Copied to clipboard",
+        "url": {
+            "title": "Your share URL",
+            "description": "Add this URL to any post-purchase email, marketing campaign, banner or social post. When customers click it, the share modal opens automatically on your storefront."
+        },
+        "snippets": {
+            "linkText": "Share & earn rewards",
+            "shopify": {
+                "title": "Shopify Notifications",
+                "description": "Paste this Liquid snippet into your Order Confirmation template under Settings → Notifications. The shop URL is filled in automatically."
+            },
+            "klaviyo": {
+                "title": "Klaviyo",
+                "description": "Drop this into your Klaviyo post-purchase flow email. The store URL is pulled from your organization settings."
+            },
+            "html": {
+                "title": "Plain HTML",
+                "description": "Use this in Customer.io, Mailchimp, Postscript or any tool that accepts raw HTML."
+            }
+        },
+        "perCustomer": {
+            "title": "Per-customer share URLs",
+            "description": "When a customer places an order, Frak generates a unique share URL and stores it on their Shopify customer record under the `frak.share_url` metafield. Use these snippets in transactional emails for personalized post-purchase share flows.",
+            "shopify": {
+                "title": "Shopify Notifications",
+                "description": "Paste this Liquid snippet into any notification template that has access to the `customer` object (Order Confirmation, Shipping Confirmation, etc.)."
+            },
+            "klaviyo": {
+                "title": "Klaviyo",
+                "description": "Once Klaviyo's Shopify integration syncs the metafield as a profile property, use this snippet in your post-purchase flow. Adjust the property name if your Klaviyo account uses a different convention."
+            }
+        }
     }
 }

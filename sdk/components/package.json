@@ -61,6 +61,11 @@
       "import": "./dist/postPurchase.js",
       "types": "./dist/postPurchase.d.ts"
     },
+    "./shareLink": {
+      "development": "./src/utils/shareLink.ts",
+      "import": "./dist/shareLink.js",
+      "types": "./dist/shareLink.d.ts"
+    },
     "./banner": {
       "development": "./src/components/Banner/index.ts",
       "import": "./dist/banner.js",

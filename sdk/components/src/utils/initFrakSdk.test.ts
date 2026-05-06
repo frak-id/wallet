@@ -1,9 +1,10 @@
 import * as coreSdkIndex from "@frak-labs/core-sdk";
 import * as coreSdkActions from "@frak-labs/core-sdk/actions";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import * as buttonWalletUtils from "../components/ButtonWallet/utils";
 import * as clientReadyUtils from "./clientReady";
 import { initFrakSdk } from "./initFrakSdk";
+import * as sharingPageUtils from "./sharingPage";
+import { buildShareLinkUrl, type ShareLinkPayload } from "./shareLink";
 
 // Mock dependencies — pass through withCache/clearAllCache so the real cache works
 vi.mock("@frak-labs/core-sdk", async () => {
@@ -25,8 +26,8 @@ vi.mock("./clientReady", () => ({
     dispatchClientReadyEvent: vi.fn(),
 }));
 
-vi.mock("../components/ButtonWallet/utils", () => ({
-    openWalletModal: vi.fn(),
+vi.mock("./sharingPage", () => ({
+    openSharingPage: vi.fn(),
 }));
 
 // Sequential: tests mutate window.FrakSetup and vi.mock module state,
@@ -50,6 +51,7 @@ describe.sequential("initFrakSdk", () => {
         Object.defineProperty(window, "location", {
             value: {
                 search: "",
+                href: "https://example.com/",
             },
             writable: true,
         });
@@ -184,7 +186,7 @@ describe.sequential("initFrakSdk", () => {
         vi.useRealTimers();
     });
 
-    it("should open wallet modal when frakAction=share query param is present", async () => {
+    it("should open sharing page when frakAction=share query param is present", async () => {
         const mockClient = {
             config: {
                 domain: "example.com",
@@ -197,9 +199,14 @@ describe.sequential("initFrakSdk", () => {
         Object.defineProperty(window, "location", {
             value: {
                 search: "?frakAction=share",
+                href: "https://example.com/?frakAction=share",
             },
             writable: true,
         });
+
+        const replaceStateSpy = vi
+            .spyOn(window.history, "replaceState")
+            .mockImplementation(() => {});
 
         const consoleLogSpy = vi
             .spyOn(console, "log")
@@ -207,15 +214,65 @@ describe.sequential("initFrakSdk", () => {
 
         await initFrakSdk();
 
-        expect(buttonWalletUtils.openWalletModal).toHaveBeenCalled();
+        expect(sharingPageUtils.openSharingPage).toHaveBeenCalled();
         expect(consoleLogSpy).toHaveBeenCalledWith(
-            "[Frak SDK] Auto open query param found"
+            "[Frak SDK] Auto share trigger detected"
+        );
+        // URL is stripped of frakAction so refresh / back-nav doesn't re-fire
+        expect(replaceStateSpy).toHaveBeenCalledWith(
+            null,
+            "",
+            "https://example.com/"
         );
 
         consoleLogSpy.mockRestore();
+        replaceStateSpy.mockRestore();
     });
 
-    it("should not open wallet modal when frakAction query param is not present", async () => {
+    it("should decode frakData payload and forward it to openSharingPage", async () => {
+        const mockClient = {
+            config: { domain: "example.com" },
+        } as any;
+        vi.mocked(coreSdkIndex.setupClient).mockResolvedValue(mockClient);
+
+        const payload: ShareLinkPayload = {
+            link: "https://example.com/product/red",
+            products: [{ title: "Red shirt" }],
+            targetInteraction: "create_referral_link",
+        };
+        const shareUrl = buildShareLinkUrl({
+            baseUrl: "https://example.com/",
+            payload,
+        });
+        const parsedUrl = new URL(shareUrl);
+
+        Object.defineProperty(window, "location", {
+            value: { search: parsedUrl.search, href: shareUrl },
+            writable: true,
+        });
+
+        const replaceStateSpy = vi
+            .spyOn(window.history, "replaceState")
+            .mockImplementation(() => {});
+
+        await initFrakSdk();
+
+        expect(sharingPageUtils.openSharingPage).toHaveBeenCalledWith(
+            payload.targetInteraction,
+            undefined,
+            { link: payload.link, products: payload.products }
+        );
+        // Both frakAction and frakData are stripped from the URL
+        expect(replaceStateSpy).toHaveBeenCalledWith(
+            null,
+            "",
+            "https://example.com/"
+        );
+
+        replaceStateSpy.mockRestore();
+    });
+
+    it("should not open sharing page when frakAction query param is not present", async () => {
         const mockClient = {
             config: {
                 domain: "example.com",
@@ -226,10 +283,10 @@ describe.sequential("initFrakSdk", () => {
 
         await initFrakSdk();
 
-        expect(buttonWalletUtils.openWalletModal).not.toHaveBeenCalled();
+        expect(sharingPageUtils.openSharingPage).not.toHaveBeenCalled();
     });
 
-    it("should not open wallet modal when frakAction has different value", async () => {
+    it("should not open sharing page when frakAction has different value", async () => {
         const mockClient = {
             config: {
                 domain: "example.com",
@@ -241,12 +298,13 @@ describe.sequential("initFrakSdk", () => {
         Object.defineProperty(window, "location", {
             value: {
                 search: "?frakAction=other",
+                href: "https://example.com/?frakAction=other",
             },
             writable: true,
         });
 
         await initFrakSdk();
 
-        expect(buttonWalletUtils.openWalletModal).not.toHaveBeenCalled();
+        expect(sharingPageUtils.openSharingPage).not.toHaveBeenCalled();
     });
 });

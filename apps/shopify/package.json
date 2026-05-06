@@ -31,6 +31,7 @@
     "@frak-labs/app-essentials": "workspace:*",
     "@frak-labs/backend-elysia": "workspace:*",
     "@frak-labs/core-sdk": "workspace:*",
+    "@frak-labs/components": "workspace:*",
     "@frak-labs/ui-preview": "workspace:*",
     "@frak-labs/react-sdk": "workspace:*",
     "@react-router/node": "^7.13.1",

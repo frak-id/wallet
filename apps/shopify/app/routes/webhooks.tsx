@@ -3,10 +3,11 @@ import { sessionTable } from "db/schema/sessionTable";
 import { eq } from "drizzle-orm";
 import type { ActionFunctionArgs } from "react-router";
 import { purchaseTable } from "../../db/schema/purchaseTable";
+import { mintAndStoreCustomerShareUrl } from "../services.server/customerShareUrl";
 import { authenticate } from "../shopify.server";
 
 export const action = async ({ request }: ActionFunctionArgs) => {
-    const { shop, session, topic, payload } =
+    const { admin, shop, session, topic, payload } =
         await authenticate.webhook(request);
 
     console.log(`Received ${topic} webhook for ${shop}`, payload);
@@ -27,6 +28,29 @@ export const action = async ({ request }: ActionFunctionArgs) => {
                     .where(eq(sessionTable.shop, shop));
             }
             break;
+
+        case "ORDERS_CREATE": {
+            // Mint a per-customer share URL and persist it to the customer's
+            // `frak.share_url` metafield. Failures are swallowed inside the
+            // service so they never block order processing.
+            const customerGid = payload?.customer?.admin_graphql_api_id;
+            if (admin && session && customerGid) {
+                const firstLineItem = payload?.line_items?.[0];
+                const lineItems = firstLineItem?.product_id
+                    ? [
+                          {
+                              productGid: `gid://shopify/Product/${firstLineItem.product_id}`,
+                              title: firstLineItem.title ?? firstLineItem.name ?? "",
+                          },
+                      ]
+                    : undefined;
+                await mintAndStoreCustomerShareUrl(
+                    { admin, session },
+                    { customerGid, lineItems }
+                );
+            }
+            break;
+        }
         /*
         GDPR compliance webhooks
         https://shopify.dev/docs/apps/build/privacy-law-compliance#subscribe-to-compliance-webhooks

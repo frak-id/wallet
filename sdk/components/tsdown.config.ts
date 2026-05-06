@@ -160,6 +160,7 @@ export default defineConfig([
             openInApp: "./src/components/OpenInAppButton/index.ts",
             postPurchase: "./src/components/PostPurchase/index.ts",
             banner: "./src/components/Banner/index.ts",
+            shareLink: "./src/utils/shareLink.ts",
         },
         format: ["esm"],
         platform: "browser",

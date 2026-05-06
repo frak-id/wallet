@@ -13,13 +13,13 @@ automatically_update_urls_on_dev = false
 api_version = "2026-04"
 
   [[webhooks.subscriptions]]
-  topics = [ "app_purchases_one_time/update", "app/uninstalled" ]
+  topics = [ "app_purchases_one_time/update", "app/uninstalled", "orders/create" ]
   uri = "/webhooks"
   compliance_topics = [ "customers/data_request", "customers/redact", "shop/redact" ]
 
 [access_scopes]
 # Learn more at https://shopify.dev/docs/apps/tools/cli/configuration#access_scopes
-scopes = "read_customer_events,read_orders,read_pixels,read_products,read_themes,write_pixels"
+scopes = "read_customer_events,read_orders,read_pixels,read_products,read_themes,write_customers,write_pixels"
 
 [auth]
 redirect_urls = [

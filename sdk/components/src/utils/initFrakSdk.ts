@@ -1,8 +1,9 @@
 import * as coreSdkIndex from "@frak-labs/core-sdk";
 import { setupClient, trackEvent, withCache } from "@frak-labs/core-sdk";
 import * as coreSdkActions from "@frak-labs/core-sdk/actions";
-import { openWalletModal } from "../components/ButtonWallet/utils";
 import { dispatchClientReadyEvent } from "./clientReady";
+import { FRAK_ACTION_KEY, FRAK_DATA_KEY, parseShareLinkPayload } from "./shareLink";
+import { openSharingPage } from "./sharingPage";
 
 /**
  * Initializes the Frak SDK client and sets up necessary configurations.
@@ -79,17 +80,49 @@ async function doInit(): Promise<void> {
 }
 
 /**
- * Check the query param contain params for an auto opening of the frak modal
+ * Check the query param contain params for an auto opening of a frak action
+ *
+ * Strips the matched params from the URL via `history.replaceState` so the
+ * action does not re-fire on refresh or back navigation.
  */
 function handleActionQueryParam() {
     const urlParams = new URLSearchParams(window.location.search);
-    const frakAction = urlParams.get("frakAction");
+    const frakAction = urlParams.get(FRAK_ACTION_KEY);
     if (!frakAction) {
         return;
     }
 
     if (frakAction === "share") {
-        console.log("[Frak SDK] Auto open query param found");
-        openWalletModal();
+        console.log("[Frak SDK] Auto share trigger detected");
+        const payload = parseShareLinkPayload();
+        openSharingPage(
+            payload?.targetInteraction,
+            undefined,
+            payload
+                ? { link: payload.link, products: payload.products }
+                : undefined
+        );
+        stripFrakActionParams();
     }
+}
+
+/**
+ * Remove frak auto-action params from the current URL.
+ *
+ * No-op outside a browser (or when no params are present).
+ */
+function stripFrakActionParams() {
+    if (typeof window === "undefined" || !window.history?.replaceState) {
+        return;
+    }
+    const url = new URL(window.location.href);
+    if (
+        !url.searchParams.has(FRAK_ACTION_KEY) &&
+        !url.searchParams.has(FRAK_DATA_KEY)
+    ) {
+        return;
+    }
+    url.searchParams.delete(FRAK_ACTION_KEY);
+    url.searchParams.delete(FRAK_DATA_KEY);
+    window.history.replaceState(null, "", url.toString());
 }

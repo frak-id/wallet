@@ -8,6 +8,7 @@ import {
     ensureWalletUrlMetafield,
     resolveMerchantId,
 } from "app/services.server/merchant";
+import { ensureCustomerShareUrlDefinition } from "app/services.server/customerShareUrl";
 import { shopInfo } from "app/services.server/shop";
 import { doesThemeSupportBlock } from "app/services.server/theme";
 import { shouldShowOutletSkeleton } from "app/utils/navigationLoading";
@@ -42,6 +43,9 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     ensureWalletUrlMetafield(context).catch(() => {});
     // Fire-and-forget: sync components CDN URL metafield for listener.liquid
     ensureComponentsUrlMetafield(context).catch(() => {});
+    // Fire-and-forget: ensure the per-customer share URL metafield definition
+    // exists so it surfaces in Shopify admin and Klaviyo profile sync.
+    ensureCustomerShareUrlDefinition(context).catch(() => {});
 
     return {
         apiKey: process.env.SHOPIFY_API_KEY || "",

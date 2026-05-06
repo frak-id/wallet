@@ -18,7 +18,8 @@
             "general": "Général",
             "pixel": "Pixel d'application",
             "webhook": "Webhook",
-            "theme": "Thème"
+            "theme": "Thème",
+            "share": "Lien de partage"
         }
     },
     "stepper": {
@@ -402,5 +403,40 @@
     },
     "settings": {
         "title": "Paramètres"
+    },
+    "share": {
+        "copy": "Copier",
+        "copied": "Copié dans le presse-papiers",
+        "url": {
+            "title": "Votre URL de partage",
+            "description": "Ajoutez cette URL à vos emails post-achat, campagnes marketing, bannières ou posts sociaux. Quand un client clique dessus, la modale de partage s'ouvre automatiquement sur votre boutique."
+        },
+        "snippets": {
+            "linkText": "Partagez et gagnez des récompenses",
+            "shopify": {
+                "title": "Notifications Shopify",
+                "description": "Collez ce snippet Liquid dans votre modèle de Confirmation de commande sous Paramètres → Notifications. L'URL de la boutique est remplie automatiquement."
+            },
+            "klaviyo": {
+                "title": "Klaviyo",
+                "description": "Insérez ceci dans votre flow Klaviyo post-achat. L'URL de la boutique est récupérée depuis vos paramètres d'organisation."
+            },
+            "html": {
+                "title": "HTML standard",
+                "description": "Utilisez ceci dans Customer.io, Mailchimp, Postscript ou tout outil qui accepte du HTML brut."
+            }
+        },
+        "perCustomer": {
+            "title": "URLs de partage par client",
+            "description": "Quand un client passe une commande, Frak génère une URL de partage unique et la stocke sur sa fiche client Shopify dans le metafield `frak.share_url`. Utilisez ces snippets dans vos emails transactionnels pour des flows de partage post-achat personnalisés.",
+            "shopify": {
+                "title": "Notifications Shopify",
+                "description": "Collez ce snippet Liquid dans tout modèle de notification qui a accès à l'objet `customer` (Confirmation de commande, Confirmation d'expédition, etc.)."
+            },
+            "klaviyo": {
+                "title": "Klaviyo",
+                "description": "Une fois que l'intégration Shopify de Klaviyo synchronise le metafield en propriété de profil, utilisez ce snippet dans votre flow post-achat. Ajustez le nom de la propriété si votre compte Klaviyo utilise une convention différente."
+            }
+        }
     }
 }
