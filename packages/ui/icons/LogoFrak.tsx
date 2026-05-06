@@ -1,47 +1,30 @@
 import type { SVGProps } from "react";
-import { useId } from "react";
 
+/**
+ * Frak brand mark — flat solid shape.
+ *
+ * Uses `currentColor` so the color is driven by the parent's CSS `color`
+ * property. Set `color` on the parent (or any ancestor) to tint the logo.
+ */
 export const LogoFrak = (
     props: SVGProps<SVGSVGElement> & { sizes?: number }
 ) => {
     const { sizes, ...rest } = props;
-    const gradientId = useId();
     return (
         <svg
             xmlns="http://www.w3.org/2000/svg"
-            width={sizes ?? "36"}
-            height={sizes ?? "36"}
+            width={sizes ?? 36}
+            height={sizes ?? 36}
             fill="none"
-            viewBox="0 0 36 36"
+            viewBox="0 0 120 120"
+            aria-hidden="true"
             {...rest}
         >
             <title>Logo Frak</title>
             <path
-                fill={`url(#${gradientId})`}
-                d="M12.29 27.878L.46 23.875a.348.348 0 00-.46.33v7.302c0 .149.095.28.236.329l11.83 4.002a.348.348 0 00.46-.33v-7.301a.347.347 0 00-.236-.33zm12.306-14.003l-11.834 4.002a.348.348 0 00-.236.33v7.301c0 .238.234.406.46.33l11.832-4.003a.348.348 0 00.237-.33v-7.301a.348.348 0 00-.46-.33zM35.708.01l-19.81 6.378a.348.348 0 00-.242.331v7.482c0 .148.148.254.292.207l19.81-6.378a.348.348 0 00.242-.33V.218a.222.222 0 00-.292-.208z"
+                fill="currentColor"
+                d="M40.9656 92.9592L1.53047 79.6135C0.77971 79.3587 0 79.9184 0 80.7116V105.06C0 105.558 0.316516 105.998 0.78743 106.158L40.2226 119.504C40.9734 119.759 41.7531 119.199 41.7531 118.406V94.0574C41.7531 93.5594 41.4366 93.1194 40.9656 92.9592ZM81.9853 46.2654L42.5405 59.6112C42.0696 59.7714 41.7531 60.2114 41.7531 60.7094V85.0579C41.7531 85.8511 42.5328 86.4108 43.2835 86.1561L82.7283 72.8103C83.1993 72.6501 83.5158 72.2101 83.5158 71.7121V47.3636C83.5158 46.5704 82.738 46.0107 81.9853 46.2654ZM119.027 0.0367608L52.9913 21.3051C52.5127 21.4595 52.1884 21.9053 52.1884 22.409V47.3559C52.1884 47.8519 52.6806 48.2031 53.1592 48.0487L119.195 26.7804C119.674 26.626 120 26.1802 120 25.6765V0.729621C119.998 0.233617 119.506 -0.117637 119.027 0.0367608Z"
             />
-            <defs>
-                <linearGradient
-                    id={gradientId}
-                    x1="1.677"
-                    x2="36.6"
-                    y1="29.793"
-                    y2="5.359"
-                    gradientUnits="userSpaceOnUse"
-                >
-                    <stop offset="0.02" stopColor="#8B5EB3" />
-                    <stop offset="0.04" stopColor="#B155B3" />
-                    <stop offset="0.09" stopColor="#B13FB3" />
-                    <stop offset="0.14" stopColor="#B12FB3" />
-                    <stop offset="0.21" stopColor="#B125B3" />
-                    <stop offset="0.29" stopColor="#B123B3" />
-                    <stop offset="0.42" stopColor="#6E5CCA" />
-                    <stop offset="0.55" stopColor="#338EDE" />
-                    <stop offset="0.65" stopColor="#0FAEEB" />
-                    <stop offset="0.7" stopColor="#02BAF0" />
-                    <stop offset="0.9" stopColor="#02E6D5" />
-                </linearGradient>
-            </defs>
         </svg>
     );
 };
