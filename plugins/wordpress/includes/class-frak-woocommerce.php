@@ -25,6 +25,34 @@ class Frak_WooCommerce {
 	private const DEFAULT_PRODUCT_CAP = 6;
 
 	/**
+	 * Idempotency latch — keyed by order id, populated on each successful
+	 * tracker emission within a request and read by every additional call
+	 * path so the same order never lands a duplicate inline `<script>` tag.
+	 *
+	 * Multiple surfaces can race to fire the tracker on the same request:
+	 *   - `woocommerce_thankyou` (this class — primary path)
+	 *   - `woocommerce_view_order` (this class — My Account → View Order)
+	 *   - `wfocu_custom_purchase_tracking` (FunnelKit — see {@see Frak_Funnel_Compat})
+	 *   - `wp_footer` funnel-step fallback ({@see Frak_Funnel_Compat::maybe_render_tracker_for_funnel_step()})
+	 * Two of those can legitimately carry DIFFERENT order ids on the same
+	 * request (e.g. `woocommerce_thankyou` for the parent order + a late
+	 * `wfocu_custom_purchase_tracking` for an upsell child order on the
+	 * final WFOCU thank-you page). A boolean latch would silently drop the
+	 * second order and leave it stuck in `pending_claim` on the backend, so
+	 * we key by order id and let each distinct order emit exactly once. The
+	 * inline `<script>` tag's HTML id is suffixed with the order id so
+	 * multi-emission requests still satisfy id-uniqueness.
+	 *
+	 * Backend `trackPurchaseStatus` is itself idempotent on the
+	 * `(merchantId, orderId, token)` triple, so the latch is purely about
+	 * HTML hygiene + parse cost, not correctness — but skipping a distinct
+	 * order id WOULD harm correctness, hence the per-order keying.
+	 *
+	 * @var array<int, true>
+	 */
+	private static array $emitted_order_ids = array();
+
+	/**
 	 * Register WooCommerce hooks. Called once from {@see Frak_Plugin::init()}.
 	 *
 	 * Tracker registration uses `woocommerce_thankyou` and `woocommerce_view_order`
@@ -206,10 +234,19 @@ class Frak_WooCommerce {
 	}
 
 	/**
-	 * Inline tracker fired from `woocommerce_thankyou` and `woocommerce_view_order`
-	 * — always emits the `trackPurchaseStatus` call so reward attribution works
-	 * even when the merchant has not placed the `frak/post-purchase` block on
-	 * their template.
+	 * Inline tracker entrypoint — always emits the `trackPurchaseStatus`
+	 * call so reward attribution works even when the merchant has not placed
+	 * the `frak/post-purchase` block on their template.
+	 *
+	 * Hooked directly to `woocommerce_thankyou` and `woocommerce_view_order`
+	 * for the standard WC paths, and called by {@see Frak_Funnel_Compat} for
+	 * funnel-builder thank-you pages (FunnelKit / CartFlows). Each distinct
+	 * order id emits at most once per request (see {@see $emitted_order_ids});
+	 * subsequent calls for the same id within the same request short-circuit
+	 * so a single page never emits two `<script id="frak-purchase-tracker-inline-{order_id}">`
+	 * tags for the same order. Different order ids in the same request still
+	 * each get their own emission — required for WFOCU upsell flows where the
+	 * final TY page can carry both the parent order and a child upsell order.
 	 *
 	 * The `frak/post-purchase` block, when present, ALSO fires `trackPurchaseStatus`
 	 * from its `<frak-post-purchase>` web component on mount. The duplicate call
@@ -225,7 +262,7 @@ class Frak_WooCommerce {
 	 */
 	public static function render_purchase_tracker_for_order( $order_id ) {
 		$order_id = absint( $order_id );
-		if ( ! $order_id ) {
+		if ( ! $order_id || isset( self::$emitted_order_ids[ $order_id ] ) ) {
 			return;
 		}
 
@@ -250,6 +287,20 @@ class Frak_WooCommerce {
 			$payload_json
 		);
 
-		wp_print_inline_script_tag( $script, array( 'id' => 'frak-purchase-tracker-inline' ) );
+		wp_print_inline_script_tag( $script, array( 'id' => 'frak-purchase-tracker-inline-' . $order_id ) );
+		self::$emitted_order_ids[ $order_id ] = true;
+	}
+
+	/**
+	 * Whether the inline tracker has already been emitted for the given
+	 * order id within the current request. Surface for compat layers (see
+	 * {@see Frak_Funnel_Compat}) that want to skip resolution work when the
+	 * standard `woocommerce_thankyou` path has already covered the order.
+	 *
+	 * @param int $order_id Order ID to check.
+	 * @return bool
+	 */
+	public static function has_emitted_tracker_for_order( int $order_id ): bool {
+		return isset( self::$emitted_order_ids[ $order_id ] );
 	}
 }
