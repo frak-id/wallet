@@ -1,7 +1,9 @@
 import { Box } from "@frak-labs/design-system/components/Box";
 import { Button } from "@frak-labs/design-system/components/Button";
 import { Card } from "@frak-labs/design-system/components/Card";
+import { IconCircle } from "@frak-labs/design-system/components/IconCircle";
 import { Text } from "@frak-labs/design-system/components/Text";
+import { CheckCircleFilledIcon } from "@frak-labs/design-system/icons";
 import { useMutation } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 import {
@@ -30,6 +32,11 @@ type SoftUpdatePromptProps =
  *                  pulls the update in the background.
  * `downloaded`   — Android only. Final "Restart now" CTA that calls
  *                  `completeUpdate()` to install + relaunch.
+ *
+ * Layout mirrors the wallet's `ResponsiveModal` confirmation modals
+ * (e.g. `DeleteRedemptionConfirmModal`): heading + secondary description
+ * up top, full-width stacked actions at the bottom — primary first so the
+ * happy-path tap target is closest to the thumb.
  */
 export function SoftUpdatePrompt(props: SoftUpdatePromptProps) {
     const { t } = useTranslation();
@@ -51,10 +58,14 @@ export function SoftUpdatePrompt(props: SoftUpdatePromptProps) {
 
         return (
             <Card variant="elevated" className={styles.banner}>
-                <Box flexDirection="column" gap="s">
-                    <Text variant="bodySmall">
-                        {t("version.softUpdate.inProgress.title", { percent })}
-                    </Text>
+                <Box className={styles.body}>
+                    <Box className={styles.text}>
+                        <Text variant="heading4" weight="semiBold">
+                            {t("version.softUpdate.inProgress.title", {
+                                percent,
+                            })}
+                        </Text>
+                    </Box>
                     <div className={styles.progressTrack}>
                         <div
                             className={styles.progressBar}
@@ -90,26 +101,28 @@ function AvailableBanner({
 
     return (
         <Card variant="elevated" className={styles.banner}>
-            <Box flexDirection="column" gap="s">
-                <Text variant="bodySmall">
-                    {t("version.softUpdate.available.title")}
-                </Text>
-                <Text variant="bodySmall">
-                    {t("version.softUpdate.available.description")}
-                </Text>
-                <Box flexDirection="row" gap="s" justifyContent="flex-end">
+            <Box className={styles.body}>
+                <Box className={styles.text}>
+                    <Text variant="heading4" weight="semiBold">
+                        {t("version.softUpdate.available.title")}
+                    </Text>
+                    <Text variant="bodySmall" color="secondary">
+                        {t("version.softUpdate.available.description")}
+                    </Text>
+                </Box>
+                <Box className={styles.actions}>
+                    <Button
+                        onClick={() => start.mutate()}
+                        disabled={start.isPending}
+                    >
+                        {t("version.softUpdate.available.cta")}
+                    </Button>
                     <Button
                         variant="secondary"
                         onClick={onDismiss}
                         disabled={start.isPending}
                     >
                         {t("version.softUpdate.dismiss")}
-                    </Button>
-                    <Button
-                        onClick={() => start.mutate()}
-                        disabled={start.isPending}
-                    >
-                        {t("version.softUpdate.available.cta")}
                     </Button>
                 </Box>
             </Box>
@@ -125,11 +138,20 @@ function DownloadedBanner({ t }: { t: Translate }) {
 
     return (
         <Card variant="elevated" className={styles.banner}>
-            <Box flexDirection="column" gap="s">
-                <Text variant="bodySmall">
-                    {t("version.softUpdate.downloaded.title")}
-                </Text>
-                <Box flexDirection="row" justifyContent="flex-end">
+            <Box className={styles.body}>
+                <Box className={styles.successContent}>
+                    <IconCircle>
+                        <CheckCircleFilledIcon
+                            width={24}
+                            height={24}
+                            className={styles.downloadedIcon}
+                        />
+                    </IconCircle>
+                    <Text variant="heading4" weight="semiBold" align="center">
+                        {t("version.softUpdate.downloaded.title")}
+                    </Text>
+                </Box>
+                <Box className={styles.actions}>
                     <Button
                         onClick={() => complete.mutate()}
                         disabled={complete.isPending}

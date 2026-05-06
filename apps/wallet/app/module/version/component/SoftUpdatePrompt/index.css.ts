@@ -22,6 +22,47 @@ export const banner = style({
     },
 });
 
+/**
+ * Modal-style internal layout — copied from the wallet's confirmation
+ * modals (see `DeleteRedemptionConfirmModal`) so the soft-update prompt
+ * doesn't feel like a different surface.
+ */
+export const body = style({
+    display: "flex",
+    flexDirection: "column",
+    gap: alias.spacing.l,
+    width: "100%",
+});
+
+export const text = style({
+    display: "flex",
+    flexDirection: "column",
+    gap: alias.spacing.xs,
+    width: "100%",
+});
+
+/**
+ * Centered icon-led layout for success states (e.g. update downloaded).
+ * Mirrors the wallet's success modals (`RecoveryCodeSuccessModal`,
+ * `MoneriumTransferSuccessModal`) so the icon reads as a status badge
+ * rather than a row decoration.
+ */
+export const successContent = style({
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "center",
+    gap: alias.spacing.s,
+    width: "100%",
+    textAlign: "center",
+});
+
+export const actions = style({
+    display: "flex",
+    flexDirection: "column",
+    gap: alias.spacing.m,
+    width: "100%",
+});
+
 export const progressTrack = style({
     width: "100%",
     height: "4px",
@@ -34,4 +75,9 @@ export const progressBar = style({
     height: "100%",
     background: vars.surface.primary,
     transition: "width 200ms linear",
+});
+
+export const downloadedIcon = style({
+    color: vars.icon.success,
+    flexShrink: 0,
 });

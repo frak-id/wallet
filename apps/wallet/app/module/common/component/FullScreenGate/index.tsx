@@ -1,6 +1,5 @@
 import { Box } from "@frak-labs/design-system/components/Box";
 import { Text } from "@frak-labs/design-system/components/Text";
-import { LogoFrakWithName } from "@frak-labs/wallet-shared";
 import type { ReactNode } from "react";
 import * as styles from "./index.css";
 
@@ -13,11 +12,10 @@ type FullScreenGateProps = {
 };
 
 /**
- * Fullscreen blocking screen with the brand gradient + logo.
- *
- * Shared by `BiometricLock` and `HardUpdateGate` — both render the same
- * "you can't proceed until this resolves" UX, so the layout, gradient and
- * logo sizing live here once.
+ * Fullscreen blocking screen used by `BiometricLock`, `HardUpdateGate`, and
+ * the router error boundary. Content sits centered, action pins to the
+ * bottom edge full-width — same layout shape as the wallet's modals so it
+ * doesn't feel like a different surface.
  */
 export function FullScreenGate({
     title,
@@ -25,20 +23,16 @@ export function FullScreenGate({
     action,
 }: FullScreenGateProps) {
     return (
-        <Box
-            padding="l"
-            gap="xl"
-            className={styles.gate}
-            flexDirection="column"
-            alignItems="center"
-            justifyContent="center"
-        >
-            <LogoFrakWithName className={styles.logo} />
-            <Box flexDirection="column" alignItems="center" gap="m">
-                <Text variant="heading1">{title}</Text>
-                {description}
+        <Box className={styles.gate}>
+            <Box className={styles.content}>
+                <Text variant="heading2" align="center">
+                    {title}
+                </Text>
+                {description && (
+                    <Box className={styles.description}>{description}</Box>
+                )}
             </Box>
-            {action}
+            <Box className={styles.actions}>{action}</Box>
         </Box>
     );
 }
