@@ -105,37 +105,42 @@ iOS uses **native WKWebView WebAuthn** support, which means:
 #### Associated Domains
 
 The app is configured with Associated Domains for WebAuthn:
-- **Development**: `webcredentials:wallet-dev.frak.id`
-- Configured in: `gen/apple/app_iOS/app_iOS.entitlements`
+- **Prod variant** (`id.frak.wallet`): `webcredentials:wallet.frak.id`, `applinks:wallet.frak.id`
+- **Dev variant**  (`id.frak.wallet.dev`): `webcredentials:wallet-dev.frak.id`, `applinks:wallet-dev.frak.id`
+- Configured in: `gen/apple/app_iOS/app_iOS.entitlements` (rewritten in place by `scripts/patch-ios-dev.sh` for the dev build)
 
-This allows the app to share WebAuthn credentials with the web domain.
+This allows the app to share WebAuthn credentials with the matching web domain.
 
 #### iCloud Key-Value Storage (recovery hint)
 
 The app uses `NSUbiquitousKeyValueStore` via `tauri-plugin-recovery-hint` to persist a tiny hint (last authenticator id, wallet, login timestamp) that survives uninstall and syncs across the user's Apple devices.
 
-Required entitlements in `gen/apple/app_iOS/app_iOS.entitlements`:
+Required entitlements in `gen/apple/app_iOS/app_iOS.entitlements`. Both keys use
+Xcode build variables so the same template covers prod (`id.frak.wallet`) and the
+dev variant (`id.frak.wallet.dev`):
 
 ```xml
 <key>com.apple.developer.ubiquity-kvstore-identifier</key>
-<string>$(TeamIdentifierPrefix)id.frak.wallet</string>
+<string>$(TeamIdentifierPrefix)$(CFBundleIdentifier)</string>
 
 <key>keychain-access-groups</key>
 <array>
     <string>$(AppIdentifierPrefix)id.frak.wallet</string>
+    <!-- patch-ios-dev.sh appends ".dev" to the line above for the dev build -->
 </array>
 ```
 
-Required Apple Developer Portal configuration on the `id.frak.wallet` App ID:
+Required Apple Developer Portal configuration on **each** App ID (`id.frak.wallet`
+and `id.frak.wallet.dev`):
 1. Enable the **iCloud** capability.
 2. Enable **Key-value storage** (no container needed — uses the App ID).
 3. Regenerate and re-download the provisioning profile.
 
 #### Code Signing
 
-- **Bundle ID**: `id.frak.wallet`
-- **Development Team**: `57DZ6Z2235`
-- Configured in: `tauri.conf.json`
+- **Bundle ID**: `id.frak.wallet` (prod) · `id.frak.wallet.dev` (dev)
+- **Development Team**: `57DZ6Z2235` (shared)
+- Configured in: `tauri.conf.json` (prod) · `tauri.conf.dev.json` overlay + `scripts/patch-ios-dev.sh` (dev)
 
 ### Android
 
@@ -149,10 +154,10 @@ Android uses the **Tauri WebAuthn plugin** (`tauri-plugin-webauthn`) which provi
 #### Digital Asset Links
 
 The app is configured with Digital Asset Links for WebAuthn verification:
-- **Host**: `wallet-dev.frak.id`
-- **APK Key Hash**: `J5BkkRNeQIjYwltCaq5W4EKI5Bj4X9pA8rxuepD24SQ`
-  - ⚠️ **Important**: This hash must match your APK signing key. Update it in `packages/app-essentials/src/webauthn/index.ts` if the signing key changes.
-- Configured in: `gen/android/app/src/main/AndroidManifest.xml`
+- **Host**: `wallet.frak.id` (prod) · `wallet-dev.frak.id` (dev), injected from `app/build.gradle.kts` via `appLinkHost`
+- **APK Key Hash**: derived at runtime from `ANDROID_SHA256_FINGERPRINT` (CSV-supported); the upload keystore is shared between prod and dev so the hash matches both.
+  - ⚠️ **Important**: once Google Play App Signing kicks in for the dev variant, append the new SHA-256 to the dev backend's `ANDROID_SHA256_FINGERPRINT` secret (comma-separated).
+- Configured in: `gen/android/app/src/main/AndroidManifest.xml` (`${appLinkHost}` placeholder) + `app/build.gradle.kts` (`asset_statements` resource)
 
 #### Additional Plugins
 
@@ -166,7 +171,7 @@ Android-specific Tauri plugins:
 
 - **Min SDK**: 28 (Android 9.0)
 - **Target SDK**: 36
-- **Package**: `id.frak.wallet`
+- **Package**: `id.frak.wallet` (prod) · `id.frak.wallet.dev` (dev), driven by the Gradle `appVariant` property
 
 ## Deep Linking
 
@@ -174,15 +179,22 @@ The app supports deep linking via a custom URL scheme.
 
 ### URL Schemes
 
-**Custom URL Scheme:**
-- `frakwallet://wallet` - Open wallet home
-- `frakwallet://send?to=0x...` - Pre-filled send screen
-- `frakwallet://receive` - Receive screen
-- `frakwallet://settings` - Settings
-- `frakwallet://recovery` - Recovery settings
-- `frakwallet://notifications` - Notifications
-- `frakwallet://history` - Transaction history
-- `frakwallet://pair?id=<id>&mode=embedded` - Pairing confirmation (iframe flow)
+**Custom URL Scheme** — each variant registers its own scheme; the OS routes deterministically:
+
+| Path | Prod (`id.frak.wallet`) | Dev (`id.frak.wallet.dev`) |
+|---|---|---|
+| Wallet home | `frakwallet://wallet` | `frakwallet-dev://wallet` |
+| Pre-filled send | `frakwallet://send?to=0x...` | `frakwallet-dev://send?to=0x...` |
+| Receive | `frakwallet://receive` | `frakwallet-dev://receive` |
+| Settings | `frakwallet://settings` | `frakwallet-dev://settings` |
+| Recovery | `frakwallet://recovery` | `frakwallet-dev://recovery` |
+| Notifications | `frakwallet://notifications` | `frakwallet-dev://notifications` |
+| History | `frakwallet://history` | `frakwallet-dev://history` |
+| Pairing | `frakwallet://pair?id=<id>&mode=embedded` | `frakwallet-dev://pair?id=<id>&mode=embedded` |
+
+The active scheme is exposed at build time via the `DEEP_LINK_SCHEME` constant
+(`sdk/core/src/utils/constants.ts`), overridden by the listener's Vite `define`
+based on the deployment stage.
 
 ### Configuration Files
 
@@ -202,13 +214,16 @@ When running in development mode via SST:
 ### Production
 
 Production builds use:
-- **Backend URL**: Configured via environment variables
-- **RP ID**: `frak.id` (production) or `wallet-dev.frak.id` (staging)
-- **RP Origin**: `https://wallet.frak.id` (production) or `https://wallet-dev.frak.id` (staging)
+- **Backend URL**: Configured via environment variables (per-stage)
+- **RP ID**: `frak.id` for both prod and dev Tauri builds (registrable suffix of both `wallet.frak.id` and `wallet-dev.frak.id`, so credentials registered on the web work in either app shell)
+- **RP Origin**: `https://wallet.frak.id` (prod) · `https://wallet-dev.frak.id` (dev), derived from `FRAK_WALLET_URL`
 
 ## WebAuthn Configuration
 
 The WebAuthn configuration is centralized in `packages/app-essentials/src/webauthn/index.ts`:
+
+> Setting up the dev variant from scratch (Apple Portal, Play Console, Firebase, .well-known)
+> is documented in [`docs/dev-variant-setup.md`](./docs/dev-variant-setup.md).
 
 - **RP ID**: Determined by environment (prod/dev/local)
 - **RP Origins**: Includes web origin + mobile app origins

@@ -39,8 +39,10 @@
     "tauri:ios:dev": "sst dev tauri ios dev",
     "tauri:ios:build": "sst shell -- tauri ios build",
     "tauri:ios:build:prod": "sst shell -- tauri ios build --export-method app-store-connect",
+    "tauri:ios:build:dev": "./scripts/build-ios-dev.sh",
     "tauri:android:dev": "sst dev tauri android dev",
     "tauri:android:build": "sst shell -- tauri android build",
+    "tauri:android:build:dev": "./scripts/build-android-dev.sh",
     "tauri:version": "./scripts/sync-version.sh",
     "tauri:icons": "./src-tauri/icons/sources/regenerate.sh"
   },

@@ -1,10 +1,13 @@
+import { isRunningInProd } from "@frak-labs/app-essentials";
 import { Elysia } from "elysia";
 
 const iosTeamId = "57DZ6Z2235";
-const iosBundleId = "id.frak.wallet";
-const iosAppId = `${iosTeamId}.${iosBundleId}`;
+// Stage-scoped bundle ID + package: wallet.frak.id advertises only the prod app,
+// wallet-dev.frak.id advertises only the dev app (strict per-host scoping).
+const bundleId = isRunningInProd ? "id.frak.wallet" : "id.frak.wallet.dev";
+const iosAppId = `${iosTeamId}.${bundleId}`;
 
-const androidPackageName = "id.frak.wallet";
+const androidPackageName = bundleId;
 
 // Validate Android SHA256 fingerprint(s) from environment.
 // Supports comma-separated values for multiple signing keys
