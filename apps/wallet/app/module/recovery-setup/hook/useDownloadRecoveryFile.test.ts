@@ -13,6 +13,7 @@ import { useDownloadRecoveryFile } from "./useDownloadRecoveryFile";
 
 vi.mock("@frak-labs/app-essentials/utils/platform", () => ({
     isAndroid: vi.fn(() => false),
+    isIOS: vi.fn(() => false),
     isTauri: vi.fn(() => false),
 }));
 

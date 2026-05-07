@@ -60,6 +60,11 @@ const router = createRouter({
     defaultPendingMinMs: 500,
     scrollRestoration: true,
     scrollToTopSelectors: ["main"],
+    // Browsers without `document.startViewTransition` (Firefox, Safari < 18)
+    // gracefully fall through to instant navigation.
+    defaultViewTransition: {
+        types: ({ pathChanged }) => (pathChanged ? ["page"] : false),
+    },
 });
 
 // Subscribe to navigation events to manage root element attributes
