@@ -62,6 +62,25 @@ export const giftIcon = style({
     flexShrink: 0,
 });
 
+export const imageWrapper = style({
+    flexShrink: 0,
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    width: "80px",
+    height: "80px",
+    overflow: "hidden",
+});
+
+export const customImage = style({
+    maxWidth: "100%",
+    maxHeight: "100%",
+    width: "auto",
+    height: "auto",
+    objectFit: "contain",
+    display: "block",
+});
+
 export const frakLogo = style({
     display: "block",
     marginLeft: "auto",

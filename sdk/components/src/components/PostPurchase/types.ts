@@ -61,6 +61,13 @@ export type PostPurchaseProps = {
      */
     ctaText?: string;
     /**
+     * Override the image displayed on the left of the post-purchase card.
+     * Accepts an image URL. Falls back to the built-in gift icon when omitted.
+     * The image is constrained to the icon slot via `object-fit: contain`,
+     * so any aspect ratio renders correctly.
+     */
+    imageUrl?: string;
+    /**
      * Optional product cards forwarded to the sharing page when the user
      * clicks the CTA. Accepts either a real {@link SharingPageProduct}
      * array (when set imperatively via the JS property,

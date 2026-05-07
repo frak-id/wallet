@@ -29,6 +29,7 @@ import {
     referralCta,
     referralDescription,
     referralIconWrapper,
+    referralImage,
     referralTitle,
 } from "./Banner.css";
 import type { BannerProps } from "./types";
@@ -75,6 +76,7 @@ export function Banner({
     inappTitle: propInappTitle,
     inappDescription: propInappDescription,
     inappCta: propInappCta,
+    imageUrl,
     preview,
     previewMode,
 }: BannerProps) {
@@ -285,7 +287,15 @@ export function Banner({
     return (
         <div class={bannerClass} role="alert">
             <div class={`${referralIconWrapper} frak-banner__icon`}>
-                <GiftIcon class={iconSvg} />
+                {imageUrl ? (
+                    <img
+                        src={imageUrl}
+                        alt=""
+                        class={referralImage}
+                    />
+                ) : (
+                    <GiftIcon class={iconSvg} />
+                )}
             </div>
             <div class={`${referralBody} frak-banner__text`}>
                 <p class={`${referralTitle} frak-banner__title`}>

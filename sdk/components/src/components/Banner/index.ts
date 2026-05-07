@@ -31,6 +31,7 @@ registerWebComponent(
         "inappCta",
         "preview",
         "previewMode",
+        "imageUrl",
     ],
     {
         shadow: false,

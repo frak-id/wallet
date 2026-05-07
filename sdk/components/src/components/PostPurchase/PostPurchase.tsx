@@ -38,9 +38,11 @@ import {
     card,
     cssSource,
     cta,
+    customImage,
     frakLogo,
     giftIcon,
     icon,
+    imageWrapper,
     message,
 } from "./PostPurchase.css";
 import { coerceProductCandidates, normalizeProductCandidate } from "./products";
@@ -131,6 +133,7 @@ export function PostPurchase({
     preview,
     previewVariant,
     products,
+    imageUrl,
 }: PostPurchaseProps) {
     const isPreview = !!preview;
     const { shouldRender, isHidden, isClientReady } = useClientReady();
@@ -370,7 +373,21 @@ export function PostPurchase({
                 </Column>
                 <Column width="content">
                     <Stack space="xs" align="right">
-                        <GiftIcon className={giftIcon} width={80} height={80} />
+                        {imageUrl ? (
+                            <span class={imageWrapper}>
+                                <img
+                                    src={imageUrl}
+                                    alt=""
+                                    class={customImage}
+                                />
+                            </span>
+                        ) : (
+                            <GiftIcon
+                                className={giftIcon}
+                                width={80}
+                                height={80}
+                            />
+                        )}
                         <LogoFrak className={frakLogo} width={14} height={14} />
                     </Stack>
                 </Column>

@@ -36,6 +36,7 @@ registerWebComponent(
         "products",
         "preview",
         "previewVariant",
+        "imageUrl",
     ],
     {
         shadow: false,

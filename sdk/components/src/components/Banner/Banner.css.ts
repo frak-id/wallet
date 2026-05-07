@@ -47,8 +47,21 @@ export const referral = style([
 export const referralIconWrapper = style({
     flexShrink: 0,
     alignSelf: "flex-start",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
     width: "40px",
     height: "40px",
+    overflow: "hidden",
+});
+
+export const referralImage = style({
+    maxWidth: "100%",
+    maxHeight: "100%",
+    width: "auto",
+    height: "auto",
+    objectFit: "contain",
+    display: "block",
 });
 
 export const referralBody = style({
