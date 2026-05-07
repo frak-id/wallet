@@ -105,9 +105,10 @@ iOS uses **native WKWebView WebAuthn** support, which means:
 #### Associated Domains
 
 The app is configured with Associated Domains for WebAuthn:
-- **Prod variant** (`id.frak.wallet`): `webcredentials:wallet.frak.id`, `applinks:wallet.frak.id`
-- **Dev variant**  (`id.frak.wallet.dev`): `webcredentials:wallet-dev.frak.id`, `applinks:wallet-dev.frak.id`
-- Configured in: `gen/apple/app_iOS/app_iOS.entitlements` (rewritten in place by `scripts/patch-ios-dev.sh` for the dev build)
+- **Shared (both variants)**: `webcredentials:frak.id` — required because `WebAuthN.rpId` resolves to `frak.id` in Tauri (see `packages/app-essentials/src/webauthn/index.ts`); the AASA at the apex lists both bundle IDs.
+- **Prod variant** (`id.frak.wallet`): adds `webcredentials:wallet.frak.id`, `applinks:wallet.frak.id`
+- **Dev variant** (`id.frak.wallet.dev`): adds `webcredentials:wallet-dev.frak.id`, `applinks:wallet-dev.frak.id`
+- Configured in: `gen/apple/project.yml` + `gen/apple/app_iOS/app_iOS.entitlements` (the host-scoped `wallet*.frak.id` lines are rewritten in place by `scripts/patch-ios-dev.sh` for the dev build; the `frak.id` line is shared and untouched)
 
 This allows the app to share WebAuthn credentials with the matching web domain.
 

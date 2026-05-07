@@ -6,6 +6,7 @@
 	<string>development</string>
 	<key>com.apple.developer.associated-domains</key>
 	<array>
+		<string>webcredentials:frak.id</string>
 		<string>webcredentials:wallet.frak.id</string>
 		<string>applinks:wallet.frak.id</string>
 	</array>

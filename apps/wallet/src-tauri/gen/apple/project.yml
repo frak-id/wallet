@@ -69,6 +69,7 @@ targets:
       path: app_iOS/app_iOS.entitlements
       properties:
         com.apple.developer.associated-domains:
+          - webcredentials:frak.id
           - webcredentials:wallet.frak.id
           - applinks:wallet.frak.id
         # iCloud Key-Value storage — tauri-plugin-recovery-hint uses this to
