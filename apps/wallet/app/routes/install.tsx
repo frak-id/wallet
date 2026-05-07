@@ -149,9 +149,14 @@ function InstallProcessing({ m: merchantId, a: anonymousId }: InstallSearch) {
 //  Install code view — web only, when the user needs to download the app
 // ---------------------------------------------------------------------------
 
+// Stage-scoped Android package id (prod build → id.frak.wallet,
+// dev build → id.frak.wallet.dev). The App Store URL stays prod-only;
+// the dev iOS variant ships through TestFlight, not the public store.
+const isProdStage =
+    process.env.STAGE === "prod" || process.env.STAGE === "production";
+const playStorePackage = isProdStage ? "id.frak.wallet" : "id.frak.wallet.dev";
 const appStoreUrl = "https://apps.apple.com/app/frak-wallet/id6740261164";
-const playStoreUrl =
-    "https://play.google.com/store/apps/details?id=id.frak.wallet";
+const playStoreUrl = `https://play.google.com/store/apps/details?id=${playStorePackage}`;
 
 function merchantInfoQueryOptions(merchantId?: string) {
     return queryOptions({

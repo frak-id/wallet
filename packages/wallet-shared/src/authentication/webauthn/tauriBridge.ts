@@ -17,6 +17,7 @@ import {
 } from "@frak-labs/app-essentials/utils/platform";
 import type { WebAuthnP256 } from "ox";
 import { BaseError } from "ox/Errors";
+import { getInvoke } from "../../common/tauri";
 
 // ============================================================================
 // Types matching what the plugin returns (base64url JSON)
@@ -103,7 +104,7 @@ async function invokeTauriPlugin<T>(
     command: string,
     args?: Record<string, unknown>
 ): Promise<T> {
-    const { invoke } = await import("@tauri-apps/api/core");
+    const invoke = await getInvoke();
     return invoke(`plugin:frak-webauthn|${command}`, args);
 }
 
@@ -114,12 +115,24 @@ function getWebAuthnOrigin(): string {
 }
 
 // ============================================================================
-// SPKI DER extraction from attestationObject (iOS fallback)
+// SPKI DER extraction from attestationObject — JS-side fallback
 //
-// iOS ASAuthorization doesn't expose the public key in SPKI DER format.
-// We extract P-256 coordinates from the COSE key embedded in the
-// attestationObject using the same byte-scan approach as Ox's internal
-// fallback (ox/core/internal/webauthn.ts).
+// TODO(remove-once-ios-rollout-stable): The iOS plugin
+// (`tauri-plugin-frak-webauthn`) now extracts the SPKI natively in Swift and
+// emits it as `response.publicKey`, matching the Android Credential Manager
+// shape. This JS-side scan is kept as a safety net for the rollout window —
+// once we're confident every shipped iOS build returns `publicKey`, drop the
+// helpers below and simplify `getPublicKey` to:
+//
+//     getPublicKey: () => json.response.publicKey
+//         ? fromBase64Url(json.response.publicKey)
+//         : null,
+//
+// Tracking: tied to the next mobile release after the Swift change lands in
+// production (TestFlight + Play Store). Do NOT call into this from new code.
+//
+// Mirrors the byte-scan approach used by Ox's WebAuthn fallback
+// (ox/core/internal/webauthn.ts).
 //
 // CBOR encoding reference:
 //   0x21 = CBOR negative int -2 (COSE label for x coordinate)

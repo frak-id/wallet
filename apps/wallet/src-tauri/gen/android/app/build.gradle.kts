@@ -20,17 +20,36 @@ val keyProperties = Properties().apply {
     }
 }
 
+// Variant selection: pass `-PappVariant=dev` (or `ORG_GRADLE_PROJECT_appVariant=dev`)
+// to build the dev wallet (id.frak.wallet.dev / "Frak Wallet Dev"). Defaults to prod.
+val appVariant = (project.findProperty("appVariant") as? String) ?: "prod"
+val isDevVariant = appVariant == "dev"
+val appName = if (isDevVariant) "Frak Wallet Dev" else "Frak Wallet"
+val appLinkHost = if (isDevVariant) "wallet-dev.frak.id" else "wallet.frak.id"
+val deepLinkScheme = if (isDevVariant) "frakwallet-dev" else "frakwallet"
+
 android {
     compileSdk = 36
     ndkVersion = "29.0.14206865"
     namespace = "id.frak.wallet"
     defaultConfig {
         manifestPlaceholders["usesCleartextTraffic"] = "false"
-        applicationId = "id.frak.wallet"
+        applicationId = if (isDevVariant) "id.frak.wallet.dev" else "id.frak.wallet"
         minSdk = 28
         targetSdk = 36
         versionCode = tauriProperties.getProperty("tauri.android.versionCode", "1").toInt()
         versionName = tauriProperties.getProperty("tauri.android.versionName", "1.0")
+
+        // Variant-aware resources & manifest placeholders (replace the corresponding strings.xml entries).
+        resValue("string", "app_name", appName)
+        resValue("string", "main_activity_title", appName)
+        resValue(
+            "string",
+            "asset_statements",
+            """[{\"include\": \"https://$appLinkHost/.well-known/assetlinks.json\"}]"""
+        )
+        manifestPlaceholders["appLinkHost"] = appLinkHost
+        manifestPlaceholders["deepLinkScheme"] = deepLinkScheme
     }
     signingConfigs {
         create("release") {

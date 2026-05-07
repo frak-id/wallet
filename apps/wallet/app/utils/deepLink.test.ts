@@ -57,10 +57,6 @@ vi.mock("@frak-labs/wallet-shared", async (importOriginal) => {
     };
 });
 
-vi.mock("@/module/common/utils/walletMode", () => ({
-    isCryptoMode: true,
-}));
-
 describe("initDeepLinks", () => {
     beforeEach(async () => {
         vi.clearAllMocks();
@@ -215,6 +211,24 @@ describe("initDeepLinks", () => {
         expect(navigate).toHaveBeenCalledWith({
             to: "/pairing",
             search: { id: "pair-cs", mode: "embedded" },
+        });
+    });
+
+    test("should handle frakwallet-dev:// custom scheme (dev variant)", async () => {
+        const { initDeepLinks } = await import("./deepLink");
+        const navigate = vi.fn();
+
+        await initDeepLinks(navigate);
+
+        if (!openUrlHandler) {
+            throw new Error("Expected openUrlHandler to be set");
+        }
+
+        openUrlHandler(["frakwallet-dev://pair?id=pair-dev&mode=embedded"]);
+
+        expect(navigate).toHaveBeenCalledWith({
+            to: "/pairing",
+            search: { id: "pair-dev", mode: "embedded" },
         });
     });
 

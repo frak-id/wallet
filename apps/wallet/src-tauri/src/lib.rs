@@ -16,7 +16,8 @@ pub fn run() {
             .plugin(tauri_plugin_frak_share::init())
             .plugin(tauri_plugin_clipboard_manager::init())
             .plugin(tauri_plugin_recovery_hint::init())
-            .plugin(tauri_plugin_frak_crashlytics::init());
+            .plugin(tauri_plugin_frak_crashlytics::init())
+            .plugin(tauri_plugin_frak_updater::init());
     }
 
     #[cfg(target_os = "android")]

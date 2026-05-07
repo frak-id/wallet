@@ -156,7 +156,7 @@ export function ExplorerDetail({ merchant, onClose }: ExplorerDetailProps) {
 
     return (
         <DetailSheet style={{ paddingTop: 0 }}>
-            <DetailSheetHero height={375} className={styles.heroImageSheet}>
+            <DetailSheetHero height={232} className={styles.heroImageSheet}>
                 <div ref={scrollContainerRef} className={styles.heroSlider}>
                     {images.map((url, index) => (
                         <div

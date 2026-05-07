@@ -1,0 +1,1 @@
+export { getInvoke } from "./bridge";

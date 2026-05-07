@@ -24,7 +24,7 @@ export function isChromiumAndroid(): boolean {
 }
 
 /**
- * Convert a frakwallet:// deep link to an Android intent:// URL.
+ * Convert a Frak deep link to an Android intent:// URL.
  *
  * Intent URLs let Chromium browsers open the app directly without
  * showing the "Continue to app?" confirmation bar.
@@ -35,12 +35,17 @@ export function isChromiumAndroid(): boolean {
  * Without `package`, Chrome simply does nothing when the app is
  * missing, allowing the fallback mechanism to fire correctly.
  *
- * Format: intent://path#Intent;scheme=frakwallet;end
+ * The scheme is derived from `DEEP_LINK_SCHEME` so the dev variant
+ * (`frakwallet-dev://`) routes to the dev app shell, not prod.
+ *
+ * Format: intent://path#Intent;scheme=<scheme>;end
  */
+const DEEP_LINK_SCHEME_NAME = DEEP_LINK_SCHEME.replace("://", "");
+
 export function toAndroidIntentUrl(deepLink: string): string {
-    // Extract everything after "frakwallet://"
+    // Extract everything after the scheme (e.g. "frakwallet://" or "frakwallet-dev://")
     const path = deepLink.slice(DEEP_LINK_SCHEME.length);
-    return `intent://${path}#Intent;scheme=frakwallet;end`;
+    return `intent://${path}#Intent;scheme=${DEEP_LINK_SCHEME_NAME};end`;
 }
 
 /**

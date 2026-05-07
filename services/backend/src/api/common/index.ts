@@ -2,6 +2,7 @@ import { Elysia } from "elysia";
 import { airtableRoutes } from "./airtable";
 import { commonRoutes } from "./common";
 import { socialRoute } from "./social";
+import { versionRoutes } from "./version";
 
 /**
  * Shared API routes used both internally within the monorepo and externally
@@ -13,4 +14,5 @@ import { socialRoute } from "./social";
 export const commonApi = new Elysia({ prefix: "/common" })
     .use(airtableRoutes)
     .use(socialRoute)
-    .use(commonRoutes);
+    .use(commonRoutes)
+    .use(versionRoutes);

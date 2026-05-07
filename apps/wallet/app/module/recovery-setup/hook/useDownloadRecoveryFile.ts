@@ -1,5 +1,6 @@
 import { isAndroid, isTauri } from "@frak-labs/app-essentials/utils/platform";
 import {
+    getInvoke,
     type RecoveryFileContent,
     recordError,
 } from "@frak-labs/wallet-shared";
@@ -109,7 +110,7 @@ async function downloadViaTauriShare(
     fileContent: string,
     fileName: string
 ): Promise<void> {
-    const { invoke } = await import("@tauri-apps/api/core");
+    const invoke = await getInvoke();
     const { downloadDir, join } = await import("@tauri-apps/api/path");
     const { writeTextFile, BaseDirectory } = await import(
         "@tauri-apps/plugin-fs"

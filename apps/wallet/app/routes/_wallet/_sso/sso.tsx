@@ -9,7 +9,12 @@ import { Box } from "@frak-labs/design-system/components/Box";
 import { Button } from "@frak-labs/design-system/components/Button";
 import { Spinner } from "@frak-labs/design-system/components/Spinner";
 import { Text } from "@frak-labs/design-system/components/Text";
-import { CircleCheckIcon, LogoFrak } from "@frak-labs/design-system/icons";
+import {
+    ArrowLeftIcon,
+    CircleCheckIcon,
+    LogoFrak,
+    WalletIcon,
+} from "@frak-labs/design-system/icons";
 import { createRpcClient } from "@frak-labs/frame-connector";
 import type { Session, SsoRpcSchema } from "@frak-labs/wallet-shared";
 import {
@@ -28,6 +33,7 @@ import { createFileRoute, redirect } from "@tanstack/react-router";
 import i18next from "i18next";
 import { useCallback, useMemo, useState } from "react";
 import { Trans, useTranslation } from "react-i18next";
+import { type Address, slice } from "viem";
 import * as layout from "@/module/authentication/component/authLayout.css";
 import { ButtonAuth } from "@/module/authentication/component/ButtonAuth";
 import * as styles from "@/module/authentication/component/Sso/index.css";
@@ -143,6 +149,22 @@ function Sso() {
      * Current view: initial auth choices or QR-code pairing screen.
      */
     const [view, setView] = useState<"choose" | "pairing">("choose");
+
+    /**
+     * Whether we already have an active session in store — typically a
+     * `distant-webauthn` from a prior pairing or a still-valid local
+     * webauthn login. When true, the user can complete SSO with a single
+     * click; no biometry / no re-pair.
+     */
+    const session = sessionStore((state) => state.session);
+
+    /**
+     * One-shot opt-out: if the user clicks "Use another account", we keep
+     * the existing session in store (so a paired desktop stays paired)
+     * but render the standard login/register choices on this page only.
+     */
+    const [bypassSession, setBypassSession] = useState(false);
+    const useSessionShortcut = !!session && !bypassSession;
 
     /**
      * The on success callback
@@ -331,10 +353,29 @@ function Sso() {
                         />
                     )}
                     <Box className={layout.actions}>
-                        <Actions onSuccess={onSuccess} onError={setError} />
-                        <PhonePairingAction
-                            onClick={() => setView("pairing")}
-                        />
+                        {useSessionShortcut ? (
+                            <ContinueAsSession
+                                address={session.address}
+                                productName={currentMetadata.name}
+                                onContinue={onSuccess}
+                                onUseAnother={() => setBypassSession(true)}
+                            />
+                        ) : (
+                            <>
+                                <Actions
+                                    onSuccess={onSuccess}
+                                    onError={setError}
+                                />
+                                <PhonePairingAction
+                                    onClick={() => setView("pairing")}
+                                />
+                                {session && bypassSession && (
+                                    <BackToSessionAction
+                                        onClick={() => setBypassSession(false)}
+                                    />
+                                )}
+                            </>
+                        )}
                     </Box>
                     <Disclaimer metadata={currentMetadata} />
                 </>
@@ -480,6 +521,9 @@ function Actions({
         );
     }
 
+    // Note: the "existing session" smooth path is handled at the parent
+    // level (`Sso` component) via the `ContinueAsSession` component.
+
     // If previous wallet known
     if (lastAuthenticator) {
         return (
@@ -524,6 +568,66 @@ function Actions({
     );
 }
 
+/**
+ * Smooth path shown when an active session is already in `sessionStore`.
+ *
+ * Renders three stacked elements:
+ *  1. A single primary CTA ("Continue with my wallet") that forwards the
+ *     existing session to the listener iframe via `sso_complete`. No
+ *     biometry, no re-pair.
+ *  2. A caption telling the user which merchant + which wallet address
+ *     the click will sign them in to.
+ *  3. A ghost "Use another account" link that flips the parent state to
+ *     reveal the standard login/register choices without touching the
+ *     session in store — so cancelling preserves the paired desktop.
+ */
+function ContinueAsSession({
+    address,
+    productName,
+    onContinue,
+    onUseAnother,
+}: {
+    address: Address;
+    productName?: string;
+    onContinue: () => void;
+    onUseAnother: () => void;
+}) {
+    const { t } = useTranslation();
+    return (
+        <>
+            <Box>
+                <Button
+                    variant="primary"
+                    icon={<WalletIcon width={24} height={24} />}
+                    onClick={onContinue}
+                >
+                    {t("authent.sso.btn.continue")}
+                </Button>
+            </Box>
+            <Text variant="caption" align="center" color="primary">
+                <Trans
+                    i18nKey="authent.sso.continueDescription"
+                    values={{
+                        productName: productName ?? "",
+                        address: shortenAddress(address),
+                    }}
+                />
+            </Text>
+            <Box>
+                <Button variant="ghost" onClick={onUseAnother}>
+                    {t("authent.sso.btn.useAnother")}
+                </Button>
+            </Box>
+        </>
+    );
+}
+
+function shortenAddress(address: Address): string {
+    const start = slice(address, 0, 3); // "0x" + 2 hex chars
+    const end = slice(address, -4).replace("0x", "");
+    return `${start}...${end}`;
+}
+
 function PhonePairingAction({ onClick }: { onClick: () => void }) {
     const { t } = useTranslation();
 
@@ -536,6 +640,26 @@ function PhonePairingAction({ onClick }: { onClick: () => void }) {
         <Box>
             <Button variant="ghost" onClick={onClick}>
                 {t("authent.sso.btn.new.phone")}
+            </Button>
+        </Box>
+    );
+}
+
+/**
+ * Ghost "← Back to my wallet" button shown when the user has bypassed the
+ * session shortcut (via "Use another account") but might want to return to
+ * it. Restores the smooth flow without touching the session in store.
+ */
+function BackToSessionAction({ onClick }: { onClick: () => void }) {
+    const { t } = useTranslation();
+    return (
+        <Box>
+            <Button
+                variant="ghost"
+                icon={<ArrowLeftIcon width={16} height={16} />}
+                onClick={onClick}
+            >
+                {t("authent.sso.btn.backToSession")}
             </Button>
         </Box>
     );

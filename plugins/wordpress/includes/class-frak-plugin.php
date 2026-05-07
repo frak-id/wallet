@@ -72,6 +72,16 @@ class Frak_Plugin {
 	public static function init() {
 		$has_wc = class_exists( 'WooCommerce' );
 
+		// Webhook payload PII filter must register in EVERY context (frontend,
+		// admin, CLI, cron) because WC dispatches webhooks synchronously from
+		// `woocommerce_update_order` — the trigger fires in whichever request
+		// changed the order. The option-update hooks below are registered
+		// per-context (admin/CLI/cron only) since those are the only contexts
+		// that mutate the watched options.
+		if ( $has_wc ) {
+			Frak_WC_Webhook_Registrar::init_payload_filter();
+		}
+
 		if ( ( defined( 'WP_CLI' ) && WP_CLI ) || wp_doing_cron() ) {
 			if ( $has_wc ) {
 				Frak_WC_Webhook_Registrar::init();
@@ -94,6 +104,11 @@ class Frak_Plugin {
 
 		if ( $has_wc ) {
 			Frak_WooCommerce::init();
+			// Funnel-builder compatibility (FunnelKit / CartFlows). Self-gates
+			// on `class_exists` for the funnel plugins, so the registration
+			// is a no-op on stores running stock WooCommerce — zero per-request
+			// cost when no funnel builder is active.
+			Frak_Funnel_Compat::init();
 		}
 	}
 }

@@ -1,5 +1,6 @@
 import { isTauri } from "@frak-labs/app-essentials/utils/platform";
 import type { Address } from "viem";
+import { getInvoke } from "../tauri";
 
 /**
  * Minimal hint persisted in platform-native cloud storage so that the wallet
@@ -29,7 +30,7 @@ const INVOKE_CLEAR = "plugin:recovery-hint|clear_recovery_hint";
 // Tauri desktop target that would reject with "command not found".
 
 async function tauriInvoke<T>(cmd: string, args?: unknown): Promise<T> {
-    const { invoke } = await import("@tauri-apps/api/core");
+    const invoke = await getInvoke();
     return invoke<T>(cmd, args as Record<string, unknown> | undefined);
 }
 

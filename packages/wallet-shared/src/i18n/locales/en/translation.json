@@ -7,6 +7,9 @@
         },
         "sso": {
             "btn": {
+                "continue": "Continue with my wallet",
+                "useAnother": "Use another account",
+                "backToSession": "Back to my wallet",
                 "new": {
                     "create": "Use biometrics",
                     "login": "Already have an existing wallet?",
@@ -17,6 +20,7 @@
                     "login": "Use biometrics"
                 }
             },
+            "continueDescription": "You'll sign in to <strong>{{productName}}</strong> as <strong>{{address}}</strong>.",
             "description": "Frak does not store any personal or biometric data. By continuing you accept our <conditionsLink>terms</conditionsLink> and our <privacyLink>privacy policy</privacyLink>.",
             "header": {
                 "title": "Login with Frak Wallet"
@@ -763,6 +767,30 @@
             "step2Description": "Every order made through your link on {{name}} earns you cash directly in your wallet.",
             "step3Title": "Collect your earnings in your wallet",
             "step3Description": "In one click, transfer your earnings to your bank account."
+        }
+    },
+    "version": {
+        "hardUpdate": {
+            "title": "Update required",
+            "description": "Your version ({{currentVersion}}) is no longer supported. Update to {{minVersion}} or higher to continue using Frak Wallet.",
+            "cta": "Update now",
+            "retry": "Try again",
+            "fallback": "Couldn't open the store automatically. Please update Frak Wallet manually from your device's app store."
+        },
+        "softUpdate": {
+            "available": {
+                "title": "A new version is available",
+                "description": "Update Frak Wallet to get the latest features and improvements.",
+                "cta": "Update"
+            },
+            "inProgress": {
+                "title": "Downloading update… {{percent}}%"
+            },
+            "downloaded": {
+                "title": "Update ready to install.",
+                "cta": "Restart now"
+            },
+            "dismiss": "Later"
         }
     }
 }

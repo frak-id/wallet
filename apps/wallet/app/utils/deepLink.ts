@@ -30,9 +30,20 @@ function extractSearchParams(
 }
 
 /**
+ * Custom URL schemes registered by the wallet variants.
+ * - Prod app (id.frak.wallet) registers `frakwallet://`
+ * - Dev app  (id.frak.wallet.dev) registers `frakwallet-dev://`
+ *
+ * Each variant only ever receives its own scheme from the OS, but we accept
+ * both here so a single source file works for any build without rebuild-only
+ * branching.
+ */
+const customDeepLinkProtocols = new Set(["frakwallet:", "frakwallet-dev:"]);
+
+/**
  * Known wallet hosts that trigger App Link handling on Android.
  * When the OS opens the app via a verified HTTPS link, the URL arrives
- * here as an `https://` deep link instead of the `frakwallet://` scheme.
+ * here as an `https://` deep link instead of the custom scheme.
  */
 const knownWalletHosts = new Set(["wallet.frak.id", "wallet-dev.frak.id"]);
 
@@ -40,8 +51,9 @@ function parseDeepLink(url: string): DeepLinkParams | null {
     try {
         const parsed = new URL(url);
 
-        // frakwallet://pair?id=...&mode=embedded
-        if (parsed.protocol === "frakwallet:") {
+        // frakwallet://pair?id=...&mode=embedded (prod variant)
+        // frakwallet-dev://pair?id=...&mode=embedded (dev variant)
+        if (customDeepLinkProtocols.has(parsed.protocol)) {
             const action =
                 parsed.hostname || parsed.pathname.replace(/^\//, "") || "home";
             return { action, ...extractSearchParams(parsed.searchParams) };

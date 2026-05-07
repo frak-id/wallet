@@ -2,6 +2,7 @@ import { isAndroid, isIOS } from "@frak-labs/app-essentials/utils/platform";
 import { type MutationOptions, useMutation } from "@tanstack/react-query";
 import { trackEvent } from "../../common/analytics";
 import type { SharingSource } from "../../common/analytics/events";
+import { getInvoke } from "../../common/tauri";
 
 type TauriShareResponse = { shared: boolean };
 
@@ -28,7 +29,7 @@ type TauriSharePayload = {
  *     Android 10+ so the chooser shows a branded preview tile.
  */
 async function invokeTauriShare(payload: TauriSharePayload): Promise<boolean> {
-    const { invoke } = await import("@tauri-apps/api/core");
+    const invoke = await getInvoke();
     const response = await invoke<TauriShareResponse>(
         "plugin:frak-share|share_text",
         payload

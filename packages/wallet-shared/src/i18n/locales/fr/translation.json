@@ -7,6 +7,9 @@
         },
         "sso": {
             "btn": {
+                "continue": "Continuer avec mon porte-monnaie",
+                "useAnother": "Utiliser un autre compte",
+                "backToSession": "Retour à mon porte-monnaie",
                 "new": {
                     "create": "Utiliser la biométrie",
                     "login": "Déjà un porte-monnaie existant ?",
@@ -17,6 +20,7 @@
                     "login": "Utiliser la biométrie"
                 }
             },
+            "continueDescription": "Vous vous connecterez à <strong>{{productName}}</strong> en tant que <strong>{{address}}</strong>.",
             "description": "Frak ne stocke aucune donnée personnelle ou biométrique. En continuant vous acceptez nos <conditionsLink>conditions</conditionsLink> et notre <privacyLink>politique de confidentialité</privacyLink>.",
             "header": { "title": "Connectez-vous avec Frak Wallet" },
             "pairing": {
@@ -760,6 +764,30 @@
             "step2Description": "Chaque commande réalisée grâce à toi sur {{name}} te rapporte du cash directement dans ton porte-monnaie.",
             "step3Title": "Récupère tes gains dans ton porte-monnaie",
             "step3Description": "En un clic, transfère tes gains vers ton compte bancaire."
+        }
+    },
+    "version": {
+        "hardUpdate": {
+            "title": "Mise à jour requise",
+            "description": "Ta version ({{currentVersion}}) n'est plus supportée. Installe la version {{minVersion}} ou plus récente pour continuer à utiliser Frak Wallet.",
+            "cta": "Mettre à jour",
+            "retry": "Réessayer",
+            "fallback": "Impossible d'ouvrir le store automatiquement. Mets à jour Frak Wallet manuellement depuis le store de ton appareil."
+        },
+        "softUpdate": {
+            "available": {
+                "title": "Une nouvelle version est disponible",
+                "description": "Mets à jour Frak Wallet pour profiter des dernières fonctionnalités et améliorations.",
+                "cta": "Mettre à jour"
+            },
+            "inProgress": {
+                "title": "Téléchargement… {{percent}}%"
+            },
+            "downloaded": {
+                "title": "Mise à jour prête à installer.",
+                "cta": "Redémarrer"
+            },
+            "dismiss": "Plus tard"
         }
     }
 }

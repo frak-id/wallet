@@ -105,10 +105,12 @@ export { authenticatorStorage } from "./storage/authenticators";
 export type { PreviousAuthenticatorModel } from "./storage/PreviousAuthenticatorModel";
 export type { RecoveryHint } from "./storage/recoveryHint";
 export { recoveryHintStorage } from "./storage/recoveryHint";
+// Utils
+// Tauri
+export { getInvoke } from "./tauri";
 export { formatCurrency } from "./utils/formatCurrency";
 export { emitLifecycleEvent } from "./utils/lifecycleEvents";
 export { prefixModalCss } from "./utils/prefixModalCss";
-// Utils
 export {
     getFromLocalStorage,
     getSafeSdkSession,

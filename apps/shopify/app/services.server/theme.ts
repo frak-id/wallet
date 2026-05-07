@@ -455,4 +455,3 @@ export async function doesThemeHasFrakBanner(context: AuthenticatedContext) {
         );
     });
 }
-

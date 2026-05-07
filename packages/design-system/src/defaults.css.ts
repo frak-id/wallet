@@ -15,7 +15,11 @@ globalStyle("a", {
 });
 
 globalStyle("a:hover", {
-    color: vars.text.actionHover,
+    "@media": {
+        "(hover: hover)": {
+            color: vars.text.actionHover,
+        },
+    },
 });
 
 globalStyle("body", {

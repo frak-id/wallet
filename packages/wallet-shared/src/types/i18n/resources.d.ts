@@ -82,6 +82,11 @@ interface Resources {
                     q5: "Why do brands use Frak?";
                     title: "Frequently asked questions";
                 };
+                legal: {
+                    help: "Help";
+                    privacy: "Privacy notice";
+                    terms: "Terms & conditions";
+                };
                 reward: {
                     tagline: "You earn a reward every time a friend makes a purchase through your link.";
                     title: "Share with your friends";
@@ -118,6 +123,8 @@ interface Resources {
             };
             sso: {
                 btn: {
+                    backToSession: "Back to my wallet";
+                    continue: "Continue with my wallet";
                     existing: {
                         create: "Create a new wallet";
                         login: "Use biometrics";
@@ -127,7 +134,9 @@ interface Resources {
                         login: "Already have an existing wallet?";
                         phone: "Use a QR code to connect";
                     };
+                    useAnother: "Use another account";
                 };
+                continueDescription: "You'll sign in to <strong>{{productName}}</strong> as <strong>{{address}}</strong>.";
                 description: "Frak does not store any personal or biometric data. By continuing you accept our <conditionsLink>terms</conditionsLink> and our <privacyLink>privacy policy</privacyLink>.";
                 header: {
                     title: "Login with Frak Wallet";
@@ -511,8 +520,32 @@ interface Resources {
             text: "Discover this amazing product!";
             title: "{{productName}} invite link";
         };
+        version: {
+            hardUpdate: {
+                cta: "Update now";
+                description: "Your version ({{currentVersion}}) is no longer supported. Update to {{minVersion}} or higher to continue using Frak Wallet.";
+                fallback: "Couldn't open the store automatically. Please update Frak Wallet manually from your device's app store.";
+                retry: "Try again";
+                title: "Update required";
+            };
+            softUpdate: {
+                available: {
+                    cta: "Update";
+                    description: "Update Frak Wallet to get the latest features and improvements.";
+                    title: "A new version is available";
+                };
+                dismiss: "Later";
+                downloaded: {
+                    cta: "Restart now";
+                    title: "Update ready to install.";
+                };
+                inProgress: {
+                    title: "Downloading update… {{percent}}%";
+                };
+            };
+        };
         wallet: {
-            activateNotifications: "<strong>Enable notifications</strong> <br /> to be notified when your gains are paid";
+            activateNotifications: "Turn on notifs to track your earnings in real time.";
             activateNotificationsRationale: "<strong>Enable notifications</strong> <br /> We need your permission to notify you when gains are paid";
             inAppBrowser: {
                 clickToOpen: "Tap to open in your browser.";
