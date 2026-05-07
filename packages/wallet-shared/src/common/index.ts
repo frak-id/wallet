@@ -77,6 +77,7 @@ export {
 } from "./component/Drawer";
 export { InAppBrowserToast } from "./component/InAppBrowserToast";
 export { Markdown } from "./component/Markdown";
+export { OfflineBanner } from "./component/OfflineBanner";
 export { TextData } from "./component/TextData";
 export { Toast } from "./component/Toast";
 export { WalletModal } from "./component/WalletModal";
@@ -92,6 +93,7 @@ export {
 } from "./hook/useEstimatedReward";
 export { useGetSafeSdkSession } from "./hook/useGetSafeSdkSession";
 export { useMountedTimeout } from "./hook/useMountedTimeout";
+export { useOnlineStatus } from "./hook/useOnlineStatus";
 export { useSessionFlag } from "./hook/useSessionFlag";
 // Lib
 export { isInIframe } from "./lib/inApp";

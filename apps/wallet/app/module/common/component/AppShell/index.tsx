@@ -4,7 +4,7 @@ import {
     ProfileIcon,
     WalletIcon,
 } from "@frak-labs/design-system/icons";
-import { InAppBrowserToast } from "@frak-labs/wallet-shared";
+import { InAppBrowserToast, OfflineBanner } from "@frak-labs/wallet-shared";
 import { Outlet, useNavigate, useRouterState } from "@tanstack/react-router";
 import type { ReactNode } from "react";
 import { useMemo, useRef } from "react";
@@ -82,6 +82,7 @@ export function AppShell({
         <AppShellScrollContext.Provider value={scrollValue}>
             <Box className={auth ? shellContainerAuth : shellContainer}>
                 <InAppBrowserToast />
+                <OfflineBanner />
                 <Box
                     as="main"
                     ref={mainRef}

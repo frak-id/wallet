@@ -576,6 +576,10 @@ interface Resources {
             notifications: {
                 noNotifications: "No notifications";
             };
+            offline: {
+                description: "Some features may be unavailable until your connection is restored.";
+                title: "You're offline";
+            };
             openLogin: {
                 login: "Connect with biometrics";
                 webauthnNotSupported: "WebAuthn is not supported on this device";

@@ -441,6 +441,10 @@
             "clipboardAlert": "This browser doesn't support all features needed.\n\nThe link has been copied to your clipboard.\n\nTo continue:\n1. Open Safari\n2. Tap the address bar\n3. Paste and go",
             "clipboardManualAlert": "This browser doesn't support all features needed.\n\nAutomatic copy failed.\n\nCopy this link manually:\n{{url}}\n\nThen:\n1. Open Safari\n2. Tap the address bar\n3. Paste and go"
         },
+        "offline": {
+            "title": "You're offline",
+            "description": "Some features may be unavailable until your connection is restored."
+        },
         "toastLoading": {
             "stuck": "Stuck? See the <pLink>Troubleshooting</pLink> section for more information.<br /><br />You can try to <button>cleanup</button>.<br />(this will logout and you will need to redo a login / pairing)",
             "dismiss": "Dismiss inapp browser warning"
