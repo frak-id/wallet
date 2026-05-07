@@ -129,4 +129,3 @@ export type {
     SdkEventMap,
     SdkHandshakeFailureReason,
 } from "./utils/analytics";
-export { computeLegacyProductId } from "./utils/computeLegacyProductId";
