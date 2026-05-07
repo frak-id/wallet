@@ -62,12 +62,14 @@ export default defineConfig({
         // Run test files in parallel for better performance
         fileParallelism: true,
 
-        // Test execution sequencing for deterministic and concurrent runs
+        // Test execution sequencing for deterministic runs
+        // Tests within a file run sequentially: many suites mutate shared
+        // globals (window.location, global.fetch, sessionStorage, module-level
+        // caches) and rely on beforeEach for isolation, which only works under
+        // sequential execution. Files still run in parallel via fileParallelism.
         sequence: {
-            // Deterministic ordering aids in debugging flaky tests
             shuffle: false,
-            // Run tests concurrently within files for better performance
-            concurrent: true,
+            concurrent: false,
         },
 
         // Optimized reporters for CI vs local development
