@@ -6,9 +6,18 @@ export function useLightDomStyles(
     tag: string,
     placementId?: string,
     placementCss?: string,
-    baseCss?: string
+    baseCss?: string,
+    sharedBaseCss?: string
 ): void {
     useEffect(() => {
+        // Components that pass `sharedBaseCss` (PostPurchase, Banner) opt into
+        // vanilla-extract styling and need the shared design-system base
+        // (reset + theme tokens + sprinkles) injected once. In CDN mode this
+        // is also injected at boot by loader.ts — styleManager.injectBase is
+        // idempotent on the tag id, so the duplicate call is a no-op.
+        if (sharedBaseCss) {
+            styleManager.injectBase("shared", sharedBaseCss);
+        }
         styleManager.injectBase(tag, baseCss ?? lightDomBaseCss);
     }, [tag]);
 

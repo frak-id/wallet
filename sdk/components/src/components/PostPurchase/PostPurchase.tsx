@@ -27,6 +27,7 @@ import { useClientReady } from "@/hooks/useClientReady";
 import { useGlobalComponents } from "@/hooks/useGlobalComponents";
 import { useLightDomStyles } from "@/hooks/useLightDomStyles";
 import { usePlacement } from "@/hooks/usePlacement";
+import { cssSource as sharedBaseCss } from "@/utils/sharedBaseCss.css";
 import {
     applyRewardPlaceholder,
     formatEstimatedReward,
@@ -143,7 +144,8 @@ export function PostPurchase({
         "frak-post-purchase",
         placementId,
         placement?.components?.postPurchase?.css,
-        cssSource
+        cssSource,
+        sharedBaseCss
     );
 
     const [context, setContext] = useState<ResolvedPostPurchaseContext | null>(

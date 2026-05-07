@@ -55,6 +55,19 @@ function vanillaExtractInlinePlugin(): Plugin {
             // Rewrite ALL side-effect .vanilla.css imports into named imports
             // VE generates: import 'file.vanilla.css?source=...'
             // We rewrite to: import { cssSource as css_N } from 'file.vanilla.css?source=...'
+            //
+            // Exception: reset/theme/sprinkles CSS is injected ONCE globally
+            // via `sharedBaseCss.css.ts` (see loader.ts and useLightDomStyles).
+            // For every OTHER source file, those imports are dropped here so
+            // each component's <style> tag only contains component-specific
+            // rules and we never re-emit ~28KB of shared rules per component
+            // (which previously caused cascade-ordering bugs across <style>
+            // tags when components mounted in certain orders).
+            const isSharedBaseFile = filePath.endsWith(
+                "/sharedBaseCss.css.ts"
+            );
+            const sharedCssRe =
+                /\/(reset|theme|sprinkles)\.css\.ts\.vanilla\.css/;
             let counter = 0;
             const cssImportNames: string[] = [];
             const rewritten = output
@@ -62,6 +75,9 @@ function vanillaExtractInlinePlugin(): Plugin {
                 .replace(
                     /import ['"]([^'"]+\.vanilla\.css[^'"]*)['"];?/g,
                     (_match, specifier) => {
+                        if (!isSharedBaseFile && sharedCssRe.test(specifier)) {
+                            return "";
+                        }
                         const name = `__veCss${counter++}`;
                         cssImportNames.push(name);
                         return `import { cssSource as ${name} } from "${specifier}";`;

@@ -19,6 +19,7 @@ import { useClientReady } from "@/hooks/useClientReady";
 import { useGlobalComponents } from "@/hooks/useGlobalComponents";
 import { useLightDomStyles } from "@/hooks/useLightDomStyles";
 import { usePlacement } from "@/hooks/usePlacement";
+import { cssSource as sharedBaseCss } from "@/utils/sharedBaseCss.css";
 import { useReward } from "@/hooks/useReward";
 import { GiftIcon } from "../icons/GiftIcon";
 import {
@@ -90,7 +91,8 @@ export function Banner({
         "frak-banner",
         placementId,
         placement?.components?.banner?.css,
-        cssSource
+        cssSource,
+        sharedBaseCss
     );
 
     const [dismissed, setDismissed] = useState(false);
