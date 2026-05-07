@@ -24,8 +24,14 @@ export const slider = styleVariants({
         scrollbarWidth: "none",
         touchAction: "pan-x",
         WebkitOverflowScrolling: "touch",
+        // Full bleed: extend through the parent's lateral padding so
+        // adjacent cards peek symmetrically and the carousel runs
+        // edge-to-edge of the screen (no white border on either side).
+        marginLeft: `calc(-1 * ${alias.spacing.m})`,
         marginRight: `calc(-1 * ${alias.spacing.m})`,
+        paddingLeft: alias.spacing.m,
         paddingRight: alias.spacing.m,
+        scrollPaddingLeft: alias.spacing.m,
         scrollPaddingRight: alias.spacing.m,
         selectors: {
             "&::-webkit-scrollbar": {
@@ -42,10 +48,12 @@ export const slider = styleVariants({
 
 export const slide = styleVariants({
     multiple: {
-        flex: `0 0 calc(100% - ${alias.spacing.m} - ${alias.spacing.xs})`,
+        // Match the width of the surrounding blocks (Balance, Earnings).
+        // Adjacent cards peek through the slider's lateral breakout zone.
+        flex: "0 0 100%",
         overflow: "hidden",
         borderRadius: alias.cornerRadius.l,
-        scrollSnapAlign: "start",
+        scrollSnapAlign: "center",
         scrollSnapStop: "always",
     },
     single: {
