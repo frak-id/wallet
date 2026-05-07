@@ -28,8 +28,9 @@
  *
  * @ignore
  */
-import { type Address, bytesToHex, hexToBytes, isAddress } from "viem";
+import type { Address } from "viem";
 import type { FrakContextV2 } from "../types";
+import { addressToBytes, bytesToAddress, isAddress } from "./address";
 
 const VERSION_V2 = 0x02;
 const VERSION_MASK = 0x0f;
@@ -111,7 +112,7 @@ export function encodeFrakContextV2(ctx: FrakContextV2): Uint8Array | null {
     }
 
     if (hasW) {
-        buf.set(hexToBytes(ctx.w as Address), offset);
+        buf.set(addressToBytes(ctx.w as Address), offset);
         offset += ADDRESS_BYTES;
     }
 
@@ -165,10 +166,9 @@ export function decodeFrakContextV2(buf: Uint8Array): FrakContextV2 | null {
     }
 
     if (hasW) {
-        const walletHex = bytesToHex(
-            buf.subarray(offset, offset + ADDRESS_BYTES),
-            { size: ADDRESS_BYTES }
-        ) as Address;
+        const walletHex = bytesToAddress(
+            buf.subarray(offset, offset + ADDRESS_BYTES)
+        );
         if (!isAddress(walletHex)) return null;
         out.w = walletHex;
         offset += ADDRESS_BYTES;

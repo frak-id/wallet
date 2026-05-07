@@ -1,14 +1,9 @@
 // Clients
 
 export { ssoPopupFeatures, ssoPopupName } from "./actions/openSso";
-export {
-    createIFrameFrakClient,
-    DebugInfoGatherer,
-    setupClient,
-} from "./clients";
+export { createIFrameFrakClient, setupClient } from "./clients";
 
 export type { InteractionTypeKey } from "./constants/interactionTypes";
-export { type LocalesKey, locales } from "./constants/locales";
 
 // Types
 export type {
@@ -87,7 +82,6 @@ export type {
     UtmParams,
     WalletStatusReturnType,
 } from "./types";
-export { isV1Context, isV2Context } from "./types";
 // Utils
 export {
     type AppSpecificSsoMetadata,
@@ -97,7 +91,6 @@ export {
     type CompressedSsoData,
     clearAllCache,
     compressJsonToB64,
-    createIframe,
     DEEP_LINK_SCHEME,
     type DeepLinkFallbackOptions,
     decompressJsonFromB64,
@@ -107,20 +100,14 @@ export {
     formatAmount,
     generateSsoUrl,
     getBackendUrl,
-    getCache,
     getClientId,
     getCurrencyAmountKey,
     getSupportedCurrency,
-    getSupportedLocale,
-    isChromiumAndroid,
-    isFrakDeepLink,
     isInAppBrowser,
-    isIOS,
     type MergeAttributionInput,
     mergeAttribution,
     redirectToExternalBrowser,
     sdkConfigStore,
-    toAndroidIntentUrl,
     trackEvent,
     triggerDeepLinkWithFallback,
     withCache,

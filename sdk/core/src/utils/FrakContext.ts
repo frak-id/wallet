@@ -1,4 +1,4 @@
-import { type Address, bytesToHex, hexToBytes, isAddress } from "viem";
+import { addressToBytes, bytesToAddress, isAddress } from "./address";
 import type {
     AttributionParams,
     FrakContext,
@@ -34,7 +34,7 @@ function compress(context?: FrakContextV1 | FrakContextV2): string | undefined {
         }
 
         // V1 legacy: compress wallet address as raw bytes
-        const bytes = hexToBytes(context.r);
+        const bytes = addressToBytes(context.r);
         return base64urlEncode(bytes);
     } catch (e) {
         console.error("Error compressing Frak context", { e, context });
@@ -64,7 +64,7 @@ function decompress(context?: string): FrakContext | undefined {
             return undefined;
         }
 
-        const hex = bytesToHex(bytes, { size: 20 }) as Address;
+        const hex = bytesToAddress(bytes);
         if (isAddress(hex)) {
             return { r: hex };
         }

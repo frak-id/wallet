@@ -1,4 +1,4 @@
-import { isAddressEqual } from "viem";
+import { areAddressesEqual } from "../../utils/address";
 import type {
     FrakClient,
     FrakContext,
@@ -113,7 +113,7 @@ function isSelfReferral(
     if (isV2Context(frakContext)) {
         // Wallet match takes precedence — it's the strongest signal we have.
         if (frakContext.w && walletStatus?.wallet) {
-            return isAddressEqual(frakContext.w, walletStatus.wallet);
+            return areAddressesEqual(frakContext.w, walletStatus.wallet);
         }
         if (frakContext.c) {
             return getClientId() === frakContext.c;
@@ -121,7 +121,7 @@ function isSelfReferral(
         return false;
     }
     if (isV1Context(frakContext) && walletStatus?.wallet) {
-        return isAddressEqual(frakContext.r, walletStatus.wallet);
+        return areAddressesEqual(frakContext.r, walletStatus.wallet);
     }
     return false;
 }
