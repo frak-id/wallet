@@ -40,6 +40,7 @@ class Frak_Component_Renderer {
 		'inappTitle'          => 'inapp-title',
 		'inappDescription'    => 'inapp-description',
 		'inappCta'            => 'inapp-cta',
+		'imageUrl'            => 'image-url',
 	);
 
 	/**
@@ -93,6 +94,7 @@ class Frak_Component_Renderer {
 		'referrerText' => 'referrer-text',
 		'refereeText'  => 'referee-text',
 		'ctaText'      => 'cta-text',
+		'imageUrl'     => 'image-url',
 	);
 
 	/**

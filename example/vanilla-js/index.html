@@ -341,18 +341,22 @@
         and a share CTA.
     </p>
     <p class="test-section__note">
-        Fetches referral status and merchant info automatically. Variant is
-        determined by the user's referral state (referrer vs referee).
+        Rendered in <code>preview="true"</code> below so the cards stay visible without a backend referral status.
+        At runtime the variant (referrer vs referee) is auto-detected from the user's referral state.
     </p>
 
-    <h3 class="test-section__subtitle">Default (auto-detect variant)</h3>
+    <h3 class="test-section__subtitle">Default (built-in gift icon)</h3>
     <div class="component-row">
-        <frak-post-purchase></frak-post-purchase>
+        <frak-post-purchase preview="true" preview-variant="referrer"></frak-post-purchase>
     </div>
 
-    <h3 class="test-section__subtitle">With sharing URL override</h3>
+    <h3 class="test-section__subtitle">Custom image (<code>image-url</code>)</h3>
     <div class="component-row">
-        <frak-post-purchase sharing-url="https://example.com/product/shoes"></frak-post-purchase>
+        <frak-post-purchase
+            preview="true"
+            preview-variant="referrer"
+            image-url="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='50' r='44' fill='%230043EF'/><text x='50' y='66' font-size='52' text-anchor='middle' fill='white' font-family='Arial' font-weight='bold'>F</text></svg>"
+        ></frak-post-purchase>
     </div>
 </div>
 
@@ -367,23 +371,21 @@
         Uses Light DOM to inherit merchant styles.
     </p>
     <p class="test-section__note">
-        The in-app browser banner only appears in in-app browsers (Instagram, TikTok, etc.).
-        The referral banner appears after a successful referral.
+        Rendered in <code>preview="true"</code> below so the referral banner stays visible without firing a real referral event.
     </p>
 
-    <h3 class="test-section__subtitle">Default (auto-detect mode)</h3>
+    <h3 class="test-section__subtitle">Default (built-in gift icon)</h3>
     <div class="component-row">
-        <frak-banner></frak-banner>
+        <frak-banner preview="true" preview-mode="referral"></frak-banner>
     </div>
 
-    <h3 class="test-section__subtitle">With placement</h3>
+    <h3 class="test-section__subtitle">Custom image (<code>image-url</code>)</h3>
     <div class="component-row">
-        <frak-banner placement="hero-share"></frak-banner>
-    </div>
-
-    <h3 class="test-section__subtitle">With interaction filter (purchase only)</h3>
-    <div class="component-row">
-        <frak-banner interaction="purchase"></frak-banner>
+        <frak-banner
+            preview="true"
+            preview-mode="referral"
+            image-url="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='50' r='44' fill='%230043EF'/><text x='50' y='66' font-size='52' text-anchor='middle' fill='white' font-family='Arial' font-weight='bold'>F</text></svg>"
+        ></frak-banner>
     </div>
 </div>
 

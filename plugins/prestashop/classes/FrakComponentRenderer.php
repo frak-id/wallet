@@ -33,6 +33,7 @@ class FrakComponentRenderer
         'inappTitle' => 'inapp-title',
         'inappDescription' => 'inapp-description',
         'inappCta' => 'inapp-cta',
+        'imageUrl' => 'image-url',
     ];
 
     /**
@@ -120,6 +121,7 @@ class FrakComponentRenderer
         'orderId' => 'order-id',
         'token' => 'token',
         'products' => 'products',
+        'imageUrl' => 'image-url',
     ];
 
     /**

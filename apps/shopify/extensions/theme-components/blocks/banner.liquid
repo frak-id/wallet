@@ -12,6 +12,7 @@
   {% if block.settings.inapp_title != blank %}inapp-title="{{ block.settings.inapp_title }}"{% endif %}
   {% if block.settings.inapp_description != blank %}inapp-description="{{ block.settings.inapp_description }}"{% endif %}
   {% if block.settings.inapp_cta != blank %}inapp-cta="{{ block.settings.inapp_cta }}"{% endif %}
+  {% if block.settings.image_url != blank %}image-url="{{ block.settings.image_url }}"{% endif %}
   {% if request.design_mode and block.settings.enable_preview %}preview="true" preview-mode="{{ block.settings.preview_mode }}"{% endif %}
 ></frak-banner>
 
@@ -88,6 +89,16 @@
       "id": "inapp_cta",
       "label": "Button text",
       "info": "Override the in-app browser banner button text (default: \"Open browser\")"
+    },
+    {
+      "type": "header",
+      "content": "Image"
+    },
+    {
+      "type": "text",
+      "id": "image_url",
+      "label": "Custom image URL",
+      "info": "Override the gift icon on the left of the banner. Leave empty to keep the default Frak icon. Any aspect ratio works \u2014 the SDK contains the image to a 40\u00d740 slot."
     },
     {
       "type": "header",

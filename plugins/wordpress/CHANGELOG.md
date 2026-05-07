@@ -11,6 +11,15 @@ version on dispatch.
 
 ## [Unreleased]
 
+### Added
+
+- **Custom image override on `<frak-banner>` and `<frak-post-purchase>`**: every Frak surface now exposes a new optional **Image URL** control that swaps the default gift icon shown on the left of the banner / post-purchase card for a merchant-supplied image. Wired through the underlying SDK `imageUrl` prop (HTML attribute `image-url`) added in `@frak-labs/components`. The SDK constrains the image to a fixed slot (40×40 on the banner, 80×80 on the post-purchase) with `object-fit: contain` so over- or under-sized assets render cleanly without breaking the surrounding layout. Empty / unset values fall back to the SDK's built-in `GiftIcon`, so existing posts and configurations see no visual change.
+  - Gutenberg blocks (`frak/banner`, `frak/post-purchase`): new **Image** inspector panel with a live editor preview that reflects the configured URL.
+  - Shortcodes: `[frak_banner image_url="…"]` and `[frak_post_purchase image_url="…"]` (snake_case is normalised to camelCase by `Frak_Component_Renderer::snake_keys_to_camel()`).
+  - Sidebar widgets (`Frak_Banner_Widget`, `Frak_Post_Purchase_Widget`): new **Image URL** field exposed on the widget form (`url` input type for browser-side validation).
+  - Elementor widgets (`Frak_Elementor_Banner_Widget`, `Frak_Elementor_Post_Purchase_Widget`): new **Image** content section with a TEXT control flagged `dynamic` so Elementor Pro users can wire ACF / query parameters / other dynamic data sources into the URL.
+  - `Frak_Component_Renderer::BANNER_ATTRS` and `Frak_Component_Renderer::POST_PURCHASE_ATTRS` map `imageUrl => image-url`, so any plugin author calling the renderer directly automatically forwards the value with no extra wiring.
+
 ## [1.1.5] - 2026-05-06
 
 ### Added

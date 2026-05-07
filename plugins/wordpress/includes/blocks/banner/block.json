@@ -25,6 +25,7 @@
 		"inappTitle": { "type": "string", "default": "" },
 		"inappDescription": { "type": "string", "default": "" },
 		"inappCta": { "type": "string", "default": "" },
+		"imageUrl": { "type": "string", "default": "" },
 		"previewMode": { "type": "string", "default": "referral" }
 	},
 	"editorScript": "file:./editor.js",

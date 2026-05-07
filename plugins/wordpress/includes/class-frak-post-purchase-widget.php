@@ -62,6 +62,11 @@ class Frak_Post_Purchase_Widget extends Frak_Widget_Base {
 				'type'  => 'text',
 				'label' => __( 'Call-to-action text', 'frak' ),
 			),
+			'imageUrl'     => array(
+				'type'  => 'url',
+				'label' => __( 'Image URL', 'frak' ),
+				'help'  => __( 'Override the gift icon on the left. Leave empty to keep the default.', 'frak' ),
+			),
 			'sharingUrl'   => array(
 				'type'  => 'url',
 				'label' => __( 'Sharing URL', 'frak' ),
