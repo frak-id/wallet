@@ -1,5 +1,4 @@
-import { base, element } from "@frak-labs/design-system/utils";
-import "@frak-labs/design-system/sprinkles";
+import { base } from "@frak-labs/design-system/utils";
 // Pull the InAppBanner vanilla-extract styles into this module's dependency graph
 // so the vanillaExtractInlinePlugin aggregates them into the `cssSource` string
 // injected by <frak-banner> via useLightDomStyles. Without this side-effect import,
@@ -8,6 +7,7 @@ import "@frak-labs/design-system/styles/inAppBanner";
 import { vars } from "@frak-labs/design-system/theme";
 import { alias, brand, fontSize } from "@frak-labs/design-system/tokens";
 import { keyframes, style } from "@vanilla-extract/css";
+import { buttonReset } from "@/utils/sharedBaseCss.css";
 
 const fadeIn = keyframes({
     from: { opacity: 0, transform: "translateY(-4px)" },
@@ -90,7 +90,7 @@ export const referralDescription = style([
 ]);
 
 export const referralCta = style([
-    element.button,
+    buttonReset,
     {
         display: "inline-block",
         padding: `${alias.spacing.xs} ${alias.spacing.m}`,
@@ -101,12 +101,6 @@ export const referralCta = style([
         fontWeight: brand.typography.fontWeight.bold,
         lineHeight: "12px",
         textTransform: "uppercase",
-        selectors: {
-            "&:focus-visible": {
-                outline: "2px solid #000000",
-                outlineOffset: "2px",
-            },
-        },
     },
 ]);
 

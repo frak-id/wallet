@@ -19,8 +19,8 @@ import { useClientReady } from "@/hooks/useClientReady";
 import { useGlobalComponents } from "@/hooks/useGlobalComponents";
 import { useLightDomStyles } from "@/hooks/useLightDomStyles";
 import { usePlacement } from "@/hooks/usePlacement";
-import { cssSource as sharedBaseCss } from "@/utils/sharedBaseCss.css";
 import { useReward } from "@/hooks/useReward";
+import { cssSource as sharedBaseCss } from "@/utils/sharedBaseCss.css";
 import { GiftIcon } from "../icons/GiftIcon";
 import {
     cssSource,
@@ -290,11 +290,7 @@ export function Banner({
         <div class={bannerClass} role="alert">
             <div class={`${referralIconWrapper} frak-banner__icon`}>
                 {imageUrl ? (
-                    <img
-                        src={imageUrl}
-                        alt=""
-                        class={referralImage}
-                    />
+                    <img src={imageUrl} alt="" class={referralImage} />
                 ) : (
                     <GiftIcon class={iconSvg} />
                 )}

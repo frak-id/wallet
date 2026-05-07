@@ -63,11 +63,9 @@ function vanillaExtractInlinePlugin(): Plugin {
             // rules and we never re-emit ~28KB of shared rules per component
             // (which previously caused cascade-ordering bugs across <style>
             // tags when components mounted in certain orders).
-            const isSharedBaseFile = filePath.endsWith(
-                "/sharedBaseCss.css.ts"
-            );
+            const isSharedBaseFile = filePath.endsWith("/sharedBaseCss.css.ts");
             const sharedCssRe =
-                /\/(reset|theme|sprinkles)\.css\.ts\.vanilla\.css/;
+                /\/(reset|theme|sprinkles|sharedBaseCss)\.css\.ts\.vanilla\.css/;
             let counter = 0;
             const cssImportNames: string[] = [];
             const rewritten = output

@@ -3,9 +3,9 @@ import { onDocumentReady } from "./onDocumentReady";
 import { cssSource as sharedBaseCss } from "./sharedBaseCss.css";
 import { styleManager } from "./styleManager";
 
-// Inject the shared base CSS (vanilla-extract reset rules + theme tokens +
-// sprinkles utilities) ONCE for the SDK. Components no longer bundle these
-// rules in their own cssSource — see sharedBaseCss.css.ts.
+// Inject the shared base CSS (vanilla-extract reset rules + theme tokens)
+// ONCE for the SDK. Components no longer bundle these rules in their own
+// cssSource — see sharedBaseCss.css.ts.
 styleManager.injectBase("shared", sharedBaseCss);
 
 // Prevent FOUCE: hide undefined custom elements until they're registered
