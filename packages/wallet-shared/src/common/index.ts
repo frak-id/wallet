@@ -76,6 +76,7 @@ export {
 } from "./api/errors";
 // Components
 export { CodeInput } from "./component/CodeInput";
+export { ExternalLink } from "./component/ExternalLink";
 export { InAppBrowserToast } from "./component/InAppBrowserToast";
 export { Markdown } from "./component/Markdown";
 export { OfflineBanner } from "./component/OfflineBanner";
@@ -111,6 +112,7 @@ export { recoveryHintStorage } from "./storage/recoveryHint";
 export { getInvoke } from "./tauri";
 export { formatCurrency } from "./utils/formatCurrency";
 export { emitLifecycleEvent } from "./utils/lifecycleEvents";
+export { openExternalUrl } from "./utils/openExternalUrl";
 export { prefixModalCss } from "./utils/prefixModalCss";
 export {
     getFromLocalStorage,
