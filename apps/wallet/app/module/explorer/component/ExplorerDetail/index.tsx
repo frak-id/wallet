@@ -166,13 +166,6 @@ export function ExplorerDetail({ merchant, onClose }: ExplorerDetailProps) {
                         >
                             <img
                                 src={url}
-                                alt=""
-                                aria-hidden
-                                className={styles.heroBackground}
-                            />
-                            <div className={styles.heroOverlay} aria-hidden />
-                            <img
-                                src={url}
                                 alt={`${merchant.name}${images.length > 1 ? ` ${index + 1}` : ""}`}
                                 className={styles.heroImage}
                             />
