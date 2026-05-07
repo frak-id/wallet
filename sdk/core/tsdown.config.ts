@@ -77,8 +77,10 @@ export default defineConfig([
                 : true,
         dts: false,
         outDir: "./cdn",
-        noExternal: [/.*/],
-        inlineOnly: false,
+        deps: {
+            alwaysBundle: [/.*/],
+            onlyBundle: false,
+        },
         treeshake: {
             moduleSideEffects: false,
         },

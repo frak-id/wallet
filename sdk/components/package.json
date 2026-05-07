@@ -95,7 +95,7 @@
   "devDependencies": {
     "@frak-labs/test-foundation": "workspace:*",
     "@preact/preset-vite": "^2.10.4",
-    "@rolldown/plugin-node-polyfills": "^1.0.3",
+    "@rolldown/plugin-node-polyfills": "catalog:",
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/preact": "^3.2.4",
     "@testing-library/user-event": "^14.6.1",
@@ -109,7 +109,7 @@
     "@vitest/coverage-v8": "^4.1.0",
     "@vitest/ui": "^4.1.0",
     "jsdom": "^29.0.0",
-    "tsdown": "^0.21.8",
+    "tsdown": "catalog:",
     "typescript": "^6.0.2",
     "vitest": "^4.1.4"
   }

@@ -332,10 +332,10 @@ export function PostPurchase({
         });
     }, [resolvedVariant, placementId, resolvedSharingUrl, parsedProducts]);
 
-    // Bail conditions
-    if (!isPreview && (!shouldRender || isHidden)) return null;
-    if (!isPreview && (!context || !resolvedVariant)) return null;
+    // Bail conditions: hide when the resolved variant is missing, or when we're
+    // in normal (non-preview) mode and the client/context isn't ready yet.
     if (!resolvedVariant) return null;
+    if (!isPreview && (!shouldRender || isHidden || !context)) return null;
 
     const cardClass = [card, classname].filter(Boolean).join(" ");
 
