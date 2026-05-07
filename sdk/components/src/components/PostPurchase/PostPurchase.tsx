@@ -14,7 +14,7 @@ import { Box } from "@frak-labs/design-system/components/Box";
 import { Column } from "@frak-labs/design-system/components/Column";
 import { Columns } from "@frak-labs/design-system/components/Columns";
 import { Stack } from "@frak-labs/design-system/components/Stack";
-import { LogoFrak } from "@frak-labs/design-system/icons";
+import { LogoFrakWithName } from "@frak-labs/design-system/icons";
 import { FrakRpcError, RpcErrorCodes } from "@frak-labs/frame-connector";
 import {
     useCallback,
@@ -371,7 +371,11 @@ export function PostPurchase({
                 <Column width="content">
                     <Stack space="xs" align="right">
                         <GiftIcon className={giftIcon} width={80} height={80} />
-                        <LogoFrak className={frakLogo} width={14} height={14} />
+                        <LogoFrakWithName
+                            className={frakLogo}
+                            width={42}
+                            height={24}
+                        />
                     </Stack>
                 </Column>
             </Columns>

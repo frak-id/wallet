@@ -60,10 +60,7 @@ export function PostShareConfirmation({
                             alt={appName}
                             className={styles.merchantLogo}
                         />
-                        <LogoFrakWithName
-                            className={styles.logo}
-                            color="#000"
-                        />
+                        <LogoFrakWithName className={styles.logo} />
                     </Box>
                     <button
                         type="button"

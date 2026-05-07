@@ -65,7 +65,6 @@ export const giftIcon = style({
 export const frakLogo = style({
     display: "block",
     marginLeft: "auto",
-    color: vars.surface.primary,
 });
 
 // Injected at build time by vanillaExtractInlinePlugin with the

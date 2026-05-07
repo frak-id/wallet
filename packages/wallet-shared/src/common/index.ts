@@ -1,5 +1,8 @@
 // Icons
-export { LogoFrakWithName } from "@frak-labs/design-system/icons";
+export {
+    LogoFrakBadge,
+    LogoFrakWithName,
+} from "@frak-labs/design-system/icons";
 export type {
     AppErrorSource,
     AuthEventMap,
