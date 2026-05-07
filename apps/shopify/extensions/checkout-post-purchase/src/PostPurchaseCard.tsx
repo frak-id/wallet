@@ -21,6 +21,7 @@ type PostPurchaseSettings = {
     description?: string;
     cta_text?: string;
     badge_text?: string;
+    image_url?: string;
 };
 
 export type ProductInfo = {
@@ -131,6 +132,7 @@ export function PostPurchaseCard({
     const description = settings.description || DEFAULT_DESCRIPTION;
     const ctaText = settings.cta_text || DEFAULT_CTA;
     const badgeText = settings.badge_text;
+    const imageUrl = settings.image_url;
 
     // Build external sharing page URL with all params
     const sharingPageUrl = useMemo(() => {
@@ -191,8 +193,8 @@ export function PostPurchaseCard({
                 <s-stack direction="block" alignItems="end">
                     <s-grid gridTemplateColumns="80px">
                         <s-image
-                            src={GIFT_SVG_DATA_URI}
-                            alt="Gift"
+                            src={imageUrl || GIFT_SVG_DATA_URI}
+                            alt={imageUrl ? "" : "Gift"}
                             aspectRatio="1"
                             inlineSize="fill"
                             objectFit="contain"

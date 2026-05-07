@@ -76,6 +76,7 @@ class Frak_Elementor_Post_Purchase_Widget extends Frak_Elementor_Widget_Base {
 			'variant',
 			'sharingUrl',
 			'showProducts',
+			'imageUrl',
 			'previewVariant',
 			'placement',
 			'merchantId',
@@ -186,6 +187,25 @@ class Frak_Elementor_Post_Purchase_Widget extends Frak_Elementor_Widget_Base {
 
 		$this->end_controls_section();
 
+		$this->start_controls_section(
+			'frak_image_section',
+			array(
+				'label' => esc_html__( 'Image', 'frak' ),
+				'tab'   => \Elementor\Controls_Manager::TAB_CONTENT,
+			)
+		);
+
+		$this->add_control(
+			'imageUrl',
+			array(
+				'label'       => esc_html__( 'Image URL', 'frak' ),
+				'type'        => \Elementor\Controls_Manager::TEXT,
+				'description' => esc_html__( 'Override the gift icon on the left. Leave empty to keep the default.', 'frak' ),
+				'dynamic'     => array( 'active' => true ),
+			)
+		);
+
+		$this->end_controls_section();
 		$this->start_controls_section(
 			'frak_editor_preview_section',
 			array(

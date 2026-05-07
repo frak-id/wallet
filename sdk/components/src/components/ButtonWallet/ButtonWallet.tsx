@@ -3,7 +3,7 @@ import { useEffect, useMemo, useState } from "preact/hooks";
 import { useClientReady } from "@/hooks/useClientReady";
 import { usePlacement } from "@/hooks/usePlacement";
 import { useReward } from "@/hooks/useReward";
-import { buildStyleContent } from "@/utils/sharedCss";
+import { buildStyleContent } from "@/styles/sharedCss";
 import { GiftIcon } from "./assets/GiftIcon";
 import type { ButtonWalletProps } from "./types";
 import { openWalletModal } from "./utils";

@@ -45,6 +45,7 @@ class Frak_Shortcodes {
 		'inapp_title'          => '',
 		'inapp_description'    => '',
 		'inapp_cta'            => '',
+		'image_url'            => '',
 	);
 
 	/**
@@ -78,6 +79,7 @@ class Frak_Shortcodes {
 		'referrer_text' => '',
 		'referee_text'  => '',
 		'cta_text'      => '',
+		'image_url'     => '',
 	);
 
 	/**

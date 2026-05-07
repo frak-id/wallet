@@ -1,11 +1,11 @@
 import { Deferred } from "@frak-labs/frame-connector";
+import { BACKUP_KEY } from "../../constants";
 import type { FrakLifecycleEvent } from "../../types";
-import { BACKUP_KEY } from "../../utils/constants";
 import {
     isFrakDeepLink,
     triggerDeepLinkWithFallback,
-} from "../../utils/deepLinkWithFallback";
-import { changeIframeVisibility } from "../../utils/iframeHelper";
+} from "../../utils/browser/deepLinkWithFallback";
+import { changeIframeVisibility } from "../../utils/iframe/iframeHelper";
 
 /**
  * Detect iOS in-app browsers (Instagram, Facebook) where server-side

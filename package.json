@@ -83,7 +83,10 @@
     "@tanstack/react-query-persist-client": "^5.90.22",
     "@tanstack/query-async-storage-persister": "^5.90.22",
     "vite": "^8.0.8",
-    "@vitejs/plugin-react": "^6.0.0"
+    "@vitejs/plugin-react": "^6.0.0",
+    "tsdown": "^0.22.0",
+    "@rolldown/plugin-node-polyfills": "^1.0.3",
+    "@openpanel/web": "^1.4.1"
   },
   "dependencies": {
     "@tauri-apps/api": "^2.10.1",

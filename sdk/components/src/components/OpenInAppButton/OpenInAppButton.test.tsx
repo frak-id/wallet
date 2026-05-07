@@ -1,8 +1,8 @@
 import { cleanup, fireEvent, render } from "@testing-library/preact";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import * as openInAppUtil from "@/actions/openInApp";
 import * as useClientReadyHook from "@/hooks/useClientReady";
 import * as useIsMobileHook from "@/hooks/useIsMobile";
-import * as openInAppUtil from "@/utils/openInApp";
 import { OpenInAppButton } from "./OpenInAppButton";
 
 vi.mock("@/hooks/useClientReady", () => ({
@@ -17,7 +17,7 @@ vi.mock("@/hooks/useIsMobile", () => ({
     useIsMobile: vi.fn(() => ({ isMobile: true })),
 }));
 
-vi.mock("@/utils/openInApp", () => ({
+vi.mock("@/actions/openInApp", () => ({
     openFrakWalletApp: vi.fn(),
 }));
 

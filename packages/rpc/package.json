@@ -67,9 +67,9 @@
     },
     "devDependencies": {
         "@arethetypeswrong/cli": "^0.18.2",
-        "@rolldown/plugin-node-polyfills": "^1.0.3",
+        "@rolldown/plugin-node-polyfills": "catalog:",
         "@types/node": "catalog:",
-        "tsdown": "^0.21.8",
+        "tsdown": "catalog:",
         "typescript": "^6.0.2",
         "viem": "catalog:"
     }

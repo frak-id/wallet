@@ -1,0 +1,34 @@
+function ensureStyle(id: string, css: string): void {
+    const existing = document.getElementById(id);
+    if (existing) {
+        if (existing.textContent !== css) {
+            existing.textContent = css;
+        }
+        return;
+    }
+    const style = document.createElement("style");
+    style.id = id;
+    style.textContent = css;
+    document.head.appendChild(style);
+}
+
+function injectBase(tag: string, css: string): void {
+    const id = `frak-base-${tag}`;
+    if (document.getElementById(id)) return;
+    if (!css) return;
+
+    const style = document.createElement("style");
+    style.id = id;
+    style.textContent = css;
+    document.head.appendChild(style);
+}
+
+function injectPlacement(
+    tag: string,
+    placementId: string,
+    scopedCss: string
+): void {
+    ensureStyle(`frak-placement-${tag}-${placementId}`, scopedCss);
+}
+
+export const styleManager = { injectBase, injectPlacement };

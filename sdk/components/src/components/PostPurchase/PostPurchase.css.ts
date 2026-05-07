@@ -1,13 +1,37 @@
-import { element } from "@frak-labs/design-system/utils";
-import "@frak-labs/design-system/sprinkles";
 import { vars } from "@frak-labs/design-system/theme";
 import { alias } from "@frak-labs/design-system/tokens";
 import { style } from "@vanilla-extract/css";
+import { buttonReset } from "@/styles/sharedBaseCss.css";
 
 export const card = style({
+    padding: alias.spacing.m,
     borderRadius: alias.cornerRadius.m,
     backgroundColor: vars.surface.background,
     border: `1px solid ${vars.border.default}`,
+});
+
+export const cardLayout = style({
+    display: "flex",
+    flexDirection: "row",
+    alignItems: "center",
+    gap: alias.spacing.xl,
+});
+
+export const cardLeft = style({
+    flexGrow: 1,
+    minWidth: 0,
+    display: "flex",
+    flexDirection: "column",
+    gap: alias.spacing.xs,
+});
+
+export const cardRight = style({
+    flexShrink: 0,
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "flex-end",
+    gap: alias.spacing.xs,
+    textAlign: "right",
 });
 
 export const badge = style({
@@ -30,20 +54,21 @@ export const message = style({
 });
 
 export const cta = style([
-    element.button,
+    buttonReset,
     {
         display: "inline-flex",
         alignItems: "center",
         justifyContent: "center",
         gap: alias.spacing.xxs,
         padding: `${alias.spacing.s} ${alias.spacing.m}`,
+
         borderRadius: alias.cornerRadius.full,
         backgroundColor: vars.text.primary,
         color: vars.text.onAction,
         fontSize: "12px",
         fontWeight: "bold",
         textTransform: "uppercase",
-        cursor: "pointer",
+
         selectors: {
             "&:disabled": {
                 opacity: 0.7,
@@ -60,6 +85,25 @@ export const icon = style({
 export const giftIcon = style({
     display: "block",
     flexShrink: 0,
+});
+
+export const imageWrapper = style({
+    flexShrink: 0,
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    width: "80px",
+    height: "80px",
+    overflow: "hidden",
+});
+
+export const customImage = style({
+    maxWidth: "100%",
+    maxHeight: "100%",
+    width: "auto",
+    height: "auto",
+    objectFit: "contain",
+    display: "block",
 });
 
 export const frakLogo = style({

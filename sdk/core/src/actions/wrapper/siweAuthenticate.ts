@@ -1,4 +1,3 @@
-import { generateSiweNonce } from "viem/siwe";
 import type {
     FrakClient,
     ModalRpcMetadata,
@@ -6,6 +5,31 @@ import type {
     SiweAuthenticationParams,
 } from "../../types";
 import { displayModal } from "../displayModal";
+
+/**
+ * Generate a random EIP-4361-compatible nonce.
+ *
+ * Matches viem/siwe's `generateSiweNonce` shape (96 alphanumeric chars) but
+ * inlined here to avoid pulling viem's runtime utilities into the bundle.
+ * Uses `crypto.getRandomValues` when available (browsers, modern Node) and
+ * falls back to `Math.random` for the rare environment without WebCrypto.
+ */
+function generateSiweNonce(length = 96): string {
+    const byteCount = Math.ceil(length / 2);
+    let hex = "";
+    if (typeof crypto !== "undefined" && crypto.getRandomValues) {
+        const bytes = new Uint8Array(byteCount);
+        crypto.getRandomValues(bytes);
+        for (let i = 0; i < bytes.length; i++) {
+            hex += bytes[i].toString(16).padStart(2, "0");
+        }
+    } else {
+        for (let i = 0; i < byteCount; i++) {
+            hex += ((Math.random() * 256) | 0).toString(16).padStart(2, "0");
+        }
+    }
+    return hex.substring(0, length);
+}
 
 /**
  * Parameter used to directly show a modal used to authenticate with SIWE

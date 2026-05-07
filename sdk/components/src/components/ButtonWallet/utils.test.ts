@@ -1,13 +1,13 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import * as embeddedWalletUtils from "@/utils/embeddedWallet";
-import * as safeVibrateUtils from "@/utils/safeVibrate";
+import * as embeddedWalletUtils from "@/actions/embeddedWallet";
+import * as safeVibrateUtils from "@/utils/browser/safeVibrate";
 import { openWalletModal } from "./utils";
 
-vi.mock("@/utils/embeddedWallet", () => ({
+vi.mock("@/actions/embeddedWallet", () => ({
     openEmbeddedWallet: vi.fn(),
 }));
 
-vi.mock("@/utils/safeVibrate", () => ({
+vi.mock("@/utils/browser/safeVibrate", () => ({
     safeVibrate: vi.fn(),
 }));
 

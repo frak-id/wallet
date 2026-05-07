@@ -1,10 +1,10 @@
 import * as coreSdk from "@frak-labs/core-sdk";
 import { fireEvent, render, screen, waitFor } from "@testing-library/preact";
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import * as embeddedWalletUtils from "@/actions/embeddedWallet";
+import * as sharingPageUtils from "@/actions/sharingPage";
 import * as useClientReadyHook from "@/hooks/useClientReady";
 import * as useRewardHook from "@/hooks/useReward";
-import * as embeddedWalletUtils from "@/utils/embeddedWallet";
-import * as sharingPageUtils from "@/utils/sharingPage";
 import { ButtonShare } from "./ButtonShare";
 
 // Mock the hooks
@@ -20,11 +20,11 @@ vi.mock("@/hooks/useReward", () => ({
     useReward: vi.fn(() => ({ reward: undefined })),
 }));
 
-vi.mock("@/utils/embeddedWallet", () => ({
+vi.mock("@/actions/embeddedWallet", () => ({
     openEmbeddedWallet: vi.fn(),
 }));
 
-vi.mock("@/utils/sharingPage", () => ({
+vi.mock("@/actions/sharingPage", () => ({
     openSharingPage: vi.fn(),
 }));
 

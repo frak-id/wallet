@@ -43,6 +43,13 @@ export type BannerProps = {
      */
     inappCta?: string;
     /**
+     * Override the image displayed on the left of the referral banner.
+     * Accepts an image URL. Falls back to the built-in gift icon when omitted.
+     * The image is constrained to the icon slot via `object-fit: contain`,
+     * so any aspect ratio renders correctly.
+     */
+    imageUrl?: string;
+    /**
      * When set, forces the banner to render in preview mode (e.g. in Shopify theme editor).
      * Bypasses normal event/browser detection and shows static content.
      */

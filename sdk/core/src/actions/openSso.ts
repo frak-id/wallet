@@ -1,11 +1,11 @@
+import { getClientId } from "../config/clientId";
+import { sdkConfigStore } from "../config/sdkConfigStore";
 import type {
     FrakClient,
     OpenSsoParamsType,
     OpenSsoReturnType,
 } from "../types";
-import { getClientId } from "../utils/clientId";
-import { computeLegacyProductId } from "../utils/computeLegacyProductId";
-import { generateSsoUrl } from "../utils/sso";
+import { generateSsoUrl } from "../utils/sso/sso";
 
 // SSO popup configuration
 export const ssoPopupFeatures =
@@ -92,7 +92,7 @@ export async function openSso(
         generateSsoUrl(
             walletUrl ?? "https://wallet.frak.id",
             args,
-            computeLegacyProductId(),
+            (await sdkConfigStore.resolveMerchantId()) ?? "",
             metadata.name,
             getClientId(),
             customizations?.css

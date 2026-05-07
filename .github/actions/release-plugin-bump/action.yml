@@ -1,0 +1,55 @@
+name: "Bump plugin version"
+description: "Bump version file + promote CHANGELOG [Unreleased] -> [version] for a single PHP plugin"
+
+inputs:
+  version:
+    description: "Semantic version to release (e.g. 1.0.1)"
+    required: true
+  plugin-slug:
+    description: "Slug used in tag prefix, e.g. 'wordpress'"
+    required: true
+  directory:
+    description: "Plugin directory, e.g. 'plugins/wordpress'"
+    required: true
+  version-file:
+    description: "File (relative to directory) containing the version; .php or .json"
+    required: true
+
+runs:
+  using: composite
+  steps:
+    - name: "🔢 Bump version file"
+      shell: bash
+      working-directory: ${{ inputs.directory }}
+      env:
+        VERSION: ${{ inputs.version }}
+        VERSION_FILE: ${{ inputs.version-file }}
+      run: |
+        case "$VERSION_FILE" in
+          *.php)
+            sed -i -E "s|^(\s*\*\s*Version:\s*).*$|\1${VERSION}|" "$VERSION_FILE"
+            grep -E '^\s*\*\s*Version:' "$VERSION_FILE"
+            ;;
+          *.json)
+            tmp=$(mktemp)
+            jq --arg v "$VERSION" '.version = $v' "$VERSION_FILE" > "$tmp" && mv "$tmp" "$VERSION_FILE"
+            grep -E '"version"' "$VERSION_FILE"
+            ;;
+          *)
+            echo "::error::Unsupported version file type: $VERSION_FILE"
+            exit 1
+            ;;
+        esac
+
+    - name: "📝 Promote CHANGELOG [Unreleased] → [${{ inputs.version }}]"
+      # Pinned to commit on main (PR #86) which adds support for explicit semver versions.
+      # v3.0.0 (the latest tag) only accepts bump keywords (patch/minor/major) and rejects values like "1.0.1".
+      # Revert to @v3 once a newer tag is released that contains this change.
+      uses: release-flow/keep-a-changelog-action@51fdfb38631a4d2530cf1f3b11c0bba0c0f5f1e2
+      with:
+        command: bump
+        version: ${{ inputs.version }}
+        changelog: ${{ inputs.directory }}/CHANGELOG.md
+        tag-prefix: ${{ inputs.plugin-slug }}-
+        keep-unreleased-section: true
+        fail-on-empty-release-notes: true

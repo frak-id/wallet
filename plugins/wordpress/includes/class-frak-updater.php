@@ -55,7 +55,7 @@
  *     resolves at build time within the `5.6.*` constraint. Patch-level
  *     drift between releases is acceptable (PUC is conservative about
  *     breaking changes within a minor) but not strictly reproducible —
- *     `release-wordpress.yml` runs `composer install --no-dev` fresh per
+ *     `release-php-plugins.yml` runs `composer install --no-dev` fresh per
  *     release.
  *
  * @package Frak_Integration

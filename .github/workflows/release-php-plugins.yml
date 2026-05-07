@@ -1,0 +1,207 @@
+name: "🚀 Release PHP Plugins"
+
+on:
+  workflow_dispatch:
+    inputs:
+      magento_version:
+        description: "Magento Module version (e.g. 1.0.1) — leave empty to skip"
+        required: false
+        type: string
+        default: ""
+      prestashop_version:
+        description: "PrestaShop Module version (e.g. 1.0.1) — leave empty to skip"
+        required: false
+        type: string
+        default: ""
+      wordpress_version:
+        description: "WordPress Plugin version (e.g. 1.0.1) — leave empty to skip"
+        required: false
+        type: string
+        default: ""
+  pull_request:
+    types: [closed]
+    branches: [main, dev]
+
+permissions:
+  contents: write
+  pull-requests: write
+
+concurrency:
+  group: release-php-plugins
+  cancel-in-progress: false
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  prepare-pr:
+    name: "📝 Prepare release PR"
+    if: github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    steps:
+      - name: "✅ Validate inputs"
+        env:
+          MAGENTO_VERSION: ${{ inputs.magento_version }}
+          PRESTASHOP_VERSION: ${{ inputs.prestashop_version }}
+          WORDPRESS_VERSION: ${{ inputs.wordpress_version }}
+        run: |
+          VERSION_RE='^[0-9]+\.[0-9]+\.[0-9]+$'
+          ok=1
+          check() {
+            local label=$1 version=$2
+            [ -z "$version" ] && return
+            if ! echo "$version" | grep -qE "$VERSION_RE"; then
+              echo "::error::Invalid $label version: '$version' (expected: X.Y.Z)"
+              ok=0
+            fi
+          }
+          check "Magento"    "$MAGENTO_VERSION"
+          check "PrestaShop" "$PRESTASHOP_VERSION"
+          check "WordPress"  "$WORDPRESS_VERSION"
+          if [ -z "$MAGENTO_VERSION" ] && [ -z "$PRESTASHOP_VERSION" ] && [ -z "$WORDPRESS_VERSION" ]; then
+            echo "::error::At least one plugin version must be provided"
+            ok=0
+          fi
+          [ "$ok" = "1" ] || exit 1
+
+      - name: "📥 Checkout source branch"
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ github.ref_name }}
+          fetch-depth: 0
+
+      - name: "📦 Bump Magento Module"
+        if: inputs.magento_version != ''
+        uses: ./.github/actions/release-plugin-bump
+        with:
+          version: ${{ inputs.magento_version }}
+          plugin-slug: magento
+          directory: plugins/magento
+          version-file: composer.json
+
+      - name: "📦 Bump PrestaShop Module"
+        if: inputs.prestashop_version != ''
+        uses: ./.github/actions/release-plugin-bump
+        with:
+          version: ${{ inputs.prestashop_version }}
+          plugin-slug: prestashop
+          directory: plugins/prestashop
+          version-file: composer.json
+
+      - name: "📦 Bump WordPress Plugin"
+        if: inputs.wordpress_version != ''
+        uses: ./.github/actions/release-plugin-bump
+        with:
+          version: ${{ inputs.wordpress_version }}
+          plugin-slug: wordpress
+          directory: plugins/wordpress
+          version-file: frak-integration.php
+
+      - name: "🏷️ Build PR metadata"
+        id: meta
+        env:
+          MAGENTO_VERSION: ${{ inputs.magento_version }}
+          PRESTASHOP_VERSION: ${{ inputs.prestashop_version }}
+          WORDPRESS_VERSION: ${{ inputs.wordpress_version }}
+        run: |
+          BRANCH="release/php"
+          TITLE_PARTS=""
+          LABELS=""
+          PLUGIN_LIST=""
+          add_plugin() {
+            local slug=$1 name=$2 version=$3
+            [ -z "$version" ] && return
+            BRANCH="${BRANCH}-${slug}-${version}"
+            if [ -z "$TITLE_PARTS" ]; then
+              TITLE_PARTS="${slug} ${version}"
+            else
+              TITLE_PARTS="${TITLE_PARTS}, ${slug} ${version}"
+            fi
+            LABELS+="release:${slug}"$'\n'
+            PLUGIN_LIST+="- ${name} ${version}"$'\n'
+          }
+          add_plugin magento    "Magento Module"    "$MAGENTO_VERSION"
+          add_plugin prestashop "PrestaShop Module" "$PRESTASHOP_VERSION"
+          add_plugin wordpress  "WordPress Plugin"  "$WORDPRESS_VERSION"
+          {
+            echo "branch=$BRANCH"
+            echo "title=chore(plugins): release $TITLE_PARTS"
+            echo "labels<<EOF"
+            printf '%s' "$LABELS"
+            echo "EOF"
+            echo "plugin-list<<EOF"
+            printf '%s' "$PLUGIN_LIST"
+            echo "EOF"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: "📌 Create release PR"
+        uses: peter-evans/create-pull-request@v8
+        with:
+          branch: ${{ steps.meta.outputs.branch }}
+          base: ${{ github.ref_name }}
+          title: ${{ steps.meta.outputs.title }}
+          commit-message: ${{ steps.meta.outputs.title }}
+          body: |
+            ${{ steps.meta.outputs.title }}
+
+            Plugins included in this release:
+            ${{ steps.meta.outputs.plugin-list }}
+
+            Merging this PR will, for each included plugin:
+            - Tag the merge commit (`<plugin>-<version>`)
+            - Build the plugin zip
+            - Create a GitHub release with the CHANGELOG notes + zip asset
+          labels: ${{ steps.meta.outputs.labels }}
+          delete-branch: true
+          add-paths: |
+            plugins/magento/composer.json
+            plugins/magento/CHANGELOG.md
+            plugins/prestashop/composer.json
+            plugins/prestashop/CHANGELOG.md
+            plugins/wordpress/frak-integration.php
+            plugins/wordpress/CHANGELOG.md
+
+  publish:
+    name: "🚀 Build & publish"
+    if: |
+      github.event_name == 'pull_request' &&
+      github.event.pull_request.merged == true &&
+      startsWith(github.event.pull_request.head.ref, 'release/php-')
+    runs-on: ubuntu-latest
+    steps:
+      - name: "📥 Checkout merge commit"
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ github.event.pull_request.merge_commit_sha }}
+          fetch-depth: 0
+
+      - name: "📦 Publish Magento Module"
+        if: contains(github.event.pull_request.labels.*.name, 'release:magento')
+        uses: ./.github/actions/release-plugin-publish
+        with:
+          plugin-name: "Magento Module"
+          plugin-slug: magento
+          directory: plugins/magento
+          version-file: composer.json
+          artifact-glob: dist/frak-magento2-module-*.zip
+
+      - name: "📦 Publish PrestaShop Module"
+        if: contains(github.event.pull_request.labels.*.name, 'release:prestashop')
+        uses: ./.github/actions/release-plugin-publish
+        with:
+          plugin-name: "PrestaShop Module"
+          plugin-slug: prestashop
+          directory: plugins/prestashop
+          version-file: composer.json
+          artifact-glob: dist/frakintegration-*.zip
+
+      - name: "📦 Publish WordPress Plugin"
+        if: contains(github.event.pull_request.labels.*.name, 'release:wordpress')
+        uses: ./.github/actions/release-plugin-publish
+        with:
+          plugin-name: "WordPress Plugin"
+          plugin-slug: wordpress
+          directory: plugins/wordpress
+          version-file: frak-integration.php
+          artifact-glob: dist/frak-integration-*.zip
