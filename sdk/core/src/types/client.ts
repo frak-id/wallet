@@ -7,8 +7,5 @@ import type { IFrameTransport } from "./transport";
  */
 export type FrakClient = {
     config: FrakWalletSdkConfig;
-    debugInfo: {
-        formatDebugInfo: (error: Error | unknown | string) => string;
-    };
     openPanel?: OpenPanel;
 } & IFrameTransport;

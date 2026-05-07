@@ -15,7 +15,6 @@ import type { FrakWalletSdkConfig } from "../types/config";
 import type { SdkResolvedConfig } from "../types/resolvedConfig";
 import type { IFrameRpcSchema } from "../types/rpc";
 import { clearAllCache } from "../utils/cache";
-import { DebugInfoGatherer } from "./DebugInfo";
 import { setupSsoUrlListener } from "./ssoUrlListener";
 import {
     createIFrameLifecycleManager,
@@ -84,9 +83,6 @@ export function createIFrameFrakClient({
     // lifecycle manager resolves the `isConnected` promise.
     const handshakeStartedAt = Date.now();
 
-    // Create our debug info gatherer
-    const debugInfo = new DebugInfoGatherer(config, iframe);
-
     // Validate iframe
     if (!iframe.contentWindow) {
         throw new FrakRpcError(
@@ -113,17 +109,6 @@ export function createIFrameFrakClient({
                     }
                     await contextSent.promise;
                     return ctx;
-                },
-            },
-            // Save debug info
-            {
-                onRequest(message, ctx) {
-                    debugInfo.setLastRequest(message);
-                    return ctx;
-                },
-                onResponse(message, response) {
-                    debugInfo.setLastResponse(message, response);
-                    return response;
                 },
             },
         ],
@@ -227,7 +212,7 @@ export function createIFrameFrakClient({
         contextSent,
         openPanel,
     })
-        .then(() => debugInfo.updateSetupStatus(true))
+        .then(() => {})
         .catch((err) => {
             contextSent.reject(err);
             throw err;
@@ -235,7 +220,6 @@ export function createIFrameFrakClient({
 
     return {
         config,
-        debugInfo,
         waitForConnection: lifecycleManager.isConnected,
         waitForSetup,
         request: rpcClient.request,
