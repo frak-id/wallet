@@ -104,6 +104,13 @@ export const referralCta = style([
     },
 ]);
 
+export const frakLogo = style({
+    position: "absolute",
+    right: alias.spacing.m,
+    bottom: alias.spacing.s,
+    pointerEvents: "none",
+});
+
 // Injected at build time by vanillaExtractInlinePlugin with the
 // compiled CSS string. Placeholder satisfies TypeScript.
 export const cssSource: string = "";

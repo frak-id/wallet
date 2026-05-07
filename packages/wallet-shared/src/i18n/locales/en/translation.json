@@ -91,6 +91,7 @@
         "profile": {
             "pageTitle": "Profil",
             "notificationSettings": "Notification settings",
+            "notificationDeniedHelp": "Notifications blocked by browser. Enable them in browser settings.",
             "manageAction": "Manage",
             "unsubscribeNotifications": "Unsubscribe",
             "biometricPrompt": "Require {{biometryLabel}} at every app launch",
@@ -205,8 +206,6 @@
             "walletDescription": "Transfer to a crypto wallet"
         },
         "activateNotifications": "Turn on notifs to track your earnings in real time.",
-        "activateNotificationsRationale": "<strong>Enable notifications</strong> <br /> We need your permission to notify you when gains are paid",
-        "openNotificationSettings": "<strong>Notifications disabled</strong> <br /> Open settings to enable notifications",
         "manageNotifications": "<strong>Manage notifications</strong> <br /> Open settings to control your notifications",
         "settings": {
             "biometryInfo": "Biometry informations",
@@ -441,6 +440,10 @@
             "dismiss": "Dismiss inapp browser warning",
             "clipboardAlert": "This browser doesn't support all features needed.\n\nThe link has been copied to your clipboard.\n\nTo continue:\n1. Open Safari\n2. Tap the address bar\n3. Paste and go",
             "clipboardManualAlert": "This browser doesn't support all features needed.\n\nAutomatic copy failed.\n\nCopy this link manually:\n{{url}}\n\nThen:\n1. Open Safari\n2. Tap the address bar\n3. Paste and go"
+        },
+        "offline": {
+            "title": "You're offline",
+            "description": "Some features may be unavailable until your connection is restored."
         },
         "toastLoading": {
             "stuck": "Stuck? See the <pLink>Troubleshooting</pLink> section for more information.<br /><br />You can try to <button>cleanup</button>.<br />(this will logout and you will need to redo a login / pairing)",

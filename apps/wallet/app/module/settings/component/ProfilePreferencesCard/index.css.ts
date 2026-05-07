@@ -57,3 +57,7 @@ export const switchControl = style({
 export const selectTrigger = style({
     minWidth: "132px",
 });
+
+export const helperText = style({
+    padding: `0 ${alias.spacing.m} ${alias.spacing.m}`,
+});

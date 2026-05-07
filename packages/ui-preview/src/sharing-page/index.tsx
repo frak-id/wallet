@@ -53,7 +53,7 @@ export function SharingPreview({ t, logoUrl, appName }: SharingPreviewProps) {
                             className={styles.merchantLogo}
                         />
                     )}
-                    <LogoFrakWithName className={styles.logo} color="#000" />
+                    <LogoFrakWithName className={styles.logo} />
                 </Box>
                 <span className={styles.dismissText}>
                     {t("sdk.sharingPage.dismiss")}

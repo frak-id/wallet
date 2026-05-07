@@ -64,6 +64,12 @@ export function createWebNotificationAdapter(): NotificationAdapter {
     return {
         initPromise,
 
+        isSupported: () =>
+            typeof window !== "undefined" &&
+            "serviceWorker" in navigator &&
+            "Notification" in window &&
+            "PushManager" in window,
+
         getPermissionStatus: async () => {
             if (typeof Notification === "undefined") {
                 return "prompt";

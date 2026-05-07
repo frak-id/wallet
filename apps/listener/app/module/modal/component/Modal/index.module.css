@@ -201,6 +201,9 @@
 }
 
 .modalTitle__provided {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
     margin-left: auto;
     font-size: 12px;
     font-style: italic;
@@ -210,7 +213,6 @@
 }
 
 .modalTitle__logo {
-    margin-left: 2px;
     height: 22px;
     width: auto;
 }

@@ -16,6 +16,7 @@ import { DetectPWA } from "@/module/wallet/component/DetectPWA";
 import "@frak-labs/wallet-shared";
 // Import global styles
 import "@frak-labs/design-system/global";
+import "./__root.css";
 import { useHardwareBack } from "@/module/common/hook/useHardwareBack";
 
 export const Route = createRootRoute({

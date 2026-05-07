@@ -34,6 +34,7 @@ export { LaptopIcon } from "./LaptopIcon";
 export { LinkIcon } from "./LinkIcon";
 export { LockIcon } from "./LockIcon";
 export { LogoFrak } from "./LogoFrak";
+export { LogoFrakBadge } from "./LogoFrakBadge";
 export { LogoFrakWithName } from "./LogoFrakWithName";
 export { MobileIcon } from "./MobileIcon";
 export { PencilIcon } from "./PencilIcon";

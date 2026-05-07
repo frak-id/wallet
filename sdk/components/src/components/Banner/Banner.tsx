@@ -8,6 +8,7 @@ import {
     REFERRAL_SUCCESS_EVENT,
 } from "@frak-labs/core-sdk/actions";
 import { InAppBanner } from "@frak-labs/design-system/components/InAppBanner";
+import { LogoFrakWithName } from "@frak-labs/design-system/icons";
 import {
     useCallback,
     useEffect,
@@ -24,6 +25,7 @@ import { cssSource as sharedBaseCss } from "@/styles/sharedBaseCss.css";
 import { GiftIcon } from "../icons/GiftIcon";
 import {
     cssSource,
+    frakLogo,
     iconSvg,
     referral,
     referralBody,
@@ -310,6 +312,11 @@ export function Banner({
                     {texts.cta}
                 </button>
             </div>
+            <LogoFrakWithName
+                class={`${frakLogo} frak-banner__logo`}
+                width={42}
+                height={24}
+            />
         </div>
     );
 }

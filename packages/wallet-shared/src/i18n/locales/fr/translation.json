@@ -89,6 +89,7 @@
         "profile": {
             "pageTitle": "Profil",
             "notificationSettings": "Paramètres de notification",
+            "notificationDeniedHelp": "Notifications bloquées par le navigateur. Active-les depuis les paramètres du navigateur.",
             "manageAction": "Gérer",
             "unsubscribeNotifications": "Se désabonner",
             "biometricPrompt": "Demander {{biometryLabel}} à chaque ouverture de l'app",
@@ -203,8 +204,6 @@
             "walletDescription": "Transférer vers un crypto wallet"
         },
         "activateNotifications": "Active tes notifs pour suivre tes gains en temps réel.",
-        "activateNotificationsRationale": "<strong>Activer les notifications</strong><br /> Nous avons besoin de votre permission pour vous notifier du versement de vos gains",
-        "openNotificationSettings": "<strong>Notifications désactivées</strong><br /> Ouvrez les paramètres pour activer les notifications",
         "manageNotifications": "<strong>Gérer les notifications</strong><br /> Ouvrez les paramètres pour contrôler vos notifications",
         "settings": {
             "biometryInfo": "Informations biométriques",
@@ -439,6 +438,10 @@
             "dismiss": "Masquer le message",
             "clipboardAlert": "Ce navigateur ne prend pas en charge toutes les fonctionnalités.\n\nLe lien a été copié dans votre presse-papiers.\n\nPour continuer :\n1. Ouvrez Safari\n2. Appuyez sur la barre d'adresse\n3. Collez et validez",
             "clipboardManualAlert": "Ce navigateur ne prend pas en charge toutes les fonctionnalités.\n\nLa copie automatique a échoué.\n\nCopiez ce lien manuellement :\n{{url}}\n\nPuis :\n1. Ouvrez Safari\n2. Appuyez sur la barre d'adresse\n3. Collez et validez"
+        },
+        "offline": {
+            "title": "Vous êtes hors ligne",
+            "description": "Certaines fonctionnalités peuvent être indisponibles jusqu'à la restauration de la connexion."
         },
         "toastLoading": {
             "stuck": "Vous êtes bloqué ? Consulter la section <pLink>Dépannage</pLink> pour plus d'informations.<br /><br />Vous pouvez essayer de <button>nettoyer</button>.<br />(cela vous déconnectera et vous devrez redémarrer une connexion / appairage)",

@@ -15,7 +15,12 @@ export type NotificationOptInOutcome =
     | "skipped"
     | "denied"
     | "auto_skipped_granted"
-    | "auto_skipped_denied";
+    | "auto_skipped_denied"
+    | "settings_subscribed"
+    | "settings_unsubscribed"
+    | "settings_blocked"
+    | "settings_failed"
+    | "settings_opened";
 
 type NotificationBaseProps = {
     flow_id?: string;

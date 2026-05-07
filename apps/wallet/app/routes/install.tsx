@@ -256,7 +256,7 @@ function InstallCodeView({ m: merchantId, a: anonymousId }: InstallSearch) {
                             className={styles.merchantLogo}
                         />
                     )}
-                    <LogoFrakWithName className={styles.logo} color="#000" />
+                    <LogoFrakWithName className={styles.logo} />
                 </Box>
                 <button
                     type="button"

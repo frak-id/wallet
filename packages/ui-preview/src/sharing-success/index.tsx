@@ -55,7 +55,7 @@ export function SharingSuccessPreview({
                             className={styles.merchantLogo}
                         />
                     )}
-                    <LogoFrakWithName className={styles.logo} color="#000" />
+                    <LogoFrakWithName className={styles.logo} />
                 </Box>
                 <span className={styles.dismissIcon}>
                     <CloseIcon width={20} height={20} />
