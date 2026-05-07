@@ -3,9 +3,9 @@
  * Tests locale resolution from currency
  */
 
-import { describe, expect, it } from "../../tests/vitest-fixtures";
-import { locales } from "../constants/locales";
-import type { Currency } from "../types";
+import { describe, expect, it } from "../../../tests/vitest-fixtures";
+import { locales } from "../../constants/locales";
+import type { Currency } from "../../types";
 import { getSupportedLocale } from "./getSupportedLocale";
 
 describe("getSupportedLocale", () => {

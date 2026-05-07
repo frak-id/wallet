@@ -1,42 +1,48 @@
+// Generic, framework-agnostic utilities. Stateful concerns (config store,
+// client identifiers) live in `src/config/`; URL/binary codecs for the
+// referral context live in `src/context/`; SSO URL listener belongs to the
+// iframe client lifecycle in `src/clients/`. Keep this surface narrow.
 export { Deferred } from "@frak-labs/frame-connector";
+
+// Analytics
 export { trackEvent } from "./analytics";
-export { getBackendUrl } from "./backendUrl";
-export { clearAllCache, getCache, withCache } from "./cache";
-export { getClientId } from "./clientId";
-export { base64urlDecode, base64urlEncode } from "./compression/b64";
-export { compressJsonToB64 } from "./compression/compress";
-export { decompressJsonFromB64 } from "./compression/decompress";
-export { DEEP_LINK_SCHEME } from "./constants";
+// Browser / deep linking
 export {
     type DeepLinkFallbackOptions,
     isChromiumAndroid,
     isFrakDeepLink,
     toAndroidIntentUrl,
     triggerDeepLinkWithFallback,
-} from "./deepLinkWithFallback";
-export { FrakContextManager } from "./FrakContext";
-export { formatAmount } from "./formatAmount";
-export { getCurrencyAmountKey } from "./getCurrencyAmountKey";
-export { getSupportedCurrency } from "./getSupportedCurrency";
-export { getSupportedLocale } from "./getSupportedLocale";
-export {
-    baseIframeProps,
-    createIframe,
-    findIframeInOpener,
-} from "./iframeHelper";
+} from "./browser/deepLinkWithFallback";
 export {
     isInAppBrowser,
     isIOS,
     redirectToExternalBrowser,
-} from "./inAppBrowser";
+} from "./browser/inAppBrowser";
+// Cache
+export { clearAllCache, getCache, withCache } from "./cache";
+// Compression / encoding
+export { base64urlDecode, base64urlEncode } from "./compression/b64";
+export { compressJsonToB64 } from "./compression/compress";
+export { decompressJsonFromB64 } from "./compression/decompress";
+
+// Formatting / i18n
+export { formatAmount } from "./format/formatAmount";
+export { getCurrencyAmountKey } from "./format/getCurrencyAmountKey";
+export { getSupportedCurrency } from "./format/getSupportedCurrency";
+export { getSupportedLocale } from "./format/getSupportedLocale";
+
+// Iframe DOM helpers
 export {
-    type MergeAttributionInput,
-    mergeAttribution,
-} from "./mergeAttribution";
-export { sdkConfigStore } from "./sdkConfigStore";
+    baseIframeProps,
+    createIframe,
+    findIframeInOpener,
+} from "./iframe/iframeHelper";
+
+// SSO URL builder
 export {
     type AppSpecificSsoMetadata,
     type CompressedSsoData,
     type FullSsoParams,
     generateSsoUrl,
-} from "./sso";
+} from "./sso/sso";

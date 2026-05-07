@@ -3,8 +3,8 @@
  * Tests currency validation and fallback behavior
  */
 
-import { describe, expect, it } from "../../tests/vitest-fixtures";
-import type { Currency } from "../types";
+import { describe, expect, it } from "../../../tests/vitest-fixtures";
+import type { Currency } from "../../types";
 import { getSupportedCurrency } from "./getSupportedCurrency";
 
 describe("getSupportedCurrency", () => {

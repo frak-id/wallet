@@ -1,4 +1,6 @@
-import { areAddressesEqual } from "../../utils/address";
+import { getClientId } from "../../config/clientId";
+import { FrakContextManager } from "../../context";
+import { areAddressesEqual } from "../../context/address";
 import type {
     FrakClient,
     FrakContext,
@@ -6,7 +8,7 @@ import type {
     WalletStatusReturnType,
 } from "../../types";
 import { isV1Context, isV2Context } from "../../types";
-import { FrakContextManager, getClientId, trackEvent } from "../../utils";
+import { trackEvent } from "../../utils";
 import { sendInteraction } from "../sendInteraction";
 
 /**

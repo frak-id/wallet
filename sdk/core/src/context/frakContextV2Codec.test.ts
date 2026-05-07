@@ -1,7 +1,7 @@
 import type { Address } from "viem";
 import { describe, expect, it } from "../../tests/vitest-fixtures";
 import type { FrakContextV2 } from "../types";
-import { base64urlEncode } from "./compression/b64";
+import { base64urlEncode } from "../utils/compression/b64";
 import {
     decodeFrakContextV2,
     encodeFrakContextV2,

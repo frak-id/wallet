@@ -1,6 +1,6 @@
-import type { FrakWalletSdkConfig } from "../types";
-import { getBackendUrl } from "./backendUrl";
-import { getClientId } from "./clientId";
+import { getBackendUrl } from "../../config/backendUrl";
+import { getClientId } from "../../config/clientId";
+import type { FrakWalletSdkConfig } from "../../types";
 
 /**
  * Base props for the iframe

@@ -6,17 +6,17 @@ import {
     RpcErrorCodes,
 } from "@frak-labs/frame-connector";
 import { OpenPanel } from "@openpanel/web";
+import { getClientId } from "../config/clientId";
+import { sdkConfigStore } from "../config/sdkConfigStore";
+import { BACKUP_KEY } from "../constants";
 import type { FrakLifecycleEvent } from "../types";
 import type { FrakClient } from "../types/client";
 import type { FrakWalletSdkConfig } from "../types/config";
 import type { SdkResolvedConfig } from "../types/resolvedConfig";
 import type { IFrameRpcSchema } from "../types/rpc";
-import { getClientId } from "../utils";
 import { clearAllCache } from "../utils/cache";
-import { BACKUP_KEY } from "../utils/constants";
-import { sdkConfigStore } from "../utils/sdkConfigStore";
-import { setupSsoUrlListener } from "../utils/ssoUrlListener";
 import { DebugInfoGatherer } from "./DebugInfo";
+import { setupSsoUrlListener } from "./ssoUrlListener";
 import {
     createIFrameLifecycleManager,
     type IframeLifecycleManager,

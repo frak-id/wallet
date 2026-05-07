@@ -1,5 +1,5 @@
-import { type LocalesKey, locales } from "../constants/locales";
-import type { Currency } from "../types";
+import { type LocalesKey, locales } from "../../constants/locales";
+import type { Currency } from "../../types";
 
 /**
  * Get the supported locale for a given currency

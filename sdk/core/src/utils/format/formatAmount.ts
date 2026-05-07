@@ -1,4 +1,4 @@
-import type { Currency } from "../types";
+import type { Currency } from "../../types";
 import { getSupportedCurrency } from "./getSupportedCurrency";
 import { getSupportedLocale } from "./getSupportedLocale";
 

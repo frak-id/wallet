@@ -1,4 +1,4 @@
-import type { Currency, TokenAmountType } from "../types";
+import type { Currency, TokenAmountType } from "../../types";
 
 /**
  * Get the currency amount key for a given currency

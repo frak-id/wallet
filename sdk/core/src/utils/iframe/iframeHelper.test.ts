@@ -1,6 +1,6 @@
 import { vi } from "vitest";
 
-vi.mock("./clientId", () => ({
+vi.mock("../../config/clientId", () => ({
     getClientId: vi.fn(() => "mock-client-id-for-test"),
 }));
 
@@ -15,8 +15,8 @@ import {
     describe,
     expect,
     it,
-} from "../../tests/vitest-fixtures";
-import type { FrakWalletSdkConfig } from "../types";
+} from "../../../tests/vitest-fixtures";
+import type { FrakWalletSdkConfig } from "../../types";
 import {
     baseIframeProps,
     changeIframeVisibility,

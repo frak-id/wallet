@@ -1,9 +1,4 @@
-/**
- * Tests for constants
- * Tests backup key constant value
- */
-
-import { describe, expect, it } from "../../tests/vitest-fixtures";
+import { describe, expect, it } from "../tests/vitest-fixtures";
 import { BACKUP_KEY } from "./constants";
 
 describe("constants", () => {

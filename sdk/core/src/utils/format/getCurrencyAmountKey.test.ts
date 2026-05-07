@@ -3,8 +3,8 @@
  * Tests currency amount key generation
  */
 
-import { describe, expect, it } from "../../tests/vitest-fixtures";
-import type { Currency } from "../types";
+import { describe, expect, it } from "../../../tests/vitest-fixtures";
+import type { Currency } from "../../types";
 import { getCurrencyAmountKey } from "./getCurrencyAmountKey";
 
 describe("getCurrencyAmountKey", () => {

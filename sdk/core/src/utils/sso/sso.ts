@@ -1,6 +1,6 @@
 import type { Hex } from "viem";
-import type { PrepareSsoParamsType, SsoMetadata } from "../types";
-import { compressJsonToB64 } from "./compression/compress";
+import type { PrepareSsoParamsType, SsoMetadata } from "../../types";
+import { compressJsonToB64 } from "../compression/compress";
 
 export type AppSpecificSsoMetadata = SsoMetadata & {
     name?: string;

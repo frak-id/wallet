@@ -1,4 +1,3 @@
-import { addressToBytes, bytesToAddress, isAddress } from "./address";
 import type {
     AttributionParams,
     FrakContext,
@@ -6,7 +5,8 @@ import type {
     FrakContextV2,
 } from "../types";
 import { isV2Context } from "../types";
-import { base64urlDecode, base64urlEncode } from "./compression/b64";
+import { base64urlDecode, base64urlEncode } from "../utils/compression/b64";
+import { addressToBytes, bytesToAddress, isAddress } from "./address";
 import { decodeFrakContextV2, encodeFrakContextV2 } from "./frakContextV2Codec";
 
 /**

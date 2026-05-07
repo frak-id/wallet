@@ -1,6 +1,6 @@
-import { getBackendUrl } from "../utils/backendUrl";
-import { getClientId } from "../utils/clientId";
-import { sdkConfigStore } from "../utils/sdkConfigStore";
+import { getBackendUrl } from "../config/backendUrl";
+import { getClientId } from "../config/clientId";
+import { sdkConfigStore } from "../config/sdkConfigStore";
 
 /**
  * Function used to track the status of a purchase

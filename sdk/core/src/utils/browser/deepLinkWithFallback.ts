@@ -1,4 +1,4 @@
-import { DEEP_LINK_SCHEME } from "./constants";
+import { DEEP_LINK_SCHEME } from "../../constants";
 
 /**
  * Options for deep link with fallback

@@ -3,7 +3,7 @@
  * Tests currency formatting with proper locale support
  */
 
-import { describe, expect, it } from "../../tests/vitest-fixtures";
+import { describe, expect, it } from "../../../tests/vitest-fixtures";
 import { formatAmount } from "./formatAmount";
 
 describe("formatAmount", () => {

@@ -16,19 +16,19 @@ vi.mock("@frak-labs/frame-connector", () => ({
     },
 }));
 
-vi.mock("../../utils/constants", () => ({
+vi.mock("../../constants", () => ({
     BACKUP_KEY: "frak-backup-key",
 }));
 
-vi.mock("../../utils/iframeHelper", () => ({
+vi.mock("../../utils/iframe/iframeHelper", () => ({
     changeIframeVisibility: vi.fn(),
 }));
 
-vi.mock("../../utils/clientId", () => ({
+vi.mock("../../config/clientId", () => ({
     getClientId: vi.fn(() => "mock-client-id"),
 }));
 
-vi.mock("../../utils/deepLinkWithFallback", () => ({
+vi.mock("../../utils/browser/deepLinkWithFallback", () => ({
     isFrakDeepLink: vi.fn((url: string) => url.startsWith("frakwallet://")),
     triggerDeepLinkWithFallback: vi.fn(),
 }));
@@ -185,7 +185,7 @@ describe("createIFrameLifecycleManager", () => {
                 "./iframeLifecycleManager"
             );
             const { changeIframeVisibility } = await import(
-                "../../utils/iframeHelper"
+                "../../utils/iframe/iframeHelper"
             );
 
             const mockIframe = document.createElement("iframe");
@@ -211,7 +211,7 @@ describe("createIFrameLifecycleManager", () => {
                 "./iframeLifecycleManager"
             );
             const { changeIframeVisibility } = await import(
-                "../../utils/iframeHelper"
+                "../../utils/iframe/iframeHelper"
             );
 
             const mockIframe = document.createElement("iframe");
@@ -301,7 +301,7 @@ describe("createIFrameLifecycleManager", () => {
                 "./iframeLifecycleManager"
             );
             const { triggerDeepLinkWithFallback } = await import(
-                "../../utils/deepLinkWithFallback"
+                "../../utils/browser/deepLinkWithFallback"
             );
 
             Object.defineProperty(window, "location", {
@@ -340,7 +340,7 @@ describe("createIFrameLifecycleManager", () => {
                 "./iframeLifecycleManager"
             );
             const { triggerDeepLinkWithFallback } = await import(
-                "../../utils/deepLinkWithFallback"
+                "../../utils/browser/deepLinkWithFallback"
             );
 
             Object.defineProperty(window, "location", {
@@ -396,7 +396,7 @@ describe("createIFrameLifecycleManager", () => {
                 "./iframeLifecycleManager"
             );
             const { triggerDeepLinkWithFallback } = await import(
-                "../../utils/deepLinkWithFallback"
+                "../../utils/browser/deepLinkWithFallback"
             );
 
             Object.defineProperty(window, "location", {
@@ -453,7 +453,7 @@ describe("createIFrameLifecycleManager", () => {
                 "./iframeLifecycleManager"
             );
             const { changeIframeVisibility } = await import(
-                "../../utils/iframeHelper"
+                "../../utils/iframe/iframeHelper"
             );
 
             const mockIframe = document.createElement("iframe");

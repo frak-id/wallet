@@ -9,7 +9,7 @@ import {
     vi,
 } from "../../tests/vitest-fixtures";
 import type { FrakContextV1, FrakContextV2 } from "../types";
-import { FrakContextManager } from "./FrakContext";
+import { FrakContextManager } from "./frakContext";
 
 describe("FrakContextManager", () => {
     let consoleErrorSpy: any;
@@ -144,7 +144,9 @@ describe("FrakContextManager", () => {
                 const { encodeFrakContextV2 } = await import(
                     "./frakContextV2Codec"
                 );
-                const { base64urlEncode } = await import("./compression/b64");
+                const { base64urlEncode } = await import(
+                    "../utils/compression/b64"
+                );
                 const encoded = encodeFrakContextV2(v2Context);
                 expect(encoded).toBeDefined();
                 const tampered = new Uint8Array(encoded as Uint8Array);

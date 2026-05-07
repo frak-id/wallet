@@ -2,9 +2,21 @@
 
 export { ssoPopupFeatures, ssoPopupName } from "./actions/openSso";
 export { createIFrameFrakClient, setupClient } from "./clients";
-
+// Config (reactive merchant config + identity)
+export {
+    getBackendUrl,
+    getClientId,
+    sdkConfigStore,
+} from "./config";
+// Constants
+export { DEEP_LINK_SCHEME } from "./constants";
 export type { InteractionTypeKey } from "./constants/interactionTypes";
-
+// Context (FrakContext URL codec + attribution merge)
+export {
+    FrakContextManager,
+    type MergeAttributionInput,
+    mergeAttribution,
+} from "./context";
 // Types
 export type {
     AttributionDefaults,
@@ -82,6 +94,7 @@ export type {
     UtmParams,
     WalletStatusReturnType,
 } from "./types";
+
 // Utils
 export {
     type AppSpecificSsoMetadata,
@@ -91,23 +104,17 @@ export {
     type CompressedSsoData,
     clearAllCache,
     compressJsonToB64,
-    DEEP_LINK_SCHEME,
     type DeepLinkFallbackOptions,
     decompressJsonFromB64,
-    FrakContextManager,
     type FullSsoParams,
     findIframeInOpener,
     formatAmount,
     generateSsoUrl,
-    getBackendUrl,
-    getClientId,
     getCurrencyAmountKey,
     getSupportedCurrency,
     isInAppBrowser,
-    type MergeAttributionInput,
-    mergeAttribution,
+    isIOS,
     redirectToExternalBrowser,
-    sdkConfigStore,
     trackEvent,
     triggerDeepLinkWithFallback,
     withCache,

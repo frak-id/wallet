@@ -14,8 +14,8 @@ import type {
     MerchantConfigResponse,
     SdkResolvedConfig,
 } from "../types/resolvedConfig";
+import { clearAllCache, withCache } from "../utils/cache";
 import { getBackendUrl } from "./backendUrl";
-import { clearAllCache, withCache } from "./cache";
 
 const GLOBAL_KEY = "__frakSdkConfig";
 const CACHE_TTL = 30_000; // 30 seconds
