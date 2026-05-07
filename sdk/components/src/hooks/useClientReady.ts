@@ -1,6 +1,6 @@
 import { type SdkResolvedConfig, sdkConfigStore } from "@frak-labs/core-sdk";
 import { useEffect, useState } from "preact/hooks";
-import { onClientReady } from "@/utils/clientReady";
+import { onClientReady } from "@/bootstrap/clientReady";
 
 export function useClientReady() {
     const [shouldRender, setShouldRender] = useState(() => {

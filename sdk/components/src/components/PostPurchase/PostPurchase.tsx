@@ -19,16 +19,16 @@ import {
     useRef,
     useState,
 } from "preact/hooks";
+import { openSharingPage } from "@/actions/sharingPage";
 import { useClientReady } from "@/hooks/useClientReady";
 import { useGlobalComponents } from "@/hooks/useGlobalComponents";
 import { useLightDomStyles } from "@/hooks/useLightDomStyles";
 import { usePlacement } from "@/hooks/usePlacement";
+import { cssSource as sharedBaseCss } from "@/styles/sharedBaseCss.css";
 import {
     applyRewardPlaceholder,
     formatEstimatedReward,
-} from "@/utils/formatReward";
-import { cssSource as sharedBaseCss } from "@/utils/sharedBaseCss.css";
-import { openSharingPage } from "@/utils/sharingPage";
+} from "@/utils/format/formatReward";
 import { GiftIcon } from "../icons/GiftIcon";
 import {
     badge,

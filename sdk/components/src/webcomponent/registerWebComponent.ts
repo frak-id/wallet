@@ -1,7 +1,7 @@
 import type { ComponentType } from "preact";
 import register from "preact-custom-element";
-import { initFrakSdk } from "./initFrakSdk";
-import { onDocumentReady } from "./onDocumentReady";
+import { initFrakSdk } from "../bootstrap/initFrakSdk";
+import { onDocumentReady } from "../utils/browser/onDocumentReady";
 
 /**
  * Registers a Preact component as a custom web component

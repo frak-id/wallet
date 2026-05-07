@@ -17,6 +17,19 @@ function checkIsIOS(): boolean {
 export const isIOS: boolean = checkIsIOS();
 
 /**
+ * Check if the current device is a mobile device (iOS, iPadOS, Android,
+ * webOS, BlackBerry, IEMobile, Opera Mini). Reuses {@link isIOS} so the
+ * iPadOS-13+ Macintosh heuristic stays in one place.
+ */
+export function isMobile(): boolean {
+    if (typeof navigator === "undefined") return false;
+    if (isIOS) return true;
+    return /Android|webOS|BlackBerry|IEMobile|Opera Mini/i.test(
+        navigator.userAgent
+    );
+}
+
+/**
  * Check if the current browser is a social media in-app browser
  * (Instagram, Facebook WebView).
  */

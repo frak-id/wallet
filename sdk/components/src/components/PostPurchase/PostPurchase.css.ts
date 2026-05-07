@@ -1,7 +1,7 @@
 import { vars } from "@frak-labs/design-system/theme";
 import { alias } from "@frak-labs/design-system/tokens";
 import { style } from "@vanilla-extract/css";
-import { buttonReset } from "@/utils/sharedBaseCss.css";
+import { buttonReset } from "@/styles/sharedBaseCss.css";
 
 export const card = style({
     padding: alias.spacing.m,

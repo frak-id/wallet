@@ -1,15 +1,15 @@
 import register from "preact-custom-element";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import * as initFrakSdk from "./initFrakSdk";
-import * as onDocumentReady from "./onDocumentReady";
+import * as initFrakSdk from "../bootstrap/initFrakSdk";
+import * as onDocumentReady from "../utils/browser/onDocumentReady";
 import { registerWebComponent } from "./registerWebComponent";
 
 // Mock dependencies
-vi.mock("./initFrakSdk", () => ({
+vi.mock("../bootstrap/initFrakSdk", () => ({
     initFrakSdk: vi.fn(),
 }));
 
-vi.mock("./onDocumentReady", () => ({
+vi.mock("../utils/browser/onDocumentReady", () => ({
     onDocumentReady: vi.fn((callback) => {
         // Execute callback immediately in test environment
         callback();

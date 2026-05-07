@@ -1,4 +1,4 @@
-import { registerWebComponent } from "@/utils/registerWebComponent";
+import { registerWebComponent } from "@/webcomponent/registerWebComponent";
 import { Banner } from "./Banner";
 import type { BannerProps } from "./types";
 

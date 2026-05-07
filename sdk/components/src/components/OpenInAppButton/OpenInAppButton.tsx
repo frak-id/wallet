@@ -1,8 +1,8 @@
+import { openFrakWalletApp } from "@/actions/openInApp";
 import { useClientReady } from "@/hooks/useClientReady";
 import { useIsMobile } from "@/hooks/useIsMobile";
 import { useLightDomStyles } from "@/hooks/useLightDomStyles";
 import { usePlacement } from "@/hooks/usePlacement";
-import { openFrakWalletApp } from "@/utils/openInApp";
 import type { OpenInAppButtonProps } from "./types";
 
 /**

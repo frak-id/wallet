@@ -114,6 +114,7 @@ export {
     getSupportedCurrency,
     isInAppBrowser,
     isIOS,
+    isMobile,
     redirectToExternalBrowser,
     trackEvent,
     triggerDeepLinkWithFallback,

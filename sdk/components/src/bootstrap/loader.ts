@@ -1,7 +1,7 @@
+import { cssSource as sharedBaseCss } from "../styles/sharedBaseCss.css";
+import { styleManager } from "../styles/styleManager";
+import { onDocumentReady } from "../utils/browser/onDocumentReady";
 import { initFrakSdk } from "./initFrakSdk";
-import { onDocumentReady } from "./onDocumentReady";
-import { cssSource as sharedBaseCss } from "./sharedBaseCss.css";
-import { styleManager } from "./styleManager";
 
 // Inject the shared base CSS (vanilla-extract reset rules + theme tokens)
 // ONCE for the SDK. Components no longer bundle these rules in their own

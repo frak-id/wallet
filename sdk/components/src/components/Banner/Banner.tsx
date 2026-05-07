@@ -20,7 +20,7 @@ import { useGlobalComponents } from "@/hooks/useGlobalComponents";
 import { useLightDomStyles } from "@/hooks/useLightDomStyles";
 import { usePlacement } from "@/hooks/usePlacement";
 import { useReward } from "@/hooks/useReward";
-import { cssSource as sharedBaseCss } from "@/utils/sharedBaseCss.css";
+import { cssSource as sharedBaseCss } from "@/styles/sharedBaseCss.css";
 import { GiftIcon } from "../icons/GiftIcon";
 import {
     cssSource,

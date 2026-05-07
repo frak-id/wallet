@@ -1,6 +1,6 @@
 import { useEffect } from "preact/hooks";
-import { lightDomBaseCss } from "@/utils/sharedCss";
-import { styleManager } from "@/utils/styleManager";
+import { lightDomBaseCss } from "@/styles/sharedCss";
+import { styleManager } from "@/styles/styleManager";
 
 export function useLightDomStyles(
     tag: string,

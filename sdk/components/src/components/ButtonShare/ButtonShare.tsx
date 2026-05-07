@@ -1,13 +1,13 @@
 import { type InteractionTypeKey, trackEvent } from "@frak-labs/core-sdk";
 import { useCallback, useMemo } from "preact/hooks";
+import { openEmbeddedWallet } from "@/actions/embeddedWallet";
+import { openSharingPage } from "@/actions/sharingPage";
 import { useClientReady } from "@/hooks/useClientReady";
 import { useGlobalComponents } from "@/hooks/useGlobalComponents";
 import { useLightDomStyles } from "@/hooks/useLightDomStyles";
 import { usePlacement } from "@/hooks/usePlacement";
 import { useReward } from "@/hooks/useReward";
-import { openEmbeddedWallet } from "@/utils/embeddedWallet";
-import { applyRewardPlaceholder } from "@/utils/formatReward";
-import { openSharingPage } from "@/utils/sharingPage";
+import { applyRewardPlaceholder } from "@/utils/format/formatReward";
 import type { ButtonShareProps } from "./types";
 
 /**

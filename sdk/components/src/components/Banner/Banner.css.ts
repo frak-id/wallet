@@ -7,7 +7,7 @@ import "@frak-labs/design-system/styles/inAppBanner";
 import { vars } from "@frak-labs/design-system/theme";
 import { alias, brand, fontSize } from "@frak-labs/design-system/tokens";
 import { keyframes, style } from "@vanilla-extract/css";
-import { buttonReset } from "@/utils/sharedBaseCss.css";
+import { buttonReset } from "@/styles/sharedBaseCss.css";
 
 const fadeIn = keyframes({
     from: { opacity: 0, transform: "translateY(-4px)" },

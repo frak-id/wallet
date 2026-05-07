@@ -1,9 +1,9 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import * as onDocumentReady from "../utils/browser/onDocumentReady";
 import * as initFrakSdk from "./initFrakSdk";
-import * as onDocumentReady from "./onDocumentReady";
 
 // Mock dependencies
-vi.mock("./onDocumentReady", () => ({
+vi.mock("../utils/browser/onDocumentReady", () => ({
     onDocumentReady: vi.fn((callback) => {
         // Execute callback immediately in test environment
         callback();

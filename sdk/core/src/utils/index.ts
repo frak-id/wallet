@@ -17,6 +17,7 @@ export {
 export {
     isInAppBrowser,
     isIOS,
+    isMobile,
     redirectToExternalBrowser,
 } from "./browser/inAppBrowser";
 // Cache

@@ -8,5 +8,6 @@ export {
 export {
     isInAppBrowser,
     isIOS,
+    isMobile,
     redirectToExternalBrowser,
 } from "./inAppBrowser";

@@ -190,7 +190,7 @@ export default defineConfig([
     {
         entry: {
             components: "./src/components.ts",
-            loader: "./src/utils/loader.ts",
+            loader: "./src/bootstrap/loader.ts",
         },
         format: "esm",
         platform: "browser",

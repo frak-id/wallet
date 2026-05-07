@@ -1,6 +1,6 @@
 import type { InteractionTypeKey } from "@frak-labs/core-sdk";
-import { openEmbeddedWallet } from "@/utils/embeddedWallet";
-import { safeVibrate } from "@/utils/safeVibrate";
+import { openEmbeddedWallet } from "@/actions/embeddedWallet";
+import { safeVibrate } from "@/utils/browser/safeVibrate";
 
 export function openWalletModal(
     targetInteraction?: InteractionTypeKey,
