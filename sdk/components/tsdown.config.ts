@@ -159,9 +159,11 @@ const preactCompatAlias: Record<string, string> = {
     "preact/jsx-runtime": preactJsxRuntime,
 };
 
-// Stub rrweb to avoid bundling it — @openpanel/web statically imports `record`
-// from rrweb even when session replay is disabled.
-// See: https://github.com/Openpanel-dev/openpanel/issues/336
+// Stub rrweb in the CDN bundle only. @openpanel/web 1.4.1 dynamically imports
+// its replay module (which depends on rrweb), but the CDN config bundles every
+// dependency inline (`alwaysBundle: [/.*/]`), so we alias rrweb to a noop to
+// keep that bundle small. The NPM build leaves the dynamic import alone so
+// downstream bundlers can tree-shake / code-split it.
 const rrwebStub = fileURLToPath(
     new URL("../core/src/stubs/rrweb.ts", import.meta.url)
 );
@@ -181,7 +183,7 @@ export default defineConfig([
         clean: true,
         dts: true,
         outDir: "./dist",
-        alias: { ...preactCompatAlias, rrweb: rrwebStub },
+        alias: preactCompatAlias,
         deps: { alwaysBundle: [/design-system/] },
         plugins: [vanillaExtractInlinePlugin(), nodePolyfills()],
     },

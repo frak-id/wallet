@@ -17,9 +17,10 @@ import { defineConfig } from "tsdown";
  * New integrations should use @frak-labs/core-sdk instead.
  */
 
-// Stub rrweb to avoid bundling it — @openpanel/web statically imports `record`
-// from rrweb even when session replay is disabled.
-// See: https://github.com/Openpanel-dev/openpanel/issues/336
+// Stub rrweb to keep this IIFE bundle small. @openpanel/web 1.4.1 dynamically
+// imports its replay module (which depends on rrweb), but IIFE bundles inline
+// every dependency, so we alias rrweb to a noop. Session replay is disabled in
+// our SDK so this has no behavioural impact.
 const rrwebStub = fileURLToPath(
     new URL("../core/src/stubs/rrweb.ts", import.meta.url)
 );
