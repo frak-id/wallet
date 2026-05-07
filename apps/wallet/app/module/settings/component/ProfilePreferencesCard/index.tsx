@@ -7,7 +7,12 @@ import {
     SelectValue,
 } from "@frak-labs/design-system/components/Select";
 import { Switch } from "@frak-labs/design-system/components/Switch";
+import { Text } from "@frak-labs/design-system/components/Text";
 import { BellIcon, FaceIdIcon } from "@frak-labs/design-system/icons";
+import {
+    type NotificationOptInOutcome,
+    trackEvent,
+} from "@frak-labs/wallet-shared";
 import { useQueryClient } from "@tanstack/react-query";
 import { ShieldCheck } from "lucide-react";
 import { useTranslation } from "react-i18next";
@@ -23,6 +28,7 @@ import { authenticateWithBiometrics } from "@/module/biometrics/utils/biometrics
 import { InfoCard, InfoRow } from "@/module/common/component/InfoCard";
 import { notificationAdapter } from "@/module/notification/adapter";
 import { useNotificationStatus } from "@/module/notification/hook/useNotificationSetupStatus";
+import { useSubscribeToPushNotification } from "@/module/notification/hook/useSubscribeToPushNotification";
 import { useUnsubscribeFromPushNotification } from "@/module/notification/hook/useUnsubscribeFromPushNotification";
 import { notificationKey } from "@/module/notification/queryKeys/notification";
 import * as styles from "./index.css";
@@ -30,29 +36,55 @@ import * as styles from "./index.css";
 function NotificationRow() {
     const { t } = useTranslation();
     const queryClient = useQueryClient();
-    const { hasLocalCapability } = useNotificationStatus();
-    const { unsubscribeFromPush, isPending } =
+    const { permissionStatus, hasLocalCapability } = useNotificationStatus();
+    const { subscribeToPushAsync, isPending: isSubscribePending } =
+        useSubscribeToPushNotification();
+    const { unsubscribeFromPushAsync, isPending: isUnsubPending } =
         useUnsubscribeFromPushNotification();
 
-    if (!hasLocalCapability) {
-        return null;
-    }
+    const isNativeApp = isTauri();
+    const isDeniedOnWeb = !isNativeApp && permissionStatus === "denied";
 
-    const handleManageNotifications = async () => {
+    const trackOutcome = (outcome: NotificationOptInOutcome, err?: unknown) => {
+        trackEvent("notification_opt_in_resolved", {
+            outcome,
+            ...(err
+                ? { reason: err instanceof Error ? err.message : String(err) }
+                : {}),
+        });
+    };
+
+    const handleNativeToggle = async () => {
         await notificationAdapter.openSettings();
         await queryClient.invalidateQueries({
             queryKey: notificationKey.push.permission,
         });
+        trackOutcome("settings_opened");
+    };
+
+    const handleWebSubscribe = async () => {
+        try {
+            await subscribeToPushAsync();
+            trackOutcome("settings_subscribed");
+        } catch (err) {
+            trackOutcome("settings_failed", err);
+        }
+    };
+
+    const handleWebUnsubscribe = async () => {
+        try {
+            await unsubscribeFromPushAsync();
+            trackOutcome("settings_unsubscribed");
+        } catch (err) {
+            trackOutcome("settings_failed", err);
+        }
     };
 
     const handleToggle = async (checked: boolean) => {
-        if (isTauri()) {
-            await handleManageNotifications();
-            return;
-        }
-        if (!checked) {
-            unsubscribeFromPush();
-        }
+        if (isNativeApp) return handleNativeToggle();
+        if (!checked) return handleWebUnsubscribe();
+        if (isDeniedOnWeb) return trackOutcome("settings_blocked");
+        return handleWebSubscribe();
     };
 
     return (
@@ -62,12 +94,22 @@ function NotificationRow() {
                 label={t("wallet.profile.notificationSettings")}
                 action={
                     <Switch
-                        checked={true}
-                        disabled={isPending}
+                        checked={hasLocalCapability}
+                        disabled={isSubscribePending || isUnsubPending}
                         onCheckedChange={handleToggle}
                     />
                 }
             />
+            {isDeniedOnWeb ? (
+                <Text
+                    as="p"
+                    variant="caption"
+                    color="secondary"
+                    className={styles.helperText}
+                >
+                    {t("wallet.profile.notificationDeniedHelp")}
+                </Text>
+            ) : null}
         </InfoCard>
     );
 }
@@ -153,12 +195,12 @@ function BiometricRow() {
 }
 
 export function ProfilePreferencesCard() {
-    const { hasLocalCapability } = useNotificationStatus();
+    const isNotificationSupported = notificationAdapter.isSupported();
     const isBiometricsAvailable = biometricsStore(selectIsAvailable);
 
     return (
         <>
-            {hasLocalCapability && <NotificationRow />}
+            {isNotificationSupported && <NotificationRow />}
             {isBiometricsAvailable && <BiometricRow />}
         </>
     );

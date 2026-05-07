@@ -130,6 +130,8 @@ export function createTauriNotificationAdapter(): NotificationAdapter {
     const adapter: NotificationAdapter = {
         initPromise,
 
+        isSupported: () => true,
+
         getPermissionStatus: async () => {
             try {
                 const fcm = await getFcm();

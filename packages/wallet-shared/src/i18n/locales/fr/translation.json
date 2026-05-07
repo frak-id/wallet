@@ -89,6 +89,7 @@
         "profile": {
             "pageTitle": "Profil",
             "notificationSettings": "Paramètres de notification",
+            "notificationDeniedHelp": "Notifications bloquées par le navigateur. Active-les depuis les paramètres du navigateur.",
             "manageAction": "Gérer",
             "unsubscribeNotifications": "Se désabonner",
             "biometricPrompt": "Demander {{biometryLabel}} à chaque ouverture de l'app",
@@ -203,8 +204,6 @@
             "walletDescription": "Transférer vers un crypto wallet"
         },
         "activateNotifications": "Active tes notifs pour suivre tes gains en temps réel.",
-        "activateNotificationsRationale": "<strong>Activer les notifications</strong><br /> Nous avons besoin de votre permission pour vous notifier du versement de vos gains",
-        "openNotificationSettings": "<strong>Notifications désactivées</strong><br /> Ouvrez les paramètres pour activer les notifications",
         "manageNotifications": "<strong>Gérer les notifications</strong><br /> Ouvrez les paramètres pour contrôler vos notifications",
         "settings": {
             "biometryInfo": "Informations biométriques",

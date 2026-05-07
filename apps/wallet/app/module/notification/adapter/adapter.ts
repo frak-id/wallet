@@ -32,6 +32,7 @@ export type NotificationAdapterEventMap = {
 
 export type NotificationAdapter = {
     initPromise: Promise<void>;
+    isSupported: () => boolean;
     getPermissionStatus: () => Promise<NotificationPermissionStatus>;
     requestPermission: () => Promise<NotificationPermissionStatus>;
     getToken: () => Promise<PushTokenPayload | null>;

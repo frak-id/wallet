@@ -546,7 +546,6 @@ interface Resources {
         };
         wallet: {
             activateNotifications: "Turn on notifs to track your earnings in real time.";
-            activateNotificationsRationale: "<strong>Enable notifications</strong> <br /> We need your permission to notify you when gains are paid";
             inAppBrowser: {
                 clickToOpen: "Tap to open in your browser.";
                 clipboardAlert: "This browser doesn't support all features needed.\n\nThe link has been copied to your clipboard.\n\nTo continue:\n1. Open Safari\n2. Tap the address bar\n3. Paste and go";
@@ -581,7 +580,6 @@ interface Resources {
                 login: "Connect with biometrics";
                 webauthnNotSupported: "WebAuthn is not supported on this device";
             };
-            openNotificationSettings: "<strong>Notifications disabled</strong> <br /> Open settings to enable notifications";
             pageTitle: "Wallet";
             pairing: {
                 cancel: "Cancel";
@@ -700,6 +698,7 @@ interface Resources {
                 lastConnection: "Last connection";
                 manageAction: "Manage";
                 managePairings: "Manage paired devices";
+                notificationDeniedHelp: "Notifications blocked by browser. Enable them in browser settings.";
                 notificationSettings: "Notification settings";
                 pageTitle: "Profil";
                 privacyPolicy: "Privacy Policy";

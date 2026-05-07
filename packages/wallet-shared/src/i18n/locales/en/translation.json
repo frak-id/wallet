@@ -91,6 +91,7 @@
         "profile": {
             "pageTitle": "Profil",
             "notificationSettings": "Notification settings",
+            "notificationDeniedHelp": "Notifications blocked by browser. Enable them in browser settings.",
             "manageAction": "Manage",
             "unsubscribeNotifications": "Unsubscribe",
             "biometricPrompt": "Require {{biometryLabel}} at every app launch",
@@ -205,8 +206,6 @@
             "walletDescription": "Transfer to a crypto wallet"
         },
         "activateNotifications": "Turn on notifs to track your earnings in real time.",
-        "activateNotificationsRationale": "<strong>Enable notifications</strong> <br /> We need your permission to notify you when gains are paid",
-        "openNotificationSettings": "<strong>Notifications disabled</strong> <br /> Open settings to enable notifications",
         "manageNotifications": "<strong>Manage notifications</strong> <br /> Open settings to control your notifications",
         "settings": {
             "biometryInfo": "Biometry informations",
