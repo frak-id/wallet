@@ -252,12 +252,11 @@ jobs:
         env:
           STAGE: ${{ needs.validate.outputs.stage }}
 
-      - name: "🍎 Patch iOS shell for dev variant"
-        if: needs.validate.outputs.stage == 'dev'
-        run: bash apps/wallet/src-tauri/scripts/patch-ios-dev.sh
-
       - name: "🏗️ Build iOS"
-        # cd into wallet app so tauri finds src-tauri/ and beforeBuildCommand runs in correct directory
+        # cd into wallet app so tauri finds src-tauri/ and beforeBuildCommand runs in correct directory.
+        # FRAK_VARIANT=dev triggers build.rs (src-tauri/build.rs) to rewrite the entitlements
+        # file in place for the dev variant (associated domains → wallet-dev.frak.id, keychain
+        # access group → id.frak.wallet.dev). The --config overlay flips identifier + productName.
         run: |
           if [ "$STAGE" = "dev" ]; then
             CONFIG_FLAG="--config src-tauri/tauri.conf.dev.json"
@@ -268,6 +267,7 @@ jobs:
             "cd apps/wallet && tauri ios build $CONFIG_FLAG --export-method app-store-connect"
         env:
           STAGE: ${{ needs.validate.outputs.stage }}
+          FRAK_VARIANT: ${{ needs.validate.outputs.stage }}
           APPLE_API_ISSUER: ${{ secrets.APPSTORE_ISSUER_ID }}
           APPLE_API_KEY: ${{ secrets.APPSTORE_API_KEY_ID }}
           APPLE_API_KEY_PATH: ${{ runner.temp }}/AuthKey.p8
@@ -412,11 +412,20 @@ jobs:
 
       - name: "🏗️ Build Android"
         # cd into wallet app so tauri finds src-tauri/ and beforeBuildCommand runs in correct directory.
-        # ORG_GRADLE_PROJECT_appVariant flips the wallet variant in app/build.gradle.kts (id.frak.wallet[.dev], app name, app link host).
-        run: sst shell --stage "$STAGE" --print-logs -- bash -c "cd apps/wallet && tauri android build"
+        # FRAK_VARIANT flips the wallet variant in app/build.gradle.kts (id.frak.wallet[.dev], app
+        # name, app link host, deep-link scheme).
+        #
+        # We do NOT pass `--config src-tauri/tauri.conf.dev.json` here. Android's `applicationId`
+        # is decoupled from `namespace` (Kotlin source package) by Gradle, so the dev bundle id
+        # comes from build.gradle.kts — not Tauri's `identifier`. Overriding `identifier` would
+        # make Tauri CLI look for sources at gen/android/app/src/main/java/id/frak/wallet/dev/
+        # which doesn't exist (sources live under id/frak/wallet/, matching `namespace`).
+        run: |
+          sst shell --stage "$STAGE" --print-logs -- bash -c \
+            "cd apps/wallet && tauri android build"
         env:
           STAGE: ${{ needs.validate.outputs.stage }}
-          ORG_GRADLE_PROJECT_appVariant: ${{ needs.validate.outputs.stage }}
+          FRAK_VARIANT: ${{ needs.validate.outputs.stage }}
 
       # TODO: Graduate from `internal` track to `production` when ready for public release
       - name: "🚀 Upload to Play Store"

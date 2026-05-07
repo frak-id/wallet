@@ -35,6 +35,9 @@
             "icons/icon.icns",
             "icons/icon.ico"
         ],
+        "android": {
+            "debugApplicationIdSuffix": ".dev"
+        },
         "iOS": {
             "developmentTeam": "57DZ6Z2235"
         }

@@ -20,9 +20,12 @@ val keyProperties = Properties().apply {
     }
 }
 
-// Variant selection: pass `-PappVariant=dev` (or `ORG_GRADLE_PROJECT_appVariant=dev`)
-// to build the dev wallet (id.frak.wallet.dev / "Frak Wallet Dev"). Defaults to prod.
-val appVariant = (project.findProperty("appVariant") as? String) ?: "prod"
+// Variant selection: prefers `FRAK_VARIANT` env var (shared with iOS / build.rs),
+// falls back to the legacy `-PappVariant=dev` (or `ORG_GRADLE_PROJECT_appVariant=dev`)
+// Gradle property. Defaults to prod.
+val appVariant = (System.getenv("FRAK_VARIANT")
+    ?: project.findProperty("appVariant") as? String
+    ?: "prod")
 val isDevVariant = appVariant == "dev"
 val appName = if (isDevVariant) "Frak Wallet Dev" else "Frak Wallet"
 val appLinkHost = if (isDevVariant) "wallet-dev.frak.id" else "wallet.frak.id"
@@ -34,7 +37,7 @@ android {
     namespace = "id.frak.wallet"
     defaultConfig {
         manifestPlaceholders["usesCleartextTraffic"] = "false"
-        applicationId = if (isDevVariant) "id.frak.wallet.dev" else "id.frak.wallet"
+        applicationId = "id.frak.wallet"
         minSdk = 28
         targetSdk = 36
         versionCode = tauriProperties.getProperty("tauri.android.versionCode", "1").toInt()
@@ -61,6 +64,13 @@ android {
     }
     buildTypes {
         getByName("debug") {
+            // `applicationIdSuffix` is also declared in tauri.conf.json
+            // (`bundle.android.debugApplicationIdSuffix`); the Tauri CLI re-patches
+            // this exact line on every `tauri android dev`/`build`. Keeping the
+            // literal in sync here means the patch is a no-op (clean git tree).
+            // Debug builds always install as `id.frak.wallet.dev` so they never
+            // collide with a side-loaded prod build on the same device.
+            applicationIdSuffix = ".dev"
             manifestPlaceholders["usesCleartextTraffic"] = "true"
             signingConfig = signingConfigs.getByName("release")
             isDebuggable = true
@@ -73,6 +83,11 @@ android {
             }
         }
         getByName("release") {
+            // Dev release builds (TestFlight/Play internal track) carry the
+            // `.dev` suffix so they install side-by-side with prod on the same device.
+            if (isDevVariant) {
+                applicationIdSuffix = ".dev"
+            }
             signingConfig = signingConfigs.getByName("release")
             isMinifyEnabled = true
             proguardFiles(
