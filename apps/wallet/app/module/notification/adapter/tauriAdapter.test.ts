@@ -51,6 +51,7 @@ vi.mock("@frak-labs/wallet-shared", () => ({
             },
         },
     },
+    getInvoke: vi.fn(async () => invokeMock),
 }));
 
 vi.mock("@frak-labs/app-essentials/utils/platform", () => ({

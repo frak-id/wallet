@@ -1,31 +1,43 @@
 import { vi } from "vitest";
-import {
-    afterEach,
-    beforeEach,
-    describe,
-    expect,
-    test,
-} from "@/tests/vitest-fixtures";
+import { beforeEach, describe, expect, test } from "@/tests/vitest-fixtures";
+
+const {
+    isAndroidMock,
+    isTauriMock,
+    isIOSMock,
+    getInsetsMock,
+    recordErrorMock,
+} = vi.hoisted(() => ({
+    isAndroidMock: vi.fn(() => false),
+    isTauriMock: vi.fn(() => false),
+    isIOSMock: vi.fn(() => false),
+    getInsetsMock: vi.fn(),
+    recordErrorMock: vi.fn(),
+}));
 
 vi.mock("@frak-labs/app-essentials/utils/platform", () => ({
-    isAndroid: vi.fn(() => false),
+    isAndroid: isAndroidMock,
+    isTauri: isTauriMock,
+    isIOS: isIOSMock,
+}));
+
+vi.mock("@frak-labs/wallet-shared", () => ({
+    recordError: recordErrorMock,
 }));
 
 vi.mock("tauri-plugin-safe-area-insets", () => ({
-    getInsets: vi.fn(),
+    getInsets: getInsetsMock,
 }));
 
-describe("initSafeAreaInsets", () => {
-    let originalSetProperty: typeof document.documentElement.style.setProperty;
+import { initSafeAreaInsets } from "./safeArea";
 
+describe.sequential("initSafeAreaInsets", () => {
     beforeEach(() => {
-        vi.clearAllMocks();
-        originalSetProperty = document.documentElement.style.setProperty;
-    });
-
-    afterEach(() => {
-        document.documentElement.style.setProperty = originalSetProperty;
-        vi.restoreAllMocks();
+        isAndroidMock.mockReset().mockReturnValue(false);
+        isTauriMock.mockReset().mockReturnValue(false);
+        isIOSMock.mockReset().mockReturnValue(false);
+        getInsetsMock.mockReset();
+        recordErrorMock.mockReset();
     });
 
     test("should not run when window is undefined", async () => {
@@ -33,92 +45,68 @@ describe("initSafeAreaInsets", () => {
         // @ts-expect-error - Simulating SSR environment
         global.window = undefined;
 
-        const { initSafeAreaInsets } = await import("./safeArea");
-        await initSafeAreaInsets();
-
-        global.window = originalWindow;
+        try {
+            await initSafeAreaInsets();
+        } finally {
+            global.window = originalWindow;
+        }
     });
 
     test("should not run on non-Android platforms", async () => {
-        const { isAndroid } = await import(
-            "@frak-labs/app-essentials/utils/platform"
+        isAndroidMock.mockReturnValue(false);
+
+        const setPropertySpy = vi.spyOn(
+            document.documentElement.style,
+            "setProperty"
         );
-        vi.mocked(isAndroid).mockReturnValue(false);
 
-        const mockSetProperty = vi.fn();
-        document.documentElement.style.setProperty = mockSetProperty;
-
-        vi.resetModules();
-        const { initSafeAreaInsets } = await import("./safeArea");
         await initSafeAreaInsets();
 
-        expect(mockSetProperty).not.toHaveBeenCalled();
+        expect(setPropertySpy).not.toHaveBeenCalled();
     });
 
     test("should set CSS variables on Android", async () => {
-        const { isAndroid } = await import(
-            "@frak-labs/app-essentials/utils/platform"
-        );
-        vi.mocked(isAndroid).mockReturnValue(true);
-
-        const { getInsets } = await import("tauri-plugin-safe-area-insets");
-        vi.mocked(getInsets).mockResolvedValue({
+        isAndroidMock.mockReturnValue(true);
+        getInsetsMock.mockResolvedValue({
             top: 24,
             bottom: 48,
             left: 0,
             right: 0,
         });
 
-        const mockSetProperty = vi.fn();
-        document.documentElement.style.setProperty = mockSetProperty;
+        const setPropertySpy = vi.spyOn(
+            document.documentElement.style,
+            "setProperty"
+        );
 
-        vi.resetModules();
-        const { initSafeAreaInsets } = await import("./safeArea");
         await initSafeAreaInsets();
 
-        expect(mockSetProperty).toHaveBeenCalledWith(
+        expect(setPropertySpy).toHaveBeenCalledWith(
             "--safe-area-inset-top",
             "24px"
         );
-        expect(mockSetProperty).toHaveBeenCalledWith(
+        expect(setPropertySpy).toHaveBeenCalledWith(
             "--safe-area-inset-bottom",
             "48px"
         );
-        expect(mockSetProperty).toHaveBeenCalledWith(
+        expect(setPropertySpy).toHaveBeenCalledWith(
             "--safe-area-inset-left",
             "0px"
         );
-        expect(mockSetProperty).toHaveBeenCalledWith(
+        expect(setPropertySpy).toHaveBeenCalledWith(
             "--safe-area-inset-right",
             "0px"
         );
     });
 
     test("should handle errors gracefully", async () => {
-        const { isAndroid } = await import(
-            "@frak-labs/app-essentials/utils/platform"
-        );
-        vi.mocked(isAndroid).mockReturnValue(true);
-
-        const { getInsets } = await import("tauri-plugin-safe-area-insets");
-        vi.mocked(getInsets).mockRejectedValue(
-            new Error("Plugin not available")
-        );
-
-        const consoleSpy = vi
-            .spyOn(console, "error")
-            .mockImplementation(() => {});
-
-        vi.resetModules();
-        const { initSafeAreaInsets } = await import("./safeArea");
+        isAndroidMock.mockReturnValue(true);
+        getInsetsMock.mockRejectedValue(new Error("Plugin not available"));
 
         await expect(initSafeAreaInsets()).resolves.not.toThrow();
 
-        expect(consoleSpy).toHaveBeenCalledWith(
-            "Failed to get safe area insets:",
-            expect.any(Error)
-        );
-
-        consoleSpy.mockRestore();
+        expect(recordErrorMock).toHaveBeenCalledWith(expect.any(Error), {
+            source: "safe_area",
+        });
     });
 });

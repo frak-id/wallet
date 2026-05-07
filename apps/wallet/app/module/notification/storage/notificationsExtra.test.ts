@@ -145,7 +145,7 @@ describe("notificationStorage", () => {
 
             expect(result).toEqual([]);
             expect(consoleErrorSpy).toHaveBeenCalledWith(
-                "Failed to get notifications:",
+                "Error while reading notifications",
                 unexpectedError
             );
 
