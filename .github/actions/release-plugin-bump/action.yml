@@ -1,15 +1,12 @@
-name: "Prepare plugin release PR"
-description: "Bump version + promote CHANGELOG and open a release PR for a PHP plugin"
+name: "Bump plugin version"
+description: "Bump version file + promote CHANGELOG [Unreleased] -> [version] for a single PHP plugin"
 
 inputs:
   version:
     description: "Semantic version to release (e.g. 1.0.1)"
     required: true
-  plugin-name:
-    description: "Display name, e.g. 'WordPress Plugin'"
-    required: true
   plugin-slug:
-    description: "Slug used in branch/tag/label, e.g. 'wordpress'"
+    description: "Slug used in tag prefix, e.g. 'wordpress'"
     required: true
   directory:
     description: "Plugin directory, e.g. 'plugins/wordpress'"
@@ -17,24 +14,10 @@ inputs:
   version-file:
     description: "File (relative to directory) containing the version; .php or .json"
     required: true
-  base-branch:
-    description: "Branch to open the release PR against"
-    required: false
-    default: main
 
 runs:
   using: composite
   steps:
-    - name: "✅ Validate version format"
-      shell: bash
-      env:
-        VERSION: ${{ inputs.version }}
-      run: |
-        if ! echo "$VERSION" | grep -qE '^[0-9]+\.[0-9]+\.[0-9]+$'; then
-          echo "::error::Invalid version format: $VERSION (expected: X.Y.Z)"
-          exit 1
-        fi
-
     - name: "🔢 Bump version file"
       shell: bash
       working-directory: ${{ inputs.directory }}
@@ -70,23 +53,3 @@ runs:
         tag-prefix: ${{ inputs.plugin-slug }}-
         keep-unreleased-section: true
         fail-on-empty-release-notes: true
-
-    - name: "📌 Create release PR"
-      uses: peter-evans/create-pull-request@v8
-      with:
-        branch: release/${{ inputs.plugin-slug }}-${{ inputs.version }}
-        base: ${{ inputs.base-branch }}
-        title: "chore(${{ inputs.plugin-slug }}): release ${{ inputs.version }}"
-        commit-message: "chore(${{ inputs.plugin-slug }}): release ${{ inputs.version }}"
-        body: |
-          Release **${{ inputs.plugin-name }} ${{ inputs.version }}**.
-
-          Merging this PR will:
-          - Tag the merge commit as `${{ inputs.plugin-slug }}-${{ inputs.version }}`
-          - Build the plugin zip
-          - Create a GitHub release with the CHANGELOG notes + zip asset
-        labels: release:${{ inputs.plugin-slug }}
-        delete-branch: true
-        add-paths: |
-          ${{ inputs.directory }}/${{ inputs.version-file }}
-          ${{ inputs.directory }}/CHANGELOG.md

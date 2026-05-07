@@ -42,7 +42,7 @@ Hand-editing `config.xml` / `frakintegration.php` versions (let `build.sh` propa
 
 ## Release Flow
 - CI: `.github/workflows/php-plugins.yaml` runs `cs` + `analyse` + `test` on every push.
-- Release: dispatch `release-prestashop.yml` with the new version → bump-PR → merge with `release:prestashop` label → tag + zip + GitHub release.
+- Release: dispatch `release-php-plugins.yml` with the new version + `release_prestashop=true` (combinable with `release_magento` / `release_wordpress` for a multi-plugin train) → single `release/php-<version>` bump-PR with one `release:<plugin>` label per selected plugin → merge → per-plugin tag + zip + GitHub release.
 
 ## See Also
 Parent `/AGENTS.md` · `plugins/wordpress/AGENTS.md` · `plugins/magento/AGENTS.md` · `services/backend/` (webhook receiver).

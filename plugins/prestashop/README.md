@@ -124,10 +124,10 @@ The full architecture and refactor roadmap lives in [`docs/prestashop-refactor-p
 
 ## Release
 
-The release flow lives in [`.github/workflows/release-prestashop.yml`](../../.github/workflows/release-prestashop.yml):
+The release flow lives in [`.github/workflows/release-php-plugins.yml`](../../.github/workflows/release-php-plugins.yml):
 
-1. Dispatch the workflow with the new version (e.g. `1.0.1`). It opens a `release/prestashop-<version>` PR that bumps `composer.json#version` and promotes `[Unreleased]` to a dated section in `CHANGELOG.md`.
-2. Merge the PR with the `release:prestashop` label. The publish job tags `prestashop-<version>`, builds the zip via `build.sh`, and uploads the artifact to a GitHub Release.
+1. Dispatch the workflow with the new version (e.g. `1.0.1`) and tick `release_prestashop` (alongside any other plugins shipping in the same train). It opens a single `release/php-<version>` PR that bumps `composer.json#version` and promotes `[Unreleased]` to a dated section in `CHANGELOG.md` for every selected plugin.
+2. Merge the PR (it carries one `release:<plugin>` label per selected plugin). The publish job runs the per-plugin tag + zip + GitHub release for each label present — for PrestaShop that means tagging `prestashop-<version>`, building the zip via `build.sh`, and uploading the artifact to a GitHub Release.
 
 `composer.json#version` is the canonical source of truth for the module version. `build.sh` propagates the resolved version into `config.xml` and `frakintegration.php` inside the staged build directory only — the source tree carries the last-released values, and the released zip always reflects the resolved version.
 
