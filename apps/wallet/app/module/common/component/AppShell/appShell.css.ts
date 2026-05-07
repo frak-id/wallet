@@ -37,6 +37,10 @@ const mainContentBase = style({
     minHeight: 0,
     overflowY: "auto",
     WebkitOverflowScrolling: "touch",
+    // Prevent native browser pull-to-refresh / overscroll on the scroll container.
+    // Required so PullToRefresh's e.preventDefault() in touchmove fully suppresses
+    // iOS rubber-band and Chrome Android native PTR.
+    overscrollBehaviorY: "contain",
 });
 
 /**
