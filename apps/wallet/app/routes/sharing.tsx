@@ -9,6 +9,7 @@ import {
     clearConfirmation,
     clientIdStore,
     getSavedConfirmation,
+    openExternalUrl,
     SharingPage,
     saveConfirmation,
     sessionStore,
@@ -273,8 +274,7 @@ function WalletSharingPage() {
             if (IS_TAURI) {
                 // In Tauri, open the redirect URL in the external browser
                 // and navigate back to the wallet home.
-                const { openUrl } = await import("@tauri-apps/plugin-opener");
-                await openUrl(redirectUrl);
+                await openExternalUrl(redirectUrl);
                 navigate({ to: "/wallet" });
                 return;
             }

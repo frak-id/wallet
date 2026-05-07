@@ -25,6 +25,7 @@ import {
 import {
     buildSharingLink,
     clientIdStore,
+    ExternalLink,
     estimatedRewardsQueryOptions,
     formatEstimatedReward,
     mergeTokenQueryOptions,
@@ -215,17 +216,15 @@ export function ExplorerDetail({ merchant, onClose }: ExplorerDetailProps) {
                 <div className={styles.brandHeader}>
                     <div className={styles.brandInfo}>
                         <Text as="h1" variant="heading1">
-                            <a
+                            <ExternalLink
                                 href={brandLinkUrl}
-                                target="_blank"
-                                rel="noopener noreferrer"
                                 className={styles.brandLink}
                             >
                                 {merchant.name}{" "}
                                 <span className={styles.brandLinkIcon}>
                                     <ExternalLinkIcon width={14} height={14} />
                                 </span>
-                            </a>
+                            </ExternalLink>
                         </Text>
                         {rewardSummary.maxReferrerReward && (
                             <Text variant="body" weight="medium">
@@ -282,13 +281,9 @@ export function ExplorerDetail({ merchant, onClose }: ExplorerDetailProps) {
                             values={{ merchantName: merchant.name }}
                             components={{
                                 termsLink: (
-                                    <a
-                                        href="https://frak.id/terms"
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                    >
+                                    <ExternalLink href="https://frak.id/terms">
                                         {" "}
-                                    </a>
+                                    </ExternalLink>
                                 ),
                             }}
                         />

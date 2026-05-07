@@ -1,3 +1,4 @@
+import { isTauri } from "@frak-labs/app-essentials/utils/platform";
 import {
     type CompressedSsoData,
     compressJsonToB64,
@@ -21,7 +22,9 @@ import {
     authenticationStore,
     clientIdStore,
     compressedSsoToParams,
+    ExternalLink,
     HandleErrors,
+    openExternalUrl,
     PairingView,
     recordError,
     sessionStore,
@@ -241,7 +244,21 @@ function Sso() {
                 redirectUrl.searchParams.set("sso", compressed);
             }
 
-            window.location.href = redirectUrl.toString();
+            const url = redirectUrl.toString();
+            if (isTauri()) {
+                // On native, hand the redirect off to the system browser
+                // and bring the user back to the wallet home so the app
+                // doesn't get stranded on the merchant URL inside the webview.
+                openExternalUrl(url).catch((error) => {
+                    recordError(error, {
+                        source: "sso",
+                        context: { stage: "tauri_redirect" },
+                    });
+                });
+                window.location.href = "/wallet";
+                return;
+            }
+            window.location.href = url;
             return;
         }
         // If we got a direct exit, close this window
@@ -436,14 +453,12 @@ function SsoSubtitle({ metadata }: { metadata: Metadata }) {
             }}
             components={{
                 pLink: metadata.homepageLink ? (
-                    <a
+                    <ExternalLink
                         href={metadata.homepageLink}
-                        target={"_blank"}
-                        rel={"noreferrer"}
                         className={styles.merchantLink}
                     >
                         {metadata.name}
-                    </a>
+                    </ExternalLink>
                 ) : (
                     <u>{metadata.name}</u>
                 ),
@@ -465,20 +480,14 @@ function Disclaimer({ metadata }: { metadata: Metadata }) {
                 }}
                 components={{
                     conditionsLink: (
-                        // biome-ignore lint/a11y/useAnchorContent: Trans injects children from i18n
-                        <a
+                        <ExternalLink
                             href="https://frak.id/terms"
-                            target="_blank"
-                            rel="noreferrer"
                             className={styles.disclaimerLink}
                         />
                     ),
                     privacyLink: (
-                        // biome-ignore lint/a11y/useAnchorContent: Trans injects children from i18n
-                        <a
+                        <ExternalLink
                             href="https://frak.id/privacy"
-                            target="_blank"
-                            rel="noreferrer"
                             className={styles.disclaimerLink}
                         />
                     ),

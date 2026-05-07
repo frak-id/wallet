@@ -19,6 +19,7 @@ import {
 } from "@frak-labs/design-system/icons";
 import { Minus, Plus } from "lucide-react";
 import { Toaster } from "sonner";
+import { ExternalLink } from "../../../common/component/ExternalLink";
 import { MerchantLogo } from "../MerchantLogo";
 import { PostShareConfirmation } from "../PostShareConfirmation";
 import { overlay } from "../shared.css";
@@ -390,30 +391,24 @@ export function SharingPage({
                     </Stack>
 
                     <nav className={styles.legalLinks}>
-                        <a
+                        <ExternalLink
                             href="https://frak.id/support"
-                            target="_blank"
-                            rel="noopener noreferrer"
                             className={styles.legalLink}
                         >
                             {t("sdk.sharingPage.legal.help")}
-                        </a>
-                        <a
+                        </ExternalLink>
+                        <ExternalLink
                             href="https://frak.id/privacy"
-                            target="_blank"
-                            rel="noopener noreferrer"
                             className={styles.legalLink}
                         >
                             {t("sdk.sharingPage.legal.privacy")}
-                        </a>
-                        <a
+                        </ExternalLink>
+                        <ExternalLink
                             href="https://frak.id/terms"
-                            target="_blank"
-                            rel="noopener noreferrer"
                             className={styles.legalLink}
                         >
                             {t("sdk.sharingPage.legal.terms")}
-                        </a>
+                        </ExternalLink>
                     </nav>
                 </main>
 

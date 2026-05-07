@@ -7,7 +7,7 @@ import {
 } from "@frak-labs/design-system/components/DetailSheet";
 import { Text } from "@frak-labs/design-system/components/Text";
 import { ShareIcon } from "@frak-labs/design-system/icons";
-import { useShareLink } from "@frak-labs/wallet-shared";
+import { ExternalLink, useShareLink } from "@frak-labs/wallet-shared";
 import { useCallback } from "react";
 import { Trans, useTranslation } from "react-i18next";
 import { ButtonLink } from "@/module/common/component/ButtonLink";
@@ -83,13 +83,9 @@ export function WelcomeDetail({ onClose }: WelcomeDetailProps) {
                         i18nKey="wallet.welcome.detail.legal"
                         components={{
                             termsLink: (
-                                <a
-                                    href="https://frak.id/terms"
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                >
+                                <ExternalLink href="https://frak.id/terms">
                                     {" "}
-                                </a>
+                                </ExternalLink>
                             ),
                         }}
                     />
