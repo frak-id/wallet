@@ -1,5 +1,4 @@
 import { Spinner } from "@frak-labs/design-system/components/Spinner";
-import { X } from "lucide-react";
 import type { MouseEvent, ReactNode } from "react";
 import { Warning } from "../Warning";
 import styles from "./index.module.css";
@@ -43,7 +42,7 @@ export function Toast({
                     className={styles.toast__dismissButton}
                     aria-label={ariaDismissLabel}
                 >
-                    <X size={16} />
+                    <CloseIcon />
                 </button>
             </div>
         </div>
@@ -79,4 +78,30 @@ function ClickableComponent({
         );
     }
     return children;
+}
+
+/**
+ * Inlined `X` glyph (lucide-react geometry) so the Toast doesn't pull the
+ * full lucide-react package into the eager listener bundle. The original
+ * import was the only reason `ui-vendor` was statically reachable from
+ * `common`, which forced the chunk into the iframe-boot preload list.
+ */
+function CloseIcon() {
+    return (
+        <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width={16}
+            height={16}
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth={2}
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            aria-hidden="true"
+        >
+            <path d="M18 6 6 18" />
+            <path d="m6 6 12 12" />
+        </svg>
+    );
 }

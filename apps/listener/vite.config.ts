@@ -246,15 +246,45 @@ export default defineConfig(async () => {
                                 priority: 30,
                             },
 
-                            // All the other elements shared within the codebase
+                            // Listener UI code that's only reachable from the
+                            // lazy Modal / Wallet / SharingPage chunks (and their
+                            // lazy hook impls). Anything matched here MUST NOT be
+                            // statically imported from the eager listener entry —
+                            // otherwise the whole chunk gets dragged into the
+                            // iframe-boot preload list (which defeats the point).
+                            //
+                            // Notable exclusions, intentionally absent:
+                            //  - `apps/listener/app/module/component/ListenerUiRenderer`
+                            //    is rendered by `views/listener.tsx` on every iframe
+                            //    boot; matching it pulls the whole lazy-shared graph
+                            //    eagerly.
+                            //  - `module/utils/{i18nMapper,deprecatedModalMetadataMapper}`
+                            //    are imported by `ListenerUiProvider` (eager) and
+                            //    `lifecycleHandler` (eager). Same eager-pull issue.
+                            //  - `wallet-shared/src/pairing/component/*` is included
+                            //    because Modal/Wallet pull `OriginPairingState` etc.
+                            //    via the pairing barrel; without this group those
+                            //    components hoist to `common` and force `ui-vendor`
+                            //    (lucide + cuer + cva) into the eager bundle.
                             {
                                 name: "lazy-shared",
-                                test: /(?:wallet-shared[\\/]src[\\/]common[\\/]component)|(?:apps[\\/]listener[\\/]app[\\/]module[\\/](?:component|utils[\\/](?:i18nMapper|deprecatedModalMetadataMapper|resolveBackendMetadata)))/,
+                                test: /(?:wallet-shared[\\/]src[\\/](?:common|pairing)[\\/]component)|(?:apps[\\/]listener[\\/]app[\\/]module[\\/](?:component[\\/](?:ButtonAuth|SsoButton|WalletAddress|ToastLoading)|utils[\\/]resolveBackendMetadata))/,
                                 priority: 11,
                             },
+                            // Catch-all for code that's shared between the eager
+                            // listener entry and the lazy UI chunks. Without an
+                            // explicit test Rolldown ends up attracting these
+                            // modules (Zustand stores, analytics stubs, i18n
+                            // mappers, app-essentials helpers) into whichever
+                            // grouped chunk happens to import them — in our case
+                            // `lazy-shared` — which then forces lazy-shared into
+                            // the eager preload list. Naming them here keeps them
+                            // pinned to `common` so `lazy-shared` stays reachable
+                            // only via dynamic imports.
                             {
                                 name: "common",
-                                priority: 10,
+                                test: /(?:wallet-shared[\\/]src[\\/](?:stores|i18n|polyfills|stubs|identity|types|pairing[\\/](?:clients|hook|queryKeys|types)|common[\\/](?:analytics|api|hook|lib|utils)))|(?:packages[\\/]app-essentials[\\/])|(?:apps[\\/]listener[\\/]app[\\/]module[\\/](?:stores|middleware|handlers|providers|types|common|queryKeys|utils[\\/](?:i18nMapper|deprecatedModalMetadataMapper|normalizeTargetInteraction|backup)))/,
+                                priority: 20,
                             },
                         ],
                     },
