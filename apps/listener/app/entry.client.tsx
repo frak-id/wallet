@@ -6,8 +6,6 @@ import {
     interpolation,
     supportedLngs,
 } from "@frak-labs/wallet-shared/i18n";
-import frCustomized from "@frak-labs/wallet-shared/i18n/locales/fr/customized.json";
-import frTranslation from "@frak-labs/wallet-shared/i18n/locales/fr/translation.json";
 import { setupBigIntSerialization } from "@frak-labs/wallet-shared/polyfills/bigint-serialization";
 
 // Setup BigInt serialization polyfill
@@ -31,13 +29,25 @@ import "./styles/all.css";
 // (~13 KB gzipped saved). Listener registered before init() so the initial
 // `languageChanged` event emitted by the language detector is captured.
 i18next.on("languageChanged", async (lng) => {
-    if (lng === "en" && !i18next.hasResourceBundle("en", "translation")) {
+    if (lng === "fr" && !i18next.hasResourceBundle("fr", "translation")) {
+        const [frTranslation, frCustomized] = await Promise.all([
+            import("@frak-labs/wallet-shared/i18n/locales/fr/translation.json"),
+            import("@frak-labs/wallet-shared/i18n/locales/fr/customized.json"),
+        ]);
+        i18next.addResourceBundle("fr", "translation", frTranslation.default);
+        i18next.addResourceBundle("fr", "customized", frCustomized.default);
+        return;
+    }
+
+    // Otherwise, if we didn't loaded en translation, load them
+    if (!i18next.hasResourceBundle("en", "translation")) {
         const [enTranslation, enCustomized] = await Promise.all([
             import("@frak-labs/wallet-shared/i18n/locales/en/translation.json"),
             import("@frak-labs/wallet-shared/i18n/locales/en/customized.json"),
         ]);
         i18next.addResourceBundle("en", "translation", enTranslation.default);
         i18next.addResourceBundle("en", "customized", enCustomized.default);
+        return;
     }
 });
 
@@ -56,9 +66,6 @@ i18next
         fallbackNS: "customized",
         supportedLngs,
         partialBundledLanguages: true,
-        resources: {
-            fr: { translation: frTranslation, customized: frCustomized },
-        },
         debug: isRunningLocally,
         interpolation,
 

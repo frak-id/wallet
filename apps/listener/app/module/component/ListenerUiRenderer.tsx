@@ -35,12 +35,11 @@ export function ListenerUiRenderer() {
     const { currentRequest } = useListenerUI();
 
     /**
-     * Preload the modal + embedded wallet so it did not take too much time to display on slow network
+     * Preload the modal + sharing page so it did not take too much time to display on slow network
      */
     useEffect(() => {
         const handleIdleCallback = async () => {
             await modalImport();
-            await walletImport();
             await sharingImport();
         };
 

@@ -61,7 +61,11 @@ function stripOrphanCrossChunkImports() {
         apply: "build" as const,
         generateBundle(_options: unknown, bundle: Record<string, unknown>) {
             for (const file of Object.values(bundle)) {
-                const f = file as { type?: string; fileName?: string; code?: string };
+                const f = file as {
+                    type?: string;
+                    fileName?: string;
+                    code?: string;
+                };
                 if (f.type !== "chunk" || !f.fileName?.includes("common-")) {
                     continue;
                 }
@@ -240,10 +244,14 @@ export default defineConfig(async () => {
                                 name: "ui-vendor",
                                 test: /node_modules[\\/](@radix-ui|vaul|micromark|sonner|lucide-react|class-variance-authority|cuer|nprogress|react-hook-form|react-dropzone)/,
                                 priority: 30,
-                                // minSize: 30000,
                             },
 
                             // All the other elements shared within the codebase
+                            {
+                                name: "lazy-shared",
+                                test: /(?:wallet-shared[\\/]src[\\/]common[\\/]component)|(?:apps[\\/]listener[\\/]app[\\/]module[\\/](?:component|utils[\\/](?:i18nMapper|deprecatedModalMetadataMapper|resolveBackendMetadata)))/,
+                                priority: 11,
+                            },
                             {
                                 name: "common",
                                 priority: 10,

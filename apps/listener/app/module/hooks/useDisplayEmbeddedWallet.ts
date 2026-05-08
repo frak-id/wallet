@@ -90,7 +90,6 @@ export function useDisplayEmbeddedWallet(): OnDisplayEmbeddedWalletRequest {
 
             // Clean up any existing deferred
             if (currentDeferredRef.current) {
-                console.log("arleady got one");
                 currentDeferredRef.current.reject(
                     new FrakRpcError(
                         RpcErrorCodes.internalError,
