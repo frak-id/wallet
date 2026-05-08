@@ -28,6 +28,12 @@ const isTauriIos = isTauri && tauriPlatform === "ios";
 const isTauriAndroid = isTauri && tauriPlatform === "android";
 const isSandbox = !!process.env.ATELIER_SANDBOX_ID;
 const appVersion = process.env.COMMIT_HASH ?? walletPackage.version;
+// Tauri's collapsed `vendor` chunk (~470 KB) is intentional — see
+// `buildChunkGroups`. The 500 KB limit accommodates it without noise;
+// web stays strict at 300 KB to surface regressions early.
+const chunkSizeWarningLimit = isTauri ? 500 : 300;
+// Drop Rolldown debug info in prod (smaller maps), keep full in dev.
+const attachDebugInfo: "full" | "none" = isProd ? "none" : "full";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -50,6 +56,88 @@ const tauriAlias = isTauri
           { find: /^@tauri-apps\/.*$/, replacement: tauriStub },
           { find: /^tauri-plugin-.*$/, replacement: tauriStub },
       ];
+
+// Rolldown's `tags` field on a code-splitting group is typed as `"$initial"[]`
+// (literal). Inline `["$initial"]` widens to `string[]`; `as const` makes it
+// readonly. Both fail the assignability check, so we declare a properly-typed
+// constant once and reuse it.
+const initialOnly: "$initial"[] = ["$initial"];
+
+// Code-splitting groups for Rolldown. Returned per-build because Tauri and web
+// have different optimal shapes:
+//  • Tauri: assets are served from the embedded binary via the `tauri://` URI
+//    handler — no HTTP/2 multiplexing, no CDN cache, each chunk = a Rust IPC
+//    roundtrip on cold boot. Cache granularity is irrelevant (the binary ships
+//    a fixed asset set), so we collapse generic vendors into a single
+//    `vendor` chunk to minimise IPC count.
+//  • Web: keep granular vendor split for browser-cache hit-rate across deploys
+//    (React rarely changes; UI libs churn faster) and HTTP/2 parallel preload.
+//
+// `tags: initialOnly` everywhere locks each vendor to modules statically
+// reachable from the entry — without it, a lazy-only module shared by 2+ lazy
+// chunks can drift into an eager vendor and inflate first paint.
+//
+// Note: `ox` was previously a typo `0x` matching nothing — it now lands in
+// `blockchain-vendor` instead of `common`.
+function buildChunkGroups(forTauri: boolean) {
+    const eagerVendor = forTauri
+        ? [
+              // Tauri: single eager vendor chunk for everything except blockchain.
+              // React + TanStack + UI + i18n + utility libs collapse here.
+              {
+                  name: "vendor",
+                  tags: initialOnly,
+                  test: /node_modules[\\/](?:react|react-dom|scheduler|react[\\/]jsx-runtime|@tanstack|@radix-ui|vaul|micromark|sonner|lucide-react|class-variance-authority|cuer|react-hook-form|react-dropzone|i18next|i18next-browser-languagedetector|react-i18next|zustand|idb-keyval|jose|radash|remix-utils|clsx)[\\/]/,
+                  priority: 40,
+                  // minShareCount: 1 forces single-importer node_modules
+                  // (e.g. react-dom-client, ~170 KB, imported only by the
+                  // entry for createRoot) into vendor instead of the entry chunk.
+                  minShareCount: 1,
+              },
+          ]
+        : [
+              // Web: granular vendor split for cache granularity.
+              {
+                  name: "react-vendor",
+                  tags: initialOnly,
+                  test: /node_modules[\\/](react|react-dom|scheduler|react[\\/]jsx-runtime)[\\/]/,
+                  priority: 40,
+                  minShareCount: 1,
+              },
+              {
+                  name: "tanstack-vendor",
+                  tags: initialOnly,
+                  test: /node_modules[\\/]@tanstack[\\/]/,
+                  priority: 32,
+              },
+              {
+                  name: "ui-vendor",
+                  tags: initialOnly,
+                  test: /node_modules[\\/](@radix-ui|vaul|micromark|sonner|lucide-react|class-variance-authority|cuer|react-hook-form|react-dropzone)[\\/]/,
+                  priority: 30,
+              },
+          ];
+
+    return [
+        ...eagerVendor,
+        // Blockchain stays isolated on both builds: viem/wagmi update
+        // independently from React (web cache benefit) and the regex captures
+        // all crypto deps that would otherwise pollute `vendor` (Tauri).
+        {
+            name: "blockchain-vendor",
+            tags: initialOnly,
+            test: /node_modules[\\/](viem|wagmi|@wagmi|permissionless|@noble|@scure|ox)[\\/]/,
+            priority: 35,
+        },
+        // Catch-all for anything shared by 2+ modules.
+        // tags: initialOnly prevents lazy-only modules from drifting eager.
+        {
+            name: "common",
+            tags: initialOnly,
+            priority: 10,
+        },
+    ];
+}
 
 export default defineConfig(
     async ({ mode, command }: ConfigEnv): Promise<UserConfig> => {
@@ -212,14 +300,25 @@ export default defineConfig(
                 },
             },
             build: {
-                // CSS code splitting - keep enabled for better caching
-                cssCodeSplit: false,
+                // Web: split CSS per route chunk so unauthenticated entries
+                // (login, sso, install) don't ship the auth+wallet+history+
+                // monerium stylesheet on first paint.
+                // Tauri: keep a single bundled stylesheet — same Rust IPC
+                // logic as JS chunks (one fetch is cheaper than many).
+                cssCodeSplit: !isTauri,
                 target: "baseline-widely-available",
-                // Chunk size warning limit - we're optimizing chunks to stay under this
-                chunkSizeWarningLimit: 400,
+                chunkSizeWarningLimit,
                 minify: true,
                 sourcemap: !isProd,
                 rolldownOptions: {
+                    experimental: {
+                        // Drop debug info in prod (smaller maps), keep in dev.
+                        attachDebugInfo,
+                        // Lazy-evaluate barrel re-exports — improves tree-shaking
+                        // through `wallet-shared` / `app-essentials` / `design-system`
+                        // public APIs (proven on the listener build).
+                        lazyBarrel: true,
+                    },
                     // Enable aggressive tree shaking
                     treeshake: {
                         moduleSideEffects: "no-external", // External packages (node_modules) have no side effects
@@ -231,43 +330,13 @@ export default defineConfig(
                     },
                     output: {
                         codeSplitting: {
-                            // Only chunk stuff shared by at least 2 module
+                            // Only chunk stuff shared by at least 2 modules.
+                            // Group definitions live in `buildChunkGroups`
+                            // (top of file) for readability — they branch on
+                            // `isTauri` since the optimal chunking shape
+                            // differs between native webview and browser.
                             minShareCount: 2,
-                            groups: [
-                                // React ecosystem - React + React-DOM + scheduler
-                                {
-                                    name: "react-vendor",
-                                    test: /node_modules[\\/](react|react-dom|react[\\/]jsx-runtime)/,
-                                    priority: 40,
-                                },
-
-                                // Blockchain libraries - viem + wagmi + all crypto
-                                {
-                                    name: "blockchain-vendor",
-                                    test: /node_modules[\\/](viem|0x|wagmi|@wagmi|permissionless|@noble|@scure)/,
-                                    priority: 35,
-                                },
-
-                                // TanStack libraries - Router + Query
-                                {
-                                    name: "tanstack-vendor",
-                                    test: /node_modules[\\/]@tanstack/,
-                                    priority: 32,
-                                },
-
-                                // UI vendors - ALL UI libraries together
-                                {
-                                    name: "ui-vendor",
-                                    test: /node_modules[\\/](@radix-ui|vaul|micromark|sonner|lucide-react|class-variance-authority|cuer|react-hook-form|react-dropzone)/,
-                                    priority: 30,
-                                },
-
-                                // All the other elements shared within the codebase
-                                {
-                                    name: "common",
-                                    priority: 10,
-                                },
-                            ],
+                            groups: buildChunkGroups(isTauri),
                         },
                     },
                     onwarn,
