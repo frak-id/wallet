@@ -87,6 +87,11 @@ export type FrakWalletSdkConfig = {
      * excluded — it is per-content/per-product, never a merchant-wide default.
      */
     attribution?: AttributionDefaults;
+    /**
+     * Preload specific UI views inside the listener iframe for better UX.
+     * Default: ["sharing"]
+     */
+    preload?: ListenerPreloadOption[];
 };
 
 /**
@@ -125,6 +130,12 @@ export type FrakWalletSdkConfig = {
 export type I18nConfig =
     | Record<Language, LocalizedI18nConfig>
     | LocalizedI18nConfig;
+
+/**
+ * Options for preloading the listener UI
+ * @category Config
+ */
+export type ListenerPreloadOption = "modal" | "sharing";
 
 /**
  * A localized i18n config (inline objects only — URL-based i18n removed)
