@@ -1,10 +1,10 @@
 import { LogoFrakWithName } from "@frak-labs/wallet-shared/common";
 import { sessionStore } from "@frak-labs/wallet-shared/stores/sessionStore";
-import { cx } from "class-variance-authority";
+import { clsx as cx } from "clsx";
 import { useState } from "react";
 import { prefixWalletCss } from "@/module/common/utils/prefixWalletCss";
 import { useEmbeddedListenerUI } from "@/module/providers/ListenerUiProvider";
-import styles from "../Wallet/index.module.css";
+import * as styles from "../Wallet/index.css";
 
 /**
  * Header of the wallet

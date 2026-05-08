@@ -14,7 +14,7 @@ import {
 import { useEffect, useMemo } from "react";
 import { SsoButton } from "@/module/component/SsoButton";
 import { DismissButton } from "@/module/modal/component/Generic";
-import styles from "@/module/modal/component/Modal/index.module.css";
+import * as styles from "@/module/modal/component/Modal/index.css";
 import {
     useListenerTranslation,
     useModalListenerUI,

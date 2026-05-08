@@ -1,5 +1,5 @@
 import { Markdown } from "@frak-labs/wallet-shared/common";
-import { cx } from "class-variance-authority";
+import { clsx as cx } from "clsx";
 import { prefixWalletCss } from "@/module/common/utils/prefixWalletCss";
 import { SsoButton } from "@/module/component/SsoButton";
 import { AuthenticateWithPhone } from "@/module/modal/component/AuthenticateWithPhone";
@@ -8,7 +8,7 @@ import {
     useListenerTranslation,
 } from "@/module/providers/ListenerUiProvider";
 import { useSafeResolvingContext } from "@/module/stores/hooks";
-import styles from "./index.module.css";
+import * as styles from "./index.css";
 
 /**
  * View for the logged out user

@@ -4,7 +4,7 @@ import { HandleErrors, prefixModalCss } from "@frak-labs/wallet-shared/common";
 import { useMemo } from "react";
 import { createSiweMessage, type SiweMessage } from "viem/siwe";
 import { useConnection, useSignMessage } from "wagmi";
-import styles from "@/module/modal/component/Modal/index.module.css";
+import * as styles from "@/module/modal/component/Modal/index.css";
 import { useListenerTranslation } from "@/module/providers/ListenerUiProvider";
 import * as authStyles from "./index.css";
 

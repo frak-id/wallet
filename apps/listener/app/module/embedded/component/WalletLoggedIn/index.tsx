@@ -15,7 +15,7 @@ import {
 import { clientIdStore } from "@frak-labs/wallet-shared/stores/clientIdStore";
 import { sessionStore } from "@frak-labs/wallet-shared/stores/sessionStore";
 import { useGetUserBalance } from "@frak-labs/wallet-shared/tokens/hook/useGetUserBalance";
-import { cx } from "class-variance-authority";
+import { clsx as cx } from "clsx";
 import { toast } from "sonner";
 import { Copy } from "@/module/common/icons/Copy";
 import { Share } from "@/module/common/icons/Share";
@@ -32,7 +32,7 @@ import {
 import { useSafeResolvingContext } from "@/module/stores/hooks";
 import { resolvingContextStore } from "@/module/stores/resolvingContextStore";
 import { useTrackSharing } from "../../../hooks/useTrackSharing";
-import styles from "./index.module.css";
+import * as styles from "./index.css";
 
 /**
  * View for the logged in user

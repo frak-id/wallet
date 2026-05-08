@@ -1,6 +1,6 @@
 import { prefixModalCss } from "@frak-labs/wallet-shared/common";
 import type { ComponentProps } from "react";
-import styles from "./index.module.css";
+import * as styles from "./index.css";
 
 export function ButtonAction(props: ComponentProps<"button">) {
     return (

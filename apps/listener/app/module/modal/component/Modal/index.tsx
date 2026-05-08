@@ -12,7 +12,7 @@ import {
     useCancelAllSignatureRequests,
 } from "@frak-labs/wallet-shared/pairing";
 import * as AlertDialogPrimitive from "@radix-ui/react-alert-dialog";
-import { cx } from "class-variance-authority";
+import { clsx as cx } from "clsx";
 import { X } from "lucide-react";
 import {
     type Dispatch,
@@ -48,7 +48,7 @@ import {
 } from "@/module/stores/modalStore";
 import { resolvingContextStore } from "@/module/stores/resolvingContextStore";
 import { ToastLoading } from "../../../component/ToastLoading";
-import styles from "./index.module.css";
+import * as styles from "./index.css";
 import { ModalStepIndicator } from "./Step";
 
 /**

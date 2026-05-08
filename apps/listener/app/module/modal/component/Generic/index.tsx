@@ -1,6 +1,6 @@
 import { Markdown, prefixModalCss } from "@frak-labs/wallet-shared/common";
 import { useMemo } from "react";
-import styles from "@/module/modal/component/Modal/index.module.css";
+import * as styles from "@/module/modal/component/Modal/index.css";
 import {
     useListenerTranslation,
     useModalListenerUI,

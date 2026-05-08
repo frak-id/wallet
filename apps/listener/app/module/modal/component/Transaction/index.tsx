@@ -16,7 +16,7 @@ import { ButtonAuth } from "@/module/component/ButtonAuth";
 import { useDeepLinkFallback } from "@/module/hooks/useDeepLinkFallback";
 import { AccordionTransactions } from "@/module/modal/component/Transaction/AccordionTransactions";
 import { useListenerTranslation } from "@/module/providers/ListenerUiProvider";
-import styles from "./index.module.css";
+import * as styles from "./index.css";
 
 const mobileWalletDeepLink = `${DEEP_LINK_SCHEME}wallet`;
 

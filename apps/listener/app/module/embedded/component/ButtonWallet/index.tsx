@@ -1,32 +1,18 @@
 import { Spinner } from "@frak-labs/design-system/components/Spinner";
-import { cva, cx, type VariantProps } from "class-variance-authority";
+import clsx from "clsx";
 import type { ComponentPropsWithRef, ReactNode } from "react";
-import styles from "./index.module.css";
+import * as styles from "./index.css";
 
-type ButtonWalletProps = ComponentPropsWithRef<"button"> &
-    VariantProps<typeof buttonWalletVariants> & {
-        isLoading?: boolean;
-        icon?: ReactNode;
-        children?: string | ReactNode;
-    };
-
-const buttonWalletVariants = cva(styles.button, {
-    variants: {
-        variant: {
-            primary: styles.primary,
-            danger: styles.danger,
-            success: styles.success,
-            disabled: styles.disabled,
-        },
-    },
-    defaultVariants: {
-        variant: "primary",
-    },
-});
+type ButtonWalletProps = ComponentPropsWithRef<"button"> & {
+    isLoading?: boolean;
+    icon?: ReactNode;
+    children?: string | ReactNode;
+    variant?: keyof typeof styles.variant;
+};
 
 export const ButtonWallet = ({
     ref,
-    variant,
+    variant = "primary",
     className = "",
     isLoading,
     icon,
@@ -35,16 +21,18 @@ export const ButtonWallet = ({
 }: ButtonWalletProps) => {
     return (
         <div
-            className={cx(
-                styles.buttonContainer,
-                props.disabled && styles["buttonContainer--disabled"]
+            className={clsx(
+                props.disabled
+                    ? styles.buttonContainer.disabled
+                    : styles.buttonContainer.default
             )}
         >
             <button
-                className={buttonWalletVariants({
-                    variant,
-                    className,
-                })}
+                className={clsx(
+                    styles.button,
+                    styles.variant[variant],
+                    className
+                )}
                 ref={ref}
                 type={"button"}
                 {...props}

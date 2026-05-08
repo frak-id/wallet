@@ -1,7 +1,7 @@
 import { Overlay } from "@frak-labs/design-system/components/Overlay";
 import { InAppBrowserToast } from "@frak-labs/wallet-shared/common";
 import { sessionStore } from "@frak-labs/wallet-shared/stores/sessionStore";
-import { cva, cx } from "class-variance-authority";
+import clsx from "clsx";
 import { Toaster } from "sonner";
 import { prefixWalletCss } from "@/module/common/utils/prefixWalletCss";
 import { ListenerWalletHeader } from "@/module/embedded/component/WalletHeader";
@@ -12,19 +12,7 @@ import { BlockchainProvider } from "@/module/providers/BlockchainProvider";
 import { useEmbeddedListenerUI } from "@/module/providers/ListenerUiProvider";
 import { resolvingContextStore } from "@/module/stores/resolvingContextStore";
 import { ToastLoading } from "../../../component/ToastLoading";
-import styles from "./index.module.css";
-
-const walletStyles = cva(styles.modalListenerWallet, {
-    variants: {
-        position: {
-            left: styles.modalListenerWallet__left,
-            right: styles.modalListenerWallet__right,
-        },
-    },
-    defaultVariants: {
-        position: "right",
-    },
-});
+import * as styles from "./index.css";
 
 export function ListenerWallet() {
     return (
@@ -45,8 +33,9 @@ function ListenerWalletInner() {
     return (
         <>
             <div
-                className={cx(
-                    walletStyles({ position: metadata?.position }),
+                className={clsx(
+                    styles.modalListenerWallet,
+                    styles.position[metadata?.position ?? "right"],
                     prefixWalletCss("modalListenerWallet")
                 )}
             >
@@ -67,9 +56,9 @@ function CurrentEmbeddedViewComponent() {
     const parentUrl = resolvingContextStore((s) => s.context?.sourceUrl);
     return (
         <div
-            className={cx(
+            className={clsx(
                 styles.modalListenerWallet__inner,
-                session && styles["modalListenerWallet__inner--loggedIn"],
+                session && styles.modalListenerWallet__innerLoggedIn,
                 prefixWalletCss("modalListenerWallet__inner")
             )}
         >
