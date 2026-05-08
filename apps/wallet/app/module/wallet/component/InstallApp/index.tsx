@@ -1,4 +1,4 @@
-import { isTauri } from "@frak-labs/app-essentials/utils/platform";
+import { IS_TAURI } from "@frak-labs/app-essentials/utils/platform";
 import { Box } from "@frak-labs/design-system/components/Box";
 import { Button } from "@frak-labs/design-system/components/Button";
 import { trackEvent, useAddToHomeScreenPrompt } from "@frak-labs/wallet-shared";
@@ -14,7 +14,7 @@ type PwaInstallState = {
 
 export function InstallApp() {
     // PWA install is not relevant for native Tauri apps
-    if (isTauri()) {
+    if (IS_TAURI) {
         return null;
     }
 

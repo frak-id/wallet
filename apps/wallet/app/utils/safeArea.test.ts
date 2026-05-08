@@ -15,10 +15,22 @@ const {
     recordErrorMock: vi.fn(),
 }));
 
+// `IS_*` getters resolve through the same mocked function on each access, so
+// `vi.mocked(isAndroidMock).mockReturnValue(true)` continues to flip the
+// platform branch even though the production code reads the constant directly.
 vi.mock("@frak-labs/app-essentials/utils/platform", () => ({
     isAndroid: isAndroidMock,
     isTauri: isTauriMock,
     isIOS: isIOSMock,
+    get IS_ANDROID() {
+        return isAndroidMock();
+    },
+    get IS_TAURI() {
+        return isTauriMock();
+    },
+    get IS_IOS() {
+        return isIOSMock();
+    },
 }));
 
 vi.mock("@frak-labs/wallet-shared", () => ({

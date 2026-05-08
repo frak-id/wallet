@@ -1,4 +1,6 @@
+import * as path from "node:path";
 import * as process from "node:process";
+import { fileURLToPath } from "node:url";
 import { vanillaExtractPlugin } from "@vanilla-extract/vite-plugin";
 import react from "@vitejs/plugin-react";
 import type { UserConfig } from "vite";
@@ -11,6 +13,19 @@ import {
     lightningCssConfig,
     onwarn,
 } from "../../packages/dev-tooling";
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+
+// Build-time stub that swaps every `@tauri-apps/*` and `tauri-plugin-*`
+// runtime path with a no-op module. The listener iframe never executes Tauri
+// code (every call site is dead under `IS_TAURI = false`), so the stub keeps
+// the actual `invoke` / `transformCallback` runtime out of the bundle.
+// Single shared stub lives in `wallet-shared` and is also used by the wallet
+// web build.
+const tauriStub = path.resolve(
+    __dirname,
+    "../../packages/wallet-shared/src/stubs/tauri-noop.ts"
+);
 
 const DEBUG = JSON.stringify(false);
 
@@ -36,6 +51,10 @@ export default defineConfig(async () => {
                     ? ["production", "default"]
                     : ["development"],
             tsconfigPaths: true,
+            alias: [
+                { find: /^@tauri-apps\/.*$/, replacement: tauriStub },
+                { find: /^tauri-plugin-.*$/, replacement: tauriStub },
+            ],
         },
         define: {
             "process.env.STAGE": JSON.stringify(getSstResource("STAGE")),
@@ -75,6 +94,14 @@ export default defineConfig(async () => {
                 process.env.IS_APP_AVAILABLE ?? "true"
             ),
             "process.env.DEEP_LINK_SCHEME": JSON.stringify(deepLinkScheme),
+            // Build-time platform constants consumed by
+            // `packages/app-essentials/src/utils/platform.ts`. Listener never runs in Tauri,
+            // so all three are hard-coded to `false`. Rolldown's `inlineConst` propagates
+            // them, dead-code-eliminating every `if (IS_TAURI)` branch and its transitive
+            // `@tauri-apps/*` dynamic imports out of the bundle.
+            __IS_TAURI__: "false",
+            __IS_IOS__: "false",
+            __IS_ANDROID__: "false",
         },
         plugins: [
             react(),

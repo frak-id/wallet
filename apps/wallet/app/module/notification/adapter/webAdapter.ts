@@ -1,4 +1,4 @@
-import { isTauri } from "@frak-labs/app-essentials/utils/platform";
+import { IS_TAURI } from "@frak-labs/app-essentials/utils/platform";
 import type {
     NotificationAdapter,
     NotificationPermissionStatus,
@@ -50,7 +50,7 @@ export function createWebNotificationAdapter(): NotificationAdapter {
         if (
             typeof navigator === "undefined" ||
             !("serviceWorker" in navigator) ||
-            isTauri()
+            IS_TAURI
         ) {
             return;
         }

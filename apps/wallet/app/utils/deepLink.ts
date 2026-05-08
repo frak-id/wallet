@@ -1,4 +1,4 @@
-import { isTauri } from "@frak-labs/app-essentials/utils/platform";
+import { IS_TAURI } from "@frak-labs/app-essentials/utils/platform";
 import { getSafeSession, recordError } from "@frak-labs/wallet-shared";
 import { pendingActionsStore } from "@/module/pending-actions/stores/pendingActionsStore";
 
@@ -195,7 +195,7 @@ export function routeDeepLink(navigate: NavigateFn, params: DeepLinkParams) {
 }
 
 export async function initDeepLinks(navigate: NavigateFn): Promise<void> {
-    if (!isTauri()) {
+    if (!IS_TAURI) {
         return;
     }
 

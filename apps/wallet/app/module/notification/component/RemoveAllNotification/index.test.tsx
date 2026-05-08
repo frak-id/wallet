@@ -4,10 +4,24 @@ import { beforeEach, describe, expect, test } from "@/tests/vitest-fixtures";
 
 const mockUnsubscribeFromPush = vi.fn();
 
-vi.mock("@frak-labs/app-essentials/utils/platform", () => ({
+const platformMocks = vi.hoisted(() => ({
     isTauri: vi.fn(() => false),
     isAndroid: vi.fn(() => false),
     isIOS: vi.fn(() => false),
+}));
+vi.mock("@frak-labs/app-essentials/utils/platform", () => ({
+    isTauri: platformMocks.isTauri,
+    isAndroid: platformMocks.isAndroid,
+    isIOS: platformMocks.isIOS,
+    get IS_TAURI() {
+        return platformMocks.isTauri();
+    },
+    get IS_ANDROID() {
+        return platformMocks.isAndroid();
+    },
+    get IS_IOS() {
+        return platformMocks.isIOS();
+    },
 }));
 
 vi.mock("@/module/notification/adapter", () => ({

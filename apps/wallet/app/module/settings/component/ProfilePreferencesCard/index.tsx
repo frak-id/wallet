@@ -1,4 +1,4 @@
-import { isTauri } from "@frak-labs/app-essentials/utils/platform";
+import { IS_TAURI } from "@frak-labs/app-essentials/utils/platform";
 import {
     Select,
     SelectContent,
@@ -42,7 +42,7 @@ function NotificationRow() {
     const { unsubscribeFromPushAsync, isPending: isUnsubPending } =
         useUnsubscribeFromPushNotification();
 
-    const isNativeApp = isTauri();
+    const isNativeApp = IS_TAURI;
     const isDeniedOnWeb = !isNativeApp && permissionStatus === "denied";
 
     const trackOutcome = (outcome: NotificationOptInOutcome, err?: unknown) => {
@@ -123,7 +123,7 @@ function BiometricRow() {
     const setLockTimeout = biometricsStore((state) => state.setLockTimeout);
     const isAvailable = biometricsStore(selectIsAvailable);
 
-    if (!isTauri() || !isAvailable) {
+    if (!IS_TAURI || !isAvailable) {
         return null;
     }
 

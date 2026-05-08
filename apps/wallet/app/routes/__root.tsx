@@ -1,3 +1,4 @@
+import { IS_TAURI } from "@frak-labs/app-essentials/utils/platform";
 import { Button } from "@frak-labs/design-system/components/Button";
 import { Text } from "@frak-labs/design-system/components/Text";
 import { recordError } from "@frak-labs/wallet-shared";
@@ -36,14 +37,14 @@ function RootComponent() {
     return (
         <RootProvider>
             {/* Only show PWA features in web mode — tree-shaken in Tauri builds */}
-            {!process.env.IS_TAURI && (
+            {!IS_TAURI && (
                 <>
                     <PwaInstall />
                     <DetectPWA />
                 </>
             )}
-            {process.env.IS_TAURI && <BiometricLock />}
-            {process.env.IS_TAURI && <VersionGate />}
+            {IS_TAURI && <BiometricLock />}
+            {IS_TAURI && <VersionGate />}
             <Outlet />
             <TargetSignatureModal />
             <ModalOutlet />

@@ -1,4 +1,4 @@
-import { isTauri } from "@frak-labs/app-essentials/utils/platform";
+import { IS_TAURI } from "@frak-labs/app-essentials/utils/platform";
 import {
     bufferToBase64URLString,
     bytesToBase64URLString,
@@ -69,7 +69,7 @@ export const useMoneriumAuth = () => {
 
             const authUrl = `${getMoneriumAuthBaseUrl()}?${searchParams.toString()}`;
 
-            if (isTauri()) {
+            if (IS_TAURI) {
                 window.open(authUrl, "_blank");
                 return;
             }

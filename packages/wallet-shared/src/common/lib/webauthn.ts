@@ -1,4 +1,4 @@
-import { isTauri } from "@frak-labs/app-essentials/utils/platform";
+import { IS_TAURI } from "@frak-labs/app-essentials/utils/platform";
 
 function checkWebauthNSupport() {
     // If on server side, webauthn not supported
@@ -7,7 +7,7 @@ function checkWebauthNSupport() {
     }
 
     // If running in Tauri, we have the plugin available
-    if (isTauri()) {
+    if (IS_TAURI) {
         return true;
     }
 

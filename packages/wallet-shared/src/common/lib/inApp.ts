@@ -19,7 +19,13 @@ function checkIsIOS() {
     return false;
 }
 
-export const isIOS = checkIsIOS();
+/**
+ * UA-based iOS detection. Distinct from `IS_IOS` in
+ * `@frak-labs/app-essentials/utils/platform`, which is gated by `IS_TAURI`.
+ * Use this when you need to identify iOS-flavoured browsers (web/PWA), not
+ * specifically the Tauri iOS shell.
+ */
+export const isUaIOS = checkIsIOS();
 
 function checkIsIPad() {
     if (typeof navigator === "undefined") {

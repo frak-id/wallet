@@ -53,10 +53,24 @@ vi.mock("ua-parser-js/helpers", () => ({
     isStandalonePWA: vi.fn(() => false),
 }));
 
-vi.mock("@frak-labs/app-essentials/utils/platform", () => ({
+const platformMocks = vi.hoisted(() => ({
     isTauri: vi.fn(() => false),
     isIOS: vi.fn(() => false),
     isAndroid: vi.fn(() => false),
+}));
+vi.mock("@frak-labs/app-essentials/utils/platform", () => ({
+    isTauri: platformMocks.isTauri,
+    isIOS: platformMocks.isIOS,
+    isAndroid: platformMocks.isAndroid,
+    get IS_TAURI() {
+        return platformMocks.isTauri();
+    },
+    get IS_IOS() {
+        return platformMocks.isIOS();
+    },
+    get IS_ANDROID() {
+        return platformMocks.isAndroid();
+    },
 }));
 
 describe("Analytics", () => {

@@ -1,3 +1,4 @@
+import { IS_TAURI } from "@frak-labs/app-essentials/utils/platform";
 import {
     setProfileId,
     usePersistentPairingClient,
@@ -71,7 +72,7 @@ export function RootProvider({ children }: PropsWithChildren) {
             client={queryClient}
             persistOptions={persistOptions}
         >
-            {process.env.IS_TAURI ? (
+            {IS_TAURI ? (
                 content
             ) : (
                 <PwaInstallProvider>{content}</PwaInstallProvider>

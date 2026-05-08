@@ -1,4 +1,4 @@
-import { isTauri } from "@frak-labs/app-essentials/utils/platform";
+import { IS_TAURI } from "@frak-labs/app-essentials/utils/platform";
 import { getInvoke } from "../tauri";
 
 /**
@@ -60,7 +60,7 @@ export const crashlytics = {
      * empty string to clear it on logout.
      */
     async setUserId(userId: string): Promise<void> {
-        if (!isTauri()) return;
+        if (!IS_TAURI) return;
         try {
             await tauriInvoke<void>(INVOKE_SET_USER_ID, { userId });
         } catch (err) {
@@ -74,7 +74,7 @@ export const crashlytics = {
      * up to 64 keys per app — old keys are evicted FIFO once the cap is hit.
      */
     async setKey(key: string, value: unknown): Promise<void> {
-        if (!isTauri()) return;
+        if (!IS_TAURI) return;
         try {
             await tauriInvoke<void>(INVOKE_SET_KEY, {
                 key,
@@ -91,7 +91,7 @@ export const crashlytics = {
      * over verbose dumps.
      */
     async log(message: string): Promise<void> {
-        if (!isTauri()) return;
+        if (!IS_TAURI) return;
         try {
             await tauriInvoke<void>(INVOKE_LOG, { message });
         } catch (err) {
@@ -108,7 +108,7 @@ export const crashlytics = {
      * exception-grouping uses `name` + `message`.
      */
     async recordError(err: unknown): Promise<void> {
-        if (!isTauri()) return;
+        if (!IS_TAURI) return;
         try {
             const error = err instanceof Error ? err : new Error(String(err));
             await tauriInvoke<void>(INVOKE_RECORD_ERROR, {
@@ -127,7 +127,7 @@ export const crashlytics = {
      * opt-out toggle.
      */
     async setCollectionEnabled(enabled: boolean): Promise<void> {
-        if (!isTauri()) return;
+        if (!IS_TAURI) return;
         try {
             await tauriInvoke<void>(INVOKE_SET_COLLECTION_ENABLED, { enabled });
         } catch (err) {

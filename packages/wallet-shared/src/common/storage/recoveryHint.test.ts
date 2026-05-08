@@ -6,8 +6,14 @@ vi.mock("@tauri-apps/api/core", () => ({
     invoke: (...args: unknown[]) => invokeMock(...args),
 }));
 
-vi.mock("@frak-labs/app-essentials/utils/platform", () => ({
+const platformMocks = vi.hoisted(() => ({
     isTauri: vi.fn(() => false),
+}));
+vi.mock("@frak-labs/app-essentials/utils/platform", () => ({
+    isTauri: platformMocks.isTauri,
+    get IS_TAURI() {
+        return platformMocks.isTauri();
+    },
 }));
 
 // Import after mocks so the module picks them up.

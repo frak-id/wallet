@@ -1,4 +1,4 @@
-import { isTauri } from "@frak-labs/app-essentials/utils/platform";
+import { IS_TAURI } from "@frak-labs/app-essentials/utils/platform";
 import type { Address } from "viem";
 import { getInvoke } from "../tauri";
 
@@ -40,7 +40,7 @@ export const recoveryHintStorage = {
      * platforms or when nothing has been persisted yet.
      */
     async get(): Promise<RecoveryHint> {
-        if (!isTauri()) return {};
+        if (!IS_TAURI) return {};
         try {
             return await tauriInvoke<RecoveryHint>(INVOKE_GET);
         } catch (err) {
@@ -54,7 +54,7 @@ export const recoveryHintStorage = {
      * callers can update a single field without re-reading the whole hint.
      */
     async set(hint: RecoveryHint): Promise<void> {
-        if (!isTauri()) return;
+        if (!IS_TAURI) return;
         try {
             const current = await recoveryHintStorage.get();
             const merged: RecoveryHint = { ...current, ...hint };
@@ -73,7 +73,7 @@ export const recoveryHintStorage = {
      * Remove any persisted hint. Typically called on explicit logout.
      */
     async clear(): Promise<void> {
-        if (!isTauri()) return;
+        if (!IS_TAURI) return;
         try {
             await tauriInvoke<void>(INVOKE_CLEAR);
         } catch (err) {

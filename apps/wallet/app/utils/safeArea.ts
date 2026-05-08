@@ -1,4 +1,4 @@
-import { isAndroid } from "@frak-labs/app-essentials/utils/platform";
+import { IS_ANDROID } from "@frak-labs/app-essentials/utils/platform";
 import { recordError } from "@frak-labs/wallet-shared";
 
 /**
@@ -9,7 +9,7 @@ export async function initSafeAreaInsets() {
     if (typeof window === "undefined") return;
 
     // Only run on Android - iOS has native env() support
-    if (!isAndroid()) {
+    if (!IS_ANDROID) {
         return;
     }
 

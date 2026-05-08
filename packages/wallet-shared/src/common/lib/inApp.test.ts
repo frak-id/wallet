@@ -27,7 +27,7 @@ describe("inApp utilities", () => {
         });
     });
 
-    describe("isIOS", () => {
+    describe("isUaIOS", () => {
         it("should return true for iPhone user agent", async () => {
             Object.defineProperty(global.navigator, "userAgent", {
                 value: "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1 Instagram",
@@ -35,8 +35,8 @@ describe("inApp utilities", () => {
                 configurable: true,
             });
 
-            const { isIOS } = await import("./inApp");
-            expect(isIOS).toBe(true);
+            const { isUaIOS } = await import("./inApp");
+            expect(isUaIOS).toBe(true);
         });
 
         it("should return true for iPad user agent", async () => {
@@ -46,8 +46,8 @@ describe("inApp utilities", () => {
                 configurable: true,
             });
 
-            const { isIOS } = await import("./inApp");
-            expect(isIOS).toBe(true);
+            const { isUaIOS } = await import("./inApp");
+            expect(isUaIOS).toBe(true);
         });
 
         it("should return true for iPadOS 13+ (Macintosh UA with touch)", async () => {
@@ -62,8 +62,8 @@ describe("inApp utilities", () => {
                 configurable: true,
             });
 
-            const { isIOS } = await import("./inApp");
-            expect(isIOS).toBe(true);
+            const { isUaIOS } = await import("./inApp");
+            expect(isUaIOS).toBe(true);
         });
 
         it("should return false for real Mac (Macintosh UA, no touch)", async () => {
@@ -78,8 +78,8 @@ describe("inApp utilities", () => {
                 configurable: true,
             });
 
-            const { isIOS } = await import("./inApp");
-            expect(isIOS).toBe(false);
+            const { isUaIOS } = await import("./inApp");
+            expect(isUaIOS).toBe(false);
         });
 
         it("should return false for Android user agent", async () => {
@@ -89,8 +89,8 @@ describe("inApp utilities", () => {
                 configurable: true,
             });
 
-            const { isIOS } = await import("./inApp");
-            expect(isIOS).toBe(false);
+            const { isUaIOS } = await import("./inApp");
+            expect(isUaIOS).toBe(false);
         });
 
         it("should return false for desktop user agent", async () => {
@@ -100,8 +100,8 @@ describe("inApp utilities", () => {
                 configurable: true,
             });
 
-            const { isIOS } = await import("./inApp");
-            expect(isIOS).toBe(false);
+            const { isUaIOS } = await import("./inApp");
+            expect(isUaIOS).toBe(false);
         });
     });
 

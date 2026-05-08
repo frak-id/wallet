@@ -11,10 +11,24 @@ import {
 } from "@/tests/vitest-fixtures";
 import { useDownloadRecoveryFile } from "./useDownloadRecoveryFile";
 
-vi.mock("@frak-labs/app-essentials/utils/platform", () => ({
+const platformMocks = vi.hoisted(() => ({
     isAndroid: vi.fn(() => false),
     isIOS: vi.fn(() => false),
     isTauri: vi.fn(() => false),
+}));
+vi.mock("@frak-labs/app-essentials/utils/platform", () => ({
+    isAndroid: platformMocks.isAndroid,
+    isIOS: platformMocks.isIOS,
+    isTauri: platformMocks.isTauri,
+    get IS_ANDROID() {
+        return platformMocks.isAndroid();
+    },
+    get IS_IOS() {
+        return platformMocks.isIOS();
+    },
+    get IS_TAURI() {
+        return platformMocks.isTauri();
+    },
 }));
 
 vi.mock("@tauri-apps/api/core", () => ({

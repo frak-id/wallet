@@ -1,4 +1,6 @@
+import * as path from "node:path";
 import * as process from "node:process";
+import { fileURLToPath } from "node:url";
 import { tanstackRouter } from "@tanstack/router-plugin/vite";
 import { vanillaExtractPlugin } from "@vanilla-extract/vite-plugin";
 import viteReact from "@vitejs/plugin-react";
@@ -18,8 +20,26 @@ const DEBUG = JSON.stringify(false);
 
 const isProd = process.env.STAGE?.includes("prod") ?? false;
 const isTauri = !!process.env.TAURI_CLI_RUNNING;
+// Tauri 2 sets `TAURI_ENV_PLATFORM` for hook commands (`ios`, `android`, `darwin`, `linux`, `windows`).
+// Combined with `TAURI_CLI_RUNNING`, lets us hard-code platform booleans per Tauri target build,
+// so the iOS bundle drops Android-only code and vice-versa.
+const tauriPlatform = process.env.TAURI_ENV_PLATFORM;
+const isTauriIos = isTauri && tauriPlatform === "ios";
+const isTauriAndroid = isTauri && tauriPlatform === "android";
 const isSandbox = !!process.env.ATELIER_SANDBOX_ID;
 const appVersion = process.env.COMMIT_HASH ?? walletPackage.version;
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+
+// Build-time stub that swaps every `@tauri-apps/*` and `tauri-plugin-*`
+// runtime path with a no-op module on the web build. Every call site is
+// dead under `IS_TAURI = false`, so the stub keeps the actual `invoke` /
+// `transformCallback` runtime out of the chunk graph. Skipped in Tauri
+// builds where the real packages must be loaded.
+const tauriStub = path.resolve(
+    __dirname,
+    "../../packages/wallet-shared/src/stubs/tauri-noop.ts"
+);
 
 export default defineConfig(
     async ({ mode, command }: ConfigEnv): Promise<UserConfig> => {
@@ -55,7 +75,14 @@ export default defineConfig(
                     getSstResource("VAPID_PUBLIC_KEY")
                 ),
                 "process.env.DEBUG": JSON.stringify(DEBUG),
-                "process.env.IS_TAURI": JSON.stringify(isTauri),
+                // Build-time platform constants consumed by
+                // `packages/app-essentials/src/utils/platform.ts`. Substituted to literal
+                // booleans so Rolldown's `inlineConst` propagates them to every call site
+                // and dead-code-eliminates the unreachable branches (and their `@tauri-apps/*`
+                // dynamic imports).
+                __IS_TAURI__: JSON.stringify(isTauri),
+                __IS_IOS__: JSON.stringify(isTauriIos),
+                __IS_ANDROID__: JSON.stringify(isTauriAndroid),
                 "process.env.APP_VERSION": JSON.stringify(appVersion),
                 "process.env.FRAK_WALLET_URL": JSON.stringify(
                     sandboxEnv.walletUrl ??
@@ -129,13 +156,32 @@ export default defineConfig(
                     process.env.NODE_ENV === "production"
                         ? ["production", "default"]
                         : ["development"],
-                alias: {
+                alias: [
                     ...(command === "build"
-                        ? {
-                              "react-dom/server": "react-dom/server.node",
-                          }
-                        : {}),
-                },
+                        ? [
+                              {
+                                  find: "react-dom/server",
+                                  replacement: "react-dom/server.node",
+                              },
+                          ]
+                        : []),
+                    // On the web build the Tauri runtime is unreachable;
+                    // alias every `@tauri-apps/*` and `tauri-plugin-*` import to a
+                    // no-op stub so Rolldown drops the actual `invoke` /
+                    // `transformCallback` channel from the shared chunk.
+                    ...(isTauri
+                        ? []
+                        : [
+                              {
+                                  find: /^@tauri-apps\/.*$/,
+                                  replacement: tauriStub,
+                              },
+                              {
+                                  find: /^tauri-plugin-.*$/,
+                                  replacement: tauriStub,
+                              },
+                          ]),
+                ],
             },
             server: {
                 port: isTauri ? 3010 : 3000,

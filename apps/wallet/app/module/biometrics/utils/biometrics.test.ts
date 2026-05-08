@@ -5,8 +5,12 @@ import {
     getBiometryTypeLabel,
 } from "./biometrics";
 
+const isTauriMock = vi.hoisted(() => vi.fn(() => false));
 vi.mock("@frak-labs/app-essentials/utils/platform", () => ({
-    isTauri: vi.fn(() => false),
+    isTauri: isTauriMock,
+    get IS_TAURI() {
+        return isTauriMock();
+    },
 }));
 
 describe("biometrics utils", () => {

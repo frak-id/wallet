@@ -1,4 +1,4 @@
-import { isAndroid, isIOS } from "@frak-labs/app-essentials/utils/platform";
+import { IS_ANDROID, IS_TAURI } from "@frak-labs/app-essentials/utils/platform";
 import { getInvoke } from "@frak-labs/wallet-shared";
 import { isBelow } from "./compareVersions";
 
@@ -63,7 +63,7 @@ type OpenStoreResponse = { opened: boolean };
  * to `unsupported` outside iOS/Android.
  */
 export async function checkNativeUpdate(): Promise<NativeUpdateStatus> {
-    if (!isIOS() && !isAndroid()) {
+    if (!IS_TAURI) {
         return { status: "unsupported", currentVersion: "" };
     }
     const invoke = await getInvoke();
@@ -91,7 +91,7 @@ export async function checkNativeUpdate(): Promise<NativeUpdateStatus> {
 }
 
 export async function startNativeSoftUpdate(): Promise<boolean> {
-    if (!isIOS() && !isAndroid()) return false;
+    if (!IS_TAURI) return false;
     const invoke = await getInvoke();
     const response = await invoke<StartSoftUpdateResponse>(
         "plugin:frak-updater|start_soft_update"
@@ -104,7 +104,7 @@ export async function startNativeSoftUpdate(): Promise<boolean> {
  * on iOS or when nothing is pending — safe to call unconditionally.
  */
 export async function completeNativeSoftUpdate(): Promise<boolean> {
-    if (!isAndroid()) return false;
+    if (!IS_ANDROID) return false;
     const invoke = await getInvoke();
     const response = await invoke<CompleteSoftUpdateResponse>(
         "plugin:frak-updater|complete_soft_update"
@@ -113,7 +113,7 @@ export async function completeNativeSoftUpdate(): Promise<boolean> {
 }
 
 export async function openNativeStore(): Promise<boolean> {
-    if (!isIOS() && !isAndroid()) return false;
+    if (!IS_TAURI) return false;
     const invoke = await getInvoke();
     const response = await invoke<OpenStoreResponse>(
         "plugin:frak-updater|open_store"

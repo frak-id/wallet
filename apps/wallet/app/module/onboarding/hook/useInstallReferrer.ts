@@ -1,4 +1,4 @@
-import { isAndroid, isTauri } from "@frak-labs/app-essentials/utils/platform";
+import { IS_ANDROID, IS_TAURI } from "@frak-labs/app-essentials/utils/platform";
 import {
     authenticatedBackendApi,
     clientIdStore,
@@ -77,7 +77,7 @@ export function useInstallReferrer() {
 
             return { merchantId, anonymousId, merchant };
         },
-        enabled: isTauri() && isAndroid(),
+        enabled: IS_TAURI && IS_ANDROID,
         staleTime: Number.POSITIVE_INFINITY,
         retry: false,
         meta: { storable: false },

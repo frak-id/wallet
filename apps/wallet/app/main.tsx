@@ -1,5 +1,5 @@
 import { isRunningLocally } from "@frak-labs/app-essentials";
-import { isTauri } from "@frak-labs/app-essentials/utils/platform";
+import { IS_TAURI } from "@frak-labs/app-essentials/utils/platform";
 import {
     defaultNS,
     fallbackLng,
@@ -89,7 +89,7 @@ declare module "@tanstack/react-router" {
 
 async function main() {
     // Initialize Tauri-specific features for mobile devices
-    if (isTauri()) {
+    if (IS_TAURI) {
         await initSafeAreaInsets();
         await initDeepLinks((options) => {
             return router.navigate(
@@ -139,7 +139,7 @@ async function main() {
     });
 
     // Dismiss native splash screen (Android holds it via setKeepOnScreenCondition)
-    if (isTauri()) {
+    if (IS_TAURI) {
         (
             window as unknown as {
                 NativeSplash?: { dismiss(): void };

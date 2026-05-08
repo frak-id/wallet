@@ -1,4 +1,4 @@
-import { isTauri } from "@frak-labs/app-essentials/utils/platform";
+import { IS_TAURI } from "@frak-labs/app-essentials/utils/platform";
 import { useCallback, useRef } from "react";
 
 const TAP_THRESHOLD = 5;
@@ -12,7 +12,7 @@ export function useDemoTap(
     navigate: (opts: { to: string }) => void,
     to = "/register-demo"
 ) {
-    const enabled = isTauri();
+    const enabled = IS_TAURI;
     const tapCountRef = useRef(0);
     const tapTimerRef = useRef<ReturnType<typeof setTimeout>>(undefined);
 

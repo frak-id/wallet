@@ -1,4 +1,4 @@
-import { isAndroid, isTauri } from "@frak-labs/app-essentials/utils/platform";
+import { IS_ANDROID, IS_TAURI } from "@frak-labs/app-essentials/utils/platform";
 import {
     getInvoke,
     type RecoveryFileContent,
@@ -153,13 +153,13 @@ export function useDownloadRecoveryFile() {
             const fileContent = JSON.stringify(file, null, 2);
 
             // Android: Use native Tauri share plugin
-            if (isAndroid()) {
+            if (IS_ANDROID) {
                 await downloadViaTauriShare(fileContent, fileName);
                 return;
             }
 
             // iOS/Tauri: Use Web Share API with anchor fallback
-            if (isTauri()) {
+            if (IS_TAURI) {
                 const shared = await tryShareFile(fileContent, fileName);
                 if (!shared) {
                     await downloadViaAnchor(fileContent, fileName);

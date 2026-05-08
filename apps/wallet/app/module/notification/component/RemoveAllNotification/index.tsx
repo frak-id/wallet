@@ -1,4 +1,4 @@
-import { isTauri } from "@frak-labs/app-essentials/utils/platform";
+import { IS_TAURI } from "@frak-labs/app-essentials/utils/platform";
 import { Box } from "@frak-labs/design-system/components/Box";
 import { Button } from "@frak-labs/design-system/components/Button";
 import { Inline } from "@frak-labs/design-system/components/Inline";
@@ -25,7 +25,7 @@ export function RemoveAllNotification() {
         return null;
     }
 
-    if (isTauri()) {
+    if (IS_TAURI) {
         return <ManageNotificationsNative />;
     }
 
