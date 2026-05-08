@@ -8,11 +8,9 @@ import { useEffect } from "react";
 import { BiometricLock } from "@/module/biometrics";
 import { FullScreenGate } from "@/module/common/component/FullScreenGate";
 import { ModalOutlet } from "@/module/common/component/ModalOutlet";
-import { PwaInstall } from "@/module/common/component/PwaInstall";
 import { RootProvider } from "@/module/common/provider/RootProvider";
 import { TargetSignatureModal } from "@/module/pairing/component/TargetSignatureModal";
 import { VersionGate } from "@/module/version";
-import { DetectPWA } from "@/module/wallet/component/DetectPWA";
 // Import open panel to ensure it's initialized
 import "@frak-labs/wallet-shared";
 // Import global styles
@@ -36,13 +34,6 @@ function RootComponent() {
 
     return (
         <RootProvider>
-            {/* Only show PWA features in web mode — tree-shaken in Tauri builds */}
-            {!IS_TAURI && (
-                <>
-                    <PwaInstall />
-                    <DetectPWA />
-                </>
-            )}
             {IS_TAURI && <BiometricLock />}
             {IS_TAURI && <VersionGate />}
             <Outlet />

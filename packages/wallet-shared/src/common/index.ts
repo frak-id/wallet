@@ -83,7 +83,6 @@ export { Toast } from "./component/Toast";
 export { WalletModal } from "./component/WalletModal";
 export { Warning } from "./component/Warning";
 // Hooks
-export { useAddToHomeScreenPrompt } from "./hook/useAddToHomeScreenPrompt";
 export { useCopyToClipboardWithState } from "./hook/useCopyToClipboardWithState";
 export {
     estimatedRewardsQueryOptions,

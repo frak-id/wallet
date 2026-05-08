@@ -44,7 +44,7 @@ vi.mock("../lib/inApp", () => ({
     isInIframe: false,
 }));
 
-vi.mock("ua-parser-js/helpers", () => ({
+vi.mock("ua-parser-js/browser-detection", () => ({
     isStandalonePWA: vi.fn(() => false),
 }));
 
