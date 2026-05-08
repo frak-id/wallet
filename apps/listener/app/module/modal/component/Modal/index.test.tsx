@@ -60,10 +60,6 @@ vi.mock("@/module/stores/resolvingContextStore", () => ({
         }),
 }));
 
-vi.mock("@frak-labs/design-system/hooks/useMediaQuery", () => ({
-    useMediaQuery: () => true,
-}));
-
 vi.mock("@frak-labs/wallet-shared/common", () => ({
     Drawer: ({ children }: { children: ReactNode }) => <div>{children}</div>,
     DrawerContent: ({ children }: { children: ReactNode }) => (

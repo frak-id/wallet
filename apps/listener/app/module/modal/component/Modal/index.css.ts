@@ -242,19 +242,7 @@ export const modalTitle__logo = style({
     width: "auto",
 });
 
-export const drawerTitle__container = style({
-    margin: "12px 0",
-    fontSize: "16px",
-    textAlign: "left",
-    fontWeight: 700,
-});
-
-/* === Modal shell styles (ported from deleted wallet-shared/Drawer + WalletModal) === */
-
-const drawerOverlayShow = keyframes({
-    from: { opacity: 0 },
-    to: { opacity: 1 },
-});
+/* === Modal shell styles (ported from deleted wallet-shared/WalletModal) === */
 
 const dialogOverlayShow = keyframes({
     from: { opacity: 0 },
@@ -270,48 +258,6 @@ const dialogContentShow = keyframes({
         opacity: 1,
         transform: "translate(-50%, -50%) scale(1)",
     },
-});
-
-export const drawer__overlay = style({
-    background: "rgba(0, 0, 0, 0.2)",
-    position: "fixed",
-    zIndex: 10,
-    inset: 0,
-    animation: `${drawerOverlayShow} 250ms cubic-bezier(0.16, 1, 0.3, 1)`,
-});
-
-export const drawer__contentWrapper = style({
-    /* Create a new stacking context for the toaster to be inside our modal */
-    transform: "translateZ(0)",
-    position: "fixed",
-    bottom: 0,
-    left: 0,
-    right: 0,
-    zIndex: 10,
-    maxHeight: "100dvh",
-    marginTop: "24px",
-    display: "flex",
-    flexDirection: "column",
-    borderTopLeftRadius: "8px",
-    borderTopRightRadius: "8px",
-    backgroundColor: "var(--frak-drawer-background-color)",
-});
-
-export const drawer__content = style({
-    padding: "20px",
-});
-
-globalStyle(`${drawer__content} > section`, {
-    overflow: "auto",
-    maxHeight: "91dvh",
-});
-
-export const drawer__handle = style({
-    margin: "16px auto 0 auto",
-    height: "8px",
-    width: "100px",
-    borderRadius: "var(--frak-radius-full)",
-    backgroundColor: "var(--frak-drawer-handle-background-color)",
 });
 
 export const alertDialog__overlay = style({

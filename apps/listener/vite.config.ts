@@ -260,17 +260,12 @@ export default defineConfig(async () => {
                             // • `blockchain-vendor` → viem + wagmi +
                             //   permissionless + BaseProvider + provider glue.
                             //   Modal/Wallet only.
-                            // • `ui-vendor` → heavy lazy UI libs (vaul,
-                            //   @radix-ui, cuer, micromark). vaul + radix +
-                            //   alert-dialog are Modal-only; cuer + micromark
-                            //   land here through wallet-shared pairing/
-                            //   Markdown which Modal+Wallet share. SharingPage
-                            //   pulls @radix-ui/react-accordion via
-                            //   design-system Accordion (FAQ section).
-                            //   Cleaned up after the cva → cx migration:
-                            //   removed dead alternations (cva, nprogress,
-                            //   react-hook-form, react-dropzone) that were
-                            //   never installed.
+                            // • `ui-vendor` → heavy lazy UI libs (@radix-ui,
+                            //   cuer, micromark). radix + alert-dialog are
+                            //   Modal-only; cuer + micromark land here through
+                            //   wallet-shared pairing/Markdown which Modal+Wallet
+                            //   share. SharingPage pulls @radix-ui/react-accordion
+                            //   via design-system Accordion (FAQ section).
                             // • `lazy-shared` → design-system + sonner +
                             //   lucide + listener shared components +
                             //   Toast/Markdown/etc + pairing UI. Pulled by
@@ -288,7 +283,7 @@ export default defineConfig(async () => {
                             },
                             {
                                 name: "ui-vendor",
-                                test: /node_modules[\\/](?:@radix-ui|vaul|micromark|cuer)[\\/]/,
+                                test: /node_modules[\\/](?:@radix-ui|micromark|cuer)[\\/]/,
                                 priority: 30,
                             },
                             {
