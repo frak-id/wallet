@@ -16,7 +16,6 @@ export { OriginPairingState } from "./component/OriginPairingState";
 export { PairingStatus } from "./component/PairingStatus";
 export {
     StatusBoxModal,
-    StatusBoxWallet,
     StatusBoxWalletEmbedded,
 } from "./component/PairingStatusBox";
 export { PairingView } from "./component/PairingView";

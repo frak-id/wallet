@@ -3,8 +3,8 @@ import {
     Deferred,
     type ExtractReturnType,
     FrakRpcError,
-    type RpcPromiseHandler,
     RpcErrorCodes,
+    type RpcPromiseHandler,
     type RpcResponse,
 } from "@frak-labs/frame-connector";
 import { trackEvent } from "@frak-labs/wallet-shared/common/analytics";
@@ -135,8 +135,7 @@ export const handleDisplayEmbeddedWallet = async (
         emitter,
         appName: resolved.appName,
         logoUrl: params[0].metadata?.logo ?? resolved.logoUrl,
-        homepageLink:
-            params[0].metadata?.homepageLink ?? resolved.homepageLink,
+        homepageLink: params[0].metadata?.homepageLink ?? resolved.homepageLink,
         targetInteraction: normalizeTargetInteraction(
             placement?.targetInteraction ??
                 params[0].metadata?.targetInteraction

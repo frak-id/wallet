@@ -1,10 +1,3 @@
-.statusBoxWalletContainer {
-    margin: 10px;
-    border: 1px solid #e5e7eb;
-    border-radius: 18px;
-    padding: 10px 16px;
-}
-
 .statusBox {
     display: flex;
     gap: 5px;

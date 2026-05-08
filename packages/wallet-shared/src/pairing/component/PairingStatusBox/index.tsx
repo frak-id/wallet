@@ -14,35 +14,6 @@ type Status = "success" | "waiting" | "loading" | "error";
 type AnyPairingClient = BasePairingClient<any, any, any>;
 
 /**
- * StatusBoxWallet is a component that displays a status icon and a title.
- * It is used to display the status of a pairing process on wallet.
- *
- * @param status - The status of the pairing process.
- * @param title - The title of the pairing process.
- * @param children - The children of the pairing process.
- */
-export function StatusBoxWallet({
-    status,
-    title,
-    client,
-    children,
-}: PropsWithChildren<{
-    status: Status;
-    title: string;
-    client?: AnyPairingClient;
-}>) {
-    return (
-        <div className={styles.statusBoxWalletContainer}>
-            <div className={styles.statusBox}>
-                <InnerStatusBox status={status} title={title} />
-            </div>
-            {client && <StatusBoxRetry client={client} />}
-            {children}
-        </div>
-    );
-}
-
-/**
  * StatusBoxModal is a component that displays a status icon and a title.
  * It is used to display the status of a pairing process on shared modal.
  *

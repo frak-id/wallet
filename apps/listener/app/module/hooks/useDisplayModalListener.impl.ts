@@ -8,8 +8,8 @@ import {
     Deferred,
     type ExtractReturnType,
     FrakRpcError,
-    type RpcPromiseHandler,
     RpcErrorCodes,
+    type RpcPromiseHandler,
     type RpcResponse,
 } from "@frak-labs/frame-connector";
 import { trackEvent } from "@frak-labs/wallet-shared/common/analytics";

@@ -26,15 +26,8 @@ export const Route = createFileRoute("/_wallet/_protected")({
 });
 
 function ProtectedLayout() {
-    // const session = sessionStore(selectDistantWebauthnSession);
-    // const Component =
-    //     session?.type === "distant-webauthn"
-    //         ? OriginPairingState
-    //         : TargetPairingState;
-
     return (
         <AppShell navigation={true}>
-            {/*<Component type="wallet" />*/}
             <Outlet />
         </AppShell>
     );

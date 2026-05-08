@@ -6,8 +6,8 @@ import {
     Deferred,
     type ExtractReturnType,
     FrakRpcError,
-    type RpcPromiseHandler,
     RpcErrorCodes,
+    type RpcPromiseHandler,
     type RpcResponse,
 } from "@frak-labs/frame-connector";
 import { trackEvent } from "@frak-labs/wallet-shared/common/analytics";
@@ -95,8 +95,7 @@ export const handleDisplaySharingPage = async (
         emitter,
         appName: resolved.appName,
         logoUrl: request.metadata?.logo ?? resolved.logoUrl,
-        homepageLink:
-            request.metadata?.homepageLink ?? resolved.homepageLink,
+        homepageLink: request.metadata?.homepageLink ?? resolved.homepageLink,
         targetInteraction: normalizeTargetInteraction(
             placement?.targetInteraction ?? request.metadata?.targetInteraction
         ),

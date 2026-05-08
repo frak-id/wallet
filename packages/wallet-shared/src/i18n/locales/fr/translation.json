@@ -376,14 +376,6 @@
                     }
                 }
             },
-            "target": {
-                "state": {
-                    "connecting": "Connexion à l'appareil partenaire",
-                    "paired": "Connecté avec un autre appareil",
-                    "retryError": "Erreur lors de la connexion à l'appareil partenaire",
-                    "error": "Connexion refusée par le serveur"
-                }
-            },
             "status": {
                 "idle": "Inactif",
                 "connecting": "Appairage en cours",
