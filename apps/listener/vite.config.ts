@@ -2,7 +2,7 @@ import * as path from "node:path";
 import * as process from "node:process";
 import { fileURLToPath } from "node:url";
 import { vanillaExtractPlugin } from "@vanilla-extract/vite-plugin";
-import react from "@vitejs/plugin-react";
+import preact from "@preact/preset-vite";
 import type { UserConfig } from "vite";
 import { defineConfig } from "vite";
 import mkcert from "vite-plugin-mkcert";
@@ -25,6 +25,22 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const tauriStub = path.resolve(
     __dirname,
     "../../packages/wallet-shared/src/stubs/tauri-noop.ts"
+);
+
+// Absolute paths for preact aliases. The listener installs preact directly
+// (`apps/listener/node_modules/preact`), but `wallet-shared` (and other workspace
+// packages consumed via the `development` export condition) import from "react"
+// and have no preact in their own `node_modules`. Resolving aliases to absolute
+// paths sidesteps Bun's per-package node_modules layout so every importer ends
+// up bundling the same preact/compat module.
+const preactCompat = path.resolve(__dirname, "node_modules/preact/compat");
+const preactCompatClient = path.resolve(
+    __dirname,
+    "node_modules/preact/compat/client"
+);
+const preactJsxRuntime = path.resolve(
+    __dirname,
+    "node_modules/preact/jsx-runtime"
 );
 
 const DEBUG = JSON.stringify(false);
@@ -94,6 +110,41 @@ export default defineConfig(async () => {
             alias: [
                 { find: /^@tauri-apps\/.*$/, replacement: tauriStub },
                 { find: /^tauri-plugin-.*$/, replacement: tauriStub },
+                // Override @preact/preset-vite defaults with absolute paths so
+                // workspace packages (wallet-shared, design-system, ui) resolve
+                // correctly under Bun's per-package node_modules layout.
+                // Listener installs preact directly; absolute paths sidestep
+                // bare-specifier resolution from sibling workspace packages.
+                {
+                    find: /^preact$/,
+                    replacement: path.resolve(__dirname, "node_modules/preact"),
+                },
+                { find: /^preact\/compat$/, replacement: preactCompat },
+                {
+                    find: /^preact\/compat\/client$/,
+                    replacement: preactCompatClient,
+                },
+                {
+                    find: /^preact\/jsx-runtime$/,
+                    replacement: preactJsxRuntime,
+                },
+                {
+                    find: /^preact\/hooks$/,
+                    replacement: path.resolve(
+                        __dirname,
+                        "node_modules/preact/hooks"
+                    ),
+                },
+                // React shim: aliased to preact/compat so existing
+                // `import ... from "react"` keeps working unchanged.
+                { find: /^react$/, replacement: preactCompat },
+                { find: /^react-dom$/, replacement: preactCompat },
+                { find: /^react-dom\/client$/, replacement: preactCompatClient },
+                { find: /^react\/jsx-runtime$/, replacement: preactJsxRuntime },
+                {
+                    find: /^react\/jsx-dev-runtime$/,
+                    replacement: preactJsxRuntime,
+                },
             ],
         },
         define: {
@@ -143,7 +194,7 @@ export default defineConfig(async () => {
             "process.env.APP_VERSION": "undefined",
         },
         plugins: [
-            react(),
+            preact({ reactAliasesEnabled: false }),
             vanillaExtractPlugin(),
             ...(isSandbox ? [] : [mkcert()]),
             ...(isProd ? [removeConsole()] : []),
@@ -239,12 +290,11 @@ export default defineConfig(async () => {
                             {
                                 name: "vendor",
                                 tags: ["$initial"],
-                                test: /node_modules[\\/](?:react|react-dom|scheduler|react[\\/]jsx-runtime|i18next|i18next-browser-languagedetector|react-i18next|@tanstack|zustand|idb-keyval|nanoid|@elysiajs|clsx)[\\/]/,
+                                test: /node_modules[\\/](?:preact|i18next|i18next-browser-languagedetector|react-i18next|@tanstack|zustand|idb-keyval|nanoid|@elysiajs|clsx)[\\/]/,
                                 priority: 40,
                                 // CRITICAL: must be 1, otherwise the global
                                 // `minShareCount: 2` keeps single-entry node_modules
-                                // (e.g. `react-dom/cjs/react-dom-client.production.js`,
-                                // 174 KB — only the eager entry imports it for
+                                // (e.g. `preact/compat` — only the eager entry imports it for
                                 // `createRoot`) inside the `index` entry chunk
                                 // instead of vendor. Forces ALL matching node_modules
                                 // into vendor regardless of how many entries reach them.
