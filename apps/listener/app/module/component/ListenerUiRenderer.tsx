@@ -35,13 +35,32 @@ export function ListenerUiRenderer() {
     const { currentRequest } = useListenerUI();
 
     /**
-     * Preload the modal + embedded wallet so it did not take too much time to display on slow network
+     * Preload the modal + sharing page so it did not take too much time to display on slow network
      */
     useEffect(() => {
+        const hash = window.location.hash.slice(1);
+        const urlParams = new URLSearchParams(hash);
+        const preloadRaw = urlParams.get("preload");
+        // No preload parameter -> do nothing
+        if (!preloadRaw) {
+            return;
+        }
+
+        const preloads = preloadRaw.split(",");
+        const shouldPreloadModal = preloads.includes("modal");
+        const shouldPreloadSharing = preloads.includes("sharing");
+
+        if (!shouldPreloadModal && !shouldPreloadSharing) {
+            return;
+        }
+
         const handleIdleCallback = async () => {
-            await modalImport();
-            await walletImport();
-            await sharingImport();
+            if (shouldPreloadModal) {
+                await modalImport();
+            }
+            if (shouldPreloadSharing) {
+                await sharingImport();
+            }
         };
 
         if ("requestIdleCallback" in window) {

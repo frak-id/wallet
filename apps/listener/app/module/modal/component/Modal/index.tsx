@@ -1,18 +1,18 @@
-import { useMediaQuery } from "@frak-labs/design-system/hooks/useMediaQuery";
 import { RpcErrorCodes } from "@frak-labs/frame-connector";
 import {
-    Drawer,
-    DrawerContent,
-    getOriginPairingClient,
     InAppBrowserToast,
     LogoFrakWithName,
-    OriginPairingState,
     prefixModalCss,
     trackEvent,
+} from "@frak-labs/wallet-shared/common";
+import {
+    getOriginPairingClient,
+    OriginPairingState,
     useCancelAllSignatureRequests,
-    WalletModal,
-} from "@frak-labs/wallet-shared";
-import { cx } from "class-variance-authority";
+} from "@frak-labs/wallet-shared/pairing";
+import * as AlertDialogPrimitive from "@radix-ui/react-alert-dialog";
+import { clsx as cx } from "clsx";
+import { X } from "lucide-react";
 import {
     type Dispatch,
     type PropsWithChildren,
@@ -30,6 +30,7 @@ import { FinalModalStep } from "@/module/modal/component/Final";
 import { MetadataInfo } from "@/module/modal/component/Generic";
 import { LoginModalStep } from "@/module/modal/component/Login";
 import { TransactionModalStep } from "@/module/modal/component/Transaction";
+import { BlockchainProvider } from "@/module/providers/BlockchainProvider";
 import {
     type GenericWalletUiType,
     type ModalUiType,
@@ -45,13 +46,21 @@ import {
 } from "@/module/stores/modalStore";
 import { resolvingContextStore } from "@/module/stores/resolvingContextStore";
 import { ToastLoading } from "../../../component/ToastLoading";
-import styles from "./index.module.css";
+import * as styles from "./index.css";
 import { ModalStepIndicator } from "./Step";
 
 /**
  * Display the given request in a modal
  */
-export function ListenerModal({
+export function ListenerModal(props: ModalUiType & GenericWalletUiType) {
+    return (
+        <BlockchainProvider>
+            <ListenerModalInner {...props} />
+        </BlockchainProvider>
+    );
+}
+
+function ListenerModalInner({
     metadata,
     emitter,
     logoUrl,
@@ -240,7 +249,7 @@ export function ListenerModal({
 }
 
 /**
- * Main component for the modal (either drawer or alert bx depending on the client)
+ * Main component for the modal — alert dialog wrapper
  * @param title
  * @param open
  * @param onOpenChange
@@ -257,30 +266,40 @@ function ModalComponent({
     open: boolean;
     onOpenChange: Dispatch<boolean>;
 }>) {
-    // Check if the screen is desktop or mobile
-    const isDesktop = useMediaQuery("(min-width : 600px)");
-
-    // Use a Drawer for mobile and a WalletModal for desktop
-    if (isDesktop) {
-        return (
-            <WalletModal
-                classNameTitle={styles.modalListener__title}
-                title={title}
-                text={children}
-                open={open}
-                onOpenChange={onOpenChange}
-            />
-        );
-    }
-
-    // Otherwise, return bottom drawer
     return (
-        <Drawer open={open} onOpenChange={onOpenChange}>
-            <DrawerContent>
-                <div className={styles.drawerTitle__container}>{title}</div>
-                {children}
-            </DrawerContent>
-        </Drawer>
+        <AlertDialogPrimitive.Root open={open} onOpenChange={onOpenChange}>
+            <AlertDialogPrimitive.Portal>
+                <AlertDialogPrimitive.Overlay
+                    onClick={() => onOpenChange?.(false)}
+                    className={`${prefixModalCss("overlay")} ${styles.alertDialog__overlay}`}
+                />
+                <AlertDialogPrimitive.Content
+                    onEscapeKeyDown={() => onOpenChange?.(false)}
+                    className={`${prefixModalCss("content")} ${styles.alertDialog__content} ${styles.alertDialog__withCloseButton}`}
+                >
+                    <AlertDialogPrimitive.Cancel asChild>
+                        <button
+                            type="button"
+                            className={`${prefixModalCss("close")} ${styles.alertDialog__close}`}
+                            aria-label="Close"
+                        >
+                            <X />
+                        </button>
+                    </AlertDialogPrimitive.Cancel>
+                    <AlertDialogPrimitive.Title
+                        className={`${prefixModalCss("title")} ${styles.alertDialog__title} ${styles.modalListener__title}`}
+                    >
+                        {title}
+                    </AlertDialogPrimitive.Title>
+                    <AlertDialogPrimitive.Description />
+                    <div
+                        className={`${prefixModalCss("description")} ${styles.alertDialog__description}`}
+                    >
+                        {children}
+                    </div>
+                </AlertDialogPrimitive.Content>
+            </AlertDialogPrimitive.Portal>
+        </AlertDialogPrimitive.Root>
     );
 }
 

@@ -12,6 +12,7 @@ export type {
     FrakWalletSdkConfig,
     I18nConfig,
     Language,
+    ListenerPreloadOption,
     LocalizedI18nConfig,
 } from "./config";
 // Utils

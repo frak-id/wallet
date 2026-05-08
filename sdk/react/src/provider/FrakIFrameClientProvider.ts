@@ -56,10 +56,16 @@ export function FrakIFrameClientProvider({
     // Using a state for the client since using directly a client built inside the ref cause re-render loop
     const [client, setClient] = useState<FrakClient | undefined>(undefined);
 
+    const preload = config.preload ?? ["sharing"];
+    let iframeSrc = `${config.walletUrl}/listener`;
+    if (preload.length > 0) {
+        iframeSrc += `#preload=${preload.join(",")}`;
+    }
+
     // Create the iframe that will be used to communicate with the wallet
     const iFrame = createElement("iframe", {
         ...baseIframeProps,
-        src: `${config.walletUrl}/listener`,
+        src: iframeSrc,
         style: style ?? baseIframeProps.style,
         ref: (iframe: HTMLIFrameElement) => {
             if (!iframe || client) {

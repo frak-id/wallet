@@ -62,4 +62,5 @@ export const frakWalletSdkConfig: Omit<FrakWalletSdkConfig, "domain"> = {
     customizations: {
         css: getCssUrl(),
     },
+    preload: ["modal"],
 };

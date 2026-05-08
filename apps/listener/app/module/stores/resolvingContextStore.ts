@@ -1,7 +1,5 @@
-import {
-    clientIdStore,
-    updateGlobalProperties,
-} from "@frak-labs/wallet-shared";
+import { updateGlobalProperties } from "@frak-labs/wallet-shared/common/analytics";
+import { clientIdStore } from "@frak-labs/wallet-shared/stores/clientIdStore";
 import { create } from "zustand";
 import type { ResolvingContextStore, TrustLevel } from "./types";
 

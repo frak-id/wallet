@@ -1,9 +1,9 @@
 import { isRunningInProd, isRunningLocally } from "../utils";
-import { isTauri } from "../utils/platform";
+import { IS_TAURI } from "../utils/platform";
 
 function resolveRpId(): string {
     if (process.env.WEBAUTHN_RP_ID) return process.env.WEBAUTHN_RP_ID;
-    if (isTauri()) return "frak.id";
+    if (IS_TAURI) return "frak.id";
     if (isRunningLocally) return "localhost";
     return "frak.id";
 }
@@ -11,7 +11,7 @@ function resolveRpId(): string {
 function resolveRpOrigin(rpId: string): string {
     const envOrigin = process.env.FRAK_WALLET_URL;
 
-    if (isTauri()) {
+    if (IS_TAURI) {
         if (envOrigin && isRpOriginCompatibleWithId(envOrigin, rpId)) {
             return envOrigin;
         }

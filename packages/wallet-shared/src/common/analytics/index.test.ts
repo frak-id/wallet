@@ -1,8 +1,3 @@
-import {
-    isAndroid,
-    isIOS,
-    isTauri,
-} from "@frak-labs/app-essentials/utils/platform";
 import type { Address, Hex } from "viem";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { WebAuthNWallet } from "../../types/WebAuthN";
@@ -49,14 +44,23 @@ vi.mock("../lib/inApp", () => ({
     isInIframe: false,
 }));
 
-vi.mock("ua-parser-js/helpers", () => ({
-    isStandalonePWA: vi.fn(() => false),
-}));
-
-vi.mock("@frak-labs/app-essentials/utils/platform", () => ({
+const platformMocks = vi.hoisted(() => ({
     isTauri: vi.fn(() => false),
     isIOS: vi.fn(() => false),
     isAndroid: vi.fn(() => false),
+    isStandalonePwa: vi.fn(() => false),
+}));
+vi.mock("@frak-labs/app-essentials/utils/platform", () => ({
+    get IS_TAURI() {
+        return platformMocks.isTauri();
+    },
+    get IS_IOS() {
+        return platformMocks.isIOS();
+    },
+    get IS_ANDROID() {
+        return platformMocks.isAndroid();
+    },
+    isStandalonePwa: () => platformMocks.isStandalonePwa(),
 }));
 
 describe("Analytics", () => {
@@ -84,9 +88,9 @@ describe("Analytics", () => {
 
     describe("getPlatformInfo", () => {
         beforeEach(() => {
-            vi.mocked(isTauri).mockReturnValue(false);
-            vi.mocked(isIOS).mockReturnValue(false);
-            vi.mocked(isAndroid).mockReturnValue(false);
+            platformMocks.isTauri.mockReturnValue(false);
+            platformMocks.isIOS.mockReturnValue(false);
+            platformMocks.isAndroid.mockReturnValue(false);
         });
 
         it("returns web platform when not in Tauri", () => {
@@ -97,8 +101,8 @@ describe("Analytics", () => {
         });
 
         it("returns ios when in Tauri iOS", () => {
-            vi.mocked(isTauri).mockReturnValue(true);
-            vi.mocked(isIOS).mockReturnValue(true);
+            platformMocks.isTauri.mockReturnValue(true);
+            platformMocks.isIOS.mockReturnValue(true);
             expect(getPlatformInfo()).toEqual({
                 isTauri: true,
                 platform: "ios",
@@ -106,8 +110,8 @@ describe("Analytics", () => {
         });
 
         it("returns android when in Tauri Android", () => {
-            vi.mocked(isTauri).mockReturnValue(true);
-            vi.mocked(isAndroid).mockReturnValue(true);
+            platformMocks.isTauri.mockReturnValue(true);
+            platformMocks.isAndroid.mockReturnValue(true);
             expect(getPlatformInfo()).toEqual({
                 isTauri: true,
                 platform: "android",
@@ -115,7 +119,7 @@ describe("Analytics", () => {
         });
 
         it("returns unknown for desktop Tauri", () => {
-            vi.mocked(isTauri).mockReturnValue(true);
+            platformMocks.isTauri.mockReturnValue(true);
             expect(getPlatformInfo()).toEqual({
                 isTauri: true,
                 platform: "unknown",

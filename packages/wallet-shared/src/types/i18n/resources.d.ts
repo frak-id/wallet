@@ -661,14 +661,6 @@ interface Resources {
                     idle: "Idle";
                     paired: "Paired";
                 };
-                target: {
-                    state: {
-                        connecting: "Connecting to partner device";
-                        error: "Connection rejected by the server";
-                        paired: "Connected with other device";
-                        retryError: "Error when connecting to partner device";
-                    };
-                };
                 text: "You're about to connect a device to your account.";
                 title: "Confirm device pairing";
             };

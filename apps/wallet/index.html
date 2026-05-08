@@ -89,14 +89,11 @@
         <link rel="stylesheet" href="/fonts/inter.css">
         <link rel="stylesheet" href="/fonts/inter-tight.css">
 
-        <!-- PWA Install Prompt Handler -->
+        <!-- Suppress Chrome's native PWA install promotion — users should install the Tauri app instead -->
         <script>
-        window.addEventListener("beforeinstallprompt", (e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            e.stopImmediatePropagation();
-            window.promptEvent = e;
-        });
+        window.addEventListener("beforeinstallprompt", (e) =>
+            e.preventDefault()
+        );
         </script>
     </head>
 

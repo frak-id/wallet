@@ -1,26 +1,24 @@
 /**
- * Platform detection utilities for runtime environment checks
+ * Platform detection utilities for runtime environment checks.
+ *
+ * Designed for build-time dead-code elimination. When the consuming bundler
+ * applies `define` substitutions for `__IS_TAURI__`, `__IS_IOS__` and
+ * `__IS_ANDROID__`, the exported constants collapse to literal booleans and
+ * Rolldown's `inlineConst` propagates them to every call site, eliminating
+ * dead branches and their transitive imports (e.g. `@tauri-apps/*`).
+ *
+ * When `define` is not applied (tests, sdk consumers, REPL), the constants
+ * fall back to the historical runtime detection so behavior is preserved.
+ *
+ * Always import the `IS_TAURI` / `IS_IOS` / `IS_ANDROID` constants — only the
+ * constant form is guaranteed to be inlined and tree-shaken by the bundler.
  */
 
-/**
- * Check if the app is running in Tauri (native desktop/mobile app)
- *
- * @returns {boolean} True if running in Tauri, false otherwise
- *
- * @example
- * ```typescript
- * import { isTauri } from '@frak-labs/app-essentials';
- *
- * if (isTauri()) {
- *   // Native app specific logic
- *   console.log('Running in native app');
- * } else {
- *   // Web specific logic
- *   console.log('Running in browser');
- * }
- * ```
- */
-export function isTauri(): boolean {
+declare const __IS_TAURI__: boolean;
+declare const __IS_IOS__: boolean;
+declare const __IS_ANDROID__: boolean;
+
+function detectTauriRuntime(): boolean {
     if (typeof window === "undefined") return false;
     return (
         window.location.hostname === "tauri.localhost" ||
@@ -30,44 +28,74 @@ export function isTauri(): boolean {
     );
 }
 
-/**
- * Check if the app is running on iOS (Tauri iOS app)
- *
- * @returns {boolean} True if running on iOS, false otherwise
- *
- * @example
- * ```typescript
- * import { isIOS } from '@frak-labs/app-essentials';
- *
- * if (isIOS()) {
- *   // iOS-specific logic
- *   console.log('Running on iOS');
- * }
- * ```
- */
-export function isIOS(): boolean {
-    if (!isTauri()) return false;
+function detectIosRuntime(): boolean {
     if (typeof window === "undefined") return false;
     return window.location.protocol === "tauri:";
 }
 
-/**
- * Check if the app is running on Android (Tauri Android app)
- *
- * @returns {boolean} True if running on Android, false otherwise
- *
- * @example
- * ```typescript
- * import { isAndroid } from '@frak-labs/app-essentials';
- *
- * if (isAndroid()) {
- *   // Android-specific logic
- *   console.log('Running on Android');
- * }
- * ```
- */
-export function isAndroid(): boolean {
-    if (!isTauri()) return false;
+function detectAndroidRuntime(): boolean {
     if (typeof window === "undefined") return false;
     return window.location.hostname === "tauri.localhost";
+}
+
+/**
+ * `true` when the bundle runs inside the Tauri shell (desktop or mobile).
+ *
+ * Build-time literal in apps that wire `__IS_TAURI__` through Vite `define`;
+ * runtime-detected otherwise.
+ */
+export const IS_TAURI: boolean =
+    typeof __IS_TAURI__ === "boolean" ? __IS_TAURI__ : detectTauriRuntime();
+
+/**
+ * `true` when the bundle runs inside the Tauri iOS shell.
+ *
+ * Falls back to runtime detection only when `__IS_IOS__` is not provided by
+ * the bundler. Always implies `IS_TAURI`.
+ */
+export const IS_IOS: boolean =
+    typeof __IS_IOS__ === "boolean"
+        ? __IS_IOS__
+        : IS_TAURI && detectIosRuntime();
+
+/**
+ * `true` when the bundle runs inside the Tauri Android shell.
+ *
+ * Falls back to runtime detection only when `__IS_ANDROID__` is not provided
+ * by the bundler. Always implies `IS_TAURI`.
+ */
+export const IS_ANDROID: boolean =
+    typeof __IS_ANDROID__ === "boolean"
+        ? __IS_ANDROID__
+        : IS_TAURI && detectAndroidRuntime();
+
+type NavigatorStandalone = Navigator & { standalone?: boolean };
+
+/**
+ * `true` when the page is running as an installed PWA (standalone display
+ * mode). SSR-safe — returns `false` outside a browser context.
+ *
+ * Combines the standard `display-mode: standalone` media query, the iOS
+ * `navigator.standalone` flag and the Android TWA referrer signal. This is
+ * the same set of checks that `is-standalone-pwa` performs, inlined here to
+ * avoid pulling `ua-parser-js` into the bundle.
+ */
+export function isStandalonePwa(): boolean {
+    if (typeof window === "undefined") return false;
+    try {
+        if (typeof window.matchMedia === "function") {
+            if (window.matchMedia("(display-mode: standalone)").matches) {
+                return true;
+            }
+        }
+        if ((window.navigator as NavigatorStandalone)?.standalone === true) {
+            return true;
+        }
+        if (typeof document !== "undefined") {
+            return document.referrer.startsWith("android-app://");
+        }
+        return false;
+    } catch {
+        return false;
+    }
 }

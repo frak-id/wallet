@@ -1,4 +1,4 @@
-import { isTauri } from "@frak-labs/app-essentials/utils/platform";
+import { IS_TAURI } from "@frak-labs/app-essentials/utils/platform";
 import { Button } from "@frak-labs/design-system/components/Button";
 import {
     type ChangeEvent,
@@ -149,7 +149,7 @@ export function CodeInput({
     const handlePasteFromClipboard = useCallback(async () => {
         try {
             let text: string;
-            if (isTauri()) {
+            if (IS_TAURI) {
                 const { readText } = await import(
                     "@tauri-apps/plugin-clipboard-manager"
                 );

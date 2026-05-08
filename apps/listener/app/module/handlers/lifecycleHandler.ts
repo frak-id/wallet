@@ -4,14 +4,14 @@ import type {
     LifecycleHandler,
     RpcRequestContext,
 } from "@frak-labs/frame-connector";
-import type { SdkSession, Session } from "@frak-labs/wallet-shared";
 import {
-    authenticatedBackendApi,
-    clientIdStore,
-    emitLifecycleEvent,
     trackEvent,
     updateGlobalProperties,
-} from "@frak-labs/wallet-shared";
+} from "@frak-labs/wallet-shared/common/analytics";
+import { authenticatedBackendApi } from "@frak-labs/wallet-shared/common/api/backendClient";
+import { emitLifecycleEvent } from "@frak-labs/wallet-shared/common/utils/lifecycleEvents";
+import { clientIdStore } from "@frak-labs/wallet-shared/stores/clientIdStore";
+import type { SdkSession, Session } from "@frak-labs/wallet-shared/types";
 import { getI18n } from "react-i18next";
 import {
     iframeClientId,

@@ -55,6 +55,7 @@ export type {
     // Compression
     KeyProvider,
     Language,
+    ListenerPreloadOption,
     LocalizedI18nConfig,
     LoggedInEmbeddedView,
     LoggedOutEmbeddedView,

@@ -1,4 +1,4 @@
-import { isAndroid, isIOS } from "@frak-labs/app-essentials/utils/platform";
+import { IS_TAURI } from "@frak-labs/app-essentials/utils/platform";
 import { type MutationOptions, useMutation } from "@tanstack/react-query";
 import { trackEvent } from "../../common/analytics";
 import type { SharingSource } from "../../common/analytics/events";
@@ -84,9 +84,8 @@ export function useShareLink(
     // `frak-share` only ships iOS (UIActivityViewController) and Android
     // (Intent.ACTION_SEND) handlers, so gate the Tauri path on those two
     // platforms instead of the generic `isTauri()` check.
-    const useTauriShare = isIOS() || isAndroid();
     const canShare =
-        useTauriShare ||
+        IS_TAURI ||
         (typeof navigator !== "undefined" &&
             typeof navigator.share === "function");
 
@@ -103,7 +102,7 @@ export function useShareLink(
 
             // Tauri (iOS / Android) routes through the native plugin because
             // `navigator.share` is not exposed inside the Tauri WebView.
-            if (useTauriShare) {
+            if (IS_TAURI) {
                 try {
                     const shared = await invokeTauriShare({
                         url: link,

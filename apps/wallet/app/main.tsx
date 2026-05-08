@@ -1,14 +1,18 @@
 import { isRunningLocally } from "@frak-labs/app-essentials";
-import { isTauri } from "@frak-labs/app-essentials/utils/platform";
+import { IS_TAURI } from "@frak-labs/app-essentials/utils/platform";
 import {
     defaultNS,
     fallbackLng,
     interpolation,
     recordError,
-    resources,
     setupBigIntSerialization,
     supportedLngs,
 } from "@frak-labs/wallet-shared";
+import { initAnalytics } from "@frak-labs/wallet-shared/common/analytics";
+import {
+    customized as frCustomized,
+    translation as frTranslation,
+} from "@frak-labs/wallet-shared/i18n/locales/fr";
 import { createRouter, RouterProvider } from "@tanstack/react-router";
 import i18next from "i18next";
 import I18nextBrowserLanguageDetector from "i18next-browser-languagedetector";
@@ -20,6 +24,25 @@ import { initSafeAreaInsets } from "./utils/safeArea";
 
 // Setup BigInt serialization polyfill
 setupBigIntSerialization();
+
+// Initialise analytics (OpenPanel + crashlytics globals) once at bootstrap.
+// Side-effect was previously triggered by importing the analytics module;
+// the explicit call keeps tree-shaking honest now that the side-effect is gone.
+initAnalytics();
+
+// Lazy-load the English bundle on demand. French is bundled (it's our
+// fallbackLng), so most loads skip the ~13 KB gzipped EN payload. Registered
+// before init() so the initial `languageChanged` event from the detector is
+// captured.
+i18next.on("languageChanged", async (lng) => {
+    if (lng === "en" && !i18next.hasResourceBundle("en", "translation")) {
+        const { translation, customized } = await import(
+            "@frak-labs/wallet-shared/i18n/locales/en"
+        );
+        i18next.addResourceBundle("en", "translation", translation);
+        i18next.addResourceBundle("en", "customized", customized);
+    }
+});
 
 // Wire global JS error reporting BEFORE anything else can throw — this
 // catches errors emitted during module evaluation, the i18next init, or
@@ -89,7 +112,7 @@ declare module "@tanstack/react-router" {
 
 async function main() {
     // Initialize Tauri-specific features for mobile devices
-    if (isTauri()) {
+    if (IS_TAURI) {
         await initSafeAreaInsets();
         await initDeepLinks((options) => {
             return router.navigate(
@@ -107,7 +130,13 @@ async function main() {
             fallbackLng,
             fallbackNS: "customized",
             supportedLngs,
-            resources,
+            partialBundledLanguages: true,
+            resources: {
+                fr: {
+                    translation: frTranslation,
+                    customized: frCustomized,
+                },
+            },
             debug: isRunningLocally,
             interpolation,
 
@@ -139,7 +168,7 @@ async function main() {
     });
 
     // Dismiss native splash screen (Android holds it via setKeepOnScreenCondition)
-    if (isTauri()) {
+    if (IS_TAURI) {
         (
             window as unknown as {
                 NativeSplash?: { dismiss(): void };

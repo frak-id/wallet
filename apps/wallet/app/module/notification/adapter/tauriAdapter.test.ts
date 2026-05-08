@@ -55,7 +55,10 @@ vi.mock("@frak-labs/wallet-shared", () => ({
 }));
 
 vi.mock("@frak-labs/app-essentials/utils/platform", () => ({
-    isAndroid: isAndroidMock,
+    get IS_ANDROID() {
+        return isAndroidMock();
+    },
+    isStandalonePwa: () => false,
 }));
 
 vi.mock("@tauri-apps/plugin-opener", () => ({

@@ -1,4 +1,4 @@
-import { emitLifecycleEvent } from "@frak-labs/wallet-shared";
+import { emitLifecycleEvent } from "@frak-labs/wallet-shared/common/utils/lifecycleEvents";
 import { useCallback, useEffect, useRef } from "react";
 import { resolvingContextStore } from "@/module/stores/resolvingContextStore";
 

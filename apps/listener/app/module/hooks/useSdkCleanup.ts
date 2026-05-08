@@ -1,8 +1,6 @@
-import {
-    emitLifecycleEvent,
-    sessionStore,
-    trackEvent,
-} from "@frak-labs/wallet-shared";
+import { trackEvent } from "@frak-labs/wallet-shared/common/analytics";
+import { emitLifecycleEvent } from "@frak-labs/wallet-shared/common/utils/lifecycleEvents";
+import { sessionStore } from "@frak-labs/wallet-shared/stores/sessionStore";
 import { useQueryClient } from "@tanstack/react-query";
 import { useCallback } from "react";
 import { modalStore } from "@/module/stores/modalStore";

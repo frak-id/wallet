@@ -1,4 +1,4 @@
-import { isTauri } from "@frak-labs/app-essentials/utils/platform";
+import { IS_TAURI } from "@frak-labs/app-essentials/utils/platform";
 import { Box } from "@frak-labs/design-system/components/Box";
 import { Button } from "@frak-labs/design-system/components/Button";
 import { Card } from "@frak-labs/design-system/components/Card";
@@ -53,7 +53,7 @@ function InstallPage() {
     // Otherwise → use the web processing flow (ensure + register/login)
     const shouldShowCodeView =
         process.env.IS_APP_AVAILABLE === "true" &&
-        !isTauri() &&
+        !IS_TAURI &&
         !getSafeSession()?.token;
 
     useEffect(() => {

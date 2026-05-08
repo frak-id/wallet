@@ -4,7 +4,7 @@ import type { PropsWithChildren } from "react";
 import { useTranslation } from "react-i18next";
 import { useStore } from "zustand";
 import type { BasePairingClient } from "../../clients/base";
-import styles from "./index.module.css";
+import * as styles from "./index.css";
 
 type Status = "success" | "waiting" | "loading" | "error";
 
@@ -12,35 +12,6 @@ type Status = "success" | "waiting" | "loading" | "error";
 // are unused here so we accept any subclass.
 // biome-ignore lint/suspicious/noExplicitAny: structural client prop
 type AnyPairingClient = BasePairingClient<any, any, any>;
-
-/**
- * StatusBoxWallet is a component that displays a status icon and a title.
- * It is used to display the status of a pairing process on wallet.
- *
- * @param status - The status of the pairing process.
- * @param title - The title of the pairing process.
- * @param children - The children of the pairing process.
- */
-export function StatusBoxWallet({
-    status,
-    title,
-    client,
-    children,
-}: PropsWithChildren<{
-    status: Status;
-    title: string;
-    client?: AnyPairingClient;
-}>) {
-    return (
-        <div className={styles.statusBoxWalletContainer}>
-            <div className={styles.statusBox}>
-                <InnerStatusBox status={status} title={title} />
-            </div>
-            {client && <StatusBoxRetry client={client} />}
-            {children}
-        </div>
-    );
-}
 
 /**
  * StatusBoxModal is a component that displays a status icon and a title.
@@ -183,7 +154,7 @@ function getIcon(status: Status) {
 function GreenDot() {
     return (
         <div
-            className={`${styles.statusBox__indicator} ${styles["statusBox__indicator--green"]}`}
+            className={`${styles.statusBox__indicator} ${styles.statusBoxIndicatorColor.green}`}
         />
     );
 }
@@ -191,7 +162,7 @@ function GreenDot() {
 function AmberDot() {
     return (
         <div
-            className={`${styles.statusBox__indicator} ${styles["statusBox__indicator--amber"]}`}
+            className={`${styles.statusBox__indicator} ${styles.statusBoxIndicatorColor.amber}`}
         />
     );
 }
@@ -199,7 +170,7 @@ function AmberDot() {
 function RedDot() {
     return (
         <div
-            className={`${styles.statusBox__indicator} ${styles["statusBox__indicator--red"]}`}
+            className={`${styles.statusBox__indicator} ${styles.statusBoxIndicatorColor.red}`}
         />
     );
 }

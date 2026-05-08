@@ -1,8 +1,6 @@
 import type { SendInteractionParamsType } from "@frak-labs/core-sdk";
-import {
-    authenticatedBackendApi,
-    clientIdStore,
-} from "@frak-labs/wallet-shared";
+import { authenticatedBackendApi } from "@frak-labs/wallet-shared/common/api/backendClient";
+import { clientIdStore } from "@frak-labs/wallet-shared/stores/clientIdStore";
 import { useMutation } from "@tanstack/react-query";
 import { resolvingContextStore } from "../stores/resolvingContextStore";
 

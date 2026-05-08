@@ -378,14 +378,6 @@
                     }
                 }
             },
-            "target": {
-                "state": {
-                    "connecting": "Connecting to partner device",
-                    "paired": "Connected with other device",
-                    "retryError": "Error when connecting to partner device",
-                    "error": "Connection rejected by the server"
-                }
-            },
             "status": {
                 "idle": "Idle",
                 "connecting": "Pairing in progress",

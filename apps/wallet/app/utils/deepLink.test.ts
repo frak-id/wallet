@@ -28,10 +28,22 @@ const getSafeSessionMock = vi.fn<() => { token: string } | null | undefined>(
 
 const mockEnsurePost = vi.fn(() => Promise.resolve({ error: null }));
 
-vi.mock("@frak-labs/app-essentials/utils/platform", () => ({
+const platformMocks = vi.hoisted(() => ({
     isAndroid: vi.fn(() => false),
     isIOS: vi.fn(() => false),
     isTauri: vi.fn(() => true),
+}));
+vi.mock("@frak-labs/app-essentials/utils/platform", () => ({
+    get IS_ANDROID() {
+        return platformMocks.isAndroid();
+    },
+    get IS_IOS() {
+        return platformMocks.isIOS();
+    },
+    get IS_TAURI() {
+        return platformMocks.isTauri();
+    },
+    isStandalonePwa: () => false,
 }));
 
 vi.mock("@tauri-apps/plugin-deep-link", () => ({
@@ -63,10 +75,7 @@ describe("initDeepLinks", () => {
         pendingActionsStore.getState().clearAll();
         openUrlHandler = null;
         getSafeSessionMock.mockReturnValue({ token: "valid-token" });
-        const { isTauri } = await import(
-            "@frak-labs/app-essentials/utils/platform"
-        );
-        vi.mocked(isTauri).mockReturnValue(true);
+        platformMocks.isTauri.mockReturnValue(true);
     });
 
     afterEach(() => {
@@ -74,10 +83,7 @@ describe("initDeepLinks", () => {
     });
 
     test("should skip initialization when not running in Tauri", async () => {
-        const { isTauri } = await import(
-            "@frak-labs/app-essentials/utils/platform"
-        );
-        vi.mocked(isTauri).mockReturnValue(false);
+        platformMocks.isTauri.mockReturnValue(false);
 
         const { initDeepLinks } = await import("./deepLink");
         const navigate = vi.fn();
@@ -274,10 +280,7 @@ describe("deep link auth gate", () => {
         pendingActionsStore.getState().clearAll();
         openUrlHandler = null;
         getSafeSessionMock.mockReturnValue(null);
-        const { isTauri } = await import(
-            "@frak-labs/app-essentials/utils/platform"
-        );
-        vi.mocked(isTauri).mockReturnValue(true);
+        platformMocks.isTauri.mockReturnValue(true);
     });
 
     afterEach(() => {
@@ -390,10 +393,7 @@ describe("monerium OAuth callback", () => {
         pendingActionsStore.getState().clearAll();
         openUrlHandler = null;
         getSafeSessionMock.mockReturnValue({ token: "valid-token" });
-        const { isTauri } = await import(
-            "@frak-labs/app-essentials/utils/platform"
-        );
-        vi.mocked(isTauri).mockReturnValue(true);
+        platformMocks.isTauri.mockReturnValue(true);
     });
 
     afterEach(() => {

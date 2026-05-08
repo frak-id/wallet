@@ -1,7 +1,7 @@
-import { prefixModalCss } from "@frak-labs/wallet-shared";
+import { prefixModalCss } from "@frak-labs/wallet-shared/common";
 import { Fingerprint, HandCoins, SendHorizonal, Share } from "lucide-react";
 import { type PropsWithChildren, useMemo } from "react";
-import styles from "@/module/modal/component/Modal/index.module.css";
+import * as styles from "@/module/modal/component/Modal/index.css";
 import { useListenerTranslation } from "@/module/providers/ListenerUiProvider";
 import {
     modalStore,
@@ -121,16 +121,12 @@ function StepItem({
 
 function isActiveStyle(isActive: boolean) {
     return isActive
-        ? `${prefixModalCss("step-active")} ${
-              styles["modalListener__stepItem--active"]
-          }`
+        ? `${prefixModalCss("step-active")} ${styles.stepItemModifier.active}`
         : "";
 }
 
 function isDoneStyle(isDone: boolean) {
     return isDone
-        ? `${prefixModalCss("step-done")} ${
-              styles["modalListener__stepItem--done"]
-          }`
+        ? `${prefixModalCss("step-done")} ${styles.stepItemModifier.done}`
         : "";
 }

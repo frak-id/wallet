@@ -1,4 +1,4 @@
-import { isTauri } from "@frak-labs/app-essentials/utils/platform";
+import { IS_TAURI } from "@frak-labs/app-essentials/utils/platform";
 import type {
     AttributionParams,
     SharingPageProduct,
@@ -270,7 +270,7 @@ function WalletSharingPage() {
 
     const handleDismiss = async () => {
         if (redirectUrl) {
-            if (isTauri()) {
+            if (IS_TAURI) {
                 // In Tauri, open the redirect URL in the external browser
                 // and navigate back to the wallet home.
                 const { openUrl } = await import("@tauri-apps/plugin-opener");

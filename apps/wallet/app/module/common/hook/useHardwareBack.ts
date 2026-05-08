@@ -1,6 +1,5 @@
+import { IS_TAURI } from "@frak-labs/app-essentials/utils/platform";
 import { useBlocker } from "@tanstack/react-router";
-import { onBackButtonPress } from "@tauri-apps/api/app";
-import { isTauri } from "@tauri-apps/api/core";
 import { useEffect } from "react";
 import { modalStore } from "@/module/stores/modalStore";
 
@@ -40,19 +39,26 @@ export function useHardwareBack() {
     // Handle Tauri Android hardware back button.
     // Only registered while a modal is open — when unregistered,
     // AppPlugin's default behavior handles goBack / exit natively.
+    //
+    // The `IS_TAURI` constant is the single gate. In web/listener builds it is
+    // a `false` literal, so this entire effect (including the dynamic
+    // `@tauri-apps/api/app` import) is dead-code-eliminated by Rolldown.
     useEffect(() => {
-        if (!isTauri() || !hasModal) return;
+        if (!IS_TAURI || !hasModal) return;
 
-        const listenerPromise = onBackButtonPress((payload) => {
-            const state = modalStore.getState();
-            if (state.modal) {
-                state.closeModal();
-            } else if (payload.canGoBack) {
-                // Fallback for the narrow window between last modal
-                // closing and the listener being unregistered.
-                window.history.back();
-            }
-        });
+        const listenerPromise = import("@tauri-apps/api/app").then(
+            ({ onBackButtonPress }) =>
+                onBackButtonPress((payload) => {
+                    const state = modalStore.getState();
+                    if (state.modal) {
+                        state.closeModal();
+                    } else if (payload.canGoBack) {
+                        // Fallback for the narrow window between last modal
+                        // closing and the listener being unregistered.
+                        window.history.back();
+                    }
+                })
+        );
 
         return () => {
             listenerPromise.then((listener) => listener.unregister());

@@ -7,7 +7,7 @@ import {
     RpcErrorCodes,
     type RpcPromiseHandler,
 } from "@frak-labs/frame-connector";
-import { estimatedRewardsQueryOptions } from "@frak-labs/wallet-shared";
+import { estimatedRewardsQueryOptions } from "@frak-labs/wallet-shared/common/hook/useEstimatedReward";
 import { useQueryClient } from "@tanstack/react-query";
 import { useCallback } from "react";
 import { resolvingContextStore } from "@/module/stores/resolvingContextStore";

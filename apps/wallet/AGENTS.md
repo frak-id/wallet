@@ -13,7 +13,7 @@ bun run test:e2e     # Playwright (19 specs) in tests/specs/
 ```
 
 ## Key Files
-- `app/entry.client.tsx` — PWA / Tauri bootstrap + safe area handling
+- `app/main.tsx` — Tauri bootstrap + safe area handling
 - `app/service-worker.ts` — critical for offline + pairing; `bun run build:sw` emits it
 - `app/routes/__root.tsx` — global layout · `app/routes/_wallet/_protected/` — guarded routes
 - `app/module/{authentication,wallet,tokens,pairing,recovery,biometrics,notification,history,settings}/` — features

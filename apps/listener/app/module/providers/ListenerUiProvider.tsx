@@ -13,7 +13,7 @@ import type {
     ExtractReturnType,
     RpcResponse,
 } from "@frak-labs/frame-connector";
-import { emitLifecycleEvent } from "@frak-labs/wallet-shared";
+import { emitLifecycleEvent } from "@frak-labs/wallet-shared/common/utils/lifecycleEvents";
 import type { i18n, TOptions } from "i18next";
 import {
     mapI18nConfig,
@@ -26,7 +26,7 @@ import {
  */
 type TranslationOptions = Omit<TOptions, "context"> & { context?: string };
 
-import { useFormattedEstimatedReward } from "@frak-labs/wallet-shared";
+import { useFormattedEstimatedReward } from "@frak-labs/wallet-shared/common/hook/useEstimatedReward";
 import {
     createContext,
     type PropsWithChildren,

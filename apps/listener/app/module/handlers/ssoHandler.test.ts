@@ -5,23 +5,27 @@ vi.mock("@frak-labs/core-sdk", () => ({
     generateSsoUrl: vi.fn(),
 }));
 
-vi.mock("@frak-labs/wallet-shared", async (importOriginal) => {
-    const actual =
-        await importOriginal<typeof import("@frak-labs/wallet-shared")>();
-    return {
-        ...actual,
-        addLastAuthentication: vi.fn(),
-        emitLifecycleEvent: vi.fn(),
-        identifyAuthenticatedUser: vi.fn(),
-        trackEvent: vi.fn(),
-        sessionStore: {
-            getState: vi.fn().mockReturnValue({
-                setSession: vi.fn(),
-                setSdkSession: vi.fn(),
-            }),
-        },
-    };
-});
+vi.mock("@frak-labs/wallet-shared/stores/authenticationStore", () => ({
+    addLastAuthentication: vi.fn(),
+}));
+
+vi.mock("@frak-labs/wallet-shared/common/utils/lifecycleEvents", () => ({
+    emitLifecycleEvent: vi.fn(),
+}));
+
+vi.mock("@frak-labs/wallet-shared/common/analytics", () => ({
+    identifyAuthenticatedUser: vi.fn(),
+    trackEvent: vi.fn(),
+}));
+
+vi.mock("@frak-labs/wallet-shared/stores/sessionStore", () => ({
+    sessionStore: {
+        getState: vi.fn().mockReturnValue({
+            setSession: vi.fn(),
+            setSdkSession: vi.fn(),
+        }),
+    },
+}));
 
 describe("ssoHandler", () => {
     beforeEach(() => {
@@ -30,12 +34,15 @@ describe("ssoHandler", () => {
 
     describe("processSsoCompletion", () => {
         test("should store session and sdkSession in stores", async () => {
-            const {
-                sessionStore,
-                addLastAuthentication,
-                identifyAuthenticatedUser,
-                trackEvent,
-            } = await import("@frak-labs/wallet-shared");
+            const { sessionStore } = await import(
+                "@frak-labs/wallet-shared/stores/sessionStore"
+            );
+            const { addLastAuthentication } = await import(
+                "@frak-labs/wallet-shared/stores/authenticationStore"
+            );
+            const { identifyAuthenticatedUser, trackEvent } = await import(
+                "@frak-labs/wallet-shared/common/analytics"
+            );
 
             const setSession = vi.fn();
             const setSdkSession = vi.fn();
@@ -69,7 +76,7 @@ describe("ssoHandler", () => {
 
         test("should handle errors and reject pending request", async () => {
             const { addLastAuthentication } = await import(
-                "@frak-labs/wallet-shared"
+                "@frak-labs/wallet-shared/stores/authenticationStore"
             );
             vi.mocked(addLastAuthentication).mockRejectedValue(
                 new Error("Storage failed")
@@ -89,11 +96,15 @@ describe("ssoHandler", () => {
 
     describe("handleSsoComplete", () => {
         test("should call processSsoCompletion and return success", async () => {
-            const {
-                sessionStore,
-                addLastAuthentication,
-                identifyAuthenticatedUser,
-            } = await import("@frak-labs/wallet-shared");
+            const { sessionStore } = await import(
+                "@frak-labs/wallet-shared/stores/sessionStore"
+            );
+            const { addLastAuthentication } = await import(
+                "@frak-labs/wallet-shared/stores/authenticationStore"
+            );
+            const { identifyAuthenticatedUser } = await import(
+                "@frak-labs/wallet-shared/common/analytics"
+            );
 
             const setSession = vi.fn();
             const setSdkSession = vi.fn();
@@ -162,7 +173,7 @@ describe("ssoHandler", () => {
         test("should emit redirect lifecycle event in redirect mode", async () => {
             const { generateSsoUrl } = await import("@frak-labs/core-sdk");
             const { emitLifecycleEvent } = await import(
-                "@frak-labs/wallet-shared"
+                "@frak-labs/wallet-shared/common/utils/lifecycleEvents"
             );
 
             vi.mocked(generateSsoUrl).mockReturnValue(
@@ -196,7 +207,7 @@ describe("ssoHandler", () => {
         test("should infer redirect mode from redirectUrl presence", async () => {
             const { generateSsoUrl } = await import("@frak-labs/core-sdk");
             const { emitLifecycleEvent } = await import(
-                "@frak-labs/wallet-shared"
+                "@frak-labs/wallet-shared/common/utils/lifecycleEvents"
             );
 
             vi.mocked(generateSsoUrl).mockReturnValue("https://sso-url");

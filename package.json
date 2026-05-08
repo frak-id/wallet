@@ -82,8 +82,8 @@
     "@tanstack/react-query-devtools": "^5.91.3",
     "@tanstack/react-query-persist-client": "^5.90.22",
     "@tanstack/query-async-storage-persister": "^5.90.22",
-    "vite": "^8.0.8",
-    "@vitejs/plugin-react": "^6.0.0",
+    "vite": "^8.0.11",
+    "@vitejs/plugin-react": "^6.0.1",
     "tsdown": "^0.22.0",
     "@rolldown/plugin-node-polyfills": "^1.0.3",
     "@openpanel/web": "^1.4.1"
@@ -92,7 +92,7 @@
     "@tauri-apps/api": "^2.10.1",
     "@tinymomentum/liquid-glass-react": "^1.0.6",
     "caniuse-lite": "^1.0.30001779",
-    "vite": "^8.0.8"
+    "vite": "^8.0.11"
   },
   "resolutions": {
     "caniuse-lite": "^1.0.30001779",

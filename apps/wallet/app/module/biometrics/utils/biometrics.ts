@@ -1,4 +1,4 @@
-import { isTauri } from "@frak-labs/app-essentials/utils/platform";
+import { IS_TAURI } from "@frak-labs/app-essentials/utils/platform";
 import { recordError } from "@frak-labs/wallet-shared";
 
 type BiometricStatus = {
@@ -19,7 +19,7 @@ let biometricModulePromise: Promise<
 > | null = null;
 
 function getBiometricModule() {
-    if (!isTauri()) return Promise.resolve(null);
+    if (!IS_TAURI) return Promise.resolve(null);
 
     if (!biometricModulePromise) {
         biometricModulePromise = import("@tauri-apps/plugin-biometric").catch(
