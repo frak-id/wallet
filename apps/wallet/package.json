@@ -12,7 +12,8 @@
   "scripts": {
     "build": "bun run build:sw && NODE_ENV=production vite build",
     "build:sw": "vite build --mode sw",
-    "dev": "bun run build:sw && sst dev vite dev",
+    "dev": "bun run build:sw && sst dev bun run dev:built",
+    "dev:built": "sh -c 'trap \"kill 0\" INT TERM EXIT; NODE_ENV=production bun vite build --watch & bun vite preview'",
     "dev:sandbox": "bun run build:sw && vite dev  --clearScreen false --host",
     "start": "bunx serve dist -p 3000",
     "lint": "biome lint .",

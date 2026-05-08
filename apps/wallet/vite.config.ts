@@ -28,12 +28,24 @@ const isTauriIos = isTauri && tauriPlatform === "ios";
 const isTauriAndroid = isTauri && tauriPlatform === "android";
 const isSandbox = !!process.env.ATELIER_SANDBOX_ID;
 const appVersion = process.env.COMMIT_HASH ?? walletPackage.version;
-// Tauri's collapsed `vendor` chunk (~470 KB) is intentional — see
-// `buildChunkGroups`. The 500 KB limit accommodates it without noise;
-// web stays strict at 300 KB to surface regressions early.
+// Web stays strict at 300 KB to surface regressions early; Tauri allows
+// 500 KB since assets ship in the binary (no network cost) and the
+// `blockchain-vendor` chunk runs close to the limit.
 const chunkSizeWarningLimit = isTauri ? 500 : 300;
 // Drop Rolldown debug info in prod (smaller maps), keep full in dev.
 const attachDebugInfo: "full" | "none" = isProd ? "none" : "full";
+
+// Routes whose only purpose is to host nested child routes via `<Outlet/>`.
+// They look like leaf routes from `routeId` alone, but their files are
+// 9-line layout shells. Listed explicitly so TanStack Router's
+// `autoCodeSplitting` skips them — saves one ~210 B lazy chunk per route.
+// Verify with: `rg '<Outlet ?/>' apps/wallet/app/routes`.
+const PURE_OUTLET_PARENT_ROUTES = new Set([
+    "/_wallet/_protected/wallet",
+    "/_wallet/_protected/profile",
+    "/_wallet/_protected/settings",
+    "/_wallet/_protected-fullscreen/profile/referral",
+]);
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -57,84 +69,110 @@ const tauriAlias = isTauri
           { find: /^tauri-plugin-.*$/, replacement: tauriStub },
       ];
 
-// Rolldown's `tags` field on a code-splitting group is typed as `"$initial"[]`
-// (literal). Inline `["$initial"]` widens to `string[]`; `as const` makes it
-// readonly. Both fail the assignability check, so we declare a properly-typed
-// constant once and reuse it.
-const initialOnly: "$initial"[] = ["$initial"];
 
-// Code-splitting groups for Rolldown. Returned per-build because Tauri and web
-// have different optimal shapes:
-//  • Tauri: assets are served from the embedded binary via the `tauri://` URI
-//    handler — no HTTP/2 multiplexing, no CDN cache, each chunk = a Rust IPC
-//    roundtrip on cold boot. Cache granularity is irrelevant (the binary ships
-//    a fixed asset set), so we collapse generic vendors into a single
-//    `vendor` chunk to minimise IPC count.
-//  • Web: keep granular vendor split for browser-cache hit-rate across deploys
-//    (React rarely changes; UI libs churn faster) and HTTP/2 parallel preload.
+// Code-splitting groups for Rolldown. Same shape for web and Tauri.
 //
-// `tags: initialOnly` everywhere locks each vendor to modules statically
-// reachable from the entry — without it, a lazy-only module shared by 2+ lazy
-// chunks can drift into an eager vendor and inflate first paint.
+// Tauri's `tauri://` protocol handler is faster than HTTP/2+CDN per asset
+// (1–5 ms local fs read vs network round-trip), so saving JS parse/compile
+// cost on unused routes outweighs the extra fetch overhead. The granular
+// vendor split costs nothing on Tauri (no cross-deploy cache benefit) but
+// matches the web cache strategy and keeps a single source of truth.
 //
-// Note: `ox` was previously a typo `0x` matching nothing — it now lands in
-// `blockchain-vendor` instead of `common`.
-function buildChunkGroups(forTauri: boolean) {
-    const eagerVendor = forTauri
-        ? [
-              // Tauri: single eager vendor chunk for everything except blockchain.
-              // React + TanStack + UI + i18n + utility libs collapse here.
-              {
-                  name: "vendor",
-                  tags: initialOnly,
-                  test: /node_modules[\\/](?:react|react-dom|scheduler|react[\\/]jsx-runtime|@tanstack|@radix-ui|vaul|micromark|sonner|lucide-react|class-variance-authority|cuer|react-hook-form|react-dropzone|i18next|i18next-browser-languagedetector|react-i18next|zustand|idb-keyval|jose|radash|remix-utils|clsx)[\\/]/,
-                  priority: 40,
-                  // minShareCount: 1 forces single-importer node_modules
-                  // (e.g. react-dom-client, ~170 KB, imported only by the
-                  // entry for createRoot) into vendor instead of the entry chunk.
-                  minShareCount: 1,
-              },
-          ]
-        : [
-              // Web: granular vendor split for cache granularity.
-              {
-                  name: "react-vendor",
-                  tags: initialOnly,
-                  test: /node_modules[\\/](react|react-dom|scheduler|react[\\/]jsx-runtime)[\\/]/,
-                  priority: 40,
-                  minShareCount: 1,
-              },
-              {
-                  name: "tanstack-vendor",
-                  tags: initialOnly,
-                  test: /node_modules[\\/]@tanstack[\\/]/,
-                  priority: 32,
-              },
-              {
-                  name: "ui-vendor",
-                  tags: initialOnly,
-                  test: /node_modules[\\/](@radix-ui|vaul|micromark|sonner|lucide-react|class-variance-authority|cuer|react-hook-form|react-dropzone)[\\/]/,
-                  priority: 30,
-              },
-          ];
-
+// Routes are autoCodeSplit by TanStack Router but immediately re-grouped by
+// manual `feature-*` groups so each navigation pulls one logical chunk
+// instead of 5–10 tiny ones (Skeleton, hooks, queryKeys, route component, ...).
+//
+// `tags: ["$initial"]` on `app-shell` filters to modules statically reachable
+// from `main.tsx` — without it, modules shared between bootstrap and lazy
+// route components leak into feature chunks and force the entry to static-
+// import them, defeating lazy loading entirely.
+//
+// `common-lazy` deliberately omits the tag so the lazy-shared tail (Skeleton,
+// queryKeys constants, small hooks) collapses into one chunk instead of
+// auto-emitting a sub-1 KB chunk per module.
+function buildChunkGroups() {
     return [
-        ...eagerVendor,
-        // Blockchain stays isolated on both builds: viem/wagmi update
-        // independently from React (web cache benefit) and the regex captures
-        // all crypto deps that would otherwise pollute `vendor` (Tauri).
+        // Vendor split — stable libraries first for long-term browser cache.
+        {
+            name: "react-vendor",
+            test: /node_modules[\\/](react|react-dom|scheduler|react[\\/]jsx-runtime)[\\/]/,
+            priority: 40,
+            minShareCount: 1,
+        },
         {
             name: "blockchain-vendor",
-            tags: initialOnly,
-            test: /node_modules[\\/](viem|wagmi|@wagmi|permissionless|@noble|@scure|ox)[\\/]/,
+            test: /[\\/]node_modules[\\/](?:viem|wagmi|@wagmi|permissionless|@noble|@scure|ox)[\\/]/,
             priority: 35,
+            minShareCount: 1,
         },
-        // Catch-all for anything shared by 2+ modules.
-        // tags: initialOnly prevents lazy-only modules from drifting eager.
         {
-            name: "common",
-            tags: initialOnly,
-            priority: 10,
+            name: "tanstack-vendor",
+            test: /[\\/]node_modules[\\/]@tanstack[\\/]/,
+            priority: 32,
+            minShareCount: 1,
+        },
+        {
+            name: "ui-vendor",
+            test: /[\\/]node_modules[\\/](@radix-ui|vaul|micromark|sonner|lucide-react|class-variance-authority|cuer|react-hook-form|react-dropzone)[\\/]/,
+            priority: 30,
+            minShareCount: 1,
+        },
+        // Eager app-shell catch-all. `tags: ["$initial"]` filters to modules
+        // statically reachable from `main.tsx` — i.e., everything that has
+        // to be parsed before first paint anyway. Without this, modules
+        // shared between bootstrap (RootProvider, layouts, route
+        // definitions) and lazy route components leak into the feature
+        // chunks and force the entry to static-import them, defeating
+        // lazy loading entirely.
+        {
+            name: "app-shell",
+            tags: ["$initial"] as "$initial"[],
+            priority: 28,
+            minShareCount: 1,
+        },
+        // Feature buckets — truly LAZY chunks, only loaded when the user
+        // navigates to a route in that family. We match exclusively the
+        // `?tsr-split=*` virtual modules (TanStack Router's lazy
+        // component split). Their transitive dependencies that aren't
+        // captured by another group fall into the feature chunk via the
+        // auto-chunker, keeping each navigation to a single fetch.
+        {
+            name: "feature-auth",
+            test: /[\\/]app[\\/]routes[\\/]_wallet[\\/](?:_auth|_sso)[\\/].*\?tsr-split=/,
+            priority: 25,
+            minShareCount: 1,
+        },
+        {
+            name: "feature-wallet",
+            test: /[\\/]app[\\/]routes[\\/]_wallet[\\/]_protected[\\/](?:wallet|tokens|monerium)[.\\/].*\?tsr-split=/,
+            priority: 24,
+            minShareCount: 1,
+        },
+        {
+            name: "feature-profile",
+            test: /[\\/]app[\\/]routes[\\/]_wallet[\\/]_protected[\\/](?:profile|settings)[.\\/].*\?tsr-split=/,
+            priority: 23,
+            minShareCount: 1,
+        },
+        {
+            name: "feature-social",
+            test: /[\\/]app[\\/]routes[\\/](?:_wallet[\\/]_protected-fullscreen[\\/]|(?:sharing|install)\.).*\?tsr-split=/,
+            priority: 22,
+            minShareCount: 1,
+        },
+        {
+            name: "feature-content",
+            test: /[\\/]app[\\/]routes[\\/]_wallet[\\/]_protected[\\/](?:history|notifications|explorer)\..*\?tsr-split=/,
+            priority: 21,
+            minShareCount: 1,
+        },
+        // Lowest-priority catch-all for shared LAZY modules (used by 2+
+        // feature chunks but not part of the eager shell). Without this,
+        // duplicates leak into each feature chunk.
+        {
+            name: "common-lazy",
+            priority: 5,
+            minShareCount: 2,
         },
     ];
 }
@@ -239,8 +277,35 @@ export default defineConfig(
                 tanstackRouter({
                     routesDirectory: "./app/routes",
                     generatedRouteTree: "./app/routeTree.gen.ts",
+                    // Per-route lazy chunks. The `feature-*` groups in
+                    // `buildChunkGroups` re-coalesce these into one chunk
+                    // per feature so each navigation is a single fetch.
                     autoCodeSplitting: true,
                     routeFileIgnorePattern: "\\.css\\.ts$",
+                    // Per-route splitting policy. We disable splitting for
+                    // pure-`<Outlet/>` layouts so they don't each produce a
+                    // 200–300 B chunk that is downloaded eagerly with the
+                    // child route anyway. Inlining them into the static
+                    // route tree adds ~1 KB to the entry chunk in exchange
+                    // for ~10 fewer HTTP requests.
+                    codeSplittingOptions: {
+                        splitBehavior: ({ routeId }) => {
+                            // Filename-prefix layouts (TanStack convention).
+                            const lastSegment =
+                                routeId.split("/").pop() ?? "";
+                            if (lastSegment.startsWith("_")) return [];
+                            // Parent routes that just render `<Outlet/>` to
+                            // host nested children. TanStack's plugin can't
+                            // detect this from `routeId` alone; the list is
+                            // verified by greppping for `<Outlet />` in the
+                            // route files.
+                            if (PURE_OUTLET_PARENT_ROUTES.has(routeId)) {
+                                return [];
+                            }
+                            // Default: split the component into a lazy chunk.
+                            return undefined;
+                        },
+                    },
                 }),
                 viteReact(),
                 vanillaExtractPlugin(),
@@ -265,6 +330,25 @@ export default defineConfig(
                         : []),
                     ...tauriAlias,
                 ],
+            },
+            preview: {
+                port: isTauri ? 3010 : 3000,
+                allowedHosts: isSandbox ? true : undefined,
+                proxy: {
+                    // Proxy listener app from separate dev server
+                    "/listener": {
+                        target: "https://localhost:3002",
+                        changeOrigin: true,
+                        secure: false, // Allow self-signed certs in dev
+                        ws: true, // Proxy websockets if needed
+                    },
+                    // Monerium sandbox doesn't whitelist localhost origins.
+                    "/monerium-api": {
+                        target: "https://api.monerium.dev",
+                        changeOrigin: true,
+                        rewrite: (path) => path.replace(/^\/monerium-api/, ""),
+                    },
+                },
             },
             server: {
                 port: isTauri ? 3010 : 3000,
@@ -300,12 +384,13 @@ export default defineConfig(
                 },
             },
             build: {
-                // Web: split CSS per route chunk so unauthenticated entries
-                // (login, sso, install) don't ship the auth+wallet+history+
-                // monerium stylesheet on first paint.
-                // Tauri: keep a single bundled stylesheet — same Rust IPC
-                // logic as JS chunks (one fetch is cheaper than many).
-                cssCodeSplit: !isTauri,
+                // Single bundled stylesheet for both web and Tauri.
+                // Per-route CSS splitting was tried, but Vanilla Extract emits
+                // a CSS file per `.css.ts` source — that exploded into 38 CSS
+                // chunks (25 under 1 KB) for negligible first-paint gain
+                // (~5 KB gz). One stylesheet is simpler, fewer requests, and
+                // matches Tauri's preferred pattern (single Rust IPC fetch).
+                cssCodeSplit: false,
                 target: "baseline-widely-available",
                 chunkSizeWarningLimit,
                 minify: true,
@@ -330,13 +415,16 @@ export default defineConfig(
                     },
                     output: {
                         codeSplitting: {
-                            // Only chunk stuff shared by at least 2 modules.
-                            // Group definitions live in `buildChunkGroups`
-                            // (top of file) for readability — they branch on
-                            // `isTauri` since the optimal chunking shape
-                            // differs between native webview and browser.
-                            minShareCount: 2,
-                            groups: buildChunkGroups(isTauri),
+                            // Default of 1 lets every shared dynamic-import
+                            // target spawn its own chunk; bumping to 4 forces
+                            // the auto-chunker to inline small shared modules
+                            // into their importers (the manual `common` group
+                            // catches the rest).
+                            minShareCount: 4,
+                            // Manual groups whose accumulated size is below 4 KB
+                            // are dropped — their modules fall back to auto.
+                            minSize: 4096,
+                            groups: buildChunkGroups(),
                         },
                     },
                     onwarn,
