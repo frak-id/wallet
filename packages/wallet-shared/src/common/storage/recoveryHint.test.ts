@@ -13,6 +13,7 @@ vi.mock("@frak-labs/app-essentials/utils/platform", () => ({
     get IS_TAURI() {
         return platformMocks.isTauri();
     },
+    isStandalonePwa: () => false,
 }));
 
 // Import after mocks so the module picks them up.

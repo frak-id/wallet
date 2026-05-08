@@ -10,6 +10,7 @@ vi.mock("@frak-labs/app-essentials/utils/platform", () => ({
     get IS_TAURI() {
         return isTauriMock();
     },
+    isStandalonePwa: () => false,
 }));
 
 describe("biometrics utils", () => {

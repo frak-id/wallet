@@ -51,7 +51,6 @@
     "react": "catalog:",
     "react-dom": "catalog:",
     "react-i18next": "^16.5.8",
-    "ua-parser-js": "^2.0.9",
     "vaul": "^1.1.2",
     "viem": "catalog:",
     "wagmi": "catalog:",

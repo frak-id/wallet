@@ -68,3 +68,34 @@ export const IS_ANDROID: boolean =
     typeof __IS_ANDROID__ === "boolean"
         ? __IS_ANDROID__
         : IS_TAURI && detectAndroidRuntime();
+
+type NavigatorStandalone = Navigator & { standalone?: boolean };
+
+/**
+ * `true` when the page is running as an installed PWA (standalone display
+ * mode). SSR-safe — returns `false` outside a browser context.
+ *
+ * Combines the standard `display-mode: standalone` media query, the iOS
+ * `navigator.standalone` flag and the Android TWA referrer signal. This is
+ * the same set of checks that `is-standalone-pwa` performs, inlined here to
+ * avoid pulling `ua-parser-js` into the bundle.
+ */
+export function isStandalonePwa(): boolean {
+    if (typeof window === "undefined") return false;
+    try {
+        if (typeof window.matchMedia === "function") {
+            if (window.matchMedia("(display-mode: standalone)").matches) {
+                return true;
+            }
+        }
+        if ((window.navigator as NavigatorStandalone)?.standalone === true) {
+            return true;
+        }
+        if (typeof document !== "undefined") {
+            return document.referrer.startsWith("android-app://");
+        }
+        return false;
+    } catch {
+        return false;
+    }
+}

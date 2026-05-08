@@ -19,6 +19,7 @@ vi.mock("@frak-labs/app-essentials/utils/platform", () => ({
     get IS_IOS() {
         return platformMocks.isIOS();
     },
+    isStandalonePwa: () => false,
 }));
 
 vi.mock("@/module/notification/adapter", () => ({

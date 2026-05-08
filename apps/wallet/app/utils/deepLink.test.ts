@@ -43,6 +43,7 @@ vi.mock("@frak-labs/app-essentials/utils/platform", () => ({
     get IS_TAURI() {
         return platformMocks.isTauri();
     },
+    isStandalonePwa: () => false,
 }));
 
 vi.mock("@tauri-apps/plugin-deep-link", () => ({

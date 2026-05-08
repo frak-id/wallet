@@ -2,9 +2,9 @@ import {
     IS_ANDROID,
     IS_IOS,
     IS_TAURI,
+    isStandalonePwa,
 } from "@frak-labs/app-essentials/utils/platform";
 import { OpenPanel } from "@openpanel/web";
-import { isStandalonePWA } from "ua-parser-js/browser-detection";
 import { isInIframe } from "../lib/inApp";
 
 export function getPlatformInfo() {
@@ -75,27 +75,13 @@ function rewriteTauriPath(properties: Record<string, unknown>) {
     }
 }
 
-function getIsStandalonePwa() {
-    if (
-        typeof window === "undefined" ||
-        typeof window.matchMedia !== "function"
-    ) {
-        return false;
-    }
-    try {
-        return isStandalonePWA();
-    } catch {
-        return false;
-    }
-}
-
 export function getInitProperties() {
     if (typeof window === "undefined") return {};
     const referrer =
         isInIframe && document.referrer !== "" ? document.referrer : undefined;
     return {
         isIframe: isInIframe,
-        isPwa: getIsStandalonePwa(),
+        isPwa: isStandalonePwa(),
         iframeReferrer: referrer,
         ...getPlatformInfo(),
     };

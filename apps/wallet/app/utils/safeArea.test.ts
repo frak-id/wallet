@@ -28,6 +28,7 @@ vi.mock("@frak-labs/app-essentials/utils/platform", () => ({
     get IS_IOS() {
         return isIOSMock();
     },
+    isStandalonePwa: () => false,
 }));
 
 vi.mock("@frak-labs/wallet-shared", () => ({

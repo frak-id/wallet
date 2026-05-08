@@ -58,6 +58,7 @@ vi.mock("@frak-labs/app-essentials/utils/platform", () => ({
     get IS_ANDROID() {
         return isAndroidMock();
     },
+    isStandalonePwa: () => false,
 }));
 
 vi.mock("@tauri-apps/plugin-opener", () => ({

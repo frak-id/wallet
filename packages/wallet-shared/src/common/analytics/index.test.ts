@@ -44,14 +44,11 @@ vi.mock("../lib/inApp", () => ({
     isInIframe: false,
 }));
 
-vi.mock("ua-parser-js/browser-detection", () => ({
-    isStandalonePWA: vi.fn(() => false),
-}));
-
 const platformMocks = vi.hoisted(() => ({
     isTauri: vi.fn(() => false),
     isIOS: vi.fn(() => false),
     isAndroid: vi.fn(() => false),
+    isStandalonePwa: vi.fn(() => false),
 }));
 vi.mock("@frak-labs/app-essentials/utils/platform", () => ({
     get IS_TAURI() {
@@ -63,6 +60,7 @@ vi.mock("@frak-labs/app-essentials/utils/platform", () => ({
     get IS_ANDROID() {
         return platformMocks.isAndroid();
     },
+    isStandalonePwa: () => platformMocks.isStandalonePwa(),
 }));
 
 describe("Analytics", () => {
