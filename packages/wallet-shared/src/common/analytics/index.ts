@@ -1,5 +1,3 @@
-import { initAnalytics } from "./globalProps";
-
 export { crashlytics } from "./crashlytics";
 export type {
     AppErrorSource,
@@ -52,9 +50,6 @@ export type {
     AnalyticsAuthenticationType,
     AnalyticsGlobalProperties,
 } from "./types";
-
-// Initialise OpenPanel at module load — preserves existing behaviour.
-initAnalytics();
 
 /**
  * Normalise an unknown thrown value into an analytics-friendly shape.

@@ -1,4 +1,4 @@
-import { Toast } from "@frak-labs/wallet-shared";
+import { Toast } from "@frak-labs/wallet-shared/common/component/Toast";
 import { useIsMutating } from "@tanstack/react-query";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Trans, useTranslation } from "react-i18next";

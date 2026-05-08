@@ -1,5 +1,5 @@
 import { generateSsoUrl } from "@frak-labs/core-sdk";
-import { clientIdStore } from "@frak-labs/wallet-shared";
+import { clientIdStore } from "@frak-labs/wallet-shared/stores/clientIdStore";
 import { useMemo } from "react";
 import type { Hex } from "viem";
 

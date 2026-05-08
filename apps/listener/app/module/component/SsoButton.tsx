@@ -4,14 +4,12 @@ import {
     ssoPopupFeatures,
     ssoPopupName,
 } from "@frak-labs/core-sdk";
-import {
-    emitLifecycleEvent,
-    getOriginPairingClient,
-    type OriginIdentityNode,
-    trackEvent,
-    ua,
-    useMountedTimeout,
-} from "@frak-labs/wallet-shared";
+import { trackEvent } from "@frak-labs/wallet-shared/common/analytics";
+import { useMountedTimeout } from "@frak-labs/wallet-shared/common/hook/useMountedTimeout";
+import { ua } from "@frak-labs/wallet-shared/common/lib/ua";
+import { emitLifecycleEvent } from "@frak-labs/wallet-shared/common/utils/lifecycleEvents";
+import { getOriginPairingClient } from "@frak-labs/wallet-shared/pairing/clients/store";
+import type { OriginIdentityNode } from "@frak-labs/wallet-shared/pairing/types";
 import {
     type ReactNode,
     type RefObject,
