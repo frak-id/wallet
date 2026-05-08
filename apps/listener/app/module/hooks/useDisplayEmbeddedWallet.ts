@@ -9,11 +9,11 @@ import {
     FrakRpcError,
     RpcErrorCodes,
 } from "@frak-labs/frame-connector";
+import { trackEvent } from "@frak-labs/wallet-shared/common/analytics";
 import {
     selectSession,
     sessionStore,
-    trackEvent,
-} from "@frak-labs/wallet-shared";
+} from "@frak-labs/wallet-shared/stores/sessionStore";
 import { useCallback, useEffect, useRef } from "react";
 import type { Hex } from "viem";
 import { useListenerUI } from "@/module/providers/ListenerUiProvider";

@@ -1,4 +1,4 @@
-import { usePersistentPairingClient } from "@frak-labs/wallet-shared";
+import { usePersistentPairingClient } from "@frak-labs/wallet-shared/pairing/usePersistentPairingClient";
 import { createAsyncStoragePersister } from "@tanstack/query-async-storage-persister";
 import { QueryClient } from "@tanstack/react-query";
 import {

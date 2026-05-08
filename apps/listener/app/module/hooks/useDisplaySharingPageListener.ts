@@ -10,7 +10,7 @@ import {
     type RpcPromiseHandler,
     type RpcResponse,
 } from "@frak-labs/frame-connector";
-import { trackEvent } from "@frak-labs/wallet-shared";
+import { trackEvent } from "@frak-labs/wallet-shared/common/analytics";
 import { useCallback, useRef } from "react";
 import { useListenerUI } from "@/module/providers/ListenerUiProvider";
 import { resolvingContextStore } from "@/module/stores/resolvingContextStore";

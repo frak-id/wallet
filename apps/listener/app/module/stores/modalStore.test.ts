@@ -14,7 +14,7 @@ import {
 } from "./modalStore";
 
 // Mock wallet-shared imports
-vi.mock("@frak-labs/wallet-shared", () => ({
+vi.mock("@frak-labs/wallet-shared/common/analytics", () => ({
     trackEvent: vi.fn(),
 }));
 
@@ -268,7 +268,9 @@ describe("modalStore", () => {
 
     describe("dismissModal", () => {
         test("should set dismissed flag when no steps present", async () => {
-            const { trackEvent } = await import("@frak-labs/wallet-shared");
+            const { trackEvent } = await import(
+                "@frak-labs/wallet-shared/common/analytics"
+            );
 
             modalStore.setState({ steps: undefined });
 
@@ -284,7 +286,9 @@ describe("modalStore", () => {
         });
 
         test("should set dismissed flag when no final step found", async () => {
-            const { trackEvent } = await import("@frak-labs/wallet-shared");
+            const { trackEvent } = await import(
+                "@frak-labs/wallet-shared/common/analytics"
+            );
 
             const steps = [
                 {
@@ -307,7 +311,9 @@ describe("modalStore", () => {
         });
 
         test("should atomically set dismissed and move to final step for non-reward", async () => {
-            const { trackEvent } = await import("@frak-labs/wallet-shared");
+            const { trackEvent } = await import(
+                "@frak-labs/wallet-shared/common/analytics"
+            );
 
             const steps = [
                 {
@@ -336,7 +342,9 @@ describe("modalStore", () => {
         });
 
         test("should atomically set dismissed and skip past reward final step", async () => {
-            const { trackEvent } = await import("@frak-labs/wallet-shared");
+            const { trackEvent } = await import(
+                "@frak-labs/wallet-shared/common/analytics"
+            );
 
             const steps = [
                 {
@@ -365,7 +373,9 @@ describe("modalStore", () => {
         });
 
         test("should work correctly when already on final step", async () => {
-            const { trackEvent } = await import("@frak-labs/wallet-shared");
+            const { trackEvent } = await import(
+                "@frak-labs/wallet-shared/common/analytics"
+            );
 
             const steps = [
                 {

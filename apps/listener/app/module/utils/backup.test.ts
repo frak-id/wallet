@@ -24,8 +24,11 @@ vi.mock("@frak-labs/core-sdk", () => {
     return { base64urlEncode, base64urlDecode };
 });
 
-vi.mock("@frak-labs/wallet-shared", () => ({
+vi.mock("@frak-labs/wallet-shared/common/utils/lifecycleEvents", () => ({
     emitLifecycleEvent: vi.fn(),
+}));
+
+vi.mock("@frak-labs/wallet-shared/stores/sessionStore", () => ({
     sessionStore: {
         getState: vi.fn(),
     },
@@ -134,7 +137,9 @@ describe("backup", () => {
                 expireAtTimestamp: Date.now() + 1000 * 60 * 60,
             };
 
-            const { sessionStore } = await import("@frak-labs/wallet-shared");
+            const { sessionStore } = await import(
+                "@frak-labs/wallet-shared/stores/sessionStore"
+            );
             const setSession = vi.fn();
             const setSdkSession = vi.fn();
             vi.mocked(sessionStore.getState).mockReturnValue({
@@ -162,7 +167,9 @@ describe("backup", () => {
                 expireAtTimestamp: Date.now() + 1000 * 60 * 60,
             };
 
-            const { sessionStore } = await import("@frak-labs/wallet-shared");
+            const { sessionStore } = await import(
+                "@frak-labs/wallet-shared/stores/sessionStore"
+            );
             const setSession = vi.fn();
             const setSdkSession = vi.fn();
             vi.mocked(sessionStore.getState).mockReturnValue({
@@ -186,7 +193,9 @@ describe("backup", () => {
                 expireAtTimestamp: Date.now() + 1000 * 60 * 60,
             };
 
-            const { sessionStore } = await import("@frak-labs/wallet-shared");
+            const { sessionStore } = await import(
+                "@frak-labs/wallet-shared/stores/sessionStore"
+            );
             const setSession = vi.fn();
             const setSdkSession = vi.fn();
             vi.mocked(sessionStore.getState).mockReturnValue({
@@ -228,8 +237,11 @@ describe("backup", () => {
                 expireAtTimestamp: Date.now() - 1000,
             };
 
-            const { emitLifecycleEvent, sessionStore } = await import(
-                "@frak-labs/wallet-shared"
+            const { emitLifecycleEvent } = await import(
+                "@frak-labs/wallet-shared/common/utils/lifecycleEvents"
+            );
+            const { sessionStore } = await import(
+                "@frak-labs/wallet-shared/stores/sessionStore"
             );
             const setSession = vi.fn();
             vi.mocked(sessionStore.getState).mockReturnValue({
@@ -254,7 +266,9 @@ describe("backup", () => {
                 expireAtTimestamp: Date.now() + 1000 * 60 * 60,
             };
 
-            const { sessionStore } = await import("@frak-labs/wallet-shared");
+            const { sessionStore } = await import(
+                "@frak-labs/wallet-shared/stores/sessionStore"
+            );
             const setSession = vi.fn();
             vi.mocked(sessionStore.getState).mockReturnValue({
                 setSession,
@@ -270,7 +284,9 @@ describe("backup", () => {
         });
 
         test("should return early on malformed base64", async () => {
-            const { sessionStore } = await import("@frak-labs/wallet-shared");
+            const { sessionStore } = await import(
+                "@frak-labs/wallet-shared/stores/sessionStore"
+            );
             const setSession = vi.fn();
             vi.mocked(sessionStore.getState).mockReturnValue({
                 setSession,
@@ -289,7 +305,7 @@ describe("backup", () => {
     describe("pushBackupData", () => {
         test("should return early when no domain provided", async () => {
             const { emitLifecycleEvent } = await import(
-                "@frak-labs/wallet-shared"
+                "@frak-labs/wallet-shared/common/utils/lifecycleEvents"
             );
 
             const { pushBackupData } = await import("./backup");
@@ -300,7 +316,7 @@ describe("backup", () => {
 
         test("should return early when domain is undefined", async () => {
             const { emitLifecycleEvent } = await import(
-                "@frak-labs/wallet-shared"
+                "@frak-labs/wallet-shared/common/utils/lifecycleEvents"
             );
 
             const { pushBackupData } = await import("./backup");
@@ -310,8 +326,11 @@ describe("backup", () => {
         });
 
         test("should emit remove-backup when no session tokens exist", async () => {
-            const { emitLifecycleEvent, sessionStore } = await import(
-                "@frak-labs/wallet-shared"
+            const { emitLifecycleEvent } = await import(
+                "@frak-labs/wallet-shared/common/utils/lifecycleEvents"
+            );
+            const { sessionStore } = await import(
+                "@frak-labs/wallet-shared/stores/sessionStore"
             );
 
             vi.mocked(sessionStore.getState).mockReturnValue({
@@ -328,8 +347,11 @@ describe("backup", () => {
         });
 
         test("should emit remove-backup when no sessions at all", async () => {
-            const { emitLifecycleEvent, sessionStore } = await import(
-                "@frak-labs/wallet-shared"
+            const { emitLifecycleEvent } = await import(
+                "@frak-labs/wallet-shared/common/utils/lifecycleEvents"
+            );
+            const { sessionStore } = await import(
+                "@frak-labs/wallet-shared/stores/sessionStore"
             );
 
             vi.mocked(sessionStore.getState).mockReturnValue({
@@ -346,8 +368,11 @@ describe("backup", () => {
         });
 
         test("should encode and emit do-backup with a valid hash that round-trips through restoreBackupData", async () => {
-            const { emitLifecycleEvent, sessionStore } = await import(
-                "@frak-labs/wallet-shared"
+            const { emitLifecycleEvent } = await import(
+                "@frak-labs/wallet-shared/common/utils/lifecycleEvents"
+            );
+            const { sessionStore } = await import(
+                "@frak-labs/wallet-shared/stores/sessionStore"
             );
 
             vi.mocked(sessionStore.getState).mockReturnValue({
@@ -393,8 +418,11 @@ describe("backup", () => {
         });
 
         test("should include both session and sdkSession when both have tokens", async () => {
-            const { emitLifecycleEvent, sessionStore } = await import(
-                "@frak-labs/wallet-shared"
+            const { emitLifecycleEvent } = await import(
+                "@frak-labs/wallet-shared/common/utils/lifecycleEvents"
+            );
+            const { sessionStore } = await import(
+                "@frak-labs/wallet-shared/stores/sessionStore"
             );
             const { base64urlDecode } = await import("@frak-labs/core-sdk");
 

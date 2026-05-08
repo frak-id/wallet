@@ -1,5 +1,5 @@
 import type { IFrameRpcSchema } from "@frak-labs/core-sdk";
-import type { SsoRpcSchema } from "@frak-labs/wallet-shared";
+import type { SsoRpcSchema } from "@frak-labs/wallet-shared/types";
 
 /**
  * Augmented context for wallet RPC handlers

@@ -7,7 +7,7 @@ import type {
     ModalRpcStepsResultType,
     ModalStepTypes,
 } from "@frak-labs/core-sdk";
-import type { ModalDismissSource } from "@frak-labs/wallet-shared";
+import type { ModalDismissSource } from "@frak-labs/wallet-shared/common/analytics";
 
 export type { ResolvedSdkConfig };
 

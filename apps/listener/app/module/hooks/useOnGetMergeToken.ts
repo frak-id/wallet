@@ -1,6 +1,6 @@
 import type { IFrameRpcSchema } from "@frak-labs/core-sdk";
 import type { RpcPromiseHandler } from "@frak-labs/frame-connector";
-import { authenticatedBackendApi } from "@frak-labs/wallet-shared";
+import { authenticatedBackendApi } from "@frak-labs/wallet-shared/common/api/backendClient";
 import { useCallback } from "react";
 import type { WalletRpcContext } from "@/module/types/context";
 
