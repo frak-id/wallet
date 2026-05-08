@@ -4,7 +4,7 @@ import {
     HandleErrors,
     prefixModalCss,
     TextData,
-} from "@frak-labs/wallet-shared";
+} from "@frak-labs/wallet-shared/common";
 import { useMemo } from "react";
 import { createSiweMessage, type SiweMessage } from "viem/siwe";
 import { useConnection, useSignMessage } from "wagmi";

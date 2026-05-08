@@ -1,4 +1,4 @@
-import { prefixModalCss } from "@frak-labs/wallet-shared";
+import { prefixModalCss } from "@frak-labs/wallet-shared/common";
 import { Fingerprint, HandCoins, SendHorizonal, Share } from "lucide-react";
 import { type PropsWithChildren, useMemo } from "react";
 import styles from "@/module/modal/component/Modal/index.module.css";

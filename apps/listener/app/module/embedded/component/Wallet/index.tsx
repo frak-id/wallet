@@ -1,5 +1,6 @@
 import { Overlay } from "@frak-labs/design-system/components/Overlay";
-import { InAppBrowserToast, sessionStore } from "@frak-labs/wallet-shared";
+import { InAppBrowserToast } from "@frak-labs/wallet-shared/common";
+import { sessionStore } from "@frak-labs/wallet-shared/stores/sessionStore";
 import { cva, cx } from "class-variance-authority";
 import { Toaster } from "sonner";
 import { prefixWalletCss } from "@/module/common/utils/prefixWalletCss";

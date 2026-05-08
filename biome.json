@@ -119,6 +119,23 @@
             }
         },
         {
+            "includes": ["apps/listener/**"],
+            "linter": {
+                "rules": {
+                    "style": {
+                        "noRestrictedImports": {
+                            "level": "error",
+                            "options": {
+                                "paths": {
+                                    "@frak-labs/wallet-shared": "Listener is loaded on every partner page. Use a domain subpath (@frak-labs/wallet-shared/common, /pairing, /sharing, /stores/<store>) instead — the bare barrel re-exports ./blockchain, ./providers, ./wallet which forces blockchain-vendor into the eager iframe bundle."
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        {
             "includes": ["packages/test-foundation/**"],
             "linter": {
                 "rules": {

@@ -1,4 +1,5 @@
-import { LogoFrakWithName, sessionStore } from "@frak-labs/wallet-shared";
+import { LogoFrakWithName } from "@frak-labs/wallet-shared/common";
+import { sessionStore } from "@frak-labs/wallet-shared/stores/sessionStore";
 import { cx } from "class-variance-authority";
 import { useState } from "react";
 import { prefixWalletCss } from "@/module/common/utils/prefixWalletCss";

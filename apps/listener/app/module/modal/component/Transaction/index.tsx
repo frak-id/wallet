@@ -1,14 +1,14 @@
 import type { SendTransactionModalStepType } from "@frak-labs/core-sdk";
 import { DEEP_LINK_SCHEME } from "@frak-labs/core-sdk";
 import {
-    encodeWalletMulticall,
     type Flow,
     HandleErrors,
-    sessionStore,
     startFlow,
     ua,
     useMountedTimeout,
-} from "@frak-labs/wallet-shared";
+} from "@frak-labs/wallet-shared/common";
+import { sessionStore } from "@frak-labs/wallet-shared/stores/sessionStore";
+import { encodeWalletMulticall } from "@frak-labs/wallet-shared/wallet/utils/multicall";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useConnection, useSendTransaction } from "wagmi";
 import { useStore } from "zustand";

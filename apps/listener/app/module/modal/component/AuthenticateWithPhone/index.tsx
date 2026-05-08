@@ -1,8 +1,9 @@
+import { ua } from "@frak-labs/wallet-shared/common";
 import type {
     OnPairingSuccessCallback,
     OriginIdentityNode,
-} from "@frak-labs/wallet-shared";
-import { LaunchPairing, ua } from "@frak-labs/wallet-shared";
+} from "@frak-labs/wallet-shared/pairing";
+import { LaunchPairing } from "@frak-labs/wallet-shared/pairing";
 import { type ElementType, useMemo, useState } from "react";
 import { useStore } from "zustand/react";
 import { resolvingContextStore } from "@/module/stores/resolvingContextStore";

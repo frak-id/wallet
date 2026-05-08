@@ -64,28 +64,32 @@ vi.mock("@frak-labs/design-system/hooks/useMediaQuery", () => ({
     useMediaQuery: () => true,
 }));
 
-vi.mock("@frak-labs/wallet-shared", () => ({
+vi.mock("@frak-labs/wallet-shared/common", () => ({
     Drawer: ({ children }: { children: ReactNode }) => <div>{children}</div>,
     DrawerContent: ({ children }: { children: ReactNode }) => (
         <div>{children}</div>
     ),
-    getOriginPairingClient: () => ({}),
     InAppBrowserToast: () => null,
     LogoFrakWithName: ({ className }: { className?: string }) => (
         <span className={className}>frak-logo</span>
     ),
-    OriginPairingState: () => <div>origin-pairing</div>,
     prefixModalCss: (name: string) => `nexus-modal-${name}`,
-    useCancelAllSignatureRequests: () => ({
-        mutate: () => {},
-        isPending: false,
-    }),
+    trackEvent: () => {},
     WalletModal: ({ title, text }: { title: ReactNode; text: ReactNode }) => (
         <div>
             <div>{title}</div>
             <div>{text}</div>
         </div>
     ),
+}));
+
+vi.mock("@frak-labs/wallet-shared/pairing", () => ({
+    getOriginPairingClient: () => ({}),
+    OriginPairingState: () => <div>origin-pairing</div>,
+    useCancelAllSignatureRequests: () => ({
+        mutate: () => {},
+        isPending: false,
+    }),
 }));
 
 vi.mock("./Step", () => ({

@@ -1,13 +1,15 @@
 import { type FinalActionType, FrakContextManager } from "@frak-labs/core-sdk";
 import {
-    buildSharingLink,
-    clientIdStore,
     prefixModalCss,
-    sessionStore,
     trackEvent,
     useCopyToClipboardWithState,
+} from "@frak-labs/wallet-shared/common";
+import {
+    buildSharingLink,
     useShareLink,
-} from "@frak-labs/wallet-shared";
+} from "@frak-labs/wallet-shared/sharing";
+import { clientIdStore } from "@frak-labs/wallet-shared/stores/clientIdStore";
+import { sessionStore } from "@frak-labs/wallet-shared/stores/sessionStore";
 import { Copy, Share } from "lucide-react";
 import { useMemo } from "react";
 import { toast } from "sonner";

@@ -4,15 +4,17 @@ import {
     getCurrencyAmountKey,
 } from "@frak-labs/core-sdk";
 import {
-    buildSharingLink,
-    clientIdStore,
-    OriginPairingState,
-    sessionStore,
     trackEvent,
     useCopyToClipboardWithState,
-    useGetUserBalance,
+} from "@frak-labs/wallet-shared/common";
+import { OriginPairingState } from "@frak-labs/wallet-shared/pairing";
+import {
+    buildSharingLink,
     useShareLink,
-} from "@frak-labs/wallet-shared";
+} from "@frak-labs/wallet-shared/sharing";
+import { clientIdStore } from "@frak-labs/wallet-shared/stores/clientIdStore";
+import { sessionStore } from "@frak-labs/wallet-shared/stores/sessionStore";
+import { useGetUserBalance } from "@frak-labs/wallet-shared/tokens/hook/useGetUserBalance";
 import { cx } from "class-variance-authority";
 import { toast } from "sonner";
 import { Copy } from "@/module/common/icons/Copy";

@@ -1,4 +1,4 @@
-import { Markdown } from "@frak-labs/wallet-shared";
+import { Markdown } from "@frak-labs/wallet-shared/common";
 import { cx } from "class-variance-authority";
 import { prefixWalletCss } from "@/module/common/utils/prefixWalletCss";
 import { SsoButton } from "@/module/component/SsoButton";

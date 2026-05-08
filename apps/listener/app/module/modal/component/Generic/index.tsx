@@ -1,4 +1,4 @@
-import { Markdown, prefixModalCss } from "@frak-labs/wallet-shared";
+import { Markdown, prefixModalCss } from "@frak-labs/wallet-shared/common";
 import { useMemo } from "react";
 import styles from "@/module/modal/component/Modal/index.module.css";
 import {

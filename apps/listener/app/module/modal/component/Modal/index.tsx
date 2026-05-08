@@ -3,15 +3,17 @@ import { RpcErrorCodes } from "@frak-labs/frame-connector";
 import {
     Drawer,
     DrawerContent,
-    getOriginPairingClient,
     InAppBrowserToast,
     LogoFrakWithName,
-    OriginPairingState,
     prefixModalCss,
     trackEvent,
-    useCancelAllSignatureRequests,
     WalletModal,
-} from "@frak-labs/wallet-shared";
+} from "@frak-labs/wallet-shared/common";
+import {
+    getOriginPairingClient,
+    OriginPairingState,
+    useCancelAllSignatureRequests,
+} from "@frak-labs/wallet-shared/pairing";
 import { cx } from "class-variance-authority";
 import {
     type Dispatch,
