@@ -5,7 +5,6 @@ import {
     type Session,
     sessionStore,
 } from "@frak-labs/wallet-shared";
-import { sha256 } from "viem";
 
 /**
  * Represent backed up data
@@ -23,12 +22,22 @@ type BackupData = {
 type HashProtectedBackup = BackupData & { validationHash: string };
 
 /**
- * Hash JSON data with SHA256
+ * Hash JSON data with SHA256 using the Web Crypto API.
+ *
+ * Output is byte-identical to `viem.sha256(new TextEncoder().encode(...))`
+ * (`"0x" + 64 lowercase hex chars`) so existing customer backups continue to
+ * validate without any migration. Replacing viem with `crypto.subtle.digest`
+ * removes ~the entire viem chunk from the eager iframe bundle.
+ *
  * @param data - Data to hash
- * @returns SHA256 hash as hex string
+ * @returns SHA256 hash as `0x`-prefixed lowercase hex string
  */
-function hashJson(data: unknown): string {
-    return sha256(new TextEncoder().encode(JSON.stringify(data)));
+export async function hashJson(data: unknown): Promise<string> {
+    const buf = new TextEncoder().encode(JSON.stringify(data));
+    const digest = await crypto.subtle.digest("SHA-256", buf);
+    return `0x${Array.from(new Uint8Array(digest))
+        .map((b) => b.toString(16).padStart(2, "0"))
+        .join("")}`;
 }
 
 /**
@@ -52,7 +61,7 @@ export async function restoreBackupData({
 
         // Extract and verify hash
         const { validationHash, ...backupData } = decoded;
-        if (hashJson(backupData) !== validationHash) {
+        if ((await hashJson(backupData)) !== validationHash) {
             throw new Error("Invalid backup hash");
         }
 
@@ -123,7 +132,7 @@ export async function pushBackupData(args?: { domain?: string }) {
     // Add hash to backup data
     const hashProtected: HashProtectedBackup = {
         ...backup,
-        validationHash: hashJson(backup),
+        validationHash: await hashJson(backup),
     };
 
     // Encode as JSON + base64url

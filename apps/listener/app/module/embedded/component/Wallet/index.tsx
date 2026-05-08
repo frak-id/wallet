@@ -7,6 +7,7 @@ import { ListenerWalletHeader } from "@/module/embedded/component/WalletHeader";
 import { LoggedInComponent } from "@/module/embedded/component/WalletLoggedIn";
 import { LoggedOutComponent } from "@/module/embedded/component/WalletLoggedOut";
 import { useGetMergeToken } from "@/module/hooks/useGetMergeToken";
+import { BlockchainProvider } from "@/module/providers/BlockchainProvider";
 import { useEmbeddedListenerUI } from "@/module/providers/ListenerUiProvider";
 import { resolvingContextStore } from "@/module/stores/resolvingContextStore";
 import { ToastLoading } from "../../../component/ToastLoading";
@@ -25,6 +26,14 @@ const walletStyles = cva(styles.modalListenerWallet, {
 });
 
 export function ListenerWallet() {
+    return (
+        <BlockchainProvider>
+            <ListenerWalletInner />
+        </BlockchainProvider>
+    );
+}
+
+function ListenerWalletInner() {
     const {
         clearRequest,
         currentRequest: {

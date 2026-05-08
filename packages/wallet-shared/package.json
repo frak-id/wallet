@@ -21,6 +21,7 @@
   "exports": {
     ".": "./src/index.ts",
     "./pairing/*": "./src/pairing/*",
+    "./providers/*": "./src/providers/*",
     "./styles/*": "./styles/*",
     "./test": "./src/test/factories.ts",
     "./tests/vitest-fixtures": "./tests/vitest-fixtures.ts"

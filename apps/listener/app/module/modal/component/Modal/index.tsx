@@ -30,6 +30,7 @@ import { FinalModalStep } from "@/module/modal/component/Final";
 import { MetadataInfo } from "@/module/modal/component/Generic";
 import { LoginModalStep } from "@/module/modal/component/Login";
 import { TransactionModalStep } from "@/module/modal/component/Transaction";
+import { BlockchainProvider } from "@/module/providers/BlockchainProvider";
 import {
     type GenericWalletUiType,
     type ModalUiType,
@@ -51,7 +52,15 @@ import { ModalStepIndicator } from "./Step";
 /**
  * Display the given request in a modal
  */
-export function ListenerModal({
+export function ListenerModal(props: ModalUiType & GenericWalletUiType) {
+    return (
+        <BlockchainProvider>
+            <ListenerModalInner {...props} />
+        </BlockchainProvider>
+    );
+}
+
+function ListenerModalInner({
     metadata,
     emitter,
     logoUrl,

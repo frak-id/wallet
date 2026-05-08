@@ -8,6 +8,12 @@ vi.mock("@/module/hooks/useGetMergeToken", () => ({
     useGetMergeToken: () => vi.fn(),
 }));
 
+vi.mock("@/module/providers/BlockchainProvider", () => ({
+    BlockchainProvider: ({ children }: { children: ReactNode }) => (
+        <>{children}</>
+    ),
+}));
+
 vi.mock("@/module/providers/ListenerUiProvider", () => ({
     useListenerUI: () => ({
         clearRequest: vi.fn(),

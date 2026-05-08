@@ -116,8 +116,29 @@ export default defineConfig(async () => {
         },
         build: {
             cssCodeSplit: true,
+            // Vite eagerly emits `<link rel="modulepreload">` tags for every
+            // chunk reachable from the entry — including those reached only
+            // via dynamic imports. That defeats the lazy-loading effort:
+            // the modal/embedded-wallet bundles (and the heavy blockchain
+            // graph they pull) end up downloaded on iframe boot just to be
+            // ready when the user eventually opens a modal. Restrict the
+            // HTML preload list to the chunks the iframe actually needs
+            // before any user interaction. Runtime preloading via
+            // `__vitePreload` (used when modal/wallet actually mounts) is
+            // unaffected.
+            modulePreload: {
+                resolveDependencies: (_filename, deps, { hostType }) => {
+                    if (hostType !== "html") return deps;
+                    return deps.filter(
+                        (d) =>
+                            !/(?:blockchain-vendor|BaseProvider|Modal|Wallet|SharingPage|ccip|secp256k1)-/.test(
+                                d
+                            )
+                    );
+                },
+            },
             target: "baseline-widely-available",
-            chunkSizeWarningLimit: 400,
+            chunkSizeWarningLimit: 300,
             rolldownOptions: {
                 // Enable aggressive tree shaking
                 treeshake: {
@@ -133,6 +154,19 @@ export default defineConfig(async () => {
                         // Only chunk stuff shared by at least 2 modules
                         minShareCount: 2,
                         groups: [
+                            // Vite's `__vitePreload` helper (virtual module).
+                            // Without this group it gets hoisted into the largest
+                            // shared chunk — in our case `blockchain-vendor` — which
+                            // forces the eager iframe entry to statically import
+                            // that chunk just to get the dynamic-import wrapper.
+                            // Pinning it to its own tiny chunk keeps the heavy
+                            // blockchain code fully lazy.
+                            {
+                                name: "vite-preload",
+                                test: /vite[\\/]preload-helper/,
+                                priority: 50,
+                            },
+
                             // React ecosystem - React + React-DOM + scheduler
                             {
                                 name: "react-vendor",
@@ -140,10 +174,20 @@ export default defineConfig(async () => {
                                 priority: 40,
                             },
 
-                            // Blockchain libraries - viem + wagmi + all crypto
+                            // Blockchain libraries — viem (incl. account-abstraction),
+                            // wagmi, permissionless, and their crypto deps. Now lazy-only:
+                            // pulled by the modal + embedded-wallet chunks via
+                            // `BlockchainProvider`.
+                            //
+                            // The regex also captures wallet-shared's blockchain-adjacent
+                            // code (smart wallet, providers/BaseProvider, blockchain/*)
+                            // so it lands in this lazy vendor chunk instead of being
+                            // hoisted into `common` (which is statically imported by
+                            // the eager iframe bundle and would otherwise drag the
+                            // whole wagmi graph in eagerly).
                             {
                                 name: "blockchain-vendor",
-                                test: /node_modules[\\/](viem|0x|wagmi|@wagmi|permissionless|@noble|@scure)/,
+                                test: /(?:node_modules[\\/](?:viem|wagmi|@wagmi|permissionless|@noble|@scure|ox))|(?:wallet-shared[\\/]src[\\/](?:providers[\\/]BaseProvider|wallet[\\/]|blockchain[\\/]))/,
                                 priority: 35,
                             },
 
