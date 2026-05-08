@@ -10,9 +10,8 @@
  * When `define` is not applied (tests, sdk consumers, REPL), the constants
  * fall back to the historical runtime detection so behavior is preserved.
  *
- * Prefer the `IS_TAURI` / `IS_IOS` / `IS_ANDROID` constants over the function
- * aliases (`isTauri()` / `isIOS()` / `isAndroid()`) at hot paths — only the
- * constants are guaranteed to be inlined and tree-shaken by the bundler.
+ * Always import the `IS_TAURI` / `IS_IOS` / `IS_ANDROID` constants — only the
+ * constant form is guaranteed to be inlined and tree-shaken by the bundler.
  */
 
 declare const __IS_TAURI__: boolean;
@@ -69,21 +68,3 @@ export const IS_ANDROID: boolean =
     typeof __IS_ANDROID__ === "boolean"
         ? __IS_ANDROID__
         : IS_TAURI && detectAndroidRuntime();
-
-/**
- * Backwards-compatible function alias for {@link IS_TAURI}.
- *
- * Prefer the constant at hot paths — function-call sites are not always
- * folded by the bundler and may keep the dead branch alive.
- */
-export const isTauri = (): boolean => IS_TAURI;
-
-/**
- * Backwards-compatible function alias for {@link IS_IOS}.
- */
-export const isIOS = (): boolean => IS_IOS;
-
-/**
- * Backwards-compatible function alias for {@link IS_ANDROID}.
- */
-export const isAndroid = (): boolean => IS_ANDROID;

@@ -17,9 +17,6 @@ const platformMocks = vi.hoisted(() => ({
     isTauri: vi.fn(() => false),
 }));
 vi.mock("@frak-labs/app-essentials/utils/platform", () => ({
-    isAndroid: platformMocks.isAndroid,
-    isIOS: platformMocks.isIOS,
-    isTauri: platformMocks.isTauri,
     get IS_ANDROID() {
         return platformMocks.isAndroid();
     },
@@ -84,11 +81,8 @@ describe("useDownloadRecoveryFile", () => {
     test("should download via web method on standard browser", async ({
         queryWrapper,
     }) => {
-        const { isAndroid, isTauri } = await import(
-            "@frak-labs/app-essentials/utils/platform"
-        );
-        vi.mocked(isAndroid).mockReturnValue(false);
-        vi.mocked(isTauri).mockReturnValue(false);
+        platformMocks.isAndroid.mockReturnValue(false);
+        platformMocks.isTauri.mockReturnValue(false);
 
         const { result } = renderHook(() => useDownloadRecoveryFile(), {
             wrapper: queryWrapper.wrapper,
@@ -107,11 +101,8 @@ describe("useDownloadRecoveryFile", () => {
     test("should use Web Share API on iOS/Tauri when available", async ({
         queryWrapper,
     }) => {
-        const { isAndroid, isTauri } = await import(
-            "@frak-labs/app-essentials/utils/platform"
-        );
-        vi.mocked(isAndroid).mockReturnValue(false);
-        vi.mocked(isTauri).mockReturnValue(true);
+        platformMocks.isAndroid.mockReturnValue(false);
+        platformMocks.isTauri.mockReturnValue(true);
 
         const mockShare = vi.fn().mockResolvedValue(undefined);
         const mockCanShare = vi.fn().mockReturnValue(true);
@@ -142,11 +133,8 @@ describe("useDownloadRecoveryFile", () => {
     test("should fallback to anchor download when Web Share not available on iOS/Tauri", async ({
         queryWrapper,
     }) => {
-        const { isAndroid, isTauri } = await import(
-            "@frak-labs/app-essentials/utils/platform"
-        );
-        vi.mocked(isAndroid).mockReturnValue(false);
-        vi.mocked(isTauri).mockReturnValue(true);
+        platformMocks.isAndroid.mockReturnValue(false);
+        platformMocks.isTauri.mockReturnValue(true);
 
         Object.defineProperty(navigator, "share", {
             value: undefined,
@@ -175,11 +163,8 @@ describe("useDownloadRecoveryFile", () => {
     test("should throw error when user cancels share", async ({
         queryWrapper,
     }) => {
-        const { isAndroid, isTauri } = await import(
-            "@frak-labs/app-essentials/utils/platform"
-        );
-        vi.mocked(isAndroid).mockReturnValue(false);
-        vi.mocked(isTauri).mockReturnValue(true);
+        platformMocks.isAndroid.mockReturnValue(false);
+        platformMocks.isTauri.mockReturnValue(true);
 
         const abortError = new Error("User cancelled");
         abortError.name = "AbortError";
@@ -208,10 +193,7 @@ describe("useDownloadRecoveryFile", () => {
     test("should use Tauri native share on Android", async ({
         queryWrapper,
     }) => {
-        const { isAndroid } = await import(
-            "@frak-labs/app-essentials/utils/platform"
-        );
-        vi.mocked(isAndroid).mockReturnValue(true);
+        platformMocks.isAndroid.mockReturnValue(true);
 
         const { writeTextFile } = await import("@tauri-apps/plugin-fs");
         const { downloadDir, join } = await import("@tauri-apps/api/path");

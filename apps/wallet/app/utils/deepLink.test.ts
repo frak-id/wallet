@@ -34,9 +34,6 @@ const platformMocks = vi.hoisted(() => ({
     isTauri: vi.fn(() => true),
 }));
 vi.mock("@frak-labs/app-essentials/utils/platform", () => ({
-    isAndroid: platformMocks.isAndroid,
-    isIOS: platformMocks.isIOS,
-    isTauri: platformMocks.isTauri,
     get IS_ANDROID() {
         return platformMocks.isAndroid();
     },
@@ -77,10 +74,7 @@ describe("initDeepLinks", () => {
         pendingActionsStore.getState().clearAll();
         openUrlHandler = null;
         getSafeSessionMock.mockReturnValue({ token: "valid-token" });
-        const { isTauri } = await import(
-            "@frak-labs/app-essentials/utils/platform"
-        );
-        vi.mocked(isTauri).mockReturnValue(true);
+        platformMocks.isTauri.mockReturnValue(true);
     });
 
     afterEach(() => {
@@ -88,10 +82,7 @@ describe("initDeepLinks", () => {
     });
 
     test("should skip initialization when not running in Tauri", async () => {
-        const { isTauri } = await import(
-            "@frak-labs/app-essentials/utils/platform"
-        );
-        vi.mocked(isTauri).mockReturnValue(false);
+        platformMocks.isTauri.mockReturnValue(false);
 
         const { initDeepLinks } = await import("./deepLink");
         const navigate = vi.fn();
@@ -288,10 +279,7 @@ describe("deep link auth gate", () => {
         pendingActionsStore.getState().clearAll();
         openUrlHandler = null;
         getSafeSessionMock.mockReturnValue(null);
-        const { isTauri } = await import(
-            "@frak-labs/app-essentials/utils/platform"
-        );
-        vi.mocked(isTauri).mockReturnValue(true);
+        platformMocks.isTauri.mockReturnValue(true);
     });
 
     afterEach(() => {
@@ -404,10 +392,7 @@ describe("monerium OAuth callback", () => {
         pendingActionsStore.getState().clearAll();
         openUrlHandler = null;
         getSafeSessionMock.mockReturnValue({ token: "valid-token" });
-        const { isTauri } = await import(
-            "@frak-labs/app-essentials/utils/platform"
-        );
-        vi.mocked(isTauri).mockReturnValue(true);
+        platformMocks.isTauri.mockReturnValue(true);
     });
 
     afterEach(() => {

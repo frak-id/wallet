@@ -7,7 +7,6 @@ import {
 
 const isTauriMock = vi.hoisted(() => vi.fn(() => false));
 vi.mock("@frak-labs/app-essentials/utils/platform", () => ({
-    isTauri: isTauriMock,
     get IS_TAURI() {
         return isTauriMock();
     },

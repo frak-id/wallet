@@ -41,6 +41,16 @@ const tauriStub = path.resolve(
     "../../packages/wallet-shared/src/stubs/tauri-noop.ts"
 );
 
+// Tauri-only path: the real packages must remain reachable. On the web build,
+// alias them to the no-op stub so Rolldown drops the runtime out of the chunk
+// graph.
+const tauriAlias = isTauri
+    ? []
+    : [
+          { find: /^@tauri-apps\/.*$/, replacement: tauriStub },
+          { find: /^tauri-plugin-.*$/, replacement: tauriStub },
+      ];
+
 export default defineConfig(
     async ({ mode, command }: ConfigEnv): Promise<UserConfig> => {
         const isSW = mode === "sw";
@@ -165,22 +175,7 @@ export default defineConfig(
                               },
                           ]
                         : []),
-                    // On the web build the Tauri runtime is unreachable;
-                    // alias every `@tauri-apps/*` and `tauri-plugin-*` import to a
-                    // no-op stub so Rolldown drops the actual `invoke` /
-                    // `transformCallback` channel from the shared chunk.
-                    ...(isTauri
-                        ? []
-                        : [
-                              {
-                                  find: /^@tauri-apps\/.*$/,
-                                  replacement: tauriStub,
-                              },
-                              {
-                                  find: /^tauri-plugin-.*$/,
-                                  replacement: tauriStub,
-                              },
-                          ]),
+                    ...tauriAlias,
                 ],
             },
             server: {
