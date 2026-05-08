@@ -9,8 +9,10 @@ import {
     supportedLngs,
 } from "@frak-labs/wallet-shared";
 import { initAnalytics } from "@frak-labs/wallet-shared/common/analytics";
-import frCustomized from "@frak-labs/wallet-shared/i18n/locales/fr/customized.json";
-import frTranslation from "@frak-labs/wallet-shared/i18n/locales/fr/translation.json";
+import {
+    customized as frCustomized,
+    translation as frTranslation,
+} from "@frak-labs/wallet-shared/i18n/locales/fr";
 import { createRouter, RouterProvider } from "@tanstack/react-router";
 import i18next from "i18next";
 import I18nextBrowserLanguageDetector from "i18next-browser-languagedetector";
@@ -34,12 +36,11 @@ initAnalytics();
 // captured.
 i18next.on("languageChanged", async (lng) => {
     if (lng === "en" && !i18next.hasResourceBundle("en", "translation")) {
-        const [enTranslation, enCustomized] = await Promise.all([
-            import("@frak-labs/wallet-shared/i18n/locales/en/translation.json"),
-            import("@frak-labs/wallet-shared/i18n/locales/en/customized.json"),
-        ]);
-        i18next.addResourceBundle("en", "translation", enTranslation.default);
-        i18next.addResourceBundle("en", "customized", enCustomized.default);
+        const { translation, customized } = await import(
+            "@frak-labs/wallet-shared/i18n/locales/en"
+        );
+        i18next.addResourceBundle("en", "translation", translation);
+        i18next.addResourceBundle("en", "customized", customized);
     }
 });
 

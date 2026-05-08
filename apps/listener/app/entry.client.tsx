@@ -30,23 +30,21 @@ import "./styles/all.css";
 // `languageChanged` event emitted by the language detector is captured.
 i18next.on("languageChanged", async (lng) => {
     if (lng === "fr" && !i18next.hasResourceBundle("fr", "translation")) {
-        const [frTranslation, frCustomized] = await Promise.all([
-            import("@frak-labs/wallet-shared/i18n/locales/fr/translation.json"),
-            import("@frak-labs/wallet-shared/i18n/locales/fr/customized.json"),
-        ]);
-        i18next.addResourceBundle("fr", "translation", frTranslation.default);
-        i18next.addResourceBundle("fr", "customized", frCustomized.default);
+        const { translation, customized } = await import(
+            "@frak-labs/wallet-shared/i18n/locales/fr"
+        );
+        i18next.addResourceBundle("fr", "translation", translation);
+        i18next.addResourceBundle("fr", "customized", customized);
         return;
     }
 
     // Otherwise, if we didn't loaded en translation, load them
     if (!i18next.hasResourceBundle("en", "translation")) {
-        const [enTranslation, enCustomized] = await Promise.all([
-            import("@frak-labs/wallet-shared/i18n/locales/en/translation.json"),
-            import("@frak-labs/wallet-shared/i18n/locales/en/customized.json"),
-        ]);
-        i18next.addResourceBundle("en", "translation", enTranslation.default);
-        i18next.addResourceBundle("en", "customized", enCustomized.default);
+        const { translation, customized } = await import(
+            "@frak-labs/wallet-shared/i18n/locales/en"
+        );
+        i18next.addResourceBundle("en", "translation", translation);
+        i18next.addResourceBundle("en", "customized", customized);
         return;
     }
 });

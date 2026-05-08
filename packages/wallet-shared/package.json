@@ -21,10 +21,8 @@
   "exports": {
     ".": "./src/index.ts",
     "./i18n": "./src/i18n/index.ts",
-    "./i18n/locales/en/translation.json": "./src/i18n/locales/en/translation.json",
-    "./i18n/locales/en/customized.json": "./src/i18n/locales/en/customized.json",
-    "./i18n/locales/fr/translation.json": "./src/i18n/locales/fr/translation.json",
-    "./i18n/locales/fr/customized.json": "./src/i18n/locales/fr/customized.json",
+    "./i18n/locales/en": "./src/i18n/locales/en/index.ts",
+    "./i18n/locales/fr": "./src/i18n/locales/fr/index.ts",
     "./polyfills/bigint-serialization": "./src/polyfills/bigint-serialization.ts",
     "./stores/sessionStore": "./src/stores/sessionStore.ts",
     "./stores/clientIdStore": "./src/stores/clientIdStore.ts",

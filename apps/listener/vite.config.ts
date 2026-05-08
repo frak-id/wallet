@@ -55,9 +55,9 @@ const deepLinkScheme = isProd ? "frakwallet://" : "frakwallet-dev://";
  */
 function stripOrphanCrossChunkImports() {
     const ORPHAN_IMPORT_RE =
-        /import\s*"\.\/blockchain-vendor-[A-Za-z0-9_-]+\.js";/g;
+        /^import\s*"\.\/(?:blockchain-vendor|BaseProvider|ui-vendor|lazy-shared|Modal|Wallet|SharingPage)-[A-Za-z0-9_-]+\.js";\n?/gm;
     return {
-        name: "strip-orphan-blockchain-vendor-import",
+        name: "strip-orphan-cross-chunk-imports",
         apply: "build" as const,
         generateBundle(_options: unknown, bundle: Record<string, unknown>) {
             for (const file of Object.values(bundle)) {
@@ -124,6 +124,7 @@ export default defineConfig(async () => {
             "process.env.OPEN_PANEL_LISTENER_CLIENT_ID": JSON.stringify(
                 getSstResource("OPEN_PANEL_LISTENER_CLIENT_ID")
             ),
+            "process.env.OPEN_PANEL_WALLET_CLIENT_ID": "undefined",
             "process.env.WEBAUTHN_RP_ID": JSON.stringify(
                 process.env.WEBAUTHN_RP_ID
             ),
@@ -155,6 +156,14 @@ export default defineConfig(async () => {
             proxy: {},
             allowedHosts: isSandbox ? true : undefined,
         },
+        // Mirrors `server` so `vite preview` (used by `dev:built`)
+        // is reachable on the same HTTPS host:port the wallet dev
+        // proxy targets (`https://localhost:3002`). Keeps the iframe
+        // URL identical between dev mode and built-bundle mode.
+        preview: {
+            port: 3002,
+            allowedHosts: isSandbox ? true : undefined,
+        },
         build: {
             cssCodeSplit: true,
             // Vite eagerly emits `<link rel="modulepreload">` tags for every
@@ -172,7 +181,7 @@ export default defineConfig(async () => {
                     if (hostType !== "html") return deps;
                     return deps.filter(
                         (d) =>
-                            !/(?:blockchain-vendor|BaseProvider|Modal|Wallet|SharingPage|ccip|secp256k1)-/.test(
+                            !/(?:blockchain-vendor|BaseProvider|Modal|Wallet|SharingPage|ccip|secp256k1|lazy-shared|ui-vendor)-/.test(
                                 d
                             )
                     );
@@ -181,6 +190,10 @@ export default defineConfig(async () => {
             target: "baseline-widely-available",
             chunkSizeWarningLimit: 300,
             rolldownOptions: {
+                experimental: {
+                    attachDebugInfo: isProd ? "none" : "full",
+                    lazyBarrel: true,
+                },
                 // Enable aggressive tree shaking
                 treeshake: {
                     moduleSideEffects: "no-external", // External packages (node_modules) have no side effects
@@ -196,95 +209,135 @@ export default defineConfig(async () => {
                         minShareCount: 2,
                         groups: [
                             // Vite's `__vitePreload` helper (virtual module).
-                            // Without this group it gets hoisted into the largest
-                            // shared chunk — in our case `blockchain-vendor` — which
-                            // forces the eager iframe entry to statically import
-                            // that chunk just to get the dynamic-import wrapper.
-                            // Pinning it to its own tiny chunk keeps the heavy
-                            // blockchain code fully lazy.
+                            // Pinned to its own tiny chunk (1.2 KB) so it doesn't
+                            // get hoisted into a heavy lazy chunk — if that
+                            // happens the eager entry statically imports that
+                            // chunk just to obtain the dynamic-import wrapper.
+                            // (Tested: removing this group hoists the helper into
+                            // `blockchain-vendor` and drags 165 KB into eager.)
+                            //
+                            // NOTE: Rolldown's `\0rolldown/runtime.js` is emitted
+                            // as its own hardcoded `rolldown-runtime` chunk by the
+                            // native core — user-defined `codeSplitting.groups`
+                            // cannot redirect it (verified empirically). The two
+                            // tiny runtime chunks (~0.7 KB + ~1.2 KB) therefore
+                            // remain separate.
                             {
                                 name: "vite-preload",
                                 test: /vite[\\/]preload-helper/,
                                 priority: 50,
                             },
 
-                            // React ecosystem - React + React-DOM + scheduler
+                            // ============================================
+                            // EAGER chunks (loaded on every iframe boot)
+                            // ============================================
+                            //
+                            // Goal: keep the request count low for partner
+                            // sites. We collapse react / i18n / tanstack /
+                            // misc-eager-node_modules into a single `vendor`
+                            // chunk — the marginal caching gain from finer
+                            // splits doesn't justify the extra HTTP requests
+                            // visible in partner network tabs.
                             {
-                                name: "react-vendor",
-                                test: /node_modules[\\/](react|react-dom|react[\\/]jsx-runtime)/,
+                                name: "vendor",
+                                tags: ["$initial"],
+                                test: /node_modules[\\/](?:react|react-dom|scheduler|react[\\/]jsx-runtime|i18next|i18next-browser-languagedetector|react-i18next|@tanstack|zustand|idb-keyval|nanoid|@elysiajs|clsx)[\\/]/,
                                 priority: 40,
+                                // CRITICAL: must be 1, otherwise the global
+                                // `minShareCount: 2` keeps single-entry node_modules
+                                // (e.g. `react-dom/cjs/react-dom-client.production.js`,
+                                // 174 KB — only the eager entry imports it for
+                                // `createRoot`) inside the `index` entry chunk
+                                // instead of vendor. Forces ALL matching node_modules
+                                // into vendor regardless of how many entries reach them.
+                                minShareCount: 1,
                             },
 
-                            // Blockchain libraries — viem (incl. account-abstraction),
-                            // wagmi, permissionless, and their crypto deps. Now lazy-only:
-                            // pulled by the modal + embedded-wallet chunks via
-                            // `BlockchainProvider`.
+                            // ============================================
+                            // LAZY chunks (loaded on first UI display)
+                            // ============================================
                             //
-                            // The regex also captures wallet-shared's blockchain-adjacent
-                            // code (smart wallet, providers/BaseProvider, blockchain/*)
-                            // so it lands in this lazy vendor chunk instead of being
-                            // hoisted into `common` (which is statically imported by
-                            // the eager iframe bundle and would otherwise drag the
-                            // whole wagmi graph in eagerly).
+                            // • `blockchain-vendor` → viem + wagmi +
+                            //   permissionless + BaseProvider + provider glue.
+                            //   Modal/Wallet only.
+                            // • `ui-vendor` → heavy lazy UI libs (vaul,
+                            //   @radix-ui, cuer, micromark). vaul + radix +
+                            //   alert-dialog are Modal-only; cuer + micromark
+                            //   land here through wallet-shared pairing/
+                            //   Markdown which Modal+Wallet share. SharingPage
+                            //   pulls @radix-ui/react-accordion via
+                            //   design-system Accordion (FAQ section).
+                            //   Cleaned up after the cva → cx migration:
+                            //   removed dead alternations (cva, nprogress,
+                            //   react-hook-form, react-dropzone) that were
+                            //   never installed.
+                            // • `lazy-shared` → design-system + sonner +
+                            //   lucide + listener shared components +
+                            //   Toast/Markdown/etc + pairing UI. Pulled by
+                            //   any lazy boundary that needs UI primitives.
+                            //   `minShareCount: 1` ensures it materialises
+                            //   even when only one boundary uses a given file.
+                            //
+                            // SharingPage skips `blockchain-vendor` and the
+                            // heavy `ui-vendor` — only `lazy-shared` is fetched
+                            // on first display.
                             {
                                 name: "blockchain-vendor",
                                 test: /(?:node_modules[\\/](?:viem|wagmi|@wagmi|permissionless|@noble|@scure|ox))|(?:wallet-shared[\\/]src[\\/](?:providers[\\/]BaseProvider|wallet[\\/]|blockchain[\\/]))/,
                                 priority: 35,
                             },
-
-                            // TanStack libraries - React Query
-                            {
-                                name: "tanstack-vendor",
-                                test: /node_modules[\\/]@tanstack/,
-                                priority: 32,
-                            },
-
-                            // UI vendors - ALL UI libraries together
                             {
                                 name: "ui-vendor",
-                                test: /node_modules[\\/](@radix-ui|vaul|micromark|sonner|lucide-react|class-variance-authority|cuer|nprogress|react-hook-form|react-dropzone)/,
+                                test: /node_modules[\\/](?:@radix-ui|vaul|micromark|cuer)[\\/]/,
                                 priority: 30,
                             },
-
-                            // Listener UI code that's only reachable from the
-                            // lazy Modal / Wallet / SharingPage chunks (and their
-                            // lazy hook impls). Anything matched here MUST NOT be
-                            // statically imported from the eager listener entry —
-                            // otherwise the whole chunk gets dragged into the
-                            // iframe-boot preload list (which defeats the point).
-                            //
-                            // Notable exclusions, intentionally absent:
-                            //  - `apps/listener/app/module/component/ListenerUiRenderer`
-                            //    is rendered by `views/listener.tsx` on every iframe
-                            //    boot; matching it pulls the whole lazy-shared graph
-                            //    eagerly.
-                            //  - `module/utils/{i18nMapper,deprecatedModalMetadataMapper}`
-                            //    are imported by `ListenerUiProvider` (eager) and
-                            //    `lifecycleHandler` (eager). Same eager-pull issue.
-                            //  - `wallet-shared/src/pairing/component/*` is included
-                            //    because Modal/Wallet pull `OriginPairingState` etc.
-                            //    via the pairing barrel; without this group those
-                            //    components hoist to `common` and force `ui-vendor`
-                            //    (lucide + cuer + cva) into the eager bundle.
                             {
                                 name: "lazy-shared",
-                                test: /(?:wallet-shared[\\/]src[\\/](?:common|pairing)[\\/]component)|(?:apps[\\/]listener[\\/]app[\\/]module[\\/](?:component[\\/](?:ButtonAuth|SsoButton|WalletAddress|ToastLoading)|utils[\\/]resolveBackendMetadata))/,
-                                priority: 11,
+                                test: /(?:node_modules[\\/](?:sonner|lucide-react)[\\/])|(?:packages[\\/]design-system[\\/])|(?:wallet-shared[\\/]src[\\/](?:(?:common|pairing)[\\/]component|common[\\/]hook[\\/]useCopyToClipboardWithState|sharing))|(?:apps[\\/]listener[\\/]app[\\/]module[\\/](?:component[\\/](?:SsoButton|ToastLoading)|stores[\\/]hooks|utils[\\/](?:resolveBackendMetadata|normalizeTargetInteraction)|hooks[\\/]useTrackSharing))/,
+                                priority: 25,
+                                minShareCount: 1,
                             },
-                            // Catch-all for code that's shared between the eager
-                            // listener entry and the lazy UI chunks. Without an
-                            // explicit test Rolldown ends up attracting these
-                            // modules (Zustand stores, analytics stubs, i18n
-                            // mappers, app-essentials helpers) into whichever
-                            // grouped chunk happens to import them — in our case
-                            // `lazy-shared` — which then forces lazy-shared into
-                            // the eager preload list. Naming them here keeps them
-                            // pinned to `common` so `lazy-shared` stays reachable
-                            // only via dynamic imports.
+                            // (i18n locale chunking is implicit — the per-language
+                            // barrel module `wallet-shared/i18n/locales/{en,fr}`
+                            // is the single dynamic-import target. Both bundled
+                            // JSONs are reachable only through it, so Rolldown's
+                            // default chunking emits exactly one chunk per
+                            // language without an explicit group.)
+                            //
+                            // NOTE: `WalletAddress` and `ButtonAuth` are
+                            // Modal-only (verified via importer audit) and
+                            // pulled `viem.slice` (WalletAddress) +
+                            // `lucide-react.Fingerprint` (ButtonAuth) into
+                            // `lazy-shared` — forcing every lazy flow,
+                            // including SharingPage, to load
+                            // `blockchain-vendor`. They are now allowed to
+                            // fall into the Modal chunk via default chunking.
+                            // SharingPage no longer fetches blockchain-vendor.
+
+                            // ============================================
+                            // SHARED-WITH-LAZY (eager) chunk
+                            // ============================================
+                            //
+                            // Workspace utilities reachable from BOTH the
+                            // eager entry and the lazy chunks (Zustand stores,
+                            // analytics, api client, i18n config, app-essentials,
+                            // pairing clients, etc.). `tags: ['$initial']`
+                            // ensures only modules statically reachable from
+                            // accidentally drift in.
+                            //
+                            // CRITICAL: priority MUST be higher than `lazy-shared`.
+                            // Otherwise Rolldown's default
+                            // `includeDependenciesRecursively: true` lets
+                            // `lazy-shared` claim eager modules (e.g.
+                            // ListenerUiProvider) that lazy boundaries reach
+                            // via shared hooks (useSharingListenerUI etc.),
+                            // forcing the entry to statically import the lazy
+                            // chunk to get back its own Provider.
                             {
                                 name: "common",
-                                test: /(?:wallet-shared[\\/]src[\\/](?:stores|i18n|polyfills|stubs|identity|types|pairing[\\/](?:clients|hook|queryKeys|types)|common[\\/](?:analytics|api|hook|lib|utils)))|(?:packages[\\/]app-essentials[\\/])|(?:apps[\\/]listener[\\/]app[\\/]module[\\/](?:stores|middleware|handlers|providers|types|common|queryKeys|utils[\\/](?:i18nMapper|deprecatedModalMetadataMapper|normalizeTargetInteraction|backup)))/,
-                                priority: 20,
+                                tags: ["$initial"],
+                                test: /(?:wallet-shared[\\/]src[\\/](?:stores|i18n|polyfills|stubs|identity|types|pairing[\\/](?:clients|hook|queryKeys|types)|common[\\/](?:analytics|api|hook|lib|utils)))|(?:packages[\\/]app-essentials[\\/])|(?:apps[\\/]listener[\\/]app[\\/]module[\\/](?:stores|middleware|handlers|providers|types|common|queryKeys|hooks|utils[\\/](?:i18nMapper|deprecatedModalMetadataMapper|normalizeTargetInteraction|backup)))/,
+                                priority: 28,
                             },
                         ],
                     },
