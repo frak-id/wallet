@@ -37,6 +37,42 @@ const isSandbox = !!process.env.ATELIER_SANDBOX_ID;
 // dev listener (wallet-dev.frak.id) opens the dev wallet (id.frak.wallet.dev) via frakwallet-dev://.
 const deepLinkScheme = isProd ? "frakwallet://" : "frakwallet-dev://";
 
+/**
+ * Rolldown emits a side-effect-only `import "./blockchain-vendor-*.js";` at the
+ * top of `common-*.js` even though no symbols from that chunk are bound and
+ * `bundle-stats` shows zero real edges. This appears to be a chunking artifact:
+ * once viem/wagmi land in their own vendor chunk while the dynamic-import
+ * boundary (BlockchainProvider) lives in a chunk reachable from the eager entry,
+ * Rolldown preserves a static evaluation-order import "just in case".
+ *
+ * Effect on the iframe: the browser fetches blockchain-vendor.js (~52 KB gz)
+ * on cold boot even though the modulePreload filter strips it from the HTML.
+ * That defeats the entire lazy-blockchain effort.
+ *
+ * The bound dynamic import (`__vitePreload(() => import('./BaseProvider...'))`)
+ * is preserved by this plugin — only the orphan side-effect import statement is
+ * removed.
+ */
+function stripOrphanCrossChunkImports() {
+    const ORPHAN_IMPORT_RE =
+        /import\s*"\.\/blockchain-vendor-[A-Za-z0-9_-]+\.js";/g;
+    return {
+        name: "strip-orphan-blockchain-vendor-import",
+        apply: "build" as const,
+        generateBundle(_options: unknown, bundle: Record<string, unknown>) {
+            for (const file of Object.values(bundle)) {
+                const f = file as { type?: string; fileName?: string; code?: string };
+                if (f.type !== "chunk" || !f.fileName?.includes("common-")) {
+                    continue;
+                }
+                if (typeof f.code === "string") {
+                    f.code = f.code.replace(ORPHAN_IMPORT_RE, "");
+                }
+            }
+        },
+    };
+}
+
 export default defineConfig(async () => {
     const sandboxEnv = await getSandboxEnv();
 
@@ -108,6 +144,7 @@ export default defineConfig(async () => {
             vanillaExtractPlugin(),
             ...(isSandbox ? [] : [mkcert()]),
             ...(isProd ? [removeConsole()] : []),
+            stripOrphanCrossChunkImports(),
         ],
         server: {
             port: 3002,
