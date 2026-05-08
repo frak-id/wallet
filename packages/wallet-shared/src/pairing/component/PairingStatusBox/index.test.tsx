@@ -6,6 +6,7 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { StatusBoxModal, StatusBoxWalletEmbedded } from "./index";
+import * as styles from "./index.css";
 
 // Mock react-i18next
 vi.mock("react-i18next", () => ({
@@ -268,7 +269,7 @@ describe("PairingStatusBox", () => {
             );
 
             const indicator = container.querySelector(
-                '[class*="statusBox__indicator--green"]'
+                `.${styles.statusBoxIndicatorColor.green}`
             );
             expect(indicator).toBeInTheDocument();
         });
@@ -279,7 +280,7 @@ describe("PairingStatusBox", () => {
             );
 
             const indicator = container.querySelector(
-                '[class*="statusBox__indicator--amber"]'
+                `.${styles.statusBoxIndicatorColor.amber}`
             );
             expect(indicator).toBeInTheDocument();
         });
@@ -290,7 +291,7 @@ describe("PairingStatusBox", () => {
             );
 
             const indicator = container.querySelector(
-                '[class*="statusBox__indicator--red"]'
+                `.${styles.statusBoxIndicatorColor.red}`
             );
             expect(indicator).toBeInTheDocument();
         });
@@ -317,7 +318,7 @@ describe("PairingStatusBox", () => {
 
             // Title element should exist even if empty
             const titleElement = container.querySelector(
-                '[class*="statusBox__title"]'
+                `.${styles.statusBox__title}`
             );
             expect(titleElement).toBeInTheDocument();
         });

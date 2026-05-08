@@ -40,7 +40,6 @@
     "./common/hook/useCopyToClipboardWithState": "./src/common/hook/useCopyToClipboardWithState.ts",
     "./common/hook/useMountedTimeout": "./src/common/hook/useMountedTimeout.ts",
     "./common/lib/ua": "./src/common/lib/ua.ts",
-    "./common/component/Toast": "./src/common/component/Toast/index.tsx",
     "./pairing": "./src/pairing/index.ts",
     "./pairing/usePersistentPairingClient": "./src/pairing/hook/usePersistentPairingClient.tsx",
     "./identity": "./src/identity/index.ts",
@@ -64,7 +63,6 @@
     "@frak-labs/design-system": "workspace:*",
     "@vanilla-extract/css": "^1.19.1",
     "@openpanel/web": "catalog:",
-    "@radix-ui/react-alert-dialog": "^1.1.15",
     "@tanstack/react-query": "catalog:",
     "@tauri-apps/plugin-clipboard-manager": "^2.3.2",
     "class-variance-authority": "^0.7.1",
@@ -82,7 +80,6 @@
     "react": "catalog:",
     "react-dom": "catalog:",
     "react-i18next": "^16.5.8",
-    "vaul": "^1.1.2",
     "viem": "catalog:",
     "wagmi": "catalog:",
     "zustand": "catalog:"

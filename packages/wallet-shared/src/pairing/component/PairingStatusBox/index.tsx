@@ -4,7 +4,7 @@ import type { PropsWithChildren } from "react";
 import { useTranslation } from "react-i18next";
 import { useStore } from "zustand";
 import type { BasePairingClient } from "../../clients/base";
-import styles from "./index.module.css";
+import * as styles from "./index.css";
 
 type Status = "success" | "waiting" | "loading" | "error";
 
@@ -154,7 +154,7 @@ function getIcon(status: Status) {
 function GreenDot() {
     return (
         <div
-            className={`${styles.statusBox__indicator} ${styles["statusBox__indicator--green"]}`}
+            className={`${styles.statusBox__indicator} ${styles.statusBoxIndicatorColor.green}`}
         />
     );
 }
@@ -162,7 +162,7 @@ function GreenDot() {
 function AmberDot() {
     return (
         <div
-            className={`${styles.statusBox__indicator} ${styles["statusBox__indicator--amber"]}`}
+            className={`${styles.statusBox__indicator} ${styles.statusBoxIndicatorColor.amber}`}
         />
     );
 }
@@ -170,7 +170,7 @@ function AmberDot() {
 function RedDot() {
     return (
         <div
-            className={`${styles.statusBox__indicator} ${styles["statusBox__indicator--red"]}`}
+            className={`${styles.statusBox__indicator} ${styles.statusBoxIndicatorColor.red}`}
         />
     );
 }

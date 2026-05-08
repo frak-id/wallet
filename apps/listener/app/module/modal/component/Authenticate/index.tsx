@@ -1,15 +1,12 @@
 import type { SiweAuthenticateModalStepType } from "@frak-labs/core-sdk";
 import { Spinner } from "@frak-labs/design-system/components/Spinner";
-import {
-    HandleErrors,
-    prefixModalCss,
-    TextData,
-} from "@frak-labs/wallet-shared/common";
+import { HandleErrors, prefixModalCss } from "@frak-labs/wallet-shared/common";
 import { useMemo } from "react";
 import { createSiweMessage, type SiweMessage } from "viem/siwe";
 import { useConnection, useSignMessage } from "wagmi";
 import styles from "@/module/modal/component/Modal/index.module.css";
 import { useListenerTranslation } from "@/module/providers/ListenerUiProvider";
+import * as authStyles from "./index.css";
 
 /**
  * The component for the siwe authentication step of a modal
@@ -66,11 +63,11 @@ export function SiweAuthenticateModalStep({
 
     return (
         <>
-            <TextData>
+            <div className={authStyles.textData}>
                 <p>{siweMessage?.statement}</p>
                 <p>Domain: {siweMessage?.domain}</p>
                 <p>Uri: {siweMessage?.uri}</p>
-            </TextData>
+            </div>
 
             <div
                 className={`${styles.modalListener__buttonsWrapper} ${prefixModalCss("buttons-wrapper")}`}

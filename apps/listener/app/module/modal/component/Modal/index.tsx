@@ -1,20 +1,19 @@
 import { useMediaQuery } from "@frak-labs/design-system/hooks/useMediaQuery";
 import { RpcErrorCodes } from "@frak-labs/frame-connector";
 import {
-    Drawer,
-    DrawerContent,
     InAppBrowserToast,
     LogoFrakWithName,
     prefixModalCss,
     trackEvent,
-    WalletModal,
 } from "@frak-labs/wallet-shared/common";
 import {
     getOriginPairingClient,
     OriginPairingState,
     useCancelAllSignatureRequests,
 } from "@frak-labs/wallet-shared/pairing";
+import * as AlertDialogPrimitive from "@radix-ui/react-alert-dialog";
 import { cx } from "class-variance-authority";
+import { X } from "lucide-react";
 import {
     type Dispatch,
     type PropsWithChildren,
@@ -25,6 +24,7 @@ import {
     useState,
 } from "react";
 import { Toaster } from "sonner";
+import { Drawer as DrawerPrimitive } from "vaul";
 import { useShallow } from "zustand/react/shallow";
 import { useGetMergeToken } from "@/module/hooks/useGetMergeToken";
 import { SiweAuthenticateModalStep } from "@/module/modal/component/Authenticate";
@@ -271,27 +271,71 @@ function ModalComponent({
     // Check if the screen is desktop or mobile
     const isDesktop = useMediaQuery("(min-width : 600px)");
 
-    // Use a Drawer for mobile and a WalletModal for desktop
+    // Use a Drawer for mobile and an alert dialog for desktop
     if (isDesktop) {
         return (
-            <WalletModal
-                classNameTitle={styles.modalListener__title}
-                title={title}
-                text={children}
-                open={open}
-                onOpenChange={onOpenChange}
-            />
+            <AlertDialogPrimitive.Root open={open} onOpenChange={onOpenChange}>
+                <AlertDialogPrimitive.Portal>
+                    <AlertDialogPrimitive.Overlay
+                        onClick={() => onOpenChange?.(false)}
+                        className={`${prefixModalCss("overlay")} ${styles.alertDialog__overlay}`}
+                    />
+                    <AlertDialogPrimitive.Content
+                        onEscapeKeyDown={() => onOpenChange?.(false)}
+                        className={`${prefixModalCss("content")} ${styles.alertDialog__content} ${styles.alertDialog__withCloseButton}`}
+                    >
+                        <AlertDialogPrimitive.Cancel asChild>
+                            <button
+                                type="button"
+                                className={`${prefixModalCss("close")} ${styles.alertDialog__close}`}
+                                aria-label="Close"
+                            >
+                                <X />
+                            </button>
+                        </AlertDialogPrimitive.Cancel>
+                        <AlertDialogPrimitive.Title
+                            className={`${prefixModalCss("title")} ${styles.alertDialog__title} ${styles.modalListener__title}`}
+                        >
+                            {title}
+                        </AlertDialogPrimitive.Title>
+                        <AlertDialogPrimitive.Description />
+                        <div
+                            className={`${prefixModalCss("description")} ${styles.alertDialog__description}`}
+                        >
+                            {children}
+                        </div>
+                    </AlertDialogPrimitive.Content>
+                </AlertDialogPrimitive.Portal>
+            </AlertDialogPrimitive.Root>
         );
     }
 
     // Otherwise, return bottom drawer
     return (
-        <Drawer open={open} onOpenChange={onOpenChange}>
-            <DrawerContent>
-                <div className={styles.drawerTitle__container}>{title}</div>
-                {children}
-            </DrawerContent>
-        </Drawer>
+        <DrawerPrimitive.Root
+            open={open}
+            onOpenChange={onOpenChange}
+            shouldScaleBackground={true}
+        >
+            <DrawerPrimitive.Portal>
+                <DrawerPrimitive.Overlay className={styles.drawer__overlay} />
+                <DrawerPrimitive.Content
+                    className={styles.drawer__contentWrapper}
+                >
+                    <DrawerPrimitive.Title asChild>
+                        <div className={styles.drawer__handle} />
+                    </DrawerPrimitive.Title>
+                    <DrawerPrimitive.Description asChild>
+                        <div className={styles.drawer__content}>
+                            <div className={styles.drawerTitle__container}>
+                                {title}
+                            </div>
+                            {children}
+                        </div>
+                    </DrawerPrimitive.Description>
+                </DrawerPrimitive.Content>
+            </DrawerPrimitive.Portal>
+        </DrawerPrimitive.Root>
     );
 }
 

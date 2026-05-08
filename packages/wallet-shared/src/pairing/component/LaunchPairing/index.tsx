@@ -9,7 +9,7 @@ import type { OnPairingSuccessCallback } from "../../clients/origin";
 import { getOriginPairingClient } from "../../clients/store";
 import type { OriginIdentityNode, OriginPairingState } from "../../types";
 import { PairingStatus } from "../PairingStatus";
-import styles from "./index.module.css";
+import * as styles from "./index.css";
 
 const useShowBrighterQRCodeStore = create<{
     show: boolean;
@@ -126,11 +126,7 @@ function PairingContent({ clientState }: { clientState: OriginPairingState }) {
             <div className={styles.launchPairing__status}>
                 <PairingStatus status={clientState.status} />
             </div>
-            {clientState.partnerDevice && (
-                <p className={styles.launchPairing__partnerDevice}>
-                    {clientState.partnerDevice}
-                </p>
-            )}
+            {clientState.partnerDevice && <p>{clientState.partnerDevice}</p>}
             {pairingInfo?.code && (
                 <CodeInput value={pairingInfo.code} mode="numeric" />
             )}

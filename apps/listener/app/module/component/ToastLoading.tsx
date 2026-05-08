@@ -1,9 +1,15 @@
-import { Toast } from "@frak-labs/wallet-shared/common/component/Toast";
 import { useIsMutating } from "@tanstack/react-query";
-import { useCallback, useEffect, useRef, useState } from "react";
+import {
+    type MouseEvent,
+    type ReactNode,
+    useCallback,
+    useEffect,
+    useRef,
+    useState,
+} from "react";
 import { Trans, useTranslation } from "react-i18next";
 import { useSdkCleanup } from "../hooks/useSdkCleanup";
-import styles from "./ToastLoading.module.css";
+import * as styles from "./ToastLoading.css";
 
 export function ToastLoading() {
     const { t } = useTranslation();
@@ -53,7 +59,7 @@ export function ToastLoading() {
 
     // after 5sec after the mutating is unchanged, link to the troubleshooting section + the button to logout and redo a login / pairing (cleanup hook)
     return (
-        <Toast
+        <StuckToast
             text={
                 <Trans
                     i18nKey="wallet.toastLoading.stuck"
@@ -65,7 +71,7 @@ export function ToastLoading() {
                                     cleanup();
                                     startStuckTimer();
                                 }}
-                                className={styles.toastStuck__button}
+                                className={styles.toastStuckButton}
                             />
                         ),
                         pLink: (
@@ -73,7 +79,7 @@ export function ToastLoading() {
                                 href="https://frak.id/ressources#troubleshooting"
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className={styles.toastStuck__link}
+                                className={styles.toastStuckLink}
                             >
                                 troubleshooting
                             </a>
@@ -88,5 +94,62 @@ export function ToastLoading() {
                 startStuckTimer();
             }}
         />
+    );
+}
+
+/**
+ * Inlined dismissible warning banner. Replaces the deleted wallet-shared
+ * `Toast` + `Warning` components — same dark glass appearance, same close
+ * button, scoped to this single consumer.
+ */
+function StuckToast({
+    text,
+    ariaLabel,
+    ariaDismissLabel,
+    onDismiss,
+}: {
+    text: ReactNode;
+    ariaLabel: string;
+    ariaDismissLabel: string;
+    onDismiss: (e: MouseEvent) => void;
+}) {
+    return (
+        <div className={styles.toast} role="status" aria-label={ariaLabel}>
+            <div className={styles.warning}>
+                <span className={styles.warningGlyph}>&#9888;</span> {text}
+            </div>
+            <button
+                type="button"
+                onClick={onDismiss}
+                className={styles.dismissButton}
+                aria-label={ariaDismissLabel}
+            >
+                <CloseIcon />
+            </button>
+        </div>
+    );
+}
+
+/**
+ * Inlined `X` glyph (lucide-react geometry) so the toast doesn't pull
+ * lucide-react into the eager listener bundle path.
+ */
+function CloseIcon() {
+    return (
+        <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width={16}
+            height={16}
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth={2}
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            aria-hidden="true"
+        >
+            <path d="M18 6 6 18" />
+            <path d="m6 6 12 12" />
+        </svg>
     );
 }
