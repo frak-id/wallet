@@ -18,9 +18,16 @@ WORKDIR /app
 #
 # Installing the real Node.js binary to /usr/bin/node (earlier in PATH than the
 # fallback) makes the vanilla-extract-inline plugin in sdk/components work.
+#
+# Pinned to Node.js 24.x (NodeSource) so that tsdown's `auto` config-loader
+# resolves to `native` (requires Node >= 22.18 with built-in TypeScript
+# support). Otherwise tsdown 0.22+ falls back to `unrun`, which it no longer
+# bundles, and the build fails with `Failed to import module "unrun"`.
 RUN apt-get update \
-    && apt-get install -y --no-install-recommends nodejs \
-    && rm -rf /var/lib/apt/lists/*
+    && apt-get install -y --no-install-recommends ca-certificates curl gnupg \
+    && curl -fsSL https://deb.nodesource.com/setup_24.x | bash - \
+&& apt-get install -y --no-install-recommends nodejs \
+&& rm -rf /var/lib/apt/lists/*
 
 # Copy root package files
 COPY package.json bun.lock tsconfig.json ./
