@@ -40,6 +40,7 @@ import {
 import { useTranslation } from "react-i18next";
 import { resolvingContextStore } from "@/module/stores/resolvingContextStore";
 import type { ResolvedSdkConfig } from "@/module/stores/types";
+import { uiBus } from "@/uiBus";
 import { mapDeprecatedModalMetadata } from "../utils/deprecatedModalMetadataMapper";
 
 export type GenericWalletUiType = {
@@ -208,6 +209,10 @@ export function ListenerUiProvider({ children }: PropsWithChildren) {
             style.remove();
         };
     }, [placementCss]);
+
+    // Subscribe to the UI bus so RPC handlers (Ring 0) can request UI
+    // displays without holding a reference to React state.
+    useEffect(() => uiBus.attach(setRequest), [setRequest]);
 
     const populateI18nResources = useCallback(
         (i18n: i18n, lang: Language, request?: UIRequest) => {

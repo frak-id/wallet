@@ -1,9 +1,8 @@
 import type { IFrameRpcSchema } from "@frak-labs/core-sdk";
 import type { RpcPromiseHandler } from "@frak-labs/frame-connector";
 import { useCallback } from "react";
-import { useListenerUI } from "@/module/providers/ListenerUiProvider";
+import { uiBus } from "@/uiBus";
 import type { WalletRpcContext } from "@/module/types/context";
-
 type OnDisplayModalRequest = RpcPromiseHandler<
     IFrameRpcSchema,
     "frak_displayModal",
@@ -18,15 +17,10 @@ type OnDisplayModalRequest = RpcPromiseHandler<
  * trigger a modal pay zero cost for that code on boot.
  */
 export function useDisplayModalListener(): OnDisplayModalRequest {
-    const { setRequest } = useListenerUI();
-
-    return useCallback(
-        async (params, _context) => {
-            const { handleDisplayModal } = await import(
-                "./useDisplayModalListener.impl"
-            );
-            return handleDisplayModal(params, { setRequest });
-        },
-        [setRequest]
-    );
+    return useCallback(async (params, _context) => {
+        const { handleDisplayModal } = await import(
+            "./useDisplayModalListener.impl"
+        );
+        return handleDisplayModal(params, { setRequest: uiBus.request });
+    }, []);
 }

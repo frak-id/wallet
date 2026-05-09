@@ -1,9 +1,8 @@
 import type { IFrameRpcSchema } from "@frak-labs/core-sdk";
 import type { RpcPromiseHandler } from "@frak-labs/frame-connector";
 import { useCallback } from "react";
-import { useListenerUI } from "@/module/providers/ListenerUiProvider";
+import { uiBus } from "@/uiBus";
 import type { WalletRpcContext } from "@/module/types/context";
-
 type OnDisplaySharingPageRequest = RpcPromiseHandler<
     IFrameRpcSchema,
     "frak_displaySharingPage",
@@ -21,15 +20,12 @@ type OnDisplaySharingPageRequest = RpcPromiseHandler<
  * already resolved).
  */
 export function useDisplaySharingPageListener(): OnDisplaySharingPageRequest {
-    const { setRequest } = useListenerUI();
-
-    return useCallback(
-        async (params, _context) => {
-            const { handleDisplaySharingPage } = await import(
-                "./useDisplaySharingPageListener.impl"
-            );
-            return handleDisplaySharingPage(params, { setRequest });
-        },
-        [setRequest]
-    );
+    return useCallback(async (params, _context) => {
+        const { handleDisplaySharingPage } = await import(
+            "./useDisplaySharingPageListener.impl"
+        );
+        return handleDisplaySharingPage(params, {
+            setRequest: uiBus.request,
+        });
+    }, []);
 }

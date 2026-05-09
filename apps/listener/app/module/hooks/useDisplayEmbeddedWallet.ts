@@ -1,9 +1,8 @@
 import type { IFrameRpcSchema } from "@frak-labs/core-sdk";
 import type { RpcPromiseHandler } from "@frak-labs/frame-connector";
 import { useCallback } from "react";
-import { useListenerUI } from "@/module/providers/ListenerUiProvider";
+import { uiBus } from "@/uiBus";
 import type { WalletRpcContext } from "@/module/types/context";
-
 type OnDisplayEmbeddedWalletRequest = RpcPromiseHandler<
     IFrameRpcSchema,
     "frak_displayEmbeddedWallet",
@@ -17,15 +16,12 @@ type OnDisplayEmbeddedWalletRequest = RpcPromiseHandler<
  * first time `frak_displayEmbeddedWallet` is invoked.
  */
 export function useDisplayEmbeddedWallet(): OnDisplayEmbeddedWalletRequest {
-    const { setRequest } = useListenerUI();
-
-    return useCallback(
-        async (params, _context) => {
-            const { handleDisplayEmbeddedWallet } = await import(
-                "./useDisplayEmbeddedWallet.impl"
-            );
-            return handleDisplayEmbeddedWallet(params, { setRequest });
-        },
-        [setRequest]
-    );
+    return useCallback(async (params, _context) => {
+        const { handleDisplayEmbeddedWallet } = await import(
+            "./useDisplayEmbeddedWallet.impl"
+        );
+        return handleDisplayEmbeddedWallet(params, {
+            setRequest: uiBus.request,
+        });
+    }, []);
 }
