@@ -218,10 +218,6 @@ export const modalListener__iconContainer = style({
     flexDirection: "column",
 });
 
-globalStyle(`${modalListener__iconContainer} ${modalTitle__provided}`, {
-    alignSelf: "flex-end",
-    marginTop: "-4px",
-});
 
 export const modalListener__icon = style({
     display: "block",

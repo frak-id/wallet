@@ -97,15 +97,7 @@
   "resolutions": {
     "caniuse-lite": "^1.0.30001779",
     "parse5": "^7.3.0",
-    "@tanstack/react-router": "1.169.2",
-    "@tanstack/react-router-devtools": "1.166.13",
-    "@tanstack/router-plugin": "1.167.35",
-    "@tanstack/router-core": "1.169.2",
-    "@tanstack/router-devtools-core": "1.167.3",
-    "@tanstack/router-generator": "1.166.42",
-    "@tanstack/router-utils": "1.161.8",
-    "@tanstack/virtual-file-routes": "1.161.7",
-    "@tanstack/history": "1.161.6"
+    "qr": "^0.5.0"
   },
   "trustedDependencies": []
 }

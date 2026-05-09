@@ -205,21 +205,24 @@ function ListenerModalInner({
             </span>
         );
 
-        // Build the footer (only if no icon present)
-        const footer =
-            logoUrl && !logoFailed ? null : (
-                <div className={styles.modalListener__footer}>
-                    <OriginPairingState type="modal" />
-                    {providedBy}
-                </div>
-            );
+        // Always render the footer with `provided by Frak` on the right.
+        // Previously it sat under the logo when one was present, but that
+        // crammed the attribution into the merchant icon box. Keeping it
+        // in the footer means it always lives in the bottom-right corner
+        // of the modal regardless of logo presence.
+        const footer = (
+            <div className={styles.modalListener__footer}>
+                <OriginPairingState type="modal" />
+                {providedBy}
+            </div>
+        );
 
         return {
             titleComponent,
             providedBy,
             footer,
         };
-    }, [metadata, logoUrl, logoFailed]);
+    }, [metadata]);
 
     return (
         <ModalComponent
@@ -237,7 +240,6 @@ function ListenerModalInner({
             <ModalLogoIcon
                 logoUrl={logoUrl}
                 logoFailed={logoFailed}
-                providedBy={providedBy}
                 onError={() => setLogoFailed(true)}
             />
             <CurrentModalMetadataInfo />
@@ -424,12 +426,10 @@ function CurrentModalStepComponent({
 function ModalLogoIcon({
     logoUrl,
     logoFailed,
-    providedBy,
     onError,
 }: {
     logoUrl?: string;
     logoFailed: boolean;
-    providedBy: ReactNode;
     onError: () => void;
 }) {
     if (!logoUrl || logoFailed) return null;
@@ -442,7 +442,6 @@ function ModalLogoIcon({
                 className={styles.modalListener__icon}
                 onError={onError}
             />
-            {providedBy}
         </div>
     );
 }
