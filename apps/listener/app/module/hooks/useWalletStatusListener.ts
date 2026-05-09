@@ -45,10 +45,8 @@ export function createWalletStatusHandler(): OnListenToWallet {
     ) {
         if (signal.aborted) return;
 
-        const wallet =
-            sessionStore.getState().session ?? getSafeSession();
-        const sdk =
-            sessionStore.getState().sdkSession ?? getSafeSdkSession();
+        const wallet = sessionStore.getState().session ?? getSafeSession();
+        const sdk = sessionStore.getState().sdkSession ?? getSafeSdkSession();
 
         if (!wallet?.address) {
             emitter({ key: "not-connected" });
@@ -82,11 +80,7 @@ export function createWalletStatusHandler(): OnListenToWallet {
         const unsubscribe = sessionStore.subscribe(() => {
             abortController.abort();
             abortController = new AbortController();
-            void emitCurrentStatus(
-                emitter,
-                domain,
-                abortController.signal
-            );
+            void emitCurrentStatus(emitter, domain, abortController.signal);
         });
         activeUnsubscribe = unsubscribe;
     };

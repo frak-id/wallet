@@ -42,9 +42,7 @@ describe("i18nOverrideQueue", () => {
         const i18n = makeI18n("en");
 
         drainPendingI18nOverrides(
-            i18n as unknown as Parameters<
-                typeof drainPendingI18nOverrides
-            >[0]
+            i18n as unknown as Parameters<typeof drainPendingI18nOverrides>[0]
         );
 
         // microtasks settle
@@ -59,9 +57,7 @@ describe("i18nOverrideQueue", () => {
         const i18n = makeI18n();
 
         drainPendingI18nOverrides(
-            i18n as unknown as Parameters<
-                typeof drainPendingI18nOverrides
-            >[0]
+            i18n as unknown as Parameters<typeof drainPendingI18nOverrides>[0]
         );
 
         // Wait for the dynamic import + apply to settle.
@@ -76,9 +72,7 @@ describe("i18nOverrideQueue", () => {
     test("applies immediately when an i18n is already attached", async () => {
         const i18n = makeI18n("en");
         drainPendingI18nOverrides(
-            i18n as unknown as Parameters<
-                typeof drainPendingI18nOverrides
-            >[0]
+            i18n as unknown as Parameters<typeof drainPendingI18nOverrides>[0]
         );
 
         enqueueLanguageChange("fr");
@@ -91,9 +85,7 @@ describe("i18nOverrideQueue", () => {
     test("skips changeLanguage when language already matches", async () => {
         const i18n = makeI18n("fr");
         drainPendingI18nOverrides(
-            i18n as unknown as Parameters<
-                typeof drainPendingI18nOverrides
-            >[0]
+            i18n as unknown as Parameters<typeof drainPendingI18nOverrides>[0]
         );
 
         enqueueLanguageChange("fr");
@@ -108,14 +100,10 @@ describe("i18nOverrideQueue", () => {
         const i18n = makeI18n("en");
 
         drainPendingI18nOverrides(
-            i18n as unknown as Parameters<
-                typeof drainPendingI18nOverrides
-            >[0]
+            i18n as unknown as Parameters<typeof drainPendingI18nOverrides>[0]
         );
         drainPendingI18nOverrides(
-            i18n as unknown as Parameters<
-                typeof drainPendingI18nOverrides
-            >[0]
+            i18n as unknown as Parameters<typeof drainPendingI18nOverrides>[0]
         );
 
         await Promise.resolve();

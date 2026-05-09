@@ -218,7 +218,6 @@ export const modalListener__iconContainer = style({
     flexDirection: "column",
 });
 
-
 export const modalListener__icon = style({
     display: "block",
     width: "100%",

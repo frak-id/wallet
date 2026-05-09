@@ -25,12 +25,12 @@ import {
     OnboardingShare,
     OnboardingWelcome,
 } from "@/module/embedded/component/Onboarding";
+import { useSafeResolvingContext } from "@/module/stores/hooks";
+import { resolvingContextStore } from "@/module/stores/resolvingContextStore";
 import {
     useEmbeddedListenerUI,
     useListenerTranslation,
 } from "@/ui/ListenerUiProvider";
-import { useSafeResolvingContext } from "@/module/stores/hooks";
-import { resolvingContextStore } from "@/module/stores/resolvingContextStore";
 import { useTrackSharing } from "../../../hooks/useTrackSharing";
 import * as styles from "./index.css";
 

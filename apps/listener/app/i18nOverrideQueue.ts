@@ -37,9 +37,7 @@ async function applyEntry(i18n: I18nType, entry: Entry): Promise<void> {
         return;
     }
 
-    const { mapI18nConfig } = await import(
-        "@/module/utils/i18nMapper"
-    );
+    const { mapI18nConfig } = await import("@/module/utils/i18nMapper");
     await mapI18nConfig(entry.payload, i18n);
 }
 
@@ -86,6 +84,7 @@ export function drainPendingI18nOverrides(i18n: I18nType): void {
 
 /**
  * Test-only escape hatch.
+ * todo: to be deleted
  */
 export function _resetI18nOverrideQueueForTests(): void {
     activeI18n = null;

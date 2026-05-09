@@ -28,8 +28,11 @@ function normalizeInteractionInput(input: SendInteractionInput): {
  * current resolving context if not provided in the input. Safe to call
  * outside any React tree (used by the listener RPC handlers).
  */
-export async function sendInteraction(input: SendInteractionInput): Promise<void> {
-    const { interaction, merchantId, clientId } = normalizeInteractionInput(input);
+export async function sendInteraction(
+    input: SendInteractionInput
+): Promise<void> {
+    const { interaction, merchantId, clientId } =
+        normalizeInteractionInput(input);
     const resolvedMerchantId =
         merchantId ?? resolvingContextStore.getState().context?.merchantId;
 

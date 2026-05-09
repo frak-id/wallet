@@ -8,9 +8,9 @@ import {
     type RpcPromiseHandler,
 } from "@frak-labs/frame-connector";
 import { estimatedRewardsQueryOptions } from "@frak-labs/wallet-shared/common/hook/useEstimatedReward";
-import { ensureHydrated, queryClient } from "@/queryClient";
 import { resolvingContextStore } from "@/module/stores/resolvingContextStore";
 import type { WalletRpcContext } from "@/module/types/context";
+import { ensureHydrated, queryClient } from "@/queryClient";
 
 type OnGetMerchantInformation = RpcPromiseHandler<
     IFrameRpcSchema,
@@ -33,8 +33,7 @@ export function createGetMerchantInformationHandler(): OnGetMerchantInformation 
         }
 
         const domain = new URL(context.sourceUrl).host.replace("www.", "");
-        const backendConfig =
-            resolvingContextStore.getState().backendSdkConfig;
+        const backendConfig = resolvingContextStore.getState().backendSdkConfig;
 
         const rewards = await queryClient.fetchQuery(
             estimatedRewardsQueryOptions(merchantId)

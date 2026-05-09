@@ -1,7 +1,7 @@
 import { Overlay } from "@frak-labs/design-system/components/Overlay";
 import { InAppBrowserToast } from "@frak-labs/wallet-shared/common";
-import { sessionStore } from "@frak-labs/wallet-shared/stores/sessionStore";
 import { usePersistentPairingClient } from "@frak-labs/wallet-shared/pairing/usePersistentPairingClient";
+import { sessionStore } from "@frak-labs/wallet-shared/stores/sessionStore";
 import clsx from "clsx";
 import { Toaster } from "sonner";
 import { prefixWalletCss } from "@/module/common/utils/prefixWalletCss";
@@ -9,9 +9,9 @@ import { ListenerWalletHeader } from "@/module/embedded/component/WalletHeader";
 import { LoggedInComponent } from "@/module/embedded/component/WalletLoggedIn";
 import { LoggedOutComponent } from "@/module/embedded/component/WalletLoggedOut";
 import { useGetMergeToken } from "@/module/hooks/useGetMergeToken";
+import { resolvingContextStore } from "@/module/stores/resolvingContextStore";
 import { BlockchainProvider } from "@/ui/BlockchainProvider";
 import { useEmbeddedListenerUI } from "@/ui/ListenerUiProvider";
-import { resolvingContextStore } from "@/module/stores/resolvingContextStore";
 import { ToastLoading } from "../../../component/ToastLoading";
 import * as styles from "./index.css";
 

@@ -40,8 +40,8 @@ import {
 import { useTranslation } from "react-i18next";
 import { resolvingContextStore } from "@/module/stores/resolvingContextStore";
 import type { ResolvedSdkConfig } from "@/module/stores/types";
-import { uiBus } from "@/uiBus";
 import { mapDeprecatedModalMetadata } from "@/module/utils/deprecatedModalMetadataMapper";
+import { uiBus } from "@/uiBus";
 
 export type GenericWalletUiType = {
     appName: string;

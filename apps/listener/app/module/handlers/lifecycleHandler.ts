@@ -275,7 +275,6 @@ function applyBackendCss(sdkConfig: ResolvedSdkConfig): void {
     document.head.appendChild(style);
 }
 
-
 async function handleSsoRedirectComplete(data: {
     compressed: string;
 }): Promise<void> {

@@ -24,8 +24,8 @@ import type { Hex } from "viem";
 import { useStore } from "zustand";
 import { useDeepLinkFallback } from "@/module/hooks/useDeepLinkFallback";
 import { useSsoLink } from "@/module/hooks/useSsoLink";
-import { useListenerWithRequestUI } from "@/ui/ListenerUiProvider";
 import { resolvingContextStore } from "@/module/stores/resolvingContextStore";
+import { useListenerWithRequestUI } from "@/ui/ListenerUiProvider";
 
 function buildDeepLinkHref(pairing: { id: string }): string {
     const id = encodeURIComponent(pairing.id);

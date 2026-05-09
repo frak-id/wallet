@@ -44,7 +44,6 @@ import type {
 } from "@/module/types/context";
 import { ensureHydrated } from "@/queryClient";
 
-
 /**
  * Send a one-shot ping to the metrics server so we can count iframe loads.
  * Fire-and-forget — failures are silently dropped, the metrics endpoint

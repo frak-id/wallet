@@ -15,11 +15,11 @@ import { useEffect, useMemo } from "react";
 import { SsoButton } from "@/module/component/SsoButton";
 import { DismissButton } from "@/module/modal/component/Generic";
 import * as styles from "@/module/modal/component/Modal/index.css";
+import { resolvingContextStore } from "@/module/stores/resolvingContextStore";
 import {
     useListenerTranslation,
     useModalListenerUI,
 } from "@/ui/ListenerUiProvider";
-import { resolvingContextStore } from "@/module/stores/resolvingContextStore";
 import { AuthenticateWithPhone } from "../AuthenticateWithPhone";
 
 /**

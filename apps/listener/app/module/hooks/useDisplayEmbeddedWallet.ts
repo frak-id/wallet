@@ -1,8 +1,8 @@
 import type { IFrameRpcSchema } from "@frak-labs/core-sdk";
 import type { RpcPromiseHandler } from "@frak-labs/frame-connector";
+import type { WalletRpcContext } from "@/module/types/context";
 import { uiBus } from "@/uiBus";
 import { ensureUiRuntime } from "@/uiRuntime";
-import type { WalletRpcContext } from "@/module/types/context";
 
 type OnDisplayEmbeddedWalletRequest = RpcPromiseHandler<
     IFrameRpcSchema,

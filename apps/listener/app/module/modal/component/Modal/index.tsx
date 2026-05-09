@@ -31,13 +31,6 @@ import { FinalModalStep } from "@/module/modal/component/Final";
 import { MetadataInfo } from "@/module/modal/component/Generic";
 import { LoginModalStep } from "@/module/modal/component/Login";
 import { TransactionModalStep } from "@/module/modal/component/Transaction";
-import { BlockchainProvider } from "@/ui/BlockchainProvider";
-import {
-    type GenericWalletUiType,
-    type ModalUiType,
-    useListenerTranslation,
-    useListenerUI,
-} from "@/ui/ListenerUiProvider";
 import {
     modalStore,
     selectCurrentStep,
@@ -46,6 +39,13 @@ import {
     selectShouldFinish,
 } from "@/module/stores/modalStore";
 import { resolvingContextStore } from "@/module/stores/resolvingContextStore";
+import { BlockchainProvider } from "@/ui/BlockchainProvider";
+import {
+    type GenericWalletUiType,
+    type ModalUiType,
+    useListenerTranslation,
+    useListenerUI,
+} from "@/ui/ListenerUiProvider";
 import { ToastLoading } from "../../../component/ToastLoading";
 import * as styles from "./index.css";
 import { ModalStepIndicator } from "./Step";
@@ -189,7 +189,7 @@ function ListenerModalInner({
     /**
      * The inner component to display
      */
-    const { titleComponent, providedBy, footer } = useMemo(() => {
+    const { titleComponent, footer } = useMemo(() => {
         // Build the title component we will display
         const titleComponent = metadata?.header?.title ? (
             metadata.header.title
@@ -224,7 +224,6 @@ function ListenerModalInner({
 
         return {
             titleComponent,
-            providedBy,
             footer,
         };
     }, [metadata]);

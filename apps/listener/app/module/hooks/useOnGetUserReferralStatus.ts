@@ -4,9 +4,9 @@ import {
     RpcErrorCodes,
     type RpcPromiseHandler,
 } from "@frak-labs/frame-connector";
-import { ensureHydrated, queryClient } from "@/queryClient";
 import { userReferralStatusQueryOptions } from "@/module/hooks/useUserReferralStatus";
 import type { WalletRpcContext } from "@/module/types/context";
+import { ensureHydrated, queryClient } from "@/queryClient";
 
 type OnGetUserReferralStatus = RpcPromiseHandler<
     IFrameRpcSchema,

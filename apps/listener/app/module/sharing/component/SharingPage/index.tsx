@@ -17,12 +17,12 @@ import { sessionStore } from "@frak-labs/wallet-shared/stores/sessionStore";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import { useTrackSharing } from "@/module/hooks/useTrackSharing";
+import { useSafeResolvingContext } from "@/module/stores/hooks";
+import { resolvingContextStore } from "@/module/stores/resolvingContextStore";
 import {
     useListenerTranslation,
     useSharingListenerUI,
 } from "@/ui/ListenerUiProvider";
-import { useSafeResolvingContext } from "@/module/stores/hooks";
-import { resolvingContextStore } from "@/module/stores/resolvingContextStore";
 
 export function ListenerSharingPage() {
     const { currentRequest, clearRequest } = useSharingListenerUI();

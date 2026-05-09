@@ -10,11 +10,11 @@ import {
 import { trackEvent } from "@frak-labs/wallet-shared/common/analytics";
 import { sessionStore } from "@frak-labs/wallet-shared/stores/sessionStore";
 import type { Hex } from "viem";
-import type { UIRequest } from "@/ui/ListenerUiProvider";
 import { resolvingContextStore } from "@/module/stores/resolvingContextStore";
 import type { WalletRpcContext } from "@/module/types/context";
 import { normalizeTargetInteraction } from "@/module/utils/normalizeTargetInteraction";
 import { resolveBackendMetadata } from "@/module/utils/resolveBackendMetadata";
+import type { UIRequest } from "@/ui/ListenerUiProvider";
 
 type OnDisplayEmbeddedWalletRequest = RpcPromiseHandler<
     IFrameRpcSchema,

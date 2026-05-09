@@ -15,9 +15,9 @@ import { useMemo } from "react";
 import { toast } from "sonner";
 import { ButtonAction } from "@/module/modal/component/ButtonAction";
 import * as styles from "@/module/modal/component/Modal/index.css";
-import { useListenerTranslation } from "@/ui/ListenerUiProvider";
 import { useSafeResolvingContext } from "@/module/stores/hooks";
 import { resolvingContextStore } from "@/module/stores/resolvingContextStore";
+import { useListenerTranslation } from "@/ui/ListenerUiProvider";
 import { useTrackSharing } from "../../../hooks/useTrackSharing";
 
 export function FinalModalActionComponent({

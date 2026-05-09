@@ -1,8 +1,8 @@
 import * as path from "node:path";
 import * as process from "node:process";
 import { fileURLToPath } from "node:url";
-import { vanillaExtractPlugin } from "@vanilla-extract/vite-plugin";
 import preact from "@preact/preset-vite";
+import { vanillaExtractPlugin } from "@vanilla-extract/vite-plugin";
 import type { UserConfig } from "vite";
 import { defineConfig } from "vite";
 import mkcert from "vite-plugin-mkcert";
@@ -139,7 +139,10 @@ export default defineConfig(async () => {
                 // `import ... from "react"` keeps working unchanged.
                 { find: /^react$/, replacement: preactCompat },
                 { find: /^react-dom$/, replacement: preactCompat },
-                { find: /^react-dom\/client$/, replacement: preactCompatClient },
+                {
+                    find: /^react-dom\/client$/,
+                    replacement: preactCompatClient,
+                },
                 { find: /^react\/jsx-runtime$/, replacement: preactJsxRuntime },
                 {
                     find: /^react\/jsx-dev-runtime$/,

@@ -1,5 +1,5 @@
 import { LogoFrak } from "@frak-labs/design-system/icons";
-import { encodeQR, type ErrorCorrection } from "qr";
+import { type ErrorCorrection, encodeQR } from "qr";
 import { useMemo } from "react";
 import * as styles from "./index.css";
 
@@ -110,6 +110,7 @@ function QrSvg({
     );
 }
 
+// biome-ignore lint/complexity/noExcessiveCognitiveComplexity: cuer replacement to build the cells for the qr code
 function buildCellsPath(
     grid: boolean[][],
     edge: number,

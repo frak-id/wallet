@@ -74,10 +74,7 @@ function initI18n(): void {
     // (~13 KB gzipped saved). Listener registered before init() so the initial
     // `languageChanged` event emitted by the language detector is captured.
     i18next.on("languageChanged", async (lng) => {
-        if (
-            lng === "fr" &&
-            !i18next.hasResourceBundle("fr", "translation")
-        ) {
+        if (lng === "fr" && !i18next.hasResourceBundle("fr", "translation")) {
             const { translation, customized } = await import(
                 "@frak-labs/wallet-shared/i18n/locales/fr"
             );
