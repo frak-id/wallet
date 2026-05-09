@@ -84,9 +84,14 @@ const router = createRouter({
     scrollRestoration: true,
     scrollToTopSelectors: ["main"],
     // Browsers without `document.startViewTransition` (Firefox, Safari < 18)
-    // gracefully fall through to instant navigation.
+    // gracefully fall through to instant navigation. We skip the transition
+    // on the very first navigation (no `fromLocation`) so the boot path —
+    // which often awaits route loaders, lazy chunks, and smart-wallet init —
+    // never trips Chromium's ~4s DOM-update timeout ("Transition was aborted
+    // because of timeout in DOM update").
     defaultViewTransition: {
-        types: ({ pathChanged }) => (pathChanged ? ["page"] : false),
+        types: ({ pathChanged, fromLocation }) =>
+            fromLocation && pathChanged ? ["page"] : false,
     },
 });
 
