@@ -20,7 +20,7 @@ import { useTrackSharing } from "@/module/hooks/useTrackSharing";
 import {
     useListenerTranslation,
     useSharingListenerUI,
-} from "@/module/providers/ListenerUiProvider";
+} from "@/ui/ListenerUiProvider";
 import { useSafeResolvingContext } from "@/module/stores/hooks";
 import { resolvingContextStore } from "@/module/stores/resolvingContextStore";
 

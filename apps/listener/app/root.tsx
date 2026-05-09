@@ -1,4 +1,4 @@
-import { RootProvider } from "@/module/providers/RootProvider";
+import { RootProvider } from "@/ui/RootProvider";
 import Listener from "@/views/listener";
 
 /**

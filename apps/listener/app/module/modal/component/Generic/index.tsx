@@ -4,7 +4,7 @@ import * as styles from "@/module/modal/component/Modal/index.css";
 import {
     useListenerTranslation,
     useModalListenerUI,
-} from "@/module/providers/ListenerUiProvider";
+} from "@/ui/ListenerUiProvider";
 import {
     modalStore,
     selectCurrentStepIndex,

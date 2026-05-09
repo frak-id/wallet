@@ -8,7 +8,7 @@
  * so it can stay in the eager bundle.
  */
 
-import type { UIRequest } from "@/module/providers/ListenerUiProvider";
+import type { UIRequest } from "@/ui/ListenerUiProvider";
 
 type Handler = (req: UIRequest) => void;
 

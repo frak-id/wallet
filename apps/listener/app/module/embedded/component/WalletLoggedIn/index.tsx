@@ -28,7 +28,7 @@ import {
 import {
     useEmbeddedListenerUI,
     useListenerTranslation,
-} from "@/module/providers/ListenerUiProvider";
+} from "@/ui/ListenerUiProvider";
 import { useSafeResolvingContext } from "@/module/stores/hooks";
 import { resolvingContextStore } from "@/module/stores/resolvingContextStore";
 import { useTrackSharing } from "../../../hooks/useTrackSharing";

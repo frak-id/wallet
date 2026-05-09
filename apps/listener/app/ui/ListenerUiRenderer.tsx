@@ -1,5 +1,5 @@
 import { lazy, Suspense, useEffect } from "react";
-import { useListenerUI } from "@/module/providers/ListenerUiProvider";
+import { useListenerUI } from "@/ui/ListenerUiProvider";
 
 /**
  * Lazy import of the modal UI

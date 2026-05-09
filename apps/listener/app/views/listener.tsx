@@ -3,7 +3,7 @@ import { createRpcListener } from "@frak-labs/frame-connector";
 import { useQueryClient } from "@tanstack/react-query";
 import i18next from "i18next";
 import { useEffect, useMemo } from "react";
-import { ListenerUiRenderer } from "@/module/component/ListenerUiRenderer";
+import { ListenerUiRenderer } from "@/ui/ListenerUiRenderer";
 import {
     clientLifecycleHandler,
     emitConnected,
@@ -27,7 +27,7 @@ import {
     loggingMiddleware,
     walletContextMiddleware,
 } from "@/module/middleware";
-import { ListenerUiProvider } from "@/module/providers/ListenerUiProvider";
+import { ListenerUiProvider } from "@/ui/ListenerUiProvider";
 import type {
     CombinedRpcSchema,
     WalletRpcContext,

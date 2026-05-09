@@ -2,7 +2,7 @@ import { prefixModalCss } from "@frak-labs/wallet-shared/common";
 import { Fingerprint, HandCoins, SendHorizonal, Share } from "lucide-react";
 import { type PropsWithChildren, useMemo } from "react";
 import * as styles from "@/module/modal/component/Modal/index.css";
-import { useListenerTranslation } from "@/module/providers/ListenerUiProvider";
+import { useListenerTranslation } from "@/ui/ListenerUiProvider";
 import {
     modalStore,
     selectActiveStep,

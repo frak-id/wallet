@@ -14,7 +14,7 @@ import {
 } from "@frak-labs/frame-connector";
 import { trackEvent } from "@frak-labs/wallet-shared/common/analytics";
 import { sessionStore } from "@frak-labs/wallet-shared/stores/sessionStore";
-import type { UIRequest } from "@/module/providers/ListenerUiProvider";
+import type { UIRequest } from "@/ui/ListenerUiProvider";
 import { modalStore, selectShouldFinish } from "@/module/stores/modalStore";
 import { resolvingContextStore } from "@/module/stores/resolvingContextStore";
 import type { DisplayedModalStep } from "@/module/stores/types";

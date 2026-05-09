@@ -31,13 +31,13 @@ import { FinalModalStep } from "@/module/modal/component/Final";
 import { MetadataInfo } from "@/module/modal/component/Generic";
 import { LoginModalStep } from "@/module/modal/component/Login";
 import { TransactionModalStep } from "@/module/modal/component/Transaction";
-import { BlockchainProvider } from "@/module/providers/BlockchainProvider";
+import { BlockchainProvider } from "@/ui/BlockchainProvider";
 import {
     type GenericWalletUiType,
     type ModalUiType,
     useListenerTranslation,
     useListenerUI,
-} from "@/module/providers/ListenerUiProvider";
+} from "@/ui/ListenerUiProvider";
 import {
     modalStore,
     selectCurrentStep,

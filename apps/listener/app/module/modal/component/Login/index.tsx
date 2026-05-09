@@ -18,7 +18,7 @@ import * as styles from "@/module/modal/component/Modal/index.css";
 import {
     useListenerTranslation,
     useModalListenerUI,
-} from "@/module/providers/ListenerUiProvider";
+} from "@/ui/ListenerUiProvider";
 import { resolvingContextStore } from "@/module/stores/resolvingContextStore";
 import { AuthenticateWithPhone } from "../AuthenticateWithPhone";
 

@@ -6,7 +6,7 @@ import { AuthenticateWithPhone } from "@/module/modal/component/AuthenticateWith
 import {
     useEmbeddedListenerUI,
     useListenerTranslation,
-} from "@/module/providers/ListenerUiProvider";
+} from "@/ui/ListenerUiProvider";
 import { useSafeResolvingContext } from "@/module/stores/hooks";
 import * as styles from "./index.css";
 
