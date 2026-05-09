@@ -216,22 +216,25 @@ describe("LaunchPairing", () => {
             expect(qrCode).toBeInTheDocument();
             expect(qrCode).toHaveAttribute(
                 "data-value",
-                expect.stringContaining("pairing-123")
+                expect.stringContaining("PAIRING-123")
             );
         });
 
-        it("should display QR code with correct URL format", () => {
+        it("emits the compact uppercase /P/<HEX> QR payload", () => {
             mockPairingState.pairing = {
-                id: "pairing-456",
+                id: "abc123def456",
                 code: "789012",
             };
 
             render(<LaunchPairing />);
 
             const qrCode = screen.getByTestId("qr-code");
-            expect(qrCode.getAttribute("data-value")).toContain(
-                "/pairing?id=pairing-456"
-            );
+            const value = qrCode.getAttribute("data-value") ?? "";
+            // QR alphanumeric mode requires uppercase + the 45-char alphabet.
+            expect(value).toContain("/P/ABC123DEF456");
+            expect(value).not.toMatch(/[a-z]/);
+            expect(value).not.toContain("?");
+            expect(value).not.toContain("mode=");
         });
 
         it("should set QR code size to 200", () => {

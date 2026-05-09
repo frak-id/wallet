@@ -238,6 +238,44 @@ describe("initDeepLinks", () => {
         });
     });
 
+    test("should handle compact /p/<HEX> HTTPS App Link (uppercase QR payload)", async () => {
+        const { initDeepLinks } = await import("./deepLink");
+        const navigate = vi.fn();
+
+        await initDeepLinks(navigate);
+
+        if (!openUrlHandler) {
+            throw new Error("Expected openUrlHandler to be set");
+        }
+
+        // QR codes emit uppercase to enable QR alphanumeric mode; the parser
+        // must lowercase the id so backend lookups (byte-exact varchar) match.
+        openUrlHandler(["https://wallet.frak.id/P/ABC123DEF456"]);
+
+        expect(navigate).toHaveBeenCalledWith({
+            to: "/pairing",
+            search: { id: "abc123def456", mode: "embedded" },
+        });
+    });
+
+    test("should handle compact frakwallet://p/<HEX> custom scheme", async () => {
+        const { initDeepLinks } = await import("./deepLink");
+        const navigate = vi.fn();
+
+        await initDeepLinks(navigate);
+
+        if (!openUrlHandler) {
+            throw new Error("Expected openUrlHandler to be set");
+        }
+
+        openUrlHandler(["frakwallet://p/ABC123DEF456"]);
+
+        expect(navigate).toHaveBeenCalledWith({
+            to: "/pairing",
+            search: { id: "abc123def456", mode: "embedded" },
+        });
+    });
+
     test("should ignore unknown HTTPS hosts", async () => {
         const { initDeepLinks } = await import("./deepLink");
         const navigate = vi.fn();

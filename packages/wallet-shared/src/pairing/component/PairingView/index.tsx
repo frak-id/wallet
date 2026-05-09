@@ -71,9 +71,9 @@ export function PairingView({
                     <Stack space="m" className={styles.qrCodeWrapper}>
                         {pairingInfo ? (
                             <PairingQrCode
-                                value={`${process.env.FRAK_WALLET_URL}/pairing?id=${pairingInfo.id}&mode=embedded`}
+                                value={`${process.env.FRAK_WALLET_URL ?? ""}/P/${pairingInfo.id}`.toUpperCase()}
                                 size={224}
-                                errorCorrection="quartile"
+                                errorCorrection="high"
                             />
                         ) : (
                             <Spinner />

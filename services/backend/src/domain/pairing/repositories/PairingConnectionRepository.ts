@@ -131,7 +131,9 @@ export class PairingConnectionRepository extends PairingRepository {
         const deviceName = this.uaToDeviceName(userAgent);
 
         // Create a new pairing
-        const pairingId = randomUUID();
+        // Hyphenless lowercase 32-char hex (UUID v4 entropy, fewer bytes on the
+        // wire so the QR code can use the QR alphanumeric mode when uppercased).
+        const pairingId = randomUUID().replace(/-/g, "");
 
         const pairingCode = randomInt(100000, 1000000).toString();
 
