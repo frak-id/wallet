@@ -505,6 +505,17 @@ jobs:
       #
       # The task is registered by `com.google.firebase.crashlytics` Gradle plugin. AGP
       # still strips the .so before packaging the AAB, so the shipped binary stays small.
+      #
+      # We `-x` the `rustBuild*Release` tasks because they would otherwise re-run as a
+      # transitive dependency of `merge*JniLibFolders`. Their `BuildTask` declares no
+      # `@OutputDirectory`, so Gradle treats them as always-out-of-date, and they shell out
+      # to `tauri android android-studio-script` which expects a parent `tauri android build`
+      # process to be alive (it reads CLI options over a JSON-RPC WebSocket whose addr is
+      # left in `/tmp/<identifier>-server-addr` by `write_options`). Outside that lifetime,
+      # the addr file is stale and the child panics with `ECONNREFUSED` at
+      # `crates/tauri-cli/src/mobile/mod.rs:read_options`. The `.so` files produced by the
+      # previous `tauri android build` step are still on disk, so the upload task can run
+      # against them without rebuilding.
       - name: "🔍 Upload Crashlytics native symbols"
         # Non-blocking: symbol upload failures must not break the release pipeline.
         # The AAB ships with `app-universal-release.aab`, so we target the Universal
@@ -512,7 +523,13 @@ jobs:
         continue-on-error: true
         run: |
           sst shell --stage "$STAGE" --print-logs -- bash -c \
-            "cd apps/wallet/src-tauri/gen/android && ./gradlew uploadCrashlyticsSymbolFileUniversalRelease --no-daemon"
+            "cd apps/wallet/src-tauri/gen/android && ./gradlew uploadCrashlyticsSymbolFileUniversalRelease \
+              -x rustBuildUniversalRelease \
+              -x rustBuildArm64Release \
+              -x rustBuildArmRelease \
+              -x rustBuildX86Release \
+              -x rustBuildX86_64Release \
+              --no-daemon"
         env:
           STAGE: ${{ needs.validate.outputs.stage }}
           FRAK_VARIANT: ${{ needs.validate.outputs.stage }}
