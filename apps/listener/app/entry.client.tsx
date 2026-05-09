@@ -11,6 +11,46 @@ import { setupBigIntSerialization } from "@frak-labs/wallet-shared/polyfills/big
 // Setup BigInt serialization polyfill
 setupBigIntSerialization();
 
+// ──────────────────────────────────────────────────────────────────────────
+// [PREACT-DEBUG] Global error surface
+// ──────────────────────────────────────────────────────────────────────────
+// During the React→Preact migration we hit silent UI failures whose only
+// console signal is `Uncaught (in promise) Promise {<pending>}`. That message
+// originates from preact/compat/src/suspense.js: when a lazy component throws
+// a Promise and no <Suspense> boundary is found while walking up the vdom,
+// the thrown Promise falls through to the default error handler and becomes
+// an unhandled rejection. Wire up window-level listeners so we always see
+// the full stack + the offending value, instead of just the opaque message.
+if (typeof window !== "undefined") {
+    window.addEventListener("unhandledrejection", (event) => {
+        const reason = event.reason;
+        // eslint-disable-next-line no-console
+        console.error(
+            "[listener-debug] unhandledrejection",
+            {
+                isPromise: reason && typeof (reason as { then?: unknown })?.then === "function",
+                reasonString: String(reason),
+                reason,
+            }
+        );
+    });
+    window.addEventListener("error", (event) => {
+        // eslint-disable-next-line no-console
+        console.error("[listener-debug] window error", {
+            message: event.message,
+            filename: event.filename,
+            lineno: event.lineno,
+            colno: event.colno,
+            error: event.error,
+        });
+    });
+    // eslint-disable-next-line no-console
+    console.log("[listener-debug] entry.client booting", {
+        href: window.location.href,
+        hash: window.location.hash,
+    });
+}
+
 // Initialise analytics (OpenPanel + crashlytics globals) once at bootstrap.
 // Side-effect was previously triggered by importing the analytics module;
 // the explicit call keeps tree-shaking honest in the listener bundle.

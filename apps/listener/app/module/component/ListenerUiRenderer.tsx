@@ -1,4 +1,4 @@
-import { lazy, useEffect } from "react";
+import { lazy, Suspense, useEffect } from "react";
 import { useListenerUI } from "@/module/providers/ListenerUiProvider";
 
 /**
@@ -98,18 +98,30 @@ export function ListenerUiRenderer() {
      * If the request is an embedded wallet, display it
      */
     if (currentRequest.type === "embedded") {
-        return <ListenerWallet />;
+        return (
+            <Suspense fallback={null}>
+                <ListenerWallet />
+            </Suspense>
+        );
     }
 
     /**
      * If the request is a sharing page, display it
      */
     if (currentRequest.type === "sharing") {
-        return <ListenerSharingPage />;
+        return (
+            <Suspense fallback={null}>
+                <ListenerSharingPage />
+            </Suspense>
+        );
     }
 
     /**
      * If the request is a modal, display it
      */
-    return <ListenerModal {...currentRequest} />;
+    return (
+        <Suspense fallback={null}>
+            <ListenerModal {...currentRequest} />
+        </Suspense>
+    );
 }
