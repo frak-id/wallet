@@ -128,7 +128,7 @@ function PairingContent({ clientState }: { clientState: OriginPairingState }) {
             </div>
             {clientState.partnerDevice && <p>{clientState.partnerDevice}</p>}
             {pairingInfo?.code && (
-                <CodeInput value={pairingInfo.code} mode="numeric" />
+                <CodeInput value={pairingInfo.code} mode="numeric" fill />
             )}
         </div>
     );
