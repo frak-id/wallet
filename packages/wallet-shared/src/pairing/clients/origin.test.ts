@@ -421,4 +421,66 @@ describe("OriginPairingClient", () => {
 
         expect(client.state.pairing).toBeUndefined();
     });
+
+    test("RESUME_TOKEN_EXPIRED close auto-reinitiates with the last options", async () => {
+        // 1. Component calls initiatePairing — stashes options on the client.
+        await client.initiatePairing();
+        const ws = getLastWs();
+        ws.fire("open");
+        ws.fire("message", {
+            data: {
+                type: "pairing-initiated",
+                payload: {
+                    pairingId: "pairing-1",
+                    pairingCode: "123456",
+                    originResumeToken: "resume-token-xyz",
+                },
+            },
+        });
+        expect(client.state.pairing).toBeDefined();
+
+        // 2. WS dies, then resume attempt fails because the token aged out.
+        ws.ws.readyState = WebSocket.CLOSED;
+        subscribeMock.mockClear();
+        ws.fire("close", {
+            code: 4407,
+            reason: "Invalid or expired resume token",
+        } as CloseEvent);
+
+        // 3. Auto-reinitiate is queued via microtask — flush it.
+        await Promise.resolve();
+
+        // 4. A fresh `action=initiate` WS should have been opened.
+        expect(subscribeMock).toHaveBeenCalledTimes(1);
+        expect(subscribeMock.mock.calls[0]?.[0]?.query).toMatchObject({
+            action: "initiate",
+        });
+        // 5. State is NOT in "error" — the close was consumed silently.
+        expect(client.state.status).not.toBe("error");
+    });
+
+    test("RESUME_TOKEN_EXPIRED with no stashed options falls through to error state", () => {
+        // No initiatePairing() call — e.g. tab refresh + auto-resume from
+        // sessionStorage that races a server-side TTL expiry.
+        mockedSafeSession.mockImplementation(() => undefined);
+        client.store.setState((prev) => ({
+            ...prev,
+            status: "connecting",
+            pairing: {
+                id: "pairing-1",
+                code: "123456",
+                originResumeToken: "resume-token-xyz",
+            },
+        }));
+        client.reconnect();
+        const ws = getLastWs();
+        ws.ws.readyState = WebSocket.CLOSED;
+        ws.fire("close", {
+            code: 4407,
+            reason: "Pairing not found",
+        } as CloseEvent);
+
+        expect(client.state.status).toBe("error");
+        expect(client.state.pairing).toBeUndefined();
+    });
 });

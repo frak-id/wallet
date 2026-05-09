@@ -197,14 +197,17 @@ export class PairingConnectionRepository extends PairingRepository {
         ws: ElysiaWS;
     }) {
         if (!originResumeToken) {
-            ws.close(WsCloseCode.INVALID_MSG, "Missing resume token");
+            ws.close(WsCloseCode.RESUME_TOKEN_EXPIRED, "Missing resume token");
             return;
         }
 
         const verified =
             await JwtContext.originResume.verify(originResumeToken);
         if (!verified) {
-            ws.close(WsCloseCode.FORBIDDEN, "Invalid or expired resume token");
+            ws.close(
+                WsCloseCode.RESUME_TOKEN_EXPIRED,
+                "Invalid or expired resume token"
+            );
             return;
         }
 
@@ -212,7 +215,9 @@ export class PairingConnectionRepository extends PairingRepository {
             where: eq(pairingTable.pairingId, verified.pairingId),
         });
         if (!pairing) {
-            ws.close(WsCloseCode.PAIRING_NOT_FOUND, "Pairing not found");
+            // Pairing was GC'd before the origin reconnected. Use the same
+            // close code so the client treats it as a clean restart trigger.
+            ws.close(WsCloseCode.RESUME_TOKEN_EXPIRED, "Pairing not found");
             return;
         }
 

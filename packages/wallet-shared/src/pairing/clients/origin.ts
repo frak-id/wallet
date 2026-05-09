@@ -20,6 +20,15 @@ import {
 } from "../types";
 import { BasePairingClient } from "./base";
 
+/**
+ * App-defined WS close code mirroring
+ * `WsCloseCode.RESUME_TOKEN_EXPIRED` from the backend. Imported as a
+ * literal to avoid a runtime dep on the backend module from the shared
+ * package; if the backend ever changes the value, the test for
+ * `auto-reinitiate` will catch the drift.
+ */
+const RESUME_TOKEN_EXPIRED_CODE = 4407;
+
 export type OnPairingSuccessCallback = () => void | Promise<void>;
 
 const PING_INTERVAL_MS = 5_000;
@@ -100,6 +109,16 @@ export class OriginPairingClient extends BasePairingClient<
 
     private onPairingSuccess: OnPairingSuccessCallback | null = null;
 
+    /**
+     * Last options passed to `initiatePairing()`. Held so the client can
+     * transparently re-initiate when the server signals that the current
+     * pairing/token is gone (RESUME_TOKEN_EXPIRED). Cleared on `reset()`.
+     */
+    private lastInitiateOptions: {
+        onSuccess?: OnPairingSuccessCallback;
+        originNode?: OriginIdentityNode;
+    } | null = null;
+
     constructor() {
         super();
 
@@ -142,7 +161,22 @@ export class OriginPairingClient extends BasePairingClient<
             status: "idle",
             signatureRequests: new Map(),
             closeInfo: undefined,
+            // Explicitly undefined so a Zustand shallow merge
+            // (`{ ...prev, ...initial }`) actually clears any stale pairing
+            // — omitting the key would let the previous value survive.
+            pairing: undefined,
         };
+    }
+
+    /**
+     * Override of base hook — also clear stashed initiate options. After a
+     * hard reset the consumer is expected to start fresh, so any leftover
+     * options would be misleading.
+     */
+    override reset(): void {
+        this.lastInitiateOptions = null;
+        this.onPairingSuccess = null;
+        super.reset();
     }
 
     async initiatePairing(options?: {
@@ -150,6 +184,7 @@ export class OriginPairingClient extends BasePairingClient<
         originNode?: OriginIdentityNode;
     }) {
         this.onPairingSuccess = options?.onSuccess ?? null;
+        this.lastInitiateOptions = options ?? {};
 
         this.forceConnect(() =>
             this.connect({
@@ -338,6 +373,34 @@ export class OriginPairingClient extends BasePairingClient<
      */
     protected override onSocketOpen(): void {
         this.startPingInterval();
+    }
+
+    /**
+     * Override of base hook — a `RESUME_TOKEN_EXPIRED` close means the server
+     * dropped the pairing (TTL exceeded) or our resume token aged out of its
+     * 10-minute window. Either way, the right answer is to silently obtain a
+     * fresh pairing using the same options the consumer passed to the last
+     * `initiatePairing()` call. If we have no stashed options (e.g. tab
+     * refresh + auto-resume + token expired before the component mounted
+     * and called `initiatePairing()`), fall back to the default error path
+     * by returning false.
+     */
+    protected override handleFatalClose(code: number): boolean {
+        if (code !== RESUME_TOKEN_EXPIRED_CODE) return false;
+
+        // Wipe the stale `pairing` state synchronously so the next
+        // `initiatePairing()` doesn't read it back from the persisted store.
+        this.setState({ ...this.getInitialState() });
+
+        const opts = this.lastInitiateOptions;
+        if (!opts) return false;
+
+        // Defer the re-initiate so we leave the close handler before opening
+        // a new WS — keeps the WS lifecycle linear.
+        queueMicrotask(() => {
+            void this.initiatePairing(opts);
+        });
+        return true;
     }
 
     private removeSignatureRequest(id: string) {

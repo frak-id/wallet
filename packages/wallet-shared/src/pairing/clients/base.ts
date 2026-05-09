@@ -201,6 +201,17 @@ export abstract class BasePairingClient<
     }
 
     /**
+     * Hook fired during a fatal WS close. If the subclass returns `true`,
+     * the base will SKIP the default "error" state transition (assuming the
+     * subclass already moved the client to a sensible state — idle, a fresh
+     * pairing attempt, etc.). Returning `false` (the default) keeps the
+     * standard error-surfacing behaviour.
+     */
+    protected handleFatalClose(_code: number, _reason: string): boolean {
+        return false;
+    }
+
+    /**
      * Subclass hook fired after the socket is open and the outbound queue
      * has been flushed. Useful to (re)start the heartbeat after reconnect.
      */
@@ -449,6 +460,16 @@ export abstract class BasePairingClient<
                 code: "connection-lost",
                 detail: reason || `ws-${code}`,
             });
+
+            // Subclass hook: a subclass may know that this specific fatal
+            // close is recoverable without user intervention (e.g. an
+            // expired resume token where re-initiating produces a fresh
+            // one). If consumed, we DON'T flip status to "error".
+            if (this.handleFatalClose(code, reason)) {
+                this.resetReconnectState();
+                return;
+            }
+
             this.setState({
                 ...this.getInitialState(),
                 status: "error",
