@@ -13,6 +13,7 @@ import {
     getSstResource,
     lightningCssConfig,
     onwarn,
+    stripAbiInternalType,
 } from "../../packages/dev-tooling";
 import walletPackage from "./package.json";
 
@@ -69,7 +70,6 @@ const tauriAlias = isTauri
           { find: /^tauri-plugin-.*$/, replacement: tauriStub },
       ];
 
-
 // Code-splitting groups for Rolldown. Same shape for web and Tauri.
 //
 // Tauri's `tauri://` protocol handler is faster than HTTP/2+CDN per asset
@@ -99,21 +99,42 @@ function buildChunkGroups() {
             priority: 40,
             minShareCount: 1,
         },
+        // Tanstack-vendor BEFORE blockchain-vendor: when wagmi pulls @tanstack/
+        // query-core and zustand transitively, bun's content-addressed layout
+        // produces paths like `node_modules/.bun/wagmi@x/node_modules/@tanstack/
+        // query-core/...` that match BOTH this regex AND the blockchain regex.
+        // Higher priority wins (Rolldown), so tanstack-vendor must outrank
+        // blockchain-vendor or query-core gets duplicated across both chunks.
+        // We also fold zustand here — same state-management family, same leakage
+        // pattern: it was previously split between `index` (17KB) and
+        // `blockchain-vendor` (15KB) for ~32KB of duplication.
+        {
+            name: "tanstack-vendor",
+            test: /[\\/]node_modules[\\/](?:@tanstack|zustand)[\\/]/,
+            priority: 36,
+            minShareCount: 1,
+        },
         {
             name: "blockchain-vendor",
             test: /[\\/]node_modules[\\/](?:viem|wagmi|@wagmi|permissionless|@noble|@scure|ox)[\\/]/,
             priority: 35,
             minShareCount: 1,
         },
+        // Forms vendor — react-hook-form, cuer (QR component) and the underlying
+        // `qr` package. All three are reached only via lazy code paths (recovery
+        // routes, tokens.send route, PairingView in lazy auth routes, and the
+        // now-lazy Keypass modal in ModalOutlet). Split out from `ui-vendor`
+        // because ui-vendor's other members (@radix-ui/vaul/sonner) are eager via
+        // the app shell, which dragged forms + cuer along when they shared a chunk.
         {
-            name: "tanstack-vendor",
-            test: /[\\/]node_modules[\\/]@tanstack[\\/]/,
-            priority: 32,
+            name: "forms-vendor",
+            test: /[\\/]node_modules[\\/](?:react-hook-form|cuer|qr)[\\/]/,
+            priority: 31,
             minShareCount: 1,
         },
         {
             name: "ui-vendor",
-            test: /[\\/]node_modules[\\/](@radix-ui|vaul|micromark|sonner|lucide-react|class-variance-authority|cuer|react-hook-form|react-dropzone)[\\/]/,
+            test: /[\\/]node_modules[\\/](@radix-ui|vaul|micromark|sonner|lucide-react|class-variance-authority|react-dropzone)[\\/]/,
             priority: 30,
             minShareCount: 1,
         },
@@ -130,50 +151,95 @@ function buildChunkGroups() {
             priority: 28,
             minShareCount: 1,
         },
-        // Feature buckets — truly LAZY chunks, only loaded when the user
-        // navigates to a route in that family. We match exclusively the
-        // `?tsr-split=*` virtual modules (TanStack Router's lazy
-        // component split). Their transitive dependencies that aren't
-        // captured by another group fall into the feature chunk via the
-        // auto-chunker, keeping each navigation to a single fetch.
+        // Shared LAZY app code: small components in `app/module/common/` plus
+        // a curated subset of `wallet-shared` (sharing/referral/pairing/identity)
+        // used across 2+ feature chunks. MUST sit ABOVE the feature groups in
+        // priority — Rolldown's `add_module_and_dependencies_to_group_recursively`
+        // pulls every transitive dep of a matched module into that group, so a
+        // shared component like `InfoCard` (used by 6 features) ends up swept into
+        // the FIRST feature group whose regex matches its importer (e.g.
+        // feature-monerium claiming InfoCard via MoneriumConnect). Every other
+        // feature then static-imports from that one, turning isolated navigations
+        // into multi-chunk fetches.
+        //
+        // `minShareCount: 2` keeps single-feature internals (e.g. auth-only
+        // `Back`/`Password` components) inside their feature chunk; only modules
+        // reachable from 2+ entries get hoisted here. `minSize: 0` overrides the
+        // global 4KB threshold so even a 3KB shared module emits as its own chunk.
+        {
+            name: "common-lazy",
+            test: /[\\/]app[\\/]module[\\/]common[\\/]|[\\/]packages[\\/]wallet-shared[\\/]src[\\/](?:common|sharing|referral|pairing|identity)[\\/]/,
+            priority: 27,
+            minShareCount: 2,
+            minSize: 0,
+        },
+        // Feature buckets — truly LAZY chunks, loaded when the user navigates
+        // to a route in that family OR opens a heavy modal through `ModalOutlet`.
+        // We match BOTH:
+        //   • `?tsr-split=*` virtual modules (TanStack Router lazy components)
+        //   • `app/module/<name>/` paths reached via dynamic `import()` from
+        //     `ModalOutlet` (e.g. MoneriumBankFlow, ExplorerDetail, …)
+        // Their transitive dependencies that aren't captured by another group
+        // fall into the feature chunk via the auto-chunker, keeping each
+        // navigation/modal-open to a single fetch.
         {
             name: "feature-auth",
-            test: /[\\/]app[\\/]routes[\\/]_wallet[\\/](?:_auth|_sso)[\\/].*\?tsr-split=/,
+            test: /[\\/]app[\\/](?:routes[\\/]_wallet[\\/](?:_auth|_sso)[\\/].*\?tsr-split=|module[\\/](?:onboarding|authentication)[\\/])/,
             priority: 25,
             minShareCount: 1,
         },
         {
             name: "feature-wallet",
-            test: /[\\/]app[\\/]routes[\\/]_wallet[\\/]_protected[\\/](?:wallet|tokens|monerium)[.\\/].*\?tsr-split=/,
+            test: /[\\/]app[\\/](?:module[\\/](?:wallet|tokens)[\\/]|routes[\\/]_wallet[\\/]_protected[\\/](?:wallet|tokens)[.\\/].*\?tsr-split=)/,
             priority: 24,
+            minShareCount: 1,
+        },
+        // Monerium subtree — entire 12-file flow + REST client + zustand stores.
+        // No external SDK; ~70KB of hand-rolled code. Captured here so it lazy-
+        // loads when the user opens the bank-flow modal or hits the OAuth callback.
+        {
+            name: "feature-monerium",
+            test: /[\\/]app[\\/](?:module[\\/]monerium[\\/]|routes[\\/]_wallet[\\/]_protected[\\/]monerium\.)/,
+            priority: 23,
             minShareCount: 1,
         },
         {
             name: "feature-profile",
             test: /[\\/]app[\\/]routes[\\/]_wallet[\\/]_protected[\\/](?:profile|settings)[.\\/].*\?tsr-split=/,
-            priority: 23,
+            priority: 22,
+            minShareCount: 1,
+        },
+        // Referral subtree (module + the fullscreen referral route). Higher
+        // priority than `feature-social` so the route ID match wins over the
+        // generic `_protected-fullscreen` capture.
+        {
+            name: "feature-referral",
+            test: /[\\/]app[\\/](?:module[\\/]referral[\\/]|routes[\\/]_wallet[\\/]_protected-fullscreen[\\/]profile[\\/]referral)/,
+            priority: 21,
+            minShareCount: 1,
+        },
+        // Explorer subtree (module + protected `explorer.*` route). Captured
+        // separately so opening the explorer modal pulls a focused ~25KB chunk.
+        {
+            name: "feature-explorer",
+            test: /[\\/]app[\\/](?:module[\\/]explorer[\\/]|routes[\\/]_wallet[\\/]_protected[\\/]explorer\..*\?tsr-split=)/,
+            priority: 20,
             minShareCount: 1,
         },
         {
             name: "feature-social",
             test: /[\\/]app[\\/]routes[\\/](?:_wallet[\\/]_protected-fullscreen[\\/]|(?:sharing|install)\.).*\?tsr-split=/,
-            priority: 22,
+            priority: 19,
             minShareCount: 1,
         },
         {
             name: "feature-content",
-            test: /[\\/]app[\\/]routes[\\/]_wallet[\\/]_protected[\\/](?:history|notifications|explorer)\..*\?tsr-split=/,
-            priority: 21,
+            test: /[\\/]app[\\/](?:module[\\/]history[\\/]|routes[\\/]_wallet[\\/]_protected[\\/](?:history|notifications)\..*\?tsr-split=)/,
+            priority: 18,
             minShareCount: 1,
         },
-        // Lowest-priority catch-all for shared LAZY modules (used by 2+
-        // feature chunks but not part of the eager shell). Without this,
-        // duplicates leak into each feature chunk.
-        {
-            name: "common-lazy",
-            priority: 5,
-            minShareCount: 2,
-        },
+        // (`common-lazy` group is defined above, between app-shell and the feature
+        // groups, so its priority outranks every feature.)
     ];
 }
 
@@ -291,8 +357,7 @@ export default defineConfig(
                     codeSplittingOptions: {
                         splitBehavior: ({ routeId }) => {
                             // Filename-prefix layouts (TanStack convention).
-                            const lastSegment =
-                                routeId.split("/").pop() ?? "";
+                            const lastSegment = routeId.split("/").pop() ?? "";
                             if (lastSegment.startsWith("_")) return [];
                             // Parent routes that just render `<Outlet/>` to
                             // host nested children. TanStack's plugin can't
@@ -312,6 +377,7 @@ export default defineConfig(
                 // Skip HTTPS for Tauri dev (simulators don't trust self-signed certs) and sandbox (proxy handles TLS)
                 ...(isTauri || isSandbox ? [] : [mkcert()]),
                 ...(isProd ? [removeConsole()] : []),
+                stripAbiInternalType(),
             ],
             resolve: {
                 tsconfigPaths: true,
