@@ -3,7 +3,10 @@
   "version": "0.0.1",
   "description": "SDK iframe listener for Frak Wallet",
   "private": true,
-  "sideEffects": false,
+  "sideEffects": [
+    "**/*.css",
+    "**/*.css.ts"
+  ],
   "type": "module",
   "license": "GNU GPL 3.0",
   "scripts": {

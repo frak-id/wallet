@@ -202,6 +202,7 @@ describe("mapI18nConfig", () => {
         mockI18n = {
             language: "en",
             languages: ["en", "fr", "de"],
+            options: { supportedLngs: ["en", "fr", "de"] },
             addResourceBundle: vi.fn(),
         };
         vi.stubGlobal("fetch", vi.fn());
@@ -432,5 +433,78 @@ describe("mapI18nConfig", () => {
 
         expect(consoleSpy).toHaveBeenCalled();
         consoleSpy.mockRestore();
+    });
+
+    // Regression: cloneInstance() returns synchronously but populates
+    // `languages` only after async init completes. Detection must still
+    // work via supportedLngs / language fallbacks during that window.
+    describe("when i18n.languages is not yet populated", () => {
+        it("should fall back to options.supportedLngs to detect language codes", async () => {
+            mockI18n.languages = undefined;
+            mockI18n.options = { supportedLngs: ["en", "fr", "de"] };
+
+            const config = {
+                en: { "app.title": "English" },
+                fr: { "app.title": "Français" },
+            };
+
+            await mapI18nConfig(config, mockI18n);
+
+            expect(mockI18n.addResourceBundle).toHaveBeenCalledTimes(2);
+        });
+
+        it("should fall back to options.supportedLngs to detect localized config", async () => {
+            mockI18n.languages = undefined;
+            mockI18n.options = { supportedLngs: ["en", "fr", "de"] };
+
+            const config = {
+                "app.title": "Title",
+                "app.text": "Text",
+            };
+
+            await mapI18nConfig(config, mockI18n);
+
+            expect(mockI18n.addResourceBundle).toHaveBeenCalledWith(
+                "en",
+                "customized",
+                expect.any(Object),
+                true,
+                true
+            );
+        });
+
+        it("should fall back to language when supportedLngs is missing", async () => {
+            mockI18n.languages = undefined;
+            mockI18n.options = {};
+
+            const config = {
+                en: { "app.title": "English" },
+            };
+
+            await mapI18nConfig(config, mockI18n);
+
+            expect(mockI18n.addResourceBundle).toHaveBeenCalledTimes(1);
+            expect(mockI18n.addResourceBundle).toHaveBeenCalledWith(
+                "en",
+                "customized",
+                expect.objectContaining({ app: { title: "English" } }),
+                true,
+                true
+            );
+        });
+
+        it("should not throw when languages, supportedLngs and language are all missing", async () => {
+            mockI18n.languages = undefined;
+            mockI18n.language = undefined;
+            mockI18n.options = {};
+
+            const config = {
+                "app.title": "Title",
+            };
+
+            await expect(
+                mapI18nConfig(config, mockI18n)
+            ).resolves.not.toThrow();
+        });
     });
 });

@@ -25,3 +25,7 @@ src-tauri/plugins/*/android/.tauri/
 
 # Tanstack temo
 .tanstack/tmp/
+
+# Build
+dist-web/
+dist-tauri/

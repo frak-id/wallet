@@ -12,10 +12,12 @@ const fadeOutKeyframes = keyframes({
 
 export const launchPairing = style({
     margin: "20px auto",
+    width: "100%",
+    boxSizing: "border-box",
 });
 
 export const launchPairing__status = style({
-    marginTop: "15px",
+    marginTop: "8px",
     textAlign: "center",
 });
 
@@ -28,17 +30,14 @@ export const launchPairing__qrCode = style({
 
 export const launchPairing__brighterQRCode = style({
     position: "fixed",
-    top: 0,
-    left: 0,
-    width: "100%",
-    height: "100%",
+    inset: 0,
     backgroundColor: "#fff",
     zIndex: 1000,
     color: "#000",
     borderRadius: "var(--frak-radius-l)",
     display: "flex",
     flexDirection: "column",
-    alignItems: "center",
+    alignItems: "stretch",
     justifyContent: "center",
     textAlign: "center",
     opacity: 0,

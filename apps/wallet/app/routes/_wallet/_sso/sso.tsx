@@ -41,6 +41,7 @@ import { SsoHeader } from "@/module/authentication/component/Sso/SsoHeader";
 import { SsoLoginComponent } from "@/module/authentication/component/Sso/SsoLogin";
 import { SsoRegisterComponent } from "@/module/authentication/component/Sso/SsoRegister";
 import { useDemoLogin } from "@/module/authentication/hook/useDemoLogin";
+import { Back } from "@/module/common/component/Back";
 import { ContentBlock } from "@/module/common/component/ContentBlock";
 import { PageLayout } from "@/module/common/component/PageLayout";
 import { StepLayout } from "@/module/common/component/StepLayout";
@@ -333,6 +334,7 @@ function Sso() {
             <PageLayout>
                 <Box className={layout.contentTop}>
                     <PairingView
+                        back={<Back onClick={() => setView("choose")} />}
                         title={t("authent.sso.pairing.title")}
                         description={t("authent.sso.pairing.description")}
                         onSuccess={onSuccess}

@@ -1,17 +1,52 @@
+import { lazy, Suspense } from "react";
 import { DetailOverlay } from "@/module/common/component/DetailOverlay";
-import { ExplorerDetail } from "@/module/explorer/component/ExplorerDetail";
-import { RewardDetailModal } from "@/module/history/component/RewardDetailModal";
-import { MoneriumBankFlow } from "@/module/monerium/component/MoneriumBankFlow";
-import { Keypass } from "@/module/onboarding/component/Keypass";
 import { RecoveryCodeSuccessModal } from "@/module/recovery-code/component/RecoveryCodeSuccessModal";
-import { EditReferralCodeSheet } from "@/module/referral/component/EditReferralCodeSheet";
 import { modalStore, selectModal } from "@/module/stores/modalStore";
 import { EmptyPendingGainsModal } from "@/module/tokens/component/EmptyPendingGainsModal";
 import { EmptyTransferModal } from "@/module/tokens/component/EmptyTransferModal";
 import { EmptyTransferredGainsModal } from "@/module/tokens/component/EmptyTransferredGainsModal";
-import { PendingGainsModal } from "@/module/tokens/component/PendingGainsModal";
 import { TransferModal } from "@/module/tokens/component/TransferModal";
-import { WelcomeDetail } from "@/module/wallet/component/WelcomeCard/WelcomeDetail";
+
+// Lazy-loaded: each modal is reached only via explicit user action and pulls a
+// non-trivial subtree (e.g. MoneriumBankFlow ~70KB across 12 files; Keypass pulls
+// AuthenticateWithPhone → LaunchPairing → cuer + react-hook-form). Keeping them
+// out of the entry chunk shrinks first paint by ~150KB. Modal animations mask
+// the ~50ms chunk fetch so `fallback={null}` is fine.
+const ExplorerDetail = lazy(() =>
+    import("@/module/explorer/component/ExplorerDetail").then((m) => ({
+        default: m.ExplorerDetail,
+    }))
+);
+const MoneriumBankFlow = lazy(() =>
+    import("@/module/monerium/component/MoneriumBankFlow").then((m) => ({
+        default: m.MoneriumBankFlow,
+    }))
+);
+const Keypass = lazy(() =>
+    import("@/module/onboarding/component/Keypass").then((m) => ({
+        default: m.Keypass,
+    }))
+);
+const RewardDetailModal = lazy(() =>
+    import("@/module/history/component/RewardDetailModal").then((m) => ({
+        default: m.RewardDetailModal,
+    }))
+);
+const EditReferralCodeSheet = lazy(() =>
+    import("@/module/referral/component/EditReferralCodeSheet").then((m) => ({
+        default: m.EditReferralCodeSheet,
+    }))
+);
+const WelcomeDetail = lazy(() =>
+    import("@/module/wallet/component/WelcomeCard/WelcomeDetail").then((m) => ({
+        default: m.WelcomeDetail,
+    }))
+);
+const PendingGainsModal = lazy(() =>
+    import("@/module/tokens/component/PendingGainsModal").then((m) => ({
+        default: m.PendingGainsModal,
+    }))
+);
 
 /**
  * Global modal outlet — mounted once at the app root.
@@ -27,6 +62,15 @@ export function ModalOutlet() {
 
     if (!modal) return null;
 
+    return (
+        <Suspense fallback={null}>{renderModal(modal, closeModal)}</Suspense>
+    );
+}
+
+function renderModal(
+    modal: NonNullable<ReturnType<typeof selectModal>>,
+    closeModal: () => void
+) {
     switch (modal.id) {
         case "emptyTransfer":
             return <EmptyTransferModal onClose={closeModal} />;

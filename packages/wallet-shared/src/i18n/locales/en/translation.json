@@ -381,7 +381,16 @@
             "status": {
                 "idle": "Idle",
                 "connecting": "Pairing in progress",
-                "paired": "Paired"
+                "paired": "Paired",
+                "retryError": "Reconnecting…",
+                "error": "Connection lost"
+            },
+            "launch": {
+                "error": {
+                    "title": "Couldn’t connect",
+                    "description": "Something interrupted the pairing. Please try again.",
+                    "retry": "Try again"
+                }
             },
             "signatureRequest": {
                 "title": "Signature request",

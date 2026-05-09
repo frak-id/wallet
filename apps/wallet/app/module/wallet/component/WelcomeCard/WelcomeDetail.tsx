@@ -1,4 +1,3 @@
-import { Button } from "@frak-labs/design-system/components/Button";
 import {
     DetailSheet,
     DetailSheetActions,
@@ -9,9 +8,9 @@ import {
 import { Text } from "@frak-labs/design-system/components/Text";
 import { ShareIcon } from "@frak-labs/design-system/icons";
 import { useShareLink } from "@frak-labs/wallet-shared";
-import { useNavigate } from "@tanstack/react-router";
 import { useCallback } from "react";
 import { Trans, useTranslation } from "react-i18next";
+import { ButtonLink } from "@/module/common/component/ButtonLink";
 import { GlassButton } from "@/module/common/component/GlassButton";
 import { GlassCloseButton } from "@/module/common/component/GlassCloseButton";
 import { InstructionList } from "@/module/common/component/InstructionList";
@@ -31,7 +30,6 @@ type WelcomeDetailProps = {
 
 export function WelcomeDetail({ onClose }: WelcomeDetailProps) {
     const { t } = useTranslation();
-    const navigate = useNavigate();
 
     // Use the shared hook so Tauri (iOS / Android) goes through the native
     // share plugin and web uses the Web Share API — keeps analytics consistent
@@ -49,11 +47,6 @@ export function WelcomeDetail({ onClose }: WelcomeDetailProps) {
         if (!canShare) return;
         triggerSharing();
     }, [canShare, triggerSharing]);
-
-    const handleDiscover = () => {
-        onClose();
-        navigate({ to: "/explorer" });
-    };
 
     return (
         <DetailSheet style={{ paddingTop: 0 }}>
@@ -101,15 +94,16 @@ export function WelcomeDetail({ onClose }: WelcomeDetailProps) {
                         }}
                     />
                 </Text>
-                <Button
+                <ButtonLink
+                    to="/explorer"
+                    onClick={onClose}
                     variant="primary"
                     width="full"
-                    onClick={handleDiscover}
                     size="large"
                     fontSize="s"
                 >
                     {t("wallet.welcome.detail.discoverOffers")}
-                </Button>
+                </ButtonLink>
             </DetailSheetFooter>
         </DetailSheet>
     );

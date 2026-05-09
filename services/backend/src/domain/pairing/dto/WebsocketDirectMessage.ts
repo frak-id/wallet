@@ -3,12 +3,19 @@ import type { SignatureRejectReason } from "./SignatureRejectReason";
 
 /**
  * When a pairing is initiated by the origin
+ *
+ * `originResumeToken` is a short-lived JWT that authorises the origin to
+ * call `action=resume` after a transient WS close. It is sent ONLY over
+ * this direct response — never broadcast on the topic, never returned by
+ * the public `/find/:id` endpoint — so possessing the pairingId+code is
+ * not sufficient to hijack a resume.
  */
 export type WsPairingCreatedResponse = {
     type: "pairing-initiated";
     payload: {
         pairingId: string;
         pairingCode: string;
+        originResumeToken: string;
     };
 };
 

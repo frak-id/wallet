@@ -17,6 +17,7 @@ import "@frak-labs/wallet-shared";
 import "@frak-labs/design-system/global";
 import "./__root.css";
 import { useHardwareBack } from "@/module/common/hook/useHardwareBack";
+import { scheduleIdleModalPreload } from "@/module/common/utils/preloadModalChunks";
 
 export const Route = createRootRoute({
     component: RootComponent,
@@ -31,6 +32,12 @@ export const Route = createRootRoute({
  */
 function RootComponent() {
     useHardwareBack();
+
+    // Pre-warm modal-only lazy chunks during browser idle so the first open
+    // of Keypass / MoneriumBankFlow / ExplorerDetail / etc. resolves from a
+    // hot cache instead of a cold round-trip. Routes already preload via
+    // TanStack Router's `defaultPreload: "render"` (see `main.tsx`).
+    useEffect(() => scheduleIdleModalPreload(), []);
 
     return (
         <RootProvider>

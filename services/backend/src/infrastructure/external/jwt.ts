@@ -12,6 +12,7 @@ import {
     WalletTokenDto,
 } from "../../domain/auth/models/WalletSessionDto";
 import { AnonymousMergeTokenDto } from "../../domain/identity/models/AnonymousMergeTokenDto";
+import { OriginResumeTokenDto } from "../../domain/pairing/models/OriginResumeTokenDto";
 
 export namespace JwtContext {
     export const wallet = buildJwtContext({
@@ -42,6 +43,18 @@ export namespace JwtContext {
         // 60 minutes - user may browse before leaving in-app browser
         expirationDelayInSecond: 60 * 60,
         iss: "frak-identity",
+    });
+    /**
+     * Used to authenticate origin-side `action=resume` requests when the
+     * origin's WS dropped before a wallet token existed. Reuses the wallet
+     * JWT secret — shorter expiry to bound the replay window.
+     */
+    export const originResume = buildJwtContext({
+        secret: process.env.JWT_SECRET as string,
+        schema: OriginResumeTokenDto,
+        // 10 minutes — mirrors the backend's idle-pairing TTL.
+        expirationDelayInSecond: 60 * 10,
+        iss: "frak.id",
     });
 }
 

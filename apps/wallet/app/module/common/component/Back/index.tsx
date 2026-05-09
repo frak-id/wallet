@@ -9,6 +9,10 @@ import * as styles from "./index.css";
 
 type BackProps = {
     href?: string;
+    /** When `href` is set, navigate with `replace: true`. Use this for
+     * back arrows on entry-form pages so the user can't restore the
+     * page they came from when they tap the system back button. */
+    replace?: boolean;
     onClick?: () => void;
     disabled?: boolean;
     /** Override the default back arrow icon. */
@@ -18,6 +22,7 @@ type BackProps = {
 export function Back({
     children,
     href,
+    replace,
     onClick,
     disabled,
     icon = <ArrowLeftIcon />,
@@ -34,6 +39,7 @@ export function Back({
             <Box>
                 <Link
                     to={href}
+                    replace={replace}
                     aria-disabled={disabled}
                     aria-label={ariaLabel}
                     viewTransition

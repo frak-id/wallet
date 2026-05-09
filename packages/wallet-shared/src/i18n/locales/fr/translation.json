@@ -379,7 +379,16 @@
             "status": {
                 "idle": "Inactif",
                 "connecting": "Appairage en cours",
-                "paired": "Appairé"
+                "paired": "Appairé",
+                "retryError": "Reconnexion…",
+                "error": "Connexion perdue"
+            },
+            "launch": {
+                "error": {
+                    "title": "Connexion impossible",
+                    "description": "Quelque chose a interrompu l’appairage. Veuillez réessayer.",
+                    "retry": "Réessayer"
+                }
             },
             "signatureRequest": {
                 "title": "Demande de signature",

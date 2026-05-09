@@ -9,6 +9,7 @@ import type {
     StaticWalletTokenDto,
     StaticWalletWebauthnTokenDto,
 } from "../../auth/models/WalletSessionDto";
+import type { AuthenticatorRepository } from "../../auth/repositories/AuthenticatorRepository";
 import type { WalletSdkSessionService } from "../../auth/services/WalletSdkSessionService";
 import { pairingSignatureRequestTable, pairingTable } from "../db/schema";
 import { WsCloseCode } from "../dto/WebSocketCloseCode";
@@ -24,7 +25,8 @@ import {
 export class PairingConnectionRepository extends PairingRepository {
     constructor(
         // Helpers to generate the auth tokens
-        private readonly walletSdkSession: WalletSdkSessionService
+        private readonly walletSdkSession: WalletSdkSessionService,
+        private readonly authenticatorRepository: AuthenticatorRepository
     ) {
         super();
     }
@@ -43,7 +45,13 @@ export class PairingConnectionRepository extends PairingRepository {
         wallet?: StaticWalletTokenDto;
         ws: ElysiaWS;
     }) {
-        const { action, pairingCode, id, originNode: originNodeRaw } = query;
+        const {
+            action,
+            pairingCode,
+            id,
+            originResumeToken,
+            originNode: originNodeRaw,
+        } = query;
         if (!action && !wallet) {
             log.debug("No action or wallet token");
             ws.close(
@@ -58,6 +66,19 @@ export class PairingConnectionRepository extends PairingRepository {
         // If that's an initiate request
         if (action === "initiate" && !wallet) {
             await this.handleInitiateRequest({ userAgent, ws, originNode });
+            return;
+        }
+
+        // If that's a resume request (origin reconnecting an in-flight pairing
+        // before any wallet token exists — e.g. after a transient WS close).
+        // The resume token is a self-contained JWT that proves the caller is
+        // the original origin device, so it's the only credential we need.
+        if (action === "resume" && !wallet) {
+            await this.handleResumeRequest({
+                originResumeToken,
+                userAgent,
+                ws,
+            });
             return;
         }
 
@@ -124,6 +145,16 @@ export class PairingConnectionRepository extends PairingRepository {
         // Subscribe the client to the pairing topic
         ws.subscribe(originTopic(pairingId));
 
+        // Sign a short-lived token that authorises this origin device to call
+        // `action=resume`. The token is delivered ONLY over the direct WS
+        // response below (never broadcast on the topic, never returned by the
+        // public `/find/:id` endpoint), so possession of `pairingId` +
+        // `pairingCode` alone is not sufficient to hijack a resume.
+        const originResumeToken = await JwtContext.originResume.sign({
+            kind: "origin-resume",
+            pairingId,
+        });
+
         // Send back the pairing initiated event to the client
         this.sendDirectMessage({
             ws,
@@ -132,6 +163,137 @@ export class PairingConnectionRepository extends PairingRepository {
                 payload: {
                     pairingId,
                     pairingCode,
+                    originResumeToken,
+                },
+            },
+        });
+    }
+
+    /**
+     * Handle an origin resume request: re-attach the WS to its pairing topic
+     * after a transient close that happened *before* the target authenticated.
+     *
+     * Authentication uses a self-contained `originResumeToken` JWT that the
+     * server issued privately at `pairing-initiated`. The token's signature
+     * + `pairingId` claim is the only credential we need — we don't validate
+     * `pairingCode` here because the JWT itself is the proof of identity
+     * (and `pairingCode` leaks via the public `/find/:id` endpoint anyway).
+     *
+     * Two outcomes once the token is valid:
+     *  - Pairing still unresolved: just re-subscribe to the origin topic and
+     *    wait for the target to join. The origin already has the pairing
+     *    metadata in its local state, so we don't replay `pairing-initiated`.
+     *  - Pairing resolved while origin was disconnected: re-issue the wallet
+     *    JWT (looking up any valid authenticator for the wallet) and replay
+     *    the `authenticated` message directly to this WS.
+     */
+    private async handleResumeRequest({
+        originResumeToken,
+        userAgent,
+        ws,
+    }: {
+        originResumeToken?: string;
+        userAgent?: string;
+        ws: ElysiaWS;
+    }) {
+        if (!originResumeToken) {
+            ws.close(WsCloseCode.RESUME_TOKEN_EXPIRED, "Missing resume token");
+            return;
+        }
+
+        const verified =
+            await JwtContext.originResume.verify(originResumeToken);
+        if (!verified) {
+            ws.close(
+                WsCloseCode.RESUME_TOKEN_EXPIRED,
+                "Invalid or expired resume token"
+            );
+            return;
+        }
+
+        const pairing = await db.query.pairingTable.findFirst({
+            where: eq(pairingTable.pairingId, verified.pairingId),
+        });
+        if (!pairing) {
+            // Pairing was GC'd before the origin reconnected. Use the same
+            // close code so the client treats it as a clean restart trigger.
+            ws.close(WsCloseCode.RESUME_TOKEN_EXPIRED, "Pairing not found");
+            return;
+        }
+
+        // Always re-subscribe to the origin topic so future target-side
+        // messages reach this WS.
+        ws.subscribe(originTopic(pairing.pairingId));
+
+        // Touch lastActiveAt so the cleanup cron treats the resumed pairing
+        // as still alive.
+        await db
+            .update(pairingTable)
+            .set({ lastActiveAt: new Date() })
+            .where(eq(pairingTable.pairingId, pairing.pairingId));
+
+        // Pairing not yet resolved — nothing else to do, the origin already
+        // has its `pairing` state from the original `pairing-initiated`.
+        if (!pairing.wallet) {
+            log.debug(
+                { pairingId: pairing.pairingId },
+                "[Pairing] origin resumed an unresolved pairing"
+            );
+            return;
+        }
+
+        // Pairing was resolved while the origin was disconnected. Replay
+        // `authenticated` so the origin can settle into its `paired` session.
+        const authenticator =
+            await this.authenticatorRepository.getBySmartWalletAddress(
+                pairing.wallet
+            );
+        if (!authenticator) {
+            log.warn(
+                {
+                    pairingId: pairing.pairingId,
+                    wallet: pairing.wallet,
+                },
+                "[Pairing] resume: no authenticator found for resolved wallet"
+            );
+            ws.close(
+                WsCloseCode.PAIRING_NOT_FOUND,
+                "No authenticator for resolved wallet"
+            );
+            return;
+        }
+
+        const walletPayload: StaticWalletTokenDto = {
+            type: "distant-webauthn",
+            address: pairing.wallet,
+            authenticatorId: authenticator._id,
+            publicKey: authenticator.publicKey,
+            transports: undefined,
+            pairingId: pairing.pairingId,
+        };
+
+        const [walletToken, sdkJwt] = await Promise.all([
+            JwtContext.wallet.sign(walletPayload),
+            this.walletSdkSession.generateSdkJwt({ wallet: pairing.wallet }),
+        ]);
+
+        log.debug(
+            { pairingId: pairing.pairingId, wallet: pairing.wallet },
+            "[Pairing] origin resumed a resolved pairing — replaying authenticated"
+        );
+
+        // We intentionally bypass `userAgent` updates here — this is a
+        // re-attachment, not a fresh join.
+        void userAgent;
+
+        this.sendDirectMessage({
+            ws,
+            message: {
+                type: "authenticated",
+                payload: {
+                    token: walletToken,
+                    sdkJwt,
+                    wallet: walletPayload,
                 },
             },
         });

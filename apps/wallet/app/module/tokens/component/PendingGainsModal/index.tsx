@@ -1,7 +1,4 @@
-import {
-    addresses,
-    rewarderHubAbi,
-} from "@frak-labs/app-essentials/blockchain";
+import { addresses } from "@frak-labs/app-essentials/blockchain";
 import { Box } from "@frak-labs/design-system/components/Box";
 import { Button } from "@frak-labs/design-system/components/Button";
 import { ResponsiveModal } from "@frak-labs/design-system/components/ResponsiveModal";
@@ -18,6 +15,7 @@ import { encodeFunctionData } from "viem";
 import { waitForTransactionReceipt } from "viem/actions";
 import { useConnection, useSendTransaction } from "wagmi";
 import { CloseButton } from "@/module/common/component/CloseButton";
+import { rewarderClaimBatchAbi } from "@/module/tokens/utils/abi";
 import { useGetPendingRewards } from "../../hooks/useGetPendingRewards";
 import * as styles from "./index.css";
 
@@ -38,7 +36,7 @@ export function PendingGainsModal({ onClose }: PendingGainsModalProps) {
             if (!(pendingRewards?.length && address)) return;
 
             const data = encodeFunctionData({
-                abi: rewarderHubAbi,
+                abi: [rewarderClaimBatchAbi],
                 functionName: "claimBatch",
                 args: [pendingRewards.map(({ token }) => token)],
             });

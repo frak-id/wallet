@@ -293,6 +293,22 @@ export function ListenerUiProvider({ children }: PropsWithChildren) {
             defaultNS: "customized",
             // Use the translation fallback if not found in the custom ns
             fallbackNS: "translation",
+            // Force synchronous init so the clone is fully ready
+            // (isInitialized=true, languages populated, namespaces marked
+            // loaded) before this useMemo continues into populateI18nResources
+            // / getFixedT. Otherwise i18next logs "i18next was not initialized"
+            // and "namespace was not yet loaded" warnings on every modal open,
+            // and consumers race the async init queued via setTimeout(load, 0).
+            // Safe here: we have no backend plugin, so loadResources resolves
+            // synchronously and the parent already shares the resourceStore.
+            initAsync: false,
+            // Skip the no-op `loadResources` call (we share the parent's
+            // resourceStore — nothing to fetch). Setting `resources` to a
+            // truthy value combined with `partialBundledLanguages: false`
+            // makes i18next short-circuit `loadResources`, silencing the
+            // "No backend was added via i18next.use" warning.
+            partialBundledLanguages: false,
+            resources: {},
         });
 
         // Populate the i18n resources

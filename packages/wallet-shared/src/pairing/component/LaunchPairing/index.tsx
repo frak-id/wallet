@@ -1,13 +1,16 @@
+import { EmptyState } from "@frak-labs/design-system/components/EmptyState";
 import { Spinner } from "@frak-labs/design-system/components/Spinner";
+import { Text } from "@frak-labs/design-system/components/Text";
 import { clsx as cx } from "clsx";
-import { Cuer } from "cuer";
+import { CircleAlert } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { create, useStore } from "zustand";
-import { trackEvent } from "../../../common/analytics";
+import { useTranslation } from "react-i18next";
+import { create } from "zustand";
 import { CodeInput } from "../../../common/component/CodeInput";
 import type { OnPairingSuccessCallback } from "../../clients/origin";
-import { getOriginPairingClient } from "../../clients/store";
+import { useOriginPairingFlow } from "../../hook/useOriginPairingFlow";
 import type { OriginIdentityNode, OriginPairingState } from "../../types";
+import { PairingQrCode } from "../PairingQrCode";
 import { PairingStatus } from "../PairingStatus";
 import * as styles from "./index.css";
 
@@ -39,10 +42,11 @@ export function LaunchPairing({
     const [showFullScreen, setShowFullScreen] = useState(showBrighterQRCode);
     const [isExiting, setIsExiting] = useState(false);
     const timeoutRef = useRef<NodeJS.Timeout | null>(null);
-    const client = getOriginPairingClient();
 
-    // Get the current state of the client
-    const clientState = useStore(client.store);
+    const { clientState, isError, handleRetry } = useOriginPairingFlow({
+        onSuccess,
+        originNode,
+    });
 
     // Sync showFullScreen with store state
     useEffect(() => {
@@ -66,14 +70,22 @@ export function LaunchPairing({
         return () => setShowBrighterQRCode(false);
     }, [setShowBrighterQRCode]);
 
+    // The brighter-QR overlay is a white surface; the EmptyState text is dark
+    // by default but inherits `color: "#000"` from the overlay — still, the
+    // overlay is meaningless once the QR isn't usable. Dismiss it whenever
+    // the client transitions into an error state so the user lands back on
+    // the inline EmptyState retry block.
     useEffect(() => {
-        client.initiatePairing({ onSuccess, originNode });
-        trackEvent("pairing_initiated");
-    }, [client, onSuccess]);
+        if (isError && showBrighterQRCode) {
+            setShowBrighterQRCode(false);
+        }
+    }, [isError, showBrighterQRCode, setShowBrighterQRCode]);
 
     const pairingContent = useMemo(
-        () => <PairingContent clientState={clientState} />,
-        [clientState]
+        () => (
+            <PairingContent clientState={clientState} onRetry={handleRetry} />
+        ),
+        [clientState, handleRetry]
     );
 
     return (
@@ -97,7 +109,14 @@ export function LaunchPairing({
     );
 }
 
-function PairingContent({ clientState }: { clientState: OriginPairingState }) {
+function PairingContent({
+    clientState,
+    onRetry,
+}: {
+    clientState: OriginPairingState;
+    onRetry: () => void;
+}) {
+    const { t } = useTranslation();
     const pairingInfo = clientState.pairing;
     const showBrighterQRCode = useShowBrighterQRCodeStore(
         (state) => state.show
@@ -105,30 +124,48 @@ function PairingContent({ clientState }: { clientState: OriginPairingState }) {
     const setShowBrighterQRCode = useShowBrighterQRCodeStore(
         (state) => state.setShow
     );
+    const isError =
+        clientState.status === "error" || clientState.status === "retry-error";
 
     return (
         <div className={styles.launchPairing}>
-            {pairingInfo ? (
+            {isError ? (
+                <EmptyState
+                    icon={<CircleAlert size={20} />}
+                    title={t("wallet.pairing.launch.error.title")}
+                    description={t("wallet.pairing.launch.error.description")}
+                    action={{
+                        label: t("wallet.pairing.launch.error.retry"),
+                        onClick: onRetry,
+                    }}
+                />
+            ) : pairingInfo ? (
                 <button
                     type="button"
                     className={styles.launchPairing__qrCode}
                     onClick={() => setShowBrighterQRCode(!showBrighterQRCode)}
                 >
-                    <Cuer
-                        arena={"/icon.svg"}
+                    <PairingQrCode
                         value={`${process.env.FRAK_WALLET_URL}/pairing?id=${pairingInfo.id}&mode=embedded`}
                         size={200}
+                        errorCorrection="medium"
                     />
                 </button>
             ) : (
                 <Spinner />
             )}
-            <div className={styles.launchPairing__status}>
-                <PairingStatus status={clientState.status} />
-            </div>
-            {clientState.partnerDevice && <p>{clientState.partnerDevice}</p>}
-            {pairingInfo?.code && (
-                <CodeInput value={pairingInfo.code} mode="numeric" />
+            {!isError && (
+                <div className={styles.launchPairing__status}>
+                    <PairingStatus status={clientState.status} />
+                </div>
+            )}
+            {clientState.partnerDevice && (
+                <Text variant="bodySmall" align="center">
+                    {clientState.partnerDevice}
+                </Text>
+            )}
+            {!isError && pairingInfo?.code && (
+                <CodeInput value={pairingInfo.code} mode="numeric" fill />
             )}
         </div>
     );

@@ -250,14 +250,8 @@ const dialogOverlayShow = keyframes({
 });
 
 const dialogContentShow = keyframes({
-    from: {
-        opacity: 0,
-        transform: "translate(-50%, -48%) scale(0.96)",
-    },
-    to: {
-        opacity: 1,
-        transform: "translate(-50%, -50%) scale(1)",
-    },
+    from: { opacity: 0, transform: "scale(0.96)" },
+    to: { opacity: 1, transform: "scale(1)" },
 });
 
 export const alertDialog__overlay = style({
@@ -277,16 +271,18 @@ export const alertDialog__close = style({
 });
 
 export const alertDialog__content = style({
-    /* Create a new stacking context for the toaster to be inside our modal */
-    transform: "translate(-50%, -50%)",
+    /* Centering via `translate` (independent from `transform`, so animations using transform: scale() don't conflict) */
     backgroundColor: "var(--frak-alertDialog-background-color)",
     backdropFilter: "blur(85px)",
     position: "fixed",
     top: "50%",
     left: "50%",
+    translate: "-50% -50%",
     zIndex: 220,
-    width: "90vw",
+    width: "calc(100vw - 32px)",
     maxWidth: "420px",
+    maxHeight: "calc(100dvh - 32px)",
+    boxSizing: "border-box",
     padding: "15px",
     animation: `${dialogContentShow} 250ms cubic-bezier(0.16, 1, 0.3, 1)`,
     overflowY: "auto",

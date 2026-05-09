@@ -25,7 +25,7 @@ import type {
 import { useForm } from "react-hook-form";
 import { useTranslation } from "react-i18next";
 import type { Hex } from "viem";
-import { erc20Abi, parseUnits } from "viem";
+import { parseUnits } from "viem";
 import { useWriteContract } from "wagmi";
 import { useBiometricConfirm } from "@/module/biometrics";
 import { Back } from "@/module/common/component/Back";
@@ -35,6 +35,7 @@ import { TokenMax } from "@/module/tokens/component/TokenMax";
 import { TokenModalList } from "@/module/tokens/component/TokenModalList";
 import { TransactionError } from "@/module/tokens/component/TransactionError";
 import { TransactionSuccess } from "@/module/tokens/component/TransactionSuccess";
+import { erc20TransferAbi } from "@/module/tokens/utils/abi";
 import { getUpdatedToken } from "@/module/tokens/utils/getUpdatedToken";
 import { validateAmount } from "@/module/tokens/utils/validateAmount";
 import * as styles from "./tokens.send.css";
@@ -261,7 +262,7 @@ function TokensSendPage() {
 
             try {
                 await writeContractAsync({
-                    abi: erc20Abi,
+                    abi: [erc20TransferAbi],
                     address: selectedToken.token,
                     functionName: "transfer",
                     args: [

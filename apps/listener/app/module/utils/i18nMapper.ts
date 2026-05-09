@@ -117,6 +117,24 @@ function isLocalizedConfig(
         (typeof value === "object" &&
             Object.keys(value).length > 0 &&
             // If keys don't look like language codes but like translation paths
-            !Object.keys(value).some((key) => i18n.languages.includes(key)))
+            !Object.keys(value).some((key) =>
+                getKnownLanguageCodes(i18n).includes(key)
+            ))
     );
+}
+
+/**
+ * Resolve the language codes known to this i18n instance.
+ *
+ * `i18n.languages` is populated only after the async `init()` completes —
+ * cloned instances (see `ListenerUiProvider`) are returned synchronously
+ * before that happens, so we must fall back to `supportedLngs` / `language`
+ * to keep language-code detection working when this runs during a React
+ * render right after `cloneInstance`.
+ */
+function getKnownLanguageCodes(i18n: I18nType): readonly string[] {
+    if (i18n.languages?.length) return i18n.languages;
+    const supported = i18n.options.supportedLngs;
+    if (Array.isArray(supported) && supported.length > 0) return supported;
+    return i18n.language ? [i18n.language] : [];
 }
