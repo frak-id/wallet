@@ -26,13 +26,14 @@ export function getPlatformInfo() {
  * Returns undefined when env vars are missing so callers can no-op safely.
  * The SDK keeps its own OpenPanel instance (see `sdk/core/src/utils/trackEvent.ts`).
  */
+const clientId =
+    process.env.OPEN_PANEL_WALLET_CLIENT_ID ??
+    process.env.OPEN_PANEL_LISTENER_CLIENT_ID;
 export const openPanel =
-    typeof window !== "undefined" &&
-    process.env.OPEN_PANEL_API_URL &&
-    process.env.OPEN_PANEL_WALLET_CLIENT_ID
+    typeof window !== "undefined" && process.env.OPEN_PANEL_API_URL && clientId
         ? new OpenPanel({
               apiUrl: process.env.OPEN_PANEL_API_URL,
-              clientId: process.env.OPEN_PANEL_WALLET_CLIENT_ID,
+              clientId,
               trackScreenViews: true,
               trackOutgoingLinks: true,
               trackAttributes: false,
