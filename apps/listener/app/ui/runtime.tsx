@@ -19,6 +19,7 @@ import I18nextBrowserLanguageDetector from "i18next-browser-languagedetector";
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import { I18nextProvider, initReactI18next } from "react-i18next";
+import { drainPendingI18nOverrides } from "@/i18nOverrideQueue";
 import { useListenerDataPreload } from "@/module/hooks/useListenerDataPreload";
 import { ListenerUiProvider } from "@/ui/ListenerUiProvider";
 import { ListenerUiRenderer } from "@/ui/ListenerUiRenderer";
@@ -124,5 +125,10 @@ function initI18n(): void {
                 ],
             },
             react: { useSuspense: false },
+        })
+        .then(() => {
+            // Replay any lifecycle overrides that arrived while Ring 0 was
+            // running solo (modal-i18n, resolved-config.lang).
+            drainPendingI18nOverrides(i18next);
         });
 }
