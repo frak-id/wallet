@@ -35,6 +35,8 @@
     "@radix-ui/react-alert-dialog": "^1.1.15",
     "@frak-labs/wallet-shared": "workspace:*",
     "@tanstack/query-async-storage-persister": "catalog:",
+    "@tanstack/query-core": "catalog:",
+    "@tanstack/query-persist-client-core": "catalog:",
     "@tanstack/react-query": "catalog:",
     "@tanstack/react-query-persist-client": "catalog:",
     "clsx": "^2.1.1",

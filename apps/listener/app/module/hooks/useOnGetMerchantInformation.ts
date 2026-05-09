@@ -8,7 +8,7 @@ import {
     type RpcPromiseHandler,
 } from "@frak-labs/frame-connector";
 import { estimatedRewardsQueryOptions } from "@frak-labs/wallet-shared/common/hook/useEstimatedReward";
-import type { QueryClient } from "@tanstack/react-query";
+import { ensureHydrated, queryClient } from "@/queryClient";
 import { resolvingContextStore } from "@/module/stores/resolvingContextStore";
 import type { WalletRpcContext } from "@/module/types/context";
 
@@ -18,14 +18,11 @@ type OnGetMerchantInformation = RpcPromiseHandler<
     WalletRpcContext
 >;
 
-type Deps = {
-    queryClient: QueryClient;
-};
-
-export function createGetMerchantInformationHandler({
-    queryClient,
-}: Deps): OnGetMerchantInformation {
+export function createGetMerchantInformationHandler(): OnGetMerchantInformation {
     return async (_params, context) => {
+        // Wait for sessionStorage hydration so cached entries from previous
+        // page loads are available before falling back to a network round-trip.
+        await ensureHydrated();
         const { merchantId } = context;
 
         if (!merchantId) {

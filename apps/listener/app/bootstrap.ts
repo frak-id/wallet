@@ -17,7 +17,6 @@
 
 import type { FrakLifecycleEvent } from "@frak-labs/core-sdk";
 import { createRpcListener } from "@frak-labs/frame-connector";
-import { QueryClient } from "@tanstack/react-query";
 import {
     clientLifecycleHandler,
     emitConnected,
@@ -43,25 +42,8 @@ import type {
     CombinedRpcSchema,
     WalletRpcContext,
 } from "@/module/types/context";
+import { ensureHydrated } from "@/queryClient";
 
-/**
- * Singleton QueryClient shared between Ring 0 (RPC handlers via factories)
- * and Ring 1 (the React provider tree wraps it via QueryClientProvider).
- *
- * Persistence (sessionStorage hydration + dehydration) is wired in Ring 1
- * via `PersistQueryClientProvider`. Step 7 will introduce a vanilla lazy
- * hydration path so eager handlers can read cached entries before the UI
- * mounts; for now they just hit the network if the cache is cold.
- */
-export const queryClient = new QueryClient({
-    defaultOptions: {
-        queries: {
-            gcTime: 5 * 60 * 1000, // 5 minutes
-            staleTime: 60 * 1000, // 1 minute
-            retry: 1, // Reduced retries for iframe context
-        },
-    },
-});
 
 /**
  * Send a one-shot ping to the metrics server so we can count iframe loads.
@@ -162,15 +144,15 @@ export function bootstrap(): { cleanup: () => void } {
 
     markRootListener();
 
+    // Kick off lazy sessionStorage hydration so the singleton QueryClient
+    // can serve cached entries to handlers that arrive before Ring 1 mounts.
+    void ensureHydrated();
+
     // Vanilla factory handlers — created once, no React deps.
     const onWalletListenRequest = createWalletStatusHandler();
-    const onGetMerchantInformation = createGetMerchantInformationHandler({
-        queryClient,
-    });
+    const onGetMerchantInformation = createGetMerchantInformationHandler();
     const onSendInteraction = createSendInteractionHandler();
-    const onGetUserReferralStatus = createGetUserReferralStatusHandler({
-        queryClient,
-    });
+    const onGetUserReferralStatus = createGetUserReferralStatusHandler();
     const onGetMergeToken = createGetMergeTokenHandler();
     const onDisplayModalRequest = createDisplayModalHandler();
     const onDisplayEmbeddedWallet = createDisplayEmbeddedWalletHandler();
