@@ -146,7 +146,7 @@ function PairingContent({
                     onClick={() => setShowBrighterQRCode(!showBrighterQRCode)}
                 >
                     <PairingQrCode
-                        value={`${process.env.FRAK_WALLET_URL ?? ""}/P/${pairingInfo.id}`.toUpperCase()}
+                        value={`${process.env.FRAK_WALLET_URL ?? ""}/p/${pairingInfo.id}`}
                         size={200}
                         errorCorrection="quartile"
                     />

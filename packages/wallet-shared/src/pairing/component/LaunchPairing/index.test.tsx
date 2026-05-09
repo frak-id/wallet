@@ -216,11 +216,11 @@ describe("LaunchPairing", () => {
             expect(qrCode).toBeInTheDocument();
             expect(qrCode).toHaveAttribute(
                 "data-value",
-                expect.stringContaining("PAIRING-123")
+                expect.stringContaining("pairing-123")
             );
         });
 
-        it("emits the compact uppercase /P/<HEX> QR payload", () => {
+        it("emits the compact /p/<hex> QR payload", () => {
             mockPairingState.pairing = {
                 id: "abc123def456",
                 code: "789012",
@@ -230,9 +230,9 @@ describe("LaunchPairing", () => {
 
             const qrCode = screen.getByTestId("qr-code");
             const value = qrCode.getAttribute("data-value") ?? "";
-            // QR alphanumeric mode requires uppercase + the 45-char alphabet.
-            expect(value).toContain("/P/ABC123DEF456");
-            expect(value).not.toMatch(/[a-z]/);
+            // Compact alias: path-based id, no `mode=embedded`, no hyphens —
+            // halves the QR module count vs the legacy `/pairing?id=...` form.
+            expect(value).toContain("/p/abc123def456");
             expect(value).not.toContain("?");
             expect(value).not.toContain("mode=");
         });

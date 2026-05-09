@@ -238,7 +238,7 @@ describe("initDeepLinks", () => {
         });
     });
 
-    test("should handle compact /p/<HEX> HTTPS App Link (uppercase QR payload)", async () => {
+    test("should handle compact /p/<id> HTTPS App Link", async () => {
         const { initDeepLinks } = await import("./deepLink");
         const navigate = vi.fn();
 
@@ -248,8 +248,9 @@ describe("initDeepLinks", () => {
             throw new Error("Expected openUrlHandler to be set");
         }
 
-        // QR codes emit uppercase to enable QR alphanumeric mode; the parser
-        // must lowercase the id so backend lookups (byte-exact varchar) match.
+        // QR codes emit lowercase, but some scanners or shares may
+        // uppercase the URL — the parser must lowercase the id so backend
+        // lookups (byte-exact varchar) match the stored canonical form.
         openUrlHandler(["https://wallet.frak.id/P/ABC123DEF456"]);
 
         expect(navigate).toHaveBeenCalledWith({
@@ -258,7 +259,7 @@ describe("initDeepLinks", () => {
         });
     });
 
-    test("should handle compact frakwallet://p/<HEX> custom scheme", async () => {
+    test("should handle compact frakwallet://p/<id> custom scheme", async () => {
         const { initDeepLinks } = await import("./deepLink");
         const navigate = vi.fn();
 

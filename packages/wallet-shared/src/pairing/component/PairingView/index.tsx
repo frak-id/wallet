@@ -71,7 +71,7 @@ export function PairingView({
                     <Stack space="m" className={styles.qrCodeWrapper}>
                         {pairingInfo ? (
                             <PairingQrCode
-                                value={`${process.env.FRAK_WALLET_URL ?? ""}/P/${pairingInfo.id}`.toUpperCase()}
+                                value={`${process.env.FRAK_WALLET_URL ?? ""}/p/${pairingInfo.id}`}
                                 size={224}
                                 errorCorrection="high"
                             />
