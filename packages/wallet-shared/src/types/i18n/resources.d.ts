@@ -599,6 +599,13 @@ interface Resources {
                     status: "Status";
                     title: "Pairing information";
                 };
+                launch: {
+                    error: {
+                        description: "Something interrupted the pairing. Please try again.";
+                        retry: "Try again";
+                        title: "Couldn’t connect";
+                    };
+                };
                 list: {
                     createdAt: "Created at";
                     delete: "Delete device";
@@ -658,8 +665,10 @@ interface Resources {
                 };
                 status: {
                     connecting: "Pairing in progress";
+                    error: "Connection lost";
                     idle: "Idle";
                     paired: "Paired";
+                    retryError: "Reconnecting…";
                 };
                 text: "You're about to connect a device to your account.";
                 title: "Confirm device pairing";
