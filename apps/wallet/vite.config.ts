@@ -11,6 +11,7 @@ import removeConsole from "vite-plugin-remove-console";
 import {
     getSandboxEnv,
     getSstResource,
+    inlineFontFaces,
     lightningCssConfig,
     onwarn,
     stripAbiInternalType,
@@ -379,6 +380,13 @@ export default defineConfig(
                 ...(isTauri || isSandbox ? [] : [mkcert()]),
                 ...(isProd ? [removeConsole()] : []),
                 stripAbiInternalType(),
+                inlineFontFaces({
+                    cssFiles: [
+                        "public/fonts/inter.css",
+                        "public/fonts/inter-tight.css",
+                    ],
+                    preload: ["/fonts/inter-latin.woff2"],
+                }),
             ],
             resolve: {
                 tsconfigPaths: true,

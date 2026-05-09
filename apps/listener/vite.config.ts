@@ -339,7 +339,7 @@ export default defineConfig(async () => {
                 },
                 onwarn,
             },
-            sourcemap: false,
+            sourcemap: !isProd,
         },
     } satisfies UserConfig;
 });

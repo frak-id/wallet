@@ -1,4 +1,6 @@
-import type { Plugin, Rollup } from "vite";
+import * as fs from "node:fs/promises";
+import * as path from "node:path";
+import type { HtmlTagDescriptor, Plugin, Rollup } from "vite";
 
 export function onwarn(
     warning: Rollup.RollupLog,
@@ -120,6 +122,71 @@ export function stripAbiInternalType(): Plugin {
                 // small offset shifts are not worth the MagicString overhead.
                 map: null,
             };
+        },
+    };
+}
+
+/**
+ * Build-time plugin that inlines font-face CSS into `<style>` tags inside
+ * `index.html` and emits `<link rel="preload">` hints for hand-picked font
+ * files.
+ *
+ * Why: shipping `<link rel="stylesheet" href="/fonts/foo.css">` makes the CSS
+ * a render-blocking dependency AND chains the woff2 fetch behind it (HTML →
+ * css → woff2). Inlining the CSS removes the round-trip; preloading the
+ * critical subset removes the chain. Net: ~150–450 ms saved on FCP/LCP
+ * depending on network.
+ *
+ * Files are read at HTML transform time (works in dev and build). Paths are
+ * resolved against the Vite project root so the plugin is portable across
+ * apps in the monorepo.
+ */
+export type InlineFontFacesOptions = {
+    /** Project-root-relative paths to CSS files to inline, in order. */
+    cssFiles: string[];
+    /**
+     * Public URLs to add as `<link rel="preload" as="font" type="font/woff2"
+     * crossorigin>`. Targets the LCP-critical subset — don't preload more than
+     * 1–2 fonts or the budget gets eaten and other resources get delayed.
+     */
+    preload?: string[];
+};
+
+export function inlineFontFaces(options: InlineFontFacesOptions): Plugin {
+    let projectRoot = process.cwd();
+    return {
+        name: "frak:inline-font-faces",
+        configResolved(config) {
+            projectRoot = config.root;
+        },
+        async transformIndexHtml() {
+            const cssParts = await Promise.all(
+                options.cssFiles.map((file) =>
+                    fs.readFile(path.resolve(projectRoot, file), "utf-8")
+                )
+            );
+            const css = cssParts.join("\n");
+
+            const tags: HtmlTagDescriptor[] = [];
+            for (const href of options.preload ?? []) {
+                tags.push({
+                    tag: "link",
+                    attrs: {
+                        rel: "preload",
+                        as: "font",
+                        type: "font/woff2",
+                        crossorigin: "",
+                        href,
+                    },
+                    injectTo: "head",
+                });
+            }
+            tags.push({
+                tag: "style",
+                children: css,
+                injectTo: "head",
+            });
+            return tags;
         },
     };
 }

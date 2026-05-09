@@ -85,9 +85,9 @@
         <link rel="author" href="https://github.com/srod">
         <link rel="author" href="https://github.com/KONFeature">
 
-        <!-- Fonts: self-hosted Inter + Inter Tight (no CDN dependency) -->
-        <link rel="stylesheet" href="/fonts/inter.css">
-        <link rel="stylesheet" href="/fonts/inter-tight.css">
+        <!-- Fonts: self-hosted Inter + Inter Tight. Inlined into a <style> tag
+             and the latin subset is preloaded by the `inlineFontFaces` Vite
+             plugin (see vite.config.ts). -->
 
         <!-- Suppress Chrome's native PWA install promotion — users should install the Tauri app instead -->
         <script>
