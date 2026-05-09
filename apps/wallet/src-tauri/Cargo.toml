@@ -43,13 +43,18 @@ tauri-plugin-clipboard-manager = "2"
 tauri-plugin-share = "2.0.5"
 tauri-plugin-fs = "2.5.1"
 
-# Optimized release profile for smaller, faster builds
+# Optimized release profile for smaller, faster builds.
+# `strip = false` keeps Rust debug symbols in the unstripped `.so` so the
+# Firebase Crashlytics Gradle plugin can extract + upload them via
+# `uploadCrashlyticsSymbolFileRelease`. AGP still strips the `.so` before
+# packaging the APK/AAB, so the shipped binary stays small — only the
+# intermediate build artifacts carry debug info.
 [profile.release]
 codegen-units = 1
 lto = true
 opt-level = "s"
 panic = "abort"
-strip = true
+strip = false
 
 # Fast incremental dev builds
 [profile.dev]

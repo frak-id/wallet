@@ -432,6 +432,21 @@ jobs:
           STAGE: ${{ needs.validate.outputs.stage }}
           FRAK_VARIANT: ${{ needs.validate.outputs.stage }}
 
+      # Crashlytics symbol upload — runs against the unstripped Rust .so files emitted
+      # by `[profile.release] strip = false`. Without this, Rust panic backtraces in
+      # Crashlytics show only `art_quick_generic_jni_trampoline` + `<unknown>` frames
+      # (no Rust function names).
+      #
+      # The task is registered by `com.google.firebase.crashlytics` Gradle plugin. AGP
+      # still strips the .so before packaging the AAB, so the shipped binary stays small.
+      - name: "🔍 Upload Crashlytics native symbols"
+        run: |
+          sst shell --stage "$STAGE" --print-logs -- bash -c \
+            "cd apps/wallet/src-tauri/gen/android && ./gradlew uploadCrashlyticsSymbolFileRelease --no-daemon"
+        env:
+          STAGE: ${{ needs.validate.outputs.stage }}
+          FRAK_VARIANT: ${{ needs.validate.outputs.stage }}
+
       # TODO: Graduate from `internal` track to `production` when ready for public release
       - name: "🚀 Upload to Play Store"
         uses: r0adkll/upload-google-play@v1.1.3

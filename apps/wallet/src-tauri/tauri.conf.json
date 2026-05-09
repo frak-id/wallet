@@ -25,6 +25,28 @@
             "csp": "default-src 'self'; script-src 'self' 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self' https://*.frak.id https://*.drpc.org https://*.pimlico.io wss://*.frak.id https://api.monerium.app https://api.monerium.dev"
         }
     },
+    "plugins": {
+        "deep-link": {
+            "mobile": [
+                {
+                    "host": "wallet.frak.id",
+                    "scheme": ["https"],
+                    "pathPattern": ["/.*"]
+                },
+                {
+                    "host": "wallet-dev.frak.id",
+                    "scheme": ["https"],
+                    "pathPattern": ["/.*"]
+                },
+                {
+                    "scheme": ["frakwallet"]
+                },
+                {
+                    "scheme": ["frakwallet-dev"]
+                }
+            ]
+        }
+    },
     "bundle": {
         "active": true,
         "targets": "all",
