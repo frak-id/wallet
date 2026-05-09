@@ -1,5 +1,11 @@
 import { nanoid } from "nanoid";
 import type { Hex } from "viem";
+import {
+    createJSONStorage,
+    persist,
+    type StateStorage,
+} from "zustand/middleware";
+import { createStore, type StoreApi } from "zustand/vanilla";
 import { identifyAuthenticatedUser, trackEvent } from "../../common/analytics";
 import { getSafeSession } from "../../common/utils/safeSession";
 import { sessionStore } from "../../stores/sessionStore";
@@ -18,6 +24,59 @@ export type OnPairingSuccessCallback = () => void | Promise<void>;
 
 const PING_INTERVAL_MS = 5_000;
 const MAX_UNANSWERED_PINGS = 5;
+
+/**
+ * Storage key for the in-flight pairing state. Scoped to sessionStorage so
+ * the resume capability survives WS closes / tab refreshes during pairing,
+ * but doesn't leak across browser sessions.
+ */
+const PAIRING_STORAGE_KEY = "frak_pairing_in_flight";
+
+/**
+ * TTL for the persisted in-flight pairing. Mirrors the backend cleanup
+ * window for unresolved pairings (10 minutes idle). Older entries are
+ * dropped on hydration so we don't try to resume a pairing that the
+ * server has already GC'd.
+ */
+const PAIRING_PERSIST_TTL_MS = 10 * 60 * 1_000;
+
+/**
+ * sessionStorage adapter that wraps every value with a timestamp and drops
+ * entries older than {@link PAIRING_PERSIST_TTL_MS} on read. Returns null
+ * (no persisted state) in non-browser contexts.
+ */
+const sessionStorageWithTtl: StateStorage = {
+    getItem: (name) => {
+        if (typeof window === "undefined") return null;
+        const raw = window.sessionStorage.getItem(name);
+        if (!raw) return null;
+        try {
+            const { value, persistedAt } = JSON.parse(raw) as {
+                value: string;
+                persistedAt: number;
+            };
+            if (Date.now() - persistedAt > PAIRING_PERSIST_TTL_MS) {
+                window.sessionStorage.removeItem(name);
+                return null;
+            }
+            return value;
+        } catch {
+            window.sessionStorage.removeItem(name);
+            return null;
+        }
+    },
+    setItem: (name, value) => {
+        if (typeof window === "undefined") return;
+        window.sessionStorage.setItem(
+            name,
+            JSON.stringify({ value, persistedAt: Date.now() })
+        );
+    },
+    removeItem: (name) => {
+        if (typeof window === "undefined") return;
+        window.sessionStorage.removeItem(name);
+    },
+};
 
 /**
  * Pairing client for the origin device (typically a desktop initiating pairing).
@@ -40,6 +99,39 @@ export class OriginPairingClient extends BasePairingClient<
     private pendingPings = 0;
 
     private onPairingSuccess: OnPairingSuccessCallback | null = null;
+
+    constructor() {
+        super();
+
+        // Auto-resume any in-flight pairing recovered from sessionStorage.
+        // The persist middleware hydrates synchronously; if we still have a
+        // pending `pairing` after construction, kick off a reconnect that the
+        // base class can route to either the resume action (no session yet)
+        // or the regular session-based path. Defer to a microtask so the
+        // constructor finishes before any WS work begins.
+        if (this.state.pairing) {
+            queueMicrotask(() => this.reconnect());
+        }
+    }
+
+    /**
+     * Wrap the Zustand store with the `persist` middleware so the in-flight
+     * pairing (id + code) survives transient WS closes and tab refreshes.
+     * Other state — in particular the `signatureRequests` Map and the
+     * `partnerDevice` — is intentionally NOT persisted; only the data
+     * needed to resume the pairing handshake is kept.
+     */
+    protected override createPairingStore(): StoreApi<OriginPairingState> {
+        return createStore<OriginPairingState>()(
+            persist(() => this.getInitialState(), {
+                name: PAIRING_STORAGE_KEY,
+                storage: createJSONStorage(() => sessionStorageWithTtl),
+                partialize: (state) => ({
+                    pairing: state.pairing,
+                }),
+            })
+        );
+    }
 
     /**
      * Get the initial state for the client
@@ -68,33 +160,50 @@ export class OriginPairingClient extends BasePairingClient<
     }
 
     /**
-     * Reconnect to all the pairing associated with the current wallet.
-     * Uses isAlive() to detect and clean up zombie connections left
-     * after the app was backgrounded on mobile.
+     * Reconnect to the pairing websocket.
+     *
+     * Three paths:
+     *  - distant-webauthn session present — reconnect with the wallet token
+     *    (the standard already-paired flow).
+     *  - no session but `pairing` state persisted — origin is mid-handshake
+     *    and the WS dropped before the target authenticated. Use the resume
+     *    action with the pairingId/code to re-attach to the topic.
+     *  - neither — nothing to do.
+     *
+     * Uses isAlive() to detect and clean up zombie connections left after
+     * the app was backgrounded on mobile.
      */
     reconnect() {
         const session = getSafeSession();
-        if (!session) {
-            console.warn("No session found, skipping reconnection");
+
+        if (session && session.type === "distant-webauthn") {
+            if (this.isAlive()) return;
+            this.pendingPings = 0;
+            this.connect({ wallet: session.token });
             return;
         }
 
-        if (session.type !== "distant-webauthn") {
+        // No usable session — fall back to resume if we have an in-flight
+        // pairing recovered from sessionStorage.
+        const pending = this.state.pairing;
+        if (pending) {
+            if (this.isAlive()) return;
+            this.pendingPings = 0;
+            this.connect({
+                action: "resume",
+                originResumeToken: pending.originResumeToken,
+            });
+            return;
+        }
+
+        if (session) {
             console.warn(
                 "Not a distant-webauthn session, skipping reconnection"
             );
             return;
         }
 
-        // If the connection is still alive, nothing to do
-        if (this.isAlive()) return;
-
-        // Reset stale ping state from previous connection
-        this.pendingPings = 0;
-
-        this.connect({
-            wallet: session.token,
-        });
+        console.warn("No session or in-flight pairing, skipping reconnection");
     }
 
     /**
@@ -248,6 +357,7 @@ export class OriginPairingClient extends BasePairingClient<
                 pairing: {
                     id: message.payload.pairingId,
                     code: message.payload.pairingCode,
+                    originResumeToken: message.payload.originResumeToken,
                 },
             });
             return;
@@ -296,7 +406,10 @@ export class OriginPairingClient extends BasePairingClient<
 
         // Authenticated message (update session status)
         if (message.type === "authenticated") {
-            this.setState({ status: "paired" });
+            // The pairing handshake is complete — the SDK session takes over
+            // from the in-flight pairing state. Drop `pairing` so future
+            // reconnects use the wallet token path and sessionStorage clears.
+            this.setState({ status: "paired", pairing: undefined });
 
             // Store the session
             sessionStore.getState().setSession({

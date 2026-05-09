@@ -51,15 +51,32 @@ class FakeWs {
 
 const fakeWsRegistry: FakeWs[] = [];
 
+type SafeSession =
+    | { type: string; token: string; pairingId: string; address: string }
+    | undefined;
+
+// Hoisted block: vi.mock factories run before any top-level statement, so
+// any reference they capture must be created via vi.hoisted().
+const { subscribeMock, mockedSafeSession } = vi.hoisted(() => ({
+    subscribeMock: vi.fn(
+        (_args?: { query?: Record<string, unknown> }): unknown => undefined
+    ),
+    mockedSafeSession: vi.fn<() => SafeSession>(() => undefined),
+}));
+
+// Wire the FakeWs factory in here so the FakeWs class is in scope. Tests
+// reset the implementation before/after as needed.
+subscribeMock.mockImplementation(() => {
+    const ws = new FakeWs();
+    fakeWsRegistry.push(ws);
+    return ws;
+});
+
 vi.mock("../../common/api/backendClient", () => ({
     authenticatedWalletApi: {
         pairings: {
             ws: {
-                subscribe: vi.fn(() => {
-                    const ws = new FakeWs();
-                    fakeWsRegistry.push(ws);
-                    return ws;
-                }),
+                subscribe: subscribeMock,
             },
         },
     },
@@ -82,12 +99,7 @@ vi.mock("../../stores/sessionStore", () => ({
 }));
 
 vi.mock("../../common/utils/safeSession", () => ({
-    getSafeSession: vi.fn(() => ({
-        type: "distant-webauthn",
-        token: "wallet-token",
-        pairingId: "pairing-1",
-        address: "0xabc",
-    })),
+    getSafeSession: mockedSafeSession,
 }));
 
 vi.mock("../../common/analytics", () => ({
@@ -110,6 +122,18 @@ describe("OriginPairingClient", () => {
     beforeEach(() => {
         vi.useFakeTimers();
         fakeWsRegistry.length = 0;
+        // Reset to the default authenticated mock; individual tests opt out.
+        mockedSafeSession.mockImplementation(() => ({
+            type: "distant-webauthn",
+            token: "wallet-token",
+            pairingId: "pairing-1",
+            address: "0xabc",
+        }));
+        // Clear sessionStorage so persisted pairing from prior tests doesn't
+        // leak (the persist middleware reads it during construction).
+        if (typeof window !== "undefined") {
+            window.sessionStorage.clear();
+        }
         client = new OriginPairingClient();
     });
 
@@ -326,5 +350,75 @@ describe("OriginPairingClient", () => {
             name: "PairingSignatureError",
             cause: "connection-lost",
         });
+    });
+
+    test("reconnect with no session but in-flight pairing uses the resume action", () => {
+        // Simulate the slow-pairing scenario: pairing-initiated arrived but
+        // target hasn't authenticated yet, so no session exists.
+        mockedSafeSession.mockImplementation(() => undefined);
+
+        // Seed the in-flight pairing state (as if pairing-initiated had been
+        // received before the WS dropped).
+        client.store.setState((prev) => ({
+            ...prev,
+            status: "connecting",
+            pairing: {
+                id: "pairing-1",
+                code: "123456",
+                originResumeToken: "resume-token-xyz",
+            },
+        }));
+
+        subscribeMock.mockClear();
+        client.reconnect();
+
+        expect(subscribeMock).toHaveBeenCalledTimes(1);
+        const lastCall = subscribeMock.mock.calls[0];
+        expect(lastCall?.[0]?.query).toEqual({
+            action: "resume",
+            originResumeToken: "resume-token-xyz",
+        });
+    });
+
+    test("reconnect without session or pending pairing bails without opening a WS", () => {
+        mockedSafeSession.mockImplementation(() => undefined);
+        subscribeMock.mockClear();
+
+        client.reconnect();
+        expect(subscribeMock).not.toHaveBeenCalled();
+    });
+
+    test("authenticated message clears the persisted pairing state", () => {
+        const ws = bringClientToPaired();
+        // Seed a pairing in state to simulate having gone through pairing-initiated.
+        client.store.setState((prev) => ({
+            ...prev,
+            pairing: {
+                id: "pairing-1",
+                code: "123456",
+                originResumeToken: "resume-token-xyz",
+            },
+        }));
+        expect(client.state.pairing).toBeDefined();
+
+        ws.fire("message", {
+            data: {
+                type: "authenticated",
+                payload: {
+                    token: "wallet-token",
+                    sdkJwt: { token: "sdk-jwt", expires: 0 },
+                    wallet: {
+                        type: "distant-webauthn",
+                        address: "0xabc",
+                        authenticatorId: "auth-1",
+                        publicKey: { x: "0x01", y: "0x02" },
+                        transports: undefined,
+                        pairingId: "pairing-1",
+                    },
+                },
+            },
+        });
+
+        expect(client.state.pairing).toBeUndefined();
     });
 });

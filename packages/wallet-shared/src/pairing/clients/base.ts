@@ -34,6 +34,14 @@ type ConnectionParams =
           wallet: string;
       }
     | {
+          action: "resume";
+          /**
+           * Self-contained JWT issued by the server in `pairing-initiated`.
+           * Carries the `pairingId` claim, so no other params are needed.
+           */
+          originResumeToken: string;
+      }
+    | {
           wallet: string;
       };
 
@@ -97,7 +105,16 @@ export abstract class BasePairingClient<
     protected _store: StoreApi<TState>;
 
     constructor() {
-        this._store = createStore<TState>()(() => this.getInitialState());
+        this._store = this.createPairingStore();
+    }
+
+    /**
+     * Create the Zustand store backing this client. Subclasses can override
+     * to wrap with middleware (e.g. `persist` to survive WS closes / tab
+     * refreshes during an in-flight pairing).
+     */
+    protected createPairingStore(): StoreApi<TState> {
+        return createStore<TState>()(() => this.getInitialState());
     }
 
     /**
