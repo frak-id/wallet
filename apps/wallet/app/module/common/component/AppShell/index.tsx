@@ -5,7 +5,7 @@ import {
     WalletIcon,
 } from "@frak-labs/design-system/icons";
 import { InAppBrowserToast, OfflineBanner } from "@frak-labs/wallet-shared";
-import { Outlet, useNavigate, useRouterState } from "@tanstack/react-router";
+import { Outlet, useRouterState } from "@tanstack/react-router";
 import type { ReactNode } from "react";
 import { useMemo, useRef } from "react";
 import {
@@ -29,7 +29,14 @@ export { useAppShellScroll } from "./scrollContext";
  * Tab definitions matching the existing Navigation component routes.
  */
 const tabs: TabItem[] = [
-    { key: "/wallet", label: "Porte-monnaie", icon: <WalletIcon /> },
+    // `replace: true` on the home tab so back-stack doesn't grow each time
+    // the user pings /wallet from elsewhere.
+    {
+        key: "/wallet",
+        label: "Porte-monnaie",
+        icon: <WalletIcon />,
+        replace: true,
+    },
     { key: "/explorer", label: "Explorer", icon: <ExplorerIcon /> },
     { key: "/profile", label: "Profil", icon: <ProfileIcon /> },
 ];
@@ -66,7 +73,9 @@ export function AppShell({
     auth = false,
     children,
 }: AppShellProps) {
-    const navigate = useNavigate();
+    // Navigation is handled by `<Link>`s inside BottomTabBar — no imperative
+    // `useNavigate` needed here, which also unlocks the router's render-time
+    // preload of the destination routes.
     const mainRef = useRef<HTMLElement>(null);
     const pathname = useRouterState({
         select: (state) => state.location.pathname,
@@ -94,19 +103,7 @@ export function AppShell({
                 </Box>
                 {navigation && (
                     <Box className={bottomBar}>
-                        <BottomTabBar
-                            tabs={tabs}
-                            activeKey={activeKey}
-                            onTabChange={(key) => {
-                                if (key === "/wallet") {
-                                    // If we're going to wallet, replace history so we don't build up a huge stack
-                                    navigate({ to: key, replace: true });
-                                } else {
-                                    // If going to another tab, push it so we can go back to it
-                                    navigate({ to: key });
-                                }
-                            }}
-                        />
+                        <BottomTabBar tabs={tabs} activeKey={activeKey} />
                     </Box>
                 )}
             </Box>

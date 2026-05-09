@@ -1,7 +1,6 @@
 import { Box } from "@frak-labs/design-system/components/Box";
 import { Button } from "@frak-labs/design-system/components/Button";
 import { CodeInput, trackEvent } from "@frak-labs/wallet-shared";
-import { useNavigate } from "@tanstack/react-router";
 import { useCallback, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Back } from "@/module/common/component/Back";
@@ -15,7 +14,6 @@ const CODE_LENGTH = 6;
 
 export function RecoveryCodePage() {
     const { t } = useTranslation();
-    const navigate = useNavigate();
     const [code, setCode] = useState("");
     const openModal = modalStore((s) => s.openModal);
 
@@ -70,9 +68,7 @@ export function RecoveryCodePage() {
             }
         >
             <Box paddingLeft="m">
-                <Back
-                    onClick={() => navigate({ to: "/register", replace: true })}
-                />
+                <Back href="/register" replace />
             </Box>
             <div className={styles.wrapper}>
                 <Box display={"flex"} flexDirection={"column"} gap={"m"}>

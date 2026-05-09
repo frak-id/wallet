@@ -214,7 +214,7 @@ function buildChunkGroups() {
         // generic `_protected-fullscreen` capture.
         {
             name: "feature-referral",
-            test: /[\\/]app[\\/](?:module[\\/]referral[\\/]|routes[\\/]_wallet[\\/]_protected-fullscreen[\\/]profile[\\/]referral)/,
+            test: /[\\/]app[\\/](?:module[\\/]referral[\\/]|routes[\\/]_wallet[\\/]_protected-fullscreen[\\/]profile\.referral)/,
             priority: 21,
             minShareCount: 1,
         },
@@ -243,74 +243,75 @@ function buildChunkGroups() {
     ];
 }
 
+async function getDefineProps() {
+    const sandboxEnv = await getSandboxEnv();
+    return {
+        "process.env.STAGE": JSON.stringify(getSstResource("STAGE") ?? "dev"),
+        "process.env.BACKEND_URL": JSON.stringify(
+            sandboxEnv.backendUrl ??
+                getSstResource("BACKEND_URL") ??
+                "https://backend.gcp-dev.frak.id"
+        ),
+        "process.env.ERPC_URL": JSON.stringify(
+            getSstResource("ERPC_URL") ??
+                "https://erpc.gcp-dev.frak.id/nexus-rpc/evm/"
+        ),
+        "process.env.DRPC_API_KEY": JSON.stringify(
+            getSstResource("DRPC_API_KEY")
+        ),
+        "process.env.PIMLICO_API_KEY": JSON.stringify(
+            getSstResource("PIMLICO_API_KEY")
+        ),
+        "process.env.NEXUS_RPC_SECRET": JSON.stringify(
+            getSstResource("NEXUS_RPC_SECRET")
+        ),
+        "process.env.VAPID_PUBLIC_KEY": JSON.stringify(
+            getSstResource("VAPID_PUBLIC_KEY")
+        ),
+        "process.env.DEBUG": JSON.stringify(DEBUG),
+        // Build-time platform constants consumed by
+        // `packages/app-essentials/src/utils/platform.ts`. Substituted to literal
+        // booleans so Rolldown's `inlineConst` propagates them to every call site
+        // and dead-code-eliminates the unreachable branches (and their `@tauri-apps/*`
+        // dynamic imports).
+        __IS_TAURI__: JSON.stringify(isTauri),
+        __IS_IOS__: JSON.stringify(isTauriIos),
+        __IS_ANDROID__: JSON.stringify(isTauriAndroid),
+        "process.env.APP_VERSION": JSON.stringify(appVersion),
+        "process.env.FRAK_WALLET_URL": JSON.stringify(
+            sandboxEnv.walletUrl ??
+                getSstResource("FRAK_WALLET_URL") ??
+                "https://wallet-dev.frak.id"
+        ),
+        "process.env.OPEN_PANEL_API_URL": JSON.stringify(
+            getSstResource("OPEN_PANEL_API_URL") ?? "https://op-api.gcp.frak.id"
+        ),
+        "process.env.OPEN_PANEL_WALLET_CLIENT_ID": JSON.stringify(
+            getSstResource("OPEN_PANEL_WALLET_CLIENT_ID")
+        ),
+        "process.env.WEBAUTHN_RP_ID": JSON.stringify(
+            process.env.WEBAUTHN_RP_ID
+        ),
+        "process.env.ANDROID_SHA256_FINGERPRINT": JSON.stringify(
+            getSstResource("ANDROID_SHA256_FINGERPRINT")
+        ),
+        "process.env.MONERIUM_CLIENT_ID": JSON.stringify(
+            getSstResource("MONERIUM_CLIENT_ID")
+        ),
+        "process.env.IS_APP_AVAILABLE": JSON.stringify(
+            process.env.IS_APP_AVAILABLE ?? "true"
+        ),
+    };
+}
+
 export default defineConfig(
     async ({ mode, command }: ConfigEnv): Promise<UserConfig> => {
         const isSW = mode === "sw";
-        const sandboxEnv = await getSandboxEnv();
 
-        const baseConfig = {
+        const baseConfig: UserConfig = {
             clearScreen: false,
             envPrefix: ["VITE_", "TAURI_"],
-            define: {
-                "process.env.STAGE": JSON.stringify(
-                    getSstResource("STAGE") ?? "dev"
-                ),
-                "process.env.BACKEND_URL": JSON.stringify(
-                    sandboxEnv.backendUrl ??
-                        getSstResource("BACKEND_URL") ??
-                        "https://backend.gcp-dev.frak.id"
-                ),
-                "process.env.ERPC_URL": JSON.stringify(
-                    getSstResource("ERPC_URL") ??
-                        "https://erpc.gcp-dev.frak.id/nexus-rpc/evm/"
-                ),
-                "process.env.DRPC_API_KEY": JSON.stringify(
-                    getSstResource("DRPC_API_KEY")
-                ),
-                "process.env.PIMLICO_API_KEY": JSON.stringify(
-                    getSstResource("PIMLICO_API_KEY")
-                ),
-                "process.env.NEXUS_RPC_SECRET": JSON.stringify(
-                    getSstResource("NEXUS_RPC_SECRET")
-                ),
-                "process.env.VAPID_PUBLIC_KEY": JSON.stringify(
-                    getSstResource("VAPID_PUBLIC_KEY")
-                ),
-                "process.env.DEBUG": JSON.stringify(DEBUG),
-                // Build-time platform constants consumed by
-                // `packages/app-essentials/src/utils/platform.ts`. Substituted to literal
-                // booleans so Rolldown's `inlineConst` propagates them to every call site
-                // and dead-code-eliminates the unreachable branches (and their `@tauri-apps/*`
-                // dynamic imports).
-                __IS_TAURI__: JSON.stringify(isTauri),
-                __IS_IOS__: JSON.stringify(isTauriIos),
-                __IS_ANDROID__: JSON.stringify(isTauriAndroid),
-                "process.env.APP_VERSION": JSON.stringify(appVersion),
-                "process.env.FRAK_WALLET_URL": JSON.stringify(
-                    sandboxEnv.walletUrl ??
-                        getSstResource("FRAK_WALLET_URL") ??
-                        "https://wallet-dev.frak.id"
-                ),
-                "process.env.OPEN_PANEL_API_URL": JSON.stringify(
-                    getSstResource("OPEN_PANEL_API_URL") ??
-                        "https://op-api.gcp.frak.id"
-                ),
-                "process.env.OPEN_PANEL_WALLET_CLIENT_ID": JSON.stringify(
-                    getSstResource("OPEN_PANEL_WALLET_CLIENT_ID")
-                ),
-                "process.env.WEBAUTHN_RP_ID": JSON.stringify(
-                    process.env.WEBAUTHN_RP_ID
-                ),
-                "process.env.ANDROID_SHA256_FINGERPRINT": JSON.stringify(
-                    getSstResource("ANDROID_SHA256_FINGERPRINT")
-                ),
-                "process.env.MONERIUM_CLIENT_ID": JSON.stringify(
-                    getSstResource("MONERIUM_CLIENT_ID")
-                ),
-                "process.env.IS_APP_AVAILABLE": JSON.stringify(
-                    process.env.IS_APP_AVAILABLE ?? "true"
-                ),
-            },
+            define: await getDefineProps(),
         };
 
         // Service worker configuration

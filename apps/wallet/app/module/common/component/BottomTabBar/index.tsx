@@ -1,4 +1,5 @@
 import { Box } from "@frak-labs/design-system/components/Box";
+import { Link } from "@tanstack/react-router";
 import type { ReactNode } from "react";
 import { useMemo } from "react";
 import { bottomTabBarStyles } from "./bottomTabBar.css";
@@ -7,19 +8,20 @@ export type TabItem = {
     key: string;
     label: string;
     icon: ReactNode;
+    /**
+     * If true, the tab navigates with `replace: true` so back-stack doesn't
+     * accumulate when the user pings the same tab repeatedly. Use for the
+     * "home" tab (e.g. /wallet) to keep history depth bounded.
+     */
+    replace?: boolean;
 };
 
 export type BottomTabBarProps = {
     tabs: TabItem[];
     activeKey: string;
-    onTabChange: (key: string) => void;
 };
 
-export function BottomTabBar({
-    tabs,
-    activeKey,
-    onTabChange,
-}: BottomTabBarProps) {
+export function BottomTabBar({ tabs, activeKey }: BottomTabBarProps) {
     const activeIndex = useMemo(
         () =>
             Math.max(
@@ -55,12 +57,11 @@ export function BottomTabBar({
                 {tabs.map((tab) => {
                     const isActive = tab.key === activeKey;
                     return (
-                        <Box
+                        <Link
                             key={tab.key}
-                            as="button"
-                            type="button"
+                            to={tab.key}
+                            replace={tab.replace}
                             className={`${bottomTabBarStyles.tab}${isActive ? ` ${bottomTabBarStyles.tabActive}` : ""}`}
-                            onClick={() => onTabChange(tab.key)}
                             aria-current={isActive ? "page" : undefined}
                         >
                             <Box
@@ -79,7 +80,7 @@ export function BottomTabBar({
                             >
                                 {tab.label}
                             </Box>
-                        </Box>
+                        </Link>
                     );
                 })}
                 {/* Sliding glider — position driven by active tab index */}

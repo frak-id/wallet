@@ -1,12 +1,11 @@
 import { Box } from "@frak-labs/design-system/components/Box";
-import { Button } from "@frak-labs/design-system/components/Button";
 import { Card } from "@frak-labs/design-system/components/Card";
 import { Inline } from "@frak-labs/design-system/components/Inline";
 import { Stack } from "@frak-labs/design-system/components/Stack";
 import { Text } from "@frak-labs/design-system/components/Text";
 import { ReferralIcon } from "@frak-labs/design-system/icons";
-import { useNavigate } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
+import { ButtonLink } from "@/module/common/component/ButtonLink";
 import * as styles from "./index.css";
 
 /**
@@ -15,7 +14,6 @@ import * as styles from "./index.css";
  */
 export function ReferralInviteCard() {
     const { t } = useTranslation();
-    const navigate = useNavigate();
 
     return (
         <Card padding="default" variant="elevated">
@@ -33,14 +31,14 @@ export function ReferralInviteCard() {
                         </Text>
                     </Stack>
                 </Inline>
-                <Button
+                <ButtonLink
+                    to="/profile/referral/create"
                     variant="secondary"
                     size="small"
                     width="full"
-                    onClick={() => navigate({ to: "/profile/referral/create" })}
                 >
                     {t("wallet.referral.invite.cta")}
-                </Button>
+                </ButtonLink>
             </Stack>
         </Card>
     );
