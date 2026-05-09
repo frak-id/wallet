@@ -19,7 +19,10 @@ import I18nextBrowserLanguageDetector from "i18next-browser-languagedetector";
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import { I18nextProvider, initReactI18next } from "react-i18next";
-import App from "@/root";
+import { useListenerDataPreload } from "@/module/hooks/useListenerDataPreload";
+import { ListenerUiProvider } from "@/ui/ListenerUiProvider";
+import { ListenerUiRenderer } from "@/ui/ListenerUiRenderer";
+import { RootProvider } from "@/ui/RootProvider";
 import "@/styles/all.css";
 
 let mounted = false;
@@ -33,6 +36,38 @@ export function mountUiRuntime(): void {
     if (mounted) return;
     mounted = true;
 
+    initI18n();
+
+    const root = document.getElementById("root");
+    if (!root) {
+        throw new Error("Root element not found");
+    }
+
+    createRoot(root).render(
+        <I18nextProvider i18n={i18next}>
+            <StrictMode>
+                <RootProvider>
+                    <ListenerUiProvider>
+                        <ListenerHost />
+                    </ListenerUiProvider>
+                </RootProvider>
+            </StrictMode>
+        </I18nextProvider>
+    );
+}
+
+/**
+ * Inner host that runs Ring-1-only side effects (SDK session warmup) and
+ * renders the request-driven UI. Lives here rather than in
+ * `ListenerUiRenderer` because those side effects need React, while the
+ * renderer itself is happy as a pure component.
+ */
+function ListenerHost() {
+    useListenerDataPreload();
+    return <ListenerUiRenderer />;
+}
+
+function initI18n(): void {
     // Lazy-load the English bundle on demand. French is bundled by default
     // (it's our fallbackLng) so most loads avoid pulling EN translations
     // (~13 KB gzipped saved). Listener registered before init() so the initial
@@ -90,17 +125,4 @@ export function mountUiRuntime(): void {
             },
             react: { useSuspense: false },
         });
-
-    const root = document.getElementById("root");
-    if (!root) {
-        throw new Error("Root element not found");
-    }
-
-    createRoot(root).render(
-        <I18nextProvider i18n={i18next}>
-            <StrictMode>
-                <App />
-            </StrictMode>
-        </I18nextProvider>
-    );
 }

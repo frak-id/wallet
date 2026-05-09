@@ -71,7 +71,7 @@ const deepLinkScheme = isProd ? "frakwallet://" : "frakwallet-dev://";
  */
 function stripOrphanCrossChunkImports() {
     const ORPHAN_IMPORT_RE =
-        /^import\s*"\.\/(?:blockchain-vendor|BaseProvider|ui-vendor|lazy-shared|Modal|Wallet|SharingPage)-[A-Za-z0-9_-]+\.js";\n?/gm;
+        /^import\s*"\.\/(?:blockchain-vendor|BaseProvider|ui-vendor|ui-runtime|lazy-shared|Modal|Wallet|SharingPage)-[A-Za-z0-9_-]+\.js";\n?/gm;
     return {
         name: "strip-orphan-cross-chunk-imports",
         apply: "build" as const,
@@ -230,7 +230,7 @@ export default defineConfig(async () => {
                     if (hostType !== "html") return deps;
                     return deps.filter(
                         (d) =>
-                            !/(?:blockchain-vendor|BaseProvider|Modal|Wallet|SharingPage|ccip|secp256k1|lazy-shared|ui-vendor)-/.test(
+                            !/(?:blockchain-vendor|BaseProvider|Modal|Wallet|SharingPage|ccip|secp256k1|lazy-shared|ui-vendor|ui-runtime)-/.test(
                                 d
                             )
                     );
@@ -287,17 +287,31 @@ export default defineConfig(async () => {
                             // chunk — the marginal caching gain from finer
                             // splits doesn't justify the extra HTTP requests
                             // visible in partner network tabs.
+                            // ui-runtime hosts everything Preact/React-ish:
+                            // preact, i18next, react-i18next, @tanstack/react-query,
+                            // plus the listener's own provider tree (`app/ui/`).
+                            // It is pulled in dynamically the first time a
+                            // partner site triggers UI — NOT tagged $initial.
+                            // Higher priority than `vendor` so its rule wins for
+                            // node_modules that match both regexes.
+                            {
+                                name: "ui-runtime",
+                                test: /(?:node_modules[\\/](?:preact|i18next|i18next-browser-languagedetector|react-i18next|@tanstack)[\\/])|(?:apps[\\/]listener[\\/]app[\\/]ui[\\/])/,
+                                priority: 45,
+                                minShareCount: 1,
+                            },
+
+                            // `vendor` keeps only Ring-0-eager runtime libs:
+                            // zustand stores, idb-keyval, nanoid, elysia client,
+                            // clsx. Everything React-ish moved to `ui-runtime`.
                             {
                                 name: "vendor",
                                 tags: ["$initial"],
-                                test: /node_modules[\\/](?:preact|i18next|i18next-browser-languagedetector|react-i18next|@tanstack|zustand|idb-keyval|nanoid|@elysiajs|clsx)[\\/]/,
+                                test: /node_modules[\\/](?:zustand|idb-keyval|nanoid|@elysiajs|clsx)[\\/]/,
                                 priority: 40,
                                 // CRITICAL: must be 1, otherwise the global
                                 // `minShareCount: 2` keeps single-entry node_modules
-                                // (e.g. `preact/compat` — only the eager entry imports it for
-                                // `createRoot`) inside the `index` entry chunk
-                                // instead of vendor. Forces ALL matching node_modules
-                                // into vendor regardless of how many entries reach them.
+                                // inside the `index` entry chunk instead of vendor.
                                 minShareCount: 1,
                             },
 

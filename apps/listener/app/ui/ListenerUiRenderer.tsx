@@ -1,4 +1,4 @@
-import { lazy, Suspense, useEffect } from "react";
+import { lazy, Suspense } from "react";
 import { useListenerUI } from "@/ui/ListenerUiProvider";
 
 /**
@@ -47,46 +47,6 @@ const sharingHookImport = () =>
  */
 export function ListenerUiRenderer() {
     const { currentRequest } = useListenerUI();
-
-    /**
-     * Preload the modal + sharing page (and their RPC handler impls) so
-     * the first display is not gated on a network round-trip on slow links.
-     */
-    useEffect(() => {
-        const hash = window.location.hash.slice(1);
-        const urlParams = new URLSearchParams(hash);
-        const preloadRaw = urlParams.get("preload");
-        // No preload parameter -> do nothing
-        if (!preloadRaw) {
-            return;
-        }
-
-        const preloads = preloadRaw.split(",");
-        const shouldPreloadModal = preloads.includes("modal");
-        const shouldPreloadSharing = preloads.includes("sharing");
-
-        if (!shouldPreloadModal && !shouldPreloadSharing) {
-            return;
-        }
-
-        const handleIdleCallback = async () => {
-            if (shouldPreloadModal) {
-                await Promise.all([modalImport(), modalHookImport()]);
-            }
-            if (shouldPreloadSharing) {
-                await Promise.all([sharingImport(), sharingHookImport()]);
-            }
-        };
-
-        if ("requestIdleCallback" in window) {
-            const idleCallbackId = requestIdleCallback(handleIdleCallback);
-            return () => cancelIdleCallback(idleCallbackId);
-        }
-
-        const timeoutId = setTimeout(handleIdleCallback, 0);
-        return () => clearTimeout(timeoutId);
-    }, []);
-
     /**
      * If no request, do not display anything
      */
