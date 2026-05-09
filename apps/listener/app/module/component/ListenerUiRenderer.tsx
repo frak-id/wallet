@@ -29,13 +29,28 @@ const sharingImport = () =>
 const ListenerSharingPage = lazy(sharingImport);
 
 /**
+ * Lazy import of the modal hook impl (paired with the modal view).
+ * Same module specifier as the dynamic import inside `useDisplayModalListener`,
+ * so the bundler resolves both call sites to the same chunk.
+ */
+const modalHookImport = () =>
+    import("@/module/hooks/useDisplayModalListener.impl");
+
+/**
+ * Lazy import of the sharing hook impl (paired with the sharing view).
+ */
+const sharingHookImport = () =>
+    import("@/module/hooks/useDisplaySharingPageListener.impl");
+
+/**
  * Render the listener UI if needed
  */
 export function ListenerUiRenderer() {
     const { currentRequest } = useListenerUI();
 
     /**
-     * Preload the modal + sharing page so it did not take too much time to display on slow network
+     * Preload the modal + sharing page (and their RPC handler impls) so
+     * the first display is not gated on a network round-trip on slow links.
      */
     useEffect(() => {
         const hash = window.location.hash.slice(1);
@@ -56,10 +71,10 @@ export function ListenerUiRenderer() {
 
         const handleIdleCallback = async () => {
             if (shouldPreloadModal) {
-                await modalImport();
+                await Promise.all([modalImport(), modalHookImport()]);
             }
             if (shouldPreloadSharing) {
-                await sharingImport();
+                await Promise.all([sharingImport(), sharingHookImport()]);
             }
         };
 
