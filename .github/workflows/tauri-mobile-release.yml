@@ -272,14 +272,48 @@ jobs:
           STAGE: ${{ needs.validate.outputs.stage }}
 
       # `swift-rs` runs `swift build` from each plugin's build.rs in parallel under cargo,
-      # racing over the global SwiftPM artifact cache. Pre-resolving here serializes the
-      # Firebase binary-artifact downloads (FirebaseAnalytics.zip, grpcpp.zip, etc.) so the
-      # subsequent parallel `swift build` invocations all hit a warm cache instead of failing
-      # with `already exists in file system`.
+      # racing over the global SwiftPM artifact cache. Pre-resolving with a standalone stub
+      # package serializes the Firebase binary-artifact downloads (FirebaseAnalytics.zip,
+      # grpcpp.zip, etc.) so the subsequent parallel `swift build` invocations all hit a warm
+      # cache instead of failing with `already exists in file system`.
+      #
+      # The stub avoids depending on the crashlytics plugin's Package.swift directly, which
+      # references `../.tauri/tauri-api` — that path is only materialized later by tauri-build
+      # during `cargo build`. The SPM artifact cache is keyed by binary-target URL (global,
+      # shared), so any resolve that fetches the same URLs warms the same slots.
+      #
+      # Keep the firebase-ios-sdk pin in sync with `plugins/tauri-plugin-frak-crashlytics/ios/Package.swift`.
       # See: https://github.com/firebase/firebase-ios-sdk/issues/14821
       - name: "🔥 Pre-warm SwiftPM artifact cache"
-        working-directory: apps/wallet/src-tauri/plugins/tauri-plugin-frak-crashlytics/ios
-        run: swift package resolve
+        run: |
+          PREWARM_DIR="$RUNNER_TEMP/spm-prewarm"
+          mkdir -p "$PREWARM_DIR/Sources/Prewarm"
+          cat > "$PREWARM_DIR/Package.swift" <<'EOF'
+          // swift-tools-version:5.7
+          import PackageDescription
+          let package = Package(
+              name: "Prewarm",
+              platforms: [.iOS(.v14), .macOS(.v10_15)],
+              products: [.library(name: "Prewarm", targets: ["Prewarm"])],
+              dependencies: [
+                  .package(url: "https://github.com/firebase/firebase-ios-sdk", from: "12.11.0"),
+              ],
+              targets: [
+                  .target(
+                      name: "Prewarm",
+                      dependencies: [
+                          .product(name: "FirebaseCrashlytics", package: "firebase-ios-sdk"),
+                          .product(name: "FirebaseMessaging", package: "firebase-ios-sdk"),
+                          .product(name: "FirebaseAnalytics", package: "firebase-ios-sdk"),
+                          .product(name: "FirebaseFirestore", package: "firebase-ios-sdk"),
+                      ]
+                  )
+              ]
+          )
+          EOF
+          echo '// stub' > "$PREWARM_DIR/Sources/Prewarm/Stub.swift"
+          cd "$PREWARM_DIR"
+          swift package resolve
 
       - name: "🏗️ Build iOS"
         # cd into wallet app so tauri finds src-tauri/ and beforeBuildCommand runs in correct directory.
