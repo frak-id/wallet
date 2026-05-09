@@ -112,9 +112,6 @@ export default defineConfig(async () => {
                 getSstResource("NEXUS_RPC_SECRET")
             ),
             "process.env.DEBUG": JSON.stringify(DEBUG),
-            "process.env.APP_VERSION": JSON.stringify(
-                process.env.COMMIT_HASH ?? "UNKNOWN"
-            ),
             "process.env.FRAK_WALLET_URL": JSON.stringify(
                 sandboxEnv.walletUrl ?? getSstResource("FRAK_WALLET_URL")
             ),
@@ -124,7 +121,6 @@ export default defineConfig(async () => {
             "process.env.OPEN_PANEL_LISTENER_CLIENT_ID": JSON.stringify(
                 getSstResource("OPEN_PANEL_LISTENER_CLIENT_ID")
             ),
-            "process.env.OPEN_PANEL_WALLET_CLIENT_ID": "undefined",
             "process.env.WEBAUTHN_RP_ID": JSON.stringify(
                 process.env.WEBAUTHN_RP_ID
             ),
@@ -143,6 +139,8 @@ export default defineConfig(async () => {
             __IS_TAURI__: "false",
             __IS_IOS__: "false",
             __IS_ANDROID__: "false",
+            "process.env.OPEN_PANEL_WALLET_CLIENT_ID": "undefined",
+            "process.env.APP_VERSION": "undefined",
         },
         plugins: [
             react(),
