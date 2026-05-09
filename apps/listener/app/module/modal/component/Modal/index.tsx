@@ -10,6 +10,7 @@ import {
     OriginPairingState,
     useCancelAllSignatureRequests,
 } from "@frak-labs/wallet-shared/pairing";
+import { usePersistentPairingClient } from "@frak-labs/wallet-shared/pairing/usePersistentPairingClient";
 import * as AlertDialogPrimitive from "@radix-ui/react-alert-dialog";
 import { clsx as cx } from "clsx";
 import { X } from "lucide-react";
@@ -66,6 +67,10 @@ function ListenerModalInner({
     logoUrl,
 }: ModalUiType & GenericWalletUiType) {
     const { clearRequest } = useListenerUI();
+    // Pairing reconnect lives inside the lazy modal tree so the WebSocket
+    // only opens when a partner site actually requests UI — keeping idle
+    // iframes off the backend pairing socket.
+    usePersistentPairingClient();
     const [isOpen, setIsOpen] = useState(true);
     const [logoFailed, setLogoFailed] = useState(false);
     const getMergeToken = useGetMergeToken();

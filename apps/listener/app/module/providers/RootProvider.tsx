@@ -1,4 +1,3 @@
-import { usePersistentPairingClient } from "@frak-labs/wallet-shared/pairing/usePersistentPairingClient";
 import { createAsyncStoragePersister } from "@tanstack/query-async-storage-persister";
 import { QueryClient } from "@tanstack/react-query";
 import {
@@ -35,19 +34,20 @@ const persistOptions: PersistQueryClientProviderProps["persistOptions"] = {
     },
 };
 
-function PairingReconnect({ children }: PropsWithChildren) {
-    usePersistentPairingClient();
-    return children;
-}
-
 /**
  * Root provider for the listener app
- * Provides persisted QueryClient (and pairing reconnection) to the app.
+ * Provides persisted QueryClient to the app.
  *
  * Note: `WagmiProviderWithDynamicConfig` is intentionally NOT mounted here.
  * It is moved into the lazy-loaded modal + embedded-wallet boundaries via
  * `BlockchainProvider`, so the wagmi/viem/permissionless graph stays out of
  * the eager iframe bundle.
+ *
+ * Note: `usePersistentPairingClient` is also NOT mounted here. Pairing is
+ * only consumed by the Modal + Embedded Wallet UI trees (signature requests,
+ * smart-wallet ops). Mounting it inside those trees instead of eagerly here
+ * keeps the WebSocket dormant until a partner site triggers UI — reducing
+ * idle backend WS load.
  */
 export function RootProvider({ children }: PropsWithChildren) {
     return (
@@ -55,7 +55,7 @@ export function RootProvider({ children }: PropsWithChildren) {
             client={queryClient}
             persistOptions={persistOptions}
         >
-            <PairingReconnect>{children}</PairingReconnect>
+            {children}
         </PersistQueryClientProvider>
     );
 }

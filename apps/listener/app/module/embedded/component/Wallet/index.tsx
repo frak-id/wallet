@@ -1,6 +1,7 @@
 import { Overlay } from "@frak-labs/design-system/components/Overlay";
 import { InAppBrowserToast } from "@frak-labs/wallet-shared/common";
 import { sessionStore } from "@frak-labs/wallet-shared/stores/sessionStore";
+import { usePersistentPairingClient } from "@frak-labs/wallet-shared/pairing/usePersistentPairingClient";
 import clsx from "clsx";
 import { Toaster } from "sonner";
 import { prefixWalletCss } from "@/module/common/utils/prefixWalletCss";
@@ -29,6 +30,10 @@ function ListenerWalletInner() {
             params: { metadata },
         },
     } = useEmbeddedListenerUI();
+    // Pairing reconnect lives inside the lazy embedded-wallet tree so the
+    // WebSocket only opens when a partner site actually displays the wallet
+    // — keeping idle iframes off the backend pairing socket.
+    usePersistentPairingClient();
 
     return (
         <>
