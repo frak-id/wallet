@@ -41,6 +41,10 @@ const mainContentBase = style({
     // Required so PullToRefresh's e.preventDefault() in touchmove fully suppresses
     // iOS rubber-band and Chrome Android native PTR.
     overscrollBehaviorY: "contain",
+    // Flex column so route content (toasts, banners, PageLayout, ...) can share
+    // the available height instead of stacking with hardcoded heights.
+    display: "flex",
+    flexDirection: "column",
 });
 
 /**

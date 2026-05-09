@@ -103,8 +103,7 @@ export function stripAbiInternalType(): Plugin {
     //   - optional leading whitespace (handles indented multi-line ABI items)
     //   - the key + colon + quoted value (string contains no internal `"`)
     //   - an optional trailing comma
-    const internalTypeRe =
-        /\s*internalType\s*:\s*"[^"]*",?/g;
+    const internalTypeRe = /\s*internalType\s*:\s*"[^"]*",?/g;
 
     return {
         name: "frak:strip-abi-internal-type",

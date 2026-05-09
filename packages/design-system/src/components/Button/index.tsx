@@ -52,8 +52,8 @@ export function Button(props: ButtonProps) {
         as === "button"
             ? {
                   type:
-                      (rest as ButtonHTMLAttributes<HTMLButtonElement>)
-                          .type ?? ("button" as const),
+                      (rest as ButtonHTMLAttributes<HTMLButtonElement>).type ??
+                      ("button" as const),
                   disabled:
                       (rest as ButtonHTMLAttributes<HTMLButtonElement>)
                           .disabled || loading,
