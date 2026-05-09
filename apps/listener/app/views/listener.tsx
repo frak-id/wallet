@@ -1,7 +1,8 @@
 import type { FrakLifecycleEvent } from "@frak-labs/core-sdk";
 import { createRpcListener } from "@frak-labs/frame-connector";
+import { useQueryClient } from "@tanstack/react-query";
 import i18next from "i18next";
-import { useEffect } from "react";
+import { useEffect, useMemo } from "react";
 import { ListenerUiRenderer } from "@/module/component/ListenerUiRenderer";
 import {
     clientLifecycleHandler,
@@ -16,12 +17,12 @@ import { useDisplayEmbeddedWallet } from "@/module/hooks/useDisplayEmbeddedWalle
 import { useDisplayModalListener } from "@/module/hooks/useDisplayModalListener";
 import { useDisplaySharingPageListener } from "@/module/hooks/useDisplaySharingPageListener";
 import { useListenerDataPreload } from "@/module/hooks/useListenerDataPreload";
-import { useOnGetMerchantInformation } from "@/module/hooks/useOnGetMerchantInformation";
-import { useOnGetMergeToken } from "@/module/hooks/useOnGetMergeToken";
-import { useOnGetUserReferralStatus } from "@/module/hooks/useOnGetUserReferralStatus";
-import { useSendInteractionListener } from "@/module/hooks/useSendInteractionListener";
+import { createGetMerchantInformationHandler } from "@/module/hooks/useOnGetMerchantInformation";
+import { createGetMergeTokenHandler } from "@/module/hooks/useOnGetMergeToken";
+import { createGetUserReferralStatusHandler } from "@/module/hooks/useOnGetUserReferralStatus";
+import { createSendInteractionHandler } from "@/module/hooks/useSendInteractionListener";
 import { useSendPing } from "@/module/hooks/useSendPing";
-import { useWalletStatusListener } from "@/module/hooks/useWalletStatusListener";
+import { createWalletStatusHandler } from "@/module/hooks/useWalletStatusListener";
 import {
     loggingMiddleware,
     walletContextMiddleware,
@@ -49,25 +50,32 @@ export default function Listener() {
  * @constructor
  */
 function ListenerContent() {
-    // Hook used when a wallet status is requested
-    const onWalletListenRequest = useWalletStatusListener();
+    const queryClient = useQueryClient();
 
-    // Hook when a modal display is asked
+    // The display* hooks are thin shells that route to uiBus + lazy-import the
+    // implementation modules. Keeping them as React hooks for now (their refs
+    // are stable so the useEffect deps array effectively never changes).
     const onDisplayModalRequest = useDisplayModalListener();
-
-    // Hook when a embedded wallet display is asked
     const onDisplayEmbeddedWallet = useDisplayEmbeddedWallet();
-
-    const onGetMerchantInformation = useOnGetMerchantInformation();
-
-    const onSendInteraction = useSendInteractionListener();
-
-    const onGetUserReferralStatus = useOnGetUserReferralStatus();
-
-    const onGetMergeToken = useOnGetMergeToken();
-
-    // Hook when a sharing page display is asked
     const onDisplaySharingPage = useDisplaySharingPageListener();
+
+    // Vanilla factory handlers — created once per queryClient identity.
+    // They have no React-state dependencies, so the listener registration
+    // useEffect re-runs only when queryClient itself changes (effectively never).
+    const handlers = useMemo(
+        () => ({
+            onWalletListenRequest: createWalletStatusHandler(),
+            onGetMerchantInformation: createGetMerchantInformationHandler({
+                queryClient,
+            }),
+            onSendInteraction: createSendInteractionHandler(),
+            onGetUserReferralStatus: createGetUserReferralStatusHandler({
+                queryClient,
+            }),
+            onGetMergeToken: createGetMergeTokenHandler(),
+        }),
+        [queryClient]
+    );
 
     // Create the RPC listener with centralized message handling
     useEffect(() => {
@@ -133,18 +141,21 @@ function ListenerContent() {
         listener.handle("frak_openSso", handleOpenSso);
         listener.handle(
             "frak_getMerchantInformation",
-            onGetMerchantInformation
+            handlers.onGetMerchantInformation
         );
         listener.handle("frak_displayEmbeddedWallet", onDisplayEmbeddedWallet);
-        listener.handle("frak_sendInteraction", onSendInteraction);
-        listener.handle("frak_getUserReferralStatus", onGetUserReferralStatus);
+        listener.handle("frak_sendInteraction", handlers.onSendInteraction);
+        listener.handle(
+            "frak_getUserReferralStatus",
+            handlers.onGetUserReferralStatus
+        );
         listener.handle("frak_displaySharingPage", onDisplaySharingPage);
-        listener.handle("frak_getMergeToken", onGetMergeToken);
+        listener.handle("frak_getMergeToken", handlers.onGetMergeToken);
 
         // Register streaming handlers (IFrameRpcSchema)
         listener.handleStream(
             "frak_listenToWalletStatus",
-            onWalletListenRequest
+            handlers.onWalletListenRequest
         );
 
         // Register SSO handlers (SsoRpcSchema)
@@ -159,14 +170,10 @@ function ListenerContent() {
             listener.cleanup();
         };
     }, [
-        onWalletListenRequest,
+        handlers,
         onDisplayModalRequest,
-        onGetMerchantInformation,
-        onGetUserReferralStatus,
-        onGetMergeToken,
         onDisplayEmbeddedWallet,
         onDisplaySharingPage,
-        onSendInteraction,
     ]);
 
     /**
