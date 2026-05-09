@@ -135,11 +135,13 @@ run_android() {
     cd "$WALLET_DIR"
     # Match release: local dev rides the dev variant (id.frak.wallet.dev) so the
     # bundle id, app-link host, and deep-link scheme align with wallet-dev.frak.id.
-    # Note: we do NOT pass `--config src-tauri/tauri.conf.dev.json` here. On Android,
-    # `applicationId` is decoupled from `namespace` — the dev variant flips it via Gradle
-    # (FRAK_VARIANT=dev in app/build.gradle.kts). Overriding Tauri's `identifier` would
-    # break Tauri CLI's source-dir lookup (gen/android/app/src/main/java/<identifier>).
-    FRAK_VARIANT=dev bun run tauri android dev --no-dev-server -c '{"build":{"beforeDevCommand":""}}' &
+    # Note: we pass `--config src-tauri/tauri.conf.android-dev.json` (NOT `tauri.conf.dev.json`).
+    # On Android, `applicationId` is decoupled from `namespace` — the dev variant flips it via
+    # Gradle (FRAK_VARIANT=dev in app/build.gradle.kts). Overriding Tauri's `identifier` would
+    # break Tauri CLI's source-dir lookup (gen/android/app/src/main/java/<identifier>). The
+    # Android-specific overlay only flips `plugins.deep-link.mobile` so the dev variant
+    # registers `wallet-dev.frak.id` + `frakwallet-dev://` (strict per-variant routing).
+    FRAK_VARIANT=dev bun run tauri android dev --config src-tauri/tauri.conf.android-dev.json --no-dev-server -c '{"build":{"beforeDevCommand":""}}' &
     TAURI_PID=$!
     wait $TAURI_PID
 }

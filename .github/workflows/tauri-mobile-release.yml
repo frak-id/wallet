@@ -213,6 +213,8 @@ jobs:
         with:
           workspaces: apps/wallet/src-tauri
           cache-on-failure: true
+          key: ${{ needs.validate.outputs.stage }}
+          prefix-key: "v1-rust"
 
       - name: "💾 Setup SST Cache"
         id: sst-caching
@@ -232,6 +234,18 @@ jobs:
           path: ~/Library/Developer/Xcode/DerivedData
           key: ${{ runner.os }}-xcode-derived-${{ hashFiles('apps/wallet/src-tauri/gen/apple/**') }}
           restore-keys: ${{ runner.os }}-xcode-derived-
+
+      # `swift-rs` invokes `swift build` from each plugin's build.rs in parallel under cargo,
+      # racing over this single global cache. Caching it across runs gives subsequent runs warm
+      # artifacts; the pre-warm step below covers cold (cache-miss) runs.
+      - name: "💾 Cache SwiftPM artifacts"
+        uses: actions/cache@v5
+        with:
+          path: |
+            ~/Library/Caches/org.swift.swiftpm
+            ~/Library/org.swift.swiftpm
+          key: ${{ runner.os }}-spm-${{ hashFiles('apps/wallet/src-tauri/plugins/*/ios/Package.resolved', 'apps/wallet/src-tauri/Cargo.lock') }}
+          restore-keys: ${{ runner.os }}-spm-
 
       - name: "👥 Configure AWS Credentials"
         uses: aws-actions/configure-aws-credentials@v6
@@ -256,6 +270,16 @@ jobs:
           echo "[ci] GoogleService-Info.plist written ($(wc -c < apps/wallet/src-tauri/gen/apple/app_iOS/GoogleService-Info.plist) bytes)"
         env:
           STAGE: ${{ needs.validate.outputs.stage }}
+
+      # `swift-rs` runs `swift build` from each plugin's build.rs in parallel under cargo,
+      # racing over the global SwiftPM artifact cache. Pre-resolving here serializes the
+      # Firebase binary-artifact downloads (FirebaseAnalytics.zip, grpcpp.zip, etc.) so the
+      # subsequent parallel `swift build` invocations all hit a warm cache instead of failing
+      # with `already exists in file system`.
+      # See: https://github.com/firebase/firebase-ios-sdk/issues/14821
+      - name: "🔥 Pre-warm SwiftPM artifact cache"
+        working-directory: apps/wallet/src-tauri/plugins/tauri-plugin-frak-crashlytics/ios
+        run: swift package resolve
 
       - name: "🏗️ Build iOS"
         # cd into wallet app so tauri finds src-tauri/ and beforeBuildCommand runs in correct directory.
@@ -420,14 +444,22 @@ jobs:
         # FRAK_VARIANT flips the wallet variant in app/build.gradle.kts (id.frak.wallet[.dev], app
         # name, app link host, deep-link scheme).
         #
-        # We do NOT pass `--config src-tauri/tauri.conf.dev.json` here. Android's `applicationId`
-        # is decoupled from `namespace` (Kotlin source package) by Gradle, so the dev bundle id
-        # comes from build.gradle.kts — not Tauri's `identifier`. Overriding `identifier` would
-        # make Tauri CLI look for sources at gen/android/app/src/main/java/id/frak/wallet/dev/
-        # which doesn't exist (sources live under id/frak/wallet/, matching `namespace`).
+        # We pass `--config src-tauri/tauri.conf.android-dev.json` for the dev stage (NOT
+        # `tauri.conf.dev.json`). Android's `applicationId` is decoupled from `namespace`
+        # (Kotlin source package) by Gradle, so the dev bundle id comes from build.gradle.kts —
+        # not Tauri's `identifier`. Overriding `identifier` would make Tauri CLI look for
+        # sources at gen/android/app/src/main/java/id/frak/wallet/dev/ which doesn't exist.
+        # The Android-specific overlay only flips `plugins.deep-link.mobile` so each variant
+        # gets strict per-variant deep-link intent-filters (dev: wallet-dev.frak.id +
+        # frakwallet-dev:// only; prod: wallet.frak.id + frakwallet:// only).
         run: |
+          if [ "$STAGE" = "dev" ]; then
+            CONFIG_FLAG="--config src-tauri/tauri.conf.android-dev.json"
+          else
+            CONFIG_FLAG=""
+          fi
           sst shell --stage "$STAGE" --print-logs -- bash -c \
-            "cd apps/wallet && tauri android build"
+            "cd apps/wallet && tauri android build $CONFIG_FLAG"
         env:
           STAGE: ${{ needs.validate.outputs.stage }}
           FRAK_VARIANT: ${{ needs.validate.outputs.stage }}

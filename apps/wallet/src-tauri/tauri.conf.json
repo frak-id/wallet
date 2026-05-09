@@ -34,15 +34,7 @@
                     "pathPattern": ["/.*"]
                 },
                 {
-                    "host": "wallet-dev.frak.id",
-                    "scheme": ["https"],
-                    "pathPattern": ["/.*"]
-                },
-                {
                     "scheme": ["frakwallet"]
-                },
-                {
-                    "scheme": ["frakwallet-dev"]
                 }
             ]
         }

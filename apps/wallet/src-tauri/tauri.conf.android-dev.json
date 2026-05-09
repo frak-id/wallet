@@ -1,7 +1,6 @@
 {
     "$schema": "../node_modules/@tauri-apps/cli/config.schema.json",
-    "productName": "Frak Wallet Dev",
-    "identifier": "id.frak.wallet.dev",
+    "_comment": "Android-only dev overlay. Mirrors `plugins.deep-link.mobile` from `tauri.conf.dev.json` but DOES NOT override `identifier` — Android dev variants take their `applicationId` from Gradle (`FRAK_VARIANT=dev` in app/build.gradle.kts adds the `.dev` suffix). Overriding `identifier` here would make Tauri CLI look for sources at gen/android/app/src/main/java/id/frak/wallet/dev/ which doesn't exist.",
     "plugins": {
         "deep-link": {
             "mobile": [

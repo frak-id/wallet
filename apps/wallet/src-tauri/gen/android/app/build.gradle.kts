@@ -34,6 +34,12 @@ val appName = if (isDevVariant) "Frak Wallet Dev" else "Frak Wallet"
 // `deepLinkScheme` placeholder is no longer needed.
 val appLinkHost = if (isDevVariant) "wallet-dev.frak.id" else "wallet.frak.id"
 
+// The Firebase plugins must be applied BEFORE the `android { ... }` block so that
+// the `CrashlyticsExtension` is registered by the time `configure<CrashlyticsExtension>`
+// runs inside the release build type closure below.
+apply(plugin = "com.google.gms.google-services")
+apply(plugin = "com.google.firebase.crashlytics")
+
 android {
     compileSdk = 36
     ndkVersion = "29.0.14206865"
@@ -135,5 +141,3 @@ dependencies {
 }
 
 apply(from = "tauri.build.gradle.kts")
-apply(plugin = "com.google.gms.google-services")
-apply(plugin = "com.google.firebase.crashlytics")
