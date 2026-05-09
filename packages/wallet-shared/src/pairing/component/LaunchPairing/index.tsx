@@ -1,16 +1,16 @@
 import { EmptyState } from "@frak-labs/design-system/components/EmptyState";
 import { Spinner } from "@frak-labs/design-system/components/Spinner";
+import { Text } from "@frak-labs/design-system/components/Text";
 import { clsx as cx } from "clsx";
-import { Cuer } from "cuer";
 import { CircleAlert } from "lucide-react";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { create, useStore } from "zustand";
-import { trackEvent } from "../../../common/analytics";
+import { create } from "zustand";
 import { CodeInput } from "../../../common/component/CodeInput";
 import type { OnPairingSuccessCallback } from "../../clients/origin";
-import { getOriginPairingClient } from "../../clients/store";
+import { useOriginPairingFlow } from "../../hook/useOriginPairingFlow";
 import type { OriginIdentityNode, OriginPairingState } from "../../types";
+import { PairingQrCode } from "../PairingQrCode";
 import { PairingStatus } from "../PairingStatus";
 import * as styles from "./index.css";
 
@@ -42,10 +42,11 @@ export function LaunchPairing({
     const [showFullScreen, setShowFullScreen] = useState(showBrighterQRCode);
     const [isExiting, setIsExiting] = useState(false);
     const timeoutRef = useRef<NodeJS.Timeout | null>(null);
-    const client = getOriginPairingClient();
 
-    // Get the current state of the client
-    const clientState = useStore(client.store);
+    const { clientState, isError, handleRetry } = useOriginPairingFlow({
+        onSuccess,
+        originNode,
+    });
 
     // Sync showFullScreen with store state
     useEffect(() => {
@@ -69,25 +70,16 @@ export function LaunchPairing({
         return () => setShowBrighterQRCode(false);
     }, [setShowBrighterQRCode]);
 
+    // The brighter-QR overlay is a white surface; the EmptyState text is dark
+    // by default but inherits `color: "#000"` from the overlay — still, the
+    // overlay is meaningless once the QR isn't usable. Dismiss it whenever
+    // the client transitions into an error state so the user lands back on
+    // the inline EmptyState retry block.
     useEffect(() => {
-        client.initiatePairing({ onSuccess, originNode });
-        trackEvent("pairing_initiated");
-    }, [client, onSuccess]);
-
-    /**
-     * Recover from a fatal/transient error surfaced by the origin client.
-     * `retry-error` (reconnect budget exhausted) → just call reconnect().
-     * `error` (fatal close) → reset() + a fresh initiatePairing() with the
-     * options the parent passed to this component.
-     */
-    const handleRetry = useCallback(() => {
-        if (client.state.status === "retry-error") {
-            client.reconnect();
-            return;
+        if (isError && showBrighterQRCode) {
+            setShowBrighterQRCode(false);
         }
-        client.reset();
-        client.initiatePairing({ onSuccess, originNode });
-    }, [client, onSuccess, originNode]);
+    }, [isError, showBrighterQRCode, setShowBrighterQRCode]);
 
     const pairingContent = useMemo(
         () => (
@@ -153,10 +145,10 @@ function PairingContent({
                     className={styles.launchPairing__qrCode}
                     onClick={() => setShowBrighterQRCode(!showBrighterQRCode)}
                 >
-                    <Cuer
-                        arena={"/icon.svg"}
+                    <PairingQrCode
                         value={`${process.env.FRAK_WALLET_URL}/pairing?id=${pairingInfo.id}&mode=embedded`}
                         size={200}
+                        errorCorrection="medium"
                     />
                 </button>
             ) : (
@@ -167,7 +159,11 @@ function PairingContent({
                     <PairingStatus status={clientState.status} />
                 </div>
             )}
-            {clientState.partnerDevice && <p>{clientState.partnerDevice}</p>}
+            {clientState.partnerDevice && (
+                <Text variant="bodySmall" align="center">
+                    {clientState.partnerDevice}
+                </Text>
+            )}
             {!isError && pairingInfo?.code && (
                 <CodeInput value={pairingInfo.code} mode="numeric" fill />
             )}
