@@ -309,8 +309,8 @@ export default defineConfig(async () => {
                             //   permissionless + BaseProvider + provider glue.
                             //   Modal/Wallet only.
                             // • `ui-vendor` → heavy lazy UI libs (@radix-ui,
-                            //   cuer, micromark). radix + alert-dialog are
-                            //   Modal-only; cuer + micromark land here through
+                            //   qr, micromark). radix + alert-dialog are
+                            //   Modal-only; qr + micromark land here through
                             //   wallet-shared pairing/Markdown which Modal+Wallet
                             //   share. SharingPage pulls @radix-ui/react-accordion
                             //   via design-system Accordion (FAQ section).
@@ -331,7 +331,7 @@ export default defineConfig(async () => {
                             },
                             {
                                 name: "ui-vendor",
-                                test: /node_modules[\\/](?:@radix-ui|micromark|cuer)[\\/]/,
+                                test: /node_modules[\\/](?:@radix-ui|micromark|qr)[\\/]/,
                                 priority: 30,
                             },
                             {

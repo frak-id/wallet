@@ -96,8 +96,7 @@
   },
   "resolutions": {
     "caniuse-lite": "^1.0.30001779",
-    "parse5": "^7.3.0",
-    "qr": "^0.5.0"
+    "parse5": "^7.3.0"
   },
   "trustedDependencies": []
 }
