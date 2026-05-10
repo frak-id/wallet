@@ -155,26 +155,6 @@ function handleDeepLinkAction(
     routeDeepLink(navigate, params);
 }
 
-function dispatchDeepLink(
-    navigate: NavigateFn,
-    url: string,
-    source: DeepLinkSource
-) {
-    const params = parseDeepLink(url);
-    if (!params) {
-        // Parse failure — still record the delivery so we can detect
-        // unexpected URL shapes in the wild without losing the cold/warm
-        // signal that the OS did hand a URL to the app.
-        trackEvent("deep_link_received", {
-            source,
-            action: null,
-            gated: false,
-        });
-        return;
-    }
-    handleDeepLinkAction(navigate, params, source);
-}
-
 /**
  * Convert deep link params to typed pending actions for post-auth execution.
  * Stores them in `pendingActionsStore` (persisted, survives refresh).
@@ -284,10 +264,11 @@ export async function initDeepLinks(navigate: NavigateFn): Promise<void> {
             const initialUrls = await getCurrent();
             if (initialUrls && initialUrls.length > 0) {
                 const url = initialUrls[0];
-                setTimeout(
-                    () => dispatchDeepLink(navigate, url, "cold_start"),
-                    100
-                );
+                setTimeout(() => {
+                    const params = parseDeepLink(url);
+                    if (!params) return;
+                    handleDeepLinkAction(navigate, params, "cold_start");
+                }, 100);
             }
         } catch {
             // Ignore errors from getCurrent - may not be available on all platforms
@@ -297,7 +278,8 @@ export async function initDeepLinks(navigate: NavigateFn): Promise<void> {
         await onOpenUrl((urls: string[]) => {
             const url = urls[0];
             if (!url) return;
-            dispatchDeepLink(navigate, url, "warm_start");
+            const params = parseDeepLink(url);
+            if (params) handleDeepLinkAction(navigate, params, "warm_start");
         });
     } catch (error) {
         recordError(error, {
