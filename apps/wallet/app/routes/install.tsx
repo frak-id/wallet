@@ -10,6 +10,7 @@ import { CloseIcon, CopyIcon } from "@frak-labs/design-system/icons";
 import {
     authenticatedBackendApi,
     CodeInput,
+    ExternalLink,
     getSafeSession,
     LogoFrakWithName,
     trackEvent,
@@ -345,10 +346,8 @@ function InstallCodeView({ m: merchantId, a: anonymousId }: InstallSearch) {
             </Card>
 
             <footer className={styles.footer}>
-                <a
+                <ExternalLink
                     href={downloadUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
                     className={styles.downloadButton}
                     onClick={() => {
                         trackEvent("install_store_clicked", {
@@ -360,7 +359,7 @@ function InstallCodeView({ m: merchantId, a: anonymousId }: InstallSearch) {
                     }}
                 >
                     {t("installCode.download")}
-                </a>
+                </ExternalLink>
             </footer>
         </div>
     );

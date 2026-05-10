@@ -1,6 +1,7 @@
 import { Box } from "@frak-labs/design-system/components/Box";
 import { Button } from "@frak-labs/design-system/components/Button";
 import { Text } from "@frak-labs/design-system/components/Text";
+import { ExternalLink } from "@frak-labs/wallet-shared";
 import { Trans, useTranslation } from "react-i18next";
 import { PageLayout } from "@/module/common/component/PageLayout";
 import { HeroContent } from "../HeroContent";
@@ -27,20 +28,10 @@ export function Welcome({ onContinue }: WelcomeProps) {
                                 i18nKey="onboarding.welcome.legal"
                                 components={{
                                     termsLink: (
-                                        // biome-ignore lint/a11y/useAnchorContent: Content provided by Trans i18n component
-                                        <a
-                                            href="https://frak.id/privacy"
-                                            target="_blank"
-                                            rel="noreferrer"
-                                        />
+                                        <ExternalLink href="https://frak.id/privacy" />
                                     ),
                                     privacyLink: (
-                                        // biome-ignore lint/a11y/useAnchorContent: Content provided by Trans i18n component
-                                        <a
-                                            href="https://frak.id/privacy"
-                                            target="_blank"
-                                            rel="noreferrer"
-                                        />
+                                        <ExternalLink href="https://frak.id/privacy" />
                                     ),
                                 }}
                             />

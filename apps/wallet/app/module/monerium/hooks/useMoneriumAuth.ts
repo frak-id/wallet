@@ -1,4 +1,5 @@
 import { IS_TAURI } from "@frak-labs/app-essentials/utils/platform";
+import { openExternalUrl } from "@frak-labs/wallet-shared";
 import {
     bufferToBase64URLString,
     bytesToBase64URLString,
@@ -70,7 +71,7 @@ export const useMoneriumAuth = () => {
             const authUrl = `${getMoneriumAuthBaseUrl()}?${searchParams.toString()}`;
 
             if (IS_TAURI) {
-                window.open(authUrl, "_blank");
+                await openExternalUrl(authUrl);
                 return;
             }
 
