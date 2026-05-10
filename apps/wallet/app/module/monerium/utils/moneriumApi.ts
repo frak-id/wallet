@@ -1,3 +1,4 @@
+import { IS_TAURI } from "@frak-labs/app-essentials/utils/platform";
 import { recordError } from "@frak-labs/wallet-shared";
 import type { Address, Hex } from "viem";
 import { moneriumStore } from "@/module/monerium/store/moneriumStore";
@@ -35,20 +36,22 @@ const REFRESH_BASE_DELAY_MS = 500;
 let activeRefresh: Promise<void> | null = null;
 
 function getApiBaseUrl(): string {
-    // Monerium's CORS preflight handler routes by the actual `Accept` header
-    // value, but browsers don't replay it on OPTIONS — so any direct call from
-    // localhost (sandbox doesn't whitelist it anyway) returns 404 with no
-    // ACAO header. Route through the vite proxy (configured in vite.config.ts
-    // for both `dev` and `preview` servers) whenever we're on localhost.
-    if (typeof window !== "undefined") {
+    // Production Tauri builds load bundled assets from `tauri://localhost`
+    // (iOS) / `https://tauri.localhost` (Android), so a relative
+    // `/monerium-api/...` would resolve against the local scheme and 404.
+    // Route through the deployed wallet's nginx proxy at FRAK_WALLET_URL.
+    // (See apps/wallet/nginx.conf — the `/monerium-api/` location allows
+    // Tauri origins via CORS reflection.) Tauri dev (devUrl runs vite on
+    // localhost) falls through to the relative path so the vite proxy wins.
+    if (IS_TAURI && typeof window !== "undefined") {
         const host = window.location.hostname;
-        if (host === "localhost" || host === "127.0.0.1") {
-            return "/monerium-api";
+        if (host !== "localhost" && host !== "127.0.0.1") {
+            return `${process.env.FRAK_WALLET_URL}/monerium-api`;
         }
     }
-    return moneriumConfig.environment === "production"
-        ? "https://api.monerium.app"
-        : "https://api.monerium.dev";
+    // Web (localhost dev or deployed) — relative path is proxied by vite
+    // (dev) or by the wallet pod's nginx (deployed).
+    return "/monerium-api";
 }
 
 const delay = (ms: number) => new Promise<void>((r) => setTimeout(r, ms));

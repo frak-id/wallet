@@ -53,6 +53,9 @@ export const walletEnv = {
     OPEN_PANEL_LISTENER_CLIENT_ID: openPanelWalletClientId.value,
     ANDROID_SHA256_FINGERPRINT: androidSha256Fingerprint.value,
     MONERIUM_CLIENT_ID: moneriumClientId.value,
+    // Monerium API host the in-pod nginx proxy forwards `/monerium-api/*` to.
+    // Workaround for their broken CORS preflight (see apps/wallet/nginx.conf).
+    MONERIUM_API_HOST: isProd ? "api.monerium.app" : "api.monerium.dev",
     IS_APP_AVAILABLE: isAppAvailable,
 };
 
