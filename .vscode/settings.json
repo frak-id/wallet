@@ -18,8 +18,6 @@
         "**/playwright-report": true,
         "**/target": true,
         "**/test-results": true,
-        "apps/wallet/src-tauri/gen": true,
-        "apps/wallet/src-tauri/plugins": true,
         "plugins/*/vendor": true
     },
     "search.exclude": {
@@ -65,7 +63,7 @@
         "apps/wallet/src-tauri/plugins/**": true,
         "plugins/*/vendor/**": true
     },
-    "typescript.tsserver.watchOptions": {
+    "ts.tsserver.watchOptions": {
         "excludeDirectories": [
             "**/.react-router",
             "**/.sst",
@@ -87,23 +85,23 @@
             "plugins/wordpress/vendor"
         ]
     },
-    "typescript.tsserver.maxTsServerMemory": 8192,
-    "typescript.disableAutomaticTypeAcquisition": true,
-    "typescript.preferences.autoImportFileExcludePatterns": [
+    "ts.tsserver.maxTsServerMemory": 8192,
+    "ts.disableAutomaticTypeAcquisition": true,
+    "ts.preferences.autoImportFileExcludePatterns": [
         "**/build/**",
         "**/cdn/**",
         "**/dist/**",
         "**/generated-docs/**",
         "**/node_modules/**/dist/**"
     ],
-    "javascript.preferences.autoImportFileExcludePatterns": [
+    "js.preferences.autoImportFileExcludePatterns": [
         "**/build/**",
         "**/cdn/**",
         "**/dist/**",
         "**/generated-docs/**",
         "**/node_modules/**/dist/**"
     ],
-    "typescript.workspaceSymbols.scope": "currentProject",
+    "ts.workspaceSymbols.scope": "currentProject",
     "workbench.editor.alwaysShowEditorActions": true,
     "workbench.editor.autoLockGroups": {
         "default": true
