@@ -4,47 +4,34 @@ import {
     isMoneriumConnected,
     moneriumStore,
 } from "@/module/monerium/store/moneriumStore";
-import { getProfiles } from "@/module/monerium/utils/moneriumApi";
-import { useMoneriumTokenRefresh } from "./useMoneriumClient";
+import {
+    getProfiles,
+    isMoneriumRetryable,
+} from "@/module/monerium/utils/moneriumApi";
 
 export function useMoneriumProfile() {
     const isConnected = moneriumStore(isMoneriumConnected);
-    const accessToken = moneriumStore((s) => s.accessToken);
-    const { isReady } = useMoneriumTokenRefresh();
 
     const { data, isLoading, error, refetch } = useQuery({
         queryKey: moneriumKey.profile,
         queryFn: async () => {
-            try {
-                const { profiles } = await getProfiles();
-                const profile = profiles[0];
-
-                if (!profile) {
-                    return null;
-                }
-
-                return {
-                    profileId: profile.id,
-                    profileState: profile.state,
-                };
-            } catch (error) {
-                if (error instanceof Error && error.message.includes("401")) {
-                    moneriumStore.getState().disconnect();
-                }
-                throw error;
-            }
+            const { profiles } = await getProfiles();
+            return profiles[0] ?? null;
         },
-        enabled: isConnected && isReady && !!accessToken,
+        enabled: isConnected,
         refetchOnWindowFocus: true,
         refetchInterval: (query) => {
-            if (query.state.data?.profileState === "pending") return 30_000;
+            if (query.state.data?.state === "pending") return 30_000;
             return false;
         },
+        retry: (failureCount, err) =>
+            failureCount < 3 && isMoneriumRetryable(err),
     });
 
     return {
-        profileId: data?.profileId ?? null,
-        profileState: data?.profileState ?? null,
+        profile: data ?? null,
+        profileId: data?.id ?? null,
+        profileState: data?.state ?? null,
         isLoading,
         error,
         refetch,

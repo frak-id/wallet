@@ -663,6 +663,8 @@
             "cancelledDescription": "You can reconnect to Monerium whenever you're ready.",
             "errorTitle": "Connection failed",
             "errorDescription": "Something went wrong while connecting to Monerium. Please try again in a moment.",
+            "csrfTitle": "Security check failed",
+            "csrfDescription": "We couldn't verify the connection request. Please retry from the start.",
             "tryAgain": "Try again"
         },
         "bankFlow": {
@@ -707,7 +709,8 @@
                     "ibanEmpty": "No IBAN saved",
                     "modify": "Edit",
                     "continue": "Continue",
-                    "insufficientBalance": "Insufficient balance"
+                    "insufficientBalance": "Insufficient balance",
+                    "aboveMax": "Transfers of {{max}}€ or more require additional documentation."
                 },
                 "recap": {
                     "title": "Summary",

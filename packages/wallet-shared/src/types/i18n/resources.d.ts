@@ -327,6 +327,7 @@ interface Resources {
                 };
                 transfer: {
                     amount: {
+                        aboveMax: "Transfers of {{max}}€ or more require additional documentation.";
                         continue: "Continue";
                         ibanEmpty: "No IBAN saved";
                         ibanLabel: "IBAN";
@@ -367,6 +368,8 @@ interface Resources {
             callback: {
                 cancelledDescription: "You can reconnect to Monerium whenever you're ready.";
                 cancelledTitle: "Connection cancelled";
+                csrfDescription: "We couldn't verify the connection request. Please retry from the start.";
+                csrfTitle: "Security check failed";
                 errorDescription: "Something went wrong while connecting to Monerium. Please try again in a moment.";
                 errorTitle: "Connection failed";
                 tryAgain: "Try again";

@@ -36,18 +36,16 @@ export type MoneriumPostAddressResponse = {
     state: "linked" | "pending";
 };
 
-export type MoneriumIban = {
-    iban: string;
-    bic: string;
-    profile: string;
-    address: string;
-    chain: string;
-    state: "requested" | "approved" | "pending" | "rejected" | "closed";
-    emailNotifications: boolean;
-};
-
-export type MoneriumIbansResponse = {
-    ibans: MoneriumIban[];
+/**
+ * SEPA recipient identity used by Monerium for AML / SCT compliance.
+ * Sent inside `counterpart.details` on redeem orders. Fields are optional —
+ * any absent field is omitted from the payload (`JSON.stringify` drops
+ * `undefined`), which is preferable to sending an empty string.
+ */
+export type MoneriumOrderDetails = {
+    firstName?: string;
+    lastName?: string;
+    country?: string;
 };
 
 export type MoneriumNewOrder = {
@@ -61,7 +59,7 @@ export type MoneriumNewOrder = {
             standard: string;
             iban: string;
         };
-        details: Record<string, unknown>;
+        details: MoneriumOrderDetails;
     };
     message: string;
     memo?: string;
@@ -80,7 +78,7 @@ export type MoneriumOrder = {
             standard: string;
             iban?: string;
         };
-        details: Record<string, unknown>;
+        details: MoneriumOrderDetails;
     };
     memo: string;
     meta: {

@@ -660,6 +660,8 @@
             "cancelledDescription": "Tu peux relancer la connexion à Monerium quand tu le souhaites.",
             "errorTitle": "Connexion impossible",
             "errorDescription": "Un problème est survenu lors de la connexion à Monerium. Réessaye dans un instant.",
+            "csrfTitle": "Vérification de sécurité échouée",
+            "csrfDescription": "Nous n'avons pas pu vérifier la demande de connexion. Recommence depuis le début.",
             "tryAgain": "Réessayer"
         },
         "bankFlow": {
@@ -704,7 +706,8 @@
                     "ibanEmpty": "Aucun IBAN enregistré",
                     "modify": "Modifier",
                     "continue": "Continuer",
-                    "insufficientBalance": "Total balance Insuffisante"
+                    "insufficientBalance": "Total balance Insuffisante",
+                    "aboveMax": "Les transferts de {{max}}€ ou plus nécessitent des documents supplémentaires."
                 },
                 "recap": {
                     "title": "Récapitulatif",

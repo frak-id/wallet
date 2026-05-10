@@ -53,7 +53,7 @@ export const useMoneriumAuth = () => {
             const codeChallenge = await createCodeChallenge(codeVerifier);
             const state = createStateNonce();
 
-            moneriumStore.getState().setPendingCodeVerifier(codeVerifier);
+            moneriumStore.getState().setPendingAuth(codeVerifier, state);
 
             const searchParams = new URLSearchParams({
                 client_id: moneriumConfig.clientId,

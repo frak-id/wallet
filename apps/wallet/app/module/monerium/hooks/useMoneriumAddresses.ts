@@ -5,16 +5,16 @@ import {
     isMoneriumConnected,
     moneriumStore,
 } from "@/module/monerium/store/moneriumStore";
-import { getAddresses } from "@/module/monerium/utils/moneriumApi";
-import { useMoneriumTokenRefresh } from "./useMoneriumClient";
+import {
+    getAddresses,
+    isMoneriumRetryable,
+} from "@/module/monerium/utils/moneriumApi";
 
 const FIVE_MINUTES_MS = 5 * 60 * 1000;
 
 export function useMoneriumAddresses() {
     const { address: walletAddress } = useConnection();
     const isConnected = moneriumStore(isMoneriumConnected);
-    const accessToken = moneriumStore((s) => s.accessToken);
-    const { isReady } = useMoneriumTokenRefresh();
 
     const query = useQuery({
         queryKey: moneriumKey.addresses,
@@ -30,9 +30,11 @@ export function useMoneriumAddresses() {
 
             return { addresses, isWalletLinked };
         },
-        enabled: isConnected && isReady && !!accessToken,
+        enabled: isConnected,
         staleTime: FIVE_MINUTES_MS,
         refetchOnWindowFocus: true,
+        retry: (failureCount, err) =>
+            failureCount < 3 && isMoneriumRetryable(err),
     });
 
     return {

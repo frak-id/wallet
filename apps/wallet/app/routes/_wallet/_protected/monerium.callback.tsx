@@ -5,7 +5,7 @@ import { Text } from "@frak-labs/design-system/components/Text";
 import { recordError } from "@frak-labs/wallet-shared";
 import { useMutation } from "@tanstack/react-query";
 import { createFileRoute, redirect, useNavigate } from "@tanstack/react-router";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { DetailOverlay } from "@/module/common/component/DetailOverlay";
 import { MoneriumScreen } from "@/module/monerium/component/MoneriumBankFlow/MoneriumScreen";
@@ -28,7 +28,25 @@ export const Route = createFileRoute("/_wallet/_protected/monerium/callback")({
     }),
 });
 
-type OutcomeKind = "cancelled" | "error";
+type OutcomeKind = "cancelled" | "csrf" | "error";
+
+const OUTCOME_COPY: Record<
+    OutcomeKind,
+    { title: string; description: string }
+> = {
+    cancelled: {
+        title: "monerium.callback.cancelledTitle",
+        description: "monerium.callback.cancelledDescription",
+    },
+    csrf: {
+        title: "monerium.callback.csrfTitle",
+        description: "monerium.callback.csrfDescription",
+    },
+    error: {
+        title: "monerium.callback.errorTitle",
+        description: "monerium.callback.errorDescription",
+    },
+};
 
 function Outcome({
     kind,
@@ -40,7 +58,7 @@ function Outcome({
     onClose: () => void;
 }) {
     const { t } = useTranslation();
-    const isCancelled = kind === "cancelled";
+    const copy = OUTCOME_COPY[kind];
 
     return (
         <MoneriumScreen
@@ -49,19 +67,9 @@ function Outcome({
             ctaOnClick={onRetry}
         >
             <Box paddingTop={"m"}>
-                <Text variant="heading1">
-                    {t(
-                        isCancelled
-                            ? "monerium.callback.cancelledTitle"
-                            : "monerium.callback.errorTitle"
-                    )}
-                </Text>
+                <Text variant="heading1">{t(copy.title)}</Text>
                 <Text variant="body" color="secondary">
-                    {t(
-                        isCancelled
-                            ? "monerium.callback.cancelledDescription"
-                            : "monerium.callback.errorDescription"
-                    )}
+                    {t(copy.description)}
                 </Text>
             </Box>
         </MoneriumScreen>
@@ -70,11 +78,11 @@ function Outcome({
 
 function MoneriumCallback() {
     const navigate = useNavigate();
-    const { code, error } = Route.useSearch();
+    const { code, state, error } = Route.useSearch();
     const hasStartedRef = useRef(false);
-    const pendingCodeVerifier = moneriumStore(
-        (state) => state.pendingCodeVerifier
-    );
+    const [stateMismatch, setStateMismatch] = useState(false);
+    const pendingCodeVerifier = moneriumStore((s) => s.pendingCodeVerifier);
+    const pendingState = moneriumStore((s) => s.pendingState);
 
     const { mutate, isPending, isError, isSuccess } = useMutation({
         mutationFn: async ({
@@ -85,7 +93,7 @@ function MoneriumCallback() {
             codeVerifier: string;
         }) => {
             const tokens = await exchangeCodeForTokens(code, codeVerifier);
-            // Verifier cleared in `onSuccess` — clearing it here would flip
+            // Pending auth cleared in `onSuccess` — clearing here would flip
             // the subscribed selector before react-query flags `isSuccess`
             // and flash the error screen during the redirect.
             moneriumStore
@@ -102,7 +110,7 @@ function MoneriumCallback() {
             // because the modal store is in-memory.
             modalStore.getState().openModal({ id: "moneriumBankFlow" });
             navigate({ to: "/wallet", replace: true });
-            moneriumStore.getState().setPendingCodeVerifier(null);
+            moneriumStore.getState().clearPendingAuth();
         },
         onError: (err) => {
             recordError(err, { source: "monerium_callback" });
@@ -112,11 +120,23 @@ function MoneriumCallback() {
     useEffect(() => {
         if (hasStartedRef.current) return;
         if (!code) return;
-        if (!pendingCodeVerifier) return;
+        if (!pendingCodeVerifier || !pendingState) return;
 
         hasStartedRef.current = true;
+
+        // CSRF guard: spec requires the returned `state` to match what we
+        // stored before the redirect. Mismatch means the callback isn't ours.
+        if (state !== pendingState) {
+            moneriumStore.getState().clearPendingAuth();
+            recordError(new Error("Monerium OAuth state mismatch"), {
+                source: "monerium_callback",
+            });
+            setStateMismatch(true);
+            return;
+        }
+
         mutate({ code, codeVerifier: pendingCodeVerifier });
-    }, [code, pendingCodeVerifier, mutate]);
+    }, [code, state, pendingCodeVerifier, pendingState, mutate]);
 
     const goToProfile = () => navigate({ to: "/profile", replace: true });
     const goToWallet = () => navigate({ to: "/wallet", replace: true });
@@ -124,9 +144,13 @@ function MoneriumCallback() {
     // Spinner while the exchange is in-flight, just succeeded (before the
     // redirect lands), or about to start (initial mount with code + verifier).
     const isExchangingCode =
-        isPending ||
-        isSuccess ||
-        (Boolean(code) && Boolean(pendingCodeVerifier) && !isError);
+        !stateMismatch &&
+        (isPending ||
+            isSuccess ||
+            (Boolean(code) &&
+                Boolean(pendingCodeVerifier) &&
+                Boolean(pendingState) &&
+                !isError));
 
     return (
         <DetailOverlay onClose={goToWallet}>
@@ -139,11 +163,15 @@ function MoneriumCallback() {
                     );
                 }
 
-                const isCancelled = !code && Boolean(error);
+                const kind: OutcomeKind = stateMismatch
+                    ? "csrf"
+                    : !code && Boolean(error)
+                      ? "cancelled"
+                      : "error";
 
                 return (
                     <Outcome
-                        kind={isCancelled ? "cancelled" : "error"}
+                        kind={kind}
                         onRetry={goToProfile}
                         onClose={handleClose}
                     />
