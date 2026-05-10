@@ -1,5 +1,5 @@
 import { IS_TAURI } from "@frak-labs/app-essentials/utils/platform";
-import { openExternalUrl } from "@frak-labs/wallet-shared";
+import { openExternalUrl, trackEvent } from "@frak-labs/wallet-shared";
 import {
     bufferToBase64URLString,
     bytesToBase64URLString,
@@ -48,6 +48,7 @@ export const useMoneriumAuth = () => {
 
     const connect = useCallback(async (walletAddress: Address) => {
         setIsConnecting(true);
+        trackEvent("monerium_auth_started", { is_tauri: IS_TAURI });
 
         try {
             const codeVerifier = createCodeVerifier();

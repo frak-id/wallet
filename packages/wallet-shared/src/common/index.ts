@@ -14,6 +14,8 @@ export {
 export type {
     AppErrorSource,
     AuthEventMap,
+    DeepLinkEventMap,
+    DeepLinkSource,
     DiagnosticsEventMap,
     EmbeddedWalletEventMap,
     EventMap,
@@ -32,6 +34,8 @@ export type {
     ListenerTxEventMap,
     ModalDismissSource,
     ModalEventMap,
+    MoneriumCallbackOutcome,
+    MoneriumEventMap,
     NotificationEventMap,
     NotificationOptInOutcome,
     OnboardingAction,

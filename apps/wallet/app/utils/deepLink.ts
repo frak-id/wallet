@@ -1,5 +1,10 @@
 import { IS_TAURI } from "@frak-labs/app-essentials/utils/platform";
-import { getSafeSession, recordError } from "@frak-labs/wallet-shared";
+import {
+    type DeepLinkSource,
+    getSafeSession,
+    recordError,
+    trackEvent,
+} from "@frak-labs/wallet-shared";
 import { pendingActionsStore } from "@/module/pending-actions/stores/pendingActionsStore";
 
 type DeepLinkParams = {
@@ -123,21 +128,51 @@ type NavigateFn = (options: {
  */
 const publicActions = new Set(["register", "login", "recovery", "install"]);
 
-function handleDeepLinkAction(navigate: NavigateFn, params: DeepLinkParams) {
-    // Gate protected deep links behind auth
-    if (!publicActions.has(params.action)) {
-        const session = getSafeSession();
-        if (!session?.token) {
-            // Convert deep link to typed pending actions in the store
-            storePendingActions(params);
-            // Replace so the deep link doesn't leave a /register entry that
-            // back-navigation could surface after the post-auth redirect.
-            navigate({ to: "/register", replace: true });
-            return;
-        }
+function handleDeepLinkAction(
+    navigate: NavigateFn,
+    params: DeepLinkParams,
+    source: DeepLinkSource
+) {
+    const isPublic = publicActions.has(params.action);
+    const session = isPublic ? null : getSafeSession();
+    const gated = !isPublic && !session?.token;
+
+    trackEvent("deep_link_received", {
+        source,
+        action: params.action,
+        gated,
+    });
+
+    if (gated) {
+        // Convert deep link to typed pending actions in the store
+        storePendingActions(params);
+        // Replace so the deep link doesn't leave a /register entry that
+        // back-navigation could surface after the post-auth redirect.
+        navigate({ to: "/register", replace: true });
+        return;
     }
 
     routeDeepLink(navigate, params);
+}
+
+function dispatchDeepLink(
+    navigate: NavigateFn,
+    url: string,
+    source: DeepLinkSource
+) {
+    const params = parseDeepLink(url);
+    if (!params) {
+        // Parse failure — still record the delivery so we can detect
+        // unexpected URL shapes in the wild without losing the cold/warm
+        // signal that the OS did hand a URL to the app.
+        trackEvent("deep_link_received", {
+            source,
+            action: null,
+            gated: false,
+        });
+        return;
+    }
+    handleDeepLinkAction(navigate, params, source);
 }
 
 /**
@@ -248,13 +283,11 @@ export async function initDeepLinks(navigate: NavigateFn): Promise<void> {
         try {
             const initialUrls = await getCurrent();
             if (initialUrls && initialUrls.length > 0) {
-                const params = parseDeepLink(initialUrls[0]);
-                if (params) {
-                    setTimeout(
-                        () => handleDeepLinkAction(navigate, params),
-                        100
-                    );
-                }
+                const url = initialUrls[0];
+                setTimeout(
+                    () => dispatchDeepLink(navigate, url, "cold_start"),
+                    100
+                );
             }
         } catch {
             // Ignore errors from getCurrent - may not be available on all platforms
@@ -264,11 +297,7 @@ export async function initDeepLinks(navigate: NavigateFn): Promise<void> {
         await onOpenUrl((urls: string[]) => {
             const url = urls[0];
             if (!url) return;
-
-            const params = parseDeepLink(url);
-            if (params) {
-                handleDeepLinkAction(navigate, params);
-            }
+            dispatchDeepLink(navigate, url, "warm_start");
         });
     } catch (error) {
         recordError(error, {
