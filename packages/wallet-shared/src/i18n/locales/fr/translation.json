@@ -715,7 +715,6 @@
                     "amountLabel": "Montant",
                     "beneficiaryLabel": "Bénéficiaire",
                     "addNote": "Ajouter une note",
-                    "defaultNote": "Envoyé depuis FRAK",
                     "warning": "Une fois validée, l'opération ne peut être annulée",
                     "confirm": "Confirmer le transfert"
                 },
@@ -726,8 +725,12 @@
                 "ibanManager": {
                     "title": "Gérer mes IBAN",
                     "addNew": "Ajouter un IBAN",
-                    "nameLabel": "Nom du bénéficiaire",
-                    "namePlaceholder": "Ex. Mon compte courant",
+                    "firstNameLabel": "Prénom",
+                    "firstNamePlaceholder": "Ex. Jean",
+                    "lastNameLabel": "Nom",
+                    "lastNamePlaceholder": "Ex. Dupont",
+                    "pseudoLabel": "Pseudo / note",
+                    "pseudoPlaceholder": "Par défaut : prénom + nom",
                     "ibanLabel": "IBAN",
                     "ibanPlaceholder": "FR76...",
                     "save": "Enregistrer",

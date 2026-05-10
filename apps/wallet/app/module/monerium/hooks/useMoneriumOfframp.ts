@@ -13,6 +13,8 @@ export const MAX_REDEEM_AMOUNT_EUR = 15_000;
 type PlaceOrderParams = {
     amount: string;
     iban: string;
+    firstName: string;
+    lastName: string;
     memo?: string;
 };
 
@@ -30,7 +32,13 @@ export function useMoneriumOfframp() {
     const accessToken = moneriumStore((s) => s.accessToken);
 
     const mutation = useMutation({
-        mutationFn: async ({ amount, iban, memo }: PlaceOrderParams) => {
+        mutationFn: async ({
+            amount,
+            iban,
+            firstName,
+            lastName,
+            memo,
+        }: PlaceOrderParams) => {
             if (!accessToken) throw new Error("Monerium is not ready");
             if (!walletAddress) throw new Error("Wallet is not connected");
 
@@ -61,10 +69,10 @@ export function useMoneriumOfframp() {
                     chain: moneriumConfig.chain,
                     counterpart: {
                         identifier: { standard: "iban", iban },
-                        // TODO(monerium-details): empty until product
-                        // confirms how to source SEPA recipient identity
-                        // (firstName / lastName / country).
-                        details: {},
+                        details: {
+                            firstName: firstName.trim(),
+                            lastName: lastName.trim(),
+                        },
                     },
                     message,
                     memo: memo?.trim() || "Frak Wallet offramp",

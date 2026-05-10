@@ -53,16 +53,12 @@ export function MoneriumTransferRecapScreen({
 
     const errorMessage = isError && error ? error.message : null;
 
-    // Pre-fill once on mount. Reads `note` via `getState()` so the effect
-    // doesn't re-seed when the user clears the field through the × button.
-    // `defaultNote` deliberately omitted from deps — language switches mid-flow
-    // shouldn't overwrite a user-typed note.
-    const defaultNote = t("monerium.bankFlow.transfer.recap.defaultNote");
+    // Pre-fill the memo with the beneficiary's pseudo on mount.
     useEffect(() => {
         if (moneriumFlowStore.getState().note.length === 0) {
-            setNote(defaultNote);
+            setNote(selectedIban?.pseudo ?? "");
         }
-    }, [setNote]);
+    }, [setNote, selectedIban?.pseudo]);
 
     const noteInputRef = useRef<HTMLInputElement>(null);
     const handleClearNote = useCallback(() => {
@@ -81,6 +77,8 @@ export function MoneriumTransferRecapScreen({
             await placeOrder({
                 amount: normalizeAmountForApi(amount),
                 iban: selectedIban.iban,
+                firstName: selectedIban.firstName,
+                lastName: selectedIban.lastName,
                 memo: note,
             });
         } catch {

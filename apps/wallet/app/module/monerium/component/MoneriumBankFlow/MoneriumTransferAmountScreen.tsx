@@ -132,7 +132,7 @@ export function MoneriumTransferAmountScreen({
                             </Text>
                             <Text variant="bodySmall" color="secondary">
                                 {selectedIban
-                                    ? selectedIban.name ||
+                                    ? selectedIban.pseudo ||
                                       maskIban(selectedIban.iban)
                                     : t(
                                           "monerium.bankFlow.transfer.amount.ibanEmpty"

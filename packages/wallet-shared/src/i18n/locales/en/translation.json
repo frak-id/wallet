@@ -718,7 +718,6 @@
                     "amountLabel": "Amount",
                     "beneficiaryLabel": "Beneficiary",
                     "addNote": "Add a note",
-                    "defaultNote": "Sent from FRAK",
                     "warning": "Once confirmed, this operation cannot be cancelled",
                     "confirm": "Confirm transfer"
                 },
@@ -729,8 +728,12 @@
                 "ibanManager": {
                     "title": "Manage my IBANs",
                     "addNew": "Add an IBAN",
-                    "nameLabel": "Beneficiary name",
-                    "namePlaceholder": "e.g. My checking account",
+                    "firstNameLabel": "First name",
+                    "firstNamePlaceholder": "e.g. John",
+                    "lastNameLabel": "Last name",
+                    "lastNamePlaceholder": "e.g. Doe",
+                    "pseudoLabel": "Pseudo / note",
+                    "pseudoPlaceholder": "Defaults to first + last name",
                     "ibanLabel": "IBAN",
                     "ibanPlaceholder": "FR76...",
                     "save": "Save",

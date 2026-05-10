@@ -3,10 +3,16 @@ import { persist } from "zustand/middleware";
 
 /**
  * A single known beneficiary IBAN, locally managed by the user.
+ *
+ * `pseudo` is the user-facing label displayed in the IBAN list and
+ * pre-fills the order memo on the recap screen.  `firstName` /
+ * `lastName` are sent inside `counterpart.details` for SEPA AML.
  */
 export type IbanEntry = {
     iban: string;
-    name: string;
+    firstName: string;
+    lastName: string;
+    pseudo: string;
 };
 
 type IbanStoreState = {
@@ -42,7 +48,12 @@ export const ibanStore = create<IbanStoreState>()(
                     const normalized = normalizeIban(entry.iban);
                     if (normalized.length === 0) return state;
 
-                    const trimmedName = entry.name.trim();
+                    const trimmed: IbanEntry = {
+                        iban: normalized,
+                        firstName: entry.firstName.trim(),
+                        lastName: entry.lastName.trim(),
+                        pseudo: entry.pseudo.trim(),
+                    };
                     const existing = state.knownIbans.find(
                         (i) => i.iban === normalized
                     );
@@ -51,17 +62,21 @@ export const ibanStore = create<IbanStoreState>()(
                         return {
                             knownIbans: state.knownIbans.map((i) =>
                                 i.iban === normalized
-                                    ? { ...i, name: trimmedName || i.name }
+                                    ? {
+                                          ...i,
+                                          firstName:
+                                              trimmed.firstName || i.firstName,
+                                          lastName:
+                                              trimmed.lastName || i.lastName,
+                                          pseudo: trimmed.pseudo || i.pseudo,
+                                      }
                                     : i
                             ),
                         };
                     }
 
                     return {
-                        knownIbans: [
-                            ...state.knownIbans,
-                            { iban: normalized, name: trimmedName },
-                        ],
+                        knownIbans: [...state.knownIbans, trimmed],
                     };
                 }),
 
