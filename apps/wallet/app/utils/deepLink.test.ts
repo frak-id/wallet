@@ -108,6 +108,7 @@ describe("initDeepLinks", () => {
         expect(navigate).toHaveBeenCalledWith({
             to: "/pairing",
             search: { id: "pair-123", mode: "embedded" },
+            replace: true,
         });
     });
 
@@ -126,6 +127,7 @@ describe("initDeepLinks", () => {
         expect(navigate).toHaveBeenCalledWith({
             to: "/tokens/send",
             search: { to: "0xabc" },
+            replace: true,
         });
     });
 
@@ -141,7 +143,7 @@ describe("initDeepLinks", () => {
 
         openUrlHandler(["frakwallet://wallet"]);
 
-        expect(navigate).toHaveBeenCalledWith({ to: "/wallet" });
+        expect(navigate).toHaveBeenCalledWith({ to: "/wallet", replace: true });
     });
 
     test("should handle HTTPS App Link for pairing (Android)", async () => {
@@ -159,6 +161,7 @@ describe("initDeepLinks", () => {
         expect(navigate).toHaveBeenCalledWith({
             to: "/pairing",
             search: { id: "pair-456", mode: "embedded" },
+            replace: true,
         });
     });
 
@@ -177,6 +180,7 @@ describe("initDeepLinks", () => {
         expect(navigate).toHaveBeenCalledWith({
             to: "/pairing",
             search: { id: "pair-789", mode: "embedded" },
+            replace: true,
         });
     });
 
@@ -199,6 +203,7 @@ describe("initDeepLinks", () => {
         expect(navigate).toHaveBeenCalledWith({
             to: "/pairing",
             search: { id: "pair-qr", mode: "embedded" },
+            replace: true,
         });
     });
 
@@ -217,6 +222,7 @@ describe("initDeepLinks", () => {
         expect(navigate).toHaveBeenCalledWith({
             to: "/pairing",
             search: { id: "pair-cs", mode: "embedded" },
+            replace: true,
         });
     });
 
@@ -235,6 +241,7 @@ describe("initDeepLinks", () => {
         expect(navigate).toHaveBeenCalledWith({
             to: "/pairing",
             search: { id: "pair-dev", mode: "embedded" },
+            replace: true,
         });
     });
 
@@ -256,6 +263,7 @@ describe("initDeepLinks", () => {
         expect(navigate).toHaveBeenCalledWith({
             to: "/pairing",
             search: { id: "abc123def456", mode: "embedded" },
+            replace: true,
         });
     });
 
@@ -274,6 +282,7 @@ describe("initDeepLinks", () => {
         expect(navigate).toHaveBeenCalledWith({
             to: "/pairing",
             search: { id: "abc123def456", mode: "embedded" },
+            replace: true,
         });
     });
 
@@ -309,6 +318,7 @@ describe("initDeepLinks", () => {
         expect(navigate).toHaveBeenCalledWith({
             to: "/install",
             search: { m: "merchant-123", a: "anonymous-456" },
+            replace: true,
         });
     });
 });
@@ -338,7 +348,10 @@ describe("deep link auth gate", () => {
 
         openUrlHandler(["frakwallet://send?to=0xabc"]);
 
-        expect(navigate).toHaveBeenCalledWith({ to: "/register" });
+        expect(navigate).toHaveBeenCalledWith({
+            to: "/register",
+            replace: true,
+        });
         expect(navigate).not.toHaveBeenCalledWith(
             expect.objectContaining({ to: "/tokens/send" })
         );
@@ -385,7 +398,10 @@ describe("deep link auth gate", () => {
             navAction?.type === "navigation" &&
                 navAction.search?.id === "pair-abc"
         ).toBe(true);
-        expect(navigate).toHaveBeenCalledWith({ to: "/register" });
+        expect(navigate).toHaveBeenCalledWith({
+            to: "/register",
+            replace: true,
+        });
     });
 
     test("should navigate to /install for install deep link when unauthenticated (public action)", async () => {
@@ -404,6 +420,7 @@ describe("deep link auth gate", () => {
         expect(navigate).toHaveBeenCalledWith({
             to: "/install",
             search: { m: "merchant-123", a: "anonymous-456" },
+            replace: true,
         });
         // No pending actions stored by deep link handler (the /install page handles that)
         const actions = pendingActionsStore.getState().getValidActions();
@@ -422,7 +439,10 @@ describe("deep link auth gate", () => {
 
         openUrlHandler(["frakwallet://recovery"]);
 
-        expect(navigate).toHaveBeenCalledWith({ to: "/profile/recovery" });
+        expect(navigate).toHaveBeenCalledWith({
+            to: "/profile/recovery",
+            replace: true,
+        });
     });
 });
 
@@ -456,6 +476,7 @@ describe("monerium OAuth callback", () => {
         expect(navigate).toHaveBeenCalledWith({
             to: "/monerium/callback",
             search: { code: "abc123", state: "xyz" },
+            replace: true,
         });
     });
 
@@ -476,6 +497,7 @@ describe("monerium OAuth callback", () => {
         expect(navigate).toHaveBeenCalledWith({
             to: "/monerium/callback",
             search: { code: "abc123", state: "xyz" },
+            replace: true,
         });
     });
 
@@ -494,6 +516,7 @@ describe("monerium OAuth callback", () => {
         expect(navigate).toHaveBeenCalledWith({
             to: "/monerium/callback",
             search: { code: "abc123" },
+            replace: true,
         });
     });
 
@@ -512,6 +535,7 @@ describe("monerium OAuth callback", () => {
         expect(navigate).toHaveBeenCalledWith({
             to: "/monerium/callback",
             search: { state: "xyz" },
+            replace: true,
         });
     });
 
@@ -529,6 +553,7 @@ describe("monerium OAuth callback", () => {
 
         expect(navigate).toHaveBeenCalledWith({
             to: "/monerium/callback",
+            replace: true,
             search: {},
         });
     });

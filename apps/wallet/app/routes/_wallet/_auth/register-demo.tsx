@@ -19,7 +19,7 @@ function RegisterDemo() {
     const navigate = useNavigate();
     const [disabled, setDisabled] = useState(false);
     const { register, error, isRegisterInProgress } = useRegisterDemo({
-        onSuccess: () => navigate({ to: "/wallet" }),
+        onSuccess: () => navigate({ to: "/wallet", replace: true }),
     });
 
     /**

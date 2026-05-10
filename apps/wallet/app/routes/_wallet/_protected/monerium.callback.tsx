@@ -17,7 +17,7 @@ import * as styles from "./monerium.callback.css";
 export const Route = createFileRoute("/_wallet/_protected/monerium/callback")({
     beforeLoad: () => {
         if (isRunningInProd) {
-            throw redirect({ to: "/wallet" });
+            throw redirect({ to: "/wallet", replace: true });
         }
     },
     component: MoneriumCallback,

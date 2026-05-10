@@ -113,6 +113,7 @@ function buildParams(
 type NavigateFn = (options: {
     to: string;
     search?: Record<string, string>;
+    replace?: boolean;
 }) => unknown;
 
 /**
@@ -129,7 +130,9 @@ function handleDeepLinkAction(navigate: NavigateFn, params: DeepLinkParams) {
         if (!session?.token) {
             // Convert deep link to typed pending actions in the store
             storePendingActions(params);
-            navigate({ to: "/register" });
+            // Replace so the deep link doesn't leave a /register entry that
+            // back-navigation could surface after the post-auth redirect.
+            navigate({ to: "/register", replace: true });
             return;
         }
     }
@@ -225,7 +228,9 @@ function deepLinkToRoute(params: DeepLinkParams): Route {
 export function routeDeepLink(navigate: NavigateFn, params: DeepLinkParams) {
     const route = deepLinkToRoute(params);
     if (route) {
-        navigate(route);
+        // Deep links are entry-point navigations, not part of an in-app flow,
+        // so replace rather than push to keep the back-stack bounded.
+        navigate({ ...route, replace: true });
     }
 }
 

@@ -275,14 +275,14 @@ function WalletSharingPage() {
                 // In Tauri, open the redirect URL in the external browser
                 // and navigate back to the wallet home.
                 await openExternalUrl(redirectUrl);
-                navigate({ to: "/wallet" });
+                navigate({ to: "/wallet", replace: true });
                 return;
             }
             window.location.assign(redirectUrl);
             return;
         }
         // Navigate back or close — on wallet this just goes to the home page
-        navigate({ to: "/wallet" });
+        navigate({ to: "/wallet", replace: true });
     };
 
     const handleShareAgain = () => {

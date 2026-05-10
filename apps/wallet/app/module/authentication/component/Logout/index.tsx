@@ -63,7 +63,7 @@ export function Logout() {
         // Local storage cleanup
         setTimeout(() => {
             cleanLocalStorage();
-            navigate({ to: "/register" });
+            navigate({ to: "/register", replace: true });
         }, 100);
     };
 

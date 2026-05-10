@@ -29,17 +29,15 @@ export { useAppShellScroll } from "./scrollContext";
  * Tab definitions matching the existing Navigation component routes.
  */
 const tabs: TabItem[] = [
-    // `replace: true` on the home tab so back-stack doesn't grow each time
-    // the user pings /wallet from elsewhere.
-    {
-        key: "/wallet",
-        label: "Porte-monnaie",
-        icon: <WalletIcon />,
-        replace: true,
-    },
+    { key: "/wallet", label: "Porte-monnaie", icon: <WalletIcon /> },
     { key: "/explorer", label: "Explorer", icon: <ExplorerIcon /> },
     { key: "/profile", label: "Profil", icon: <ProfileIcon /> },
 ];
+
+// Home tab key. The bottom tab bar uses this to keep the back-stack bounded:
+// pressing back from /explorer or /profile returns to /wallet in a single jump,
+// rather than walking through every tab the user visited.
+const TAB_HOME_KEY = "/wallet";
 
 /**
  * Resolve active tab key from current pathname.
@@ -103,7 +101,11 @@ export function AppShell({
                 </Box>
                 {navigation && (
                     <Box className={bottomBar}>
-                        <BottomTabBar tabs={tabs} activeKey={activeKey} />
+                        <BottomTabBar
+                            tabs={tabs}
+                            activeKey={activeKey}
+                            homeKey={TAB_HOME_KEY}
+                        />
                     </Box>
                 )}
             </Box>

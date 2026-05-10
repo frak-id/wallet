@@ -122,7 +122,7 @@ function PairingPage() {
                 });
                 client.disconnect();
             }
-            navigate({ to: "/wallet" });
+            navigate({ to: "/wallet", replace: true });
         },
         [navigate, client, pairingInfo, id, pairingModeTag]
     );

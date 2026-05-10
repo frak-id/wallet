@@ -8,20 +8,22 @@ export type TabItem = {
     key: string;
     label: string;
     icon: ReactNode;
-    /**
-     * If true, the tab navigates with `replace: true` so back-stack doesn't
-     * accumulate when the user pings the same tab repeatedly. Use for the
-     * "home" tab (e.g. /wallet) to keep history depth bounded.
-     */
-    replace?: boolean;
 };
 
 export type BottomTabBarProps = {
     tabs: TabItem[];
     activeKey: string;
+    /**
+     * Optional "home" tab key. When set, the home tab always navigates with
+     * `replace: true`, non-home tabs push when navigating away from home, and
+     * replace when switching between non-home tabs. Result: pressing back from
+     * any non-home tab returns to home in a single jump and the back-stack
+     * stays bounded at two entries.
+     */
+    homeKey?: string;
 };
 
-export function BottomTabBar({ tabs, activeKey }: BottomTabBarProps) {
+export function BottomTabBar({ tabs, activeKey, homeKey }: BottomTabBarProps) {
     const activeIndex = useMemo(
         () =>
             Math.max(
@@ -56,11 +58,17 @@ export function BottomTabBar({ tabs, activeKey }: BottomTabBarProps) {
             >
                 {tabs.map((tab) => {
                     const isActive = tab.key === activeKey;
+                    // Home tab always replaces. Non-home tabs only push when
+                    // leaving home, otherwise replace so we don't stack a
+                    // chain of sibling tabs in the back-stack.
+                    const replace = homeKey
+                        ? tab.key === homeKey || activeKey !== homeKey
+                        : false;
                     return (
                         <Link
                             key={tab.key}
                             to={tab.key}
-                            replace={tab.replace}
+                            replace={replace}
                             className={`${bottomTabBarStyles.tab}${isActive ? ` ${bottomTabBarStyles.tabActive}` : ""}`}
                             aria-current={isActive ? "page" : undefined}
                         >

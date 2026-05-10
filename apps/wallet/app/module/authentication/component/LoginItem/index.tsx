@@ -34,7 +34,7 @@ export function LoginItem({
     const { login } = useLogin({
         onSuccess: () => {
             startTransition(() => {
-                navigate({ to: "/wallet" });
+                navigate({ to: "/wallet", replace: true });
             });
         },
     });
