@@ -1,4 +1,4 @@
-import { isTauri } from "@frak-labs/app-essentials/utils/platform";
+import { IS_TAURI } from "@frak-labs/app-essentials/utils/platform";
 import { Box } from "@frak-labs/design-system/components/Box";
 import { Card } from "@frak-labs/design-system/components/Card";
 import { Text } from "@frak-labs/design-system/components/Text";
@@ -126,7 +126,7 @@ function ExternalRow({
     const isTel = href.startsWith("tel:");
     const handleClick = useCallback(
         async (e: MouseEvent<HTMLAnchorElement>) => {
-            if (isTauri()) {
+            if (IS_TAURI) {
                 e.preventDefault();
                 await openExternalUrl(href);
             }

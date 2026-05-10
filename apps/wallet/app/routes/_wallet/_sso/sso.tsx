@@ -1,4 +1,4 @@
-import { isTauri } from "@frak-labs/app-essentials/utils/platform";
+import { IS_TAURI } from "@frak-labs/app-essentials/utils/platform";
 import {
     type CompressedSsoData,
     compressJsonToB64,
@@ -245,7 +245,7 @@ function Sso() {
             }
 
             const url = redirectUrl.toString();
-            if (isTauri()) {
+            if (IS_TAURI) {
                 // On native, hand the redirect off to the system browser
                 // and bring the user back to the wallet home so the app
                 // doesn't get stranded on the merchant URL inside the webview.
