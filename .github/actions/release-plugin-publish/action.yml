@@ -82,7 +82,7 @@ runs:
         git push origin "${PLUGIN_SLUG}-${VERSION}"
 
     - name: "🚀 Create GitHub release"
-      uses: softprops/action-gh-release@v4
+      uses: softprops/action-gh-release@v3
       with:
         tag_name: "${{ inputs.plugin-slug }}-${{ steps.version.outputs.version }}"
         name: "${{ inputs.plugin-name }} ${{ steps.version.outputs.version }}"
