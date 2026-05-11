@@ -11,8 +11,6 @@ version on dispatch.
 
 ## [Unreleased]
 
-## [1.0.5] - 2026-05-11
-
 ### Added
 
 - **Custom image override on `<frak-banner>` and `<frak-post-purchase>`**: both web components now accept an optional `image-url` HTML attribute (`imageUrl` camelCase) that swaps the default gift icon shown on the left of the banner / post-purchase card for a merchant-supplied image. `FrakComponentRenderer::BANNER_ATTRS` and `FrakComponentRenderer::POST_PURCHASE_ATTRS` map `imageUrl => image-url` so every render path automatically forwards the value: the auto-rendered placement hooks (`displayNavFullWidth` / `displayOrderConfirmation` / `displayOrderDetail`) via `FrakDisplayDispatcher`, the Smarty function plugins (`{frak_banner image_url="…"}` / `{frak_post_purchase image_url="…"}`) via `snakeKeysToCamel()`, and any third-party caller invoking the renderer directly. Empty / unset values fall back to the SDK's built-in `GiftIcon`, so existing installs see no visual change. The SDK constrains the image to a fixed slot (40×40 on the banner, 80×80 on the post-purchase) with `object-fit: contain` so over- or under-sized assets render cleanly without breaking the surrounding layout.
@@ -195,9 +193,7 @@ version on dispatch.
 - New `views/templates/hook/post-purchase.tpl` Smarty partial: theme-overridable wrapper for the post-purchase markup. Override path: `themes/<theme>/modules/frakintegration/views/templates/hook/post-purchase.tpl`.
 - New `FrakOrderResolver` class: single-pass extraction of customer/order/token context plus product line items from a resolved `Order`, fail-soft on missing images / deleted products. Sibling of the WordPress `Frak_WooCommerce::get_post_purchase_data()` helper.
 
-[Unreleased]: https://github.com/frak-id/wallet/compare/prestashop-1.0.5...HEAD
-
-[1.0.5]: https://github.com/frak-id/wallet/compare/prestashop-1.0.4...prestashop-1.0.5
+[Unreleased]: https://github.com/frak-id/wallet/compare/prestashop-1.0.4...HEAD
 
 [1.0.4]: https://github.com/frak-id/wallet/compare/prestashop-1.0.3...prestashop-1.0.4
 
