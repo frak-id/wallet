@@ -8,7 +8,6 @@ import {
     useLogin,
 } from "@frak-labs/wallet-shared";
 import { Trans, useTranslation } from "react-i18next";
-import { type Address, slice } from "viem";
 import { useLastAuthenticatorHint } from "@/module/authentication/hook/useLastAuthenticatorHint";
 
 type AuthActionsProps = {
@@ -82,9 +81,7 @@ export function AuthActions({
                         onClick={handleUseExisting}
                         className={className}
                     >
-                        <Trans
-                            i18nKey="wallet.login.useMyAccount"
-                        />
+                        <Trans i18nKey="wallet.login.useMyAccount" />
                     </Button>
                 </Box>
             )}
