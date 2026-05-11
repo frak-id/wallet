@@ -33,6 +33,8 @@
 	<false/>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
+	<key>UIRequiresFullScreen</key>
+	<true/>
 	<key>NSFaceIDUsageDescription</key>
 	<string>Unlock your wallet securely with Face ID</string>
 	<key>UIBackgroundModes</key>
