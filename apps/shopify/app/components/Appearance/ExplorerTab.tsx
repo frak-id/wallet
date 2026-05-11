@@ -214,7 +214,7 @@ export function ExplorerTab({
                         <s-text font-weight="semibold">
                             {t("appearance.explorer.previewTitle")}
                         </s-text>
-                        <s-text tone="subdued">
+                        <s-text color="subdued">
                             {t("appearance.explorer.previewDescription")}
                         </s-text>
                         <ExplorerCardPreview

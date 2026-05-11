@@ -1,14 +1,14 @@
-import {
-    addresses,
-    currentStablecoinsList,
-    rewarderHubAbi,
-} from "@frak-labs/app-essentials";
+import { addresses, currentStablecoinsList } from "@frak-labs/app-essentials";
 import { claimableKey, currentViemClient } from "@frak-labs/wallet-shared";
 import { useQuery } from "@tanstack/react-query";
 import { useMemo } from "react";
-import { erc20Abi, formatUnits } from "viem";
+import { formatUnits } from "viem";
 import { multicall } from "viem/actions";
 import { useConnection } from "wagmi";
+import {
+    erc20DecimalsAbi,
+    rewarderGetClaimableAbi,
+} from "@/module/tokens/utils/abi";
 
 export function useGetPendingRewards() {
     const { address } = useConnection();
@@ -25,13 +25,13 @@ export function useGetPendingRewards() {
                     [
                         {
                             address: addresses.rewarderHub,
-                            abi: rewarderHubAbi,
+                            abi: [rewarderGetClaimableAbi],
                             functionName: "getClaimable",
                             args: [address, token],
                         },
                         {
                             address: token,
-                            abi: erc20Abi,
+                            abi: [erc20DecimalsAbi],
                             functionName: "decimals",
                         },
                     ] as const

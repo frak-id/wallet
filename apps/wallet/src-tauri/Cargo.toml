@@ -1,6 +1,6 @@
 [package]
 name = "app"
-version = "1.0.35"
+version = "1.0.48"
 description = "Frak Wallet"
 authors = ["Frak Labs"]
 license = "GNU GPL 3.0"
@@ -15,17 +15,18 @@ name = "app_lib"
 crate-type = ["staticlib", "cdylib", "rlib"]
 
 [build-dependencies]
-tauri-build = { version = "2.5", features = [] }
+tauri-build = { version = "2.6", features = [] }
+plist = "1"
 
 [dependencies]
 serde_json = "1.0"
 serde = { version = "1.0", features = ["derive"] }
 log = "0.4"
-tauri = { version = "2.10", features = [] }
-tauri-plugin-log = "2.7.1"
+tauri = { version = "2.11", features = [] }
+tauri-plugin-log = "2.8.0"
 tauri-plugin-safe-area-insets = "0.1.0"
 tauri-plugin-biometric = "2"
-tauri-plugin-fcm = "0.1.9"
+tauri-plugin-fcm = "0.2.0"
 tauri-plugin-deep-link = "2"
 tauri-plugin-opener = "2"
 tauri-plugin-app-settings = { path = "plugins/tauri-plugin-app-settings" }
@@ -40,15 +41,20 @@ tauri-plugin-clipboard-manager = "2"
 # Android-only: share + fs plugins for file sharing (needed for recovery file download)
 [target.'cfg(target_os = "android")'.dependencies]
 tauri-plugin-share = "2.0.5"
-tauri-plugin-fs = "2.4.4"
+tauri-plugin-fs = "2.5.1"
 
-# Optimized release profile for smaller, faster builds
+# Optimized release profile for smaller, faster builds.
+# `strip = false` keeps Rust debug symbols in the unstripped `.so` so the
+# Firebase Crashlytics Gradle plugin can extract + upload them via
+# `uploadCrashlyticsSymbolFileRelease`. AGP still strips the `.so` before
+# packaging the APK/AAB, so the shipped binary stays small — only the
+# intermediate build artifacts carry debug info.
 [profile.release]
 codegen-units = 1
 lto = true
 opt-level = "s"
 panic = "abort"
-strip = true
+strip = false
 
 # Fast incremental dev builds
 [profile.dev]

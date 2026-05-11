@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { notificationOptOutStore } from "@/module/notification/stores/notificationOptOutStore";
 import { createTauriNotificationAdapter } from "./tauriAdapter";
 
 const {
@@ -51,10 +52,14 @@ vi.mock("@frak-labs/wallet-shared", () => ({
             },
         },
     },
+    getInvoke: vi.fn(async () => invokeMock),
 }));
 
 vi.mock("@frak-labs/app-essentials/utils/platform", () => ({
-    isAndroid: isAndroidMock,
+    get IS_ANDROID() {
+        return isAndroidMock();
+    },
+    isStandalonePwa: () => false,
 }));
 
 vi.mock("@tauri-apps/plugin-opener", () => ({
@@ -67,6 +72,7 @@ vi.mock("@tauri-apps/api/core", () => ({
 
 describe.sequential("createTauriNotificationAdapter", () => {
     beforeEach(() => {
+        notificationOptOutStore.getState().setOptedOut(false);
         getTokenMock.mockReset();
         requestPermissionsMock.mockReset();
         checkPermissionsMock.mockReset();
@@ -444,8 +450,7 @@ describe.sequential("createTauriNotificationAdapter", () => {
         expect(received).toEqual([]);
     });
 
-    it("should openSettings: call invoke with app-settings plugin on Android", async () => {
-        isAndroidMock.mockReturnValue(true);
+    it("should openSettings: call invoke with app-settings plugin on both platforms", async () => {
         invokeMock.mockResolvedValue(undefined);
 
         const adapter = createTauriNotificationAdapter();
@@ -457,14 +462,52 @@ describe.sequential("createTauriNotificationAdapter", () => {
         expect(openUrlMock).not.toHaveBeenCalled();
     });
 
-    it("should openSettings: call openUrl with app-settings on iOS", async () => {
-        isAndroidMock.mockReturnValue(false);
-        openUrlMock.mockResolvedValue(undefined);
+    it("should getToken: short-circuit and return null when opted out", async () => {
+        notificationOptOutStore.getState().setOptedOut(true);
+        // Ensure obtainToken would otherwise resolve a value — proving the
+        // short-circuit bypasses the FCM round-trip entirely.
+        getTokenMock.mockResolvedValue({ token: "should-not-be-used" });
+        checkPermissionsMock.mockResolvedValue("granted");
 
         const adapter = createTauriNotificationAdapter();
-        await adapter.openSettings();
+        const result = await adapter.getToken();
 
-        expect(openUrlMock).toHaveBeenCalledWith("app-settings:");
-        expect(invokeMock).not.toHaveBeenCalled();
+        expect(result).toBeNull();
+        expect(getTokenMock).not.toHaveBeenCalled();
+        expect(registerMock).not.toHaveBeenCalled();
+    });
+
+    it("should init: skip eager fcm.register when opted out and permission granted", async () => {
+        notificationOptOutStore.getState().setOptedOut(true);
+        checkPermissionsMock.mockResolvedValue("granted");
+
+        const adapter = createTauriNotificationAdapter();
+        await adapter.initPromise;
+
+        expect(registerMock).not.toHaveBeenCalled();
+    });
+
+    it("should init: run eager fcm.register when permission granted and not opted out", async () => {
+        notificationOptOutStore.getState().setOptedOut(false);
+        checkPermissionsMock.mockResolvedValue("granted");
+
+        const adapter = createTauriNotificationAdapter();
+        await adapter.initPromise;
+
+        expect(registerMock).toHaveBeenCalledOnce();
+    });
+
+    it("should getToken: run lazy fcm.register when permission granted and not opted out", async () => {
+        notificationOptOutStore.getState().setOptedOut(false);
+        checkPermissionsMock.mockResolvedValue("granted");
+        getTokenMock.mockResolvedValue({ token: "fresh-token" });
+
+        const adapter = createTauriNotificationAdapter();
+        const result = await adapter.getToken();
+
+        // register called once during init (granted, not opted) +
+        // once inside getToken — the lazy safety net.
+        expect(registerMock).toHaveBeenCalledTimes(2);
+        expect(result).toEqual({ type: "fcm", token: "fresh-token" });
     });
 });

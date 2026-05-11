@@ -27,8 +27,7 @@ export type NotificationWelcomeSlide = {
     kind: "notifications";
     title: string;
     actionI18nKey: string;
-    onAction: () => void | Promise<void>;
-    isActionPending: boolean;
+    onAction: () => void;
 };
 
 export type WelcomeSlide =

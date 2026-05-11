@@ -1,5 +1,5 @@
+import { FrakContextManager } from "../../context";
 import type { FrakClient } from "../../types";
-import { FrakContextManager } from "../../utils";
 import { watchWalletStatus } from "../index";
 import {
     type ProcessReferralOptions,

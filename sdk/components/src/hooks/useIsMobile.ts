@@ -1,5 +1,5 @@
+import { isMobile } from "@frak-labs/core-sdk";
 import { useMemo } from "preact/hooks";
-import { isMobile } from "@/utils/isMobile";
 
 export function useIsMobile() {
     const isMobileDevice = useMemo(() => isMobile(), []);

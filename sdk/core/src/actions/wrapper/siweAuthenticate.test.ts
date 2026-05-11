@@ -4,10 +4,6 @@ vi.mock("../displayModal", () => ({
     displayModal: vi.fn(),
 }));
 
-vi.mock("viem/siwe", () => ({
-    generateSiweNonce: vi.fn(() => "mock-nonce-123456"),
-}));
-
 import type { Address, Hex } from "viem";
 import { describe, expect, it } from "../../../tests/vitest-fixtures";
 import type { FrakClient } from "../../types";
@@ -65,7 +61,7 @@ describe("siweAuthenticate", () => {
                     siweAuthenticate: {
                         siwe: expect.objectContaining({
                             domain: "example.com",
-                            nonce: "mock-nonce-123456",
+                            nonce: expect.stringMatching(/^[0-9a-f]{96}$/),
                             uri: "https://example.com",
                             version: "1",
                         }),

@@ -64,8 +64,13 @@ FROM nginx:1.29.1
 # Copy built static files (including pre-compressed .gz files) from builder
 COPY --from=builder /app/apps/wallet/dist /usr/share/nginx/html
 
-# Copy nginx configuration
-COPY apps/wallet/nginx.conf /etc/nginx/conf.d/default.conf
+# Copy nginx configuration as a template; the official nginx entrypoint runs
+# envsubst on /etc/nginx/templates/*.template at container startup, writing
+# the substituted result to /etc/nginx/conf.d/. NGINX_ENVSUBST_FILTER scopes
+# substitution to MONERIUM_* env vars so nginx's own $uri/$http_* are left
+# untouched. MONERIUM_API_HOST is set per-stage on the pod via Pulumi.
+COPY apps/wallet/nginx.conf /etc/nginx/templates/default.conf.template
+ENV NGINX_ENVSUBST_FILTER='^MONERIUM_'
 
 # Expose port 80
 EXPOSE 80

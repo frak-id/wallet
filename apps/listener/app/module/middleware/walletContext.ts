@@ -1,4 +1,4 @@
-import { isRunningLocally } from "@frak-labs/app-essentials";
+import { isRunningLocally } from "@frak-labs/app-essentials/utils/env";
 import {
     FrakRpcError,
     RpcErrorCodes,

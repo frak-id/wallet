@@ -9,7 +9,6 @@ import type { PersistQueryClientProviderProps } from "@tanstack/react-query-pers
 import { PersistQueryClientProvider } from "@tanstack/react-query-persist-client";
 import { lazy, type PropsWithChildren, useEffect } from "react";
 import { useConnection } from "wagmi";
-import { PwaInstallProvider } from "@/module/common/context/PwaInstallContext";
 import { useEnforceWagmiConnection } from "@/module/common/hook/useEnforceWagmiConnection";
 
 const ReactQueryDevtools = lazy(() =>
@@ -71,11 +70,7 @@ export function RootProvider({ children }: PropsWithChildren) {
             client={queryClient}
             persistOptions={persistOptions}
         >
-            {process.env.IS_TAURI ? (
-                content
-            ) : (
-                <PwaInstallProvider>{content}</PwaInstallProvider>
-            )}
+            {content}
             {import.meta.env.DEV && (
                 <ReactQueryDevtools
                     initialIsOpen={false}

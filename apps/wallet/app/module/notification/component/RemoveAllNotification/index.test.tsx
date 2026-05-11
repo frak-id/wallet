@@ -4,10 +4,22 @@ import { beforeEach, describe, expect, test } from "@/tests/vitest-fixtures";
 
 const mockUnsubscribeFromPush = vi.fn();
 
-vi.mock("@frak-labs/app-essentials/utils/platform", () => ({
+const platformMocks = vi.hoisted(() => ({
     isTauri: vi.fn(() => false),
     isAndroid: vi.fn(() => false),
     isIOS: vi.fn(() => false),
+}));
+vi.mock("@frak-labs/app-essentials/utils/platform", () => ({
+    get IS_TAURI() {
+        return platformMocks.isTauri();
+    },
+    get IS_ANDROID() {
+        return platformMocks.isAndroid();
+    },
+    get IS_IOS() {
+        return platformMocks.isIOS();
+    },
+    isStandalonePwa: () => false,
 }));
 
 vi.mock("@/module/notification/adapter", () => ({
@@ -80,10 +92,7 @@ describe("RemoveAllNotification", () => {
 
     describe("on web (non-Tauri)", () => {
         beforeEach(async () => {
-            const platform = await import(
-                "@frak-labs/app-essentials/utils/platform"
-            );
-            vi.mocked(platform.isTauri).mockReturnValue(false);
+            platformMocks.isTauri.mockReturnValue(false);
 
             const { useNotificationStatus } = await import(
                 "@/module/notification/hook/useNotificationSetupStatus"
@@ -119,10 +128,7 @@ describe("RemoveAllNotification", () => {
 
     describe("on native (Tauri)", () => {
         beforeEach(async () => {
-            const platform = await import(
-                "@frak-labs/app-essentials/utils/platform"
-            );
-            vi.mocked(platform.isTauri).mockReturnValue(true);
+            platformMocks.isTauri.mockReturnValue(true);
 
             const { useNotificationStatus } = await import(
                 "@/module/notification/hook/useNotificationSetupStatus"

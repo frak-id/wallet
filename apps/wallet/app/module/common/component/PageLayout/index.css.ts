@@ -5,9 +5,22 @@ import { style } from "@vanilla-extract/css";
 export const container = style({
     display: "flex",
     flexDirection: "column",
-    minHeight: `calc(100% + 2 * ${alias.spacing.m})`,
-    margin: `calc(-1 * ${alias.spacing.m})`,
+    // Fill the AppShell main flex column so siblings (e.g. inline toasts)
+    // can claim their own height without forcing an overflow scrollbar.
+    flex: "1 1 0",
+    minHeight: 0,
+    marginRight: `calc(-1 * ${alias.spacing.m})`,
+    marginBottom: `calc(-1 * ${alias.spacing.m})`,
+    marginLeft: `calc(-1 * ${alias.spacing.m})`,
     background: vars.surface.background,
+    selectors: {
+        // Bleed into main's top padding only when nothing is rendered above us.
+        // When a sibling (toast, banner, ...) precedes PageLayout, we keep the
+        // natural gap so the layouts don't overlap.
+        "&:first-child": {
+            marginTop: `calc(-1 * ${alias.spacing.m})`,
+        },
+    },
 });
 
 export const content = style({

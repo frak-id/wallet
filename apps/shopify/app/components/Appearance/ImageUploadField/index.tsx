@@ -25,7 +25,7 @@ const imageAccept = {
 
 const restrictionsText = {
     logo: "PNG, JPEG, WebP, SVG, GIF — Min 128×128px — Ratio 1:2 to 2:1 — Max 10MB",
-    hero: "PNG, JPEG, WebP, SVG, GIF — Min 600×200px — Ratio 3:2 to 4:1 — Max 10MB",
+    hero: "PNG, JPEG, WebP, SVG, GIF — Min 800×450px — Ratio 4:3 to 2:1 — Max 10MB",
 } as const;
 
 export function ImageUploadField({

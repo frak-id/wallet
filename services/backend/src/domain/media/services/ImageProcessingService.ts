@@ -19,10 +19,10 @@ const imageConstraints = {
     hero: {
         maxWidth: 1200,
         maxHeight: 800,
-        minWidth: 600,
-        minHeight: 200,
-        minRatio: 1.5, // 3:2
-        maxRatio: 4, // 4:1
+        minWidth: 800,
+        minHeight: 450,
+        minRatio: 1.33, // 4:3
+        maxRatio: 2, // 2:1
     },
 } as const;
 

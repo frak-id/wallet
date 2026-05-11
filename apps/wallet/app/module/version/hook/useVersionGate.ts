@@ -1,4 +1,8 @@
-import { isAndroid, isIOS } from "@frak-labs/app-essentials/utils/platform";
+import {
+    IS_ANDROID,
+    IS_IOS,
+    IS_TAURI,
+} from "@frak-labs/app-essentials/utils/platform";
 import { authenticatedBackendApi } from "@frak-labs/wallet-shared";
 import { useQuery } from "@tanstack/react-query";
 import { isBelow } from "../utils/compareVersions";
@@ -66,22 +70,20 @@ const nativeUpdateQueryOptions = {
  * binary).
  */
 export function useVersionGate(): VersionGateState {
-    const enabled = isIOS() || isAndroid();
-
     const minVersion = useQuery({
         ...minVersionQueryOptions,
-        enabled,
+        enabled: IS_TAURI,
     });
     const native = useQuery({
         ...nativeUpdateQueryOptions,
-        enabled,
+        enabled: IS_TAURI,
     });
 
-    if (!enabled) return { kind: "idle" };
+    if (!IS_TAURI) return { kind: "idle" };
 
-    const platformKey: "ios" | "android" | null = isIOS()
+    const platformKey: "ios" | "android" | null = IS_IOS
         ? "ios"
-        : isAndroid()
+        : IS_ANDROID
           ? "android"
           : null;
     if (!platformKey) return { kind: "idle" };

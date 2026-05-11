@@ -11,6 +11,10 @@ import { WsCloseCode } from "../../../../domain/pairing/dto/WebSocketCloseCode";
 
 const initiateRateLimit = { windowMs: 60_000, maxRequests: 10 };
 const initiateStore = createRateLimitStore();
+// Resume gets a slightly larger budget than initiate — a flaky network can
+// generate several reconnect attempts during a single slow pairing flow.
+const resumeRateLimit = { windowMs: 60_000, maxRequests: 20 };
+const resumeStore = createRateLimitStore();
 
 /**
  * Resolve the wallet JWT (if any) carried on a WS connection's query string.
@@ -45,17 +49,18 @@ export const wsRoute = new Elysia()
             const userAgent = ws.data.headers["user-agent"];
             const action = ws.data.query?.action;
 
-            if (action === "initiate") {
+            if (action === "initiate" || action === "resume") {
                 const ip =
                     getClientIp({
                         headers: ws.data.headers,
                         remoteAddress: ws.remoteAddress,
                     }) ?? "unknown";
-                if (!initiateStore.consume(ip, initiateRateLimit)) {
-                    log.warn(
-                        { ip },
-                        "[Pairing] Rate limit exceeded for initiate"
-                    );
+                const store =
+                    action === "initiate" ? initiateStore : resumeStore;
+                const limit =
+                    action === "initiate" ? initiateRateLimit : resumeRateLimit;
+                if (!store.consume(ip, limit)) {
+                    log.warn({ ip, action }, "[Pairing] Rate limit exceeded");
                     ws.close(WsCloseCode.FORBIDDEN, "Rate limit exceeded");
                     return;
                 }

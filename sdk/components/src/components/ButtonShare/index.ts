@@ -1,4 +1,4 @@
-import { registerWebComponent } from "@/utils/registerWebComponent";
+import { registerWebComponent } from "@/webcomponent/registerWebComponent";
 import { ButtonShare } from "./ButtonShare";
 import type { ButtonShareProps } from "./types";
 

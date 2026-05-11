@@ -14,6 +14,7 @@
         <meta-data android:name="asset_statements" android:resource="@string/asset_statements" />
         <activity
             android:configChanges="orientation|keyboardHidden|keyboard|screenSize|locale|smallestScreenSize|screenLayout|uiMode"
+            android:screenOrientation="portrait"
             android:launchMode="singleTask"
             android:label="@string/main_activity_title"
             android:name=".MainActivity"
@@ -22,20 +23,20 @@
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
-            <!-- App Links (verified) for the variant's wallet domain. Host is injected from build.gradle.kts (appLinkHost). -->
-            <intent-filter android:autoVerify="true">
-                <action android:name="android.intent.action.VIEW" />
-                <category android:name="android.intent.category.DEFAULT" />
-                <category android:name="android.intent.category.BROWSABLE" />
-                <data android:scheme="https" android:host="${appLinkHost}" />
-            </intent-filter>
-            <!-- Custom URL Scheme for Deep Linking -->
-            <intent-filter>
-                <action android:name="android.intent.action.VIEW" />
-                <category android:name="android.intent.category.DEFAULT" />
-                <category android:name="android.intent.category.BROWSABLE" />
-                <data android:scheme="${deepLinkScheme}" />
-            </intent-filter>
+            <!--
+                Deep-link intent-filters (HTTPS App Links + custom schemes) are injected
+                automatically by `tauri-plugin-deep-link`'s build.rs from `tauri.conf.json >
+                plugins.deep-link.mobile`. Do NOT re-declare them here — the plugin needs the
+                runtime config (so its Kotlin `isDeepLink()` filter accepts the URL) and the
+                manifest declaration (so Android delivers the intent), and adding both would
+                produce duplicate intent-filters in the final manifest.
+
+                Per-variant routing is enforced by App Link verification: the `assetlinks.json`
+                served by each backend (wallet.frak.id vs wallet-dev.frak.id) only delegates
+                to the matching package id (id.frak.wallet vs id.frak.wallet.dev), so even
+                though every variant declares both hosts in its manifest, only the matching
+                host actually opens the app.
+            -->
         </activity>
 
         <provider

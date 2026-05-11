@@ -327,6 +327,7 @@ interface Resources {
                 };
                 transfer: {
                     amount: {
+                        aboveMax: "Transfers of {{max}}€ or more require additional documentation.";
                         continue: "Continue";
                         ibanEmpty: "No IBAN saved";
                         ibanLabel: "IBAN";
@@ -367,6 +368,8 @@ interface Resources {
             callback: {
                 cancelledDescription: "You can reconnect to Monerium whenever you're ready.";
                 cancelledTitle: "Connection cancelled";
+                csrfDescription: "We couldn't verify the connection request. Please retry from the start.";
+                csrfTitle: "Security check failed";
                 errorDescription: "Something went wrong while connecting to Monerium. Please try again in a moment.";
                 errorTitle: "Connection failed";
                 tryAgain: "Try again";
@@ -546,7 +549,6 @@ interface Resources {
         };
         wallet: {
             activateNotifications: "Turn on notifs to track your earnings in real time.";
-            activateNotificationsRationale: "<strong>Enable notifications</strong> <br /> We need your permission to notify you when gains are paid";
             inAppBrowser: {
                 clickToOpen: "Tap to open in your browser.";
                 clipboardAlert: "This browser doesn't support all features needed.\n\nThe link has been copied to your clipboard.\n\nTo continue:\n1. Open Safari\n2. Tap the address bar\n3. Paste and go";
@@ -577,11 +579,14 @@ interface Resources {
             notifications: {
                 noNotifications: "No notifications";
             };
+            offline: {
+                description: "Some features may be unavailable until your connection is restored.";
+                title: "You're offline";
+            };
             openLogin: {
                 login: "Connect with biometrics";
                 webauthnNotSupported: "WebAuthn is not supported on this device";
             };
-            openNotificationSettings: "<strong>Notifications disabled</strong> <br /> Open settings to enable notifications";
             pageTitle: "Wallet";
             pairing: {
                 cancel: "Cancel";
@@ -596,6 +601,13 @@ interface Resources {
                     device: "Device";
                     status: "Status";
                     title: "Pairing information";
+                };
+                launch: {
+                    error: {
+                        description: "Something interrupted the pairing. Please try again.";
+                        retry: "Try again";
+                        title: "Couldn’t connect";
+                    };
                 };
                 list: {
                     createdAt: "Created at";
@@ -656,16 +668,10 @@ interface Resources {
                 };
                 status: {
                     connecting: "Pairing in progress";
+                    error: "Connection lost";
                     idle: "Idle";
                     paired: "Paired";
-                };
-                target: {
-                    state: {
-                        connecting: "Connecting to partner device";
-                        error: "Connection rejected by the server";
-                        paired: "Connected with other device";
-                        retryError: "Error when connecting to partner device";
-                    };
+                    retryError: "Reconnecting…";
                 };
                 text: "You're about to connect a device to your account.";
                 title: "Confirm device pairing";
@@ -700,6 +706,7 @@ interface Resources {
                 lastConnection: "Last connection";
                 manageAction: "Manage";
                 managePairings: "Manage paired devices";
+                notificationDeniedHelp: "Notifications blocked by browser. Enable them in browser settings.";
                 notificationSettings: "Notification settings";
                 pageTitle: "Profil";
                 privacyPolicy: "Privacy Policy";

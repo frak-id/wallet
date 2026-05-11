@@ -2,13 +2,13 @@ import { sdkConfigStore } from "@frak-labs/core-sdk";
 import { renderHook, waitFor } from "@testing-library/preact";
 import { act } from "preact/test-utils";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import * as clientReadyUtils from "@/utils/clientReady";
+import * as clientReadyUtils from "@/bootstrap/clientReady";
 import { useClientReady } from "./useClientReady";
 
-vi.mock("@/utils/clientReady", async () => {
-    const actual = await vi.importActual<typeof import("@/utils/clientReady")>(
-        "@/utils/clientReady"
-    );
+vi.mock("@/bootstrap/clientReady", async () => {
+    const actual = await vi.importActual<
+        typeof import("@/bootstrap/clientReady")
+    >("@/bootstrap/clientReady");
     return {
         ...actual,
         onClientReady: vi.fn((action, callback) => {

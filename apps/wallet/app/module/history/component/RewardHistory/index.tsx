@@ -1,4 +1,3 @@
-import { Button } from "@frak-labs/design-system/components/Button";
 import { Card } from "@frak-labs/design-system/components/Card";
 import { IconCircle } from "@frak-labs/design-system/components/IconCircle";
 import { Inline } from "@frak-labs/design-system/components/Inline";
@@ -15,9 +14,9 @@ import {
     formatCurrency,
     type RewardHistoryItem as RewardHistoryItemType,
 } from "@frak-labs/wallet-shared";
-import { useNavigate } from "@tanstack/react-router";
 import type { TFunction } from "i18next";
 import { useTranslation } from "react-i18next";
+import { ButtonLink } from "@/module/common/component/ButtonLink";
 import { Skeleton } from "@/module/common/component/Skeleton";
 import { MerchantLogo } from "@/module/history/component/MerchantLogo";
 import { useGetRewardHistory } from "@/module/history/hook/useGetRewardHistory";
@@ -26,7 +25,6 @@ import * as styles from "./index.css";
 
 export function RewardHistoryList() {
     const { t } = useTranslation();
-    const navigate = useNavigate();
     const { items, totalCount, isLoading } = useGetRewardHistory();
 
     if (isLoading) return <Skeleton count={3} height={110} />;
@@ -48,15 +46,15 @@ export function RewardHistoryList() {
             ))}
             {totalCount >= 5 && (
                 <Inline space="none" padding="m" align="center">
-                    <Button
+                    <ButtonLink
+                        to="/history"
                         variant="ghost"
                         size="none"
                         fontSize="m"
                         width="auto"
-                        onClick={() => navigate({ to: "/history" })}
                     >
                         {t("reward.history.seeAll")}
-                    </Button>
+                    </ButtonLink>
                 </Inline>
             )}
         </Card>
@@ -65,7 +63,6 @@ export function RewardHistoryList() {
 
 function RewardHistoryEmpty() {
     const { t } = useTranslation();
-    const navigate = useNavigate();
 
     return (
         <Card className={styles.emptyLayout}>
@@ -80,14 +77,14 @@ function RewardHistoryEmpty() {
                     {t("reward.history.emptyDescription")}
                 </Text>
             </Stack>
-            <Button
+            <ButtonLink
+                to="/explorer"
                 variant="secondary"
                 size="small"
                 width="auto"
-                onClick={() => navigate({ to: "/explorer" })}
             >
                 {t("reward.history.discover")}
-            </Button>
+            </ButtonLink>
         </Card>
     );
 }

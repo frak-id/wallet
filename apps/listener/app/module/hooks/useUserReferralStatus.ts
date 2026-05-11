@@ -1,5 +1,5 @@
 import type { UserReferralStatusType } from "@frak-labs/core-sdk";
-import { authenticatedBackendApi } from "@frak-labs/wallet-shared";
+import { authenticatedBackendApi } from "@frak-labs/wallet-shared/common/api/backendClient";
 import { queryOptions } from "@tanstack/react-query";
 import { listenerMerchantKey } from "@/module/queryKeys/merchant";
 

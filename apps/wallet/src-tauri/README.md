@@ -105,9 +105,10 @@ iOS uses **native WKWebView WebAuthn** support, which means:
 #### Associated Domains
 
 The app is configured with Associated Domains for WebAuthn:
-- **Prod variant** (`id.frak.wallet`): `webcredentials:wallet.frak.id`, `applinks:wallet.frak.id`
-- **Dev variant**  (`id.frak.wallet.dev`): `webcredentials:wallet-dev.frak.id`, `applinks:wallet-dev.frak.id`
-- Configured in: `gen/apple/app_iOS/app_iOS.entitlements` (rewritten in place by `scripts/patch-ios-dev.sh` for the dev build)
+- **Shared (both variants)**: `webcredentials:frak.id` — required because `WebAuthN.rpId` resolves to `frak.id` in Tauri (see `packages/app-essentials/src/webauthn/index.ts`); the AASA at the apex lists both bundle IDs.
+- **Prod variant** (`id.frak.wallet`): adds `webcredentials:wallet.frak.id`, `applinks:wallet.frak.id`
+- **Dev variant** (`id.frak.wallet.dev`): adds `webcredentials:wallet-dev.frak.id`, `applinks:wallet-dev.frak.id`
+- Variant selection is driven by the `FRAK_VARIANT=dev|prod` env var (default prod). `src-tauri/build.rs` rewrites `gen/apple/app_iOS/app_iOS.entitlements` in place to match the active variant on every iOS build (xcode-script).
 
 This allows the app to share WebAuthn credentials with the matching web domain.
 
@@ -126,7 +127,7 @@ dev variant (`id.frak.wallet.dev`):
 <key>keychain-access-groups</key>
 <array>
     <string>$(AppIdentifierPrefix)id.frak.wallet</string>
-    <!-- patch-ios-dev.sh appends ".dev" to the line above for the dev build -->
+    <!-- build.rs (FRAK_VARIANT=dev) appends ".dev" to the line above -->
 </array>
 ```
 
@@ -140,7 +141,7 @@ and `id.frak.wallet.dev`):
 
 - **Bundle ID**: `id.frak.wallet` (prod) · `id.frak.wallet.dev` (dev)
 - **Development Team**: `57DZ6Z2235` (shared)
-- Configured in: `tauri.conf.json` (prod) · `tauri.conf.dev.json` overlay + `scripts/patch-ios-dev.sh` (dev)
+- Configured in: `tauri.conf.json` (prod) · `tauri.conf.dev.json` overlay + `FRAK_VARIANT=dev` env (drives `src-tauri/build.rs`)
 
 ### Android
 
@@ -171,7 +172,7 @@ Android-specific Tauri plugins:
 
 - **Min SDK**: 28 (Android 9.0)
 - **Target SDK**: 36
-- **Package**: `id.frak.wallet` (prod) · `id.frak.wallet.dev` (dev), driven by the Gradle `appVariant` property
+- **Package**: `id.frak.wallet` (prod) · `id.frak.wallet.dev` (dev), driven by the `FRAK_VARIANT=dev` env var (legacy `-PappVariant=dev` Gradle property still honored)
 
 ## Deep Linking
 

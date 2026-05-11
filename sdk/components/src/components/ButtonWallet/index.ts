@@ -1,4 +1,4 @@
-import { registerWebComponent } from "@/utils/registerWebComponent";
+import { registerWebComponent } from "@/webcomponent/registerWebComponent";
 import { ButtonWallet } from "./ButtonWallet";
 import type { ButtonWalletProps } from "./types";
 

@@ -13,10 +13,10 @@ export { TargetPairingClient } from "./clients/target";
 // Components
 export { LaunchPairing } from "./component/LaunchPairing";
 export { OriginPairingState } from "./component/OriginPairingState";
+
 export { PairingStatus } from "./component/PairingStatus";
 export {
     StatusBoxModal,
-    StatusBoxWallet,
     StatusBoxWalletEmbedded,
 } from "./component/PairingStatusBox";
 export { PairingView } from "./component/PairingView";
@@ -24,6 +24,7 @@ export { PairingView } from "./component/PairingView";
 export { useCancelAllSignatureRequests } from "./hook/useCancelAllSignatureRequests";
 export { useDeletePairing } from "./hook/useDeletePairing";
 export { useGetActivePairings } from "./hook/useListPairings";
+
 export {
     isPairingNotFoundError,
     PairingNotFoundError,

@@ -1,4 +1,5 @@
-import { isTauri } from "@frak-labs/app-essentials/utils/platform";
+import { IS_TAURI } from "@frak-labs/app-essentials/utils/platform";
+import { openExternalUrl, trackEvent } from "@frak-labs/wallet-shared";
 import {
     bufferToBase64URLString,
     bytesToBase64URLString,
@@ -47,13 +48,14 @@ export const useMoneriumAuth = () => {
 
     const connect = useCallback(async (walletAddress: Address) => {
         setIsConnecting(true);
+        trackEvent("monerium_auth_started", { is_tauri: IS_TAURI });
 
         try {
             const codeVerifier = createCodeVerifier();
             const codeChallenge = await createCodeChallenge(codeVerifier);
             const state = createStateNonce();
 
-            moneriumStore.getState().setPendingCodeVerifier(codeVerifier);
+            moneriumStore.getState().setPendingAuth(codeVerifier, state);
 
             const searchParams = new URLSearchParams({
                 client_id: moneriumConfig.clientId,
@@ -69,8 +71,8 @@ export const useMoneriumAuth = () => {
 
             const authUrl = `${getMoneriumAuthBaseUrl()}?${searchParams.toString()}`;
 
-            if (isTauri()) {
-                window.open(authUrl, "_blank");
+            if (IS_TAURI) {
+                await openExternalUrl(authUrl);
                 return;
             }
 

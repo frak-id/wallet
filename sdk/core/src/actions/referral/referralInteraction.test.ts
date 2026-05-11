@@ -2,7 +2,7 @@ import type { Hex } from "viem";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { referralInteraction } from "./referralInteraction";
 
-vi.mock("../../utils", () => ({
+vi.mock("../../context", () => ({
     FrakContextManager: {
         parse: vi.fn(),
     },
@@ -30,7 +30,7 @@ describe("referralInteraction", () => {
     });
 
     test("should parse context from window location", async () => {
-        const { FrakContextManager } = await import("../../utils");
+        const { FrakContextManager } = await import("../../context");
         const { watchWalletStatus } = await import("../index");
         const { processReferral } = await import("./processReferral");
 
@@ -46,7 +46,7 @@ describe("referralInteraction", () => {
     });
 
     test("should get current wallet status", async () => {
-        const { FrakContextManager } = await import("../../utils");
+        const { FrakContextManager } = await import("../../context");
         const { watchWalletStatus } = await import("../index");
         const { processReferral } = await import("./processReferral");
 
@@ -63,7 +63,7 @@ describe("referralInteraction", () => {
     });
 
     test("should call processReferral with all parameters", async () => {
-        const { FrakContextManager } = await import("../../utils");
+        const { FrakContextManager } = await import("../../context");
         const { watchWalletStatus } = await import("../index");
         const { processReferral } = await import("./processReferral");
 
@@ -87,7 +87,7 @@ describe("referralInteraction", () => {
     });
 
     test("should return result from processReferral", async () => {
-        const { FrakContextManager } = await import("../../utils");
+        const { FrakContextManager } = await import("../../context");
         const { watchWalletStatus } = await import("../index");
         const { processReferral } = await import("./processReferral");
 
@@ -101,7 +101,7 @@ describe("referralInteraction", () => {
     });
 
     test("should return undefined on error", async () => {
-        const { FrakContextManager } = await import("../../utils");
+        const { FrakContextManager } = await import("../../context");
         const { watchWalletStatus } = await import("../index");
         const { processReferral } = await import("./processReferral");
 
@@ -124,7 +124,7 @@ describe("referralInteraction", () => {
     });
 
     test("should work with empty options", async () => {
-        const { FrakContextManager } = await import("../../utils");
+        const { FrakContextManager } = await import("../../context");
         const { watchWalletStatus } = await import("../index");
         const { processReferral } = await import("./processReferral");
 

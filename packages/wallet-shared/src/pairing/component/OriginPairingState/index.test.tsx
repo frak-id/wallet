@@ -53,11 +53,6 @@ const mockStore = createMockStore();
 
 // Mock PairingStatusBox components to avoid needing to mock getTargetPairingClient
 vi.mock("../PairingStatusBox", () => ({
-    StatusBoxWallet: ({ status, title }: any) => (
-        <div data-testid="status-box-wallet" data-status={status}>
-            {title}
-        </div>
-    ),
     StatusBoxModal: ({ status, title }: any) => (
         <div data-testid="status-box-modal" data-status={status}>
             {title}
@@ -92,7 +87,7 @@ describe("OriginPairingState", () => {
         it("should return null when no distant webauthn session", () => {
             mockSessionState.distantWebauthnSession = null;
 
-            const { container } = render(<OriginPairingState type="wallet" />);
+            const { container } = render(<OriginPairingState type="modal" />);
 
             expect(container.firstChild).toBeNull();
         });
@@ -102,10 +97,10 @@ describe("OriginPairingState", () => {
                 address: "0x1234567890123456789012345678901234567890",
             };
 
-            render(<OriginPairingState type="wallet" />);
+            render(<OriginPairingState type="modal" />);
 
             // Should render status box
-            expect(screen.getByTestId("status-box-wallet")).toBeInTheDocument();
+            expect(screen.getByTestId("status-box-modal")).toBeInTheDocument();
         });
     });
 
@@ -114,12 +109,6 @@ describe("OriginPairingState", () => {
             mockSessionState.distantWebauthnSession = {
                 address: "0x1234567890123456789012345678901234567890",
             };
-        });
-
-        it("should render wallet variant", () => {
-            render(<OriginPairingState type="wallet" />);
-
-            expect(screen.getByTestId("status-box-wallet")).toBeInTheDocument();
         });
 
         it("should render modal variant", () => {
@@ -155,9 +144,9 @@ describe("OriginPairingState", () => {
             mockPairingState.status = "idle";
             mockPairingState.signatureRequests = new Map();
 
-            render(<OriginPairingState type="wallet" />);
+            render(<OriginPairingState type="modal" />);
 
-            const statusBox = screen.getByTestId("status-box-wallet");
+            const statusBox = screen.getByTestId("status-box-modal");
             expect(statusBox).toHaveAttribute("data-status", "waiting");
             expect(statusBox).toHaveTextContent(
                 "wallet.pairing.origin.state.idle"
@@ -168,9 +157,9 @@ describe("OriginPairingState", () => {
             mockPairingState.status = "connecting";
             mockPairingState.signatureRequests = new Map();
 
-            render(<OriginPairingState type="wallet" />);
+            render(<OriginPairingState type="modal" />);
 
-            const statusBox = screen.getByTestId("status-box-wallet");
+            const statusBox = screen.getByTestId("status-box-modal");
             expect(statusBox).toHaveAttribute("data-status", "waiting");
             expect(statusBox).toHaveTextContent(
                 "wallet.pairing.origin.state.connecting"
@@ -181,9 +170,9 @@ describe("OriginPairingState", () => {
             mockPairingState.status = "paired";
             mockPairingState.signatureRequests = new Map();
 
-            render(<OriginPairingState type="wallet" />);
+            render(<OriginPairingState type="modal" />);
 
-            const statusBox = screen.getByTestId("status-box-wallet");
+            const statusBox = screen.getByTestId("status-box-modal");
             expect(statusBox).toHaveAttribute("data-status", "success");
             expect(statusBox).toHaveTextContent(
                 "wallet.pairing.origin.state.paired"
@@ -194,9 +183,9 @@ describe("OriginPairingState", () => {
             mockPairingState.status = "retry-error";
             mockPairingState.signatureRequests = new Map();
 
-            render(<OriginPairingState type="wallet" />);
+            render(<OriginPairingState type="modal" />);
 
-            const statusBox = screen.getByTestId("status-box-wallet");
+            const statusBox = screen.getByTestId("status-box-modal");
             expect(statusBox).toHaveAttribute("data-status", "error");
             expect(statusBox).toHaveTextContent(
                 "wallet.pairing.origin.state.retryError"
@@ -215,9 +204,9 @@ describe("OriginPairingState", () => {
             mockPairingState.status = "paired";
             mockPairingState.signatureRequests = new Map([["req-1", {}]]);
 
-            render(<OriginPairingState type="wallet" />);
+            render(<OriginPairingState type="modal" />);
 
-            const statusBox = screen.getByTestId("status-box-wallet");
+            const statusBox = screen.getByTestId("status-box-modal");
             expect(statusBox).toHaveAttribute("data-status", "loading");
             expect(statusBox).toHaveTextContent(
                 "wallet.pairing.origin.state.requests.paired"
@@ -228,9 +217,9 @@ describe("OriginPairingState", () => {
             mockPairingState.status = "connecting";
             mockPairingState.signatureRequests = new Map([["req-1", {}]]);
 
-            render(<OriginPairingState type="wallet" />);
+            render(<OriginPairingState type="modal" />);
 
-            const statusBox = screen.getByTestId("status-box-wallet");
+            const statusBox = screen.getByTestId("status-box-modal");
             expect(statusBox).toHaveAttribute("data-status", "waiting");
             expect(statusBox).toHaveTextContent(
                 "wallet.pairing.origin.state.requests.connecting"
@@ -241,9 +230,9 @@ describe("OriginPairingState", () => {
             mockPairingState.status = "paired";
             mockPairingState.signatureRequests = new Map([["req-1", {}]]);
 
-            render(<OriginPairingState type="wallet" />);
+            render(<OriginPairingState type="modal" />);
 
-            const statusBox = screen.getByTestId("status-box-wallet");
+            const statusBox = screen.getByTestId("status-box-modal");
             // Should show request state, not regular paired state
             expect(statusBox).toHaveTextContent(
                 "wallet.pairing.origin.state.requests.paired"
@@ -265,9 +254,9 @@ describe("OriginPairingState", () => {
             mockPairingState.status = "paired";
             mockPairingState.signatureRequests = new Map();
 
-            render(<OriginPairingState type="wallet" />);
+            render(<OriginPairingState type="modal" />);
 
-            const statusBox = screen.getByTestId("status-box-wallet");
+            const statusBox = screen.getByTestId("status-box-modal");
             expect(statusBox).toHaveAttribute("data-status", "success");
         });
 
@@ -275,9 +264,9 @@ describe("OriginPairingState", () => {
             mockPairingState.status = "idle";
             mockPairingState.signatureRequests = new Map();
 
-            render(<OriginPairingState type="wallet" />);
+            render(<OriginPairingState type="modal" />);
 
-            const statusBox = screen.getByTestId("status-box-wallet");
+            const statusBox = screen.getByTestId("status-box-modal");
             expect(statusBox).toHaveAttribute("data-status", "waiting");
         });
 
@@ -285,9 +274,9 @@ describe("OriginPairingState", () => {
             mockPairingState.status = "retry-error";
             mockPairingState.signatureRequests = new Map();
 
-            render(<OriginPairingState type="wallet" />);
+            render(<OriginPairingState type="modal" />);
 
-            const statusBox = screen.getByTestId("status-box-wallet");
+            const statusBox = screen.getByTestId("status-box-modal");
             expect(statusBox).toHaveAttribute("data-status", "error");
         });
     });

@@ -65,7 +65,7 @@ export function recordError(
     // Forward to Firebase Crashlytics on Tauri mobile so native crash
     // reports and JS-recorded non-fatals share a single dashboard. The
     // adapter is a no-op outside Tauri so this stays free on web/desktop.
-    crashlytics.recordError(error);
+    crashlytics?.recordError(error);
 
     trackEvent("app_error", {
         message: error.message || error.name || "unknown",

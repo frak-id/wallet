@@ -1,31 +1,107 @@
 {
     "files.exclude": {
         "**/.idea": true,
+        "**/.next": true,
+        "**/.nitro": true,
+        "**/.output": true,
         "**/.react-router": true,
         "**/.sst": true,
+        "**/.tanstack": true,
         "**/.turbo": true,
+        "**/.vitest": true,
+        "**/build": true,
+        "**/cdn": true,
+        "**/coverage": true,
+        "**/dist": true,
+        "**/generated-docs": true,
         "**/node_modules": true,
-        "packages/backend-elysia": false
+        "**/playwright-report": true,
+        "**/target": true,
+        "**/test-results": true,
+        "plugins/*/vendor": true
     },
     "search.exclude": {
-        "**/coverage": true,
+        "**/.kotlin": true,
+        "**/.react-router": true,
+        "**/.sst": true,
+        "**/.tanstack": true,
+        "**/.turbo": true,
         "**/.vitest": true,
-        "**/node_modules/.vitest": true
+        "**/*.tsbuildinfo": true,
+        "**/build": true,
+        "**/bun.lock": true,
+        "**/cdn": true,
+        "**/coverage": true,
+        "**/dist": true,
+        "**/generated-docs": true,
+        "**/node_modules": true,
+        "**/playwright-report": true,
+        "**/target": true,
+        "**/test-results": true,
+        "apps/wallet/src-tauri/gen": true,
+        "apps/wallet/src-tauri/plugins": true,
+        "plugins/*/vendor": true
     },
     "files.watcherExclude": {
-        "**/coverage/**": true,
+        "**/.kotlin/**": true,
+        "**/.react-router/**": true,
+        "**/.sst/**": true,
+        "**/.tanstack/**": true,
+        "**/.turbo/**": true,
         "**/.vitest/**": true,
-        "**/node_modules/.vitest/**": true
+        "**/*.tsbuildinfo": true,
+        "**/build/**": true,
+        "**/cdn/**": true,
+        "**/coverage/**": true,
+        "**/dist/**": true,
+        "**/generated-docs/**": true,
+        "**/node_modules/**": true,
+        "**/playwright-report/**": true,
+        "**/target/**": true,
+        "**/test-results/**": true,
+        "apps/wallet/src-tauri/gen/**": true,
+        "apps/wallet/src-tauri/plugins/**": true,
+        "plugins/*/vendor/**": true
     },
-    "typescript.tsserver.watchOptions": {
+    "ts.tsserver.watchOptions": {
         "excludeDirectories": [
-            "**/node_modules",
-            "**/coverage",
+            "**/.react-router",
+            "**/.sst",
+            "**/.tanstack",
+            "**/.turbo",
             "**/.vitest",
+            "**/build",
+            "**/cdn",
+            "**/coverage",
             "**/dist",
-            "**/build"
+            "**/generated-docs",
+            "**/gen",
+            "**/node_modules",
+            "**/playwright-report",
+            "**/target",
+            "**/test-results",
+            "plugins/magento/vendor",
+            "plugins/prestashop/vendor",
+            "plugins/wordpress/vendor"
         ]
     },
+    "ts.tsserver.maxTsServerMemory": 8192,
+    "ts.disableAutomaticTypeAcquisition": true,
+    "ts.preferences.autoImportFileExcludePatterns": [
+        "**/build/**",
+        "**/cdn/**",
+        "**/dist/**",
+        "**/generated-docs/**",
+        "**/node_modules/**/dist/**"
+    ],
+    "js.preferences.autoImportFileExcludePatterns": [
+        "**/build/**",
+        "**/cdn/**",
+        "**/dist/**",
+        "**/generated-docs/**",
+        "**/node_modules/**/dist/**"
+    ],
+    "ts.workspaceSymbols.scope": "currentProject",
     "workbench.editor.alwaysShowEditorActions": true,
     "workbench.editor.autoLockGroups": {
         "default": true

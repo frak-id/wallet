@@ -48,15 +48,10 @@ targets:
         UIRequiredDeviceCapabilities: [arm64, metal]
         UISupportedInterfaceOrientations:
           - UIInterfaceOrientationPortrait
-          - UIInterfaceOrientationLandscapeLeft
-          - UIInterfaceOrientationLandscapeRight
         UISupportedInterfaceOrientations~ipad:
           - UIInterfaceOrientationPortrait
-          - UIInterfaceOrientationPortraitUpsideDown
-          - UIInterfaceOrientationLandscapeLeft
-          - UIInterfaceOrientationLandscapeRight
-        CFBundleShortVersionString: 1.0.35
-        CFBundleVersion: "1.0.35"
+        CFBundleShortVersionString: 1.0.48
+        CFBundleVersion: "1.0.48"
         ITSAppUsesNonExemptEncryption: false
         UIBackgroundModes:
           - remote-notification
@@ -69,6 +64,7 @@ targets:
       path: app_iOS/app_iOS.entitlements
       properties:
         com.apple.developer.associated-domains:
+          - webcredentials:frak.id
           - webcredentials:wallet.frak.id
           - applinks:wallet.frak.id
         # iCloud Key-Value storage — tauri-plugin-recovery-hint uses this to

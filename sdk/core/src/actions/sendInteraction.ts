@@ -1,6 +1,6 @@
+import { getClientId } from "../config/clientId";
 import type { FrakClient } from "../types";
 import type { SendInteractionParamsType } from "../types/rpc/interaction";
-import { getClientId } from "../utils/clientId";
 
 /**
  * Send an interaction to the backend via the listener RPC.

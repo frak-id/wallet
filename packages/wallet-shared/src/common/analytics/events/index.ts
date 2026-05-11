@@ -1,9 +1,11 @@
 import type { AuthEventMap } from "./auth";
+import type { DeepLinkEventMap } from "./deepLink";
 import type { DiagnosticsEventMap } from "./diagnostics";
 import type { EmbeddedWalletEventMap } from "./embeddedWallet";
 import type { InstallEventMap } from "./install";
 import type { ListenerMiscEventMap } from "./listener";
 import type { ModalEventMap, WalletModalEventMap } from "./modal";
+import type { MoneriumEventMap } from "./monerium";
 import type { NotificationEventMap } from "./notification";
 import type { OnboardingEventMap } from "./onboarding";
 import type { PairingEventMap } from "./pairing";
@@ -12,6 +14,7 @@ import type { TokensEventMap } from "./tokens";
 import type { ListenerTxEventMap } from "./transaction";
 
 export type { AuthEventMap } from "./auth";
+export type { DeepLinkEventMap, DeepLinkSource } from "./deepLink";
 export type { AppErrorSource, DiagnosticsEventMap } from "./diagnostics";
 export type { EmbeddedWalletEventMap } from "./embeddedWallet";
 export type {
@@ -37,8 +40,13 @@ export type {
     WalletModalEventMap,
 } from "./modal";
 export type {
+    MoneriumCallbackOutcome,
+    MoneriumEventMap,
+} from "./monerium";
+export type {
     NotificationEventMap,
     NotificationOptInOutcome,
+    NotificationTogglePhase,
 } from "./notification";
 export type { OnboardingAction, OnboardingEventMap } from "./onboarding";
 export type {
@@ -62,4 +70,6 @@ export type EventMap = AuthEventMap &
     PairingEventMap &
     TokensEventMap &
     InstallEventMap &
+    MoneriumEventMap &
+    DeepLinkEventMap &
     DiagnosticsEventMap;

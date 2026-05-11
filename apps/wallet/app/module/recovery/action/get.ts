@@ -2,7 +2,6 @@ import {
     addresses,
     getExecutionAbi,
     kernelAddresses,
-    multiWebAuthNValidatorV2Abi,
 } from "@frak-labs/app-essentials";
 import type { CurrentRecovery } from "@frak-labs/wallet-shared";
 import { currentViemClient } from "@frak-labs/wallet-shared";
@@ -19,6 +18,7 @@ import { readContract } from "viem/actions";
 import {
     doAddPassKeyFnAbi,
     ecdsaValidatorStorageAbi,
+    webAuthNGetPasskeyAbi,
 } from "@/module/recovery/utils/abi";
 
 /**
@@ -118,7 +118,7 @@ export async function getRecoveryAvailability({
     const [, potentiallyExistingPasskey] = await tryit(() =>
         readContract(currentViemClient, {
             address: addresses.webAuthNValidator,
-            abi: multiWebAuthNValidatorV2Abi,
+            abi: [webAuthNGetPasskeyAbi],
             functionName: "getPasskey",
             args: [wallet, keccak256(toHex(newAuthenticatorId))],
         })

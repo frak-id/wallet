@@ -1,13 +1,13 @@
 {
-    "$schema": "../../../node_modules/@tauri-apps/cli/config.schema.json",
+    "$schema": "../node_modules/@tauri-apps/cli/config.schema.json",
     "productName": "Frak Wallet",
-    "version": "1.0.35",
+    "version": "1.0.48",
     "identifier": "id.frak.wallet",
     "build": {
         "frontendDist": "../dist",
         "devUrl": "http://localhost:3010",
         "beforeDevCommand": "NODE_ENV=development TAURI_CLI_RUNNING=1 vite dev",
-        "beforeBuildCommand": "NODE_ENV=production vite build"
+        "beforeBuildCommand": "NODE_ENV=production TAURI_CLI_RUNNING=1 vite build"
     },
     "app": {
         "windows": [
@@ -25,6 +25,20 @@
             "csp": "default-src 'self'; script-src 'self' 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self' https://*.frak.id https://*.drpc.org https://*.pimlico.io wss://*.frak.id https://api.monerium.app https://api.monerium.dev"
         }
     },
+    "plugins": {
+        "deep-link": {
+            "mobile": [
+                {
+                    "host": "wallet.frak.id",
+                    "scheme": ["https"],
+                    "pathPattern": ["/.*"]
+                },
+                {
+                    "scheme": ["frakwallet"]
+                }
+            ]
+        }
+    },
     "bundle": {
         "active": true,
         "targets": "all",
@@ -35,6 +49,9 @@
             "icons/icon.icns",
             "icons/icon.ico"
         ],
+        "android": {
+            "debugApplicationIdSuffix": ".dev"
+        },
         "iOS": {
             "developmentTeam": "57DZ6Z2235"
         }

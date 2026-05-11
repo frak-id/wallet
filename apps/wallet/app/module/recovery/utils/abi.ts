@@ -57,3 +57,32 @@ export const doAddPassKeyFnAbi = {
     outputs: [],
     stateMutability: "nonpayable",
 } as const;
+
+/**
+ * MultiWebAuthNValidatorV2 `getPasskey(wallet, authenticatorIdHash)` view.
+ *
+ * Wallet-local partial: the full validator ABI (~4.75 KB raw) carries a dozen
+ * admin items the recovery flow never reads (`addPassKey`, `removePassKey`,
+ * `validateUserOp`, all events/errors). Inlining only this overload keeps the
+ * lazy `feature-auth` chunk lean.
+ */
+export const webAuthNGetPasskeyAbi = {
+    type: "function",
+    name: "getPasskey",
+    inputs: [
+        { name: "_smartWallet", type: "address" },
+        { name: "_authenticatorId", type: "bytes32" },
+    ],
+    outputs: [
+        { name: "", type: "bytes32" },
+        {
+            name: "",
+            type: "tuple",
+            components: [
+                { name: "x", type: "uint256" },
+                { name: "y", type: "uint256" },
+            ],
+        },
+    ],
+    stateMutability: "view",
+} as const;

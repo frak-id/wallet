@@ -45,8 +45,9 @@ export const digitInputError = style({
 
 export const digitInputFill = style({
     width: "auto",
-    flex: "1 0 0",
+    flex: "1 1 0",
     minWidth: 0,
+    maxWidth: 41,
 });
 
 export const digitInputReadOnly = style({

@@ -1,58 +1,41 @@
-import { cva, cx, type VariantProps } from "class-variance-authority";
+import clsx from "clsx";
 import { Fingerprint } from "lucide-react";
 import type {
     ComponentPropsWithRef,
     PropsWithChildren,
     ReactNode,
 } from "react";
-import styles from "./index.module.css";
+import * as styles from "./index.css";
 
-type ButtonAuthSize = "none" | "small" | "normal" | "big";
-type ButtonAuthProps = ComponentPropsWithRef<"button"> &
-    VariantProps<typeof buttonAuthVariants> & {
-        className?: string;
-        size?: ButtonAuthSize;
-        isLoading?: boolean;
-        children?: ReactNode;
-    };
-
-const buttonAuthVariants = cva(styles.buttonAuth, {
-    variants: {
-        size: {
-            none: styles["size--none"],
-            small: styles["size--small"],
-            normal: styles["size--normal"],
-            big: styles["size--big"],
-        },
-        width: {
-            auto: styles["width--auto"],
-            full: styles["width--full"],
-        },
-    },
-    defaultVariants: {
-        size: "normal",
-        width: "auto",
-    },
-});
+type ButtonAuthSize = keyof typeof styles.size;
+type ButtonAuthWidth = keyof typeof styles.width;
+type ButtonAuthProps = ComponentPropsWithRef<"button"> & {
+    className?: string;
+    size?: ButtonAuthSize;
+    width?: ButtonAuthWidth;
+    isLoading?: boolean;
+    children?: ReactNode;
+};
 
 export function ButtonAuth({
     type = "button",
     disabled,
     onClick,
     className = "",
-    size,
+    size = "normal",
     isLoading,
-    width,
+    width = "auto",
     children,
 }: PropsWithChildren<ButtonAuthProps>) {
     return (
         <button
             type={type}
-            className={buttonAuthVariants({
-                size,
-                className,
-                width,
-            })}
+            className={clsx(
+                styles.buttonAuth,
+                styles.size[size],
+                styles.width[width],
+                className
+            )}
             disabled={disabled}
             onClick={onClick}
         >
@@ -72,7 +55,7 @@ function ButtonAuthIcon({ isLoading }: { isLoading?: boolean }) {
     return (
         <span className={styles.buttonAuth__iconWrapper}>
             <Fingerprint
-                className={cx(
+                className={clsx(
                     styles.buttonAuth__icon,
                     isLoading && styles.buttonAuth__pulsingIcon
                 )}

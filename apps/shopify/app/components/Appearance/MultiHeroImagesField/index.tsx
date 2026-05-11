@@ -20,7 +20,7 @@ const imageAccept = {
 };
 
 const restrictionsText =
-    "PNG, JPEG, WebP, SVG, GIF — Min 600×200px — Ratio 3:2 to 4:1 — Max 10MB";
+    "PNG, JPEG, WebP, SVG, GIF — Min 800×450px — Ratio 4:3 to 2:1 — Max 10MB";
 
 // Extract storage key (e.g. "hero-abc12345") from a stored URL.
 function urlToType(url: string): string | null {

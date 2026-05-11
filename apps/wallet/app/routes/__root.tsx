@@ -1,3 +1,4 @@
+import { IS_TAURI } from "@frak-labs/app-essentials/utils/platform";
 import { Button } from "@frak-labs/design-system/components/Button";
 import { Text } from "@frak-labs/design-system/components/Text";
 import { recordError } from "@frak-labs/wallet-shared";
@@ -7,16 +8,16 @@ import { useEffect } from "react";
 import { BiometricLock } from "@/module/biometrics";
 import { FullScreenGate } from "@/module/common/component/FullScreenGate";
 import { ModalOutlet } from "@/module/common/component/ModalOutlet";
-import { PwaInstall } from "@/module/common/component/PwaInstall";
 import { RootProvider } from "@/module/common/provider/RootProvider";
 import { TargetSignatureModal } from "@/module/pairing/component/TargetSignatureModal";
 import { VersionGate } from "@/module/version";
-import { DetectPWA } from "@/module/wallet/component/DetectPWA";
 // Import open panel to ensure it's initialized
 import "@frak-labs/wallet-shared";
 // Import global styles
 import "@frak-labs/design-system/global";
+import "./__root.css";
 import { useHardwareBack } from "@/module/common/hook/useHardwareBack";
+import { scheduleIdleModalPreload } from "@/module/common/utils/preloadModalChunks";
 
 export const Route = createRootRoute({
     component: RootComponent,
@@ -32,17 +33,16 @@ export const Route = createRootRoute({
 function RootComponent() {
     useHardwareBack();
 
+    // Pre-warm modal-only lazy chunks during browser idle so the first open
+    // of Keypass / MoneriumBankFlow / ExplorerDetail / etc. resolves from a
+    // hot cache instead of a cold round-trip. Routes already preload via
+    // TanStack Router's `defaultPreload: "render"` (see `main.tsx`).
+    useEffect(() => scheduleIdleModalPreload(), []);
+
     return (
         <RootProvider>
-            {/* Only show PWA features in web mode — tree-shaken in Tauri builds */}
-            {!process.env.IS_TAURI && (
-                <>
-                    <PwaInstall />
-                    <DetectPWA />
-                </>
-            )}
-            {process.env.IS_TAURI && <BiometricLock />}
-            {process.env.IS_TAURI && <VersionGate />}
+            {IS_TAURI && <BiometricLock />}
+            {IS_TAURI && <VersionGate />}
             <Outlet />
             <TargetSignatureModal />
             <ModalOutlet />

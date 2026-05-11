@@ -6,15 +6,17 @@ import {
     type RpcPromiseHandler,
 } from "@frak-labs/frame-connector";
 import {
-    addLastAuthentication,
-    emitLifecycleEvent,
     identifyAuthenticatedUser,
-    type SdkSession,
-    type Session,
-    type SsoRpcSchema,
-    sessionStore,
     trackEvent,
-} from "@frak-labs/wallet-shared";
+} from "@frak-labs/wallet-shared/common/analytics";
+import { emitLifecycleEvent } from "@frak-labs/wallet-shared/common/utils/lifecycleEvents";
+import { addLastAuthentication } from "@frak-labs/wallet-shared/stores/authenticationStore";
+import { sessionStore } from "@frak-labs/wallet-shared/stores/sessionStore";
+import type {
+    SdkSession,
+    Session,
+    SsoRpcSchema,
+} from "@frak-labs/wallet-shared/types";
 import type { Hex } from "viem";
 import type { WalletRpcContext } from "@/module/types/context";
 

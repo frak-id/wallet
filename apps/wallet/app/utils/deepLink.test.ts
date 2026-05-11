@@ -28,10 +28,22 @@ const getSafeSessionMock = vi.fn<() => { token: string } | null | undefined>(
 
 const mockEnsurePost = vi.fn(() => Promise.resolve({ error: null }));
 
-vi.mock("@frak-labs/app-essentials/utils/platform", () => ({
+const platformMocks = vi.hoisted(() => ({
     isAndroid: vi.fn(() => false),
     isIOS: vi.fn(() => false),
     isTauri: vi.fn(() => true),
+}));
+vi.mock("@frak-labs/app-essentials/utils/platform", () => ({
+    get IS_ANDROID() {
+        return platformMocks.isAndroid();
+    },
+    get IS_IOS() {
+        return platformMocks.isIOS();
+    },
+    get IS_TAURI() {
+        return platformMocks.isTauri();
+    },
+    isStandalonePwa: () => false,
 }));
 
 vi.mock("@tauri-apps/plugin-deep-link", () => ({
@@ -63,10 +75,7 @@ describe("initDeepLinks", () => {
         pendingActionsStore.getState().clearAll();
         openUrlHandler = null;
         getSafeSessionMock.mockReturnValue({ token: "valid-token" });
-        const { isTauri } = await import(
-            "@frak-labs/app-essentials/utils/platform"
-        );
-        vi.mocked(isTauri).mockReturnValue(true);
+        platformMocks.isTauri.mockReturnValue(true);
     });
 
     afterEach(() => {
@@ -74,10 +83,7 @@ describe("initDeepLinks", () => {
     });
 
     test("should skip initialization when not running in Tauri", async () => {
-        const { isTauri } = await import(
-            "@frak-labs/app-essentials/utils/platform"
-        );
-        vi.mocked(isTauri).mockReturnValue(false);
+        platformMocks.isTauri.mockReturnValue(false);
 
         const { initDeepLinks } = await import("./deepLink");
         const navigate = vi.fn();
@@ -102,6 +108,7 @@ describe("initDeepLinks", () => {
         expect(navigate).toHaveBeenCalledWith({
             to: "/pairing",
             search: { id: "pair-123", mode: "embedded" },
+            replace: true,
         });
     });
 
@@ -120,6 +127,7 @@ describe("initDeepLinks", () => {
         expect(navigate).toHaveBeenCalledWith({
             to: "/tokens/send",
             search: { to: "0xabc" },
+            replace: true,
         });
     });
 
@@ -135,7 +143,7 @@ describe("initDeepLinks", () => {
 
         openUrlHandler(["frakwallet://wallet"]);
 
-        expect(navigate).toHaveBeenCalledWith({ to: "/wallet" });
+        expect(navigate).toHaveBeenCalledWith({ to: "/wallet", replace: true });
     });
 
     test("should handle HTTPS App Link for pairing (Android)", async () => {
@@ -153,6 +161,7 @@ describe("initDeepLinks", () => {
         expect(navigate).toHaveBeenCalledWith({
             to: "/pairing",
             search: { id: "pair-456", mode: "embedded" },
+            replace: true,
         });
     });
 
@@ -171,6 +180,7 @@ describe("initDeepLinks", () => {
         expect(navigate).toHaveBeenCalledWith({
             to: "/pairing",
             search: { id: "pair-789", mode: "embedded" },
+            replace: true,
         });
     });
 
@@ -193,6 +203,7 @@ describe("initDeepLinks", () => {
         expect(navigate).toHaveBeenCalledWith({
             to: "/pairing",
             search: { id: "pair-qr", mode: "embedded" },
+            replace: true,
         });
     });
 
@@ -211,6 +222,7 @@ describe("initDeepLinks", () => {
         expect(navigate).toHaveBeenCalledWith({
             to: "/pairing",
             search: { id: "pair-cs", mode: "embedded" },
+            replace: true,
         });
     });
 
@@ -229,6 +241,48 @@ describe("initDeepLinks", () => {
         expect(navigate).toHaveBeenCalledWith({
             to: "/pairing",
             search: { id: "pair-dev", mode: "embedded" },
+            replace: true,
+        });
+    });
+
+    test("should handle compact /p/<id> HTTPS App Link", async () => {
+        const { initDeepLinks } = await import("./deepLink");
+        const navigate = vi.fn();
+
+        await initDeepLinks(navigate);
+
+        if (!openUrlHandler) {
+            throw new Error("Expected openUrlHandler to be set");
+        }
+
+        // QR codes emit lowercase, but some scanners or shares may
+        // uppercase the URL — the parser must lowercase the id so backend
+        // lookups (byte-exact varchar) match the stored canonical form.
+        openUrlHandler(["https://wallet.frak.id/P/ABC123DEF456"]);
+
+        expect(navigate).toHaveBeenCalledWith({
+            to: "/pairing",
+            search: { id: "abc123def456", mode: "embedded" },
+            replace: true,
+        });
+    });
+
+    test("should handle compact frakwallet://p/<id> custom scheme", async () => {
+        const { initDeepLinks } = await import("./deepLink");
+        const navigate = vi.fn();
+
+        await initDeepLinks(navigate);
+
+        if (!openUrlHandler) {
+            throw new Error("Expected openUrlHandler to be set");
+        }
+
+        openUrlHandler(["frakwallet://p/ABC123DEF456"]);
+
+        expect(navigate).toHaveBeenCalledWith({
+            to: "/pairing",
+            search: { id: "abc123def456", mode: "embedded" },
+            replace: true,
         });
     });
 
@@ -264,6 +318,7 @@ describe("initDeepLinks", () => {
         expect(navigate).toHaveBeenCalledWith({
             to: "/install",
             search: { m: "merchant-123", a: "anonymous-456" },
+            replace: true,
         });
     });
 });
@@ -274,10 +329,7 @@ describe("deep link auth gate", () => {
         pendingActionsStore.getState().clearAll();
         openUrlHandler = null;
         getSafeSessionMock.mockReturnValue(null);
-        const { isTauri } = await import(
-            "@frak-labs/app-essentials/utils/platform"
-        );
-        vi.mocked(isTauri).mockReturnValue(true);
+        platformMocks.isTauri.mockReturnValue(true);
     });
 
     afterEach(() => {
@@ -296,7 +348,10 @@ describe("deep link auth gate", () => {
 
         openUrlHandler(["frakwallet://send?to=0xabc"]);
 
-        expect(navigate).toHaveBeenCalledWith({ to: "/register" });
+        expect(navigate).toHaveBeenCalledWith({
+            to: "/register",
+            replace: true,
+        });
         expect(navigate).not.toHaveBeenCalledWith(
             expect.objectContaining({ to: "/tokens/send" })
         );
@@ -343,7 +398,10 @@ describe("deep link auth gate", () => {
             navAction?.type === "navigation" &&
                 navAction.search?.id === "pair-abc"
         ).toBe(true);
-        expect(navigate).toHaveBeenCalledWith({ to: "/register" });
+        expect(navigate).toHaveBeenCalledWith({
+            to: "/register",
+            replace: true,
+        });
     });
 
     test("should navigate to /install for install deep link when unauthenticated (public action)", async () => {
@@ -362,6 +420,7 @@ describe("deep link auth gate", () => {
         expect(navigate).toHaveBeenCalledWith({
             to: "/install",
             search: { m: "merchant-123", a: "anonymous-456" },
+            replace: true,
         });
         // No pending actions stored by deep link handler (the /install page handles that)
         const actions = pendingActionsStore.getState().getValidActions();
@@ -380,7 +439,10 @@ describe("deep link auth gate", () => {
 
         openUrlHandler(["frakwallet://recovery"]);
 
-        expect(navigate).toHaveBeenCalledWith({ to: "/profile/recovery" });
+        expect(navigate).toHaveBeenCalledWith({
+            to: "/profile/recovery",
+            replace: true,
+        });
     });
 });
 
@@ -390,10 +452,7 @@ describe("monerium OAuth callback", () => {
         pendingActionsStore.getState().clearAll();
         openUrlHandler = null;
         getSafeSessionMock.mockReturnValue({ token: "valid-token" });
-        const { isTauri } = await import(
-            "@frak-labs/app-essentials/utils/platform"
-        );
-        vi.mocked(isTauri).mockReturnValue(true);
+        platformMocks.isTauri.mockReturnValue(true);
     });
 
     afterEach(() => {
@@ -417,6 +476,7 @@ describe("monerium OAuth callback", () => {
         expect(navigate).toHaveBeenCalledWith({
             to: "/monerium/callback",
             search: { code: "abc123", state: "xyz" },
+            replace: true,
         });
     });
 
@@ -437,6 +497,7 @@ describe("monerium OAuth callback", () => {
         expect(navigate).toHaveBeenCalledWith({
             to: "/monerium/callback",
             search: { code: "abc123", state: "xyz" },
+            replace: true,
         });
     });
 
@@ -455,6 +516,7 @@ describe("monerium OAuth callback", () => {
         expect(navigate).toHaveBeenCalledWith({
             to: "/monerium/callback",
             search: { code: "abc123" },
+            replace: true,
         });
     });
 
@@ -473,6 +535,7 @@ describe("monerium OAuth callback", () => {
         expect(navigate).toHaveBeenCalledWith({
             to: "/monerium/callback",
             search: { state: "xyz" },
+            replace: true,
         });
     });
 
@@ -490,6 +553,7 @@ describe("monerium OAuth callback", () => {
 
         expect(navigate).toHaveBeenCalledWith({
             to: "/monerium/callback",
+            replace: true,
             search: {},
         });
     });

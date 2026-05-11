@@ -1,4 +1,4 @@
-import { isTauri } from "@frak-labs/app-essentials/utils/platform";
+import { IS_TAURI } from "@frak-labs/app-essentials/utils/platform";
 import { getInvoke } from "../tauri";
 
 /**
@@ -54,84 +54,89 @@ function stringifyValue(value: unknown): string {
     }
 }
 
-export const crashlytics = {
-    /**
-     * Identify the current user (typically the wallet address). Pass an
-     * empty string to clear it on logout.
-     */
-    async setUserId(userId: string): Promise<void> {
-        if (!isTauri()) return;
-        try {
-            await tauriInvoke<void>(INVOKE_SET_USER_ID, { userId });
-        } catch (err) {
-            console.warn("crashlytics.setUserId failed", err);
-        }
-    },
+export const crashlytics = !IS_TAURI
+    ? undefined
+    : {
+          /**
+           * Identify the current user (typically the wallet address). Pass an
+           * empty string to clear it on logout.
+           */
+          async setUserId(userId: string): Promise<void> {
+              if (!IS_TAURI) return;
+              try {
+                  await tauriInvoke<void>(INVOKE_SET_USER_ID, { userId });
+              } catch (err) {
+                  console.warn("crashlytics.setUserId failed", err);
+              }
+          },
 
-    /**
-     * Attach a custom key/value to subsequent crash reports. Useful for
-     * splits like `env`, `feature_flag`, `last_route`. Crashlytics keeps
-     * up to 64 keys per app — old keys are evicted FIFO once the cap is hit.
-     */
-    async setKey(key: string, value: unknown): Promise<void> {
-        if (!isTauri()) return;
-        try {
-            await tauriInvoke<void>(INVOKE_SET_KEY, {
-                key,
-                value: stringifyValue(value),
-            });
-        } catch (err) {
-            console.warn("crashlytics.setKey failed", err);
-        }
-    },
+          /**
+           * Attach a custom key/value to subsequent crash reports. Useful for
+           * splits like `env`, `feature_flag`, `last_route`. Crashlytics keeps
+           * up to 64 keys per app — old keys are evicted FIFO once the cap is hit.
+           */
+          async setKey(key: string, value: unknown): Promise<void> {
+              if (!IS_TAURI) return;
+              try {
+                  await tauriInvoke<void>(INVOKE_SET_KEY, {
+                      key,
+                      value: stringifyValue(value),
+                  });
+              } catch (err) {
+                  console.warn("crashlytics.setKey failed", err);
+              }
+          },
 
-    /**
-     * Append a breadcrumb log entry. The next crash report will include
-     * the most recent ~64 KB of logs. Prefer short, structured messages
-     * over verbose dumps.
-     */
-    async log(message: string): Promise<void> {
-        if (!isTauri()) return;
-        try {
-            await tauriInvoke<void>(INVOKE_LOG, { message });
-        } catch (err) {
-            console.warn("crashlytics.log failed", err);
-        }
-    },
+          /**
+           * Append a breadcrumb log entry. The next crash report will include
+           * the most recent ~64 KB of logs. Prefer short, structured messages
+           * over verbose dumps.
+           */
+          async log(message: string): Promise<void> {
+              if (!IS_TAURI) return;
+              try {
+                  await tauriInvoke<void>(INVOKE_LOG, { message });
+              } catch (err) {
+                  console.warn("crashlytics.log failed", err);
+              }
+          },
 
-    /**
-     * Record a non-fatal error. Shows up in Crashlytics under the same
-     * dashboard as fatal crashes, distinguished by the "non-fatal" badge.
-     *
-     * The original error's `stack` is attached as a breadcrumb on the next
-     * report so the JS frames survive the native bridge — Crashlytics's own
-     * exception-grouping uses `name` + `message`.
-     */
-    async recordError(err: unknown): Promise<void> {
-        if (!isTauri()) return;
-        try {
-            const error = err instanceof Error ? err : new Error(String(err));
-            await tauriInvoke<void>(INVOKE_RECORD_ERROR, {
-                name: error.name || "Error",
-                message: error.message || "",
-                stack: error.stack,
-            });
-        } catch (innerErr) {
-            console.warn("crashlytics.recordError failed", innerErr);
-        }
-    },
+          /**
+           * Record a non-fatal error. Shows up in Crashlytics under the same
+           * dashboard as fatal crashes, distinguished by the "non-fatal" badge.
+           *
+           * The original error's `stack` is attached as a breadcrumb on the next
+           * report so the JS frames survive the native bridge — Crashlytics's own
+           * exception-grouping uses `name` + `message`.
+           */
+          async recordError(err: unknown): Promise<void> {
+              if (!IS_TAURI) return;
+              try {
+                  const error =
+                      err instanceof Error ? err : new Error(String(err));
+                  await tauriInvoke<void>(INVOKE_RECORD_ERROR, {
+                      name: error.name || "Error",
+                      message: error.message || "",
+                      stack: error.stack,
+                  });
+              } catch (innerErr) {
+                  console.warn("crashlytics.recordError failed", innerErr);
+              }
+          },
 
-    /**
-     * Toggle Crashlytics collection at runtime. Takes effect on the next
-     * app start (per Firebase SDK behaviour). Use this to back a Settings
-     * opt-out toggle.
-     */
-    async setCollectionEnabled(enabled: boolean): Promise<void> {
-        if (!isTauri()) return;
-        try {
-            await tauriInvoke<void>(INVOKE_SET_COLLECTION_ENABLED, { enabled });
-        } catch (err) {
-            console.warn("crashlytics.setCollectionEnabled failed", err);
-        }
-    },
-};
+          /**
+           * Toggle Crashlytics collection at runtime. Takes effect on the next
+           * app start (per Firebase SDK behaviour). Use this to back a Settings
+           * opt-out toggle.
+           */
+          async setCollectionEnabled(enabled: boolean): Promise<void> {
+              if (!IS_TAURI) return;
+              try {
+                  await tauriInvoke<void>(INVOKE_SET_COLLECTION_ENABLED, {
+                      enabled,
+                  });
+              } catch (err) {
+                  console.warn("crashlytics.setCollectionEnabled failed", err);
+              }
+          },
+      };

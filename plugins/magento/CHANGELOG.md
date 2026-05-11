@@ -6,7 +6,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 Add entries under `[Unreleased]` as you work. The release workflow
-(`.github/workflows/release-magento.yml`) promotes `[Unreleased]` to the new
+(`.github/workflows/release-php-plugins.yml`) promotes `[Unreleased]` to the new
 version on dispatch.
 
 ## [Unreleased]

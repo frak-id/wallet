@@ -1,4 +1,4 @@
-import { mergeTokenQueryOptions } from "@frak-labs/wallet-shared";
+import { mergeTokenQueryOptions } from "@frak-labs/wallet-shared/identity";
 import { useQuery } from "@tanstack/react-query";
 import { useCallback } from "react";
 import { resolvingContextStore } from "@/module/stores/resolvingContextStore";

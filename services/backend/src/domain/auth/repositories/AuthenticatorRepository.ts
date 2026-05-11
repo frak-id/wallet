@@ -1,5 +1,6 @@
 import { getLibsqlDb } from "@backend-infrastructure";
 import { eq } from "drizzle-orm";
+import type { Address } from "viem";
 import { authenticatorsTable } from "../db/schema";
 import type { AuthenticatorDocument } from "../models/dto/AuthenticatorDocument";
 
@@ -15,6 +16,44 @@ export class AuthenticatorRepository {
             .select()
             .from(authenticatorsTable)
             .where(eq(authenticatorsTable.id, credentialId));
+
+        if (!row) return null;
+
+        return {
+            _id: row.id,
+            smartWalletAddress:
+                row.smartWalletAddress as AuthenticatorDocument["smartWalletAddress"],
+            userAgent: row.userAgent,
+            publicKey: {
+                x: row.publicKeyX as AuthenticatorDocument["publicKey"]["x"],
+                y: row.publicKeyY as AuthenticatorDocument["publicKey"]["y"],
+            },
+            credentialPublicKey: row.credentialPublicKey,
+            counter: row.counter,
+            credentialDeviceType:
+                row.credentialDeviceType as AuthenticatorDocument["credentialDeviceType"],
+            credentialBackedUp: row.credentialBackedUp,
+            transports: row.transports as AuthenticatorDocument["transports"],
+        };
+    }
+
+    /**
+     * Get the most recently registered authenticator for a smart wallet
+     * address. A wallet can have multiple authenticators (multi-device); we
+     * return any valid one — callers that need a specific credential should
+     * use `getByCredentialId` instead.
+     */
+    public async getBySmartWalletAddress(
+        smartWalletAddress: Address
+    ): Promise<AuthenticatorDocument | null> {
+        const db = getLibsqlDb();
+        const [row] = await db
+            .select()
+            .from(authenticatorsTable)
+            .where(
+                eq(authenticatorsTable.smartWalletAddress, smartWalletAddress)
+            )
+            .limit(1);
 
         if (!row) return null;
 

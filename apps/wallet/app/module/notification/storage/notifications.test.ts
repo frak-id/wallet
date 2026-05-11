@@ -11,7 +11,7 @@ vi.mock("idb-keyval", () => ({
     createStore: vi.fn(() => ({})), // Return a mock store object
 }));
 
-describe("notificationStorage", () => {
+describe.sequential("notificationStorage", () => {
     beforeEach(() => {
         vi.clearAllMocks();
     });
@@ -164,7 +164,7 @@ describe("notificationStorage", () => {
 
             expect(result).toEqual([]);
             expect(consoleErrorSpy).toHaveBeenCalledWith(
-                "Failed to get notifications:",
+                "Error while reading notifications",
                 unexpectedError
             );
 

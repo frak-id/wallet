@@ -39,11 +39,6 @@ beforeEach(() => {
                     currency: "eur",
                 },
             },
-            debugInfo: {
-                formatDebugInfo: vi.fn((error: unknown) => {
-                    return `Debug info: ${error}`;
-                }),
-            },
         },
         config: {
             metadata: {

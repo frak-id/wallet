@@ -1,9 +1,9 @@
-import { initAnalytics } from "./globalProps";
-
 export { crashlytics } from "./crashlytics";
 export type {
     AppErrorSource,
     AuthEventMap,
+    DeepLinkEventMap,
+    DeepLinkSource,
     DiagnosticsEventMap,
     EmbeddedWalletEventMap,
     EventMap,
@@ -21,8 +21,11 @@ export type {
     ListenerTxEventMap,
     ModalDismissSource,
     ModalEventMap,
+    MoneriumCallbackOutcome,
+    MoneriumEventMap,
     NotificationEventMap,
     NotificationOptInOutcome,
+    NotificationTogglePhase,
     OnboardingAction,
     OnboardingEventMap,
     PairingErrorState,
@@ -52,9 +55,6 @@ export type {
     AnalyticsAuthenticationType,
     AnalyticsGlobalProperties,
 } from "./types";
-
-// Initialise OpenPanel at module load — preserves existing behaviour.
-initAnalytics();
 
 /**
  * Normalise an unknown thrown value into an analytics-friendly shape.

@@ -4,11 +4,7 @@ import {
     expect,
     test,
 } from "../../../../tests/vitest-fixtures";
-import {
-    isMoneriumConnected,
-    isMoneriumTokenExpired,
-    moneriumStore,
-} from "./moneriumStore";
+import { isMoneriumConnected, moneriumStore } from "./moneriumStore";
 
 describe("moneriumStore", () => {
     beforeEach(() => {
@@ -23,6 +19,8 @@ describe("moneriumStore", () => {
             expect(state.refreshToken).toBeNull();
             expect(state.tokenExpiry).toBeNull();
             expect(state.pendingCodeVerifier).toBeNull();
+            expect(state.pendingState).toBeNull();
+            expect(state.hasSeenSetupSuccess).toBe(false);
         });
     });
 
@@ -52,20 +50,26 @@ describe("moneriumStore", () => {
         });
     });
 
-    describe("setPendingCodeVerifier", () => {
-        test("should set pending code verifier", () => {
-            const verifier = "code-verifier-abc123xyz";
-
-            moneriumStore.getState().setPendingCodeVerifier(verifier);
-            expect(moneriumStore.getState().pendingCodeVerifier).toBe(verifier);
-        });
-
-        test("should clear pending code verifier when null", () => {
+    describe("setPendingAuth / clearPendingAuth", () => {
+        test("should set verifier and state together", () => {
             moneriumStore
                 .getState()
-                .setPendingCodeVerifier("code-verifier-123");
-            moneriumStore.getState().setPendingCodeVerifier(null);
-            expect(moneriumStore.getState().pendingCodeVerifier).toBeNull();
+                .setPendingAuth("verifier-abc", "state-xyz");
+
+            const state = moneriumStore.getState();
+            expect(state.pendingCodeVerifier).toBe("verifier-abc");
+            expect(state.pendingState).toBe("state-xyz");
+        });
+
+        test("should clear both verifier and state", () => {
+            moneriumStore
+                .getState()
+                .setPendingAuth("verifier-abc", "state-xyz");
+            moneriumStore.getState().clearPendingAuth();
+
+            const state = moneriumStore.getState();
+            expect(state.pendingCodeVerifier).toBeNull();
+            expect(state.pendingState).toBeNull();
         });
     });
 
@@ -74,7 +78,9 @@ describe("moneriumStore", () => {
             moneriumStore
                 .getState()
                 .setTokens("access-token", "refresh-token", 3600);
-            moneriumStore.getState().setPendingCodeVerifier("code-verifier");
+            moneriumStore
+                .getState()
+                .setPendingAuth("code-verifier", "csrf-state");
 
             let state = moneriumStore.getState();
             expect(state.accessToken).not.toBeNull();
@@ -87,6 +93,7 @@ describe("moneriumStore", () => {
             expect(state.refreshToken).toBeNull();
             expect(state.tokenExpiry).toBeNull();
             expect(state.pendingCodeVerifier).toBeNull();
+            expect(state.pendingState).toBeNull();
         });
     });
 
@@ -110,40 +117,6 @@ describe("moneriumStore", () => {
             moneriumStore.getState().disconnect();
 
             expect(isMoneriumConnected(moneriumStore.getState())).toBe(false);
-        });
-    });
-
-    describe("isMoneriumTokenExpired", () => {
-        test("should return false when token is not expired", () => {
-            moneriumStore
-                .getState()
-                .setTokens("access-token", "refresh-token", 3600);
-
-            expect(isMoneriumTokenExpired(moneriumStore.getState())).toBe(
-                false
-            );
-        });
-
-        test("should return true when token is expired", () => {
-            moneriumStore
-                .getState()
-                .setTokens("access-token", "refresh-token", -1);
-
-            expect(isMoneriumTokenExpired(moneriumStore.getState())).toBe(true);
-        });
-
-        test("should return false when tokenExpiry is null", () => {
-            expect(isMoneriumTokenExpired(moneriumStore.getState())).toBe(
-                false
-            );
-        });
-
-        test("should return true at exact expiry time", () => {
-            moneriumStore
-                .getState()
-                .setTokens("access-token", "refresh-token", 0);
-
-            expect(isMoneriumTokenExpired(moneriumStore.getState())).toBe(true);
         });
     });
 });

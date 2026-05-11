@@ -1,4 +1,4 @@
-import { isAndroid, isTauri } from "@frak-labs/app-essentials/utils/platform";
+import { IS_ANDROID, IS_TAURI } from "@frak-labs/app-essentials/utils/platform";
 import { getInvoke } from "@frak-labs/wallet-shared";
 
 type InstallReferrerResult = {
@@ -8,7 +8,7 @@ type InstallReferrerResult = {
 };
 
 export async function getInstallReferrer(): Promise<InstallReferrerResult> {
-    if (!isTauri() || !isAndroid()) {
+    if (!IS_TAURI || !IS_ANDROID) {
         throw new Error("Install referrer is only available on Android");
     }
 

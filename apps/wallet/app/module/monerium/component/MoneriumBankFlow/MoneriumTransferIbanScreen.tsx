@@ -42,10 +42,23 @@ export function MoneriumTransferIbanScreen() {
     // `moneriumFlowStore` is in-memory; fall back to persisted last-used.
     const currentIban = (currentOverride ?? effectiveIban)?.iban ?? null;
 
-    const [name, setName] = useState("");
+    const [firstName, setFirstName] = useState("");
+    const [lastName, setLastName] = useState("");
     const [iban, setIban] = useState("");
+    const [pseudo, setPseudo] = useState("");
+    // Track whether the user has explicitly typed in the pseudo input —
+    // we only auto-default it from `${firstName} ${lastName}` while it's
+    // pristine, otherwise we'd clobber their custom value.
+    const [pseudoTouched, setPseudoTouched] = useState(false);
 
-    const canSave = name.trim().length > 0 && isValidIbanFormat(iban);
+    const derivedPseudo = `${firstName.trim()} ${lastName.trim()}`.trim();
+    const effectivePseudo = pseudoTouched ? pseudo : derivedPseudo;
+
+    const canSave =
+        firstName.trim().length > 0 &&
+        lastName.trim().length > 0 &&
+        effectivePseudo.length > 0 &&
+        isValidIbanFormat(iban);
 
     function handleSelect(entry: IbanEntry) {
         setLastUsedIban(entry.iban);
@@ -55,15 +68,20 @@ export function MoneriumTransferIbanScreen() {
 
     function handleSave() {
         if (!canSave) return;
-        const trimmed = { name: name.trim(), iban: iban.trim() };
+        const trimmed: IbanEntry = {
+            iban: iban.replace(/\s/g, "").toUpperCase(),
+            firstName: firstName.trim(),
+            lastName: lastName.trim(),
+            pseudo: effectivePseudo,
+        };
         addIban(trimmed);
         setLastUsedIban(trimmed.iban);
-        setName("");
+        setFirstName("");
+        setLastName("");
         setIban("");
-        handleSelect({
-            name: trimmed.name,
-            iban: trimmed.iban.replace(/\s/g, "").toUpperCase(),
-        });
+        setPseudo("");
+        setPseudoTouched(false);
+        handleSelect(trimmed);
     }
 
     return (
@@ -111,7 +129,7 @@ export function MoneriumTransferIbanScreen() {
                                                 variant="body"
                                                 weight="medium"
                                             >
-                                                {entry.name}
+                                                {entry.pseudo}
                                             </Text>
                                             <Text
                                                 variant="bodySmall"
@@ -151,18 +169,40 @@ export function MoneriumTransferIbanScreen() {
 
                 <Stack space="xs">
                     <FieldLabel>
-                        {t("monerium.bankFlow.transfer.ibanManager.nameLabel")}
+                        {t(
+                            "monerium.bankFlow.transfer.ibanManager.firstNameLabel"
+                        )}
                     </FieldLabel>
                     <Input
                         variant="bare"
                         length="big"
-                        value={name}
-                        onChange={(e) => setName(e.target.value)}
+                        value={firstName}
+                        onChange={(e) => setFirstName(e.target.value)}
                         placeholder={t(
-                            "monerium.bankFlow.transfer.ibanManager.namePlaceholder"
+                            "monerium.bankFlow.transfer.ibanManager.firstNamePlaceholder"
                         )}
                         aria-label={t(
-                            "monerium.bankFlow.transfer.ibanManager.nameLabel"
+                            "monerium.bankFlow.transfer.ibanManager.firstNameLabel"
+                        )}
+                    />
+                </Stack>
+
+                <Stack space="xs">
+                    <FieldLabel>
+                        {t(
+                            "monerium.bankFlow.transfer.ibanManager.lastNameLabel"
+                        )}
+                    </FieldLabel>
+                    <Input
+                        variant="bare"
+                        length="big"
+                        value={lastName}
+                        onChange={(e) => setLastName(e.target.value)}
+                        placeholder={t(
+                            "monerium.bankFlow.transfer.ibanManager.lastNamePlaceholder"
+                        )}
+                        aria-label={t(
+                            "monerium.bankFlow.transfer.ibanManager.lastNameLabel"
                         )}
                     />
                 </Stack>
@@ -181,6 +221,29 @@ export function MoneriumTransferIbanScreen() {
                         )}
                         aria-label={t(
                             "monerium.bankFlow.transfer.ibanManager.ibanLabel"
+                        )}
+                    />
+                </Stack>
+
+                <Stack space="xs">
+                    <FieldLabel>
+                        {t(
+                            "monerium.bankFlow.transfer.ibanManager.pseudoLabel"
+                        )}
+                    </FieldLabel>
+                    <Input
+                        variant="bare"
+                        length="big"
+                        value={effectivePseudo}
+                        onChange={(e) => {
+                            setPseudoTouched(true);
+                            setPseudo(e.target.value);
+                        }}
+                        placeholder={t(
+                            "monerium.bankFlow.transfer.ibanManager.pseudoPlaceholder"
+                        )}
+                        aria-label={t(
+                            "monerium.bankFlow.transfer.ibanManager.pseudoLabel"
                         )}
                     />
                 </Stack>

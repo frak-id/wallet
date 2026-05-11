@@ -1,7 +1,7 @@
 import clsx from "clsx";
 import type { PropsWithChildren } from "react";
 import { useTranslation } from "react-i18next";
-import styles from "./HandleErrors.module.css";
+import * as styles from "./HandleErrors.css";
 
 type HandleErrorsProps = {
     error: Error;
@@ -103,7 +103,7 @@ function ErrorWrapper({
     className,
 }: PropsWithChildren<{ className?: string }>) {
     return (
-        <p className={clsx("error", styles.errorWrapper__error, className)}>
+        <p className={clsx("error", styles.errorWrapper, className)}>
             {children}
         </p>
     );

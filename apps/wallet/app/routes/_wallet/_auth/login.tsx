@@ -13,6 +13,7 @@ import { useTranslation } from "react-i18next";
 import { AuthActions } from "@/module/authentication/component/AuthActions";
 import * as layout from "@/module/authentication/component/authLayout.css";
 import { DemoTapZone } from "@/module/authentication/component/DemoTapZone";
+import { Back } from "@/module/common/component/Back";
 import { ContentBlock } from "@/module/common/component/ContentBlock";
 import { PageLayout } from "@/module/common/component/PageLayout";
 import { PairingInProgress } from "@/module/pairing/component/PairingInProgress";
@@ -51,6 +52,7 @@ function LoginPage() {
                 <PageLayout>
                     <Box className={layout.contentTop}>
                         <PairingView
+                            back={<Back onClick={() => setView("choose")} />}
                             title={t("authent.sso.pairing.title")}
                             description={t("authent.sso.pairing.description")}
                             onSuccess={handlePostLoginRedirect}
@@ -99,6 +101,17 @@ function LoginPage() {
                     </>
                 }
             >
+                <Box paddingLeft="m">
+                    <Back
+                        onClick={() =>
+                            navigate({
+                                to: "/register",
+                                search: { new: true },
+                                replace: true,
+                            })
+                        }
+                    />
+                </Box>
                 <Box className={layout.content}>
                     <ContentBlock
                         icon={

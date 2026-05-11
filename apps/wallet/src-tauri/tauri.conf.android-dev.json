@@ -1,0 +1,17 @@
+{
+    "$schema": "../node_modules/@tauri-apps/cli/config.schema.json",
+    "plugins": {
+        "deep-link": {
+            "mobile": [
+                {
+                    "host": "wallet-dev.frak.id",
+                    "scheme": ["https"],
+                    "pathPattern": ["/.*"]
+                },
+                {
+                    "scheme": ["frakwallet-dev"]
+                }
+            ]
+        }
+    }
+}

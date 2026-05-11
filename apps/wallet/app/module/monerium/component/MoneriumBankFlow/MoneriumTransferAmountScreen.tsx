@@ -8,6 +8,7 @@ import { ArrowDownIcon } from "@frak-labs/design-system/icons";
 import { useGetUserBalance } from "@frak-labs/wallet-shared";
 import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
+import { MAX_REDEEM_AMOUNT_EUR } from "@/module/monerium/hooks/useMoneriumOfframp";
 import {
     ibanStore,
     selectEffectiveIban,
@@ -66,7 +67,9 @@ export function MoneriumTransferAmountScreen({
     const numericAmount = parseAmount(amount);
     const hasAmount = numericAmount > 0;
     const isInsufficient = hasAmount && numericAmount > eureBalance;
-    const canContinue = hasAmount && !isInsufficient && selectedIban !== null;
+    const isAboveMax = hasAmount && numericAmount >= MAX_REDEEM_AMOUNT_EUR;
+    const canContinue =
+        hasAmount && !isInsufficient && !isAboveMax && selectedIban !== null;
 
     function handleAmountInput(event: React.ChangeEvent<HTMLInputElement>) {
         const raw = event.target.value;
@@ -129,7 +132,7 @@ export function MoneriumTransferAmountScreen({
                             </Text>
                             <Text variant="bodySmall" color="secondary">
                                 {selectedIban
-                                    ? selectedIban.name ||
+                                    ? selectedIban.pseudo ||
                                       maskIban(selectedIban.iban)
                                     : t(
                                           "monerium.bankFlow.transfer.amount.ibanEmpty"
@@ -177,6 +180,12 @@ export function MoneriumTransferAmountScreen({
                         {t(
                             "monerium.bankFlow.transfer.amount.insufficientBalance"
                         )}
+                    </Text>
+                ) : isAboveMax ? (
+                    <Text variant="caption" color="error">
+                        {t("monerium.bankFlow.transfer.amount.aboveMax", {
+                            max: MAX_REDEEM_AMOUNT_EUR,
+                        })}
                     </Text>
                 ) : null}
             </Stack>

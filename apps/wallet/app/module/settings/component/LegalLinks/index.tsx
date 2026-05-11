@@ -1,5 +1,6 @@
 import { Stack } from "@frak-labs/design-system/components/Stack";
-import { ExternalLink, Scale } from "lucide-react";
+import { ExternalLink } from "@frak-labs/wallet-shared";
+import { ExternalLink as ExternalLinkIcon, Scale } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { Panel } from "@/module/common/component/Panel";
 import { Title } from "@/module/common/component/Title";
@@ -14,24 +15,20 @@ export function LegalLinks() {
                 {t("wallet.settings.legal")}
             </Title>
             <Stack space="m">
-                <a
-                    href="https://frak.id/privacy"
-                    target={"_blank"}
-                    rel={"noreferrer"}
+                <ExternalLink
+                    href="https://frak.id/terms"
                     className={styles.legalLink}
                 >
                     {t("wallet.settings.termsOfUse")}
-                    <ExternalLink size={16} />
-                </a>
-                <a
+                    <ExternalLinkIcon size={16} />
+                </ExternalLink>
+                <ExternalLink
                     href="https://frak.id/account-deletion"
-                    target={"_blank"}
-                    rel={"noreferrer"}
                     className={styles.legalLink}
                 >
                     {t("wallet.settings.deleteAccount")}
-                    <ExternalLink size={16} />
-                </a>
+                    <ExternalLinkIcon size={16} />
+                </ExternalLink>
             </Stack>
         </Panel>
     );

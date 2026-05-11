@@ -1,4 +1,4 @@
-import { cx } from "class-variance-authority";
+import { clsx as cx } from "clsx";
 import {
     type CSSProperties,
     type PropsWithChildren,
@@ -8,7 +8,7 @@ import {
 import { Trans } from "react-i18next";
 import { Arrow } from "@/module/embedded/component/Onboarding/assets/Arrow";
 import { useListenerTranslation } from "@/module/providers/ListenerUiProvider";
-import styles from "./index.module.css";
+import * as styles from "./index.css";
 
 function Onboarding({
     style,
@@ -21,8 +21,9 @@ function Onboarding({
     return (
         <div
             className={cx(
-                styles.onboarding,
-                isReverse && styles["onboarding--reverse"]
+                isReverse
+                    ? styles.onboarding.reverse
+                    : styles.onboarding.default
             )}
             style={{
                 top: style?.top ?? "auto",
@@ -62,8 +63,9 @@ export function OnboardingWelcome() {
     return (
         <div
             className={cx(
-                styles.onboardingWrapper,
-                hidden && styles["onboardingWrapper--hidden"]
+                hidden
+                    ? styles.onboardingWrapper.hidden
+                    : styles.onboardingWrapper.visible
             )}
         >
             <Onboarding style={{ top: "92px", right: "-39px" }}>
@@ -95,8 +97,9 @@ export function OnboardingShare({ isHidden = true }: { isHidden?: boolean }) {
     return (
         <div
             className={cx(
-                styles.onboardingWrapper,
-                hidden && styles["onboardingWrapper--hidden"]
+                hidden
+                    ? styles.onboardingWrapper.hidden
+                    : styles.onboardingWrapper.visible
             )}
         >
             <Onboarding style={{ top: "-90px", right: "10px" }}>

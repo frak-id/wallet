@@ -1,15 +1,22 @@
 // Clients
 
 export { ssoPopupFeatures, ssoPopupName } from "./actions/openSso";
+export { createIFrameFrakClient, setupClient } from "./clients";
+// Config (reactive merchant config + identity)
 export {
-    createIFrameFrakClient,
-    DebugInfoGatherer,
-    setupClient,
-} from "./clients";
-
+    getBackendUrl,
+    getClientId,
+    sdkConfigStore,
+} from "./config";
+// Constants
+export { DEEP_LINK_SCHEME } from "./constants";
 export type { InteractionTypeKey } from "./constants/interactionTypes";
-export { type LocalesKey, locales } from "./constants/locales";
-
+// Context (FrakContext URL codec + attribution merge)
+export {
+    FrakContextManager,
+    type MergeAttributionInput,
+    mergeAttribution,
+} from "./context";
 // Types
 export type {
     AttributionDefaults,
@@ -48,6 +55,7 @@ export type {
     // Compression
     KeyProvider,
     Language,
+    ListenerPreloadOption,
     LocalizedI18nConfig,
     LoggedInEmbeddedView,
     LoggedOutEmbeddedView,
@@ -87,7 +95,7 @@ export type {
     UtmParams,
     WalletStatusReturnType,
 } from "./types";
-export { isV1Context, isV2Context } from "./types";
+
 // Utils
 export {
     type AppSpecificSsoMetadata,
@@ -97,30 +105,18 @@ export {
     type CompressedSsoData,
     clearAllCache,
     compressJsonToB64,
-    createIframe,
-    DEEP_LINK_SCHEME,
     type DeepLinkFallbackOptions,
     decompressJsonFromB64,
-    FrakContextManager,
     type FullSsoParams,
     findIframeInOpener,
     formatAmount,
     generateSsoUrl,
-    getBackendUrl,
-    getCache,
-    getClientId,
     getCurrencyAmountKey,
     getSupportedCurrency,
-    getSupportedLocale,
-    isChromiumAndroid,
-    isFrakDeepLink,
     isInAppBrowser,
     isIOS,
-    type MergeAttributionInput,
-    mergeAttribution,
+    isMobile,
     redirectToExternalBrowser,
-    sdkConfigStore,
-    toAndroidIntentUrl,
     trackEvent,
     triggerDeepLinkWithFallback,
     withCache,
@@ -129,4 +125,3 @@ export type {
     SdkEventMap,
     SdkHandshakeFailureReason,
 } from "./utils/analytics";
-export { computeLegacyProductId } from "./utils/computeLegacyProductId";

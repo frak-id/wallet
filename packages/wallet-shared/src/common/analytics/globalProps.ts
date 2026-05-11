@@ -16,7 +16,7 @@ const pendingProfileProps: Record<string, unknown> = {};
 export function setProfileId(profileId?: string) {
     // Crashlytics: mirror profile changes so logout (`undefined`) clears
     // the identifier and the next session starts anonymous.
-    void crashlytics.setUserId(profileId ?? "");
+    void crashlytics?.setUserId(profileId ?? "");
     if (!openPanel) return;
     openPanel.profileId = profileId;
 }
@@ -65,10 +65,6 @@ export function getOrCreateSessionId(): string {
     }
 }
 
-function getAppVersion(): string | undefined {
-    return process.env.APP_VERSION;
-}
-
 /**
  * Initialise OpenPanel and merge the baseline global properties
  * (platform + iframe flags + session / build).
@@ -81,16 +77,16 @@ export function initAnalytics() {
     // client id but we still want crash context.
     const initProps = getInitProperties();
     const platformInfo = getPlatformInfo();
-    void crashlytics.setKey("platform", platformInfo.platform);
-    const appVersion = getAppVersion();
-    if (appVersion) void crashlytics.setKey("app_version", appVersion);
+    void crashlytics?.setKey("platform", platformInfo.platform);
+    if (process.env.APP_VERSION && crashlytics)
+        void crashlytics.setKey("app_version", process.env.APP_VERSION);
 
     if (!openPanel) return;
     openPanel.init();
     updateGlobalProperties({
         ...initProps,
         session_id: getOrCreateSessionId(),
-        app_version: appVersion,
+        app_version: process.env.APP_VERSION,
     });
 }
 
@@ -102,7 +98,7 @@ export function initAnalytics() {
 export function setInstallSource(source: string) {
     // Surface install attribution as a crash-report key so we can split
     // crash rates per acquisition channel.
-    void crashlytics.setKey("install_source", source);
+    void crashlytics?.setKey("install_source", source);
     setProfileProperty("install_source", source);
 }
 
@@ -119,9 +115,9 @@ export function identifyAuthenticatedUser(session: Omit<Session, "token">) {
     // Crashlytics first — wallet address is the canonical user id and
     // session metadata helps narrow crash reports per auth flow. Runs
     // independently of openPanel availability.
-    void crashlytics.setUserId(session.address);
-    void crashlytics.setKey("session_type", session.type ?? "webauthn");
-    void crashlytics.setKey("session_src", "pairing");
+    void crashlytics?.setUserId(session.address);
+    void crashlytics?.setKey("session_type", session.type ?? "webauthn");
+    void crashlytics?.setKey("session_src", "pairing");
 
     if (!openPanel) return;
     updateGlobalProperties({

@@ -8,6 +8,7 @@ import {
     REFERRAL_SUCCESS_EVENT,
 } from "@frak-labs/core-sdk/actions";
 import { InAppBanner } from "@frak-labs/design-system/components/InAppBanner";
+import { LogoFrakWithName } from "@frak-labs/design-system/icons";
 import {
     useCallback,
     useEffect,
@@ -20,15 +21,18 @@ import { useGlobalComponents } from "@/hooks/useGlobalComponents";
 import { useLightDomStyles } from "@/hooks/useLightDomStyles";
 import { usePlacement } from "@/hooks/usePlacement";
 import { useReward } from "@/hooks/useReward";
+import { cssSource as sharedBaseCss } from "@/styles/sharedBaseCss.css";
 import { GiftIcon } from "../icons/GiftIcon";
 import {
     cssSource,
+    frakLogo,
     iconSvg,
     referral,
     referralBody,
     referralCta,
     referralDescription,
     referralIconWrapper,
+    referralImage,
     referralTitle,
 } from "./Banner.css";
 import type { BannerProps } from "./types";
@@ -75,6 +79,7 @@ export function Banner({
     inappTitle: propInappTitle,
     inappDescription: propInappDescription,
     inappCta: propInappCta,
+    imageUrl,
     preview,
     previewMode,
 }: BannerProps) {
@@ -88,7 +93,8 @@ export function Banner({
         "frak-banner",
         placementId,
         placement?.components?.banner?.css,
-        cssSource
+        cssSource,
+        sharedBaseCss
     );
 
     const [dismissed, setDismissed] = useState(false);
@@ -285,7 +291,11 @@ export function Banner({
     return (
         <div class={bannerClass} role="alert">
             <div class={`${referralIconWrapper} frak-banner__icon`}>
-                <GiftIcon class={iconSvg} />
+                {imageUrl ? (
+                    <img src={imageUrl} alt="" class={referralImage} />
+                ) : (
+                    <GiftIcon class={iconSvg} />
+                )}
             </div>
             <div class={`${referralBody} frak-banner__text`}>
                 <p class={`${referralTitle} frak-banner__title`}>
@@ -302,6 +312,11 @@ export function Banner({
                     {texts.cta}
                 </button>
             </div>
+            <LogoFrakWithName
+                class={`${frakLogo} frak-banner__logo`}
+                width={42}
+                height={24}
+            />
         </div>
     );
 }

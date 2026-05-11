@@ -1,15 +1,20 @@
-import { isRunningLocally } from "@frak-labs/app-essentials";
+import { isRunningLocally } from "@frak-labs/app-essentials/utils/env";
+import { initAnalytics } from "@frak-labs/wallet-shared/common/analytics";
 import {
     defaultNS,
     fallbackLng,
     interpolation,
-    resources,
-    setupBigIntSerialization,
     supportedLngs,
-} from "@frak-labs/wallet-shared";
+} from "@frak-labs/wallet-shared/i18n";
+import { setupBigIntSerialization } from "@frak-labs/wallet-shared/polyfills/bigint-serialization";
 
 // Setup BigInt serialization polyfill
 setupBigIntSerialization();
+
+// Initialise analytics (OpenPanel + crashlytics globals) once at bootstrap.
+// Side-effect was previously triggered by importing the analytics module;
+// the explicit call keeps tree-shaking honest in the listener bundle.
+initAnalytics();
 
 import i18next from "i18next";
 import I18nextBrowserLanguageDetector from "i18next-browser-languagedetector";
@@ -19,11 +24,36 @@ import { I18nextProvider, initReactI18next } from "react-i18next";
 import App from "./root";
 import "./styles/all.css";
 
-// Kick off i18next in parallel with the React render. `resources` are bundled
-// and all configured detectors are synchronous, so `init()` completes on the
-// next microtask; by that point `react-i18next` has subscribed to the
-// "initialized" event and will re-render consumers. `useSuspense: false` keeps
-// `useTranslation` from suspending if it's ever called before init completes.
+// Lazy-load the English bundle on demand. French is bundled by default
+// (it's our fallbackLng) so most loads avoid pulling EN translations
+// (~13 KB gzipped saved). Listener registered before init() so the initial
+// `languageChanged` event emitted by the language detector is captured.
+i18next.on("languageChanged", async (lng) => {
+    if (lng === "fr" && !i18next.hasResourceBundle("fr", "translation")) {
+        const { translation, customized } = await import(
+            "@frak-labs/wallet-shared/i18n/locales/fr"
+        );
+        i18next.addResourceBundle("fr", "translation", translation);
+        i18next.addResourceBundle("fr", "customized", customized);
+        return;
+    }
+
+    // Otherwise, if we didn't loaded en translation, load them
+    if (!i18next.hasResourceBundle("en", "translation")) {
+        const { translation, customized } = await import(
+            "@frak-labs/wallet-shared/i18n/locales/en"
+        );
+        i18next.addResourceBundle("en", "translation", translation);
+        i18next.addResourceBundle("en", "customized", customized);
+        return;
+    }
+});
+
+// Kick off i18next in parallel with the React render. The bundled French
+// resources resolve synchronously; English is added later via the listener
+// above. `react-i18next` re-renders consumers when `addResourceBundle`
+// fires its `added` event. `useSuspense: false` keeps `useTranslation`
+// from suspending if it's ever called before init completes.
 i18next
     .use(initReactI18next) // Tell i18next to use the react-i18next plugin
     .use(I18nextBrowserLanguageDetector) // Setup a client-side language detector
@@ -33,7 +63,7 @@ i18next
         fallbackLng,
         fallbackNS: "customized",
         supportedLngs,
-        resources,
+        partialBundledLanguages: true,
         debug: isRunningLocally,
         interpolation,
 

@@ -8,14 +8,10 @@ import {
 } from "../../../stores/sessionStore";
 import { getOriginPairingClient } from "../../clients/store";
 import type { OriginPairingState as OriginPairingStateType } from "../../types";
-import {
-    StatusBoxModal,
-    StatusBoxWallet,
-    StatusBoxWalletEmbedded,
-} from "../PairingStatusBox";
+import { StatusBoxModal, StatusBoxWalletEmbedded } from "../PairingStatusBox";
 
 type OriginPairingStateProps = {
-    type: "embedded" | "modal" | "wallet";
+    type: "embedded" | "modal";
 };
 
 /**
@@ -44,7 +40,6 @@ function InnerOriginPairingState({ type }: OriginPairingStateProps) {
     const components = {
         embedded: StatusBoxWalletEmbedded,
         modal: StatusBoxModal,
-        wallet: StatusBoxWallet,
     };
     const Component = components[type];
     if (!Component) {

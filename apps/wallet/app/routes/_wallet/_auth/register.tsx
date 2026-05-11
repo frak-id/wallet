@@ -4,6 +4,8 @@ import {
     recoveryHintStorage,
     startFlow,
     trackEvent,
+    ua,
+    useLogin,
 } from "@frak-labs/wallet-shared";
 import { createFileRoute, redirect, useNavigate } from "@tanstack/react-router";
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -97,10 +99,32 @@ function RegisterPage() {
         setStep("notification");
     }, [closeModal, executePendingActions]);
 
-    // NOTE: login is intentionally NOT performed on the register page.
-    // When the user taps "Already have an account?", we route them to
-    // /login so the dedicated login UX (existing-account shortcut,
-    // connect another account, QR pairing) can take over.
+    // On mobile (where the QR-code option isn't offered on `/login`),
+    // "Already have an account?" runs the login mutation inline. On the
+    // web we still redirect to `/login` so the user can pick the dedicated
+    // login UX (existing-account shortcut, connect another account, QR
+    // pairing).
+    const handlePostLoginRedirect = useCallback(async () => {
+        const navigated = await executePendingActions();
+        if (!navigated) {
+            navigate({ to: "/wallet", replace: true });
+        }
+    }, [executePendingActions, navigate]);
+
+    const { login, isLoading: isLoginLoading } = useLogin({
+        onSuccess: handlePostLoginRedirect,
+    });
+
+    const handleAlreadyHaveAccount = useCallback(() => {
+        flowRef.current?.track("onboarding_action_clicked", {
+            action: "login",
+        });
+        if (ua.isMobile) {
+            login({});
+            return;
+        }
+        navigate({ to: "/login" });
+    }, [login, navigate]);
 
     const { permissionStatus, permissionGranted, hasBackendToken } =
         useNotificationStatus();
@@ -152,12 +176,8 @@ function RegisterPage() {
                     buttonLabel={t("onboarding.continue")}
                     lastButtonLabel={t("onboarding.activateSecureSpace")}
                     loginLabel={t("onboarding.alreadyHaveAccount")}
-                    onLoginClick={() => {
-                        flowRef.current?.track("onboarding_action_clicked", {
-                            action: "login",
-                        });
-                        navigate({ to: "/login" });
-                    }}
+                    onLoginClick={handleAlreadyHaveAccount}
+                    isLoginLoading={isLoginLoading}
                     onRecoveryCodeClick={() => {
                         trackEvent("auth_recovery_code_clicked");
                         flowRef.current?.track("onboarding_action_clicked", {

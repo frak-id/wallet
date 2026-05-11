@@ -1,4 +1,4 @@
-import { registerWebComponent } from "@/utils/registerWebComponent";
+import { registerWebComponent } from "@/webcomponent/registerWebComponent";
 import { OpenInAppButton } from "./OpenInAppButton";
 import type { OpenInAppButtonProps } from "./types";
 

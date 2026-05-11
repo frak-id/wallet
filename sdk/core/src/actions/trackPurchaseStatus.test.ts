@@ -7,18 +7,18 @@ import {
     test,
 } from "../../tests/vitest-fixtures";
 
-vi.mock("../utils/clientId", () => ({
+vi.mock("../config/clientId", () => ({
     getClientId: vi.fn().mockReturnValue("test-client-id"),
 }));
 
-vi.mock("../utils/sdkConfigStore", () => ({
+vi.mock("../config/sdkConfigStore", () => ({
     sdkConfigStore: {
         resolveMerchantId: vi.fn().mockResolvedValue(undefined),
     },
 }));
 
-import { getClientId } from "../utils/clientId";
-import { sdkConfigStore } from "../utils/sdkConfigStore";
+import { getClientId } from "../config/clientId";
+import { sdkConfigStore } from "../config/sdkConfigStore";
 import { trackPurchaseStatus } from "./trackPurchaseStatus";
 
 describe.sequential("trackPurchaseStatus", () => {

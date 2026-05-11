@@ -1,6 +1,5 @@
+import { IS_ANDROID } from "@frak-labs/app-essentials/utils/platform";
 import { useBlocker } from "@tanstack/react-router";
-import { onBackButtonPress } from "@tauri-apps/api/app";
-import { isTauri } from "@tauri-apps/api/core";
 import { useEffect } from "react";
 import { modalStore } from "@/module/stores/modalStore";
 
@@ -25,13 +24,23 @@ export function useHardwareBack() {
     const hasModal = modalStore((s) => !!s.modal);
 
     useBlocker({
-        shouldBlockFn: () => {
+        shouldBlockFn: ({ action }) => {
             const state = modalStore.getState();
-            if (state.modal) {
-                state.closeModal();
-                return true;
-            }
-            return false;
+            if (!state.modal) return false;
+
+            // Close the topmost modal as a side effect of any navigation
+            // while one is open — leaving stale overlays hovering over a
+            // freshly-navigated route is broken UX.
+            state.closeModal();
+
+            // BACK: closing the modal IS the user's intent; block the
+            // actual history change so back doesn't also navigate away.
+            // PUSH/REPLACE/FORWARD/GO (e.g. deep-link handlers calling
+            // `router.navigate`): let the navigation proceed — returning
+            // true here would silently drop it in @tanstack/history's
+            // `tryNavigation`, which is exactly the deep-link-arrived-but-
+            // route-didn't-change bug we're fixing.
+            return action === "BACK";
         },
         enableBeforeUnload: false,
         disabled: !hasModal,
@@ -40,19 +49,29 @@ export function useHardwareBack() {
     // Handle Tauri Android hardware back button.
     // Only registered while a modal is open — when unregistered,
     // AppPlugin's default behavior handles goBack / exit natively.
+    //
+    // The `IS_ANDROID` constant is the single gate. iOS has no hardware back
+    // button and the Tauri `app` plugin doesn't expose `back-button` on iOS,
+    // so calling `onBackButtonPress` there triggers an ACL rejection. In
+    // web/listener/iOS builds the constant collapses to `false`, so this
+    // effect (including the dynamic `@tauri-apps/api/app` import) is
+    // dead-code-eliminated by Rolldown.
     useEffect(() => {
-        if (!isTauri() || !hasModal) return;
+        if (!IS_ANDROID || !hasModal) return;
 
-        const listenerPromise = onBackButtonPress((payload) => {
-            const state = modalStore.getState();
-            if (state.modal) {
-                state.closeModal();
-            } else if (payload.canGoBack) {
-                // Fallback for the narrow window between last modal
-                // closing and the listener being unregistered.
-                window.history.back();
-            }
-        });
+        const listenerPromise = import("@tauri-apps/api/app").then(
+            ({ onBackButtonPress }) =>
+                onBackButtonPress((payload) => {
+                    const state = modalStore.getState();
+                    if (state.modal) {
+                        state.closeModal();
+                    } else if (payload.canGoBack) {
+                        // Fallback for the narrow window between last modal
+                        // closing and the listener being unregistered.
+                        window.history.back();
+                    }
+                })
+        );
 
         return () => {
             listenerPromise.then((listener) => listener.unregister());

@@ -9,7 +9,7 @@ import {
 } from "@frak-labs/core-sdk";
 import { getMerchantInformation } from "@frak-labs/core-sdk/actions";
 import { useEffect, useState } from "preact/hooks";
-import { formatEstimatedReward } from "@/utils/formatReward";
+import { formatEstimatedReward } from "@/utils/format/formatReward";
 
 /**
  * Get the comparable fiat value of a reward for ranking purposes.

@@ -1,6 +1,7 @@
 import { useTranslation } from "react-i18next";
 import { Warning } from "@/module/common/component/Warning";
 import { pendingActionsStore } from "@/module/pending-actions/stores/pendingActionsStore";
+import * as styles from "./index.css";
 
 export function PairingInProgress() {
     const { t } = useTranslation();
@@ -16,5 +17,9 @@ export function PairingInProgress() {
 
     if (!hasPendingPairing) return null;
 
-    return <Warning text={t("wallet.pairing.pairingInProgress")} />;
+    return (
+        <div className={styles.toast}>
+            <Warning text={t("wallet.pairing.pairingInProgress")} />
+        </div>
+    );
 }

@@ -1,4 +1,4 @@
-import { registerWebComponent } from "@/utils/registerWebComponent";
+import { registerWebComponent } from "@/webcomponent/registerWebComponent";
 import { PostPurchase } from "./PostPurchase";
 import type { PostPurchaseProps } from "./types";
 
@@ -36,6 +36,7 @@ registerWebComponent(
         "products",
         "preview",
         "previewVariant",
+        "imageUrl",
     ],
     {
         shadow: false,

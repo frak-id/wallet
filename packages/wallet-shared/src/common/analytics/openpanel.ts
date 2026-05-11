@@ -1,20 +1,20 @@
 import {
-    isAndroid,
-    isIOS,
-    isTauri,
+    IS_ANDROID,
+    IS_IOS,
+    IS_TAURI,
+    isStandalonePwa,
 } from "@frak-labs/app-essentials/utils/platform";
 import { OpenPanel } from "@openpanel/web";
-import { isStandalonePWA } from "ua-parser-js/browser-detection";
 import { isInIframe } from "../lib/inApp";
 
 export function getPlatformInfo() {
-    const tauri = isTauri();
+    const tauri = IS_TAURI;
     return {
         isTauri: tauri,
         platform: tauri
-            ? isIOS()
+            ? IS_IOS
                 ? "ios"
-                : isAndroid()
+                : IS_ANDROID
                   ? "android"
                   : "unknown"
             : "web",
@@ -26,13 +26,14 @@ export function getPlatformInfo() {
  * Returns undefined when env vars are missing so callers can no-op safely.
  * The SDK keeps its own OpenPanel instance (see `sdk/core/src/utils/trackEvent.ts`).
  */
+const clientId =
+    process.env.OPEN_PANEL_WALLET_CLIENT_ID ??
+    process.env.OPEN_PANEL_LISTENER_CLIENT_ID;
 export const openPanel =
-    typeof window !== "undefined" &&
-    process.env.OPEN_PANEL_API_URL &&
-    process.env.OPEN_PANEL_WALLET_CLIENT_ID
+    typeof window !== "undefined" && process.env.OPEN_PANEL_API_URL && clientId
         ? new OpenPanel({
               apiUrl: process.env.OPEN_PANEL_API_URL,
-              clientId: process.env.OPEN_PANEL_WALLET_CLIENT_ID,
+              clientId,
               trackScreenViews: true,
               trackOutgoingLinks: true,
               trackAttributes: false,
@@ -75,27 +76,13 @@ function rewriteTauriPath(properties: Record<string, unknown>) {
     }
 }
 
-function getIsStandalonePwa() {
-    if (
-        typeof window === "undefined" ||
-        typeof window.matchMedia !== "function"
-    ) {
-        return false;
-    }
-    try {
-        return isStandalonePWA();
-    } catch {
-        return false;
-    }
-}
-
 export function getInitProperties() {
     if (typeof window === "undefined") return {};
     const referrer =
         isInIframe && document.referrer !== "" ? document.referrer : undefined;
     return {
         isIframe: isInIframe,
-        isPwa: getIsStandalonePwa(),
+        isPwa: isStandalonePwa(),
         iframeReferrer: referrer,
         ...getPlatformInfo(),
     };

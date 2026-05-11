@@ -91,6 +91,7 @@
         "profile": {
             "pageTitle": "Profil",
             "notificationSettings": "Notification settings",
+            "notificationDeniedHelp": "Notifications blocked by browser. Enable them in browser settings.",
             "manageAction": "Manage",
             "unsubscribeNotifications": "Unsubscribe",
             "biometricPrompt": "Require {{biometryLabel}} at every app launch",
@@ -205,8 +206,6 @@
             "walletDescription": "Transfer to a crypto wallet"
         },
         "activateNotifications": "Turn on notifs to track your earnings in real time.",
-        "activateNotificationsRationale": "<strong>Enable notifications</strong> <br /> We need your permission to notify you when gains are paid",
-        "openNotificationSettings": "<strong>Notifications disabled</strong> <br /> Open settings to enable notifications",
         "manageNotifications": "<strong>Manage notifications</strong> <br /> Open settings to control your notifications",
         "settings": {
             "biometryInfo": "Biometry informations",
@@ -228,10 +227,9 @@
             "button": "Use biometrics",
             "title": "Log in to your wallet",
             "recover": "Recover wallet from file",
-            "walletsOnDevice": "Wallets used on this device",
             "privy": "Connect via Privy",
             "useQRCode": "Use QR code to connect",
-            "useMyAccount": "Use my account <strong>{{address}}</strong>",
+            "useMyAccount": "Continue with my account",
             "anotherAccount": "Connect another account"
         },
         "notifications": {
@@ -379,18 +377,19 @@
                     }
                 }
             },
-            "target": {
-                "state": {
-                    "connecting": "Connecting to partner device",
-                    "paired": "Connected with other device",
-                    "retryError": "Error when connecting to partner device",
-                    "error": "Connection rejected by the server"
-                }
-            },
             "status": {
                 "idle": "Idle",
                 "connecting": "Pairing in progress",
-                "paired": "Paired"
+                "paired": "Paired",
+                "retryError": "Reconnecting…",
+                "error": "Connection lost"
+            },
+            "launch": {
+                "error": {
+                    "title": "Couldn’t connect",
+                    "description": "Something interrupted the pairing. Please try again.",
+                    "retry": "Try again"
+                }
             },
             "signatureRequest": {
                 "title": "Signature request",
@@ -441,6 +440,10 @@
             "dismiss": "Dismiss inapp browser warning",
             "clipboardAlert": "This browser doesn't support all features needed.\n\nThe link has been copied to your clipboard.\n\nTo continue:\n1. Open Safari\n2. Tap the address bar\n3. Paste and go",
             "clipboardManualAlert": "This browser doesn't support all features needed.\n\nAutomatic copy failed.\n\nCopy this link manually:\n{{url}}\n\nThen:\n1. Open Safari\n2. Tap the address bar\n3. Paste and go"
+        },
+        "offline": {
+            "title": "You're offline",
+            "description": "Some features may be unavailable until your connection is restored."
         },
         "toastLoading": {
             "stuck": "Stuck? See the <pLink>Troubleshooting</pLink> section for more information.<br /><br />You can try to <button>cleanup</button>.<br />(this will logout and you will need to redo a login / pairing)",
@@ -659,6 +662,8 @@
             "cancelledDescription": "You can reconnect to Monerium whenever you're ready.",
             "errorTitle": "Connection failed",
             "errorDescription": "Something went wrong while connecting to Monerium. Please try again in a moment.",
+            "csrfTitle": "Security check failed",
+            "csrfDescription": "We couldn't verify the connection request. Please retry from the start.",
             "tryAgain": "Try again"
         },
         "bankFlow": {
@@ -703,7 +708,8 @@
                     "ibanEmpty": "No IBAN saved",
                     "modify": "Edit",
                     "continue": "Continue",
-                    "insufficientBalance": "Insufficient balance"
+                    "insufficientBalance": "Insufficient balance",
+                    "aboveMax": "Transfers of {{max}}€ or more require additional documentation."
                 },
                 "recap": {
                     "title": "Summary",
@@ -711,7 +717,6 @@
                     "amountLabel": "Amount",
                     "beneficiaryLabel": "Beneficiary",
                     "addNote": "Add a note",
-                    "defaultNote": "Sent from FRAK",
                     "warning": "Once confirmed, this operation cannot be cancelled",
                     "confirm": "Confirm transfer"
                 },
@@ -722,8 +727,12 @@
                 "ibanManager": {
                     "title": "Manage my IBANs",
                     "addNew": "Add an IBAN",
-                    "nameLabel": "Beneficiary name",
-                    "namePlaceholder": "e.g. My checking account",
+                    "firstNameLabel": "First name",
+                    "firstNamePlaceholder": "e.g. John",
+                    "lastNameLabel": "Last name",
+                    "lastNamePlaceholder": "e.g. Doe",
+                    "pseudoLabel": "Pseudo / note",
+                    "pseudoPlaceholder": "Defaults to first + last name",
                     "ibanLabel": "IBAN",
                     "ibanPlaceholder": "FR76...",
                     "save": "Save",
@@ -741,7 +750,6 @@
             "description": "New offers are coming soon. Check back later!"
         },
         "card": {
-            "badge": "Up to {{amount}}",
             "until": "Until {{date}}"
         },
         "detail": {

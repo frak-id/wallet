@@ -37,6 +37,14 @@ const mainContentBase = style({
     minHeight: 0,
     overflowY: "auto",
     WebkitOverflowScrolling: "touch",
+    // Prevent native browser pull-to-refresh / overscroll on the scroll container.
+    // Required so PullToRefresh's e.preventDefault() in touchmove fully suppresses
+    // iOS rubber-band and Chrome Android native PTR.
+    overscrollBehaviorY: "contain",
+    // Flex column so route content (toasts, banners, PageLayout, ...) can share
+    // the available height instead of stacking with hardcoded heights.
+    display: "flex",
+    flexDirection: "column",
 });
 
 /**

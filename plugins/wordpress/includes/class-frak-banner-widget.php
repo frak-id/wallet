@@ -60,6 +60,11 @@ class Frak_Banner_Widget extends Frak_Widget_Base {
 				'type'  => 'text',
 				'label' => __( 'In-app browser — call to action', 'frak' ),
 			),
+			'imageUrl'            => array(
+				'type'  => 'url',
+				'label' => __( 'Image URL', 'frak' ),
+				'help'  => __( 'Override the gift icon on the left. Leave empty to keep the default.', 'frak' ),
+			),
 			'placement'           => array(
 				'type'  => 'text',
 				'label' => __( 'Placement ID', 'frak' ),

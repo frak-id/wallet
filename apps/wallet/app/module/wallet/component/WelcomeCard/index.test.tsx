@@ -5,39 +5,25 @@ import { WelcomeCard } from "./index";
 
 type ReferralStatusReturn = ReturnType<typeof useReferralStatus>;
 
-const {
-    mockSubscribeToPush,
-    mockOpenSettings,
-    mockInvalidateQueries,
-    mockUseNotificationStatus,
-    mockUseSubscribeToPushNotification,
-    mockIsTauri,
-    mockUseReferralStatus,
-    mockNavigate,
-} = vi.hoisted(() => ({
-    mockSubscribeToPush: vi.fn(),
-    mockOpenSettings: vi.fn(),
-    mockInvalidateQueries: vi.fn(),
-    mockUseNotificationStatus: vi.fn(() => ({
-        permissionStatus: "prompt",
-        isReady: true,
-        hasLocalCapability: false,
-    })),
-    mockUseSubscribeToPushNotification: vi.fn(() => ({
-        subscribeToPush: vi.fn(),
-        isPending: false,
-    })),
-    mockIsTauri: vi.fn(() => false),
-    // Typed against the real hook's return so per-test overrides cast to
-    // a meaningful target instead of self-referencing the narrowed default.
-    mockUseReferralStatus: vi.fn<() => ReturnType<typeof useReferralStatus>>(
-        () =>
-            ({ data: { ownedCode: null } }) as unknown as ReturnType<
-                typeof useReferralStatus
-            >
-    ),
-    mockNavigate: vi.fn(),
-}));
+const { mockUseNotificationStatus, mockUseReferralStatus, mockNavigate } =
+    vi.hoisted(() => ({
+        mockUseNotificationStatus: vi.fn(() => ({
+            permissionStatus: "prompt",
+            isReady: true,
+            hasLocalCapability: false,
+        })),
+        // Typed against the real hook's return so per-test overrides cast to
+        // a meaningful target instead of self-referencing the narrowed default.
+        mockUseReferralStatus: vi.fn<
+            () => ReturnType<typeof useReferralStatus>
+        >(
+            () =>
+                ({ data: { ownedCode: null } }) as unknown as ReturnType<
+                    typeof useReferralStatus
+                >
+        ),
+        mockNavigate: vi.fn(),
+    }));
 
 vi.mock("react-i18next", () => ({
     useTranslation: () => ({
@@ -45,21 +31,6 @@ vi.mock("react-i18next", () => ({
     }),
     Trans: ({ i18nKey }: { i18nKey: string }) => i18nKey,
 }));
-
-vi.mock("@frak-labs/app-essentials/utils/platform", () => ({
-    isTauri: mockIsTauri,
-}));
-
-vi.mock("@tanstack/react-query", async () => {
-    const actual = await vi.importActual("@tanstack/react-query");
-
-    return {
-        ...actual,
-        useQueryClient: () => ({
-            invalidateQueries: mockInvalidateQueries,
-        }),
-    };
-});
 
 vi.mock("@frak-labs/wallet-shared", async () => {
     const actual = await vi.importActual<
@@ -81,18 +52,8 @@ vi.mock("@tanstack/react-router", async () => {
     };
 });
 
-vi.mock("@/module/notification/adapter", () => ({
-    notificationAdapter: {
-        openSettings: mockOpenSettings,
-    },
-}));
-
 vi.mock("@/module/notification/hook/useNotificationSetupStatus", () => ({
     useNotificationStatus: mockUseNotificationStatus,
-}));
-
-vi.mock("@/module/notification/hook/useSubscribeToPushNotification", () => ({
-    useSubscribeToPushNotification: mockUseSubscribeToPushNotification,
 }));
 
 // `describe.sequential` because the tests share localStorage and the
@@ -110,19 +71,11 @@ describe.sequential("WelcomeCard", () => {
         HTMLElement.prototype.scrollTo = mockScrollTo;
         mockScrollTo.mockReset();
         intersectionObserverCallback = null;
-        mockSubscribeToPush.mockReset();
-        mockOpenSettings.mockReset();
-        mockInvalidateQueries.mockReset();
         mockNavigate.mockReset();
-        mockIsTauri.mockReturnValue(false);
         mockUseNotificationStatus.mockReturnValue({
             permissionStatus: "prompt",
             isReady: true,
             hasLocalCapability: false,
-        });
-        mockUseSubscribeToPushNotification.mockReturnValue({
-            subscribeToPush: mockSubscribeToPush,
-            isPending: false,
         });
         // Default: user hasn't issued a code yet, so the invite slide
         // should render. Tests that need the opposite override this.
@@ -270,6 +223,21 @@ describe.sequential("WelcomeCard", () => {
         ).not.toBeInTheDocument();
     });
 
+    it("should keep the notification slide visible when permission is denied", () => {
+        mockUseNotificationStatus.mockReturnValue({
+            permissionStatus: "denied",
+            isReady: true,
+            hasLocalCapability: false,
+        });
+
+        const { container } = render(<WelcomeCard />);
+
+        expect(container.querySelectorAll("[data-index]")).toHaveLength(3);
+        expect(
+            screen.getByText("wallet.welcome.notifications.title")
+        ).toBeInTheDocument();
+    });
+
     it("should hide the invite slide when the wallet already has an active referral code", () => {
         // Partial of `UseQueryResult` is enough for what the component
         // reads (`data.ownedCode`); the cast bridges to the full type.
@@ -324,7 +292,7 @@ describe.sequential("WelcomeCard", () => {
         expect(container).toBeEmptyDOMElement();
     });
 
-    it("should subscribe to push when tapping the notification action in prompt state", () => {
+    it("should navigate to /profile when the notification slide is clicked", () => {
         render(<WelcomeCard />);
 
         const notificationCard = screen
@@ -332,30 +300,7 @@ describe.sequential("WelcomeCard", () => {
             .closest("[role='button']") as HTMLElement;
         fireEvent.click(notificationCard);
 
-        expect(mockSubscribeToPush).toHaveBeenCalledOnce();
-    });
-
-    it("should open settings when tapping the notification action in native denied state", async () => {
-        mockIsTauri.mockReturnValue(true);
-        mockUseNotificationStatus.mockReturnValue({
-            permissionStatus: "denied",
-            isReady: true,
-            hasLocalCapability: false,
-        });
-        mockOpenSettings.mockResolvedValue(undefined);
-
-        render(<WelcomeCard />);
-
-        const notificationCard = screen
-            .getByText("wallet.openNotificationSettings")
-            .closest("[role='button']") as HTMLElement;
-        fireEvent.click(notificationCard);
-
-        expect(mockOpenSettings).toHaveBeenCalledOnce();
-        await Promise.resolve();
-        expect(mockInvalidateQueries).toHaveBeenCalledWith({
-            queryKey: ["notification", "push", "permission"],
-        });
+        expect(mockNavigate).toHaveBeenCalledWith({ to: "/profile" });
     });
 
     it("should keep the notification slide hidden while notification status is unresolved", () => {

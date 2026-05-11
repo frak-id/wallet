@@ -11,6 +11,8 @@ export type SlideProps = {
     imageVariant?: "cover" | "center";
     /** Optional max-width for the image (e.g. "223px") */
     imageMaxWidth?: string;
+    /** Hint that this slide owns the LCP — enables fetchpriority=high. */
+    priority?: boolean;
 };
 
 export function Slide({
@@ -18,6 +20,7 @@ export function Slide({
     image,
     imageVariant = "center",
     imageMaxWidth,
+    priority = false,
 }: SlideProps) {
     const { t } = useTranslation();
 
@@ -27,6 +30,9 @@ export function Slide({
                 <img
                     src={image}
                     alt=""
+                    decoding="async"
+                    fetchPriority={priority ? "high" : "auto"}
+                    loading={priority ? "eager" : "lazy"}
                     className={
                         imageVariant === "cover"
                             ? styles.slideImg

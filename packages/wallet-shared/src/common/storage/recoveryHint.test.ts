@@ -6,18 +6,23 @@ vi.mock("@tauri-apps/api/core", () => ({
     invoke: (...args: unknown[]) => invokeMock(...args),
 }));
 
-vi.mock("@frak-labs/app-essentials/utils/platform", () => ({
+const platformMocks = vi.hoisted(() => ({
     isTauri: vi.fn(() => false),
+}));
+vi.mock("@frak-labs/app-essentials/utils/platform", () => ({
+    get IS_TAURI() {
+        return platformMocks.isTauri();
+    },
+    isStandalonePwa: () => false,
 }));
 
 // Import after mocks so the module picks them up.
-import { isTauri } from "@frak-labs/app-essentials/utils/platform";
 import { recoveryHintStorage } from "./recoveryHint";
 
 describe("recoveryHintStorage", () => {
     beforeEach(() => {
         vi.clearAllMocks();
-        vi.mocked(isTauri).mockReturnValue(false);
+        platformMocks.isTauri.mockReturnValue(false);
     });
 
     describe("on non-mobile platforms", () => {
@@ -40,7 +45,7 @@ describe("recoveryHintStorage", () => {
 
     describe("inside Tauri", () => {
         beforeEach(() => {
-            vi.mocked(isTauri).mockReturnValue(true);
+            platformMocks.isTauri.mockReturnValue(true);
         });
 
         it("get invokes the plugin and returns its payload", async () => {

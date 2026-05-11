@@ -10,13 +10,19 @@ const mockEmitLifecycleEvent = vi.fn();
 const mockSetSession = vi.fn();
 const mockSetSdkSession = vi.fn();
 
-vi.mock("@frak-labs/wallet-shared", () => ({
+vi.mock("@frak-labs/wallet-shared/common/analytics", () => ({
     get trackEvent() {
         return mockTrackEvent;
     },
+}));
+
+vi.mock("@frak-labs/wallet-shared/common/utils/lifecycleEvents", () => ({
     get emitLifecycleEvent() {
         return mockEmitLifecycleEvent;
     },
+}));
+
+vi.mock("@frak-labs/wallet-shared/stores/sessionStore", () => ({
     sessionStore: {
         getState: vi.fn(() => ({
             setSession: mockSetSession,

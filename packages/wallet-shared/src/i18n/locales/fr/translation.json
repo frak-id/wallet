@@ -89,6 +89,7 @@
         "profile": {
             "pageTitle": "Profil",
             "notificationSettings": "Paramètres de notification",
+            "notificationDeniedHelp": "Notifications bloquées par le navigateur. Active-les depuis les paramètres du navigateur.",
             "manageAction": "Gérer",
             "unsubscribeNotifications": "Se désabonner",
             "biometricPrompt": "Demander {{biometryLabel}} à chaque ouverture de l'app",
@@ -203,8 +204,6 @@
             "walletDescription": "Transférer vers un crypto wallet"
         },
         "activateNotifications": "Active tes notifs pour suivre tes gains en temps réel.",
-        "activateNotificationsRationale": "<strong>Activer les notifications</strong><br /> Nous avons besoin de votre permission pour vous notifier du versement de vos gains",
-        "openNotificationSettings": "<strong>Notifications désactivées</strong><br /> Ouvrez les paramètres pour activer les notifications",
         "manageNotifications": "<strong>Gérer les notifications</strong><br /> Ouvrez les paramètres pour contrôler vos notifications",
         "settings": {
             "biometryInfo": "Informations biométriques",
@@ -226,10 +225,9 @@
             "button": "Utiliser la biométrie",
             "title": "Connectez-vous à votre porte-monnaie",
             "recover": "Récupérer le porte-monnaie à partir du fichier",
-            "walletsOnDevice": "Porte-monnaies utilisés sur cet appareil",
             "privy": "Connection via Privy",
             "useQRCode": "Utiliser un QR code pour me connecter",
-            "useMyAccount": "Utiliser mon compte <strong>{{address}}</strong>",
+            "useMyAccount": "Continuer avec mon compte",
             "anotherAccount": "Se connecter avec un autre compte"
         },
         "notifications": {
@@ -377,18 +375,19 @@
                     }
                 }
             },
-            "target": {
-                "state": {
-                    "connecting": "Connexion à l'appareil partenaire",
-                    "paired": "Connecté avec un autre appareil",
-                    "retryError": "Erreur lors de la connexion à l'appareil partenaire",
-                    "error": "Connexion refusée par le serveur"
-                }
-            },
             "status": {
                 "idle": "Inactif",
                 "connecting": "Appairage en cours",
-                "paired": "Appairé"
+                "paired": "Appairé",
+                "retryError": "Reconnexion…",
+                "error": "Connexion perdue"
+            },
+            "launch": {
+                "error": {
+                    "title": "Connexion impossible",
+                    "description": "Quelque chose a interrompu l’appairage. Veuillez réessayer.",
+                    "retry": "Réessayer"
+                }
             },
             "signatureRequest": {
                 "title": "Demande de signature",
@@ -439,6 +438,10 @@
             "dismiss": "Masquer le message",
             "clipboardAlert": "Ce navigateur ne prend pas en charge toutes les fonctionnalités.\n\nLe lien a été copié dans votre presse-papiers.\n\nPour continuer :\n1. Ouvrez Safari\n2. Appuyez sur la barre d'adresse\n3. Collez et validez",
             "clipboardManualAlert": "Ce navigateur ne prend pas en charge toutes les fonctionnalités.\n\nLa copie automatique a échoué.\n\nCopiez ce lien manuellement :\n{{url}}\n\nPuis :\n1. Ouvrez Safari\n2. Appuyez sur la barre d'adresse\n3. Collez et validez"
+        },
+        "offline": {
+            "title": "Vous êtes hors ligne",
+            "description": "Certaines fonctionnalités peuvent être indisponibles jusqu'à la restauration de la connexion."
         },
         "toastLoading": {
             "stuck": "Vous êtes bloqué ? Consulter la section <pLink>Dépannage</pLink> pour plus d'informations.<br /><br />Vous pouvez essayer de <button>nettoyer</button>.<br />(cela vous déconnectera et vous devrez redémarrer une connexion / appairage)",
@@ -656,6 +659,8 @@
             "cancelledDescription": "Tu peux relancer la connexion à Monerium quand tu le souhaites.",
             "errorTitle": "Connexion impossible",
             "errorDescription": "Un problème est survenu lors de la connexion à Monerium. Réessaye dans un instant.",
+            "csrfTitle": "Vérification de sécurité échouée",
+            "csrfDescription": "Nous n'avons pas pu vérifier la demande de connexion. Recommence depuis le début.",
             "tryAgain": "Réessayer"
         },
         "bankFlow": {
@@ -700,7 +705,8 @@
                     "ibanEmpty": "Aucun IBAN enregistré",
                     "modify": "Modifier",
                     "continue": "Continuer",
-                    "insufficientBalance": "Total balance Insuffisante"
+                    "insufficientBalance": "Total balance Insuffisante",
+                    "aboveMax": "Les transferts de {{max}}€ ou plus nécessitent des documents supplémentaires."
                 },
                 "recap": {
                     "title": "Récapitulatif",
@@ -708,7 +714,6 @@
                     "amountLabel": "Montant",
                     "beneficiaryLabel": "Bénéficiaire",
                     "addNote": "Ajouter une note",
-                    "defaultNote": "Envoyé depuis FRAK",
                     "warning": "Une fois validée, l'opération ne peut être annulée",
                     "confirm": "Confirmer le transfert"
                 },
@@ -719,8 +724,12 @@
                 "ibanManager": {
                     "title": "Gérer mes IBAN",
                     "addNew": "Ajouter un IBAN",
-                    "nameLabel": "Nom du bénéficiaire",
-                    "namePlaceholder": "Ex. Mon compte courant",
+                    "firstNameLabel": "Prénom",
+                    "firstNamePlaceholder": "Ex. Jean",
+                    "lastNameLabel": "Nom",
+                    "lastNamePlaceholder": "Ex. Dupont",
+                    "pseudoLabel": "Pseudo / note",
+                    "pseudoPlaceholder": "Par défaut : prénom + nom",
                     "ibanLabel": "IBAN",
                     "ibanPlaceholder": "FR76...",
                     "save": "Enregistrer",
@@ -738,7 +747,6 @@
             "description": "De nouvelles offres arrivent bientôt. Revenez plus tard !"
         },
         "card": {
-            "badge": "Jusqu'à {{amount}}",
             "until": "Jusqu'au {{date}}"
         },
         "detail": {

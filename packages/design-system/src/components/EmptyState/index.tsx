@@ -1,7 +1,6 @@
 import type { ReactNode } from "react";
 import { Box } from "../Box";
 import { Button } from "../Button";
-import { IconCircle } from "../IconCircle";
 import { emptyStateStyles } from "./emptyState.css";
 
 type EmptyStateAction = {
@@ -24,7 +23,7 @@ export function EmptyState({
 }: EmptyStateProps) {
     return (
         <Box className={emptyStateStyles.container}>
-            {icon && <IconCircle>{icon}</IconCircle>}
+            {icon}
             <Box as="h3" className={emptyStateStyles.title}>
                 {title}
             </Box>

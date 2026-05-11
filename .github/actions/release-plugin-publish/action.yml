@@ -1,15 +1,18 @@
 name: "Publish plugin release"
-description: "Build PHP plugin, create tag, and publish GitHub release from merged release PR"
+description: "Build PHP plugin, create tag, and publish GitHub release for a single PHP plugin"
 
 inputs:
   plugin-name:
     description: "Display name, e.g. 'WordPress Plugin'"
     required: true
   plugin-slug:
-    description: "Slug used in branch/tag/label, e.g. 'wordpress'"
+    description: "Slug used in tag/release name, e.g. 'wordpress'"
     required: true
   directory:
     description: "Plugin directory, e.g. 'plugins/wordpress'"
+    required: true
+  version-file:
+    description: "File (relative to directory) containing the version; .php or .json"
     required: true
   artifact-glob:
     description: "Glob (relative to directory) for built release assets, e.g. 'dist/frak-integration-*.zip'"
@@ -18,16 +21,27 @@ inputs:
 runs:
   using: composite
   steps:
-    - name: "🏷️ Extract version from PR branch"
+    - name: "🔢 Read version from file"
       id: version
       shell: bash
+      working-directory: ${{ inputs.directory }}
       env:
-        BRANCH: ${{ github.event.pull_request.head.ref }}
-        PLUGIN_SLUG: ${{ inputs.plugin-slug }}
+        VERSION_FILE: ${{ inputs.version-file }}
       run: |
-        VERSION="${BRANCH#release/${PLUGIN_SLUG}-}"
+        case "$VERSION_FILE" in
+          *.php)
+            VERSION=$(grep -E '^\s*\*\s*Version:' "$VERSION_FILE" | head -n1 | awk '{print $3}')
+            ;;
+          *.json)
+            VERSION=$(jq -r '.version' "$VERSION_FILE")
+            ;;
+          *)
+            echo "::error::Unsupported version file type: $VERSION_FILE"
+            exit 1
+            ;;
+        esac
         if ! echo "$VERSION" | grep -qE '^[0-9]+\.[0-9]+\.[0-9]+$'; then
-          echo "::error::Could not parse version from branch: $BRANCH"
+          echo "::error::Invalid version read from $VERSION_FILE: '$VERSION' (expected: X.Y.Z)"
           exit 1
         fi
         echo "version=$VERSION" >> "$GITHUB_OUTPUT"
@@ -68,7 +82,7 @@ runs:
         git push origin "${PLUGIN_SLUG}-${VERSION}"
 
     - name: "🚀 Create GitHub release"
-      uses: softprops/action-gh-release@v2
+      uses: softprops/action-gh-release@v4
       with:
         tag_name: "${{ inputs.plugin-slug }}-${{ steps.version.outputs.version }}"
         name: "${{ inputs.plugin-name }} ${{ steps.version.outputs.version }}"

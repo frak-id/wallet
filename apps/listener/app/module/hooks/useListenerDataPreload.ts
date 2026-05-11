@@ -1,4 +1,4 @@
-import { useGetSafeSdkSession } from "@frak-labs/wallet-shared";
+import { useGetSafeSdkSession } from "@frak-labs/wallet-shared/common/hook/useGetSafeSdkSession";
 
 /**
  * Small hook to preload some listener queries

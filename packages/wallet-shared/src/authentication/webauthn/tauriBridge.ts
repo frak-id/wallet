@@ -11,9 +11,9 @@
 
 import { WebAuthN } from "@frak-labs/app-essentials";
 import {
-    isAndroid,
-    isIOS,
-    isTauri,
+    IS_ANDROID,
+    IS_IOS,
+    IS_TAURI,
 } from "@frak-labs/app-essentials/utils/platform";
 import type { WebAuthnP256 } from "ox";
 import { BaseError } from "ox/Errors";
@@ -109,8 +109,8 @@ async function invokeTauriPlugin<T>(
 }
 
 function getWebAuthnOrigin(): string {
-    if (isAndroid()) return WebAuthN.androidApkOrigin;
-    if (isIOS()) return WebAuthN.rpOrigin;
+    if (IS_ANDROID) return WebAuthN.androidApkOrigin;
+    if (IS_IOS) return WebAuthN.rpOrigin;
     return WebAuthN.rpOrigin;
 }
 
@@ -291,7 +291,7 @@ function fromPluginRegistration(json: PluginRegistrationResponse) {
 }
 
 export function getTauriCreateFn(): OxCreateFn {
-    if (!isTauri()) return undefined;
+    if (!IS_TAURI) return undefined;
 
     return async (options) => {
         if (!options?.publicKey) return null;
@@ -367,7 +367,7 @@ function fromPluginAuthentication(json: PluginAuthenticationResponse) {
 }
 
 export function getTauriGetFn(): OxGetFn {
-    if (!isTauri()) return undefined;
+    if (!IS_TAURI) return undefined;
 
     return async (options) => {
         if (!options?.publicKey) return null;

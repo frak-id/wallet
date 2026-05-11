@@ -8,7 +8,7 @@ import {
 import { useTranslation } from "react-i18next";
 import { formatEther } from "viem";
 import { WalletAddress } from "@/module/component/WalletAddress";
-import styles from "./index.module.css";
+import * as styles from "./index.css";
 
 export function AccordionTransactions({
     txs,

@@ -29,19 +29,53 @@ const sharingImport = () =>
 const ListenerSharingPage = lazy(sharingImport);
 
 /**
+ * Lazy import of the modal hook impl (paired with the modal view).
+ * Same module specifier as the dynamic import inside `useDisplayModalListener`,
+ * so the bundler resolves both call sites to the same chunk.
+ */
+const modalHookImport = () =>
+    import("@/module/hooks/useDisplayModalListener.impl");
+
+/**
+ * Lazy import of the sharing hook impl (paired with the sharing view).
+ */
+const sharingHookImport = () =>
+    import("@/module/hooks/useDisplaySharingPageListener.impl");
+
+/**
  * Render the listener UI if needed
  */
 export function ListenerUiRenderer() {
     const { currentRequest } = useListenerUI();
 
     /**
-     * Preload the modal + embedded wallet so it did not take too much time to display on slow network
+     * Preload the modal + sharing page (and their RPC handler impls) so
+     * the first display is not gated on a network round-trip on slow links.
      */
     useEffect(() => {
+        const hash = window.location.hash.slice(1);
+        const urlParams = new URLSearchParams(hash);
+        const preloadRaw = urlParams.get("preload");
+        // No preload parameter -> do nothing
+        if (!preloadRaw) {
+            return;
+        }
+
+        const preloads = preloadRaw.split(",");
+        const shouldPreloadModal = preloads.includes("modal");
+        const shouldPreloadSharing = preloads.includes("sharing");
+
+        if (!shouldPreloadModal && !shouldPreloadSharing) {
+            return;
+        }
+
         const handleIdleCallback = async () => {
-            await modalImport();
-            await walletImport();
-            await sharingImport();
+            if (shouldPreloadModal) {
+                await Promise.all([modalImport(), modalHookImport()]);
+            }
+            if (shouldPreloadSharing) {
+                await Promise.all([sharingImport(), sharingHookImport()]);
+            }
         };
 
         if ("requestIdleCallback" in window) {

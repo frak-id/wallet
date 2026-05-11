@@ -13,6 +13,12 @@ export type OriginPairingState = BasePairingState & {
     pairing?: {
         id: string;
         code: string;
+        /**
+         * Short-lived JWT issued by the server in `pairing-initiated`. Required
+         * to call `action=resume` after a transient WS close. Persisted along
+         * with `id`/`code` so a tab refresh can resume the in-flight pairing.
+         */
+        originResumeToken: string;
     };
     signatureRequests: Map<
         string,

@@ -29,7 +29,7 @@ define( 'FRAK_PLUGIN_URL', plugin_dir_url( __FILE__ ) );
 // Single source of truth: derive the plugin version from the `* Version:`
 // header above so `FRAK_PLUGIN_VERSION`, admin/block asset cache-busters, and
 // every `editor.asset.php` stay in lockstep. The release workflow
-// (`.github/workflows/release-wordpress.yml`) bumps only the header via sed;
+// (`.github/workflows/release-php-plugins.yml`) bumps only the header via sed;
 // this `get_file_data()` call propagates that bump to every consumer without
 // extra CI steps. `get_file_data()` lives in `wp-includes/functions.php` and
 // is loaded before plugins, so it's safe to call here.

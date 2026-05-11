@@ -1,17 +1,19 @@
 import type { SharingPageProduct } from "@frak-labs/core-sdk";
 import {
+    emitLifecycleEvent,
+    trackEvent,
+    useCopyToClipboardWithState,
+} from "@frak-labs/wallet-shared/common";
+import {
     buildSharingLink,
     clearConfirmation,
-    clientIdStore,
-    emitLifecycleEvent,
     getSavedConfirmation,
     SharingPage,
     saveConfirmation,
-    sessionStore,
-    trackEvent,
-    useCopyToClipboardWithState,
     useShareLink,
-} from "@frak-labs/wallet-shared";
+} from "@frak-labs/wallet-shared/sharing";
+import { clientIdStore } from "@frak-labs/wallet-shared/stores/clientIdStore";
+import { sessionStore } from "@frak-labs/wallet-shared/stores/sessionStore";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import { useTrackSharing } from "@/module/hooks/useTrackSharing";

@@ -94,6 +94,16 @@
 					),
 					el(
 						PanelBody,
+						{ title: __( 'Image', 'frak' ), initialOpen: false },
+						el( TextControl, {
+							label: __( 'Image URL', 'frak' ),
+							help: __( 'Override the gift icon on the left. Leave empty to keep the default. Any aspect ratio works — the SDK contains it to a 40×40 slot.', 'frak' ),
+							value: attributes.imageUrl,
+							onChange: setter( 'imageUrl' ),
+						} )
+					),
+					el(
+						PanelBody,
 						{ title: __( 'Editor preview', 'frak' ), initialOpen: false },
 						el( SelectControl, {
 							label: __( 'Preview mode', 'frak' ),
@@ -143,6 +153,7 @@
 							'inapp-title': attr( attributes.inappTitle ),
 							'inapp-description': attr( attributes.inappDescription ),
 							'inapp-cta': attr( attributes.inappCta ),
+							'image-url': attr( attributes.imageUrl ),
 						} )
 					)
 			);

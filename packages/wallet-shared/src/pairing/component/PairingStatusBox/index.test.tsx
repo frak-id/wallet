@@ -5,11 +5,8 @@
 
 import { fireEvent, render, screen } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import {
-    StatusBoxModal,
-    StatusBoxWallet,
-    StatusBoxWalletEmbedded,
-} from "./index";
+import { StatusBoxModal, StatusBoxWalletEmbedded } from "./index";
+import * as styles from "./index.css";
 
 // Mock react-i18next
 vi.mock("react-i18next", () => ({
@@ -62,44 +59,6 @@ describe("PairingStatusBox", () => {
             status: "idle",
             closeInfo: null,
         };
-    });
-
-    describe("StatusBoxWallet", () => {
-        it("should render with status and title", () => {
-            render(<StatusBoxWallet status="success" title="Paired" />);
-
-            expect(screen.getByText("Paired")).toBeInTheDocument();
-        });
-
-        it("should render children", () => {
-            render(
-                <StatusBoxWallet status="success" title="Paired">
-                    <div data-testid="child">Child content</div>
-                </StatusBoxWallet>
-            );
-
-            expect(screen.getByTestId("child")).toBeInTheDocument();
-        });
-
-        it("should render with different statuses", () => {
-            const { rerender } = render(
-                <StatusBoxWallet status="success" title="Success" />
-            );
-            expect(screen.getByText("Success")).toBeInTheDocument();
-
-            rerender(<StatusBoxWallet status="waiting" title="Waiting" />);
-            expect(screen.getByText("Waiting")).toBeInTheDocument();
-
-            rerender(<StatusBoxWallet status="loading" title="Loading" />);
-            // Title is in a paragraph element
-            const titleElement = screen.getByText("Loading", {
-                selector: "p",
-            });
-            expect(titleElement).toBeInTheDocument();
-
-            rerender(<StatusBoxWallet status="error" title="Error" />);
-            expect(screen.getByText("Error")).toBeInTheDocument();
-        });
     });
 
     describe("StatusBoxModal", () => {
@@ -174,7 +133,7 @@ describe("PairingStatusBox", () => {
             mockStoreState.status = "idle";
 
             render(
-                <StatusBoxWallet
+                <StatusBoxModal
                     status="waiting"
                     title="Idle"
                     client={mockClient}
@@ -193,7 +152,7 @@ describe("PairingStatusBox", () => {
             };
 
             render(
-                <StatusBoxWallet
+                <StatusBoxModal
                     status="error"
                     title="Error"
                     client={mockClient}
@@ -212,7 +171,7 @@ describe("PairingStatusBox", () => {
             };
 
             render(
-                <StatusBoxWallet
+                <StatusBoxModal
                     status="error"
                     title="Error"
                     client={mockClient}
@@ -235,7 +194,7 @@ describe("PairingStatusBox", () => {
             };
 
             render(
-                <StatusBoxWallet
+                <StatusBoxModal
                     status="error"
                     title="Error"
                     client={mockClient}
@@ -257,7 +216,7 @@ describe("PairingStatusBox", () => {
             };
 
             render(
-                <StatusBoxWallet
+                <StatusBoxModal
                     status="error"
                     title="Error"
                     client={mockClient}
@@ -281,7 +240,7 @@ describe("PairingStatusBox", () => {
             };
 
             render(
-                <StatusBoxWallet
+                <StatusBoxModal
                     status="error"
                     title="Error"
                     client={mockClient}
@@ -299,49 +258,49 @@ describe("PairingStatusBox", () => {
 
     describe("status icons", () => {
         it("should render spinner for loading status", () => {
-            render(<StatusBoxWallet status="loading" title="Loading" />);
+            render(<StatusBoxModal status="loading" title="Loading" />);
 
             expect(screen.getByTestId("spinner")).toBeInTheDocument();
         });
 
         it("should render indicator for success status", () => {
             const { container } = render(
-                <StatusBoxWallet status="success" title="Success" />
+                <StatusBoxModal status="success" title="Success" />
             );
 
             const indicator = container.querySelector(
-                '[class*="statusBox__indicator--green"]'
+                `.${styles.statusBoxIndicatorColor.green}`
             );
             expect(indicator).toBeInTheDocument();
         });
 
         it("should render indicator for waiting status", () => {
             const { container } = render(
-                <StatusBoxWallet status="waiting" title="Waiting" />
+                <StatusBoxModal status="waiting" title="Waiting" />
             );
 
             const indicator = container.querySelector(
-                '[class*="statusBox__indicator--amber"]'
+                `.${styles.statusBoxIndicatorColor.amber}`
             );
             expect(indicator).toBeInTheDocument();
         });
 
         it("should render indicator for error status", () => {
             const { container } = render(
-                <StatusBoxWallet status="error" title="Error" />
+                <StatusBoxModal status="error" title="Error" />
             );
 
             const indicator = container.querySelector(
-                '[class*="statusBox__indicator--red"]'
+                `.${styles.statusBoxIndicatorColor.red}`
             );
             expect(indicator).toBeInTheDocument();
         });
     });
 
     describe("edge cases", () => {
-        it("should handle all three variants with same props", () => {
+        it("should handle both variants with same props", () => {
             const { rerender } = render(
-                <StatusBoxWallet status="success" title="Test" />
+                <StatusBoxModal status="success" title="Test" />
             );
             expect(screen.getByText("Test")).toBeInTheDocument();
 
@@ -354,12 +313,12 @@ describe("PairingStatusBox", () => {
 
         it("should handle empty title", () => {
             const { container } = render(
-                <StatusBoxWallet status="success" title="" />
+                <StatusBoxModal status="success" title="" />
             );
 
             // Title element should exist even if empty
             const titleElement = container.querySelector(
-                '[class*="statusBox__title"]'
+                `.${styles.statusBox__title}`
             );
             expect(titleElement).toBeInTheDocument();
         });

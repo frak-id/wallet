@@ -2,7 +2,7 @@ import { Spinner } from "@frak-labs/design-system/components/Spinner";
 import { Stack } from "@frak-labs/design-system/components/Stack";
 import { Text } from "@frak-labs/design-system/components/Text";
 import type { TFunction } from "i18next";
-import { Check } from "lucide-react";
+import { Check, CircleAlert, RefreshCw } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import type { BasePairingState } from "../../types";
 
@@ -36,6 +36,24 @@ function getStatusDetails(t: TFunction, status: BasePairingState["status"]) {
                     <Check color="green" size={16} />
                     <Text variant="bodySmall" weight="medium">
                         {t("wallet.pairing.status.paired")}
+                    </Text>
+                </Stack>
+            );
+        case "retry-error":
+            return (
+                <Stack space="xs" align="center">
+                    <RefreshCw color="orange" size={16} />
+                    <Text variant="bodySmall" weight="medium">
+                        {t("wallet.pairing.status.retryError")}
+                    </Text>
+                </Stack>
+            );
+        case "error":
+            return (
+                <Stack space="xs" align="center">
+                    <CircleAlert color="red" size={16} />
+                    <Text variant="bodySmall" weight="medium">
+                        {t("wallet.pairing.status.error")}
                     </Text>
                 </Stack>
             );

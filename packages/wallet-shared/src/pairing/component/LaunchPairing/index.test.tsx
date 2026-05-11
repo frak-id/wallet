@@ -68,6 +68,8 @@ let mockPairingState: {
 };
 
 const mockInitiatePairing = vi.fn();
+const mockReset = vi.fn();
+const mockReconnect = vi.fn();
 
 const createMockStore = () => ({
     getState: () => mockPairingState,
@@ -82,6 +84,11 @@ vi.mock("../../clients/store", () => ({
     getOriginPairingClient: vi.fn(() => ({
         store: mockStore,
         initiatePairing: mockInitiatePairing,
+        reset: mockReset,
+        reconnect: mockReconnect,
+        get state() {
+            return mockPairingState;
+        },
     })),
 }));
 
@@ -119,7 +126,71 @@ describe("LaunchPairing", () => {
             const onSuccess = vi.fn();
             render(<LaunchPairing onSuccess={onSuccess} />);
 
-            expect(mockInitiatePairing).toHaveBeenCalledWith({ onSuccess });
+            expect(mockInitiatePairing).toHaveBeenCalledWith({
+                onSuccess,
+                originNode: undefined,
+            });
+        });
+    });
+
+    describe("error UX", () => {
+        it("shows the EmptyState retry block on fatal error and clears the QR", () => {
+            mockPairingState = {
+                status: "error",
+                pairing: { id: "pairing-1", code: "123456" },
+                partnerDevice: null,
+            };
+
+            render(<LaunchPairing />);
+
+            expect(
+                screen.getByText("wallet.pairing.launch.error.title")
+            ).toBeInTheDocument();
+            // QR is hidden so the user doesn't try to scan a stale code
+            expect(screen.queryByTestId("qr-code")).not.toBeInTheDocument();
+            // Code input is hidden too
+            expect(
+                screen.queryByTestId("pairing-code")
+            ).not.toBeInTheDocument();
+        });
+
+        it("clicking retry on fatal error resets the client and re-initiates", () => {
+            mockPairingState = {
+                status: "error",
+                pairing: null,
+                partnerDevice: null,
+            };
+            const onSuccess = vi.fn();
+            render(<LaunchPairing onSuccess={onSuccess} />);
+
+            mockInitiatePairing.mockClear();
+
+            fireEvent.click(
+                screen.getByText("wallet.pairing.launch.error.retry")
+            );
+
+            expect(mockReset).toHaveBeenCalledTimes(1);
+            expect(mockInitiatePairing).toHaveBeenCalledWith({
+                onSuccess,
+                originNode: undefined,
+            });
+            expect(mockReconnect).not.toHaveBeenCalled();
+        });
+
+        it("clicking retry on retry-error calls reconnect (no reset)", () => {
+            mockPairingState = {
+                status: "retry-error",
+                pairing: null,
+                partnerDevice: null,
+            };
+            render(<LaunchPairing />);
+
+            fireEvent.click(
+                screen.getByText("wallet.pairing.launch.error.retry")
+            );
+
+            expect(mockReconnect).toHaveBeenCalledTimes(1);
+            expect(mockReset).not.toHaveBeenCalled();
         });
     });
 
@@ -149,18 +220,21 @@ describe("LaunchPairing", () => {
             );
         });
 
-        it("should display QR code with correct URL format", () => {
+        it("emits the compact /p/<hex> QR payload", () => {
             mockPairingState.pairing = {
-                id: "pairing-456",
+                id: "abc123def456",
                 code: "789012",
             };
 
             render(<LaunchPairing />);
 
             const qrCode = screen.getByTestId("qr-code");
-            expect(qrCode.getAttribute("data-value")).toContain(
-                "/pairing?id=pairing-456"
-            );
+            const value = qrCode.getAttribute("data-value") ?? "";
+            // Compact alias: path-based id, no `mode=embedded`, no hyphens —
+            // halves the QR module count vs the legacy `/pairing?id=...` form.
+            expect(value).toContain("/p/abc123def456");
+            expect(value).not.toContain("?");
+            expect(value).not.toContain("mode=");
         });
 
         it("should set QR code size to 200", () => {
@@ -305,10 +379,12 @@ describe("LaunchPairing", () => {
             }
         });
 
-        it("should handle all pairing states", () => {
-            const states: Array<
-                "idle" | "connecting" | "paired" | "retry-error" | "error"
-            > = ["idle", "connecting", "paired", "retry-error", "error"];
+        it("should render PairingStatus for non-error states", () => {
+            const states: Array<"idle" | "connecting" | "paired"> = [
+                "idle",
+                "connecting",
+                "paired",
+            ];
 
             states.forEach((state) => {
                 mockPairingState.status = state;
@@ -316,6 +392,24 @@ describe("LaunchPairing", () => {
 
                 const status = screen.getByTestId("pairing-status");
                 expect(status).toHaveAttribute("data-status", state);
+
+                unmount();
+            });
+        });
+
+        it("should hide PairingStatus in error states (EmptyState replaces it)", () => {
+            const states: Array<"error" | "retry-error"> = [
+                "error",
+                "retry-error",
+            ];
+
+            states.forEach((state) => {
+                mockPairingState.status = state;
+                const { unmount } = render(<LaunchPairing />);
+
+                expect(
+                    screen.queryByTestId("pairing-status")
+                ).not.toBeInTheDocument();
 
                 unmount();
             });

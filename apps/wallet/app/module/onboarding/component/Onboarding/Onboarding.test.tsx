@@ -1,8 +1,14 @@
 import { fireEvent, render, screen } from "@testing-library/react";
-import { describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { Onboarding } from "./index";
 
-describe("Onboarding", () => {
+describe.sequential("Onboarding", () => {
+    beforeEach(() => {
+        // JSDOM does not implement Element.scrollTo — useSlideCarousel calls
+        // it on mount, so stub it on the prototype to prevent throws.
+        HTMLElement.prototype.scrollTo = vi.fn();
+    });
+
     it("should render all slides with buttonLabel when lastButtonLabel not provided", () => {
         const onFinish = vi.fn();
         render(

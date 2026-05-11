@@ -62,3 +62,9 @@ key = "sharing_url"
 type = "single_line_text_field"
 name = "Default sharing URL"
 description = "By default, the link of a product in the customer's cart is shared. Use this field to override that with a custom URL for every customer."
+
+[[extensions.settings.fields]]
+key = "image_url"
+type = "single_line_text_field"
+name = "Custom image URL"
+description = "Override the gift icon on the left of the card. Leave empty to keep the default. Any aspect ratio works — the slot constrains the image to 80×80."

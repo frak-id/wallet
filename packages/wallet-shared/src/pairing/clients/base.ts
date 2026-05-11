@@ -34,6 +34,14 @@ type ConnectionParams =
           wallet: string;
       }
     | {
+          action: "resume";
+          /**
+           * Self-contained JWT issued by the server in `pairing-initiated`.
+           * Carries the `pairingId` claim, so no other params are needed.
+           */
+          originResumeToken: string;
+      }
+    | {
           wallet: string;
       };
 
@@ -97,7 +105,16 @@ export abstract class BasePairingClient<
     protected _store: StoreApi<TState>;
 
     constructor() {
-        this._store = createStore<TState>()(() => this.getInitialState());
+        this._store = this.createPairingStore();
+    }
+
+    /**
+     * Create the Zustand store backing this client. Subclasses can override
+     * to wrap with middleware (e.g. `persist` to survive WS closes / tab
+     * refreshes during an in-flight pairing).
+     */
+    protected createPairingStore(): StoreApi<TState> {
+        return createStore<TState>()(() => this.getInitialState());
     }
 
     /**
@@ -181,6 +198,17 @@ export abstract class BasePairingClient<
         _reason: PairingSignatureFailure
     ): void {
         // Subclasses override.
+    }
+
+    /**
+     * Hook fired during a fatal WS close. If the subclass returns `true`,
+     * the base will SKIP the default "error" state transition (assuming the
+     * subclass already moved the client to a sensible state — idle, a fresh
+     * pairing attempt, etc.). Returning `false` (the default) keeps the
+     * standard error-surfacing behaviour.
+     */
+    protected handleFatalClose(_code: number, _reason: string): boolean {
+        return false;
     }
 
     /**
@@ -432,6 +460,16 @@ export abstract class BasePairingClient<
                 code: "connection-lost",
                 detail: reason || `ws-${code}`,
             });
+
+            // Subclass hook: a subclass may know that this specific fatal
+            // close is recoverable without user intervention (e.g. an
+            // expired resume token where re-initiating produces a fresh
+            // one). If consumed, we DON'T flip status to "error".
+            if (this.handleFatalClose(code, reason)) {
+                this.resetReconnectState();
+                return;
+            }
+
             this.setState({
                 ...this.getInitialState(),
                 status: "error",

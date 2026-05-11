@@ -32,9 +32,12 @@ const buildDefine = {
     "process.env.DEEP_LINK_SCHEME": JSON.stringify("frakwallet://"),
 };
 
-// Stub rrweb to avoid bundling it — @openpanel/web statically imports `record`
-// from rrweb even when session replay is disabled.
-// See: https://github.com/Openpanel-dev/openpanel/issues/336
+// Stub rrweb in the CDN/IIFE build only. @openpanel/web 1.4.1 dynamically
+// imports its replay module (which depends on rrweb), but the IIFE bundle
+// inlines every dependency (alwaysBundle catch-all). Rolldown's DCE doesn't
+// drop the unreachable `return await import(...)` even with a build-time
+// `__OPENPANEL_REPLAY_URL__` define, so we alias rrweb itself to a noop.
+// Session replay is never enabled in the SDK so this is a behavioural no-op.
 const rrwebStub = fileURLToPath(
     new URL("./src/stubs/rrweb.ts", import.meta.url)
 );
@@ -58,7 +61,6 @@ export default defineConfig([
             moduleSideEffects: false,
         },
         define: buildDefine,
-        alias: { rrweb: rrwebStub },
         plugins: [nodePolyfills()],
     },
     // CDN distribution (IIFE)
@@ -77,8 +79,10 @@ export default defineConfig([
                 : true,
         dts: false,
         outDir: "./cdn",
-        noExternal: [/.*/],
-        inlineOnly: false,
+        deps: {
+            alwaysBundle: [/.*/],
+            onlyBundle: false,
+        },
         treeshake: {
             moduleSideEffects: false,
         },
@@ -89,7 +93,7 @@ export default defineConfig([
             };
         },
         define: buildDefine,
-        alias: { rrweb: rrwebStub },
         plugins: [nodePolyfills()],
+        alias: { rrweb: rrwebStub },
     },
 ]);

@@ -3,7 +3,7 @@ import { beforeEach, describe, expect, test } from "@/tests/fixtures";
 
 let mockIsRunningLocally = false;
 
-vi.mock("@frak-labs/app-essentials", () => ({
+vi.mock("@frak-labs/app-essentials/utils/env", () => ({
     get isRunningLocally() {
         return mockIsRunningLocally;
     },

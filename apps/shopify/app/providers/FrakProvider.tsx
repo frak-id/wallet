@@ -17,6 +17,7 @@ export function FrakProvider({ children }: PropsWithChildren) {
                 merchantId: rootData.merchantId,
             }),
         },
+        preload: ["modal" as const],
         // Use the actual shop domain so merchant resolution works
         // through proxied/tunneled environments (e.g. Cloudflare tunnel in dev)
         domain: rootData?.shop?.normalizedDomain,

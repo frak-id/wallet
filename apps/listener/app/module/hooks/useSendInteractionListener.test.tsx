@@ -11,7 +11,7 @@ const { mockSetClientId } = vi.hoisted(() => ({
     mockSetClientId: vi.fn(),
 }));
 
-vi.mock("@frak-labs/wallet-shared", () => ({
+vi.mock("@frak-labs/wallet-shared/common/api/backendClient", () => ({
     authenticatedBackendApi: {
         user: {
             merchant: {
@@ -29,6 +29,9 @@ vi.mock("@frak-labs/wallet-shared", () => ({
             },
         },
     },
+}));
+
+vi.mock("@frak-labs/wallet-shared/stores/clientIdStore", () => ({
     clientIdStore: {
         getState: () => ({
             setClientId: mockSetClientId,

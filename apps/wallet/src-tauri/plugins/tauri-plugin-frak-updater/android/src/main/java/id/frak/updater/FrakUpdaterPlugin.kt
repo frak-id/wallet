@@ -12,6 +12,7 @@ import app.tauri.plugin.Plugin
 import com.google.android.play.core.appupdate.AppUpdateInfo
 import com.google.android.play.core.appupdate.AppUpdateManager
 import com.google.android.play.core.appupdate.AppUpdateManagerFactory
+import com.google.android.play.core.appupdate.AppUpdateOptions
 import com.google.android.play.core.install.InstallStateUpdatedListener
 import com.google.android.play.core.install.model.AppUpdateType
 import com.google.android.play.core.install.model.InstallStatus
@@ -111,8 +112,8 @@ class FrakUpdaterPlugin(activity: Activity) : Plugin(activity) {
                     // signature but is otherwise inert here.
                     updateManager.startUpdateFlowForResult(
                         info,
-                        AppUpdateType.FLEXIBLE,
                         pluginActivity,
+                        AppUpdateOptions.newBuilder(AppUpdateType.FLEXIBLE).build(),
                         UPDATE_REQUEST_CODE
                     )
                     invoke.resolve(JSObject().apply { put("started", true) })
