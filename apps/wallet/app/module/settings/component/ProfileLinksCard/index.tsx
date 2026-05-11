@@ -21,7 +21,7 @@ export function ProfileLinksCard() {
                 <InfoRow
                     icon={DocumentIcon}
                     label={t("wallet.settings.termsOfUse", "Terms of Use")}
-                    href="https://frak.id/privacy"
+                    href="https://frak.id/terms"
                 />
             </InfoCard>
             <InfoCard>

@@ -16,7 +16,7 @@ export function LegalLinks() {
             </Title>
             <Stack space="m">
                 <ExternalLink
-                    href="https://frak.id/privacy"
+                    href="https://frak.id/terms"
                     className={styles.legalLink}
                 >
                     {t("wallet.settings.termsOfUse")}
