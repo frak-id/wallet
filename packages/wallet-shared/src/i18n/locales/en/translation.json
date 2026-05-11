@@ -751,7 +751,6 @@
             "description": "New offers are coming soon. Check back later!"
         },
         "card": {
-            "badge": "Up to {{amount}}",
             "until": "Until {{date}}"
         },
         "detail": {

@@ -748,7 +748,6 @@
             "description": "De nouvelles offres arrivent bientôt. Revenez plus tard !"
         },
         "card": {
-            "badge": "Jusqu'à {{amount}}",
             "until": "Jusqu'au {{date}}"
         },
         "detail": {

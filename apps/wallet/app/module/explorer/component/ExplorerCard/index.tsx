@@ -1,7 +1,6 @@
 import type { ExplorerMerchantItem } from "@frak-labs/backend-elysia/orchestration/schemas";
 import { Box } from "@frak-labs/design-system/components/Box";
 import { Text } from "@frak-labs/design-system/components/Text";
-import { CoinsIcon } from "@frak-labs/design-system/icons";
 import {
     estimatedRewardsQueryOptions,
     selectFormattedReward,
@@ -68,17 +67,6 @@ export function ExplorerCard({ merchant, onClick }: ExplorerCardProps) {
                     />
                 ) : (
                     <Box className={styles.imagePlaceholder} />
-                )}
-
-                {cardInfo && (
-                    <Box as="span" className={styles.badge}>
-                        <CoinsIcon width={12} height={12} />
-                        <Text variant="tiny" weight="semiBold">
-                            {t("explorer.card.badge", {
-                                amount: cardInfo.maxReward,
-                            })}
-                        </Text>
-                    </Box>
                 )}
 
                 {logoUrl && (

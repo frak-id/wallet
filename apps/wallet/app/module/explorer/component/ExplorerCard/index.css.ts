@@ -27,20 +27,6 @@ export const heroImage = style({
     aspectRatio: "361 / 158.5",
 });
 
-export const badge = style({
-    position: "absolute",
-    top: 17,
-    right: 17,
-    display: "inline-flex",
-    alignItems: "center",
-    gap: alias.spacing.xxs,
-    padding: "4px 8px",
-    borderRadius: alias.cornerRadius.full,
-    backgroundColor: "rgba(255, 255, 255, 0.7)",
-    backdropFilter: "blur(16px)",
-    color: vars.text.primary,
-});
-
 export const logoWrapper = style({
     position: "absolute",
     bottom: "-12px",
