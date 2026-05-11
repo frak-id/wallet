@@ -50,8 +50,8 @@ targets:
           - UIInterfaceOrientationPortrait
         UISupportedInterfaceOrientations~ipad:
           - UIInterfaceOrientationPortrait
-        CFBundleShortVersionString: 1.0.48
-        CFBundleVersion: "1.0.48"
+        CFBundleShortVersionString: 1.0.49
+        CFBundleVersion: "1.0.49"
         ITSAppUsesNonExemptEncryption: false
         UIBackgroundModes:
           - remote-notification
