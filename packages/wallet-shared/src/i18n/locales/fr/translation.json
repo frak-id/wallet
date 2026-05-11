@@ -320,10 +320,10 @@
                 "description": "Active tes notifs pour suivre tes gains en temps réel."
             },
             "invite": {
-                "title": "Invite tes ami·e·s et gagne",
-                "check1": "Crée ton code de parrainage",
-                "check2": "Partage-le avec tes ami·e·s",
-                "check3": "Gagne de l'argent à chaque commande réalisée."
+                "title": "Invite tes ami·e·s sur Frak",
+                "check1": "Crée ton code de parrainage.",
+                "check2": "Partage-le avec tes ami·e·s.",
+                "check3": "Gagne de l'argent à chaque achat réalisé sur tous les sites partenaires."
             },
             "detail": {
                 "howItWorks": "Comment ça marche ?",
