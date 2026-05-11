@@ -1,0 +1,1 @@
+ALTER TABLE `authenticators` ADD `email` text;

@@ -31,6 +31,7 @@ export const registerRoutes = new Elysia()
                 userAgent,
                 previousWallet,
                 merchantId,
+                email,
             },
         }) => {
             // Decode the registration response
@@ -79,6 +80,7 @@ export const registerRoutes = new Elysia()
                 credentialBackedUp,
                 publicKey,
                 transports: credential.transports,
+                email,
             });
 
             // Prepare the additional data object
@@ -146,6 +148,7 @@ export const registerRoutes = new Elysia()
                 previousWallet: t.Optional(t.Address()),
                 setSessionCookie: t.Optional(t.Boolean()),
                 merchantId: t.Optional(t.String({ format: "uuid" })),
+                email: t.Optional(t.String({ format: "email" })),
             }),
             response: {
                 400: t.String(),
