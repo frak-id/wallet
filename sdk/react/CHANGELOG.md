@@ -1,5 +1,16 @@
 # @frak-labs/react-sdk
 
+## 1.1.0
+
+### Minor Changes
+
+- [#183](https://github.com/frak-id/wallet/pull/183) [`4d6e2ae`](https://github.com/frak-id/wallet/commit/4d6e2ae7f819eb226169f3c938e4d07607db9f50) Thanks [@KONFeature](https://github.com/KONFeature)! - ✨ feat: Add `preload` option to `FrakWalletSdkConfig` allowing consumers to specify which views inside the listener iframe should be preloaded. Defaults to `["sharing"]`.
+
+### Patch Changes
+
+- Updated dependencies [[`4d6e2ae`](https://github.com/frak-id/wallet/commit/4d6e2ae7f819eb226169f3c938e4d07607db9f50), [`b1ac0d2`](https://github.com/frak-id/wallet/commit/b1ac0d207b225cc462b290a4c68b02b06600adac), [`9ddf96b`](https://github.com/frak-id/wallet/commit/9ddf96b22b9c310c4c779b63c4088254e973344d), [`ec55f4a`](https://github.com/frak-id/wallet/commit/ec55f4a700d8169da58e24bf0dff68c082fa6994), [`ec55f4a`](https://github.com/frak-id/wallet/commit/ec55f4a700d8169da58e24bf0dff68c082fa6994)]:
+  - @frak-labs/core-sdk@1.1.0
+
 ## 1.0.2
 
 ### Patch Changes
