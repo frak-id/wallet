@@ -3,41 +3,51 @@ import { Card } from "@frak-labs/design-system/components/Card";
 import { Inline } from "@frak-labs/design-system/components/Inline";
 import { Stack } from "@frak-labs/design-system/components/Stack";
 import { Text } from "@frak-labs/design-system/components/Text";
-import { ReferralIcon } from "@frak-labs/design-system/icons";
-import { useTranslation } from "react-i18next";
+import type { ComponentType, SVGProps } from "react";
 import { ButtonLink } from "@/module/common/component/ButtonLink";
 import * as styles from "./index.css";
 
-/**
- * Rich invite card shown on the hub when the user has no code yet:
- * icon + title + description + "Générer mon code" CTA → /create.
- */
-export function ReferralInviteCard() {
-    const { t } = useTranslation();
+type ReferralActionCardProps = {
+    icon: ComponentType<SVGProps<SVGSVGElement>>;
+    title: string;
+    description: string;
+    ctaLabel: string;
+    to: string;
+};
 
+/**
+ * Rich action card used on the referral hub: icon + title + description + CTA.
+ */
+export function ReferralActionCard({
+    icon: Icon,
+    title,
+    description,
+    ctaLabel,
+    to,
+}: ReferralActionCardProps) {
     return (
         <Card padding="default" variant="elevated">
             <Stack space="xs">
                 <Inline space="m" alignY="top">
                     <Box className={styles.iconWrapper}>
-                        <ReferralIcon />
+                        <Icon />
                     </Box>
                     <Stack space="xxs" as="div" className={styles.content}>
                         <Text as="span" variant="body" weight="medium">
-                            {t("wallet.referral.invite.title")}
+                            {title}
                         </Text>
                         <Text variant="bodySmall" color="secondary">
-                            {t("wallet.referral.invite.description")}
+                            {description}
                         </Text>
                     </Stack>
                 </Inline>
                 <ButtonLink
-                    to="/profile/referral/create"
+                    to={to}
                     variant="secondary"
                     size="small"
                     width="full"
                 >
-                    {t("wallet.referral.invite.cta")}
+                    {ctaLabel}
                 </ButtonLink>
             </Stack>
         </Card>

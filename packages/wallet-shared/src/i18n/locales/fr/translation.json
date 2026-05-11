@@ -105,11 +105,15 @@
             "title": "Parrainages",
             "menuLabel": "Parrainages",
             "invite": {
-                "title": "Inviter des ami·e·s",
-                "description": "Crée ton code et commence à le partager à tes proches pour gagner encore plus d'argent.",
+                "title": "Invite tes ami·e·s sur Frak",
+                "description": "Crée ton code et partage le à tes proches. Gagner encore plus d'argent sur tes achats réalisés sur tous les sites partenaires.",
                 "cta": "Générer mon code"
             },
-            "enterCode": "Entrer un code de parrainage",
+            "enterCode": {
+                "title": "Entrer un code de parrainage",
+                "description": "Gagne de l'argent à chaque achat que tu effectues sur l'ensemble des sites partenaires.",
+                "cta": "Entrer un code de parrainage"
+            },
             "modify": "Modifier",
             "create": {
                 "title": "Mon code de parrainage",
