@@ -123,3 +123,9 @@ export {
     getSafeSdkSession,
     getSafeSession,
 } from "./utils/safeSession";
+export {
+    APP_STORE_URL,
+    getRateAppUrl,
+    PLAY_STORE_URL,
+    STORE_PACKAGE_ID,
+} from "./utils/storeUrls";

@@ -8,11 +8,13 @@ import { Stack } from "@frak-labs/design-system/components/Stack";
 import { Text } from "@frak-labs/design-system/components/Text";
 import { CloseIcon, CopyIcon } from "@frak-labs/design-system/icons";
 import {
+    APP_STORE_URL,
     authenticatedBackendApi,
     CodeInput,
     ExternalLink,
     getSafeSession,
     LogoFrakWithName,
+    PLAY_STORE_URL,
     trackEvent,
     useFormattedEstimatedReward,
 } from "@frak-labs/wallet-shared";
@@ -150,15 +152,6 @@ function InstallProcessing({ m: merchantId, a: anonymousId }: InstallSearch) {
 //  Install code view — web only, when the user needs to download the app
 // ---------------------------------------------------------------------------
 
-// Stage-scoped Android package id (prod build → id.frak.wallet,
-// dev build → id.frak.wallet.dev). The App Store URL stays prod-only;
-// the dev iOS variant ships through TestFlight, not the public store.
-const isProdStage =
-    process.env.STAGE === "prod" || process.env.STAGE === "production";
-const playStorePackage = isProdStage ? "id.frak.wallet" : "id.frak.wallet.dev";
-const appStoreUrl = "https://apps.apple.com/app/frak-wallet/id6740261164";
-const playStoreUrl = `https://play.google.com/store/apps/details?id=${playStorePackage}`;
-
 function merchantInfoQueryOptions(merchantId?: string) {
     return queryOptions({
         queryKey: ["merchant", "info", merchantId ?? "none"],
@@ -232,10 +225,10 @@ function InstallCodeView({ m: merchantId, a: anonymousId }: InstallSearch) {
 
     const isAndroid = useMemo(() => /android/i.test(navigator.userAgent), []);
     const downloadUrl = useMemo(() => {
-        if (!isAndroid) return appStoreUrl;
-        if (!merchantId || !anonymousId) return playStoreUrl;
+        if (!isAndroid) return APP_STORE_URL;
+        if (!merchantId || !anonymousId) return PLAY_STORE_URL;
         const referrerData = `merchantId=${merchantId}&anonymousId=${anonymousId}`;
-        return `${playStoreUrl}&referrer=${encodeURIComponent(referrerData)}`;
+        return `${PLAY_STORE_URL}&referrer=${encodeURIComponent(referrerData)}`;
     }, [merchantId, anonymousId, isAndroid]);
 
     const handleCopy = useCallback(async () => {
