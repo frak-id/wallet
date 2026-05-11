@@ -3,6 +3,7 @@ import { useMutation } from "@tanstack/react-query";
 import i18next from "i18next";
 import { notificationAdapter } from "@/module/notification/adapter";
 import { notificationKey } from "@/module/notification/queryKeys/notification";
+import { notificationOptOutStore } from "@/module/notification/stores/notificationOptOutStore";
 
 export function useSubscribeToPushNotification() {
     const {
@@ -13,6 +14,11 @@ export function useSubscribeToPushNotification() {
         mutationKey: notificationKey.push.subscribe,
         mutationFn: async () => {
             const tokenPayload = await notificationAdapter.subscribe();
+            // Clear the opt-out flag as soon as subscribe() succeeds — the
+            // OS-level state now matches "subscribed", so the adapter's
+            // lazy register and the backend re-PUT reconciliation should
+            // re-engage even if the backend put() below throws.
+            notificationOptOutStore.getState().setOptedOut(false);
             await authenticatedWalletApi.notifications.tokens.put({
                 ...tokenPayload,
                 locale: i18next.language?.split("-")[0],

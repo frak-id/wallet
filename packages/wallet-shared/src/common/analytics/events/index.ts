@@ -46,6 +46,7 @@ export type {
 export type {
     NotificationEventMap,
     NotificationOptInOutcome,
+    NotificationTogglePhase,
 } from "./notification";
 export type { OnboardingAction, OnboardingEventMap } from "./onboarding";
 export type {

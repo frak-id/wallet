@@ -38,6 +38,7 @@ export type {
     MoneriumEventMap,
     NotificationEventMap,
     NotificationOptInOutcome,
+    NotificationTogglePhase,
     OnboardingAction,
     OnboardingEventMap,
     PairingErrorState,

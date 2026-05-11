@@ -2,6 +2,7 @@ import { authenticatedWalletApi, getInvoke } from "@frak-labs/wallet-shared";
 import type { PluginListener } from "@tauri-apps/api/core";
 import i18next from "i18next";
 import type { PermissionState } from "tauri-plugin-fcm";
+import { notificationOptOutStore } from "@/module/notification/stores/notificationOptOutStore";
 import type {
     NotificationAdapter,
     NotificationPermissionStatus,
@@ -122,6 +123,17 @@ export function createTauriNotificationAdapter(): NotificationAdapter {
                 importance: 4,
             });
             await setupTokenRefreshListener();
+            // iOS requires an explicit fcm.register() before
+            // `Messaging.token()` returns a value, unlike Android FCM which
+            // auto-registers on app init. If the OS-level permission was
+            // already granted in a previous session (or via system Settings
+            // out-of-band), proactively register so the FCM token is cached
+            // before the settings page reads it. No-op on Android.
+            const permission = await fcm.checkPermissions();
+            const optedOut = notificationOptOutStore.getState().optedOut;
+            if (permission === "granted" && !optedOut) {
+                await fcm.register();
+            }
         } catch (error) {
             console.warn("Tauri notification init failed:", error);
         }
@@ -155,7 +167,27 @@ export function createTauriNotificationAdapter(): NotificationAdapter {
         getToken: async () => {
             await initPromise;
 
+            // Short-circuit when the user has opted out — avoids the
+            // 10s `obtainToken` wait that would otherwise run while
+            // `hasLocalCapability` is already forced to false in the UI.
+            if (notificationOptOutStore.getState().optedOut) return null;
+
             try {
+                // Lazy register safety net: covers the case where the OS
+                // permission was denied at app start (init skipped the eager
+                // register) and later flipped to granted out-of-band — e.g.
+                // user came back from system Settings. iOS requires
+                // fcm.register() before getToken returns a value; this call
+                // is idempotent once APNs is already registered.
+                const fcm = await getFcm();
+                const permission = await fcm.checkPermissions();
+                if (permission === "granted") {
+                    try {
+                        await fcm.register();
+                    } catch (error) {
+                        console.warn("FCM lazy register failed:", error);
+                    }
+                }
                 const token = await obtainToken();
                 return { type: "fcm", token: token };
             } catch (e) {

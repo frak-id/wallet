@@ -5,6 +5,7 @@ import type {
     PushTokenPayload,
 } from "@/module/notification/adapter";
 import { useNotificationStatus } from "@/module/notification/hook/useNotificationSetupStatus";
+import { notificationOptOutStore } from "@/module/notification/stores/notificationOptOutStore";
 import {
     beforeEach,
     describe,
@@ -58,6 +59,8 @@ describe.sequential("useNotificationStatus", () => {
     beforeEach(({ queryWrapper }: WalletTestFixtures) => {
         queryWrapper.client.clear();
         mockAdapter.events = new EventTarget();
+
+        notificationOptOutStore.getState().setOptedOut(false);
 
         mockAdapter.getPermissionStatus
             .mockReset()
@@ -165,6 +168,57 @@ describe.sequential("useNotificationStatus", () => {
             hasLocalCapability: false,
             hasBackendToken: false,
         });
+    });
+
+    test("should force hasLocalCapability to false when opted out, even with permission + token", async ({
+        queryWrapper,
+    }: WalletTestFixtures) => {
+        notificationOptOutStore.getState().setOptedOut(true);
+        mockAdapter.getPermissionStatus.mockResolvedValue(
+            "granted" satisfies NotificationPermissionStatus
+        );
+        mockAdapter.getToken.mockResolvedValue({
+            type: "fcm",
+            token: "cached-token",
+        } satisfies PushTokenPayload);
+        mockTokensApi.hasAny.get.mockResolvedValue({ data: true });
+
+        const { result } = renderHook(() => useNotificationStatus(), {
+            wrapper: queryWrapper.wrapper,
+        });
+
+        await waitFor(() => {
+            expect(result.current.permissionGranted).toBe(true);
+        });
+
+        expect(result.current.hasLocalCapability).toBe(false);
+    });
+
+    test("should skip auto re-PUT reconciliation when opted out", async ({
+        queryWrapper,
+    }: WalletTestFixtures) => {
+        notificationOptOutStore.getState().setOptedOut(true);
+        mockAdapter.getPermissionStatus.mockResolvedValue(
+            "granted" satisfies NotificationPermissionStatus
+        );
+        mockAdapter.getToken.mockResolvedValue({
+            type: "fcm",
+            token: "cached-token",
+        } satisfies PushTokenPayload);
+        // Backend has no token — without the opt-out guard the effect
+        // would PUT it back, defeating the unsubscribe.
+        mockTokensApi.hasAny.get.mockResolvedValue({ data: false });
+
+        renderHook(() => useNotificationStatus(), {
+            wrapper: queryWrapper.wrapper,
+        });
+
+        await waitFor(() => {
+            expect(mockAdapter.getPermissionStatus).toHaveBeenCalled();
+            expect(mockTokensApi.hasAny.get).toHaveBeenCalled();
+        });
+
+        expect(mockTokensApi.put).not.toHaveBeenCalled();
     });
 
     test("should update localToken and permission when token-update event fires", async ({

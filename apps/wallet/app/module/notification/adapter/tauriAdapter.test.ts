@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { notificationOptOutStore } from "@/module/notification/stores/notificationOptOutStore";
 import { createTauriNotificationAdapter } from "./tauriAdapter";
 
 const {
@@ -71,6 +72,7 @@ vi.mock("@tauri-apps/api/core", () => ({
 
 describe.sequential("createTauriNotificationAdapter", () => {
     beforeEach(() => {
+        notificationOptOutStore.getState().setOptedOut(false);
         getTokenMock.mockReset();
         requestPermissionsMock.mockReset();
         checkPermissionsMock.mockReset();
@@ -458,5 +460,54 @@ describe.sequential("createTauriNotificationAdapter", () => {
             "plugin:app-settings|open_notification_settings"
         );
         expect(openUrlMock).not.toHaveBeenCalled();
+    });
+
+    it("should getToken: short-circuit and return null when opted out", async () => {
+        notificationOptOutStore.getState().setOptedOut(true);
+        // Ensure obtainToken would otherwise resolve a value — proving the
+        // short-circuit bypasses the FCM round-trip entirely.
+        getTokenMock.mockResolvedValue({ token: "should-not-be-used" });
+        checkPermissionsMock.mockResolvedValue("granted");
+
+        const adapter = createTauriNotificationAdapter();
+        const result = await adapter.getToken();
+
+        expect(result).toBeNull();
+        expect(getTokenMock).not.toHaveBeenCalled();
+        expect(registerMock).not.toHaveBeenCalled();
+    });
+
+    it("should init: skip eager fcm.register when opted out and permission granted", async () => {
+        notificationOptOutStore.getState().setOptedOut(true);
+        checkPermissionsMock.mockResolvedValue("granted");
+
+        const adapter = createTauriNotificationAdapter();
+        await adapter.initPromise;
+
+        expect(registerMock).not.toHaveBeenCalled();
+    });
+
+    it("should init: run eager fcm.register when permission granted and not opted out", async () => {
+        notificationOptOutStore.getState().setOptedOut(false);
+        checkPermissionsMock.mockResolvedValue("granted");
+
+        const adapter = createTauriNotificationAdapter();
+        await adapter.initPromise;
+
+        expect(registerMock).toHaveBeenCalledOnce();
+    });
+
+    it("should getToken: run lazy fcm.register when permission granted and not opted out", async () => {
+        notificationOptOutStore.getState().setOptedOut(false);
+        checkPermissionsMock.mockResolvedValue("granted");
+        getTokenMock.mockResolvedValue({ token: "fresh-token" });
+
+        const adapter = createTauriNotificationAdapter();
+        const result = await adapter.getToken();
+
+        // register called once during init (granted, not opted) +
+        // once inside getToken — the lazy safety net.
+        expect(registerMock).toHaveBeenCalledTimes(2);
+        expect(result).toEqual({ type: "fcm", token: "fresh-token" });
     });
 });
