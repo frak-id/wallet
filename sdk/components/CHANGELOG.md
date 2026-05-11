@@ -1,5 +1,90 @@
 # @frak-labs/components
 
+## 1.0.4
+
+### Patch Changes
+
+- [#183](https://github.com/frak-id/wallet/pull/183) [`22344f0`](https://github.com/frak-id/wallet/commit/22344f072f9931da944152221b12f6fdcf55ee1f) Thanks [@KONFeature](https://github.com/KONFeature)! - `<frak-banner>` and `<frak-post-purchase>`: add an optional `imageUrl` prop to override the gift icon displayed on the left of each component. When omitted, the built-in `GiftIcon` keeps rendering as before, so the change is fully backwards-compatible. The custom image is rendered into a fixed-size slot (40×40 for the banner, 80×80 for the post-purchase card) with `overflow: hidden` and `object-fit: contain`, so over- or undersized assets stay visually contained without breaking the surrounding layout. Exposed both as a JS property (`el.imageUrl = "..."`) and as a kebab-case HTML attribute (`<frak-banner image-url="...">` / `<frak-post-purchase image-url="...">`) so server-rendered surfaces (WordPress / Magento / Shopify Liquid) can set it without JavaScript.
+
+- [#183](https://github.com/frak-id/wallet/pull/183) [`9ddf96b`](https://github.com/frak-id/wallet/commit/9ddf96b22b9c310c4c779b63c4088254e973344d) Thanks [@KONFeature](https://github.com/KONFeature)! - Remove the unused `DebugInfoGatherer` class from `@frak-labs/core-sdk`. The class was constructed once per `createIFrameFrakClient` call and its state was actively maintained on every RPC roundtrip via middleware (`setLastRequest` / `setLastResponse` / `updateSetupStatus`), but its single output method `client.debugInfo.formatDebugInfo()` was never called anywhere — zero consumers in `apps/`, `packages/`, sister `sdk/` packages, `example/`, `services/`, or `plugins/`. The only non-definition reference was a `vi.fn()` mock in `sdk/components/tests/vitest-setup.ts` to satisfy the `FrakClient` type shape.
+
+  **Public API change**: `DebugInfoGatherer` is no longer exported from `@frak-labs/core-sdk`. The `debugInfo` field on `FrakClient` is removed. External consumers calling `client.debugInfo.formatDebugInfo()` would need to handle errors via their own error-reporting infrastructure (e.g. wrapping `client.request(...)` calls in try/catch and reporting via the merchant's existing observability stack).
+
+  If SDK-side observability is desired in the future, the natural path is a typed `sdk_rpc_error` event emitted via the already-initialized `client.openPanel?.track(...)` (mirroring the `recordError` / `app_error` pattern in `packages/wallet-shared`). That would be a new feature, built fresh — not a revival of this class.
+
+  **Removed files**:
+
+  - `sdk/core/src/clients/DebugInfo.ts`
+  - `sdk/core/src/clients/DebugInfo.test.ts` (28 unit tests)
+
+  **Modified files**:
+
+  - `sdk/core/src/clients/index.ts` — drop the `DebugInfoGatherer` re-export
+  - `sdk/core/src/clients/createIFrameFrakClient.ts` — drop the import, the `new DebugInfoGatherer(...)` instantiation, the `setLastRequest` / `setLastResponse` middleware block, the `updateSetupStatus` chain, and the `debugInfo` field on the returned client object
+  - `sdk/core/src/types/client.ts` — drop the `debugInfo` field from `FrakClient`
+  - `sdk/components/tests/vitest-setup.ts` — drop the `debugInfo` mock from the `window.FrakSetup.client` test fixture
+
+  **Bundle impact** (CDN, raw / gzip):
+
+  | Bundle                                               |            Before |             After |               Δ raw |              Δ gzip |
+  | ---------------------------------------------------- | ----------------: | ----------------: | ------------------: | ------------------: |
+  | `sdk/core/cdn/bundle.js` (`window.FrakSDK`)          | 41.1 KB / 13.9 KB | 39.0 KB / 13.2 KB | **−2.1 KB (−5.2%)** | **−0.6 KB (−4.5%)** |
+  | `sdk/components/cdn/loader.js` (always-loaded entry) | 47.6 KB / 15.5 KB | 45.5 KB / 14.9 KB | **−2.1 KB (−4.4%)** | **−0.6 KB (−4.0%)** |
+
+  Combined: **−4.2 KB raw / −1.2 KB gzip** across the two CDN bundles.
+
+- [#183](https://github.com/frak-id/wallet/pull/183) [`ec55f4a`](https://github.com/frak-id/wallet/commit/ec55f4a700d8169da58e24bf0dff68c082fa6994) Thanks [@KONFeature](https://github.com/KONFeature)! - Trim the public API surface of `@frak-labs/core-sdk` by removing 11 leaked internal helpers that had no consumer outside of the SDK itself. This shrinks the always-loaded `@frak-labs/components` CDN loader (`cdn/loader.js`) and the core SDK's IIFE bundle (`window.FrakSDK`) without changing any other code — every downstream package + every `import * as` consumer cascades to a smaller surface automatically.
+
+  **Removed exports** (no named-import consumer found in `apps/`, `packages/`, `sdk/{components,react,legacy}`, `example/`, `services/`, `plugins/`):
+
+  - `DebugInfoGatherer` (class, internal debug helper)
+  - `LocalesKey` (type), `locales` (constant array)
+  - `isV1Context`, `isV2Context` (FrakContext type guards)
+  - `createIframe` (low-level — `setupClient` is the public entry)
+  - `getCache` (cache primitive — `withCache` is the public wrapper)
+  - `getSupportedLocale` (internal locale validator)
+  - `isChromiumAndroid`, `isFrakDeepLink`, `toAndroidIntentUrl` (deep-link internals — `triggerDeepLinkWithFallback` is the public entry)
+  - `isIOS` (browser detection — apps that need it import from `@frak-labs/app-essentials/utils/platform`)
+
+  **Kept in the public API**: `createIFrameFrakClient`, `setupClient`, `ssoPopupFeatures`, `ssoPopupName`, `base64urlDecode`, `base64urlEncode`, `baseIframeProps`, `clearAllCache`, `compressJsonToB64`, `DEEP_LINK_SCHEME`, `decompressJsonFromB64`, `FrakContextManager`, `findIframeInOpener`, `formatAmount`, `generateSsoUrl`, `getBackendUrl`, `getClientId`, `getCurrencyAmountKey`, `getSupportedCurrency`, `isInAppBrowser`, `mergeAttribution`, `redirectToExternalBrowser`, `sdkConfigStore`, `trackEvent`, `triggerDeepLinkWithFallback`, `withCache` — plus all types and the entire `@frak-labs/core-sdk/actions` subpath.
+
+  **Bundle size impact** (CDN, raw / gzip):
+
+  - `sdk/core/cdn/bundle.js`: 47.1 KB / 16.0 KB → 41.1 KB / 13.9 KB (**−13%**)
+  - `sdk/components/cdn/loader.js`: 59.0 KB / 19.7 KB → 49.5 KB / 16.2 KB (**−16% / −18%**)
+
+  Internally these helpers remain available — they're still importable from their concrete modules (`@frak-labs/core-sdk/src/utils/inAppBrowser` etc.) for any future need, they're just no longer part of the public re-export surface.
+
+- [#183](https://github.com/frak-id/wallet/pull/183) [`ec55f4a`](https://github.com/frak-id/wallet/commit/ec55f4a700d8169da58e24bf0dff68c082fa6994) Thanks [@KONFeature](https://github.com/KONFeature)! - Replace runtime `viem` imports with in-house equivalents in the four files that pulled viem into the SDK bundle. No public API change — these are all internal implementations, the `viem` peer dependency is still used for `Address` / `Hex` type imports.
+
+  **Why**: `viem` v2's `BaseError` machinery (six `Object.defineProperty` calls per error subclass × ~5 sub-errors) plus its keccak/checksum/encoding stack was bleeding into the SDK bundle even though the SDK only needed a handful of helpers. Combined with rolldown's lazy-init treeshaking on the IIFE format, the leaked viem code also caused runtime crashes when calling `FrakSDK.processReferral` or `FrakSDK.computeLegacyProductId` from the CDN bundle (uninitialized `var Pe, Fe; ...` referenced by surviving consumer functions).
+
+  **Changes**:
+
+  - `sdk/core/src/utils/address.ts` (new) — minimal, dependency-free address helpers:
+    - `isAddress` (regex shape check, no EIP-55 checksum — SDK never produces checksum-cased payloads, downstream consumers treat addresses case-insensitively)
+    - `areAddressesEqual` (lowercase compare)
+    - `addressToBytes` / `bytesToAddress` (fixed 20-byte conversion with a precomputed hex lookup table for the encode hot path)
+  - `sdk/core/src/utils/FrakContext.ts` — swap `viem` `bytesToHex` / `hexToBytes` / `isAddress` → in-house `bytesToAddress` / `addressToBytes` / `isAddress`.
+  - `sdk/core/src/utils/frakContextV2Codec.ts` — same swap (kept the `Address` type-only import).
+  - `sdk/core/src/actions/referral/processReferral.ts` — swap `viem` `isAddressEqual` → `areAddressesEqual`.
+  - `sdk/core/src/actions/wrapper/siweAuthenticate.ts` — drop `viem/siwe` `generateSiweNonce` import, inline a 96-hex-char nonce generator using `crypto.getRandomValues` (with a `Math.random` fallback for the rare environment without WebCrypto). Matches viem's nonce shape exactly.
+  - `sdk/core/src/actions/wrapper/siweAuthenticate.test.ts` — drop the `viem/siwe` mock, assert nonce shape via `expect.stringMatching(/^[0-9a-f]{96}$/)`.
+
+  **Bundle impact** (CDN, raw / gzip), from baseline before this trim → final:
+
+  | Bundle                                               |            Before |             After |               Δ raw |             Δ gzip |
+  | ---------------------------------------------------- | ----------------: | ----------------: | ------------------: | -----------------: |
+  | `sdk/core/cdn/bundle.js` (`window.FrakSDK`)          | 46.7 KB / 15.9 KB | 41.1 KB / 13.9 KB |  **−5.7 KB (−12%)** | **−2.1 KB (−13%)** |
+  | `sdk/components/cdn/loader.js` (always-loaded entry) | 60.3 KB / 20.0 KB | 49.5 KB / 16.2 KB | **−10.8 KB (−18%)** | **−3.8 KB (−19%)** |
+
+  After this change, **zero** `viem` runtime code ships in either CDN bundle (verified: 0 hits for `BaseError`, `isAddress`, `keccak`, `@noble`, etc.). The `viem` peer dep is now type-only for SDK CDN consumers.
+
+  **Side effect — IIFE crash fix**: The `window.FrakSDK.processReferral(...)` call previously threw `TypeError: Cannot read properties of undefined (reading 'has')` due to rolldown tree-shaking viem's lazy-init closures while keeping the consumer functions. Verified post-trim: `processReferral` / `FrakContextManager.parse` / `compressJsonToB64` / `getClientId` all work correctly when invoked from the IIFE bundle.
+
+- Updated dependencies [[`4d6e2ae`](https://github.com/frak-id/wallet/commit/4d6e2ae7f819eb226169f3c938e4d07607db9f50), [`b1ac0d2`](https://github.com/frak-id/wallet/commit/b1ac0d207b225cc462b290a4c68b02b06600adac), [`9ddf96b`](https://github.com/frak-id/wallet/commit/9ddf96b22b9c310c4c779b63c4088254e973344d), [`ec55f4a`](https://github.com/frak-id/wallet/commit/ec55f4a700d8169da58e24bf0dff68c082fa6994), [`ec55f4a`](https://github.com/frak-id/wallet/commit/ec55f4a700d8169da58e24bf0dff68c082fa6994)]:
+  - @frak-labs/core-sdk@1.1.0
+
 ## 1.0.3
 
 ### Patch Changes

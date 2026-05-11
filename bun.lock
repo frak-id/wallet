@@ -212,7 +212,7 @@
     },
     "apps/wallet": {
       "name": "@frak-labs/nexus-wallet",
-      "version": "1.0.43",
+      "version": "1.0.48",
       "dependencies": {
         "@frak-labs/app-essentials": "workspace:*",
         "@frak-labs/core-sdk": "workspace:*",
@@ -461,7 +461,7 @@
     },
     "packages/ui-preview": {
       "name": "@frak-labs/ui-preview",
-      "version": "0.0.3",
+      "version": "0.0.4",
       "dependencies": {
         "@frak-labs/core-sdk": "workspace:*",
         "@frak-labs/design-system": "workspace:*",
@@ -479,7 +479,7 @@
     },
     "packages/wallet-shared": {
       "name": "@frak-labs/wallet-shared",
-      "version": "0.0.6",
+      "version": "0.0.7",
       "dependencies": {
         "@elysiajs/eden": "^1.4.9",
         "@frak-labs/app-essentials": "workspace:*",
@@ -529,7 +529,7 @@
     },
     "sdk/components": {
       "name": "@frak-labs/components",
-      "version": "1.0.3",
+      "version": "1.0.4",
       "dependencies": {
         "@frak-labs/core-sdk": "workspace:*",
         "@frak-labs/design-system": "workspace:*",
@@ -561,7 +561,7 @@
     },
     "sdk/core": {
       "name": "@frak-labs/core-sdk",
-      "version": "1.0.2",
+      "version": "1.1.0",
       "dependencies": {
         "@frak-labs/frame-connector": "workspace:*",
         "@openpanel/web": "catalog:",
@@ -586,7 +586,7 @@
     },
     "sdk/legacy": {
       "name": "@frak-labs/nexus-sdk",
-      "version": "0.0.47",
+      "version": "0.0.48",
       "dependencies": {
         "@frak-labs/core-sdk": "workspace:*",
       },
@@ -599,7 +599,7 @@
     },
     "sdk/react": {
       "name": "@frak-labs/react-sdk",
-      "version": "1.0.2",
+      "version": "1.1.0",
       "dependencies": {
         "@frak-labs/core-sdk": "workspace:*",
         "@frak-labs/frame-connector": "workspace:*",
@@ -633,7 +633,7 @@
     },
     "services/backend": {
       "name": "@frak-labs/backend-elysia",
-      "version": "0.0.19",
+      "version": "0.0.20",
       "dependencies": {
         "@bogeychan/elysia-logger": "^0.1.10",
         "@elysiajs/cors": "^1.4.1",
