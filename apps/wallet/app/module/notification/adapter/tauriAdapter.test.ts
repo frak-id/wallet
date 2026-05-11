@@ -448,8 +448,7 @@ describe.sequential("createTauriNotificationAdapter", () => {
         expect(received).toEqual([]);
     });
 
-    it("should openSettings: call invoke with app-settings plugin on Android", async () => {
-        isAndroidMock.mockReturnValue(true);
+    it("should openSettings: call invoke with app-settings plugin on both platforms", async () => {
         invokeMock.mockResolvedValue(undefined);
 
         const adapter = createTauriNotificationAdapter();
@@ -459,16 +458,5 @@ describe.sequential("createTauriNotificationAdapter", () => {
             "plugin:app-settings|open_notification_settings"
         );
         expect(openUrlMock).not.toHaveBeenCalled();
-    });
-
-    it("should openSettings: call openUrl with app-settings on iOS", async () => {
-        isAndroidMock.mockReturnValue(false);
-        openUrlMock.mockResolvedValue(undefined);
-
-        const adapter = createTauriNotificationAdapter();
-        await adapter.openSettings();
-
-        expect(openUrlMock).toHaveBeenCalledWith("app-settings:");
-        expect(invokeMock).not.toHaveBeenCalled();
     });
 });

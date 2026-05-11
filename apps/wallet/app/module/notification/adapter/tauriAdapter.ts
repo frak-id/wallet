@@ -1,4 +1,3 @@
-import { IS_ANDROID } from "@frak-labs/app-essentials/utils/platform";
 import { authenticatedWalletApi, getInvoke } from "@frak-labs/wallet-shared";
 import type { PluginListener } from "@tauri-apps/api/core";
 import i18next from "i18next";
@@ -197,13 +196,8 @@ export function createTauriNotificationAdapter(): NotificationAdapter {
         },
 
         openSettings: async () => {
-            if (IS_ANDROID) {
-                const invoke = await getInvoke();
-                await invoke("plugin:app-settings|open_notification_settings");
-            } else {
-                const { openUrl } = await import("@tauri-apps/plugin-opener");
-                await openUrl("app-settings:");
-            }
+            const invoke = await getInvoke();
+            await invoke("plugin:app-settings|open_notification_settings");
         },
 
         events,

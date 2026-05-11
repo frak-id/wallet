@@ -1,4 +1,4 @@
-import { IS_TAURI } from "@frak-labs/app-essentials/utils/platform";
+import { IS_ANDROID } from "@frak-labs/app-essentials/utils/platform";
 import { useBlocker } from "@tanstack/react-router";
 import { useEffect } from "react";
 import { modalStore } from "@/module/stores/modalStore";
@@ -50,11 +50,14 @@ export function useHardwareBack() {
     // Only registered while a modal is open — when unregistered,
     // AppPlugin's default behavior handles goBack / exit natively.
     //
-    // The `IS_TAURI` constant is the single gate. In web/listener builds it is
-    // a `false` literal, so this entire effect (including the dynamic
-    // `@tauri-apps/api/app` import) is dead-code-eliminated by Rolldown.
+    // The `IS_ANDROID` constant is the single gate. iOS has no hardware back
+    // button and the Tauri `app` plugin doesn't expose `back-button` on iOS,
+    // so calling `onBackButtonPress` there triggers an ACL rejection. In
+    // web/listener/iOS builds the constant collapses to `false`, so this
+    // effect (including the dynamic `@tauri-apps/api/app` import) is
+    // dead-code-eliminated by Rolldown.
     useEffect(() => {
-        if (!IS_TAURI || !hasModal) return;
+        if (!IS_ANDROID || !hasModal) return;
 
         const listenerPromise = import("@tauri-apps/api/app").then(
             ({ onBackButtonPress }) =>
