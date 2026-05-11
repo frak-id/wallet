@@ -26,7 +26,7 @@ export function ChainingConfig() {
     const cac = useWatch({ control, name: "cac" }) ?? 0;
     const ratio = useWatch({ control, name: "ratio" }) ?? 90;
     const chainingEnabled =
-        useWatch({ control, name: "chainingEnabled" }) ?? true;
+        useWatch({ control, name: "chainingEnabled" }) ?? false;
     const deperditionPerLevel =
         useWatch({ control, name: "deperditionPerLevel" }) ?? 80;
     const maxDepth = useWatch({ control, name: "maxDepth" }) ?? 5;
