@@ -7,7 +7,6 @@ import {
     trackEvent,
     useLogin,
 } from "@frak-labs/wallet-shared";
-import { useNavigate } from "@tanstack/react-router";
 import { Trans, useTranslation } from "react-i18next";
 import { type Address, slice } from "viem";
 import { useLastAuthenticatorHint } from "@/module/authentication/hook/useLastAuthenticatorHint";
@@ -19,12 +18,6 @@ type AuthActionsProps = {
     className?: string;
 };
 
-function shortenAddress(address: Address): string {
-    const start = slice(address, 0, 3); // "0x" + 2 hex chars
-    const end = slice(address, -4).replace("0x", "");
-    return `${start}...${end}`;
-}
-
 /**
  * Login actions rendered on the `/login` page.
  *
@@ -34,9 +27,8 @@ function shortenAddress(address: Address): string {
  *    another account" (`wallet.login.anotherAccount`).
  *  - When no hint: primary biometric button labeled `wallet.login.button`
  *    ("Use biometrics") — same text as the legacy login flow.
- *  - Always: secondary "Create a new wallet" that navigates to
- *    `/register?new=1` (registration happens on the register page, not
- *    inline here).
+ *  - The "Create a new wallet" action lives on the page header (see the
+ *    `<Back>` button on `/login`) which routes to `/register?new=1`.
  */
 export function AuthActions({
     onSuccess,
@@ -45,7 +37,6 @@ export function AuthActions({
     className,
 }: AuthActionsProps) {
     const { t } = useTranslation();
-    const navigate = useNavigate();
     const hint = useLastAuthenticatorHint();
     const { login, isLoading: isLoginLoading } = useLogin({
         onSuccess: () => onSuccess(),
@@ -80,13 +71,6 @@ export function AuthActions({
         login({});
     };
 
-    const handleCreateNew = () => {
-        trackEvent("auth_login_method_selected", {
-            method: "register_redirect",
-        });
-        navigate({ to: "/register", search: { new: true } });
-    };
-
     return (
         <>
             {hint && (
@@ -100,7 +84,6 @@ export function AuthActions({
                     >
                         <Trans
                             i18nKey="wallet.login.useMyAccount"
-                            values={{ address: shortenAddress(hint.wallet) }}
                         />
                     </Button>
                 </Box>
@@ -122,11 +105,6 @@ export function AuthActions({
                                 : "wallet.login.button"
                         }
                     />
-                </Button>
-            </Box>
-            <Box>
-                <Button variant="secondary" onClick={handleCreateNew}>
-                    <Trans i18nKey="authent.sso.btn.existing.create" />
                 </Button>
             </Box>
         </>

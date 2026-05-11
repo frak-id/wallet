@@ -225,10 +225,9 @@
             "button": "Utiliser la biométrie",
             "title": "Connectez-vous à votre porte-monnaie",
             "recover": "Récupérer le porte-monnaie à partir du fichier",
-            "walletsOnDevice": "Porte-monnaies utilisés sur cet appareil",
             "privy": "Connection via Privy",
             "useQRCode": "Utiliser un QR code pour me connecter",
-            "useMyAccount": "Utiliser mon compte <strong>{{address}}</strong>",
+            "useMyAccount": "Continuer avec mon compte",
             "anotherAccount": "Se connecter avec un autre compte"
         },
         "notifications": {

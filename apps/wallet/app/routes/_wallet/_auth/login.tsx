@@ -101,6 +101,17 @@ function LoginPage() {
                     </>
                 }
             >
+                <Box paddingLeft="m">
+                    <Back
+                        onClick={() =>
+                            navigate({
+                                to: "/register",
+                                search: { new: true },
+                                replace: true,
+                            })
+                        }
+                    />
+                </Box>
                 <Box className={layout.content}>
                     <ContentBlock
                         icon={

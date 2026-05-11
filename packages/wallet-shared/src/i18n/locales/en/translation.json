@@ -227,10 +227,9 @@
             "button": "Use biometrics",
             "title": "Log in to your wallet",
             "recover": "Recover wallet from file",
-            "walletsOnDevice": "Wallets used on this device",
             "privy": "Connect via Privy",
             "useQRCode": "Use QR code to connect",
-            "useMyAccount": "Use my account <strong>{{address}}</strong>",
+            "useMyAccount": "Continue with my account",
             "anotherAccount": "Connect another account"
         },
         "notifications": {
