@@ -4,8 +4,9 @@ import { style } from "@vanilla-extract/css";
 export const body = style({
     display: "flex",
     flexDirection: "column",
-    justifyContent: "center",
     gap: alias.spacing.l,
+    flex: 1,
+    minHeight: 0,
 });
 
 export const heroImage = style({

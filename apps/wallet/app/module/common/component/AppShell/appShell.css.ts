@@ -61,7 +61,9 @@ export const mainContentWithNav = style([
 export const mainContentNoNav = style([
     mainContentBase,
     {
-        paddingBottom: alias.spacing.m,
+        // Reserve the home-indicator safe area so PageLayout's footer is not
+        // clipped by the iOS gesture bar on auth/onboarding screens.
+        paddingBottom: `calc(${alias.spacing.m} + env(safe-area-inset-bottom, 0px))`,
         "@media": {
             [`(min-width: ${tablet}px)`]: {
                 maxHeight: "758px",

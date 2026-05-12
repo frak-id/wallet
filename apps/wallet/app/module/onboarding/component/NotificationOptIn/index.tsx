@@ -23,6 +23,7 @@ export function NotificationOptIn({
 
     return (
         <PageLayout
+            fixedViewport
             footer={
                 <>
                     <Button

@@ -4,6 +4,7 @@ import { style } from "@vanilla-extract/css";
 
 const heroImageBase = style({
     height: "350px",
+    flex: "0 0 350px",
     overflow: "hidden",
 });
 

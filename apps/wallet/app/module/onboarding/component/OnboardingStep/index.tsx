@@ -41,6 +41,7 @@ export function OnboardingStep({
 
     return (
         <PageLayout
+            fixedViewport
             back={onBack ? <Back onClick={onBack} /> : undefined}
             footer={
                 <>

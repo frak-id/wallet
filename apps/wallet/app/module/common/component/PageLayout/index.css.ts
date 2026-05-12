@@ -35,3 +35,16 @@ export const footer = style({
     gap: alias.spacing.m,
     padding: alias.spacing.m,
 });
+
+// Pin the page to main's content box height so the footer stays in view
+// instead of being pushed out by tall content. Negative-margin bleed from
+// `container` is compensated by adding 2 * spacing.m to the target height.
+export const containerFixed = style({
+    height: `calc(100% + 2 * ${alias.spacing.m})`,
+    minHeight: 0,
+});
+
+// Suppress scroll inside the page so children must shrink to fit.
+export const contentFixed = style({
+    overflow: "hidden",
+});

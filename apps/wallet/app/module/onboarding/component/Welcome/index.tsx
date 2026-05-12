@@ -17,6 +17,7 @@ export function Welcome({ onContinue }: WelcomeProps) {
 
     return (
         <PageLayout
+            fixedViewport
             footer={
                 <>
                     <Button onClick={onContinue}>
