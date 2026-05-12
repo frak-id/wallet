@@ -22,6 +22,7 @@ import { ReferralCodeStep } from "@/module/onboarding/component/ReferralCodeStep
 import { onboardingSteps } from "@/module/onboarding/component/step/onboardingSteps";
 import { Welcome } from "@/module/onboarding/component/Welcome";
 import { useInstallReferrer } from "@/module/onboarding/hook/useInstallReferrer";
+import { withStepTransition } from "@/module/onboarding/utils/stepTransition";
 import { PairingInProgress } from "@/module/pairing/component/PairingInProgress";
 import { useExecutePendingActions } from "@/module/pending-actions/hook/useExecutePendingActions";
 import { modalStore } from "@/module/stores/modalStore";
@@ -82,6 +83,13 @@ function RegisterPage() {
     const { t } = useTranslation();
     const navigate = useNavigate();
     const [step, setStep] = useState<FlowStep>("onboardingOne");
+
+    const goToStep = useCallback(
+        (next: FlowStep, direction: "forward" | "backward" = "forward") => {
+            withStepTransition(direction, () => setStep(next));
+        },
+        []
+    );
     const [referralToast, setReferralToast] = useState<ToastState>("idle");
     const flowRef = useRef<Flow | null>(null);
 
@@ -121,8 +129,8 @@ function RegisterPage() {
         // Drain logical pending actions (ensure calls) immediately after auth.
         // Navigation actions are deferred until after the welcome screen.
         executePendingActions({ skipNavigation: true });
-        setStep("referralCode");
-    }, [closeModal, executePendingActions]);
+        goToStep("referralCode");
+    }, [closeModal, executePendingActions, goToStep]);
 
     // On mobile (where the QR-code option isn't offered on `/login`),
     // "Already have an account?" runs the login mutation inline. On the
@@ -190,8 +198,8 @@ function RegisterPage() {
         flowRef.current?.track("referral_code_resolved", {
             outcome: "auto_skipped_existing",
         });
-        setStep("notification");
-    }, [step, hasExistingReferrer]);
+        goToStep("notification");
+    }, [step, hasExistingReferrer, goToStep]);
 
     // Drive the referral-success toast lifecycle: shown → leaving → idle.
     useEffect(() => {
@@ -224,8 +232,8 @@ function RegisterPage() {
                     ? "auto_skipped_denied"
                     : "auto_skipped_granted",
         });
-        setStep("welcome");
-    }, [step, permissionStatus, permissionGranted, hasBackendToken]);
+        goToStep("welcome");
+    }, [step, permissionStatus, permissionGranted, hasBackendToken, goToStep]);
 
     const handleOpenKeypass = useCallback(() => {
         flowRef.current?.track("onboarding_action_clicked", {
@@ -242,15 +250,15 @@ function RegisterPage() {
             outcome: "applied",
         });
         setReferralToast("shown");
-        setStep("notification");
-    }, []);
+        goToStep("notification");
+    }, [goToStep]);
 
     const handleReferralSkip = useCallback(() => {
         flowRef.current?.track("referral_code_resolved", {
             outcome: "skipped",
         });
-        setStep("notification");
-    }, []);
+        goToStep("notification");
+    }, [goToStep]);
 
     const handleReferralError = useCallback((errorKey: string) => {
         flowRef.current?.track("referral_code_resolved", {
@@ -267,7 +275,7 @@ function RegisterPage() {
                 <OnboardingStep
                     hero={onboardingSteps[0]}
                     buttonLabel={t("onboarding.start")}
-                    onContinue={() => setStep("onboardingTwo")}
+                    onContinue={() => goToStep("onboardingTwo")}
                     loginLabel={t("onboarding.alreadyHaveAccount")}
                     onLoginClick={handleAlreadyHaveAccount}
                     isLoginLoading={isLoginLoading}
@@ -284,8 +292,8 @@ function RegisterPage() {
                 <OnboardingStep
                     hero={onboardingSteps[1]}
                     buttonLabel={t("onboarding.continue")}
-                    onContinue={() => setStep("onboardingThree")}
-                    onBack={() => setStep("onboardingOne")}
+                    onContinue={() => goToStep("onboardingThree")}
+                    onBack={() => goToStep("onboardingOne", "backward")}
                 />
             )}
             {step === "onboardingThree" && (
@@ -293,7 +301,7 @@ function RegisterPage() {
                     hero={onboardingSteps[2]}
                     buttonLabel={t("onboarding.activateSecureSpace")}
                     onContinue={handleOpenKeypass}
-                    onBack={() => setStep("onboardingTwo")}
+                    onBack={() => goToStep("onboardingTwo", "backward")}
                 />
             )}
             {step === "referralCode" && !hasExistingReferrer && (
@@ -312,7 +320,7 @@ function RegisterPage() {
                                     "notification_opt_in_resolved",
                                     { outcome: "enabled" }
                                 );
-                                setStep("welcome");
+                                goToStep("welcome");
                             })
                             .catch((err: unknown) => {
                                 flowRef.current?.track(
@@ -325,14 +333,14 @@ function RegisterPage() {
                                                 : String(err),
                                     }
                                 );
-                                setStep("welcome");
+                                goToStep("welcome");
                             });
                     }}
                     onSkip={() => {
                         flowRef.current?.track("notification_opt_in_resolved", {
                             outcome: "skipped",
                         });
-                        setStep("welcome");
+                        goToStep("welcome");
                     }}
                 />
             )}
