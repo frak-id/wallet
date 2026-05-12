@@ -40,7 +40,17 @@ export function PageLayout({
                 {back && <Box paddingLeft="m">{back}</Box>}
                 {children}
             </div>
-            {footer && <div className={styles.footer}>{footer}</div>}
+            {footer && (
+                <div
+                    className={
+                        fixedViewport
+                            ? `${styles.footer} ${styles.footerFixed}`
+                            : styles.footer
+                    }
+                >
+                    {footer}
+                </div>
+            )}
         </div>
     );
 }

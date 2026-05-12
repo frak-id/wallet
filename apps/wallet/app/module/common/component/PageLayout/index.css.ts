@@ -36,6 +36,12 @@ export const footer = style({
     padding: alias.spacing.m,
 });
 
+// Onboarding screens (those passing `fixedViewport`) keep the CTA off the
+// home indicator with a 32px floor that grows on devices with a larger inset.
+export const footerFixed = style({
+    paddingBottom: `max(${alias.spacing.xl}, env(safe-area-inset-bottom))`,
+});
+
 // Pin the page to main's content box height so the footer stays in view
 // instead of being pushed out by tall content. Negative-margin bleed from
 // `container` is compensated by adding 2 * spacing.m to the target height.
