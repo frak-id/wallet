@@ -15,10 +15,11 @@ import java.io.File
  * Bridges Tauri commands to the FirebaseCrashlytics singleton.
  *
  * Auto-capture (uncaught JVM exceptions + native NDK signals) is wired by
- * the Firebase SDK itself as soon as `FirebaseApp.initializeApp()` has run
- * (which happens during tauri-plugin-fcm setup). This class only adds the
- * **context** surface: user id, custom keys, breadcrumb logs, and explicit
- * non-fatal errors recorded from the JS / Rust side.
+ * the Firebase SDK as soon as `FirebaseApp.initializeApp()` has run, which the
+ * `google-services` Gradle plugin triggers automatically via FirebaseInitProvider
+ * before any application code runs. This class only adds the **context**
+ * surface: user id, custom keys, breadcrumb logs, and explicit non-fatal errors
+ * recorded from the JS / Rust side.
  */
 @TauriPlugin
 class FrakCrashlyticsPlugin(private val activity: Activity) : Plugin(activity) {

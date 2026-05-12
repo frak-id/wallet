@@ -120,7 +120,20 @@ targets:
           - $(SRCROOT)/Externals/arm64/${CONFIGURATION}/libapp.a
     postBuildScripts:
       - script: |
-          "${PODS_ROOT}/FirebaseCrashlytics/run"
+          # FirebaseCrashlytics is provided via Swift Package Manager by
+          # tauri-plugin-frak-crashlytics (and tauri-plugin-fcm). Tauri's swift-rs
+          # build clones firebase-ios-sdk into the Cargo target dir, so the
+          # upload-symbols binary lives there — NOT under ${PODS_ROOT} or Xcode's
+          # DerivedData/SourcePackages. The plugin build dir is content-hashed and
+          # the arch/profile combo varies per build, so glob for the binary and
+          # pick the most recently modified copy.
+          CARGO_TARGET_DIR="${CARGO_TARGET_DIR:-${PROJECT_DIR}/../../target}"
+          UPLOAD_SYMBOLS=$(/bin/ls -t "${CARGO_TARGET_DIR}"/*/*/build/tauri-plugin-*/out/swift-rs/*/checkouts/firebase-ios-sdk/Crashlytics/upload-symbols 2>/dev/null | head -n 1)
+          if [ -z "${UPLOAD_SYMBOLS}" ] || [ ! -x "${UPLOAD_SYMBOLS}" ]; then
+            echo "warning: Crashlytics upload-symbols not found under ${CARGO_TARGET_DIR}; skipping dSYM upload"
+            exit 0
+          fi
+          "${UPLOAD_SYMBOLS}" -gsp "${PROJECT_DIR}/app_iOS/GoogleService-Info.plist" -p ios "${DWARF_DSYM_FOLDER_PATH}/${DWARF_DSYM_FILE_NAME}"
         name: Upload dSYMs to Firebase Crashlytics
         basedOnDependencyAnalysis: false
         inputFiles:
