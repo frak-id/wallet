@@ -44,7 +44,6 @@ export function ReferralCodeStep({
 
     return (
         <PageLayout
-            fixedViewport
             footer={
                 <>
                     <Button
