@@ -57,6 +57,7 @@ export function RecoveryCodePage() {
 
     return (
         <PageLayout
+            back={<Back href="/register" replace />}
             footer={
                 <Button
                     onClick={handleValidate}
@@ -67,9 +68,6 @@ export function RecoveryCodePage() {
                 </Button>
             }
         >
-            <Box paddingLeft="m">
-                <Back href="/register" replace />
-            </Box>
             <div className={styles.wrapper}>
                 <Box display={"flex"} flexDirection={"column"} gap={"m"}>
                     <Title size="page">{t("recoveryCode.title")}</Title>

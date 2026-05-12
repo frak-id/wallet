@@ -68,6 +68,17 @@ function LoginPage() {
             <DemoTapZone navigate={navigate} />
             <PairingInProgress />
             <PageLayout
+                back={
+                    <Back
+                        onClick={() =>
+                            navigate({
+                                to: "/register",
+                                search: { new: true },
+                                replace: true,
+                            })
+                        }
+                    />
+                }
                 footer={
                     <>
                         {error && (
@@ -101,17 +112,6 @@ function LoginPage() {
                     </>
                 }
             >
-                <Box paddingLeft="m">
-                    <Back
-                        onClick={() =>
-                            navigate({
-                                to: "/register",
-                                search: { new: true },
-                                replace: true,
-                            })
-                        }
-                    />
-                </Box>
                 <Box className={layout.content}>
                     <ContentBlock
                         icon={

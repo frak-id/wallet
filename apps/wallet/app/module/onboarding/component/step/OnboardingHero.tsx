@@ -2,7 +2,7 @@ import { useTranslation } from "react-i18next";
 import { HeroContent } from "../HeroContent";
 import * as styles from "./index.css";
 
-export type SlideProps = {
+export type OnboardingHeroProps = {
     /** Translation key suffix: "one" | "two" | "three" */
     translationKey: string;
     /** Image source */
@@ -11,17 +11,17 @@ export type SlideProps = {
     imageVariant?: "cover" | "center";
     /** Optional max-width for the image (e.g. "223px") */
     imageMaxWidth?: string;
-    /** Hint that this slide owns the LCP — enables fetchpriority=high. */
+    /** Hint that this step owns the LCP — enables fetchpriority=high. */
     priority?: boolean;
 };
 
-export function Slide({
+export function OnboardingHero({
     translationKey,
     image,
     imageVariant = "center",
     imageMaxWidth,
     priority = false,
-}: SlideProps) {
+}: OnboardingHeroProps) {
     const { t } = useTranslation();
 
     return (
@@ -35,8 +35,8 @@ export function Slide({
                     loading={priority ? "eager" : "lazy"}
                     className={
                         imageVariant === "cover"
-                            ? styles.slideImg
-                            : styles.slideImgCenter
+                            ? styles.heroImage
+                            : styles.heroImageCenter
                     }
                     style={
                         imageMaxWidth ? { maxWidth: imageMaxWidth } : undefined
@@ -44,8 +44,8 @@ export function Slide({
                 />
             }
             imageVariant={imageVariant}
-            title={t(`onboarding.slides.${translationKey}.title`)}
-            description={t(`onboarding.slides.${translationKey}.description`)}
+            title={t(`onboarding.steps.${translationKey}.title`)}
+            description={t(`onboarding.steps.${translationKey}.description`)}
         />
     );
 }

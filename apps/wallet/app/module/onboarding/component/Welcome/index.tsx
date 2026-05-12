@@ -5,7 +5,7 @@ import { ExternalLink } from "@frak-labs/wallet-shared";
 import { Trans, useTranslation } from "react-i18next";
 import { PageLayout } from "@/module/common/component/PageLayout";
 import { HeroContent } from "../HeroContent";
-import * as slideStyles from "../slides/index.css";
+import * as stepStyles from "../step/index.css";
 import welcomeImg from "./welcome.webp";
 
 type WelcomeProps = {
@@ -40,14 +40,14 @@ export function Welcome({ onContinue }: WelcomeProps) {
                 </>
             }
         >
-            <div className={slideStyles.slide}>
+            <div className={stepStyles.body}>
                 <HeroContent
                     bleed
                     image={
                         <img
                             src={welcomeImg}
                             alt=""
-                            className={slideStyles.slideImgCenter}
+                            className={stepStyles.heroImageCenter}
                         />
                     }
                     title={t("onboarding.welcome.title")}

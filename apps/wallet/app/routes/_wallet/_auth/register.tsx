@@ -17,12 +17,9 @@ import { DemoTapZone } from "@/module/authentication/component/DemoTapZone";
 import { useNotificationStatus } from "@/module/notification/hook/useNotificationSetupStatus";
 import { useSubscribeToPushNotification } from "@/module/notification/hook/useSubscribeToPushNotification";
 import { NotificationOptIn } from "@/module/onboarding/component/NotificationOptIn";
-import { Onboarding } from "@/module/onboarding/component/Onboarding";
+import { OnboardingStep } from "@/module/onboarding/component/OnboardingStep";
 import { ReferralCodeStep } from "@/module/onboarding/component/ReferralCodeStep";
-import {
-    onboardingSlides,
-    Slide,
-} from "@/module/onboarding/component/slides/OnboardingSlides";
+import { onboardingSteps } from "@/module/onboarding/component/step/onboardingSteps";
 import { Welcome } from "@/module/onboarding/component/Welcome";
 import { useInstallReferrer } from "@/module/onboarding/hook/useInstallReferrer";
 import { PairingInProgress } from "@/module/pairing/component/PairingInProgress";
@@ -60,7 +57,19 @@ export const Route = createFileRoute("/_wallet/_auth/register")({
     },
 });
 
-type FlowStep = "onboarding" | "referralCode" | "notification" | "welcome";
+const ONBOARDING_FLOW_STEPS = [
+    "onboardingOne",
+    "onboardingTwo",
+    "onboardingThree",
+] as const;
+
+type OnboardingFlowStep = (typeof ONBOARDING_FLOW_STEPS)[number];
+
+type FlowStep =
+    | OnboardingFlowStep
+    | "referralCode"
+    | "notification"
+    | "welcome";
 
 type ToastState = "idle" | "shown" | "leaving";
 
@@ -72,7 +81,7 @@ const TOAST_EXIT_MS = 220;
 function RegisterPage() {
     const { t } = useTranslation();
     const navigate = useNavigate();
-    const [step, setStep] = useState<FlowStep>("onboarding");
+    const [step, setStep] = useState<FlowStep>("onboardingOne");
     const [referralToast, setReferralToast] = useState<ToastState>("idle");
     const flowRef = useRef<Flow | null>(null);
 
@@ -145,6 +154,20 @@ function RegisterPage() {
     const { permissionStatus, permissionGranted, hasBackendToken } =
         useNotificationStatus();
     const { subscribeToPushAsync } = useSubscribeToPushNotification();
+
+    // Fire on each onboarding step entry. Event name keeps the legacy
+    // `*_slide_viewed` suffix for analytics-history continuity even though
+    // the UI no longer uses a slider — see the event declaration in
+    // `packages/wallet-shared/src/common/analytics/events/onboarding.ts`.
+    useEffect(() => {
+        const index = ONBOARDING_FLOW_STEPS.indexOf(step as OnboardingFlowStep);
+        if (index === -1) return;
+        flowRef.current?.track("onboarding_slide_viewed", {
+            index,
+            translation_key:
+                onboardingSteps[index]?.translationKey ?? "unknown",
+        });
+    }, [step]);
 
     // Fire `referral_code_viewed` once we land on that step
     useEffect(() => {
@@ -240,11 +263,11 @@ function RegisterPage() {
         <>
             <DemoTapZone navigate={navigate} />
             <PairingInProgress />
-            {step === "onboarding" && (
-                <Onboarding
-                    firstButtonLabel={t("onboarding.start")}
-                    buttonLabel={t("onboarding.continue")}
-                    lastButtonLabel={t("onboarding.activateSecureSpace")}
+            {step === "onboardingOne" && (
+                <OnboardingStep
+                    hero={onboardingSteps[0]}
+                    buttonLabel={t("onboarding.start")}
+                    onContinue={() => setStep("onboardingTwo")}
                     loginLabel={t("onboarding.alreadyHaveAccount")}
                     onLoginClick={handleAlreadyHaveAccount}
                     isLoginLoading={isLoginLoading}
@@ -255,20 +278,23 @@ function RegisterPage() {
                         });
                         navigate({ to: "/recovery-code" });
                     }}
-                    onFinish={handleOpenKeypass}
-                    onSlideViewed={(index) => {
-                        flowRef.current?.track("onboarding_slide_viewed", {
-                            index,
-                            translation_key:
-                                onboardingSlides[index]?.translationKey ??
-                                "unknown",
-                        });
-                    }}
-                >
-                    {onboardingSlides.map((slide) => (
-                        <Slide key={slide.translationKey} {...slide} />
-                    ))}
-                </Onboarding>
+                />
+            )}
+            {step === "onboardingTwo" && (
+                <OnboardingStep
+                    hero={onboardingSteps[1]}
+                    buttonLabel={t("onboarding.continue")}
+                    onContinue={() => setStep("onboardingThree")}
+                    onBack={() => setStep("onboardingOne")}
+                />
+            )}
+            {step === "onboardingThree" && (
+                <OnboardingStep
+                    hero={onboardingSteps[2]}
+                    buttonLabel={t("onboarding.activateSecureSpace")}
+                    onContinue={handleOpenKeypass}
+                    onBack={() => setStep("onboardingTwo")}
+                />
             )}
             {step === "referralCode" && !hasExistingReferrer && (
                 <ReferralCodeStep

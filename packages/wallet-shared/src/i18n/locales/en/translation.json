@@ -519,7 +519,7 @@
         "activateSecureSpace": "Activate my secure space",
         "alreadyHaveAccount": "Already have an account?",
         "recoveryCode": "I have a recovery code",
-        "slides": {
+        "steps": {
             "one": {
                 "title": "Earn money by recommending",
                 "description": "Share your favorites and earn money for every purchase you help generate."

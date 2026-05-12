@@ -517,7 +517,7 @@
         "activateSecureSpace": "Activer mon espace sécurisé",
         "alreadyHaveAccount": "Déjà un compte ?",
         "recoveryCode": "J'ai un code de récupération",
-        "slides": {
+        "steps": {
             "one": {
                 "title": "Gagne de l'argent en recommandant",
                 "description": "Partage tes coups de cœur et gagne de l'argent à chaque achat généré grâce à toi."

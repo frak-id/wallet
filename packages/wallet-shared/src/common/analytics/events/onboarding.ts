@@ -20,13 +20,15 @@ export type ReferralCodeOutcome =
 type OnboardingFlow = FlowEvents<"onboarding">;
 
 type OnboardingMidFlowEvents = {
+    // Legacy name: kept as `*_slide_viewed` to preserve analytics history.
+    // The onboarding UI now uses "step" lexicon (see OnboardingStep);
+    // do not rename without coordinating with downstream dashboards.
     onboarding_slide_viewed: OnboardingBaseProps & {
         index: number;
         translation_key: string;
     };
     onboarding_action_clicked: OnboardingBaseProps & {
         action: OnboardingAction;
-        slide_index?: number;
     };
     referral_code_viewed: OnboardingBaseProps | undefined;
     referral_code_resolved: OnboardingBaseProps & {

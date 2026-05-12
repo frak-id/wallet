@@ -6,7 +6,7 @@ import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { PageLayout } from "@/module/common/component/PageLayout";
 import { HeroContent } from "../HeroContent";
-import * as slideStyles from "../slides/index.css";
+import * as stepStyles from "../step/index.css";
 import notificationImg from "./notification.webp";
 
 type NotificationOptInProps = {
@@ -46,13 +46,13 @@ export function NotificationOptIn({
             }
         >
             {isEnabling && <Overlay />}
-            <div className={slideStyles.slide}>
+            <div className={stepStyles.body}>
                 <HeroContent
                     image={
                         <img
                             src={notificationImg}
                             alt=""
-                            className={slideStyles.slideImgCenter}
+                            className={stepStyles.heroImageCenter}
                         />
                     }
                     title={t("onboarding.notification.title")}
