@@ -16,6 +16,7 @@ import { useTranslation } from "react-i18next";
 import { DemoTapZone } from "@/module/authentication/component/DemoTapZone";
 import { useNotificationStatus } from "@/module/notification/hook/useNotificationSetupStatus";
 import { useSubscribeToPushNotification } from "@/module/notification/hook/useSubscribeToPushNotification";
+import { EmailInputStep } from "@/module/onboarding/component/EmailInputStep";
 import { NotificationOptIn } from "@/module/onboarding/component/NotificationOptIn";
 import { OnboardingStep } from "@/module/onboarding/component/OnboardingStep";
 import { ReferralCodeStep } from "@/module/onboarding/component/ReferralCodeStep";
@@ -68,6 +69,7 @@ type OnboardingFlowStep = (typeof ONBOARDING_FLOW_STEPS)[number];
 
 type FlowStep =
     | OnboardingFlowStep
+    | "emailInput"
     | "referralCode"
     | "notification"
     | "welcome";
@@ -83,6 +85,12 @@ function RegisterPage() {
     const { t } = useTranslation();
     const navigate = useNavigate();
     const [step, setStep] = useState<FlowStep>("onboardingOne");
+    // Hold the email collected on the `emailInput` step. Stays in component
+    // state so navigating back to the step pre-fills the field.
+    // TODO: forward to the backend on register — the endpoint already accepts
+    // an optional email (`services/backend/src/api/user/wallet/auth/register.ts`,
+    // `email: t.Optional(t.String({ format: "email" }))`).
+    const [email, setEmail] = useState("");
 
     const goToStep = useCallback(
         (next: FlowStep, direction: "forward" | "backward" = "forward") => {
@@ -175,6 +183,13 @@ function RegisterPage() {
             translation_key:
                 onboardingSteps[index]?.translationKey ?? "unknown",
         });
+    }, [step]);
+
+    // Fire `email_input_viewed` once we land on the email step
+    useEffect(() => {
+        if (step === "emailInput") {
+            flowRef.current?.track("email_input_viewed");
+        }
     }, [step]);
 
     // Fire `referral_code_viewed` once we land on that step
@@ -292,8 +307,26 @@ function RegisterPage() {
                 <OnboardingStep
                     hero={onboardingSteps[1]}
                     buttonLabel={t("onboarding.continue")}
-                    onContinue={() => goToStep("onboardingThree")}
+                    onContinue={() => goToStep("emailInput")}
                     onBack={() => goToStep("onboardingOne", "backward")}
+                />
+            )}
+            {step === "emailInput" && (
+                <EmailInputStep
+                    initialValue={email}
+                    onContinue={(value) => {
+                        setEmail(value);
+                        flowRef.current?.track("email_input_resolved", {
+                            outcome: "submitted",
+                        });
+                        goToStep("onboardingThree");
+                    }}
+                    onBack={() => {
+                        flowRef.current?.track("email_input_resolved", {
+                            outcome: "back",
+                        });
+                        goToStep("onboardingTwo", "backward");
+                    }}
                 />
             )}
             {step === "onboardingThree" && (
@@ -301,7 +334,7 @@ function RegisterPage() {
                     hero={onboardingSteps[2]}
                     buttonLabel={t("onboarding.activateSecureSpace")}
                     onContinue={handleOpenKeypass}
-                    onBack={() => goToStep("onboardingTwo", "backward")}
+                    onBack={() => goToStep("emailInput", "backward")}
                 />
             )}
             {step === "referralCode" && !hasExistingReferrer && (

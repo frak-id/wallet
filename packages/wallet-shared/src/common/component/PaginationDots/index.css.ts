@@ -32,8 +32,7 @@ export const dot = style({
     transform: "scale(0.6667)",
     transformOrigin: "center",
     WebkitTapHighlightColor: "transparent",
-    transition:
-        "transform 0.25s ease-out, opacity 0.25s ease-out",
+    transition: "transform 0.25s ease-out, opacity 0.25s ease-out",
 });
 
 export const dotActive = style({

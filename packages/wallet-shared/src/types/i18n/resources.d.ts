@@ -408,6 +408,14 @@ interface Resources {
             activateSecureSpace: "Activate my secure space";
             alreadyHaveAccount: "Already have an account?";
             continue: "Continue";
+            email: {
+                clearAriaLabel: "Clear email address";
+                continue: "Continue";
+                description: "Your email is only used to recover your account if you forget it. It will never be used to send you unsolicited messages.";
+                label: "Email";
+                placeholder: "name@example.com";
+                title: "Enter your email address";
+            };
             keypass: {
                 description: "A secure key is saved in your password manager to quickly log in via biometrics.";
                 existingAccount: {

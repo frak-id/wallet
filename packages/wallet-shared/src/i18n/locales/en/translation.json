@@ -533,6 +533,14 @@
                 "description": "No forms, no paperwork. Your wallet is ready to receive your earnings, instantly."
             }
         },
+        "email": {
+            "title": "Enter your email address",
+            "description": "Your email is only used to recover your account if you forget it. It will never be used to send you unsolicited messages.",
+            "label": "Email",
+            "placeholder": "name@example.com",
+            "continue": "Continue",
+            "clearAriaLabel": "Clear email address"
+        },
         "keypass": {
             "title": "Secure your account",
             "description": "A secure key is saved in your password manager to quickly log in via biometrics.",
