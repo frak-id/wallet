@@ -106,7 +106,7 @@
             "menuLabel": "Parrainages",
             "invite": {
                 "title": "Invite tes ami·e·s sur Frak",
-                "description": "Crée ton code et partage le à tes proches. Gagner encore plus d'argent sur tes achats réalisés sur tous les sites partenaires.",
+                "description": "Crée ton code et partage-le avec tes proches pour gagner encore plus d'argent.",
                 "cta": "Générer mon code"
             },
             "enterCode": {
