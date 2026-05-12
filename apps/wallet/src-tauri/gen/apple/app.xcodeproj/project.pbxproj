@@ -167,7 +167,6 @@
 				81BE6BC5B603407AF570E994 /* Sources */,
 				2FBCB8C3ED193E9C4A9FDB59 /* Resources */,
 				4825CF6C55516D374210C8E1 /* Frameworks */,
-				C1C41F7BFE0F714A7A5E31F2 /* Upload dSYMs to Firebase Crashlytics */,
 			);
 			buildRules = (
 			);
@@ -229,28 +228,6 @@
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXShellScriptBuildPhase section */
-		C1C41F7BFE0F714A7A5E31F2 /* Upload dSYMs to Firebase Crashlytics */ = {
-			isa = PBXShellScriptBuildPhase;
-			alwaysOutOfDate = 1;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			inputFileListPaths = (
-			);
-			inputPaths = (
-				"${DWARF_DSYM_FOLDER_PATH}/${DWARF_DSYM_FILE_NAME}/Contents/Resources/DWARF/${TARGET_NAME}",
-				"$(TARGET_BUILD_DIR)/$(INFOPLIST_PATH)",
-				"${PROJECT_DIR}/app_iOS/GoogleService-Info.plist",
-			);
-			name = "Upload dSYMs to Firebase Crashlytics";
-			outputFileListPaths = (
-			);
-			outputPaths = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-			shellPath = /bin/sh;
-			shellScript = "# FirebaseCrashlytics is provided via Swift Package Manager by\n# tauri-plugin-frak-crashlytics (and tauri-plugin-fcm). Tauri's swift-rs\n# build clones firebase-ios-sdk into the Cargo target dir, so the\n# upload-symbols binary lives there -- NOT under $PODS_ROOT or Xcode's\n# DerivedData/SourcePackages. The plugin build dir is content-hashed and\n# the arch/profile combo varies per build, so glob for the binary and\n# pick the most recently modified copy.\nCARGO_TARGET_DIR=\"${CARGO_TARGET_DIR:-${PROJECT_DIR}/../../target}\"\nUPLOAD_SYMBOLS=$(/bin/ls -t \"${CARGO_TARGET_DIR}\"/*/*/build/tauri-plugin-*/out/swift-rs/*/checkouts/firebase-ios-sdk/Crashlytics/upload-symbols 2>/dev/null | head -n 1)\nif [ -z \"${UPLOAD_SYMBOLS}\" ] || [ ! -x \"${UPLOAD_SYMBOLS}\" ]; then\n  echo \"warning: Crashlytics upload-symbols not found under ${CARGO_TARGET_DIR}; skipping dSYM upload\"\n  exit 0\nfi\n\"${UPLOAD_SYMBOLS}\" -gsp \"${PROJECT_DIR}/app_iOS/GoogleService-Info.plist\" -p ios \"${DWARF_DSYM_FOLDER_PATH}/${DWARF_DSYM_FILE_NAME}\"\n";
-		};
 		E028F843270D8815FCE2B491 /* Build Rust Code */ = {
 			isa = PBXShellScriptBuildPhase;
 			alwaysOutOfDate = 1;

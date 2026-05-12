@@ -335,6 +335,48 @@ jobs:
           APPLE_API_KEY: ${{ secrets.APPSTORE_API_KEY_ID }}
           APPLE_API_KEY_PATH: ${{ runner.temp }}/AuthKey.p8
 
+      # Run out-of-band from xcodebuild: doing this as an Xcode build phase races with
+      # `dsymutil` (the script can fire before dSYM generation finalizes) and SIGBUSes
+      # `upload-symbols`. By the time this step runs, the xcarchive and its dSYMs are
+      # on disk at a stable path. Soft-fail so a Firebase outage can't block TestFlight.
+      - name: "🔥 Upload dSYMs to Firebase Crashlytics"
+        continue-on-error: true
+        run: |
+          set -euo pipefail
+          APPLE_DIR="apps/wallet/src-tauri/gen/apple"
+          # Tauri uses apps/wallet/src-tauri/target by default. PROJECT_DIR in the
+          # old Xcode script was gen/apple, so its `../../target` lands two levels
+          # up from APPLE_DIR.
+          CARGO_TARGET_DIR="${CARGO_TARGET_DIR:-$APPLE_DIR/../../target}"
+          GSP="$APPLE_DIR/app_iOS/GoogleService-Info.plist"
+          DSYMS_DIR="$APPLE_DIR/build/app_iOS.xcarchive/dSYMs"
+
+          # `upload-symbols` is a host macOS binary shipped inside the firebase-ios-sdk
+          # SPM checkout. swift-rs clones the SDK under <target-triple>/<profile>/build/
+          # and the plugin build dir is content-hashed, so glob and pick the most
+          # recently modified copy.
+          UPLOAD_SYMBOLS=$(
+            /bin/ls -t \
+              "$CARGO_TARGET_DIR"/*/*/build/tauri-plugin-*/out/swift-rs/*/checkouts/firebase-ios-sdk/Crashlytics/upload-symbols \
+              2>/dev/null | head -n 1
+          )
+
+          if [ -z "${UPLOAD_SYMBOLS:-}" ] || [ ! -x "$UPLOAD_SYMBOLS" ]; then
+            echo "::warning::Crashlytics upload-symbols not found under $CARGO_TARGET_DIR; skipping"
+            exit 0
+          fi
+          if [ ! -d "$DSYMS_DIR" ]; then
+            echo "::warning::No dSYMs dir at $DSYMS_DIR; skipping"
+            exit 0
+          fi
+
+          echo "Using upload-symbols: $UPLOAD_SYMBOLS"
+          shopt -s nullglob
+          for dsym in "$DSYMS_DIR"/*.dSYM; do
+            echo "Uploading $dsym"
+            "$UPLOAD_SYMBOLS" -gsp "$GSP" -p ios "$dsym"
+          done
+
       # apple-actions/upload-testflight-build@v4 uses iTMSTransporter which was removed in Xcode 14+.
       # xcrun altool is the supported replacement on macos-15 (Xcode 16.4).
       - name: "🚀 Upload to TestFlight"

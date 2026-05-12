@@ -72,10 +72,11 @@ plugins.
 - **Version floor** is pinned to the same major+minor as `tauri-plugin-fcm`'s
   Package.swift so Xcode's workspace-level SPM resolution converges on a single
   Firebase copy. Bumping one plugin requires bumping the other in lockstep.
-- **Run Script Phase** in `gen/apple/project.yml → app_iOS.postBuildScripts`
-  uploads dSYMs to Firebase on every build. `DEBUG_INFORMATION_FORMAT` is set
-  to `dwarf-with-dsym` for **both** debug and release so symbolicated reports
-  show up regardless of configuration.
+- **dSYM upload runs in CI**, not from Xcode. `DEBUG_INFORMATION_FORMAT` is set
+  to `dwarf-with-dsym` for **both** debug and release so dSYMs are produced
+  regardless of configuration; the GitHub Actions release workflow then invokes
+  `upload-symbols` against the xcarchive after `tauri ios build` finishes. See
+  the "Symbol upload" section below for the rationale.
 
 ### Android
 
@@ -91,16 +92,23 @@ plugins.
 
 ## Symbol upload
 
-### iOS dSYMs (auto)
+### iOS dSYMs (CI step)
 
-The post-build Run Script invokes `upload-symbols` from Tauri's swift-rs SPM
-checkout under the Cargo target dir
-(`${CARGO_TARGET_DIR:-${PROJECT_DIR}/../../target}/<arch>/<profile>/build/tauri-plugin-*/out/swift-rs/*/checkouts/firebase-ios-sdk/Crashlytics/upload-symbols`).
-The plugin build dir is content-hashed and the arch/profile combo varies per
-build, so the script globs and picks the most recently modified copy. It skips
-with a warning if no binary is found (e.g. during a clean before any plugin has
-built). For TestFlight / App Store builds, Xcode produces `.xcarchive` bundles
-whose dSYMs are uploaded by the same script during the archive step.
+`.github/workflows/tauri-mobile-release.yml` invokes `upload-symbols` after
+`tauri ios build` finishes, against the xcarchive at
+`apps/wallet/src-tauri/gen/apple/build/app_iOS.xcarchive/dSYMs/*.dSYM`.
+
+`upload-symbols` itself is a host macOS binary shipped inside the firebase-ios-sdk
+SPM checkout under the Cargo target dir
+(`${CARGO_TARGET_DIR:-apps/wallet/src-tauri/target}/<arch>/<profile>/build/tauri-plugin-*/out/swift-rs/*/checkouts/firebase-ios-sdk/Crashlytics/upload-symbols`).
+The plugin build dir is content-hashed and several swift-rs checkouts may exist
+(one per target triple) — they all ship the same prebuilt universal binary, so
+the workflow globs and picks the most recently modified copy.
+
+This used to run as an Xcode build phase, but it raced with `dsymutil` —
+`upload-symbols` would SIGBUS reading a not-yet-finalized dSYM. Running it after
+xcodebuild has fully exited removes the race entirely, and a Firebase outage no
+longer blocks the TestFlight upload.
 
 ### Android NDK symbols (manual / CI)
 
