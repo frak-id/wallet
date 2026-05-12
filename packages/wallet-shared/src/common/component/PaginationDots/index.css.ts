@@ -11,20 +11,32 @@ export const dots = style({
 });
 
 export const dot = style({
+    appearance: "none",
+    WebkitAppearance: "none",
     border: "none",
+    margin: 0,
     padding: 0,
+    boxSizing: "border-box",
+    font: "inherit",
+    lineHeight: 0,
     cursor: "pointer",
-    width: "4px",
-    height: "4px",
+    width: "6px",
+    height: "6px",
     borderRadius: alias.cornerRadius.full,
     backgroundColor: vars.icon.disabled,
     opacity: 0.7,
+    // Inactive dots scale down to 4×4 visually. Using transform instead of
+    // animating width/height keeps the size change on the GPU compositor —
+    // animating layout properties on Safari inside a scroll-snap container
+    // produced stuck/missed transitions on iOS.
+    transform: "scale(0.6667)",
+    transformOrigin: "center",
+    WebkitTapHighlightColor: "transparent",
     transition:
-        "width 0.25s ease-out, height 0.25s ease-out, opacity 0.25s ease-out",
+        "transform 0.25s ease-out, opacity 0.25s ease-out",
 });
 
 export const dotActive = style({
-    width: "6px",
-    height: "6px",
+    transform: "scale(1)",
     opacity: 1,
 });
