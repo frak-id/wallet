@@ -5,18 +5,14 @@ import { style } from "@vanilla-extract/css";
 export const container = style({
     display: "flex",
     flexDirection: "column",
-    // Fill the AppShell main flex column so siblings (e.g. inline toasts)
-    // can claim their own height without forcing an overflow scrollbar.
-    flex: "1 1 0",
-    minHeight: 0,
+    // Fills main's scroll area, negative margins bleed into main's padding.
+    minHeight: `calc(100% + 2 * ${alias.spacing.m})`,
     marginRight: `calc(-1 * ${alias.spacing.m})`,
     marginBottom: `calc(-1 * ${alias.spacing.m})`,
     marginLeft: `calc(-1 * ${alias.spacing.m})`,
     background: vars.surface.background,
     selectors: {
-        // Bleed into main's top padding only when nothing is rendered above us.
-        // When a sibling (toast, banner, ...) precedes PageLayout, we keep the
-        // natural gap so the layouts don't overlap.
+        // Only bleed top when nothing precedes us.
         "&:first-child": {
             marginTop: `calc(-1 * ${alias.spacing.m})`,
         },
