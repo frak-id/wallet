@@ -220,7 +220,6 @@ interface Resources {
         };
         explorer: {
             card: {
-                badge: "Up to {{amount}}";
                 until: "Until {{date}}";
             };
             detail: {
@@ -340,10 +339,14 @@ interface Resources {
                     ibanManager: {
                         addNew: "Add an IBAN";
                         empty: "No IBAN saved. Add one to get started.";
+                        firstNameLabel: "First name";
+                        firstNamePlaceholder: "e.g. John";
                         ibanLabel: "IBAN";
                         ibanPlaceholder: "FR76...";
-                        nameLabel: "Beneficiary name";
-                        namePlaceholder: "e.g. My checking account";
+                        lastNameLabel: "Last name";
+                        lastNamePlaceholder: "e.g. Doe";
+                        pseudoLabel: "Pseudo / note";
+                        pseudoPlaceholder: "Defaults to first + last name";
                         remove: "Remove";
                         save: "Save";
                         select: "Select";
@@ -355,7 +358,6 @@ interface Resources {
                         beneficiaryLabel: "Beneficiary";
                         cancel: "Cancel";
                         confirm: "Confirm transfer";
-                        defaultNote: "Sent from FRAK";
                         title: "Summary";
                         warning: "Once confirmed, this operation cannot be cancelled";
                     };
@@ -428,7 +430,17 @@ interface Resources {
                 title: "Don't miss any reward!";
             };
             recoveryCode: "I have a recovery code";
-            slides: {
+            referral: {
+                appliedToast: "Referral code applied";
+                description: "Got a creator code? Enter it here. Otherwise, you can skip this step.";
+                label: "Referral code";
+                placeholder: "Ex: LOLA10";
+                skip: "Skip";
+                submitCta: "Apply code";
+                title: "Add a referral code";
+            };
+            start: "Get started";
+            steps: {
                 one: {
                     description: "Share your favorites and earn money for every purchase you help generate.";
                     title: "Earn money by recommending";
@@ -442,7 +454,6 @@ interface Resources {
                     title: "Your earnings in real time";
                 };
             };
-            start: "Get started";
             welcome: {
                 button: "Get started";
                 description: "Let's go! Explore our partner brands, recommend your favorites and turn your influence into earnings.";
@@ -571,9 +582,8 @@ interface Resources {
                 privy: "Connect via Privy";
                 recover: "Recover wallet from file";
                 title: "Log in to your wallet";
-                useMyAccount: "Use my account <strong>{{address}}</strong>";
+                useMyAccount: "Continue with my account";
                 useQRCode: "Use QR code to connect";
-                walletsOnDevice: "Wallets used on this device";
             };
             manageNotifications: "<strong>Manage notifications</strong> <br /> Open settings to control your notifications";
             notifications: {
@@ -784,11 +794,15 @@ interface Resources {
                     };
                     title: "Edit my code";
                 };
-                enterCode: "Enter a referral code";
+                enterCode: {
+                    cta: "Enter a referral code";
+                    description: "Earn money on every purchase you make across all partner sites.";
+                    title: "Enter a referral code";
+                };
                 invite: {
                     cta: "Generate my code";
-                    description: "Create your code and start sharing it with your loved ones to earn even more money.";
-                    title: "Invite friends";
+                    description: "Create your code and share it with your loved ones to earn even more money.";
+                    title: "Invite your friends to Frak";
                 };
                 menuLabel: "Referrals";
                 modify: "Modify";
@@ -903,10 +917,10 @@ interface Resources {
                     step3Title: "Earn money";
                 };
                 invite: {
-                    check1: "Create your referral code";
-                    check2: "Share it with your friends";
-                    check3: "Earn money on every order they place.";
-                    title: "Invite your friends and earn";
+                    check1: "Create your referral code.";
+                    check2: "Share it with your friends.";
+                    check3: "Earn money on every purchase made across all partner sites.";
+                    title: "Invite your friends to Frak";
                 };
                 notifications: {
                     description: "Enable notifications to track your earnings in real time.";
