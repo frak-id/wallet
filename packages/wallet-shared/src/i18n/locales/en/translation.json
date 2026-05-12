@@ -554,6 +554,15 @@
             "enable": "Yes, notify me",
             "skip": "Later"
         },
+        "referral": {
+            "title": "Add a referral code",
+            "description": "Got a creator code? Enter it here. Otherwise, you can skip this step.",
+            "label": "Referral code",
+            "placeholder": "Ex: LOLA10",
+            "submitCta": "Apply code",
+            "skip": "Skip",
+            "appliedToast": "Referral code applied"
+        },
         "welcome": {
             "title": "Welcome to your wallet",
             "description": "Let's go! Explore our partner brands, recommend your favorites and turn your influence into earnings.",

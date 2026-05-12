@@ -11,6 +11,12 @@ type OnboardingBaseProps = {
     flow_id?: string;
 };
 
+export type ReferralCodeOutcome =
+    | "applied"
+    | "skipped"
+    | "auto_skipped_existing"
+    | "error";
+
 type OnboardingFlow = FlowEvents<"onboarding">;
 
 type OnboardingMidFlowEvents = {
@@ -21,6 +27,11 @@ type OnboardingMidFlowEvents = {
     onboarding_action_clicked: OnboardingBaseProps & {
         action: OnboardingAction;
         slide_index?: number;
+    };
+    referral_code_viewed: OnboardingBaseProps | undefined;
+    referral_code_resolved: OnboardingBaseProps & {
+        outcome: ReferralCodeOutcome;
+        error_key?: string;
     };
 };
 

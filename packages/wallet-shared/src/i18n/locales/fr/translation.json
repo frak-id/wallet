@@ -551,6 +551,15 @@
             "enable": "Oui, me prévenir",
             "skip": "Plus tard"
         },
+        "referral": {
+            "title": "Ajoute un code de parrainage",
+            "description": "Tu as un code créateur ? Entre-le ici. Sinon, tu peux passer cette étape.",
+            "label": "Code de parrainage",
+            "placeholder": "Ex : LOLA10",
+            "submitCta": "Appliquer le code",
+            "skip": "Passer",
+            "appliedToast": "Code de parrainage appliqué"
+        },
         "welcome": {
             "title": "Bienvenue dans ton porte-monnaie",
             "description": "C'est parti ! Explore nos marques partenaires, recommande tes coups de cœur et transforme ton influence en argent.",
