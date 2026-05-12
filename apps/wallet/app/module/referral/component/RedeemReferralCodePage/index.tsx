@@ -10,34 +10,19 @@ import {
     CloseIcon,
 } from "@frak-labs/design-system/icons";
 import {
+    REDEMPTION_CODE_LENGTH,
     referralKey,
     resolveApiErrorKey,
-    useRedeemReferralCode,
+    useRedeemReferralCodeForm,
     useReferralStatus,
     useUnredeemReferralCode,
 } from "@frak-labs/wallet-shared";
 import { useQueryClient } from "@tanstack/react-query";
-import { type ChangeEvent, type FormEvent, useState } from "react";
+import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { DeleteRedemptionConfirmModal } from "../DeleteRedemptionConfirmModal";
 import { ReferralPageShell } from "../ReferralPageShell";
 import * as styles from "./index.css";
-
-const ERROR_KEY_MAP = {
-    byCode: {
-        NOT_FOUND: "wallet.referral.redeem.errorNotFound",
-        SELF_REFERRAL: "wallet.referral.redeem.errorSelf",
-        WOULD_CYCLE: "wallet.referral.redeem.errorCycle",
-        ALREADY_REDEEMED: "wallet.referral.redeem.errorAlreadyRedeemed",
-    },
-    // 400 = domain-level invalid; 422 = Elysia body validation
-    // (e.g. user submitted fewer than 6 chars).
-    byStatus: {
-        400: "wallet.referral.redeem.errorInvalid",
-        422: "wallet.referral.redeem.errorInvalid",
-    },
-    fallback: "wallet.referral.redeem.errorGeneric",
-} as const;
 
 // Unredeem rarely fails (404 means status is already stale; status
 // invalidation will reconcile). Anything else falls back to the generic
@@ -45,8 +30,6 @@ const ERROR_KEY_MAP = {
 const UNREDEEM_ERROR_KEY_MAP = {
     fallback: "wallet.referral.redeem.errorGeneric",
 } as const;
-
-const REDEMPTION_CODE_LENGTH = 6;
 
 export function RedeemReferralCodePage() {
     const { t } = useTranslation();
@@ -78,34 +61,16 @@ export function RedeemReferralCodePage() {
 
 function RedeemForm({ onRedeemed }: { onRedeemed: () => void }) {
     const { t } = useTranslation();
-    const redeem = useRedeemReferralCode({
-        mutations: { onSuccess: onRedeemed },
-    });
-
-    const [code, setCode] = useState("");
-    const hasValue = code.length > 0;
-    const isCompleteCode = code.length === REDEMPTION_CODE_LENGTH;
-
-    const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
-        const next = e.target.value
-            .replace(/[^a-zA-Z0-9]/g, "")
-            .slice(0, REDEMPTION_CODE_LENGTH)
-            .toUpperCase();
-        setCode(next);
-    };
-
-    const handleClear = () => {
-        setCode("");
-        redeem.reset();
-    };
-
-    const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
-        e.preventDefault();
-        if (!isCompleteCode || redeem.isPending) return;
-        redeem.mutate({ code });
-    };
-
-    const errorMessageKey = resolveApiErrorKey(redeem.error, ERROR_KEY_MAP);
+    const {
+        code,
+        hasValue,
+        canSubmit,
+        isPending,
+        errorMessageKey,
+        handleChange,
+        handleClear,
+        handleSubmit,
+    } = useRedeemReferralCodeForm({ onApplied: onRedeemed });
 
     return (
         <form onSubmit={handleSubmit}>
@@ -153,12 +118,10 @@ function RedeemForm({ onRedeemed }: { onRedeemed: () => void }) {
                     variant="secondary"
                     size="large"
                     width="full"
-                    disabled={!isCompleteCode || redeem.isPending}
-                    loading={redeem.isPending}
+                    disabled={!canSubmit}
+                    loading={isPending}
                 >
-                    {redeem.isPending
-                        ? null
-                        : t("wallet.referral.redeem.submitCta")}
+                    {isPending ? null : t("wallet.referral.redeem.submitCta")}
                 </Button>
                 {errorMessageKey ? (
                     <Text variant="caption" color="error" align="center">

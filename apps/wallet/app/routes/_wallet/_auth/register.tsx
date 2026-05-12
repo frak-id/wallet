@@ -1,3 +1,5 @@
+import { ConfirmationTooltip } from "@frak-labs/design-system/components/ConfirmationTooltip";
+import { ToastSurface } from "@frak-labs/design-system/components/ToastSurface";
 import {
     authenticatorStorage,
     type Flow,
@@ -6,6 +8,7 @@ import {
     trackEvent,
     ua,
     useLogin,
+    useReferralStatus,
 } from "@frak-labs/wallet-shared";
 import { createFileRoute, redirect, useNavigate } from "@tanstack/react-router";
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -15,6 +18,7 @@ import { useNotificationStatus } from "@/module/notification/hook/useNotificatio
 import { useSubscribeToPushNotification } from "@/module/notification/hook/useSubscribeToPushNotification";
 import { NotificationOptIn } from "@/module/onboarding/component/NotificationOptIn";
 import { Onboarding } from "@/module/onboarding/component/Onboarding";
+import { ReferralCodeStep } from "@/module/onboarding/component/ReferralCodeStep";
 import {
     onboardingSlides,
     Slide,
@@ -24,6 +28,7 @@ import { useInstallReferrer } from "@/module/onboarding/hook/useInstallReferrer"
 import { PairingInProgress } from "@/module/pairing/component/PairingInProgress";
 import { useExecutePendingActions } from "@/module/pending-actions/hook/useExecutePendingActions";
 import { modalStore } from "@/module/stores/modalStore";
+import * as styles from "./register.css";
 
 export const Route = createFileRoute("/_wallet/_auth/register")({
     component: RegisterPage,
@@ -55,13 +60,24 @@ export const Route = createFileRoute("/_wallet/_auth/register")({
     },
 });
 
-type FlowStep = "onboarding" | "notification" | "welcome";
+type FlowStep = "onboarding" | "referralCode" | "notification" | "welcome";
+
+type ToastState = "idle" | "shown" | "leaving";
+
+// Visible duration for the referral-code success toast.
+const REFERRAL_TOAST_VISIBLE_MS = 4000;
+// Matches `ConfirmationTooltip`'s 200ms exit animation + buffer.
+const TOAST_EXIT_MS = 220;
 
 function RegisterPage() {
     const { t } = useTranslation();
     const navigate = useNavigate();
     const [step, setStep] = useState<FlowStep>("onboarding");
+    const [referralToast, setReferralToast] = useState<ToastState>("idle");
     const flowRef = useRef<Flow | null>(null);
+
+    const { data: referralStatus } = useReferralStatus();
+    const hasExistingReferrer = Boolean(referralStatus?.crossMerchantReferrer);
 
     const openModal = modalStore((s) => s.openModal);
     const closeModal = modalStore((s) => s.closeModal);
@@ -91,12 +107,12 @@ function RegisterPage() {
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
-    const advanceToNotification = useCallback(() => {
+    const advanceToReferralCode = useCallback(() => {
         closeModal();
         // Drain logical pending actions (ensure calls) immediately after auth.
         // Navigation actions are deferred until after the welcome screen.
         executePendingActions({ skipNavigation: true });
-        setStep("notification");
+        setStep("referralCode");
     }, [closeModal, executePendingActions]);
 
     // On mobile (where the QR-code option isn't offered on `/login`),
@@ -130,12 +146,44 @@ function RegisterPage() {
         useNotificationStatus();
     const { subscribeToPushAsync } = useSubscribeToPushNotification();
 
+    // Fire `referral_code_viewed` once we land on that step
+    useEffect(() => {
+        if (step === "referralCode") {
+            flowRef.current?.track("referral_code_viewed");
+        }
+    }, [step]);
+
     // Fire `notification_opt_in_viewed` once we land on that step
     useEffect(() => {
         if (step === "notification") {
             flowRef.current?.track("notification_opt_in_viewed");
         }
     }, [step]);
+
+    // Auto-skip referral step if the user already has an applied referrer
+    // (e.g. install-referrer resolved before the user reaches this screen).
+    useEffect(() => {
+        if (step !== "referralCode" || !hasExistingReferrer) return;
+        flowRef.current?.track("referral_code_resolved", {
+            outcome: "auto_skipped_existing",
+        });
+        setStep("notification");
+    }, [step, hasExistingReferrer]);
+
+    // Drive the referral-success toast lifecycle: shown → leaving → idle.
+    useEffect(() => {
+        if (referralToast === "idle") return;
+        const delay =
+            referralToast === "shown"
+                ? REFERRAL_TOAST_VISIBLE_MS
+                : TOAST_EXIT_MS;
+        const next: ToastState = referralToast === "shown" ? "leaving" : "idle";
+        const timeoutId = window.setTimeout(
+            () => setReferralToast(next),
+            delay
+        );
+        return () => window.clearTimeout(timeoutId);
+    }, [referralToast]);
 
     // Auto-skip notification step if already granted or denied
     useEffect(() => {
@@ -162,9 +210,31 @@ function RegisterPage() {
         });
         openModal({
             id: "keypass",
-            onAuthSuccess: advanceToNotification,
+            onAuthSuccess: advanceToReferralCode,
         });
-    }, [openModal, advanceToNotification]);
+    }, [openModal, advanceToReferralCode]);
+
+    const handleReferralApplied = useCallback(() => {
+        flowRef.current?.track("referral_code_resolved", {
+            outcome: "applied",
+        });
+        setReferralToast("shown");
+        setStep("notification");
+    }, []);
+
+    const handleReferralSkip = useCallback(() => {
+        flowRef.current?.track("referral_code_resolved", {
+            outcome: "skipped",
+        });
+        setStep("notification");
+    }, []);
+
+    const handleReferralError = useCallback((errorKey: string) => {
+        flowRef.current?.track("referral_code_resolved", {
+            outcome: "error",
+            error_key: errorKey,
+        });
+    }, []);
 
     return (
         <>
@@ -199,6 +269,13 @@ function RegisterPage() {
                         <Slide key={slide.translationKey} {...slide} />
                     ))}
                 </Onboarding>
+            )}
+            {step === "referralCode" && !hasExistingReferrer && (
+                <ReferralCodeStep
+                    onApplied={handleReferralApplied}
+                    onSkip={handleReferralSkip}
+                    onError={handleReferralError}
+                />
             )}
             {step === "notification" && (
                 <NotificationOptIn
@@ -245,6 +322,20 @@ function RegisterPage() {
                     }}
                 />
             )}
+            {/*
+             * Rendered last so PageLayout's `:first-child` marginTop rule
+             * stays stable as the toast mounts/unmounts. ToastSurface is
+             * `position: absolute`, so render order does not affect layout.
+             */}
+            {referralToast !== "idle" ? (
+                <ToastSurface className={styles.toastOffset}>
+                    <ConfirmationTooltip
+                        isLeaving={referralToast === "leaving"}
+                    >
+                        {t("onboarding.referral.appliedToast")}
+                    </ConfirmationTooltip>
+                </ToastSurface>
+            ) : null}
         </>
     );
 }
