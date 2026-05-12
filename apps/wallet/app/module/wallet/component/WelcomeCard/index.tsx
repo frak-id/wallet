@@ -1,6 +1,6 @@
 import { Box } from "@frak-labs/design-system/components/Box";
 import { Card } from "@frak-labs/design-system/components/Card";
-import { useReferralStatus } from "@frak-labs/wallet-shared";
+import { PaginationDots, useReferralStatus } from "@frak-labs/wallet-shared";
 import { useNavigate } from "@tanstack/react-router";
 import { type KeyboardEvent, type MouseEvent, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -71,7 +71,7 @@ export function WelcomeCard() {
         (slide) => !dismissedSlides.includes(slide.id)
     );
     const hasMultipleSlides = visibleSlides.length > 1;
-    const { currentIndex, scrollContainerRef } = useSlideCarousel({
+    const { currentIndex, scrollContainerRef, goToIndex } = useSlideCarousel({
         slideCount: visibleSlides.length,
     });
 
@@ -171,6 +171,13 @@ export function WelcomeCard() {
                     </Box>
                 ))}
             </Box>
+            {hasMultipleSlides && (
+                <PaginationDots
+                    count={visibleSlides.length}
+                    currentIndex={currentIndex}
+                    onSelect={goToIndex}
+                />
+            )}
         </Box>
     );
 }
