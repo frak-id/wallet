@@ -65,11 +65,18 @@ export type MoneriumNewOrder = {
     memo?: string;
 };
 
+export type MoneriumOrderKind = "issue" | "redeem";
+export type MoneriumOrderState =
+    | "placed"
+    | "pending"
+    | "processed"
+    | "rejected";
+
 export type MoneriumOrder = {
     id: string;
     profile: string;
-    address: string;
-    kind: string;
+    address: Address;
+    kind: MoneriumOrderKind;
     chain: string;
     amount: string;
     currency: string;
@@ -81,10 +88,21 @@ export type MoneriumOrder = {
         details: MoneriumOrderDetails;
     };
     memo: string;
+    referenceNumber?: string;
     meta: {
         placedAt: string;
         processedAt?: string;
         rejectedReason?: string;
+        supportingDocumentId?: string;
+        /**
+         * Burn (redeem) or mint (issue) tx hashes. Populated once the
+         * order has been processed on-chain.
+         */
+        txHashes?: string[];
     };
-    state: string;
+    state: MoneriumOrderState;
+};
+
+export type MoneriumOrdersResponse = {
+    orders: MoneriumOrder[];
 };

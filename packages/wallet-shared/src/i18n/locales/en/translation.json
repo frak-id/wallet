@@ -762,6 +762,18 @@
                     "select": "Select"
                 }
             }
+        },
+        "order": {
+            "kind": {
+                "issue": "Bank deposit",
+                "redeem": "Withdraw to bank"
+            },
+            "state": {
+                "placed": "Order placed",
+                "pending": "Processing",
+                "processed": "Completed",
+                "rejected": "Rejected"
+            }
         }
     },
     "explorer": {

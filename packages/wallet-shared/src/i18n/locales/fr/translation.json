@@ -759,6 +759,18 @@
                     "select": "Sélectionner"
                 }
             }
+        },
+        "order": {
+            "kind": {
+                "issue": "Dépôt bancaire",
+                "redeem": "Virement vers la banque"
+            },
+            "state": {
+                "placed": "Ordre placé",
+                "pending": "En cours de traitement",
+                "processed": "Terminé",
+                "rejected": "Rejeté"
+            }
         }
     },
     "explorer": {

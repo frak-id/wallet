@@ -7,6 +7,8 @@ import type {
     MoneriumAddressesResponse,
     MoneriumNewOrder,
     MoneriumOrder,
+    MoneriumOrdersResponse,
+    MoneriumOrderState,
     MoneriumPostAddressResponse,
     MoneriumProfilesResponse,
     MoneriumTokenResponse,
@@ -247,13 +249,46 @@ export async function placeOrder(
         body: JSON.stringify({ kind: "redeem", ...order }),
     });
 }
+/**
+ * Filter parameters supported by `GET /orders`. Mirrors the OpenAPI spec at
+ * <https://monerium.dev/api-docs/v2> (`/orders` query parameters). Pagination
+ * is not exposed by the API — the endpoint returns the full set for the
+ * caller profile.
+ */
+export type GetOrdersParams = {
+    address?: Address;
+    txHash?: string;
+    profile?: string;
+    memo?: string;
+    state?: MoneriumOrderState;
+};
 
-// TODO(monerium-orders-monitoring): wire `GET /orders` and `GET /orders/{id}`
-// into the wallet history module so users can see redeem state transitions
-// (placed → pending → processed | rejected) and the on-chain burn tx hash.
-// Per Monerium's docs the canonical pattern is:
-//   1. Listen for ERC-20 Transfer events on the EURe token (mint = incoming
-//      SEPA, burn = outgoing SEPA) — addresses come from `GET /tokens`.
-//   2. On a matched event, fetch the order once via `GET /orders?txHash=...`
-//      (do NOT poll in a loop).
-// Tracked separately from this PR.
+function buildOrdersQuery(params?: GetOrdersParams): string {
+    if (!params) return "";
+    const searchParams = new URLSearchParams();
+    for (const [key, value] of Object.entries(params)) {
+        if (value !== undefined && value !== null && value !== "") {
+            searchParams.set(key, String(value));
+        }
+    }
+    const qs = searchParams.toString();
+    return qs ? `?${qs}` : "";
+}
+
+/**
+ * List orders for the caller's profile. Used by the wallet history view to
+ * surface redeem state transitions (`placed → pending → processed | rejected`)
+ * and, once available, the on-chain burn tx hash.
+ */
+export async function getOrders(
+    params?: GetOrdersParams
+): Promise<MoneriumOrdersResponse> {
+    return moneriumFetch<MoneriumOrdersResponse>(
+        `/orders${buildOrdersQuery(params)}`
+    );
+}
+
+/** Retrieve a single order by its UUID. */
+export async function getOrder(orderId: string): Promise<MoneriumOrder> {
+    return moneriumFetch<MoneriumOrder>(`/orders/${orderId}`);
+}
