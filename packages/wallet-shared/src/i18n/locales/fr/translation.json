@@ -332,11 +332,11 @@
             "detail": {
                 "howItWorks": "Comment ça marche ?",
                 "step1Title": "Explore nos marques partenaires",
-                "step1Description": "Un lien personnel est généré automatiquement à chaque partage.",
+                "step1Description": "Découvre des produits à recommander autour de toi.",
                 "step2Title": "Partage un article à tes ami·e·s",
-                "step2Description": "Un lien personnel est généré automatiquement à chaque partage.",
+                "step2Description": "Un lien personnel est automatiquement généré à chaque partage. S’ils achètent via ton lien, tu gagnes de l’argent.",
                 "step3Title": "Gagne de l'argent",
-                "step3Description": "En un clic, transfère tes gains vers ton compte bancaire.",
+                "step3Description": "Transfère tes gains en un clic vers ton compte bancaire.",
                 "discoverOffers": "Découvrir les offres",
                 "legal": "Les <termsLink>conditions générales</termsLink> de FRAK s'appliquent."
             }
