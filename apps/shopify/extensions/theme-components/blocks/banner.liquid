@@ -12,7 +12,7 @@
   {% if block.settings.inapp_title != blank %}inapp-title="{{ block.settings.inapp_title }}"{% endif %}
   {% if block.settings.inapp_description != blank %}inapp-description="{{ block.settings.inapp_description }}"{% endif %}
   {% if block.settings.inapp_cta != blank %}inapp-cta="{{ block.settings.inapp_cta }}"{% endif %}
-  {% if block.settings.image_url != blank %}image-url="{{ block.settings.image_url }}"{% endif %}
+  {% if block.settings.image_url != blank %}image-url="{{ block.settings.image_url | image_url: width: 200 }}"{% endif %}
   {% if request.design_mode and block.settings.enable_preview %}preview="true" preview-mode="{{ block.settings.preview_mode }}"{% endif %}
 ></frak-banner>
 
@@ -95,10 +95,10 @@
       "content": "Image"
     },
     {
-      "type": "text",
+      "type": "image_picker",
       "id": "image_url",
-      "label": "Custom image URL",
-      "info": "Override the gift icon on the left of the banner. Leave empty to keep the default Frak icon. Any aspect ratio works \u2014 the SDK contains the image to a 40\u00d740 slot."
+      "label": "Custom image",
+      "info": "Override the gift icon on the left of the banner. Drag-and-drop into the Files library, or pick an existing image. Leave empty to keep the default Frak icon. Any aspect ratio works — the SDK contains the image to a 40×40 slot."
     },
     {
       "type": "header",

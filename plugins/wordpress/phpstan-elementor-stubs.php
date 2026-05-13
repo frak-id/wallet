@@ -124,6 +124,7 @@ if ( ! class_exists( '\Elementor\Controls_Manager' ) ) {
 		const SELECT      = 'select';
 		const SWITCHER    = 'switcher';
 		const DIMENSIONS  = 'dimensions';
+		const MEDIA       = 'media';
 	}
 }
 

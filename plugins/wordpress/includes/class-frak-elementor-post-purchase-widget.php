@@ -198,9 +198,10 @@ class Frak_Elementor_Post_Purchase_Widget extends Frak_Elementor_Widget_Base {
 		$this->add_control(
 			'imageUrl',
 			array(
-				'label'       => esc_html__( 'Image URL', 'frak' ),
-				'type'        => \Elementor\Controls_Manager::TEXT,
-				'description' => esc_html__( 'Override the gift icon on the left. Leave empty to keep the default.', 'frak' ),
+				'label'       => esc_html__( 'Image', 'frak' ),
+				'type'        => \Elementor\Controls_Manager::MEDIA,
+				'media_types' => array( 'image' ),
+				'description' => esc_html__( 'Override the gift icon on the left. Leave empty to keep the default. Drag-and-drop upload happens inside the Media Library.', 'frak' ),
 				'dynamic'     => array( 'active' => true ),
 			)
 		);
@@ -294,6 +295,9 @@ class Frak_Elementor_Post_Purchase_Widget extends Frak_Elementor_Widget_Base {
 	protected function render_component( array $attrs, bool $preview ): string {
 		if ( array_key_exists( 'showProducts', $attrs ) ) {
 			$attrs['showProducts'] = self::switcher_to_bool( $attrs['showProducts'] );
+		}
+		if ( is_array( $attrs['imageUrl'] ?? null ) ) {
+			$attrs['imageUrl'] = (string) ( $attrs['imageUrl']['url'] ?? '' );
 		}
 
 		$preview_overrides = array();

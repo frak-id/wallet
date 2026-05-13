@@ -15,6 +15,8 @@
  *   - `checkbox` => `<input type="checkbox">` + boolean cast.
  *   - `select`   => `<select>` (requires `options` map); value restricted to keys.
  *   - `url`      => `<input type="url">` + `esc_url_raw` on save, `esc_url` on render.
+ *   - `media`    => `<input type="url">` + Media Library picker button (drag-and-drop
+ *     upload happens inside the WP media modal). Stores the chosen URL just like `url`.
  *
  * All field labels are translatable via the `frak` text domain. Each widget
  * additionally carries the standard `title` field (rendered inside the
@@ -127,6 +129,7 @@ abstract class Frak_Widget_Base extends WP_Widget {
 					$clean[ $key ] = array_key_exists( $raw_str, $options ) ? $raw_str : '';
 					break;
 
+				case 'media':
 				case 'url':
 					$clean[ $key ] = esc_url_raw( (string) $raw );
 					break;
@@ -181,6 +184,18 @@ abstract class Frak_Widget_Base extends WP_Widget {
 			case 'url':
 				echo '<label for="' . esc_attr( $field_id ) . '">' . esc_html( $field['label'] ) . '</label>';
 				echo '<input class="widefat" type="url" id="' . esc_attr( $field_id ) . '" name="' . esc_attr( $field_name ) . '" value="' . esc_url( (string) $value ) . '" />';
+				break;
+
+			case 'media':
+				$value_str   = (string) $value;
+				$has_value   = '' !== $value_str;
+				$preview_css = $has_value ? '' : 'display:none;';
+				$remove_css  = $has_value ? '' : 'display:none;';
+				echo '<label for="' . esc_attr( $field_id ) . '">' . esc_html( $field['label'] ) . '</label>';
+				echo '<img id="' . esc_attr( $field_id ) . '-preview" src="' . esc_url( $value_str ) . '" alt="" style="display:block;max-width:100%;height:auto;margin:4px 0;border-radius:4px;' . esc_attr( $preview_css ) . '" />';
+				echo '<input class="widefat" type="url" id="' . esc_attr( $field_id ) . '" name="' . esc_attr( $field_name ) . '" value="' . esc_url( $value_str ) . '" placeholder="https://..." />';
+				echo '<button type="button" class="button frak-media-picker" data-target="' . esc_attr( $field_id ) . '" data-title="' . esc_attr__( 'Select image', 'frak' ) . '" data-button-text="' . esc_attr__( 'Use this image', 'frak' ) . '" style="margin-top:4px;">' . esc_html__( 'Upload or select image', 'frak' ) . '</button>';
+				echo ' <button type="button" class="button-link frak-media-remove" id="' . esc_attr( $field_id ) . '-remove" data-target="' . esc_attr( $field_id ) . '" style="' . esc_attr( $remove_css ) . '">' . esc_html__( 'Remove', 'frak' ) . '</button>';
 				break;
 
 			case 'text':
