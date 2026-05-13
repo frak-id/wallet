@@ -19,6 +19,7 @@ import { usePreviousAuthenticators } from "@/module/authentication/hook/usePrevi
 
 type UseRegisterArgs = {
     merchantId?: string;
+    email?: string;
     // biome-ignore lint/suspicious/noConfusingVoidType: required for optional mutation arguments
 } | void;
 
@@ -61,6 +62,7 @@ export function useRegister(
                     },
                     raw: encodedResponse,
                     merchantId: args?.merchantId || undefined,
+                    email: args?.email || undefined,
                 });
             if (error) {
                 throw error;

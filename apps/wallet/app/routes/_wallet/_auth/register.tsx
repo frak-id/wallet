@@ -86,10 +86,9 @@ function RegisterPage() {
     const navigate = useNavigate();
     const [step, setStep] = useState<FlowStep>("onboardingOne");
     // Hold the email collected on the `emailInput` step. Stays in component
-    // state so navigating back to the step pre-fills the field.
-    // TODO: forward to the backend on register — the endpoint already accepts
-    // an optional email (`services/backend/src/api/user/wallet/auth/register.ts`,
-    // `email: t.Optional(t.String({ format: "email" }))`).
+    // state so navigating back to the step pre-fills the field, and is
+    // forwarded to the register endpoint when the user activates their
+    // secure space.
     const [email, setEmail] = useState("");
 
     const goToStep = useCallback(
@@ -257,8 +256,9 @@ function RegisterPage() {
         openModal({
             id: "keypass",
             onAuthSuccess: advanceToReferralCode,
+            email: email || undefined,
         });
-    }, [openModal, advanceToReferralCode]);
+    }, [openModal, advanceToReferralCode, email]);
 
     const handleReferralApplied = useCallback(() => {
         flowRef.current?.track("referral_code_resolved", {

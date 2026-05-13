@@ -29,7 +29,7 @@ export type ModalState =
     | { id: "transfer" }
     | { id: "explorerDetail"; merchant: ExplorerMerchantItem }
     | { id: "welcomeDetail" }
-    | { id: "keypass"; onAuthSuccess: () => void }
+    | { id: "keypass"; onAuthSuccess: () => void; email?: string }
     | {
           id: "recoveryCodeSuccess";
           merchant?: { name: string; domain: string };
