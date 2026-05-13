@@ -26,7 +26,7 @@
     "@tanstack/react-query": "catalog:",
     "@tanstack/react-query-devtools": "catalog:",
     "@tanstack/react-query-persist-client": "catalog:",
-    "@tanstack/react-router": "^1.167.3",
+    "@tanstack/react-router": "1.169.2",
     "@vanilla-extract/css": "^1.19.1",
     "lucide-react": "^0.577.0",
     "react": "catalog:",
@@ -34,8 +34,8 @@
     "viem": "catalog:"
   },
   "devDependencies": {
-    "@tanstack/react-router-devtools": "^1.166.9",
-    "@tanstack/router-plugin": "^1.166.12",
+    "@tanstack/react-router-devtools": "1.166.13",
+    "@tanstack/router-plugin": "1.167.35",
     "@types/react": "catalog:",
     "@types/react-dom": "catalog:",
     "@vanilla-extract/vite-plugin": "^5.2.0",
