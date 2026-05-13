@@ -1,5 +1,4 @@
 import { IS_TAURI } from "@frak-labs/app-essentials/utils/platform";
-import { Button } from "@frak-labs/design-system/components/Button";
 import {
     Select,
     SelectContent,
@@ -137,14 +136,12 @@ function TauriNotificationRow() {
 
     return (
         <InfoCard>
-            <Button
-                variant="ghost"
-                icon={<BellIcon width={24} height={24} />}
+            <InfoRow
+                icon={BellIcon}
+                label={label}
                 onClick={handleClick}
-                loading={isSubscribePending}
-            >
-                {label}
-            </Button>
+                disabled={isSubscribePending}
+            />
         </InfoCard>
     );
 }
