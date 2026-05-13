@@ -87,6 +87,7 @@ function renderModal(
                 <Keypass
                     onClose={closeModal}
                     onAuthSuccess={modal.onAuthSuccess}
+                    email={modal.email}
                 />
             );
         case "recoveryCodeSuccess":

@@ -17,6 +17,8 @@ export type ReferralCodeOutcome =
     | "auto_skipped_existing"
     | "error";
 
+export type EmailInputOutcome = "submitted" | "back";
+
 type OnboardingFlow = FlowEvents<"onboarding">;
 
 type OnboardingMidFlowEvents = {
@@ -34,6 +36,13 @@ type OnboardingMidFlowEvents = {
     referral_code_resolved: OnboardingBaseProps & {
         outcome: ReferralCodeOutcome;
         error_key?: string;
+    };
+    // Fires once when the user lands on the `emailInput` onboarding step.
+    email_input_viewed: OnboardingBaseProps | undefined;
+    // Fires when the user leaves the email step: `submitted` advances the
+    // flow, `back` returns to the previous step.
+    email_input_resolved: OnboardingBaseProps & {
+        outcome: EmailInputOutcome;
     };
 };
 
