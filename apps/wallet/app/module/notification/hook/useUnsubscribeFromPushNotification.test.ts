@@ -5,7 +5,6 @@ import type {
     PushTokenPayload,
 } from "@/module/notification/adapter";
 import { useUnsubscribeFromPushNotification } from "@/module/notification/hook/useUnsubscribeFromPushNotification";
-import { notificationOptOutStore } from "@/module/notification/stores/notificationOptOutStore";
 import {
     beforeEach,
     describe,
@@ -62,8 +61,6 @@ describe.sequential("useUnsubscribeFromPushNotification", () => {
         mockAdapter.unsubscribe.mockReset().mockResolvedValue(undefined);
 
         mockTokensApi.delete.mockReset().mockResolvedValue(undefined);
-
-        notificationOptOutStore.getState().setOptedOut(false);
     });
 
     test("should return mutation functions and idle state initially", ({
@@ -158,29 +155,5 @@ describe.sequential("useUnsubscribeFromPushNotification", () => {
         await waitFor(() => {
             expect(result.current.isError).toBe(true);
         });
-    });
-
-    test("should set opt-out flag before adapter.unsubscribe runs", async ({
-        queryWrapper,
-    }: WalletTestFixtures) => {
-        // Capture the flag value at the moment the adapter is called —
-        // the unsubscribe flow must flip the flag *before* the async work
-        // so the concurrent localToken refetch reads the new state.
-        let flagDuringUnsubscribe: boolean | undefined;
-        mockAdapter.unsubscribe.mockImplementation(async () => {
-            flagDuringUnsubscribe = notificationOptOutStore.getState().optedOut;
-        });
-
-        const { result } = renderHook(
-            () => useUnsubscribeFromPushNotification(),
-            { wrapper: queryWrapper.wrapper }
-        );
-
-        await act(async () => {
-            await result.current.unsubscribeFromPushAsync();
-        });
-
-        expect(flagDuringUnsubscribe).toBe(true);
-        expect(notificationOptOutStore.getState().optedOut).toBe(true);
     });
 });

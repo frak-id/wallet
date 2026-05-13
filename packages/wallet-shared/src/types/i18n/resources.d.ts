@@ -712,17 +712,17 @@ interface Resources {
             profile: {
                 biometricPrompt: "Require {{biometryLabel}} at every app launch";
                 currentDeviceConnected: "Connected";
+                enableNotifications: "Enable notifications";
                 helpSupport: "Help & support";
                 lastConnection: "Last connection";
-                manageAction: "Manage";
+                manageNotifications: "Manage notifications";
                 managePairings: "Manage paired devices";
                 notificationDeniedHelp: "Notifications blocked by browser. Enable them in browser settings.";
-                notificationSettings: "Notification settings";
+                notificationSettings: "Notifications";
                 pageTitle: "Profil";
                 privacyPolicy: "Privacy Policy";
                 rateApp: "Rate the app";
                 recoveryConfigured: "Configured";
-                unsubscribeNotifications: "Unsubscribe";
             };
             recovery: {
                 continue: "Continue recovery";
@@ -909,11 +909,11 @@ interface Resources {
                     discoverOffers: "Discover offers";
                     howItWorks: "How does it work?";
                     legal: "FRAK's <termsLink>terms and conditions</termsLink> apply.";
-                    step1Description: "A personal link is automatically generated with each share.";
+                    step1Description: "Discover products to recommend to your friends and family.";
                     step1Title: "Explore our partner brands";
-                    step2Description: "A personal link is automatically generated with each share.";
+                    step2Description: "A personalized link is automatically generated every time you share. If they make a purchase through your link, you earn money.";
                     step2Title: "Share an article with your friends";
-                    step3Description: "In one click, transfer your earnings to your bank account.";
+                    step3Description: "Transfer your earnings to your bank account with just one click.";
                     step3Title: "Earn money";
                 };
                 invite: {

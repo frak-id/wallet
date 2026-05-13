@@ -90,10 +90,10 @@
         "pageTitle": "Wallet",
         "profile": {
             "pageTitle": "Profil",
-            "notificationSettings": "Notification settings",
+            "notificationSettings": "Notifications",
+            "manageNotifications": "Manage notifications",
+            "enableNotifications": "Enable notifications",
             "notificationDeniedHelp": "Notifications blocked by browser. Enable them in browser settings.",
-            "manageAction": "Manage",
-            "unsubscribeNotifications": "Unsubscribe",
             "biometricPrompt": "Require {{biometryLabel}} at every app launch",
             "recoveryConfigured": "Configured",
             "privacyPolicy": "Privacy Policy",

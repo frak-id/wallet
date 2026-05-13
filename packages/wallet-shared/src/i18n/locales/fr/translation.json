@@ -88,10 +88,10 @@
         "pageTitle": "Porte-monnaie",
         "profile": {
             "pageTitle": "Profil",
-            "notificationSettings": "Paramètres de notification",
+            "notificationSettings": "Notifications",
+            "manageNotifications": "Gérer mes notifications",
+            "enableNotifications": "Activer les notifications",
             "notificationDeniedHelp": "Notifications bloquées par le navigateur. Active-les depuis les paramètres du navigateur.",
-            "manageAction": "Gérer",
-            "unsubscribeNotifications": "Se désabonner",
             "biometricPrompt": "Demander {{biometryLabel}} à chaque ouverture de l'app",
             "recoveryConfigured": "Configurée",
             "privacyPolicy": "Politique de confidentialité",
