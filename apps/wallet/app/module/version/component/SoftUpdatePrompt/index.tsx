@@ -4,10 +4,11 @@ import { Card } from "@frak-labs/design-system/components/Card";
 import { IconCircle } from "@frak-labs/design-system/components/IconCircle";
 import { Text } from "@frak-labs/design-system/components/Text";
 import { CheckIcon } from "@frak-labs/design-system/icons";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 import {
     completeNativeSoftUpdate,
+    type NativeUpdateStatus,
     startNativeSoftUpdate,
 } from "../../utils/nativeUpdater";
 import * as styles from "./index.css";
@@ -94,9 +95,33 @@ function AvailableBanner({
     onDismiss: () => void;
     t: Translate;
 }) {
+    const queryClient = useQueryClient();
     const start = useMutation({
         mutationKey: ["version", "start-soft-update"],
         mutationFn: startNativeSoftUpdate,
+        // Optimistically flip the native-status cache to `in_progress` so
+        // the prompt swaps to the progress bar the instant the user taps
+        // Update, instead of waiting for Play Core's first DOWNLOADING
+        // event (which can lag several seconds, or never arrive if the user
+        // dismisses the FLEXIBLE consent dialog). Real progress / completion
+        // / cancellation lands afterwards via `listenToNativeUpdateStatus`,
+        // and the `refetchInterval` safety net in `useVersionGate` recovers
+        // the cache if neither channel reports back.
+        onSuccess: (started) => {
+            if (!started) return;
+            queryClient.setQueryData<NativeUpdateStatus>(
+                ["version", "native-status"],
+                (previous) => ({
+                    status: "in_progress",
+                    currentVersion:
+                        previous && "currentVersion" in previous
+                            ? previous.currentVersion
+                            : "",
+                    bytesDownloaded: 0,
+                    totalBytes: 0,
+                })
+            );
+        },
     });
 
     return (

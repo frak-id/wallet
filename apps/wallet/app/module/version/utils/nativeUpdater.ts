@@ -1,5 +1,6 @@
 import { IS_ANDROID, IS_TAURI } from "@frak-labs/app-essentials/utils/platform";
 import { getInvoke } from "@frak-labs/wallet-shared";
+import type { PluginListener } from "@tauri-apps/api/core";
 import { isBelow } from "./compareVersions";
 
 /**
@@ -119,4 +120,26 @@ export async function openNativeStore(): Promise<boolean> {
         "plugin:frak-updater|open_store"
     );
     return response.opened;
+}
+
+/**
+ * Push-channel counterpart to `checkNativeUpdate`. Subscribes to the Android
+ * `InstallStateUpdatedListener` so soft-update progress, completion, and
+ * cancellation can flow into the JS state without waiting for the next
+ * window-focus refetch.
+ *
+ * iOS never emits — the App Store flow happens out of the app process — so
+ * `null` is returned outside Android. Callers should treat `null` as "no
+ * push channel available" and fall back to polling via `checkNativeUpdate`.
+ */
+export async function listenToNativeUpdateStatus(
+    handler: (event: NativeUpdateStatus) => void
+): Promise<PluginListener | null> {
+    if (!IS_ANDROID) return null;
+    const { addPluginListener } = await import("@tauri-apps/api/core");
+    return addPluginListener<NativeUpdateStatus>(
+        "frak-updater",
+        "update-status",
+        handler
+    );
 }

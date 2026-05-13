@@ -4,10 +4,13 @@ import {
     IS_TAURI,
 } from "@frak-labs/app-essentials/utils/platform";
 import { authenticatedBackendApi } from "@frak-labs/wallet-shared";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import type { PluginListener } from "@tauri-apps/api/core";
+import { useEffect } from "react";
 import { isBelow } from "../utils/compareVersions";
 import {
     checkNativeUpdate,
+    listenToNativeUpdateStatus,
     type NativeUpdateStatus,
 } from "../utils/nativeUpdater";
 
@@ -70,6 +73,7 @@ const nativeUpdateQueryOptions = {
  * binary).
  */
 export function useVersionGate(): VersionGateState {
+    const queryClient = useQueryClient();
     const minVersion = useQuery({
         ...minVersionQueryOptions,
         enabled: IS_TAURI,
@@ -77,7 +81,47 @@ export function useVersionGate(): VersionGateState {
     const native = useQuery({
         ...nativeUpdateQueryOptions,
         enabled: IS_TAURI,
+        // Safety net for the push channel: while Play Core is mid-download
+        // we poll natively every 3s so the UI recovers even if a
+        // `update-status` event is missed (e.g. listener registered late,
+        // user cancelled the FLEXIBLE consent dialog before any
+        // `DOWNLOADING` event fired). Disabled otherwise to avoid wasted
+        // work on a quiescent gate.
+        refetchInterval: (query) =>
+            query.state.data?.status === "in_progress" ? 3000 : false,
     });
+
+    // Subscribe to the native push channel on Android so download progress
+    // and completion land in the cache without waiting for window focus.
+    // No-op on iOS / web — the helper resolves to `null` there.
+    useEffect(() => {
+        if (!IS_TAURI || !IS_ANDROID) return;
+        let listener: PluginListener | null = null;
+        let cancelled = false;
+        listenToNativeUpdateStatus((event) => {
+            queryClient.setQueryData<NativeUpdateStatus>(
+                ["version", "native-status"],
+                event
+            );
+        })
+            .then((registered) => {
+                if (cancelled) {
+                    registered?.unregister();
+                    return;
+                }
+                listener = registered;
+            })
+            .catch((error) => {
+                console.warn(
+                    "Failed to subscribe to native update status events:",
+                    error
+                );
+            });
+        return () => {
+            cancelled = true;
+            listener?.unregister();
+        };
+    }, [queryClient]);
 
     if (!IS_TAURI) return { kind: "idle" };
 

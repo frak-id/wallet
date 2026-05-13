@@ -56,23 +56,60 @@ class FrakUpdaterPlugin(activity: Activity) : Plugin(activity) {
     private val installListener = InstallStateUpdatedListener { state ->
         when (state.installStatus()) {
             InstallStatus.DOWNLOADING -> {
+                val bytesDownloaded = state.bytesDownloaded()
+                val totalBytes = state.totalBytesToDownload()
                 lastDownloadProgress = DownloadProgress(
-                    bytesDownloaded = state.bytesDownloaded(),
-                    totalBytes = state.totalBytesToDownload()
+                    bytesDownloaded = bytesDownloaded,
+                    totalBytes = totalBytes
                 )
+                triggerStatusEvent(JSObject().apply {
+                    put("currentVersion", currentVersionName())
+                    put("status", "in_progress")
+                    put("bytesDownloaded", bytesDownloaded)
+                    put("totalBytes", totalBytes)
+                })
             }
             InstallStatus.DOWNLOADED -> {
+                val totalBytes = state.totalBytesToDownload()
                 lastDownloadProgress = DownloadProgress(
-                    bytesDownloaded = state.totalBytesToDownload(),
-                    totalBytes = state.totalBytesToDownload()
+                    bytesDownloaded = totalBytes,
+                    totalBytes = totalBytes
                 )
+                triggerStatusEvent(JSObject().apply {
+                    put("currentVersion", currentVersionName())
+                    put("status", "downloaded")
+                })
+            }
+            InstallStatus.FAILED, InstallStatus.CANCELED -> {
+                // Surface the cancellation back to JS so the soft-update prompt
+                // can drop the optimistic "in progress" state and let the user
+                // retry from the available banner. Note: Play Core does NOT emit
+                // a CANCELED event when the user dismisses the FLEXIBLE consent
+                // dialog itself — only for a started-then-aborted download — so
+                // the JS layer also polls via `refetchInterval` as a safety net.
+                lastDownloadProgress = null
+                triggerStatusEvent(JSObject().apply {
+                    put("currentVersion", currentVersionName())
+                    put("status", "available")
+                })
             }
             else -> {
-                // INSTALLED, FAILED, CANCELED — clear any cached progress so
-                // the next checkUpdate() reflects the current Play state.
+                // INSTALLED (app is restarting via completeUpdate), PENDING,
+                // REQUIRES_UI_INTENT, UNKNOWN — leave the JS cache alone; the
+                // next checkUpdate() / focus refetch will reconcile if needed.
                 lastDownloadProgress = null
             }
         }
+    }
+
+    /**
+     * Pushes the current Play Core install state to JS via `addPluginListener`.
+     * Pairs with `listenToNativeUpdateStatus` on the JS side so the soft-update
+     * UI can reflect progress and completion without waiting for the next
+     * window-focus refetch.
+     */
+    private fun triggerStatusEvent(payload: JSObject) {
+        trigger(UPDATE_STATUS_EVENT, payload)
     }
 
     init {
@@ -244,5 +281,6 @@ class FrakUpdaterPlugin(activity: Activity) : Plugin(activity) {
     companion object {
         private const val TAG = "FrakUpdaterPlugin"
         private const val UPDATE_REQUEST_CODE = 1042
+        private const val UPDATE_STATUS_EVENT = "update-status"
     }
 }
