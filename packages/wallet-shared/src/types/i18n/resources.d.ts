@@ -413,7 +413,7 @@ interface Resources {
                 continue: "Continue";
                 description: "Your email is only used to recover your account if you forget it. It will never be used to send you unsolicited messages.";
                 label: "Email";
-                placeholder: "name@example.com";
+                placeholder: "your.mail@example.com";
                 title: "Enter your email address";
             };
             keypass: {

@@ -537,7 +537,7 @@
             "title": "Enter your email address",
             "description": "Your email is only used to recover your account if you forget it. It will never be used to send you unsolicited messages.",
             "label": "Email",
-            "placeholder": "name@example.com",
+            "placeholder": "your.email@gmail.com",
             "continue": "Continue",
             "clearAriaLabel": "Clear email address"
         },

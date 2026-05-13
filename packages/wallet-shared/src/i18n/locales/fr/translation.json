@@ -535,7 +535,7 @@
             "title": "Entre ton adresse e-mail",
             "description": "Ton e-mail sert uniquement à récupérer ton compte en cas d'oubli. Il ne sera jamais utilisé pour t'envoyer des messages non sollicités.",
             "label": "Email",
-            "placeholder": "nom@exemple.com",
+            "placeholder": "ton.email@gmail.com",
             "continue": "Continuer",
             "clearAriaLabel": "Effacer l'adresse e-mail"
         },
