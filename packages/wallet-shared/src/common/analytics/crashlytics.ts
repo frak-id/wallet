@@ -2,7 +2,7 @@ import { IS_TAURI } from "@frak-labs/app-essentials/utils/platform";
 import { getInvoke } from "../tauri";
 
 /**
- * Bridge to the local `tauri-plugin-frak-crashlytics` plugin.
+ * Bridge to the local `tauri-plugin-frak-firebase` plugin (Crashlytics half).
  *
  * Forwards user identification, custom keys, breadcrumb logs and non-fatal
  * errors to Firebase Crashlytics on iOS and Android. All calls are no-ops
@@ -17,12 +17,12 @@ import { getInvoke } from "../tauri";
  * an observability sink, not a critical-path dependency.
  */
 
-const INVOKE_SET_USER_ID = "plugin:frak-crashlytics|set_user_id";
-const INVOKE_SET_KEY = "plugin:frak-crashlytics|set_key";
-const INVOKE_LOG = "plugin:frak-crashlytics|log";
-const INVOKE_RECORD_ERROR = "plugin:frak-crashlytics|record_error";
+const INVOKE_SET_USER_ID = "plugin:frak-firebase|set_user_id";
+const INVOKE_SET_KEY = "plugin:frak-firebase|set_key";
+const INVOKE_LOG = "plugin:frak-firebase|log";
+const INVOKE_RECORD_ERROR = "plugin:frak-firebase|record_error";
 const INVOKE_SET_COLLECTION_ENABLED =
-    "plugin:frak-crashlytics|set_collection_enabled";
+    "plugin:frak-firebase|set_collection_enabled";
 
 async function tauriInvoke<T>(cmd: string, args?: unknown): Promise<T> {
     const invoke = await getInvoke();

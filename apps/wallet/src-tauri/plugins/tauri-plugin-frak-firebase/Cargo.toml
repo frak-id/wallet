@@ -1,0 +1,16 @@
+[package]
+name = "tauri-plugin-frak-firebase"
+version = "0.1.0"
+edition = "2021"
+links = "tauri-plugin-frak-firebase"
+description = "Combined Firebase Cloud Messaging (FCM) + Crashlytics for Tauri 2 mobile. Vendored from srod/tauri-plugin-fcm and merged with the previous tauri-plugin-frak-crashlytics."
+
+[dependencies]
+tauri = "2"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+thiserror = "2"
+log = "0.4"
+
+[build-dependencies]
+tauri-plugin = { version = "2", features = ["build"] }

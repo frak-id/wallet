@@ -286,12 +286,12 @@ jobs:
       # grpcpp.zip, etc.) so the subsequent parallel `swift build` invocations all hit a warm
       # cache instead of failing with `already exists in file system`.
       #
-      # The stub avoids depending on the crashlytics plugin's Package.swift directly, which
-      # references `../.tauri/tauri-api` — that path is only materialized later by tauri-build
+      # The stub avoids depending on the merged frak-firebase plugin's Package.swift
+      # directly, which references `../.tauri/tauri-api` — that path is only materialized
       # during `cargo build`. The SPM artifact cache is keyed by binary-target URL (global,
       # shared), so any resolve that fetches the same URLs warms the same slots.
       #
-      # Keep the firebase-ios-sdk pin in sync with `plugins/tauri-plugin-frak-crashlytics/ios/Package.swift`.
+      # Keep the firebase-ios-sdk pin in sync with `plugins/tauri-plugin-frak-firebase/ios/Package.swift`.
       # See: https://github.com/firebase/firebase-ios-sdk/issues/14821
       - name: "🔥 Pre-warm SwiftPM artifact cache"
         run: |

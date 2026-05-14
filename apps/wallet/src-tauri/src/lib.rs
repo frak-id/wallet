@@ -9,14 +9,13 @@ pub fn run() {
     {
         builder = builder
             .plugin(tauri_plugin_biometric::init())
-            .plugin(tauri_plugin_fcm::init())
+            .plugin(tauri_plugin_frak_firebase::init())
             .plugin(tauri_plugin_app_settings::init())
             .plugin(tauri_plugin_install_referrer::init())
             .plugin(tauri_plugin_frak_webauthn::init())
             .plugin(tauri_plugin_frak_share::init())
             .plugin(tauri_plugin_clipboard_manager::init())
             .plugin(tauri_plugin_recovery_hint::init())
-            .plugin(tauri_plugin_frak_crashlytics::init())
             .plugin(tauri_plugin_frak_updater::init());
     }
 

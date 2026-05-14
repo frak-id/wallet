@@ -1,28 +1,84 @@
 import { authenticatedWalletApi, getInvoke } from "@frak-labs/wallet-shared";
-import type { PluginListener } from "@tauri-apps/api/core";
+import {
+    addPluginListener,
+    checkPermissions as checkPermissions_,
+    type PluginListener,
+    requestPermissions as requestPermissions_,
+} from "@tauri-apps/api/core";
 import i18next from "i18next";
-import type { PermissionState } from "tauri-plugin-fcm";
 import type {
     NotificationAdapter,
     NotificationPermissionStatus,
     PushTokenPayload,
 } from "./adapter";
 
+/**
+ * Permission state shape returned by the `frak-firebase` plugin.
+ *
+ * Mirrors `@tauri-apps/api/core` PermissionState — declared inline because the
+ * merged plugin no longer ships a typed JS bindings package. Both halves
+ * (FCM + Crashlytics) are consumed via raw `invoke()` strings (see
+ * `packages/wallet-shared/src/common/analytics/crashlytics.ts` for the
+ * Crashlytics half).
+ */
+type PermissionState =
+    | "granted"
+    | "denied"
+    | "prompt"
+    | "prompt-with-rationale";
+
+const PLUGIN_NAME = "frak-firebase";
+const INVOKE_GET_TOKEN = "plugin:frak-firebase|get_token";
+const INVOKE_REGISTER = "plugin:frak-firebase|register";
+const INVOKE_DELETE_TOKEN = "plugin:frak-firebase|delete_token";
+const INVOKE_CREATE_CHANNEL = "plugin:frak-firebase|create_channel";
+
+async function fcmGetToken(): Promise<{ token: string }> {
+    const invoke = await getInvoke();
+    return invoke<{ token: string }>(INVOKE_GET_TOKEN);
+}
+
+async function fcmRegister(): Promise<void> {
+    const invoke = await getInvoke();
+    await invoke(INVOKE_REGISTER);
+}
+
+async function fcmDeleteToken(): Promise<void> {
+    const invoke = await getInvoke();
+    await invoke(INVOKE_DELETE_TOKEN);
+}
+
+async function fcmCreateChannel(opts: {
+    id: string;
+    name: string;
+    importance: number;
+}): Promise<void> {
+    const invoke = await getInvoke();
+    await invoke(INVOKE_CREATE_CHANNEL, { args: opts });
+}
+
+async function fcmCheckPermissions(): Promise<PermissionState> {
+    const result = await checkPermissions_<{ notification: PermissionState }>(
+        PLUGIN_NAME
+    );
+    return result.notification;
+}
+
+async function fcmRequestPermissions(): Promise<PermissionState> {
+    const result = await requestPermissions_<{
+        notification: PermissionState;
+    }>(PLUGIN_NAME);
+    return result.notification;
+}
+
+async function fcmOnTokenRefresh(
+    handler: (event: { token: string }) => void
+): Promise<PluginListener> {
+    return await addPluginListener(PLUGIN_NAME, "token-refresh", handler);
+}
+
 const FCM_TOKEN_DELIVERY_TIMEOUT_MS = 10_000;
 
-/**
- * Lazy-loaded handle to the `tauri-plugin-fcm` runtime API.
- *
- * The static import bleeds the FCM SDK into the web bundle even though it's
- * only ever invoked inside Tauri mobile. Memoize the dynamic import so the
- * module graph is walked at most once.
- */
-type FcmModule = typeof import("tauri-plugin-fcm");
-let fcmPromise: Promise<FcmModule> | null = null;
-function getFcm(): Promise<FcmModule> {
-    if (!fcmPromise) fcmPromise = import("tauri-plugin-fcm");
-    return fcmPromise;
-}
 
 function mapPermission(state: PermissionState): NotificationPermissionStatus {
     if (state === "granted") return "granted";
@@ -67,8 +123,7 @@ export function createTauriNotificationAdapter(): NotificationAdapter {
     const setupTokenRefreshListener = async (): Promise<boolean> => {
         if (tokenRefreshListener !== undefined) return true;
         try {
-            const fcm = await getFcm();
-            tokenRefreshListener = await fcm.onTokenRefresh(handleTokenRefresh);
+            tokenRefreshListener = await fcmOnTokenRefresh(handleTokenRefresh);
             return true;
         } catch (error) {
             console.warn("FCM token refresh listener unavailable:", error);
@@ -85,8 +140,7 @@ export function createTauriNotificationAdapter(): NotificationAdapter {
 
     const obtainToken = async (): Promise<string> => {
         try {
-            const fcm = await getFcm();
-            const response = await fcm.getToken();
+            const response = await fcmGetToken();
             if (response.token) return response.token;
         } catch (error) {
             const msg = error instanceof Error ? error.message : String(error);
@@ -115,22 +169,21 @@ export function createTauriNotificationAdapter(): NotificationAdapter {
 
     const initPromise: Promise<void> = (async () => {
         try {
-            const fcm = await getFcm();
-            await fcm.createChannel({
+            await fcmCreateChannel({
                 id: "default",
                 name: "Frak Wallet",
                 importance: 4,
             });
             await setupTokenRefreshListener();
-            // iOS requires an explicit fcm.register() before
+            // iOS requires an explicit register() before
             // `Messaging.token()` returns a value, unlike Android FCM which
             // auto-registers on app init. If the OS-level permission was
             // already granted in a previous session (or via system Settings
             // out-of-band), proactively register so the FCM token is cached
             // before the settings page reads it. No-op on Android.
-            const permission = await fcm.checkPermissions();
+            const permission = await fcmCheckPermissions();
             if (permission === "granted") {
-                await fcm.register();
+                await fcmRegister();
             }
         } catch (error) {
             console.warn("Tauri notification init failed:", error);
@@ -144,8 +197,7 @@ export function createTauriNotificationAdapter(): NotificationAdapter {
 
         getPermissionStatus: async () => {
             try {
-                const fcm = await getFcm();
-                const state = await fcm.checkPermissions();
+                const state = await fcmCheckPermissions();
                 return mapPermission(state);
             } catch {
                 return "prompt";
@@ -153,12 +205,11 @@ export function createTauriNotificationAdapter(): NotificationAdapter {
         },
 
         requestPermission: async () => {
-            const fcm = await getFcm();
             // Check the current permission, if granted, early exit
-            const current = await fcm.checkPermissions();
+            const current = await fcmCheckPermissions();
             if (current === "granted") return mapPermission(current);
 
-            const state = await fcm.requestPermissions();
+            const state = await fcmRequestPermissions();
             return mapPermission(state);
         },
 
@@ -170,13 +221,12 @@ export function createTauriNotificationAdapter(): NotificationAdapter {
                 // permission was denied at app start (init skipped the eager
                 // register) and later flipped to granted out-of-band — e.g.
                 // user came back from system Settings. iOS requires
-                // fcm.register() before getToken returns a value; this call
+                // register() before getToken returns a value; this call
                 // is idempotent once APNs is already registered.
-                const fcm = await getFcm();
-                const permission = await fcm.checkPermissions();
+                const permission = await fcmCheckPermissions();
                 if (permission === "granted") {
                     try {
-                        await fcm.register();
+                        await fcmRegister();
                     } catch (error) {
                         console.warn("FCM lazy register failed:", error);
                     }
@@ -201,8 +251,7 @@ export function createTauriNotificationAdapter(): NotificationAdapter {
 
             earlyToken = undefined;
             await setupTokenRefreshListener();
-            const fcm = await getFcm();
-            await fcm.register();
+            await fcmRegister();
 
             const token = await obtainToken();
 
@@ -213,8 +262,7 @@ export function createTauriNotificationAdapter(): NotificationAdapter {
             await teardownTokenRefreshListener();
 
             try {
-                const fcm = await getFcm();
-                await fcm.deleteToken();
+                await fcmDeleteToken();
             } catch (error) {
                 console.warn("Failed to delete FCM token", error);
             }
