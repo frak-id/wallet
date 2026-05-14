@@ -84,11 +84,16 @@ export const Route = createFileRoute("/_wallet/_sso/sso")({
         const { merchantId, redirectUrl, directExit, lang, metadata } =
             compressedSsoToParams(compressedParam);
 
+        // Apply default for directExit: close the popup after completion
+        // unless the caller provided a redirectUrl. This matches the SDK-side
+        // default and protects against older SDK callers that omit the flag.
+        const resolvedDirectExit = directExit ?? !redirectUrl;
+
         // Save the SSO context to the store
         authenticationStore.getState().setSsoContext({
             merchantId: merchantId || undefined,
             redirectUrl: redirectUrl ?? undefined,
-            directExit: directExit ?? undefined,
+            directExit: resolvedDirectExit,
             metadata: metadata ?? undefined,
         });
 
@@ -103,7 +108,13 @@ export const Route = createFileRoute("/_wallet/_sso/sso")({
         }
 
         return {
-            ssoParams: { merchantId, redirectUrl, directExit, lang, metadata },
+            ssoParams: {
+                merchantId,
+                redirectUrl,
+                directExit: resolvedDirectExit,
+                lang,
+                metadata,
+            },
         };
     },
 });

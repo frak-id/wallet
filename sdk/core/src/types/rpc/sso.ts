@@ -25,8 +25,12 @@ export type PrepareSsoParamsType = {
      */
     redirectUrl?: string;
     /**
-     * If the SSO should directly exit after completion
-     * @defaultValue true
+     * If the SSO should directly exit (close the popup) after completion.
+     *
+     * Defaults to `true` when `redirectUrl` is omitted, `false` otherwise.
+     * The default is applied by {@link @frak-labs/core-sdk!actions.openSso | `openSso()`}
+     * before the SSO URL is generated and by the wallet SSO route as a fallback
+     * for older SDK callers.
      */
     directExit?: boolean;
     /**

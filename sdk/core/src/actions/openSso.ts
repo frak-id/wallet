@@ -67,13 +67,20 @@ export const ssoPopupName = "frak-sso";
  */
 export async function openSso(
     client: FrakClient,
-    args: OpenSsoParamsType
+    inputArgs: OpenSsoParamsType
 ): Promise<OpenSsoReturnType> {
     const { metadata, customizations, walletUrl } = client.config;
 
+    // Apply default: when no redirectUrl is provided we want the SSO popup
+    // to close itself after completion. Without this default the popup
+    // sticks on the success screen and the "Redirect now" button is a no-op.
+    const args: OpenSsoParamsType = {
+        ...inputArgs,
+        directExit: inputArgs.directExit ?? !inputArgs.redirectUrl,
+    };
+
     // Check if redirect mode (default to true if redirectUrl present)
     const isRedirectMode = args.openInSameWindow ?? !!args.redirectUrl;
-
     if (isRedirectMode) {
         // Redirect flow: Wallet generates URL and triggers redirect via lifecycle event
         // This must happen on wallet side because only the iframe can trigger the redirect
