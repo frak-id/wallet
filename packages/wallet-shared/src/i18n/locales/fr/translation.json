@@ -836,7 +836,7 @@
                 "cta": "Mettre à jour"
             },
             "inProgress": {
-                "title": "Téléchargement… {{percent}}%"
+                "title": "Téléchargement…"
             },
             "downloaded": {
                 "title": "Mise à jour prête à installer.",

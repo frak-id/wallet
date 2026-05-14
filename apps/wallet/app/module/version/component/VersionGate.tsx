@@ -41,13 +41,7 @@ export function VersionGate() {
     }
 
     if (state.kind === "soft_update_in_progress") {
-        return (
-            <SoftUpdatePrompt
-                mode="in_progress"
-                bytesDownloaded={state.bytesDownloaded}
-                totalBytes={state.totalBytes}
-            />
-        );
+        return <SoftUpdatePrompt mode="in_progress" />;
     }
 
     if (state.kind === "soft_update_downloaded") {

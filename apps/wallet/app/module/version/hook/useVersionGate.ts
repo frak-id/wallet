@@ -21,11 +21,7 @@ export type VersionGateState =
           kind: "soft_update";
           storeVersion?: string;
       }
-    | {
-          kind: "soft_update_in_progress";
-          bytesDownloaded: number;
-          totalBytes: number;
-      }
+    | { kind: "soft_update_in_progress" }
     | { kind: "soft_update_downloaded" };
 
 /**
@@ -149,11 +145,7 @@ export function useVersionGate(): VersionGateState {
     }
 
     if (native.data?.status === "in_progress") {
-        return {
-            kind: "soft_update_in_progress",
-            bytesDownloaded: native.data.bytesDownloaded,
-            totalBytes: native.data.totalBytes,
-        };
+        return { kind: "soft_update_in_progress" };
     }
     if (native.data?.status === "downloaded") {
         return { kind: "soft_update_downloaded" };

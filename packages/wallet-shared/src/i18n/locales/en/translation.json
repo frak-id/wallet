@@ -839,7 +839,7 @@
                 "cta": "Update"
             },
             "inProgress": {
-                "title": "Downloading update… {{percent}}%"
+                "title": "Downloading update…"
             },
             "downloaded": {
                 "title": "Update ready to install.",

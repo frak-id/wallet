@@ -15,11 +15,7 @@ import * as styles from "./index.css";
 
 type SoftUpdatePromptProps =
     | { mode: "available"; storeVersion?: string; onDismiss: () => void }
-    | {
-          mode: "in_progress";
-          bytesDownloaded: number;
-          totalBytes: number;
-      }
+    | { mode: "in_progress" }
     | { mode: "downloaded" };
 
 /**
@@ -47,31 +43,16 @@ export function SoftUpdatePrompt(props: SoftUpdatePromptProps) {
     }
 
     if (props.mode === "in_progress") {
-        const percent =
-            props.totalBytes > 0
-                ? Math.min(
-                      100,
-                      Math.round(
-                          (props.bytesDownloaded / props.totalBytes) * 100
-                      )
-                  )
-                : 0;
-
         return (
             <Card variant="elevated" className={styles.banner}>
                 <Box className={styles.body}>
                     <Box className={styles.text}>
                         <Text variant="heading4" weight="semiBold">
-                            {t("version.softUpdate.inProgress.title", {
-                                percent,
-                            })}
+                            {t("version.softUpdate.inProgress.title")}
                         </Text>
                     </Box>
                     <div className={styles.progressTrack}>
-                        <div
-                            className={styles.progressBar}
-                            style={{ width: `${percent}%` }}
-                        />
+                        <div className={styles.progressBar} />
                     </div>
                 </Box>
             </Card>
