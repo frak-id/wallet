@@ -25,6 +25,7 @@ import { Welcome } from "@/module/onboarding/component/Welcome";
 import { useInstallReferrer } from "@/module/onboarding/hook/useInstallReferrer";
 import { withStepTransition } from "@/module/onboarding/utils/stepTransition";
 import { useExecutePendingActions } from "@/module/pending-actions/hook/useExecutePendingActions";
+import { pendingActionsStore } from "@/module/pending-actions/stores/pendingActionsStore";
 import { modalStore } from "@/module/stores/modalStore";
 import * as styles from "./register.css";
 
@@ -90,6 +91,19 @@ function RegisterPage() {
     // secure space.
     const [email, setEmail] = useState("");
 
+    // Detect pairing context once at mount: user landed on /register
+    // because they hit a /pairing?id=xxx deep link before authenticating
+    // (the pending navigation action is stored by
+    // _wallet/_protected-fullscreen.tsx). When true, skip non-essential
+    // onboarding steps so the user can confirm the pairing ASAP.
+    const [isPairingContext] = useState(() => {
+        const actions = pendingActionsStore.getState().getValidActions();
+        return actions.some(
+            (a) =>
+                a.type === "navigation" && a.to === "/pairing" && !!a.search?.id
+        );
+    });
+
     const goToStep = useCallback(
         (next: FlowStep, direction: "forward" | "backward" = "forward") => {
             withStepTransition(direction, () => setStep(next));
@@ -130,13 +144,16 @@ function RegisterPage() {
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
-    const advanceToReferralCode = useCallback(() => {
+    const advanceAfterKeypass = useCallback(() => {
         closeModal();
         // Drain logical pending actions (ensure calls) immediately after auth.
         // Navigation actions are deferred until after the welcome screen.
         executePendingActions({ skipNavigation: true });
-        goToStep("referralCode");
-    }, [closeModal, executePendingActions, goToStep]);
+        // In pairing context, skip referral + notification steps and jump
+        // straight to the welcome screen so the user can confirm the
+        // pairing as soon as possible.
+        goToStep(isPairingContext ? "welcome" : "referralCode");
+    }, [closeModal, executePendingActions, goToStep, isPairingContext]);
 
     // On mobile (where the QR-code option isn't offered on `/login`),
     // "Already have an account?" runs the login mutation inline. On the
@@ -248,16 +265,19 @@ function RegisterPage() {
         goToStep("welcome");
     }, [step, permissionStatus, permissionGranted, hasBackendToken, goToStep]);
 
-    const handleOpenKeypass = useCallback(() => {
-        flowRef.current?.track("onboarding_action_clicked", {
-            action: "activate_secure_space",
-        });
-        openModal({
-            id: "keypass",
-            onAuthSuccess: advanceToReferralCode,
-            email: email || undefined,
-        });
-    }, [openModal, advanceToReferralCode, email]);
+    const handleOpenKeypass = useCallback(
+        (emailOverride?: string) => {
+            flowRef.current?.track("onboarding_action_clicked", {
+                action: "activate_secure_space",
+            });
+            openModal({
+                id: "keypass",
+                onAuthSuccess: advanceAfterKeypass,
+                email: emailOverride || email || undefined,
+            });
+        },
+        [openModal, advanceAfterKeypass, email]
+    );
 
     const handleReferralApplied = useCallback(() => {
         flowRef.current?.track("referral_code_resolved", {
@@ -292,7 +312,11 @@ function RegisterPage() {
                         ),
                     }}
                     buttonLabel={t("onboarding.start")}
-                    onContinue={() => goToStep("onboardingTwo")}
+                    onContinue={() =>
+                        goToStep(
+                            isPairingContext ? "emailInput" : "onboardingTwo"
+                        )
+                    }
                     loginLabel={t("onboarding.alreadyHaveAccount")}
                     onLoginClick={handleAlreadyHaveAccount}
                     isLoginLoading={isLoginLoading}
@@ -321,13 +345,22 @@ function RegisterPage() {
                         flowRef.current?.track("email_input_resolved", {
                             outcome: "submitted",
                         });
-                        goToStep("onboardingThree");
+                        if (isPairingContext) {
+                            handleOpenKeypass(value);
+                        } else {
+                            goToStep("onboardingThree");
+                        }
                     }}
                     onBack={() => {
                         flowRef.current?.track("email_input_resolved", {
                             outcome: "back",
                         });
-                        goToStep("onboardingTwo", "backward");
+                        goToStep(
+                            isPairingContext
+                                ? "onboardingOne"
+                                : "onboardingTwo",
+                            "backward"
+                        );
                     }}
                 />
             )}
