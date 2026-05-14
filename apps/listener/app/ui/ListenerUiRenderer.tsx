@@ -29,20 +29,6 @@ const sharingImport = () =>
 const ListenerSharingPage = lazy(sharingImport);
 
 /**
- * Lazy import of the modal hook impl (paired with the modal view).
- * Same module specifier as the dynamic import inside `useDisplayModalListener`,
- * so the bundler resolves both call sites to the same chunk.
- */
-const modalHookImport = () =>
-    import("@/module/hooks/useDisplayModalListener.impl");
-
-/**
- * Lazy import of the sharing hook impl (paired with the sharing view).
- */
-const sharingHookImport = () =>
-    import("@/module/hooks/useDisplaySharingPageListener.impl");
-
-/**
  * Render the listener UI if needed
  */
 export function ListenerUiRenderer() {

@@ -19,7 +19,7 @@ export function createDisplayEmbeddedWalletHandler(): OnDisplayEmbeddedWalletReq
     return async (params, _context) => {
         void ensureUiRuntime();
         const { handleDisplayEmbeddedWallet } = await import(
-            "./useDisplayEmbeddedWallet.impl"
+            "@/module/embedded/component/Wallet"
         );
         return handleDisplayEmbeddedWallet(params, {
             setRequest: uiBus.request,

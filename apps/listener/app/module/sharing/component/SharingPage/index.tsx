@@ -25,6 +25,11 @@ import {
     useSharingListenerUI,
 } from "@/ui/ListenerUiProvider";
 
+// Re-export the lazy handler body so it lands in the lazy-shared chunk
+// (which already hosts both the sharing UI and the impl regex match).
+// See useDisplaySharingPageListener.ts.
+export { handleDisplaySharingPage } from "@/module/hooks/useDisplaySharingPageListener.impl";
+
 export function ListenerSharingPage() {
     const { currentRequest, clearRequest } = useSharingListenerUI();
     const { t } = useListenerTranslation();

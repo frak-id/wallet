@@ -54,39 +54,73 @@ const isSandbox = !!process.env.ATELIER_SANDBOX_ID;
 const deepLinkScheme = isProd ? "frakwallet://" : "frakwallet-dev://";
 
 /**
- * Rolldown emits a side-effect-only `import "./blockchain-vendor-*.js";` at the
- * top of `common-*.js` even though no symbols from that chunk are bound and
- * `bundle-stats` shows zero real edges. This appears to be a chunking artifact:
- * once viem/wagmi land in their own vendor chunk while the dynamic-import
- * boundary (BlockchainProvider) lives in a chunk reachable from the eager entry,
- * Rolldown preserves a static evaluation-order import "just in case".
+ * Rolldown emits a side-effect-only `import "./<chunk>.js";` at the top of
+ * downstream chunks even when the imported chunk is empty or has no bound
+ * symbols. This appears to be a chunking artifact: side-effect-free
+ * re-export barrels (e.g. from workspace `dist/index.js`) collapse to a
+ * zero-byte chunk, but Rolldown preserves the static-evaluation-order
+ * import "just in case".
  *
- * Effect on the iframe: the browser fetches blockchain-vendor.js (~52 KB gz)
- * on cold boot even though the modulePreload filter strips it from the HTML.
- * That defeats the entire lazy-blockchain effort.
+ * Effect on the iframe: the browser fetches the chunk on cold boot even
+ * though it is empty (or near-empty) and the modulePreload filter strips
+ * it from the HTML. That extra round trip defeats the lazy strategy.
  *
- * The bound dynamic import (`__vitePreload(() => import('./BaseProvider...'))`)
- * is preserved by this plugin — only the orphan side-effect import statement is
- * removed.
+ * This plugin:
+ *  1. Scans the emitted bundle for chunks with empty/whitespace-only code.
+ *  2. Strips every `import "./<name>.js";` referencing those orphan chunks.
+ *  3. Deletes the orphan chunks from the bundle so they aren't written.
+ *
+ * It ALSO strips orphan side-effect imports of known lazy-only chunks
+ * (blockchain-vendor, BaseProvider, ui-vendor, ui-runtime, lazy-shared,
+ * Modal, Wallet, SharingPage). Those chunks are not empty, but Rolldown
+ * sometimes hoists their side-effect imports into eager chunks even when
+ * no bound symbols cross the boundary — forcing the iframe to download
+ * lazy chunks on boot. Real dynamic-import call sites (`__vitePreload(...)`)
+ * are preserved because they don't use the top-level `import "...";` form.
  */
 function stripOrphanCrossChunkImports() {
-    const ORPHAN_IMPORT_RE =
-        /^import\s*"\.\/(?:blockchain-vendor|BaseProvider|ui-vendor|ui-runtime|lazy-shared|Modal|Wallet|SharingPage)-[A-Za-z0-9_-]+\.js";\n?/gm;
+    const LAZY_ORPHAN_RE =
+        /import\s*"\.\/(?:blockchain-vendor|BaseProvider|ui-vendor|ui-runtime|lazy-shared|Modal|Wallet|SharingPage)-[A-Za-z0-9_-]+\.js";/g;
     return {
         name: "strip-orphan-cross-chunk-imports",
         apply: "build" as const,
         generateBundle(_options: unknown, bundle: Record<string, unknown>) {
+            type Chunk = { type?: string; fileName?: string; code?: string };
+            const chunks = Object.entries(bundle) as [string, Chunk][];
+
+            // Pass 1: drop chunks whose code is empty (zero-byte phantoms
+            // produced by Rolldown when a side-effect-free re-export barrel
+            // collapses to nothing). Their import statements would otherwise
+            // remain in every consumer chunk on cold boot.
+            const orphanFileNames: string[] = [];
+            for (const [key, file] of chunks) {
+                if (file.type !== "chunk" || !file.fileName) continue;
+                if (typeof file.code === "string" && file.code.trim() === "") {
+                    orphanFileNames.push(file.fileName);
+                    delete bundle[key];
+                }
+            }
+            const orphanPatterns = orphanFileNames.map((name) => {
+                const escaped = name
+                    .replace(/^assets\//, "")
+                    .replace(/[.+?^${}()|[\]\\]/g, "\\$&");
+                return new RegExp(
+                    `import\\s*"\\./${escaped}";`,
+                    "g"
+                );
+            });
+            // Pass 2: strip orphan side-effect imports from surviving chunks.
             for (const file of Object.values(bundle)) {
                 const f = file as {
                     type?: string;
-                    fileName?: string;
                     code?: string;
                 };
-                if (f.type !== "chunk" || !f.fileName?.includes("common-")) {
+                if (f.type !== "chunk" || typeof f.code !== "string") {
                     continue;
                 }
-                if (typeof f.code === "string") {
-                    f.code = f.code.replace(ORPHAN_IMPORT_RE, "");
+                f.code = f.code.replace(LAZY_ORPHAN_RE, "");
+                for (const re of orphanPatterns) {
+                    f.code = f.code.replace(re, "");
                 }
             }
         },
@@ -316,7 +350,7 @@ export default defineConfig(async () => {
                                 // is matched broadly here, the eager entry is
                                 // forced to statically import this whole
                                 // chunk, defeating the lazy strategy.
-                                test: /(?:node_modules[\\/](?:preact|i18next|i18next-browser-languagedetector|react-i18next|@tanstack[\\/]react-query|@tanstack[\\/]react-query-persist-client)[\\/])|(?:node_modules[\\/]zustand[\\/]esm[\\/]react(?:[\\/]|\.mjs))|(?:apps[\\/]listener[\\/]app[\\/]ui[\\/])/,
+                                test: /(?:node_modules[\\/](?:preact|i18next|i18next-browser-languagedetector|react-i18next|@tanstack[\\/]react-query|@tanstack[\\/]react-query-persist-client)[\\/])|(?:node_modules[\\/]zustand[\\/]esm[\\/]react(?:[\\/]|\.mjs))|(?:apps[\\/]listener[\\/]app[\\/](?:ui[\\/]|module[\\/]hooks[\\/]useListenerDataPreload))|(?:packages[\\/]wallet-shared[\\/]src[\\/](?:i18n[\\/]config|common[\\/](?:hook[\\/]useGetSafeSdkSession|queryKeys[\\/]sdk)))/,
                                 priority: 45,
                                 minShareCount: 1,
                             },
@@ -364,8 +398,12 @@ export default defineConfig(async () => {
                             // on first display.
                             {
                                 name: "blockchain-vendor",
-                                test: /(?:node_modules[\\/](?:viem|wagmi|@wagmi|permissionless|@noble|@scure|ox))|(?:wallet-shared[\\/]src[\\/](?:providers[\\/]BaseProvider|wallet[\\/]|blockchain[\\/]))/,
+                                test: /(?:node_modules[\\/](?:viem|wagmi|@wagmi|permissionless|@noble|@scure|ox|abitype|radash|mipd|eventemitter3)[\\/])|(?:packages[\\/]app-essentials[\\/]src[\\/](?:blockchain|webauthn))|(?:wallet-shared[\\/]src[\\/](?:providers[\\/]BaseProvider|wallet[\\/]|blockchain[\\/]|authentication[\\/]webauthn[\\/]tauriBridge))/,
                                 priority: 35,
+                                // CRITICAL: must be 1 so viem's dynamically
+                                // imported subtree (ccip OffchainLookup errors)
+                                // lands here instead of its own chunk.
+                                minShareCount: 1,
                             },
                             {
                                 name: "ui-vendor",
@@ -374,10 +412,18 @@ export default defineConfig(async () => {
                             },
                             {
                                 name: "lazy-shared",
-                                test: /(?:node_modules[\\/](?:sonner|lucide-react)[\\/])|(?:packages[\\/]design-system[\\/])|(?:wallet-shared[\\/]src[\\/](?:(?:common|pairing)[\\/]component|common[\\/]hook[\\/]useCopyToClipboardWithState|sharing))|(?:apps[\\/]listener[\\/]app[\\/]module[\\/](?:component[\\/](?:SsoButton|ToastLoading)|stores[\\/]hooks|utils[\\/](?:resolveBackendMetadata|normalizeTargetInteraction)|hooks[\\/]useTrackSharing))/,
+                                test: /(?:node_modules[\\/](?:sonner|lucide-react|use-sync-external-store)[\\/])|(?:packages[\\/]design-system[\\/])|(?:wallet-shared[\\/]src[\\/](?:(?:common|pairing)[\\/]component|common[\\/](?:hook[\\/](?:useCopyToClipboardWithState|useFormattedEstimatedReward)|utils[\\/]openExternalUrl)|sharing|pairing[\\/]clients))|(?:apps[\\/]listener[\\/]app[\\/]module[\\/](?:component[\\/](?:SsoButton|ToastLoading)|stores[\\/]hooks|utils[\\/](?:resolveBackendMetadata|normalizeTargetInteraction|deprecatedModalMetadataMapper)|hooks[\\/](?:useTrackSharing|useDisplaySharingPageListener\.impl)|sharing[\\/]component))/,
                                 priority: 25,
                                 minShareCount: 1,
                             },
+                            // No explicit Modal/Wallet group: default chunking
+                            // emits a single chunk per dynamic-import boundary
+                            // (Modal/index.tsx and Wallet/index.tsx). Each
+                            // boundary now re-exports its lazy handler body
+                            // (handleDisplayModal / handleDisplayEmbeddedWallet)
+                            // from useDisplay*.impl so the impl modules land in
+                            // the same default chunk as their parent component
+                            // tree — collapsing the previous 1-2 KB shim chunks.
                             // (i18n locale chunking is implicit — the per-language
                             // barrel module `wallet-shared/i18n/locales/{en,fr}`
                             // is the single dynamic-import target. Both bundled

@@ -59,9 +59,12 @@ function sendBootPing(): void {
 
 /**
  * Reads `?preload=modal,sharing,wallet` from the iframe URL hash and
- * idle-warms the matching Ring 1 + Ring 2 chunks plus the lazy impl
- * modules. Used by partner sites that know they will trigger UI within
- * a few hundred ms — eliminates the cold-start dynamic import latency.
+ * idle-warms the matching Ring 1 + Ring 2 chunks. Each display chunk
+ * (Modal / Wallet / SharingPage's content via lazy-shared) bundles its
+ * own `useDisplay*.impl` handler body, so a single `import()` warms
+ * both the component and its handler. Used by partner sites that know
+ * they will trigger UI within a few hundred ms — eliminates the
+ * cold-start dynamic import latency.
  */
 function setupPreloadHints(): void {
     if (typeof window === "undefined") return;
@@ -82,23 +85,20 @@ function setupPreloadHints(): void {
         // Always warm Ring 1 (preact + provider tree) when any UI is hinted.
         const promises: Promise<unknown>[] = [import("@/ui/runtime")];
 
+        // Preload the matching display chunk(s). Each chunk co-hosts the
+        // component tree AND its lazy handler body (useDisplay*.impl) via
+        // the `Modal` / `Wallet` / `lazy-shared` chunk groups in
+        // vite.config.ts, so a single import warms both files.
         if (wantsModal) {
-            promises.push(
-                import("@/module/modal/component/Modal"),
-                import("@/module/hooks/useDisplayModalListener.impl")
-            );
+            promises.push(import("@/module/modal/component/Modal"));
         }
         if (wantsSharing) {
             promises.push(
-                import("@/module/sharing/component/SharingPage"),
-                import("@/module/hooks/useDisplaySharingPageListener.impl")
+                import("@/module/sharing/component/SharingPage")
             );
         }
         if (wantsWallet) {
-            promises.push(
-                import("@/module/embedded/component/Wallet"),
-                import("@/module/hooks/useDisplayEmbeddedWallet.impl")
-            );
+            promises.push(import("@/module/embedded/component/Wallet"));
         }
 
         await Promise.all(promises);

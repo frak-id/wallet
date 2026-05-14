@@ -19,7 +19,7 @@ export function createDisplaySharingPageHandler(): OnDisplaySharingPageRequest {
     return async (params, _context) => {
         void ensureUiRuntime();
         const { handleDisplaySharingPage } = await import(
-            "./useDisplaySharingPageListener.impl"
+            "@/module/sharing/component/SharingPage"
         );
         return handleDisplaySharingPage(params, {
             setRequest: uiBus.request,

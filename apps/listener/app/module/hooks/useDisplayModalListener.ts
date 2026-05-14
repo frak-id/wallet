@@ -25,7 +25,7 @@ export function createDisplayModalHandler(): OnDisplayModalRequest {
         // provider attaches, so we don't need to await the runtime.
         void ensureUiRuntime();
         const { handleDisplayModal } = await import(
-            "./useDisplayModalListener.impl"
+            "@/module/modal/component/Modal"
         );
         return handleDisplayModal(params, { setRequest: uiBus.request });
     };

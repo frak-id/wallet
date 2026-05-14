@@ -16,6 +16,10 @@ import { useEmbeddedListenerUI } from "@/ui/ListenerUiProvider";
 import { ToastLoading } from "../../../component/ToastLoading";
 import * as styles from "./index.css";
 
+// Re-export the lazy handler body so it lands in the Wallet default chunk
+// instead of its own .impl shim chunk. See useDisplayEmbeddedWallet.ts.
+export { handleDisplayEmbeddedWallet } from "@/module/hooks/useDisplayEmbeddedWallet.impl";
+
 export function ListenerWallet() {
     return (
         <BlockchainProvider>

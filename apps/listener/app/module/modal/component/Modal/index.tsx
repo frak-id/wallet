@@ -51,6 +51,10 @@ import { ToastLoading } from "../../../component/ToastLoading";
 import * as styles from "./index.css";
 import { ModalStepIndicator } from "./Step";
 
+// Re-export the lazy handler body so it lands in the Modal default chunk
+// instead of its own .impl shim chunk. See useDisplayModalListener.ts.
+export { handleDisplayModal } from "@/module/hooks/useDisplayModalListener.impl";
+
 /**
  * Display the given request in a modal
  */
