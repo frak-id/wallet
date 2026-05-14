@@ -1,7 +1,8 @@
 import * as coreSdkIndex from "@frak-labs/core-sdk";
 import { setupClient, trackEvent, withCache } from "@frak-labs/core-sdk";
 import * as coreSdkActions from "@frak-labs/core-sdk/actions";
-import { openWalletModal } from "../components/ButtonWallet/utils";
+import { openSharingPage } from "../actions/sharingPage";
+import { decodeProductsParam } from "../utils/sharingPageProducts";
 import { dispatchClientReadyEvent } from "./clientReady";
 
 /**
@@ -79,17 +80,32 @@ async function doInit(): Promise<void> {
 }
 
 /**
- * Check the query param contain params for an auto opening of the frak modal
+ * Check the query param for an auto-opening of the Frak sharing page.
+ *
+ * Supported params (all optional except `frakAction`):
+ * - `frakAction=share` triggers the auto-open.
+ * - `link` overrides the URL the sharing page generates outbound shares for.
+ *   When omitted, the listener falls back to the merchant domain.
+ * - `products` is a base64-encoded compressed JSON payload of
+ *   `SharingPageProduct[]` — produced by `compressJsonToB64(productsArray)`
+ *   on the sender side (e.g. a Klaviyo email template). Used by
+ *   post-purchase emails to surface the items the customer just bought as
+ *   product cards on the sharing page.
+ * - `placement` lets the caller scope backend-driven CSS / config to a
+ *   specific placement (mirrors the prop on the components).
  */
 function handleActionQueryParam() {
     const urlParams = new URLSearchParams(window.location.search);
     const frakAction = urlParams.get("frakAction");
-    if (!frakAction) {
+    if (frakAction !== "share") {
         return;
     }
 
-    if (frakAction === "share") {
-        console.log("[Frak SDK] Auto open query param found");
-        openWalletModal();
-    }
+    console.log("[Frak SDK] Auto open share via query param");
+
+    const link = urlParams.get("link") ?? undefined;
+    const placement = urlParams.get("placement") ?? undefined;
+    const products = decodeProductsParam(urlParams.get("products"));
+
+    openSharingPage(undefined, placement, { link, products });
 }

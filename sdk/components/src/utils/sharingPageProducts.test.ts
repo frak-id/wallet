@@ -1,5 +1,11 @@
+import { compressJsonToB64 } from "@frak-labs/core-sdk";
 import { describe, expect, it } from "vitest";
-import { coerceProductCandidates, normalizeProductCandidate } from "./products";
+import {
+    coerceProductCandidates,
+    decodeProductsParam,
+    normalizeProductCandidate,
+    sanitizeProductList,
+} from "./sharingPageProducts";
 
 describe("coerceProductCandidates", () => {
     describe("falsy / unsupported inputs", () => {
@@ -11,26 +17,19 @@ describe("coerceProductCandidates", () => {
             expect(coerceProductCandidates("")).toBeNull();
         });
 
-        // Defence-in-depth: although the type says `string | array | undefined`,
-        // surfaces that bypass the type system (raw HTML attribute setters,
-        // misuse from JS) might pass numbers / objects / null. We don't want
-        // those to crash downstream.
+        // Defence-in-depth: although the type says `unknown`, we still want
+        // bad inputs (numbers / objects / null) to bail out cleanly so we
+        // don't crash downstream.
         it("returns null for non-string non-array values (number)", () => {
-            expect(
-                coerceProductCandidates(42 as unknown as undefined)
-            ).toBeNull();
+            expect(coerceProductCandidates(42)).toBeNull();
         });
 
         it("returns null for non-string non-array values (plain object)", () => {
-            expect(
-                coerceProductCandidates({ title: "x" } as unknown as undefined)
-            ).toBeNull();
+            expect(coerceProductCandidates({ title: "x" })).toBeNull();
         });
 
         it("returns null for null", () => {
-            expect(
-                coerceProductCandidates(null as unknown as undefined)
-            ).toBeNull();
+            expect(coerceProductCandidates(null)).toBeNull();
         });
     });
 
@@ -295,5 +294,97 @@ describe("normalizeProductCandidate", () => {
                 link: "https://shop.example.com/x",
             });
         });
+    });
+});
+
+describe("sanitizeProductList", () => {
+    it("returns undefined for falsy / unsupported inputs", () => {
+        expect(sanitizeProductList(undefined)).toBeUndefined();
+        expect(sanitizeProductList(null)).toBeUndefined();
+        expect(sanitizeProductList("")).toBeUndefined();
+        expect(sanitizeProductList(42)).toBeUndefined();
+        expect(sanitizeProductList({ title: "x" })).toBeUndefined();
+    });
+
+    it("returns undefined for an empty array", () => {
+        // Caller intent: no products to display.
+        expect(sanitizeProductList([])).toBeUndefined();
+    });
+
+    it("returns undefined when every candidate is malformed", () => {
+        expect(
+            sanitizeProductList([{ imageUrl: "https://x.test" }, { title: "" }])
+        ).toBeUndefined();
+    });
+
+    it("returns the sanitised entries when at least one is valid", () => {
+        expect(
+            sanitizeProductList([
+                { title: "Boots", link: "javascript:evil()" },
+                { title: "" },
+                { title: "Shoes", link: "https://shop.example.com/shoes" },
+            ])
+        ).toEqual([
+            { title: "Boots" },
+            { title: "Shoes", link: "https://shop.example.com/shoes" },
+        ]);
+    });
+
+    it("accepts a JSON-stringified payload (HTML-attribute surface)", () => {
+        expect(
+            sanitizeProductList(
+                JSON.stringify([
+                    { title: "x", imageUrl: "https://cdn.example.com/x.jpg" },
+                ])
+            )
+        ).toEqual([{ title: "x", imageUrl: "https://cdn.example.com/x.jpg" }]);
+    });
+});
+
+describe("decodeProductsParam", () => {
+    it("returns undefined for empty / null / undefined input", () => {
+        expect(decodeProductsParam(undefined)).toBeUndefined();
+        expect(decodeProductsParam(null)).toBeUndefined();
+        expect(decodeProductsParam("")).toBeUndefined();
+    });
+
+    it("decodes a compressed array and sanitises every entry", () => {
+        const encoded = compressJsonToB64([
+            {
+                title: "Boots",
+                imageUrl: "https://cdn.example.com/boots.jpg",
+                link: "https://shop.example.com/boots",
+            },
+            {
+                title: "Bad",
+                imageUrl: "javascript:alert(1)",
+                link: "https://shop.example.com/bad",
+            },
+        ]);
+        expect(decodeProductsParam(encoded)).toEqual([
+            {
+                title: "Boots",
+                imageUrl: "https://cdn.example.com/boots.jpg",
+                link: "https://shop.example.com/boots",
+            },
+            {
+                title: "Bad",
+                link: "https://shop.example.com/bad",
+            },
+        ]);
+    });
+
+    it("returns undefined when the decoded payload is not an array", () => {
+        const encoded = compressJsonToB64({ title: "x" });
+        expect(decodeProductsParam(encoded)).toBeUndefined();
+    });
+
+    it("returns undefined when the decoded array has no usable entries", () => {
+        const encoded = compressJsonToB64([{ title: "" }, { foo: "bar" }]);
+        expect(decodeProductsParam(encoded)).toBeUndefined();
+    });
+
+    it("returns undefined for a malformed / non-base64 input", () => {
+        expect(decodeProductsParam("$$$ not-base64 $$$")).toBeUndefined();
     });
 });

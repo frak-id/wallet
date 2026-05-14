@@ -7,6 +7,8 @@ const APPEARANCE_KEY = "appearance";
 const MERCHANT_ID_KEY = "merchant_id";
 const WALLET_URL_KEY = "wallet_url";
 const COMPONENTS_URL_KEY = "components_url";
+const SHARE_URL_KEY = "share_url";
+const SHARE_BUTTON_HTML_KEY = "share_button_html";
 
 export type AppearanceMetafieldValue = {
     logoUrl?: string;
@@ -412,4 +414,106 @@ export async function writeComponentsUrlMetafield(
     userErrors: Array<{ field: string; message: string }>;
 }> {
     return writeMetafield(context, COMPONENTS_URL_KEY, componentsUrl);
+}
+
+/* -------------------------------------------------------------------------- */
+/*                          Klaviyo share helpers                             */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * Read the Klaviyo share URL pattern from shop metafields.
+ *
+ * The value is a fully-qualified URL that, when visited, auto-opens the
+ * Frak sharing page on the merchant's storefront via the `frakAction=share`
+ * query param handled by the SDK loader.
+ *
+ * Merchants reference this metafield from their email-tool templates
+ * (Klaviyo, Omnisend, Customer.io …) to drop a ready-to-use CTA without
+ * hard-coding the storefront host.
+ */
+export async function getShareUrlMetafield({
+    admin: { graphql },
+}: AuthenticatedContext): Promise<string | null> {
+    return readMetafield<string>(graphql, SHARE_URL_KEY);
+}
+
+/**
+ * Write the Klaviyo share URL pattern. Wraps `writeMetafield` so the value
+ * is JSON-encoded the same way every other Frak metafield is.
+ */
+export async function writeShareUrlMetafield(
+    context: AuthenticatedContext,
+    shareUrl: string
+): Promise<{
+    success: boolean;
+    userErrors: Array<{ field: string; message: string }>;
+}> {
+    return writeMetafield(context, SHARE_URL_KEY, shareUrl);
+}
+
+/**
+ * Read the Klaviyo paste-in share button HTML snippet from shop metafields.
+ *
+ * The value is a self-contained `<a>` tag with inline styles — valid in
+ * every major email client, no external CSS, no JS. The snippet is built
+ * server-side (see `ensureKlaviyoShareMetafields`) so it always reflects
+ * the current storefront domain.
+ */
+export async function getShareButtonHtmlMetafield({
+    admin: { graphql },
+}: AuthenticatedContext): Promise<string | null> {
+    return readMetafield<string>(graphql, SHARE_BUTTON_HTML_KEY);
+}
+
+/**
+ * Write the Klaviyo paste-in share button HTML snippet.
+ */
+export async function writeShareButtonHtmlMetafield(
+    context: AuthenticatedContext,
+    html: string
+): Promise<{
+    success: boolean;
+    userErrors: Array<{ field: string; message: string }>;
+}> {
+    return writeMetafield(context, SHARE_BUTTON_HTML_KEY, html);
+}
+
+/**
+ * Build the canonical share URL for a given storefront host.
+ *
+ * The SDK loader treats `?frakAction=share` as a directive to auto-open
+ * the sharing page on the next page load — see `handleActionQueryParam`
+ * in `sdk/components/src/bootstrap/initFrakSdk.ts`.
+ */
+export function buildShareUrl(domain: string): string {
+    return `https://${domain}/?frakAction=share`;
+}
+
+/**
+ * Build the paste-in email share button HTML snippet.
+ *
+ * Inline styles only (email clients strip `<style>` blocks) and a fallback
+ * font stack so the CTA renders consistently across Gmail / Outlook / Apple
+ * Mail. Merchants can swap the `background-color` / `color` to match their
+ * brand without breaking the layout.
+ */
+export function buildShareButtonHtml(domain: string): string {
+    const shareUrl = buildShareUrl(domain);
+    return `<a href="${shareUrl}" style="display:inline-block;padding:12px 28px;background-color:#121212;color:#ffffff;text-decoration:none;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;font-size:14px;font-weight:600;line-height:1.4;border-radius:6px;">Share &amp; earn</a>`;
+}
+
+/**
+ * Read both Klaviyo share metafields in a single pass.
+ *
+ * Returned by the appearance loader so the admin UI can show what merchants
+ * are about to paste into Klaviyo, alongside copy-to-clipboard buttons.
+ */
+export async function getKlaviyoShareMetafields(
+    context: AuthenticatedContext
+): Promise<{ shareUrl: string | null; shareButtonHtml: string | null }> {
+    const [shareUrl, shareButtonHtml] = await Promise.all([
+        getShareUrlMetafield(context),
+        getShareButtonHtmlMetafield(context),
+    ]);
+    return { shareUrl, shareButtonHtml };
 }
