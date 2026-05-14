@@ -71,6 +71,7 @@ class Frak_Elementor_Banner_Widget extends Frak_Elementor_Widget_Base {
 			'inappTitle',
 			'inappDescription',
 			'inappCta',
+			'allowInappRedirect',
 			'imageUrl',
 			'previewMode',
 			'placement',
@@ -155,6 +156,19 @@ class Frak_Elementor_Banner_Widget extends Frak_Elementor_Widget_Base {
 				'label'   => esc_html__( 'CTA label', 'frak' ),
 				'type'    => \Elementor\Controls_Manager::TEXT,
 				'dynamic' => array( 'active' => true ),
+			)
+		);
+
+		$this->add_control(
+			'allowInappRedirect',
+			array(
+				'label'        => esc_html__( 'Allow in-app browser redirect', 'frak' ),
+				'type'         => \Elementor\Controls_Manager::SWITCHER,
+				'label_on'     => esc_html__( 'On', 'frak' ),
+				'label_off'    => esc_html__( 'Off', 'frak' ),
+				'return_value' => 'true',
+				'default'      => '',
+				'description'  => esc_html__( 'When enabled, prompts users opening this page in Instagram or Facebook in-app browsers to switch to their system browser. Disabled by default — enable only on surfaces that drive users into a flow requiring WebAuthn (passkey login, transaction signing).', 'frak' ),
 			)
 		);
 

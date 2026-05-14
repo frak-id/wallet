@@ -46,6 +46,7 @@ class Frak_Shortcodes {
 		'inapp_description'    => '',
 		'inapp_cta'            => '',
 		'image_url'            => '',
+		'allow_inapp_redirect' => '',
 	);
 
 	/**

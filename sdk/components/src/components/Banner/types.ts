@@ -59,4 +59,19 @@ export type BannerProps = {
      * Only used when {@link preview} is set. Defaults to "referral".
      */
     previewMode?: "referral" | "inapp";
+    /**
+     * When `true` (default `false`), the banner is allowed to switch to
+     * in-app browser mode (Instagram / Facebook WebView) and prompt the
+     * user to escape to the system browser.
+     *
+     * Most flows now work inside in-app browsers via the anonymous-id
+     * flow, so the redirect is opt-in. Enable it only on surfaces that
+     * actually drive users into a WebAuthn-bound action (login,
+     * sendTransaction, SIWE authenticate).
+     *
+     * Accepts the boolean `true` (TS/JSX) or the string `"true"` (HTML
+     * attribute). Any other value — including `false`, `"false"`, the
+     * empty string, or attribute absence — keeps the redirect disabled.
+     */
+    allowInappRedirect?: boolean | "true" | "false";
 };

@@ -32,6 +32,7 @@ registerWebComponent(
         "preview",
         "previewMode",
         "imageUrl",
+        "allowInappRedirect",
     ],
     {
         shadow: false,

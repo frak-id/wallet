@@ -71,6 +71,14 @@ return array(
 				'type'    => 'string',
 				'default' => '',
 			),
+			'imageUrl'            => array(
+				'type'    => 'string',
+				'default' => '',
+			),
+			'allowInappRedirect'  => array(
+				'type'    => 'boolean',
+				'default' => false,
+			),
 			'previewMode'         => array(
 				'type'    => 'string',
 				'default' => 'referral',
@@ -130,6 +138,10 @@ return array(
 				'default' => '',
 			),
 			'ctaText'        => array(
+				'type'    => 'string',
+				'default' => '',
+			),
+			'imageUrl'       => array(
 				'type'    => 'string',
 				'default' => '',
 			),

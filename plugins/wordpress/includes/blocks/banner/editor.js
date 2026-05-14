@@ -5,7 +5,7 @@
 	const el = element.createElement;
 	const { Fragment, useEffect, useRef } = element;
 	const { InspectorControls, useBlockProps, MediaUpload, MediaUploadCheck } = blockEditor;
-	const { PanelBody, TextControl, TextareaControl, SelectControl, Button } = components;
+	const { PanelBody, TextControl, TextareaControl, SelectControl, ToggleControl, Button } = components;
 	const { __ } = i18n;
 
 	const PREVIEW_MODES = [
@@ -90,6 +90,12 @@
 							label: __( 'CTA label', 'frak' ),
 							value: attributes.inappCta,
 							onChange: setter( 'inappCta' ),
+						} ),
+						el( ToggleControl, {
+							label: __( 'Allow in-app browser redirect', 'frak' ),
+							help: __( 'When enabled, prompts users opening this page in Instagram or Facebook in-app browsers to switch to their system browser. Disabled by default — enable only on surfaces that drive users into a flow requiring WebAuthn (passkey login, transaction signing).', 'frak' ),
+							checked: !! attributes.allowInappRedirect,
+							onChange: ( value ) => setAttributes( { allowInappRedirect: !! value } ),
 						} )
 					),
 					el(
@@ -162,6 +168,7 @@
 							'inapp-description': attr( attributes.inappDescription ),
 							'inapp-cta': attr( attributes.inappCta ),
 							'image-url': attr( attributes.imageUrl ),
+							'allow-inapp-redirect': attributes.allowInappRedirect ? 'true' : null,
 						} )
 					)
 			);

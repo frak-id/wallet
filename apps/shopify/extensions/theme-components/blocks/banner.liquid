@@ -13,6 +13,7 @@
   {% if block.settings.inapp_description != blank %}inapp-description="{{ block.settings.inapp_description }}"{% endif %}
   {% if block.settings.inapp_cta != blank %}inapp-cta="{{ block.settings.inapp_cta }}"{% endif %}
   {% if block.settings.image_url != blank %}image-url="{{ block.settings.image_url | image_url: width: 200 }}"{% endif %}
+  {% if block.settings.allow_inapp_redirect %}allow-inapp-redirect="true"{% endif %}
   {% if request.design_mode and block.settings.enable_preview %}preview="true" preview-mode="{{ block.settings.preview_mode }}"{% endif %}
 ></frak-banner>
 
@@ -89,6 +90,17 @@
       "id": "inapp_cta",
       "label": "Button text",
       "info": "Override the in-app browser banner button text (default: \"Open browser\")"
+    },
+    {
+      "type": "header",
+      "content": "In-app browser redirect"
+    },
+    {
+      "type": "checkbox",
+      "id": "allow_inapp_redirect",
+      "label": "Allow in-app browser redirect",
+      "info": "When enabled, the banner prompts users opening this page in Instagram or Facebook's in-app browser to switch to their system browser. Disabled by default \u2014 enable only if this surface drives users into a flow that requires WebAuthn (passkey login, transaction signing).",
+      "default": false
     },
     {
       "type": "header",
