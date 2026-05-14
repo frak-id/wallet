@@ -300,6 +300,8 @@
             "useQRCode": "Utiliser un QR code pour me connecter"
         },
         "registerDemo": {
+            "title": "Essayer Frak en mode démo",
+            "description": "Créez un porte-monnaie temporaire pour explorer Frak. Pas de biométrie, pas de récupération — juste un bac à sable.",
             "button": {
                 "create": "Créez votre <strong>porte-monnaie</strong> de démonstration",
                 "error": "Erreur lors de l'inscription, veuillez réessayer",
@@ -758,6 +760,26 @@
                     "empty": "Aucun IBAN enregistré. Ajoutes-en un pour commencer.",
                     "select": "Sélectionner"
                 }
+            }
+        },
+        "order": {
+            "kind": {
+                "issue": "IBAN **** -> Frak Labs",
+                "redeem": "Frak Labs -> IBAN ****"
+            },
+            "state": {
+                "placed": "Ordre placé",
+                "pending": "En cours de traitement",
+                "processed": "Terminé",
+                "rejected": "Rejeté"
+            },
+            "detail": {
+                "walletName": "Frak Labs",
+                "bank": "Banque",
+                "noNote": "Envoyé sans note",
+                "from": "De",
+                "to": "À",
+                "transaction": "Transaction"
             }
         }
     },

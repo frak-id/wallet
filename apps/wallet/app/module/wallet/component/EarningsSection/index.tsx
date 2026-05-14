@@ -4,11 +4,11 @@ import { Text } from "@frak-labs/design-system/components/Text";
 import { Link } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
 import { RewardHistoryList } from "@/module/history/component/RewardHistory";
-import { useGetRewardHistory } from "@/module/history/hook/useGetRewardHistory";
+import { useHistory } from "@/module/history/hook/useHistory";
 
 export function EarningsSection() {
     const { t } = useTranslation();
-    const { totalCount } = useGetRewardHistory();
+    const { totalCount } = useHistory();
 
     return (
         <Box display="flex" flexDirection="column" gap="xs">
