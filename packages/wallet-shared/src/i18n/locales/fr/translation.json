@@ -303,7 +303,7 @@
             "title": "Essayer Frak en mode démo",
             "description": "Créez un porte-monnaie temporaire pour explorer Frak. Pas de biométrie, pas de récupération — juste un bac à sable.",
             "button": {
-                "create": "Créez votre <strong>porte-monnaie</strong> de démonstration",
+                "create": "Créez votre porte-monnaie de démonstration",
                 "error": "Erreur lors de l'inscription, veuillez réessayer",
                 "inProgress": "Création du porte-monnaie en cours"
             }
