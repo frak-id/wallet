@@ -2,8 +2,8 @@
  * Zustand store for session management
  */
 
-import { createStore } from "zustand/vanilla";
 import { persist } from "zustand/middleware";
+import { createStore } from "zustand/vanilla";
 import type { SessionStore } from "./types";
 
 /**

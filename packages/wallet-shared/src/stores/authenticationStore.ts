@@ -2,8 +2,8 @@
  * Zustand store for authentication management
  */
 
-import { createStore } from "zustand/vanilla";
 import { persist } from "zustand/middleware";
+import { createStore } from "zustand/vanilla";
 import { authenticatorStorage } from "../common/storage/authenticators";
 import type { Session } from "../types/Session";
 import type { AuthenticationStore } from "./types";

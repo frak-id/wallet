@@ -1,4 +1,3 @@
-import { useStore } from "zustand";
 import { IS_TAURI } from "@frak-labs/app-essentials/utils/platform";
 import type {
     AttributionParams,
@@ -24,6 +23,7 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
+import { useStore } from "zustand";
 import { useMerchantResolvedConfig } from "@/module/common/hook/useMerchantResolvedConfig";
 
 /**

@@ -1,7 +1,4 @@
-import type {
-    Currency,
-    InteractionTypeKey,
-} from "@frak-labs/core-sdk";
+import type { Currency, InteractionTypeKey } from "@frak-labs/core-sdk";
 import { useQuery } from "@tanstack/react-query";
 import {
     estimatedRewardsQueryOptions,

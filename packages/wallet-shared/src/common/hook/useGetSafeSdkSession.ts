@@ -1,6 +1,6 @@
-import { useStore } from "zustand";
 import { useQuery } from "@tanstack/react-query";
 import { useCallback } from "react";
+import { useStore } from "zustand";
 import {
     authenticationStore,
     selectLastWebAuthNAction,
@@ -21,8 +21,14 @@ export function useGetSafeSdkSession() {
     // Using zustand hooks
     const currentSdkSession = useStore(sessionStore, selectSdkSession);
     const currentSession = useStore(sessionStore, selectSession);
-    const lastWebAuthnAction = useStore(authenticationStore, selectLastWebAuthNAction);
-    const setSdkSession = useStore(sessionStore, (state) => state.setSdkSession);
+    const lastWebAuthnAction = useStore(
+        authenticationStore,
+        selectLastWebAuthNAction
+    );
+    const setSdkSession = useStore(
+        sessionStore,
+        (state) => state.setSdkSession
+    );
 
     /**
      * Generate an SDK session from the last webauthn action if possible

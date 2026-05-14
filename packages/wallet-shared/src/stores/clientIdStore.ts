@@ -10,8 +10,8 @@
  * identity resolution misses some correlations.
  */
 
-import { createStore } from "zustand/vanilla";
 import { persist } from "zustand/middleware";
+import { createStore } from "zustand/vanilla";
 import type { ClientIdStore } from "./types";
 
 /**

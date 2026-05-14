@@ -1,7 +1,7 @@
-import { useStore } from "zustand";
 import { mergeTokenQueryOptions } from "@frak-labs/wallet-shared/identity";
 import { useQuery } from "@tanstack/react-query";
 import { useCallback } from "react";
+import { useStore } from "zustand";
 import { resolvingContextStore } from "@/module/stores/resolvingContextStore";
 
 export function useGetMergeToken() {

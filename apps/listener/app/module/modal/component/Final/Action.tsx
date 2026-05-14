@@ -1,4 +1,3 @@
-import { useStore } from "zustand";
 import { type FinalActionType, FrakContextManager } from "@frak-labs/core-sdk";
 import {
     prefixModalCss,
@@ -14,6 +13,7 @@ import { sessionStore } from "@frak-labs/wallet-shared/stores/sessionStore";
 import { Copy, Share } from "lucide-react";
 import { useMemo } from "react";
 import { toast } from "sonner";
+import { useStore } from "zustand";
 import { ButtonAction } from "@/module/modal/component/ButtonAction";
 import * as styles from "@/module/modal/component/Modal/index.css";
 import { useSafeResolvingContext } from "@/module/stores/hooks";
@@ -79,7 +79,10 @@ function SharingButtons({
     const { copy } = useCopyToClipboardWithState();
     const { t } = useListenerTranslation();
     const { mutate: trackSharing } = useTrackSharing();
-    const defaultAttribution = useStore(resolvingContextStore, (s) => s.backendSdkConfig?.attribution);
+    const defaultAttribution = useStore(
+        resolvingContextStore,
+        (s) => s.backendSdkConfig?.attribution
+    );
 
     const finalSharingLink = useMemo(() => {
         const url = link ?? sourceUrl;

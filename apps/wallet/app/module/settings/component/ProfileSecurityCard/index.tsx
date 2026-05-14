@@ -1,4 +1,3 @@
-import { useStore } from "zustand";
 import { Badge } from "@frak-labs/design-system/components/Badge";
 import { Box } from "@frak-labs/design-system/components/Box";
 import { Card } from "@frak-labs/design-system/components/Card";
@@ -7,6 +6,7 @@ import { selectWebauthnSession, sessionStore } from "@frak-labs/wallet-shared";
 import { Link } from "@tanstack/react-router";
 import { ChevronRight, Shield } from "lucide-react";
 import { useTranslation } from "react-i18next";
+import { useStore } from "zustand";
 import { useRecoverySetupStatus } from "@/module/recovery-setup/hook/useRecoverySetupStatus";
 import * as styles from "./index.css";
 

@@ -1,4 +1,3 @@
-import { useStore } from "zustand";
 import { Card } from "@frak-labs/design-system/components/Card";
 import { Inline } from "@frak-labs/design-system/components/Inline";
 import { Text } from "@frak-labs/design-system/components/Text";
@@ -13,6 +12,7 @@ import type { Pairing } from "@frak-labs/wallet-shared/pairing/types";
 import { useQueryClient } from "@tanstack/react-query";
 import type { ReactNode } from "react";
 import { useTranslation } from "react-i18next";
+import { useStore } from "zustand";
 import * as styles from "./index.css";
 
 function formatDate(value: Date | string | number, language: string) {

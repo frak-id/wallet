@@ -1,5 +1,5 @@
-import { useStore } from "zustand";
 import { useQuery } from "@tanstack/react-query";
+import { useStore } from "zustand";
 import { authenticatedWalletApi } from "../../common/api/backendClient";
 import { selectWebauthnSession, sessionStore } from "../../stores/sessionStore";
 import { pairingKey } from "../queryKeys";

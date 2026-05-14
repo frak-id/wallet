@@ -1,6 +1,6 @@
-import { useStore } from "zustand";
 import { useMutation } from "@tanstack/react-query";
 import { useCallback } from "react";
+import { useStore } from "zustand";
 import { selectWebauthnSession, sessionStore } from "../../stores/sessionStore";
 import { signHashViaWebAuthN } from "../../wallet/smartWallet/signature";
 import type { TargetPairingClient } from "../clients/target";

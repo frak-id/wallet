@@ -104,10 +104,7 @@ function stripOrphanCrossChunkImports() {
                 const escaped = name
                     .replace(/^assets\//, "")
                     .replace(/[.+?^${}()|[\]\\]/g, "\\$&");
-                return new RegExp(
-                    `import\\s*"\\./${escaped}";`,
-                    "g"
-                );
+                return new RegExp(`import\\s*"\\./${escaped}";`, "g");
             });
             // Pass 2: strip orphan side-effect imports from surviving chunks.
             for (const file of Object.values(bundle)) {
@@ -276,6 +273,11 @@ export default defineConfig(async () => {
             target: "baseline-widely-available",
             chunkSizeWarningLimit: 300,
             rolldownOptions: {
+                // Skip emitting facade chunks for dynamic-import entry points.
+                // Combined with `includeDependenciesRecursively: false`, this lets
+                // Rolldown route `@/ui/runtime` directly to the `ui-runtime` chunk
+                // instead of creating a 73-byte re-export shim.
+                preserveEntrySignatures: false,
                 experimental: {
                     attachDebugInfo: isProd ? "none" : "full",
                     lazyBarrel: true,
@@ -304,26 +306,17 @@ export default defineConfig(async () => {
                         // chunking based on their own match.
                         includeDependenciesRecursively: false,
                         groups: [
-                            // Vite's `__vitePreload` helper (virtual module).
-                            // Pinned to its own tiny chunk (1.2 KB) so it doesn't
-                            // get hoisted into a heavy lazy chunk — if that
-                            // happens the eager entry statically imports that
-                            // chunk just to obtain the dynamic-import wrapper.
-                            // (Tested: removing this group hoists the helper into
-                            // `blockchain-vendor` and drags 165 KB into eager.)
-                            //
                             // NOTE: Rolldown's `\0rolldown/runtime.js` is emitted
                             // as its own hardcoded `rolldown-runtime` chunk by the
                             // native core — user-defined `codeSplitting.groups`
-                            // cannot redirect it (verified empirically). The two
-                            // tiny runtime chunks (~0.7 KB + ~1.2 KB) therefore
-                            // remain separate.
-                            {
-                                name: "vite-preload",
-                                test: /vite[\\/]preload-helper/,
-                                priority: 50,
-                            },
-
+                            // cannot redirect it (verified empirically). That tiny
+                            // chunk (~0.8 KB) therefore remains separate.
+                            //
+                            // `vite/preload-helper` (1.2 KB) used to be pinned to
+                            // its own chunk; the wider `common` regex below claims
+                            // it now, saving an HTTP request without dragging lazy
+                            // chunks into eager (common is the only static dependency
+                            // root the preload helper has).
                             // ============================================
                             // EAGER chunks (loaded on every iframe boot)
                             // ============================================
@@ -412,7 +405,7 @@ export default defineConfig(async () => {
                             },
                             {
                                 name: "lazy-shared",
-                                test: /(?:node_modules[\\/](?:sonner|lucide-react|use-sync-external-store)[\\/])|(?:packages[\\/]design-system[\\/])|(?:wallet-shared[\\/]src[\\/](?:(?:common|pairing)[\\/]component|common[\\/](?:hook[\\/](?:useCopyToClipboardWithState|useFormattedEstimatedReward)|utils[\\/]openExternalUrl)|sharing|pairing[\\/]clients))|(?:apps[\\/]listener[\\/]app[\\/]module[\\/](?:component[\\/](?:SsoButton|ToastLoading)|stores[\\/]hooks|utils[\\/](?:resolveBackendMetadata|normalizeTargetInteraction|deprecatedModalMetadataMapper)|hooks[\\/](?:useTrackSharing|useDisplaySharingPageListener\.impl)|sharing[\\/]component))/,
+                                test: /(?:node_modules[\\/](?:sonner|lucide-react|use-sync-external-store|@vanilla-extract)[\\/])|(?:packages[\\/]design-system[\\/])|(?:wallet-shared[\\/]src[\\/](?:(?:common|pairing)[\\/]component|common[\\/](?:hook[\\/](?:useCopyToClipboardWithState|useFormattedEstimatedReward)|utils[\\/]openExternalUrl)|sharing|pairing[\\/](?:clients|types)))|(?:sdk[\\/]core[\\/]src[\\/](?:context|types[\\/]context))|(?:apps[\\/]listener[\\/]app[\\/]module[\\/](?:component[\\/](?:SsoButton|ToastLoading)|stores[\\/]hooks|utils[\\/](?:resolveBackendMetadata|normalizeTargetInteraction|deprecatedModalMetadataMapper)|hooks[\\/](?:useTrackSharing|useDisplaySharingPageListener\.impl)|sharing[\\/]component))/,
                                 priority: 25,
                                 minShareCount: 1,
                             },
@@ -467,7 +460,7 @@ export default defineConfig(async () => {
                                 // hook .impl chunks) out of this chunk — they
                                 // belong in `lazy-shared` / their boundary chunk.
                                 tags: ["$initial"],
-                                test: /(?:wallet-shared[\\/]src[\\/](?:stores|i18n|polyfills|stubs|types|common[\\/](?:analytics|api|lib|utils|storage|tauri|queryKeys)|common[\\/]hook[\\/](?:useEstimatedReward|useGetSafeSdkSession)))|(?:packages[\\/]app-essentials[\\/])|(?:packages[\\/]rpc[\\/](?:dist|src)[\\/])|(?:apps[\\/]listener[\\/]app[\\/]module[\\/](?:stores|middleware|handlers|providers|types|common|queryKeys|utils[\\/](?:i18nMapper|deprecatedModalMetadataMapper|normalizeTargetInteraction|backup)|hooks[\\/](?:useDisplayEmbeddedWallet(?!\.impl)|useDisplayModalListener(?!\.impl)|useDisplaySharingPageListener(?!\.impl)|useOnGet|useSendInteraction(?!Listener\.)|useSendInteractionListener|useUserReferralStatus|useWalletStatusListener|useSsoLink)))/,
+                                test: /(?:vite[\\/](?:dist[\\/])?preload-helper)|(?:wallet-shared[\\/]src[\\/](?:stores|i18n|polyfills|stubs|types|pairing[\\/]types|common[\\/](?:analytics|api|lib|utils|storage|tauri|queryKeys)|common[\\/]hook[\\/](?:useEstimatedReward|useGetSafeSdkSession)))|(?:packages[\\/]app-essentials[\\/])|(?:packages[\\/]rpc[\\/](?:dist|src)[\\/])|(?:sdk[\\/]core[\\/]src[\\/])|(?:apps[\\/]listener[\\/]app[\\/](?:uiBus|queryClient|i18nOverrideQueue)\.ts)|(?:apps[\\/]listener[\\/]app[\\/]module[\\/](?:stores|middleware|handlers|providers|types|common|queryKeys|utils[\\/](?:i18nMapper|deprecatedModalMetadataMapper|normalizeTargetInteraction|backup)|hooks[\\/](?:useDisplayEmbeddedWallet(?!\.impl)|useDisplayModalListener(?!\.impl)|useDisplaySharingPageListener(?!\.impl)|useOnGet|useSendInteraction(?!Listener\.)|useSendInteractionListener|useUserReferralStatus|useWalletStatusListener|useSsoLink)))/,
                                 priority: 28,
                                 // Single-importer modules must still land here
                                 // (e.g. wallet-shared/common/api/backendClient.ts

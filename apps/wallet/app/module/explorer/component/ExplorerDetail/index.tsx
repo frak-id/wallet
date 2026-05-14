@@ -1,4 +1,3 @@
-import { useStore } from "zustand";
 import type { EstimatedRewardItem } from "@frak-labs/backend-elysia/domain/campaign";
 import type { ExplorerMerchantItem } from "@frak-labs/backend-elysia/orchestration/schemas";
 import type { EstimatedReward } from "@frak-labs/core-sdk";
@@ -39,6 +38,7 @@ import {
 import { useQuery } from "@tanstack/react-query";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Trans, useTranslation } from "react-i18next";
+import { useStore } from "zustand";
 import { GlassButton } from "@/module/common/component/GlassButton";
 import { GlassCloseButton } from "@/module/common/component/GlassCloseButton";
 import { InfoCard, InfoRow } from "@/module/common/component/InfoCard";

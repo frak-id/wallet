@@ -1,4 +1,3 @@
-import { useStore } from "zustand";
 import { IS_TAURI } from "@frak-labs/app-essentials/utils/platform";
 import {
     type CompressedSsoData,
@@ -38,6 +37,7 @@ import i18next from "i18next";
 import { useCallback, useMemo, useState } from "react";
 import { Trans, useTranslation } from "react-i18next";
 import { type Address, slice } from "viem";
+import { useStore } from "zustand";
 import * as layout from "@/module/authentication/component/authLayout.css";
 import * as styles from "@/module/authentication/component/Sso/index.css";
 import { SsoHeader } from "@/module/authentication/component/Sso/SsoHeader";
@@ -132,7 +132,10 @@ function Sso() {
     /**
      * The current metadata
      */
-    const ssoContext = useStore(authenticationStore, (state) => state.ssoContext);
+    const ssoContext = useStore(
+        authenticationStore,
+        (state) => state.ssoContext
+    );
     const currentMetadata = useMemo(
         () => ssoContext?.metadata,
         [ssoContext?.metadata]
@@ -141,7 +144,10 @@ function Sso() {
     /**
      * Whether we know of a previously-used passkey on this device.
      */
-    const lastAuthenticator = useStore(authenticationStore, (state) => state.lastAuthenticator);
+    const lastAuthenticator = useStore(
+        authenticationStore,
+        (state) => state.lastAuthenticator
+    );
 
     /**
      * The success state after login or register
@@ -513,8 +519,14 @@ function Actions({
     onSuccess: () => void;
     onError: (error: Error | null) => void;
 }) {
-    const lastAuthenticator = useStore(authenticationStore, (state) => state.lastAuthenticator);
-    const merchantId = useStore(authenticationStore, (state) => state.ssoContext?.merchantId);
+    const lastAuthenticator = useStore(
+        authenticationStore,
+        (state) => state.lastAuthenticator
+    );
+    const merchantId = useStore(
+        authenticationStore,
+        (state) => state.ssoContext?.merchantId
+    );
     const privateKey = useStore(sessionStore, (state) => state.demoPrivateKey);
     const { login, isLoginInProgress } = useLoginDemo({
         onSuccess: () => onSuccess(),

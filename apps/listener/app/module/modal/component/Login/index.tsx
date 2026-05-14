@@ -1,4 +1,3 @@
-import { useStore } from "zustand";
 import type { LoginModalStepType } from "@frak-labs/core-sdk";
 import { Spinner } from "@frak-labs/design-system/components/Spinner";
 import { useLogin } from "@frak-labs/wallet-shared/authentication/hook/useLogin";
@@ -13,6 +12,7 @@ import {
     sessionStore,
 } from "@frak-labs/wallet-shared/stores/sessionStore";
 import { useEffect, useMemo } from "react";
+import { useStore } from "zustand";
 import { SsoButton } from "@/module/component/SsoButton";
 import { DismissButton } from "@/module/modal/component/Generic";
 import * as styles from "@/module/modal/component/Modal/index.css";
@@ -35,7 +35,10 @@ export function LoginModalStep({
     params: LoginModalStepType["params"];
     onFinish: (args: LoginModalStepType["returns"]) => void;
 }) {
-    const resolvingContext = useStore(resolvingContextStore, (state) => state.context);
+    const resolvingContext = useStore(
+        resolvingContextStore,
+        (state) => state.context
+    );
     const { t } = useListenerTranslation();
     const {
         currentRequest: { homepageLink, logoUrl },

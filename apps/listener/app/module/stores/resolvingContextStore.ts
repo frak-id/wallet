@@ -26,37 +26,39 @@ if (iframeClientId) {
 
 export { iframeClientId };
 
-export const resolvingContextStore = createStore<ResolvingContextStore>()((set) => ({
-    context: undefined,
-    backendSdkConfig: undefined,
-    trustLevel: "pending" as TrustLevel,
+export const resolvingContextStore = createStore<ResolvingContextStore>()(
+    (set) => ({
+        context: undefined,
+        backendSdkConfig: undefined,
+        trustLevel: "pending" as TrustLevel,
 
-    setContext: (context) => {
-        set({ context });
-        updateGlobalProperties({
-            isIframe: true,
-            contextUrl: context.sourceUrl,
-        });
-    },
+        setContext: (context) => {
+            set({ context });
+            updateGlobalProperties({
+                isIframe: true,
+                contextUrl: context.sourceUrl,
+            });
+        },
 
-    clearContext: () =>
-        set({
-            context: undefined,
-            backendSdkConfig: undefined,
-            trustLevel: "pending" as TrustLevel,
-        }),
+        clearContext: () =>
+            set({
+                context: undefined,
+                backendSdkConfig: undefined,
+                trustLevel: "pending" as TrustLevel,
+            }),
 
-    setTrustLevel: (level: TrustLevel) => set({ trustLevel: level }),
+        setTrustLevel: (level: TrustLevel) => set({ trustLevel: level }),
 
-    setBackendConfig: (merchantId, config) => {
-        set((state) => ({
-            backendSdkConfig: config,
-            context: state.context
-                ? {
-                      ...state.context,
-                      merchantId: merchantId || state.context.merchantId,
-                  }
-                : state.context,
-        }));
-    },
-}));
+        setBackendConfig: (merchantId, config) => {
+            set((state) => ({
+                backendSdkConfig: config,
+                context: state.context
+                    ? {
+                          ...state.context,
+                          merchantId: merchantId || state.context.merchantId,
+                      }
+                    : state.context,
+            }));
+        },
+    })
+);

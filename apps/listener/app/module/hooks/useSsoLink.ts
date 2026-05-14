@@ -1,8 +1,8 @@
-import { useStore } from "zustand";
 import { generateSsoUrl } from "@frak-labs/core-sdk";
 import { clientIdStore } from "@frak-labs/wallet-shared/stores/clientIdStore";
 import { useMemo } from "react";
 import type { Hex } from "viem";
+import { useStore } from "zustand";
 
 /**
  * App-specific SSO metadata extending the base SsoMetadata

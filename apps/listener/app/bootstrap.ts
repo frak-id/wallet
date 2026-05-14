@@ -93,9 +93,7 @@ function setupPreloadHints(): void {
             promises.push(import("@/module/modal/component/Modal"));
         }
         if (wantsSharing) {
-            promises.push(
-                import("@/module/sharing/component/SharingPage")
-            );
+            promises.push(import("@/module/sharing/component/SharingPage"));
         }
         if (wantsWallet) {
             promises.push(import("@/module/embedded/component/Wallet"));

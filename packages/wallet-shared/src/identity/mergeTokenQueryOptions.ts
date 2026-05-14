@@ -1,5 +1,5 @@
-import { queryOptions } from "../common/utils/queryOptions";
 import { authenticatedBackendApi } from "../common/api/backendClient";
+import { queryOptions } from "../common/utils/queryOptions";
 
 /**
  * Query keys for identity merge tokens.

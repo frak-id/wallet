@@ -92,7 +92,7 @@ export {
     estimatedRewardsQueryOptions,
     formatEstimatedReward,
     selectFormattedReward,
-    } from "./hook/useEstimatedReward";
+} from "./hook/useEstimatedReward";
 export { useFormattedEstimatedReward } from "./hook/useFormattedEstimatedReward";
 export { useGetSafeSdkSession } from "./hook/useGetSafeSdkSession";
 export { useMountedTimeout } from "./hook/useMountedTimeout";

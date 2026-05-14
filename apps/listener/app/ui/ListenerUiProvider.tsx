@@ -1,4 +1,3 @@
-import { useStore } from "zustand";
 import {
     type DisplayEmbeddedWalletParamsType,
     type DisplaySharingPageParamsType,
@@ -16,6 +15,7 @@ import type {
 } from "@frak-labs/frame-connector";
 import { emitLifecycleEvent } from "@frak-labs/wallet-shared/common/utils/lifecycleEvents";
 import type { i18n, TOptions } from "i18next";
+import { useStore } from "zustand";
 import {
     mapI18nConfig,
     translationKeyPathToObject,
@@ -131,8 +131,14 @@ export function ListenerUiProvider({ children }: PropsWithChildren) {
     // Initial translation context
     const { i18n: initialI18n } = useTranslation();
     // We are not using the safeResolvingContext here, since this component is init before the iframe is ready
-    const resolvingContext = useStore(resolvingContextStore, (state) => state.context);
-    const backendSdkConfig = useStore(resolvingContextStore, (state) => state.backendSdkConfig);
+    const resolvingContext = useStore(
+        resolvingContextStore,
+        (state) => state.context
+    );
+    const backendSdkConfig = useStore(
+        resolvingContextStore,
+        (state) => state.backendSdkConfig
+    );
     // The current UI request
     const [currentRequest, setCurrentRequest] = useState<UIRequest | undefined>(
         undefined

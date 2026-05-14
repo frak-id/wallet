@@ -1,8 +1,8 @@
-import { useStore } from "zustand";
 import { selectWebauthnSession, sessionStore } from "@frak-labs/wallet-shared";
 import { Link } from "@tanstack/react-router";
 import { Shield } from "lucide-react";
 import { useTranslation } from "react-i18next";
+import { useStore } from "zustand";
 import { Panel } from "@/module/common/component/Panel";
 import { Title } from "@/module/common/component/Title";
 import { CurrentRecoverySetupStatus } from "@/module/recovery-setup/component/CurrentSetupStatus";

@@ -1,8 +1,8 @@
-import { useStore } from "zustand";
 import { selectDemoPrivateKey, sessionStore } from "@frak-labs/wallet-shared";
 import { KeyRound } from "lucide-react";
 import { useCallback } from "react";
 import { useTranslation } from "react-i18next";
+import { useStore } from "zustand";
 import { useLogout } from "@/module/authentication/hook/useLogout";
 import { useBiometricConfirm } from "@/module/biometrics";
 import { InfoCard, InfoRow } from "@/module/common/component/InfoCard";

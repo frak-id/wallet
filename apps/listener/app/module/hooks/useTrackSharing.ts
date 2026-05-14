@@ -1,6 +1,6 @@
-import { useStore } from "zustand";
 import type { SendInteractionParamsType } from "@frak-labs/core-sdk";
 import { useMutation } from "@tanstack/react-query";
+import { useStore } from "zustand";
 import { resolvingContextStore } from "@/module/stores/resolvingContextStore";
 import { sendInteraction } from "./useSendInteraction";
 

@@ -1,7 +1,7 @@
-import { useStore } from "zustand";
 import { selectWebauthnSession, sessionStore } from "@frak-labs/wallet-shared";
 import { useEffect } from "react";
 import { useTranslation } from "react-i18next";
+import { useStore } from "zustand";
 import { AccordionRecoveryItem } from "@/module/common/component/AccordionRecoveryItem";
 import { useGenerateRecoveryOptions } from "@/module/recovery-setup/hook/useGenerateRecoveryOptions";
 import {

@@ -1,4 +1,3 @@
-import { useStore } from "zustand";
 import type { SharingPageProduct } from "@frak-labs/core-sdk";
 import {
     emitLifecycleEvent,
@@ -17,6 +16,7 @@ import { clientIdStore } from "@frak-labs/wallet-shared/stores/clientIdStore";
 import { sessionStore } from "@frak-labs/wallet-shared/stores/sessionStore";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
+import { useStore } from "zustand";
 import { useTrackSharing } from "@/module/hooks/useTrackSharing";
 import { useSafeResolvingContext } from "@/module/stores/hooks";
 import { resolvingContextStore } from "@/module/stores/resolvingContextStore";
@@ -34,7 +34,10 @@ export function ListenerSharingPage() {
     const { currentRequest, clearRequest } = useSharingListenerUI();
     const { t } = useListenerTranslation();
     const { sourceUrl, merchantId } = useSafeResolvingContext();
-    const defaultAttribution = useStore(resolvingContextStore, (s) => s.backendSdkConfig?.attribution);
+    const defaultAttribution = useStore(
+        resolvingContextStore,
+        (s) => s.backendSdkConfig?.attribution
+    );
     const clientId = useStore(clientIdStore, (s) => s.clientId);
     const walletAddress = useStore(sessionStore, (s) => s.session?.address);
     const { copy } = useCopyToClipboardWithState();

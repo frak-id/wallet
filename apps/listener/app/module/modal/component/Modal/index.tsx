@@ -1,4 +1,3 @@
-import { useStore } from "zustand";
 import { RpcErrorCodes } from "@frak-labs/frame-connector";
 import {
     InAppBrowserToast,
@@ -25,6 +24,7 @@ import {
     useState,
 } from "react";
 import { Toaster } from "sonner";
+import { useStore } from "zustand";
 import { useShallow } from "zustand/react/shallow";
 import { useGetMergeToken } from "@/module/hooks/useGetMergeToken";
 import { SiweAuthenticateModalStep } from "@/module/modal/component/Authenticate";
@@ -79,7 +79,10 @@ function ListenerModalInner({
     const [isOpen, setIsOpen] = useState(true);
     const [logoFailed, setLogoFailed] = useState(false);
     const getMergeToken = useGetMergeToken();
-    const parentUrl = useStore(resolvingContextStore, (s) => s.context?.sourceUrl);
+    const parentUrl = useStore(
+        resolvingContextStore,
+        (s) => s.context?.sourceUrl
+    );
     const cancelAllSignatures = useCancelAllSignatureRequests({
         client: getOriginPairingClient(),
     });

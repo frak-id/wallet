@@ -1,4 +1,3 @@
-import { useStore } from "zustand";
 import type { SdkSessionPayload } from "@frak-labs/wallet-shared";
 import {
     selectDemoPrivateKey,
@@ -6,6 +5,7 @@ import {
     sessionStore,
 } from "@frak-labs/wallet-shared";
 import { decodeJwt } from "jose";
+import { useStore } from "zustand";
 import { Panel } from "@/module/common/component/Panel";
 import * as styles from "./index.css";
 

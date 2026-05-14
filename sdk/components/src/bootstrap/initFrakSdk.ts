@@ -6,10 +6,9 @@ import {
     withCache,
 } from "@frak-labs/core-sdk";
 import * as coreSdkActions from "@frak-labs/core-sdk/actions";
-import { detectListenerPreloads } from "../utils/dom/detectListenerPreloads";
 import { openSharingPage } from "../actions/sharingPage";
+import { detectListenerPreloads } from "../utils/dom/detectListenerPreloads";
 import { decodeProductsParam } from "../utils/sharingPageProducts";
-import { openWalletModal } from "../components/ButtonWallet/utils";
 import { dispatchClientReadyEvent } from "./clientReady";
 
 /**

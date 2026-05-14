@@ -1,4 +1,3 @@
-import { useStore } from "zustand";
 import {
     type Currency,
     formatAmount,
@@ -18,6 +17,7 @@ import { sessionStore } from "@frak-labs/wallet-shared/stores/sessionStore";
 import { useGetUserBalance } from "@frak-labs/wallet-shared/tokens/hook/useGetUserBalance";
 import { clsx as cx } from "clsx";
 import { toast } from "sonner";
+import { useStore } from "zustand";
 import { Copy } from "@/module/common/icons/Copy";
 import { Share } from "@/module/common/icons/Share";
 import { prefixWalletCss } from "@/module/common/utils/prefixWalletCss";
@@ -96,7 +96,10 @@ function ActionButtons() {
     const { sourceUrl, merchantId } = useSafeResolvingContext();
     const clientId = useStore(clientIdStore, (s) => s.clientId);
     const walletAddress = useStore(sessionStore, (s) => s.session?.address);
-    const defaultAttribution = useStore(resolvingContextStore, (s) => s.backendSdkConfig?.attribution);
+    const defaultAttribution = useStore(
+        resolvingContextStore,
+        (s) => s.backendSdkConfig?.attribution
+    );
 
     const finalSharingLink = buildSharingLink({
         clientId: clientId ?? undefined,

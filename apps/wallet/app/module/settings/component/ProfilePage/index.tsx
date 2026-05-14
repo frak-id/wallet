@@ -1,4 +1,3 @@
-import { useStore } from "zustand";
 import { isRunningInProd } from "@frak-labs/app-essentials";
 import { Box } from "@frak-labs/design-system/components/Box";
 import { Text } from "@frak-labs/design-system/components/Text";
@@ -10,6 +9,7 @@ import {
 } from "@frak-labs/wallet-shared";
 import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
+import { useStore } from "zustand";
 import { InfoCard, InfoRow } from "@/module/common/component/InfoCard";
 import { Title } from "@/module/common/component/Title";
 // import { Logout } from "@/module/authentication/component/Logout";
@@ -27,7 +27,10 @@ export function ProfilePage() {
     const version = process.env.APP_VERSION;
     const displayVersion =
         version && version !== "UNKNOWN" ? version : undefined;
-    const lastAuthenticationAt = useStore(authenticationStore, selectLastAuthenticationAt);
+    const lastAuthenticationAt = useStore(
+        authenticationStore,
+        selectLastAuthenticationAt
+    );
     const formattedLastAuthentication = useMemo(() => {
         if (!lastAuthenticationAt) return null;
 

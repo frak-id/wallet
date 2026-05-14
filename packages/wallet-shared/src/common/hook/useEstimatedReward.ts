@@ -10,8 +10,8 @@ import {
     getCurrencyAmountKey,
     getSupportedCurrency,
 } from "@frak-labs/core-sdk";
-import { queryOptions } from "../utils/queryOptions";
 import { authenticatedBackendApi } from "../api/backendClient";
+import { queryOptions } from "../utils/queryOptions";
 
 export function estimatedRewardsQueryOptions(merchantId?: string) {
     return queryOptions({

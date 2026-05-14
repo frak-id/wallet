@@ -1,4 +1,3 @@
-import { useStore } from "zustand";
 import {
     authenticationStore,
     type PreviousAuthenticatorModel,
@@ -6,6 +5,7 @@ import {
 } from "@frak-labs/wallet-shared";
 import { useQuery } from "@tanstack/react-query";
 import { useMemo } from "react";
+import { useStore } from "zustand";
 
 /**
  * Returns the best-known "last authenticator" hint for the current device.
@@ -21,7 +21,10 @@ import { useMemo } from "react";
  * yet).
  */
 export function useLastAuthenticatorHint(): PreviousAuthenticatorModel | null {
-    const lastAuthenticator = useStore(authenticationStore, (state) => state.lastAuthenticator);
+    const lastAuthenticator = useStore(
+        authenticationStore,
+        (state) => state.lastAuthenticator
+    );
 
     const { data: recoveryHint } = useQuery({
         queryKey: ["recoveryHint"],
