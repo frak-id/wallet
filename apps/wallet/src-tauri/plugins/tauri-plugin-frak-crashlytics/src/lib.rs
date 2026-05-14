@@ -25,11 +25,12 @@ pub(crate) const PANIC_REPORT_FILENAME: &str = "frak.wallet.last_rust_panic.txt"
 /// Initialize the `frak-crashlytics` plugin.
 ///
 /// Native iOS/Android Crashlytics SDKs install their own uncaught-exception
-/// handlers as soon as `FirebaseApp.configure()` runs (which happens during
-/// `tauri-plugin-fcm` initialization), so most crashes are captured without
-/// any code from this plugin. The commands exposed here add **context** to
-/// those reports: user id, custom keys, breadcrumb logs, and explicit
-/// non-fatal errors.
+/// handlers as soon as Firebase is initialized. On iOS the host plugin owns
+/// `FirebaseApp.configure()` (see `FrakCrashlyticsPlugin.init()`); on Android
+/// the `google-services` Gradle plugin installs a `ContentProvider` that
+/// runs `FirebaseInitProvider` before any Tauri code executes. The commands
+/// exposed here add **context** to those reports: user id, custom keys,
+/// breadcrumb logs, and explicit non-fatal errors.
 ///
 /// On mobile we additionally install a panic hook that persists the
 /// panic message + location to disk so the native plugin can forward it

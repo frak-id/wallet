@@ -38,7 +38,6 @@ import { useCallback, useMemo, useState } from "react";
 import { Trans, useTranslation } from "react-i18next";
 import { type Address, slice } from "viem";
 import * as layout from "@/module/authentication/component/authLayout.css";
-import { ButtonAuth } from "@/module/authentication/component/ButtonAuth";
 import * as styles from "@/module/authentication/component/Sso/index.css";
 import { SsoHeader } from "@/module/authentication/component/Sso/SsoHeader";
 import { SsoLoginComponent } from "@/module/authentication/component/Sso/SsoLogin";
@@ -520,14 +519,14 @@ function Actions({
     if (privateKey) {
         return (
             <Box>
-                <ButtonAuth
-                    onClick={() => {
-                        login();
-                    }}
-                    disabled={isLoginInProgress}
+                <Button
+                    variant="primary"
+                    icon={<WalletIcon width={24} height={24} />}
+                    onClick={() => login()}
+                    loading={isLoginInProgress}
                 >
                     {t("authent.sso.btn.existing.login")}
-                </ButtonAuth>
+                </Button>
             </Box>
         );
     }

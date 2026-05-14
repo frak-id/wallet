@@ -49,6 +49,8 @@ export function InfoRow({
     labelWeight = "medium",
     href,
     to,
+    onClick,
+    disabled,
     action,
     align = "center",
 }: {
@@ -59,6 +61,8 @@ export function InfoRow({
     labelWeight?: "regular" | "medium" | "semiBold" | "bold";
     href?: string;
     to?: string;
+    onClick?: () => void;
+    disabled?: boolean;
     /**
      * Right-side slot. On `to` rows the action lives inside the `<Link>`,
      * so any click in this slot bubbles up and triggers navigation. Use
@@ -102,6 +106,21 @@ export function InfoRow({
             <ExternalRow href={href} className={rowClass}>
                 {content}
             </ExternalRow>
+        );
+    }
+
+    if (onClick) {
+        return (
+            <Box
+                as="button"
+                type="button"
+                onClick={onClick}
+                disabled={disabled}
+                className={`${rowClass} ${styles.rowButton}`}
+            >
+                {content}
+                {action ? <Box className={styles.action}>{action}</Box> : null}
+            </Box>
         );
     }
 

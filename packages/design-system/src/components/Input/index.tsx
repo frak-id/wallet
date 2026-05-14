@@ -8,10 +8,16 @@ type InputProps = Omit<
 > & {
     /**
      * - `"default"` — standard bordered field
-     * - `"bare"` — borderless 56px white card (Monerium-style flat surface)
+     * - `"bare"` — borderless 56px flat card (pair with `tone`)
      */
     variant?: "default" | "bare";
     length?: "small" | "medium" | "big";
+    /**
+     * Surface tone for `variant="bare"`. Use `elevated` (default, white)
+     * when the page background is not white; use `muted` (#f7f7f7) when
+     * the page itself is white and the input needs contrast.
+     */
+    tone?: "elevated" | "muted";
     leftSection?: ReactNode;
     rightSection?: ReactNode;
     error?: boolean;
@@ -22,6 +28,7 @@ type InputProps = Omit<
 export function Input({
     variant = "default",
     length,
+    tone,
     leftSection: leftSlot,
     rightSection: rightSlot,
     error,
@@ -33,7 +40,7 @@ export function Input({
     return (
         <Box
             as="span"
-            className={`${inputWrapper({ variant, length, error, disabled })}${className ? ` ${className}` : ""}`}
+            className={`${inputWrapper({ variant, length, tone, error, disabled })}${className ? ` ${className}` : ""}`}
         >
             {leftSlot ? (
                 <Box

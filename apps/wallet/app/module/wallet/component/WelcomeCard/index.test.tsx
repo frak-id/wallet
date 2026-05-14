@@ -107,13 +107,13 @@ describe.sequential("WelcomeCard", () => {
         global.IntersectionObserver = originalIntersectionObserver;
     });
 
-    it("should render intro + invite + notification slides without visible pagination", () => {
+    it("should render intro + invite + notification slides with pagination dots", () => {
         const { container } = render(<WelcomeCard />);
 
         expect(container.querySelectorAll("[data-index]")).toHaveLength(3);
-        expect(
-            screen.queryByRole("button", { name: /Slide / })
-        ).not.toBeInTheDocument();
+        expect(screen.getAllByRole("button", { name: /Slide / })).toHaveLength(
+            3
+        );
         expect(
             screen.getByText("wallet.welcome.invite.title")
         ).toBeInTheDocument();

@@ -18,31 +18,26 @@ import type { TFunction } from "i18next";
 import { useTranslation } from "react-i18next";
 import { ButtonLink } from "@/module/common/component/ButtonLink";
 import { Skeleton } from "@/module/common/component/Skeleton";
+import { HistoryEntryRow } from "@/module/history/component/HistoryEntryRow";
 import { MerchantLogo } from "@/module/history/component/MerchantLogo";
-import { useGetRewardHistory } from "@/module/history/hook/useGetRewardHistory";
+import { useHistory } from "@/module/history/hook/useHistory";
 import { modalStore } from "@/module/stores/modalStore";
 import * as styles from "./index.css";
 
 export function RewardHistoryList() {
     const { t } = useTranslation();
-    const { items, totalCount, isLoading } = useGetRewardHistory();
+    const { entries, totalCount, isLoading } = useHistory();
 
     if (isLoading) return <Skeleton count={3} height={110} />;
 
-    if (!items || items.length === 0) {
+    if (entries.length === 0) {
         return <RewardHistoryEmpty />;
     }
 
     return (
         <Card padding="none">
-            {items.slice(0, 5).map((item) => (
-                <RewardHistoryItem
-                    key={
-                        item.txHash ??
-                        `${item.createdAt}-${item.merchant.domain}`
-                    }
-                    item={item}
-                />
+            {entries.slice(0, 5).map((entry) => (
+                <HistoryEntryRow key={entry.id} entry={entry} />
             ))}
             {totalCount >= 5 && (
                 <Inline space="none" padding="m" align="center">

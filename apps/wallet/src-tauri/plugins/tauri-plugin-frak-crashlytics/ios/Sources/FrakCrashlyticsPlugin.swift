@@ -1,3 +1,4 @@
+import FirebaseCore
 import FirebaseCrashlytics
 import SwiftRs
 import Tauri
@@ -5,11 +6,14 @@ import UIKit
 
 /// Bridges Tauri commands to the Crashlytics singleton.
 ///
-/// Auto-capture (NSException + Mach signal handler) is wired by the
-/// Crashlytics SDK as soon as `FirebaseApp.configure()` runs (handled by
-/// tauri-plugin-fcm). This class only adds the **context** surface: user id,
-/// custom keys, breadcrumb logs, and explicit non-fatal errors recorded
-/// from the JS / Rust side.
+/// Owns `FirebaseApp.configure()` so Crashlytics' NSException + Mach signal
+/// handlers are wired up before the Tauri WebView is created. tauri-plugin-fcm's
+/// own `load()` keeps the `if FirebaseApp.app() == nil` guard, so the FCM plugin
+/// becomes a no-op for Firebase init when this plugin is also registered.
+///
+/// On top of the auto-capture, this class exposes the **context** surface:
+/// user id, custom keys, breadcrumb logs, and explicit non-fatal errors
+/// recorded from the JS / Rust side.
 class FrakCrashlyticsPlugin: Plugin {
     /// Filename written by the Rust panic hook (see `panic_hook.rs`).
     /// Must stay in sync with `PANIC_REPORT_FILENAME` on the Rust side.
@@ -18,6 +22,12 @@ class FrakCrashlyticsPlugin: Plugin {
 
     override init() {
         super.init()
+        // Configure Firebase as early as possible. `init()` runs before the
+        // WebView is attached, so handlers are armed before any user code runs.
+        // Guarded so re-entry (e.g. tauri-plugin-fcm's own configure) is a no-op.
+        if FirebaseApp.app() == nil {
+            FirebaseApp.configure()
+        }
         forwardPersistedRustPanic()
     }
 

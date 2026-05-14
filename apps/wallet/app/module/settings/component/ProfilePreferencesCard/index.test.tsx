@@ -5,7 +5,6 @@ import type {
     NotificationPermissionStatus,
     PushTokenPayload,
 } from "@/module/notification/adapter";
-import { notificationOptOutStore } from "@/module/notification/stores/notificationOptOutStore";
 import {
     beforeEach,
     describe,
@@ -16,7 +15,13 @@ import {
 
 vi.mock("react-i18next", () => ({
     useTranslation: () => ({
-        t: (_key: string, fallback?: string) => fallback ?? _key,
+        t: (key: string, fallback?: string) => {
+            if (key === "wallet.profile.manageNotifications")
+                return "Manage notifications";
+            if (key === "wallet.profile.enableNotifications")
+                return "Enable notifications";
+            return fallback ?? key;
+        },
         i18n: { language: "fr" },
     }),
 }));
@@ -36,6 +41,28 @@ const mockUseNotificationStatus = vi.hoisted(() => vi.fn());
 vi.mock("@/module/notification/hook/useNotificationSetupStatus", () => ({
     useNotificationStatus: mockUseNotificationStatus,
 }));
+
+const mockSubscribeAsync = vi.hoisted(() =>
+    vi.fn().mockResolvedValue(undefined)
+);
+vi.mock("@/module/notification/hook/useSubscribeToPushNotification", () => ({
+    useSubscribeToPushNotification: () => ({
+        subscribeToPush: vi.fn(),
+        subscribeToPushAsync: mockSubscribeAsync,
+        isPending: false,
+    }),
+}));
+
+vi.mock(
+    "@/module/notification/hook/useUnsubscribeFromPushNotification",
+    () => ({
+        useUnsubscribeFromPushNotification: () => ({
+            unsubscribeFromPush: vi.fn(),
+            unsubscribeFromPushAsync: vi.fn().mockResolvedValue(undefined),
+            isPending: false,
+        }),
+    })
+);
 
 const mockAdapter = vi.hoisted(() => ({
     isSupported: vi.fn(() => true),
@@ -79,41 +106,76 @@ vi.mock("@/module/biometrics/utils/biometrics", () => ({
     authenticateWithBiometrics: vi.fn(),
 }));
 
-vi.mock("@frak-labs/design-system/components/Switch", () => ({
-    Switch: ({
-        checked,
-        disabled,
-        onCheckedChange,
-    }: {
-        checked: boolean;
-        disabled?: boolean;
-        onCheckedChange: (v: boolean) => void;
-    }) => (
-        <button
-            type="button"
-            role="switch"
-            aria-checked={checked}
-            disabled={disabled}
-            onClick={() => onCheckedChange(!checked)}
-        >
-            switch
-        </button>
-    ),
-}));
-
 const ProfilePreferencesCardPromise = import("./index").then(
     (m) => m.ProfilePreferencesCard
 );
 
-describe.sequential("ProfilePreferencesCard › NotificationRow", () => {
+describe.sequential("ProfilePreferencesCard › Tauri NotificationRow", () => {
     beforeEach(({ queryWrapper }: WalletTestFixtures) => {
         queryWrapper.client.clear();
         mockAdapter.openSettings.mockReset().mockResolvedValue(undefined);
-        mockAdapter.subscribe.mockReset().mockResolvedValue(undefined);
-        mockAdapter.unsubscribe.mockReset().mockResolvedValue(undefined);
+        mockSubscribeAsync.mockReset().mockResolvedValue(undefined);
+    });
 
-        notificationOptOutStore.getState().setOptedOut(true);
+    test("should render 'Manage notifications' and call openSettings when permission is granted", async ({
+        queryWrapper,
+    }: WalletTestFixtures) => {
+        mockUseNotificationStatus.mockReturnValue({
+            permissionStatus: "granted" satisfies NotificationPermissionStatus,
+            permissionGranted: true,
+            isReady: true,
+            hasLocalCapability: true,
+            hasBackendToken: true,
+        });
 
+        const ProfilePreferencesCard =
+            (await ProfilePreferencesCardPromise) as ComponentType;
+        render(<ProfilePreferencesCard />, {
+            wrapper: queryWrapper.wrapper,
+        });
+
+        const button = screen.getByRole("button", {
+            name: /manage notifications/i,
+        });
+        await act(async () => {
+            fireEvent.click(button);
+        });
+
+        expect(mockAdapter.openSettings).toHaveBeenCalledOnce();
+        expect(mockSubscribeAsync).not.toHaveBeenCalled();
+    });
+
+    test("should render 'Enable notifications' and call subscribe when permission is prompt", async ({
+        queryWrapper,
+    }: WalletTestFixtures) => {
+        mockUseNotificationStatus.mockReturnValue({
+            permissionStatus: "prompt" satisfies NotificationPermissionStatus,
+            permissionGranted: false,
+            isReady: true,
+            hasLocalCapability: false,
+            hasBackendToken: false,
+        });
+
+        const ProfilePreferencesCard =
+            (await ProfilePreferencesCardPromise) as ComponentType;
+        render(<ProfilePreferencesCard />, {
+            wrapper: queryWrapper.wrapper,
+        });
+
+        const button = screen.getByRole("button", {
+            name: /enable notifications/i,
+        });
+        await act(async () => {
+            fireEvent.click(button);
+        });
+
+        expect(mockSubscribeAsync).toHaveBeenCalledOnce();
+        expect(mockAdapter.openSettings).not.toHaveBeenCalled();
+    });
+
+    test("should render 'Enable notifications' and call openSettings when permission is denied", async ({
+        queryWrapper,
+    }: WalletTestFixtures) => {
         mockUseNotificationStatus.mockReturnValue({
             permissionStatus: "denied" satisfies NotificationPermissionStatus,
             permissionGranted: false,
@@ -121,24 +183,21 @@ describe.sequential("ProfilePreferencesCard › NotificationRow", () => {
             hasLocalCapability: false,
             hasBackendToken: false,
         });
-    });
 
-    test("should clear opt-out flag and call openSettings when toggling on while denied", async ({
-        queryWrapper,
-    }: WalletTestFixtures) => {
         const ProfilePreferencesCard =
             (await ProfilePreferencesCardPromise) as ComponentType;
-
         render(<ProfilePreferencesCard />, {
             wrapper: queryWrapper.wrapper,
         });
 
-        const switchEl = screen.getByRole("switch");
+        const button = screen.getByRole("button", {
+            name: /enable notifications/i,
+        });
         await act(async () => {
-            fireEvent.click(switchEl);
+            fireEvent.click(button);
         });
 
         expect(mockAdapter.openSettings).toHaveBeenCalledOnce();
-        expect(notificationOptOutStore.getState().optedOut).toBe(false);
+        expect(mockSubscribeAsync).not.toHaveBeenCalled();
     });
 });

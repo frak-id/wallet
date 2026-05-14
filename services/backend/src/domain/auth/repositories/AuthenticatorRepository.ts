@@ -34,6 +34,7 @@ export class AuthenticatorRepository {
                 row.credentialDeviceType as AuthenticatorDocument["credentialDeviceType"],
             credentialBackedUp: row.credentialBackedUp,
             transports: row.transports as AuthenticatorDocument["transports"],
+            email: row.email ?? undefined,
         };
     }
 
@@ -72,6 +73,7 @@ export class AuthenticatorRepository {
                 row.credentialDeviceType as AuthenticatorDocument["credentialDeviceType"],
             credentialBackedUp: row.credentialBackedUp,
             transports: row.transports as AuthenticatorDocument["transports"],
+            email: row.email ?? undefined,
         };
     }
 
@@ -98,6 +100,7 @@ export class AuthenticatorRepository {
             credentialDeviceType: authenticator.credentialDeviceType,
             credentialBackedUp: authenticator.credentialBackedUp,
             transports: authenticator.transports,
+            email: authenticator.email,
         });
     }
 }

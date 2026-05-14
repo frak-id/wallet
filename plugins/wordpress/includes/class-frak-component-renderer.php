@@ -41,6 +41,7 @@ class Frak_Component_Renderer {
 		'inappDescription'    => 'inapp-description',
 		'inappCta'            => 'inapp-cta',
 		'imageUrl'            => 'image-url',
+		'allowInappRedirect'  => 'allow-inapp-redirect',
 	);
 
 	/**
@@ -107,6 +108,20 @@ class Frak_Component_Renderer {
 	 */
 	private const BOOLEAN_HTML_ATTRS = array(
 		'use-reward',
+	);
+
+	/**
+	 * Attribute names that emit `name="true"` when truthy and are skipped
+	 * entirely when falsy. Distinct from {@see BOOLEAN_HTML_ATTRS} (bare
+	 * presence) because the SDK side reads the value as a string and only
+	 * treats the literal `"true"` as on — a bare `allow-inapp-redirect`
+	 * attribute deserialises to the empty string under preact-custom-element,
+	 * which would be ignored by the component's `=== "true"` check.
+	 *
+	 * @var string[]
+	 */
+	private const TRUE_VALUED_HTML_ATTRS = array(
+		'allow-inapp-redirect',
 	);
 
 	/**
@@ -387,6 +402,13 @@ class Frak_Component_Renderer {
 			if ( in_array( $html_attr, self::BOOLEAN_HTML_ATTRS, true ) ) {
 				if ( self::is_truthy( $value ) ) {
 					$pairs[] = esc_attr( $html_attr );
+				}
+				continue;
+			}
+
+			if ( in_array( $html_attr, self::TRUE_VALUED_HTML_ATTRS, true ) ) {
+				if ( self::is_truthy( $value ) ) {
+					$pairs[] = sprintf( '%s="true"', esc_attr( $html_attr ) );
 				}
 				continue;
 			}

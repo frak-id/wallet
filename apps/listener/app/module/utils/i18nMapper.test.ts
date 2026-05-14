@@ -218,7 +218,10 @@ describe("mapI18nConfig", () => {
             json: () => Promise.resolve(mockResponse),
         } as Response);
 
-        const config = "https://example.com/translations.json" as any;
+        const config =
+            "https://example.com/translations.json" as unknown as Parameters<
+                typeof mapI18nConfig
+            >[0];
 
         await mapI18nConfig(config, mockI18n);
 
@@ -345,7 +348,10 @@ describe("mapI18nConfig", () => {
             .spyOn(console, "warn")
             .mockImplementation(() => {});
 
-        const config = "https://example.com/broken.json" as any;
+        const config =
+            "https://example.com/broken.json" as unknown as Parameters<
+                typeof mapI18nConfig
+            >[0];
 
         await mapI18nConfig(config, mockI18n);
 
@@ -411,7 +417,7 @@ describe("mapI18nConfig", () => {
         const config = {
             en: { "app.title": "Direct" },
             fr: "https://example.com/fr.json" as any,
-        } as any;
+        } as unknown as Parameters<typeof mapI18nConfig>[0];
 
         await mapI18nConfig(config, mockI18n);
 
@@ -427,7 +433,10 @@ describe("mapI18nConfig", () => {
             .spyOn(console, "warn")
             .mockImplementation(() => {});
 
-        const config = "https://example.com/invalid.json" as any;
+        const config =
+            "https://example.com/invalid.json" as unknown as Parameters<
+                typeof mapI18nConfig
+            >[0];
 
         await mapI18nConfig(config, mockI18n);
 
@@ -479,7 +488,7 @@ describe("mapI18nConfig", () => {
 
             const config = {
                 en: { "app.title": "English" },
-            };
+            } as unknown as Parameters<typeof mapI18nConfig>[0];
 
             await mapI18nConfig(config, mockI18n);
 

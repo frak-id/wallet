@@ -88,10 +88,10 @@
         "pageTitle": "Porte-monnaie",
         "profile": {
             "pageTitle": "Profil",
-            "notificationSettings": "Paramètres de notification",
+            "notificationSettings": "Notifications",
+            "manageNotifications": "Gérer mes notifications",
+            "enableNotifications": "Activer les notifications",
             "notificationDeniedHelp": "Notifications bloquées par le navigateur. Active-les depuis les paramètres du navigateur.",
-            "manageAction": "Gérer",
-            "unsubscribeNotifications": "Se désabonner",
             "biometricPrompt": "Demander {{biometryLabel}} à chaque ouverture de l'app",
             "recoveryConfigured": "Configurée",
             "privacyPolicy": "Politique de confidentialité",
@@ -105,11 +105,15 @@
             "title": "Parrainages",
             "menuLabel": "Parrainages",
             "invite": {
-                "title": "Inviter des ami·e·s",
-                "description": "Crée ton code et commence à le partager à tes proches pour gagner encore plus d'argent.",
+                "title": "Invite tes ami·e·s sur Frak",
+                "description": "Crée ton code et partage-le avec tes proches pour gagner encore plus d'argent.",
                 "cta": "Générer mon code"
             },
-            "enterCode": "Entrer un code de parrainage",
+            "enterCode": {
+                "title": "Entrer un code de parrainage",
+                "description": "Gagne de l'argent à chaque achat que tu effectues sur l'ensemble des sites partenaires.",
+                "cta": "Entrer un code de parrainage"
+            },
             "modify": "Modifier",
             "create": {
                 "title": "Mon code de parrainage",
@@ -296,8 +300,10 @@
             "useQRCode": "Utiliser un QR code pour me connecter"
         },
         "registerDemo": {
+            "title": "Essayer Frak en mode démo",
+            "description": "Créez un porte-monnaie temporaire pour explorer Frak. Pas de biométrie, pas de récupération — juste un bac à sable.",
             "button": {
-                "create": "Créez votre <strong>porte-monnaie</strong> de démonstration",
+                "create": "Créez votre porte-monnaie de démonstration",
                 "error": "Erreur lors de l'inscription, veuillez réessayer",
                 "inProgress": "Création du porte-monnaie en cours"
             }
@@ -320,19 +326,19 @@
                 "description": "Active tes notifs pour suivre tes gains en temps réel."
             },
             "invite": {
-                "title": "Invite tes ami·e·s et gagne",
-                "check1": "Crée ton code de parrainage",
-                "check2": "Partage-le avec tes ami·e·s",
-                "check3": "Gagne de l'argent à chaque commande réalisée."
+                "title": "Invite tes ami·e·s sur Frak",
+                "check1": "Crée ton code de parrainage.",
+                "check2": "Partage-le avec tes ami·e·s.",
+                "check3": "Gagne de l'argent à chaque achat réalisé sur tous les sites partenaires."
             },
             "detail": {
                 "howItWorks": "Comment ça marche ?",
                 "step1Title": "Explore nos marques partenaires",
-                "step1Description": "Un lien personnel est généré automatiquement à chaque partage.",
+                "step1Description": "Découvre des produits à recommander autour de toi.",
                 "step2Title": "Partage un article à tes ami·e·s",
-                "step2Description": "Un lien personnel est généré automatiquement à chaque partage.",
+                "step2Description": "Un lien personnel est automatiquement généré à chaque partage. S’ils achètent via ton lien, tu gagnes de l’argent.",
                 "step3Title": "Gagne de l'argent",
-                "step3Description": "En un clic, transfère tes gains vers ton compte bancaire.",
+                "step3Description": "Transfère tes gains en un clic vers ton compte bancaire.",
                 "discoverOffers": "Découvrir les offres",
                 "legal": "Les <termsLink>conditions générales</termsLink> de FRAK s'appliquent."
             }
@@ -361,7 +367,11 @@
             },
             "cancel": "Annuler",
             "confirm": "Confirmer le code",
-            "pairingInProgress": "Jumelage en cours, veuillez vous authentifier",
+            "pendingPairing": {
+                "title": "Jumelage en cours",
+                "description": "Veuillez vous authentifier pour continuer.",
+                "dismissLabel": "Masquer la notification"
+            },
             "origin": {
                 "state": {
                     "idle": "Initialisation du pairage",
@@ -513,7 +523,7 @@
         "activateSecureSpace": "Activer mon espace sécurisé",
         "alreadyHaveAccount": "Déjà un compte ?",
         "recoveryCode": "J'ai un code de récupération",
-        "slides": {
+        "steps": {
             "one": {
                 "title": "Gagne de l'argent en recommandant",
                 "description": "Partage tes coups de cœur et gagne de l'argent à chaque achat généré grâce à toi."
@@ -526,6 +536,14 @@
                 "title": "Active ton espace sécurisé en 10 sec",
                 "description": "Sans formulaire, sans paperasse. Ton porte-monnaie est prêt à recevoir tes gains, instantanément."
             }
+        },
+        "email": {
+            "title": "Entre ton adresse e-mail",
+            "description": "Ton e-mail sert uniquement à récupérer ton compte en cas d'oubli. Il ne sera jamais utilisé pour t'envoyer des messages non sollicités.",
+            "label": "Email",
+            "placeholder": "ton.email@gmail.com",
+            "continue": "Continuer",
+            "clearAriaLabel": "Effacer l'adresse e-mail"
         },
         "keypass": {
             "title": "Sécurise ton compte",
@@ -546,6 +564,15 @@
             "description": "Sois averti dès que l'argent est crédité sur ton porte-monnaie.",
             "enable": "Oui, me prévenir",
             "skip": "Plus tard"
+        },
+        "referral": {
+            "title": "Ajoute un code de parrainage",
+            "description": "Tu as un code créateur ? Entre-le ici. Sinon, tu peux passer cette étape.",
+            "label": "Code de parrainage",
+            "placeholder": "Ex : LOLA10",
+            "submitCta": "Appliquer le code",
+            "skip": "Passer",
+            "appliedToast": "Code de parrainage appliqué"
         },
         "welcome": {
             "title": "Bienvenue dans ton porte-monnaie",
@@ -738,6 +765,26 @@
                     "select": "Sélectionner"
                 }
             }
+        },
+        "order": {
+            "kind": {
+                "issue": "IBAN **** -> Frak Labs",
+                "redeem": "Frak Labs -> IBAN ****"
+            },
+            "state": {
+                "placed": "Ordre placé",
+                "pending": "En cours de traitement",
+                "processed": "Terminé",
+                "rejected": "Rejeté"
+            },
+            "detail": {
+                "walletName": "Frak Labs",
+                "bank": "Banque",
+                "noNote": "Envoyé sans note",
+                "from": "De",
+                "to": "À",
+                "transaction": "Transaction"
+            }
         }
     },
     "explorer": {
@@ -789,7 +836,7 @@
                 "cta": "Mettre à jour"
             },
             "inProgress": {
-                "title": "Téléchargement… {{percent}}%"
+                "title": "Téléchargement…"
             },
             "downloaded": {
                 "title": "Mise à jour prête à installer.",

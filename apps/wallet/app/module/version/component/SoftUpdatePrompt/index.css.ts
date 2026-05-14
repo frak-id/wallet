@@ -1,6 +1,6 @@
 import { vars } from "@frak-labs/design-system/theme";
 import { alias, shadow, zIndex } from "@frak-labs/design-system/tokens";
-import { style } from "@vanilla-extract/css";
+import { keyframes, style } from "@vanilla-extract/css";
 
 /**
  * Wrapper positioning for the floating soft-update prompt. The Card itself
@@ -64,6 +64,7 @@ export const actions = style({
 });
 
 export const progressTrack = style({
+    position: "relative",
     width: "100%",
     height: "4px",
     borderRadius: alias.cornerRadius.full,
@@ -71,10 +72,25 @@ export const progressTrack = style({
     overflow: "hidden",
 });
 
+/**
+ * Indeterminate progress animation. Bar slides left-to-right on a loop
+ * so users get continuous motion feedback without depending on the
+ * Play Core byte-progress events (which arrive inconsistently or not at
+ * all once the FLEXIBLE consent dialog has been dismissed).
+ */
+const progressIndeterminate = keyframes({
+    "0%": { transform: "translateX(-100%)" },
+    "100%": { transform: "translateX(400%)" },
+});
+
 export const progressBar = style({
+    position: "absolute",
+    top: 0,
+    left: 0,
+    width: "30%",
     height: "100%",
     background: vars.surface.primary,
-    transition: "width 200ms linear",
+    animation: `${progressIndeterminate} 1.5s linear infinite`,
 });
 
 export const downloadedIcon = style({

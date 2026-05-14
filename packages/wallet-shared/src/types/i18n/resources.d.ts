@@ -220,7 +220,6 @@ interface Resources {
         };
         explorer: {
             card: {
-                badge: "Up to {{amount}}";
                 until: "Until {{date}}";
             };
             detail: {
@@ -340,10 +339,14 @@ interface Resources {
                     ibanManager: {
                         addNew: "Add an IBAN";
                         empty: "No IBAN saved. Add one to get started.";
+                        firstNameLabel: "First name";
+                        firstNamePlaceholder: "e.g. John";
                         ibanLabel: "IBAN";
                         ibanPlaceholder: "FR76...";
-                        nameLabel: "Beneficiary name";
-                        namePlaceholder: "e.g. My checking account";
+                        lastNameLabel: "Last name";
+                        lastNamePlaceholder: "e.g. Doe";
+                        pseudoLabel: "Pseudo / note";
+                        pseudoPlaceholder: "Defaults to first + last name";
                         remove: "Remove";
                         save: "Save";
                         select: "Select";
@@ -355,7 +358,6 @@ interface Resources {
                         beneficiaryLabel: "Beneficiary";
                         cancel: "Cancel";
                         confirm: "Confirm transfer";
-                        defaultNote: "Sent from FRAK";
                         title: "Summary";
                         warning: "Once confirmed, this operation cannot be cancelled";
                     };
@@ -394,6 +396,26 @@ interface Resources {
                 success: "Order submitted! Funds will arrive in 1-2 business days.";
                 tryAgain: "Try again";
             };
+            order: {
+                detail: {
+                    bank: "Bank";
+                    from: "From";
+                    noNote: "Sent with no note";
+                    to: "To";
+                    transaction: "Transaction";
+                    walletName: "Frak Labs";
+                };
+                kind: {
+                    issue: "IBAN **** -> Frak Labs";
+                    redeem: "Frak Labs -> IBAN ****";
+                };
+                state: {
+                    pending: "Processing";
+                    placed: "Order placed";
+                    processed: "Completed";
+                    rejected: "Rejected";
+                };
+            };
             status: {
                 approved: "Verified ✓";
                 created: "Account created — complete verification on Monerium";
@@ -406,6 +428,14 @@ interface Resources {
             activateSecureSpace: "Activate my secure space";
             alreadyHaveAccount: "Already have an account?";
             continue: "Continue";
+            email: {
+                clearAriaLabel: "Clear email address";
+                continue: "Continue";
+                description: "Your email is only used to recover your account if you forget it. It will never be used to send you unsolicited messages.";
+                label: "Email";
+                placeholder: "your.email@gmail.com";
+                title: "Enter your email address";
+            };
             keypass: {
                 description: "A secure key is saved in your password manager to quickly log in via biometrics.";
                 existingAccount: {
@@ -428,7 +458,17 @@ interface Resources {
                 title: "Don't miss any reward!";
             };
             recoveryCode: "I have a recovery code";
-            slides: {
+            referral: {
+                appliedToast: "Referral code applied";
+                description: "Got a creator code? Enter it here. Otherwise, you can skip this step.";
+                label: "Referral code";
+                placeholder: "Ex: LOLA10";
+                skip: "Skip";
+                submitCta: "Apply code";
+                title: "Add a referral code";
+            };
+            start: "Get started";
+            steps: {
                 one: {
                     description: "Share your favorites and earn money for every purchase you help generate.";
                     title: "Earn money by recommending";
@@ -442,7 +482,6 @@ interface Resources {
                     title: "Your earnings in real time";
                 };
             };
-            start: "Get started";
             welcome: {
                 button: "Get started";
                 description: "Let's go! Explore our partner brands, recommend your favorites and turn your influence into earnings.";
@@ -571,9 +610,8 @@ interface Resources {
                 privy: "Connect via Privy";
                 recover: "Recover wallet from file";
                 title: "Log in to your wallet";
-                useMyAccount: "Use my account <strong>{{address}}</strong>";
+                useMyAccount: "Continue with my account";
                 useQRCode: "Use QR code to connect";
-                walletsOnDevice: "Wallets used on this device";
             };
             manageNotifications: "<strong>Manage notifications</strong> <br /> Open settings to control your notifications";
             notifications: {
@@ -635,7 +673,11 @@ interface Resources {
                         retryError: "Error when connecting to the paired device";
                     };
                 };
-                pairingInProgress: "Pairing in progress, please authenticate";
+                pendingPairing: {
+                    description: "Please authenticate to continue.";
+                    dismissLabel: "Dismiss notification";
+                    title: "Pairing in progress";
+                };
                 reconnect: "Reconnect";
                 refresh: "Retry";
                 refreshCode: "Code:";
@@ -702,17 +744,17 @@ interface Resources {
             profile: {
                 biometricPrompt: "Require {{biometryLabel}} at every app launch";
                 currentDeviceConnected: "Connected";
+                enableNotifications: "Enable notifications";
                 helpSupport: "Help & support";
                 lastConnection: "Last connection";
-                manageAction: "Manage";
+                manageNotifications: "Manage notifications";
                 managePairings: "Manage paired devices";
                 notificationDeniedHelp: "Notifications blocked by browser. Enable them in browser settings.";
-                notificationSettings: "Notification settings";
+                notificationSettings: "Notifications";
                 pageTitle: "Profil";
                 privacyPolicy: "Privacy Policy";
                 rateApp: "Rate the app";
                 recoveryConfigured: "Configured";
-                unsubscribeNotifications: "Unsubscribe";
             };
             recovery: {
                 continue: "Continue recovery";
@@ -784,11 +826,15 @@ interface Resources {
                     };
                     title: "Edit my code";
                 };
-                enterCode: "Enter a referral code";
+                enterCode: {
+                    cta: "Enter a referral code";
+                    description: "Earn money on every purchase you make across all partner sites.";
+                    title: "Enter a referral code";
+                };
                 invite: {
                     cta: "Generate my code";
-                    description: "Create your code and start sharing it with your loved ones to earn even more money.";
-                    title: "Invite friends";
+                    description: "Create your code and share it with your loved ones to earn even more money.";
+                    title: "Invite your friends to Frak";
                 };
                 menuLabel: "Referrals";
                 modify: "Modify";
@@ -842,6 +888,8 @@ interface Resources {
                     error: "Error during registration, please try again";
                     inProgress: "Wallet creation in progress";
                 };
+                description: "Spin up a temporary wallet to explore Frak. No biometrics, no recovery — just a sandbox.";
+                title: "Try Frak in demo mode";
             };
             settings: {
                 biometryInfo: "Biometry informations";
@@ -895,18 +943,18 @@ interface Resources {
                     discoverOffers: "Discover offers";
                     howItWorks: "How does it work?";
                     legal: "FRAK's <termsLink>terms and conditions</termsLink> apply.";
-                    step1Description: "A personal link is automatically generated with each share.";
+                    step1Description: "Discover products to recommend to your friends and family.";
                     step1Title: "Explore our partner brands";
-                    step2Description: "A personal link is automatically generated with each share.";
+                    step2Description: "A personalized link is automatically generated every time you share. If they make a purchase through your link, you earn money.";
                     step2Title: "Share an article with your friends";
-                    step3Description: "In one click, transfer your earnings to your bank account.";
+                    step3Description: "Transfer your earnings to your bank account with just one click.";
                     step3Title: "Earn money";
                 };
                 invite: {
-                    check1: "Create your referral code";
-                    check2: "Share it with your friends";
-                    check3: "Earn money on every order they place.";
-                    title: "Invite your friends and earn";
+                    check1: "Create your referral code.";
+                    check2: "Share it with your friends.";
+                    check3: "Earn money on every purchase made across all partner sites.";
+                    title: "Invite your friends to Frak";
                 };
                 notifications: {
                     description: "Enable notifications to track your earnings in real time.";

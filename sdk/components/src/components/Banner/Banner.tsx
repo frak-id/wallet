@@ -82,10 +82,15 @@ export function Banner({
     imageUrl,
     preview,
     previewMode,
+    allowInappRedirect,
 }: BannerProps) {
     const isPreview = !!preview;
     const resolvedPreviewMode: BannerMode =
         previewMode === "inapp" ? "inapp" : "referral";
+    // HTML attribute consumers (Shopify Liquid, WordPress PHP) pass
+    // strings, so allow `"true"` alongside the JSX boolean `true`.
+    const isInappRedirectAllowed =
+        allowInappRedirect === true || allowInappRedirect === "true";
     const placement = usePlacement(placementId);
     const { shouldRender, isHidden, isClientReady } = useClientReady();
 
@@ -100,7 +105,7 @@ export function Banner({
     const [dismissed, setDismissed] = useState(false);
     const [mode, setMode] = useState<BannerMode | null>(() => {
         if (isPreview) return resolvedPreviewMode;
-        return isInAppBrowser ? "inapp" : null;
+        return isInappRedirectAllowed && isInAppBrowser ? "inapp" : null;
     });
 
     // Emit a single impression per (mount, mode) pair. A user who sees the

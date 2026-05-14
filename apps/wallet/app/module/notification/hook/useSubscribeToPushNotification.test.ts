@@ -5,7 +5,6 @@ import type {
     PushTokenPayload,
 } from "@/module/notification/adapter";
 import { useSubscribeToPushNotification } from "@/module/notification/hook/useSubscribeToPushNotification";
-import { notificationOptOutStore } from "@/module/notification/stores/notificationOptOutStore";
 import {
     beforeEach,
     describe,
@@ -66,13 +65,9 @@ describe.sequential("useSubscribeToPushNotification", () => {
 
         mockAdapter.subscribe.mockReset().mockResolvedValue(validTokenPayload);
         mockTokensApi.put.mockReset().mockResolvedValue(undefined);
-
-        // Start each test with the opt-out flag set so we can assert it
-        // gets cleared on a successful subscribe.
-        notificationOptOutStore.getState().setOptedOut(true);
     });
 
-    test("should clear opt-out flag on successful subscribe", async ({
+    test("should call adapter.subscribe and backend put on successful mutation", async ({
         queryWrapper,
     }: WalletTestFixtures) => {
         const { result } = renderHook(() => useSubscribeToPushNotification(), {
@@ -85,10 +80,9 @@ describe.sequential("useSubscribeToPushNotification", () => {
 
         expect(mockAdapter.subscribe).toHaveBeenCalledOnce();
         expect(mockTokensApi.put).toHaveBeenCalledOnce();
-        expect(notificationOptOutStore.getState().optedOut).toBe(false);
     });
 
-    test("should leave opt-out flag set when adapter.subscribe throws", async ({
+    test("should not call backend put when adapter.subscribe throws", async ({
         queryWrapper,
     }: WalletTestFixtures) => {
         mockAdapter.subscribe.mockRejectedValue(new Error("subscribe failed"));
@@ -110,15 +104,11 @@ describe.sequential("useSubscribeToPushNotification", () => {
         });
 
         expect(mockTokensApi.put).not.toHaveBeenCalled();
-        expect(notificationOptOutStore.getState().optedOut).toBe(true);
     });
 
-    test("should clear opt-out flag even when backend put() throws after subscribe success", async ({
+    test("should still report error when backend put() throws after subscribe success", async ({
         queryWrapper,
     }: WalletTestFixtures) => {
-        // Subscribe succeeds (OS-level state now matches "subscribed"),
-        // but the backend put rejects. The flag should already be cleared
-        // by the time put() runs so reconciliation can recover.
         mockTokensApi.put.mockRejectedValue(new Error("backend down"));
 
         const { result } = renderHook(() => useSubscribeToPushNotification(), {
@@ -134,6 +124,6 @@ describe.sequential("useSubscribeToPushNotification", () => {
         });
 
         expect(mockAdapter.subscribe).toHaveBeenCalledOnce();
-        expect(notificationOptOutStore.getState().optedOut).toBe(false);
+        expect(mockTokensApi.put).toHaveBeenCalledOnce();
     });
 });

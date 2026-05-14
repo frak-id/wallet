@@ -1,12 +1,29 @@
+import { StatusBanner } from "@frak-labs/design-system/components/StatusBanner";
+import { useRouterState } from "@tanstack/react-router";
+import { useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Warning } from "@/module/common/component/Warning";
 import { pendingActionsStore } from "@/module/pending-actions/stores/pendingActionsStore";
-import * as styles from "./index.css";
 
 export function PairingInProgress() {
     const { t } = useTranslation();
-    const hasPendingPairing = pendingActionsStore((s) =>
-        s.actions.some(
+
+    // Don't double up with the actual pairing screen — the user is already
+    // confirming the pairing there, so the "pending" hint is redundant.
+    const pathname = useRouterState({
+        select: (state) => state.location.pathname,
+    });
+    const isOnPairingRoute = pathname.startsWith("/pairing");
+
+    // Track the action id we last dismissed locally so the toast can be
+    // hidden without touching the underlying pending action — post-auth
+    // navigation to /pairing keeps working. The flag naturally resets if a
+    // brand-new pending pairing arrives (different id) or on full reload.
+    const [dismissedActionId, setDismissedActionId] = useState<string | null>(
+        null
+    );
+
+    const pendingPairingAction = pendingActionsStore((s) =>
+        s.actions.find(
             (a) =>
                 a.type === "navigation" &&
                 a.to === "/pairing" &&
@@ -15,11 +32,18 @@ export function PairingInProgress() {
         )
     );
 
-    if (!hasPendingPairing) return null;
+    const isDismissed =
+        !!pendingPairingAction && pendingPairingAction.id === dismissedActionId;
+
+    if (isOnPairingRoute || !pendingPairingAction || isDismissed) return null;
 
     return (
-        <div className={styles.toast}>
-            <Warning text={t("wallet.pairing.pairingInProgress")} />
-        </div>
+        <StatusBanner
+            title={t("wallet.pairing.pendingPairing.title")}
+            description={t("wallet.pairing.pendingPairing.description")}
+            role="status"
+            onDismiss={() => setDismissedActionId(pendingPairingAction.id)}
+            dismissLabel={t("wallet.pairing.pendingPairing.dismissLabel")}
+        />
     );
 }

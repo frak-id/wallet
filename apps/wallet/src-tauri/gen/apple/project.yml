@@ -44,14 +44,18 @@ targets:
       path: app_iOS/Info.plist
       properties:
         LSRequiresIPhoneOS: true
+        # UIRequiresFullScreen disables iPad multitasking (Slide Over/Split View),
+        # which exempts the app from Apple's "all 4 orientations required on iPad" rule.
+        # Frak Wallet is portrait-only by design, so we opt out of multitasking.
+        UIRequiresFullScreen: true
         UILaunchStoryboardName: LaunchScreen
         UIRequiredDeviceCapabilities: [arm64, metal]
         UISupportedInterfaceOrientations:
           - UIInterfaceOrientationPortrait
         UISupportedInterfaceOrientations~ipad:
           - UIInterfaceOrientationPortrait
-        CFBundleShortVersionString: 1.0.48
-        CFBundleVersion: "1.0.48"
+        CFBundleShortVersionString: 1.0.58
+        CFBundleVersion: "1.0.58"
         ITSAppUsesNonExemptEncryption: false
         UIBackgroundModes:
           - remote-notification
@@ -114,12 +118,9 @@ targets:
         outputFiles:
           - $(SRCROOT)/Externals/x86_64/${CONFIGURATION}/libapp.a
           - $(SRCROOT)/Externals/arm64/${CONFIGURATION}/libapp.a
-    postBuildScripts:
-      - script: |
-          "${PODS_ROOT}/FirebaseCrashlytics/run"
-        name: Upload dSYMs to Firebase Crashlytics
-        basedOnDependencyAnalysis: false
-        inputFiles:
-          - ${DWARF_DSYM_FOLDER_PATH}/${DWARF_DSYM_FILE_NAME}/Contents/Resources/DWARF/${TARGET_NAME}
-          - $(TARGET_BUILD_DIR)/$(INFOPLIST_PATH)
-          - ${PROJECT_DIR}/app_iOS/GoogleService-Info.plist
+    # Crashlytics dSYM upload is handled out-of-band by the GitHub Actions
+    # release workflow (.github/workflows/tauri-mobile-release.yml) after
+    # `tauri ios build` produces the xcarchive. Doing it from Xcode races with
+    # `dsymutil` (the script can run before dSYM generation finalizes) and SIGBUSes
+    # `upload-symbols`. Keep `DEBUG_INFORMATION_FORMAT = dwarf-with-dsym` so the
+    # archive still ships dSYMs for the CI step to consume.

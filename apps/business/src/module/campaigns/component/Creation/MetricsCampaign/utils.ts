@@ -21,7 +21,7 @@ export type RewardFormState = {
 export const DEFAULT_REWARD_STATE: RewardFormState = {
     cac: 0,
     ratio: 90,
-    chainingEnabled: true,
+    chainingEnabled: false,
     deperditionPerLevel: 80,
     maxDepth: 5,
     referralOnly: true,
@@ -190,7 +190,7 @@ export function extractFormStateFromRule(
     return {
         cac,
         ratio,
-        chainingEnabled: true,
+        chainingEnabled: false,
         deperditionPerLevel: chaining?.deperditionPerLevel ?? 80,
         maxDepth: chaining?.maxDepth ?? 5,
         referralOnly:

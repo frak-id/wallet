@@ -7,16 +7,11 @@ import {
     type PushTokenPayload,
 } from "@/module/notification/adapter";
 import { notificationKey } from "@/module/notification/queryKeys/notification";
-import {
-    notificationOptOutStore,
-    selectOptedOut,
-} from "@/module/notification/stores/notificationOptOutStore";
 
 const PERMISSION_POLL_INTERVAL = 30_000;
 
 export function useNotificationStatus() {
     const queryClient = useQueryClient();
-    const optedOut = notificationOptOutStore(selectOptedOut);
 
     const { data: permission } = useQuery({
         queryKey: notificationKey.push.permission,
@@ -46,14 +41,11 @@ export function useNotificationStatus() {
         },
     });
 
-    // `optedOut` forces the switch to OFF even when the OS still has
-    // permission granted and the FCM token is cached — it represents the
-    // user's last explicit intent in the in-app toggle.
+    // `hasLocalCapability` is the in-app source of truth for "the user can
+    // receive a push right now" — it requires both an OS-level permission
+    // grant and a cached push token.
     const hasLocalCapability =
-        !optedOut &&
-        permissionGranted &&
-        localToken !== null &&
-        localToken !== undefined;
+        permissionGranted && localToken !== null && localToken !== undefined;
     const isReady =
         hasResolvedPermission &&
         (!permissionGranted || localToken !== undefined);
@@ -81,15 +73,8 @@ export function useNotificationStatus() {
     useEffect(() => {
         // Auto re-PUT recovers the "permission flipped on out-of-band" path
         // (user enabled notifications via system Settings without going
-        // through the in-app toggle). Skip when the user has explicitly
-        // opted out — otherwise toggle-off would re-create the backend
-        // token on the next refetch.
-        if (
-            !optedOut &&
-            permissionGranted &&
-            hasBackendToken === false &&
-            localToken
-        ) {
+        // through the in-app toggle).
+        if (permissionGranted && hasBackendToken === false && localToken) {
             authenticatedWalletApi.notifications.tokens
                 .put(localToken)
                 .then(() =>
@@ -111,7 +96,7 @@ export function useNotificationStatus() {
                 )
                 .catch(console.warn);
         }
-    }, [hasBackendToken, permissionGranted, localToken, optedOut, queryClient]);
+    }, [hasBackendToken, permissionGranted, localToken, queryClient]);
 
     return useMemo(
         () => ({

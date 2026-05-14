@@ -60,9 +60,14 @@ class Frak_Banner_Widget extends Frak_Widget_Base {
 				'type'  => 'text',
 				'label' => __( 'In-app browser — call to action', 'frak' ),
 			),
+			'allowInappRedirect'  => array(
+				'type'  => 'checkbox',
+				'label' => __( 'Allow in-app browser redirect', 'frak' ),
+				'help'  => __( 'When enabled, prompts users opening this page in Instagram or Facebook\'s in-app browser to switch to their system browser. Disabled by default — enable only on surfaces that drive users into a flow requiring WebAuthn (passkey login, transaction signing).', 'frak' ),
+			),
 			'imageUrl'            => array(
-				'type'  => 'url',
-				'label' => __( 'Image URL', 'frak' ),
+				'type'  => 'media',
+				'label' => __( 'Image', 'frak' ),
 				'help'  => __( 'Override the gift icon on the left. Leave empty to keep the default.', 'frak' ),
 			),
 			'placement'           => array(

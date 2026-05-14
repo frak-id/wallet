@@ -32,65 +32,64 @@ import { useNotificationStatus } from "@/module/notification/hook/useNotificatio
 import { useSubscribeToPushNotification } from "@/module/notification/hook/useSubscribeToPushNotification";
 import { useUnsubscribeFromPushNotification } from "@/module/notification/hook/useUnsubscribeFromPushNotification";
 import { notificationKey } from "@/module/notification/queryKeys/notification";
-import { notificationOptOutStore } from "@/module/notification/stores/notificationOptOutStore";
 import * as styles from "./index.css";
 
-function NotificationRow() {
+function trackOutcome(outcome: NotificationOptInOutcome, err?: unknown) {
+    trackEvent("notification_opt_in_resolved", {
+        outcome,
+        ...(err
+            ? { reason: err instanceof Error ? err.message : String(err) }
+            : {}),
+    });
+}
+
+function trackPhase(
+    phase: NotificationTogglePhase,
+    extras: {
+        permission?: "granted" | "denied" | "prompt" | "prompt-with-rationale";
+        has_local_capability?: boolean;
+        checked?: boolean;
+        reason?: string;
+    } = {}
+) {
+    trackEvent("notification_toggle_phase", { phase, ...extras });
+}
+
+/**
+ * Tauri row: a single button whose label/action is driven by the OS-level
+ * permission state. The OS panel is the only place the user can flip the
+ * switch off, so we delegate "Manage" to `openSettings()` and only use the
+ * in-app subscribe mutation when we actually need to surface the native
+ * permission prompt (status === "prompt"/"prompt-with-rationale").
+ */
+function TauriNotificationRow() {
     const { t } = useTranslation();
     const queryClient = useQueryClient();
     const { permissionStatus, hasLocalCapability } = useNotificationStatus();
     const { subscribeToPushAsync, isPending: isSubscribePending } =
         useSubscribeToPushNotification();
-    const { unsubscribeFromPushAsync, isPending: isUnsubPending } =
-        useUnsubscribeFromPushNotification();
 
-    const trackOutcome = (outcome: NotificationOptInOutcome, err?: unknown) => {
-        trackEvent("notification_opt_in_resolved", {
-            outcome,
-            ...(err
-                ? { reason: err instanceof Error ? err.message : String(err) }
-                : {}),
-        });
-    };
-
-    const trackPhase = (
-        phase: NotificationTogglePhase,
-        extras: {
-            checked?: boolean;
-            reason?: string;
-        } = {}
-    ) => {
-        trackEvent("notification_toggle_phase", {
-            phase,
-            permission: permissionStatus,
-            has_local_capability: hasLocalCapability,
-            ...extras,
-        });
-    };
-
-    const handleUnsubscribe = async () => {
-        trackPhase("unsubscribe_start", { checked: false });
-        try {
-            await unsubscribeFromPushAsync();
-            trackPhase("unsubscribe_done", { checked: false });
-            trackOutcome("settings_unsubscribed");
-        } catch (err) {
-            trackPhase("unsubscribe_failed", {
-                checked: false,
-                reason: err instanceof Error ? err.message : String(err),
-            });
-            trackOutcome("settings_failed", err);
-        }
-    };
+    const isGranted = permissionStatus === "granted";
+    const label = isGranted
+        ? t("wallet.profile.manageNotifications")
+        : t("wallet.profile.enableNotifications");
 
     const handleSubscribe = async () => {
-        trackPhase("subscribe_start", { checked: true });
+        trackPhase("subscribe_start", {
+            permission: permissionStatus,
+            has_local_capability: hasLocalCapability,
+            checked: true,
+        });
         try {
             await subscribeToPushAsync();
-            trackPhase("subscribe_done", { checked: true });
+            trackPhase("subscribe_done", {
+                permission: permissionStatus,
+                checked: true,
+            });
             trackOutcome("settings_subscribed");
         } catch (err) {
             trackPhase("subscribe_failed", {
+                permission: permissionStatus,
                 checked: true,
                 reason: err instanceof Error ? err.message : String(err),
             });
@@ -98,29 +97,26 @@ function NotificationRow() {
         }
     };
 
-    // Native deny path: open OS settings so the user can re-enable. The
-    // FCM adapter's getToken() lazily calls fcm.register() on next read
-    // when permission is granted, so we just need to invalidate the
-    // permission + localToken queries on return — TanStack Query's focus
-    // refetch picks up the new permission and the token follows.
-    const handleOpenSettingsToReenable = async () => {
-        // Tapping the toggle while it's off signals explicit opt-in intent
-        // even if the OS-level permission needs to be granted in Settings
-        // first. Clear the persisted opt-out now so the adapter's lazy
-        // register runs and the switch reflects the new state on return.
-        notificationOptOutStore.getState().setOptedOut(false);
-        trackPhase("open_settings_start", { checked: true });
+    // Used for both "Manage" (granted → tweak OS-level settings) and the
+    // denied recovery path (iOS won't re-prompt once denied, so the only
+    // way back is the OS panel). Permission/token queries are invalidated
+    // on return so `useNotificationStatus` reflects whatever the user did.
+    const handleOpenSettings = async () => {
+        trackPhase("open_settings_start", {
+            permission: permissionStatus,
+            has_local_capability: hasLocalCapability,
+        });
         try {
             await notificationAdapter.openSettings();
         } catch (err) {
             trackPhase("open_settings_failed", {
-                checked: true,
+                permission: permissionStatus,
                 reason: err instanceof Error ? err.message : String(err),
             });
             trackOutcome("settings_failed", err);
             return;
         }
-        trackPhase("open_settings_done", { checked: true });
+        trackPhase("open_settings_done", { permission: permissionStatus });
         await Promise.all([
             queryClient.invalidateQueries({
                 queryKey: notificationKey.push.permission,
@@ -132,11 +128,93 @@ function NotificationRow() {
         trackOutcome("settings_opened");
     };
 
+    const handleClick = () => {
+        if (isGranted) return handleOpenSettings();
+        if (permissionStatus === "denied") return handleOpenSettings();
+        return handleSubscribe();
+    };
+
+    return (
+        <InfoCard>
+            <InfoRow
+                icon={BellIcon}
+                label={label}
+                onClick={handleClick}
+                disabled={isSubscribePending}
+            />
+        </InfoCard>
+    );
+}
+
+/**
+ * Web row: classic switch. The browser is the single source of truth for
+ * permission and there's no OS-side panel outside it, so the in-app toggle
+ * directly drives subscribe/unsubscribe.
+ */
+function WebNotificationRow() {
+    const { t } = useTranslation();
+    const { permissionStatus, hasLocalCapability } = useNotificationStatus();
+    const { subscribeToPushAsync, isPending: isSubscribePending } =
+        useSubscribeToPushNotification();
+    const { unsubscribeFromPushAsync, isPending: isUnsubPending } =
+        useUnsubscribeFromPushNotification();
+
+    const handleUnsubscribe = async () => {
+        trackPhase("unsubscribe_start", {
+            permission: permissionStatus,
+            has_local_capability: hasLocalCapability,
+            checked: false,
+        });
+        try {
+            await unsubscribeFromPushAsync();
+            trackPhase("unsubscribe_done", {
+                permission: permissionStatus,
+                checked: false,
+            });
+            trackOutcome("settings_unsubscribed");
+        } catch (err) {
+            trackPhase("unsubscribe_failed", {
+                permission: permissionStatus,
+                checked: false,
+                reason: err instanceof Error ? err.message : String(err),
+            });
+            trackOutcome("settings_failed", err);
+        }
+    };
+
+    const handleSubscribe = async () => {
+        trackPhase("subscribe_start", {
+            permission: permissionStatus,
+            has_local_capability: hasLocalCapability,
+            checked: true,
+        });
+        try {
+            await subscribeToPushAsync();
+            trackPhase("subscribe_done", {
+                permission: permissionStatus,
+                checked: true,
+            });
+            trackOutcome("settings_subscribed");
+        } catch (err) {
+            trackPhase("subscribe_failed", {
+                permission: permissionStatus,
+                checked: true,
+                reason: err instanceof Error ? err.message : String(err),
+            });
+            trackOutcome("settings_failed", err);
+        }
+    };
+
     const handleToggle = async (checked: boolean) => {
-        trackPhase("tap", { checked });
+        trackPhase("tap", {
+            permission: permissionStatus,
+            has_local_capability: hasLocalCapability,
+            checked,
+        });
         if (!checked) return handleUnsubscribe();
         if (permissionStatus !== "denied") return handleSubscribe();
-        if (IS_TAURI) return handleOpenSettingsToReenable();
+        // Browser denied: no OS-side panel to bounce to — surface that the
+        // user must unblock in their browser settings.
         trackOutcome("settings_blocked");
     };
 
@@ -165,6 +243,10 @@ function NotificationRow() {
             ) : null}
         </InfoCard>
     );
+}
+
+function NotificationRow() {
+    return IS_TAURI ? <TauriNotificationRow /> : <WebNotificationRow />;
 }
 
 function BiometricRow() {

@@ -19,4 +19,7 @@ export const authenticatorsTable = sqliteTable("authenticators", {
         mode: "boolean",
     }).notNull(),
     transports: text("transports", { mode: "json" }).$type<string[]>(),
+    // Optional email captured at registration. Used today only as a
+    // mail <> wallet mapping; reserved for future per-device recovery flows.
+    email: text("email"),
 });

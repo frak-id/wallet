@@ -27,12 +27,13 @@ export const inputWrapper = recipe({
                 },
             },
             /**
-             * Borderless 56px white card matching the Figma "flat" input
-             * surface (e.g. Monerium recap note + IBAN form).
+             * Borderless 56px flat card. Pick the surface tone via the
+             * `tone` axis: `elevated` (white card, for non-white page
+             * backgrounds — Monerium recap, IBAN form) or `muted`
+             * (#f7f7f7, for white page backgrounds — referral redeem).
              */
             bare: {
                 borderRadius: alias.cornerRadius.m,
-                backgroundColor: vars.surface.elevated,
                 height: "56px",
                 paddingInline: alias.spacing.m,
                 gap: alias.spacing.xs,
@@ -42,6 +43,10 @@ export const inputWrapper = recipe({
             small: { width: "160px" },
             medium: { width: "320px" },
             big: { width: "100%" },
+        },
+        tone: {
+            elevated: {},
+            muted: {},
         },
         error: {
             true: {},
@@ -54,6 +59,14 @@ export const inputWrapper = recipe({
         },
     },
     compoundVariants: [
+        {
+            variants: { variant: "bare", tone: "elevated" },
+            style: { backgroundColor: vars.surface.elevated },
+        },
+        {
+            variants: { variant: "bare", tone: "muted" },
+            style: { backgroundColor: vars.surface.muted },
+        },
         {
             variants: { variant: "default", error: true },
             style: {
@@ -74,6 +87,7 @@ export const inputWrapper = recipe({
     ],
     defaultVariants: {
         variant: "default",
+        tone: "elevated",
     },
 });
 

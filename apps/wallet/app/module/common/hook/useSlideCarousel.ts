@@ -48,6 +48,8 @@ type UseSlideCarouselReturn = {
     goToNext: () => void;
 };
 
+const PROGRAMMATIC_SCROLL_SETTLE_MS = 500;
+
 export function useSlideCarousel({
     slideCount,
     initialIndex = 0,
@@ -61,6 +63,12 @@ export function useSlideCarousel({
      * as intersecting before settling, causing index to skip ahead.
      */
     const isProgrammaticScrollRef = useRef(false);
+    /**
+     * Tracks the latest programmatic scroll so stale release callbacks
+     * (e.g. timeout fallback from an earlier dot click) don't clear the
+     * suppression flag while a newer scroll is still in flight.
+     */
+    const programmaticScrollIdRef = useRef(0);
 
     useEffect(() => {
         onIndexChange?.(currentIndex);
@@ -152,16 +160,26 @@ export function useSlideCarousel({
             // have different positioning contexts.
             const targetLeft = container.clientWidth * index;
 
+            const scrollId = ++programmaticScrollIdRef.current;
             isProgrammaticScrollRef.current = true;
             setCurrentIndex(index);
             container.scrollTo({
                 left: targetLeft,
                 behavior: "instant",
             });
-            // Re-enable observer on the next frame, after the scroll settles
-            requestAnimationFrame(() => {
+
+            // Keep observer suppressed until the scroll actually settles.
+            // Safari runs scroll-snap correction as an animation, longer than
+            // a single rAF — releasing too early let the observer report an
+            // intermediate slide and overwrite currentIndex with the wrong
+            // value. scrollend covers modern browsers; setTimeout is a fallback
+            // for engines without scrollend (Safari < 18).
+            const release = () => {
+                if (scrollId !== programmaticScrollIdRef.current) return;
                 isProgrammaticScrollRef.current = false;
-            });
+            };
+            container.addEventListener("scrollend", release, { once: true });
+            window.setTimeout(release, PROGRAMMATIC_SCROLL_SETTLE_MS);
         },
         [slideCount]
     );

@@ -32,6 +32,11 @@ const RewardDetailModal = lazy(() =>
         default: m.RewardDetailModal,
     }))
 );
+const MoneriumOrderDetailModal = lazy(() =>
+    import("@/module/history/component/MoneriumOrderDetailModal").then((m) => ({
+        default: m.MoneriumOrderDetailModal,
+    }))
+);
 const EditReferralCodeSheet = lazy(() =>
     import("@/module/referral/component/EditReferralCodeSheet").then((m) => ({
         default: m.EditReferralCodeSheet,
@@ -87,6 +92,7 @@ function renderModal(
                 <Keypass
                     onClose={closeModal}
                     onAuthSuccess={modal.onAuthSuccess}
+                    email={modal.email}
                 />
             );
         case "recoveryCodeSuccess":
@@ -129,6 +135,17 @@ function renderModal(
                     {({ handleClose }) => (
                         <RewardDetailModal
                             item={modal.item}
+                            onClose={handleClose}
+                        />
+                    )}
+                </DetailOverlay>
+            );
+        case "moneriumOrderDetail":
+            return (
+                <DetailOverlay onClose={closeModal}>
+                    {({ handleClose }) => (
+                        <MoneriumOrderDetailModal
+                            order={modal.order}
                             onClose={handleClose}
                         />
                     )}

@@ -1,3 +1,11 @@
 xcuserdata/
 build/
 Externals/
+
+# Orphaned SPM workspace data: this Xcode workspace has zero
+# XCRemoteSwiftPackageReference entries; Tauri builds Swift packages via
+# swift-rs (under target/) instead. Without this rule, Xcode would silently
+# recreate Package.resolved with stale firebase-ios-sdk pins on every open,
+# masking the real swift-rs version state (see tauri-plugin-frak-crashlytics
+# README "Symbol upload" section).
+app.xcodeproj/project.xcworkspace/xcshareddata/swiftpm/

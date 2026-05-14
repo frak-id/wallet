@@ -22,7 +22,7 @@ export const slider = styleVariants({
         scrollSnapType: "x mandatory",
         overscrollBehaviorX: "contain",
         scrollbarWidth: "none",
-        touchAction: "pan-x",
+        touchAction: "pan-x pan-y pinch-zoom",
         WebkitOverflowScrolling: "touch",
         // Full bleed: extend through the parent's lateral padding so
         // adjacent cards peek symmetrically and the carousel runs

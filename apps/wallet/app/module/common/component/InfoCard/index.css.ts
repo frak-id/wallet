@@ -53,3 +53,19 @@ export const actionButton = style({
         },
     },
 });
+
+export const rowButton = style({
+    appearance: "none",
+    background: "none",
+    border: "none",
+    cursor: "pointer",
+    textAlign: "left",
+    font: "inherit",
+    width: "100%",
+    selectors: {
+        "&:disabled": {
+            cursor: "not-allowed",
+            opacity: 0.6,
+        },
+    },
+});

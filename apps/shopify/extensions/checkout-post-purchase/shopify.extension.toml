@@ -67,4 +67,4 @@ description = "By default, the link of a product in the customer's cart is share
 key = "image_url"
 type = "single_line_text_field"
 name = "Custom image URL"
-description = "Override the gift icon on the left of the card. Leave empty to keep the default. Any aspect ratio works — the slot constrains the image to 80×80."
+description = "Override the gift icon on the left of the card. Drag-and-drop an image into Shopify > Content > Files, then paste its Files CDN URL here (Shopify's checkout-extension settings only accept text). Leave empty to keep the default Frak gift icon. Any aspect ratio works — the slot constrains the image to 80×80."

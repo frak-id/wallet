@@ -96,18 +96,48 @@ describe.sequential("Banner", () => {
 
     // ─── In-app browser mode ───
 
-    it("should render in-app banner when isInAppBrowser is true", () => {
+    it("should render in-app banner when isInAppBrowser is true and allowInappRedirect is enabled", () => {
+        coreSdkMock.isInAppBrowser = true;
+
+        const { container } = render(<Banner allowInappRedirect />);
+        const banner = container.querySelector(".frak-banner");
+        expect(banner).toBeInTheDocument();
+    });
+
+    it("should NOT render in-app banner when allowInappRedirect is unset (default off)", () => {
         coreSdkMock.isInAppBrowser = true;
 
         const { container } = render(<Banner />);
-        const banner = container.querySelector(".frak-banner");
-        expect(banner).toBeInTheDocument();
+        expect(container.querySelector(".frak-banner")).toBeNull();
+    });
+
+    it("should NOT render in-app banner when allowInappRedirect is explicitly false", () => {
+        coreSdkMock.isInAppBrowser = true;
+
+        const { container } = render(<Banner allowInappRedirect={false} />);
+        expect(container.querySelector(".frak-banner")).toBeNull();
+    });
+
+    it("should accept the string 'true' for HTML attribute usage", () => {
+        coreSdkMock.isInAppBrowser = true;
+
+        const { container } = render(<Banner allowInappRedirect="true" />);
+        expect(container.querySelector(".frak-banner")).toBeInTheDocument();
+    });
+
+    it("should treat the string 'false' as disabled", () => {
+        coreSdkMock.isInAppBrowser = true;
+
+        const { container } = render(
+            <Banner allowInappRedirect={"false" as const} />
+        );
+        expect(container.querySelector(".frak-banner")).toBeNull();
     });
 
     it("should show default in-app text", () => {
         coreSdkMock.isInAppBrowser = true;
 
-        const { container } = render(<Banner />);
+        const { container } = render(<Banner allowInappRedirect />);
         const title = container.querySelector(".frak-banner__title");
         const cta = container.querySelector(".frak-banner__cta");
         expect(title?.textContent).toBe("Open in your browser");
@@ -117,7 +147,7 @@ describe.sequential("Banner", () => {
     it("should call redirectToExternalBrowser on in-app CTA click", async () => {
         coreSdkMock.isInAppBrowser = true;
 
-        const { container } = render(<Banner />);
+        const { container } = render(<Banner allowInappRedirect />);
         const cta = container.querySelector(".frak-banner__cta");
         if (cta) fireEvent.click(cta);
 
@@ -131,7 +161,7 @@ describe.sequential("Banner", () => {
     it("should dismiss on in-app close button click", async () => {
         coreSdkMock.isInAppBrowser = true;
 
-        const { container } = render(<Banner />);
+        const { container } = render(<Banner allowInappRedirect />);
         expect(container.querySelector(".frak-banner")).toBeInTheDocument();
 
         const closeBtn = container.querySelector(".frak-banner__close");
@@ -154,7 +184,7 @@ describe.sequential("Banner", () => {
             },
         } as any);
 
-        const { container } = render(<Banner />);
+        const { container } = render(<Banner allowInappRedirect />);
         expect(
             container.querySelector(".frak-banner__title")?.textContent
         ).toBe("Custom title");
@@ -257,7 +287,7 @@ describe.sequential("Banner", () => {
     it("should prioritize in-app mode over referral event", async () => {
         coreSdkMock.isInAppBrowser = true;
 
-        const { container } = render(<Banner />);
+        const { container } = render(<Banner allowInappRedirect />);
 
         // Banner is already visible in in-app mode
         expect(container.querySelector(".frak-banner")).toBeInTheDocument();
@@ -281,7 +311,9 @@ describe.sequential("Banner", () => {
     it("should apply classname prop to banner element", () => {
         coreSdkMock.isInAppBrowser = true;
 
-        const { container } = render(<Banner classname="custom-class" />);
+        const { container } = render(
+            <Banner classname="custom-class" allowInappRedirect />
+        );
         const banner = container.querySelector(".frak-banner");
         expect(banner).toHaveClass("custom-class");
     });
@@ -289,7 +321,7 @@ describe.sequential("Banner", () => {
     it("should have role=alert on the banner", () => {
         coreSdkMock.isInAppBrowser = true;
 
-        const { container } = render(<Banner />);
+        const { container } = render(<Banner allowInappRedirect />);
         const banner = container.querySelector("[role='alert']");
         expect(banner).toBeInTheDocument();
     });

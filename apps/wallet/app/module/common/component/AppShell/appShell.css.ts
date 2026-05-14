@@ -37,14 +37,8 @@ const mainContentBase = style({
     minHeight: 0,
     overflowY: "auto",
     WebkitOverflowScrolling: "touch",
-    // Prevent native browser pull-to-refresh / overscroll on the scroll container.
-    // Required so PullToRefresh's e.preventDefault() in touchmove fully suppresses
-    // iOS rubber-band and Chrome Android native PTR.
+    // Suppress iOS rubber-band and Android native PTR so PullToRefresh's preventDefault works.
     overscrollBehaviorY: "contain",
-    // Flex column so route content (toasts, banners, PageLayout, ...) can share
-    // the available height instead of stacking with hardcoded heights.
-    display: "flex",
-    flexDirection: "column",
 });
 
 /**
@@ -67,7 +61,9 @@ export const mainContentWithNav = style([
 export const mainContentNoNav = style([
     mainContentBase,
     {
-        paddingBottom: alias.spacing.m,
+        // Reserve the home-indicator safe area so PageLayout's footer is not
+        // clipped by the iOS gesture bar on auth/onboarding screens.
+        paddingBottom: `calc(${alias.spacing.m} + env(safe-area-inset-bottom, 0px))`,
         "@media": {
             [`(min-width: ${tablet}px)`]: {
                 maxHeight: "758px",

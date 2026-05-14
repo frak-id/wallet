@@ -16,7 +16,6 @@ import { DemoTapZone } from "@/module/authentication/component/DemoTapZone";
 import { Back } from "@/module/common/component/Back";
 import { ContentBlock } from "@/module/common/component/ContentBlock";
 import { PageLayout } from "@/module/common/component/PageLayout";
-import { PairingInProgress } from "@/module/pairing/component/PairingInProgress";
 import { useExecutePendingActions } from "@/module/pending-actions/hook/useExecutePendingActions";
 
 export const Route = createFileRoute("/_wallet/_auth/login")({
@@ -46,85 +45,79 @@ function LoginPage() {
 
     if (view === "pairing") {
         return (
-            <>
-                <DemoTapZone navigate={navigate} />
-                <PairingInProgress />
-                <PageLayout>
-                    <Box className={layout.contentTop}>
-                        <PairingView
-                            back={<Back onClick={() => setView("choose")} />}
-                            title={t("authent.sso.pairing.title")}
-                            description={t("authent.sso.pairing.description")}
-                            onSuccess={handlePostLoginRedirect}
-                        />
-                    </Box>
-                </PageLayout>
-            </>
+            <PageLayout>
+                <Box className={layout.contentTop}>
+                    <PairingView
+                        back={<Back onClick={() => setView("choose")} />}
+                        title={t("authent.sso.pairing.title")}
+                        description={t("authent.sso.pairing.description")}
+                        onSuccess={handlePostLoginRedirect}
+                    />
+                </Box>
+            </PageLayout>
         );
     }
 
     return (
-        <>
-            <DemoTapZone navigate={navigate} />
-            <PairingInProgress />
-            <PageLayout
-                footer={
-                    <>
-                        {error && (
-                            <HandleErrors
-                                error={error}
-                                className={layout.errorText}
-                            />
+        <PageLayout
+            back={
+                <Back
+                    onClick={() =>
+                        navigate({
+                            to: "/register",
+                            search: { new: true },
+                            replace: true,
+                        })
+                    }
+                />
+            }
+            footer={
+                <>
+                    {error && (
+                        <HandleErrors
+                            error={error}
+                            className={layout.errorText}
+                        />
+                    )}
+                    <Box className={layout.actions}>
+                        <AuthActions
+                            onSuccess={handlePostLoginRedirect}
+                            onError={setError}
+                        />
+                        {!ua.isMobile && (
+                            <Box>
+                                <Button
+                                    variant="ghost"
+                                    onClick={() => {
+                                        trackEvent(
+                                            "auth_login_method_selected",
+                                            { method: "qr" }
+                                        );
+                                        setView("pairing");
+                                    }}
+                                >
+                                    {t("wallet.login.useQRCode")}
+                                </Button>
+                            </Box>
                         )}
-                        <Box className={layout.actions}>
-                            <AuthActions
-                                onSuccess={handlePostLoginRedirect}
-                                onError={setError}
-                            />
-                            {!ua.isMobile && (
-                                <Box>
-                                    <Button
-                                        variant="ghost"
-                                        onClick={() => {
-                                            trackEvent(
-                                                "auth_login_method_selected",
-                                                { method: "qr" }
-                                            );
-                                            setView("pairing");
-                                        }}
-                                    >
-                                        {t("wallet.login.useQRCode")}
-                                    </Button>
-                                </Box>
-                            )}
-                        </Box>
-                    </>
-                }
-            >
-                <Box paddingLeft="m">
-                    <Back
-                        onClick={() =>
-                            navigate({
-                                to: "/register",
-                                search: { new: true },
-                                replace: true,
-                            })
-                        }
-                    />
-                </Box>
-                <Box className={layout.content}>
-                    <ContentBlock
-                        icon={
+                    </Box>
+                </>
+            }
+        >
+            <Box className={layout.content}>
+                <ContentBlock
+                    icon={
+                        <DemoTapZone navigate={navigate}>
                             <Box className={layout.heroIcon}>
                                 <LogoFrak width={48} height={48} />
                             </Box>
-                        }
-                        titleAs="h1"
-                        title={t("wallet.login.title")}
-                        contentSpacing="l"
-                    />
-                </Box>
-            </PageLayout>
-        </>
+                        </DemoTapZone>
+                    }
+                    titleAs="h1"
+                    title={t("wallet.login.title")}
+                    contentSpacing="l"
+                />
+            </Box>
+        </PageLayout>
     );
 }

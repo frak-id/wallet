@@ -170,7 +170,12 @@ export function PullToRefresh({
                 setTransition(false);
             }
 
-            e.preventDefault();
+            // Browser may have already committed to native scroll earlier in
+            // the gesture (touchmove non-cancelable). Calling preventDefault
+            // would log an Intervention warning without any effect.
+            if (e.cancelable) {
+                e.preventDefault();
+            }
 
             const damped = Math.min(maxPull, dy / resistance);
             pullRef.current = damped;

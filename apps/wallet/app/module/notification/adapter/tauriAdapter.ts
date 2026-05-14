@@ -2,7 +2,6 @@ import { authenticatedWalletApi, getInvoke } from "@frak-labs/wallet-shared";
 import type { PluginListener } from "@tauri-apps/api/core";
 import i18next from "i18next";
 import type { PermissionState } from "tauri-plugin-fcm";
-import { notificationOptOutStore } from "@/module/notification/stores/notificationOptOutStore";
 import type {
     NotificationAdapter,
     NotificationPermissionStatus,
@@ -130,8 +129,7 @@ export function createTauriNotificationAdapter(): NotificationAdapter {
             // out-of-band), proactively register so the FCM token is cached
             // before the settings page reads it. No-op on Android.
             const permission = await fcm.checkPermissions();
-            const optedOut = notificationOptOutStore.getState().optedOut;
-            if (permission === "granted" && !optedOut) {
+            if (permission === "granted") {
                 await fcm.register();
             }
         } catch (error) {
@@ -166,11 +164,6 @@ export function createTauriNotificationAdapter(): NotificationAdapter {
 
         getToken: async () => {
             await initPromise;
-
-            // Short-circuit when the user has opted out — avoids the
-            // 10s `obtainToken` wait that would otherwise run while
-            // `hasLocalCapability` is already forced to false in the UI.
-            if (notificationOptOutStore.getState().optedOut) return null;
 
             try {
                 // Lazy register safety net: covers the case where the OS

@@ -11,7 +11,7 @@ import { useTranslation } from "react-i18next";
 import { Back } from "@/module/common/component/Back";
 import { InfoCard, InfoRow } from "@/module/common/component/InfoCard";
 import { Title } from "@/module/common/component/Title";
-import { ReferralInviteCard } from "../ReferralInviteCard";
+import { ReferralActionCard } from "../ReferralActionCard";
 import * as styles from "./index.css";
 
 export function ReferralPage() {
@@ -48,12 +48,20 @@ export function ReferralPage() {
                             />
                         </InfoCard>
                     ) : (
-                        <ReferralInviteCard />
+                        <ReferralActionCard
+                            icon={ReferralIcon}
+                            title={t("wallet.referral.invite.title")}
+                            description={t(
+                                "wallet.referral.invite.description"
+                            )}
+                            ctaLabel={t("wallet.referral.invite.cta")}
+                            to="/profile/referral/create"
+                        />
                     )
                 ) : null}
                 {isStatusLoaded ? (
-                    <InfoCard>
-                        {hasRedeemedCode ? (
+                    hasRedeemedCode ? (
+                        <InfoCard>
                             <InfoRow
                                 icon={GiftIcon}
                                 label={
@@ -63,14 +71,18 @@ export function ReferralPage() {
                                 to="/profile/referral/redeem"
                                 action={modifyAction}
                             />
-                        ) : (
-                            <InfoRow
-                                icon={GiftIcon}
-                                label={t("wallet.referral.enterCode")}
-                                to="/profile/referral/redeem"
-                            />
-                        )}
-                    </InfoCard>
+                        </InfoCard>
+                    ) : (
+                        <ReferralActionCard
+                            icon={GiftIcon}
+                            title={t("wallet.referral.enterCode.title")}
+                            description={t(
+                                "wallet.referral.enterCode.description"
+                            )}
+                            ctaLabel={t("wallet.referral.enterCode.cta")}
+                            to="/profile/referral/redeem"
+                        />
+                    )
                 ) : null}
             </Stack>
         </Stack>

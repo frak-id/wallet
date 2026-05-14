@@ -4,8 +4,8 @@
 
 	const el = element.createElement;
 	const { Fragment, useEffect, useRef } = element;
-	const { InspectorControls, useBlockProps } = blockEditor;
-	const { PanelBody, TextControl, TextareaControl, SelectControl } = components;
+	const { InspectorControls, useBlockProps, MediaUpload, MediaUploadCheck } = blockEditor;
+	const { PanelBody, TextControl, TextareaControl, SelectControl, ToggleControl, Button } = components;
 	const { __ } = i18n;
 
 	const PREVIEW_MODES = [
@@ -90,17 +90,31 @@
 							label: __( 'CTA label', 'frak' ),
 							value: attributes.inappCta,
 							onChange: setter( 'inappCta' ),
+						} ),
+						el( ToggleControl, {
+							label: __( 'Allow in-app browser redirect', 'frak' ),
+							help: __( 'When enabled, prompts users opening this page in Instagram or Facebook in-app browsers to switch to their system browser. Disabled by default — enable only on surfaces that drive users into a flow requiring WebAuthn (passkey login, transaction signing).', 'frak' ),
+							checked: !! attributes.allowInappRedirect,
+							onChange: ( value ) => setAttributes( { allowInappRedirect: !! value } ),
 						} )
 					),
 					el(
 						PanelBody,
 						{ title: __( 'Image', 'frak' ), initialOpen: false },
-						el( TextControl, {
-							label: __( 'Image URL', 'frak' ),
-							help: __( 'Override the gift icon on the left. Leave empty to keep the default. Any aspect ratio works — the SDK contains it to a 40×40 slot.', 'frak' ),
-							value: attributes.imageUrl,
-							onChange: setter( 'imageUrl' ),
-						} )
+						el( 'p', null, el( 'small', null, __( 'Override the gift icon on the left. Any aspect ratio works — the SDK contains it to a 40×40 slot.', 'frak' ) ) ),
+						el(
+							MediaUploadCheck,
+							null,
+							el( MediaUpload, {
+								onSelect: ( media ) => setAttributes( { imageUrl: ( media && media.url ) || '' } ),
+								allowedTypes: [ 'image' ],
+								value: attributes.imageUrl,
+								render: ( { open } ) => el( Button, {
+									variant: 'secondary',
+									onClick: open,
+								}, attributes.imageUrl ? __( 'Replace image', 'frak' ) : __( 'Upload or select image', 'frak' ) ),
+							} )
+						)
 					),
 					el(
 						PanelBody,
@@ -154,6 +168,7 @@
 							'inapp-description': attr( attributes.inappDescription ),
 							'inapp-cta': attr( attributes.inappCta ),
 							'image-url': attr( attributes.imageUrl ),
+							'allow-inapp-redirect': attributes.allowInappRedirect ? 'true' : null,
 						} )
 					)
 			);

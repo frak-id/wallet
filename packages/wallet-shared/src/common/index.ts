@@ -85,6 +85,7 @@ export { ExternalLink } from "./component/ExternalLink";
 export { InAppBrowserToast } from "./component/InAppBrowserToast";
 export { Markdown } from "./component/Markdown";
 export { OfflineBanner } from "./component/OfflineBanner";
+export { PaginationDots } from "./component/PaginationDots";
 // Hooks
 export { useCopyToClipboardWithState } from "./hook/useCopyToClipboardWithState";
 export {

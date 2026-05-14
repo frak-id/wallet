@@ -90,10 +90,10 @@
         "pageTitle": "Wallet",
         "profile": {
             "pageTitle": "Profil",
-            "notificationSettings": "Notification settings",
+            "notificationSettings": "Notifications",
+            "manageNotifications": "Manage notifications",
+            "enableNotifications": "Enable notifications",
             "notificationDeniedHelp": "Notifications blocked by browser. Enable them in browser settings.",
-            "manageAction": "Manage",
-            "unsubscribeNotifications": "Unsubscribe",
             "biometricPrompt": "Require {{biometryLabel}} at every app launch",
             "recoveryConfigured": "Configured",
             "privacyPolicy": "Privacy Policy",
@@ -107,11 +107,15 @@
             "title": "Referrals",
             "menuLabel": "Referrals",
             "invite": {
-                "title": "Invite friends",
-                "description": "Create your code and start sharing it with your loved ones to earn even more money.",
+                "title": "Invite your friends to Frak",
+                "description": "Create your code and share it with your loved ones to earn even more money.",
                 "cta": "Generate my code"
             },
-            "enterCode": "Enter a referral code",
+            "enterCode": {
+                "title": "Enter a referral code",
+                "description": "Earn money on every purchase you make across all partner sites.",
+                "cta": "Enter a referral code"
+            },
             "modify": "Modify",
             "create": {
                 "title": "My referral code",
@@ -298,8 +302,10 @@
             "useQRCode": "Use QR code to connect"
         },
         "registerDemo": {
+            "title": "Try Frak in demo mode",
+            "description": "Spin up a temporary wallet to explore Frak. No biometrics, no recovery — just a sandbox.",
             "button": {
-                "create": "Create your demo <strong>wallet</strong>",
+                "create": "Create your demo wallet",
                 "error": "Error during registration, please try again",
                 "inProgress": "Wallet creation in progress"
             }
@@ -322,19 +328,19 @@
                 "description": "Enable notifications to track your earnings in real time."
             },
             "invite": {
-                "title": "Invite your friends and earn",
-                "check1": "Create your referral code",
-                "check2": "Share it with your friends",
-                "check3": "Earn money on every order they place."
+                "title": "Invite your friends to Frak",
+                "check1": "Create your referral code.",
+                "check2": "Share it with your friends.",
+                "check3": "Earn money on every purchase made across all partner sites."
             },
             "detail": {
                 "howItWorks": "How does it work?",
                 "step1Title": "Explore our partner brands",
-                "step1Description": "A personal link is automatically generated with each share.",
+                "step1Description": "Discover products to recommend to your friends and family.",
                 "step2Title": "Share an article with your friends",
-                "step2Description": "A personal link is automatically generated with each share.",
+                "step2Description": "A personalized link is automatically generated every time you share. If they make a purchase through your link, you earn money.",
                 "step3Title": "Earn money",
-                "step3Description": "In one click, transfer your earnings to your bank account.",
+                "step3Description": "Transfer your earnings to your bank account with just one click.",
                 "discoverOffers": "Discover offers",
                 "legal": "FRAK's <termsLink>terms and conditions</termsLink> apply."
             }
@@ -363,7 +369,11 @@
             },
             "cancel": "Cancel",
             "confirm": "Confirm the code",
-            "pairingInProgress": "Pairing in progress, please authenticate",
+            "pendingPairing": {
+                "title": "Pairing in progress",
+                "description": "Please authenticate to continue.",
+                "dismissLabel": "Dismiss notification"
+            },
             "origin": {
                 "state": {
                     "idle": "Pairing logic initialisation",
@@ -515,7 +525,7 @@
         "activateSecureSpace": "Activate my secure space",
         "alreadyHaveAccount": "Already have an account?",
         "recoveryCode": "I have a recovery code",
-        "slides": {
+        "steps": {
             "one": {
                 "title": "Earn money by recommending",
                 "description": "Share your favorites and earn money for every purchase you help generate."
@@ -528,6 +538,14 @@
                 "title": "Activate your secure space in 10 sec",
                 "description": "No forms, no paperwork. Your wallet is ready to receive your earnings, instantly."
             }
+        },
+        "email": {
+            "title": "Enter your email address",
+            "description": "Your email is only used to recover your account if you forget it. It will never be used to send you unsolicited messages.",
+            "label": "Email",
+            "placeholder": "your.email@gmail.com",
+            "continue": "Continue",
+            "clearAriaLabel": "Clear email address"
         },
         "keypass": {
             "title": "Secure your account",
@@ -549,6 +567,15 @@
             "descriptionHighlight": "Track your rewards in real time.",
             "enable": "Yes, notify me",
             "skip": "Later"
+        },
+        "referral": {
+            "title": "Add a referral code",
+            "description": "Got a creator code? Enter it here. Otherwise, you can skip this step.",
+            "label": "Referral code",
+            "placeholder": "Ex: LOLA10",
+            "submitCta": "Apply code",
+            "skip": "Skip",
+            "appliedToast": "Referral code applied"
         },
         "welcome": {
             "title": "Welcome to your wallet",
@@ -741,6 +768,26 @@
                     "select": "Select"
                 }
             }
+        },
+        "order": {
+            "kind": {
+                "issue": "IBAN **** -> Frak Labs",
+                "redeem": "Frak Labs -> IBAN ****"
+            },
+            "state": {
+                "placed": "Order placed",
+                "pending": "Processing",
+                "processed": "Completed",
+                "rejected": "Rejected"
+            },
+            "detail": {
+                "walletName": "Frak Labs",
+                "bank": "Bank",
+                "noNote": "Sent with no note",
+                "from": "From",
+                "to": "To",
+                "transaction": "Transaction"
+            }
         }
     },
     "explorer": {
@@ -792,7 +839,7 @@
                 "cta": "Update"
             },
             "inProgress": {
-                "title": "Downloading update… {{percent}}%"
+                "title": "Downloading update…"
             },
             "downloaded": {
                 "title": "Update ready to install.",

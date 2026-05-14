@@ -16,6 +16,7 @@
 import type { ExplorerMerchantItem } from "@frak-labs/backend-elysia/orchestration/schemas";
 import { type RewardHistoryItem, trackEvent } from "@frak-labs/wallet-shared";
 import { create } from "zustand";
+import type { MoneriumOrder } from "@/module/monerium/utils/moneriumTypes";
 
 /**
  * Discriminated union of every modal in the wallet app.
@@ -29,12 +30,13 @@ export type ModalState =
     | { id: "transfer" }
     | { id: "explorerDetail"; merchant: ExplorerMerchantItem }
     | { id: "welcomeDetail" }
-    | { id: "keypass"; onAuthSuccess: () => void }
+    | { id: "keypass"; onAuthSuccess: () => void; email?: string }
     | {
           id: "recoveryCodeSuccess";
           merchant?: { name: string; domain: string };
       }
     | { id: "moneriumBankFlow" }
+    | { id: "moneriumOrderDetail"; order: MoneriumOrder }
     | { id: "rewardDetail"; item: RewardHistoryItem }
     | { id: "editReferralCode"; onSaved: () => void };
 

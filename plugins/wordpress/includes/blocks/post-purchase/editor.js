@@ -4,8 +4,8 @@
 
 	const el = element.createElement;
 	const { Fragment, useEffect, useRef } = element;
-	const { InspectorControls, useBlockProps } = blockEditor;
-	const { PanelBody, TextControl, TextareaControl, SelectControl, ToggleControl } = components;
+	const { InspectorControls, useBlockProps, MediaUpload, MediaUploadCheck } = blockEditor;
+	const { PanelBody, TextControl, TextareaControl, SelectControl, ToggleControl, Button } = components;
 	const { __ } = i18n;
 
 	const VARIANTS = [
@@ -83,12 +83,20 @@
 					el(
 						PanelBody,
 						{ title: __( 'Image', 'frak' ), initialOpen: false },
-						el( TextControl, {
-							label: __( 'Image URL', 'frak' ),
-							help: __( 'Override the gift icon on the left. Leave empty to keep the default. Any aspect ratio works — the SDK contains it to an 80×80 slot.', 'frak' ),
-							value: attributes.imageUrl,
-							onChange: setter( 'imageUrl' ),
-						} )
+						el( 'p', null, el( 'small', null, __( 'Override the gift icon on the left. Any aspect ratio works — the SDK contains it to an 80×80 slot.', 'frak' ) ) ),
+						el(
+							MediaUploadCheck,
+							null,
+							el( MediaUpload, {
+								onSelect: ( media ) => setAttributes( { imageUrl: ( media && media.url ) || '' } ),
+								allowedTypes: [ 'image' ],
+								value: attributes.imageUrl,
+								render: ( { open } ) => el( Button, {
+									variant: 'secondary',
+									onClick: open,
+								}, attributes.imageUrl ? __( 'Replace image', 'frak' ) : __( 'Upload or select image', 'frak' ) ),
+							} )
+						)
 					),
 					el(
 						PanelBody,

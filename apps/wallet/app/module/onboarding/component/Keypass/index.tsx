@@ -20,9 +20,11 @@ import * as styles from "./index.css";
 type KeypassProps = {
     onClose: () => void;
     onAuthSuccess: () => void;
+    /** Forwarded to the register endpoint to seed the account's recovery email. */
+    email?: string;
 };
 
-export function Keypass({ onClose, onAuthSuccess }: KeypassProps) {
+export function Keypass({ onClose, onAuthSuccess, email }: KeypassProps) {
     const { t } = useTranslation();
     const navigate = useNavigate();
     const [isRegistering, setIsRegistering] = useState(false);
@@ -43,7 +45,7 @@ export function Keypass({ onClose, onAuthSuccess }: KeypassProps) {
     const handleRegister = () => {
         if (isRegistering) return;
         setIsRegistering(true);
-        register()
+        register({ email })
             .then(() => onAuthSuccess())
             .catch(() => setIsRegistering(false));
     };

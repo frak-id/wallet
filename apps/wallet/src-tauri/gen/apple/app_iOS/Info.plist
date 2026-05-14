@@ -15,7 +15,7 @@
 	<key>CFBundlePackageType</key>
 	<string>APPL</string>
 	<key>CFBundleShortVersionString</key>
-	<string>1.0.48</string>
+	<string>1.0.58</string>
 	<key>CFBundleURLTypes</key>
 	<array>
 		<dict>
@@ -28,10 +28,12 @@
 		</dict>
 	</array>
 	<key>CFBundleVersion</key>
-	<string>1.0.48</string>
+	<string>1.0.58</string>
 	<key>ITSAppUsesNonExemptEncryption</key>
 	<false/>
 	<key>LSRequiresIPhoneOS</key>
+	<true/>
+	<key>UIRequiresFullScreen</key>
 	<true/>
 	<key>NSFaceIDUsageDescription</key>
 	<string>Unlock your wallet securely with Face ID</string>

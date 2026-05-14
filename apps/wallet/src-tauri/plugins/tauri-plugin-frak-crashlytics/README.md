@@ -12,8 +12,8 @@ under `#[cfg(mobile)]`).
 
 | Crash type | Capture path | Symbols |
 |---|---|---|
-| iOS NSException | Crashlytics auto-handler installed by `FirebaseApp.configure()` | dSYM upload via `${PODS_ROOT}/FirebaseCrashlytics/run` post-build script |
-| iOS Mach signal (Rust panic in release → SIGABRT, SIGSEGV…) | Crashlytics signal handler | Same dSYM path; Rust frames need debug info in the static lib |
+| iOS NSException | Crashlytics auto-handler installed by `FirebaseApp.configure()` (called from `FrakCrashlyticsPlugin.init()`) | dSYM upload via SPM-checkout `upload-symbols` (see `gen/apple/project.yml` post-build script) |
+| iOS Mach signal (Rust panic in release → SIGABRT, SIGSEGV…) | Crashlytics signal handler installed at the same time as the NSException handler | Same dSYM path; Rust frames need debug info in the static lib |
 | Android JVM uncaught exception | `FirebaseCrashlytics` auto-handler | ProGuard mapping uploaded automatically by `firebase-crashlytics-gradle` |
 | Android NDK signal (Rust panic / segfault) | `firebase-crashlytics-ndk` SIGABRT/SIGSEGV handler | `./gradlew uploadCrashlyticsSymbolFile{Variant}` (manual / CI step) |
 | Non-fatal JS / Rust error | `recordError()` command — see below | N/A |
@@ -47,26 +47,36 @@ mobile so call them unconditionally in shared code.
 ## Initialization
 
 Registered in `apps/wallet/src-tauri/src/lib.rs` alongside the other mobile
-plugins. `FirebaseApp.configure()` (iOS) / `FirebaseApp.initializeApp()`
-(Android) is performed by `tauri-plugin-fcm` so this plugin only consumes
-the already-initialized Crashlytics singleton.
+plugins.
+
+- **iOS**: `FrakCrashlyticsPlugin.init()` calls `FirebaseApp.configure()` itself,
+  guarded by `if FirebaseApp.app() == nil` so it stays compatible with
+  `tauri-plugin-fcm`'s own configure call. Doing it from `init()` (not `load()`)
+  arms Crashlytics' NSException + Mach signal handlers before the Tauri WebView
+  is attached.
+- **Android**: the `google-services` Gradle plugin installs `FirebaseInitProvider`
+  which runs before `Application.onCreate()`, so Firebase is initialized by the
+  time any Tauri plugin loads. No host-side configure call is needed.
 
 ## Native dependencies
 
 ### iOS
 
 - **Plugin SPM** (`ios/Package.swift`) depends on
-  `https://github.com/firebase/firebase-ios-sdk` and links the
-  `FirebaseCrashlytics` product. This is what allows `FrakCrashlyticsPlugin.swift`
-  to `import FirebaseCrashlytics` at compile time.
-- **App Podfile** (`gen/apple/Podfile`) also has `pod 'FirebaseCrashlytics'`.
-  This is required at app-link time so the runtime framework, the
-  `${PODS_ROOT}/FirebaseCrashlytics/run` script, and the dSYM upload tooling
-  are all in the standard Pods locations.
-- **Run Script Phase** in `gen/apple/project.yml → app_iOS.postBuildScripts`
-  uploads dSYMs to Firebase on every build. `DEBUG_INFORMATION_FORMAT` is set
-  to `dwarf-with-dsym` for **both** debug and release so symbolicated reports
-  show up regardless of configuration.
+  `https://github.com/firebase/firebase-ios-sdk` and links both the
+  `FirebaseCore` and `FirebaseCrashlytics` products. This plugin is the **only**
+  source of Firebase Crashlytics on iOS — the host `gen/apple/Podfile` is
+  deliberately empty of Firebase pods. Linking Firebase via both SPM and
+  CocoaPods produces duplicate symbols and silently breaks Crashlytics' crash
+  handler registration.
+- **Version floor** is pinned to the same major+minor as `tauri-plugin-fcm`'s
+  Package.swift so Xcode's workspace-level SPM resolution converges on a single
+  Firebase copy. Bumping one plugin requires bumping the other in lockstep.
+- **dSYM upload runs in CI**, not from Xcode. `DEBUG_INFORMATION_FORMAT` is set
+  to `dwarf-with-dsym` for **both** debug and release so dSYMs are produced
+  regardless of configuration; the GitHub Actions release workflow then invokes
+  `upload-symbols` against the xcarchive after `tauri ios build` finishes. See
+  the "Symbol upload" section below for the rationale.
 
 ### Android
 
@@ -82,12 +92,23 @@ the already-initialized Crashlytics singleton.
 
 ## Symbol upload
 
-### iOS dSYMs (auto)
+### iOS dSYMs (CI step)
 
-The post-build Run Script runs on every build and uploads dSYMs as part of
-the Xcode build pipeline. For TestFlight / App Store builds, Xcode produces
-`.xcarchive` bundles whose dSYMs are uploaded by the same script during the
-archive step.
+`.github/workflows/tauri-mobile-release.yml` invokes `upload-symbols` after
+`tauri ios build` finishes, against the xcarchive at
+`apps/wallet/src-tauri/gen/apple/build/app_iOS.xcarchive/dSYMs/*.dSYM`.
+
+`upload-symbols` itself is a host macOS binary shipped inside the firebase-ios-sdk
+SPM checkout under the Cargo target dir
+(`${CARGO_TARGET_DIR:-apps/wallet/src-tauri/target}/<arch>/<profile>/build/tauri-plugin-*/out/swift-rs/*/checkouts/firebase-ios-sdk/Crashlytics/upload-symbols`).
+The plugin build dir is content-hashed and several swift-rs checkouts may exist
+(one per target triple) — they all ship the same prebuilt universal binary, so
+the workflow globs and picks the most recently modified copy.
+
+This used to run as an Xcode build phase, but it raced with `dsymutil` —
+`upload-symbols` would SIGBUS reading a not-yet-finalized dSYM. Running it after
+xcodebuild has fully exited removes the race entirely, and a Firebase outage no
+longer blocks the TestFlight upload.
 
 ### Android NDK symbols (manual / CI)
 
