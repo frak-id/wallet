@@ -89,20 +89,53 @@ class FrakFirebasePlugin: Plugin, MessagingDelegate, UNUserNotificationCenterDel
 
     override init() {
         super.init()
+        // Diagnostic: log bundle id so a GoogleService-Info.plist mismatch
+        // is visible in the Xcode console at launch (look for Firebase's own
+        // "bundle ID does not match" warning right after configure).
+        let bundleId = Bundle.main.bundleIdentifier ?? "<unknown>"
+        NSLog("[frak-firebase] init — bundle id: \(bundleId)")
+
+        #if DEBUG
+        // Verbose Firebase logging surfaces configure() errors (missing or
+        // invalid GoogleService-Info.plist, bundle-id mismatch) and shows
+        // Crashlytics' own init logs that are normally suppressed.
+        FirebaseConfiguration.shared.setLoggerLevel(.debug)
+        #endif
+
         // Configure Firebase as early as possible. `init()` runs before the
         // WebView is attached, so Crashlytics' NSException + Mach signal
         // handlers are armed before any user code runs.
         //
-        // Single source of truth for Firebase init — no nil-guard needed since
-        // this plugin is the only Firebase consumer in the app (the old FCM
-        // plugin's nil-guard was for coexistence with the Crashlytics plugin;
-        // merging removes both sources of duplication).
+        // Single source of truth for Firebase init — no nil-guard needed
+        // since this plugin is the only Firebase consumer in the app.
         FirebaseApp.configure()
 
-        // Forward any persisted Rust panic from a previous session. Crashlytics
-        // expects this to happen after `FirebaseApp.configure()` — fine here
-        // since we just called it on the line above.
+        if let app = FirebaseApp.app() {
+            NSLog("[frak-firebase] FirebaseApp.configure OK — name=\(app.name) googleAppID=\(app.options.googleAppID) bundleId=\(app.options.bundleID ?? "<nil>")")
+        } else {
+            NSLog("[frak-firebase] FirebaseApp.configure FAILED — FirebaseApp.app() is nil. Check that GoogleService-Info.plist is present in the app bundle and matches the running bundle id.")
+        }
+
+        // Force Crashlytics SDK initialization. `FirebaseApp.configure()`
+        // only *registers* the Crashlytics provider with the Firebase
+        // component container; the SDK (including SIGABRT / NSException /
+        // Mach exception handler installation) is constructed on first
+        // access. Touch the singleton here so the handlers arm immediately,
+        // NOT lazily on the first JS call to setUserId / log / recordError.
+        // Without this line, a crash that fires before any Crashlytics JS
+        // command is silently lost — the signal handler was never installed.
+        let crashlytics = Crashlytics.crashlytics()
+        NSLog("[frak-firebase] Crashlytics init — collectionEnabled=\(crashlytics.isCrashlyticsCollectionEnabled()) didCrashLastRun=\(crashlytics.didCrashDuringPreviousExecution())")
+
+        // Forward any persisted Rust panic from a previous session as a
+        // non-fatal `RustPanic` issue (in addition to whatever native fatal
+        // report Crashlytics' own handler may have queued for the abort).
         forwardPersistedRustPanic()
+
+        // Force-flush any queued reports so the smoke-test feedback loop
+        // (tap button → app dies → relaunch → check dashboard) doesn't
+        // wait on Crashlytics' default upload window.
+        crashlytics.sendUnsentReports()
     }
 
     override func load(webview: WKWebView) {
