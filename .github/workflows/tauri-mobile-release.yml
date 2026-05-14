@@ -208,6 +208,15 @@ jobs:
         with:
           targets: aarch64-apple-ios
 
+      # macos-26 ships rustup via Homebrew, which wraps the cargo/rustc shims with
+      # env_script_all_files. Those wrappers exec rustup-init with argv[0] pointing
+      # at the wrapper path, so the binary loses its argv[0]-based dispatch and
+      # behaves as the installer (rejecting `cargo metadata` with `unexpected argument`).
+      # dtolnay/rust-toolchain skips adding $CARGO_HOME/bin to PATH when rustup is
+      # already present, so we prepend it manually to make the real rustup shims win.
+      - name: "🔗 Prepend cargo bin to PATH"
+        run: echo "$HOME/.cargo/bin" >> "$GITHUB_PATH"
+
       - name: "💾 Cache Rust"
         uses: Swatinem/rust-cache@v2
         with:
