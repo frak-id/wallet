@@ -302,6 +302,8 @@
             "useQRCode": "Use QR code to connect"
         },
         "registerDemo": {
+            "title": "Try Frak in demo mode",
+            "description": "Spin up a temporary wallet to explore Frak. No biometrics, no recovery — just a sandbox.",
             "button": {
                 "create": "Create your demo <strong>wallet</strong>",
                 "error": "Error during registration, please try again",
@@ -765,8 +767,8 @@
         },
         "order": {
             "kind": {
-                "issue": "Bank deposit",
-                "redeem": "Withdraw to bank"
+                "issue": "IBAN **** -> Frak Labs",
+                "redeem": "Frak Labs -> IBAN ****"
             },
             "state": {
                 "placed": "Order placed",

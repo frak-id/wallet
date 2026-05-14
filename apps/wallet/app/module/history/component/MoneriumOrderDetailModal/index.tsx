@@ -173,7 +173,7 @@ function DetailCard({ order, t }: { order: MoneriumOrder; t: TFunction }) {
         <Stack space="m">
             <InfoCard>
                 <Inline space="none" padding="m" fill>
-                    <Text variant="body" weight="medium">
+                    <Text variant="bodySmall" weight="medium" color={"secondary"}>
                         {memo && memo.length > 0
                             ? memo
                             : t("monerium.order.detail.noNote")}

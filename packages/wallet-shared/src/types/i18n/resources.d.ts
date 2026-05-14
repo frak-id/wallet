@@ -406,8 +406,8 @@ interface Resources {
           "walletName": "Frak Labs"
         },
         "kind": {
-          "issue": "Bank deposit",
-          "redeem": "Withdraw to bank"
+          "issue": "IBAN **** -> Frak Labs",
+          "redeem": "Frak Labs -> IBAN ****"
         },
         "state": {
           "pending": "Processing",
