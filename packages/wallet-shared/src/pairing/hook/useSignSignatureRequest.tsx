@@ -1,3 +1,4 @@
+import { useStore } from "zustand";
 import { useMutation } from "@tanstack/react-query";
 import { useCallback } from "react";
 import { selectWebauthnSession, sessionStore } from "../../stores/sessionStore";
@@ -14,7 +15,7 @@ export function useSignSignatureRequest({
 }: {
     client: TargetPairingClient;
 }) {
-    const session = sessionStore(selectWebauthnSession);
+    const session = useStore(sessionStore, selectWebauthnSession);
 
     return useMutation({
         mutationKey: pairingKey.target.handleSignatureRequest(session?.address),

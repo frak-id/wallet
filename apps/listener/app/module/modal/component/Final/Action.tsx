@@ -1,3 +1,4 @@
+import { useStore } from "zustand";
 import { type FinalActionType, FrakContextManager } from "@frak-labs/core-sdk";
 import {
     prefixModalCss,
@@ -73,14 +74,12 @@ function SharingButtons({
     link?: string;
 }) {
     const { sourceUrl, merchantId } = useSafeResolvingContext();
-    const clientId = clientIdStore((s) => s.clientId);
-    const walletAddress = sessionStore((s) => s.session?.address);
+    const clientId = useStore(clientIdStore, (s) => s.clientId);
+    const walletAddress = useStore(sessionStore, (s) => s.session?.address);
     const { copy } = useCopyToClipboardWithState();
     const { t } = useListenerTranslation();
     const { mutate: trackSharing } = useTrackSharing();
-    const defaultAttribution = resolvingContextStore(
-        (s) => s.backendSdkConfig?.attribution
-    );
+    const defaultAttribution = useStore(resolvingContextStore, (s) => s.backendSdkConfig?.attribution);
 
     const finalSharingLink = useMemo(() => {
         const url = link ?? sourceUrl;

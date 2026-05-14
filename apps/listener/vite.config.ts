@@ -259,6 +259,16 @@ export default defineConfig(async () => {
                     codeSplitting: {
                         // Only chunk stuff shared by at least 2 modules
                         minShareCount: 2,
+                        // Disable Rolldown's default `pull all transitive deps
+                        // into the same group as the matched module`. With it on,
+                        // `ui-runtime` (preact + @tanstack/react-query) dragged
+                        // every transitive dep (zustand, @tanstack/query-core,
+                        // @elysiajs/eden, idb-keyval) into the lazy chunk — so
+                        // the eager queryClient.ts had to statically import it.
+                        // With it off, each group claims only modules its `test`
+                        // matches; deps land in `vendor` / `common` / default
+                        // chunking based on their own match.
+                        includeDependenciesRecursively: false,
                         groups: [
                             // Vite's `__vitePreload` helper (virtual module).
                             // Pinned to its own tiny chunk (1.2 KB) so it doesn't
@@ -299,18 +309,29 @@ export default defineConfig(async () => {
                             // node_modules that match both regexes.
                             {
                                 name: "ui-runtime",
-                                test: /(?:node_modules[\\/](?:preact|i18next|i18next-browser-languagedetector|react-i18next|@tanstack)[\\/])|(?:apps[\\/]listener[\\/]app[\\/]ui[\\/])/,
+                                // Only the React-bindings live here (lazy).
+                                // The headless @tanstack/query-* libs are
+                                // imported eagerly by `app/queryClient.ts` and
+                                // therefore moved to `vendor`. If `@tanstack`
+                                // is matched broadly here, the eager entry is
+                                // forced to statically import this whole
+                                // chunk, defeating the lazy strategy.
+                                test: /(?:node_modules[\\/](?:preact|i18next|i18next-browser-languagedetector|react-i18next|@tanstack[\\/]react-query|@tanstack[\\/]react-query-persist-client)[\\/])|(?:node_modules[\\/]zustand[\\/]esm[\\/]react(?:[\\/]|\.mjs))|(?:apps[\\/]listener[\\/]app[\\/]ui[\\/])/,
                                 priority: 45,
                                 minShareCount: 1,
                             },
 
-                            // `vendor` keeps only Ring-0-eager runtime libs:
-                            // zustand stores, idb-keyval, nanoid, elysia client,
-                            // clsx. Everything React-ish moved to `ui-runtime`.
+                            // `vendor` keeps Ring-0-eager runtime libs:
+                            // zustand stores, idb-keyval, elysia client,
+                            // clsx, nanoid, and the headless @tanstack/query-*
+                            // libs that the eager `queryClient.ts` needs.
                             {
                                 name: "vendor",
-                                tags: ["$initial"],
-                                test: /node_modules[\\/](?:zustand|idb-keyval|nanoid|@elysiajs|clsx)[\\/]/,
+                                // tags omitted on purpose: marking $initial
+                                // makes Rolldown reject shared-with-lazy modules
+                                // (verified: @tanstack/query-core, zustand, etc.
+                                // would otherwise fall through to ui-runtime).
+                                test: /node_modules[\\/](?:zustand|idb-keyval|nanoid|@elysiajs|clsx|@tanstack[\\/](?:query-core|query-async-storage-persister|query-persist-client-core))[\\/]/,
                                 priority: 40,
                                 // CRITICAL: must be 1, otherwise the global
                                 // `minShareCount: 2` keeps single-entry node_modules
@@ -395,9 +416,17 @@ export default defineConfig(async () => {
                             // chunk to get back its own Provider.
                             {
                                 name: "common",
+                                // `$initial` keeps lazy-only workspace files
+                                // (pairing clients/hooks, identity, listener
+                                // hook .impl chunks) out of this chunk — they
+                                // belong in `lazy-shared` / their boundary chunk.
                                 tags: ["$initial"],
-                                test: /(?:wallet-shared[\\/]src[\\/](?:stores|i18n|polyfills|stubs|identity|types|pairing[\\/](?:clients|hook|queryKeys|types)|common[\\/](?:analytics|api|hook|lib|utils)))|(?:packages[\\/]app-essentials[\\/])|(?:apps[\\/]listener[\\/]app[\\/]module[\\/](?:stores|middleware|handlers|providers|types|common|queryKeys|hooks|utils[\\/](?:i18nMapper|deprecatedModalMetadataMapper|normalizeTargetInteraction|backup)))/,
+                                test: /(?:wallet-shared[\\/]src[\\/](?:stores|i18n|polyfills|stubs|types|common[\\/](?:analytics|api|lib|utils|storage|tauri|queryKeys)|common[\\/]hook[\\/](?:useEstimatedReward|useGetSafeSdkSession)))|(?:packages[\\/]app-essentials[\\/])|(?:packages[\\/]rpc[\\/](?:dist|src)[\\/])|(?:apps[\\/]listener[\\/]app[\\/]module[\\/](?:stores|middleware|handlers|providers|types|common|queryKeys|utils[\\/](?:i18nMapper|deprecatedModalMetadataMapper|normalizeTargetInteraction|backup)|hooks[\\/](?:useDisplayEmbeddedWallet(?!\.impl)|useDisplayModalListener(?!\.impl)|useDisplaySharingPageListener(?!\.impl)|useOnGet|useSendInteraction(?!Listener\.)|useSendInteractionListener|useUserReferralStatus|useWalletStatusListener|useSsoLink)))/,
                                 priority: 28,
+                                // Single-importer modules must still land here
+                                // (e.g. wallet-shared/common/api/backendClient.ts
+                                // is only reached via the eager api hooks).
+                                minShareCount: 1,
                             },
                         ],
                     },

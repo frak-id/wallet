@@ -1,3 +1,4 @@
+import { useStore } from "zustand";
 import { IS_TAURI } from "@frak-labs/app-essentials/utils/platform";
 import {
     type CompressedSsoData,
@@ -131,7 +132,7 @@ function Sso() {
     /**
      * The current metadata
      */
-    const ssoContext = authenticationStore((state) => state.ssoContext);
+    const ssoContext = useStore(authenticationStore, (state) => state.ssoContext);
     const currentMetadata = useMemo(
         () => ssoContext?.metadata,
         [ssoContext?.metadata]
@@ -140,9 +141,7 @@ function Sso() {
     /**
      * Whether we know of a previously-used passkey on this device.
      */
-    const lastAuthenticator = authenticationStore(
-        (state) => state.lastAuthenticator
-    );
+    const lastAuthenticator = useStore(authenticationStore, (state) => state.lastAuthenticator);
 
     /**
      * The success state after login or register
@@ -170,7 +169,7 @@ function Sso() {
      * webauthn login. When true, the user can complete SSO with a single
      * click; no biometry / no re-pair.
      */
-    const session = sessionStore((state) => state.session);
+    const session = useStore(sessionStore, (state) => state.session);
 
     /**
      * One-shot opt-out: if the user clicks "Use another account", we keep
@@ -514,13 +513,9 @@ function Actions({
     onSuccess: () => void;
     onError: (error: Error | null) => void;
 }) {
-    const lastAuthenticator = authenticationStore(
-        (state) => state.lastAuthenticator
-    );
-    const merchantId = authenticationStore(
-        (state) => state.ssoContext?.merchantId
-    );
-    const privateKey = sessionStore((state) => state.demoPrivateKey);
+    const lastAuthenticator = useStore(authenticationStore, (state) => state.lastAuthenticator);
+    const merchantId = useStore(authenticationStore, (state) => state.ssoContext?.merchantId);
+    const privateKey = useStore(sessionStore, (state) => state.demoPrivateKey);
     const { login, isLoginInProgress } = useLoginDemo({
         onSuccess: () => onSuccess(),
         onError: (error: Error | null) => onError(error),

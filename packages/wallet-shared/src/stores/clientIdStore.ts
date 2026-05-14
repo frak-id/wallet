@@ -10,7 +10,7 @@
  * identity resolution misses some correlations.
  */
 
-import { create } from "zustand";
+import { createStore } from "zustand/vanilla";
 import { persist } from "zustand/middleware";
 import type { ClientIdStore } from "./types";
 
@@ -18,7 +18,7 @@ import type { ClientIdStore } from "./types";
  * Client ID store managing the current anonymous client identifier
  * Uses persist middleware to sync with localStorage
  */
-export const clientIdStore = create<ClientIdStore>()(
+export const clientIdStore = createStore<ClientIdStore>()(
     persist(
         (set) => ({
             // Initial state

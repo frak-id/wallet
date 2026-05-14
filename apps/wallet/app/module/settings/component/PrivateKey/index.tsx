@@ -1,3 +1,4 @@
+import { useStore } from "zustand";
 import { selectDemoPrivateKey, sessionStore } from "@frak-labs/wallet-shared";
 import { KeyRound } from "lucide-react";
 import { useCallback } from "react";
@@ -8,7 +9,7 @@ import { InfoCard, InfoRow } from "@/module/common/component/InfoCard";
 
 export function PrivateKey() {
     const { t } = useTranslation();
-    const privateKey = sessionStore(selectDemoPrivateKey);
+    const privateKey = useStore(sessionStore, selectDemoPrivateKey);
     const { confirm, isConfirming } = useBiometricConfirm();
     const { logout, isLoggingOut } = useLogout();
 

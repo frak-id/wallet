@@ -10,7 +10,7 @@ import {
     getCurrencyAmountKey,
     getSupportedCurrency,
 } from "@frak-labs/core-sdk";
-import { queryOptions, useQuery } from "@tanstack/react-query";
+import { queryOptions } from "../utils/queryOptions";
 import { authenticatedBackendApi } from "../api/backendClient";
 
 export function estimatedRewardsQueryOptions(merchantId?: string) {
@@ -19,7 +19,7 @@ export function estimatedRewardsQueryOptions(merchantId?: string) {
             "merchant",
             "estimatedRewards",
             merchantId ?? "no-merchant-id",
-        ],
+        ] as const,
         queryFn: async (): Promise<EstimatedRewardItem[]> => {
             if (!merchantId) return [];
 
@@ -134,23 +134,7 @@ export function selectFormattedReward({
     };
 }
 
-export function useFormattedEstimatedReward({
-    merchantId,
-    currency,
-    targetInteraction,
-    context,
-}: {
-    merchantId?: string;
-    currency?: Currency;
-    targetInteraction?: InteractionTypeKey;
-    context?: string;
-}) {
-    return useQuery({
-        ...estimatedRewardsQueryOptions(merchantId),
-        select: selectFormattedReward({
-            currency,
-            targetInteraction,
-            context,
-        }),
-    });
-}
+// `useFormattedEstimatedReward` moved to `useFormattedEstimatedReward.ts` so
+// this module stays Ring 0 (the listener iframe bootstrap consumes
+// `estimatedRewardsQueryOptions` via `queryClient.fetchQuery(...)`).
+// React consumers should import the hook from `./useFormattedEstimatedReward`.

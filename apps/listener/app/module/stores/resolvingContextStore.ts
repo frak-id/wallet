@@ -1,6 +1,6 @@
 import { updateGlobalProperties } from "@frak-labs/wallet-shared/common/analytics";
 import { clientIdStore } from "@frak-labs/wallet-shared/stores/clientIdStore";
-import { create } from "zustand";
+import { createStore } from "zustand/vanilla";
 import type { ResolvingContextStore, TrustLevel } from "./types";
 
 /**
@@ -26,7 +26,7 @@ if (iframeClientId) {
 
 export { iframeClientId };
 
-export const resolvingContextStore = create<ResolvingContextStore>((set) => ({
+export const resolvingContextStore = createStore<ResolvingContextStore>()((set) => ({
     context: undefined,
     backendSdkConfig: undefined,
     trustLevel: "pending" as TrustLevel,

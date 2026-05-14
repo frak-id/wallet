@@ -1,3 +1,4 @@
+import { useStore } from "zustand";
 import { Overlay } from "@frak-labs/design-system/components/Overlay";
 import { InAppBrowserToast } from "@frak-labs/wallet-shared/common";
 import { usePersistentPairingClient } from "@frak-labs/wallet-shared/pairing/usePersistentPairingClient";
@@ -58,7 +59,7 @@ function ListenerWalletInner() {
 function CurrentEmbeddedViewComponent() {
     const session = sessionStore.getState().session;
     const getMergeToken = useGetMergeToken();
-    const parentUrl = resolvingContextStore((s) => s.context?.sourceUrl);
+    const parentUrl = useStore(resolvingContextStore, (s) => s.context?.sourceUrl);
     return (
         <div
             className={clsx(

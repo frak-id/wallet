@@ -11,11 +11,13 @@
  * stays useful even after Ring 1 is up — though the common case is
  * everything queued runs in a single drain call.
  *
- * Keep this module dependency-free (only types from i18next/core-sdk).
+ * Keep this module light — only types from i18next/core-sdk and the small
+ * `mapI18nConfig` mapper (resides in the `common` chunk).
  */
 
 import type { I18nConfig, Language } from "@frak-labs/core-sdk";
 import type { i18n as I18nType } from "i18next";
+import { mapI18nConfig } from "@/module/utils/i18nMapper";
 
 type OverrideEntry = { kind: "override"; payload: I18nConfig };
 type LanguageEntry = { kind: "language"; payload: Language };
@@ -25,9 +27,7 @@ let activeI18n: I18nType | null = null;
 const pending: Entry[] = [];
 
 /**
- * Apply a single entry to a live i18n instance. Lazy-imports the heavy
- * `mapI18nConfig` mapper so Ring 0 only pays for it on actual override
- * arrival (in practice the overrides are rare).
+ * Apply a single entry to a live i18n instance.
  */
 async function applyEntry(i18n: I18nType, entry: Entry): Promise<void> {
     if (entry.kind === "language") {
@@ -36,8 +36,6 @@ async function applyEntry(i18n: I18nType, entry: Entry): Promise<void> {
         }
         return;
     }
-
-    const { mapI18nConfig } = await import("@/module/utils/i18nMapper");
     await mapI18nConfig(entry.payload, i18n);
 }
 

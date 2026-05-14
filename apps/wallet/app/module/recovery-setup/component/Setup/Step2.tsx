@@ -1,3 +1,4 @@
+import { useStore } from "zustand";
 import { selectWebauthnSession, sessionStore } from "@frak-labs/wallet-shared";
 import { useEffect } from "react";
 import { useTranslation } from "react-i18next";
@@ -19,7 +20,7 @@ export function Step2() {
     const password = recoveryStore(selectRecoveryPassword);
 
     // Get the current session
-    const session = sessionStore(selectWebauthnSession);
+    const session = useStore(sessionStore, selectWebauthnSession);
 
     // Generate recovery options
     const { generateRecoveryOptionsAsync } = useGenerateRecoveryOptions();

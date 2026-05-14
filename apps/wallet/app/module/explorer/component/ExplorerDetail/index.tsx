@@ -1,3 +1,4 @@
+import { useStore } from "zustand";
 import type { EstimatedRewardItem } from "@frak-labs/backend-elysia/domain/campaign";
 import type { ExplorerMerchantItem } from "@frak-labs/backend-elysia/orchestration/schemas";
 import type { EstimatedReward } from "@frak-labs/core-sdk";
@@ -51,8 +52,8 @@ type ExplorerDetailProps = {
 };
 
 export function ExplorerDetail({ merchant, onClose }: ExplorerDetailProps) {
-    const clientId = clientIdStore((s) => s.clientId);
-    const walletAddress = sessionStore((s) => s.session?.address);
+    const clientId = useStore(clientIdStore, (s) => s.clientId);
+    const walletAddress = useStore(sessionStore, (s) => s.session?.address);
     const [isDescriptionExpanded, setIsDescriptionExpanded] = useState(false);
     const [needsReadMore, setNeedsReadMore] = useState(false);
     const descriptionRef = useRef<HTMLElement>(null);

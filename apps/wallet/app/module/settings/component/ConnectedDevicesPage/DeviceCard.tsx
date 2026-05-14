@@ -1,3 +1,4 @@
+import { useStore } from "zustand";
 import { Card } from "@frak-labs/design-system/components/Card";
 import { Inline } from "@frak-labs/design-system/components/Inline";
 import { Text } from "@frak-labs/design-system/components/Text";
@@ -26,7 +27,7 @@ function formatDate(value: Date | string | number, language: string) {
 export function DeviceCard({ pairing }: { pairing: Pairing }) {
     const { t, i18n } = useTranslation();
     const queryClient = useQueryClient();
-    const wallet = sessionStore(selectWebauthnSession);
+    const wallet = useStore(sessionStore, selectWebauthnSession);
 
     const { mutate: deletePairing, isPending } = useDeletePairing({
         mutations: {

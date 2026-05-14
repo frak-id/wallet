@@ -1,10 +1,11 @@
+import { useStore } from "zustand";
 import { mergeTokenQueryOptions } from "@frak-labs/wallet-shared/identity";
 import { useQuery } from "@tanstack/react-query";
 import { useCallback } from "react";
 import { resolvingContextStore } from "@/module/stores/resolvingContextStore";
 
 export function useGetMergeToken() {
-    const context = resolvingContextStore((state) => state.context);
+    const context = useStore(resolvingContextStore, (state) => state.context);
     const clientId = context?.clientId;
     const merchantId = context?.merchantId;
 

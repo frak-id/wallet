@@ -1,7 +1,7 @@
 import type { SendInteractionParamsType } from "@frak-labs/core-sdk";
 import { authenticatedBackendApi } from "@frak-labs/wallet-shared/common/api/backendClient";
 import { clientIdStore } from "@frak-labs/wallet-shared/stores/clientIdStore";
-import { useMutation } from "@tanstack/react-query";
+// React hook moved to `useTrackSharing.ts` so this module stays Ring 0.
 import { resolvingContextStore } from "../stores/resolvingContextStore";
 
 export type SendInteractionInput =
@@ -55,15 +55,4 @@ export async function sendInteraction(
     }
 }
 
-/**
- * React adapter for `sendInteraction` — used by Ring 1 UI components
- * (`useTrackSharing`) that want a mutation cache for status flags.
- */
-export function useSendInteraction() {
-    const context = resolvingContextStore((state) => state.context);
 
-    return useMutation({
-        mutationKey: ["send-interaction", context?.merchantId],
-        mutationFn: (input: SendInteractionInput) => sendInteraction(input),
-    });
-}

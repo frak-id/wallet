@@ -2,7 +2,7 @@
  * Zustand store for session management
  */
 
-import { create } from "zustand";
+import { createStore } from "zustand/vanilla";
 import { persist } from "zustand/middleware";
 import type { SessionStore } from "./types";
 
@@ -10,7 +10,7 @@ import type { SessionStore } from "./types";
  * Session store managing user session, SDK session, and demo private key
  * Uses persist middleware to sync with localStorage
  */
-export const sessionStore = create<SessionStore>()(
+export const sessionStore = createStore<SessionStore>()(
     persist(
         (set) => ({
             // Initial state

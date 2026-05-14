@@ -1,3 +1,4 @@
+import { useStore } from "zustand";
 import { selectWebauthnSession, sessionStore } from "@frak-labs/wallet-shared";
 import { Link } from "@tanstack/react-router";
 import { Shield } from "lucide-react";
@@ -13,7 +14,7 @@ import * as styles from "./index.css";
  */
 export function RecoveryLink() {
     const { t } = useTranslation();
-    const webauthnSession = sessionStore(selectWebauthnSession);
+    const webauthnSession = useStore(sessionStore, selectWebauthnSession);
 
     if (!webauthnSession) {
         return null;

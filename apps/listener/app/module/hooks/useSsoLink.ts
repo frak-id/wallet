@@ -1,3 +1,4 @@
+import { useStore } from "zustand";
 import { generateSsoUrl } from "@frak-labs/core-sdk";
 import { clientIdStore } from "@frak-labs/wallet-shared/stores/clientIdStore";
 import { useMemo } from "react";
@@ -36,7 +37,7 @@ export function useSsoLink({
     redirectUrl?: string;
     lang?: "en" | "fr";
 }) {
-    const clientId = clientIdStore((state) => state.clientId);
+    const clientId = useStore(clientIdStore, (state) => state.clientId);
     const link = useMemo(
         () =>
             generateSsoUrl(

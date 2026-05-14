@@ -1,3 +1,4 @@
+import { useStore } from "zustand";
 import { Badge } from "@frak-labs/design-system/components/Badge";
 import { Box } from "@frak-labs/design-system/components/Box";
 import { Card } from "@frak-labs/design-system/components/Card";
@@ -11,7 +12,7 @@ import * as styles from "./index.css";
 
 export function ProfileSecurityCard() {
     const { t } = useTranslation();
-    const webauthnSession = sessionStore(selectWebauthnSession);
+    const webauthnSession = useStore(sessionStore, selectWebauthnSession);
     const { recoverySetupStatus } = useRecoverySetupStatus();
 
     if (!webauthnSession) {

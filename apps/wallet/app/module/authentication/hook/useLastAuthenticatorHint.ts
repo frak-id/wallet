@@ -1,3 +1,4 @@
+import { useStore } from "zustand";
 import {
     authenticationStore,
     type PreviousAuthenticatorModel,
@@ -20,9 +21,7 @@ import { useMemo } from "react";
  * yet).
  */
 export function useLastAuthenticatorHint(): PreviousAuthenticatorModel | null {
-    const lastAuthenticator = authenticationStore(
-        (state) => state.lastAuthenticator
-    );
+    const lastAuthenticator = useStore(authenticationStore, (state) => state.lastAuthenticator);
 
     const { data: recoveryHint } = useQuery({
         queryKey: ["recoveryHint"],

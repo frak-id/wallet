@@ -1,3 +1,4 @@
+import { useStore } from "zustand";
 import {
     type Currency,
     formatAmount,
@@ -93,11 +94,9 @@ function ActionButtons() {
 
     const link = loggedIn?.action?.options?.link;
     const { sourceUrl, merchantId } = useSafeResolvingContext();
-    const clientId = clientIdStore((s) => s.clientId);
-    const walletAddress = sessionStore((s) => s.session?.address);
-    const defaultAttribution = resolvingContextStore(
-        (s) => s.backendSdkConfig?.attribution
-    );
+    const clientId = useStore(clientIdStore, (s) => s.clientId);
+    const walletAddress = useStore(sessionStore, (s) => s.session?.address);
+    const defaultAttribution = useStore(resolvingContextStore, (s) => s.backendSdkConfig?.attribution);
 
     const finalSharingLink = buildSharingLink({
         clientId: clientId ?? undefined,

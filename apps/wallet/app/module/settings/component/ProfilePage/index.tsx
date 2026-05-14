@@ -1,3 +1,4 @@
+import { useStore } from "zustand";
 import { isRunningInProd } from "@frak-labs/app-essentials";
 import { Box } from "@frak-labs/design-system/components/Box";
 import { Text } from "@frak-labs/design-system/components/Text";
@@ -26,9 +27,7 @@ export function ProfilePage() {
     const version = process.env.APP_VERSION;
     const displayVersion =
         version && version !== "UNKNOWN" ? version : undefined;
-    const lastAuthenticationAt = authenticationStore(
-        selectLastAuthenticationAt
-    );
+    const lastAuthenticationAt = useStore(authenticationStore, selectLastAuthenticationAt);
     const formattedLastAuthentication = useMemo(() => {
         if (!lastAuthenticationAt) return null;
 

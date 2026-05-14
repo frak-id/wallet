@@ -1,4 +1,4 @@
-import { queryOptions } from "@tanstack/react-query";
+import { queryOptions } from "../common/utils/queryOptions";
 import { authenticatedBackendApi } from "../common/api/backendClient";
 
 /**

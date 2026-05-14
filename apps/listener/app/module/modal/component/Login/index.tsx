@@ -1,3 +1,4 @@
+import { useStore } from "zustand";
 import type { LoginModalStepType } from "@frak-labs/core-sdk";
 import { Spinner } from "@frak-labs/design-system/components/Spinner";
 import { useLogin } from "@frak-labs/wallet-shared/authentication/hook/useLogin";
@@ -34,7 +35,7 @@ export function LoginModalStep({
     params: LoginModalStepType["params"];
     onFinish: (args: LoginModalStepType["returns"]) => void;
 }) {
-    const resolvingContext = resolvingContextStore((state) => state.context);
+    const resolvingContext = useStore(resolvingContextStore, (state) => state.context);
     const { t } = useListenerTranslation();
     const {
         currentRequest: { homepageLink, logoUrl },
@@ -69,7 +70,7 @@ export function LoginModalStep({
         },
     });
 
-    const session = sessionStore(selectSession);
+    const session = useStore(sessionStore, selectSession);
 
     /**
      * Listen to the session status, and exit directly after a session is set in the storage

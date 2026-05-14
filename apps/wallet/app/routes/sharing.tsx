@@ -1,3 +1,4 @@
+import { useStore } from "zustand";
 import { IS_TAURI } from "@frak-labs/app-essentials/utils/platform";
 import type {
     AttributionParams,
@@ -127,8 +128,8 @@ function WalletSharingPage() {
     } = Route.useSearch();
     const { t: rawT } = useTranslation();
     const navigate = useNavigate();
-    const storeClientId = clientIdStore((s) => s.clientId);
-    const walletAddress = sessionStore((s) => s.session?.address);
+    const storeClientId = useStore(clientIdStore, (s) => s.clientId);
+    const walletAddress = useStore(sessionStore, (s) => s.session?.address);
     const { copy } = useCopyToClipboardWithState();
 
     // Product selection state — default to first product
