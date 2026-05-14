@@ -19,6 +19,13 @@ import ObjectiveC.runtime
 /// Vendored from `srod/tauri-plugin-fcm` (commit b9d4d186) with the plugin
 /// reference renamed from `FcmPlugin` to `FrakFirebasePlugin` to reflect the
 /// merged FCM + Crashlytics surface.
+/// CAVEAT: only one swizzler can win per selector per app run. We use
+/// `method_setImplementation` and capture the previous IMP, which chains
+/// safely with other `setImplementation`-style swizzlers and with the
+/// ISA-swizzle Firebase installs first. But if a future plugin uses the
+/// fragile `method_exchangeImplementations` pattern on the same selectors,
+/// the captured `previousIMP` could end up pointing at the exchanged stub
+/// and the chain breaks. Audit any new APNs-touching plugin before adding.
 enum AppDelegateSwizzler {
     static weak var plugin: FrakFirebasePlugin?
 

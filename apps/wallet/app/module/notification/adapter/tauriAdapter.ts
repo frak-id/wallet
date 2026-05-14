@@ -54,7 +54,11 @@ async function fcmCreateChannel(opts: {
     importance: number;
 }): Promise<void> {
     const invoke = await getInvoke();
-    await invoke(INVOKE_CREATE_CHANNEL, { args: opts });
+    // Args are passed flat (top-level) because the native plugins decode
+    // via `parseArgs(CreateChannelArgs)` which expects the payload at the
+    // root of the invoke message — matching the convention used by the
+    // sibling `recovery-hint` / `frak-share` plugins.
+    await invoke(INVOKE_CREATE_CHANNEL, opts);
 }
 
 async function fcmCheckPermissions(): Promise<PermissionState> {

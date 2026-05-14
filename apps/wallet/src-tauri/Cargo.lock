@@ -4019,7 +4019,6 @@ dependencies = [
  "serde_json",
  "tauri",
  "tauri-plugin",
- "thiserror 2.0.18",
 ]
 
 [[package]]

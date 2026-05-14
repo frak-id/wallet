@@ -74,6 +74,15 @@ class FrakFirebasePlugin: Plugin, MessagingDelegate, UNUserNotificationCenterDel
 
     private let tokenBuffer = TokenBuffer()
     let errorBuffer = RegistrationErrorBuffer()
+    /// Tracks the prior `UNUserNotificationCenter.delegate` so we forward
+    /// presentation + response callbacks back to whoever was set before us.
+    ///
+    /// CAVEAT: weak reference + single-pass capture. If another plugin or app
+    /// code reassigns `.delegate` *after* our `load()` runs, our forwarding
+    /// silently breaks. Currently nothing else in this app touches the
+    /// delegate, so plugin registration order in `src-tauri/src/lib.rs` is
+    /// the de-facto contract — keep us above any future delegate-touching
+    /// plugins.
     private weak var previousNotificationDelegate: UNUserNotificationCenterDelegate?
 
     // MARK: - Lifecycle
@@ -154,14 +163,6 @@ class FrakFirebasePlugin: Plugin, MessagingDelegate, UNUserNotificationCenterDel
     }
 
     // MARK: - FCM commands
-    // Method names map to snake_case commands in build.rs:
-    //   getToken              ↔ get_token
-    //   requestPermissions    ↔ request_permissions
-    //   checkPermissions      ↔ check_permissions
-    //   register              ↔ register
-    //   deleteToken           ↔ delete_token
-    //   createChannel         ↔ create_channel
-    //   sendNotification      ↔ send_notification
 
     @objc public func getToken(_ invoke: Invoke) throws {
         Messaging.messaging().token { [weak self] token, error in
@@ -280,12 +281,6 @@ class FrakFirebasePlugin: Plugin, MessagingDelegate, UNUserNotificationCenterDel
     }
 
     // MARK: - Crashlytics commands
-    // Method names map to snake_case commands in build.rs:
-    //   setUserId               ↔ set_user_id
-    //   setKey                  ↔ set_key
-    //   log                     ↔ log
-    //   recordError             ↔ record_error
-    //   setCollectionEnabled    ↔ set_collection_enabled
 
     @objc public func setUserId(_ invoke: Invoke) {
         do {
@@ -297,6 +292,14 @@ class FrakFirebasePlugin: Plugin, MessagingDelegate, UNUserNotificationCenterDel
         }
     }
 
+    /// CAVEAT: the JS facade in `crashlytics.ts` always stringifies values
+    /// before calling this. The Crashlytics native API would happily accept
+    /// numeric / boolean primitives, but we trade that for cross-platform
+    /// uniformity (Android `FirebaseCrashlytics.setCustomKey` overloads vs.
+    /// iOS `setCustomValue` produce subtly different dashboard formatting
+    /// for the same input). The dashboard ends up showing every value as a
+    /// quoted string — if a numeric-valued key needs to be query-filtered
+    /// in BigQuery later, plan for that on the consumer side.
     @objc public func setKey(_ invoke: Invoke) {
         do {
             let args = try invoke.parseArgs(SetKeyArgs.self)
@@ -320,6 +323,13 @@ class FrakFirebasePlugin: Plugin, MessagingDelegate, UNUserNotificationCenterDel
         }
     }
 
+    /// CAVEAT (iOS specifics): we synthesize an `NSError` per call so the
+    /// Crashlytics dashboard groups issues by the JS error `name` (which we
+    /// map to `NSError.domain`). That gives reasonable per-error-class
+    /// grouping. The Android side has *coarser* grouping — every non-fatal
+    /// there is wrapped in the same `NonFatalReportedError` subclass, so
+    /// all Android non-fatals end up in a single dashboard issue. Plan
+    /// queries / alerts accordingly.
     @objc public func recordError(_ invoke: Invoke) {
         do {
             let args = try invoke.parseArgs(RecordErrorArgs.self)

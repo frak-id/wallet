@@ -119,6 +119,58 @@ raw `invoke("plugin:frak-firebase|<command>", ...)` calls:
 Permission-state and FCM-token types are declared inline in the adapter to
 avoid a workspace package boundary for a five-symbol surface.
 
+## Caveats
+
+Real-world quirks worth knowing before you debug a dashboard surprise.
+
+### Crashlytics
+
+- **Android non-fatals all group under one class.** Every JS-side `recordError`
+  is wrapped in `NonFatalReportedError` (a single `RuntimeException` subclass),
+  so the Crashlytics dashboard shows all Android non-fatals as one issue with
+  many events. iOS groups by `NSError.domain = name`, which is finer-grained.
+  Plan cross-platform dashboards / alerts accordingly.
+- **JS stack traces land in breadcrumbs, not stack frames.** The Crashlytics
+  "stack trace" tab shows the synthesized native frames (Swift / Kotlin) that
+  invoked `recordException`. The real JS frames are attached as a
+  `[non-fatal stack]` log entry — check the **Logs** tab for those.
+- **`setKey` always stringifies on the JS side.** Crashlytics native APIs
+  accept `Int` / `Double` / `Bool` directly, but `crashlytics.ts` coerces
+  everything via `stringifyValue()` before invoking. Dashboard shows numeric
+  keys as quoted strings. Trade-off for platform-uniform behavior — plan
+  BigQuery / log queries with that in mind.
+- **`setCollectionEnabled` takes effect on next launch.** Standard Firebase SDK
+  behavior. UI that backs this toggle should say "Restart required" or accept
+  that the next session is the first one affected.
+- **Persisted Rust panic forwarder has one launch of latency.** Because the
+  release profile sets `panic = "abort"`, we can't IPC from the panic hook.
+  Panic gets written to `app_cache_dir()/frak.wallet.last_rust_panic.txt` and
+  the native side reads + reports + deletes it on the *next* cold start.
+  Same UX as Crashlytics's own native crash handling.
+
+### FCM / push
+
+- **iOS `previousNotificationDelegate` is a weak reference captured once at
+  `load()` time.** If a future plugin reassigns
+  `UNUserNotificationCenter.delegate` after us, our forwarding chain silently
+  breaks. Currently nothing else in the app touches that delegate, so plugin
+  registration order in `src-tauri/src/lib.rs` is the de-facto contract —
+  keep us above any future delegate-touching plugin.
+- **iOS APNs swizzle uses `method_setImplementation`, not
+  `method_exchangeImplementations`.** This is safer (no selector-loop bugs)
+  and chains cleanly with Firebase's own ISA swizzle. But it assumes any
+  other swizzler on the same selectors also uses the `setImplementation`
+  pattern. Audit any new APNs-touching plugin before adding.
+- **Cold-start token race is handled differently per platform.** iOS uses an
+  in-memory `TokenBuffer`; Android uses `SharedPreferences`. Both correct, but
+  a force-kill on iOS loses the buffered token (next launch re-fetches via
+  `Messaging.token()` — server already has it); Android replays the stale
+  buffered token (server dedups by token value, so idempotent).
+- **Push notifications are not handled on the simulator.** iOS simulators
+  can't register for remote notifications; we fire a `push-error` event and
+  reject `register()` calls with a descriptive message. Use a real device.
+
+
 ## See also
 
 - Parent: `apps/wallet/src-tauri/README.md`

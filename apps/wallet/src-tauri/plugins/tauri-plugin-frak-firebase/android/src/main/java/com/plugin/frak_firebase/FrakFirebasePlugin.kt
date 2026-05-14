@@ -412,8 +412,18 @@ class FrakFirebasePlugin(private val activity: Activity) : Plugin(activity) {
 }
 
 /**
- * Marker exception used for non-fatal reports. Subclassing keeps the report
- * grouping consistent in the Crashlytics dashboard regardless of the JS
- * Error class — name/message provide the actual differentiation.
+ * Marker exception used for non-fatal reports.
+ *
+ * CAVEAT: every JS-side non-fatal recorded via `recordError` is wrapped in
+ * this single class, so the Crashlytics dashboard groups all Android
+ * non-fatals into one issue regardless of the original JS error name. The
+ * JS `name` + `message` are encoded into the exception message and the JS
+ * stack is attached as a `[non-fatal stack]` breadcrumb, so the per-error
+ * context is preserved in the report — just not in the *grouping*.
+ *
+ * iOS uses `NSError.domain = name` for finer grouping, so cross-platform
+ * dashboards will look asymmetric. If we ever need per-name grouping on
+ * Android, subclass per `name` value (or use the more granular but slower
+ * `recordException(Throwable, customKeys)` overload).
  */
 private class NonFatalReportedError(message: String) : RuntimeException(message)

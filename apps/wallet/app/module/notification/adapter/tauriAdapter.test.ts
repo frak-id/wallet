@@ -274,11 +274,9 @@ describe.sequential("createTauriNotificationAdapter", () => {
         await adapter.initPromise;
 
         expect(invokeMock).toHaveBeenCalledWith(CMD.CREATE_CHANNEL, {
-            args: {
-                id: "default",
-                name: "Frak Wallet",
-                importance: 4,
-            },
+            id: "default",
+            name: "Frak Wallet",
+            importance: 4,
         });
         expect(addPluginListenerMock).toHaveBeenCalledWith(
             "frak-firebase",
