@@ -47,7 +47,6 @@ function LoginPage() {
     if (view === "pairing") {
         return (
             <>
-                <DemoTapZone navigate={navigate} />
                 <PairingInProgress />
                 <PageLayout>
                     <Box className={layout.contentTop}>
@@ -65,7 +64,6 @@ function LoginPage() {
 
     return (
         <>
-            <DemoTapZone navigate={navigate} />
             <PairingInProgress />
             <PageLayout
                 back={
@@ -115,9 +113,11 @@ function LoginPage() {
                 <Box className={layout.content}>
                     <ContentBlock
                         icon={
-                            <Box className={layout.heroIcon}>
-                                <LogoFrak width={48} height={48} />
-                            </Box>
+                            <DemoTapZone navigate={navigate}>
+                                <Box className={layout.heroIcon}>
+                                    <LogoFrak width={48} height={48} />
+                                </Box>
+                            </DemoTapZone>
                         }
                         titleAs="h1"
                         title={t("wallet.login.title")}

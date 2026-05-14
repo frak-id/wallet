@@ -883,7 +883,9 @@ interface Resources {
           "create": "Create your demo <strong>wallet</strong>",
           "error": "Error during registration, please try again",
           "inProgress": "Wallet creation in progress"
-        }
+        },
+        "description": "Spin up a temporary wallet to explore Frak. No biometrics, no recovery — just a sandbox.",
+        "title": "Try Frak in demo mode"
       },
       "settings": {
         "biometryInfo": "Biometry informations",

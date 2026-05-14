@@ -13,7 +13,6 @@ import {
 import { createFileRoute, redirect, useNavigate } from "@tanstack/react-router";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { DemoTapZone } from "@/module/authentication/component/DemoTapZone";
 import { useNotificationStatus } from "@/module/notification/hook/useNotificationSetupStatus";
 import { useSubscribeToPushNotification } from "@/module/notification/hook/useSubscribeToPushNotification";
 import { EmailInputStep } from "@/module/onboarding/component/EmailInputStep";
@@ -284,7 +283,6 @@ function RegisterPage() {
 
     return (
         <>
-            <DemoTapZone navigate={navigate} />
             <PairingInProgress />
             {step === "onboardingOne" && (
                 <OnboardingStep
