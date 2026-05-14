@@ -1,4 +1,4 @@
-import { useDisplayModal, useWalletStatus } from "@frak-labs/react-sdk";
+import { useOpenSso, useWalletStatus } from "@frak-labs/react-sdk";
 import type { loader } from "app/routes/app";
 import { type ReactNode, useCallback, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -10,8 +10,9 @@ import styles from "./index.module.css";
 export function WalletGated({ children }: { children: ReactNode }) {
     const rootData = useRouteLoaderData<typeof loader>("routes/app");
     const url = rootData?.shop?.url;
+    const shopifyLogoUrl = rootData?.shopifyLogoUrl;
     const { data: walletStatus } = useWalletStatus();
-    const { mutate: displayFrakModal } = useDisplayModal();
+    const { mutate: openSso } = useOpenSso();
     const { t } = useTranslation();
     const [showTimeoutError, setShowTimeoutError] = useState(false);
 
@@ -28,17 +29,13 @@ export function WalletGated({ children }: { children: ReactNode }) {
     }, [walletStatus]);
 
     const authenticate = useCallback(() => {
-        displayFrakModal({
-            steps: {
-                login: {
-                    allowSso: true,
-                    ssoMetadata: {
-                        homepageLink: url,
-                    },
-                },
+        openSso({
+            metadata: {
+                homepageLink: url,
+                logoUrl: shopifyLogoUrl,
             },
         });
-    }, [displayFrakModal, url]);
+    }, [openSso, url, shopifyLogoUrl]);
 
     if (walletStatus === undefined) {
         return (
