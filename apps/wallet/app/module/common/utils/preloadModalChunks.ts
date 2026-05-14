@@ -23,6 +23,7 @@ export function preloadModalChunks() {
     void import("@/module/tokens/component/PendingGainsModal");
     // Lazy modals from feature-* chunks
     void import("@/module/history/component/RewardDetailModal");
+    void import("@/module/history/component/MoneriumOrderDetailModal");
     void import("@/module/explorer/component/ExplorerDetail");
     void import("@/module/referral/component/EditReferralCodeSheet");
     void import("@/module/monerium/component/MoneriumBankFlow");

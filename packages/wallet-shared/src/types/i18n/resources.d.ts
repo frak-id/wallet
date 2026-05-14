@@ -397,6 +397,14 @@ interface Resources {
         "tryAgain": "Try again"
       },
       "order": {
+        "detail": {
+          "bank": "Bank",
+          "from": "From",
+          "noNote": "Sent with no note",
+          "to": "To",
+          "transaction": "Transaction",
+          "walletName": "Frak Labs"
+        },
         "kind": {
           "issue": "Bank deposit",
           "redeem": "Withdraw to bank"

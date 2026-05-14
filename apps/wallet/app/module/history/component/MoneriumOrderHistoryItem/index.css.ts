@@ -5,6 +5,13 @@ import { style, styleVariants } from "@vanilla-extract/css";
 export const row = style({
     width: "100%",
     textAlign: "left",
+    appearance: "none",
+    background: "none",
+    border: "none",
+    padding: 0,
+    cursor: "pointer",
+    font: "inherit",
+    color: "inherit",
 });
 
 export const iconWrapper = style({

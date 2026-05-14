@@ -770,6 +770,14 @@
                 "pending": "En cours de traitement",
                 "processed": "Terminé",
                 "rejected": "Rejeté"
+            },
+            "detail": {
+                "walletName": "Frak Labs",
+                "bank": "Banque",
+                "noNote": "Envoyé sans note",
+                "from": "De",
+                "to": "À",
+                "transaction": "Transaction"
             }
         }
     },

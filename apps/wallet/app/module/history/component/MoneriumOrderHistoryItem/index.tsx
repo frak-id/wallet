@@ -16,12 +16,13 @@ import type {
     MoneriumOrder,
     MoneriumOrderState,
 } from "@/module/monerium/utils/moneriumTypes";
+import { modalStore } from "@/module/stores/modalStore";
 import * as styles from "./index.css";
 
 /**
- * Renders a Monerium order row in the unified history list. Read-only for
- * now — no detail modal — but kept structurally close to `RewardHistoryItem`
- * so the two can sit alongside each other without visual jitter.
+ * Renders a Monerium order row in the unified history list. Tapping the row
+ * opens a detail modal that mirrors the reward-detail layout, so the two
+ * surfaces feel like siblings rather than ad-hoc screens.
  */
 export function MoneriumOrderHistoryItem({ order }: { order: MoneriumOrder }) {
     const { t, i18n } = useTranslation();
@@ -38,7 +39,15 @@ export function MoneriumOrderHistoryItem({ order }: { order: MoneriumOrder }) {
     const subtitle = buildSubtitle(order, locale, t);
 
     return (
-        <div className={styles.row}>
+        <button
+            type="button"
+            className={styles.row}
+            onClick={() =>
+                modalStore
+                    .getState()
+                    .openModal({ id: "moneriumOrderDetail", order })
+            }
+        >
             <Inline space="m" padding="m" fill>
                 <OrderIcon state={order.state} />
                 <Inline space="m" align="space-between" fill>
@@ -60,7 +69,7 @@ export function MoneriumOrderHistoryItem({ order }: { order: MoneriumOrder }) {
                                     }
                                     className={styles.statusText}
                                 >
-                                {t(`monerium.order.state.${order.state}`)}
+                                    {t(`monerium.order.state.${order.state}`)}
                                 </Text>
                             )}
                         </Stack>
@@ -74,7 +83,7 @@ export function MoneriumOrderHistoryItem({ order }: { order: MoneriumOrder }) {
                     </Stack>
                 </Inline>
             </Inline>
-        </div>
+        </button>
     );
 }
 
@@ -135,7 +144,8 @@ function DisplayAmount({
             </Text>
         );
     }
-    const Icon = state === "placed" || state === "pending" ? HourglassIcon : undefined;
+    const Icon =
+        state === "placed" || state === "pending" ? HourglassIcon : undefined;
     const color =
         state === "processed"
             ? kind === "issue"
