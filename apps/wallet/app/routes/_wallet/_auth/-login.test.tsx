@@ -67,10 +67,6 @@ vi.mock("@/module/common/component/StepLayout", () => ({
     ),
 }));
 
-vi.mock("@/module/pairing/component/PairingInProgress", () => ({
-    PairingInProgress: () => <div>pairing-in-progress</div>,
-}));
-
 vi.mock("@/module/pending-actions/hook/useExecutePendingActions", () => ({
     useExecutePendingActions: () => ({
         executePendingActions: (...args: unknown[]) =>

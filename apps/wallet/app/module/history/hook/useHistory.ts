@@ -42,7 +42,6 @@ export function useHistory() {
         totalCount: entries.length,
         isLoading: isRewardsLoading || isOrdersLoading,
         error: rewardsError ?? ordersError,
-        refetch: () =>
-            Promise.all([refetchRewards(), refetchOrders()]),
+        refetch: () => Promise.all([refetchRewards(), refetchOrders()]),
     };
 }

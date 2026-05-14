@@ -116,9 +116,7 @@ describe.sequential("useVersionGate", () => {
     test("writes incoming native events into the query cache", async ({
         queryWrapper,
     }: WalletTestFixtures) => {
-        let capturedHandler:
-            | ((event: NativeUpdateStatus) => void)
-            | undefined;
+        let capturedHandler: ((event: NativeUpdateStatus) => void) | undefined;
         listenToNativeUpdateStatusMock.mockImplementation((handler) => {
             capturedHandler = handler;
             return Promise.resolve({ unregister: vi.fn() });

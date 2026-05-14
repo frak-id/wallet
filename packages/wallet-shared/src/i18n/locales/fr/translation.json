@@ -367,7 +367,11 @@
             },
             "cancel": "Annuler",
             "confirm": "Confirmer le code",
-            "pairingInProgress": "Jumelage en cours, veuillez vous authentifier",
+            "pendingPairing": {
+                "title": "Jumelage en cours",
+                "description": "Veuillez vous authentifier pour continuer.",
+                "dismissLabel": "Masquer la notification"
+            },
             "origin": {
                 "state": {
                     "idle": "Initialisation du pairage",

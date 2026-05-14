@@ -13,7 +13,6 @@ export namespace moneriumKey {
         all: ordersBase,
         byAddress: (address?: Address) =>
             [...ordersBase, address ?? "no-address"] as const,
-        byId: (orderId: string) =>
-            [...ordersBase, "by-id", orderId] as const,
+        byId: (orderId: string) => [...ordersBase, "by-id", orderId] as const,
     };
 }

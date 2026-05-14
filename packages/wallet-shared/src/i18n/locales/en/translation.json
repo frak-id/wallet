@@ -369,7 +369,11 @@
             },
             "cancel": "Cancel",
             "confirm": "Confirm the code",
-            "pairingInProgress": "Pairing in progress, please authenticate",
+            "pendingPairing": {
+                "title": "Pairing in progress",
+                "description": "Please authenticate to continue.",
+                "dismissLabel": "Dismiss notification"
+            },
             "origin": {
                 "state": {
                     "idle": "Pairing logic initialisation",

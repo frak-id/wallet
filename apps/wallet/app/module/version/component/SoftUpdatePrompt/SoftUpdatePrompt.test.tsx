@@ -76,9 +76,7 @@ describe.sequential("SoftUpdatePrompt — AvailableBanner", () => {
         );
 
         await waitFor(() => {
-            expect(
-                client.getQueryData(["version", "native-status"])
-            ).toEqual({
+            expect(client.getQueryData(["version", "native-status"])).toEqual({
                 status: "in_progress",
                 currentVersion: "1.2.3",
                 bytesDownloaded: 0,

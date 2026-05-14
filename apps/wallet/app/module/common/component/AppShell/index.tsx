@@ -1,3 +1,4 @@
+import { BannerStack } from "@frak-labs/design-system/components/BannerStack";
 import { Box } from "@frak-labs/design-system/components/Box";
 import {
     ExplorerIcon,
@@ -12,6 +13,7 @@ import {
     BottomTabBar,
     type TabItem,
 } from "@/module/common/component/BottomTabBar";
+import { PairingInProgress } from "@/module/pairing/component/PairingInProgress";
 import {
     bottomBar,
     mainContentNoNav,
@@ -89,7 +91,10 @@ export function AppShell({
         <AppShellScrollContext.Provider value={scrollValue}>
             <Box className={auth ? shellContainerAuth : shellContainer}>
                 <InAppBrowserToast />
-                <OfflineBanner />
+                <BannerStack>
+                    <OfflineBanner />
+                    <PairingInProgress />
+                </BannerStack>
                 <Box
                     as="main"
                     ref={mainRef}

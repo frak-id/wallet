@@ -23,7 +23,6 @@ import { onboardingSteps } from "@/module/onboarding/component/step/onboardingSt
 import { Welcome } from "@/module/onboarding/component/Welcome";
 import { useInstallReferrer } from "@/module/onboarding/hook/useInstallReferrer";
 import { withStepTransition } from "@/module/onboarding/utils/stepTransition";
-import { PairingInProgress } from "@/module/pairing/component/PairingInProgress";
 import { useExecutePendingActions } from "@/module/pending-actions/hook/useExecutePendingActions";
 import { modalStore } from "@/module/stores/modalStore";
 import * as styles from "./register.css";
@@ -283,7 +282,6 @@ function RegisterPage() {
 
     return (
         <>
-            <PairingInProgress />
             {step === "onboardingOne" && (
                 <OnboardingStep
                     hero={onboardingSteps[0]}

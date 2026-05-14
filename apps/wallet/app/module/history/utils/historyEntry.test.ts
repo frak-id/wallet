@@ -7,7 +7,9 @@ import {
 import type { MoneriumOrder } from "@/module/monerium/utils/moneriumTypes";
 import { describe, expect, test } from "@/tests/vitest-fixtures";
 
-function makeReward(overrides: Partial<RewardHistoryItem> = {}): RewardHistoryItem {
+function makeReward(
+    overrides: Partial<RewardHistoryItem> = {}
+): RewardHistoryItem {
     return {
         merchant: { name: "Frak", domain: "frak.id" },
         token: { symbol: "USDC", decimals: 6 },
