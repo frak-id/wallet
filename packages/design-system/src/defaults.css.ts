@@ -36,3 +36,17 @@ globalStyle("body", {
         },
     },
 });
+
+/**
+ * Native (Tauri) override: the desktop-only "phone frame" centering does not
+ * apply when the app runs as a native shell (iPad must fill the device).
+ * Keep the rule scoped to tablet+ widths to avoid touching mobile defaults.
+ */
+globalStyle(':root[data-platform="tauri"] body', {
+    "@media": {
+        [`(min-width: ${tablet}px)`]: {
+            display: "block",
+            minHeight: "unset",
+        },
+    },
+});

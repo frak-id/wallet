@@ -7,7 +7,10 @@ const safeTop = "var(--safe-area-inset-top, env(safe-area-inset-top, 0px))";
 
 /**
  * Outer shell — fills the viewport, flex column so main + bottom bar stack.
- * Mobile: 100% width. Desktop: 393px width (centered by parent body flex).
+ * Mobile: 100% width. Desktop browser: 393px width (centered by parent body flex).
+ * Tauri (iOS/iPad/Android): always 100% width / full viewport — the phone-frame
+ * tablet preview only makes sense in a desktop browser. The native app must fill
+ * the device screen on all sizes (App Store guideline 4 — iPad layout).
  */
 export const shellContainer = style({
     position: "relative",
@@ -22,6 +25,14 @@ export const shellContainer = style({
             width: "393px",
             minHeight: "unset",
             height: "min(100dvh, 852px)",
+        },
+    },
+    selectors: {
+        // Native app: opt out of the tablet phone-frame and fill the whole device.
+        ':root[data-platform="tauri"] &': {
+            width: "100%",
+            height: "100dvh",
+            minHeight: "100dvh",
         },
     },
 });
@@ -69,14 +80,21 @@ export const mainContentNoNav = style([
                 maxHeight: "758px",
             },
         },
+        selectors: {
+            // Native app: drop the desktop-only height cap so content can use the
+            // full device viewport on iPad.
+            ':root[data-platform="tauri"] &': {
+                maxHeight: "none",
+            },
+        },
     },
 ]);
 
 /**
  * Bottom tab bar — overlays content on all breakpoints.
  * Positioned absolute inside shellContainer so it stays within the
- * shell bounds on tablet (393px) without needing transform centering,
- * which would break backdrop-filter compositing.
+ * shell bounds on tablet (393px in browser, full width in Tauri) without
+ * needing transform centering, which would break backdrop-filter compositing.
  */
 export const bottomBar = style({
     position: "absolute",

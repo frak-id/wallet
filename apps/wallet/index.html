@@ -8,7 +8,9 @@
             content="width=device-width, initial-scale=1, viewport-fit=cover"
         >
         <script>
-        // Disable pinch-to-zoom only in Tauri (native app) for better native feel
+        // Disable pinch-to-zoom only in Tauri (native app) for better native feel.
+        // Also tag the document with `data-platform="tauri"` so CSS can opt out of
+        // the phone-frame desktop layout on tablet sizes (iPad fills the screen).
         if (window.__TAURI_INTERNALS__) {
             document
                 .getElementById("viewport")
@@ -16,6 +18,7 @@
                     "content",
                     "width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover"
                 );
+            document.documentElement.setAttribute("data-platform", "tauri");
         }
         </script>
 
