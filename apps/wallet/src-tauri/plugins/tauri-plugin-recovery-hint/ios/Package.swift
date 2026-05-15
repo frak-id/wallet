@@ -18,11 +18,22 @@ let package = Package(
         .package(name: "Tauri", path: "../.tauri/tauri-api")
     ],
     targets: [
+        // Tiny Objective-C target that bridges @try/@catch into Swift so the
+        // plugin can downgrade NSUbiquitousKeyValueStore NSException crashes
+        // (stale entitlement, signed-out iCloud edge cases) into soft failures.
+        // Pure Swift cannot catch NSException; mixed-language inside a single
+        // SwiftPM target is unsupported, so we declare two targets and depend.
+        .target(
+            name: "ObjCExceptionCatcher",
+            path: "Sources/ObjCExceptionCatcher",
+            publicHeadersPath: "include"),
         .target(
             name: "tauri-plugin-recovery-hint",
             dependencies: [
-                .byName(name: "Tauri")
+                .byName(name: "Tauri"),
+                .byName(name: "ObjCExceptionCatcher"),
             ],
-            path: "Sources")
+            path: "Sources",
+            exclude: ["ObjCExceptionCatcher"])
     ]
 )

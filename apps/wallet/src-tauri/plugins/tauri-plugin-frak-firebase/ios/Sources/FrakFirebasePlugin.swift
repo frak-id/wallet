@@ -89,12 +89,17 @@ class FrakFirebasePlugin: Plugin, MessagingDelegate, UNUserNotificationCenterDel
 
     override init() {
         super.init()
-        // Diagnostic: log bundle id so a GoogleService-Info.plist mismatch
-        // is visible in the Xcode console at launch (look for Firebase's own
-        // "bundle ID does not match" warning right after configure).
+        // Keep init() minimal. Tauri's Plugin base class is not fully wired
+        // until load(webview:) is called — doing heavy work here (Firebase
+        // configure, NSException-throwing APIs) means any failure unwinds
+        // through the @_cdecl entry point with no chance for Crashlytics to
+        // catch it. The diagnostic NSLog is cheap and runs unconditionally
+        // so the bundle id is in the system log even if load() never fires.
         let bundleId = Bundle.main.bundleIdentifier ?? "<unknown>"
         NSLog("[frak-firebase] init — bundle id: \(bundleId)")
+    }
 
+    override func load(webview: WKWebView) {
         #if DEBUG
         // Verbose Firebase logging surfaces configure() errors (missing or
         // invalid GoogleService-Info.plist, bundle-id mismatch) and shows
@@ -102,9 +107,18 @@ class FrakFirebasePlugin: Plugin, MessagingDelegate, UNUserNotificationCenterDel
         FirebaseConfiguration.shared.setLoggerLevel(.debug)
         #endif
 
-        // Configure Firebase as early as possible. `init()` runs before the
-        // WebView is attached, so Crashlytics' NSException + Mach signal
-        // handlers are armed before any user code runs.
+        // Configure Firebase from load() rather than init(). Tauri's Plugin
+        // base class is fully set up by the time load() runs, so any throw
+        // from configure() (missing GoogleService-Info.plist, malformed
+        // plist) unwinds through a stack frame Tauri can surface as a plugin
+        // error instead of an uncaught NSException at @_cdecl entry.
+        //
+        // Trade-off: NSException + Mach signal handlers arm slightly later
+        // (after WebView attach instead of at plugin construction). Pre-load
+        // crashes in other plugins are still captured by Crashlytics' own
+        // SIGABRT handler once it's installed; the Rust panic hook (in the
+        // plugin's Rust setup, which now runs first via lib.rs ordering)
+        // covers the remaining gap by persisting panics to disk.
         //
         // Single source of truth for Firebase init — no nil-guard needed
         // since this plugin is the only Firebase consumer in the app.
@@ -136,11 +150,9 @@ class FrakFirebasePlugin: Plugin, MessagingDelegate, UNUserNotificationCenterDel
         // (tap button → app dies → relaunch → check dashboard) doesn't
         // wait on Crashlytics' default upload window.
         crashlytics.sendUnsentReports()
-    }
 
-    override func load(webview: WKWebView) {
-        // FCM-side wiring. Runs after init(), at which point FirebaseApp is
-        // already configured.
+        // FCM-side wiring. Runs after Firebase is configured above so
+        // Messaging.messaging() returns the same FirebaseApp instance.
         Messaging.messaging().delegate = self
         previousNotificationDelegate = UNUserNotificationCenter.current().delegate
         UNUserNotificationCenter.current().delegate = self

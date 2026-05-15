@@ -111,8 +111,16 @@ class FrakSharePlugin: Plugin {
         }
 
         DispatchQueue.main.async {
-            guard let rootViewController = UIApplication.shared.windows
-                .first(where: { $0.isKeyWindow })?.rootViewController else {
+            // iOS 15+ scene-based apps return [] from UIApplication.shared.windows,
+            // so walk connectedScenes instead. Matches the WebAuthn plugin's
+            // presentationAnchor pattern — keeps the share sheet reachable on
+            // every supported iOS version.
+            let rootViewController = UIApplication.shared.connectedScenes
+                .compactMap { $0 as? UIWindowScene }
+                .flatMap { $0.windows }
+                .first { $0.isKeyWindow }?
+                .rootViewController
+            guard let rootViewController = rootViewController else {
                 invoke.reject("No root view controller available")
                 return
             }
