@@ -65,7 +65,11 @@ export const authenticate = tauriUnavailable;
 export const writeTextFile = tauriUnavailable;
 export const BaseDirectory = {} as never;
 
-// `tauri-plugin-fcm` and co.
+// Historic `tauri-plugin-fcm` symbols. The wallet shell no longer imports
+// from this package (the merged `tauri-plugin-frak-firebase` plugin uses raw
+// `invoke()` strings and `@tauri-apps/api/core` permission helpers), but we
+// keep the stub exports in place so any transitive import still resolves to a
+// safe no-op rather than the real Firebase SDK on web builds.
 export const getToken = tauriUnavailable;
 export const onTokenRefresh = tauriUnavailable;
 export const register = tauriUnavailable;

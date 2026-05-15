@@ -89,8 +89,7 @@ dependencies = [
  "tauri-plugin-biometric",
  "tauri-plugin-clipboard-manager",
  "tauri-plugin-deep-link",
- "tauri-plugin-fcm",
- "tauri-plugin-frak-crashlytics",
+ "tauri-plugin-frak-firebase",
  "tauri-plugin-frak-share",
  "tauri-plugin-frak-updater",
  "tauri-plugin-frak-webauthn",
@@ -4012,21 +4011,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "tauri-plugin-fcm"
-version = "0.2.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1ec4694e0b26db523f4aa6699af3f5ae3854fdb7b19753af72e2c8b7db1bf536"
-dependencies = [
- "log",
- "serde",
- "serde_json",
- "tauri",
- "tauri-plugin",
- "thiserror 2.0.18",
-]
-
-[[package]]
-name = "tauri-plugin-frak-crashlytics"
+name = "tauri-plugin-frak-firebase"
 version = "0.1.0"
 dependencies = [
  "log",

@@ -111,10 +111,27 @@ class FrakSharePlugin: Plugin {
         }
 
         DispatchQueue.main.async {
-            guard let rootViewController = UIApplication.shared.windows
-                .first(where: { $0.isKeyWindow })?.rootViewController else {
+            // iOS 15+ scene-based apps return [] from UIApplication.shared.windows,
+            // so walk connectedScenes instead. Matches the WebAuthn plugin's
+            // presentationAnchor pattern — keeps the share sheet reachable on
+            // every supported iOS version.
+            let rootViewController = UIApplication.shared.connectedScenes
+                .compactMap { $0 as? UIWindowScene }
+                .flatMap { $0.windows }
+                .first { $0.isKeyWindow }?
+                .rootViewController
+            guard let rootViewController = rootViewController else {
                 invoke.reject("No root view controller available")
                 return
+            }
+
+            // Walk the presentation chain so we present on the topmost VC.
+            // Calling `present(_:animated:)` on a VC that already has a
+            // `presentedViewController` raises an uncatchable NSException
+            // ("Attempt to present X on Y which is already presenting Z").
+            var presenter: UIViewController = rootViewController
+            while let presented = presenter.presentedViewController {
+                presenter = presented
             }
 
             let activityController = UIActivityViewController(
@@ -124,10 +141,10 @@ class FrakSharePlugin: Plugin {
 
             // iPad: anchor the popover to the center of the screen as a safe default.
             if let popover = activityController.popoverPresentationController {
-                popover.sourceView = rootViewController.view
+                popover.sourceView = presenter.view
                 popover.sourceRect = CGRect(
-                    x: rootViewController.view.bounds.midX,
-                    y: rootViewController.view.bounds.midY,
+                    x: presenter.view.bounds.midX,
+                    y: presenter.view.bounds.midY,
                     width: 0,
                     height: 0
                 )
@@ -145,7 +162,7 @@ class FrakSharePlugin: Plugin {
                 invoke.resolve(result)
             }
 
-            rootViewController.present(activityController, animated: true, completion: nil)
+            presenter.present(activityController, animated: true, completion: nil)
         }
     }
 

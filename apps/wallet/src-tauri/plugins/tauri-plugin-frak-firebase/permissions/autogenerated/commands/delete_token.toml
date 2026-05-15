@@ -1,0 +1,13 @@
+# Automatically generated - DO NOT EDIT!
+
+"$schema" = "../../schemas/schema.json"
+
+[[permission]]
+identifier = "allow-delete-token"
+description = "Enables the delete_token command without any pre-configured scope."
+commands.allow = ["delete_token"]
+
+[[permission]]
+identifier = "deny-delete-token"
+description = "Denies the delete_token command without any pre-configured scope."
+commands.deny = ["delete_token"]

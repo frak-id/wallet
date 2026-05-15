@@ -1,0 +1,18 @@
+[default]
+description = "Default permissions for the frak-firebase plugin (combined FCM + Crashlytics surface)."
+permissions = [
+    # FCM
+    "allow-get-token",
+    "allow-request-permissions",
+    "allow-check-permissions",
+    "allow-register",
+    "allow-delete-token",
+    "allow-create-channel",
+    "allow-send-notification",
+    # Crashlytics
+    "allow-set-user-id",
+    "allow-set-key",
+    "allow-log",
+    "allow-record-error",
+    "allow-set-collection-enabled",
+]

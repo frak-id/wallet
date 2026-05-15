@@ -1,0 +1,40 @@
+tauri-plugin-frak-firebase
+Copyright 2026 Frak Labs
+
+This plugin is a vendored fork of `tauri-plugin-fcm` (commit `b9d4d186`),
+originally authored by Rodolphe Stoclin and the tauri-plugin-fcm contributors.
+The upstream project is available at https://github.com/srod/tauri-plugin-fcm
+and is dual-licensed under MIT OR Apache-2.0.
+
+The Crashlytics surface was merged in from the previous in-tree
+`tauri-plugin-frak-crashlytics` plugin (which itself was Frak Labs original
+work under GPLv3) and re-licensed dual MIT OR Apache-2.0 to align with the
+upstream FCM plugin license.
+
+Files vendored from `srod/tauri-plugin-fcm` verbatim (or with minimal renames):
+- ios/Sources/AppDelegateSwizzler.swift
+- ios/Sources/TokenBuffer.swift
+- android/src/main/java/com/plugin/frak_firebase/FrakFirebaseMessagingService.kt
+  (renamed from FcmMessagingService.kt)
+- android/consumer-rules.pro
+- src/error.rs
+- src/commands.rs (delegate pattern)
+- src/mobile.rs (wrapper struct pattern)
+- Portions of src/models.rs (FCM-side types)
+- Portions of ios/Sources/FrakFirebasePlugin.swift (FCM-side commands +
+  MessagingDelegate + UNUserNotificationCenterDelegate)
+- Portions of android/src/main/java/com/plugin/frak_firebase/FrakFirebasePlugin.kt
+  (FCM-side commands + permission handling)
+
+Files originating from the in-tree `tauri-plugin-frak-crashlytics` plugin:
+- src/panic_hook.rs
+- Crashlytics-side portions of src/models.rs (SetUserIdArgs, SetKeyArgs,
+  LogArgs, RecordErrorArgs, SetCollectionEnabledArgs)
+- Crashlytics-side portions of ios/Sources/FrakFirebasePlugin.swift
+  (setUserId, setKey, log, recordError, setCollectionEnabled, persisted
+  Rust panic forwarder)
+- Crashlytics-side portions of
+  android/src/main/java/com/plugin/frak_firebase/FrakFirebasePlugin.kt
+  (same Crashlytics command set + persisted panic forwarder)
+
+See LICENSE-MIT and LICENSE-APACHE for the full license texts.
