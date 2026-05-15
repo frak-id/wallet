@@ -49,15 +49,45 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
         shopBrand,
         mediaFiles,
     ] = await Promise.all([
-        getI18nCustomizations(context),
-        getAppearanceMetafield(context),
-        doesThemeHasFrakButton(context),
-        doesThemeHasFrakBanner(context),
-        firstProductPublished(context),
-        getMainThemeId(context),
-        getMerchantExplorerSettings(context, request),
-        shopBrandInfo(context),
-        listMerchantMedia(context, request),
+        getI18nCustomizations(context).catch((e): I18nCustomizations => {
+            console.error("[appearance loader] i18n customizations failed:", e);
+            return {};
+        }),
+        getAppearanceMetafield(context).catch((e): AppearanceMetafieldValue => {
+            console.error(
+                "[appearance loader] appearance metafield failed:",
+                e
+            );
+            return {};
+        }),
+        doesThemeHasFrakButton(context).catch((e) => {
+            console.error("[appearance loader] button detection failed:", e);
+            return false;
+        }),
+        doesThemeHasFrakBanner(context).catch((e) => {
+            console.error("[appearance loader] banner detection failed:", e);
+            return false;
+        }),
+        firstProductPublished(context).catch((e) => {
+            console.error("[appearance loader] first product fetch failed:", e);
+            return undefined;
+        }),
+        getMainThemeId(context).catch((e) => {
+            console.error("[appearance loader] main theme id failed:", e);
+            return { gid: "", id: "" };
+        }),
+        getMerchantExplorerSettings(context, request).catch((e) => {
+            console.error("[appearance loader] explorer settings failed:", e);
+            return null;
+        }),
+        shopBrandInfo(context).catch((e) => {
+            console.error("[appearance loader] shop brand info failed:", e);
+            return { description: null, logoUrl: null, coverImageUrl: null };
+        }),
+        listMerchantMedia(context, request).catch((e) => {
+            console.error("[appearance loader] media list failed:", e);
+            return [];
+        }),
     ]);
 
     return data({

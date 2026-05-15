@@ -8,7 +8,7 @@
         "log:default",
         "safe-area-insets:default",
         "biometric:default",
-        "fcm:default",
+        "frak-firebase:default",
         "deep-link:default",
         "opener:default",
         "app-settings:allow-open-notification-settings",
@@ -17,7 +17,6 @@
         "frak-share:default",
         "clipboard-manager:allow-read-text",
         "recovery-hint:default",
-        "frak-crashlytics:default",
         "frak-updater:default"
     ]
 }

@@ -3,9 +3,9 @@
 target 'app_iOS' do
 platform :ios, '14.0'
   # Firebase (FCM + Crashlytics) is provided via Swift Package Manager by the
-  # tauri-plugin-fcm and tauri-plugin-frak-crashlytics plugins. Adding the same
-  # pods here would link Firebase twice and break Crashlytics' signal handler
-  # registration.
+  # tauri-plugin-frak-firebase plugin (combined FCM + Crashlytics). Adding the
+  # same pods here would link Firebase twice and break Crashlytics' signal
+  # handler registration.
   # Pods for app_iOS
 end
 

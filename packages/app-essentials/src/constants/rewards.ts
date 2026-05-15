@@ -6,12 +6,12 @@
  * after a purchase. Refunds during this window cancel the reward and restore
  * the campaign budget.
  */
-const MAX_DAYS = 30;
+const MAX_DAYS = 150;
 const SECONDS_PER_DAY = 86_400;
 
 export const REWARD_LOCKUP = {
     /** Default lockup applied to new campaigns. */
-    DEFAULT_DAYS: 14,
+    DEFAULT_DAYS: 0,
     /** Lower bound (0 disables the lockup). */
     MIN_DAYS: 0,
     /** Upper bound — kept conservative so a typo can't lock funds for years. */

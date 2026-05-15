@@ -1,43 +1,30 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { createTauriNotificationAdapter } from "./tauriAdapter";
 
+// Mocks for the tauri-plugin-frak-firebase IPC surface. After the FCM +
+// Crashlytics merge, the adapter no longer imports `tauri-plugin-fcm` — every
+// call goes through `getInvoke()` (raw `invoke("plugin:frak-firebase|...")`)
+// or the `@tauri-apps/api/core` permission helpers / `addPluginListener`.
+
 const {
-    getTokenMock,
-    requestPermissionsMock,
-    checkPermissionsMock,
-    registerMock,
-    deleteTokenMock,
-    createChannelMock,
-    onTokenRefreshMock,
+    invokeMock,
+    checkPermissionsCoreMock,
+    requestPermissionsCoreMock,
+    addPluginListenerMock,
     isAndroidMock,
     openUrlMock,
-    invokeMock,
 } = vi.hoisted(() => ({
-    getTokenMock: vi.fn(),
-    requestPermissionsMock: vi.fn(),
-    checkPermissionsMock: vi.fn(),
-    registerMock: vi.fn(),
-    deleteTokenMock: vi.fn(),
-    createChannelMock: vi.fn(),
-    onTokenRefreshMock: vi.fn(),
+    invokeMock: vi.fn(),
+    checkPermissionsCoreMock: vi.fn(),
+    requestPermissionsCoreMock: vi.fn(),
+    addPluginListenerMock: vi.fn(),
     isAndroidMock: vi.fn(),
     openUrlMock: vi.fn(),
-    invokeMock: vi.fn(),
 }));
 
 let capturedTokenRefreshHandler:
     | ((event: { token: string }) => void)
     | undefined;
-
-vi.mock("tauri-plugin-fcm", () => ({
-    getToken: getTokenMock,
-    requestPermissions: requestPermissionsMock,
-    checkPermissions: checkPermissionsMock,
-    register: registerMock,
-    deleteToken: deleteTokenMock,
-    createChannel: createChannelMock,
-    onTokenRefresh: onTokenRefreshMock,
-}));
 
 const { putMock } = vi.hoisted(() => ({
     putMock: vi.fn(),
@@ -67,70 +54,113 @@ vi.mock("@tauri-apps/plugin-opener", () => ({
 
 vi.mock("@tauri-apps/api/core", () => ({
     invoke: invokeMock,
+    checkPermissions: checkPermissionsCoreMock,
+    requestPermissions: requestPermissionsCoreMock,
+    addPluginListener: addPluginListenerMock,
 }));
+
+// Convenience: wrap an `invokeMock` call so each command can be matched in
+// isolation. The adapter funnels FCM commands through `getInvoke().then(invoke)`
+// using the strings below. Tests set per-command behaviour via
+// `invokeMock.mockImplementation(...)` keyed on the command string.
+const CMD = {
+    GET_TOKEN: "plugin:frak-firebase|get_token",
+    REGISTER: "plugin:frak-firebase|register",
+    DELETE_TOKEN: "plugin:frak-firebase|delete_token",
+    CREATE_CHANNEL: "plugin:frak-firebase|create_channel",
+    OPEN_SETTINGS: "plugin:app-settings|open_notification_settings",
+} as const;
+
+type CmdHandler = (args?: unknown) => unknown;
+type CmdHandlerMap = Partial<
+    Record<(typeof CMD)[keyof typeof CMD], CmdHandler>
+>;
+
+function installInvokeRouter(handlers: CmdHandlerMap) {
+    invokeMock.mockImplementation(async (cmd: string, args?: unknown) => {
+        const handler = (handlers as Record<string, CmdHandler | undefined>)[
+            cmd
+        ];
+        if (handler) {
+            return await handler(args);
+        }
+        // Default: resolve to undefined for any command the test didn't wire up.
+        return undefined;
+    });
+}
 
 describe.sequential("createTauriNotificationAdapter", () => {
     beforeEach(() => {
-        getTokenMock.mockReset();
-        requestPermissionsMock.mockReset();
-        checkPermissionsMock.mockReset();
-        registerMock.mockReset();
-        deleteTokenMock.mockReset();
-        createChannelMock.mockReset();
-        onTokenRefreshMock.mockReset();
+        invokeMock.mockReset();
+        checkPermissionsCoreMock.mockReset();
+        requestPermissionsCoreMock.mockReset();
+        addPluginListenerMock.mockReset();
         putMock.mockReset();
         isAndroidMock.mockReset();
         openUrlMock.mockReset();
-        invokeMock.mockReset();
         capturedTokenRefreshHandler = undefined;
 
-        getTokenMock.mockResolvedValue({ token: "mock-fcm-token" });
-        requestPermissionsMock.mockResolvedValue("granted");
-        checkPermissionsMock.mockResolvedValue("denied");
-        registerMock.mockResolvedValue(undefined);
-        deleteTokenMock.mockResolvedValue(undefined);
-        createChannelMock.mockResolvedValue(undefined);
-        onTokenRefreshMock.mockImplementation(
-            (handler: (event: { token: string }) => void) => {
+        // Default invoke routing: every FCM command resolves successfully.
+        installInvokeRouter({
+            [CMD.GET_TOKEN]: () => ({ token: "mock-fcm-token" }),
+            [CMD.REGISTER]: () => undefined,
+            [CMD.DELETE_TOKEN]: () => undefined,
+            [CMD.CREATE_CHANNEL]: () => undefined,
+            [CMD.OPEN_SETTINGS]: () => undefined,
+        });
+
+        // Default permission helpers: prompt for check, granted for request.
+        checkPermissionsCoreMock.mockResolvedValue({ notification: "denied" });
+        requestPermissionsCoreMock.mockResolvedValue({
+            notification: "granted",
+        });
+
+        addPluginListenerMock.mockImplementation(
+            async (
+                _plugin: string,
+                _event: string,
+                handler: (event: { token: string }) => void
+            ) => {
                 capturedTokenRefreshHandler = handler;
-                return Promise.resolve({ unregister: vi.fn() });
+                return { unregister: vi.fn() };
             }
         );
+
         putMock.mockResolvedValue(undefined);
     });
 
     it("should call checkPermissions and return 'granted' when permission is granted", async () => {
-        checkPermissionsMock.mockResolvedValue("granted");
+        checkPermissionsCoreMock.mockResolvedValue({ notification: "granted" });
 
         const adapter = createTauriNotificationAdapter();
         const result = await adapter.getPermissionStatus();
 
-        expect(checkPermissionsMock).toHaveBeenCalledOnce();
+        expect(checkPermissionsCoreMock).toHaveBeenCalled();
         expect(result).toBe("granted");
     });
 
     it("should call checkPermissions and return 'denied' when permission is denied", async () => {
-        checkPermissionsMock.mockResolvedValue("denied");
+        checkPermissionsCoreMock.mockResolvedValue({ notification: "denied" });
 
         const adapter = createTauriNotificationAdapter();
         const result = await adapter.getPermissionStatus();
 
-        expect(checkPermissionsMock).toHaveBeenCalledOnce();
+        expect(checkPermissionsCoreMock).toHaveBeenCalled();
         expect(result).toBe("denied");
     });
 
     it("should call checkPermissions and return 'prompt' when permission is prompt", async () => {
-        checkPermissionsMock.mockResolvedValue("prompt");
+        checkPermissionsCoreMock.mockResolvedValue({ notification: "prompt" });
 
         const adapter = createTauriNotificationAdapter();
         const result = await adapter.getPermissionStatus();
 
-        expect(checkPermissionsMock).toHaveBeenCalledOnce();
+        expect(checkPermissionsCoreMock).toHaveBeenCalled();
         expect(result).toBe("prompt");
     });
 
     it("should return 'prompt' when checkPermissions fails", async () => {
-        checkPermissionsMock.mockRejectedValue(new Error("Plugin error"));
+        checkPermissionsCoreMock.mockRejectedValue(new Error("Plugin error"));
 
         const adapter = createTauriNotificationAdapter();
         const result = await adapter.getPermissionStatus();
@@ -139,37 +169,49 @@ describe.sequential("createTauriNotificationAdapter", () => {
     });
 
     it("should return 'prompt-with-rationale' when plugin returns 'prompt-with-rationale'", async () => {
-        checkPermissionsMock.mockResolvedValue("prompt-with-rationale");
+        checkPermissionsCoreMock.mockResolvedValue({
+            notification: "prompt-with-rationale",
+        });
 
         const adapter = createTauriNotificationAdapter();
         const result = await adapter.getPermissionStatus();
 
-        expect(checkPermissionsMock).toHaveBeenCalledOnce();
+        expect(checkPermissionsCoreMock).toHaveBeenCalled();
         expect(result).toBe("prompt-with-rationale");
     });
 
     it("should return 'granted' for requestPermission when plugin returns 'granted'", async () => {
-        requestPermissionsMock.mockResolvedValue("granted");
+        // First check returns denied so request fires.
+        checkPermissionsCoreMock.mockResolvedValue({ notification: "denied" });
+        requestPermissionsCoreMock.mockResolvedValue({
+            notification: "granted",
+        });
 
         const adapter = createTauriNotificationAdapter();
         const result = await adapter.requestPermission();
 
-        expect(requestPermissionsMock).toHaveBeenCalledOnce();
+        expect(requestPermissionsCoreMock).toHaveBeenCalled();
         expect(result).toBe("granted");
     });
 
     it("should return 'denied' for requestPermission when plugin returns 'denied'", async () => {
-        requestPermissionsMock.mockResolvedValue("denied");
+        checkPermissionsCoreMock.mockResolvedValue({ notification: "denied" });
+        requestPermissionsCoreMock.mockResolvedValue({
+            notification: "denied",
+        });
 
         const adapter = createTauriNotificationAdapter();
         const result = await adapter.requestPermission();
 
-        expect(requestPermissionsMock).toHaveBeenCalledOnce();
+        expect(requestPermissionsCoreMock).toHaveBeenCalled();
         expect(result).toBe("denied");
     });
 
     it("should map 'prompt' to 'prompt' for requestPermission", async () => {
-        requestPermissionsMock.mockResolvedValue("prompt");
+        checkPermissionsCoreMock.mockResolvedValue({ notification: "denied" });
+        requestPermissionsCoreMock.mockResolvedValue({
+            notification: "prompt",
+        });
 
         const adapter = createTauriNotificationAdapter();
         const result = await adapter.requestPermission();
@@ -178,7 +220,10 @@ describe.sequential("createTauriNotificationAdapter", () => {
     });
 
     it("should map 'prompt-with-rationale' to 'prompt-with-rationale' for requestPermission", async () => {
-        requestPermissionsMock.mockResolvedValue("prompt-with-rationale");
+        checkPermissionsCoreMock.mockResolvedValue({ notification: "denied" });
+        requestPermissionsCoreMock.mockResolvedValue({
+            notification: "prompt-with-rationale",
+        });
 
         const adapter = createTauriNotificationAdapter();
         const result = await adapter.requestPermission();
@@ -187,7 +232,8 @@ describe.sequential("createTauriNotificationAdapter", () => {
     });
 
     it("should requestPermission: propagate plugin errors", async () => {
-        requestPermissionsMock.mockRejectedValue(
+        checkPermissionsCoreMock.mockResolvedValue({ notification: "denied" });
+        requestPermissionsCoreMock.mockRejectedValue(
             new Error("Plugin not available")
         );
 
@@ -198,7 +244,11 @@ describe.sequential("createTauriNotificationAdapter", () => {
     });
 
     it("should return token when getToken succeeds", async () => {
-        getTokenMock.mockResolvedValue({ token: "test-token" });
+        installInvokeRouter({
+            [CMD.GET_TOKEN]: () => ({ token: "test-token" }),
+            [CMD.REGISTER]: () => undefined,
+            [CMD.CREATE_CHANNEL]: () => undefined,
+        });
 
         const adapter = createTauriNotificationAdapter();
         const result = await adapter.getToken();
@@ -207,7 +257,13 @@ describe.sequential("createTauriNotificationAdapter", () => {
     });
 
     it("should return null when getToken fails", async () => {
-        getTokenMock.mockRejectedValue(new Error("No token available"));
+        installInvokeRouter({
+            [CMD.GET_TOKEN]: () => {
+                throw new Error("No token available");
+            },
+            [CMD.REGISTER]: () => undefined,
+            [CMD.CREATE_CHANNEL]: () => undefined,
+        });
 
         const adapter = createTauriNotificationAdapter();
         const result = await adapter.getToken();
@@ -219,36 +275,46 @@ describe.sequential("createTauriNotificationAdapter", () => {
         const adapter = createTauriNotificationAdapter();
         await adapter.initPromise;
 
-        expect(createChannelMock).toHaveBeenCalledWith({
+        expect(invokeMock).toHaveBeenCalledWith(CMD.CREATE_CHANNEL, {
             id: "default",
             name: "Frak Wallet",
             importance: 4,
         });
-        expect(onTokenRefreshMock).toHaveBeenCalledOnce();
+        expect(addPluginListenerMock).toHaveBeenCalledWith(
+            "frak-firebase",
+            "token-refresh",
+            expect.any(Function)
+        );
     });
 
     it("should eagerly register during init when permission is already granted", async () => {
-        checkPermissionsMock.mockResolvedValue("granted");
+        checkPermissionsCoreMock.mockResolvedValue({ notification: "granted" });
 
         const adapter = createTauriNotificationAdapter();
         await adapter.initPromise;
 
-        expect(registerMock).toHaveBeenCalledOnce();
+        expect(invokeMock).toHaveBeenCalledWith(CMD.REGISTER);
     });
 
     it("should skip eager register during init when permission is not granted", async () => {
-        checkPermissionsMock.mockResolvedValue("denied");
+        checkPermissionsCoreMock.mockResolvedValue({ notification: "denied" });
 
         const adapter = createTauriNotificationAdapter();
         await adapter.initPromise;
 
-        expect(registerMock).not.toHaveBeenCalled();
+        expect(
+            invokeMock.mock.calls.some(([cmd]) => cmd === CMD.REGISTER)
+        ).toBe(false);
     });
 
     it("should warn when init fails", async () => {
-        createChannelMock.mockRejectedValue(
-            new Error("Channel creation failed")
-        );
+        installInvokeRouter({
+            [CMD.CREATE_CHANNEL]: () => {
+                throw new Error("Channel creation failed");
+            },
+            [CMD.GET_TOKEN]: () => ({ token: "mock" }),
+            [CMD.REGISTER]: () => undefined,
+        });
 
         const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
         const adapter = createTauriNotificationAdapter();
@@ -262,31 +328,59 @@ describe.sequential("createTauriNotificationAdapter", () => {
     });
 
     it("should subscribe: return PushTokenPayload and not call backend", async () => {
-        getTokenMock.mockResolvedValue({ token: "new-fcm-token" });
+        installInvokeRouter({
+            [CMD.GET_TOKEN]: () => ({ token: "new-fcm-token" }),
+            [CMD.REGISTER]: () => undefined,
+            [CMD.CREATE_CHANNEL]: () => undefined,
+        });
+        // Request fires because initial check is denied; it resolves to granted.
+        checkPermissionsCoreMock.mockResolvedValue({ notification: "denied" });
+        requestPermissionsCoreMock.mockResolvedValue({
+            notification: "granted",
+        });
 
         const adapter = createTauriNotificationAdapter();
         const result = await adapter.subscribe();
 
-        expect(requestPermissionsMock).toHaveBeenCalledOnce();
-        expect(registerMock).toHaveBeenCalledOnce();
+        expect(requestPermissionsCoreMock).toHaveBeenCalled();
+        expect(
+            invokeMock.mock.calls.some(([cmd]) => cmd === CMD.REGISTER)
+        ).toBe(true);
         expect(result).toEqual({ type: "fcm", token: "new-fcm-token" });
         expect(putMock).not.toHaveBeenCalled();
     });
 
     it("should subscribe: set up onTokenRefresh listener BEFORE register", async () => {
-        getTokenMock.mockResolvedValue({ token: "new-fcm-token" });
+        installInvokeRouter({
+            [CMD.GET_TOKEN]: () => ({ token: "new-fcm-token" }),
+            [CMD.REGISTER]: () => undefined,
+            [CMD.CREATE_CHANNEL]: () => undefined,
+        });
 
         const adapter = createTauriNotificationAdapter();
         await adapter.subscribe();
 
         const listenerCallOrder =
-            onTokenRefreshMock.mock.invocationCallOrder[0];
-        const registerCallOrder = registerMock.mock.invocationCallOrder[0];
-        expect(listenerCallOrder).toBeLessThan(registerCallOrder);
+            addPluginListenerMock.mock.invocationCallOrder[0];
+        const registerInvokeOrders = invokeMock.mock.calls
+            .map(([cmd], idx) =>
+                cmd === CMD.REGISTER
+                    ? invokeMock.mock.invocationCallOrder[idx]
+                    : undefined
+            )
+            .filter((x): x is number => x !== undefined);
+        expect(registerInvokeOrders.length).toBeGreaterThan(0);
+        expect(listenerCallOrder).toBeLessThan(registerInvokeOrders[0]!);
     });
 
     it("should subscribe: wait for token via onTokenRefresh when getToken rejects (cold start)", async () => {
-        getTokenMock.mockRejectedValue(new Error("FCM token not available"));
+        installInvokeRouter({
+            [CMD.GET_TOKEN]: () => {
+                throw new Error("FCM token not available");
+            },
+            [CMD.REGISTER]: () => undefined,
+            [CMD.CREATE_CHANNEL]: () => undefined,
+        });
 
         const adapter = createTauriNotificationAdapter();
         const subscribePromise = adapter.subscribe();
@@ -303,7 +397,13 @@ describe.sequential("createTauriNotificationAdapter", () => {
     });
 
     it("should subscribe: propagate real APNs error from getToken instead of timing out", async () => {
-        getTokenMock.mockRejectedValue(new Error("APNs entitlement missing"));
+        installInvokeRouter({
+            [CMD.GET_TOKEN]: () => {
+                throw new Error("APNs entitlement missing");
+            },
+            [CMD.REGISTER]: () => undefined,
+            [CMD.CREATE_CHANNEL]: () => undefined,
+        });
 
         const adapter = createTauriNotificationAdapter();
         await expect(adapter.subscribe()).rejects.toThrow(
@@ -313,7 +413,13 @@ describe.sequential("createTauriNotificationAdapter", () => {
 
     it("should subscribe: reject when token delivery times out", async () => {
         vi.useFakeTimers();
-        getTokenMock.mockRejectedValue(new Error("FCM token not available"));
+        installInvokeRouter({
+            [CMD.GET_TOKEN]: () => {
+                throw new Error("FCM token not available");
+            },
+            [CMD.REGISTER]: () => undefined,
+            [CMD.CREATE_CHANNEL]: () => undefined,
+        });
 
         const adapter = createTauriNotificationAdapter();
         const subscribePromise = adapter.subscribe();
@@ -330,10 +436,14 @@ describe.sequential("createTauriNotificationAdapter", () => {
     });
 
     it("should subscribe: use buffered token when refresh arrives before getToken", async () => {
-        getTokenMock.mockRejectedValue(new Error("FCM token not available"));
-
-        registerMock.mockImplementation(async () => {
-            capturedTokenRefreshHandler?.({ token: "early-token" });
+        installInvokeRouter({
+            [CMD.GET_TOKEN]: () => {
+                throw new Error("FCM token not available");
+            },
+            [CMD.REGISTER]: () => {
+                capturedTokenRefreshHandler?.({ token: "early-token" });
+            },
+            [CMD.CREATE_CHANNEL]: () => undefined,
         });
 
         const adapter = createTauriNotificationAdapter();
@@ -343,19 +453,32 @@ describe.sequential("createTauriNotificationAdapter", () => {
     });
 
     it("should subscribe: throw when requestPermissions returns denied", async () => {
-        requestPermissionsMock.mockResolvedValue("denied");
+        checkPermissionsCoreMock.mockResolvedValue({ notification: "denied" });
+        requestPermissionsCoreMock.mockResolvedValue({
+            notification: "denied",
+        });
 
         const adapter = createTauriNotificationAdapter();
         await expect(adapter.subscribe()).rejects.toThrow(
             "Notification permission denied"
         );
 
-        expect(registerMock).not.toHaveBeenCalled();
-        expect(getTokenMock).not.toHaveBeenCalled();
+        expect(
+            invokeMock.mock.calls.some(([cmd]) => cmd === CMD.REGISTER)
+        ).toBe(false);
+        expect(
+            invokeMock.mock.calls.some(([cmd]) => cmd === CMD.GET_TOKEN)
+        ).toBe(false);
     });
 
     it("should subscribe: throw when register fails", async () => {
-        registerMock.mockRejectedValue(new Error("FCM registration failed"));
+        installInvokeRouter({
+            [CMD.GET_TOKEN]: () => ({ token: "mock" }),
+            [CMD.REGISTER]: () => {
+                throw new Error("FCM registration failed");
+            },
+            [CMD.CREATE_CHANNEL]: () => undefined,
+        });
 
         const adapter = createTauriNotificationAdapter();
         await expect(adapter.subscribe()).rejects.toThrow(
@@ -364,10 +487,14 @@ describe.sequential("createTauriNotificationAdapter", () => {
     });
 
     it("should subscribe: warn and continue when listener setup fails", async () => {
-        onTokenRefreshMock.mockRejectedValue(
+        addPluginListenerMock.mockRejectedValue(
             new Error("registerListener not allowed")
         );
-        getTokenMock.mockResolvedValue({ token: "direct-token" });
+        installInvokeRouter({
+            [CMD.GET_TOKEN]: () => ({ token: "direct-token" }),
+            [CMD.REGISTER]: () => undefined,
+            [CMD.CREATE_CHANNEL]: () => undefined,
+        });
 
         const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
         const adapter = createTauriNotificationAdapter();
@@ -386,30 +513,36 @@ describe.sequential("createTauriNotificationAdapter", () => {
         const adapter = createTauriNotificationAdapter();
         await adapter.unsubscribe();
 
-        expect(deleteTokenMock).toHaveBeenCalledOnce();
+        expect(
+            invokeMock.mock.calls.some(([cmd]) => cmd === CMD.DELETE_TOKEN)
+        ).toBe(true);
         expect(putMock).not.toHaveBeenCalled();
     });
 
     it("should unsubscribe: clean up token refresh listener", async () => {
         const unregisterMock = vi.fn().mockResolvedValue(undefined);
-        onTokenRefreshMock.mockImplementation(
-            (handler: (event: { token: string }) => void) => {
+        addPluginListenerMock.mockImplementation(
+            async (
+                _plugin: string,
+                _event: string,
+                handler: (event: { token: string }) => void
+            ) => {
                 capturedTokenRefreshHandler = handler;
-                return Promise.resolve({ unregister: unregisterMock });
+                return { unregister: unregisterMock };
             }
         );
 
         const adapter = createTauriNotificationAdapter();
 
         await adapter.subscribe();
-        expect(onTokenRefreshMock).toHaveBeenCalledOnce();
+        expect(addPluginListenerMock).toHaveBeenCalled();
 
         await adapter.unsubscribe();
         expect(unregisterMock).toHaveBeenCalledOnce();
 
-        onTokenRefreshMock.mockClear();
+        addPluginListenerMock.mockClear();
         await adapter.subscribe();
-        expect(onTokenRefreshMock).toHaveBeenCalledOnce();
+        expect(addPluginListenerMock).toHaveBeenCalled();
     });
 
     it("should onTokenRefresh event: sync token to backend", async () => {
@@ -467,14 +600,10 @@ describe.sequential("createTauriNotificationAdapter", () => {
     });
 
     it("should openSettings: call invoke with app-settings plugin on both platforms", async () => {
-        invokeMock.mockResolvedValue(undefined);
-
         const adapter = createTauriNotificationAdapter();
         await adapter.openSettings();
 
-        expect(invokeMock).toHaveBeenCalledWith(
-            "plugin:app-settings|open_notification_settings"
-        );
+        expect(invokeMock).toHaveBeenCalledWith(CMD.OPEN_SETTINGS);
         expect(openUrlMock).not.toHaveBeenCalled();
     });
 });

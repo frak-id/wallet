@@ -1,7 +1,8 @@
+import ObjCExceptionCatcher
+import Security
 import SwiftRs
 import Tauri
 import UIKit
-import Security
 
 /// Persistent recovery hint storage that survives an app uninstall.
 ///
@@ -28,17 +29,32 @@ class RecoveryHintPlugin: Plugin {
         // Observe external iCloud changes so we can log propagation events.
         // We don't cache locally — `getRecoveryHint` re-reads every time —
         // but this is useful for debugging sync behavior in TestFlight logs.
-        NotificationCenter.default.addObserver(
-            self,
-            selector: #selector(onICloudKVChangedExternally(_:)),
-            name: NSUbiquitousKeyValueStore.didChangeExternallyNotification,
-            object: kvStore
-        )
+        //
+        // Wrapped in ObjCExceptionCatcher: under stale entitlements / iCloud
+        // daemon issues, NSUbiquitousKeyValueStore can raise NSException at
+        // observer registration or synchronize() time, which would crash the
+        // app at construction with no chance to recover. Downgrading those
+        // to a logged soft failure keeps the wallet usable — the recovery
+        // hint is a UX convenience, not a correctness requirement.
+        safelyInvoke("addObserver") { [weak self] in
+            guard let self = self else { return }
+            NotificationCenter.default.addObserver(
+                self,
+                selector: #selector(self.onICloudKVChangedExternally(_:)),
+                name: NSUbiquitousKeyValueStore.didChangeExternallyNotification,
+                object: self.kvStore
+            )
+        }
         // Prime the cache so the next read picks up the latest synced copy.
-        kvStore.synchronize()
+        _ = safelyInvoke("synchronize@init", default: false) { [weak self] in
+            self?.kvStore.synchronize() ?? false
+        }
     }
 
     deinit {
+        // `removeObserver` is documented as safe to call without a matching
+        // `addObserver`, so we don't need to track whether registration
+        // succeeded above.
         NotificationCenter.default.removeObserver(self)
     }
 
@@ -87,8 +103,13 @@ class RecoveryHintPlugin: Plugin {
     }
 
     @objc public func clearRecoveryHint(_ invoke: Invoke) {
-        kvStore.removeObject(forKey: storageKey)
-        kvStore.synchronize()
+        safelyInvoke("clear:removeObject") { [weak self] in
+            guard let self = self else { return }
+            self.kvStore.removeObject(forKey: self.storageKey)
+        }
+        _ = safelyInvoke("clear:synchronize", default: false) { [weak self] in
+            self?.kvStore.synchronize() ?? false
+        }
         deleteFromKeychain()
         invoke.resolve()
     }
@@ -97,8 +118,13 @@ class RecoveryHintPlugin: Plugin {
 
     private func readFromICloudKV() -> [String: Any]? {
         // Force a sync so we see the latest value after reinstall.
-        kvStore.synchronize()
-        guard let data = kvStore.data(forKey: storageKey) else { return nil }
+        _ = safelyInvoke("read:synchronize", default: false) { [weak self] in
+            self?.kvStore.synchronize() ?? false
+        }
+        let data: Data? = safelyInvoke("read:data(forKey:)", default: nil) { [weak self] in
+            return self?.kvStore.data(forKey: self?.storageKey ?? "")
+        }
+        guard let data = data else { return nil }
         return (try? JSONSerialization.jsonObject(with: data)) as? [String: Any]
     }
 
@@ -112,8 +138,13 @@ class RecoveryHintPlugin: Plugin {
         guard let data = try? JSONSerialization.data(withJSONObject: dict) else {
             return false
         }
-        kvStore.set(data, forKey: storageKey)
-        return kvStore.synchronize()
+        safelyInvoke("write:set(forKey:)") { [weak self] in
+            guard let self = self else { return }
+            self.kvStore.set(data, forKey: self.storageKey)
+        }
+        return safelyInvoke("write:synchronize", default: false) { [weak self] in
+            self?.kvStore.synchronize() ?? false
+        }
     }
 
     // MARK: - Keychain (iCloud-synced fallback)
@@ -163,6 +194,33 @@ class RecoveryHintPlugin: Plugin {
 
     private func deleteFromKeychain() {
         SecItemDelete(keychainBaseQuery() as CFDictionary)
+    }
+
+    // MARK: - NSException helpers
+
+    /// Run `block` and log + swallow any Objective-C NSException it raises.
+    /// Use for Foundation calls (`NSUbiquitousKeyValueStore` here) that can
+    /// raise NSException under stale-entitlement / iCloud-daemon-misbehaving
+    /// conditions — Swift's `do/catch` doesn't catch those, so without this
+    /// shim they tear down the app.
+    private func safelyInvoke(_ context: String, _ block: () -> Void) {
+        if let error = ObjCExceptionCatcher.catchException(block) {
+            Logger.error("recovery-hint NSException caught at \(context): \(error.localizedDescription)")
+        }
+    }
+
+    /// Value-returning variant. Returns `defaultValue` if the block raises.
+    private func safelyInvoke<T>(
+        _ context: String,
+        default defaultValue: T,
+        _ block: () -> T
+    ) -> T {
+        var result = defaultValue
+        if let error = ObjCExceptionCatcher.catchException({ result = block() }) {
+            Logger.error("recovery-hint NSException caught at \(context): \(error.localizedDescription)")
+            return defaultValue
+        }
+        return result
     }
 }
 

@@ -1,0 +1,27 @@
+[default]
+description = "Default permissions for the frak-firebase plugin (combined FCM + Crashlytics surface)."
+permissions = [
+    # FCM
+    "allow-get-token",
+    "allow-request-permissions",
+    "allow-check-permissions",
+    "allow-register",
+    "allow-delete-token",
+    "allow-create-channel",
+    "allow-send-notification",
+    # Event subscription (inherited from Tauri's base Plugin class).
+    # Required for JS-side `addPluginListener("frak-firebase", "token-refresh", ...)`.
+    "allow-register-listener",
+    "allow-remove-listener",
+    # Crashlytics
+    "allow-set-user-id",
+    "allow-set-key",
+    "allow-log",
+    "allow-record-error",
+    "allow-set-collection-enabled",
+    # Crashlytics smoke-test commands (intentionally always allowed so the
+    # Crashlytics dashboard verification flow works on TestFlight + Play
+    # Internal builds, not just dev).
+    "allow-test-crash-native",
+    "allow-test-rust-panic",
+]

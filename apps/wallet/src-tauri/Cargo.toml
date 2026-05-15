@@ -1,6 +1,6 @@
 [package]
 name = "app"
-version = "1.0.60"
+version = "1.0.63"
 description = "Frak Wallet"
 authors = ["Frak Labs"]
 license = "GNU GPL 3.0"
@@ -26,7 +26,6 @@ tauri = { version = "2.11", features = [] }
 tauri-plugin-log = "2.8.0"
 tauri-plugin-safe-area-insets = "0.1.0"
 tauri-plugin-biometric = "2"
-tauri-plugin-fcm = "0.2.0"
 tauri-plugin-deep-link = "2"
 tauri-plugin-opener = "2"
 tauri-plugin-app-settings = { path = "plugins/tauri-plugin-app-settings" }
@@ -34,7 +33,7 @@ tauri-plugin-install-referrer = { path = "plugins/tauri-plugin-install-referrer"
 tauri-plugin-frak-webauthn = { path = "plugins/tauri-plugin-frak-webauthn" }
 tauri-plugin-recovery-hint = { path = "plugins/tauri-plugin-recovery-hint" }
 tauri-plugin-frak-share = { path = "plugins/tauri-plugin-frak-share" }
-tauri-plugin-frak-crashlytics = { path = "plugins/tauri-plugin-frak-crashlytics" }
+tauri-plugin-frak-firebase = { path = "plugins/tauri-plugin-frak-firebase" }
 tauri-plugin-frak-updater = { path = "plugins/tauri-plugin-frak-updater" }
 tauri-plugin-clipboard-manager = "2"
 
