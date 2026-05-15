@@ -271,7 +271,7 @@ export function detectFrakActivated(
     if (!blocks) return false;
     const typeMatch = "/blocks/listener/";
     return !!Object.entries(blocks).find(
-        ([_id, info]) => info.type.includes(typeMatch) && !info.disabled
+        ([_id, info]) => info.type?.includes(typeMatch) && !info.disabled
     );
 }
 
@@ -306,7 +306,7 @@ export function detectFrakButton(
             section.blocks &&
             Object.values(section.blocks).some(
                 (block) =>
-                    block.type.includes(FRAK_BUTTON_BLOCK_PATTERN) &&
+                    block.type?.includes(FRAK_BUTTON_BLOCK_PATTERN) &&
                     !block.disabled
             )
     );
@@ -339,7 +339,7 @@ export function detectFrakBannerInSections(
             section.blocks &&
             Object.values(section.blocks).some(
                 (block) =>
-                    block.type.includes("/blocks/banner/") && !block.disabled
+                    block.type?.includes("/blocks/banner/") && !block.disabled
             )
     );
 }
