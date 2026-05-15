@@ -159,7 +159,7 @@ class FrakFirebasePlugin: Plugin, MessagingDelegate, UNUserNotificationCenterDel
             NSLog("[frak-firebase] FirebaseApp.configure returned but FirebaseApp.app() is nil. Check that GoogleService-Info.plist is present in the app bundle and matches the running bundle id.")
             return
         }
-        NSLog("[frak-firebase] FirebaseApp.configure OK — name=\(app.name) googleAppID=\(app.options.googleAppID) bundleId=\(app.options.bundleID ?? "<nil>")")
+        NSLog("[frak-firebase] FirebaseApp.configure OK — name=\(app.name) googleAppID=\(app.options.googleAppID) bundleId=\(app.options.bundleID)")
 
         isFirebaseReady = true
 
@@ -459,6 +459,36 @@ class FrakFirebasePlugin: Plugin, MessagingDelegate, UNUserNotificationCenterDel
         } catch {
             invoke.reject("setCollectionEnabled failed: \(error.localizedDescription)")
         }
+    }
+
+    // MARK: - Crashlytics smoke-test commands
+
+    /// Trigger a synthetic native fatal so the Crashlytics dashboard end-to-end
+    /// wiring can be verified.
+    ///
+    /// Flow:
+    ///   1. JS calls `crashlytics.testCrashNative()` (see `crashlytics.ts`).
+    ///   2. We log a breadcrumb so the report carries a recognizable tag.
+    ///   3. `Crashlytics.crashlytics().crash()` raises a `SIGABRT` via
+    ///      `__builtin_trap()` (Apple's synthetic-crash entry point). The
+    ///      handler armed in `load(webview:)` captures it and queues the
+    ///      fatal native report.
+    ///   4. App relaunches. Crashlytics SDK uploads the queued report.
+    ///
+    /// This method never returns. The trailing `invoke.resolve()` is
+    /// unreachable but kept so the Swift signature satisfies Tauri's command
+    /// dispatcher contract.
+    @objc public func testCrashNative(_ invoke: Invoke) {
+        guard isFirebaseReady else {
+            invoke.reject("Firebase not configured")
+            return
+        }
+        crashlytics.log("[frak-firebase] testCrashNative invoked — triggering synthetic Crashlytics.crash()")
+        // `Crashlytics` has no public `crash()` API. `fatalError()` raises
+        // `SIGABRT` via the Swift runtime, which the Crashlytics signal
+        // handler (armed at `load(webview:)`) captures as a fatal native
+        // crash — same dashboard surface as a force-unwrap or array OOB.
+        fatalError("frak-firebase: synthetic test_crash_native from JS smoke-test")
     }
 
     // MARK: - UNUserNotificationCenterDelegate

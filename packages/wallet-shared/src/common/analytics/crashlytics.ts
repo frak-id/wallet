@@ -23,6 +23,11 @@ const INVOKE_LOG = "plugin:frak-firebase|log";
 const INVOKE_RECORD_ERROR = "plugin:frak-firebase|record_error";
 const INVOKE_SET_COLLECTION_ENABLED =
     "plugin:frak-firebase|set_collection_enabled";
+// Smoke-test commands — deliberately produce a crash so the Crashlytics
+// dashboard end-to-end wiring can be verified on TestFlight / Play Internal
+// builds (matching signing identity → matching dSYM/mapping upload).
+const INVOKE_TEST_CRASH_NATIVE = "plugin:frak-firebase|test_crash_native";
+const INVOKE_TEST_RUST_PANIC = "plugin:frak-firebase|test_rust_panic";
 
 async function tauriInvoke<T>(cmd: string, args?: unknown): Promise<T> {
     const invoke = await getInvoke();
@@ -137,6 +142,56 @@ export const crashlytics = !IS_TAURI
                   });
               } catch (err) {
                   console.warn("crashlytics.setCollectionEnabled failed", err);
+              }
+          },
+
+          /**
+           * Smoke-test: trigger a synthetic *native* fatal so the
+           * Crashlytics dashboard end-to-end wiring can be verified.
+           *
+           * On iOS this calls `Crashlytics.crashlytics().crash()` which
+           * raises `SIGABRT`; on Android it throws an uncaught
+           * `RuntimeException` from the main thread. Either way the SDK's
+           * signal/exception handler captures the crash, persists it, and
+           * uploads it on the next launch. **The current session dies.**
+           *
+           * Do NOT call from production code paths. Wire to a hidden
+           * settings / debug button so it can only be triggered intentionally.
+           */
+          async testCrashNative(): Promise<void> {
+              if (!IS_TAURI) return;
+              try {
+                  await tauriInvoke<void>(INVOKE_TEST_CRASH_NATIVE);
+              } catch (err) {
+                  console.warn("crashlytics.testCrashNative failed", err);
+              }
+          },
+
+          /**
+           * Smoke-test: trigger a synthetic *Rust* panic so the panic-hook
+           * → disk → next-launch forwarding pipeline can be verified.
+           *
+           * In release builds (`panic = "abort"`) this also crashes the
+           * process via `SIGABRT`, so Crashlytics records two reports across
+           * two launches:
+           *   - fatal native crash (this launch)
+           *   - non-fatal `RustPanic` issue with the persisted JSON payload
+           *     (next launch — the native plugin reads + reports + deletes)
+           *
+           * In dev builds (`panic = "unwind"`) the JS promise rejects, the
+           * panic hook still writes to disk, and you only see the non-fatal
+           * on the next launch.
+           *
+           * Same warning as `testCrashNative` — do NOT call from production.
+           */
+          async testRustPanic(): Promise<void> {
+              if (!IS_TAURI) return;
+              try {
+                  await tauriInvoke<void>(INVOKE_TEST_RUST_PANIC);
+              } catch (err) {
+                  // Expected in dev builds (panic="unwind" → promise rejects).
+                  // Release builds never reach here — the process dies first.
+                  console.warn("crashlytics.testRustPanic returned", err);
               }
           },
       };

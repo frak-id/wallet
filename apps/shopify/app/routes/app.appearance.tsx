@@ -54,7 +54,10 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
             return {};
         }),
         getAppearanceMetafield(context).catch((e): AppearanceMetafieldValue => {
-            console.error("[appearance loader] appearance metafield failed:", e);
+            console.error(
+                "[appearance loader] appearance metafield failed:",
+                e
+            );
             return {};
         }),
         doesThemeHasFrakButton(context).catch((e) => {

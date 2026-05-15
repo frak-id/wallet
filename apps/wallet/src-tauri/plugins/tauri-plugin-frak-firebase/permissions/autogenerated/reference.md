@@ -16,6 +16,8 @@ Default permissions for the frak-firebase plugin (combined FCM + Crashlytics sur
 - `allow-log`
 - `allow-record-error`
 - `allow-set-collection-enabled`
+- `allow-test-crash-native`
+- `allow-test-rust-panic`
 
 ## Permission Table
 
@@ -334,6 +336,58 @@ Enables the set_user_id command without any pre-configured scope.
 <td>
 
 Denies the set_user_id command without any pre-configured scope.
+
+</td>
+</tr>
+
+<tr>
+<td>
+
+`frak-firebase:allow-test-crash-native`
+
+</td>
+<td>
+
+Enables the test_crash_native command without any pre-configured scope.
+
+</td>
+</tr>
+
+<tr>
+<td>
+
+`frak-firebase:deny-test-crash-native`
+
+</td>
+<td>
+
+Denies the test_crash_native command without any pre-configured scope.
+
+</td>
+</tr>
+
+<tr>
+<td>
+
+`frak-firebase:allow-test-rust-panic`
+
+</td>
+<td>
+
+Enables the test_rust_panic command without any pre-configured scope.
+
+</td>
+</tr>
+
+<tr>
+<td>
+
+`frak-firebase:deny-test-rust-panic`
+
+</td>
+<td>
+
+Denies the test_rust_panic command without any pre-configured scope.
 
 </td>
 </tr>

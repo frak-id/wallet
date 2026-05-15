@@ -15,4 +15,9 @@ permissions = [
     "allow-log",
     "allow-record-error",
     "allow-set-collection-enabled",
+    # Crashlytics smoke-test commands (intentionally always allowed so the
+    # Crashlytics dashboard verification flow works on TestFlight + Play
+    # Internal builds, not just dev).
+    "allow-test-crash-native",
+    "allow-test-rust-panic",
 ]

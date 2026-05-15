@@ -13,6 +13,7 @@ import { InfoCard, InfoRow } from "@/module/common/component/InfoCard";
 import { Title } from "@/module/common/component/Title";
 // import { Logout } from "@/module/authentication/component/Logout";
 import { MoneriumConnect } from "@/module/monerium/component/MoneriumConnect";
+import { CrashlyticsDebug } from "@/module/settings/component/CrashlyticsDebug";
 import { PrivateKey } from "@/module/settings/component/PrivateKey";
 import { ProfileIdentityCard } from "@/module/settings/component/ProfileIdentityCard";
 import { ProfileLinksCard } from "@/module/settings/component/ProfileLinksCard";
@@ -71,6 +72,7 @@ export function ProfilePage() {
             ) : null}
             <ProfileLinksCard />
             <PrivateKey />
+            <CrashlyticsDebug />
             {!isRunningInProd ? <MoneriumConnect /> : null}
             {/*<Logout />*/}
             <Box className={styles.footer}>

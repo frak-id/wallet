@@ -1,0 +1,13 @@
+# Automatically generated - DO NOT EDIT!
+
+"$schema" = "../../schemas/schema.json"
+
+[[permission]]
+identifier = "allow-test-rust-panic"
+description = "Enables the test_rust_panic command without any pre-configured scope."
+commands.allow = ["test_rust_panic"]
+
+[[permission]]
+identifier = "deny-test-rust-panic"
+description = "Denies the test_rust_panic command without any pre-configured scope."
+commands.deny = ["test_rust_panic"]

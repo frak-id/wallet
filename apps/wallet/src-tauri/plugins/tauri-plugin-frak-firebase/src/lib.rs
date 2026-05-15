@@ -41,6 +41,7 @@ pub(crate) const PANIC_REPORT_FILENAME: &str = "frak.wallet.last_rust_panic.txt"
 /// to Crashlytics on the *next* launch.
 pub fn init<R: Runtime>() -> TauriPlugin<R> {
     Builder::new("frak-firebase")
+        .invoke_handler(tauri::generate_handler![test_rust_panic])
         .setup(|app, api| {
             // Install the Rust panic hook BEFORE registering the native
             // plugin so any panic during `mobile::init` (e.g. swift-rs
@@ -53,4 +54,28 @@ pub fn init<R: Runtime>() -> TauriPlugin<R> {
             Ok(())
         })
         .build()
+}
+
+/// Smoke-test command — deliberately panics so the Rust → disk → next-launch
+/// pipeline can be verified end-to-end.
+///
+/// Flow on iOS (release profile, `panic = "abort"`):
+///   1. JS calls `invoke("plugin:frak-firebase|test_rust_panic")`.
+///   2. This function runs `panic!()`. The panic hook installed at plugin
+///      setup writes a JSON payload to `app_cache_dir/last_rust_panic.txt`
+///      with `name`/`message`/`stack`.
+///   3. `panic = "abort"` raises `SIGABRT`. Crashlytics' signal handler (armed
+///      in the Swift `load(webview:)` once `FirebaseApp.configure()` succeeds)
+///      captures it and queues a fatal native report.
+///   4. App relaunches. The native plugin's `forwardPersistedRustPanic()` reads
+///      the JSON file, records it as a non-fatal `RustPanic` issue, and
+///      deletes the file.
+///
+/// On dev builds (default profile, `panic = "unwind"`) the panic is caught by
+/// Tauri's command runtime and surfaces as a JS-side rejection — but the panic
+/// hook still fires, so the next launch still shows the non-fatal in the
+/// dashboard. Useful sanity check that the persistence path works.
+#[tauri::command]
+fn test_rust_panic() {
+    panic!("frak-firebase: synthetic test_rust_panic from JS smoke-test");
 }

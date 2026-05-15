@@ -83,7 +83,6 @@ async function fcmOnTokenRefresh(
 
 const FCM_TOKEN_DELIVERY_TIMEOUT_MS = 10_000;
 
-
 function mapPermission(state: PermissionState): NotificationPermissionStatus {
     if (state === "granted") return "granted";
     if (state === "denied") return "denied";

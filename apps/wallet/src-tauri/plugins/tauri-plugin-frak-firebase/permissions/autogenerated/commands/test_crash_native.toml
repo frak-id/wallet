@@ -1,0 +1,13 @@
+# Automatically generated - DO NOT EDIT!
+
+"$schema" = "../../schemas/schema.json"
+
+[[permission]]
+identifier = "allow-test-crash-native"
+description = "Enables the test_crash_native command without any pre-configured scope."
+commands.allow = ["test_crash_native"]
+
+[[permission]]
+identifier = "deny-test-crash-native"
+description = "Denies the test_crash_native command without any pre-configured scope."
+commands.deny = ["test_crash_native"]

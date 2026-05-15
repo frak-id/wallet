@@ -72,7 +72,9 @@ const CMD = {
 } as const;
 
 type CmdHandler = (args?: unknown) => unknown;
-type CmdHandlerMap = Partial<Record<(typeof CMD)[keyof typeof CMD], CmdHandler>>;
+type CmdHandlerMap = Partial<
+    Record<(typeof CMD)[keyof typeof CMD], CmdHandler>
+>;
 
 function installInvokeRouter(handlers: CmdHandlerMap) {
     invokeMock.mockImplementation(async (cmd: string, args?: unknown) => {
@@ -358,7 +360,8 @@ describe.sequential("createTauriNotificationAdapter", () => {
         const adapter = createTauriNotificationAdapter();
         await adapter.subscribe();
 
-        const listenerCallOrder = addPluginListenerMock.mock.invocationCallOrder[0];
+        const listenerCallOrder =
+            addPluginListenerMock.mock.invocationCallOrder[0];
         const registerInvokeOrders = invokeMock.mock.calls
             .map(([cmd], idx) =>
                 cmd === CMD.REGISTER
