@@ -1,6 +1,10 @@
 import FirebaseCore
 import FirebaseCrashlytics
 import FirebaseMessaging
+import FrakObjCExceptionCatcher
+import SwiftRs
+import FirebaseCrashlytics
+import FirebaseMessaging
 import SwiftRs
 import Tauri
 import UIKit
@@ -68,6 +72,13 @@ class FrakFirebasePlugin: Plugin, MessagingDelegate, UNUserNotificationCenterDel
     /// Filename written by the Rust panic hook (see `panic_hook.rs`).
     /// Must stay in sync with `PANIC_REPORT_FILENAME` on the Rust side.
     private let panicReportFilename = "frak.wallet.last_rust_panic.txt"
+
+    /// `true` once `FirebaseApp.configure()` returned without raising and
+    /// `FirebaseApp.app()` reports a non-nil default app. Crashlytics commands
+    /// gate on this flag so a JS call that races ahead of `load(webview:)`
+    /// doesn't trip the "No default FirebaseApp" NSException raised by
+    /// `Crashlytics.crashlytics()`.
+    private var isFirebaseReady = false
     private var crashlytics: Crashlytics { Crashlytics.crashlytics() }
 
     // MARK: - FCM state
@@ -100,6 +111,23 @@ class FrakFirebasePlugin: Plugin, MessagingDelegate, UNUserNotificationCenterDel
     }
 
     override func load(webview: WKWebView) {
+        // All work below touches UIKit, UNUserNotificationCenter, Messaging
+        // delegates, and method swizzling — none of which are documented as
+        // thread-safe. Tauri calls `load(webview:)` from `on_webview_created`,
+        // which is *usually* main but not contractually so. Dispatch on main
+        // ourselves to make the threading invariants explicit.
+        if Thread.isMainThread {
+            configureAndWireFirebase()
+        } else {
+            DispatchQueue.main.sync { [weak self] in
+                self?.configureAndWireFirebase()
+            }
+        }
+    }
+
+    private func configureAndWireFirebase() {
+        dispatchPrecondition(condition: .onQueue(.main))
+
         #if DEBUG
         // Verbose Firebase logging surfaces configure() errors (missing or
         // invalid GoogleService-Info.plist, bundle-id mismatch) and shows
@@ -107,28 +135,33 @@ class FrakFirebasePlugin: Plugin, MessagingDelegate, UNUserNotificationCenterDel
         FirebaseConfiguration.shared.setLoggerLevel(.debug)
         #endif
 
-        // Configure Firebase from load() rather than init(). Tauri's Plugin
-        // base class is fully set up by the time load() runs, so any throw
-        // from configure() (missing GoogleService-Info.plist, malformed
-        // plist) unwinds through a stack frame Tauri can surface as a plugin
-        // error instead of an uncaught NSException at @_cdecl entry.
-        //
-        // Trade-off: NSException + Mach signal handlers arm slightly later
-        // (after WebView attach instead of at plugin construction). Pre-load
-        // crashes in other plugins are still captured by Crashlytics' own
-        // SIGABRT handler once it's installed; the Rust panic hook (in the
-        // plugin's Rust setup, which now runs first via lib.rs ordering)
-        // covers the remaining gap by persisting panics to disk.
-        //
-        // Single source of truth for Firebase init — no nil-guard needed
-        // since this plugin is the only Firebase consumer in the app.
-        FirebaseApp.configure()
-
-        if let app = FirebaseApp.app() {
-            NSLog("[frak-firebase] FirebaseApp.configure OK — name=\(app.name) googleAppID=\(app.options.googleAppID) bundleId=\(app.options.bundleID ?? "<nil>")")
-        } else {
-            NSLog("[frak-firebase] FirebaseApp.configure FAILED — FirebaseApp.app() is nil. Check that GoogleService-Info.plist is present in the app bundle and matches the running bundle id.")
+        // Idempotent: WebView teardown + recreation on memory pressure can
+        // trigger a second `load(webview:)`. `FirebaseApp.configure()` raises
+        // an *uncatchable* `NSException` on double-configure, so bail before
+        // ever calling it again.
+        if FirebaseApp.app() != nil {
+            NSLog("[frak-firebase] FirebaseApp already configured — skipping configure")
+            isFirebaseReady = true
+            return
         }
+
+        // Wrap configure() in an ObjC `@try/@catch` shim. `NSException`
+        // (missing plist, bundle-id mismatch, malformed plist) bypasses
+        // Swift's `do/catch` and would otherwise unwind through the
+        // `@_cdecl` entry point, killing the process *before* Crashlytics'
+        // signal handlers are armed — invisible to the dashboard.
+        if let err = FrakObjCExceptionCatcher.catchException({ FirebaseApp.configure() }) {
+            NSLog("[frak-firebase] FirebaseApp.configure threw NSException: \(err.localizedDescription) — continuing without Firebase. App will run; crash reporting + FCM disabled this session.")
+            return
+        }
+
+        guard let app = FirebaseApp.app() else {
+            NSLog("[frak-firebase] FirebaseApp.configure returned but FirebaseApp.app() is nil. Check that GoogleService-Info.plist is present in the app bundle and matches the running bundle id.")
+            return
+        }
+        NSLog("[frak-firebase] FirebaseApp.configure OK — name=\(app.name) googleAppID=\(app.options.googleAppID) bundleId=\(app.options.bundleID ?? "<nil>")")
+
+        isFirebaseReady = true
 
         // Force Crashlytics SDK initialization. `FirebaseApp.configure()`
         // only *registers* the Crashlytics provider with the Firebase
@@ -152,7 +185,8 @@ class FrakFirebasePlugin: Plugin, MessagingDelegate, UNUserNotificationCenterDel
         crashlytics.sendUnsentReports()
 
         // FCM-side wiring. Runs after Firebase is configured above so
-        // Messaging.messaging() returns the same FirebaseApp instance.
+        // Messaging.messaging() returns the same FirebaseApp instance. All
+        // delegate assignments must run on main (we already are).
         Messaging.messaging().delegate = self
         previousNotificationDelegate = UNUserNotificationCenter.current().delegate
         UNUserNotificationCenter.current().delegate = self
@@ -161,9 +195,7 @@ class FrakFirebasePlugin: Plugin, MessagingDelegate, UNUserNotificationCenterDel
         AppDelegateSwizzler.swizzlePushCallbacks()
 
         #if !targetEnvironment(simulator)
-            DispatchQueue.main.async {
-                UIApplication.shared.registerForRemoteNotifications()
-            }
+            UIApplication.shared.registerForRemoteNotifications()
         #else
             // Defer so JS event listeners have time to attach after plugin init.
             DispatchQueue.main.asyncAfter(deadline: .now() + 1) { [weak self] in
@@ -328,6 +360,10 @@ class FrakFirebasePlugin: Plugin, MessagingDelegate, UNUserNotificationCenterDel
     // MARK: - Crashlytics commands
 
     @objc public func setUserId(_ invoke: Invoke) {
+        guard isFirebaseReady else {
+            invoke.reject("Firebase not configured")
+            return
+        }
         do {
             let args = try invoke.parseArgs(SetUserIdArgs.self)
             crashlytics.setUserID(args.userId)
@@ -346,6 +382,10 @@ class FrakFirebasePlugin: Plugin, MessagingDelegate, UNUserNotificationCenterDel
     /// quoted string — if a numeric-valued key needs to be query-filtered
     /// in BigQuery later, plan for that on the consumer side.
     @objc public func setKey(_ invoke: Invoke) {
+        guard isFirebaseReady else {
+            invoke.reject("Firebase not configured")
+            return
+        }
         do {
             let args = try invoke.parseArgs(SetKeyArgs.self)
             // Crashlytics on iOS accepts heterogeneous values; the JS facade
@@ -359,6 +399,10 @@ class FrakFirebasePlugin: Plugin, MessagingDelegate, UNUserNotificationCenterDel
     }
 
     @objc public func log(_ invoke: Invoke) {
+        guard isFirebaseReady else {
+            invoke.reject("Firebase not configured")
+            return
+        }
         do {
             let args = try invoke.parseArgs(LogArgs.self)
             crashlytics.log(args.message)
@@ -376,6 +420,10 @@ class FrakFirebasePlugin: Plugin, MessagingDelegate, UNUserNotificationCenterDel
     /// all Android non-fatals end up in a single dashboard issue. Plan
     /// queries / alerts accordingly.
     @objc public func recordError(_ invoke: Invoke) {
+        guard isFirebaseReady else {
+            invoke.reject("Firebase not configured")
+            return
+        }
         do {
             let args = try invoke.parseArgs(RecordErrorArgs.self)
             // We synthesize an NSError to record. Domain/code use the JS
@@ -400,6 +448,10 @@ class FrakFirebasePlugin: Plugin, MessagingDelegate, UNUserNotificationCenterDel
     }
 
     @objc public func setCollectionEnabled(_ invoke: Invoke) {
+        guard isFirebaseReady else {
+            invoke.reject("Firebase not configured")
+            return
+        }
         do {
             let args = try invoke.parseArgs(SetCollectionEnabledArgs.self)
             crashlytics.setCrashlyticsCollectionEnabled(args.enabled)

@@ -68,10 +68,21 @@ pub fn install<R: Runtime>(app: &AppHandle<R>) {
     let previous = std::panic::take_hook();
     std::panic::set_hook(Box::new(move |info| {
         if let Some(path) = PANIC_REPORT_PATH.get() {
+            // Capture the message synchronously — it's allocated on the
+            // panic's own stack and cheap to format. Defer the backtrace
+            // capture (which allocates and walks unwind tables) under
+            // `catch_unwind` so a double-panic during backtrace collection
+            // (most likely under OOM — the one scenario we most need a
+            // report for) cannot prevent the message itself from landing.
+            let message = format_message(info);
+            let stack = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
+                format!("{}", std::backtrace::Backtrace::force_capture())
+            }))
+            .unwrap_or_else(|_| String::from("<backtrace capture failed>"));
             let report = PanicReport {
                 name: "RustPanic",
-                message: format_message(info),
-                stack: format!("{}", std::backtrace::Backtrace::force_capture()),
+                message,
+                stack,
             };
             if let Ok(json) = serde_json::to_string(&report) {
                 // Best-effort. If the write fails (disk full, permission

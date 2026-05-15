@@ -125,6 +125,15 @@ class FrakSharePlugin: Plugin {
                 return
             }
 
+            // Walk the presentation chain so we present on the topmost VC.
+            // Calling `present(_:animated:)` on a VC that already has a
+            // `presentedViewController` raises an uncatchable NSException
+            // ("Attempt to present X on Y which is already presenting Z").
+            var presenter: UIViewController = rootViewController
+            while let presented = presenter.presentedViewController {
+                presenter = presented
+            }
+
             let activityController = UIActivityViewController(
                 activityItems: items,
                 applicationActivities: nil
@@ -132,10 +141,10 @@ class FrakSharePlugin: Plugin {
 
             // iPad: anchor the popover to the center of the screen as a safe default.
             if let popover = activityController.popoverPresentationController {
-                popover.sourceView = rootViewController.view
+                popover.sourceView = presenter.view
                 popover.sourceRect = CGRect(
-                    x: rootViewController.view.bounds.midX,
-                    y: rootViewController.view.bounds.midY,
+                    x: presenter.view.bounds.midX,
+                    y: presenter.view.bounds.midY,
                     width: 0,
                     height: 0
                 )
@@ -153,7 +162,7 @@ class FrakSharePlugin: Plugin {
                 invoke.resolve(result)
             }
 
-            rootViewController.present(activityController, animated: true, completion: nil)
+            presenter.present(activityController, animated: true, completion: nil)
         }
     }
 

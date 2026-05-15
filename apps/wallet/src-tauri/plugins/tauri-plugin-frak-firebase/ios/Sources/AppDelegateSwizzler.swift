@@ -29,13 +29,28 @@ import ObjectiveC.runtime
 enum AppDelegateSwizzler {
     static weak var plugin: FrakFirebasePlugin?
 
+    /// Thread-local sentinel key set while our APNs-register block is on the
+    /// stack. If `previousIMP` ends up chaining back to us (e.g. another
+    /// plugin swapped its IMP via `method_exchangeImplementations` and we
+    /// captured a stale pointer), the re-entrant invocation detects the key
+    /// and bails before recursing — protects against stack overflow.
+    private static let didRegisterReentryKey = "frak.firebase.swizzler.didRegister"
+    private static let didFailReentryKey = "frak.firebase.swizzler.didFail"
+
+    /// `hasSwizzled` is only mutated from the main thread (see precondition
+    /// in `swizzlePushCallbacks`). No locking needed once that contract holds.
     private static var hasSwizzled = false
 
     /// IMP signatures for the two delegate methods we swizzle.
     private typealias APNsTokenIMP = @convention(c) (AnyObject, Selector, UIApplication, Data) -> Void
     private typealias APNsErrorIMP = @convention(c) (AnyObject, Selector, UIApplication, NSError) -> Void
 
+    /// Call from the main thread only. `UIApplication.shared.delegate` and
+    /// the ObjC runtime swizzle APIs are not documented as thread-safe; the
+    /// caller in `FrakFirebasePlugin.load(webview:)` already dispatches to
+    /// main before invoking us.
     static func swizzlePushCallbacks() {
+        dispatchPrecondition(condition: .onQueue(.main))
         guard !hasSwizzled else { return }
         guard let delegate = UIApplication.shared.delegate else { return }
         let delegateClass: AnyClass = type(of: delegate)
@@ -63,6 +78,14 @@ enum AppDelegateSwizzler {
 
         let block: @convention(block) (AnyObject, UIApplication, Data) -> Void = {
             selfObj, app, token in
+            // Re-entry guard: if our block is somehow on the call stack
+            // already (broken `previousIMP` chain from another swizzler),
+            // bail out instead of recursing into stack overflow.
+            let threadDict = Thread.current.threadDictionary
+            if threadDict[didRegisterReentryKey] as? Bool == true { return }
+            threadDict[didRegisterReentryKey] = true
+            defer { threadDict.removeObject(forKey: didRegisterReentryKey) }
+
             // Defensive: set APNs token explicitly so Firebase can exchange APNs → FCM.
             // Idempotent — no harm if Firebase already received it via its own swizzle.
             Messaging.messaging().apnsToken = token
@@ -101,6 +124,12 @@ enum AppDelegateSwizzler {
 
         let block: @convention(block) (AnyObject, UIApplication, NSError) -> Void = {
             selfObj, app, error in
+            // Re-entry guard: see comment in swizzleDidRegister above.
+            let threadDict = Thread.current.threadDictionary
+            if threadDict[didFailReentryKey] as? Bool == true { return }
+            threadDict[didFailReentryKey] = true
+            defer { threadDict.removeObject(forKey: didFailReentryKey) }
+
             let description = error.localizedDescription
 
             // Buffer the error so getToken() can surface it directly instead

@@ -42,8 +42,14 @@ pub(crate) const PANIC_REPORT_FILENAME: &str = "frak.wallet.last_rust_panic.txt"
 pub fn init<R: Runtime>() -> TauriPlugin<R> {
     Builder::new("frak-firebase")
         .setup(|app, api| {
-            mobile::init(app, api)?;
+            // Install the Rust panic hook BEFORE registering the native
+            // plugin so any panic during `mobile::init` (e.g. swift-rs
+            // bridge failure, Swift `init()` raising) is persisted to disk
+            // and forwarded on the next launch. With `panic = "abort"` the
+            // process dies immediately on panic, so missing the hook means
+            // missing the report.
             panic_hook::install(app);
+            mobile::init(app, api)?;
             Ok(())
         })
         .build()
