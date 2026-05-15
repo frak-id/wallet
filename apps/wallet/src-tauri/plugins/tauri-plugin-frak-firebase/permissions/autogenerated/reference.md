@@ -11,6 +11,8 @@ Default permissions for the frak-firebase plugin (combined FCM + Crashlytics sur
 - `allow-delete-token`
 - `allow-create-channel`
 - `allow-send-notification`
+- `allow-register-listener`
+- `allow-remove-listener`
 - `allow-set-user-id`
 - `allow-set-key`
 - `allow-log`
@@ -206,6 +208,58 @@ Enables the register command without any pre-configured scope.
 <td>
 
 Denies the register command without any pre-configured scope.
+
+</td>
+</tr>
+
+<tr>
+<td>
+
+`frak-firebase:allow-register-listener`
+
+</td>
+<td>
+
+Enables the register_listener command without any pre-configured scope.
+
+</td>
+</tr>
+
+<tr>
+<td>
+
+`frak-firebase:deny-register-listener`
+
+</td>
+<td>
+
+Denies the register_listener command without any pre-configured scope.
+
+</td>
+</tr>
+
+<tr>
+<td>
+
+`frak-firebase:allow-remove-listener`
+
+</td>
+<td>
+
+Enables the remove_listener command without any pre-configured scope.
+
+</td>
+</tr>
+
+<tr>
+<td>
+
+`frak-firebase:deny-remove-listener`
+
+</td>
+<td>
+
+Denies the remove_listener command without any pre-configured scope.
 
 </td>
 </tr>

@@ -379,6 +379,30 @@
           "markdownDescription": "Denies the register command without any pre-configured scope."
         },
         {
+          "description": "Enables the register_listener command without any pre-configured scope.",
+          "type": "string",
+          "const": "allow-register-listener",
+          "markdownDescription": "Enables the register_listener command without any pre-configured scope."
+        },
+        {
+          "description": "Denies the register_listener command without any pre-configured scope.",
+          "type": "string",
+          "const": "deny-register-listener",
+          "markdownDescription": "Denies the register_listener command without any pre-configured scope."
+        },
+        {
+          "description": "Enables the remove_listener command without any pre-configured scope.",
+          "type": "string",
+          "const": "allow-remove-listener",
+          "markdownDescription": "Enables the remove_listener command without any pre-configured scope."
+        },
+        {
+          "description": "Denies the remove_listener command without any pre-configured scope.",
+          "type": "string",
+          "const": "deny-remove-listener",
+          "markdownDescription": "Denies the remove_listener command without any pre-configured scope."
+        },
+        {
           "description": "Enables the request_permissions command without any pre-configured scope.",
           "type": "string",
           "const": "allow-request-permissions",
@@ -463,10 +487,10 @@
           "markdownDescription": "Denies the test_rust_panic command without any pre-configured scope."
         },
         {
-          "description": "Default permissions for the frak-firebase plugin (combined FCM + Crashlytics surface).\n#### This default permission set includes:\n\n- `allow-get-token`\n- `allow-request-permissions`\n- `allow-check-permissions`\n- `allow-register`\n- `allow-delete-token`\n- `allow-create-channel`\n- `allow-send-notification`\n- `allow-set-user-id`\n- `allow-set-key`\n- `allow-log`\n- `allow-record-error`\n- `allow-set-collection-enabled`\n- `allow-test-crash-native`\n- `allow-test-rust-panic`",
+          "description": "Default permissions for the frak-firebase plugin (combined FCM + Crashlytics surface).\n#### This default permission set includes:\n\n- `allow-get-token`\n- `allow-request-permissions`\n- `allow-check-permissions`\n- `allow-register`\n- `allow-delete-token`\n- `allow-create-channel`\n- `allow-send-notification`\n- `allow-register-listener`\n- `allow-remove-listener`\n- `allow-set-user-id`\n- `allow-set-key`\n- `allow-log`\n- `allow-record-error`\n- `allow-set-collection-enabled`\n- `allow-test-crash-native`\n- `allow-test-rust-panic`",
           "type": "string",
           "const": "default",
-          "markdownDescription": "Default permissions for the frak-firebase plugin (combined FCM + Crashlytics surface).\n#### This default permission set includes:\n\n- `allow-get-token`\n- `allow-request-permissions`\n- `allow-check-permissions`\n- `allow-register`\n- `allow-delete-token`\n- `allow-create-channel`\n- `allow-send-notification`\n- `allow-set-user-id`\n- `allow-set-key`\n- `allow-log`\n- `allow-record-error`\n- `allow-set-collection-enabled`\n- `allow-test-crash-native`\n- `allow-test-rust-panic`"
+          "markdownDescription": "Default permissions for the frak-firebase plugin (combined FCM + Crashlytics surface).\n#### This default permission set includes:\n\n- `allow-get-token`\n- `allow-request-permissions`\n- `allow-check-permissions`\n- `allow-register`\n- `allow-delete-token`\n- `allow-create-channel`\n- `allow-send-notification`\n- `allow-register-listener`\n- `allow-remove-listener`\n- `allow-set-user-id`\n- `allow-set-key`\n- `allow-log`\n- `allow-record-error`\n- `allow-set-collection-enabled`\n- `allow-test-crash-native`\n- `allow-test-rust-panic`"
         }
       ]
     }

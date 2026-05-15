@@ -9,6 +9,10 @@ permissions = [
     "allow-delete-token",
     "allow-create-channel",
     "allow-send-notification",
+    # Event subscription (inherited from Tauri's base Plugin class).
+    # Required for JS-side `addPluginListener("frak-firebase", "token-refresh", ...)`.
+    "allow-register-listener",
+    "allow-remove-listener",
     # Crashlytics
     "allow-set-user-id",
     "allow-set-key",
