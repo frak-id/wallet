@@ -8,6 +8,7 @@
     "scripts": {
         "start": "bun run src/index.ts",
         "dev": "bun run --watch src/index.ts",
+        "build": "bun run build.ts",
         "typecheck": "tsgo --noEmit",
         "db:studio": "drizzle-kit studio",
         "db:generate": "drizzle-kit generate",

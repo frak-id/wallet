@@ -1,48 +1,86 @@
-# Use pre-built SDK from base image
-ARG BASE_IMAGE=frak-wallet-base:latest
-FROM ${BASE_IMAGE} AS builder
+# syntax=docker/dockerfile:1-labs
+#
+# Elysia backend — self-contained multi-stage build.
+#
+# Runtime stays on the Debian-flavored `oven/bun` image because three runtime
+# dependencies ship native binaries that are reliably available there:
+#   - sharp           (libvips bindings; glibc prebuilds are first-class)
+#   - lightningcss    (parcel CSS engine; glibc binary preferred)
+#   - @libsql/client  (better-sqlite3 native bindings)
+# These three are excluded from `bun build` and installed at runtime instead of
+# being bundled. Switching to alpine would require validating musl prebuilds for
+# all three on every dependency bump, which is not worth the ~150 MB savings.
 
-# Set the working directory to the root of the monorepo
+ARG BUN_VERSION=1.3.11
+
+FROM oven/bun:${BUN_VERSION} AS tooling
+# Node 24 is required for the SDK build step (vanilla-extract VM-sandbox quirks);
+# the backend itself uses `bun build`, but it transitively depends on @frak-labs/core-sdk
+# being built via `bun run build:sdk`.
+RUN --mount=type=cache,id=apt-cache,target=/var/cache/apt,sharing=locked \
+    --mount=type=cache,id=apt-lib,target=/var/lib/apt,sharing=locked \
+    rm -f /etc/apt/apt.conf.d/docker-clean \
+    && apt-get update \
+    && apt-get install -y --no-install-recommends ca-certificates curl gnupg \
+    && curl -fsSL https://deb.nodesource.com/setup_24.x | bash - \
+    && apt-get install -y --no-install-recommends nodejs
+
+FROM tooling AS deps
 WORKDIR /app
+COPY --link package.json bun.lock tsconfig.json ./
+COPY --link --parents \
+    apps/*/package.json \
+    services/*/package.json \
+    packages/*/package.json \
+    sdk/*/package.json \
+    example/*/package.json \
+    ./
+RUN --mount=type=cache,id=bun-store,target=/root/.bun/install/cache,sharing=locked \
+    bun install --frozen-lockfile
 
-# Fetch arg env
+FROM deps AS sdk-builder
+COPY --link sdk ./sdk
+COPY --link packages/rpc ./packages/rpc
+COPY --link packages/dev-tooling ./packages/dev-tooling
+COPY --link packages/ui ./packages/ui
+COPY --link packages/design-system ./packages/design-system
+RUN bun run build:sdk
+
+FROM sdk-builder AS app-builder
+COPY --link packages ./packages
+COPY --link services/backend ./services/backend
+
 ARG STAGE
-ENV NODE_ENV=production
-ENV STAGE=$STAGE
+ENV NODE_ENV=production \
+    STAGE=$STAGE
 
-# Install dependencies (SDK already built in base image)
-RUN bun install --frozen-lockfile
+WORKDIR /app/services/backend
+RUN bun run build
 
-# Copy required packages
-COPY packages/ ./packages/
+# Pre-install the runtime-only native modules into a scratch directory so the
+# final image gets a clean, minimal node_modules layer instead of the previous
+# `cp -rL /tmp/node_modules` dance.
+FROM tooling AS runtime-deps
+WORKDIR /runtime
+RUN --mount=type=cache,id=bun-store,target=/root/.bun/install/cache,sharing=locked \
+    bun init -y >/dev/null \
+    && bun add sharp lightningcss @libsql/client
 
-# Copy backend service
-COPY services/backend ./services/backend
-
-# Build the backend
-RUN cd services/backend && bun run build
-
-# Start a new stage for the final image
-FROM oven/bun:1.3.11
-
+FROM oven/bun:${BUN_VERSION}
 WORKDIR /app
 
-# Security: run as non-root user (bun user ships with the official image)
-COPY --from=builder --chown=bun:bun /app/services/backend/package.json .
-COPY --from=builder --chown=bun:bun /app/services/backend/dist ./dist
-
-# Native modules with platform-specific binaries — can't be bundled, install directly in runtime
-RUN cd /tmp && bun add sharp lightningcss @libsql/client && cp -rL node_modules /app/node_modules && rm -rf /tmp/node_modules /tmp/package.json /tmp/bun.lock
+COPY --from=app-builder --chown=bun:bun /app/services/backend/package.json ./
+COPY --from=app-builder --chown=bun:bun /app/services/backend/dist ./dist
+COPY --from=runtime-deps --chown=bun:bun /runtime/node_modules ./node_modules
 
 USER bun
 
-# Runtime port
 EXPOSE 3030
 
-ENV NODE_ENV=production
-# Disable transpiler cache in ephemeral containers (official recommendation)
-ENV BUN_RUNTIME_TRANSPILER_CACHE_PATH=0
+ENV NODE_ENV=production \
+    # Disable transpiler cache in ephemeral containers (Bun docs recommendation)
+    BUN_RUNTIME_TRANSPILER_CACHE_PATH=0
 
-# Direct entrypoint — Bun is PID 1, receives SIGTERM cleanly
-# --smol: enables JSC's stopIfNecessaryTimer for aggressive GC in constrained containers
+# Direct entrypoint — Bun is PID 1, receives SIGTERM cleanly.
+# --smol enables JSC's stopIfNecessaryTimer for aggressive GC in constrained containers.
 CMD ["bun", "--smol", "dist/index.js"]

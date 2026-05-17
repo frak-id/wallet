@@ -26,7 +26,7 @@ import { isProd, normalizedStageName } from "../utils";
  */
 const isAppAvailable = isProd ? "false" : "true";
 
-import { baseDomainName, getRegistryPath, walletNamespace } from "./utils";
+import { baseDomainName, cachedImage, getRegistryPath, walletNamespace } from "./utils";
 
 // Resolve backend service name only in non-dev (avoids triggering Docker builds locally)
 const backendServiceName = $dev
@@ -66,92 +66,70 @@ let imageRefs = {
 const dependency: Resource[] = [];
 
 if (!$dev) {
-    const { baseImage } = await import("./images");
+    // Build the custom Nginx image with frontend files built-in
+    const walletImage = cachedImage("wallet", {
+        context: {
+            location: $cli.paths.root,
+        },
+        dockerfile: {
+            location: path.join($cli.paths.root, "apps/wallet/Dockerfile"),
+        },
+        // Non-secret build args
+        buildArgs: {
+            NODE_ENV: "production",
+            STAGE: walletEnv.STAGE,
+            BACKEND_URL: walletEnv.BACKEND_URL,
+            ERPC_URL: walletEnv.ERPC_URL,
+            FRAK_WALLET_URL: walletEnv.FRAK_WALLET_URL,
+            OPEN_PANEL_API_URL: walletEnv.OPEN_PANEL_API_URL,
+            IS_APP_AVAILABLE: walletEnv.IS_APP_AVAILABLE,
+        },
+        // Secrets passed via BuildKit (not stored in layers)
+        secrets: {
+            DRPC_API_KEY: walletEnv.DRPC_API_KEY,
+            PIMLICO_API_KEY: walletEnv.PIMLICO_API_KEY,
+            NEXUS_RPC_SECRET: walletEnv.NEXUS_RPC_SECRET,
+            VAPID_PUBLIC_KEY: walletEnv.VAPID_PUBLIC_KEY,
+            OPEN_PANEL_WALLET_CLIENT_ID: walletEnv.OPEN_PANEL_WALLET_CLIENT_ID,
+            ANDROID_SHA256_FINGERPRINT: walletEnv.ANDROID_SHA256_FINGERPRINT,
+            MONERIUM_CLIENT_ID: walletEnv.MONERIUM_CLIENT_ID,
+        },
+        platforms: ["linux/amd64"],
+        push: true,
+        tags: getRegistryPath("wallet"),
+    });
 
     // Build the custom Nginx image with frontend files built-in
-    const walletImage = new dockerbuild.Image(
-        "wallet",
-        {
-            context: {
-                location: $cli.paths.root,
-            },
-            dockerfile: {
-                location: path.join($cli.paths.root, "apps/wallet/Dockerfile"),
-            },
-            // Non-secret build args
-            buildArgs: {
-                NODE_ENV: "production",
-                BASE_IMAGE: baseImage.ref,
-                STAGE: walletEnv.STAGE,
-                BACKEND_URL: walletEnv.BACKEND_URL,
-                ERPC_URL: walletEnv.ERPC_URL,
-                FRAK_WALLET_URL: walletEnv.FRAK_WALLET_URL,
-                OPEN_PANEL_API_URL: walletEnv.OPEN_PANEL_API_URL,
-                IS_APP_AVAILABLE: walletEnv.IS_APP_AVAILABLE,
-            },
-            // Secrets passed via BuildKit (not stored in layers)
-            secrets: {
-                DRPC_API_KEY: walletEnv.DRPC_API_KEY,
-                PIMLICO_API_KEY: walletEnv.PIMLICO_API_KEY,
-                NEXUS_RPC_SECRET: walletEnv.NEXUS_RPC_SECRET,
-                VAPID_PUBLIC_KEY: walletEnv.VAPID_PUBLIC_KEY,
-                OPEN_PANEL_WALLET_CLIENT_ID:
-                    walletEnv.OPEN_PANEL_WALLET_CLIENT_ID,
-                ANDROID_SHA256_FINGERPRINT:
-                    walletEnv.ANDROID_SHA256_FINGERPRINT,
-                MONERIUM_CLIENT_ID: walletEnv.MONERIUM_CLIENT_ID,
-            },
-            platforms: ["linux/amd64"],
-            push: true,
-            tags: getRegistryPath("wallet"),
+    const listenerImage = cachedImage("wallet-listener", {
+        context: {
+            location: $cli.paths.root,
         },
-        {
-            dependsOn: [baseImage],
-        }
-    );
-
-    // Build the custom Nginx image with frontend files built-in
-    const listenerImage = new dockerbuild.Image(
-        "wallet-listener",
-        {
-            context: {
-                location: $cli.paths.root,
-            },
-            dockerfile: {
-                location: path.join(
-                    $cli.paths.root,
-                    "apps/listener/Dockerfile"
-                ),
-            },
-            // Non-secret build args
-            buildArgs: {
-                NODE_ENV: "production",
-                BASE_IMAGE: baseImage.ref,
-                STAGE: walletEnv.STAGE,
-                BACKEND_URL: walletEnv.BACKEND_URL,
-                ERPC_URL: walletEnv.ERPC_URL,
-                FRAK_WALLET_URL: walletEnv.FRAK_WALLET_URL,
-                OPEN_PANEL_API_URL: walletEnv.OPEN_PANEL_API_URL,
-                IS_APP_AVAILABLE: walletEnv.IS_APP_AVAILABLE,
-            },
-            // Secrets passed via BuildKit (not stored in layers)
-            secrets: {
-                DRPC_API_KEY: walletEnv.DRPC_API_KEY,
-                PIMLICO_API_KEY: walletEnv.PIMLICO_API_KEY,
-                NEXUS_RPC_SECRET: walletEnv.NEXUS_RPC_SECRET,
-                OPEN_PANEL_LISTENER_CLIENT_ID:
-                    walletEnv.OPEN_PANEL_LISTENER_CLIENT_ID,
-                ANDROID_SHA256_FINGERPRINT:
-                    walletEnv.ANDROID_SHA256_FINGERPRINT,
-            },
-            platforms: ["linux/amd64"],
-            push: true,
-            tags: getRegistryPath("wallet-listener"),
+        dockerfile: {
+            location: path.join($cli.paths.root, "apps/listener/Dockerfile"),
         },
-        {
-            dependsOn: [baseImage],
-        }
-    );
+        // Non-secret build args
+        buildArgs: {
+            NODE_ENV: "production",
+            STAGE: walletEnv.STAGE,
+            BACKEND_URL: walletEnv.BACKEND_URL,
+            ERPC_URL: walletEnv.ERPC_URL,
+            FRAK_WALLET_URL: walletEnv.FRAK_WALLET_URL,
+            OPEN_PANEL_API_URL: walletEnv.OPEN_PANEL_API_URL,
+            IS_APP_AVAILABLE: walletEnv.IS_APP_AVAILABLE,
+        },
+        // Secrets passed via BuildKit (not stored in layers)
+        secrets: {
+            DRPC_API_KEY: walletEnv.DRPC_API_KEY,
+            PIMLICO_API_KEY: walletEnv.PIMLICO_API_KEY,
+            NEXUS_RPC_SECRET: walletEnv.NEXUS_RPC_SECRET,
+            OPEN_PANEL_LISTENER_CLIENT_ID:
+                walletEnv.OPEN_PANEL_LISTENER_CLIENT_ID,
+            ANDROID_SHA256_FINGERPRINT: walletEnv.ANDROID_SHA256_FINGERPRINT,
+        },
+        platforms: ["linux/amd64"],
+        push: true,
+        tags: getRegistryPath("wallet-listener"),
+    });
 
     dependency.push(walletImage, listenerImage);
 

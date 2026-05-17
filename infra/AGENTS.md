@@ -34,7 +34,7 @@ bun run deploy-gcp:prod     # Pulumi → GCP production (all prod apps live here
 - **Cloud SQL schema** depends on stage: `staging_v2` or `production_v2`. Local dev via `cloud-sql-proxy` tunnel.
 - **Vite `define`** injects `VITE_*` env at build time for frontends — runtime env is unused.
 - **Stage literal trap**: Shopify + SST forbid `"prod"` — use `"production"`. Check before adding new stages.
-- **Dockerfile.base is a caching choice**: changes there rebuild everything. Touch it carefully.
+- **`cachedImage` (`infra/gcp/utils.ts`)** wraps `dockerbuild.Image` with `cacheFrom`/`cacheTo` against in-cluster zot (`zot.zot.svc.cluster.local:5000`). Per-image cache repo + branch tag with `branch-dev` / `branch-main` fallback. The buildkit daemon already treats that hostname as HTTP via its `buildkitd.toml` — no insecure flag needed here.
 
 ## CI/CD (.github/workflows)
 - `deploy.yml` — path-based triggers; `main` → prod, `dev` → staging
