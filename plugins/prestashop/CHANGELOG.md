@@ -11,6 +11,10 @@ version on dispatch.
 
 ## [Unreleased]
 
+### Changed
+
+- **Every storefront-visible placement now ships opt-in on a fresh install** (`FrakPlacementRegistry::PLACEMENTS`): `share_product`, `banner_top`, `post_purchase_confirmation`, and `post_purchase_detail` flipped from `default => true` to `default => false`. Installing the module no longer paints any Frak UI on the merchant's shop until they explicitly tick the relevant checkbox in **Modules → Module Manager → Frak → Configure → Component Placements**. Existing installs are unaffected — `FrakPlacementRegistry::seedDefaults()` no-ops when the bundled `FRAK_PLACEMENTS` row already exists, so merchant choices made before the upgrade survive verbatim.
+
 ## [1.0.5] - 2026-05-11
 
 ### Added
