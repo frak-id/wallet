@@ -29,7 +29,7 @@ You are an infrastructure operator. Your job is to handle deployments, infrastru
 
 - `sst.config.ts` - SST v3 configuration
 - `infra/` - Infrastructure definitions
-- `Dockerfile.base` - Base Docker image
+- Per-service Dockerfiles in `apps/*/Dockerfile` and `services/*/Dockerfile` (self-contained multi-stage builds; no shared base image — see `infra/gcp/utils.ts` `cachedImage` for the zot registry-cache wiring)
 - `.github/workflows/` - CI/CD pipelines
 
 ## Common Operations

@@ -1,102 +1,68 @@
 import path from "node:path";
 import { normalizedStageName } from "../utils";
-import { getRegistryPath } from "./utils";
+import { cachedImage, getRegistryPath } from "./utils";
 
 /**
- * Create the base builder image with SDK pre-built
- * This is used by all app images to avoid rebuilding the SDK multiple times
+ * Each image is self-contained (multi-stage Dockerfile). The shared SDK build
+ * layer is no longer materialized as a separate "base" image; instead, every
+ * Dockerfile builds the SDK locally inside a `sdk-builder` stage, and the
+ * in-cluster zot registry cache (wired by `cachedImage`) makes the cost of that
+ * step amortized — identical input layers (Node 24 install, bun install, SDK
+ * build output) dedupe at the blob level across images.
+ *
+ * `mode: max` on the cache export means intermediate stages are pushed too,
+ * which is what makes the dedup actually happen.
  */
-export const baseImage = new dockerbuild.Image("base-image", {
-    context: {
-        location: $cli.paths.root,
-    },
+
+/**
+ * Elysia backend.
+ */
+export const elysiaImage = cachedImage("elysia-image", {
+    context: { location: $cli.paths.root },
     dockerfile: {
-        location: path.join($cli.paths.root, "Dockerfile.base"),
+        location: path.join($cli.paths.root, "services/backend/Dockerfile"),
+    },
+    platforms: ["linux/amd64"],
+    buildArgs: {
+        NODE_ENV: "production",
+        STAGE: normalizedStageName,
+    },
+    push: true,
+    tags: getRegistryPath("backend"),
+});
+
+/**
+ * Bootstrap (Postgres + libSQL Drizzle migrations + RustFS bucket provisioning).
+ */
+export const bootstrapImage = cachedImage("bootstrap-image", {
+    context: { location: $cli.paths.root },
+    dockerfile: {
+        location: path.join($cli.paths.root, "services/bootstrap/Dockerfile"),
+    },
+    platforms: ["linux/amd64"],
+    buildArgs: {
+        NODE_ENV: "production",
+        STAGE: normalizedStageName,
+    },
+    push: true,
+    tags: getRegistryPath("bootstrap"),
+});
+
+/**
+ * Bidirectional MongoDB to sqld credential sync service.
+ */
+export const credentialSyncImage = cachedImage("credential-sync-image", {
+    context: { location: $cli.paths.root },
+    dockerfile: {
+        location: path.join(
+            $cli.paths.root,
+            "services/credential-sync/Dockerfile"
+        ),
     },
     platforms: ["linux/amd64"],
     buildArgs: {
         NODE_ENV: "production",
     },
     push: true,
-    tags: getRegistryPath("base"),
+    tags: getRegistryPath("credential-sync"),
 });
-
-/**
- * Create the bootstrap image (Postgres + libSQL Drizzle migrations + RustFS bucket provisioning)
- */
-export const bootstrapImage = new dockerbuild.Image(
-    "bootstrap-image",
-    {
-        context: {
-            location: $cli.paths.root,
-        },
-        dockerfile: {
-            location: path.join(
-                $cli.paths.root,
-                "services/bootstrap/Dockerfile"
-            ),
-        },
-        platforms: ["linux/amd64"],
-        buildArgs: {
-            NODE_ENV: "production",
-            STAGE: normalizedStageName,
-            BASE_IMAGE: baseImage.ref,
-        },
-        push: true,
-        tags: getRegistryPath("bootstrap"),
-    },
-    {
-        dependsOn: [baseImage],
-    }
-);
-
-/**
- * Create the elysia image
- */
-export const elysiaImage = new dockerbuild.Image(
-    "elysia-image",
-    {
-        context: {
-            location: $cli.paths.root,
-        },
-        dockerfile: {
-            location: path.join($cli.paths.root, "services/backend/Dockerfile"),
-        },
-        platforms: ["linux/amd64"],
-        buildArgs: {
-            NODE_ENV: "production",
-            STAGE: normalizedStageName,
-            BASE_IMAGE: baseImage.ref,
-        },
-        push: true,
-        tags: getRegistryPath("backend"),
-    },
-    {
-        dependsOn: [bootstrapImage],
-    }
-);
-
-export const credentialSyncImage = new dockerbuild.Image(
-    "credential-sync-image",
-    {
-        context: {
-            location: $cli.paths.root,
-        },
-        dockerfile: {
-            location: path.join(
-                $cli.paths.root,
-                "services/credential-sync/Dockerfile"
-            ),
-        },
-        platforms: ["linux/amd64"],
-        buildArgs: {
-            NODE_ENV: "production",
-            BASE_IMAGE: baseImage.ref,
-        },
-        push: true,
-        tags: getRegistryPath("credential-sync"),
-    },
-    {
-        dependsOn: [bootstrapImage],
-    }
-);
