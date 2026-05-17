@@ -44,9 +44,7 @@ export const merchantAllowedDomainsRoutes = new Elysia()
                 return status(404, "Merchant not found");
             }
 
-            MerchantContext.services.resolve.invalidateForDomain(
-                updated.domain
-            );
+            MerchantContext.services.resolve.invalidateForMerchant(updated);
 
             return status(204);
         },
@@ -99,9 +97,7 @@ export const merchantAllowedDomainsRoutes = new Elysia()
                 filtered
             );
 
-            MerchantContext.services.resolve.invalidateForDomain(
-                merchant.domain
-            );
+            MerchantContext.services.resolve.invalidateForMerchant(merchant);
 
             return status(204);
         },

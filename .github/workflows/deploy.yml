@@ -108,21 +108,21 @@ jobs:
       #   - drops setup-qemu — the buildkit pod ships QEMU emulators for cross-arch
       #
       # mTLS client cert is mounted at /buildkit-certs by the unprivileged
-      # `frak-hetzner-wallet` scale set (see infra-core arc.ts). `--use` makes it
-      # the active buildx builder so `@pulumi/docker-build` Image resources in
-      # infra/gcp/*.ts pick it up automatically (no `builder` field set).
+      # `frak-hetzner-wallet` scale set (see infra-core arc.ts). The action
+      # marks this builder as active (default `use: true`) so
+      # `@pulumi/docker-build` Image resources in infra/gcp/*.ts pick it up
+      # automatically (no `builder` field set).
       - name: "🐳 Setup remote buildkit builder"
         if: steps.changes.outputs.services == 'true' || github.event.inputs.force_deploy == 'true'
-        run: |
-          docker buildx create \
-            --name hetzner \
-            --driver remote \
-            --driver-opt cacert=/buildkit-certs/ca.crt \
-            --driver-opt cert=/buildkit-certs/tls.crt \
-            --driver-opt key=/buildkit-certs/tls.key \
-            --use \
-            tcp://buildkitd.buildkit.svc.cluster.local:1234
-          docker buildx inspect --bootstrap
+        uses: docker/setup-buildx-action@v3
+        with:
+          name: hetzner
+          driver: remote
+          endpoint: tcp://buildkitd.buildkit.svc.cluster.local:1234
+          driver-opts: |
+            cacert=/buildkit-certs/ca.crt
+            cert=/buildkit-certs/tls.crt
+            key=/buildkit-certs/tls.key
 
       - name: "👥 Login to Google Cloud"
         uses: 'google-github-actions/auth@v3'

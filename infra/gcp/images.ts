@@ -22,44 +22,59 @@ export const baseImage = new dockerbuild.Image("base-image", {
 });
 
 /**
- * Create the elysia image
- */
-export const elysiaImage = new dockerbuild.Image("elysia-image", {
-    context: {
-        location: $cli.paths.root,
-    },
-    dockerfile: {
-        location: path.join($cli.paths.root, "services/backend/Dockerfile"),
-    },
-    platforms: ["linux/amd64"],
-    buildArgs: {
-        NODE_ENV: "production",
-        STAGE: normalizedStageName,
-        BASE_IMAGE: baseImage.ref,
-    },
-    push: true,
-    tags: getRegistryPath("backend"),
-});
-
-/**
  * Create the bootstrap image (Postgres + libSQL Drizzle migrations + RustFS bucket provisioning)
  */
-export const bootstrapImage = new dockerbuild.Image("bootstrap-image", {
-    context: {
-        location: $cli.paths.root,
+export const bootstrapImage = new dockerbuild.Image(
+    "bootstrap-image",
+    {
+        context: {
+            location: $cli.paths.root,
+        },
+        dockerfile: {
+            location: path.join(
+                $cli.paths.root,
+                "services/bootstrap/Dockerfile"
+            ),
+        },
+        platforms: ["linux/amd64"],
+        buildArgs: {
+            NODE_ENV: "production",
+            STAGE: normalizedStageName,
+            BASE_IMAGE: baseImage.ref,
+        },
+        push: true,
+        tags: getRegistryPath("bootstrap"),
     },
-    dockerfile: {
-        location: path.join($cli.paths.root, "services/bootstrap/Dockerfile"),
+    {
+        dependsOn: [baseImage],
+    }
+);
+
+/**
+ * Create the elysia image
+ */
+export const elysiaImage = new dockerbuild.Image(
+    "elysia-image",
+    {
+        context: {
+            location: $cli.paths.root,
+        },
+        dockerfile: {
+            location: path.join($cli.paths.root, "services/backend/Dockerfile"),
+        },
+        platforms: ["linux/amd64"],
+        buildArgs: {
+            NODE_ENV: "production",
+            STAGE: normalizedStageName,
+            BASE_IMAGE: baseImage.ref,
+        },
+        push: true,
+        tags: getRegistryPath("backend"),
     },
-    platforms: ["linux/amd64"],
-    buildArgs: {
-        NODE_ENV: "production",
-        STAGE: normalizedStageName,
-        BASE_IMAGE: baseImage.ref,
-    },
-    push: true,
-    tags: getRegistryPath("bootstrap"),
-});
+    {
+        dependsOn: [bootstrapImage],
+    }
+);
 
 export const credentialSyncImage = new dockerbuild.Image(
     "credential-sync-image",
@@ -80,5 +95,8 @@ export const credentialSyncImage = new dockerbuild.Image(
         },
         push: true,
         tags: getRegistryPath("credential-sync"),
+    },
+    {
+        dependsOn: [bootstrapImage],
     }
 );
