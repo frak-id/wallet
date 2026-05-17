@@ -1,4 +1,4 @@
-# syntax=docker/dockerfile:1.10
+# syntax=docker/dockerfile:1-labs
 #
 # Bootstrap orchestrator — runs Postgres + libSQL Drizzle migrations and RustFS
 # bucket provisioning as a one-shot K8s Job before backend rollout.

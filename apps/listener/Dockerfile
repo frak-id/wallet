@@ -1,4 +1,4 @@
-# syntax=docker/dockerfile:1.10
+# syntax=docker/dockerfile:1-labs
 #
 # Listener iframe app — self-contained multi-stage build. See apps/wallet/Dockerfile
 # for the full caching-strategy commentary.

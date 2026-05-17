@@ -1,4 +1,4 @@
-# syntax=docker/dockerfile:1.10
+# syntax=docker/dockerfile:1-labs
 #
 # Wallet app — self-contained multi-stage build.
 #

@@ -1,4 +1,4 @@
-# syntax=docker/dockerfile:1.10
+# syntax=docker/dockerfile:1-labs
 #
 # Business dashboard — self-contained multi-stage build. See apps/wallet/Dockerfile
 # for the full caching-strategy commentary; the structure is intentionally identical

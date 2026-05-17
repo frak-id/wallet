@@ -1,4 +1,4 @@
-# syntax=docker/dockerfile:1.10
+# syntax=docker/dockerfile:1-labs
 #
 # Credential-sync — self-contained multi-stage build.
 #
