@@ -1,5 +1,5 @@
 import { formatAmount } from "@frak-labs/core-sdk";
-import { Button } from "@frak-labs/ui/component/Button";
+import { Button } from "@/module/common/component/Button";
 import { Checkbox } from "@frak-labs/design-system/components/Checkbox";
 import { WalletAddress } from "@/module/common/component/HashDisplay";
 import { Skeleton } from "@/module/common/component/Skeleton";

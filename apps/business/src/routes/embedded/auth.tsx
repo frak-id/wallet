@@ -1,5 +1,5 @@
 import { useSiweAuthenticate } from "@frak-labs/react-sdk";
-import { Button } from "@frak-labs/ui/component/Button";
+import { Button } from "@/module/common/component/Button";
 import { Spinner } from "@frak-labs/design-system/components/Spinner";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useTransition } from "react";

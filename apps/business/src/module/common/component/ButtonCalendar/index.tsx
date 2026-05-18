@@ -1,4 +1,4 @@
-import { Button, type ButtonProps } from "@frak-labs/ui/component/Button";
+import { Button, type ButtonProps } from "@/module/common/component/Button";
 import { CalendarIcon } from "lucide-react";
 import styles from "./index.module.css";
 

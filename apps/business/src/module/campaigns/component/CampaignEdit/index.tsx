@@ -1,4 +1,4 @@
-import { Button } from "@frak-labs/ui/component/Button";
+import { Button } from "@/module/common/component/Button";
 import { useNavigate } from "@tanstack/react-router";
 import { useMemo } from "react";
 import { useForm } from "react-hook-form";

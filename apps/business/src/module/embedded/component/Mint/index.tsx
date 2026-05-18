@@ -1,5 +1,5 @@
 import type { Stablecoin } from "@frak-labs/app-essentials";
-import { Button } from "@frak-labs/ui/component/Button";
+import { Button } from "@/module/common/component/Button";
 import { Spinner } from "@frak-labs/design-system/components/Spinner";
 import { useSearch } from "@tanstack/react-router";
 import { useCallback, useMemo } from "react";

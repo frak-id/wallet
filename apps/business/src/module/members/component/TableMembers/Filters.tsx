@@ -1,4 +1,4 @@
-import { Button } from "@frak-labs/ui/component/Button";
+import { Button } from "@/module/common/component/Button";
 import { SlidersHorizontal } from "lucide-react";
 import { useState } from "react";
 import {

@@ -1,4 +1,4 @@
-import { Button } from "@frak-labs/ui/component/Button";
+import { Button } from "@/module/common/component/Button";
 import { useCallback } from "react";
 import { useForm } from "react-hook-form";
 import { Row } from "@/module/common/component/Row";

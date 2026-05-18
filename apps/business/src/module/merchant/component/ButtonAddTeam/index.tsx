@@ -1,4 +1,4 @@
-import { Button } from "@frak-labs/ui/component/Button";
+import { Button } from "@/module/common/component/Button";
 import { Input } from "@frak-labs/ui/component/forms/Input";
 import { BadgeCheck } from "lucide-react";
 import {

@@ -1,4 +1,4 @@
-import { buttonVariants } from "@frak-labs/ui/component/Button";
+import { buttonVariants } from "@/module/common/component/Button";
 import type { LinkProps } from "@tanstack/react-router";
 import { Link } from "@tanstack/react-router";
 import type { VariantProps } from "class-variance-authority";

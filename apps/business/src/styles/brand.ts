@@ -34,6 +34,9 @@ export const brandColors = {
     redDark34: "#65253b",
     shadow: "#00000040",
     blur: "rgba(245, 245, 245, 0.1)",
+    buttonPrimaryBg: "rgba(245, 245, 245, 0.37)",
+    buttonDisabledBg: "rgba(129, 140, 156, 0.34)",
+    buttonDisabledText: "#818c9c",
 } as const;
 
 export const brandGradients = {

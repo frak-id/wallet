@@ -1,4 +1,4 @@
-import { Button } from "@frak-labs/ui/component/Button";
+import { Button } from "@/module/common/component/Button";
 import { InputSearch } from "@/module/forms/InputSearch";
 import type { ColumnFiltersState } from "@tanstack/react-table";
 import { format } from "date-fns";

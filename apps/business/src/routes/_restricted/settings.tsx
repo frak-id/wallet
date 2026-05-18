@@ -1,5 +1,5 @@
 import { useWalletStatus } from "@frak-labs/react-sdk";
-import { Button } from "@frak-labs/ui/component/Button";
+import { Button } from "@/module/common/component/Button";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { useDemoMode } from "@/module/common/atoms/demoMode";
