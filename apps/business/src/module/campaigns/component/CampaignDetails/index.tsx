@@ -1,4 +1,4 @@
-import { Skeleton } from "@frak-labs/ui/component/Skeleton";
+import { Skeleton } from "@/module/common/component/Skeleton";
 import { useQuery } from "@tanstack/react-query";
 import { useEffect, useMemo } from "react";
 import { useForm } from "react-hook-form";

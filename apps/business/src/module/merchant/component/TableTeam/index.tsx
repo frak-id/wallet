@@ -1,7 +1,7 @@
 import { useWalletStatus } from "@frak-labs/react-sdk";
 import { Button } from "@frak-labs/ui/component/Button";
 import { WalletAddress } from "@/module/common/component/HashDisplay";
-import { Skeleton } from "@frak-labs/ui/component/Skeleton";
+import { Skeleton } from "@/module/common/component/Skeleton";
 import type { ColumnDef } from "@tanstack/react-table";
 import { type CellContext, createColumnHelper } from "@tanstack/react-table";
 import { useMemo } from "react";

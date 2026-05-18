@@ -1,4 +1,4 @@
-import { Skeleton } from "@frak-labs/ui/component/Skeleton";
+import { Skeleton } from "@/module/common/component/Skeleton";
 import { computeWithPrecision } from "@/module/common/utils/computeWithPrecision";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import type {

@@ -75,6 +75,7 @@
         "react-dom": "catalog:",
         "react-dropzone": "^15.0.0",
         "react-hook-form": "^7.71.2",
+        "react-loading-skeleton": "^3.5.0",
         "viem": "catalog:",
         "zustand": "catalog:",
       },

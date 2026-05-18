@@ -1,0 +1,21 @@
+import ReactSkeleton, { type SkeletonProps } from "react-loading-skeleton";
+import { skeleton } from "./skeleton.css";
+
+export function Skeleton({
+    width,
+    height = 250,
+    containerClassName = "",
+    className = "",
+    ...props
+}: SkeletonProps) {
+    return (
+        <ReactSkeleton
+            width={width}
+            height={height}
+            borderRadius={8}
+            containerClassName={`${containerClassName} ${skeleton}`}
+            className={`${skeleton} ${className}`}
+            {...props}
+        />
+    );
+}
