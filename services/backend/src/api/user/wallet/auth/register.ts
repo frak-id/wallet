@@ -13,7 +13,6 @@ import {
     WalletAuthResponseDto,
 } from "../../../../domain/auth";
 import { OrchestrationContext } from "../../../../orchestration/context";
-import type { IdentityNode } from "../../../../orchestration/identity/types";
 import { FrakClientIdHeaderSchema } from "../../../schemas";
 
 // Format checks are intentionally lenient: invalid values are silently
@@ -55,33 +54,6 @@ function sanitiseInputs(
         email: emailResult?.data ?? undefined,
         merchantId: merchantIdResult?.data ?? undefined,
     };
-}
-
-async function linkWalletIdentity(
-    walletAddress: string,
-    clientId: string | undefined,
-    merchantId: string | undefined
-): Promise<void> {
-    try {
-        const nodes: IdentityNode[] = [
-            { type: "wallet", value: walletAddress as `0x${string}` },
-        ];
-        if (clientId && merchantId) {
-            nodes.push({
-                type: "anonymous_fingerprint",
-                value: clientId,
-                merchantId,
-            });
-        }
-        await OrchestrationContext.orchestrators.identity.resolveAndAssociate(
-            nodes
-        );
-    } catch (err: unknown) {
-        log.error(
-            { err, walletAddress, merchantId },
-            "Failed to connect wallet to identity"
-        );
-    }
 }
 
 export const registerRoutes = new Elysia()
@@ -196,10 +168,12 @@ export const registerRoutes = new Elysia()
             });
 
             if (created) {
-                await linkWalletIdentity(
-                    walletAddress,
-                    headers["x-frak-client-id"],
-                    cleanMerchantId
+                await OrchestrationContext.orchestrators.identity.linkWalletToFingerprint(
+                    {
+                        walletAddress,
+                        clientId: headers["x-frak-client-id"],
+                        merchantId: cleanMerchantId,
+                    }
                 );
             }
 

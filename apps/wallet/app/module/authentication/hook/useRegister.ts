@@ -1,3 +1,8 @@
+import {
+    isPermanentHttpError,
+    transientRetry,
+    transientRetryDelay,
+} from "@frak-labs/client";
 import type {
     Flow,
     PendingRegistration,
@@ -43,9 +48,8 @@ export function useRegister(
         error,
         mutateAsync: register,
     } = useMutation<Session, Error, UseRegisterArgs, RegisterContext>({
-        retry: (failureCount, err) =>
-            failureCount < 3 && isTransientHttpError(err),
-        retryDelay: (attempt) => Math.min(500 * 2 ** attempt, 4000),
+        retry: transientRetry,
+        retryDelay: transientRetryDelay,
         ...options,
         mutationKey: authKey.register,
         mutationFn: async (args?: UseRegisterArgs) => {
@@ -133,33 +137,6 @@ export function useRegister(
         error,
         register,
     };
-}
-
-/**
- * Eden Treaty surfaces HTTP errors with a numeric `status`. WebAuthn
- * ceremony errors and network-level throws do not — so checking `.status`
- * is enough to keep biometric prompts out of the retry path.
- */
-function getHttpStatus(err: unknown): number | undefined {
-    if (
-        err &&
-        typeof err === "object" &&
-        "status" in err &&
-        typeof (err as { status: unknown }).status === "number"
-    ) {
-        return (err as { status: number }).status;
-    }
-    return undefined;
-}
-
-function isTransientHttpError(err: unknown): boolean {
-    const status = getHttpStatus(err);
-    return status === 0 || (status !== undefined && status >= 500);
-}
-
-function isPermanentHttpError(err: unknown): boolean {
-    const status = getHttpStatus(err);
-    return status !== undefined && status >= 400 && status < 500;
 }
 
 const asString = (value: unknown): string | undefined =>

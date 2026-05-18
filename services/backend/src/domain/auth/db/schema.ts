@@ -27,7 +27,7 @@ export const authenticatorsTable = sqliteTable(
         email: text("email"),
     },
     // Case-insensitive expression index — matches the `LOWER(email) = ?`
-    // lookup performed by `AuthenticatorRepository.hasEmail`.
+    // lookup performed by `AuthenticatorRepository.findByEmail`.
     (table) => [
         index("authenticators_email_lower_idx").on(sql`LOWER(${table.email})`),
     ]

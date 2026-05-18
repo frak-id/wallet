@@ -1,4 +1,4 @@
-import { JwtContext, log, viemClient } from "@backend-infrastructure";
+import { JwtContext, viemClient } from "@backend-infrastructure";
 import { t } from "@backend-utils";
 import { Elysia, status } from "elysia";
 import { verifyMessage } from "viem/actions";
@@ -8,7 +8,6 @@ import {
     WalletAuthResponseDto,
 } from "../../../../domain/auth";
 import { OrchestrationContext } from "../../../../orchestration/context";
-import type { IdentityNode } from "../../../../orchestration/identity/types";
 import { FrakClientIdHeaderSchema } from "../../../schemas";
 
 export const loginRoutes = new Elysia()
@@ -65,28 +64,13 @@ export const loginRoutes = new Elysia()
                     additionalData: { demoPkey },
                 });
 
-            try {
-                const clientId = headers["x-frak-client-id"];
-                const nodes: IdentityNode[] = [
-                    { type: "wallet", value: walletAddress },
-                ];
-                if (clientId && merchantId) {
-                    nodes.push({
-                        type: "anonymous_fingerprint",
-                        value: clientId,
-                        merchantId,
-                    });
+            await OrchestrationContext.orchestrators.identity.linkWalletToFingerprint(
+                {
+                    walletAddress,
+                    clientId: headers["x-frak-client-id"],
+                    merchantId,
                 }
-
-                await OrchestrationContext.orchestrators.identity.resolveAndAssociate(
-                    nodes
-                );
-            } catch (err: unknown) {
-                log.error(
-                    { err, walletAddress, merchantId },
-                    "Failed to connect wallet to identity"
-                );
-            }
+            );
 
             return {
                 token,
@@ -157,28 +141,13 @@ export const loginRoutes = new Elysia()
                     additionalData,
                 });
 
-            try {
-                const clientId = headers["x-frak-client-id"];
-                const nodes: IdentityNode[] = [
-                    { type: "wallet", value: address },
-                ];
-                if (clientId && merchantId) {
-                    nodes.push({
-                        type: "anonymous_fingerprint",
-                        value: clientId,
-                        merchantId,
-                    });
+            await OrchestrationContext.orchestrators.identity.linkWalletToFingerprint(
+                {
+                    walletAddress: address,
+                    clientId: headers["x-frak-client-id"],
+                    merchantId,
                 }
-
-                await OrchestrationContext.orchestrators.identity.resolveAndAssociate(
-                    nodes
-                );
-            } catch (err: unknown) {
-                log.error(
-                    { err, address, merchantId },
-                    "Failed to connect wallet to identity"
-                );
-            }
+            );
 
             return {
                 token,
