@@ -1,4 +1,4 @@
-import { Checkbox } from "@frak-labs/ui/component/forms/Checkbox";
+import { Checkbox } from "@frak-labs/design-system/components/Checkbox";
 import { format, startOfDay } from "date-fns";
 import { memo, useEffect, useState } from "react";
 import { useFormContext, useWatch } from "react-hook-form";

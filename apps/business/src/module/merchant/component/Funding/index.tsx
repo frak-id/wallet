@@ -5,7 +5,7 @@ import { Button, buttonVariants } from "@frak-labs/ui/component/Button";
 import { Input } from "@frak-labs/ui/component/forms/Input";
 import { IconInfo } from "@/module/common/component/IconInfo";
 import { Spinner } from "@frak-labs/design-system/components/Spinner";
-import { Switch } from "@frak-labs/ui/component/Switch";
+import { Switch } from "@frak-labs/design-system/components/Switch";
 import { Tooltip } from "@/module/common/component/Tooltip";
 import {
     AlertTriangle,

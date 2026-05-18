@@ -1,4 +1,4 @@
-import { Switch } from "@frak-labs/ui/component/Switch";
+import { Switch } from "@frak-labs/design-system/components/Switch";
 import { useMemo } from "react";
 import { useFormContext, useWatch } from "react-hook-form";
 import { Row } from "@/module/common/component/Row";

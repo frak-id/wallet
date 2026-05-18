@@ -1,6 +1,6 @@
 import { formatAmount } from "@frak-labs/core-sdk";
 import { Button } from "@frak-labs/ui/component/Button";
-import { Checkbox } from "@frak-labs/ui/component/forms/Checkbox";
+import { Checkbox } from "@frak-labs/design-system/components/Checkbox";
 import { WalletAddress } from "@/module/common/component/HashDisplay";
 import { Skeleton } from "@frak-labs/ui/component/Skeleton";
 import { keepPreviousData, useQuery } from "@tanstack/react-query";

@@ -1,4 +1,4 @@
-import { Checkbox } from "@frak-labs/ui/component/forms/Checkbox";
+import { Checkbox } from "@frak-labs/design-system/components/Checkbox";
 import { useFormContext } from "react-hook-form";
 import { Panel } from "@/module/common/component/Panel";
 import {

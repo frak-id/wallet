@@ -1,4 +1,4 @@
-import { Switch } from "@frak-labs/ui/component/Switch";
+import { Switch } from "@frak-labs/design-system/components/Switch";
 import { useNavigate } from "@tanstack/react-router";
 import { useMemo } from "react";
 import { useForm, useWatch } from "react-hook-form";
