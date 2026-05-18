@@ -1,4 +1,4 @@
-import { Slider } from "@frak-labs/ui/component/Slider";
+import { Slider } from "@frak-labs/design-system/components/Slider";
 import { useMemo } from "react";
 import { useFormContext, useWatch } from "react-hook-form";
 import { tokenAddressToCurrency } from "@/module/common/utils/currencyOptions";

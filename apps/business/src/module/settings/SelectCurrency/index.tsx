@@ -5,7 +5,7 @@ import {
     SelectItem,
     SelectTrigger,
     SelectValue,
-} from "@frak-labs/ui/component/Select";
+} from "@frak-labs/design-system/components/Select";
 import { currencyStore } from "@/stores/currencyStore";
 import styles from "./index.module.css";
 

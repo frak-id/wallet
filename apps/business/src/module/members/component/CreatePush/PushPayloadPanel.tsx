@@ -1,6 +1,6 @@
 import { Column, Columns } from "@/module/common/component/Columns";
 import { Input } from "@frak-labs/ui/component/forms/Input";
-import { TextArea } from "@frak-labs/ui/component/forms/TextArea";
+import { TextArea } from "@frak-labs/design-system/components/TextArea";
 import { useFormContext } from "react-hook-form";
 import { Panel } from "@/module/common/component/Panel";
 import {
