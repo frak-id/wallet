@@ -429,6 +429,11 @@ interface Resources {
             alreadyHaveAccount: "Already have an account?";
             continue: "Continue";
             email: {
+                alreadyUsed: {
+                    login: "Login";
+                    message: "Oops, it looks like this email is already used. Would you like to login instead?";
+                };
+                checkError: "Unable to verify this email right now. Please try again.";
                 clearAriaLabel: "Clear email address";
                 continue: "Continue";
                 description: "Your email is only used to recover your account if you forget it. It will never be used to send you unsolicited messages.";
@@ -582,7 +587,7 @@ interface Resources {
                     title: "Update ready to install.";
                 };
                 inProgress: {
-                    title: "Downloading update… {{percent}}%";
+                    title: "Downloading update…";
                 };
             };
         };
@@ -884,7 +889,7 @@ interface Resources {
             };
             registerDemo: {
                 button: {
-                    create: "Create your demo <strong>wallet</strong>";
+                    create: "Create your demo wallet";
                     error: "Error during registration, please try again";
                     inProgress: "Wallet creation in progress";
                 };

@@ -362,6 +362,33 @@ function RegisterPage() {
                             "backward"
                         );
                     }}
+                    onLoginExisting={({
+                        email: existingEmail,
+                        authenticatorId,
+                        wallet,
+                    }) => {
+                        setEmail(existingEmail);
+                        flowRef.current?.track("email_input_resolved", {
+                            outcome: "login_existing",
+                        });
+                        flowRef.current?.track("onboarding_action_clicked", {
+                            action: "login",
+                        });
+                        // Wallet is optional in the response (legacy rows
+                        // without `smart_wallet_address`); fall back to the
+                        // global account chooser when missing.
+                        login(
+                            wallet
+                                ? {
+                                      lastAuthentication: {
+                                          authenticatorId,
+                                          wallet,
+                                      },
+                                  }
+                                : {}
+                        );
+                    }}
+                    isLoginLoading={isLoginLoading}
                 />
             )}
             {step === "onboardingThree" && (

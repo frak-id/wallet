@@ -118,18 +118,31 @@ export class AuthenticatorRepository {
     }
 
     /**
-     * Case-insensitive check for whether any authenticator row stores
-     * the given email. Used by the registration precheck so the UI can warn
-     * a user before triggering the WebAuthn ceremony.
+     * Case-insensitive lookup of the latest authenticator created with the
+     * given email. Used by the registration precheck so the UI can warn a
+     * user before triggering the WebAuthn ceremony, and seed a targeted
+     * login (with the matching credential id) when the email is already
+     * attached to an existing wallet.
      */
-    public async hasEmail(email: string): Promise<boolean> {
+    public async findByEmail(email: string): Promise<{
+        authenticatorId: string;
+        smartWalletAddress: Address | null;
+    } | null> {
         const db = getLibsqlDb();
         const normalized = email.trim().toLowerCase();
         const [row] = await db
-            .select({ id: authenticatorsTable.id })
+            .select({
+                id: authenticatorsTable.id,
+                smartWalletAddress: authenticatorsTable.smartWalletAddress,
+            })
             .from(authenticatorsTable)
             .where(sql`LOWER(${authenticatorsTable.email}) = ${normalized}`)
             .limit(1);
-        return !!row;
+        if (!row) return null;
+        return {
+            authenticatorId: row.id,
+            smartWalletAddress:
+                (row.smartWalletAddress as Address | null) ?? null,
+        };
     }
 }
