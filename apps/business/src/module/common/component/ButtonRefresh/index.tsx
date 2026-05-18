@@ -18,7 +18,7 @@ export function ButtonRefresh({
     return (
         <button
             type="button"
-            className={`button ${buttonRefresh} ${isRefreshing ? buttonRefreshing : ""} ${className}`}
+            className={`${buttonRefresh}${isRefreshing ? ` ${buttonRefreshing}` : ""}${className ? ` ${className}` : ""}`}
             title="Force refresh"
             onClick={() => {
                 setIsRefreshing(true);

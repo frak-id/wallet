@@ -51,12 +51,22 @@ export const navigationProfile = style({
     display: "flex",
     alignItems: "center",
     gap: "12px",
+    padding: "6px 10px",
+    borderRadius: "8px",
     color: vars.text.primary,
+    textDecoration: "none",
+    transition: "background-color 0.15s ease",
     "::before": {
         content: '""',
         width: "1px",
-        height: "40px",
+        height: "32px",
         background: vars.border.default,
+        marginRight: "4px",
+    },
+    selectors: {
+        "&:hover": {
+            backgroundColor: vars.surface.muted,
+        },
     },
     "@media": {
         "screen and (max-width: 768px)": {
@@ -68,17 +78,20 @@ export const navigationProfile = style({
 });
 
 export const navigationProfileAvatar = style({
-    display: "block",
+    display: "inline-flex",
+    alignItems: "center",
+    justifyContent: "center",
     width: "32px",
     height: "32px",
     borderRadius: "50%",
     border: `1px solid ${vars.border.default}`,
-    textAlign: "center",
+    backgroundColor: vars.surface.elevated,
+    color: vars.text.secondary,
 });
 
 globalStyle(`${navigationProfileAvatar} > svg`, {
-    marginTop: "3px",
-    marginLeft: "1px",
+    width: "18px",
+    height: "18px",
 });
 
 export const navigationProfileInfos = style({
