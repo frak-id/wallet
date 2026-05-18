@@ -2,7 +2,7 @@ import type { Stablecoin } from "@frak-labs/app-essentials";
 import { CheckCircle2, Star } from "lucide-react";
 import { Badge } from "@/module/common/component/Badge";
 import { currencyOptions } from "@/module/common/utils/currencyOptions";
-import styles from "./index.module.css";
+import * as styles from "./currency-selector.css";
 
 interface CurrencySelectorProps {
     value?: string;
@@ -54,9 +54,11 @@ export function CurrencySelector({
                                 !disabled && onChange(currency.value)
                             }
                             disabled={disabled}
-                            className={`${styles.currencyCard} ${
-                                isSelected ? styles.currencyCardSelected : ""
-                            } ${disabled ? styles.currencyCardDisabled : ""}`}
+                            className={`${styles.currencyCard}${
+                                isSelected
+                                    ? ` ${styles.currencyCardSelected}`
+                                    : ""
+                            }${disabled ? ` ${styles.currencyCardDisabled}` : ""}`}
                         >
                             {isSelected && (
                                 <div className={styles.selectedIndicator}>
