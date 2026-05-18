@@ -13,6 +13,7 @@ import {
 } from "@/module/common/component/Panel";
 import {
     panelAccordionContent,
+    panelAccordionItem,
     panelAccordionTrigger,
 } from "./panel-accordion.css";
 
@@ -46,7 +47,7 @@ export const PanelAccordion = ({
                 defaultValue={defaultValue}
                 onValueChange={onValueChange}
             >
-                <AccordionItem value={"item-1"}>
+                <AccordionItem value={"item-1"} className={panelAccordionItem}>
                     <AccordionTrigger className={panelAccordionTrigger}>
                         <PanelTitle title={title} />
                     </AccordionTrigger>
