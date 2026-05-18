@@ -1,11 +1,13 @@
-import { buttonVariants } from "@/module/common/component/Button";
 import type { LinkProps } from "@tanstack/react-router";
 import { Link } from "@tanstack/react-router";
-import type { VariantProps } from "class-variance-authority";
+import type { RecipeVariants } from "@vanilla-extract/recipes";
 import type { ReactNode } from "react";
+import { buttonVariants } from "@/module/common/component/Button";
+
+type ButtonRecipeVariants = NonNullable<RecipeVariants<typeof buttonVariants>>;
 
 export type LinkButtonProps = Omit<LinkProps, "className" | "children"> &
-    VariantProps<typeof buttonVariants> & {
+    ButtonRecipeVariants & {
         leftIcon?: ReactNode;
         rightIcon?: ReactNode;
         children: ReactNode;
