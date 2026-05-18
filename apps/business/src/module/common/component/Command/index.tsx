@@ -1,7 +1,16 @@
 import { Command as CommandPrimitive } from "cmdk";
 import { Search } from "lucide-react";
 import type { ComponentPropsWithRef } from "react";
-import styles from "./index.module.css";
+import {
+    command,
+    commandEmpty,
+    commandGroup,
+    commandInput,
+    commandInputWrapper,
+    commandItem,
+    commandList,
+    commandSeparator,
+} from "./command.css";
 
 const Command = ({
     ref,
@@ -10,7 +19,7 @@ const Command = ({
 }: ComponentPropsWithRef<typeof CommandPrimitive>) => (
     <CommandPrimitive
         ref={ref}
-        className={`${styles.command} ${className}`}
+        className={`${command} ${className}`}
         {...props}
     />
 );
@@ -21,11 +30,11 @@ const CommandInput = ({
     className,
     ...props
 }: ComponentPropsWithRef<typeof CommandPrimitive.Input>) => (
-    <div className={styles.command__inputWrapper}>
+    <div className={commandInputWrapper}>
         <Search size={16} />
         <CommandPrimitive.Input
             ref={ref}
-            className={`${styles.command__input} ${className}`}
+            className={`${commandInput} ${className}`}
             {...props}
         />
     </div>
@@ -40,7 +49,7 @@ const CommandList = ({
 }: ComponentPropsWithRef<typeof CommandPrimitive.List>) => (
     <CommandPrimitive.List
         ref={ref}
-        className={`${styles.command__list} ${className}`}
+        className={`${commandList} ${className}`}
         {...props}
     />
 );
@@ -53,7 +62,7 @@ const CommandEmpty = ({
 }: ComponentPropsWithRef<typeof CommandPrimitive.Empty>) => (
     <CommandPrimitive.Empty
         ref={ref}
-        className={styles.command__empty}
+        className={commandEmpty}
         {...props}
     />
 );
@@ -67,7 +76,7 @@ const CommandGroup = ({
 }: ComponentPropsWithRef<typeof CommandPrimitive.Group>) => (
     <CommandPrimitive.Group
         ref={ref}
-        className={`${styles.command__group} ${className}`}
+        className={`${commandGroup} ${className}`}
         {...props}
     />
 );
@@ -81,7 +90,7 @@ const CommandSeparator = ({
 }: ComponentPropsWithRef<typeof CommandPrimitive.Separator>) => (
     <CommandPrimitive.Separator
         ref={ref}
-        className={`${styles.command__separator} ${className}`}
+        className={`${commandSeparator} ${className}`}
         {...props}
     />
 );
@@ -94,7 +103,7 @@ const CommandItem = ({
 }: ComponentPropsWithRef<typeof CommandPrimitive.Item>) => (
     <CommandPrimitive.Item
         ref={ref}
-        className={`${styles.command__item} ${className}`}
+        className={`${commandItem} ${className}`}
         {...props}
     />
 );
