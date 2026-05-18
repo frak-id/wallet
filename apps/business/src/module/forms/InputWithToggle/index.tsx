@@ -1,8 +1,8 @@
-import { Input, type InputProps } from "@/module/forms/Input";
 import { Pencil } from "lucide-react";
 import { useState } from "react";
 import { Row } from "@/module/common/component/Row";
-import styles from "./index.module.css";
+import { Input, type InputProps } from "@/module/forms/Input";
+import { inputWithToggleButton } from "./input-with-toggle.css";
 
 export const InputWithToggle = ({ ref, disabled, ...props }: InputProps) => {
     const [isDisabled, setIsDisabled] = useState(true);
@@ -16,7 +16,7 @@ export const InputWithToggle = ({ ref, disabled, ...props }: InputProps) => {
             />
             <button
                 type={"button"}
-                className={styles.inputWithToggle__button}
+                className={inputWithToggleButton}
                 onClick={() => setIsDisabled(!isDisabled)}
                 disabled={disabled}
             >

@@ -1,6 +1,10 @@
 import { Indicator, Item, Root } from "@radix-ui/react-radio-group";
 import type { ComponentPropsWithRef } from "react";
-import styles from "./index.module.css";
+import {
+    radioGroup,
+    radioGroupIndicator,
+    radioGroupItem,
+} from "./radio-group.css";
 
 const RadioGroup = ({
     ref,
@@ -9,7 +13,7 @@ const RadioGroup = ({
 }: ComponentPropsWithRef<typeof Root>) => {
     return (
         <Root
-            className={`${styles.radioGroup} ${className}`}
+            className={`${radioGroup}${className ? ` ${className}` : ""}`}
             {...props}
             ref={ref}
         />
@@ -25,10 +29,10 @@ const RadioGroupItem = ({
     return (
         <Item
             ref={ref}
-            className={`${styles.radioGroup__item} ${className}`}
+            className={`${radioGroupItem}${className ? ` ${className}` : ""}`}
             {...props}
         >
-            <Indicator className={`${styles.radioGroup__indicator}`} />
+            <Indicator className={radioGroupIndicator} />
         </Item>
     );
 };
