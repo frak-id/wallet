@@ -1,4 +1,4 @@
-import type { NotificationPayload } from "@frak-labs/ui/types/NotificationPayload";
+import type { NotificationPayload } from "@/types/NotificationPayload";
 import type { Address } from "viem";
 import type { FormMembersFiltering } from "@/module/members/component/MembersFiltering";
 

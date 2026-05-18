@@ -3,7 +3,7 @@ import { isRunningInProd } from "@frak-labs/app-essentials";
 import { useWalletStatus } from "@frak-labs/react-sdk";
 import { Button, buttonVariants } from "@frak-labs/ui/component/Button";
 import { Input } from "@frak-labs/ui/component/forms/Input";
-import { IconInfo } from "@frak-labs/ui/component/IconInfo";
+import { IconInfo } from "@/module/common/component/IconInfo";
 import { Spinner } from "@frak-labs/ui/component/Spinner";
 import { Switch } from "@frak-labs/ui/component/Switch";
 import { Tooltip } from "@frak-labs/ui/component/Tooltip";

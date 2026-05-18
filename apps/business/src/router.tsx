@@ -1,4 +1,4 @@
-import { PendingLoader } from "@frak-labs/ui/component/PendingLoader";
+import { PendingLoader } from "@/module/common/component/PendingLoader";
 import { createRouter } from "@tanstack/react-router";
 
 // Import the generated route tree

@@ -1,5 +1,5 @@
 import { Button } from "@frak-labs/ui/component/Button";
-import { WalletAddress } from "@frak-labs/ui/component/HashDisplay";
+import { WalletAddress } from "@/module/common/component/HashDisplay";
 import type { CellContext } from "@tanstack/react-table";
 import { Trash2 } from "lucide-react";
 import { useState } from "react";

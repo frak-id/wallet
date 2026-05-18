@@ -1,5 +1,5 @@
-import { ButtonRefresh } from "@frak-labs/ui/component/ButtonRefresh";
-import { LogoFrak } from "@frak-labs/ui/icons/LogoFrak";
+import { ButtonRefresh } from "@/module/common/component/ButtonRefresh";
+import { LogoFrak } from "@/module/common/component/LogoFrak";
 import { Link } from "@tanstack/react-router";
 import { User } from "lucide-react";
 import { useIsDemoMode } from "@/module/common/atoms/demoMode";

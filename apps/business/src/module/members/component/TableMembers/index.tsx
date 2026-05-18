@@ -1,7 +1,7 @@
 import { formatAmount } from "@frak-labs/core-sdk";
 import { Button } from "@frak-labs/ui/component/Button";
 import { Checkbox } from "@frak-labs/ui/component/forms/Checkbox";
-import { WalletAddress } from "@frak-labs/ui/component/HashDisplay";
+import { WalletAddress } from "@/module/common/component/HashDisplay";
 import { Skeleton } from "@frak-labs/ui/component/Skeleton";
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import {

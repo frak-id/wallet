@@ -10,7 +10,7 @@ vi.mock("@tanstack/react-router", () => ({
     ),
 }));
 
-vi.mock("@frak-labs/ui/component/ButtonRefresh", () => ({
+vi.mock("@/module/common/component/ButtonRefresh", () => ({
     ButtonRefresh: () => <button type="button" data-testid="refresh-btn" />,
 }));
 

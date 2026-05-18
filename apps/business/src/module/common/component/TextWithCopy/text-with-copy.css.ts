@@ -1,14 +1,15 @@
 import { vars } from "@frak-labs/design-system/theme";
-import { style } from "@vanilla-extract/css";
+import { globalStyle, style } from "@vanilla-extract/css";
 
 export const container = style({
     display: "flex",
     flexWrap: "nowrap",
     alignItems: "center",
     gap: "14px",
-    selectors: {
-        "&  > :first-child": { overflowX: "auto" },
-    },
+});
+
+globalStyle(`${container} > :first-child`, {
+    overflowX: "auto",
 });
 
 export const trigger = style({

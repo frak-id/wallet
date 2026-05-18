@@ -1,4 +1,4 @@
-import type { InputNumberProps } from "@frak-labs/ui/component/forms/InputNumber";
+import type { InputNumberProps } from "@/module/forms/InputNumber";
 import { CircleDollarSign, Wallet } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { useFormContext } from "react-hook-form";

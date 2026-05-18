@@ -1,4 +1,4 @@
-import { keyframes, style } from "@vanilla-extract/css";
+import { globalStyle, keyframes, style } from "@vanilla-extract/css";
 
 const spin = keyframes({
     from: { transform: "rotate(0deg)" },
@@ -9,10 +9,8 @@ export const buttonRefresh = style({
     display: "flex",
 });
 
-export const buttonRefreshing = style({
-    selectors: {
-        "&  > svg": {
-            animation: `${spin} 1s linear infinite`,
-        },
-    },
+export const buttonRefreshing = style({});
+
+globalStyle(`${buttonRefreshing} > svg`, {
+    animation: `${spin} 1s linear infinite`,
 });

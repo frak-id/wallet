@@ -1,5 +1,5 @@
 import { Button } from "@frak-labs/ui/component/Button";
-import { InputSearch } from "@frak-labs/ui/component/forms/InputSearch";
+import { InputSearch } from "@/module/forms/InputSearch";
 import type { ColumnFiltersState } from "@tanstack/react-table";
 import { SlidersHorizontal } from "lucide-react";
 import { useMemo } from "react";
@@ -41,7 +41,7 @@ export function TablePerformanceFilters({
             <div className={styles.filters__item}>
                 <InputSearch
                     placeholder={"Search campaign..."}
-                    classNameWrapper={styles.filters__search}
+                    className={styles.filters__search}
                     value={currentTitle}
                     onChange={(e) => setTitleFilter(e.target.value)}
                 />

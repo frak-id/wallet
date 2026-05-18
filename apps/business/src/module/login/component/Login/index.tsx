@@ -1,5 +1,5 @@
 import { useSiweAuthenticate } from "@frak-labs/react-sdk";
-import { ClientOnly } from "@frak-labs/ui/component/ClientOnly";
+import { ClientOnly } from "@/module/common/component/ClientOnly";
 import { Spinner } from "@frak-labs/ui/component/Spinner";
 import { useMediaQuery } from "@frak-labs/design-system/hooks/useMediaQuery";
 import { useNavigate } from "@tanstack/react-router";

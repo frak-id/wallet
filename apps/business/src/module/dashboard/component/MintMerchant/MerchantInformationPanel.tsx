@@ -7,7 +7,7 @@ import {
 import { Button } from "@frak-labs/ui/component/Button";
 import { Input } from "@frak-labs/ui/component/forms/Input";
 import { Spinner } from "@frak-labs/ui/component/Spinner";
-import { TextWithCopy } from "@frak-labs/ui/component/TextWithCopy";
+import { TextWithCopy } from "@/module/common/component/TextWithCopy";
 import { validateUrl } from "@/module/common/utils/validateUrl";
 import { CheckCircle2, ExternalLink, XCircle } from "lucide-react";
 import type { UseFormReturn } from "react-hook-form";
