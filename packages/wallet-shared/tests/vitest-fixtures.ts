@@ -71,7 +71,6 @@ export type BaseTestFixtures = {
         authentication: {
             setLastWebAuthNAction: ReturnType<typeof import("vitest").vi.fn>;
             setLastAuthenticator: ReturnType<typeof import("vitest").vi.fn>;
-            clearAuthentication: ReturnType<typeof import("vitest").vi.fn>;
         };
     };
 
@@ -237,7 +236,13 @@ export const test = baseTest.extend<BaseTestFixtures>({
             "@frak-labs/wallet-shared"
         );
         await use(authenticationStore);
-        authenticationStore.getState().clearAuthentication();
+        authenticationStore.setState({
+            lastAuthenticator: null,
+            pendingRegistration: null,
+            lastAuthenticationAt: null,
+            lastWebAuthNAction: null,
+            ssoContext: null,
+        });
     },
 
     /**
@@ -255,7 +260,6 @@ export const test = baseTest.extend<BaseTestFixtures>({
             authentication: {
                 setLastWebAuthNAction: vi.fn(),
                 setLastAuthenticator: vi.fn(),
-                clearAuthentication: vi.fn(),
             },
         };
         await use(actions);
