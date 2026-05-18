@@ -3,7 +3,7 @@ import {
     AccordionContent,
     AccordionItem,
     AccordionTrigger,
-} from "@frak-labs/ui/component/Accordion";
+} from "@frak-labs/design-system/components/Accordion";
 import { Button } from "@frak-labs/ui/component/Button";
 import { Input } from "@frak-labs/ui/component/forms/Input";
 import { Spinner } from "@frak-labs/design-system/components/Spinner";
