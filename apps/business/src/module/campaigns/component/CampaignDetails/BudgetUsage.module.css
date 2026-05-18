@@ -6,9 +6,9 @@
 
 .budgetUsage__item {
     padding: 12px;
-    background: var(--frak-color-gray-1);
-    border: 1px solid var(--frak-color-gray-4);
-    border-radius: var(--frak-radius-2);
+    background: #f9fafb;
+    border: 1px solid #e2e2e2;
+    border-radius: 8px;
 }
 
 .budgetUsage__header {
@@ -21,26 +21,26 @@
 .budgetUsage__label {
     font-weight: 600;
     font-size: 14px;
-    color: var(--frak-color-gray-12);
+    color: #000000;
     text-transform: capitalize;
 }
 
 .budgetUsage__amounts {
     font-size: 13px;
-    color: var(--frak-color-gray-11);
+    color: #262626;
 }
 
 .budgetUsage__bar {
     width: 100%;
     height: 6px;
-    background: var(--frak-color-gray-4);
+    background: #e2e2e2;
     border-radius: 3px;
     overflow: hidden;
 }
 
 .budgetUsage__barFill {
     height: 100%;
-    background: var(--frak-color-primary);
+    background: #0043ef;
     border-radius: 3px;
     transition: width 0.3s ease;
 }
@@ -54,11 +54,11 @@
 
 .budgetUsage__spent {
     font-size: 12px;
-    color: var(--frak-color-gray-9);
+    color: #525252;
 }
 
 .budgetUsage__reset {
     font-size: 12px;
-    color: var(--frak-color-gray-9);
+    color: #525252;
     font-style: italic;
 }

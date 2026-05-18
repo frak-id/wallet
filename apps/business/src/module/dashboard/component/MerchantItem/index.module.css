@@ -7,7 +7,7 @@
     width: 295px;
     height: 413px;
     border-radius: 12px !important;
-    background: var(--frak-color-blur) !important;
+    background: rgba(245, 245, 245, 0.1) !important;
     backdrop-filter: blur(10px);
     line-height: 20px;
     text-align: center;
@@ -30,7 +30,7 @@
 .merchantItem__domain {
     font-size: 14px;
     font-weight: 400;
-    color: var(--frak-color-grayText);
+    color: #818c9c;
 }
 
 .merchantItem__actions {

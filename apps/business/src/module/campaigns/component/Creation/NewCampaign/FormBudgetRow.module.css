@@ -20,17 +20,17 @@
 .budget__label {
     font-size: 0.875rem;
     font-weight: 400;
-    color: var(--frak-color-tuna);
+    color: #333843;
 }
 
 .budget__value {
     font-size: 0.875rem;
     font-weight: 500;
-    color: var(--frak-color-royal-blue);
+    color: #5c59e8;
 }
 
 .budget__divider {
-    border-top: 1px dashed var(--frak-color-athens-gray);
+    border-top: 1px dashed #f0f1f3;
     margin: 0.5rem 0;
 }
 

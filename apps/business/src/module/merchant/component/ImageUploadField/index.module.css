@@ -29,9 +29,9 @@
     cursor: pointer;
     border-radius: 6px;
     font-size: 14px;
-    color: var(--frak-input-placeholder-color);
-    border: var(--frak-input-border-width) solid var(--frak-input-border-color);
-    background-color: var(--frak-input-background-color);
+    color: #858d9d;
+    border: 1px solid #e0e2e7;
+    background-color: #f9f9fc;
     transition: all 0.2s;
 }
 
@@ -48,9 +48,9 @@
     width: 320px;
     min-height: 64px;
     padding: 12px 16px;
-    border: 2px dashed var(--frak-input-border-color);
+    border: 2px dashed #e0e2e7;
     border-radius: 8px;
-    background-color: var(--frak-input-background-color);
+    background-color: #f9f9fc;
     cursor: pointer;
     transition:
         border-color 0.2s,
@@ -58,14 +58,14 @@
 }
 
 .dropzone:hover {
-    border-color: var(--frak-focus-border-color);
+    border-color: #5c59e8;
 }
 
 .dropzoneActive {
-    border-color: var(--frak-focus-border-color);
+    border-color: #5c59e8;
     background-color: color-mix(
         in srgb,
-        var(--frak-focus-border-color) 8%,
+        #5c59e8 8%,
         transparent
     );
 }
@@ -77,7 +77,7 @@
 
 .dropzoneText {
     font-size: 13px;
-    color: var(--frak-input-placeholder-color);
+    color: #858d9d;
     text-align: center;
 }
 
@@ -85,7 +85,7 @@
     margin: 0;
     font-size: 12px;
     line-height: 1.4;
-    color: var(--frak-input-placeholder-color);
+    color: #858d9d;
 }
 
 .error {
@@ -109,7 +109,7 @@
 .existingFilesLabel {
     margin: 0;
     font-size: 12px;
-    color: var(--frak-input-placeholder-color);
+    color: #858d9d;
 }
 
 .existingFilesList {
@@ -126,15 +126,15 @@
     width: 48px;
     height: 48px;
     border-radius: 6px;
-    border: 2px solid var(--frak-input-border-color);
-    background-color: var(--frak-input-background-color);
+    border: 2px solid #e0e2e7;
+    background-color: #f9f9fc;
     cursor: pointer;
     overflow: hidden;
     transition: border-color 0.2s;
 }
 
 .existingFileButton:hover {
-    border-color: var(--frak-focus-border-color);
+    border-color: #5c59e8;
 }
 
 .existingFileButton img {

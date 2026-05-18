@@ -7,12 +7,12 @@
 .table__budgetAmount {
     font-size: 0.875rem;
     font-weight: 500;
-    color: var(--frak-color-tuna);
+    color: #333843;
 }
 
 .table__budgetType {
     font-size: 0.75rem;
-    color: var(--frak-color-grayText);
+    color: #818c9c;
 }
 
 .table__actions {
@@ -30,12 +30,12 @@
     border: none;
     background: transparent;
     cursor: pointer;
-    color: var(--frak-color-grayText) !important;
+    color: #818c9c !important;
     transition: color 0.2s;
     text-decoration: none;
 }
 
 .table__actions button:hover,
 .table__actions a:hover {
-    color: var(--frak-color-tuna) !important;
+    color: #333843 !important;
 }

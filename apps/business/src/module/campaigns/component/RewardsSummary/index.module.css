@@ -1,11 +1,11 @@
 .rewards__empty {
     font-size: 14px;
-    color: var(--frak-color-gray-9);
+    color: #525252;
     font-style: italic;
     padding: 8px 12px;
-    background: var(--frak-color-gray-1);
-    border: 1px solid var(--frak-color-gray-4);
-    border-radius: var(--frak-radius-2);
+    background: #f9fafb;
+    border: 1px solid #e2e2e2;
+    border-radius: 8px;
 }
 
 .rewards__list {
@@ -22,34 +22,34 @@
     align-items: center;
     gap: 4px;
     font-size: 14px;
-    color: var(--frak-color-gray-11);
+    color: #262626;
     padding: 8px 12px;
-    background: var(--frak-color-gray-1);
-    border: 1px solid var(--frak-color-gray-4);
-    border-radius: var(--frak-radius-2);
+    background: #f9fafb;
+    border: 1px solid #e2e2e2;
+    border-radius: 8px;
 }
 
 .rewards__recipient {
     font-weight: 500;
-    color: var(--frak-color-gray-12);
+    color: #000000;
 }
 
 .rewards__separator {
-    color: var(--frak-color-gray-9);
+    color: #525252;
 }
 
 .rewards__amount {
     font-weight: 600;
-    color: var(--frak-color-primary);
+    color: #0043ef;
 }
 
 .rewards__chaining {
-    color: var(--frak-color-gray-9);
+    color: #525252;
     font-size: 13px;
 }
 
 .rewards__details {
-    color: var(--frak-color-gray-9);
+    color: #525252;
     font-size: 13px;
     font-weight: 400;
 }

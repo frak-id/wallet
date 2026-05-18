@@ -10,14 +10,14 @@
     gap: 8px;
     flex-wrap: wrap;
     padding: 8px 12px;
-    background: var(--frak-color-gray-1);
-    border: 1px solid var(--frak-color-gray-4);
-    border-radius: var(--frak-radius-2);
+    background: #f9fafb;
+    border: 1px solid #e2e2e2;
+    border-radius: 8px;
     font-size: 14px;
 }
 
 .conditions__operator {
-    color: var(--frak-color-gray-9);
+    color: #525252;
     font-size: 13px;
     font-weight: 500;
 }
@@ -27,15 +27,15 @@
     flex-direction: column;
     gap: 8px;
     padding: 12px;
-    background: var(--frak-color-gray-1);
-    border: 1px solid var(--frak-color-gray-4);
-    border-radius: var(--frak-radius-2);
+    background: #f9fafb;
+    border: 1px solid #e2e2e2;
+    border-radius: 8px;
 }
 
 .conditions__logic {
     font-weight: 600;
     font-size: 13px;
-    color: var(--frak-color-gray-11);
+    color: #262626;
     text-transform: uppercase;
     letter-spacing: 0.5px;
 }
@@ -45,5 +45,5 @@
     flex-direction: column;
     gap: 6px;
     padding-left: 12px;
-    border-left: 2px solid var(--frak-color-gray-4);
+    border-left: 2px solid #e2e2e2;
 }

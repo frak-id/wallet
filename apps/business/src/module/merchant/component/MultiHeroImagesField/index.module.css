@@ -19,9 +19,9 @@
     align-items: center;
     gap: 8px;
     padding: 6px 8px;
-    border: 1px solid var(--frak-input-border-color);
+    border: 1px solid #e0e2e7;
     border-radius: 6px;
-    background-color: var(--frak-input-background-color);
+    background-color: #f9f9fc;
 }
 
 .thumb {
@@ -30,7 +30,7 @@
     flex-shrink: 0;
     border-radius: 4px;
     overflow: hidden;
-    background-color: var(--frak-input-background-color);
+    background-color: #f9f9fc;
 }
 
 .thumb img {
@@ -46,7 +46,7 @@
     text-overflow: ellipsis;
     white-space: nowrap;
     font-size: 12px;
-    color: var(--frak-input-placeholder-color);
+    color: #858d9d;
 }
 
 .deleteButton {
@@ -61,9 +61,9 @@
     cursor: pointer;
     border-radius: 6px;
     font-size: 13px;
-    color: var(--frak-input-placeholder-color);
-    border: var(--frak-input-border-width) solid var(--frak-input-border-color);
-    background-color: var(--frak-input-background-color);
+    color: #858d9d;
+    border: 1px solid #e0e2e7;
+    background-color: #f9f9fc;
     transition: all 0.2s;
 }
 
@@ -83,8 +83,8 @@
     height: 160px;
     border-radius: 8px;
     overflow: hidden;
-    border: 1px solid var(--frak-input-border-color);
-    background-color: var(--frak-input-background-color);
+    border: 1px solid #e0e2e7;
+    background-color: #f9f9fc;
     box-shadow: 0 8px 24px rgba(0, 0, 0, 0.18);
 }
 
@@ -101,9 +101,9 @@
     width: 320px;
     min-height: 48px;
     padding: 10px 16px;
-    border: 2px dashed var(--frak-input-border-color);
+    border: 2px dashed #e0e2e7;
     border-radius: 8px;
-    background-color: var(--frak-input-background-color);
+    background-color: #f9f9fc;
     cursor: pointer;
     transition:
         border-color 0.2s,
@@ -111,14 +111,14 @@
 }
 
 .dropzone:hover {
-    border-color: var(--frak-focus-border-color);
+    border-color: #5c59e8;
 }
 
 .dropzoneActive {
-    border-color: var(--frak-focus-border-color);
+    border-color: #5c59e8;
     background-color: color-mix(
         in srgb,
-        var(--frak-focus-border-color) 8%,
+        #5c59e8 8%,
         transparent
     );
 }
@@ -130,7 +130,7 @@
 
 .dropzoneText {
     font-size: 13px;
-    color: var(--frak-input-placeholder-color);
+    color: #858d9d;
     text-align: center;
 }
 
@@ -138,7 +138,7 @@
     margin: 0;
     font-size: 12px;
     line-height: 1.4;
-    color: var(--frak-input-placeholder-color);
+    color: #858d9d;
 }
 
 .error {

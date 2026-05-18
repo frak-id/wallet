@@ -18,8 +18,8 @@
     border-radius: 8px;
     font-size: 14px;
     font-weight: 500;
-    background-color: var(--frak-input-background-color);
-    border: var(--frak-input-border-width) solid var(--frak-input-border-color);
+    background-color: #f9f9fc;
+    border: 1px solid #e0e2e7;
     transition: all 0.2s;
 }
 
@@ -30,9 +30,9 @@
 }
 
 .customize__tab--active {
-    background-color: var(--frak-focus-border-color);
+    background-color: #5c59e8;
     color: white;
-    border-color: var(--frak-focus-border-color);
+    border-color: #5c59e8;
 }
 
 .customize__overflow {
@@ -50,8 +50,8 @@
     gap: 2px;
     padding: 6px;
     border-radius: 8px;
-    border: var(--frak-input-border-width) solid var(--frak-input-border-color);
-    background: var(--frak-input-background-color);
+    border: 1px solid #e0e2e7;
+    background: #f9f9fc;
     box-shadow: 0 10px 24px rgba(0, 0, 0, 0.12);
 }
 
@@ -60,14 +60,14 @@
     cursor: pointer;
     padding: 8px 10px;
     border-radius: 6px;
-    color: var(--frak-text-color);
+    color: #ffffff;
     font-size: 14px;
 }
 
 .customize__overflowItem:hover {
     background: color-mix(
         in srgb,
-        var(--frak-focus-border-color) 12%,
+        #5c59e8 12%,
         transparent
     );
 }
@@ -86,11 +86,11 @@
     min-height: 220px;
     line-height: 20px;
     font-size: 14px;
-    color: var(--frak-input-text-color);
+    color: #333843;
     font-weight: 400;
-    border: var(--frak-input-border-width) solid var(--frak-input-border-color);
+    border: 1px solid #e0e2e7;
     border-radius: 8px;
-    background-color: var(--frak-input-background-color);
+    background-color: #f9f9fc;
     transition: border-color 0.2s;
     resize: vertical;
     font-family: "Fira Mono", "SF Mono", Menlo, Consolas, monospace;
@@ -98,11 +98,11 @@
 
 .customize__textarea:focus,
 .customize__select:focus {
-    box-shadow: 0 0 0 1px var(--frak-focus-border-color);
+    box-shadow: 0 0 0 1px #5c59e8;
 }
 
 .customize__textarea::placeholder {
-    color: var(--frak-input-placeholder-color);
+    color: #858d9d;
     opacity: 1;
 }
 
@@ -113,11 +113,11 @@
     width: 320px;
     line-height: 20px;
     font-size: 16px;
-    color: var(--frak-input-text-color);
+    color: #333843;
     font-weight: 400;
-    border: var(--frak-input-border-width) solid var(--frak-input-border-color);
+    border: 1px solid #e0e2e7;
     border-radius: 8px;
-    background-color: var(--frak-input-background-color);
+    background-color: #f9f9fc;
     transition: border-color 0.2s;
     appearance: auto;
 }
@@ -163,19 +163,19 @@
     border-radius: 8px;
     font-size: 14px;
     font-weight: 500;
-    background-color: var(--frak-input-background-color);
-    border: var(--frak-input-border-width) solid var(--frak-input-border-color);
+    background-color: #f9f9fc;
+    border: 1px solid #e0e2e7;
     transition: all 0.2s;
 }
 
 .customize__translationLangTab--active {
-    background-color: var(--frak-focus-border-color);
+    background-color: #5c59e8;
     color: white;
-    border-color: var(--frak-focus-border-color);
+    border-color: #5c59e8;
 }
 
 .customize__translationGroup {
-    border: var(--frak-input-border-width) solid var(--frak-input-border-color);
+    border: 1px solid #e0e2e7;
     border-radius: 10px;
     margin-bottom: 12px;
     overflow: hidden;
@@ -194,8 +194,8 @@
     font-weight: 600;
     background: color-mix(
         in srgb,
-        var(--frak-input-background-color) 88%,
-        var(--frak-focus-border-color) 12%
+        #f9f9fc 88%,
+        #5c59e8 12%
     );
 }
 
@@ -221,7 +221,7 @@
     margin: 0;
     font-size: 11px;
     font-family: "Fira Mono", "SF Mono", Menlo, Consolas, monospace;
-    color: var(--frak-input-placeholder-color);
+    color: #858d9d;
     line-height: 1;
 }
 
@@ -229,7 +229,7 @@
     margin: 0;
     font-size: 13px;
     line-height: 1.4;
-    color: var(--frak-input-placeholder-color);
+    color: #858d9d;
 }
 
 .customize__advancedSection {
@@ -248,14 +248,14 @@
     font-size: 14px;
     font-weight: 600;
     border-radius: 10px;
-    border: 1px dashed var(--frak-input-border-color);
-    color: var(--frak-input-placeholder-color);
+    border: 1px dashed #e0e2e7;
+    color: #858d9d;
     transition: all 0.2s;
 }
 
 .customize__advancedToggle:hover {
-    border-color: var(--frak-focus-border-color);
-    color: var(--frak-text-color);
+    border-color: #5c59e8;
+    color: #ffffff;
 }
 
 .customize__advancedBody {

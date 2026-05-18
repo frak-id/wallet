@@ -14,11 +14,11 @@
 .previewTitle {
     font-size: 14px;
     font-weight: 600;
-    color: var(--frak-text-color);
+    color: #ffffff;
 }
 
 .previewDescription {
     font-size: 12px;
-    color: var(--frak-input-placeholder-color);
+    color: #858d9d;
     margin-bottom: 0.5rem;
 }

@@ -3,8 +3,7 @@ import { createRootRoute, Link, Outlet } from "@tanstack/react-router";
 import { TanStackRouterDevtoolsPanel } from "@tanstack/react-router-devtools";
 import { RootProvider } from "@/module/common/provider/RootProvider";
 import "@/polyfill/bigint-serialization";
-import "@frak-labs/design-system/theme";
-import "@/styles/all.css";
+import "@/styles/all";
 import "nprogress/nprogress.css";
 import {
     errorContainer,

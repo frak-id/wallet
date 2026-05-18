@@ -66,7 +66,6 @@
         "countries-list": "^3.3.0",
         "date-fns": "^4.1.0",
         "lucide-react": "^0.577.0",
-        "normalize.css": "^8.0.1",
         "nprogress": "^0.2.0",
         "radash": "^12.1.1",
         "react": "catalog:",

@@ -8,7 +8,7 @@
 .formGoals__label_disabled {
     display: flex !important;
     align-items: center;
-    color: var(--frak-color-grayText);
+    color: #818c9c;
     gap: 8px;
 }
 
@@ -27,7 +27,7 @@
 
 .formGoals__information {
     padding: 16px;
-    color: var(--frak-color-pale-sky);
+    color: #667085;
 }
 
 .formGoals__information--awareness {
@@ -51,7 +51,7 @@
 }
 
 .formGoals__title {
-    color: var(--frak-color-tuna);
+    color: #333843;
     font-size: 16px;
     font-weight: 500;
 }

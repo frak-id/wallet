@@ -1,5 +1,5 @@
 .placeholder {
-    color: var(--frak-color-regent-gray);
+    color: #858d9d;
     font-style: italic;
     text-align: center;
     padding: 20px;
@@ -8,36 +8,36 @@
 .overallStatus__success {
     width: 100%;
     padding: 16px;
-    background-color: var(--frak-color-white-ice);
-    border-left: 4px solid var(--frak-color-malachite);
+    background-color: #e0f7fa;
+    border-left: 4px solid #0ddb84;
     border-radius: 4px;
     margin-bottom: 24px;
 }
 
 .overallStatus__success p {
     margin-top: 8px;
-    color: var(--frak-color-tuna);
+    color: #333843;
     font-size: 14px;
 }
 
 .overallStatus__warning {
     width: 100%;
     padding: 16px;
-    background-color: var(--frak-color-wild-sand);
-    border-left: 4px solid var(--frak-color-flush-orange);
+    background-color: #f5f5f5;
+    border-left: 4px solid #ff7a00;
     border-radius: 4px;
     margin-bottom: 24px;
 }
 
 .overallStatus__warning p {
     margin-top: 8px;
-    color: var(--frak-color-tuna);
+    color: #333843;
     font-size: 14px;
 }
 
 .stepItem {
     padding: 16px;
-    border-left: 4px solid var(--frak-color-mischka);
+    border-left: 4px solid #e0e2e7;
     margin-bottom: 24px;
     position: relative;
     width: 100%;
@@ -50,10 +50,10 @@
 }
 
 .stepPosition {
-    color: var(--frak-color-tuna);
+    color: #333843;
     width: 24px;
     height: 24px;
-    border-color: var(--frak-color-tuna);
+    border-color: #333843;
     border-radius: 50%;
     border-style: solid;
     border-width: 2px;
@@ -71,24 +71,24 @@
     font-weight: 500;
     display: flex;
     align-items: center;
-    color: var(--frak-color-shark);
+    color: #1a1c21;
 }
 
 .icon {
-    color: var(--frak-color-malachite);
+    color: #0ddb84;
     margin-left: 8px;
     flex-shrink: 0;
 }
 
 .iconWarning {
-    color: var(--frak-color-flush-orange);
+    color: #ff7a00;
     margin-left: 8px;
     flex-shrink: 0;
 }
 
 .description {
     margin: 8px 0 8px 36px;
-    color: var(--frak-color-gray);
+    color: #03193a;
     font-size: 14px;
     line-height: 1.5;
 }
