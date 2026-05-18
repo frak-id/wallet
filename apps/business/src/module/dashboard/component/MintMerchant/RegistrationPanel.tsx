@@ -1,4 +1,4 @@
-import { ButtonAuth } from "@frak-labs/ui/component/ButtonAuth";
+import { ButtonAuth } from "@/module/common/component/ButtonAuth";
 import { PanelAccordion } from "@/module/common/component/PanelAccordion";
 import styles from "./index.module.css";
 
