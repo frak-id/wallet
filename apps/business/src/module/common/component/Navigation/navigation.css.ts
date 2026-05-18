@@ -1,6 +1,5 @@
-import { brand } from "@frak-labs/design-system/tokens";
+import { vars } from "@frak-labs/design-system/theme";
 import { globalStyle, style } from "@vanilla-extract/css";
-import { brandColors } from "@/styles/brand";
 
 export const navigation = style({
     position: "fixed",
@@ -9,8 +8,8 @@ export const navigation = style({
     width: "256px",
     height: "calc(100dvh - 72px)",
     padding: "15px 28px 12px 10px",
-    background: brandColors.blur,
-    backdropFilter: "blur(10px)",
+    background: vars.surface.elevated,
+    borderRight: `1px solid ${vars.border.default}`,
     "@media": {
         "screen and (max-width: 768px)": {
             width: "48px",
@@ -45,17 +44,17 @@ export const navigationItemButton = style({
     padding: "0 0 0 12px",
     borderRadius: "5px",
     cursor: "pointer",
-    color: brand.colors.neutral.white,
+    color: vars.text.primary,
     transition:
         "background 0.15s, color 0.15s cubic-bezier(0.4, 0, 0.2, 1)",
     selectors: {
         "&:disabled": {
             cursor: "not-allowed",
-            color: brand.colors.neutral.grey400,
+            color: vars.text.disabled,
         },
         "&:hover": {
-            background: "rgba(245, 245, 245, 0.5)",
-            color: "rgba(0, 20, 50, 1)",
+            background: vars.surface.muted,
+            color: vars.text.action,
         },
     },
     "@media": {
@@ -67,8 +66,8 @@ export const navigationItemButton = style({
 });
 
 export const navigationItemButtonActive = style({
-    background: "rgba(245, 245, 245, 0.5)",
-    color: "rgba(0, 20, 50, 1)",
+    background: vars.surface.secondary,
+    color: vars.text.action,
 });
 
 export const navigationItemRightSection = style({

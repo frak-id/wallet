@@ -1,6 +1,5 @@
-import { brand } from "@frak-labs/design-system/tokens";
+import { vars } from "@frak-labs/design-system/theme";
 import { globalStyle, style } from "@vanilla-extract/css";
-import { brandColors } from "@/styles/brand";
 
 export const header = style({
     display: "flex",
@@ -13,8 +12,8 @@ export const header = style({
     width: "100%",
     height: "72px",
     padding: "16px 24px",
-    background: brandColors.blur,
-    backdropFilter: "blur(10px)",
+    background: vars.surface.elevated,
+    borderBottom: `1px solid ${vars.border.default}`,
 });
 
 export const headerLogo = style({
@@ -22,7 +21,7 @@ export const headerLogo = style({
     marginTop: "-18px",
     top: "50%",
     left: "28px",
-    color: "white",
+    color: vars.text.primary,
 });
 
 export const navigationTopContainer = style({
@@ -52,11 +51,12 @@ export const navigationProfile = style({
     display: "flex",
     alignItems: "center",
     gap: "12px",
+    color: vars.text.primary,
     "::before": {
         content: '""',
         width: "1px",
         height: "40px",
-        background: brand.colors.neutral.white,
+        background: vars.border.default,
     },
     "@media": {
         "screen and (max-width: 768px)": {
@@ -72,7 +72,7 @@ export const navigationProfileAvatar = style({
     width: "32px",
     height: "32px",
     borderRadius: "50%",
-    border: "1px solid white",
+    border: `1px solid ${vars.border.default}`,
     textAlign: "center",
 });
 
