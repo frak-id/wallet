@@ -1,4 +1,4 @@
-import { mergeElement } from "@frak-labs/ui/utils/mergeElement";
+import { mergeElement } from "@/module/common/utils/mergeElement";
 import { Link, useMatchRoute } from "@tanstack/react-router";
 import { cx } from "class-variance-authority";
 import type { PropsWithChildren, ReactNode } from "react";

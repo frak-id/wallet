@@ -1,7 +1,7 @@
 import { useSiweAuthenticate } from "@frak-labs/react-sdk";
 import { ClientOnly } from "@frak-labs/ui/component/ClientOnly";
 import { Spinner } from "@frak-labs/ui/component/Spinner";
-import { useMediaQuery } from "@frak-labs/ui/hook/useMediaQuery";
+import { useMediaQuery } from "@frak-labs/design-system/hooks/useMediaQuery";
 import { useNavigate } from "@tanstack/react-router";
 import { useTransition } from "react";
 import { authenticatedBackendApi } from "@/api/backendClient";

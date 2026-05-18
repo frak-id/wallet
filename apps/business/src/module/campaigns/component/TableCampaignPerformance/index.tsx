@@ -1,5 +1,5 @@
 import { Skeleton } from "@frak-labs/ui/component/Skeleton";
-import { computeWithPrecision } from "@frak-labs/ui/utils/computeWithPrecision";
+import { computeWithPrecision } from "@/module/common/utils/computeWithPrecision";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import type {
     CellContext,
