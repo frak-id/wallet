@@ -1,12 +1,12 @@
-import { Button, type ButtonProps } from "@/module/common/component/Button";
 import { CalendarIcon } from "lucide-react";
-import styles from "./index.module.css";
+import { Button, type ButtonProps } from "@/module/common/component/Button";
+import { buttonCalendarTrigger } from "./button-calendar.css";
 
 export const ButtonCalendar = ({ ref, children, ...props }: ButtonProps) => {
     return (
         <Button
             variant={"outline"}
-            className={styles.buttonCalendar__trigger}
+            className={buttonCalendarTrigger}
             ref={ref}
             {...props}
         >

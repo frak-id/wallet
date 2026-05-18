@@ -1,9 +1,8 @@
-import { buttonVariants } from "@/module/common/component/Button";
-import { cx } from "class-variance-authority";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import type { ComponentProps } from "react";
 import { DayPicker } from "react-day-picker";
-import styles from "./index.module.css";
+import { buttonVariants } from "@/module/common/component/Button";
+import * as styles from "./calendar.css";
 
 export type CalendarProps = ComponentProps<typeof DayPicker>;
 
@@ -16,7 +15,7 @@ export function Calendar({
     return (
         <DayPicker
             showOutsideDays={showOutsideDays}
-            className={cx(styles.root, className)}
+            className={`${styles.root}${className ? ` ${className}` : ""}`}
             classNames={{
                 months: styles.months,
                 month_caption: styles.caption,
@@ -29,14 +28,11 @@ export function Calendar({
                 weeks: styles.tbody,
                 week: styles.row,
                 day: styles.cell,
-                day_button: cx(
-                    buttonVariants({ variant: "ghost" }),
-                    styles.day
-                ),
+                day_button: `${buttonVariants({ variant: "ghost" })} ${styles.day}`,
                 range_end: "day-range-end",
                 selected: styles.daySelected,
                 today: styles.dayToday,
-                outside: cx("day-outside", styles.dayOutside),
+                outside: `day-outside ${styles.dayOutside}`,
                 disabled: styles.dayDisabled,
                 hidden: "invisible",
                 ...classNames,
