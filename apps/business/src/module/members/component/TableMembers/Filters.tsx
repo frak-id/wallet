@@ -31,7 +31,7 @@ export function TableMembersFilters() {
                     <PopoverTrigger asChild>
                         <Button
                             variant={"secondary"}
-                            leftIcon={<SlidersHorizontal size={20} />}
+                            icon={<SlidersHorizontal size={20} />}
                         >
                             Filters{" "}
                             <FiltersCount filter={tableMembersFilters.filter} />

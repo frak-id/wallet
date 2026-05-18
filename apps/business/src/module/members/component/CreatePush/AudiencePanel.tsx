@@ -71,7 +71,7 @@ function PreSelectedMembers({ members }: { members: Address[] }) {
                     setValue("target", undefined);
                     setValue("targetCount", 0);
                 }}
-                variant={"danger"}
+                variant={"destructive"}
             >
                 Clear selected members
             </Button>

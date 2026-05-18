@@ -70,7 +70,7 @@ export function TableTeam({ merchantId }: { merchantId: string }) {
             preTable={
                 hasAccess && (
                     <ButtonAddTeam merchantId={merchantId}>
-                        <Button variant={"submit"}>Add Team Member</Button>
+                        <Button variant={"primary"}>Add Team Member</Button>
                     </ButtonAddTeam>
                 )
             }

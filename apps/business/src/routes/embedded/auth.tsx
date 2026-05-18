@@ -87,7 +87,7 @@ function EmbeddedAuthPage() {
                             },
                         })
                     }
-                    isLoading={isPending}
+                    loading={isPending}
                     disabled={isPending}
                 >
                     {isPending && <Spinner />} Authenticate

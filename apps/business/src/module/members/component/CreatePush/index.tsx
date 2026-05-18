@@ -105,7 +105,7 @@ export function CreatePushNotification() {
                             />
                         }
                         right={
-                            <Button type={"submit"} variant={"information"}>
+                            <Button type={"submit"} variant={"secondary"}>
                                 Next
                             </Button>
                         }

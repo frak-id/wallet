@@ -130,7 +130,7 @@ function ConfirmationContent() {
                     <>
                         <Button
                             type={"button"}
-                            variant={"informationOutline"}
+                            variant={"secondary"}
                             disabled={isPending}
                             onClick={() => {
                                 window.history.back();
@@ -140,7 +140,7 @@ function ConfirmationContent() {
                         </Button>
                         <Button
                             type={"button"}
-                            variant={"submit"}
+                            variant={"primary"}
                             disabled={isPending}
                             onClick={() => {
                                 publishPushCampaign();

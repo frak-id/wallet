@@ -1,7 +1,7 @@
+import { button } from "@frak-labs/design-system/components/Button";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import type { ComponentProps } from "react";
 import { DayPicker } from "react-day-picker";
-import { buttonVariants } from "@/module/common/component/Button";
 import * as styles from "./calendar.css";
 
 export type CalendarProps = ComponentProps<typeof DayPicker>;
@@ -28,7 +28,7 @@ export function Calendar({
                 weeks: styles.tbody,
                 week: styles.row,
                 day: styles.cell,
-                day_button: `${buttonVariants({ variant: "ghost" })} ${styles.day}`,
+                day_button: `${button({ variant: "ghost" })} ${styles.day}`,
                 range_end: "day-range-end",
                 selected: styles.daySelected,
                 today: styles.dayToday,

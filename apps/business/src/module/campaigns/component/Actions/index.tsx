@@ -62,10 +62,10 @@ export const Actions = memo(function Actions({
                 <>
                     <Button
                         type={"button"}
-                        variant={"outline"}
+                        variant={"secondary"}
                         onClick={onSaveDraft}
                         disabled={isLoading || isSaving}
-                        isLoading={isSaving}
+                        loading={isSaving}
                     >
                         Save Draft
                     </Button>
@@ -75,10 +75,7 @@ export const Actions = memo(function Actions({
             right={
                 <>
                     {previousPath && !isSuccess && (
-                        <Button
-                            variant={"informationOutline"}
-                            onClick={handlePrevious}
-                        >
+                        <Button variant={"secondary"} onClick={handlePrevious}>
                             Previous
                         </Button>
                     )}
@@ -104,14 +101,14 @@ function ButtonNext({
     return isLastStep ? (
         <Button
             type={"submit"}
-            variant={"submit"}
-            isLoading={isLoading}
+            variant={"primary"}
+            loading={isLoading}
             disabled={isLoading}
         >
             Publish
         </Button>
     ) : (
-        <Button type={"submit"} variant={"information"}>
+        <Button type={"submit"} variant={"secondary"}>
             Next
         </Button>
     );

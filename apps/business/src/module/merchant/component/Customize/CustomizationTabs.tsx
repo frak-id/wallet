@@ -199,12 +199,12 @@ function CreatePlacementButton({
                     {error && <p className={"error"}>{error}</p>}
                 </div>
             }
-            cancel={<Button variant={"outline"}>Cancel</Button>}
+            cancel={<Button variant={"secondary"}>Cancel</Button>}
             action={
                 <Button
-                    variant={"submit"}
+                    variant={"primary"}
                     onClick={handleCreate}
-                    isLoading={isCreatingPlacement}
+                    loading={isCreatingPlacement}
                     disabled={isCreatingPlacement}
                 >
                     Create placement

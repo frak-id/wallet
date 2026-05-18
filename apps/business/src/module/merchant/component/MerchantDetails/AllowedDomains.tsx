@@ -59,7 +59,7 @@ export function AllowedDomains({
                         <li key={domain} className={styles.domainItem}>
                             <span>{domain}</span>
                             <Button
-                                variant={"danger"}
+                                variant={"destructive"}
                                 size={"small"}
                                 onClick={() => removeDomain(domain)}
                                 disabled={isRemoving}
@@ -88,11 +88,11 @@ export function AllowedDomains({
                 </Column>
                 <Column>
                     <Button
-                        variant={"submit"}
+                        variant={"primary"}
                         size={"small"}
                         onClick={handleAdd}
                         disabled={!isValid || isAdding}
-                        isLoading={isAdding}
+                        loading={isAdding}
                     >
                         Add Domain
                     </Button>

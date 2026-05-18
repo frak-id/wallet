@@ -13,7 +13,7 @@ import {
 import { useState } from "react";
 import { type Address, formatUnits, parseUnits } from "viem";
 import { Badge } from "@/module/common/component/Badge";
-import { Button, buttonVariants } from "@/module/common/component/Button";
+import { Button } from "@/module/common/component/Button";
 import { IconInfo } from "@/module/common/component/IconInfo";
 import { Panel } from "@/module/common/component/Panel";
 import { Row } from "@/module/common/component/Row";
@@ -74,9 +74,9 @@ export function MerchantFunding({ merchantId }: { merchantId: string }) {
                             rewards to your users.
                         </p>
                         <Button
-                            variant="submit"
+                            variant="primary"
                             onClick={() => syncBank()}
-                            isLoading={isSyncing}
+                            loading={isSyncing}
                             disabled={isSyncing}
                         >
                             Set Up Budget
@@ -165,14 +165,15 @@ function RewardBudgetView({
                 />
 
                 <div className={styles.fundActionsRow}>
-                    <a
+                    <Button
+                        as="a"
                         href={process.env.FUNDING_ON_RAMP_URL ?? "#"}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className={buttonVariants({ variant: "submit" })}
+                        variant="primary"
                     >
                         Add funds via Stripe
-                    </a>
+                    </Button>
                     {!isRunningInProd && (
                         <TestFundButton bankAddress={bankAddress} />
                     )}
@@ -312,7 +313,7 @@ function TokenCard({
                         {meta.currencySymbol}
                     </span>
                     <Tooltip content={meta.providerDescription}>
-                        <Badge size="small" variant="information">
+                        <Badge size="small" variant="secondary">
                             {meta.provider}
                         </Badge>
                     </Tooltip>
@@ -486,10 +487,10 @@ function TokenActions({
                     />
                     <Button
                         size="small"
-                        variant="submit"
+                        variant="primary"
                         onClick={handleUpdateAllowance}
                         disabled={!inputValue || isPending}
-                        isLoading={isUpdatingAllowance}
+                        loading={isUpdatingAllowance}
                     >
                         Confirm
                     </Button>
@@ -523,10 +524,10 @@ function TokenActions({
                     />
                     <Button
                         size="small"
-                        variant="submit"
+                        variant="primary"
                         onClick={handleWithdraw}
                         disabled={!inputValue || isPending}
-                        isLoading={isWithdrawing}
+                        loading={isWithdrawing}
                     >
                         Withdraw
                     </Button>
@@ -558,7 +559,7 @@ function TokenActions({
                 {needsAllowanceIncrease && (
                     <Button
                         size="small"
-                        variant="outline"
+                        variant="secondary"
                         onClick={() => setAction("allowance")}
                     >
                         <ArrowUpCircle width={14} height={14} />
@@ -573,7 +574,7 @@ function TokenActions({
                             revokeAllowance({ token: token.address })
                         }
                         disabled={isPending}
-                        isLoading={isRevokingAllowance}
+                        loading={isRevokingAllowance}
                     >
                         <PauseCircle width={14} height={14} />
                         Pause rewards
@@ -602,7 +603,7 @@ function TestFundButton({ bankAddress }: { bankAddress: Address }) {
             variant="secondary"
             onClick={() => fundTestBank({ bank: bankAddress })}
             disabled={isPending}
-            isLoading={isPending}
+            loading={isPending}
         >
             <Wallet width={16} height={16} />
             Fund with Test Tokens

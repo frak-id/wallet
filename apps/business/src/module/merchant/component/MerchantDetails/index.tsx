@@ -166,7 +166,7 @@ export function MerchantDetails({ merchantId }: { merchantId: string }) {
                             </Column>
                             <Column>
                                 <Button
-                                    variant={"informationOutline"}
+                                    variant={"secondary"}
                                     onClick={() => {
                                         form.reset(formValues);
                                     }}
@@ -178,7 +178,7 @@ export function MerchantDetails({ merchantId }: { merchantId: string }) {
                                     Discard Changes
                                 </Button>
                                 <Button
-                                    variant={"submit"}
+                                    variant={"primary"}
                                     onClick={() => {
                                         form.handleSubmit(onSubmit)();
                                     }}
@@ -186,7 +186,7 @@ export function MerchantDetails({ merchantId }: { merchantId: string }) {
                                         editMerchantPending ||
                                         !form.formState.isDirty
                                     }
-                                    isLoading={editMerchantPending}
+                                    loading={editMerchantPending}
                                 >
                                     Validate
                                 </Button>

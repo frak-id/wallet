@@ -22,17 +22,17 @@ export function FormActions({
             <Column>{isSuccess && <ActionsMessageSuccess />}</Column>
             <Column>
                 <Button
-                    variant={"informationOutline"}
+                    variant={"secondary"}
                     onClick={onDiscard}
                     disabled={isPending || !isDirty}
                 >
                     Discard Changes
                 </Button>
                 <Button
-                    variant={"submit"}
+                    variant={"primary"}
                     onClick={onSubmit}
                     disabled={isPending || !isDirty}
-                    isLoading={isPending}
+                    loading={isPending}
                 >
                     Validate
                 </Button>

@@ -9,7 +9,7 @@ export function ButtonNewCampaign() {
         <LinkButton
             to="/campaigns/draft/new"
             onClick={() => reset()}
-            leftIcon={<Plus size={20} />}
+            icon={<Plus size={20} />}
         >
             Create Campaign
         </LinkButton>

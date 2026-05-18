@@ -56,7 +56,7 @@ export function PurchaseTrackerWebhook({ merchantId }: { merchantId: string }) {
                                 : "Webhook not registered"}
                         </Badge>
                         {webhookStatus.setup && webhookStatus.platform && (
-                            <Badge variant={"information"}>
+                            <Badge variant={"secondary"}>
                                 {webhookStatus.platform}
                             </Badge>
                         )}
@@ -265,7 +265,7 @@ function CustomRegistrationForm({
             <p>And finally Register it on Frak via this button</p>
             <Button
                 type="button"
-                variant="information"
+                variant="secondary"
                 disabled={isPending}
                 onClick={() => {
                     setupWebhook({
@@ -323,7 +323,7 @@ function WooCommerceRegistrationForm({
             <p>And finally Register it on Frak via this button</p>
             <Button
                 type="button"
-                variant="information"
+                variant="secondary"
                 disabled={isPending}
                 onClick={() => {
                     setupWebhook({
@@ -390,7 +390,7 @@ function MagentoRegistrationForm({
             <p>And finally Register it on Frak via this button</p>
             <Button
                 type="button"
-                variant="information"
+                variant="secondary"
                 disabled={isPending}
                 onClick={() => {
                     setupWebhook({
@@ -466,7 +466,7 @@ function ShopifyRegistrationForm({
                     {error && <p className={"error"}>{error}</p>}
                     <Button
                         type="submit"
-                        variant="information"
+                        variant="secondary"
                         disabled={isPending}
                     >
                         {currentSigninKey

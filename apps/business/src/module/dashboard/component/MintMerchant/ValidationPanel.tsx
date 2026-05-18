@@ -71,14 +71,14 @@ export function ValidationPanel({
                     </div>
                     <div className={styles.continueSection}>
                         <Button
-                            variant={"informationOutline"}
+                            variant={"secondary"}
                             onClick={onPrevious}
                             disabled={!form.formState.isValid}
                         >
                             Previous
                         </Button>
                         <Button
-                            variant="information"
+                            variant="secondary"
                             onClick={onNext}
                             disabled={!form.formState.isValid}
                         >

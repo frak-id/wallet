@@ -30,6 +30,7 @@ function MerchantListSection({
 
             <Button
                 size={"none"}
+                width={"auto"}
                 variant={"ghost"}
                 onClick={() => {
                     navigate({ to: "/mint" });

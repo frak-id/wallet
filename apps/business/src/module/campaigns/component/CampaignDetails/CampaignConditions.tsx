@@ -59,11 +59,11 @@ function ConditionItem({ condition }: { condition: RuleCondition }) {
             <span className={styles.conditions__operator}>{operatorLabel}</span>
             {condition.operator === "between" ? (
                 <>
-                    <Badge variant={"information"}>
+                    <Badge variant={"secondary"}>
                         {formatValue(condition.field, condition.value)}
                     </Badge>
                     <span className={styles.conditions__operator}>and</span>
-                    <Badge variant={"information"}>
+                    <Badge variant={"secondary"}>
                         {formatValue(
                             condition.field,
                             condition.valueTo ?? null
@@ -72,7 +72,7 @@ function ConditionItem({ condition }: { condition: RuleCondition }) {
                 </>
             ) : condition.operator !== "exists" &&
               condition.operator !== "not_exists" ? (
-                <Badge variant={"information"}>
+                <Badge variant={"secondary"}>
                     {formatValue(condition.field, condition.value)}
                 </Badge>
             ) : null}

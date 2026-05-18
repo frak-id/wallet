@@ -51,7 +51,7 @@ function Settings() {
                         : "You will be logged out of your account."}
                 </p>
                 <Button
-                    variant={"submit"}
+                    variant={"primary"}
                     className={logoutButton}
                     onClick={() => {
                         if (isDemoMode) {

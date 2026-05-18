@@ -42,9 +42,9 @@ export function CampaignEdit({ campaignId }: { campaignId: string }) {
                         right={
                             <Button
                                 type="submit"
-                                variant="submit"
+                                variant="primary"
                                 disabled={saveCampaign.isPending}
-                                isLoading={saveCampaign.isPending}
+                                loading={saveCampaign.isPending}
                             >
                                 Save Changes
                             </Button>

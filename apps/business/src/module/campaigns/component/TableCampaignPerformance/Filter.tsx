@@ -49,7 +49,7 @@ export function TablePerformanceFilters({
             <div className={styles.filters__item}>
                 <Button
                     variant={"secondary"}
-                    leftIcon={<SlidersHorizontal size={20} />}
+                    icon={<SlidersHorizontal size={20} />}
                     onClick={() => resetFilters()}
                 >
                     Reset filters

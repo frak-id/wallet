@@ -1,9 +1,9 @@
-import { Button } from "@frak-labs/design-system/components/Button";
 import { Text } from "@frak-labs/design-system/components/Text";
 import type { ErrorComponentProps } from "@tanstack/react-router";
 import { Link } from "@tanstack/react-router";
 import { AlertTriangle } from "lucide-react";
 import type { ReactNode } from "react";
+import { Button } from "@/module/common/component/Button";
 import * as styles from "./route-error.css";
 
 type ErrorBoundaryProps = {

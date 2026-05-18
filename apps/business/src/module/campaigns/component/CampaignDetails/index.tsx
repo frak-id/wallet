@@ -94,7 +94,7 @@ export function CampaignDetails({
             </Panel>
             <ActionsWrapper
                 right={
-                    <LinkButton to="/campaigns/list" variant="submit">
+                    <LinkButton to="/campaigns/list" variant="primary">
                         Close
                     </LinkButton>
                 }

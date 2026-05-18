@@ -1,4 +1,9 @@
-import type { ComponentProps, ComponentPropsWithRef, ReactNode } from "react";
+import type {
+    ButtonHTMLAttributes,
+    ComponentProps,
+    ComponentPropsWithRef,
+    ReactNode,
+} from "react";
 import { Button } from "@/module/common/component/Button";
 import {
     pagination,
@@ -39,10 +44,14 @@ const PaginationItem = ({
 );
 PaginationItem.displayName = "PaginationItem";
 
-type PaginationLinkProps = {
+type PaginationLinkProps = Omit<
+    ButtonHTMLAttributes<HTMLButtonElement>,
+    "size"
+> & {
     isActive?: boolean;
     children?: ReactNode;
-} & ComponentProps<typeof Button>;
+    size?: "small" | "medium" | "large" | "none";
+};
 
 const PaginationLink = ({
     className,

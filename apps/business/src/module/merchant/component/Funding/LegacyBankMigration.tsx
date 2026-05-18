@@ -115,10 +115,10 @@ function LegacyBankMigrationContent({
 
             <div className={styles.legacyPanel__actions}>
                 <Button
-                    variant="submit"
+                    variant="primary"
                     size="small"
                     onClick={handleMigrate}
-                    isLoading={isPending}
+                    loading={isPending}
                     disabled={isPending}
                 >
                     <ArrowRightLeft width={14} height={14} />

@@ -129,7 +129,7 @@ function WarningStatusItem({
             <div className={styles.actions}>
                 <LinkButton
                     to={item.resolvingPage as LinkProps["to"]}
-                    variant="information"
+                    variant="secondary"
                 >
                     Complete this step
                 </LinkButton>

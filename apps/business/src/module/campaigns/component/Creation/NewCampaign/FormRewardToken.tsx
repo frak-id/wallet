@@ -214,7 +214,7 @@ export function FormRewardToken() {
                                                         )}
                                                         <Badge
                                                             size="small"
-                                                            variant="information"
+                                                            variant="secondary"
                                                         >
                                                             {currency.group}
                                                         </Badge>

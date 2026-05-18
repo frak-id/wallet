@@ -86,13 +86,13 @@ export function ButtonAddTeam({
                         </>
                     }
                     cancel={
-                        <Button variant={"outline"} disabled={isAddingMember}>
+                        <Button variant={"secondary"} disabled={isAddingMember}>
                             Cancel
                         </Button>
                     }
                     action={
                         <Button
-                            variant={"submit"}
+                            variant={"primary"}
                             disabled={!form.formState.isValid || isAddingMember}
                             onClick={form.handleSubmit(onSubmit)}
                         >
@@ -136,7 +136,7 @@ function FormWallet({ disabled }: { disabled: boolean }) {
                                 value={field.value ?? ""}
                             />
                             <Button
-                                variant={"submit"}
+                                variant={"primary"}
                                 disabled={disabled}
                                 onClick={() => {
                                     trigger("wallet");

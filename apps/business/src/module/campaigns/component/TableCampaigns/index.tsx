@@ -225,11 +225,11 @@ function ModalPause({
                     <p className={"error"}>An error occurred, try again</p>
                 ) : undefined
             }
-            cancel={<Button variant={"outline"}>Cancel</Button>}
+            cancel={<Button variant={"secondary"}>Cancel</Button>}
             action={
                 <Button
                     variant={"secondary"}
-                    isLoading={isPausing}
+                    loading={isPausing}
                     disabled={isPausing}
                     onClick={async () => {
                         await onPauseClick({
@@ -278,11 +278,11 @@ function ModalResume({
                     <p className={"error"}>An error occurred, try again</p>
                 ) : undefined
             }
-            cancel={<Button variant={"outline"}>Cancel</Button>}
+            cancel={<Button variant={"secondary"}>Cancel</Button>}
             action={
                 <Button
-                    variant={"submit"}
-                    isLoading={isResuming}
+                    variant={"primary"}
+                    loading={isResuming}
                     disabled={isResuming}
                     onClick={async () => {
                         await onResumeClick({
@@ -331,11 +331,11 @@ function ModalArchive({
                     <p className={"error"}>An error occurred, try again</p>
                 ) : undefined
             }
-            cancel={<Button variant={"outline"}>Cancel</Button>}
+            cancel={<Button variant={"secondary"}>Cancel</Button>}
             action={
                 <Button
                     variant={"secondary"}
-                    isLoading={isArchiving}
+                    loading={isArchiving}
                     disabled={isArchiving}
                     onClick={async () => {
                         await onArchiveClick({
@@ -384,11 +384,11 @@ function ModalDelete({
                     <p className={"error"}>An error occurred, try again</p>
                 ) : undefined
             }
-            cancel={<Button variant={"outline"}>Cancel</Button>}
+            cancel={<Button variant={"secondary"}>Cancel</Button>}
             action={
                 <Button
-                    variant={"danger"}
-                    isLoading={isDeleting}
+                    variant={"destructive"}
+                    loading={isDeleting}
                     disabled={isDeleting}
                     onClick={async () => {
                         await onDeleteClick({

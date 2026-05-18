@@ -1,5 +1,5 @@
 import { CheckIcon, ChevronDown, X, XIcon } from "lucide-react";
-import type { ComponentPropsWithRef } from "react";
+import type { ButtonHTMLAttributes, Ref } from "react";
 import { useState } from "react";
 import { Badge } from "@/module/common/component/Badge";
 import { Button } from "@/module/common/component/Button";
@@ -27,12 +27,19 @@ type Option = {
     tooltip?: string;
 };
 
-export type MultiSelectProps = ComponentPropsWithRef<typeof Button> & {
+// The trigger is fixed to `variant="secondary"` so we intentionally do NOT
+// extend the DS Button recipe variants here — exposing them on a multi-select
+// would invite drift between callsites. Use raw button HTML attrs as the base.
+export type MultiSelectProps = Omit<
+    ButtonHTMLAttributes<HTMLButtonElement>,
+    "value" | "onChange"
+> & {
+    ref?: Ref<HTMLButtonElement>;
+    value?: string[];
     options: Option[];
     onValueChange: (value: Option[]) => void;
     placeholder?: string;
     animation?: number;
-    asChild?: boolean;
     className?: string;
 };
 
@@ -42,7 +49,6 @@ export const MultiSelect = ({
     onValueChange,
     value,
     placeholder = "Select options",
-    asChild = false,
     className,
     ...props
 }: MultiSelectProps) => {
@@ -80,7 +86,7 @@ export const MultiSelect = ({
         <Popover open={isPopoverOpen} onOpenChange={setIsPopoverOpen}>
             <PopoverTrigger asChild>
                 <Button
-                    variant={"trigger"}
+                    variant={"secondary"}
                     ref={ref}
                     {...props}
                     onClick={handleTogglePopover}
@@ -173,7 +179,7 @@ function SelectedValues({
                         .map((option) => (
                             <Badge
                                 key={option.name}
-                                variant={"information"}
+                                variant={"secondary"}
                                 className={styles.multiSelectBadge}
                             >
                                 {option?.name}
@@ -211,7 +217,7 @@ function SelectedValuesMore({ size }: { size: number }) {
         <div className={styles.multiSelectTriggerInner}>
             <div className={styles.multiSelectTriggerBadges}>
                 <Badge
-                    variant={"information"}
+                    variant={"secondary"}
                     className={styles.multiSelectBadge}
                 >
                     {size} selected

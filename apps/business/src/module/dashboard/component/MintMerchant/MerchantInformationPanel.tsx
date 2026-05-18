@@ -267,7 +267,7 @@ export function MerchantInformationPanel({
 
                     <div className={styles.continueSection}>
                         <Button
-                            variant="information"
+                            variant="secondary"
                             onClick={onVerifyDomain}
                             type="button"
                             disabled={step > 1}

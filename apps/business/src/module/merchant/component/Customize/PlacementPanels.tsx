@@ -231,11 +231,11 @@ export function DeletePlacementPanel({
                     </button>
                 }
                 description={`This will remove all overrides for placement ${placementId}.`}
-                cancel={<Button variant={"outline"}>Cancel</Button>}
+                cancel={<Button variant={"secondary"}>Cancel</Button>}
                 action={
                     <Button
-                        variant={"danger"}
-                        isLoading={isPending}
+                        variant={"destructive"}
+                        loading={isPending}
                         disabled={isPending}
                         onClick={async () => {
                             const currentPlacements = {

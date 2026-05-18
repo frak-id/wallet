@@ -186,7 +186,7 @@ export function TableMembers() {
                                     <Button
                                         type={"button"}
                                         onClick={() => clearSelection()}
-                                        variant={"outline"}
+                                        variant={"secondary"}
                                     >
                                         Clear selection
                                     </Button>

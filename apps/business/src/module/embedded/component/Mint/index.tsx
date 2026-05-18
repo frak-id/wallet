@@ -131,7 +131,7 @@ function DoMintComponent({
                         allowedDomains: shopDomain ? [shopDomain] : undefined,
                     })
                 }
-                isLoading={isPending}
+                loading={isPending}
                 disabled={isPending}
             >
                 {isPending ? infoTxt : "Register your shop"}

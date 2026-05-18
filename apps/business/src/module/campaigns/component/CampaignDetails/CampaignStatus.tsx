@@ -52,11 +52,11 @@ export function CampaignStatus({ campaign }: { campaign: Campaign }) {
                                 key={action}
                                 variant={
                                     action === "archive"
-                                        ? "danger"
+                                        ? "destructive"
                                         : "secondary"
                                 }
                                 disabled={isPending}
-                                isLoading={isPending}
+                                loading={isPending}
                                 onClick={() =>
                                     transition({
                                         merchantId: campaign.merchantId,

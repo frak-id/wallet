@@ -98,7 +98,7 @@ export function TableCampaignFilters({
                 </Popover>
                 <Button
                     variant={"secondary"}
-                    leftIcon={<SlidersHorizontal size={20} />}
+                    icon={<SlidersHorizontal size={20} />}
                     onClick={resetFilters}
                 >
                     Reset filters

@@ -25,8 +25,8 @@ export function ButtonWithConfirmationAlert({
             title={title}
             buttonElement={
                 <Button
-                    variant={"outline"}
-                    leftIcon={<X size={20} />}
+                    variant={"secondary"}
+                    icon={<X size={20} />}
                     disabled={disabled}
                 >
                     {buttonText}
@@ -35,7 +35,7 @@ export function ButtonWithConfirmationAlert({
             description={description}
             action={
                 <Button
-                    variant={"danger"}
+                    variant={"destructive"}
                     onClick={() => {
                         onClick?.();
                         setOpen(false);

@@ -41,11 +41,11 @@ export function DeleteTeamMemberModal({
                     <p className={"error"}>An error occurred, try again</p>
                 ) : undefined
             }
-            cancel={<Button variant={"outline"}>Cancel</Button>}
+            cancel={<Button variant={"secondary"}>Cancel</Button>}
             action={
                 <Button
-                    variant={"danger"}
-                    isLoading={isDeleting}
+                    variant={"destructive"}
+                    loading={isDeleting}
                     disabled={isDeleting}
                     onClick={async () => {
                         await onDeleteClick({
