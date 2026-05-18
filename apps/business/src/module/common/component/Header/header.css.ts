@@ -47,6 +47,17 @@ export const navigationTopItemButton = style({
     cursor: "pointer",
 });
 
+export const navigationProfileSeparator = style({
+    width: "1px",
+    height: "32px",
+    background: vars.border.default,
+    "@media": {
+        "screen and (max-width: 768px)": {
+            display: "none",
+        },
+    },
+});
+
 export const navigationProfile = style({
     display: "flex",
     alignItems: "center",
@@ -56,23 +67,9 @@ export const navigationProfile = style({
     color: vars.text.primary,
     textDecoration: "none",
     transition: "background-color 0.15s ease",
-    "::before": {
-        content: '""',
-        width: "1px",
-        height: "32px",
-        background: vars.border.default,
-        marginRight: "4px",
-    },
     selectors: {
         "&:hover": {
             backgroundColor: vars.surface.muted,
-        },
-    },
-    "@media": {
-        "screen and (max-width: 768px)": {
-            "::before": {
-                display: "none",
-            },
         },
     },
 });

@@ -10,6 +10,7 @@ import {
     navigationProfile,
     navigationProfileAvatar,
     navigationProfileInfos,
+    navigationProfileSeparator,
     navigationTopContainer,
 } from "./header.css";
 
@@ -33,6 +34,10 @@ export function Header() {
                         </Link>
                     )}
                     <ButtonRefresh />
+                    <span
+                        className={navigationProfileSeparator}
+                        aria-hidden="true"
+                    />
                     <Link to="/settings" className={navigationProfile}>
                         <span>
                             <span className={navigationProfileAvatar}>
