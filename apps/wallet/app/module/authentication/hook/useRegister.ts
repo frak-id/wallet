@@ -61,8 +61,14 @@ export function useRegister(
                         prefix: publicKey.prefix,
                     },
                     raw: encodedResponse,
-                    merchantId: args?.merchantId || undefined,
-                    email: args?.email || undefined,
+                    merchantId:
+                        typeof args?.merchantId === "string"
+                            ? args.merchantId
+                            : undefined,
+                    email:
+                        typeof args?.email === "string"
+                            ? args.email
+                            : undefined,
                 });
             if (error) {
                 throw error;

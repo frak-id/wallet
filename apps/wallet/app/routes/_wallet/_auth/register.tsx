@@ -368,7 +368,7 @@ function RegisterPage() {
                 <OnboardingStep
                     hero={onboardingSteps[2]}
                     buttonLabel={t("onboarding.activateSecureSpace")}
-                    onContinue={handleOpenKeypass}
+                    onContinue={() => handleOpenKeypass()}
                     onBack={() => goToStep("emailInput", "backward")}
                 />
             )}
