@@ -93,19 +93,31 @@ async function doInit(): Promise<void> {
  *   product cards on the sharing page.
  * - `placement` lets the caller scope backend-driven CSS / config to a
  *   specific placement (mirrors the prop on the components).
+ *
+ * The four params are stripped from the URL via `history.replaceState` as
+ * soon as they are read, so refreshes / shares of the current URL do not
+ * re-trigger the auto-open. Matches the `fmt` (merge token) and `sso`
+ * cleanup patterns elsewhere in the SDK.
  */
 function handleActionQueryParam() {
-    const urlParams = new URLSearchParams(window.location.search);
-    const frakAction = urlParams.get("frakAction");
-    if (frakAction !== "share") {
+    const url = new URL(window.location.href);
+    if (url.searchParams.get("frakAction") !== "share") {
         return;
     }
 
     console.log("[Frak SDK] Auto open share via query param");
 
-    const link = urlParams.get("link") ?? undefined;
-    const placement = urlParams.get("placement") ?? undefined;
-    const products = decodeProductsParam(urlParams.get("products"));
+    const link = url.searchParams.get("link") ?? undefined;
+    const placement = url.searchParams.get("placement") ?? undefined;
+    const products = decodeProductsParam(url.searchParams.get("products"));
+
+    // Clean URL immediately so a refresh / share of the current URL does
+    // not re-trigger the auto-open. Same idiom as `fmt` / `sso` cleanup.
+    url.searchParams.delete("frakAction");
+    url.searchParams.delete("link");
+    url.searchParams.delete("placement");
+    url.searchParams.delete("products");
+    window.history.replaceState({}, "", url.toString());
 
     openSharingPage(undefined, placement, { link, products });
 }

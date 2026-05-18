@@ -50,10 +50,12 @@ describe.sequential("initFrakSdk", () => {
         // Reset URL search params
         Object.defineProperty(window, "location", {
             value: {
-                search: "",
+                href: "https://example.com/",
             },
             writable: true,
         });
+        // Spy on history.replaceState so we can assert URL cleanup
+        window.history.replaceState = vi.fn();
     });
 
     afterEach(() => {
@@ -197,7 +199,7 @@ describe.sequential("initFrakSdk", () => {
         // Set up URL search params
         Object.defineProperty(window, "location", {
             value: {
-                search: "?frakAction=share",
+                href: "https://example.com/?frakAction=share",
             },
             writable: true,
         });
@@ -216,6 +218,12 @@ describe.sequential("initFrakSdk", () => {
         expect(consoleLogSpy).toHaveBeenCalledWith(
             "[Frak SDK] Auto open share via query param"
         );
+        // URL should be cleaned so a refresh does not re-trigger auto-open
+        expect(window.history.replaceState).toHaveBeenCalledWith(
+            {},
+            "",
+            "https://example.com/"
+        );
 
         consoleLogSpy.mockRestore();
     });
@@ -233,7 +241,7 @@ describe.sequential("initFrakSdk", () => {
 
         Object.defineProperty(window, "location", {
             value: {
-                search: `?frakAction=share&link=https%3A%2F%2Fexample.com%2Forder%2F1&placement=klaviyo-post-purchase&products=${encodeURIComponent(productsParam)}`,
+                href: `https://example.com/order/42?frakAction=share&link=https%3A%2F%2Fexample.com%2Forder%2F1&placement=klaviyo-post-purchase&products=${encodeURIComponent(productsParam)}&keep=me`,
             },
             writable: true,
         });
@@ -252,6 +260,13 @@ describe.sequential("initFrakSdk", () => {
                 products,
             }
         );
+        // Only the four frak-managed params are stripped; unrelated query
+        // params on the merchant URL (e.g. `keep=me`) survive.
+        expect(window.history.replaceState).toHaveBeenCalledWith(
+            {},
+            "",
+            "https://example.com/order/42?keep=me"
+        );
 
         consoleLogSpy.mockRestore();
     });
@@ -264,7 +279,7 @@ describe.sequential("initFrakSdk", () => {
 
         Object.defineProperty(window, "location", {
             value: {
-                search: "?frakAction=share&products=$$$not-base64$$$",
+                href: "https://example.com/?frakAction=share&products=$$$not-base64$$$",
             },
             writable: true,
         });
@@ -279,6 +294,11 @@ describe.sequential("initFrakSdk", () => {
             undefined,
             undefined,
             { link: undefined, products: undefined }
+        );
+        expect(window.history.replaceState).toHaveBeenCalledWith(
+            {},
+            "",
+            "https://example.com/"
         );
 
         consoleLogSpy.mockRestore();
@@ -309,7 +329,7 @@ describe.sequential("initFrakSdk", () => {
 
         Object.defineProperty(window, "location", {
             value: {
-                search: "?frakAction=other",
+                href: "https://example.com/?frakAction=other",
             },
             writable: true,
         });
@@ -317,5 +337,7 @@ describe.sequential("initFrakSdk", () => {
         await initFrakSdk();
 
         expect(sharingPageUtils.openSharingPage).not.toHaveBeenCalled();
+        // No share intent means we never touch the URL either
+        expect(window.history.replaceState).not.toHaveBeenCalled();
     });
 });
