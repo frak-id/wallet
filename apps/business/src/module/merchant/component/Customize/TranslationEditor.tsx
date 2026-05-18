@@ -1,8 +1,8 @@
-import { Input } from "@/module/forms/Input";
 import { ChevronDown, ChevronRight } from "lucide-react";
 import { useState } from "react";
 import type { UseFormReturn } from "react-hook-form";
 import { FormActions } from "@/module/forms/FormActions";
+import { Input } from "@/module/forms/Input";
 import styles from "./index.module.css";
 import {
     EMBEDDED_TRANSLATION_GROUPS,

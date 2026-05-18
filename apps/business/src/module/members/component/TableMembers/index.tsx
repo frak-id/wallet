@@ -1,8 +1,5 @@
 import { formatAmount } from "@frak-labs/core-sdk";
-import { Button } from "@/module/common/component/Button";
 import { Checkbox } from "@frak-labs/design-system/components/Checkbox";
-import { WalletAddress } from "@/module/common/component/HashDisplay";
-import { Skeleton } from "@/module/common/component/Skeleton";
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import {
     type ColumnDef,
@@ -12,7 +9,10 @@ import {
 import { useEffect, useMemo, useState } from "react";
 import { isAddressEqual } from "viem";
 import { useIsDemoMode } from "@/module/common/atoms/demoMode";
+import { Button } from "@/module/common/component/Button";
+import { WalletAddress } from "@/module/common/component/HashDisplay";
 import { Row } from "@/module/common/component/Row";
+import { Skeleton } from "@/module/common/component/Skeleton";
 import { Table } from "@/module/common/component/Table";
 import type {
     GetMembersPageItem,

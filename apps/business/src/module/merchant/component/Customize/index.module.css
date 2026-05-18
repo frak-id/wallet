@@ -65,11 +65,7 @@
 }
 
 .customize__overflowItem:hover {
-    background: color-mix(
-        in srgb,
-        #5c59e8 12%,
-        transparent
-    );
+    background: color-mix(in srgb, #5c59e8 12%, transparent);
 }
 
 .customize__createDialogBody {
@@ -192,11 +188,7 @@
     padding: 12px 14px;
     font-size: 14px;
     font-weight: 600;
-    background: color-mix(
-        in srgb,
-        #f9f9fc 88%,
-        #5c59e8 12%
-    );
+    background: color-mix(in srgb, #f9f9fc 88%, #5c59e8 12%);
 }
 
 .customize__translationGroupBody {

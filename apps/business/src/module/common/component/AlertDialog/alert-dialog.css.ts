@@ -1,5 +1,5 @@
-import { alias, brand } from "@frak-labs/design-system/tokens";
 import { vars } from "@frak-labs/design-system/theme";
+import { alias, brand } from "@frak-labs/design-system/tokens";
 import { keyframes, style } from "@vanilla-extract/css";
 
 const overlayShow = keyframes({
@@ -13,7 +13,7 @@ const contentShow = keyframes({
 });
 
 export const overlay = style({
-    backgroundColor: "rgba(0, 0, 0, 0.44)",
+    backgroundColor: vars.surface.overlay,
     position: "fixed",
     inset: 0,
     animation: `${overlayShow} 250ms cubic-bezier(0.16, 1, 0.3, 1)`,

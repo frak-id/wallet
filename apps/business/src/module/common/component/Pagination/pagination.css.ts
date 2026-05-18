@@ -1,4 +1,4 @@
-import { brand } from "@frak-labs/design-system/tokens";
+import { alias, brand } from "@frak-labs/design-system/tokens";
 import { style } from "@vanilla-extract/css";
 
 export const pagination = style({
@@ -29,5 +29,5 @@ export const paginationLinkActive = style({
 export const paginationMore = style({
     display: "flex",
     alignItems: "flex-end",
-    borderRadius: "8px",
+    borderRadius: alias.cornerRadius.s,
 });

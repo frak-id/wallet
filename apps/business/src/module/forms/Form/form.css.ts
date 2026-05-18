@@ -1,4 +1,5 @@
-import { brand } from "@frak-labs/design-system/tokens";
+import { vars } from "@frak-labs/design-system/theme";
+import { alias, brand } from "@frak-labs/design-system/tokens";
 import { globalStyle, style } from "@vanilla-extract/css";
 import { recipe } from "@vanilla-extract/recipes";
 
@@ -11,14 +12,14 @@ export const formItem = recipe({
             radio: {
                 display: "inline-flex",
                 alignItems: "center",
-                gap: "8px",
-                borderRadius: "4px",
+                gap: alias.spacing.xs,
+                borderRadius: alias.cornerRadius.xs,
                 padding: "7px",
             },
             checkbox: {
                 display: "flex",
-                gap: "8px",
-                borderRadius: "4px",
+                gap: alias.spacing.xs,
+                borderRadius: alias.cornerRadius.xs,
             },
         },
     },
@@ -30,8 +31,8 @@ export const formLayout = style({
 
 export const formLabel = recipe({
     base: {
-        paddingBottom: "4px",
-        fontWeight: 700,
+        paddingBottom: alias.spacing.xxs,
+        fontWeight: brand.typography.fontWeight.bold,
         color: brand.colors.neutral.grey600,
         whiteSpace: "nowrap",
         selectors: {
@@ -47,11 +48,11 @@ export const formLabel = recipe({
             checkbox: {
                 color: brand.colors.neutral.grey500,
                 lineHeight: "20px",
-                fontWeight: 500,
+                fontWeight: brand.typography.fontWeight.medium,
             },
             light: {
-                fontWeight: 500,
-                color: "#818c9c",
+                fontWeight: brand.typography.fontWeight.medium,
+                color: vars.text.tertiary,
             },
             dark: {},
         },
@@ -59,7 +60,7 @@ export const formLabel = recipe({
             true: { color: `${brand.colors.primary[500]} !important` },
         },
         weight: {
-            medium: { fontWeight: 500 },
+            medium: { fontWeight: brand.typography.fontWeight.medium },
         },
     },
 });

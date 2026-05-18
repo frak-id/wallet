@@ -1,4 +1,3 @@
-import { Input } from "@/module/forms/Input";
 import type { UseFormReturn } from "react-hook-form";
 import {
     FormControl,
@@ -8,6 +7,7 @@ import {
     FormLabel,
     FormMessage,
 } from "@/module/forms/Form";
+import { Input } from "@/module/forms/Input";
 import { Switch } from "@/module/forms/Switch";
 import styles from "../index.module.css";
 import type { ComponentSettingsFormValues } from "../types";

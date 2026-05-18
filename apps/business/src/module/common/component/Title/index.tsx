@@ -36,7 +36,9 @@ export const Title = ({
             {...props}
         >
             {icon && <span className={titleIcon}>{icon}</span>}
-            <span className={`${titleText}${classNameText ? ` ${classNameText}` : ""}`}>
+            <span
+                className={`${titleText}${classNameText ? ` ${classNameText}` : ""}`}
+            >
                 {children}
             </span>
         </Component>

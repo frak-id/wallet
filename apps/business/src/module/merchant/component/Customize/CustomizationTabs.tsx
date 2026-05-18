@@ -1,9 +1,9 @@
-import { Button } from "@/module/common/component/Button";
-import { Input } from "@/module/forms/Input";
 import { Plus } from "lucide-react";
 import { useEffect, useState } from "react";
 import { AlertDialog } from "@/module/common/component/AlertDialog";
+import { Button } from "@/module/common/component/Button";
 import { Panel } from "@/module/common/component/Panel";
+import { Input } from "@/module/forms/Input";
 import styles from "./index.module.css";
 
 export function CustomizationTabs({

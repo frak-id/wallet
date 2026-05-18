@@ -1,4 +1,4 @@
-import { brand } from "@frak-labs/design-system/tokens";
+import { alias, brand } from "@frak-labs/design-system/tokens";
 import { recipe } from "@vanilla-extract/recipes";
 import { brandColors } from "@/styles/brand";
 
@@ -7,8 +7,8 @@ export const badgeVariants = recipe({
         display: "inline-flex",
         alignItems: "center",
         gap: "3px",
-        borderRadius: "100px",
-        fontWeight: 600,
+        borderRadius: alias.cornerRadius.full,
+        fontWeight: brand.typography.fontWeight.semiBold,
         lineHeight: "20px",
     },
     variants: {
@@ -45,7 +45,7 @@ export const badgeVariants = recipe({
         size: {
             none: { padding: 0 },
             small: { padding: "2px 6px", fontSize: "14px" },
-            medium: { padding: "4px 12px" },
+            medium: { padding: `${alias.spacing.xxs} ${alias.spacing.s}` },
         },
     },
     defaultVariants: {

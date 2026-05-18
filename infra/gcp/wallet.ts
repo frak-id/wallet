@@ -26,7 +26,12 @@ import { isProd, normalizedStageName } from "../utils";
  */
 const isAppAvailable = isProd ? "false" : "true";
 
-import { baseDomainName, cachedImage, getRegistryPath, walletNamespace } from "./utils";
+import {
+    baseDomainName,
+    cachedImage,
+    getRegistryPath,
+    walletNamespace,
+} from "./utils";
 
 // Resolve backend service name only in non-dev (avoids triggering Docker builds locally)
 const backendServiceName = $dev

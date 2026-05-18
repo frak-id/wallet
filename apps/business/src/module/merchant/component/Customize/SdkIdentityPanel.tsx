@@ -1,5 +1,4 @@
 import type { SdkConfig } from "@frak-labs/backend-elysia/domain/merchant";
-import { Input } from "@/module/forms/Input";
 import { useCallback, useEffect, useMemo } from "react";
 import { useForm } from "react-hook-form";
 import { Panel } from "@/module/common/component/Panel";
@@ -13,6 +12,7 @@ import {
     FormMessage,
 } from "@/module/forms/Form";
 import { FormActions } from "@/module/forms/FormActions";
+import { Input } from "@/module/forms/Input";
 import { Switch } from "@/module/forms/Switch";
 import { ImageUploadField } from "@/module/merchant/component/ImageUploadField";
 import { useMerchantUpdate } from "@/module/merchant/hook/useMerchantUpdate";

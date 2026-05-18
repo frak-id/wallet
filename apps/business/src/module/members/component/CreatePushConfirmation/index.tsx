@@ -1,10 +1,10 @@
-import { Button } from "@/module/common/component/Button";
 import { Spinner } from "@frak-labs/design-system/components/Spinner";
 import { useMutation } from "@tanstack/react-query";
 import { Link, useNavigate } from "@tanstack/react-router";
 import { authenticatedBackendApi } from "@/api/backendClient";
 import { ActionsMessageError } from "@/module/campaigns/component/Actions";
 import { ActionsWrapper } from "@/module/common/component/ActionsWrapper";
+import { Button } from "@/module/common/component/Button";
 import { ButtonWithConfirmationAlert } from "@/module/common/component/ButtonWithConfirmationAlert";
 import { Head } from "@/module/common/component/Head";
 import { Panel } from "@/module/common/component/Panel";

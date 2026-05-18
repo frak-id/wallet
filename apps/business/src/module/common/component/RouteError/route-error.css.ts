@@ -1,5 +1,5 @@
-import { alias, brand } from "@frak-labs/design-system/tokens";
 import { vars } from "@frak-labs/design-system/theme";
+import { alias, brand } from "@frak-labs/design-system/tokens";
 import { keyframes, style } from "@vanilla-extract/css";
 
 const fadeIn = keyframes({
@@ -40,17 +40,11 @@ export const icon = style({
 });
 
 export const title = style({
-    fontSize: "1.25rem",
-    fontWeight: 600,
     marginBottom: "0.5rem",
-    color: vars.text.primary,
 });
 
 export const message = style({
-    fontSize: "0.9375rem",
-    color: vars.text.secondary,
     marginBottom: "1.75rem",
-    lineHeight: 1.5,
 });
 
 export const details = style({
@@ -77,7 +71,7 @@ export const stack = style({
     marginTop: "0.75rem",
     padding: "0.75rem",
     backgroundColor: vars.surface.elevated,
-    borderRadius: "6px",
+    borderRadius: alias.cornerRadius.xs,
     overflowX: "auto",
     fontSize: "0.75rem",
     lineHeight: 1.5,

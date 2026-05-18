@@ -40,9 +40,7 @@ export const Input = ({
             {rightSlot && isValidElement(rightSlot) ? (
                 mergeElement(rightSlot, {
                     className: `${rightSection} ${
-                        hasClassName(rightSlot)
-                            ? rightSlot.props.className
-                            : ""
+                        hasClassName(rightSlot) ? rightSlot.props.className : ""
                     }`,
                 })
             ) : (

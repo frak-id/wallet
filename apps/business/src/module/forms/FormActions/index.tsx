@@ -1,6 +1,6 @@
+import { ActionsMessageSuccess } from "@/module/campaigns/component/Actions";
 import { Button } from "@/module/common/component/Button";
 import { Column, Columns } from "@/module/common/component/Columns";
-import { ActionsMessageSuccess } from "@/module/campaigns/component/Actions";
 
 type FormActionsProps = {
     isSuccess: boolean;

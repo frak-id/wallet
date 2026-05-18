@@ -1,8 +1,8 @@
 import type { Stablecoin } from "@frak-labs/app-essentials";
-import { Button } from "@/module/common/component/Button";
 import { Spinner } from "@frak-labs/design-system/components/Spinner";
 import { useSearch } from "@tanstack/react-router";
 import { useCallback, useMemo } from "react";
+import { Button } from "@/module/common/component/Button";
 import { Panel } from "@/module/common/component/Panel";
 import { Title } from "@/module/common/component/Title";
 import { useListenToDomainNameSetup } from "@/module/dashboard/hooks/dnsRecordHooks";

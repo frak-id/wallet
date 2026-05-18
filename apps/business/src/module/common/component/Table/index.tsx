@@ -16,9 +16,9 @@ import type { ReactNode } from "react";
 import { type PropsWithChildren, useMemo, useState } from "react";
 import {
     preTable as preTableStyle,
-    table as tableStyle,
     tableButton,
     tableFilterIcon,
+    table as tableStyle,
     tableWrapper,
 } from "./table.css";
 
@@ -94,10 +94,14 @@ export function Table<TData extends object>({
     );
 
     return (
-        <div className={`${tableWrapper}${classNameWrapper ? ` ${classNameWrapper}` : ""}`}>
+        <div
+            className={`${tableWrapper}${classNameWrapper ? ` ${classNameWrapper}` : ""}`}
+        >
             {preTable && <div className={preTableStyle}>{preTable}</div>}
 
-            <table className={`${tableStyle}${className ? ` ${className}` : ""}`}>
+            <table
+                className={`${tableStyle}${className ? ` ${className}` : ""}`}
+            >
                 <thead>
                     {table.getHeaderGroups().map((headerGroup) => (
                         <tr key={headerGroup.id}>

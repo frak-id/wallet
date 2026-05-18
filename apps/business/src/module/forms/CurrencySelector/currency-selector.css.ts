@@ -1,5 +1,5 @@
-import { brand } from "@frak-labs/design-system/tokens";
 import { vars } from "@frak-labs/design-system/theme";
+import { alias, brand } from "@frak-labs/design-system/tokens";
 import { globalStyle, keyframes, style } from "@vanilla-extract/css";
 
 const scaleIn = keyframes({
@@ -13,18 +13,11 @@ const pulse = keyframes({
     "50%": { opacity: 0.7 },
 });
 
-export const currencySelection = style({
-    display: "flex",
-    flexDirection: "column",
-    gap: "16px",
-    margin: "16px 0",
-});
-
 export const currencyGrid = style({
     display: "grid",
     gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))",
-    gap: "12px",
-    padding: "4px",
+    gap: alias.spacing.s,
+    padding: alias.spacing.xxs,
     "@media": {
         "(max-width: 768px)": {
             gridTemplateColumns: "repeat(2, 1fr)",
@@ -41,9 +34,9 @@ export const currencyCard = style({
     flexDirection: "column",
     alignItems: "center",
     justifyContent: "center",
-    padding: "20px 16px",
+    padding: `20px ${alias.spacing.m}`,
     border: `2px solid ${vars.border.default}`,
-    borderRadius: "12px",
+    borderRadius: alias.cornerRadius.m,
     backgroundColor: vars.surface.elevated,
     cursor: "pointer",
     transition: "all 0.2s ease",
@@ -51,9 +44,9 @@ export const currencyCard = style({
 });
 
 export const currencyCardSelected = style({
-    borderColor: "#10b981",
-    backgroundColor: "#f0fdf4",
-    boxShadow: "0 0 0 2px #10b981",
+    borderColor: vars.border.success,
+    backgroundColor: vars.surface.success,
+    boxShadow: `0 0 0 2px ${vars.border.success}`,
 });
 
 export const currencyCardDisabled = style({
@@ -66,14 +59,6 @@ globalStyle(`${currencyCard}:hover:not(${currencyCardDisabled})`, {
     backgroundColor: vars.surface.muted,
     transform: "translateY(-2px)",
     boxShadow: "0 4px 12px rgba(0, 0, 0, 0.1)",
-});
-
-export const currencyCardHeader = style({
-    display: "flex",
-    flexDirection: "column",
-    alignItems: "center",
-    gap: "12px",
-    width: "100%",
 });
 
 export const currencySymbol = style({
@@ -91,12 +76,12 @@ export const currencyBadges = style({
 
 export const selectedIndicator = style({
     position: "absolute",
-    top: "8px",
-    right: "8px",
+    top: alias.spacing.xs,
+    right: alias.spacing.xs,
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
-    color: "#10b981",
+    color: vars.icon.success,
     animation: `${scaleIn} 0.2s ease-out`,
 });
 
@@ -104,16 +89,16 @@ export const recommendedBadge = style({
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
-    color: "#f59e0b",
+    color: vars.icon.warning,
     animation: `${pulse} 2s ease-in-out infinite`,
 });
 
 export const currencyExplanation = style({
     display: "flex",
     flexDirection: "column",
-    gap: "12px",
-    padding: "16px",
-    borderRadius: "8px",
+    gap: alias.spacing.s,
+    padding: alias.spacing.m,
+    borderRadius: alias.cornerRadius.s,
     backgroundColor: vars.surface.muted,
     border: `1px solid ${vars.border.default}`,
 });

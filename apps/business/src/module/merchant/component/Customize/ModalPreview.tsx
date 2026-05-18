@@ -1,3 +1,4 @@
+import { Text } from "@frak-labs/design-system/components/Text";
 import { SharingPreview, SharingSuccessPreview } from "@frak-labs/ui-preview";
 import type { UseFormReturn } from "react-hook-form";
 import { PreviewWrapper } from "@/module/common/component/PreviewWrapper";
@@ -135,21 +136,37 @@ export function SharingPagePreview({
             <div className={styles.previewContainer}>
                 <div className={styles.previewColumn}>
                     <div>
-                        <h4 className={styles.previewTitle}>Sharing page</h4>
-                        <p className={styles.previewDescription}>
+                        <Text
+                            as="h4"
+                            variant="heading4"
+                            className={styles.previewTitle}
+                        >
+                            Sharing page
+                        </Text>
+                        <Text
+                            variant="bodySmall"
+                            className={styles.previewDescription}
+                        >
                             Shown when a visitor clicks the share button
-                        </p>
+                        </Text>
                     </div>
                     <SharingPreview t={t} logoUrl={logoUrl} />
                 </div>
                 <div className={styles.previewColumn}>
                     <div>
-                        <h4 className={styles.previewTitle}>
+                        <Text
+                            as="h4"
+                            variant="heading4"
+                            className={styles.previewTitle}
+                        >
                             Post-share success
-                        </h4>
-                        <p className={styles.previewDescription}>
+                        </Text>
+                        <Text
+                            variant="bodySmall"
+                            className={styles.previewDescription}
+                        >
                             Shown after a successful share action
-                        </p>
+                        </Text>
                     </div>
                     <SharingSuccessPreview t={t} logoUrl={logoUrl} />
                 </div>

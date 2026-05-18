@@ -1,10 +1,10 @@
-import { useSiweAuthenticate } from "@frak-labs/react-sdk";
-import { ClientOnly } from "@/module/common/component/ClientOnly";
 import { Spinner } from "@frak-labs/design-system/components/Spinner";
 import { useMediaQuery } from "@frak-labs/design-system/hooks/useMediaQuery";
+import { useSiweAuthenticate } from "@frak-labs/react-sdk";
 import { useNavigate } from "@tanstack/react-router";
 import { useTransition } from "react";
 import { authenticatedBackendApi } from "@/api/backendClient";
+import { ClientOnly } from "@/module/common/component/ClientOnly";
 import { useAuthStore } from "@/stores/authStore";
 import styles from "./index.module.css";
 import logo from "./logo-frak.svg";

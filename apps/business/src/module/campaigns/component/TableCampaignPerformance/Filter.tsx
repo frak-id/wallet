@@ -1,8 +1,8 @@
-import { Button } from "@/module/common/component/Button";
-import { InputSearch } from "@/module/forms/InputSearch";
 import type { ColumnFiltersState } from "@tanstack/react-table";
 import { SlidersHorizontal } from "lucide-react";
 import { useMemo } from "react";
+import { Button } from "@/module/common/component/Button";
+import { InputSearch } from "@/module/forms/InputSearch";
 import styles from "./index.module.css";
 
 type TablePerformanceFiltersProps = {

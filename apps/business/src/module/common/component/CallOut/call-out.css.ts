@@ -1,4 +1,4 @@
-import { brand } from "@frak-labs/design-system/tokens";
+import { alias, brand } from "@frak-labs/design-system/tokens";
 import { globalStyle, style } from "@vanilla-extract/css";
 import { recipe } from "@vanilla-extract/recipes";
 import { brandColors } from "@/styles/brand";
@@ -11,16 +11,16 @@ globalStyle(`${callOutBase} a`, {
 });
 
 globalStyle(`${callOutBase} + ${callOutBase}`, {
-    marginTop: "12px",
+    marginTop: alias.spacing.s,
 });
 
 export const callOutVariants = recipe({
     base: [
         callOutBase,
         {
-            padding: "12px",
-            borderRadius: "8px",
-            fontWeight: 600,
+            padding: alias.spacing.s,
+            borderRadius: alias.cornerRadius.s,
+            fontWeight: brand.typography.fontWeight.semiBold,
             lineHeight: "20px",
         },
     ],

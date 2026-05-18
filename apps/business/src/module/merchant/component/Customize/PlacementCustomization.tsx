@@ -1,6 +1,5 @@
 import type { SdkConfig } from "@frak-labs/backend-elysia/domain/merchant";
 import type { Currency } from "@frak-labs/core-sdk";
-import { Input } from "@/module/forms/Input";
 import {
     BannerPreview,
     PostPurchasePreview,
@@ -20,6 +19,7 @@ import {
     FormMessage,
 } from "@/module/forms/Form";
 import { FormActions } from "@/module/forms/FormActions";
+import { Input } from "@/module/forms/Input";
 import { useMerchantUpdate } from "@/module/merchant/hook/useMerchantUpdate";
 import { BannerFields, getBannerDefaults } from "./fields/BannerFields";
 import { ButtonShareFields } from "./fields/ButtonShareFields";

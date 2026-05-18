@@ -1,4 +1,3 @@
-import { Skeleton } from "@/module/common/component/Skeleton";
 import { useQuery } from "@tanstack/react-query";
 import { useEffect, useMemo } from "react";
 import { useForm } from "react-hook-form";
@@ -17,6 +16,7 @@ import { useIsDemoMode } from "@/module/common/atoms/demoMode";
 import { ActionsWrapper } from "@/module/common/component/ActionsWrapper";
 import { LinkButton } from "@/module/common/component/LinkButton";
 import { Panel } from "@/module/common/component/Panel";
+import { Skeleton } from "@/module/common/component/Skeleton";
 import { Form, FormLayout } from "@/module/forms/Form";
 import {
     type CampaignDraft,

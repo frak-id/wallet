@@ -2,7 +2,9 @@ import type { RecipeVariants } from "@vanilla-extract/recipes";
 import type { ComponentPropsWithRef } from "react";
 import { callOutVariants } from "./call-out.css";
 
-type CallOutRecipeVariants = NonNullable<RecipeVariants<typeof callOutVariants>>;
+type CallOutRecipeVariants = NonNullable<
+    RecipeVariants<typeof callOutVariants>
+>;
 
 export type CallOutProps = ComponentPropsWithRef<"p"> & CallOutRecipeVariants;
 

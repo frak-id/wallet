@@ -1,4 +1,4 @@
-import { brand } from "@frak-labs/design-system/tokens";
+import { alias, brand } from "@frak-labs/design-system/tokens";
 import { globalStyle, style } from "@vanilla-extract/css";
 
 export const multiSelectTrigger = style({
@@ -44,13 +44,13 @@ export const multiSelectTriggerBadges = style({
     display: "flex",
     alignItems: "center",
     flexWrap: "wrap",
-    gap: "8px",
+    gap: alias.spacing.xs,
 });
 
 export const multiSelectBadge = style({
     display: "inline-flex",
     gap: "3px",
-    borderRadius: "4px",
+    borderRadius: alias.cornerRadius.xs,
     padding: "3px 6px",
     fontSize: "12px",
     fontWeight: 500,

@@ -1,5 +1,5 @@
-import { PendingLoader } from "@/module/common/component/PendingLoader";
 import { createRouter } from "@tanstack/react-router";
+import { PendingLoader } from "@/module/common/component/PendingLoader";
 
 // Import the generated route tree
 import { routeTree } from "./routeTree.gen";

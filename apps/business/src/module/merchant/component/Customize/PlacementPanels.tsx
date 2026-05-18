@@ -1,9 +1,9 @@
 import type { SdkConfig } from "@frak-labs/backend-elysia/domain/merchant";
-import { Button } from "@/module/common/component/Button";
 import { Trash2 } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import { AlertDialog } from "@/module/common/component/AlertDialog";
+import { Button } from "@/module/common/component/Button";
 import { Panel } from "@/module/common/component/Panel";
 import { Form } from "@/module/forms/Form";
 import { FormActions } from "@/module/forms/FormActions";

@@ -1,4 +1,5 @@
 import type { Stablecoin } from "@frak-labs/app-essentials";
+import { Stack } from "@frak-labs/design-system/components/Stack";
 import { CheckCircle2, Star } from "lucide-react";
 import { Badge } from "@/module/common/component/Badge";
 import { currencyOptions } from "@/module/common/utils/currencyOptions";
@@ -40,7 +41,7 @@ export function CurrencySelector({
     const isMoneriumRecommended = (group: string) => group === "Monerium";
 
     return (
-        <div className={styles.currencySelection}>
+        <Stack space="m" paddingY="m">
             <div className={styles.currencyGrid}>
                 {availableCurrencies.map((currency) => {
                     const isSelected = value === currency.value;
@@ -65,7 +66,7 @@ export function CurrencySelector({
                                     <CheckCircle2 size={20} strokeWidth={2.5} />
                                 </div>
                             )}
-                            <div className={styles.currencyCardHeader}>
+                            <Stack space="s" align="center">
                                 <span className={styles.currencySymbol}>
                                     {currency.label
                                         .replace(/e$/i, "")
@@ -88,7 +89,7 @@ export function CurrencySelector({
                                         </div>
                                     )}
                                 </div>
-                            </div>
+                            </Stack>
                         </button>
                     );
                 })}
@@ -105,6 +106,6 @@ export function CurrencySelector({
                     users. Widely used across DeFi platforms and exchanges.
                 </div>
             </div>
-        </div>
+        </Stack>
     );
 }

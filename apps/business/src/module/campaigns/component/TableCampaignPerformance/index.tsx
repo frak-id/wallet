@@ -1,5 +1,3 @@
-import { Skeleton } from "@/module/common/component/Skeleton";
-import { computeWithPrecision } from "@/module/common/utils/computeWithPrecision";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import type {
     CellContext,
@@ -15,9 +13,11 @@ import type { CampaignStats } from "@/module/campaigns/api/campaignStatsApi";
 import { TablePerformanceFilters } from "@/module/campaigns/component/TableCampaignPerformance/Filter";
 import { campaignsStatsQueryOptions } from "@/module/campaigns/queries/queryOptions";
 import { useIsDemoMode } from "@/module/common/atoms/demoMode";
+import { Skeleton } from "@/module/common/component/Skeleton";
 import { Table } from "@/module/common/component/Table";
 import { TooltipTable } from "@/module/common/component/TooltipTable";
 import { useConvertToPreferredCurrency } from "@/module/common/hook/useConversionRate";
+import { computeWithPrecision } from "@/module/common/utils/computeWithPrecision";
 
 type TableData = CampaignStats;
 

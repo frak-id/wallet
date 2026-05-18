@@ -4,14 +4,13 @@ import {
     AccordionItem,
     AccordionTrigger,
 } from "@frak-labs/design-system/components/Accordion";
-import { Button } from "@/module/common/component/Button";
-import { Input } from "@/module/forms/Input";
 import { Spinner } from "@frak-labs/design-system/components/Spinner";
-import { TextWithCopy } from "@/module/common/component/TextWithCopy";
-import { validateUrl } from "@/module/common/utils/validateUrl";
 import { CheckCircle2, ExternalLink, XCircle } from "lucide-react";
 import type { UseFormReturn } from "react-hook-form";
+import { Button } from "@/module/common/component/Button";
 import { PanelAccordion } from "@/module/common/component/PanelAccordion";
+import { TextWithCopy } from "@/module/common/component/TextWithCopy";
+import { validateUrl } from "@/module/common/utils/validateUrl";
 import { useDnsTxtRecordToSet } from "@/module/dashboard/hooks/dnsRecordHooks";
 import { CurrencySelector } from "@/module/forms/CurrencySelector";
 import {
@@ -22,6 +21,7 @@ import {
     FormLabel,
     FormMessage,
 } from "@/module/forms/Form";
+import { Input } from "@/module/forms/Input";
 import type { MerchantNew } from "@/types/Merchant";
 import styles from "./index.module.css";
 

@@ -1,8 +1,8 @@
-import { Button } from "@/module/common/component/Button";
 import { Spinner } from "@frak-labs/design-system/components/Spinner";
 import { ArrowRightLeft } from "lucide-react";
 import type { Address } from "viem";
 import { formatUnits } from "viem";
+import { Button } from "@/module/common/component/Button";
 import { useTokenMetadata } from "@/module/common/hook/useTokenMetadata";
 import { useGetLegacyBankStatus } from "@/module/merchant/hook/useGetLegacyBankStatus";
 import { useMerchant } from "@/module/merchant/hook/useMerchant";

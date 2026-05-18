@@ -1,3 +1,4 @@
+import { Text } from "@frak-labs/design-system/components/Text";
 import { ButtonAuth } from "@/module/common/component/ButtonAuth";
 import { PanelAccordion } from "@/module/common/component/PanelAccordion";
 import styles from "./index.module.css";
@@ -37,14 +38,18 @@ export function RegistrationPanel({
                 </div>
             ) : step === 3 ? (
                 <div className={styles.registrationSection}>
-                    <h3 className={styles.sectionHeading}>
+                    <Text
+                        as="h3"
+                        variant="heading3"
+                        className={styles.sectionHeading}
+                    >
                         Launch Your Product
-                    </h3>
-                    <p className={styles.description}>
+                    </Text>
+                    <Text variant="body" className={styles.description}>
                         Click below to register your product on the blockchain.
                         This requires authentication with your wallet and will
                         create your product permanently on-chain.
-                    </p>
+                    </Text>
                     <ButtonAuth onClick={onSubmit} disabled={isPending}>
                         Launch Product
                     </ButtonAuth>

@@ -8,6 +8,7 @@ import { Message } from "@/assets/icons/Message";
 import { Users } from "@/assets/icons/Users";
 import { Wallet } from "@/assets/icons/Wallet";
 import { mergeElement } from "@/module/common/utils/mergeElement";
+import { NavigationCampaignsSwitcher } from "./NavigationCampaignsSwitcher";
 import {
     navigation,
     navigationItemButton,
@@ -17,7 +18,6 @@ import {
     navigationItemToBottom,
     navigationList,
 } from "./navigation.css";
-import { NavigationCampaignsSwitcher } from "./NavigationCampaignsSwitcher";
 
 export function Navigation() {
     return (

@@ -1,10 +1,10 @@
-import { brand } from "@frak-labs/design-system/tokens";
 import { vars } from "@frak-labs/design-system/theme";
+import { alias, brand } from "@frak-labs/design-system/tokens";
 import { globalStyle, style } from "@vanilla-extract/css";
 
 export const tableWrapper = style({
     backgroundColor: vars.surface.elevated,
-    borderRadius: "8px",
+    borderRadius: alias.cornerRadius.s,
     overflowX: "auto",
     color: vars.text.secondary,
     border: `1px solid ${vars.border.default}`,
@@ -60,16 +60,13 @@ globalStyle(`${table} > thead > tr > th:has(button${tableButton})`, {
     padding: 0,
 });
 
-globalStyle(
-    `${table} > tbody > tr > td, ${table} > tfoot > tr > th`,
-    {
-        padding: "18px 22px",
-        textAlign: "left",
-        borderTop: `1px solid ${vars.border.subtle}`,
-        fontWeight: 500,
-    }
-);
+globalStyle(`${table} > tbody > tr > td, ${table} > tfoot > tr > th`, {
+    padding: "18px 22px",
+    textAlign: "left",
+    borderTop: `1px solid ${vars.border.subtle}`,
+    fontWeight: 500,
+});
 
 globalStyle(`${table} a`, {
-    color: "#0e51e3",
+    color: vars.text.action,
 });

@@ -1,4 +1,5 @@
 import { vars } from "@frak-labs/design-system/theme";
+import { alias } from "@frak-labs/design-system/tokens";
 import { globalStyle, style } from "@vanilla-extract/css";
 
 export const merchantItem = style({
@@ -9,7 +10,7 @@ export const merchantItem = style({
     justifyContent: "center",
     width: "295px",
     height: "413px",
-    borderRadius: "12px",
+    borderRadius: alias.cornerRadius.m,
     background: vars.surface.secondary,
     border: `1px solid ${vars.border.default}`,
     color: vars.text.primary,
@@ -52,8 +53,8 @@ globalStyle(`${merchantItemActions} a`, {
 
 export const merchantItemStatus = style({
     position: "absolute",
-    top: "8px",
-    left: "8px",
+    top: alias.spacing.xs,
+    left: alias.spacing.xs,
     display: "flex",
     gap: "10px",
 });

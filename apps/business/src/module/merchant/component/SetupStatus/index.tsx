@@ -1,7 +1,7 @@
-import { Button } from "@/module/common/component/Button";
 import { Spinner } from "@frak-labs/design-system/components/Spinner";
 import type { LinkProps } from "@tanstack/react-router";
 import { AlertCircle, BadgeCheck } from "lucide-react";
+import { Button } from "@/module/common/component/Button";
 import { CallOut } from "@/module/common/component/CallOut";
 import { LinkButton } from "@/module/common/component/LinkButton";
 import { Panel } from "@/module/common/component/Panel";

@@ -1,4 +1,5 @@
 import { vars } from "@frak-labs/design-system/theme";
+import { alias } from "@frak-labs/design-system/tokens";
 import { globalStyle, style } from "@vanilla-extract/css";
 
 export const header = style({
@@ -6,12 +7,12 @@ export const header = style({
     alignItems: "flex-end",
     justifyContent: "center",
     flexDirection: "column",
-    gap: "8px",
+    gap: alias.spacing.xs,
     position: "fixed",
     zIndex: 1,
     width: "100%",
     height: "72px",
-    padding: "16px 24px",
+    padding: `${alias.spacing.m} ${alias.spacing.l}`,
     background: vars.surface.elevated,
     borderBottom: `1px solid ${vars.border.default}`,
 });
@@ -21,13 +22,13 @@ export const headerLogo = style({
     marginTop: "-18px",
     top: "50%",
     left: "28px",
-    color: vars.text.primary,
+    color: vars.text.action,
 });
 
 export const navigationTopContainer = style({
     display: "flex",
     alignItems: "center",
-    gap: "24px",
+    gap: alias.spacing.l,
 });
 
 export const navigationTopList = style({
@@ -61,9 +62,9 @@ export const navigationProfileSeparator = style({
 export const navigationProfile = style({
     display: "flex",
     alignItems: "center",
-    gap: "12px",
+    gap: alias.spacing.s,
     padding: "6px 10px",
-    borderRadius: "8px",
+    borderRadius: alias.cornerRadius.s,
     color: vars.text.primary,
     textDecoration: "none",
     transition: "background-color 0.15s ease",
@@ -80,7 +81,7 @@ export const navigationProfileAvatar = style({
     justifyContent: "center",
     width: "32px",
     height: "32px",
-    borderRadius: "50%",
+    borderRadius: alias.cornerRadius.full,
     border: `1px solid ${vars.border.default}`,
     backgroundColor: vars.surface.elevated,
     color: vars.text.secondary,
@@ -104,11 +105,11 @@ globalStyle(`${navigationProfileInfos} > span:last-child`, {
 export const demoModeBadge = style({
     display: "inline-flex",
     alignItems: "center",
-    padding: "4px 12px",
+    padding: `${alias.spacing.xxs} ${alias.spacing.s}`,
     backgroundColor: "rgba(147, 197, 253, 0.15)",
     color: "#93c5fd",
     border: "1px solid rgba(147, 197, 253, 0.3)",
-    borderRadius: "12px",
+    borderRadius: alias.cornerRadius.m,
     fontSize: "11px",
     fontWeight: 500,
     letterSpacing: "0.5px",

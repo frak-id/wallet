@@ -1,4 +1,5 @@
 import { vars } from "@frak-labs/design-system/theme";
+import { alias } from "@frak-labs/design-system/tokens";
 import { keyframes, style } from "@vanilla-extract/css";
 
 const slideUpAndFade = keyframes({
@@ -22,7 +23,7 @@ const slideLeftAndFade = keyframes({
 });
 
 export const popover = style({
-    borderRadius: "8px",
+    borderRadius: alias.cornerRadius.s,
     backgroundColor: vars.surface.elevated,
     boxShadow:
         "hsl(206 22% 7% / 35%) 0 10px 38px -10px, hsl(206 22% 7% / 20%) 0 10px 20px -15px",

@@ -30,10 +30,7 @@ export const Tooltip = ({
     return (
         <TooltipProvider>
             <DSTooltip delayDuration={0}>
-                <TooltipTrigger
-                    onClick={(e) => e.preventDefault()}
-                    asChild
-                >
+                <TooltipTrigger onClick={(e) => e.preventDefault()} asChild>
                     {children}
                 </TooltipTrigger>
                 <TooltipContent

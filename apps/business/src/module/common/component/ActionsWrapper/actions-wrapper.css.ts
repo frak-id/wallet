@@ -1,3 +1,4 @@
+import { alias } from "@frak-labs/design-system/tokens";
 import { style } from "@vanilla-extract/css";
 
 export const actions = style({
@@ -13,6 +14,6 @@ export const actionLeft = style({
 export const actionRight = style({
     flex: 1,
     display: "flex",
-    gap: "8px",
+    gap: alias.spacing.xs,
     justifyContent: "flex-end",
 });

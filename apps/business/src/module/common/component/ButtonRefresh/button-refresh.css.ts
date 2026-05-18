@@ -1,4 +1,5 @@
 import { vars } from "@frak-labs/design-system/theme";
+import { alias } from "@frak-labs/design-system/tokens";
 import { globalStyle, keyframes, style } from "@vanilla-extract/css";
 
 const spin = keyframes({
@@ -13,7 +14,7 @@ export const buttonRefresh = style({
     justifyContent: "center",
     width: "36px",
     height: "36px",
-    borderRadius: "8px",
+    borderRadius: alias.cornerRadius.s,
     cursor: "pointer",
     color: vars.text.primary,
     transition: "background-color 0.15s ease",

@@ -131,7 +131,7 @@ export const pulsingIcon = style({
 export const spinner = style({
     position: "absolute",
     inset: "-4px",
-    borderRadius: "50%",
+    borderRadius: alias.cornerRadius.full,
     border: "2px solid rgba(255, 255, 255, 0.3)",
     borderTopColor: "white",
     animation: `${spin} 1s linear infinite`,

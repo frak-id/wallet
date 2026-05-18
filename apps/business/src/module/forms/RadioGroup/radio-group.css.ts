@@ -1,4 +1,5 @@
-import { brand } from "@frak-labs/design-system/tokens";
+import { vars } from "@frak-labs/design-system/theme";
+import { alias, brand } from "@frak-labs/design-system/tokens";
 import { globalStyle, style } from "@vanilla-extract/css";
 
 export const radioGroup = style({
@@ -20,24 +21,24 @@ globalStyle(`${radioGroupIndicator}::after`, {
     display: "block",
     width: "10px",
     height: "10px",
-    borderRadius: "50%",
-    background: "white",
+    borderRadius: alias.cornerRadius.full,
+    background: vars.surface.elevated,
 });
 
 export const radioGroupItem = style({
     all: "unset",
-    backgroundColor: "white",
+    backgroundColor: vars.surface.elevated,
     width: "20px",
     height: "20px",
-    borderRadius: "100%",
-    border: "2px solid #94979f",
+    borderRadius: alias.cornerRadius.full,
+    border: `2px solid ${vars.border.focus}`,
     cursor: "pointer",
     selectors: {
         "&:focus-visible": {
             boxShadow: `0 0 0 1px ${brand.colors.primary[500]}`,
         },
         [`&:has(.${radioGroupIndicator.split(" ")[0]})`]: {
-            background: "#94979f",
+            background: vars.border.focus,
         },
     },
 });

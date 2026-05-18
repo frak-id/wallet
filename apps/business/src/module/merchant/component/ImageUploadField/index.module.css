@@ -63,11 +63,7 @@
 
 .dropzoneActive {
     border-color: #5c59e8;
-    background-color: color-mix(
-        in srgb,
-        #5c59e8 8%,
-        transparent
-    );
+    background-color: color-mix(in srgb, #5c59e8 8%, transparent);
 }
 
 .dropzonePending {

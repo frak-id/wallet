@@ -12,7 +12,12 @@ import {
     walletUrl,
 } from "../config";
 import { isProd, normalizedStageName } from "../utils";
-import { baseDomainName, cachedImage, getRegistryPath, walletNamespace } from "./utils";
+import {
+    baseDomainName,
+    cachedImage,
+    getRegistryPath,
+    walletNamespace,
+} from "./utils";
 
 const subDomain = isProd ? "business" : "business-dev";
 

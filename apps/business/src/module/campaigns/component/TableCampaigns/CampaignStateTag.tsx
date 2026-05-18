@@ -1,5 +1,5 @@
-import { Tooltip } from "@/module/common/component/Tooltip";
 import { Badge } from "@/module/common/component/Badge";
+import { Tooltip } from "@/module/common/component/Tooltip";
 import type { CampaignStatus, DistributionStatus } from "@/types/Campaign";
 import styles from "./CampaignStateTag.module.css";
 

@@ -1,7 +1,7 @@
-import { brand } from "@frak-labs/design-system/tokens";
+import { alias, brand } from "@frak-labs/design-system/tokens";
 import { style } from "@vanilla-extract/css";
 
-export const root = style({ padding: "12px" });
+export const root = style({ padding: alias.spacing.s });
 
 export const months = style({
     display: "flex",
@@ -11,7 +11,7 @@ export const months = style({
 export const caption = style({
     display: "flex",
     position: "relative",
-    paddingTop: "4px",
+    paddingTop: alias.spacing.xxs,
     justifyContent: "center",
     alignItems: "center",
 });
@@ -39,7 +39,7 @@ export const navButtonPrevious = style([navButtonBase, { left: "4px" }]);
 export const navButtonNext = style([navButtonBase, { right: "4px" }]);
 
 export const table = style({
-    marginTop: "16px",
+    marginTop: alias.spacing.m,
     width: "100%",
     borderCollapse: "collapse",
 });
@@ -72,7 +72,7 @@ export const day = style({
     width: "36px",
     height: "36px",
     justifyContent: "center",
-    borderRadius: "8px",
+    borderRadius: alias.cornerRadius.s,
     selectors: {
         "&:hover": { backgroundColor: brand.colors.neutral.grey250 },
     },
@@ -80,12 +80,12 @@ export const day = style({
 
 export const daySelected = style({
     backgroundColor: brand.colors.neutral.grey250,
-    borderRadius: "8px",
+    borderRadius: alias.cornerRadius.s,
 });
 
 export const dayToday = style({
     backgroundColor: brand.colors.primary[100],
-    borderRadius: "8px",
+    borderRadius: alias.cornerRadius.s,
 });
 
 export const dayOutside = style({ opacity: 0.5 });

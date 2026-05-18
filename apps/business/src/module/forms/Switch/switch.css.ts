@@ -1,12 +1,13 @@
-import { brand } from "@frak-labs/design-system/tokens";
+import { vars } from "@frak-labs/design-system/theme";
+import { alias, brand } from "@frak-labs/design-system/tokens";
 import { style } from "@vanilla-extract/css";
 
 export const switchRoot = style({
     all: "unset",
     width: "36px",
     height: "20px",
-    backgroundColor: "#c2c6ce",
-    borderRadius: "9999px",
+    backgroundColor: vars.border.default,
+    borderRadius: alias.cornerRadius.full,
     position: "relative",
     WebkitTapHighlightColor: "rgba(0, 0, 0, 0)",
     cursor: "pointer",
@@ -25,8 +26,8 @@ export const switchThumb = style({
     display: "block",
     width: "12px",
     height: "12px",
-    backgroundColor: "white",
-    borderRadius: "9999px",
+    backgroundColor: vars.surface.elevated,
+    borderRadius: alias.cornerRadius.full,
     transition: "transform 100ms",
     transform: "translateX(4px)",
     willChange: "transform",

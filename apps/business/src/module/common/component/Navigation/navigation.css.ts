@@ -1,4 +1,5 @@
 import { vars } from "@frak-labs/design-system/theme";
+import { alias } from "@frak-labs/design-system/tokens";
 import { globalStyle, style } from "@vanilla-extract/css";
 
 export const navigation = style({
@@ -42,11 +43,10 @@ export const navigationItemButton = style({
     width: "100%",
     height: "52px",
     padding: "0 0 0 12px",
-    borderRadius: "5px",
+    borderRadius: alias.cornerRadius.xs,
     cursor: "pointer",
     color: vars.text.primary,
-    transition:
-        "background 0.15s, color 0.15s cubic-bezier(0.4, 0, 0.2, 1)",
+    transition: "background 0.15s, color 0.15s cubic-bezier(0.4, 0, 0.2, 1)",
     selectors: {
         "&:disabled": {
             cursor: "not-allowed",

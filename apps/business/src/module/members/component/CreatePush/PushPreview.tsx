@@ -28,7 +28,9 @@ export function PushPreviewNotification({
     classNameDate,
 }: PushPreviewProps) {
     return (
-        <div className={`${styles.pushPreview__notification}${className ? ` ${className}` : ""}`}>
+        <div
+            className={`${styles.pushPreview__notification}${className ? ` ${className}` : ""}`}
+        >
             {icon && (
                 <span className={styles.pushPreview__icon}>
                     <img src={icon} alt={""} width={20} height={20} />
@@ -37,7 +39,9 @@ export function PushPreviewNotification({
             <div>
                 <p className={styles.pushPreview__title}>{title}</p>
                 <pre className={styles.pushPreview__text}>{message}</pre>
-                <p className={`${styles.pushPreview__date}${classNameDate ? ` ${classNameDate}` : ""}`}>
+                <p
+                    className={`${styles.pushPreview__date}${classNameDate ? ` ${classNameDate}` : ""}`}
+                >
                     now
                 </p>
             </div>

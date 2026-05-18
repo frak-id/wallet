@@ -60,11 +60,7 @@ const CommandEmpty = ({
     ref,
     ...props
 }: ComponentPropsWithRef<typeof CommandPrimitive.Empty>) => (
-    <CommandPrimitive.Empty
-        ref={ref}
-        className={commandEmpty}
-        {...props}
-    />
+    <CommandPrimitive.Empty ref={ref} className={commandEmpty} {...props} />
 );
 
 CommandEmpty.displayName = CommandPrimitive.Empty.displayName;

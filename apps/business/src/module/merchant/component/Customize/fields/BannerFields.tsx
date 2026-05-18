@@ -1,5 +1,4 @@
 import type { SdkConfig } from "@frak-labs/backend-elysia/domain/merchant";
-import { Input } from "@/module/forms/Input";
 import type { UseFormReturn } from "react-hook-form";
 import {
     FormControl,
@@ -9,6 +8,7 @@ import {
     FormLabel,
     FormMessage,
 } from "@/module/forms/Form";
+import { Input } from "@/module/forms/Input";
 import styles from "../index.module.css";
 import type { BannerFormValues, ComponentSettingsFormValues } from "../types";
 

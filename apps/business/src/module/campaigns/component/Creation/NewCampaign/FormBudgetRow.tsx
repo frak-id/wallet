@@ -1,4 +1,3 @@
-import type { InputNumberProps } from "@/module/forms/InputNumber";
 import { CircleDollarSign, Wallet } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { useFormContext } from "react-hook-form";
@@ -15,6 +14,7 @@ import {
     FormLabel,
     FormMessage,
 } from "@/module/forms/Form";
+import type { InputNumberProps } from "@/module/forms/InputNumber";
 import { RadioGroup, RadioGroupItem } from "@/module/forms/RadioGroup";
 import type { CampaignDraft } from "@/stores/campaignStore";
 import { currencyStore } from "@/stores/currencyStore";

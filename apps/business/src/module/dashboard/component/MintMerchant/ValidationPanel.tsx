@@ -1,5 +1,6 @@
-import { Button } from "@/module/common/component/Button";
+import { Text } from "@frak-labs/design-system/components/Text";
 import type { UseFormReturn } from "react-hook-form";
+import { Button } from "@/module/common/component/Button";
 import { PanelAccordion } from "@/module/common/component/PanelAccordion";
 import type { MerchantNew } from "@/types/Merchant";
 import styles from "./index.module.css";
@@ -40,14 +41,18 @@ export function ValidationPanel({
                 </div>
             ) : step === 2 ? (
                 <div className={styles.verifySection}>
-                    <h3 className={styles.sectionHeading}>
+                    <Text
+                        as="h3"
+                        variant="heading3"
+                        className={styles.sectionHeading}
+                    >
                         Review Your Merchant
-                    </h3>
-                    <p className={styles.description}>
+                    </Text>
+                    <Text variant="body" className={styles.description}>
                         Please review the information below before proceeding.
                         You'll be able to register your merchant in the next
                         step.
-                    </p>
+                    </Text>
                     <div className={styles.productSummary}>
                         <div className={styles.summaryItem}>
                             <span className={styles.summaryLabel}>

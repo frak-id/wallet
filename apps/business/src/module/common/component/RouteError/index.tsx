@@ -1,4 +1,5 @@
 import { Button } from "@frak-labs/design-system/components/Button";
+import { Text } from "@frak-labs/design-system/components/Text";
 import type { ErrorComponentProps } from "@tanstack/react-router";
 import { Link } from "@tanstack/react-router";
 import { AlertTriangle } from "lucide-react";
@@ -48,12 +49,21 @@ function ErrorBoundary({
                 <div className={styles.icon} aria-hidden="true">
                     <AlertTriangle size={40} strokeWidth={2} />
                 </div>
-                <h2 id={titleId} className={styles.title}>
-                    {title}
-                </h2>
-                <p id={messageId} className={styles.message}>
-                    {errorMessage}
-                </p>
+                <Text
+                    as="h2"
+                    variant="heading2"
+                    weight="semiBold"
+                    className={styles.title}
+                >
+                    <span id={titleId}>{title}</span>
+                </Text>
+                <Text
+                    variant="bodySmall"
+                    color="secondary"
+                    className={styles.message}
+                >
+                    <span id={messageId}>{errorMessage}</span>
+                </Text>
 
                 {shouldShowTechnicalDetails && (
                     <details className={styles.details}>

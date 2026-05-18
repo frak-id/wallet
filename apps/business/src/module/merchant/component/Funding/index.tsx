@@ -1,12 +1,8 @@
 import type { Stablecoin } from "@frak-labs/app-essentials";
 import { isRunningInProd } from "@frak-labs/app-essentials";
-import { useWalletStatus } from "@frak-labs/react-sdk";
-import { Button, buttonVariants } from "@/module/common/component/Button";
-import { Input } from "@/module/forms/Input";
-import { IconInfo } from "@/module/common/component/IconInfo";
 import { Spinner } from "@frak-labs/design-system/components/Spinner";
 import { Switch } from "@frak-labs/design-system/components/Switch";
-import { Tooltip } from "@/module/common/component/Tooltip";
+import { useWalletStatus } from "@frak-labs/react-sdk";
 import {
     AlertTriangle,
     ArrowUpCircle,
@@ -17,15 +13,19 @@ import {
 import { useState } from "react";
 import { type Address, formatUnits, parseUnits } from "viem";
 import { Badge } from "@/module/common/component/Badge";
+import { Button, buttonVariants } from "@/module/common/component/Button";
+import { IconInfo } from "@/module/common/component/IconInfo";
 import { Panel } from "@/module/common/component/Panel";
 import { Row } from "@/module/common/component/Row";
 import { Title } from "@/module/common/component/Title";
+import { Tooltip } from "@/module/common/component/Tooltip";
 import { useTokenMetadata } from "@/module/common/hook/useTokenMetadata";
 import {
     currencyMetadata,
     formatTokenBalance,
 } from "@/module/common/utils/currencyOptions";
 import { FormLayout } from "@/module/forms/Form";
+import { Input } from "@/module/forms/Input";
 import { useBankAllowanceMutation } from "@/module/merchant/hook/useBankAllowanceMutation";
 import { useFundTestBank } from "@/module/merchant/hook/useFundTestBank";
 import { useGetMerchantBank } from "@/module/merchant/hook/useGetMerchantBank";

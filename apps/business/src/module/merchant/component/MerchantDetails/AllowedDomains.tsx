@@ -1,8 +1,8 @@
+import { useMemo, useState } from "react";
 import { Button } from "@/module/common/component/Button";
 import { Column, Columns } from "@/module/common/component/Columns";
-import { Input } from "@/module/forms/Input";
-import { useMemo, useState } from "react";
 import { Panel } from "@/module/common/component/Panel";
+import { Input } from "@/module/forms/Input";
 import {
     useAddAllowedDomain,
     useRemoveAllowedDomain,

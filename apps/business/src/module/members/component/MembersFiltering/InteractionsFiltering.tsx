@@ -1,5 +1,4 @@
 import { Checkbox } from "@frak-labs/design-system/components/Checkbox";
-import { Input } from "@/module/forms/Input";
 import { useEffect, useState } from "react";
 import { useFormContext, useWatch } from "react-hook-form";
 import { Row } from "@/module/common/component/Row";
@@ -9,6 +8,7 @@ import {
     FormLabel,
     FormMessage,
 } from "@/module/forms/Form";
+import { Input } from "@/module/forms/Input";
 import type { FormMembersFiltering } from "@/module/members/component/MembersFiltering";
 import styles from "./index.module.css";
 

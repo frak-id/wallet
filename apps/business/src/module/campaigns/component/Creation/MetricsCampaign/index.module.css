@@ -141,11 +141,7 @@
 
 .chaining__barFill {
     height: 100%;
-    background: linear-gradient(
-        90deg,
-        #0043ef,
-        #ccd9fc
-    );
+    background: linear-gradient(90deg, #0043ef, #ccd9fc);
     border-radius: 4px;
     transition: width 0.2s ease;
 }

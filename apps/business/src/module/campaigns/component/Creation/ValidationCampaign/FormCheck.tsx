@@ -1,4 +1,4 @@
-import { Input } from "@/module/forms/Input";
+import { Inline } from "@frak-labs/design-system/components/Inline";
 import { capitalize } from "radash";
 import { useFormContext } from "react-hook-form";
 import { FormBudgetRow } from "@/module/campaigns/component/Creation/NewCampaign/FormBudgetRow";
@@ -7,6 +7,7 @@ import { FormGoal } from "@/module/campaigns/component/Creation/ValidationCampai
 import { RewardsSummary } from "@/module/campaigns/component/RewardsSummary";
 import { Panel } from "@/module/common/component/Panel";
 import { FormDescription, FormItem } from "@/module/forms/Form";
+import { Input } from "@/module/forms/Input";
 import type { CampaignDraft } from "@/stores/campaignStore";
 
 export function FormCheck() {
@@ -50,7 +51,7 @@ export function FormCheck() {
 
             <FormItem>
                 <FormDescription label={"Schedule"} />
-                <div style={{ display: "flex", gap: "1rem" }}>
+                <Inline space="m" fill>
                     <div style={{ flex: 1 }}>
                         <FormDescription label={"Start Date"} />
                         <Input
@@ -67,7 +68,7 @@ export function FormCheck() {
                             />
                         </div>
                     )}
-                </div>
+                </Inline>
             </FormItem>
 
             <FormItem>

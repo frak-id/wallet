@@ -1,5 +1,5 @@
-import { alias, brand } from "@frak-labs/design-system/tokens";
 import { vars } from "@frak-labs/design-system/theme";
+import { alias, brand } from "@frak-labs/design-system/tokens";
 import { globalStyle, style } from "@vanilla-extract/css";
 import { recipe } from "@vanilla-extract/recipes";
 
@@ -48,8 +48,8 @@ export const input = style({
             opacity: 0.6,
         },
         '&[data-invalid="true"]': {
-            borderColor: "#818c9c",
-            color: "#adadad",
+            borderColor: vars.border.focus,
+            color: vars.text.tertiary,
         },
     },
 });

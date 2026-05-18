@@ -6,9 +6,3 @@ export const head = style({
     alignItems: "flex-end",
     marginBottom: "10px",
 });
-
-export const headLeft = style({
-    display: "flex",
-    flexDirection: "column",
-    gap: "8px",
-});
