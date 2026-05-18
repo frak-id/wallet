@@ -1,0 +1,63 @@
+import { vars } from "@frak-labs/design-system/theme";
+import { globalStyle, style } from "@vanilla-extract/css";
+
+export const merchantItem = style({
+    position: "relative",
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "center",
+    justifyContent: "center",
+    width: "295px",
+    height: "413px",
+    borderRadius: "12px",
+    background: vars.surface.secondary,
+    border: `1px solid ${vars.border.default}`,
+    color: vars.text.primary,
+    lineHeight: "20px",
+    textAlign: "center",
+    fontSize: "19px",
+    transition: "background 0.3s, border-color 0.3s",
+    selectors: {
+        "&:hover": {
+            background: vars.surface.secondaryHover,
+            borderColor: vars.border.focus,
+        },
+    },
+});
+
+export const merchantItemName = style({
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "center",
+    gap: "14px",
+    fontWeight: 600,
+});
+
+export const merchantItemDomain = style({
+    fontSize: "14px",
+    fontWeight: 400,
+    color: vars.text.tertiary,
+});
+
+export const merchantItemActions = style({
+    position: "absolute",
+    bottom: "75px",
+    display: "flex",
+    gap: "10px",
+});
+
+globalStyle(`${merchantItemActions} a`, {
+    display: "flex",
+});
+
+export const merchantItemStatus = style({
+    position: "absolute",
+    top: "8px",
+    left: "8px",
+    display: "flex",
+    gap: "10px",
+});
+
+globalStyle(`${merchantItemStatus} svg`, {
+    cursor: "pointer",
+});
