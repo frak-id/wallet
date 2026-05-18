@@ -1,4 +1,5 @@
 import type { RecipeVariants } from "@vanilla-extract/recipes";
+import clsx from "clsx";
 import type { ComponentPropsWithRef, ElementType, ReactNode } from "react";
 import { titleIcon, titleText, titleVariants } from "./title.css";
 
@@ -29,18 +30,17 @@ export const Title = ({
     return (
         <Component
             ref={ref}
-            className={`${titleVariants({
-                tag: Component.toString() as TitleRecipeVariants["tag"],
-                size,
-            })}${className ? ` ${className}` : ""}`}
+            className={clsx(
+                titleVariants({
+                    tag: Component.toString() as TitleRecipeVariants["tag"],
+                    size,
+                }),
+                className
+            )}
             {...props}
         >
             {icon && <span className={titleIcon}>{icon}</span>}
-            <span
-                className={`${titleText}${classNameText ? ` ${classNameText}` : ""}`}
-            >
-                {children}
-            </span>
+            <span className={clsx(titleText, classNameText)}>{children}</span>
         </Component>
     );
 };

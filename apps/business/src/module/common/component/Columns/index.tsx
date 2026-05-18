@@ -1,3 +1,4 @@
+import clsx from "clsx";
 import type { ComponentPropsWithRef } from "react";
 import { column, columnRoot, columns, columnsRoot } from "./columns.css";
 
@@ -10,7 +11,7 @@ type ColumnsProps = ComponentPropsWithRef<"div"> & {
 export const Columns = ({ ref, className, align, ...props }: ColumnsProps) => {
     return (
         <div
-            className={`${columnsRoot} ${columns({ align })}${className ? ` ${className}` : ""}`}
+            className={clsx(columnsRoot, columns({ align }), className)}
             ref={ref}
             {...props}
         />
@@ -35,7 +36,7 @@ export const Column = ({
 }: ColumnProps) => {
     return (
         <div
-            className={`${columnRoot} ${column({ size, justify })}${className ? ` ${className}` : ""}`}
+            className={clsx(columnRoot, column({ size, justify }), className)}
             ref={ref}
             data-justify={justify}
             {...props}

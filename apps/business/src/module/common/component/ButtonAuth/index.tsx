@@ -1,3 +1,4 @@
+import clsx from "clsx";
 import { Fingerprint } from "lucide-react";
 import type {
     ComponentPropsWithRef,
@@ -40,7 +41,7 @@ export function ButtonAuth({
     return (
         <button
             type={type}
-            className={`${buttonAuth({ size, width })} ${className}`.trim()}
+            className={clsx(buttonAuth({ size, width }), className)}
             disabled={disabled}
             onClick={onClick}
         >
@@ -60,7 +61,7 @@ function ButtonAuthIcon({ isLoading }: { isLoading?: boolean }) {
     return (
         <span className={iconWrapper}>
             <Fingerprint
-                className={`${iconStyle}${isLoading ? ` ${pulsingIcon}` : ""}`}
+                className={clsx(iconStyle, isLoading && pulsingIcon)}
             />
             {isLoading && <div className={spinner} />}
         </span>

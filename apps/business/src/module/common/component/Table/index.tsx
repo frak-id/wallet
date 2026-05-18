@@ -11,6 +11,7 @@ import {
     type RowSelectionState,
     useReactTable,
 } from "@tanstack/react-table";
+import clsx from "clsx";
 import { ArrowDown, ArrowDownUp, ArrowUp } from "lucide-react";
 import type { ReactNode } from "react";
 import { type PropsWithChildren, useMemo, useState } from "react";
@@ -94,14 +95,10 @@ export function Table<TData extends object>({
     );
 
     return (
-        <div
-            className={`${tableWrapper}${classNameWrapper ? ` ${classNameWrapper}` : ""}`}
-        >
+        <div className={clsx(tableWrapper, classNameWrapper)}>
             {preTable && <div className={preTableStyle}>{preTable}</div>}
 
-            <table
-                className={`${tableStyle}${className ? ` ${className}` : ""}`}
-            >
+            <table className={clsx(tableStyle, className)}>
                 <thead>
                     {table.getHeaderGroups().map((headerGroup) => (
                         <tr key={headerGroup.id}>

@@ -1,4 +1,5 @@
 import { button } from "@frak-labs/design-system/components/Button";
+import clsx from "clsx";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import type { ComponentProps } from "react";
 import { DayPicker } from "react-day-picker";
@@ -15,7 +16,7 @@ export function Calendar({
     return (
         <DayPicker
             showOutsideDays={showOutsideDays}
-            className={`${styles.root}${className ? ` ${className}` : ""}`}
+            className={clsx(styles.root, className)}
             classNames={{
                 months: styles.months,
                 month_caption: styles.caption,

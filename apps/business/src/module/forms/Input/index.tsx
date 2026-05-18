@@ -1,4 +1,5 @@
 import type { RecipeVariants } from "@vanilla-extract/recipes";
+import clsx from "clsx";
 import type { ComponentPropsWithRef, ReactNode } from "react";
 import { isValidElement } from "react";
 import { hasClassName } from "@/module/common/utils/hasClassName";
@@ -25,23 +26,20 @@ export const Input = ({
     ...props
 }: InputProps) => {
     return (
-        <span
-            className={`${inputWrapper({ length })}${
-                classNameWrapper ? ` ${classNameWrapper}` : ""
-            }`}
-        >
+        <span className={clsx(inputWrapper({ length }), classNameWrapper)}>
             {leftSection}
             <input
                 type={type}
-                className={`${input}${className ? ` ${className}` : ""}`}
+                className={clsx(input, className)}
                 ref={ref}
                 {...props}
             />
             {rightSlot && isValidElement(rightSlot) ? (
                 mergeElement(rightSlot, {
-                    className: `${rightSection} ${
-                        hasClassName(rightSlot) ? rightSlot.props.className : ""
-                    }`,
+                    className: clsx(
+                        rightSection,
+                        hasClassName(rightSlot) && rightSlot.props.className
+                    ),
                 })
             ) : (
                 <span className={rightSection}>{rightSlot}</span>

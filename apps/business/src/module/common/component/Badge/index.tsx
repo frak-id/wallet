@@ -1,4 +1,5 @@
 import type { RecipeVariants } from "@vanilla-extract/recipes";
+import clsx from "clsx";
 import type { ComponentPropsWithRef } from "react";
 import { badgeVariants } from "./badge.css";
 
@@ -15,10 +16,7 @@ export const Badge = ({
 }: BadgeProps) => {
     return (
         <span
-            className={`${badgeVariants({
-                variant,
-                size,
-            })}${className ? ` ${className}` : ""}`}
+            className={clsx(badgeVariants({ variant, size }), className)}
             ref={ref}
             {...props}
         />

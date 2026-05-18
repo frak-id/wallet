@@ -1,4 +1,5 @@
 import * as AlertDialogPrimitive from "@radix-ui/react-alert-dialog";
+import clsx from "clsx";
 import { X } from "lucide-react";
 import type { ReactNode } from "react";
 import * as styles from "./alert-dialog.css";
@@ -53,7 +54,7 @@ export function AlertDialog({
                 <AlertDialogPrimitive.Trigger asChild>
                     <button
                         type="button"
-                        className={`${styles.trigger} ${className}`}
+                        className={clsx(styles.trigger, className)}
                         disabled={disabled}
                     >
                         {label}
@@ -72,7 +73,11 @@ export function AlertDialog({
                 />
                 <AlertDialogPrimitive.Content
                     onEscapeKeyDown={() => onOpenChange?.(false)}
-                    className={`${styles.content} ${showCloseButton ? styles.withCloseButton : ""} ${classNameContent}`}
+                    className={clsx(
+                        styles.content,
+                        showCloseButton && styles.withCloseButton,
+                        classNameContent
+                    )}
                 >
                     {showCloseButton && (
                         <AlertDialogPrimitive.Cancel asChild>
@@ -87,7 +92,7 @@ export function AlertDialog({
                     )}
                     {title ? (
                         <AlertDialogPrimitive.Title
-                            className={`${styles.title} ${classNameTitle}`}
+                            className={clsx(styles.title, classNameTitle)}
                         >
                             {title}
                         </AlertDialogPrimitive.Title>
@@ -105,7 +110,7 @@ export function AlertDialog({
                         <AlertDialogPrimitive.Description />
                     )}
                     {text && <div>{text}</div>}
-                    <div className={`${styles.footer} ${footerClassName}`}>
+                    <div className={clsx(styles.footer, footerClassName)}>
                         <AlertDialogPrimitive.Cancel asChild>
                             {cancel}
                         </AlertDialogPrimitive.Cancel>

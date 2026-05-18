@@ -1,5 +1,6 @@
 import type { Stablecoin } from "@frak-labs/app-essentials";
 import { Stack } from "@frak-labs/design-system/components/Stack";
+import clsx from "clsx";
 import { CheckCircle2, Star } from "lucide-react";
 import { Badge } from "@/module/common/component/Badge";
 import { currencyOptions } from "@/module/common/utils/currencyOptions";
@@ -55,11 +56,11 @@ export function CurrencySelector({
                                 !disabled && onChange(currency.value)
                             }
                             disabled={disabled}
-                            className={`${styles.currencyCard}${
-                                isSelected
-                                    ? ` ${styles.currencyCardSelected}`
-                                    : ""
-                            }${disabled ? ` ${styles.currencyCardDisabled}` : ""}`}
+                            className={clsx(
+                                styles.currencyCard,
+                                isSelected && styles.currencyCardSelected,
+                                disabled && styles.currencyCardDisabled
+                            )}
                         >
                             {isSelected && (
                                 <div className={styles.selectedIndicator}>

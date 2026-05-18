@@ -1,3 +1,4 @@
+import clsx from "clsx";
 import { Command as CommandPrimitive } from "cmdk";
 import { Search } from "lucide-react";
 import type { ComponentPropsWithRef } from "react";
@@ -19,7 +20,7 @@ const Command = ({
 }: ComponentPropsWithRef<typeof CommandPrimitive>) => (
     <CommandPrimitive
         ref={ref}
-        className={`${command} ${className}`}
+        className={clsx(command, className)}
         {...props}
     />
 );
@@ -34,7 +35,7 @@ const CommandInput = ({
         <Search size={16} />
         <CommandPrimitive.Input
             ref={ref}
-            className={`${commandInput} ${className}`}
+            className={clsx(commandInput, className)}
             {...props}
         />
     </div>
@@ -49,7 +50,7 @@ const CommandList = ({
 }: ComponentPropsWithRef<typeof CommandPrimitive.List>) => (
     <CommandPrimitive.List
         ref={ref}
-        className={`${commandList} ${className}`}
+        className={clsx(commandList, className)}
         {...props}
     />
 );
@@ -72,7 +73,7 @@ const CommandGroup = ({
 }: ComponentPropsWithRef<typeof CommandPrimitive.Group>) => (
     <CommandPrimitive.Group
         ref={ref}
-        className={`${commandGroup} ${className}`}
+        className={clsx(commandGroup, className)}
         {...props}
     />
 );
@@ -86,7 +87,7 @@ const CommandSeparator = ({
 }: ComponentPropsWithRef<typeof CommandPrimitive.Separator>) => (
     <CommandPrimitive.Separator
         ref={ref}
-        className={`${commandSeparator} ${className}`}
+        className={clsx(commandSeparator, className)}
         {...props}
     />
 );
@@ -99,7 +100,7 @@ const CommandItem = ({
 }: ComponentPropsWithRef<typeof CommandPrimitive.Item>) => (
     <CommandPrimitive.Item
         ref={ref}
-        className={`${commandItem} ${className}`}
+        className={clsx(commandItem, className)}
         {...props}
     />
 );

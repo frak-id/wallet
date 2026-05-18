@@ -1,3 +1,4 @@
+import clsx from "clsx";
 import { CheckIcon, ChevronDown, X, XIcon } from "lucide-react";
 import type { ButtonHTMLAttributes, Ref } from "react";
 import { useState } from "react";
@@ -244,11 +245,12 @@ function OptionsList({
                 onSelect={() => toggleOption(option)}
             >
                 <div
-                    className={`${styles.multiSelectChecks} ${
+                    className={clsx(
+                        styles.multiSelectChecks,
                         isSelected
                             ? styles.multiSelectChecksSelected
                             : styles.multiSelectChecksNotSelected
-                    }`}
+                    )}
                 >
                     <CheckIcon size={12} />
                 </div>

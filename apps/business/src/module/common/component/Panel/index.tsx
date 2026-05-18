@@ -1,4 +1,5 @@
 import type { RecipeVariants } from "@vanilla-extract/recipes";
+import clsx from "clsx";
 import { BadgeCheck } from "lucide-react";
 import type { ComponentPropsWithRef } from "react";
 import { Title } from "@/module/common/component/Title";
@@ -27,7 +28,7 @@ export const Panel = ({
     return (
         <div
             ref={ref}
-            className={`${panelVariants({ variant })}${className ? ` ${className}` : ""}`}
+            className={clsx(panelVariants({ variant }), className)}
             {...props}
         >
             <PanelTitle title={title} withBadge={withBadge} variant={variant} />
@@ -50,11 +51,10 @@ export function PanelTitle({
             <Title
                 icon={withBadge && <BadgeCheck color={"#0DDB84"} />}
                 size={"small"}
-                className={
-                    variant === "ghost"
-                        ? `${panelTitle} ${panelTitleGhost}`
-                        : panelTitle
-                }
+                className={clsx(
+                    panelTitle,
+                    variant === "ghost" && panelTitleGhost
+                )}
             >
                 {title}
             </Title>

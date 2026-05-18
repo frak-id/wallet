@@ -1,4 +1,5 @@
 import { useQueryClient } from "@tanstack/react-query";
+import clsx from "clsx";
 import { RefreshCcw } from "lucide-react";
 import { type PropsWithChildren, useEffect, useState } from "react";
 import { buttonRefresh, buttonRefreshing } from "./button-refresh.css";
@@ -18,7 +19,11 @@ export function ButtonRefresh({
     return (
         <button
             type="button"
-            className={`${buttonRefresh}${isRefreshing ? ` ${buttonRefreshing}` : ""}${className ? ` ${className}` : ""}`}
+            className={clsx(
+                buttonRefresh,
+                isRefreshing && buttonRefreshing,
+                className
+            )}
             title="Force refresh"
             onClick={() => {
                 setIsRefreshing(true);

@@ -1,3 +1,4 @@
+import clsx from "clsx";
 import type {
     ButtonHTMLAttributes,
     ComponentProps,
@@ -16,7 +17,7 @@ import {
 const Pagination = ({ className, ...props }: ComponentProps<"nav">) => (
     <nav
         aria-label="pagination"
-        className={`${pagination}${className ? ` ${className}` : ""}`}
+        className={clsx(pagination, className)}
         {...props}
     />
 );
@@ -27,11 +28,7 @@ const PaginationContent = ({
     className,
     ...props
 }: ComponentPropsWithRef<"ul">) => (
-    <ul
-        ref={ref}
-        className={`${paginationContent}${className ? ` ${className}` : ""}`}
-        {...props}
-    />
+    <ul ref={ref} className={clsx(paginationContent, className)} {...props} />
 );
 PaginationContent.displayName = "PaginationContent";
 
@@ -62,7 +59,11 @@ const PaginationLink = ({
     <Button
         variant="ghost"
         size={"none"}
-        className={`${paginationLink}${isActive ? ` ${paginationLinkActive}` : ""}${className ? ` ${className}` : ""}`}
+        className={clsx(
+            paginationLink,
+            isActive && paginationLinkActive,
+            className
+        )}
         {...props}
     >
         {children}
@@ -77,7 +78,7 @@ const PaginationPrevious = ({
     <PaginationLink
         aria-label="Go to previous page"
         size="none"
-        className={`${paginationLink}${className ? ` ${className}` : ""}`}
+        className={clsx(paginationLink, className)}
         {...props}
     >
         <ChevronLeft size={20} />
@@ -92,7 +93,7 @@ const PaginationNext = ({
     <PaginationLink
         aria-label="Go to next page"
         size="none"
-        className={`${paginationLink}${className ? ` ${className}` : ""}`}
+        className={clsx(paginationLink, className)}
         {...props}
     >
         <ChevronRight size={20} />
@@ -106,7 +107,7 @@ const PaginationEllipsis = ({
 }: ComponentProps<"span">) => (
     <span
         aria-hidden
-        className={`${paginationLink} ${paginationMore}${className ? ` ${className}` : ""}`}
+        className={clsx(paginationLink, paginationMore, className)}
         {...props}
     >
         <MoreHorizontal size={20} />

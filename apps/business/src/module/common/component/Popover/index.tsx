@@ -1,4 +1,5 @@
 import { Content, Portal, Root, Trigger } from "@radix-ui/react-popover";
+import clsx from "clsx";
 import type { ComponentPropsWithRef } from "react";
 import { popover } from "./popover.css";
 
@@ -16,7 +17,7 @@ const PopoverContent = ({
     <Portal>
         <Content
             ref={ref}
-            className={`${popover}${className ? ` ${className}` : ""}`}
+            className={clsx(popover, className)}
             align={align}
             sideOffset={sideOffset}
             {...props}

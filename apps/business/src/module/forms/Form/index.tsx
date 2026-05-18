@@ -1,6 +1,7 @@
 import type * as LabelPrimitive from "@radix-ui/react-label";
 import { Slot } from "@radix-ui/react-slot";
 import type { RecipeVariants } from "@vanilla-extract/recipes";
+import clsx from "clsx";
 import type { ComponentPropsWithRef, ReactNode } from "react";
 import { createContext, useContext, useId } from "react";
 import type { ControllerProps, FieldPath, FieldValues } from "react-hook-form";
@@ -24,11 +25,7 @@ function FormLayout({
     children: ReactNode;
     className?: string;
 }) {
-    return (
-        <div className={`${formLayout}${className ? ` ${className}` : ""}`}>
-            {children}
-        </div>
-    );
+    return <div className={clsx(formLayout, className)}>{children}</div>;
 }
 
 type FormFieldContextValue<
@@ -98,7 +95,7 @@ const FormItem = ({ ref, variant, className, ...props }: FormItemProps) => {
         <FormItemContext.Provider value={{ id }}>
             <div
                 ref={ref}
-                className={`${formItem({ variant })}${className ? ` ${className}` : ""}`}
+                className={clsx(formItem({ variant }), className)}
                 {...props}
             />
         </FormItemContext.Provider>
@@ -120,16 +117,14 @@ const FormLabel = ({
     ...props
 }: FormLabelProps) => {
     const { error, formItemId } = useFormField();
-    const classNameError = error ? ` ${formError}` : "";
-
     return (
         <Label
             ref={ref}
-            className={`${formLabel({
-                variant,
-                selected,
-                weight,
-            })}${className ? ` ${className}` : ""}${classNameError}`}
+            className={clsx(
+                formLabel({ variant, selected, weight }),
+                className,
+                error && formError
+            )}
             htmlFor={formItemId}
             {...props}
         />
@@ -175,16 +170,12 @@ const FormDescription = ({
     return (
         <>
             {label && (
-                <h3
-                    className={`${formTitle}${classNameTitle ? ` ${classNameTitle}` : ""}`}
-                >
-                    {label}
-                </h3>
+                <h3 className={clsx(formTitle, classNameTitle)}>{label}</h3>
             )}
             <p
                 ref={ref}
                 id={formDescriptionId}
-                className={`${formDescription}${className ? ` ${className}` : ""}`}
+                className={clsx(formDescription, className)}
                 {...props}
             >
                 {children}
@@ -211,7 +202,7 @@ const FormMessage = ({
         <p
             ref={ref}
             id={formMessageId}
-            className={`error ${className}`}
+            className={clsx("error", className)}
             {...props}
         >
             {body}
@@ -236,7 +227,7 @@ const FormValidMessage = ({
         <p
             ref={ref}
             id={`${formMessageId}-valid`}
-            className={`success ${className}`}
+            className={clsx("success", className)}
             {...props}
         >
             {children}

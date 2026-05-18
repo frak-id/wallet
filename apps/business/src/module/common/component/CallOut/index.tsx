@@ -1,4 +1,5 @@
 import type { RecipeVariants } from "@vanilla-extract/recipes";
+import clsx from "clsx";
 import type { ComponentPropsWithRef } from "react";
 import { callOutVariants } from "./call-out.css";
 
@@ -16,9 +17,7 @@ export const CallOut = ({
 }: CallOutProps) => {
     return (
         <p
-            className={`${callOutVariants({
-                variant,
-            })}${className ? ` ${className}` : ""}`}
+            className={clsx(callOutVariants({ variant }), className)}
             ref={ref}
             {...props}
         />

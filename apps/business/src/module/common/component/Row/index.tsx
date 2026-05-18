@@ -1,3 +1,4 @@
+import clsx from "clsx";
 import type { PropsWithChildren } from "react";
 import { row } from "./row.css";
 
@@ -11,9 +12,5 @@ export function Row({
     className = "",
     children,
 }: PropsWithChildren<RowProps>) {
-    return (
-        <div className={`${row({ align })}${className ? ` ${className}` : ""}`}>
-            {children}
-        </div>
-    );
+    return <div className={clsx(row({ align }), className)}>{children}</div>;
 }

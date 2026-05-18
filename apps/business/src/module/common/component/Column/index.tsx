@@ -1,3 +1,4 @@
+import clsx from "clsx";
 import type { PropsWithChildren } from "react";
 import { column, columnFullWidth } from "./column.css";
 
@@ -13,7 +14,7 @@ export function Column({
 }: PropsWithChildren<ColumnProps>) {
     return (
         <div
-            className={`${column}${fullWidth ? ` ${columnFullWidth}` : ""}${className ? ` ${className}` : ""}`}
+            className={clsx(column, fullWidth && columnFullWidth, className)}
             data-fullwidth={fullWidth || undefined}
         >
             {children}
