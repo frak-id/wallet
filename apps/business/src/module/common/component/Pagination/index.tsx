@@ -1,13 +1,17 @@
-import { Button } from "@/module/common/component/Button";
-import { cx } from "class-variance-authority";
-import { ChevronLeft, ChevronRight, MoreHorizontal } from "lucide-react";
 import type { ComponentProps, ComponentPropsWithRef, ReactNode } from "react";
-import styles from "./index.module.css";
+import { Button } from "@/module/common/component/Button";
+import {
+    pagination,
+    paginationContent,
+    paginationLink,
+    paginationLinkActive,
+    paginationMore,
+} from "./pagination.css";
 
 const Pagination = ({ className, ...props }: ComponentProps<"nav">) => (
     <nav
         aria-label="pagination"
-        className={`${styles.pagination} ${className}`}
+        className={`${pagination}${className ? ` ${className}` : ""}`}
         {...props}
     />
 );
@@ -20,7 +24,7 @@ const PaginationContent = ({
 }: ComponentPropsWithRef<"ul">) => (
     <ul
         ref={ref}
-        className={`${styles.pagination__content} ${className}`}
+        className={`${paginationContent}${className ? ` ${className}` : ""}`}
         {...props}
     />
 );
@@ -49,11 +53,7 @@ const PaginationLink = ({
     <Button
         variant="ghost"
         size={"none"}
-        className={cx(
-            styles.pagination__link,
-            isActive && styles["pagination__link--active"],
-            className
-        )}
+        className={`${paginationLink}${isActive ? ` ${paginationLinkActive}` : ""}${className ? ` ${className}` : ""}`}
         {...props}
     >
         {children}
@@ -68,7 +68,7 @@ const PaginationPrevious = ({
     <PaginationLink
         aria-label="Go to previous page"
         size="none"
-        className={`${styles.pagination__link} ${className}`}
+        className={`${paginationLink}${className ? ` ${className}` : ""}`}
         {...props}
     >
         <ChevronLeft size={20} />
@@ -83,7 +83,7 @@ const PaginationNext = ({
     <PaginationLink
         aria-label="Go to next page"
         size="none"
-        className={`${styles.pagination__link} ${className}`}
+        className={`${paginationLink}${className ? ` ${className}` : ""}`}
         {...props}
     >
         <ChevronRight size={20} />
@@ -97,7 +97,7 @@ const PaginationEllipsis = ({
 }: ComponentProps<"span">) => (
     <span
         aria-hidden
-        className={`${styles.pagination__link} ${styles.pagination__more} ${className}`}
+        className={`${paginationLink} ${paginationMore}${className ? ` ${className}` : ""}`}
         {...props}
     >
         <MoreHorizontal size={20} />
@@ -105,6 +105,8 @@ const PaginationEllipsis = ({
     </span>
 );
 PaginationEllipsis.displayName = "PaginationEllipsis";
+
+import { ChevronLeft, ChevronRight, MoreHorizontal } from "lucide-react";
 
 export {
     Pagination,
