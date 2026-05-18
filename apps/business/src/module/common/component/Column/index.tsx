@@ -1,5 +1,5 @@
 import type { PropsWithChildren } from "react";
-import styles from "./index.module.css";
+import { column, columnFullWidth } from "./column.css";
 
 type ColumnProps = {
     fullWidth?: boolean;
@@ -11,9 +11,11 @@ export function Column({
     className = "",
     children,
 }: PropsWithChildren<ColumnProps>) {
-    const classNameFullWidth = fullWidth ? styles["column--fullWidth"] : "";
     return (
-        <div className={`${styles.column} ${classNameFullWidth} ${className}`}>
+        <div
+            className={`${column}${fullWidth ? ` ${columnFullWidth}` : ""}${className ? ` ${className}` : ""}`}
+            data-fullwidth={fullWidth || undefined}
+        >
             {children}
         </div>
     );

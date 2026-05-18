@@ -20,14 +20,14 @@ describe("Column", () => {
         const { container } = render(<Column fullWidth>Content</Column>);
 
         const column = container.querySelector("div");
-        expect(column?.className).toContain("fullWidth");
+        expect(column?.getAttribute("data-fullwidth")).toBe("true");
     });
 
     it("should not apply fullWidth class when fullWidth is false", () => {
         const { container } = render(<Column>Content</Column>);
 
         const column = container.querySelector("div");
-        expect(column?.className).not.toContain("fullWidth");
+        expect(column?.getAttribute("data-fullwidth")).toBeNull();
     });
 
     it("should apply custom className", () => {
@@ -43,7 +43,7 @@ describe("Column", () => {
         const { container } = render(<Column>Content</Column>);
 
         const column = container.querySelector("div");
-        expect(column?.className).not.toContain("fullWidth");
+        expect(column?.getAttribute("data-fullwidth")).toBeNull();
     });
 
     it("should render multiple children", () => {

@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import styles from "./index.module.css";
+import { previewWrapper, previewWrapperLabel } from "./preview-wrapper.css";
 
 export function PreviewWrapper({
     label = "Preview",
@@ -9,8 +9,8 @@ export function PreviewWrapper({
     children: ReactNode;
 }) {
     return (
-        <div className={styles.previewWrapper}>
-            <p className={styles.previewWrapper__label}>{label}</p>
+        <div className={previewWrapper}>
+            <p className={previewWrapperLabel}>{label}</p>
             {children}
         </div>
     );

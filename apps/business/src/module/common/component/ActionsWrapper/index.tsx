@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 import { Panel } from "@/module/common/component/Panel";
-import styles from "./index.module.css";
+import { actionLeft, actionRight, actions } from "./actions-wrapper.css";
 
 export function ActionsWrapper({
     left,
@@ -10,9 +10,9 @@ export function ActionsWrapper({
     right?: ReactNode;
 }) {
     return (
-        <Panel variant={"secondary"} className={styles.actions}>
-            {left && <div className={styles.action__left}>{left}</div>}
-            {right && <div className={styles.action__right}>{right}</div>}
+        <Panel variant={"secondary"} className={actions}>
+            {left && <div className={actionLeft}>{left}</div>}
+            {right && <div className={actionRight}>{right}</div>}
         </Panel>
     );
 }

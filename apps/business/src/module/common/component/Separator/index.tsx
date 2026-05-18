@@ -1,6 +1,6 @@
 import { Root } from "@radix-ui/react-separator";
 import type { ComponentPropsWithRef } from "react";
-import styles from "./index.module.css";
+import { separator } from "./separator.css";
 
 export const Separator = ({
     ref,
@@ -13,7 +13,7 @@ export const Separator = ({
         ref={ref}
         decorative={decorative}
         orientation={orientation}
-        className={`${styles.separator} ${className}`}
+        className={`${separator}${className ? ` ${className}` : ""}`}
         {...props}
     />
 );

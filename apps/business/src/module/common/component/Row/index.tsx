@@ -1,5 +1,5 @@
 import type { PropsWithChildren } from "react";
-import styles from "./index.module.css";
+import { row } from "./row.css";
 
 type RowProps = {
     align?: "start" | "center" | "end";
@@ -11,9 +11,8 @@ export function Row({
     className = "",
     children,
 }: PropsWithChildren<RowProps>) {
-    const alignClass = styles[`row--${align}`];
     return (
-        <div className={`${styles.row} ${alignClass} ${className}`}>
+        <div className={`${row({ align })}${className ? ` ${className}` : ""}`}>
             {children}
         </div>
     );
