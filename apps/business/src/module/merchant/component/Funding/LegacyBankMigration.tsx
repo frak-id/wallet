@@ -1,4 +1,5 @@
 import { Spinner } from "@frak-labs/design-system/components/Spinner";
+import clsx from "clsx";
 import { ArrowRightLeft } from "lucide-react";
 import type { Address } from "viem";
 import { formatUnits } from "viem";
@@ -95,7 +96,10 @@ function LegacyBankMigrationContent({
                             Pending rewards (locked)
                         </span>
                         <span
-                            className={`${styles.legacyPanel__statValue} ${styles["legacyPanel__statValue--pending"]}`}
+                            className={clsx(
+                                styles.legacyPanel__statValue,
+                                styles["legacyPanel__statValue--pending"]
+                            )}
                         >
                             {formattedPending} {symbol}
                         </span>
@@ -106,7 +110,10 @@ function LegacyBankMigrationContent({
                         Available to migrate
                     </span>
                     <span
-                        className={`${styles.legacyPanel__statValue} ${styles["legacyPanel__statValue--withdrawable"]}`}
+                        className={clsx(
+                            styles.legacyPanel__statValue,
+                            styles["legacyPanel__statValue--withdrawable"]
+                        )}
                     >
                         {formattedWithdrawable} {symbol}
                     </span>

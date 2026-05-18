@@ -1,4 +1,5 @@
 import { useLocation, useNavigate } from "@tanstack/react-router";
+import clsx from "clsx";
 import { Check, X } from "lucide-react";
 import { memo, useCallback, useEffect } from "react";
 import { ActionsWrapper } from "@/module/common/component/ActionsWrapper";
@@ -117,7 +118,10 @@ function ButtonNext({
 export function ActionsMessageSuccess() {
     return (
         <span
-            className={`${styles.action__message} ${styles["action__message--success"]}`}
+            className={clsx(
+                styles.action__message,
+                styles["action__message--success"]
+            )}
         >
             <Check />
             All changes have been saved
@@ -128,7 +132,10 @@ export function ActionsMessageSuccess() {
 export function ActionsMessageError({ error }: { error?: Error }) {
     return (
         <span
-            className={`${styles.action__message} ${styles["action__message--error"]}`}
+            className={clsx(
+                styles.action__message,
+                styles["action__message--error"]
+            )}
         >
             <X />
             {error?.message ?? "An error occurred"}

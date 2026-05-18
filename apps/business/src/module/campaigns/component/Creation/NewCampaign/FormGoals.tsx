@@ -1,3 +1,4 @@
+import clsx from "clsx";
 import {
     MousePointer,
     RotateCw,
@@ -188,7 +189,10 @@ function GoalInformation({ goal }: { goal: ItemGoals }) {
     return (
         <>
             <div
-                className={`${styles.formGoals__information} ${styles[`formGoals__information--${goal.id}`]}`}
+                className={clsx(
+                    styles.formGoals__information,
+                    styles[`formGoals__information--${goal.id}`]
+                )}
             >
                 <h4 className={styles.formGoals__title}>{title}</h4>
                 <p>{description}</p>

@@ -5,6 +5,7 @@ import {
     PostPurchasePreview,
     ShareButtonPreview,
 } from "@frak-labs/ui-preview";
+import clsx from "clsx";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { type UseFormReturn, useForm } from "react-hook-form";
 import { Panel } from "@/module/common/component/Panel";
@@ -286,11 +287,11 @@ function PlacementSettingsPanel({
                         <button
                             key={componentType}
                             type="button"
-                            className={`${styles.customize__tab} ${
-                                selectedComponent === componentType
-                                    ? styles["customize__tab--active"]
-                                    : ""
-                            }`}
+                            className={clsx(
+                                styles.customize__tab,
+                                selectedComponent === componentType &&
+                                    styles["customize__tab--active"]
+                            )}
                             onClick={() => setSelectedComponent(componentType)}
                         >
                             {COMPONENT_LABELS[componentType]}

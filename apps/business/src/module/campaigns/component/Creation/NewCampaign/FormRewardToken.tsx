@@ -3,6 +3,7 @@ import {
     getTokenAddressForStablecoin,
     type Stablecoin,
 } from "@frak-labs/app-essentials";
+import clsx from "clsx";
 import { CheckCircle2, Pin, Star } from "lucide-react";
 import { useFormContext } from "react-hook-form";
 import type { Address } from "viem";
@@ -92,7 +93,11 @@ export function FormRewardToken() {
                                         onClick={() => {
                                             field.onChange(undefined);
                                         }}
-                                        className={`${styles.tokenCard} ${isDefaultSelected ? styles.tokenCardSelected : ""}`}
+                                        className={clsx(
+                                            styles.tokenCard,
+                                            isDefaultSelected &&
+                                                styles.tokenCardSelected
+                                        )}
                                     >
                                         {isDefaultSelected && (
                                             <div
@@ -169,7 +174,11 @@ export function FormRewardToken() {
                                                         );
                                                     field.onChange(address);
                                                 }}
-                                                className={`${styles.tokenCard} ${isSelected ? styles.tokenCardSelected : ""}`}
+                                                className={clsx(
+                                                    styles.tokenCard,
+                                                    isSelected &&
+                                                        styles.tokenCardSelected
+                                                )}
                                             >
                                                 {isSelected && (
                                                     <div

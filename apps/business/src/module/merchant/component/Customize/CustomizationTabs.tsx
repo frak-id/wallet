@@ -1,3 +1,4 @@
+import clsx from "clsx";
 import { Plus } from "lucide-react";
 import { useEffect, useState } from "react";
 import { AlertDialog } from "@/module/common/component/AlertDialog";
@@ -41,11 +42,11 @@ export function CustomizationTabs({
             <div className={styles.customize__tabs}>
                 <button
                     type="button"
-                    className={`${styles.customize__tab} ${
-                        activeTab === "default"
-                            ? styles["customize__tab--active"]
-                            : ""
-                    }`}
+                    className={clsx(
+                        styles.customize__tab,
+                        activeTab === "default" &&
+                            styles["customize__tab--active"]
+                    )}
                     onClick={() => onTabChange("default")}
                 >
                     Global defaults
@@ -55,11 +56,11 @@ export function CustomizationTabs({
                     <button
                         key={placementId}
                         type="button"
-                        className={`${styles.customize__tab} ${
-                            activeTab === placementId
-                                ? styles["customize__tab--active"]
-                                : ""
-                        }`}
+                        className={clsx(
+                            styles.customize__tab,
+                            activeTab === placementId &&
+                                styles["customize__tab--active"]
+                        )}
                         onClick={() => onTabChange(placementId)}
                     >
                         {placementId}

@@ -1,3 +1,4 @@
+import clsx from "clsx";
 import { ChevronDown, ChevronRight } from "lucide-react";
 import { useState } from "react";
 import type { UseFormReturn } from "react-hook-form";
@@ -218,33 +219,33 @@ export function TranslationEditor({
             <div className={styles.customize__translationLangTabs}>
                 <button
                     type="button"
-                    className={`${styles.customize__translationLangTab} ${
-                        lang === "default"
-                            ? styles["customize__translationLangTab--active"]
-                            : ""
-                    }`}
+                    className={clsx(
+                        styles.customize__translationLangTab,
+                        lang === "default" &&
+                            styles["customize__translationLangTab--active"]
+                    )}
                     onClick={() => onLangChange("default")}
                 >
                     Default (all languages)
                 </button>
                 <button
                     type="button"
-                    className={`${styles.customize__translationLangTab} ${
-                        lang === "en"
-                            ? styles["customize__translationLangTab--active"]
-                            : ""
-                    }`}
+                    className={clsx(
+                        styles.customize__translationLangTab,
+                        lang === "en" &&
+                            styles["customize__translationLangTab--active"]
+                    )}
                     onClick={() => onLangChange("en")}
                 >
                     English (EN)
                 </button>
                 <button
                     type="button"
-                    className={`${styles.customize__translationLangTab} ${
-                        lang === "fr"
-                            ? styles["customize__translationLangTab--active"]
-                            : ""
-                    }`}
+                    className={clsx(
+                        styles.customize__translationLangTab,
+                        lang === "fr" &&
+                            styles["customize__translationLangTab--active"]
+                    )}
                     onClick={() => onLangChange("fr")}
                 >
                     French (FR)

@@ -2,6 +2,7 @@ import { Spinner } from "@frak-labs/design-system/components/Spinner";
 import { useMediaQuery } from "@frak-labs/design-system/hooks/useMediaQuery";
 import { useSiweAuthenticate } from "@frak-labs/react-sdk";
 import { useNavigate } from "@tanstack/react-router";
+import clsx from "clsx";
 import { useTransition } from "react";
 import { authenticatedBackendApi } from "@/api/backendClient";
 import { ClientOnly } from "@/module/common/component/ClientOnly";
@@ -76,7 +77,7 @@ export function Login() {
                             alt="Login"
                             width={430}
                             height={449}
-                            className={`${styles.phone} ${styles.image}`}
+                            className={clsx(styles.phone, styles.image)}
                         />
                     </ClientOnly>
                 )}

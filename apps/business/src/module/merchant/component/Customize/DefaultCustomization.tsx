@@ -1,5 +1,6 @@
 import type { SdkConfig } from "@frak-labs/backend-elysia/domain/merchant";
 import type { Currency } from "@frak-labs/core-sdk";
+import clsx from "clsx";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import { Panel } from "@/module/common/component/Panel";
@@ -342,11 +343,11 @@ function GlobalComponentsPanel({
                         <button
                             key={componentType}
                             type="button"
-                            className={`${styles.customize__tab} ${
-                                selectedComponent === componentType
-                                    ? styles["customize__tab--active"]
-                                    : ""
-                            }`}
+                            className={clsx(
+                                styles.customize__tab,
+                                selectedComponent === componentType &&
+                                    styles["customize__tab--active"]
+                            )}
                             onClick={() => setSelectedComponent(componentType)}
                         >
                             {COMPONENT_LABELS[componentType]}
