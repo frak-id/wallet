@@ -1,4 +1,4 @@
-import { Input } from "@frak-labs/ui/component/forms/Input";
+import { Input } from "@/module/forms/Input";
 import { useFormContext } from "react-hook-form";
 import { Panel } from "@/module/common/component/Panel";
 import {

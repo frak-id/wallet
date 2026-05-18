@@ -1,4 +1,4 @@
-import { Input } from "@frak-labs/ui/component/forms/Input";
+import { Input } from "@/module/forms/Input";
 import type { UseFormReturn } from "react-hook-form";
 import {
     FormControl,

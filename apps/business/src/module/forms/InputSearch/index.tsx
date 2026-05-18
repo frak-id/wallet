@@ -1,9 +1,6 @@
-import { Input } from "@frak-labs/design-system/components/Input";
 import { Search } from "lucide-react";
-import type { ComponentProps } from "react";
+import { Input, type InputProps } from "@/module/forms/Input";
 import { icon } from "./input-search.css";
-
-type InputProps = ComponentProps<typeof Input>;
 
 export const InputSearch = ({ ref, type, ...props }: InputProps) => {
     return (

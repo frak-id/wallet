@@ -1,5 +1,5 @@
 import { Button } from "@/module/common/component/Button";
-import { Input } from "@frak-labs/ui/component/forms/Input";
+import { Input } from "@/module/forms/Input";
 import { Plus } from "lucide-react";
 import { useEffect, useState } from "react";
 import { AlertDialog } from "@/module/common/component/AlertDialog";

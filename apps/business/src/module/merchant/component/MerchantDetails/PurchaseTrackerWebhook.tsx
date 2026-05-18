@@ -1,6 +1,6 @@
 import { Button } from "@/module/common/component/Button";
 import { Column, Columns } from "@/module/common/component/Columns";
-import { Input } from "@frak-labs/ui/component/forms/Input";
+import { Input } from "@/module/forms/Input";
 import { Spinner } from "@frak-labs/design-system/components/Spinner";
 import { TextWithCopy } from "@/module/common/component/TextWithCopy";
 import { useMutation } from "@tanstack/react-query";

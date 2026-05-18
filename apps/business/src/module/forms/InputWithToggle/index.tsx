@@ -1,4 +1,4 @@
-import { Input, type InputProps } from "@frak-labs/ui/component/forms/Input";
+import { Input, type InputProps } from "@/module/forms/Input";
 import { Pencil } from "lucide-react";
 import { useState } from "react";
 import { Row } from "@/module/common/component/Row";

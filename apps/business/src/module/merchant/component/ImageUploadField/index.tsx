@@ -1,4 +1,4 @@
-import { Input } from "@frak-labs/ui/component/forms/Input";
+import { Input } from "@/module/forms/Input";
 import { useCallback, useMemo } from "react";
 import { useDropzone } from "react-dropzone";
 import {

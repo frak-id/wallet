@@ -1,14 +1,11 @@
-import { Input } from "@frak-labs/design-system/components/Input";
-import type { ComponentProps } from "react";
 import type {
     ControllerRenderProps,
     FieldPath,
     FieldValues,
 } from "react-hook-form";
+import { Input, type InputProps } from "@/module/forms/Input";
 
-type DSInputProps = ComponentProps<typeof Input>;
-
-export type InputNumberProps = DSInputProps &
+export type InputNumberProps = InputProps &
     ControllerRenderProps<FieldValues, FieldPath<FieldValues>>;
 
 export const InputNumber = ({ ref, onChange, ...props }: InputNumberProps) => {

@@ -1,4 +1,4 @@
-import { Input } from "@frak-labs/ui/component/forms/Input";
+import { Input } from "@/module/forms/Input";
 import { useMemo } from "react";
 import { useForm } from "react-hook-form";
 import type { Address } from "viem";

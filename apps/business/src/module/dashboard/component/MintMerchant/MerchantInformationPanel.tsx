@@ -5,7 +5,7 @@ import {
     AccordionTrigger,
 } from "@frak-labs/design-system/components/Accordion";
 import { Button } from "@/module/common/component/Button";
-import { Input } from "@frak-labs/ui/component/forms/Input";
+import { Input } from "@/module/forms/Input";
 import { Spinner } from "@frak-labs/design-system/components/Spinner";
 import { TextWithCopy } from "@/module/common/component/TextWithCopy";
 import { validateUrl } from "@/module/common/utils/validateUrl";

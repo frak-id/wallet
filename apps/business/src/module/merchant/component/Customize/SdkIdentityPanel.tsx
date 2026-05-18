@@ -1,5 +1,5 @@
 import type { SdkConfig } from "@frak-labs/backend-elysia/domain/merchant";
-import { Input } from "@frak-labs/ui/component/forms/Input";
+import { Input } from "@/module/forms/Input";
 import { useCallback, useEffect, useMemo } from "react";
 import { useForm } from "react-hook-form";
 import { Panel } from "@/module/common/component/Panel";

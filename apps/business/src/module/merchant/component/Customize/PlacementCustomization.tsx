@@ -1,6 +1,6 @@
 import type { SdkConfig } from "@frak-labs/backend-elysia/domain/merchant";
 import type { Currency } from "@frak-labs/core-sdk";
-import { Input } from "@frak-labs/ui/component/forms/Input";
+import { Input } from "@/module/forms/Input";
 import {
     BannerPreview,
     PostPurchasePreview,

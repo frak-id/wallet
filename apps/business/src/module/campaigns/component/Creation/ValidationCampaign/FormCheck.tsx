@@ -1,4 +1,4 @@
-import { Input } from "@frak-labs/ui/component/forms/Input";
+import { Input } from "@/module/forms/Input";
 import { capitalize } from "radash";
 import { useFormContext } from "react-hook-form";
 import { FormBudgetRow } from "@/module/campaigns/component/Creation/NewCampaign/FormBudgetRow";
