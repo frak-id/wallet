@@ -21,7 +21,7 @@ export default defineConfig(async () => {
             tanstackRouter({
                 routesDirectory: "./src/routes",
                 generatedRouteTree: "./src/routeTree.gen.ts",
-                routeFileIgnorePattern: "test",
+                routeFileIgnorePattern: "test|\\.css\\.ts$",
                 autoCodeSplitting: true,
             }),
             viteReact(),
