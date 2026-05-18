@@ -1,4 +1,4 @@
-import { Tooltip } from "@frak-labs/ui/component/Tooltip";
+import { Tooltip } from "@/module/common/component/Tooltip";
 import { Badge } from "@/module/common/component/Badge";
 import type { CampaignStatus, DistributionStatus } from "@/types/Campaign";
 import styles from "./CampaignStateTag.module.css";

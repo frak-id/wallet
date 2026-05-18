@@ -1,5 +1,5 @@
 import { Button } from "@frak-labs/ui/component/Button";
-import { Spinner } from "@frak-labs/ui/component/Spinner";
+import { Spinner } from "@frak-labs/design-system/components/Spinner";
 import { ArrowRightLeft } from "lucide-react";
 import type { Address } from "viem";
 import { formatUnits } from "viem";

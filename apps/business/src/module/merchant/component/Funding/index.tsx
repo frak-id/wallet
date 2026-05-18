@@ -4,9 +4,9 @@ import { useWalletStatus } from "@frak-labs/react-sdk";
 import { Button, buttonVariants } from "@frak-labs/ui/component/Button";
 import { Input } from "@frak-labs/ui/component/forms/Input";
 import { IconInfo } from "@/module/common/component/IconInfo";
-import { Spinner } from "@frak-labs/ui/component/Spinner";
+import { Spinner } from "@frak-labs/design-system/components/Spinner";
 import { Switch } from "@frak-labs/ui/component/Switch";
-import { Tooltip } from "@frak-labs/ui/component/Tooltip";
+import { Tooltip } from "@/module/common/component/Tooltip";
 import {
     AlertTriangle,
     ArrowUpCircle,

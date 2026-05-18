@@ -1,5 +1,5 @@
 import { Column, Columns } from "@frak-labs/ui/component/Columns";
-import { Spinner } from "@frak-labs/ui/component/Spinner";
+import { Spinner } from "@frak-labs/design-system/components/Spinner";
 import { PanelAccordion } from "@/module/common/component/PanelAccordion";
 import { Title } from "@/module/common/component/Title";
 import { usePurchaseWebhookStatus } from "@/module/merchant/hook/usePurchaseWebhookStatus";

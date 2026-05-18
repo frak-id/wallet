@@ -1,5 +1,5 @@
 import { Button } from "@frak-labs/ui/component/Button";
-import { Tooltip } from "@frak-labs/ui/component/Tooltip";
+import { Tooltip } from "@/module/common/component/Tooltip";
 import { CheckIcon, ChevronDown, X, XIcon } from "lucide-react";
 import type { ComponentPropsWithRef } from "react";
 import { useState } from "react";

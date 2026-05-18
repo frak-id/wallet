@@ -1,5 +1,5 @@
 import { Button } from "@frak-labs/ui/component/Button";
-import { Spinner } from "@frak-labs/ui/component/Spinner";
+import { Spinner } from "@frak-labs/design-system/components/Spinner";
 import type { LinkProps } from "@tanstack/react-router";
 import { AlertCircle, BadgeCheck } from "lucide-react";
 import { CallOut } from "@/module/common/component/CallOut";

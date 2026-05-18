@@ -1,7 +1,7 @@
 import { Button } from "@frak-labs/ui/component/Button";
 import { Column, Columns } from "@frak-labs/ui/component/Columns";
 import { Input } from "@frak-labs/ui/component/forms/Input";
-import { Spinner } from "@frak-labs/ui/component/Spinner";
+import { Spinner } from "@frak-labs/design-system/components/Spinner";
 import { TextWithCopy } from "@/module/common/component/TextWithCopy";
 import { useMutation } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
