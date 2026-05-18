@@ -1,4 +1,4 @@
-import { Column, Columns } from "@frak-labs/ui/component/Columns";
+import { Column, Columns } from "@/module/common/component/Columns";
 import { Spinner } from "@frak-labs/design-system/components/Spinner";
 import { PanelAccordion } from "@/module/common/component/PanelAccordion";
 import { Title } from "@/module/common/component/Title";

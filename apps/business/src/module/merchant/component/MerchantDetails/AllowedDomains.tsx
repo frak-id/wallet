@@ -1,5 +1,5 @@
 import { Button } from "@frak-labs/ui/component/Button";
-import { Column, Columns } from "@frak-labs/ui/component/Columns";
+import { Column, Columns } from "@/module/common/component/Columns";
 import { Input } from "@frak-labs/ui/component/forms/Input";
 import { useMemo, useState } from "react";
 import { Panel } from "@/module/common/component/Panel";

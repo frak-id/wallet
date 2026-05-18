@@ -1,5 +1,5 @@
 import { Button } from "@frak-labs/ui/component/Button";
-import { Column, Columns } from "@frak-labs/ui/component/Columns";
+import { Column, Columns } from "@/module/common/component/Columns";
 import { ActionsMessageSuccess } from "@/module/campaigns/component/Actions";
 
 type FormActionsProps = {

@@ -4,7 +4,7 @@ import {
     type Stablecoin,
 } from "@frak-labs/app-essentials";
 import { Button } from "@frak-labs/ui/component/Button";
-import { Column, Columns } from "@frak-labs/ui/component/Columns";
+import { Column, Columns } from "@/module/common/component/Columns";
 import { useEffect, useMemo } from "react";
 import { useForm } from "react-hook-form";
 import type { Address } from "viem";
