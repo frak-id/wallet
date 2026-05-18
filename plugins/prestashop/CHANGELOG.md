@@ -11,6 +11,8 @@ version on dispatch.
 
 ## [Unreleased]
 
+## [1.0.6] - 2026-05-18
+
 ### Changed
 
 - **Every storefront-visible placement now ships opt-in on a fresh install** (`FrakPlacementRegistry::PLACEMENTS`): `share_product`, `banner_top`, `post_purchase_confirmation`, and `post_purchase_detail` flipped from `default => true` to `default => false`. Installing the module no longer paints any Frak UI on the merchant's shop until they explicitly tick the relevant checkbox in **Modules → Module Manager → Frak → Configure → Component Placements**. Existing installs are unaffected — `FrakPlacementRegistry::seedDefaults()` no-ops when the bundled `FRAK_PLACEMENTS` row already exists, so merchant choices made before the upgrade survive verbatim.
@@ -199,7 +201,9 @@ version on dispatch.
 - New `views/templates/hook/post-purchase.tpl` Smarty partial: theme-overridable wrapper for the post-purchase markup. Override path: `themes/<theme>/modules/frakintegration/views/templates/hook/post-purchase.tpl`.
 - New `FrakOrderResolver` class: single-pass extraction of customer/order/token context plus product line items from a resolved `Order`, fail-soft on missing images / deleted products. Sibling of the WordPress `Frak_WooCommerce::get_post_purchase_data()` helper.
 
-[Unreleased]: https://github.com/frak-id/wallet/compare/prestashop-1.0.5...HEAD
+[Unreleased]: https://github.com/frak-id/wallet/compare/prestashop-1.0.6...HEAD
+
+[1.0.6]: https://github.com/frak-id/wallet/compare/prestashop-1.0.5...prestashop-1.0.6
 
 [1.0.5]: https://github.com/frak-id/wallet/compare/prestashop-1.0.4...prestashop-1.0.5
 
