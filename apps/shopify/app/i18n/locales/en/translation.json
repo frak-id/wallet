@@ -353,7 +353,9 @@
     },
     "campaigns": {
         "title": "Campaigns",
-        "description": "Manage your marketing campaigns and track their performance. Create new campaigns to distribute rewards to users and grow your customer base."
+        "description": "Manage your marketing campaigns and track their performance. Create new campaigns to distribute rewards to users and grow your customer base.",
+        "viewAll": "View all campaigns",
+        "createNew": "Create new campaign"
     },
     "appearance": {
         "title": "Appearance",

@@ -354,7 +354,9 @@
     },
     "campaigns": {
         "title": "Campagnes",
-        "description": "Gérez vos campagnes marketing et suivez leurs performances. Créez de nouvelles campagnes pour distribuer des récompenses aux utilisateurs et développer votre base client."
+        "description": "Gérez vos campagnes marketing et suivez leurs performances. Créez de nouvelles campagnes pour distribuer des récompenses aux utilisateurs et développer votre base client.",
+        "viewAll": "Voir toutes les campagnes",
+        "createNew": "Créer une nouvelle campagne"
     },
     "appearance": {
         "title": "Apparence",
