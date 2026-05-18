@@ -1,13 +1,13 @@
-import { useSiweAuthenticate } from "@frak-labs/react-sdk";
-import { Button } from "@/module/common/component/Button";
 import { Spinner } from "@frak-labs/design-system/components/Spinner";
+import { useSiweAuthenticate } from "@frak-labs/react-sdk";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useTransition } from "react";
 import { authenticatedBackendApi } from "@/api/backendClient";
+import { Button } from "@/module/common/component/Button";
 import { Panel } from "@/module/common/component/Panel";
 import { Title } from "@/module/common/component/Title";
 import { useAuthStore } from "@/stores/authStore";
-import styles from "./auth.module.css";
+import { button, container, title } from "./auth.css";
 
 export const Route = createFileRoute("/embedded/auth")({
     component: EmbeddedAuthPage,
@@ -30,7 +30,6 @@ function EmbeddedAuthPage() {
     const { mutate: authenticate, isPending } = useSiweAuthenticate({
         mutations: {
             onSuccess: async (data) => {
-                // Call backend to exchange SIWE for JWT
                 const response = await authenticatedBackendApi.auth.login.post({
                     message: data.message,
                     signature: data.signature,
@@ -63,15 +62,15 @@ function EmbeddedAuthPage() {
 
     if (isPending) {
         return (
-            <div className={styles.container}>
+            <div className={container}>
                 <Spinner />
             </div>
         );
     }
 
     return (
-        <div className={styles.container}>
-            <Title className={styles.title}>Authentication required</Title>
+        <div className={container}>
+            <Title className={title}>Authentication required</Title>
             <Panel
                 withBadge={false}
                 title="Please connect your wallet to continue"
@@ -79,11 +78,10 @@ function EmbeddedAuthPage() {
                 <Button
                     variant="secondary"
                     size="small"
-                    className={styles.button}
+                    className={button}
                     onClick={() =>
                         authenticate({
                             siwe: {
-                                // Expire the session after 1 week
                                 expirationTimeTimestamp:
                                     Date.now() + 1000 * 60 * 60 * 24 * 7,
                             },

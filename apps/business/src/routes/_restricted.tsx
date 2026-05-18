@@ -3,7 +3,7 @@ import { requireAuth } from "@/middleware/auth";
 import { Header } from "@/module/common/component/Header";
 import { Navigation } from "@/module/common/component/Navigation";
 import "@/styles/restricted.css";
-import styles from "./_restricted.module.css";
+import { main } from "./_restricted.css";
 
 export const Route = createFileRoute("/_restricted")({
     beforeLoad: requireAuth,
@@ -15,7 +15,7 @@ function RestrictedLayoutRoute() {
         <>
             <Header />
             <Navigation />
-            <main className={styles.main}>
+            <main className={main}>
                 <Outlet />
             </main>
         </>

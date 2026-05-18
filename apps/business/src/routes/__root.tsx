@@ -6,7 +6,16 @@ import "@/polyfill/bigint-serialization";
 import "@frak-labs/design-system/theme";
 import "@/styles/all.css";
 import "nprogress/nprogress.css";
-import styles from "./__root.module.css";
+import {
+    errorContainer,
+    errorContainerMessage,
+    errorContainerStack,
+    errorContainerTitle,
+    notFoundLink,
+    notFoundMessage,
+    notFoundSubtitle,
+    notFoundTitle,
+} from "./__root.css";
 
 export const Route = createRootRoute({
     component: RootComponent,
@@ -16,15 +25,11 @@ export const Route = createRootRoute({
 
 function ErrorComponent({ error }: { error: Error }) {
     return (
-        <div className={styles.errorContainer}>
-            <h1 className={styles.errorContainer__title}>
-                Something went wrong
-            </h1>
-            <p className={styles.errorContainer__message}>{error.message}</p>
+        <div className={errorContainer}>
+            <h1 className={errorContainerTitle}>Something went wrong</h1>
+            <p className={errorContainerMessage}>{error.message}</p>
             {import.meta.env.DEV && (
-                <pre className={styles.errorContainer__stack}>
-                    {error.stack}
-                </pre>
+                <pre className={errorContainerStack}>{error.stack}</pre>
             )}
         </div>
     );
@@ -53,13 +58,13 @@ function RootComponent() {
 
 function NotFound() {
     return (
-        <div className={styles.errorContainer}>
-            <h1 className={styles.notFound__title}>404</h1>
-            <h2 className={styles.notFound__subtitle}>Page Not Found</h2>
-            <p className={styles.notFound__message}>
+        <div className={errorContainer}>
+            <h1 className={notFoundTitle}>404</h1>
+            <h2 className={notFoundSubtitle}>Page Not Found</h2>
+            <p className={notFoundMessage}>
                 The page you're looking for doesn't exist or has been moved.
             </p>
-            <Link to="/dashboard" className={styles.notFound__link}>
+            <Link to="/dashboard" className={notFoundLink}>
                 Go to Dashboard
             </Link>
         </div>

@@ -1,14 +1,14 @@
 import { useWalletStatus } from "@frak-labs/react-sdk";
-import { Button } from "@/module/common/component/Button";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { useDemoMode } from "@/module/common/atoms/demoMode";
+import { Button } from "@/module/common/component/Button";
 import { Head } from "@/module/common/component/Head";
 import { Panel } from "@/module/common/component/Panel";
 import { DemoModeSwitch } from "@/module/settings/DemoModeSwitch";
 import { SelectCurrency } from "@/module/settings/SelectCurrency";
 import { useAuthStore } from "@/stores/authStore";
-import styles from "./settings.module.css";
+import { logoutButton, walletAddress } from "./settings.css";
 
 export const Route = createFileRoute("/_restricted/settings")({
     component: Settings,
@@ -20,7 +20,6 @@ function Settings() {
     const { isDemoMode, setDemoMode } = useDemoMode();
     const [isHydrated, setIsHydrated] = useState(false);
 
-    // Prevent hydration mismatch by waiting for client-side hydration
     useEffect(() => {
         setIsHydrated(true);
     }, []);
@@ -30,7 +29,7 @@ function Settings() {
             <Head title={{ content: "Settings" }} />
 
             <Panel title="Wallet">
-                <p className={styles.walletAddress}>
+                <p className={walletAddress}>
                     Your wallet address is {walletStatus?.wallet}
                 </p>
             </Panel>
@@ -53,13 +52,11 @@ function Settings() {
                 </p>
                 <Button
                     variant={"submit"}
-                    className={styles.logoutButton}
+                    className={logoutButton}
                     onClick={() => {
-                        // If in demo mode, exit demo mode first
                         if (isDemoMode) {
                             setDemoMode(false);
                         }
-                        // Clear auth and redirect to login
                         useAuthStore.getState().clearAuth();
                         navigate({ to: "/login" });
                     }}
