@@ -1,9 +1,11 @@
-import { cva, type VariantProps } from "class-variance-authority";
+import type { RecipeVariants } from "@vanilla-extract/recipes";
 import type { ComponentPropsWithRef, ElementType, ReactNode } from "react";
-import styles from "./index.module.css";
+import { titleIcon, titleText, titleVariants } from "./title.css";
+
+type TitleRecipeVariants = NonNullable<RecipeVariants<typeof titleVariants>>;
 
 export type TitleProps = ComponentPropsWithRef<"h1"> &
-    VariantProps<typeof titleVariants> & {
+    TitleRecipeVariants & {
         as?: ElementType;
         className?: string;
         classNameText?: string;
@@ -11,22 +13,7 @@ export type TitleProps = ComponentPropsWithRef<"h1"> &
         children?: string | ReactNode;
     };
 
-export const titleVariants = cva(styles.title, {
-    variants: {
-        tag: {
-            h2: styles.h2,
-            h3: styles.h3,
-        },
-        size: {
-            small: styles["size--small"],
-            medium: styles["size--medium"],
-            big: styles["size--big"],
-        },
-    },
-    defaultVariants: {
-        size: "small",
-    },
-});
+export { titleVariants };
 
 export const Title = ({
     ref,
@@ -42,17 +29,14 @@ export const Title = ({
     return (
         <Component
             ref={ref}
-            className={titleVariants({
-                tag: Component.toString() as VariantProps<
-                    typeof titleVariants
-                >["tag"],
+            className={`${titleVariants({
+                tag: Component.toString() as TitleRecipeVariants["tag"],
                 size,
-                className,
-            })}
+            })}${className ? ` ${className}` : ""}`}
             {...props}
         >
-            {icon && <span className={styles.title__icon}>{icon}</span>}
-            <span className={`${styles.title__text} ${classNameText}`}>
+            {icon && <span className={titleIcon}>{icon}</span>}
+            <span className={`${titleText}${classNameText ? ` ${classNameText}` : ""}`}>
                 {children}
             </span>
         </Component>

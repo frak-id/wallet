@@ -1,33 +1,10 @@
-import type { VariantProps } from "class-variance-authority";
-import { cva } from "class-variance-authority";
+import type { RecipeVariants } from "@vanilla-extract/recipes";
 import type { ComponentPropsWithRef } from "react";
-import styles from "./index.module.css";
+import { badgeVariants } from "./badge.css";
 
-const badgeVariants = cva(styles.badge, {
-    variants: {
-        variant: {
-            primary: styles.primary,
-            secondary: styles.secondary,
-            success: styles.success,
-            danger: styles.danger,
-            information: styles.information,
-            informationReverse: styles.informationReverse,
-            warning: styles.warning,
-        },
-        size: {
-            none: styles["size--none"],
-            small: styles["size--small"],
-            medium: styles["size--medium"],
-        },
-    },
-    defaultVariants: {
-        variant: "primary",
-        size: "medium",
-    },
-});
+type BadgeRecipeVariants = NonNullable<RecipeVariants<typeof badgeVariants>>;
 
-export type BadgeProps = ComponentPropsWithRef<"span"> &
-    VariantProps<typeof badgeVariants>;
+export type BadgeProps = ComponentPropsWithRef<"span"> & BadgeRecipeVariants;
 
 export const Badge = ({
     ref,
@@ -38,11 +15,10 @@ export const Badge = ({
 }: BadgeProps) => {
     return (
         <span
-            className={badgeVariants({
+            className={`${badgeVariants({
                 variant,
                 size,
-                className,
-            })}
+            })}${className ? ` ${className}` : ""}`}
             ref={ref}
             {...props}
         />
