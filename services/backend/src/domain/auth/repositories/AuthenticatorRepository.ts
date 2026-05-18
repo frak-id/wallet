@@ -1,5 +1,5 @@
 import { getLibsqlDb } from "@backend-infrastructure";
-import { eq } from "drizzle-orm";
+import { eq, sql } from "drizzle-orm";
 import type { Address } from "viem";
 import { authenticatorsTable } from "../db/schema";
 import type { AuthenticatorDocument } from "../models/dto/AuthenticatorDocument";
@@ -115,5 +115,21 @@ export class AuthenticatorRepository {
             );
         }
         return { created: false, document: existing };
+    }
+
+    /**
+     * Case-insensitive check for whether any authenticator row stores
+     * the given email. Used by the registration precheck so the UI can warn
+     * a user before triggering the WebAuthn ceremony.
+     */
+    public async hasEmail(email: string): Promise<boolean> {
+        const db = getLibsqlDb();
+        const normalized = email.trim().toLowerCase();
+        const [row] = await db
+            .select({ id: authenticatorsTable.id })
+            .from(authenticatorsTable)
+            .where(sql`LOWER(${authenticatorsTable.email}) = ${normalized}`)
+            .limit(1);
+        return !!row;
     }
 }
