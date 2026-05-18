@@ -14,7 +14,13 @@ import {
 import { ArrowDown, ArrowDownUp, ArrowUp } from "lucide-react";
 import type { ReactNode } from "react";
 import { type PropsWithChildren, useMemo, useState } from "react";
-import styles from "./index.module.css";
+import {
+    preTable as preTableStyle,
+    table as tableStyle,
+    tableButton,
+    tableFilterIcon,
+    tableWrapper,
+} from "./table.css";
 
 export type ReactTableProps<TData> = {
     classNameWrapper?: string;
@@ -88,10 +94,10 @@ export function Table<TData extends object>({
     );
 
     return (
-        <div className={`${styles.tableWrapper} ${classNameWrapper}`}>
-            {preTable && <div className={styles.preTable}>{preTable}</div>}
+        <div className={`${tableWrapper}${classNameWrapper ? ` ${classNameWrapper}` : ""}`}>
+            {preTable && <div className={preTableStyle}>{preTable}</div>}
 
-            <table className={`${styles.table} ${className}`}>
+            <table className={`${tableStyle}${className ? ` ${className}` : ""}`}>
                 <thead>
                     {table.getHeaderGroups().map((headerGroup) => (
                         <tr key={headerGroup.id}>
@@ -182,12 +188,12 @@ function Sorting<TData>({
               : ArrowDown;
     return (
         <button
-            className={styles.table__button}
+            className={tableButton}
             type={"button"}
             onClick={column.getToggleSortingHandler()}
         >
             {children}
-            {Icon && <Icon className={styles.table__filterIcon} />}
+            {Icon && <Icon className={tableFilterIcon} />}
         </button>
     );
 }
