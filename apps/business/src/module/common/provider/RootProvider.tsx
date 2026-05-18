@@ -65,6 +65,9 @@ function RoutePageAttribute() {
         const isRestricted = routerState.matches.some(
             (match) => match.routeId === "/_restricted"
         );
+        const isEmbedded = routerState.matches.some((match) =>
+            match.routeId.startsWith("/embedded")
+        );
         const isAuthentication =
             routerState.pathname === "/login" ||
             routerState.matches.some((match) => match.routeId === "/login");
@@ -75,6 +78,15 @@ function RoutePageAttribute() {
             rootElement.dataset.page = "authentication";
         } else {
             rootElement.removeAttribute("data-page");
+        }
+
+        // Dark dashboard / embedded surfaces keep DS dark theme so semantic
+        // text/surface tokens render correctly on the dark navy background.
+        // Other routes (login, auth, etc.) default to the light theme.
+        if (isRestricted || isEmbedded) {
+            rootElement.dataset.theme = "dark";
+        } else {
+            rootElement.removeAttribute("data-theme");
         }
     }, [routerState.pathname, routerState.matches]);
 
