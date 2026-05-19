@@ -1,3 +1,5 @@
+import { Inline } from "@frak-labs/design-system/components/Inline";
+import { Stack } from "@frak-labs/design-system/components/Stack";
 import clsx from "clsx";
 import {
     MousePointer,
@@ -9,9 +11,7 @@ import {
 import { type ReactElement, useEffect, useState } from "react";
 import { useFormContext } from "react-hook-form";
 import { Badge } from "@/module/common/component/Badge";
-import { Column } from "@/module/common/component/Column";
 import { Panel } from "@/module/common/component/Panel";
-import { Row } from "@/module/common/component/Row";
 import {
     FormControl,
     FormDescription,
@@ -108,13 +108,13 @@ export function FormGoals() {
 
     return (
         <Panel title="Goals">
-            <Column>
+            <Stack space="m">
                 <FormDescription>
                     The choice of your goal defines the event that generates the
                     distribution of rewards.
                 </FormDescription>
-            </Column>
-            <Column fullWidth={true}>
+            </Stack>
+            <Stack space="m">
                 <FormField
                     control={control}
                     name="metadata.goal"
@@ -122,7 +122,7 @@ export function FormGoals() {
                     render={({ field }) => (
                         <FormItem>
                             <FormDescription label="Campaign goal" />
-                            <Row align="start">
+                            <Inline space="m" alignY="top">
                                 <div>
                                     <FormControl>
                                         <RadioGroup
@@ -172,12 +172,12 @@ export function FormGoals() {
                                 >
                                     {goal && <GoalInformation goal={goal} />}
                                 </div>
-                            </Row>
+                            </Inline>
                             <FormMessage />
                         </FormItem>
                     )}
                 />
-            </Column>
+            </Stack>
         </Panel>
     );
 }

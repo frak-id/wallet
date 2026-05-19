@@ -4,7 +4,6 @@ import { Switch } from "@frak-labs/design-system/components/Switch";
 import { Text } from "@frak-labs/design-system/components/Text";
 import { useMemo } from "react";
 import { useFormContext, useWatch } from "react-hook-form";
-import { Row } from "@/module/common/component/Row";
 import { tokenAddressToCurrency } from "@/module/common/utils/currencyOptions";
 import {
     FormControl,
@@ -80,7 +79,7 @@ export function ChainingConfig() {
 
             {chainingEnabled && (
                 <>
-                    <Row>
+                    <Inline space="m" alignY="bottom">
                         <FormField
                             control={control}
                             name="deperditionPerLevel"
@@ -149,7 +148,7 @@ export function ChainingConfig() {
                                 </FormItem>
                             )}
                         />
-                    </Row>
+                    </Inline>
 
                     {chainDistribution.length > 0 && referrerAmount > 0 && (
                         <FormItem>

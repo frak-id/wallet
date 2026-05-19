@@ -1,7 +1,6 @@
 import { Stack } from "@frak-labs/design-system/components/Stack";
 import { Text } from "@frak-labs/design-system/components/Text";
 import { Badge } from "@/module/common/component/Badge";
-import { Column } from "@/module/common/component/Column";
 import { FormDescription, FormItem } from "@/module/forms/Form";
 import type {
     ConditionGroup,
@@ -142,7 +141,7 @@ export function CampaignConditions({
         return (
             <FormItem>
                 <FormDescription label="Conditions" />
-                <Column fullWidth={true}>
+                <Stack space="m">
                     <Stack space="xs">
                         {conditions.map((condition, index) => (
                             <ConditionItem
@@ -151,7 +150,7 @@ export function CampaignConditions({
                             />
                         ))}
                     </Stack>
-                </Column>
+                </Stack>
             </FormItem>
         );
     }
@@ -161,9 +160,9 @@ export function CampaignConditions({
     return (
         <FormItem>
             <FormDescription label="Conditions" />
-            <Column fullWidth={true}>
+            <Stack space="m">
                 <ConditionGroupDisplay group={conditions} />
-            </Column>
+            </Stack>
         </FormItem>
     );
 }

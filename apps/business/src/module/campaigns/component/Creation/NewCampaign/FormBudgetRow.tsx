@@ -1,10 +1,10 @@
+import { Inline } from "@frak-labs/design-system/components/Inline";
+import { Stack } from "@frak-labs/design-system/components/Stack";
 import { CircleDollarSign, Wallet } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { useFormContext } from "react-hook-form";
 import { getCapPeriod } from "@/module/campaigns/utils/capPeriods";
-import { Column } from "@/module/common/component/Column";
 import { InputAmount } from "@/module/common/component/InputAmount";
-import { Row } from "@/module/common/component/Row";
 import { tokenAddressToCurrency } from "@/module/common/utils/currencyOptions";
 import {
     FormControl,
@@ -74,7 +74,7 @@ export function FormBudgetRow({ disabled }: { disabled?: boolean }) {
     }, [currentAmount]);
 
     return (
-        <Column>
+        <Stack space="m">
             <FormItem>
                 <FormDescription label="Budget Period" />
                 <RadioGroup
@@ -86,7 +86,7 @@ export function FormBudgetRow({ disabled }: { disabled?: boolean }) {
                     }}
                     className={styles.periodGroup}
                 >
-                    <Row>
+                    <Inline space="m" alignY="bottom">
                         {periods.map((p) => (
                             <FormItem
                                 key={p.value}
@@ -102,11 +102,11 @@ export function FormBudgetRow({ disabled }: { disabled?: boolean }) {
                                 <FormLabel variant="radio">{p.label}</FormLabel>
                             </FormItem>
                         ))}
-                    </Row>
+                    </Inline>
                 </RadioGroup>
             </FormItem>
 
-            <Row>
+            <Inline space="m" alignY="bottom">
                 <FormField
                     control={control}
                     name="budgetConfig"
@@ -144,7 +144,7 @@ export function FormBudgetRow({ disabled }: { disabled?: boolean }) {
                         </FormItem>
                     )}
                 />
-            </Row>
+            </Inline>
 
             <div>
                 <div className={styles.budgetSection}>
@@ -177,6 +177,6 @@ export function FormBudgetRow({ disabled }: { disabled?: boolean }) {
                     </div>
                 </div>
             </div>
-        </Column>
+        </Stack>
     );
 }
