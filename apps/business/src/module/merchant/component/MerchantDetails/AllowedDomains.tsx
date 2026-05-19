@@ -1,5 +1,6 @@
 import { Column } from "@frak-labs/design-system/components/Column";
 import { Columns } from "@frak-labs/design-system/components/Columns";
+import { Inline } from "@frak-labs/design-system/components/Inline";
 import { useMemo, useState } from "react";
 import { Button } from "@/module/common/component/Button";
 import { Panel } from "@/module/common/component/Panel";
@@ -88,15 +89,17 @@ export function AllowedDomains({
                     )}
                 </Column>
                 <Column width="1/2">
-                    <Button
-                        variant={"primary"}
-                        size={"small"}
-                        onClick={handleAdd}
-                        disabled={!isValid || isAdding}
-                        loading={isAdding}
-                    >
-                        Add Domain
-                    </Button>
+                    <Inline space="s" align="right">
+                        <Button
+                            variant={"primary"}
+                            size={"small"}
+                            onClick={handleAdd}
+                            disabled={!isValid || isAdding}
+                            loading={isAdding}
+                        >
+                            Add Domain
+                        </Button>
+                    </Inline>
                 </Column>
             </Columns>
         </Panel>

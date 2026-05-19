@@ -8,6 +8,7 @@ import { useForm } from "react-hook-form";
 import type { Address } from "viem";
 import { Column } from "@frak-labs/design-system/components/Column";
 import { Columns } from "@frak-labs/design-system/components/Columns";
+import { Inline } from "@frak-labs/design-system/components/Inline";
 import { ActionsMessageSuccess } from "@/module/campaigns/component/Actions";
 import { Button } from "@/module/common/component/Button";
 import { Panel } from "@/module/common/component/Panel";
@@ -166,31 +167,33 @@ export function MerchantDetails({ merchantId }: { merchantId: string }) {
                                 )}
                             </Column>
                             <Column width="1/2">
-                                <Button
-                                    variant={"secondary"}
-                                    onClick={() => {
-                                        form.reset(formValues);
-                                    }}
-                                    disabled={
-                                        editMerchantPending ||
-                                        !form.formState.isDirty
-                                    }
-                                >
-                                    Discard Changes
-                                </Button>
-                                <Button
-                                    variant={"primary"}
-                                    onClick={() => {
-                                        form.handleSubmit(onSubmit)();
-                                    }}
-                                    disabled={
-                                        editMerchantPending ||
-                                        !form.formState.isDirty
-                                    }
-                                    loading={editMerchantPending}
-                                >
-                                    Validate
-                                </Button>
+                                <Inline space="s" align="right">
+                                    <Button
+                                        variant={"secondary"}
+                                        onClick={() => {
+                                            form.reset(formValues);
+                                        }}
+                                        disabled={
+                                            editMerchantPending ||
+                                            !form.formState.isDirty
+                                        }
+                                    >
+                                        Discard Changes
+                                    </Button>
+                                    <Button
+                                        variant={"primary"}
+                                        onClick={() => {
+                                            form.handleSubmit(onSubmit)();
+                                        }}
+                                        disabled={
+                                            editMerchantPending ||
+                                            !form.formState.isDirty
+                                        }
+                                        loading={editMerchantPending}
+                                    >
+                                        Validate
+                                    </Button>
+                                </Inline>
                             </Column>
                         </Columns>
                     </Panel>
