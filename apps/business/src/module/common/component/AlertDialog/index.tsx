@@ -1,11 +1,11 @@
 import {
-    AlertDialog as DSAlertDialog,
     AlertDialogAction,
     AlertDialogCancel,
     AlertDialogContent,
     AlertDialogDescription,
     AlertDialogTitle,
     AlertDialogTrigger,
+    AlertDialog as DSAlertDialog,
 } from "@frak-labs/design-system/components/AlertDialog";
 import clsx from "clsx";
 import { X } from "lucide-react";

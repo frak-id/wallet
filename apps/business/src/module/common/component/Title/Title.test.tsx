@@ -40,7 +40,7 @@ describe("Title", () => {
         });
     });
 
-it("should render with custom element via as prop", () => {
+    it("should render with custom element via as prop", () => {
         const { container } = render(<Title as="h1">Title</Title>);
 
         const title = container.querySelector("h1");
