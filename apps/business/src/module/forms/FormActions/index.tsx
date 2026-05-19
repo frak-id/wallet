@@ -1,6 +1,7 @@
+import { Column } from "@frak-labs/design-system/components/Column";
+import { Columns } from "@frak-labs/design-system/components/Columns";
 import { ActionsMessageSuccess } from "@/module/campaigns/component/Actions";
 import { Button } from "@/module/common/component/Button";
-import { Column, Columns } from "@/module/common/component/Columns";
 
 type FormActionsProps = {
     isSuccess: boolean;
@@ -18,9 +19,11 @@ export function FormActions({
     onSubmit,
 }: FormActionsProps) {
     return (
-        <Columns>
-            <Column>{isSuccess && <ActionsMessageSuccess />}</Column>
-            <Column>
+        <Columns space="xs" alignY="center">
+            <Column width="1/2">
+                {isSuccess && <ActionsMessageSuccess />}
+            </Column>
+            <Column width="1/2">
                 <Button
                     variant={"secondary"}
                     onClick={onDiscard}
