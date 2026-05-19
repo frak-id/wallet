@@ -7,7 +7,7 @@ import { useTransition } from "react";
 import { authenticatedBackendApi } from "@/api/backendClient";
 import { ClientOnly } from "@/module/common/component/ClientOnly";
 import { useAuthStore } from "@/stores/authStore";
-import styles from "./index.module.css";
+import * as styles from "./login.css";
 import logo from "./logo-frak.svg";
 
 export function Login() {
@@ -110,10 +110,10 @@ export function Login() {
             <footer className={styles.footer}>
                 <p>© 2026 Frak Labs Copyright and rights reserved</p>
                 <ul className={styles.list}>
-                    <li className={styles.list__item}>
+                    <li className={styles.listItem}>
                         <a href="/">Terms and Conditions</a>
                     </li>
-                    <li className={styles.list__item}>
+                    <li className={styles.listItem}>
                         <a href="/">Privacy Policy</a>
                     </li>
                 </ul>
