@@ -10,7 +10,7 @@ import { Panel } from "@/module/common/component/Panel";
 import { Row } from "@/module/common/component/Row";
 import { formatDate } from "@/module/common/utils/formatDate";
 import type { Campaign } from "@/types/Campaign";
-import styles from "./CampaignStatus.module.css";
+import * as styles from "./campaign-status.css";
 
 export function CampaignStatus({ campaign }: { campaign: Campaign }) {
     const { mutate: transition, isPending } = useStatusTransition();
@@ -46,7 +46,7 @@ export function CampaignStatus({ campaign }: { campaign: Campaign }) {
                 )}
 
                 {transitions.length > 0 && (
-                    <div className={styles.campaignStatus__actions}>
+                    <div className={styles.campaignStatusActions}>
                         {transitions.map((action) => (
                             <Button
                                 key={action}

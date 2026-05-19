@@ -1,8 +1,10 @@
+import { Stack } from "@frak-labs/design-system/components/Stack";
+import { Text } from "@frak-labs/design-system/components/Text";
 import { formatDate } from "@/module/common/utils/formatDate";
 import { formatPrice } from "@/module/common/utils/formatPrice";
 import { FormDescription, FormItem } from "@/module/forms/Form";
 import type { Campaign } from "@/types/Campaign";
-import styles from "./BudgetUsage.module.css";
+import * as styles from "./budget-usage.css";
 
 export function BudgetUsage({ campaign }: { campaign: Campaign }) {
     const { budgetConfig, budgetUsed } = campaign;
@@ -14,7 +16,7 @@ export function BudgetUsage({ campaign }: { campaign: Campaign }) {
     return (
         <FormItem>
             <FormDescription label="Budget Usage" />
-            <div className={styles.budgetUsage__list}>
+            <Stack space="s">
                 {budgetConfig.map((config) => {
                     const used = budgetUsed?.[config.label]?.used ?? 0;
                     const remaining = config.amount - used;
@@ -27,13 +29,17 @@ export function BudgetUsage({ campaign }: { campaign: Campaign }) {
                     return (
                         <div
                             key={config.label}
-                            className={styles.budgetUsage__item}
+                            className={styles.budgetUsageItem}
                         >
-                            <div className={styles.budgetUsage__header}>
-                                <span className={styles.budgetUsage__label}>
+                            <div className={styles.budgetUsageHeader}>
+                                <span className={styles.budgetUsageLabel}>
                                     {config.label}
                                 </span>
-                                <span className={styles.budgetUsage__amounts}>
+                                <Text
+                                    as="span"
+                                    variant="bodySmall"
+                                    color="secondary"
+                                >
                                     {formatPrice(remaining, undefined, "EUR")}{" "}
                                     remaining /{" "}
                                     {formatPrice(
@@ -42,22 +48,26 @@ export function BudgetUsage({ campaign }: { campaign: Campaign }) {
                                         "EUR"
                                     )}{" "}
                                     total
-                                </span>
+                                </Text>
                             </div>
-                            <div className={styles.budgetUsage__bar}>
+                            <div className={styles.budgetUsageBar}>
                                 <div
-                                    className={styles.budgetUsage__barFill}
+                                    className={styles.budgetUsageBarFill}
                                     style={{
                                         width: `${percentage}%`,
                                     }}
                                 />
                             </div>
-                            <div className={styles.budgetUsage__footer}>
-                                <span className={styles.budgetUsage__spent}>
+                            <div className={styles.budgetUsageFooter}>
+                                <Text
+                                    as="span"
+                                    variant="caption"
+                                    color="secondary"
+                                >
                                     {formatPrice(used, undefined, "EUR")} spent
-                                </span>
+                                </Text>
                                 {resetAt && (
-                                    <span className={styles.budgetUsage__reset}>
+                                    <span className={styles.budgetUsageReset}>
                                         Resets: {formatDate(new Date(resetAt))}
                                     </span>
                                 )}
@@ -65,7 +75,7 @@ export function BudgetUsage({ campaign }: { campaign: Campaign }) {
                         </div>
                     );
                 })}
-            </div>
+            </Stack>
         </FormItem>
     );
 }

@@ -1,3 +1,4 @@
+import { Inline } from "@frak-labs/design-system/components/Inline";
 import type { ColumnFiltersState } from "@tanstack/react-table";
 import { format } from "date-fns";
 import { CalendarIcon, SlidersHorizontal } from "lucide-react";
@@ -10,7 +11,7 @@ import {
     PopoverTrigger,
 } from "@/module/common/component/Popover";
 import { InputSearch } from "@/module/forms/InputSearch";
-import styles from "./Filter.module.css";
+import * as styles from "./filter.css";
 
 type TableCampaignFiltersProps = {
     columnFilters: ColumnFiltersState;
@@ -63,20 +64,20 @@ export function TableCampaignFilters({
 
     return (
         <div className={styles.filters}>
-            <div className={styles.filters__item}>
+            <Inline space="xs" alignY="center">
                 <InputSearch
                     placeholder={"Search campaign..."}
-                    className={styles.filters__search}
+                    className={styles.filtersSearch}
                     value={currentTitle}
                     onChange={(e) => setTitleFilter(e.target.value)}
                 />
-            </div>
-            <div className={styles.filters__item}>
+            </Inline>
+            <Inline space="xs" alignY="center">
                 <Popover open={isPopoverOpen} onOpenChange={setIsPopoverOpen}>
                     <PopoverTrigger asChild>
                         <Button
                             variant={"secondary"}
-                            className={styles.filters__datePickerTrigger}
+                            className={styles.filtersDatePickerTrigger}
                         >
                             <CalendarIcon size={20} />
                             <span>
@@ -103,7 +104,7 @@ export function TableCampaignFilters({
                 >
                     Reset filters
                 </Button>
-            </div>
+            </Inline>
         </div>
     );
 }

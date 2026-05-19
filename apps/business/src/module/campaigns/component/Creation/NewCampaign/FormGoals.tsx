@@ -22,7 +22,7 @@ import {
 } from "@/module/forms/Form";
 import { RadioGroup, RadioGroupItem } from "@/module/forms/RadioGroup";
 import type { CampaignDraft } from "@/stores/campaignStore";
-import styles from "./FormGoals.module.css";
+import * as styles from "./form-goals.css";
 
 type ItemGoals = {
     id: string;
@@ -153,8 +153,8 @@ export function FormGoals() {
                                                         variant="radio"
                                                         className={
                                                             item.disabled
-                                                                ? styles.formGoals__label_disabled
-                                                                : styles.formGoals__label
+                                                                ? styles.formGoalsLabelDisabled
+                                                                : styles.formGoalsLabel
                                                         }
                                                     >
                                                         {item.icon}
@@ -167,7 +167,7 @@ export function FormGoals() {
                                 </div>
                                 <div
                                     className={
-                                        styles.formGoals__informationWrapper
+                                        styles.formGoalsInformationWrapper
                                     }
                                 >
                                     {goal && <GoalInformation goal={goal} />}
@@ -190,14 +190,14 @@ function GoalInformation({ goal }: { goal: ItemGoals }) {
         <>
             <div
                 className={clsx(
-                    styles.formGoals__information,
-                    styles[`formGoals__information--${goal.id}`]
+                    styles.formGoalsInformation,
+                    styles.formGoalsInformationByGoal[goal.id]
                 )}
             >
-                <h4 className={styles.formGoals__title}>{title}</h4>
+                <h4 className={styles.formGoalsTitle}>{title}</h4>
                 <p>{description}</p>
             </div>
-            <div className={styles.formGoals__badges}>
+            <div className={styles.formGoalsBadges}>
                 {badges?.map((badge) => (
                     <Badge key={badge} variant="secondary">
                         {badge}

@@ -1,4 +1,7 @@
+import { Inline } from "@frak-labs/design-system/components/Inline";
+import { Stack } from "@frak-labs/design-system/components/Stack";
 import { Switch } from "@frak-labs/design-system/components/Switch";
+import { Text } from "@frak-labs/design-system/components/Text";
 import { useNavigate } from "@tanstack/react-router";
 import { useMemo } from "react";
 import { useForm, useWatch } from "react-hook-form";
@@ -19,9 +22,9 @@ import type { CampaignTrigger } from "@/types/Campaign";
 import { CacInput } from "./CacInput";
 import { ChainingConfig } from "./ChainingConfig";
 import { DistributionSlider } from "./DistributionSlider";
-import styles from "./index.module.css";
 import { LockupConfig } from "./LockupConfig";
 import { MinPurchaseAmount } from "./MinPurchaseAmount";
+import * as styles from "./metrics-campaign.css";
 import { TriggerSelector } from "./TriggerSelector";
 import {
     DEFAULT_REWARD_STATE,
@@ -115,19 +118,25 @@ export function MetricsCampaign() {
                     />
 
                     <Panel title="Campaign type">
-                        <div className={styles.chaining}>
-                            <div className={styles.chaining__header}>
-                                <div className={styles.chaining__headerText}>
-                                    <span className={styles.chaining__title}>
+                        <Stack space="m">
+                            <Inline
+                                space="m"
+                                align="space-between"
+                                alignY="center"
+                            >
+                                <Stack space="xxs">
+                                    <span className={styles.chainingTitle}>
                                         Referral campaign
                                     </span>
-                                    <span
-                                        className={styles.chaining__description}
+                                    <Text
+                                        as="span"
+                                        variant="bodySmall"
+                                        color="secondary"
                                     >
                                         Only reward users who were referred by
                                         another user
-                                    </span>
-                                </div>
+                                    </Text>
+                                </Stack>
                                 <FormField
                                     control={form.control}
                                     name="referralOnly"
@@ -146,8 +155,8 @@ export function MetricsCampaign() {
                                         </FormItem>
                                     )}
                                 />
-                            </div>
-                        </div>
+                            </Inline>
+                        </Stack>
                     </Panel>
 
                     <Panel title="Set a target cost per action">

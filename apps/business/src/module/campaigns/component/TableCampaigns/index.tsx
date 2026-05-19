@@ -1,3 +1,4 @@
+import { Stack } from "@frak-labs/design-system/components/Stack";
 import { Link } from "@tanstack/react-router";
 import type { ColumnDef } from "@tanstack/react-table";
 import {
@@ -20,7 +21,7 @@ import { formatDate } from "@/module/common/utils/formatDate";
 import { formatPrice } from "@/module/common/utils/formatPrice";
 import { campaignStore } from "@/stores/campaignStore";
 import type { CampaignWithActions } from "@/types/Campaign";
-import styles from "./index.module.css";
+import * as styles from "./table-campaigns.css";
 
 const columnHelper = createColumnHelper<CampaignWithActions>();
 
@@ -122,22 +123,22 @@ function CellBudget({
     const firstBudget = budgetConfig?.[0];
 
     if (!firstBudget) {
-        return <span className={styles.table__budget}>-</span>;
+        return <span>-</span>;
     }
 
     const used = budgetUsed?.[firstBudget.label]?.used ?? 0;
     const remaining = firstBudget.amount - used;
 
     return (
-        <span className={styles.table__budget}>
-            <span className={styles.table__budgetAmount}>
+        <Stack as="span" space="xxs">
+            <span className={styles.tableBudgetAmount}>
                 {formatPrice(remaining, undefined, "EUR")} /{" "}
                 {formatPrice(firstBudget.amount, undefined, "EUR")}
             </span>
-            <span className={styles.table__budgetType}>
+            <span className={styles.tableBudgetType}>
                 {firstBudget.label || "Global"}
             </span>
-        </span>
+        </Stack>
     );
 }
 
@@ -151,7 +152,7 @@ function CellActions({
     const isArchived = status === "archived";
 
     return (
-        <div className={styles.table__actions}>
+        <div className={styles.tableActions}>
             {isDraft ? (
                 <Link
                     to="/campaigns/draft/$campaignId"

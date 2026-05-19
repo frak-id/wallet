@@ -18,7 +18,7 @@ import type { InputNumberProps } from "@/module/forms/InputNumber";
 import { RadioGroup, RadioGroupItem } from "@/module/forms/RadioGroup";
 import type { CampaignDraft } from "@/stores/campaignStore";
 import { currencyStore } from "@/stores/currencyStore";
-import styles from "./FormBudgetRow.module.css";
+import * as styles from "./form-budget-row.css";
 
 type BudgetPeriod = "daily" | "weekly" | "monthly" | "global";
 
@@ -147,32 +147,32 @@ export function FormBudgetRow({ disabled }: { disabled?: boolean }) {
             </Row>
 
             <div>
-                <div className={styles.budget__section}>
-                    <div className={styles.budget__iconGroup}>
-                        <div className={styles.budget__icon}>
+                <div className={styles.budgetSection}>
+                    <div className={styles.budgetIconGroup}>
+                        <div className={styles.budgetIcon}>
                             <CircleDollarSign />
                         </div>
-                        <span className={styles.budget__label}>
+                        <span className={styles.budgetLabel}>
                             Frak commission (20%)
                         </span>
                     </div>
-                    <div className={styles.budget__value}>
+                    <div className={styles.budgetValue}>
                         {frakCommission.toFixed(2)} {currencyLabel}
                     </div>
                 </div>
 
-                <div className={styles.budget__divider} />
+                <div className={styles.budgetDivider} />
 
-                <div className={styles.budget__section}>
-                    <div className={styles.budget__iconGroup}>
-                        <div className={styles.budget__icon}>
+                <div className={styles.budgetSection}>
+                    <div className={styles.budgetIconGroup}>
+                        <div className={styles.budgetIcon}>
                             <Wallet />
                         </div>
-                        <span className={styles.budget__label}>
+                        <span className={styles.budgetLabel}>
                             Rewards distributed (80%)
                         </span>
                     </div>
-                    <div className={styles.budget__value}>
+                    <div className={styles.budgetValue}>
                         {remainingBudget.toFixed(2)} {currencyLabel}
                     </div>
                 </div>

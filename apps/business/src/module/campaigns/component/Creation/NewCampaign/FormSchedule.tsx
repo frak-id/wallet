@@ -19,7 +19,7 @@ import {
     FormMessage,
 } from "@/module/forms/Form";
 import type { CampaignDraft } from "@/stores/campaignStore";
-import styles from "./FormSchedule.module.css";
+import * as styles from "./form-schedule.css";
 
 export function FormSchedule() {
     const { control, watch, setValue, getValues } =
@@ -96,7 +96,7 @@ export function FormSchedule() {
                     <>
                         <FormItem
                             variant="checkbox"
-                            className={styles.formSchedule__endDate}
+                            className={styles.formScheduleEndDate}
                         >
                             <Checkbox
                                 onCheckedChange={(checked) => {

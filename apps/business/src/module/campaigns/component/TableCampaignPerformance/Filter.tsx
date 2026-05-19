@@ -3,7 +3,7 @@ import { SlidersHorizontal } from "lucide-react";
 import { useMemo } from "react";
 import { Button } from "@/module/common/component/Button";
 import { InputSearch } from "@/module/forms/InputSearch";
-import styles from "./index.module.css";
+import * as styles from "./table-campaign-performance.css";
 
 type TablePerformanceFiltersProps = {
     columnFilters: ColumnFiltersState;
@@ -38,15 +38,15 @@ export function TablePerformanceFilters({
 
     return (
         <div className={styles.filters}>
-            <div className={styles.filters__item}>
+            <div className={styles.filtersItem}>
                 <InputSearch
                     placeholder={"Search campaign..."}
-                    className={styles.filters__search}
+                    className={styles.filtersSearch}
                     value={currentTitle}
                     onChange={(e) => setTitleFilter(e.target.value)}
                 />
             </div>
-            <div className={styles.filters__item}>
+            <div className={styles.filtersItem}>
                 <Button
                     variant={"secondary"}
                     icon={<SlidersHorizontal size={20} />}

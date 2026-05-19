@@ -1,3 +1,5 @@
+import { Stack } from "@frak-labs/design-system/components/Stack";
+import { Text } from "@frak-labs/design-system/components/Text";
 import { Badge } from "@/module/common/component/Badge";
 import { Column } from "@/module/common/component/Column";
 import { FormDescription, FormItem } from "@/module/forms/Form";
@@ -6,7 +8,7 @@ import type {
     RuleCondition,
     RuleConditions,
 } from "@/types/Campaign";
-import styles from "./CampaignConditions.module.css";
+import * as styles from "./campaign-conditions.css";
 
 const operatorLabels: Record<string, string> = {
     eq: "=",
@@ -54,15 +56,29 @@ function ConditionItem({ condition }: { condition: RuleCondition }) {
     const fieldLabel = condition.field.replace(/\./g, " › ");
 
     return (
-        <div className={styles.conditions__item}>
+        <div className={styles.conditionsItem}>
             <Badge variant={"secondary"}>{fieldLabel}</Badge>
-            <span className={styles.conditions__operator}>{operatorLabel}</span>
+            <Text
+                as="span"
+                variant="bodySmall"
+                color="secondary"
+                weight="medium"
+            >
+                {operatorLabel}
+            </Text>
             {condition.operator === "between" ? (
                 <>
                     <Badge variant={"secondary"}>
                         {formatValue(condition.field, condition.value)}
                     </Badge>
-                    <span className={styles.conditions__operator}>and</span>
+                    <Text
+                        as="span"
+                        variant="bodySmall"
+                        color="secondary"
+                        weight="medium"
+                    >
+                        and
+                    </Text>
                     <Badge variant={"secondary"}>
                         {formatValue(
                             condition.field,
@@ -91,9 +107,9 @@ function ConditionGroupDisplay({ group }: { group: ConditionGroup }) {
               : "None of";
 
     return (
-        <div className={styles.conditions__group}>
-            <span className={styles.conditions__logic}>{logicLabel}:</span>
-            <div className={styles.conditions__groupItems}>
+        <div className={styles.conditionsGroup}>
+            <span className={styles.conditionsLogic}>{logicLabel}:</span>
+            <div className={styles.conditionsGroupItems}>
                 {group.conditions.map((condition, index) => {
                     if (isConditionGroup(condition)) {
                         return (
@@ -127,14 +143,14 @@ export function CampaignConditions({
             <FormItem>
                 <FormDescription label="Conditions" />
                 <Column fullWidth={true}>
-                    <div className={styles.conditions__list}>
+                    <Stack space="xs">
                         {conditions.map((condition, index) => (
                             <ConditionItem
                                 key={`${condition.field}-${index}`}
                                 condition={condition}
                             />
                         ))}
-                    </div>
+                    </Stack>
                 </Column>
             </FormItem>
         );

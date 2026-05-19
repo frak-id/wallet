@@ -1,11 +1,11 @@
+import { Inline } from "@frak-labs/design-system/components/Inline";
+import { Text } from "@frak-labs/design-system/components/Text";
 import { useLocation, useNavigate } from "@tanstack/react-router";
-import clsx from "clsx";
 import { Check, X } from "lucide-react";
 import { memo, useCallback, useEffect } from "react";
 import { ActionsWrapper } from "@/module/common/component/ActionsWrapper";
 import { Button } from "@/module/common/component/Button";
 import { campaignStore } from "@/stores/campaignStore";
-import styles from "./index.module.css";
 
 function getStepFromPath(pathname: string): number {
     if (pathname.endsWith("/validation")) return 3;
@@ -117,28 +117,22 @@ function ButtonNext({
 
 export function ActionsMessageSuccess() {
     return (
-        <span
-            className={clsx(
-                styles.action__message,
-                styles["action__message--success"]
-            )}
-        >
+        <Inline space="s" alignY="center">
             <Check />
-            All changes have been saved
-        </span>
+            <Text as="span" color="success" weight="semiBold">
+                All changes have been saved
+            </Text>
+        </Inline>
     );
 }
 
 export function ActionsMessageError({ error }: { error?: Error }) {
     return (
-        <span
-            className={clsx(
-                styles.action__message,
-                styles["action__message--error"]
-            )}
-        >
+        <Inline space="s" alignY="center">
             <X />
-            {error?.message ?? "An error occurred"}
-        </span>
+            <Text as="span" color="error" weight="semiBold">
+                {error?.message ?? "An error occurred"}
+            </Text>
+        </Inline>
     );
 }

@@ -22,7 +22,7 @@ import {
 import { useGetMerchantBank } from "@/module/merchant/hook/useGetMerchantBank";
 import { useMerchant } from "@/module/merchant/hook/useMerchant";
 import type { CampaignDraft } from "@/stores/campaignStore";
-import styles from "./FormRewardToken.module.css";
+import * as styles from "./form-reward-token.css";
 
 const tokenDisplayNames: Record<Stablecoin, string> = {
     eure: "Euro (Monerium)",
