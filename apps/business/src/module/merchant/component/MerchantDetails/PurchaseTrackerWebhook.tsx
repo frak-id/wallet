@@ -43,7 +43,7 @@ export function PurchaseTrackerWebhook({ merchantId }: { merchantId: string }) {
     return (
         <>
             <Columns>
-                <Column size={"full"} style={{ width: "100%" }}>
+                <Column size={"full"}>
                     <Title as={"h3"}>Status</Title>
                     <Row>
                         <Badge
@@ -65,7 +65,7 @@ export function PurchaseTrackerWebhook({ merchantId }: { merchantId: string }) {
             </Columns>
 
             <Columns>
-                <Column size={"full"} style={{ width: "100%" }}>
+                <Column size={"full"}>
                     <Title as={"h3"}>Purchase platform</Title>
 
                     <PlatformSelector
@@ -126,7 +126,6 @@ function PlatformSelector({
                 variant={
                     currentPlatform === "shopify" ? "success" : "secondary"
                 }
-                style={{ cursor: "pointer" }}
             >
                 Shopify
             </Badge>
@@ -135,7 +134,6 @@ function PlatformSelector({
                 variant={
                     currentPlatform === "woocommerce" ? "success" : "secondary"
                 }
-                style={{ cursor: "pointer" }}
             >
                 WooCommerce
             </Badge>
@@ -144,14 +142,12 @@ function PlatformSelector({
                 variant={
                     currentPlatform === "magento" ? "success" : "secondary"
                 }
-                style={{ cursor: "pointer" }}
             >
                 Magento
             </Badge>
             <Badge
                 onClick={() => handlePlatformChange("custom")}
                 variant={currentPlatform === "custom" ? "success" : "secondary"}
-                style={{ cursor: "pointer" }}
             >
                 Custom
             </Badge>
@@ -159,7 +155,7 @@ function PlatformSelector({
                 variant={
                     currentPlatform === "internal" ? "success" : "secondary"
                 }
-                style={{ cursor: "not-allowed" }}
+                disabled
             >
                 Internal
             </Badge>
@@ -256,10 +252,10 @@ function CustomRegistrationForm({
                     Documentation
                 </a>
             </p>
-            <TextWithCopy text={webhookUrl} style={{ width: "100%" }}>
+            <TextWithCopy text={webhookUrl}>
                 URL: <pre>{webhookUrl}</pre>
             </TextWithCopy>
-            <TextWithCopy text={signinKey} style={{ width: "100%" }}>
+            <TextWithCopy text={signinKey}>
                 Secret: <pre>{signinKey}</pre>
             </TextWithCopy>
             <p>And finally Register it on Frak via this button</p>
@@ -314,10 +310,10 @@ function WooCommerceRegistrationForm({
                 Create a new WebHook with the topic <i>Order Updated</i> with
                 the following URL and Secret:
             </p>
-            <TextWithCopy text={webhookUrl} style={{ width: "100%" }}>
+            <TextWithCopy text={webhookUrl}>
                 URL: <pre>{webhookUrl}</pre>
             </TextWithCopy>
-            <TextWithCopy text={signinKey} style={{ width: "100%" }}>
+            <TextWithCopy text={signinKey}>
                 Secret: <pre>{signinKey}</pre>
             </TextWithCopy>
             <p>And finally Register it on Frak via this button</p>
@@ -381,10 +377,10 @@ function MagentoRegistrationForm({
                 <br />
                 Paste the secret below into the Webhook Secret field.
             </p>
-            <TextWithCopy text={webhookUrl} style={{ width: "100%" }}>
+            <TextWithCopy text={webhookUrl}>
                 URL: <pre>{webhookUrl}</pre>
             </TextWithCopy>
-            <TextWithCopy text={signinKey} style={{ width: "100%" }}>
+            <TextWithCopy text={signinKey}>
                 Secret: <pre>{signinKey}</pre>
             </TextWithCopy>
             <p>And finally Register it on Frak via this button</p>
@@ -437,7 +433,7 @@ function ShopifyRegistrationForm({
                 Create a new WebHook with the event <i>Order Updated</i> with
                 the following URL:
             </p>
-            <TextWithCopy text={webhookUrl} style={{ width: "100%" }}>
+            <TextWithCopy text={webhookUrl}>
                 URL: <pre>{webhookUrl}</pre>
             </TextWithCopy>
             <Form {...form}>

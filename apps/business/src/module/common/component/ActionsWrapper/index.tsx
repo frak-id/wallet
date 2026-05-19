@@ -1,6 +1,6 @@
+import { Inline } from "@frak-labs/design-system/components/Inline";
 import type { ReactNode } from "react";
 import { Panel } from "@/module/common/component/Panel";
-import { actionLeft, actionRight, actions } from "./actions-wrapper.css";
 
 export function ActionsWrapper({
     left,
@@ -10,9 +10,15 @@ export function ActionsWrapper({
     right?: ReactNode;
 }) {
     return (
-        <Panel variant={"secondary"} className={actions}>
-            {left && <div className={actionLeft}>{left}</div>}
-            {right && <div className={actionRight}>{right}</div>}
+        <Panel variant={"secondary"}>
+            <Inline align="space-between" alignY="center" space="m">
+                <Inline space="s" alignY="center">
+                    {left}
+                </Inline>
+                <Inline space="xs" alignY="center">
+                    {right}
+                </Inline>
+            </Inline>
         </Panel>
     );
 }

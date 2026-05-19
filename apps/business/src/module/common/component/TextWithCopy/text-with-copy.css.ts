@@ -6,6 +6,7 @@ export const container = style({
     flexWrap: "nowrap",
     alignItems: "center",
     gap: "14px",
+    width: "100%",
 });
 
 globalStyle(`${container} > :first-child`, {
