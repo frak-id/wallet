@@ -1,4 +1,12 @@
-import * as AlertDialogPrimitive from "@radix-ui/react-alert-dialog";
+import {
+    AlertDialog as DSAlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogTitle,
+    AlertDialogTrigger,
+} from "@frak-labs/design-system/components/AlertDialog";
 import clsx from "clsx";
 import { X } from "lucide-react";
 import type { ReactNode } from "react";
@@ -31,9 +39,9 @@ export function AlertDialog({
     title,
     description,
     text,
-    button: { label, className = "", disabled } = {},
+    button: { label, className: btnClass = "", disabled } = {},
     buttonElement,
-    footer: { className: footerClassName = "", after: footerAfter } = {},
+    footer: { className: footerClass = "", after: footerAfter } = {},
     action,
     actionClose = false,
     showCloseButton = true,
@@ -45,87 +53,71 @@ export function AlertDialog({
     classNameTitle = "",
 }: AlertDialogComponentProps) {
     return (
-        <AlertDialogPrimitive.Root
+        <DSAlertDialog
             defaultOpen={defaultOpen}
             open={open}
             onOpenChange={onOpenChange}
         >
             {label && (
-                <AlertDialogPrimitive.Trigger asChild>
+                <AlertDialogTrigger asChild>
                     <button
                         type="button"
-                        className={clsx(styles.trigger, className)}
+                        className={clsx(styles.trigger, btnClass)}
                         disabled={disabled}
                     >
                         {label}
                     </button>
-                </AlertDialogPrimitive.Trigger>
+                </AlertDialogTrigger>
             )}
             {buttonElement && (
-                <AlertDialogPrimitive.Trigger asChild>
-                    {buttonElement}
-                </AlertDialogPrimitive.Trigger>
+                <AlertDialogTrigger asChild>{buttonElement}</AlertDialogTrigger>
             )}
-            <AlertDialogPrimitive.Portal>
-                <AlertDialogPrimitive.Overlay
-                    onClick={() => onOpenChange?.(false)}
-                    className={styles.overlay}
-                />
-                <AlertDialogPrimitive.Content
-                    onEscapeKeyDown={() => onOpenChange?.(false)}
-                    className={clsx(
-                        styles.content,
-                        showCloseButton && styles.withCloseButton,
-                        classNameContent
-                    )}
-                >
-                    {showCloseButton && (
-                        <AlertDialogPrimitive.Cancel asChild>
-                            <button
-                                type="button"
-                                className={styles.close}
-                                aria-label="Close"
-                            >
-                                <X />
-                            </button>
-                        </AlertDialogPrimitive.Cancel>
-                    )}
-                    {title ? (
-                        <AlertDialogPrimitive.Title
-                            className={clsx(styles.title, classNameTitle)}
+            <AlertDialogContent
+                className={clsx(
+                    styles.content,
+                    showCloseButton && styles.withCloseButton,
+                    classNameContent
+                )}
+            >
+                {showCloseButton && (
+                    <AlertDialogCancel asChild>
+                        <button
+                            type="button"
+                            className={styles.close}
+                            aria-label="Close"
                         >
-                            {title}
-                        </AlertDialogPrimitive.Title>
-                    ) : (
-                        <AlertDialogPrimitive.Title />
+                            <X />
+                        </button>
+                    </AlertDialogCancel>
+                )}
+                {title ? (
+                    <AlertDialogTitle className={classNameTitle}>
+                        {title}
+                    </AlertDialogTitle>
+                ) : (
+                    <AlertDialogTitle />
+                )}
+                {description ? (
+                    <AlertDialogDescription asChild>
+                        <div>{description}</div>
+                    </AlertDialogDescription>
+                ) : (
+                    <AlertDialogDescription />
+                )}
+                {text && <div>{text}</div>}
+                <div className={clsx(styles.footer, footerClass)}>
+                    {cancel && (
+                        <AlertDialogCancel asChild>{cancel}</AlertDialogCancel>
                     )}
-                    {description ? (
-                        <AlertDialogPrimitive.Description
-                            asChild
-                            className={styles.description}
-                        >
-                            <div>{description}</div>
-                        </AlertDialogPrimitive.Description>
-                    ) : (
-                        <AlertDialogPrimitive.Description />
+                    {actionClose && action && (
+                        <AlertDialogAction asChild>{action}</AlertDialogAction>
                     )}
-                    {text && <div>{text}</div>}
-                    <div className={clsx(styles.footer, footerClassName)}>
-                        <AlertDialogPrimitive.Cancel asChild>
-                            {cancel}
-                        </AlertDialogPrimitive.Cancel>
-                        {actionClose && (
-                            <AlertDialogPrimitive.Action asChild>
-                                {action}
-                            </AlertDialogPrimitive.Action>
-                        )}
-                        {!actionClose && action}
-                    </div>
-                    {footerAfter && (
-                        <div className={styles.footerAfter}>{footerAfter}</div>
-                    )}
-                </AlertDialogPrimitive.Content>
-            </AlertDialogPrimitive.Portal>
-        </AlertDialogPrimitive.Root>
+                    {!actionClose && action}
+                </div>
+                {footerAfter && (
+                    <div className={styles.footerAfter}>{footerAfter}</div>
+                )}
+            </AlertDialogContent>
+        </DSAlertDialog>
     );
 }

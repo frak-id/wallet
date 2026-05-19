@@ -1,24 +1,5 @@
-import { vars } from "@frak-labs/design-system/theme";
-import { alias, brand, zIndex } from "@frak-labs/design-system/tokens";
-import { keyframes, style } from "@vanilla-extract/css";
-
-const overlayShow = keyframes({
-    from: { opacity: 0 },
-    to: { opacity: 1 },
-});
-
-const contentShow = keyframes({
-    from: { opacity: 0, transform: "translate(-50%, -48%) scale(0.96)" },
-    to: { opacity: 1, transform: "translate(-50%, -50%) scale(1)" },
-});
-
-export const overlay = style({
-    backgroundColor: vars.surface.overlay,
-    position: "fixed",
-    inset: 0,
-    zIndex: zIndex.modal,
-    animation: `${overlayShow} 250ms cubic-bezier(0.16, 1, 0.3, 1)`,
-});
+import { brand } from "@frak-labs/design-system/tokens";
+import { style } from "@vanilla-extract/css";
 
 export const trigger = style({
     cursor: "pointer",
@@ -38,40 +19,12 @@ export const close = style({
 });
 
 export const content = style({
-    backgroundColor: vars.surface.elevated,
-    position: "fixed",
-    zIndex: zIndex.modal,
-    top: "50%",
-    left: "50%",
-    transform: "translate(-50%, -50%)",
-    width: "90vw",
     maxWidth: "850px",
-    padding: "15px",
-    animation: `${contentShow} 250ms cubic-bezier(0.16, 1, 0.3, 1)`,
-    overflowY: "auto",
-    borderRadius: alias.cornerRadius.s,
     color: brand.colors.neutral.grey700,
-    ":focus": { outline: "none" },
 });
 
 export const withCloseButton = style({
     paddingTop: "17px",
-});
-
-export const title = style({
-    margin: "0 0 20px 0",
-    fontWeight: brand.typography.fontWeight.medium,
-    fontSize: "18px",
-    display: "flex",
-    alignItems: "center",
-    gap: "10px",
-    color: vars.text.primary,
-});
-
-export const description = style({
-    marginBottom: "14px",
-    fontSize: "16px",
-    fontWeight: brand.typography.fontWeight.regular,
 });
 
 export const footer = style({
