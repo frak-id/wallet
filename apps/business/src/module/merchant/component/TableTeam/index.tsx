@@ -1,3 +1,4 @@
+import { Skeleton } from "@frak-labs/design-system/components/Skeleton";
 import { useWalletStatus } from "@frak-labs/react-sdk";
 import type { ColumnDef } from "@tanstack/react-table";
 import { type CellContext, createColumnHelper } from "@tanstack/react-table";
@@ -6,7 +7,6 @@ import { isAddressEqual, zeroAddress } from "viem";
 import { Badge } from "@/module/common/component/Badge";
 import { Button } from "@/module/common/component/Button";
 import { WalletAddress } from "@/module/common/component/HashDisplay";
-import { Skeleton } from "@frak-labs/design-system/components/Skeleton";
 import { Table } from "@/module/common/component/Table";
 import { useHasRoleOnMerchant } from "@/module/common/hook/useHasRoleOnMerchant";
 import { ButtonAddTeam } from "@/module/merchant/component/ButtonAddTeam";

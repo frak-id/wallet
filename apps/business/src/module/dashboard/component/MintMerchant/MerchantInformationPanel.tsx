@@ -71,12 +71,7 @@ export function MerchantInformationPanel({
             onValueChange={(value) => onOpenChange(value === "item-1")}
         >
             <Form {...form}>
-                <Box
-                    as="form"
-                    display="flex"
-                    flexDirection="column"
-                    gap="m"
-                >
+                <Box as="form" display="flex" flexDirection="column" gap="m">
                     <FormField
                         control={form.control}
                         name="name"

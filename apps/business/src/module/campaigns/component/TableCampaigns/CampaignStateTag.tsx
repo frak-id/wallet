@@ -52,12 +52,7 @@ export function CampaignStateTag({
     const badgeLabel = bankBadgeLabels[bankDistributionStatus] ?? "Issue";
 
     return (
-        <Box
-            as="span"
-            display="inline-flex"
-            alignItems="center"
-            gap="xxs"
-        >
+        <Box as="span" display="inline-flex" alignItems="center" gap="xxs">
             {statusBadge}
             <Tooltip content={bankLabel}>
                 <Badge

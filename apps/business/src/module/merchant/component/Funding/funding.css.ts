@@ -143,4 +143,3 @@ export const errorText = style({
     textAlign: "center",
     padding: "20px",
 });
-

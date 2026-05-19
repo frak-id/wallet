@@ -121,12 +121,7 @@ function LegacyBankMigrationContent({
                 </div>
             </div>
 
-            <Box
-                display="flex"
-                alignItems="center"
-                gap="xs"
-                marginTop="xxs"
-            >
+            <Box display="flex" alignItems="center" gap="xs" marginTop="xxs">
                 <Button
                     variant="primary"
                     size="small"

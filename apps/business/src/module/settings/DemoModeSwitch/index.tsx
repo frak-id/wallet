@@ -1,8 +1,8 @@
 import { Inline } from "@frak-labs/design-system/components/Inline";
 import { Stack } from "@frak-labs/design-system/components/Stack";
 import { Text } from "@frak-labs/design-system/components/Text";
-import { CallOut } from "@/module/common/component/CallOut";
 import { useDemoMode } from "@/module/common/atoms/demoMode";
+import { CallOut } from "@/module/common/component/CallOut";
 import { Switch } from "@/module/forms/Switch";
 import * as styles from "./demo-mode-switch.css";
 

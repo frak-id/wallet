@@ -63,4 +63,3 @@ export const legacyPanelStatValuePending = style({
 export const legacyPanelStatValueWithdrawable = style({
     color: vars.text.success,
 });
-
