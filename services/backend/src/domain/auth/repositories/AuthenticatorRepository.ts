@@ -145,4 +145,41 @@ export class AuthenticatorRepository {
                 (row.smartWalletAddress as Address | null) ?? null,
         };
     }
+
+    /**
+     * Get the email currently attached to a credential id, if any.
+     * Returned as-is (preserving the original case captured at registration).
+     */
+    public async getEmail(credentialId: string): Promise<string | null> {
+        const db = getLibsqlDb();
+        const [row] = await db
+            .select({ email: authenticatorsTable.email })
+            .from(authenticatorsTable)
+            .where(eq(authenticatorsTable.id, credentialId))
+            .limit(1);
+        return row?.email ?? null;
+    }
+
+    /**
+     * Attach an email to an existing authenticator. Used by the post-auth
+     * "add my email" flow on a credential that was registered without one.
+     *
+     * Returns the row count actually updated so callers can distinguish a
+     * missing credential from a successful update.
+     */
+    public async updateEmail({
+        credentialId,
+        email,
+    }: {
+        credentialId: string;
+        email: string;
+    }): Promise<{ updated: boolean }> {
+        const db = getLibsqlDb();
+        const result = await db
+            .update(authenticatorsTable)
+            .set({ email })
+            .where(eq(authenticatorsTable.id, credentialId))
+            .returning({ id: authenticatorsTable.id });
+        return { updated: result.length > 0 };
+    }
 }

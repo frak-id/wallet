@@ -16,8 +16,12 @@ export {
     MemberSortSchema,
 } from "../../orchestration/schemas/memberSchemas";
 export {
+    type AssociateEmailResponse,
+    AssociateEmailResponseSchema,
     type EmailStatusResponse,
     EmailStatusResponseSchema,
+    type MyEmailResponse,
+    MyEmailResponseSchema,
 } from "./authenticationSchemas";
 export {
     type BalanceResponse,

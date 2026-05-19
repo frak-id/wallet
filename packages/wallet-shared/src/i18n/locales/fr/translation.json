@@ -99,7 +99,30 @@
             "rateApp": "Noter l'application",
             "managePairings": "Gérer les appareils connectés",
             "lastConnection": "Dernière connexion",
-            "currentDeviceConnected": "Connecté"
+            "currentDeviceConnected": "Connecté",
+            "addEmail": "Ajouter mon e-mail"
+        },
+        "addEmail": {
+            "title": "Ajoute ton e-mail",
+            "description": "Ton e-mail sert uniquement à récupérer ton compte si tu l'oublies. Il ne sera jamais utilisé pour t'envoyer des messages non sollicités.",
+            "label": "E-mail",
+            "placeholder": "ton.email@gmail.com",
+            "continue": "Continuer",
+            "clearAriaLabel": "Effacer l'adresse e-mail",
+            "submitError": "Impossible d'enregistrer cet e-mail pour le moment. Réessaie.",
+            "conflict": {
+                "message": "Cet e-mail est déjà associé à un autre portefeuille. La fusion de comptes arrive bientôt, utilise un autre e-mail pour le moment."
+            },
+            "success": {
+                "title": "E-mail enregistré",
+                "description": "{{email}} est maintenant lié à ton portefeuille. Configure la récupération pour pouvoir le restaurer si tu perds l'accès.",
+                "setupRecovery": "Configurer la récupération",
+                "back": "Retour au profil"
+            },
+            "card": {
+                "title": "Ajoute ton e-mail",
+                "description": "Ajoute ton e-mail pour pouvoir récupérer ton portefeuille plus tard."
+            }
         },
         "referral": {
             "title": "Parrainages",
@@ -301,7 +324,7 @@
         },
         "registerDemo": {
             "title": "Essayer Frak en mode démo",
-            "description": "Créez un porte-monnaie temporaire pour explorer Frak. Pas de biométrie, pas de récupération — juste un bac à sable.",
+            "description": "Créez un porte-monnaie temporaire pour explorer Frak. Pas de biométrie, pas de récupération, juste un bac à sable.",
             "button": {
                 "create": "Créez votre porte-monnaie de démonstration",
                 "error": "Erreur lors de l'inscription, veuillez réessayer",
@@ -495,9 +518,9 @@
         "validate": "Valider le code",
         "digitLabel": "Caractère",
         "error": {
-            "invalid": "Code incorrect ou expiré — vérifie le code copié depuis wallet.frak.id",
+            "invalid": "Code incorrect ou expiré, vérifie le code copié depuis wallet.frak.id",
             "alreadyLinked": "Ce code a déjà été utilisé.",
-            "generic": "Une erreur est survenue — réessaie."
+            "generic": "Une erreur est survenue, réessaie."
         },
         "success": {
             "title": "Ton lien de parrainage a bien été retrouvé !",
@@ -660,7 +683,7 @@
         "linkWallet": "Lier le porte-monnaie",
         "status": {
             "settingUp": "Configuration...",
-            "created": "Compte créé — terminez la vérification sur Monerium",
+            "created": "Compte créé, terminez la vérification sur Monerium",
             "pending": "Vérification en cours",
             "approved": "Vérifié ✓",
             "rejected": "Vérification échouée"

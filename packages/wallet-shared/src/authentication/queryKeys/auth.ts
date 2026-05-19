@@ -42,4 +42,11 @@ export namespace authKey {
      */
     const checkEmailBase = "checkEmail" as const;
     export const checkEmail = [base, checkEmailBase] as const;
+
+    /**
+     * Query/mutation keys for the post-auth "my email" flow
+     */
+    const myEmailBase = "myEmail" as const;
+    export const myEmail = [base, myEmailBase] as const;
+    export const associateEmail = [base, myEmailBase, "associate"] as const;
 }

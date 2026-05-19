@@ -593,6 +593,28 @@ interface Resources {
         };
         wallet: {
             activateNotifications: "Turn on notifs to track your earnings in real time.";
+            addEmail: {
+                card: {
+                    description: "Add your email to be able to recover your wallet later.";
+                    title: "Add your email";
+                };
+                clearAriaLabel: "Clear email address";
+                conflict: {
+                    message: "This email is already linked to another wallet. Account merge is coming soon — for now, please use a different email.";
+                };
+                continue: "Continue";
+                description: "Your email is only used to recover your account if you forget it. It will never be used to send you unsolicited messages.";
+                label: "Email";
+                placeholder: "your.email@gmail.com";
+                submitError: "Unable to save this email right now. Please try again.";
+                success: {
+                    back: "Back to my profile";
+                    description: "{{email}} is now linked to your wallet. Set up recovery next so you can recover it if you ever lose access.";
+                    setupRecovery: "Set up recovery";
+                    title: "Email saved";
+                };
+                title: "Add your email";
+            };
             inAppBrowser: {
                 clickToOpen: "Tap to open in your browser.";
                 clipboardAlert: "This browser doesn't support all features needed.\n\nThe link has been copied to your clipboard.\n\nTo continue:\n1. Open Safari\n2. Tap the address bar\n3. Paste and go";
@@ -747,6 +769,7 @@ interface Resources {
                 title: "Pending referral reward";
             };
             profile: {
+                addEmail: "Add my email";
                 biometricPrompt: "Require {{biometryLabel}} at every app launch";
                 currentDeviceConnected: "Connected";
                 enableNotifications: "Enable notifications";

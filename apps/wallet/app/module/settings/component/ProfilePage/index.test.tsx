@@ -62,6 +62,16 @@ vi.mock("@/module/common/component/InfoCard", () => ({
     ),
 }));
 
+vi.mock("@/module/authentication/hook/useCurrentEmail", () => ({
+    // Defaulted to "already has an email" so the add-email row stays hidden
+    // for the existing snapshot expectations. Tests that need the empty
+    // state can override this mock in-place.
+    useCurrentEmail: () => ({
+        data: { email: "test@frak.id" },
+        isLoading: false,
+    }),
+}));
+
 describe("ProfilePage", () => {
     test("should render the redesigned profile sections and footer info", async ({
         freshAuthenticationStore,
