@@ -11,7 +11,8 @@ import { isAddressEqual } from "viem";
 import { useIsDemoMode } from "@/module/common/atoms/demoMode";
 import { Button } from "@/module/common/component/Button";
 import { WalletAddress } from "@/module/common/component/HashDisplay";
-import { Row } from "@/module/common/component/Row";
+import { Box } from "@frak-labs/design-system/components/Box";
+import { Inline } from "@frak-labs/design-system/components/Inline";
 import { Skeleton } from "@frak-labs/design-system/components/Skeleton";
 import { Table } from "@/module/common/component/Table";
 import type {
@@ -172,25 +173,24 @@ export function TableMembers() {
                     postTable={
                         <>
                             {(selectedMembers?.length ?? 0) > 0 && (
-                                <Row
-                                    align={"center"}
-                                    className={styles.selectedMembersRow}
-                                >
-                                    <p>
-                                        You have selected{" "}
-                                        <strong>
-                                            {selectedMembers?.length}
-                                        </strong>{" "}
-                                        Members
-                                    </p>
-                                    <Button
-                                        type={"button"}
-                                        onClick={() => clearSelection()}
-                                        variant={"secondary"}
-                                    >
-                                        Clear selection
-                                    </Button>
-                                </Row>
+                                <Box className={styles.selectedMembersRow}>
+                                    <Inline space="m" alignY="center">
+                                        <p>
+                                            You have selected{" "}
+                                            <strong>
+                                                {selectedMembers?.length}
+                                            </strong>{" "}
+                                            Members
+                                        </p>
+                                        <Button
+                                            type={"button"}
+                                            onClick={() => clearSelection()}
+                                            variant={"secondary"}
+                                        >
+                                            Clear selection
+                                        </Button>
+                                    </Inline>
+                                </Box>
                             )}
 
                             {page.totalResult > (filters.limit ?? 10) && (

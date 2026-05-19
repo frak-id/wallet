@@ -1,7 +1,7 @@
+import { Inline } from "@frak-labs/design-system/components/Inline";
 import { useCallback } from "react";
 import { useForm } from "react-hook-form";
 import { Button } from "@/module/common/component/Button";
-import { Row } from "@/module/common/component/Row";
 import { Form } from "@/module/forms/Form";
 import type { GetMembersParam } from "@/module/members/api/getMerchantMembers";
 import { InteractionsFiltering } from "@/module/members/component/MembersFiltering/InteractionsFiltering";
@@ -75,7 +75,7 @@ export function MembersFiltering({
             <MerchantFiltering {...commonProps} />
             <MembershipDateFiltering {...commonProps} />
             <InteractionsFiltering {...commonProps} />
-            <Row>
+            <Inline space="m" alignY="bottom">
                 {showResetButton && (
                     <Button
                         type={"button"}
@@ -85,7 +85,7 @@ export function MembersFiltering({
                         Reset filter
                     </Button>
                 )}
-            </Row>
+            </Inline>
         </Form>
     );
 }

@@ -9,7 +9,8 @@ import {
     PopoverContent,
     PopoverTrigger,
 } from "@/module/common/component/Popover";
-import { Row } from "@/module/common/component/Row";
+import { Box } from "@frak-labs/design-system/components/Box";
+import { Inline } from "@frak-labs/design-system/components/Inline";
 import {
     FormControl,
     FormDescription,
@@ -82,10 +83,11 @@ export const MembershipDateFiltering = memo(function MembershipDateFiltering({
                     Membership Date
                 </FormLabel>
             </FormItem>
-            <Row className={styles.formFromToRow}>
-                <FormField
-                    control={control}
-                    name={"firstInteractionTimestamp.min"}
+            <Box className={styles.formFromToRow}>
+                <Inline space="m" alignY="bottom">
+                    <FormField
+                        control={control}
+                        name={"firstInteractionTimestamp.min"}
                     render={({ field }) => {
                         const { value, ...rest } = field;
                         return (
@@ -196,8 +198,9 @@ export const MembershipDateFiltering = memo(function MembershipDateFiltering({
                             </FormItem>
                         );
                     }}
-                />
-            </Row>
+                    />
+                </Inline>
+            </Box>
         </>
     );
 });

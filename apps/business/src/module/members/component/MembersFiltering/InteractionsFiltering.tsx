@@ -1,7 +1,8 @@
+import { Box } from "@frak-labs/design-system/components/Box";
 import { Checkbox } from "@frak-labs/design-system/components/Checkbox";
+import { Inline } from "@frak-labs/design-system/components/Inline";
 import { useEffect, useState } from "react";
 import { useFormContext, useWatch } from "react-hook-form";
-import { Row } from "@/module/common/component/Row";
 import {
     FormField,
     FormItem,
@@ -65,10 +66,11 @@ export function InteractionsFiltering({
                     Interactions
                 </FormLabel>
             </FormItem>
-            <Row className={styles.formFromToRow}>
-                <FormField
-                    control={control}
-                    name={"interactions.min"}
+            <Box className={styles.formFromToRow}>
+                <Inline space="m" alignY="bottom">
+                    <FormField
+                        control={control}
+                        name={"interactions.min"}
                     disabled={inputDisabled || disabled}
                     rules={{
                         required: false,
@@ -141,8 +143,9 @@ export function InteractionsFiltering({
                             <FormMessage />
                         </FormItem>
                     )}
-                />
-            </Row>
+                    />
+                </Inline>
+            </Box>
         </>
     );
 }
