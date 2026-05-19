@@ -4,7 +4,7 @@ import { Button } from "@/module/common/component/Button";
 import { Panel } from "@/module/common/component/Panel";
 import { MerchantItem } from "@/module/dashboard/component/MerchantItem";
 import { useMyMerchants } from "@/module/dashboard/hooks/useMyMerchants";
-import styles from "./index.module.css";
+import * as styles from "./products.css";
 
 export function MyMerchants() {
     const { merchants } = useMyMerchants();

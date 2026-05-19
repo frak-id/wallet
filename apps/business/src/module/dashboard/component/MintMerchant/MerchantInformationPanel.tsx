@@ -5,6 +5,7 @@ import {
     AccordionTrigger,
 } from "@frak-labs/design-system/components/Accordion";
 import { Spinner } from "@frak-labs/design-system/components/Spinner";
+import { Text } from "@frak-labs/design-system/components/Text";
 import { CheckCircle2, ExternalLink, XCircle } from "lucide-react";
 import type { UseFormReturn } from "react-hook-form";
 import { Button } from "@/module/common/component/Button";
@@ -23,7 +24,7 @@ import {
 } from "@/module/forms/Form";
 import { Input } from "@/module/forms/Input";
 import type { MerchantNew } from "@/types/Merchant";
-import styles from "./index.module.css";
+import * as styles from "./mint-merchant.css";
 
 interface MerchantInformationPanelProps {
     form: UseFormReturn<MerchantNew>;
@@ -208,10 +209,14 @@ export function MerchantInformationPanel({
                                 <FormLabel weight="medium">
                                     DNS TXT Record Required
                                 </FormLabel>
-                                <p className={styles.dnsDescription}>
+                                <Text
+                                    as="p"
+                                    variant="bodySmall"
+                                    color="secondary"
+                                >
                                     Add this TXT record to your domain's DNS
                                     settings:
-                                </p>
+                                </Text>
                                 {isDnsLoading ? (
                                     <Spinner />
                                 ) : (
@@ -271,7 +276,6 @@ export function MerchantInformationPanel({
                             onClick={onVerifyDomain}
                             type="button"
                             disabled={step > 1}
-                            className={styles.continueButton}
                         >
                             Continue
                         </Button>

@@ -1,9 +1,10 @@
+import { Inline } from "@frak-labs/design-system/components/Inline";
 import { Text } from "@frak-labs/design-system/components/Text";
 import type { UseFormReturn } from "react-hook-form";
 import { Button } from "@/module/common/component/Button";
 import { PanelAccordion } from "@/module/common/component/PanelAccordion";
 import type { MerchantNew } from "@/types/Merchant";
-import styles from "./index.module.css";
+import * as styles from "./mint-merchant.css";
 
 interface ValidationPanelProps {
     form: UseFormReturn<MerchantNew>;
@@ -43,31 +44,54 @@ export function ValidationPanel({
                 <div className={styles.verifySection}>
                     <Text
                         as="h3"
-                        variant="heading3"
-                        className={styles.sectionHeading}
+                        variant="bodySmall"
+                        weight="semiBold"
+                        color="primary"
                     >
                         Review Your Merchant
                     </Text>
-                    <Text variant="body" className={styles.description}>
+                    <Text variant="bodySmall" color="secondary">
                         Please review the information below before proceeding.
                         You'll be able to register your merchant in the next
                         step.
                     </Text>
                     <div className={styles.productSummary}>
-                        <div className={styles.summaryItem}>
-                            <span className={styles.summaryLabel}>
+                        <Inline space="xs" alignY="baseline">
+                            <Text
+                                as="span"
+                                variant="bodySmall"
+                                weight="medium"
+                                className={styles.summaryLabel}
+                            >
                                 Merchant Name:
-                            </span>
-                            <span className={styles.summaryValue}>
+                            </Text>
+                            <Text
+                                as="span"
+                                variant="bodySmall"
+                                weight="medium"
+                                color="primary"
+                            >
                                 {values.name}
-                            </span>
-                        </div>
-                        <div className={styles.summaryItem}>
-                            <span className={styles.summaryLabel}>Domain:</span>
-                            <span className={styles.summaryValue}>
+                            </Text>
+                        </Inline>
+                        <Inline space="xs" alignY="baseline">
+                            <Text
+                                as="span"
+                                variant="bodySmall"
+                                weight="medium"
+                                className={styles.summaryLabel}
+                            >
+                                Domain:
+                            </Text>
+                            <Text
+                                as="span"
+                                variant="bodySmall"
+                                weight="medium"
+                                color="primary"
+                            >
                                 {values.domain}
-                            </span>
-                        </div>
+                            </Text>
+                        </Inline>
                     </div>
                     <div className={styles.continueSection}>
                         <Button

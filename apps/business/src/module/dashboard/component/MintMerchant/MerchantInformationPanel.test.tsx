@@ -3,8 +3,7 @@ import { MerchantInformationPanel } from "./MerchantInformationPanel";
 
 describe("MerchantInformationPanel", () => {
     it("should be importable (Rolldown can parse the component)", () => {
-        // This test verifies that Rolldown beta.50 can now parse the MerchantInformationPanel component
-        // which uses PanelAccordion, Button, and other complex UI components from @frak-labs/ui
+        // Smoke test: ensure the component module parses and exports a component.
         expect(MerchantInformationPanel).toBeDefined();
         expect(typeof MerchantInformationPanel).toBe("function");
     });
