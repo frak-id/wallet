@@ -1,5 +1,5 @@
 import { getLibsqlDb } from "@backend-infrastructure";
-import { eq } from "drizzle-orm";
+import { eq, sql } from "drizzle-orm";
 import type { Address } from "viem";
 import { authenticatorsTable } from "../db/schema";
 import type { AuthenticatorDocument } from "../models/dto/AuthenticatorDocument";
@@ -78,29 +78,71 @@ export class AuthenticatorRepository {
     }
 
     /**
-     * Create a new authenticator
+     * Idempotent insert: if a row with the same credential id already exists,
+     * returns it instead of throwing. Lets clients safely retry registration
+     * after a transient backend failure without producing duplicates or 500s.
      */
     public async createAuthenticator(
         authenticator: AuthenticatorDocument
-    ): Promise<void> {
-        const existing = await this.getByCredentialId(authenticator._id);
-        if (existing) {
-            throw new Error("Credential already exists");
+    ): Promise<{ created: boolean; document: AuthenticatorDocument }> {
+        const db = getLibsqlDb();
+        const inserted = await db
+            .insert(authenticatorsTable)
+            .values({
+                id: authenticator._id,
+                smartWalletAddress: authenticator.smartWalletAddress,
+                userAgent: authenticator.userAgent,
+                publicKeyX: authenticator.publicKey.x,
+                publicKeyY: authenticator.publicKey.y,
+                credentialPublicKey: authenticator.credentialPublicKey,
+                counter: authenticator.counter,
+                credentialDeviceType: authenticator.credentialDeviceType,
+                credentialBackedUp: authenticator.credentialBackedUp,
+                transports: authenticator.transports,
+                email: authenticator.email,
+            })
+            .onConflictDoNothing()
+            .returning();
+
+        if (inserted.length > 0) {
+            return { created: true, document: authenticator };
         }
 
+        const existing = await this.getByCredentialId(authenticator._id);
+        if (!existing) {
+            throw new Error(
+                "Authenticator insert reported conflict but row could not be retrieved"
+            );
+        }
+        return { created: false, document: existing };
+    }
+
+    /**
+     * Case-insensitive lookup of the latest authenticator created with the
+     * given email. Used by the registration precheck so the UI can warn a
+     * user before triggering the WebAuthn ceremony, and seed a targeted
+     * login (with the matching credential id) when the email is already
+     * attached to an existing wallet.
+     */
+    public async findByEmail(email: string): Promise<{
+        authenticatorId: string;
+        smartWalletAddress: Address | null;
+    } | null> {
         const db = getLibsqlDb();
-        await db.insert(authenticatorsTable).values({
-            id: authenticator._id,
-            smartWalletAddress: authenticator.smartWalletAddress,
-            userAgent: authenticator.userAgent,
-            publicKeyX: authenticator.publicKey.x,
-            publicKeyY: authenticator.publicKey.y,
-            credentialPublicKey: authenticator.credentialPublicKey,
-            counter: authenticator.counter,
-            credentialDeviceType: authenticator.credentialDeviceType,
-            credentialBackedUp: authenticator.credentialBackedUp,
-            transports: authenticator.transports,
-            email: authenticator.email,
-        });
+        const normalized = email.trim().toLowerCase();
+        const [row] = await db
+            .select({
+                id: authenticatorsTable.id,
+                smartWalletAddress: authenticatorsTable.smartWalletAddress,
+            })
+            .from(authenticatorsTable)
+            .where(sql`LOWER(${authenticatorsTable.email}) = ${normalized}`)
+            .limit(1);
+        if (!row) return null;
+        return {
+            authenticatorId: row.id,
+            smartWalletAddress:
+                (row.smartWalletAddress as Address | null) ?? null,
+        };
     }
 }

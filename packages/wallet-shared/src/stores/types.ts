@@ -46,6 +46,21 @@ export type LastWebAuthNAction = {
 
 export type LastAuthentication = Session & { type: "webauthn" };
 
+/**
+ * A WebAuthn registration that succeeded on the device but is not yet
+ * confirmed by the backend. Lets the wallet retry the backend submit
+ * without re-prompting biometrics.
+ */
+export type PendingRegistration = {
+    credentialId: string;
+    publicKey: { x: Hex; y: Hex; prefix: number };
+    rawEncoded: string;
+    email?: string;
+    merchantId?: string;
+    userAgent: string;
+    createdAt: number;
+};
+
 export type SsoContext = {
     merchantId?: string;
     redirectUrl?: string;
@@ -62,16 +77,17 @@ export type AppSpecificSsoMetadata = SsoMetadata & {
 export type AuthenticationStore = {
     // State
     lastAuthenticator: LastAuthentication | null;
+    pendingRegistration: PendingRegistration | null;
     lastAuthenticationAt: number | null;
     lastWebAuthNAction: LastWebAuthNAction | null;
     ssoContext: SsoContext | null;
 
     // Actions
     setLastAuthenticator: (auth: LastAuthentication | null) => void;
+    setPendingRegistration: (pending: PendingRegistration | null) => void;
     setLastAuthenticationAt: (timestamp: number | null) => void;
     setLastWebAuthNAction: (action: LastWebAuthNAction | null) => void;
     setSsoContext: (context: SsoContext | null) => void;
-    clearAuthentication: () => void;
 };
 /**
  * Client ID Store Types

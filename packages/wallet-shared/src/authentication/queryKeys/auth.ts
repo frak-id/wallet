@@ -36,4 +36,10 @@ export namespace authKey {
         base,
         previousAuthenticatorsBase,
     ] as const;
+
+    /**
+     * Mutation key for the pre-registration email availability check
+     */
+    const checkEmailBase = "checkEmail" as const;
+    export const checkEmail = [base, checkEmailBase] as const;
 }

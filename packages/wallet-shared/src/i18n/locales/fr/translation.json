@@ -543,7 +543,12 @@
             "label": "Email",
             "placeholder": "ton.email@gmail.com",
             "continue": "Continuer",
-            "clearAriaLabel": "Effacer l'adresse e-mail"
+            "clearAriaLabel": "Effacer l'adresse e-mail",
+            "alreadyUsed": {
+                "message": "Oups, il semble que cette adresse e-mail soit déjà utilisée. Veux-tu plutôt te connecter ?",
+                "login": "Se connecter"
+            },
+            "checkError": "Impossible de vérifier cet e-mail pour le moment. Réessaie."
         },
         "keypass": {
             "title": "Sécurise ton compte",

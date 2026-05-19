@@ -28,7 +28,9 @@ describe("WebAuthNService", () => {
                 transports: ["usb", "nfc"],
             })
         ),
-        createAuthenticator: vi.fn(() => Promise.resolve()),
+        createAuthenticator: vi.fn((doc) =>
+            Promise.resolve({ created: true, document: doc })
+        ),
     } as unknown as AuthenticatorRepository;
 
     const webAuthNService = new WebAuthNService(mockAuthenticatorRepository);

@@ -23,3 +23,19 @@ export const clearButton = style({
     cursor: "pointer",
     color: vars.icon.primary,
 });
+
+export const alreadyUsedBlock = style({
+    display: "flex",
+    flexDirection: "column",
+    gap: alias.spacing.s,
+    padding: alias.spacing.m,
+    marginInline: alias.spacing.m,
+    borderRadius: alias.spacing.s,
+    background: vars.surface.warning,
+    color: vars.text.primary,
+});
+
+export const checkError = style({
+    paddingInline: alias.spacing.m,
+    color: vars.text.error,
+});
