@@ -178,7 +178,7 @@ All changes are in `services/backend/src/domain/auth/repositories/AuthenticatorR
 | `findByEmail(email)` | `findByEmail({ chainId, email })` | Reads from `awb_email_lower_active_idx`; same fallback. |
 | `updateEmail({ credentialId, email })` | `updateEmail({ credentialId, email })` | Updates **every active binding** for the credential (denormalised across chains) AND the legacy `authenticators.email` column. |
 | `getEmail({ credentialId })` | `getEmail({ credentialId, chainId? })` | Reads from any active binding; `chainId` argument is optional (any binding works for the email value). |
-| `createAuthenticator({...})` | `createAuthenticator(credentialFields)` + chained `createInitialBindings({ credentialId, smartWalletAddress, email?, chainIds })` | Register handler calls both inside a transaction; one row in `authenticators`, two rows in `authenticator_wallet_bindings` (one per configured chain). Dual-writes the wallet/email back to the legacy columns. |
+| `createAuthenticator({...})` | `createAuthenticator(credentialFields)` + chained `seedInitialBindings({ credentialId, smartWalletAddress, email?, chainIds })` | Register handler calls both inside a transaction; one row in `authenticators`, two rows in `authenticator_wallet_bindings` (one per configured chain). Dual-writes the wallet/email back to the legacy columns. |
 
 ### New methods
 

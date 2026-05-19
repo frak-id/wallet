@@ -1,5 +1,6 @@
 import { sessionContext } from "@backend-infrastructure";
 import { t } from "@backend-utils";
+import { currentChainId } from "@frak-labs/app-essentials";
 import { Elysia, status } from "elysia";
 import { AuthContext } from "../../../../domain/auth";
 import {
@@ -69,9 +70,10 @@ export const emailRoutes = new Elysia({ prefix: "/email" })
             // future merge flow. We still surface the existing wallet so the
             // UI can later propose a recovery-by-merge action.
             const existing =
-                await AuthContext.repositories.authenticator.findByEmail(
-                    normalized
-                );
+                await AuthContext.repositories.authenticator.findByEmail({
+                    chainId: currentChainId,
+                    email: normalized,
+                });
             if (existing && existing.authenticatorId !== credentialId) {
                 return {
                     status: "conflict" as const,

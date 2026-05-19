@@ -1,8 +1,13 @@
 export {
     addresses,
+    arbitrumChainId,
+    arbitrumSepoliaChainId,
     campaignBankAbi,
+    currentChainId,
     currentStablecoins,
     currentStablecoinsList,
+    type FrakChainId,
+    frakChainIds,
     getExecutionAbi,
     KernelExecuteAbi,
     KernelInitAbi,

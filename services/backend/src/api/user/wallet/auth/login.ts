@@ -115,10 +115,13 @@ export const loginRoutes = new Elysia()
             if (!verificationnResult) {
                 return status(404, "Invalid signature");
             }
-
-            // Otherwise all good, extract a few info
             const { address, authenticatorId, publicKey, transports } =
                 verificationnResult;
+
+            await AuthContext.repositories.authenticator.ensureActiveBindings({
+                credentialId: authenticatorId,
+                smartWalletAddress: address,
+            });
 
             // Prepare the additional data object
             const additionalData: StaticWalletSdkTokenDto["additionalData"] =

@@ -1,4 +1,5 @@
 import { t } from "@backend-utils";
+import { currentChainId } from "@frak-labs/app-essentials";
 import { Elysia } from "elysia";
 import { AuthContext } from "../../../../domain/auth";
 import { EmailStatusResponseSchema } from "../../../schemas";
@@ -15,8 +16,10 @@ import { EmailStatusResponseSchema } from "../../../schemas";
 export const emailStatusRoutes = new Elysia().post(
     "/emailStatus",
     async ({ body: { email } }) => {
-        const match =
-            await AuthContext.repositories.authenticator.findByEmail(email);
+        const match = await AuthContext.repositories.authenticator.findByEmail({
+            chainId: currentChainId,
+            email,
+        });
         if (!match) {
             return { used: false } as const;
         }

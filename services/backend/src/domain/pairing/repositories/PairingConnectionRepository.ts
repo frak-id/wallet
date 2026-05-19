@@ -1,5 +1,6 @@
 import { randomInt, randomUUID } from "node:crypto";
 import { db, JwtContext, log } from "@backend-infrastructure";
+import { currentChainId } from "@frak-labs/app-essentials/blockchain";
 import { and, eq, gt, inArray, isNull } from "drizzle-orm";
 import type { ElysiaWS } from "elysia/ws";
 import { UAParser } from "ua-parser-js";
@@ -247,9 +248,10 @@ export class PairingConnectionRepository extends PairingRepository {
         // Pairing was resolved while the origin was disconnected. Replay
         // `authenticated` so the origin can settle into its `paired` session.
         const authenticator =
-            await this.authenticatorRepository.getBySmartWalletAddress(
-                pairing.wallet
-            );
+            await this.authenticatorRepository.getByActiveWallet({
+                chainId: currentChainId,
+                smartWalletAddress: pairing.wallet,
+            });
         if (!authenticator) {
             log.warn(
                 {
