@@ -8,7 +8,7 @@ import { Panel } from "@/module/common/component/Panel";
 import { Form } from "@/module/forms/Form";
 import { FormActions } from "@/module/forms/FormActions";
 import { useMerchantUpdate } from "@/module/merchant/hook/useMerchantUpdate";
-import styles from "./index.module.css";
+import * as styles from "./customize.css";
 import { SharingPagePreview } from "./ModalPreview";
 import { CssEditor, TranslationEditor } from "./TranslationEditor";
 import type {
@@ -67,7 +67,7 @@ export function PlacementCssPanel({
 
     return (
         <Panel title={`Placement CSS · ${placementId}`}>
-            <p className={styles.customize__fieldDescription}>
+            <p className={styles.customizeFieldDescription}>
                 Global CSS overrides for this placement. Styles defined here
                 apply to all SDK components within this placement.
             </p>
@@ -214,7 +214,7 @@ export function DeletePlacementPanel({
 
     return (
         <Panel title={`Delete placement · ${placementId}`}>
-            <p className={styles.customize__hint}>
+            <p className={styles.customizeHint}>
                 This removes all overrides for this placement.
             </p>
             <AlertDialog
@@ -224,7 +224,7 @@ export function DeletePlacementPanel({
                 buttonElement={
                     <button
                         type="button"
-                        className={styles.customize__deleteButton}
+                        className={styles.customizeDeleteButton}
                     >
                         <Trash2 size={16} />
                         Delete {placementId}

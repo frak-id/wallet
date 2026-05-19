@@ -1,8 +1,9 @@
+import { Stack } from "@frak-labs/design-system/components/Stack";
 import { Text } from "@frak-labs/design-system/components/Text";
 import { SharingPreview, SharingSuccessPreview } from "@frak-labs/ui-preview";
 import type { UseFormReturn } from "react-hook-form";
 import { PreviewWrapper } from "@/module/common/component/PreviewWrapper";
-import styles from "./ModalPreview.module.css";
+import * as styles from "./modal-preview.css";
 import {
     TRANSLATION_LANG_FIELDS,
     type TranslationFormValues,
@@ -134,7 +135,7 @@ export function SharingPagePreview({
     return (
         <PreviewWrapper>
             <div className={styles.previewContainer}>
-                <div className={styles.previewColumn}>
+                <Stack space="s">
                     <div>
                         <Text
                             as="h4"
@@ -151,8 +152,8 @@ export function SharingPagePreview({
                         </Text>
                     </div>
                     <SharingPreview t={t} logoUrl={logoUrl} />
-                </div>
-                <div className={styles.previewColumn}>
+                </Stack>
+                <Stack space="s">
                     <div>
                         <Text
                             as="h4"
@@ -169,7 +170,7 @@ export function SharingPagePreview({
                         </Text>
                     </div>
                     <SharingSuccessPreview t={t} logoUrl={logoUrl} />
-                </div>
+                </Stack>
             </div>
         </PreviewWrapper>
     );

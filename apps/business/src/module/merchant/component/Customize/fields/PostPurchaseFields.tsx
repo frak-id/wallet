@@ -9,7 +9,7 @@ import {
     FormMessage,
 } from "@/module/forms/Form";
 import { Input } from "@/module/forms/Input";
-import styles from "../index.module.css";
+import * as styles from "../customize.css";
 import type {
     ComponentSettingsFormValues,
     PostPurchaseFormValues,
@@ -38,7 +38,7 @@ export function PostPurchaseFields({
     form: UseFormReturn<ComponentSettingsFormValues>;
 }) {
     return (
-        <div className={styles.customize__settingsGrid}>
+        <div className={styles.customizeSettingsGrid}>
             <FormField
                 control={form.control}
                 name="postPurchase.refereeText"
@@ -243,7 +243,7 @@ export function PostPurchaseFields({
                         </FormDescription>
                         <FormControl>
                             <textarea
-                                className={styles.customize__textarea}
+                                className={styles.customizeTextarea}
                                 placeholder={".post-purchase { ... }"}
                                 rows={4}
                                 {...field}

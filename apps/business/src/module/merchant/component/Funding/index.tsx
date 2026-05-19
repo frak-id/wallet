@@ -1,6 +1,8 @@
 import type { Stablecoin } from "@frak-labs/app-essentials";
 import { isRunningInProd } from "@frak-labs/app-essentials";
+import { Inline } from "@frak-labs/design-system/components/Inline";
 import { Spinner } from "@frak-labs/design-system/components/Spinner";
+import { Stack } from "@frak-labs/design-system/components/Stack";
 import { Switch } from "@frak-labs/design-system/components/Switch";
 import { useWalletStatus } from "@frak-labs/react-sdk";
 import {
@@ -32,7 +34,7 @@ import { useGetMerchantBank } from "@/module/merchant/hook/useGetMerchantBank";
 import { useSetBankOpenStatus } from "@/module/merchant/hook/useSetBankOpenStatus";
 import { useSyncMerchantBank } from "@/module/merchant/hook/useSyncMerchantBank";
 import { useWithdrawFromBank } from "@/module/merchant/hook/useWithdrawFromBank";
-import styles from "./index.module.css";
+import * as styles from "./funding.css";
 import { LegacyBankMigration } from "./LegacyBankMigration";
 
 export function MerchantFunding({ merchantId }: { merchantId: string }) {
@@ -65,7 +67,7 @@ export function MerchantFunding({ merchantId }: { merchantId: string }) {
         return (
             <FormLayout>
                 <Panel className={styles.bankPanel}>
-                    <div className={styles.bankContent}>
+                    <Stack space="l">
                         <Title as="h3" size="small" icon={<Wallet />}>
                             Reward Budget
                         </Title>
@@ -81,7 +83,7 @@ export function MerchantFunding({ merchantId }: { merchantId: string }) {
                         >
                             Set Up Budget
                         </Button>
-                    </div>
+                    </Stack>
                 </Panel>
             </FormLayout>
         );
@@ -124,13 +126,13 @@ function RewardBudgetView({
 
     return (
         <Panel className={styles.bankPanel}>
-            <div className={styles.bankContent}>
+            <Stack space="l">
                 <div className={styles.bankHeaderRow}>
-                    <div className={styles.bankTitleGroup}>
+                    <Inline space="s" alignY="center">
                         <Title as="h3" size="small" icon={<Wallet />}>
                             Reward Budget
                         </Title>
-                    </div>
+                    </Inline>
 
                     {isManager && (
                         <DistributionToggle
@@ -178,7 +180,7 @@ function RewardBudgetView({
                         <TestFundButton bankAddress={bankAddress} />
                     )}
                 </div>
-            </div>
+            </Stack>
         </Panel>
     );
 }
@@ -250,14 +252,14 @@ function TokenGridSections({
     }
 
     return (
-        <div className={styles.tokenSections}>
+        <Stack space="m">
             <div className={styles.tokenGrid}>{renderCards(fundedTokens)}</div>
             {emptyTokens.length > 0 && (
                 <div className={styles.tokenGrid}>
                     {renderCards(emptyTokens)}
                 </div>
             )}
-        </div>
+        </Stack>
     );
 }
 
@@ -297,19 +299,19 @@ function TokenCard({
 
     const cardClassName = [
         styles.tokenCard,
-        status === "empty" && styles["tokenCard--empty"],
-        status === "active" && styles["tokenCard--active"],
-        status === "warning" && styles["tokenCard--warning"],
-        status === "paused" && styles["tokenCard--paused"],
+        status === "empty" && styles.tokenCardEmpty,
+        status === "active" && styles.tokenCardActive,
+        status === "warning" && styles.tokenCardWarning,
+        status === "paused" && styles.tokenCardPaused,
     ]
         .filter(Boolean)
         .join(" ");
 
     return (
         <div className={cardClassName}>
-            <div className={styles.tokenCard__header}>
-                <div className={styles.tokenCard__currencyGroup}>
-                    <span className={styles.tokenCard__currency}>
+            <Inline space="xs" alignY="center" align="space-between">
+                <Inline space="xs" alignY="center">
+                    <span className={styles.tokenCardCurrency}>
                         {meta.currencySymbol}
                     </span>
                     <Tooltip content={meta.providerDescription}>
@@ -317,24 +319,24 @@ function TokenCard({
                             {meta.provider}
                         </Badge>
                     </Tooltip>
-                </div>
+                </Inline>
                 <TokenStatusBadge
                     token={token}
                     status={status}
                     decimals={decimals}
                 />
-            </div>
+            </Inline>
 
             <div>
-                <div className={styles.tokenCard__balance}>
+                <div className={styles.tokenCardBalance}>
                     {formattedBalance}
                 </div>
                 {hasBalance ? (
-                    <span className={styles.tokenCard__availableLabel}>
+                    <span className={styles.tokenCardAvailableLabel}>
                         available
                     </span>
                 ) : (
-                    <span className={styles.tokenCard__emptyLabel}>
+                    <span className={styles.tokenCardEmptyLabel}>
                         No funds — add funds to start distributing rewards
                     </span>
                 )}
@@ -475,7 +477,7 @@ function TokenActions({
 
     if (action === "allowance") {
         return (
-            <div className={styles.tokenCard__actions}>
+            <div className={styles.tokenCardActions}>
                 <Row align="center" className={styles.actionRow}>
                     <Input
                         type="number"
@@ -512,7 +514,7 @@ function TokenActions({
 
     if (action === "withdraw") {
         return (
-            <div className={styles.tokenCard__actions}>
+            <div className={styles.tokenCardActions}>
                 <Row align="center" className={styles.actionRow}>
                     <Input
                         type="number"
@@ -548,14 +550,14 @@ function TokenActions({
     }
 
     return (
-        <div className={styles.tokenCard__actions}>
+        <div className={styles.tokenCardActions}>
             {needsAllowanceIncrease && (
-                <div className={styles.tokenCard__warning}>
+                <div className={styles.tokenCardWarningBox}>
                     <AlertTriangle width={14} height={14} />
                     <span>Distribution limit too low</span>
                 </div>
             )}
-            <div className={styles.tokenCard__actionButtons}>
+            <Inline space="xs" alignY="center">
                 {needsAllowanceIncrease && (
                     <Button
                         size="small"
@@ -590,7 +592,7 @@ function TokenActions({
                         Withdraw
                     </Button>
                 )}
-            </div>
+            </Inline>
         </div>
     );
 }

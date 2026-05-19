@@ -22,13 +22,13 @@ import {
 import { FormActions } from "@/module/forms/FormActions";
 import { Input } from "@/module/forms/Input";
 import { useMerchantUpdate } from "@/module/merchant/hook/useMerchantUpdate";
+import * as styles from "./customize.css";
 import { BannerFields, getBannerDefaults } from "./fields/BannerFields";
 import { ButtonShareFields } from "./fields/ButtonShareFields";
 import {
     getPostPurchaseDefaults,
     PostPurchaseFields,
 } from "./fields/PostPurchaseFields";
-import styles from "./index.module.css";
 import {
     DeletePlacementPanel,
     PlacementCssPanel,
@@ -248,7 +248,7 @@ function PlacementSettingsPanel({
     return (
         <Form {...form}>
             <Panel title={`Placement settings · ${placementId}`}>
-                <div className={styles.customize__settingsGrid}>
+                <div className={styles.customizeSettingsGrid}>
                     <FormField
                         control={form.control}
                         name="targetInteraction"
@@ -282,15 +282,15 @@ function PlacementSettingsPanel({
                     />
                 </div>
 
-                <div className={styles.customize__componentSelector}>
+                <div className={styles.customizeComponentSelector}>
                     {COMPONENT_TYPES.map((componentType) => (
                         <button
                             key={componentType}
                             type="button"
                             className={clsx(
-                                styles.customize__tab,
+                                styles.customizeTab,
                                 selectedComponent === componentType &&
-                                    styles["customize__tab--active"]
+                                    styles.customizeTabActive
                             )}
                             onClick={() => setSelectedComponent(componentType)}
                         >

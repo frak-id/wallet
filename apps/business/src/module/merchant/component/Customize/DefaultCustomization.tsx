@@ -8,10 +8,10 @@ import { PreviewWrapper } from "@/module/common/component/PreviewWrapper";
 import { Form } from "@/module/forms/Form";
 import { FormActions } from "@/module/forms/FormActions";
 import { useMerchantUpdate } from "@/module/merchant/hook/useMerchantUpdate";
+import * as styles from "./customize.css";
 import { BannerFields } from "./fields/BannerFields";
 import { ButtonShareFields } from "./fields/ButtonShareFields";
 import { PostPurchaseFields } from "./fields/PostPurchaseFields";
-import styles from "./index.module.css";
 import { SharingPagePreview } from "./ModalPreview";
 import { ComponentPreview } from "./PlacementCustomization";
 import { CssEditor, TranslationEditor } from "./TranslationEditor";
@@ -102,20 +102,20 @@ function GlobalCssPanel({
 
     return (
         <Panel title={"Global CSS"}>
-            <p className={styles.customize__fieldDescription}>
+            <p className={styles.customizeFieldDescription}>
                 CSS styles applied to all SDK components across every placement.
                 Placement-level CSS can override these defaults.
             </p>
-            <div className={styles.customize__advancedSection}>
+            <div className={styles.customizeAdvancedSection}>
                 <button
                     type="button"
-                    className={styles.customize__advancedToggle}
+                    className={styles.customizeAdvancedToggle}
                     onClick={() => setIsOpen(!isOpen)}
                 >
                     {isOpen ? "▾" : "▸"} Custom CSS
                 </button>
                 {isOpen && (
-                    <div className={styles.customize__advancedBody}>
+                    <div className={styles.customizeAdvancedBody}>
                         <CssEditor
                             value={form.watch("css")}
                             onChange={(value) => {
@@ -184,7 +184,7 @@ function GlobalTranslationsPanel({
     return (
         <Form {...form}>
             <Panel title={"Global translations"}>
-                <p className={styles.customize__fieldDescription}>
+                <p className={styles.customizeFieldDescription}>
                     Translations applied to all SDK components across every
                     placement.
                 </p>
@@ -333,20 +333,20 @@ function GlobalComponentsPanel({
     return (
         <Form {...form}>
             <Panel title={"Global component defaults"}>
-                <p className={styles.customize__fieldDescription}>
+                <p className={styles.customizeFieldDescription}>
                     Default text and styles for SDK components. Placement-level
                     settings override these values.
                 </p>
 
-                <div className={styles.customize__componentSelector}>
+                <div className={styles.customizeComponentSelector}>
                     {COMPONENT_TYPES.map((componentType) => (
                         <button
                             key={componentType}
                             type="button"
                             className={clsx(
-                                styles.customize__tab,
+                                styles.customizeTab,
                                 selectedComponent === componentType &&
-                                    styles["customize__tab--active"]
+                                    styles.customizeTabActive
                             )}
                             onClick={() => setSelectedComponent(componentType)}
                         >

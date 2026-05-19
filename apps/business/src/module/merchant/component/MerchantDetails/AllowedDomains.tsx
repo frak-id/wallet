@@ -7,7 +7,7 @@ import {
     useAddAllowedDomain,
     useRemoveAllowedDomain,
 } from "@/module/merchant/hook/useAllowedDomains";
-import styles from "./AllowedDomains.module.css";
+import * as styles from "./allowed-domains.css";
 
 const domainRegex =
     /^[a-z0-9]([a-z0-9-]*[a-z0-9])?(\.[a-z0-9]([a-z0-9-]*[a-z0-9])?)+$/;

@@ -15,7 +15,7 @@ import {
     type MerchantAdministrator,
     useGetMerchantAdministrators,
 } from "@/module/merchant/hook/useGetMerchantAdministrators";
-import styles from "./index.module.css";
+import * as styles from "./table-team.css";
 
 export type ManageTeamTableData = MerchantAdministrator;
 
@@ -100,7 +100,7 @@ function CellActions({
     if (!canDoActions) return null;
 
     return (
-        <div className={styles.table__actions}>
+        <div className={styles.tableActions}>
             <DeleteTeamMemberModal row={row} merchantId={merchantId} />
         </div>
     );

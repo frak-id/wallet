@@ -1,3 +1,4 @@
+import { Inline } from "@frak-labs/design-system/components/Inline";
 import clsx from "clsx";
 import { Plus } from "lucide-react";
 import { useEffect, useState } from "react";
@@ -5,7 +6,7 @@ import { AlertDialog } from "@/module/common/component/AlertDialog";
 import { Button } from "@/module/common/component/Button";
 import { Panel } from "@/module/common/component/Panel";
 import { Input } from "@/module/forms/Input";
-import styles from "./index.module.css";
+import * as styles from "./customize.css";
 
 export function CustomizationTabs({
     activeTab,
@@ -33,19 +34,18 @@ export function CustomizationTabs({
 
     return (
         <Panel title={"SDK Customization"}>
-            <p className={styles.customize__fieldDescription}>
+            <p className={styles.customizeFieldDescription}>
                 Global defaults apply to every SDK component. Placements are
                 variants you can use on the same website to display your
                 products in different ways — each with its own text, styles, and
                 behavior.
             </p>
-            <div className={styles.customize__tabs}>
+            <Inline space="xs" alignY="center">
                 <button
                     type="button"
                     className={clsx(
-                        styles.customize__tab,
-                        activeTab === "default" &&
-                            styles["customize__tab--active"]
+                        styles.customizeTab,
+                        activeTab === "default" && styles.customizeTabActive
                     )}
                     onClick={() => onTabChange("default")}
                 >
@@ -57,9 +57,9 @@ export function CustomizationTabs({
                         key={placementId}
                         type="button"
                         className={clsx(
-                            styles.customize__tab,
+                            styles.customizeTab,
                             activeTab === placementId &&
-                                styles["customize__tab--active"]
+                                styles.customizeTabActive
                         )}
                         onClick={() => onTabChange(placementId)}
                     >
@@ -68,24 +68,22 @@ export function CustomizationTabs({
                 ))}
 
                 {overflowPlacements.length > 0 && (
-                    <div className={styles.customize__overflow}>
+                    <div className={styles.customizeOverflow}>
                         <button
                             type="button"
-                            className={styles.customize__tab}
+                            className={styles.customizeTab}
                             onClick={() => setIsOverflowOpen(!isOverflowOpen)}
                             aria-expanded={isOverflowOpen}
                         >
                             ...
                         </button>
                         {isOverflowOpen && (
-                            <div className={styles.customize__overflowMenu}>
+                            <div className={styles.customizeOverflowMenu}>
                                 {overflowPlacements.map((placementId) => (
                                     <button
                                         key={placementId}
                                         type="button"
-                                        className={
-                                            styles.customize__overflowItem
-                                        }
+                                        className={styles.customizeOverflowItem}
                                         onClick={() => onTabChange(placementId)}
                                     >
                                         {placementId}
@@ -102,7 +100,7 @@ export function CustomizationTabs({
                     isCreatingPlacement={isCreatingPlacement}
                     isCreatePlacementSuccess={isCreatePlacementSuccess}
                 />
-            </div>
+            </Inline>
         </Panel>
     );
 }
@@ -171,7 +169,7 @@ function CreatePlacementButton({
             buttonElement={
                 <button
                     type="button"
-                    className={styles.customize__tabAdd}
+                    className={styles.customizeTabAdd}
                     disabled={placementIds.length >= 10}
                     title={
                         placementIds.length >= 10
@@ -183,8 +181,8 @@ function CreatePlacementButton({
                 </button>
             }
             description={
-                <div className={styles.customize__createDialogBody}>
-                    <p className={styles.customize__hint}>
+                <div className={styles.customizeCreateDialogBody}>
+                    <p className={styles.customizeHint}>
                         Placement id must be unique and use 3 to 16 characters.
                     </p>
                     <Input

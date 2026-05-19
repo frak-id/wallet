@@ -18,7 +18,7 @@ import { ImageUploadField } from "@/module/merchant/component/ImageUploadField";
 import { MultiHeroImagesField } from "@/module/merchant/component/MultiHeroImagesField";
 import { useMerchant } from "@/module/merchant/hook/useMerchant";
 import { useMerchantUpdate } from "@/module/merchant/hook/useMerchantUpdate";
-import styles from "./index.module.css";
+import * as styles from "./merchant-details.css";
 
 type ExplorerFormValues = {
     enabled: boolean;

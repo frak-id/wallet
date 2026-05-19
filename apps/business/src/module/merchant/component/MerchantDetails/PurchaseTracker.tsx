@@ -3,8 +3,8 @@ import { Column, Columns } from "@/module/common/component/Columns";
 import { PanelAccordion } from "@/module/common/component/PanelAccordion";
 import { Title } from "@/module/common/component/Title";
 import { usePurchaseWebhookStatus } from "@/module/merchant/hook/usePurchaseWebhookStatus";
-import styles from "./PurchaseTracker.module.css";
 import { PurchaseTrackerWebhook } from "./PurchaseTrackerWebhook";
+import * as styles from "./purchase-tracker.css";
 
 export function PurchasseTrackerSetup({ merchantId }: { merchantId: string }) {
     return (
@@ -13,7 +13,7 @@ export function PurchasseTrackerSetup({ merchantId }: { merchantId: string }) {
             id={"purchaseTracker"}
             className={styles.purchaseTrackerSetup}
         >
-            <p className={styles.purchaseTracker__description}>
+            <p className={styles.purchaseTrackerDescription}>
                 The purchase tracker will permit to create campaigns and
                 distribute rewards based on user purchase on your website.
             </p>

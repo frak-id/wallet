@@ -1,10 +1,11 @@
+import { Stack } from "@frak-labs/design-system/components/Stack";
 import { useCallback, useState } from "react";
 import { useDropzone } from "react-dropzone";
 import {
     useMediaDelete,
     useMediaUpload,
 } from "@/module/merchant/hook/useMediaUpload";
-import styles from "./index.module.css";
+import * as styles from "./multi-hero-images-field.css";
 
 type MultiHeroImagesFieldProps = {
     merchantId: string;
@@ -89,7 +90,7 @@ export function MultiHeroImagesField({
     const errorMessage = getUploadErrorMessage(uploadError);
 
     return (
-        <div className={styles.field}>
+        <Stack space="xs">
             {values.length > 0 && (
                 <ul className={styles.list}>
                     {values.map((url) => (
@@ -146,7 +147,7 @@ export function MultiHeroImagesField({
 
             <p className={styles.restrictions}>{restrictionsText}</p>
             {errorMessage && <p className={styles.error}>{errorMessage}</p>}
-        </div>
+        </Stack>
     );
 }
 

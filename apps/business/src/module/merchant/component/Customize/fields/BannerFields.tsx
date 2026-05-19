@@ -9,7 +9,7 @@ import {
     FormMessage,
 } from "@/module/forms/Form";
 import { Input } from "@/module/forms/Input";
-import styles from "../index.module.css";
+import * as styles from "../customize.css";
 import type { BannerFormValues, ComponentSettingsFormValues } from "../types";
 
 export function getBannerDefaults(
@@ -35,7 +35,7 @@ export function BannerFields({
     form: UseFormReturn<ComponentSettingsFormValues>;
 }) {
     return (
-        <div className={styles.customize__settingsGrid}>
+        <div className={styles.customizeSettingsGrid}>
             <FormField
                 control={form.control}
                 name="banner.referralTitle"
@@ -229,7 +229,7 @@ export function BannerFields({
                         </FormDescription>
                         <FormControl>
                             <textarea
-                                className={styles.customize__textarea}
+                                className={styles.customizeTextarea}
                                 placeholder={".frak-banner { ... }"}
                                 rows={4}
                                 {...field}

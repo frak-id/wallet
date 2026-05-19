@@ -11,7 +11,7 @@ import {
     type MerchantSetupStatusItem,
     useMerchantSetupStatus,
 } from "@/module/merchant/hook/useMerchantSetupStatus";
-import styles from "./index.module.css";
+import * as styles from "./setup-status.css";
 
 export function MerchantSetupStatus({ merchantId }: { merchantId: string }) {
     const { data } = useMerchantSetupStatus({ merchantId });
