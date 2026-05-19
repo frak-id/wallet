@@ -7,7 +7,7 @@ import { Panel } from "@/module/common/component/Panel";
 import { Title } from "@/module/common/component/Title";
 import { useListenToDomainNameSetup } from "@/module/dashboard/hooks/dnsRecordHooks";
 import { useRegisterMerchant } from "@/module/dashboard/hooks/useMintMyMerchant";
-import styles from "./index.module.css";
+import * as styles from "./mint.css";
 
 export function EmbeddedMint() {
     const search = useSearch({ from: "/embedded/_layout/mint" });
