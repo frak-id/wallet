@@ -1,3 +1,4 @@
+import { Box } from "@frak-labs/design-system/components/Box";
 import { Spinner } from "@frak-labs/design-system/components/Spinner";
 import clsx from "clsx";
 import { ArrowRightLeft } from "lucide-react";
@@ -120,7 +121,12 @@ function LegacyBankMigrationContent({
                 </div>
             </div>
 
-            <div className={styles.legacyPanelActions}>
+            <Box
+                display="flex"
+                alignItems="center"
+                gap="xs"
+                marginTop="xxs"
+            >
                 <Button
                     variant="primary"
                     size="small"
@@ -131,7 +137,7 @@ function LegacyBankMigrationContent({
                     <ArrowRightLeft width={14} height={14} />
                     Migrate funds to new bank
                 </Button>
-            </div>
+            </Box>
         </div>
     );
 }

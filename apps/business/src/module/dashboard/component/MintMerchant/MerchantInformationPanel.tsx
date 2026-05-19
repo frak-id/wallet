@@ -4,6 +4,7 @@ import {
     AccordionItem,
     AccordionTrigger,
 } from "@frak-labs/design-system/components/Accordion";
+import { Box } from "@frak-labs/design-system/components/Box";
 import { Spinner } from "@frak-labs/design-system/components/Spinner";
 import { Text } from "@frak-labs/design-system/components/Text";
 import { CheckCircle2, ExternalLink, XCircle } from "lucide-react";
@@ -70,7 +71,12 @@ export function MerchantInformationPanel({
             onValueChange={(value) => onOpenChange(value === "item-1")}
         >
             <Form {...form}>
-                <form className={styles.form}>
+                <Box
+                    as="form"
+                    display="flex"
+                    flexDirection="column"
+                    gap="m"
+                >
                     <FormField
                         control={form.control}
                         name="name"
@@ -142,10 +148,10 @@ export function MerchantInformationPanel({
                                             Domain Name
                                         </FormLabel>
                                         <FormControl>
-                                            <div
-                                                className={
-                                                    styles.domainInputWrapper
-                                                }
+                                            <Box
+                                                position="relative"
+                                                display="flex"
+                                                alignItems="center"
                                             >
                                                 <Input
                                                     length="medium"
@@ -171,7 +177,7 @@ export function MerchantInformationPanel({
                                                             size={20}
                                                         />
                                                     )}
-                                            </div>
+                                            </Box>
                                         </FormControl>
                                         <FormMessage />
                                     </FormItem>
@@ -280,7 +286,7 @@ export function MerchantInformationPanel({
                             Continue
                         </Button>
                     </div>
-                </form>
+                </Box>
             </Form>
         </PanelAccordion>
     );

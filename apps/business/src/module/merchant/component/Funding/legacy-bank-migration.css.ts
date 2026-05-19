@@ -64,9 +64,3 @@ export const legacyPanelStatValueWithdrawable = style({
     color: vars.text.success,
 });
 
-export const legacyPanelActions = style({
-    display: "flex",
-    alignItems: "center",
-    gap: alias.spacing.xs,
-    marginTop: alias.spacing.xxs,
-});

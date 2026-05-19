@@ -1,3 +1,4 @@
+import { Box } from "@frak-labs/design-system/components/Box";
 import { capitalize } from "radash";
 import { CampaignStateTag } from "@/module/campaigns/component/TableCampaigns/CampaignStateTag";
 import {
@@ -10,7 +11,6 @@ import { Panel } from "@/module/common/component/Panel";
 import { Row } from "@/module/common/component/Row";
 import { formatDate } from "@/module/common/utils/formatDate";
 import type { Campaign } from "@/types/Campaign";
-import * as styles from "./campaign-status.css";
 
 export function CampaignStatus({ campaign }: { campaign: Campaign }) {
     const { mutate: transition, isPending } = useStatusTransition();
@@ -46,7 +46,7 @@ export function CampaignStatus({ campaign }: { campaign: Campaign }) {
                 )}
 
                 {transitions.length > 0 && (
-                    <div className={styles.campaignStatusActions}>
+                    <Box display="flex" gap="m" marginTop="m">
                         {transitions.map((action) => (
                             <Button
                                 key={action}
@@ -68,7 +68,7 @@ export function CampaignStatus({ campaign }: { campaign: Campaign }) {
                                 {capitalize(action)}
                             </Button>
                         ))}
-                    </div>
+                    </Box>
                 )}
             </Column>
         </Panel>

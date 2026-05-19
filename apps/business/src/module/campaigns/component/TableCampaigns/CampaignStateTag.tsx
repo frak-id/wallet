@@ -1,7 +1,7 @@
+import { Box } from "@frak-labs/design-system/components/Box";
 import { Badge } from "@/module/common/component/Badge";
 import { Tooltip } from "@/module/common/component/Tooltip";
 import type { CampaignStatus, DistributionStatus } from "@/types/Campaign";
-import * as styles from "./campaign-state-tag.css";
 
 const bankHealthLabels: Record<string, string> = {
     depleted: "Bank empty — rewards can't distribute",
@@ -52,7 +52,12 @@ export function CampaignStateTag({
     const badgeLabel = bankBadgeLabels[bankDistributionStatus] ?? "Issue";
 
     return (
-        <span className={styles.campaignStateTag}>
+        <Box
+            as="span"
+            display="inline-flex"
+            alignItems="center"
+            gap="xxs"
+        >
             {statusBadge}
             <Tooltip content={bankLabel}>
                 <Badge
@@ -66,6 +71,6 @@ export function CampaignStateTag({
                     {badgeLabel}
                 </Badge>
             </Tooltip>
-        </span>
+        </Box>
     );
 }

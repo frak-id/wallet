@@ -2,12 +2,6 @@ import { vars } from "@frak-labs/design-system/theme";
 import { alias, brand } from "@frak-labs/design-system/tokens";
 import { globalStyle, style } from "@vanilla-extract/css";
 
-export const form = style({
-    display: "flex",
-    flexDirection: "column",
-    gap: alias.spacing.m,
-});
-
 export const verifySection = style({
     display: "flex",
     flexDirection: "column",
@@ -109,12 +103,6 @@ export const domainField = style({
 
 export const setupCodeField = style({
     margin: 0,
-});
-
-export const domainInputWrapper = style({
-    position: "relative",
-    display: "flex",
-    alignItems: "center",
 });
 
 export const domainValidIcon = style({

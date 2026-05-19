@@ -8,13 +8,6 @@ export const budgetUsageItem = style({
     borderRadius: alias.cornerRadius.s,
 });
 
-export const budgetUsageHeader = style({
-    display: "flex",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: alias.spacing.xs,
-});
-
 export const budgetUsageLabel = style({
     fontWeight: brand.typography.fontWeight.semiBold,
     fontSize: "14px",

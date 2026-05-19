@@ -1,3 +1,4 @@
+import { Box } from "@frak-labs/design-system/components/Box";
 import { Stack } from "@frak-labs/design-system/components/Stack";
 import { Text } from "@frak-labs/design-system/components/Text";
 import { formatDate } from "@/module/common/utils/formatDate";
@@ -31,7 +32,12 @@ export function BudgetUsage({ campaign }: { campaign: Campaign }) {
                             key={config.label}
                             className={styles.budgetUsageItem}
                         >
-                            <div className={styles.budgetUsageHeader}>
+                            <Box
+                                display="flex"
+                                justifyContent="space-between"
+                                alignItems="center"
+                                marginBottom="xs"
+                            >
                                 <span className={styles.budgetUsageLabel}>
                                     {config.label}
                                 </span>
@@ -49,7 +55,7 @@ export function BudgetUsage({ campaign }: { campaign: Campaign }) {
                                     )}{" "}
                                     total
                                 </Text>
-                            </div>
+                            </Box>
                             <div className={styles.budgetUsageBar}>
                                 <div
                                     className={styles.budgetUsageBarFill}
