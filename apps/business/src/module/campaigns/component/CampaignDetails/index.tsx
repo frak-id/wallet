@@ -16,7 +16,7 @@ import { useIsDemoMode } from "@/module/common/atoms/demoMode";
 import { ActionsWrapper } from "@/module/common/component/ActionsWrapper";
 import { LinkButton } from "@/module/common/component/LinkButton";
 import { Panel } from "@/module/common/component/Panel";
-import { Skeleton } from "@/module/common/component/Skeleton";
+import { Skeleton } from "@frak-labs/design-system/components/Skeleton";
 import { Form, FormLayout } from "@/module/forms/Form";
 import {
     type CampaignDraft,
@@ -67,7 +67,7 @@ export function CampaignDetails({
     }, [campaign, setDraft]);
 
     if (isLoading || isPending) {
-        return <Skeleton />;
+        return <Skeleton variant="rect" height={250} />;
     }
 
     if (!campaign) {

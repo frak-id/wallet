@@ -6,7 +6,7 @@ import { isAddressEqual, zeroAddress } from "viem";
 import { Badge } from "@/module/common/component/Badge";
 import { Button } from "@/module/common/component/Button";
 import { WalletAddress } from "@/module/common/component/HashDisplay";
-import { Skeleton } from "@/module/common/component/Skeleton";
+import { Skeleton } from "@frak-labs/design-system/components/Skeleton";
 import { Table } from "@/module/common/component/Table";
 import { useHasRoleOnMerchant } from "@/module/common/hook/useHasRoleOnMerchant";
 import { ButtonAddTeam } from "@/module/merchant/component/ButtonAddTeam";
@@ -60,7 +60,7 @@ export function TableTeam({ merchantId }: { merchantId: string }) {
     );
 
     if (!administrators || isLoading) {
-        return <Skeleton />;
+        return <Skeleton variant="rect" height={250} />;
     }
 
     return (

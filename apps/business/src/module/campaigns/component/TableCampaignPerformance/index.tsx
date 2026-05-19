@@ -13,7 +13,7 @@ import type { CampaignStats } from "@/module/campaigns/api/campaignStatsApi";
 import { TablePerformanceFilters } from "@/module/campaigns/component/TableCampaignPerformance/Filter";
 import { campaignsStatsQueryOptions } from "@/module/campaigns/queries/queryOptions";
 import { useIsDemoMode } from "@/module/common/atoms/demoMode";
-import { Skeleton } from "@/module/common/component/Skeleton";
+import { Skeleton } from "@frak-labs/design-system/components/Skeleton";
 import { Table } from "@/module/common/component/Table";
 import { TooltipTable } from "@/module/common/component/TooltipTable";
 import { useConvertToPreferredCurrency } from "@/module/common/hook/useConversionRate";
@@ -232,7 +232,7 @@ export function TableCampaignPerformance() {
     );
 
     if (!data) {
-        return <Skeleton />;
+        return <Skeleton variant="rect" height={250} />;
     }
 
     return (

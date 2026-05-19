@@ -12,7 +12,7 @@ import { useIsDemoMode } from "@/module/common/atoms/demoMode";
 import { Button } from "@/module/common/component/Button";
 import { WalletAddress } from "@/module/common/component/HashDisplay";
 import { Row } from "@/module/common/component/Row";
-import { Skeleton } from "@/module/common/component/Skeleton";
+import { Skeleton } from "@frak-labs/design-system/components/Skeleton";
 import { Table } from "@/module/common/component/Table";
 import type {
     GetMembersPageItem,
@@ -153,7 +153,7 @@ export function TableMembers() {
     );
 
     if (!page || isPending) {
-        return <Skeleton />;
+        return <Skeleton variant="rect" height={250} />;
     }
 
     return (

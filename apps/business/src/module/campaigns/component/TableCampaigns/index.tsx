@@ -15,7 +15,7 @@ import { useGetCampaigns } from "@/module/campaigns/hook/useGetCampaigns";
 import { useStatusTransition } from "@/module/campaigns/hook/useStatusTransition";
 import { AlertDialog } from "@/module/common/component/AlertDialog";
 import { Button } from "@/module/common/component/Button";
-import { Skeleton } from "@/module/common/component/Skeleton";
+import { Skeleton } from "@frak-labs/design-system/components/Skeleton";
 import { Table } from "@/module/common/component/Table";
 import { formatDate } from "@/module/common/utils/formatDate";
 import { formatPrice } from "@/module/common/utils/formatPrice";
@@ -93,7 +93,7 @@ export function TableCampaigns() {
     );
 
     if (!data) {
-        return <Skeleton />;
+        return <Skeleton variant="rect" height={250} />;
     }
 
     return (
