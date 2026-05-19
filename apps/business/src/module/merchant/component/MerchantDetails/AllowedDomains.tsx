@@ -1,6 +1,7 @@
+import { Column } from "@frak-labs/design-system/components/Column";
+import { Columns } from "@frak-labs/design-system/components/Columns";
 import { useMemo, useState } from "react";
 import { Button } from "@/module/common/component/Button";
-import { Column, Columns } from "@/module/common/component/Columns";
 import { Panel } from "@/module/common/component/Panel";
 import { Input } from "@/module/forms/Input";
 import {
@@ -71,8 +72,8 @@ export function AllowedDomains({
                 </ul>
             )}
 
-            <Columns>
-                <Column>
+            <Columns space="xs" alignY="center">
+                <Column width="1/2">
                     <Input
                         length={"medium"}
                         value={rawInput}
@@ -86,7 +87,7 @@ export function AllowedDomains({
                         <p className={styles.error}>Invalid domain format</p>
                     )}
                 </Column>
-                <Column>
+                <Column width="1/2">
                     <Button
                         variant={"primary"}
                         size={"small"}

@@ -6,9 +6,10 @@ import {
 import { useEffect, useMemo } from "react";
 import { useForm } from "react-hook-form";
 import type { Address } from "viem";
+import { Column } from "@frak-labs/design-system/components/Column";
+import { Columns } from "@frak-labs/design-system/components/Columns";
 import { ActionsMessageSuccess } from "@/module/campaigns/component/Actions";
 import { Button } from "@/module/common/component/Button";
-import { Column, Columns } from "@/module/common/component/Columns";
 import { Panel } from "@/module/common/component/Panel";
 import { CurrencySelector } from "@/module/forms/CurrencySelector";
 import {
@@ -158,13 +159,13 @@ export function MerchantDetails({ merchantId }: { merchantId: string }) {
                                 </FormItem>
                             )}
                         />
-                        <Columns>
-                            <Column>
+                        <Columns space="xs" alignY="center">
+                            <Column width="1/2">
                                 {editMerchantSuccess && (
                                     <ActionsMessageSuccess />
                                 )}
                             </Column>
-                            <Column>
+                            <Column width="1/2">
                                 <Button
                                     variant={"secondary"}
                                     onClick={() => {

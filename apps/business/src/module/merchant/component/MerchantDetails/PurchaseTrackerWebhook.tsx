@@ -1,3 +1,6 @@
+import { Column } from "@frak-labs/design-system/components/Column";
+import { Columns } from "@frak-labs/design-system/components/Columns";
+import { Inline } from "@frak-labs/design-system/components/Inline";
 import { Spinner } from "@frak-labs/design-system/components/Spinner";
 import { useMutation } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
@@ -6,8 +9,6 @@ import { generatePrivateKey } from "viem/accounts";
 import { authenticatedBackendApi } from "@/api/backendClient";
 import { Badge } from "@/module/common/component/Badge";
 import { Button } from "@/module/common/component/Button";
-import { Column, Columns } from "@/module/common/component/Columns";
-import { Row } from "@/module/common/component/Row";
 import { TextWithCopy } from "@/module/common/component/TextWithCopy";
 import { Title } from "@/module/common/component/Title";
 import { Form, FormLabel } from "@/module/forms/Form";
@@ -42,10 +43,10 @@ export function PurchaseTrackerWebhook({ merchantId }: { merchantId: string }) {
 
     return (
         <>
-            <Columns>
-                <Column size={"full"}>
+            <Columns space="xs" alignY="center">
+                <Column>
                     <Title as={"h3"}>Status</Title>
-                    <Row>
+                    <Inline space="m" alignY="bottom">
                         <Badge
                             variant={
                                 webhookStatus.setup ? "success" : "warning"
@@ -60,12 +61,12 @@ export function PurchaseTrackerWebhook({ merchantId }: { merchantId: string }) {
                                 {webhookStatus.platform}
                             </Badge>
                         )}
-                    </Row>
+                    </Inline>
                 </Column>
             </Columns>
 
-            <Columns>
-                <Column size={"full"}>
+            <Columns space="xs" alignY="center">
+                <Column>
                     <Title as={"h3"}>Purchase platform</Title>
 
                     <PlatformSelector
@@ -120,7 +121,7 @@ function PlatformSelector({
     };
 
     return (
-        <Row align="center">
+        <Inline space="m" alignY="center">
             <Badge
                 onClick={() => handlePlatformChange("shopify")}
                 variant={
@@ -159,7 +160,7 @@ function PlatformSelector({
             >
                 Internal
             </Badge>
-        </Row>
+        </Inline>
     );
 }
 

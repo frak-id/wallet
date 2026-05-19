@@ -1,5 +1,6 @@
+import { Column } from "@frak-labs/design-system/components/Column";
+import { Columns } from "@frak-labs/design-system/components/Columns";
 import { Spinner } from "@frak-labs/design-system/components/Spinner";
-import { Column, Columns } from "@/module/common/component/Columns";
 import { PanelAccordion } from "@/module/common/component/PanelAccordion";
 import { Title } from "@/module/common/component/Title";
 import { usePurchaseWebhookStatus } from "@/module/merchant/hook/usePurchaseWebhookStatus";
@@ -56,8 +57,8 @@ function WebhookStats({
     };
 }) {
     return (
-        <Columns>
-            <Column size={"full"}>
+        <Columns space="xs" alignY="center">
+            <Column>
                 <Title as={"h3"}>Stats</Title>
                 <p>
                     First purchase: {stats.firstPurchase?.toString() ?? "N/A"}

@@ -1,3 +1,4 @@
+import { Inline } from "@frak-labs/design-system/components/Inline";
 import { BadgeCheck } from "lucide-react";
 import {
     type PropsWithChildren,
@@ -9,7 +10,6 @@ import { useForm, useFormContext } from "react-hook-form";
 import { type Address, isAddress } from "viem";
 import { AlertDialog } from "@/module/common/component/AlertDialog";
 import { Button } from "@/module/common/component/Button";
-import { Row } from "@/module/common/component/Row";
 import {
     Form,
     FormControl,
@@ -128,7 +128,7 @@ function FormWallet({ disabled }: { disabled: boolean }) {
                         Enter your Member Wallet
                     </FormLabel>
                     <FormControl>
-                        <Row>
+                        <Inline space="m" alignY="bottom">
                             <Input
                                 length={"medium"}
                                 placeholder={"Wallet Address...."}
@@ -144,7 +144,7 @@ function FormWallet({ disabled }: { disabled: boolean }) {
                             >
                                 Verify
                             </Button>
-                        </Row>
+                        </Inline>
                     </FormControl>
                     <FormMessage />
                     <FormValidMessage>

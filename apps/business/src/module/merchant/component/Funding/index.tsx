@@ -19,7 +19,6 @@ import { Button } from "@/module/common/component/Button";
 import { CallOut } from "@/module/common/component/CallOut";
 import { IconInfo } from "@/module/common/component/IconInfo";
 import { Panel } from "@/module/common/component/Panel";
-import { Row } from "@/module/common/component/Row";
 import { Title } from "@/module/common/component/Title";
 import { Tooltip } from "@/module/common/component/Tooltip";
 import { useTokenMetadata } from "@/module/common/hook/useTokenMetadata";
@@ -477,36 +476,38 @@ function TokenActions({
     if (action === "allowance") {
         return (
             <div className={styles.tokenCardActions}>
-                <Row align="center" className={styles.actionRow}>
-                    <Input
-                        type="number"
-                        placeholder="Amount"
-                        value={inputValue}
-                        onChange={(e) => setInputValue(e.target.value)}
-                        className={styles.smallInput}
-                        autoFocus
-                    />
-                    <Button
-                        size="small"
-                        variant="primary"
-                        onClick={handleUpdateAllowance}
-                        disabled={!inputValue || isPending}
-                        loading={isUpdatingAllowance}
-                    >
-                        Confirm
-                    </Button>
-                    <Button
-                        size="small"
-                        variant="ghost"
-                        onClick={() => {
-                            setAction(null);
-                            setInputValue(defaultAllowanceValue);
-                        }}
-                        disabled={isPending}
-                    >
-                        Cancel
-                    </Button>
-                </Row>
+                <div className={styles.actionRow}>
+                    <Inline space="m" alignY="center">
+                        <Input
+                            type="number"
+                            placeholder="Amount"
+                            value={inputValue}
+                            onChange={(e) => setInputValue(e.target.value)}
+                            className={styles.smallInput}
+                            autoFocus
+                        />
+                        <Button
+                            size="small"
+                            variant="primary"
+                            onClick={handleUpdateAllowance}
+                            disabled={!inputValue || isPending}
+                            loading={isUpdatingAllowance}
+                        >
+                            Confirm
+                        </Button>
+                        <Button
+                            size="small"
+                            variant="ghost"
+                            onClick={() => {
+                                setAction(null);
+                                setInputValue(defaultAllowanceValue);
+                            }}
+                            disabled={isPending}
+                        >
+                            Cancel
+                        </Button>
+                    </Inline>
+                </div>
             </div>
         );
     }
@@ -514,36 +515,38 @@ function TokenActions({
     if (action === "withdraw") {
         return (
             <div className={styles.tokenCardActions}>
-                <Row align="center" className={styles.actionRow}>
-                    <Input
-                        type="number"
-                        placeholder="Amount"
-                        value={inputValue}
-                        onChange={(e) => setInputValue(e.target.value)}
-                        className={styles.smallInput}
-                        autoFocus
-                    />
-                    <Button
-                        size="small"
-                        variant="primary"
-                        onClick={handleWithdraw}
-                        disabled={!inputValue || isPending}
-                        loading={isWithdrawing}
-                    >
-                        Withdraw
-                    </Button>
-                    <Button
-                        size="small"
-                        variant="ghost"
-                        onClick={() => {
-                            setAction(null);
-                            setInputValue("");
-                        }}
-                        disabled={isPending}
-                    >
-                        Cancel
-                    </Button>
-                </Row>
+                <div className={styles.actionRow}>
+                    <Inline space="m" alignY="center">
+                        <Input
+                            type="number"
+                            placeholder="Amount"
+                            value={inputValue}
+                            onChange={(e) => setInputValue(e.target.value)}
+                            className={styles.smallInput}
+                            autoFocus
+                        />
+                        <Button
+                            size="small"
+                            variant="primary"
+                            onClick={handleWithdraw}
+                            disabled={!inputValue || isPending}
+                            loading={isWithdrawing}
+                        >
+                            Withdraw
+                        </Button>
+                        <Button
+                            size="small"
+                            variant="ghost"
+                            onClick={() => {
+                                setAction(null);
+                                setInputValue("");
+                            }}
+                            disabled={isPending}
+                        >
+                            Cancel
+                        </Button>
+                    </Inline>
+                </div>
             </div>
         );
     }
