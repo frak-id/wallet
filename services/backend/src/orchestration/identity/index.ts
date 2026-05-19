@@ -8,3 +8,7 @@ export type {
     IdentityNode,
     ResolveResult,
 } from "./types";
+export {
+    type MergeWeight,
+    WalletMergeOrchestrator,
+} from "./WalletMergeOrchestrator";

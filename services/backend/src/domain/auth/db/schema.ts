@@ -6,6 +6,14 @@ import {
     text,
     uniqueIndex,
 } from "drizzle-orm/sqlite-core";
+import type { Address } from "viem";
+
+/**
+ * Reason values written on a binding row. The `recovery` value is reserved
+ * for the recovery flow refactor (Phase 3+) and is never written by Phase 1
+ * code paths.
+ */
+export type BindingReason = "initial" | "merged" | "recovery";
 
 /**
  * Authenticator credentials table for WebAuthn
@@ -69,12 +77,14 @@ export const authenticatorWalletBindingsTable = sqliteTable(
             .notNull()
             .references(() => authenticatorsTable.id),
         chainId: integer("chain_id").notNull(),
-        smartWalletAddress: text("smart_wallet_address").notNull(),
+        smartWalletAddress: text("smart_wallet_address")
+            .notNull()
+            .$type<Address>(),
         email: text("email"),
         recoveryBlob: text("recovery_blob"),
         createdAt: integer("created_at").notNull(),
         unlinkedAt: integer("unlinked_at"),
-        reason: text("reason").notNull(),
+        reason: text("reason").notNull().$type<BindingReason>(),
     },
     (table) => [
         // Partial unique index — one ACTIVE binding per (authenticator, chain).
@@ -92,3 +102,6 @@ export const authenticatorWalletBindingsTable = sqliteTable(
             .where(sql`"unlinked_at" IS NULL AND "email" IS NOT NULL`),
     ]
 );
+
+export type AuthenticatorBindingSelect =
+    typeof authenticatorWalletBindingsTable.$inferSelect;

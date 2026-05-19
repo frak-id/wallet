@@ -1,4 +1,5 @@
 import { AttributionContext } from "../domain/attribution/context";
+import { AuthContext } from "../domain/auth";
 import { CampaignContext } from "../domain/campaign/context";
 import { CampaignBankContext } from "../domain/campaign-bank/context";
 import { IdentityContext } from "../domain/identity/context";
@@ -8,6 +9,7 @@ import { PurchasesContext } from "../domain/purchases/context";
 import { ReferralCodeContext } from "../domain/referral-code/context";
 import { RewardsContext } from "../domain/rewards/context";
 import { WalletContext } from "../domain/wallet/context";
+import { webAuthNValidatorReader } from "../infrastructure/blockchain/WebAuthNValidatorReader";
 import { pricingRepository } from "../infrastructure/pricing/PricingRepository";
 import { BatchRewardOrchestrator } from "./BatchRewardOrchestrator";
 import { CampaignStatsOrchestrator } from "./CampaignStatsOrchestrator";
@@ -17,6 +19,7 @@ import {
     IdentityMergeService,
     IdentityOrchestrator,
     IdentityWeightService,
+    WalletMergeOrchestrator,
 } from "./identity";
 import { InteractionSubmissionOrchestrator } from "./interaction-submission";
 import { MemberQueryOrchestrator } from "./MemberQueryOrchestrator";
@@ -41,7 +44,8 @@ const identityWeightService = new IdentityWeightService(
 );
 
 const identityMergeService = new IdentityMergeService(
-    AttributionContext.repositories.referralLink
+    AttributionContext.repositories.referralLink,
+    IdentityContext.repositories.identity
 );
 
 const identityOrchestrator = new IdentityOrchestrator(
@@ -138,6 +142,14 @@ const referralCodeRedemptionOrchestrator =
         AttributionContext.repositories.referralLink
     );
 
+const walletMergeOrchestrator = new WalletMergeOrchestrator(
+    AuthContext.repositories.authenticator,
+    IdentityContext.repositories.identity,
+    identityWeightService,
+    identityMergeService,
+    webAuthNValidatorReader
+);
+
 export namespace OrchestrationContext {
     export const orchestrators = {
         explorer: explorerOrchestrator,
@@ -155,5 +167,6 @@ export namespace OrchestrationContext {
         settlement: settlementOrchestrator,
         webhookResolver: webhookResolverOrchestrator,
         referralCodeRedemption: referralCodeRedemptionOrchestrator,
+        walletMerge: walletMergeOrchestrator,
     };
 }

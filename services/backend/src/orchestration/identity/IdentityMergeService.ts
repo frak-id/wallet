@@ -1,5 +1,6 @@
 import { db, log } from "@backend-infrastructure";
 import { and, eq, inArray, isNull, sql } from "drizzle-orm";
+import type { Address } from "viem";
 import { referralLinksTable } from "../../domain/attribution/db/schema";
 import type { ReferralLinkRepository } from "../../domain/attribution/repositories/ReferralLinkRepository";
 import {
@@ -7,10 +8,13 @@ import {
     identityNodesTable,
     type MergedGroup,
 } from "../../domain/identity/db/schema";
+import type { IdentityRepository } from "../../domain/identity/repositories/IdentityRepository";
+import { pushTokensTable } from "../../domain/notifications/db/schema";
 import {
     purchaseClaimsTable,
     purchasesTable,
 } from "../../domain/purchases/db/schema";
+import { referralCodesTable } from "../../domain/referral-code/db/schema";
 import {
     assetLogsTable,
     interactionLogsTable,
@@ -30,39 +34,42 @@ type MergeResult = {
     // the referrer/referee updates were applied. Left alone, they would have
     // become `(anchor, anchor)` self-loops (see softDeleteSelfLoopCandidatesInTrx).
     softDeletedSelfLoopReferralLinks: number;
-};
-
-type BatchMergeResult = MergeResult & {
+    // Push-token migration counters. `push_tokens` is wallet-keyed; the
+    // numbers stay zero when neither side has any wallet identity node.
+    movedPushTokens: number;
+    deletedPushTokens: number;
+    // Referral-code counters. Identity-keyed so they always run.
+    revokedConflictingReferralCodes: number;
+    migratedReferralCodes: number;
+    // Group ids that were successfully merged into the anchor.
     mergedGroupIds: string[];
+    // Groups that the losers had previously absorbed — those ids are now
+    // transitively owned by the anchor.
     previouslyMergedGroupIds: string[];
 };
 
 export class IdentityMergeService {
     constructor(
-        private readonly referralLinkRepository: ReferralLinkRepository
+        private readonly referralLinkRepository: ReferralLinkRepository,
+        private readonly identityRepository: IdentityRepository
     ) {}
 
-    async mergeMultipleGroups(params: {
+    /**
+     * Merge one-or-many `mergingGroupIds` into `anchorGroupId`. Every
+     * identity-keyed table is rewritten in a single PG transaction; the
+     * wallet-keyed `push_tokens` rows are migrated too when both sides
+     * have wallet identity nodes.
+     *
+     * No-op when `mergingGroupIds` is empty.
+     */
+    async mergeGroups(params: {
         anchorGroupId: string;
         mergingGroupIds: string[];
-    }): Promise<BatchMergeResult> {
+    }): Promise<MergeResult> {
         const { anchorGroupId, mergingGroupIds } = params;
 
         if (mergingGroupIds.length === 0) {
-            return {
-                success: true,
-                movedNodes: 0,
-                migratedPurchases: 0,
-                migratedPurchaseClaims: 0,
-                migratedInteractionLogs: 0,
-                migratedAssetLogs: 0,
-                migratedReferralLinksReferrer: 0,
-                migratedReferralLinksReferee: 0,
-                softDeletedConflictingReferralLinks: 0,
-                softDeletedSelfLoopReferralLinks: 0,
-                mergedGroupIds: [],
-                previouslyMergedGroupIds: [],
-            };
+            return emptyMergeResult();
         }
 
         const result = await db.transaction(async (trx) => {
@@ -82,6 +89,29 @@ export class IdentityMergeService {
                     (mg) => mg.groupId
                 )
             );
+
+            // Resolve wallet identity nodes BEFORE the bulk node move so
+            // we still know which wallets came from which side. Feeds the
+            // `push_tokens` migration, which is keyed by `wallet` and has
+            // no `identity_group_id` column.
+            const walletNodes = await trx
+                .select({
+                    groupId: identityNodesTable.groupId,
+                    identityValue: identityNodesTable.identityValue,
+                })
+                .from(identityNodesTable)
+                .where(
+                    and(
+                        inArray(identityNodesTable.groupId, allGroupIds),
+                        eq(identityNodesTable.identityType, "wallet")
+                    )
+                );
+            const anchorWallets = walletNodes
+                .filter((n) => n.groupId === anchorGroupId)
+                .map((n) => n.identityValue as Address);
+            const loserWallets = walletNodes
+                .filter((n) => n.groupId !== anchorGroupId)
+                .map((n) => n.identityValue as Address);
 
             const movedNodesResult = await trx
                 .update(identityNodesTable)
@@ -179,7 +209,17 @@ export class IdentityMergeService {
                 )
                 .returning({ id: purchaseClaimsTable.id });
 
-            await this.updateAnchorMergedGroupsBatchInTrx(
+            const referralCodeOps = await this.migrateReferralCodesInTrx(trx, {
+                anchorGroupId,
+                mergingGroupIds,
+            });
+
+            const pushTokenOps = await this.migratePushTokensInTrx(trx, {
+                anchorWallets,
+                loserWallets,
+            });
+
+            await this.updateAnchorMergedGroupsInTrx(
                 trx,
                 anchorGroupId,
                 mergingGroups
@@ -189,7 +229,7 @@ export class IdentityMergeService {
                 .delete(identityGroupsTable)
                 .where(inArray(identityGroupsTable.id, mergingGroupIds));
 
-            const result: BatchMergeResult = {
+            const result: MergeResult = {
                 success: true,
                 movedNodes: movedNodesResult.length,
                 migratedPurchases: migratedPurchasesResult.length,
@@ -200,6 +240,11 @@ export class IdentityMergeService {
                 migratedReferralLinksReferee: migratedRefereeResult.length,
                 softDeletedConflictingReferralLinks: softDeletedConflicts,
                 softDeletedSelfLoopReferralLinks: softDeletedSelfLoops,
+                movedPushTokens: pushTokenOps.movedPushTokens,
+                deletedPushTokens: pushTokenOps.deletedPushTokens,
+                revokedConflictingReferralCodes:
+                    referralCodeOps.revokedConflictingReferralCodes,
+                migratedReferralCodes: referralCodeOps.migratedReferralCodes,
                 mergedGroupIds: mergingGroupIds,
                 previouslyMergedGroupIds,
             };
@@ -217,7 +262,7 @@ export class IdentityMergeService {
         return result;
     }
 
-    private async updateAnchorMergedGroupsBatchInTrx(
+    private async updateAnchorMergedGroupsInTrx(
         trx: Parameters<Parameters<typeof db.transaction>[0]>[0],
         anchorGroupId: string,
         mergingGroups: (typeof identityGroupsTable.$inferSelect)[]
@@ -250,153 +295,209 @@ export class IdentityMergeService {
             .where(eq(identityGroupsTable.id, anchorGroupId));
     }
 
-    async mergeGroups(params: {
-        anchorGroupId: string;
-        mergingGroupId: string;
+    /**
+     * Wallet-driven entry point. Resolves the identity groups owning the
+     * winner / loser wallets, then delegates to `mergeGroups` with both
+     * wallets attached so the wallet-keyed ops run inside the same
+     * transaction.
+     *
+     * Idempotent: if both wallets already resolve to the same group (a
+     * retry, or a concurrent merge that already absorbed the loser), the
+     * call returns a no-op success without entering a transaction.
+     */
+    async mergeGroupsByWallet(params: {
+        winnerWallet: Address;
+        loserWallet: Address;
     }): Promise<MergeResult> {
-        const { anchorGroupId, mergingGroupId } = params;
+        const { winnerWallet, loserWallet } = params;
 
-        const result = await db.transaction(async (trx) => {
-            const [lockedGroups] = await Promise.all([
-                trx
-                    .select()
-                    .from(identityGroupsTable)
-                    .where(
-                        inArray(identityGroupsTable.id, [
-                            anchorGroupId,
-                            mergingGroupId,
-                        ])
-                    )
-                    .for("update"),
-            ]);
+        const [winnerGroup, loserGroup] = await Promise.all([
+            this.identityRepository.findGroupByIdentity({
+                type: "wallet",
+                value: winnerWallet,
+            }),
+            this.identityRepository.findGroupByIdentity({
+                type: "wallet",
+                value: loserWallet,
+            }),
+        ]);
 
-            const mergingGroup = lockedGroups.find(
-                (g) => g.id === mergingGroupId
+        if (!winnerGroup) {
+            throw new Error(
+                `mergeGroupsByWallet: no identity group for winner wallet ${winnerWallet}`
             );
-
-            const movedNodesResult = await trx
-                .update(identityNodesTable)
-                .set({ groupId: anchorGroupId })
-                .where(eq(identityNodesTable.groupId, mergingGroupId))
-                .returning({ id: identityNodesTable.id });
-
-            const migratedPurchasesResult = await trx
-                .update(purchasesTable)
-                .set({
-                    identityGroupId: anchorGroupId,
-                    updatedAt: new Date(),
-                })
-                .where(eq(purchasesTable.identityGroupId, mergingGroupId))
-                .returning({ id: purchasesTable.id });
-
-            const migratedInteractionLogsResult = await trx
-                .update(interactionLogsTable)
-                .set({ identityGroupId: anchorGroupId })
-                .where(eq(interactionLogsTable.identityGroupId, mergingGroupId))
-                .returning({ id: interactionLogsTable.id });
-
-            const migratedAssetLogsResult = await trx
-                .update(assetLogsTable)
-                .set({ identityGroupId: anchorGroupId })
-                .where(eq(assetLogsTable.identityGroupId, mergingGroupId))
-                .returning({ id: assetLogsTable.id });
-
-            // Self-loop guard — see mergeMultipleGroups for the full rationale.
-            // Must run BEFORE the referrer/referee updates that would otherwise
-            // collapse `(anchor, merging)` or `(merging, anchor)` rows to
-            // `(anchor, anchor)`.
-            const softDeletedSelfLoops =
-                await this.softDeleteSelfLoopCandidatesInTrx(trx, [
-                    anchorGroupId,
-                    mergingGroupId,
-                ]);
-
-            const migratedReferrerResult = await trx
-                .update(referralLinksTable)
-                .set({ referrerIdentityGroupId: anchorGroupId })
-                .where(
-                    and(
-                        eq(
-                            referralLinksTable.referrerIdentityGroupId,
-                            mergingGroupId
-                        ),
-                        isNull(referralLinksTable.removedAt)
-                    )
-                )
-                .returning({ id: referralLinksTable.id });
-
-            const softDeletedConflicts =
-                await this.softDeleteConflictingRefereeLinksInTrx(
-                    trx,
-                    anchorGroupId,
-                    mergingGroupId
-                );
-
-            const migratedRefereeResult = await trx
-                .update(referralLinksTable)
-                .set({ refereeIdentityGroupId: anchorGroupId })
-                .where(
-                    and(
-                        eq(
-                            referralLinksTable.refereeIdentityGroupId,
-                            mergingGroupId
-                        ),
-                        isNull(referralLinksTable.removedAt)
-                    )
-                )
-                .returning({ id: referralLinksTable.id });
-
-            const migratedPurchaseClaimsResult = await trx
-                .update(purchaseClaimsTable)
-                .set({ claimingIdentityGroupId: anchorGroupId })
-                .where(
-                    eq(
-                        purchaseClaimsTable.claimingIdentityGroupId,
-                        mergingGroupId
-                    )
-                )
-                .returning({ id: purchaseClaimsTable.id });
-
-            await this.updateAnchorMergedGroupsInTrx(
-                trx,
-                anchorGroupId,
-                mergingGroupId,
-                mergingGroup?.mergedGroups as MergedGroup[] | null
+        }
+        if (!loserGroup) {
+            throw new Error(
+                `mergeGroupsByWallet: no identity group for loser wallet ${loserWallet}`
             );
+        }
 
-            await trx
-                .delete(identityGroupsTable)
-                .where(eq(identityGroupsTable.id, mergingGroupId));
-
-            const result: MergeResult = {
-                success: true,
-                movedNodes: movedNodesResult.length,
-                migratedPurchases: migratedPurchasesResult.length,
-                migratedPurchaseClaims: migratedPurchaseClaimsResult.length,
-                migratedInteractionLogs: migratedInteractionLogsResult.length,
-                migratedAssetLogs: migratedAssetLogsResult.length,
-                migratedReferralLinksReferrer: migratedReferrerResult.length,
-                migratedReferralLinksReferee: migratedRefereeResult.length,
-                softDeletedConflictingReferralLinks: softDeletedConflicts,
-                softDeletedSelfLoopReferralLinks: softDeletedSelfLoops,
-            };
-
+        if (winnerGroup.id === loserGroup.id) {
             log.info(
                 {
-                    anchorGroupId,
-                    mergingGroupId,
-                    ...result,
+                    winnerWallet,
+                    loserWallet,
+                    groupId: winnerGroup.id,
                 },
-                "Identity groups merged successfully"
+                "Wallets already share an identity group; skipping merge"
             );
+            return emptyMergeResult();
+        }
 
-            return result;
+        return this.mergeGroups({
+            anchorGroupId: winnerGroup.id,
+            mergingGroupIds: [loserGroup.id],
         });
+    }
 
-        // See `mergeMultipleGroups` for the rationale.
-        this.referralLinkRepository.clearChainCache();
+    /**
+     * Migrate `push_tokens` rows from loser wallets onto the anchor's
+     * primary wallet. `push_tokens` keys by `wallet` (no identity_group_id
+     * column), so identity merges can only consolidate the rows by
+     * rewriting the `wallet` value.
+     *
+     * No-op when either side has zero wallet identity nodes (e.g. an
+     * anonymous-only merge — nothing keyed by either side anyway).
+     *
+     * `asset_logs.recipient_wallet` is intentionally NOT touched here:
+     * rewards are filtered by `identity_group_id` everywhere in the API,
+     * and `recipient_wallet` is the immutable on-chain destination of the
+     * original payout — rewriting it would lose audit history.
+     */
+    private async migratePushTokensInTrx(
+        trx: Parameters<Parameters<typeof db.transaction>[0]>[0],
+        params: {
+            anchorWallets: Address[];
+            loserWallets: Address[];
+        }
+    ): Promise<{
+        movedPushTokens: number;
+        deletedPushTokens: number;
+    }> {
+        const { anchorWallets, loserWallets } = params;
+        if (loserWallets.length === 0 || anchorWallets.length === 0) {
+            return { movedPushTokens: 0, deletedPushTokens: 0 };
+        }
 
-        return result;
+        // First anchor wallet is the deterministic destination. Phase 1
+        // groups carry exactly one wallet, so this is unambiguous; once
+        // multi-wallet groups land the policy may want revisiting.
+        const primaryWallet = anchorWallets[0];
+
+        const inserted = await trx.execute<{ id: number }>(sql`
+            INSERT INTO push_tokens (wallet, type, endpoint, key_p256dh, key_auth, locale, expire_at, created_at)
+            SELECT ${primaryWallet}, type, endpoint, key_p256dh, key_auth, locale, expire_at, created_at
+            FROM push_tokens
+            WHERE wallet IN (${sql.join(
+                loserWallets.map((w) => sql`${w}`),
+                sql`, `
+            )})
+            ON CONFLICT (wallet, type, endpoint) DO NOTHING
+            RETURNING id
+        `);
+
+        const deleted = await trx
+            .delete(pushTokensTable)
+            .where(inArray(pushTokensTable.wallet, loserWallets))
+            .returning({ id: pushTokensTable.id });
+
+        return {
+            movedPushTokens: inserted.length,
+            deletedPushTokens: deleted.length,
+        };
+    }
+
+    /**
+     * Migrate `referral_codes` from one-or-many loser groups onto the
+     * anchor group. Identity-keyed (uses `owner_identity_group_id`), so it
+     * runs for every identity merge — wallet-aware or not.
+     *
+     * The partial unique `(owner_identity_group_id) WHERE revoked_at IS
+     * NULL` requires at most one active code per anchor post-merge. We
+     * pre-resolve which active codes survive before the bulk re-own:
+     *  - If anchor already has an active code, revoke every loser-side
+     *    active code first.
+     *  - Otherwise keep the oldest loser-side active code (deterministic
+     *    survivor across the batch) and revoke the rest.
+     *
+     * Historic (already-revoked) loser codes always migrate — they keep
+     * the audit trail of who owned which code over time.
+     */
+    private async migrateReferralCodesInTrx(
+        trx: Parameters<Parameters<typeof db.transaction>[0]>[0],
+        params: {
+            anchorGroupId: string;
+            mergingGroupIds: string[];
+        }
+    ): Promise<{
+        revokedConflictingReferralCodes: number;
+        migratedReferralCodes: number;
+    }> {
+        const { anchorGroupId, mergingGroupIds } = params;
+        if (mergingGroupIds.length === 0) {
+            return {
+                revokedConflictingReferralCodes: 0,
+                migratedReferralCodes: 0,
+            };
+        }
+
+        const [winnerActive] = await trx
+            .select({ id: referralCodesTable.id })
+            .from(referralCodesTable)
+            .where(
+                and(
+                    eq(referralCodesTable.ownerIdentityGroupId, anchorGroupId),
+                    isNull(referralCodesTable.revokedAt)
+                )
+            )
+            .limit(1);
+
+        // Loser-side actives, oldest first — used to pick the deterministic
+        // survivor when anchor has no active code of its own.
+        const loserActives = await trx
+            .select({ id: referralCodesTable.id })
+            .from(referralCodesTable)
+            .where(
+                and(
+                    inArray(
+                        referralCodesTable.ownerIdentityGroupId,
+                        mergingGroupIds
+                    ),
+                    isNull(referralCodesTable.revokedAt)
+                )
+            )
+            .orderBy(referralCodesTable.createdAt);
+
+        const idsToRevoke = winnerActive
+            ? loserActives.map((c) => c.id)
+            : loserActives.slice(1).map((c) => c.id);
+
+        let revokedConflictingReferralCodes = 0;
+        if (idsToRevoke.length > 0) {
+            const revoked = await trx
+                .update(referralCodesTable)
+                .set({ revokedAt: new Date() })
+                .where(inArray(referralCodesTable.id, idsToRevoke))
+                .returning({ id: referralCodesTable.id });
+            revokedConflictingReferralCodes = revoked.length;
+        }
+
+        const migrated = await trx
+            .update(referralCodesTable)
+            .set({ ownerIdentityGroupId: anchorGroupId })
+            .where(
+                inArray(
+                    referralCodesTable.ownerIdentityGroupId,
+                    mergingGroupIds
+                )
+            )
+            .returning({ id: referralCodesTable.id });
+
+        return {
+            revokedConflictingReferralCodes,
+            migratedReferralCodes: migrated.length,
+        };
     }
 
     /**
@@ -514,7 +615,7 @@ export class IdentityMergeService {
      *    referrer/referee update steps would flip the orphan endpoint to
      *    `anchor`, producing `(anchor, anchor)`.
      *  - `(merging_i, merging_j)` when more than one group is merging at
-     *    once (from `mergeMultipleGroups`) — both endpoints become `anchor`.
+     *    once — both endpoints become `anchor`.
      *
      * Only ACTIVE rows are touched. Soft-deleted rows in the same shape are
      * left alone: the bulk referrer/referee updates also filter
@@ -550,40 +651,25 @@ export class IdentityMergeService {
             .returning({ id: referralLinksTable.id });
         return result.length;
     }
+}
 
-    private async updateAnchorMergedGroupsInTrx(
-        trx: Parameters<Parameters<typeof db.transaction>[0]>[0],
-        anchorGroupId: string,
-        mergingGroupId: string,
-        mergingGroupMergedGroups: MergedGroup[] | null
-    ): Promise<void> {
-        const anchorGroup = await trx.query.identityGroupsTable.findFirst({
-            where: eq(identityGroupsTable.id, anchorGroupId),
-        });
-
-        const existingMergedGroups: MergedGroup[] =
-            (anchorGroup?.mergedGroups as MergedGroup[] | null) ?? [];
-
-        const inheritedMergedGroups: MergedGroup[] =
-            mergingGroupMergedGroups ?? [];
-
-        const newMergedGroup: MergedGroup = {
-            groupId: mergingGroupId,
-            mergedAt: new Date().toISOString(),
-        };
-
-        const updatedMergedGroups = [
-            ...existingMergedGroups,
-            ...inheritedMergedGroups,
-            newMergedGroup,
-        ];
-
-        await trx
-            .update(identityGroupsTable)
-            .set({
-                mergedGroups: updatedMergedGroups,
-                updatedAt: new Date(),
-            })
-            .where(eq(identityGroupsTable.id, anchorGroupId));
-    }
+function emptyMergeResult(): MergeResult {
+    return {
+        success: true,
+        movedNodes: 0,
+        migratedPurchases: 0,
+        migratedPurchaseClaims: 0,
+        migratedInteractionLogs: 0,
+        migratedAssetLogs: 0,
+        migratedReferralLinksReferrer: 0,
+        migratedReferralLinksReferee: 0,
+        softDeletedConflictingReferralLinks: 0,
+        softDeletedSelfLoopReferralLinks: 0,
+        movedPushTokens: 0,
+        deletedPushTokens: 0,
+        revokedConflictingReferralCodes: 0,
+        migratedReferralCodes: 0,
+        mergedGroupIds: [],
+        previouslyMergedGroupIds: [],
+    };
 }

@@ -73,7 +73,10 @@ export class IdentityOrchestrator {
         const { anchorGroupId, mergingGroupId } =
             this.weightService.determineAnchor(weight1, weight2);
 
-        await this.mergeService.mergeGroups({ anchorGroupId, mergingGroupId });
+        await this.mergeService.mergeGroups({
+            anchorGroupId,
+            mergingGroupIds: [mergingGroupId],
+        });
 
         this.weightService.invalidateWeight(mergingGroupId);
         this.identityRepository.invalidateCachesForGroup(mergingGroupId);
@@ -115,7 +118,7 @@ export class IdentityOrchestrator {
             return { finalGroupId: anchorGroupId, merged: false };
         }
 
-        await this.mergeService.mergeMultipleGroups({
+        await this.mergeService.mergeGroups({
             anchorGroupId,
             mergingGroupIds,
         });

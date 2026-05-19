@@ -6,32 +6,12 @@ import {
 import { and, eq, isNull, sql } from "drizzle-orm";
 import type { Address } from "viem";
 import {
+    type AuthenticatorBindingSelect,
     authenticatorsTable,
     authenticatorWalletBindingsTable,
+    type BindingReason,
 } from "../db/schema";
 import type { AuthenticatorDocument } from "../models/dto/AuthenticatorDocument";
-
-/**
- * Represents the resolved (authenticator, chain) → wallet binding. Returned
- * by the binding-aware reads; carries the email denormalised on the binding
- * row so consumers don't have to round-trip through the legacy column.
- */
-export type AuthenticatorBinding = {
-    authenticatorId: string;
-    chainId: number;
-    smartWalletAddress: Address;
-    email: string | null;
-    recoveryBlob: string | null;
-    createdAt: number;
-    reason: BindingReason;
-};
-
-/**
- * Reason values written on a binding row. The `recovery` value is reserved
- * for the recovery flow refactor (Phase 3+) and is never written by Phase 1
- * code paths.
- */
-export type BindingReason = "initial" | "merged" | "recovery";
 
 /**
  * Email reconciliation policy when repointing a binding (e.g. during a merge).
@@ -344,7 +324,7 @@ export class AuthenticatorRepository {
      */
     public async getActiveBindings(
         credentialId: string
-    ): Promise<AuthenticatorBinding[]> {
+    ): Promise<AuthenticatorBindingSelect[]> {
         const db = getLibsqlDb();
         const rows = await db
             .select()
@@ -359,7 +339,7 @@ export class AuthenticatorRepository {
                 )
             )
             .orderBy(authenticatorWalletBindingsTable.chainId);
-        return rows.map(rowToBinding);
+        return rows;
     }
 
     /**
@@ -372,7 +352,7 @@ export class AuthenticatorRepository {
     }: {
         credentialId: string;
         chainId: FrakChainId;
-    }): Promise<AuthenticatorBinding | null> {
+    }): Promise<AuthenticatorBindingSelect | null> {
         const db = getLibsqlDb();
         const [row] = await db
             .select()
@@ -388,47 +368,7 @@ export class AuthenticatorRepository {
                 )
             )
             .limit(1);
-        return row ? rowToBinding(row) : null;
-    }
-
-    /**
-     * Insert a single binding row. Used by:
-     *  - Register flow (one call per chain at registration time).
-     *  - Bootstrap back-fill (one call per chain per legacy row).
-     *  - Lazy back-fill on login.
-     *  - Merge orchestrator (`repointBinding` does the unlink + this).
-     *
-     * Idempotent via `ON CONFLICT DO NOTHING` on the partial unique
-     * `(authenticator_id, chain_id) WHERE unlinked_at IS NULL` — calling twice
-     * for the same active binding leaves the existing row in place.
-     */
-    public async createBinding({
-        credentialId,
-        chainId,
-        smartWalletAddress,
-        email,
-        reason,
-        createdAt,
-    }: {
-        credentialId: string;
-        chainId: FrakChainId;
-        smartWalletAddress: Address;
-        email?: string | null;
-        reason: BindingReason;
-        createdAt?: number;
-    }): Promise<void> {
-        const db = getLibsqlDb();
-        await db
-            .insert(authenticatorWalletBindingsTable)
-            .values({
-                authenticatorId: credentialId,
-                chainId,
-                smartWalletAddress,
-                email: email ?? null,
-                createdAt: createdAt ?? nowSeconds(),
-                reason,
-            })
-            .onConflictDoNothing();
+        return row ?? null;
     }
 
     /**
@@ -456,7 +396,7 @@ export class AuthenticatorRepository {
         toSmartWalletAddress: Address;
         emailPolicy: RepointEmailPolicy;
         reason: BindingReason;
-    }): Promise<AuthenticatorBinding> {
+    }): Promise<AuthenticatorBindingSelect> {
         const db = getLibsqlDb();
         const now = nowSeconds();
 
@@ -529,28 +469,8 @@ export class AuthenticatorRepository {
                     "repointBinding: failed to read the new active binding back"
                 );
             }
-            return rowToBinding(freshRow);
+            return freshRow;
         });
-    }
-
-    /**
-     * Back-fill helper used by the login lazy path when a credential row was
-     * registered before the binding table existed AND its legacy
-     * `smart_wallet_address` was NULL too. Writes the freshly computed wallet
-     * to the legacy column so older code paths keep working.
-     */
-    public async legacyDualWriteWallet({
-        credentialId,
-        smartWalletAddress,
-    }: {
-        credentialId: string;
-        smartWalletAddress: Address;
-    }): Promise<void> {
-        const db = getLibsqlDb();
-        await db
-            .update(authenticatorsTable)
-            .set({ smartWalletAddress })
-            .where(eq(authenticatorsTable.id, credentialId));
     }
 
     /**
@@ -636,26 +556,6 @@ export class AuthenticatorRepository {
             )
             .onConflictDoNothing();
     }
-}
-
-function rowToBinding(row: {
-    authenticatorId: string;
-    chainId: number;
-    smartWalletAddress: string;
-    email: string | null;
-    recoveryBlob: string | null;
-    createdAt: number;
-    reason: string;
-}): AuthenticatorBinding {
-    return {
-        authenticatorId: row.authenticatorId,
-        chainId: row.chainId,
-        smartWalletAddress: row.smartWalletAddress as Address,
-        email: row.email,
-        recoveryBlob: row.recoveryBlob,
-        createdAt: row.createdAt,
-        reason: row.reason as BindingReason,
-    };
 }
 
 function resolveEmailPolicy(
