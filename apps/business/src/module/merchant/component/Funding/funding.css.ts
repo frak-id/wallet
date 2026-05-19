@@ -82,8 +82,7 @@ export const tokenCardCurrency = style({
 export const tokenCardBalance = style({
     fontSize: "1.5rem",
     fontWeight: brand.typography.fontWeight.bold,
-    // TODO: token (font-mono)
-    fontFamily: "var(--font-mono)",
+    fontFamily: '"Monaco", "Menlo", "Ubuntu Mono", monospace',
     color: vars.text.primary,
     lineHeight: 1.2,
 });

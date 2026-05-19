@@ -51,8 +51,7 @@ export const legacyPanelStatLabel = style({
 
 export const legacyPanelStatValue = style({
     fontWeight: brand.typography.fontWeight.semiBold,
-    // TODO: token
-    fontFamily: "var(--font-mono)",
+    fontFamily: '"Monaco", "Menlo", "Ubuntu Mono", monospace',
     color: vars.text.primary,
 });
 
