@@ -16,6 +16,7 @@ import { useState } from "react";
 import { type Address, formatUnits, parseUnits } from "viem";
 import { Badge } from "@/module/common/component/Badge";
 import { Button } from "@/module/common/component/Button";
+import { CallOut } from "@/module/common/component/CallOut";
 import { IconInfo } from "@/module/common/component/IconInfo";
 import { Panel } from "@/module/common/component/Panel";
 import { Row } from "@/module/common/component/Row";
@@ -149,13 +150,11 @@ function RewardBudgetView({
                 />
 
                 {allTokensEmpty && isOpen && (
-                    <div className={styles.bankWarning}>
-                        <AlertTriangle width={16} height={16} />
-                        <span>
-                            Your bank has no funds. Active campaigns cannot
-                            distribute rewards until you add funds.
-                        </span>
-                    </div>
+                    <CallOut variant="warning">
+                        <AlertTriangle width={16} height={16} /> Your bank has
+                        no funds. Active campaigns cannot distribute rewards
+                        until you add funds.
+                    </CallOut>
                 )}
 
                 <TokenGridSections

@@ -144,15 +144,3 @@ export const errorText = style({
     padding: "20px",
 });
 
-export const bankWarning = style({
-    display: "flex",
-    alignItems: "center",
-    gap: "0.5rem",
-    padding: "0.75rem 1rem",
-    backgroundColor: "rgba(255, 165, 0, 0.1)",
-    border: `1px solid ${vars.text.warning}`,
-    borderRadius: alias.cornerRadius.s,
-    color: vars.text.warning,
-    fontSize: "0.875rem",
-    lineHeight: 1.4,
-});
