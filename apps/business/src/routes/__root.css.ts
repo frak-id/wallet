@@ -1,5 +1,5 @@
 import { vars } from "@frak-labs/design-system/theme";
-import { alias } from "@frak-labs/design-system/tokens";
+import { alias, brand } from "@frak-labs/design-system/tokens";
 import { style } from "@vanilla-extract/css";
 
 export const errorContainer = style({
@@ -45,5 +45,5 @@ export const notFoundLink = style({
     color: vars.text.onAction,
     borderRadius: alias.cornerRadius.s,
     textDecoration: "none",
-    fontWeight: 600,
+    fontWeight: brand.typography.fontWeight.semiBold,
 });

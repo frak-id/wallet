@@ -23,7 +23,7 @@ export const commandInput = style({
     width: "100%",
     lineHeight: "20px",
     color: vars.text.primary,
-    fontWeight: 400,
+    fontWeight: brand.typography.fontWeight.regular,
 });
 
 export const commandList = style({

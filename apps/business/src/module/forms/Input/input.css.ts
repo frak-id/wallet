@@ -34,7 +34,7 @@ export const input = style({
     lineHeight: "20px",
     fontSize: "16px",
     color: vars.text.primary,
-    fontWeight: 400,
+    fontWeight: brand.typography.fontWeight.regular,
     selectors: {
         "&::placeholder": {
             color: vars.text.tertiary,
@@ -74,7 +74,7 @@ globalStyle(`*:has(> ${input}:focus)`, {
 
 export const rightSection = style({
     paddingRight: "12px",
-    fontWeight: 400,
+    fontWeight: brand.typography.fontWeight.regular,
     color: vars.text.secondary,
     textTransform: "uppercase",
 });

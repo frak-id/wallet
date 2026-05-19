@@ -47,7 +47,7 @@ export const table = style({
 export const headRow = style({ display: "flex" });
 
 export const headCell = style({
-    fontWeight: 400,
+    fontWeight: brand.typography.fontWeight.regular,
     width: "36px",
 });
 

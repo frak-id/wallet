@@ -1,5 +1,5 @@
 import { vars } from "@frak-labs/design-system/theme";
-import { alias } from "@frak-labs/design-system/tokens";
+import { alias, brand } from "@frak-labs/design-system/tokens";
 import { globalStyle, style } from "@vanilla-extract/css";
 
 export const merchantItem = style({
@@ -31,12 +31,12 @@ export const merchantItemName = style({
     flexDirection: "column",
     alignItems: "center",
     gap: "14px",
-    fontWeight: 600,
+    fontWeight: brand.typography.fontWeight.semiBold,
 });
 
 export const merchantItemDomain = style({
     fontSize: "14px",
-    fontWeight: 400,
+    fontWeight: brand.typography.fontWeight.regular,
     color: vars.text.tertiary,
 });
 
@@ -49,16 +49,4 @@ export const merchantItemActions = style({
 
 globalStyle(`${merchantItemActions} a`, {
     display: "flex",
-});
-
-export const merchantItemStatus = style({
-    position: "absolute",
-    top: alias.spacing.xs,
-    left: alias.spacing.xs,
-    display: "flex",
-    gap: "10px",
-});
-
-globalStyle(`${merchantItemStatus} svg`, {
-    cursor: "pointer",
 });

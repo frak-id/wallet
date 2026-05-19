@@ -63,7 +63,7 @@ globalStyle(`${currencyCard}:hover:not(${currencyCardDisabled})`, {
 
 export const currencySymbol = style({
     fontSize: "24px",
-    fontWeight: 700,
+    fontWeight: brand.typography.fontWeight.bold,
     color: vars.text.primary,
     letterSpacing: "-0.5px",
 });
@@ -111,5 +111,5 @@ export const explanationSection = style({
 
 globalStyle(`${explanationSection} strong`, {
     color: vars.text.primary,
-    fontWeight: 600,
+    fontWeight: brand.typography.fontWeight.semiBold,
 });

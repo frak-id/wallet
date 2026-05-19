@@ -58,7 +58,7 @@ export const withCloseButton = style({
 
 export const title = style({
     margin: "0 0 20px 0",
-    fontWeight: 500,
+    fontWeight: brand.typography.fontWeight.medium,
     fontSize: "18px",
     display: "flex",
     alignItems: "center",
@@ -69,7 +69,7 @@ export const title = style({
 export const description = style({
     marginBottom: "14px",
     fontSize: "16px",
-    fontWeight: 400,
+    fontWeight: brand.typography.fontWeight.regular,
 });
 
 export const footer = style({

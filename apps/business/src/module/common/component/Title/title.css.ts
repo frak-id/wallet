@@ -1,3 +1,4 @@
+import { brand } from "@frak-labs/design-system/tokens";
 import { style } from "@vanilla-extract/css";
 import { recipe } from "@vanilla-extract/recipes";
 
@@ -9,8 +10,8 @@ export const titleVariants = recipe({
     },
     variants: {
         tag: {
-            h2: { fontWeight: 500 },
-            h3: { fontWeight: 500 },
+            h2: { fontWeight: brand.typography.fontWeight.medium },
+            h3: { fontWeight: brand.typography.fontWeight.medium },
         },
         size: {
             small: { fontSize: "16px" },

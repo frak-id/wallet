@@ -1,5 +1,5 @@
 import { vars } from "@frak-labs/design-system/theme";
-import { alias, brand } from "@frak-labs/design-system/tokens";
+import { alias, brand, shadow } from "@frak-labs/design-system/tokens";
 import { globalStyle, style } from "@vanilla-extract/css";
 import { recipe } from "@vanilla-extract/recipes";
 
@@ -16,9 +16,9 @@ export const panelVariants = recipe({
             padding: alias.spacing.l,
             border: `1px solid ${vars.border.default}`,
             background: vars.surface.elevated,
-            boxShadow: "0 2px 2px 0 #1018281a",
+            boxShadow: shadow.elevated,
             color: vars.text.secondary,
-            fontWeight: 400,
+            fontWeight: brand.typography.fontWeight.regular,
             selectors: {
                 '&[aria-disabled="true"]': {
                     opacity: 0.64,

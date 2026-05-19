@@ -58,7 +58,7 @@ export const details = style({
 
 export const detailsSummary = style({
     cursor: "pointer",
-    fontWeight: 500,
+    fontWeight: brand.typography.fontWeight.medium,
     fontSize: "0.875rem",
     color: vars.text.secondary,
     userSelect: "none",

@@ -11,7 +11,7 @@ globalStyle("*, *::after, *::before", {
 globalStyle("html", {
     fontFamily: `"Inter", ${brand.typography.fontFamily.inter}`,
     fontStyle: "normal",
-    fontWeight: 500,
+    fontWeight: brand.typography.fontWeight.medium,
     fontSize: "16px",
     scrollBehavior: "smooth",
     overflowX: "hidden",

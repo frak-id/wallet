@@ -15,5 +15,5 @@ export const tooltipTable = style({
     width: "max-content !important",
     whiteSpace: "normal",
     fontSize: "16px",
-    fontWeight: 400,
+    fontWeight: brand.typography.fontWeight.regular,
 });

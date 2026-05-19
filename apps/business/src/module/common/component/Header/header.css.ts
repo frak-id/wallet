@@ -1,5 +1,5 @@
 import { vars } from "@frak-labs/design-system/theme";
-import { alias } from "@frak-labs/design-system/tokens";
+import { alias, brand } from "@frak-labs/design-system/tokens";
 import { globalStyle, style } from "@vanilla-extract/css";
 
 export const header = style({
@@ -111,7 +111,7 @@ export const demoModeBadge = style({
     border: "1px solid rgba(147, 197, 253, 0.3)",
     borderRadius: alias.cornerRadius.m,
     fontSize: "11px",
-    fontWeight: 500,
+    fontWeight: brand.typography.fontWeight.medium,
     letterSpacing: "0.5px",
     cursor: "pointer",
     textTransform: "lowercase",

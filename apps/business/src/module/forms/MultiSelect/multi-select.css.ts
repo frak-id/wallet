@@ -53,7 +53,7 @@ export const multiSelectBadge = style({
     borderRadius: alias.cornerRadius.xs,
     padding: "3px 6px",
     fontSize: "12px",
-    fontWeight: 500,
+    fontWeight: brand.typography.fontWeight.medium,
 });
 
 export const multiSelectSeparator = style({

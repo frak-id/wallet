@@ -1,5 +1,5 @@
 import { vars } from "@frak-labs/design-system/theme";
-import { alias, brand } from "@frak-labs/design-system/tokens";
+import { alias, brand, shadow } from "@frak-labs/design-system/tokens";
 import { globalStyle, style } from "@vanilla-extract/css";
 
 export const tableWrapper = style({
@@ -8,7 +8,7 @@ export const tableWrapper = style({
     overflowX: "auto",
     color: vars.text.secondary,
     border: `1px solid ${vars.border.default}`,
-    boxShadow: "0 2px 2px 0 #1018281a",
+    boxShadow: shadow.elevated,
 });
 
 export const table = style({
@@ -53,7 +53,7 @@ globalStyle(`${table} > thead > tr > th`, {
     textAlign: "left",
     whiteSpace: "nowrap",
     color: vars.text.primary,
-    fontWeight: 500,
+    fontWeight: brand.typography.fontWeight.medium,
 });
 
 globalStyle(`${table} > thead > tr > th:has(button${tableButton})`, {
@@ -64,7 +64,7 @@ globalStyle(`${table} > tbody > tr > td, ${table} > tfoot > tr > th`, {
     padding: "18px 22px",
     textAlign: "left",
     borderTop: `1px solid ${vars.border.subtle}`,
-    fontWeight: 500,
+    fontWeight: brand.typography.fontWeight.medium,
 });
 
 globalStyle(`${table} a`, {

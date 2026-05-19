@@ -139,7 +139,7 @@ export const spinner = style({
 
 export const text = style({
     color: "rgba(255, 255, 255, 0.85)",
-    fontWeight: 500,
+    fontWeight: brand.typography.fontWeight.medium,
     fontSize: "0.95rem",
     lineHeight: 1.4,
     transition: "transform 0.3s ease",
