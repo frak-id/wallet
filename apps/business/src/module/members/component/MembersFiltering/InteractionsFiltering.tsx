@@ -10,7 +10,7 @@ import {
 } from "@/module/forms/Form";
 import { Input } from "@/module/forms/Input";
 import type { FormMembersFiltering } from "@/module/members/component/MembersFiltering";
-import styles from "./index.module.css";
+import * as styles from "./members-filtering.css";
 
 export function InteractionsFiltering({
     disabled,
@@ -65,7 +65,7 @@ export function InteractionsFiltering({
                     Interactions
                 </FormLabel>
             </FormItem>
-            <Row className={styles.formFromTo__row}>
+            <Row className={styles.formFromToRow}>
                 <FormField
                     control={control}
                     name={"interactions.min"}

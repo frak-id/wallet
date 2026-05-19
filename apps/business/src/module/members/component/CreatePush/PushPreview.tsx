@@ -1,6 +1,6 @@
 import clsx from "clsx";
 import iPhone from "./assets/iPhone.png";
-import styles from "./PushPreview.module.css";
+import * as styles from "./push-preview.css";
 
 type PushPreviewProps = {
     title?: string;
@@ -14,7 +14,7 @@ export function PushPreview(props: PushPreviewProps) {
     return (
         <div className={styles.pushPreview}>
             <img src={iPhone} alt={"iPhone"} />
-            <div className={styles.pushPreview__notificationWrapper}>
+            <div className={styles.pushPreviewNotificationWrapper}>
                 <PushPreviewNotification {...props} />
             </div>
         </div>
@@ -29,16 +29,16 @@ export function PushPreviewNotification({
     classNameDate,
 }: PushPreviewProps) {
     return (
-        <div className={clsx(styles.pushPreview__notification, className)}>
+        <div className={clsx(styles.pushPreviewNotification, className)}>
             {icon && (
-                <span className={styles.pushPreview__icon}>
+                <span className={styles.pushPreviewIcon}>
                     <img src={icon} alt={""} width={20} height={20} />
                 </span>
             )}
             <div>
-                <p className={styles.pushPreview__title}>{title}</p>
-                <pre className={styles.pushPreview__text}>{message}</pre>
-                <p className={clsx(styles.pushPreview__date, classNameDate)}>
+                <p className={styles.pushPreviewTitle}>{title}</p>
+                <pre className={styles.pushPreviewText}>{message}</pre>
+                <p className={clsx(styles.pushPreviewDate, classNameDate)}>
                     now
                 </p>
             </div>

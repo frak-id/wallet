@@ -22,7 +22,7 @@ import { TableMembersFilters } from "@/module/members/component/TableMembers/Fil
 import { Pagination } from "@/module/members/component/TableMembers/Pagination";
 import { membersPageQueryOptions } from "@/module/members/queries/queryOptions";
 import { membersStore } from "@/stores/membersStore";
-import styles from "./index.module.css";
+import * as styles from "./table-members.css";
 
 const columnHelper = createColumnHelper<GetMembersPageItem>();
 

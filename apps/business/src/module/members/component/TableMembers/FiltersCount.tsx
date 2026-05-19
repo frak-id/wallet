@@ -1,7 +1,7 @@
 import { useEffect } from "react";
 import type { FormMembersFiltering } from "@/module/members/component/MembersFiltering";
 import { membersStore } from "@/stores/membersStore";
-import styles from "./FiltersCount.module.css";
+import * as styles from "./filters-count.css";
 
 export function FiltersCount({ filter }: { filter?: FormMembersFiltering }) {
     const filtersCount = membersStore((state) => state.tableFiltersCount);
@@ -15,7 +15,7 @@ export function FiltersCount({ filter }: { filter?: FormMembersFiltering }) {
 
     return (
         filtersCount > 0 && (
-            <span className={styles.filters__count}>{filtersCount}</span>
+            <span className={styles.filtersCount}>{filtersCount}</span>
         )
     );
 }
