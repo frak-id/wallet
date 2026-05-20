@@ -28,6 +28,10 @@ export const warning = style({
     fontSize: "13px",
 });
 
+export const warningContent = style({
+    margin: 0,
+});
+
 export const warningGlyph = style({
     fontFamily:
         '"Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", "Android Emoji", "EmojiOne Mozilla", "Twemoji Mozilla", "Noto Emoji", "Segoe UI Symbol", EmojiSymbols, emoji, sans-serif',
