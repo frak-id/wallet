@@ -1,16 +1,19 @@
 import { currentStablecoins, type Stablecoin } from "@frak-labs/app-essentials";
+import { Spinner } from "@frak-labs/design-system/components/Spinner";
 import { Stack } from "@frak-labs/design-system/components/Stack";
 import type { Address } from "viem";
+import { Badge } from "@/module/common/component/Badge";
 import { Panel } from "@/module/common/component/Panel";
 import { currencyMetadata } from "@/module/common/utils/currencyOptions";
 import { FormLayout } from "@/module/forms/Form";
 import { MerchantHead } from "@/module/merchant/component/MerchantHead";
 import { useMerchant } from "@/module/merchant/hook/useMerchant";
+import { usePurchaseWebhookStatus } from "@/module/merchant/hook/usePurchaseWebhookStatus";
 import { AllowedDomainsSheet } from "../AllowedDomainsSheet";
 import { MerchantEditSheet } from "../MerchantEditSheet";
+import { PurchaseTrackerSheet } from "../PurchaseTrackerSheet";
 import { ExplorerSettings } from "./ExplorerSettings";
 import * as styles from "./merchant-summary.css";
-import { PurchasseTrackerSetup } from "./PurchaseTracker";
 
 const DOMAIN_PREVIEW_COUNT = 3;
 
@@ -107,8 +110,65 @@ export function MerchantDetails({ merchantId }: { merchantId: string }) {
                 </Panel>
             )}
             <ExplorerSettings merchantId={merchantId} />
-            <PurchasseTrackerSetup merchantId={merchantId} />
+            <PurchaseTrackerSummary merchantId={merchantId} />
         </FormLayout>
+    );
+}
+
+function PurchaseTrackerSummary({ merchantId }: { merchantId: string }) {
+    const { data: webhookStatus, isLoading } = usePurchaseWebhookStatus({
+        merchantId,
+    });
+
+    return (
+        <Panel title={"Purchase tracker"}>
+            <Stack space="m">
+                <p className={styles.summaryDescription}>
+                    Track purchases from your store to power campaigns and
+                    distribute rewards.
+                </p>
+                {isLoading || !webhookStatus ? (
+                    <Spinner />
+                ) : (
+                    <>
+                        <Row
+                            label="Status"
+                            value={
+                                <Badge
+                                    variant={
+                                        webhookStatus.setup
+                                            ? "success"
+                                            : "warning"
+                                    }
+                                >
+                                    {webhookStatus.setup
+                                        ? "Webhook registered"
+                                        : "Not registered"}
+                                </Badge>
+                            }
+                        />
+                        {webhookStatus.setup && (
+                            <Row
+                                label="Platform"
+                                value={webhookStatus.platform}
+                            />
+                        )}
+                        {webhookStatus.setup && webhookStatus.stats && (
+                            <Row
+                                label="Purchases tracked"
+                                value={
+                                    webhookStatus.stats.totalPurchaseHandled ??
+                                    0
+                                }
+                            />
+                        )}
+                    </>
+                )}
+                <div className={styles.summaryActions}>
+                    <PurchaseTrackerSheet merchantId={merchantId} />
+                </div>
+            </Stack>
+        </Panel>
     );
 }
 
