@@ -8,6 +8,7 @@ import { CampaignConditions } from "@/module/campaigns/component/CampaignDetails
 import { CampaignRewardToken } from "@/module/campaigns/component/CampaignDetails/CampaignRewardToken";
 import { CampaignStatus } from "@/module/campaigns/component/CampaignDetails/CampaignStatus";
 import { CampaignTerritory } from "@/module/campaigns/component/CampaignDetails/CampaignTerritory";
+import { CampaignParametersSheet } from "@/module/campaigns/component/CampaignParametersSheet";
 import { FormBudgetRow } from "@/module/campaigns/component/Creation/NewCampaign/FormBudgetRow";
 import { FormAdvertising } from "@/module/campaigns/component/Creation/ValidationCampaign/FormAdvertising";
 import { FormGoal } from "@/module/campaigns/component/Creation/ValidationCampaign/FormGoal";
@@ -94,9 +95,15 @@ export function CampaignDetails({
             </Panel>
             <ActionsWrapper
                 right={
-                    <LinkButton to="/campaigns/list" variant="primary">
-                        Close
-                    </LinkButton>
+                    <>
+                        <CampaignParametersSheet
+                            campaign={campaign}
+                            campaignId={campaignId}
+                        />
+                        <LinkButton to="/campaigns/list" variant="primary">
+                            Close
+                        </LinkButton>
+                    </>
                 }
             />
         </FormLayout>
