@@ -19,7 +19,7 @@ export function AddMerchantSheet({ trigger }: Props) {
     return (
         <Sheet open={open} onOpenChange={setOpen}>
             <SheetTrigger asChild>{trigger}</SheetTrigger>
-            <SheetContent side="right">
+            <SheetContent side="right" size="wide">
                 <SheetHeader>
                     <SheetTitle>Add a new merchant</SheetTitle>
                     <SheetDescription>
