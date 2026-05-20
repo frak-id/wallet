@@ -94,8 +94,12 @@ function stripOrphanCrossChunkImports() {
             // remain in every consumer chunk on cold boot.
             const orphanFileNames: string[] = [];
             for (const [key, file] of chunks) {
-                if (file.type !== "chunk" || !file.fileName) continue;
-                if (typeof file.code === "string" && file.code.trim() === "") {
+                if (
+                    file.type === "chunk" &&
+                    file.fileName &&
+                    typeof file.code === "string" &&
+                    file.code.trim() === ""
+                ) {
                     orphanFileNames.push(file.fileName);
                     delete bundle[key];
                 }
@@ -112,12 +116,11 @@ function stripOrphanCrossChunkImports() {
                     type?: string;
                     code?: string;
                 };
-                if (f.type !== "chunk" || typeof f.code !== "string") {
-                    continue;
-                }
-                f.code = f.code.replace(LAZY_ORPHAN_RE, "");
-                for (const re of orphanPatterns) {
-                    f.code = f.code.replace(re, "");
+                if (f.type === "chunk" && typeof f.code === "string") {
+                    f.code = f.code.replace(LAZY_ORPHAN_RE, "");
+                    for (const re of orphanPatterns) {
+                        f.code = f.code.replace(re, "");
+                    }
                 }
             }
         },
