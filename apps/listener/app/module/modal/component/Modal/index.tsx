@@ -10,6 +10,7 @@ import {
     OriginPairingState,
     useCancelAllSignatureRequests,
 } from "@frak-labs/wallet-shared/pairing";
+import { usePersistentPairingClient } from "@frak-labs/wallet-shared/pairing/usePersistentPairingClient";
 import * as AlertDialogPrimitive from "@radix-ui/react-alert-dialog";
 import { clsx as cx } from "clsx";
 import { X } from "lucide-react";
@@ -23,6 +24,7 @@ import {
     useState,
 } from "react";
 import { Toaster } from "sonner";
+import { useStore } from "zustand";
 import { useShallow } from "zustand/react/shallow";
 import { useGetMergeToken } from "@/module/hooks/useGetMergeToken";
 import { SiweAuthenticateModalStep } from "@/module/modal/component/Authenticate";
@@ -30,13 +32,6 @@ import { FinalModalStep } from "@/module/modal/component/Final";
 import { MetadataInfo } from "@/module/modal/component/Generic";
 import { LoginModalStep } from "@/module/modal/component/Login";
 import { TransactionModalStep } from "@/module/modal/component/Transaction";
-import { BlockchainProvider } from "@/module/providers/BlockchainProvider";
-import {
-    type GenericWalletUiType,
-    type ModalUiType,
-    useListenerTranslation,
-    useListenerUI,
-} from "@/module/providers/ListenerUiProvider";
 import {
     modalStore,
     selectCurrentStep,
@@ -45,9 +40,20 @@ import {
     selectShouldFinish,
 } from "@/module/stores/modalStore";
 import { resolvingContextStore } from "@/module/stores/resolvingContextStore";
+import { BlockchainProvider } from "@/ui/BlockchainProvider";
+import {
+    type GenericWalletUiType,
+    type ModalUiType,
+    useListenerTranslation,
+    useListenerUI,
+} from "@/ui/ListenerUiProvider";
 import { ToastLoading } from "../../../component/ToastLoading";
 import * as styles from "./index.css";
 import { ModalStepIndicator } from "./Step";
+
+// Re-export the lazy handler body so it lands in the Modal default chunk
+// instead of its own .impl shim chunk. See useDisplayModalListener.ts.
+export { handleDisplayModal } from "@/module/hooks/useDisplayModalListener.impl";
 
 /**
  * Display the given request in a modal
@@ -66,10 +72,17 @@ function ListenerModalInner({
     logoUrl,
 }: ModalUiType & GenericWalletUiType) {
     const { clearRequest } = useListenerUI();
+    // Pairing reconnect lives inside the lazy modal tree so the WebSocket
+    // only opens when a partner site actually requests UI — keeping idle
+    // iframes off the backend pairing socket.
+    usePersistentPairingClient();
     const [isOpen, setIsOpen] = useState(true);
     const [logoFailed, setLogoFailed] = useState(false);
     const getMergeToken = useGetMergeToken();
-    const parentUrl = resolvingContextStore((s) => s.context?.sourceUrl);
+    const parentUrl = useStore(
+        resolvingContextStore,
+        (s) => s.context?.sourceUrl
+    );
     const cancelAllSignatures = useCancelAllSignatureRequests({
         client: getOriginPairingClient(),
     });
@@ -184,7 +197,7 @@ function ListenerModalInner({
     /**
      * The inner component to display
      */
-    const { titleComponent, providedBy, footer } = useMemo(() => {
+    const { titleComponent, footer } = useMemo(() => {
         // Build the title component we will display
         const titleComponent = metadata?.header?.title ? (
             metadata.header.title
@@ -205,21 +218,23 @@ function ListenerModalInner({
             </span>
         );
 
-        // Build the footer (only if no icon present)
-        const footer =
-            logoUrl && !logoFailed ? null : (
-                <div className={styles.modalListener__footer}>
-                    <OriginPairingState type="modal" />
-                    {providedBy}
-                </div>
-            );
+        // Always render the footer with `provided by Frak` on the right.
+        // Previously it sat under the logo when one was present, but that
+        // crammed the attribution into the merchant icon box. Keeping it
+        // in the footer means it always lives in the bottom-right corner
+        // of the modal regardless of logo presence.
+        const footer = (
+            <div className={styles.modalListener__footer}>
+                <OriginPairingState type="modal" />
+                {providedBy}
+            </div>
+        );
 
         return {
             titleComponent,
-            providedBy,
             footer,
         };
-    }, [metadata, logoUrl, logoFailed]);
+    }, [metadata]);
 
     return (
         <ModalComponent
@@ -237,7 +252,6 @@ function ListenerModalInner({
             <ModalLogoIcon
                 logoUrl={logoUrl}
                 logoFailed={logoFailed}
-                providedBy={providedBy}
                 onError={() => setLogoFailed(true)}
             />
             <CurrentModalMetadataInfo />
@@ -424,12 +438,10 @@ function CurrentModalStepComponent({
 function ModalLogoIcon({
     logoUrl,
     logoFailed,
-    providedBy,
     onError,
 }: {
     logoUrl?: string;
     logoFailed: boolean;
-    providedBy: ReactNode;
     onError: () => void;
 }) {
     if (!logoUrl || logoFailed) return null;
@@ -442,7 +454,6 @@ function ModalLogoIcon({
                 className={styles.modalListener__icon}
                 onError={onError}
             />
-            {providedBy}
         </div>
     );
 }

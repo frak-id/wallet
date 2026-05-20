@@ -15,6 +15,7 @@ import type {
 } from "@frak-labs/frame-connector";
 import { emitLifecycleEvent } from "@frak-labs/wallet-shared/common/utils/lifecycleEvents";
 import type { i18n, TOptions } from "i18next";
+import { useStore } from "zustand";
 import {
     mapI18nConfig,
     translationKeyPathToObject,
@@ -26,7 +27,7 @@ import {
  */
 type TranslationOptions = Omit<TOptions, "context"> & { context?: string };
 
-import { useFormattedEstimatedReward } from "@frak-labs/wallet-shared/common/hook/useEstimatedReward";
+import { useFormattedEstimatedReward } from "@frak-labs/wallet-shared/common/hook/useFormattedEstimatedReward";
 import {
     createContext,
     type PropsWithChildren,
@@ -40,7 +41,8 @@ import {
 import { useTranslation } from "react-i18next";
 import { resolvingContextStore } from "@/module/stores/resolvingContextStore";
 import type { ResolvedSdkConfig } from "@/module/stores/types";
-import { mapDeprecatedModalMetadata } from "../utils/deprecatedModalMetadataMapper";
+import { mapDeprecatedModalMetadata } from "@/module/utils/deprecatedModalMetadataMapper";
+import { uiBus } from "@/uiBus";
 
 export type GenericWalletUiType = {
     appName: string;
@@ -129,8 +131,12 @@ export function ListenerUiProvider({ children }: PropsWithChildren) {
     // Initial translation context
     const { i18n: initialI18n } = useTranslation();
     // We are not using the safeResolvingContext here, since this component is init before the iframe is ready
-    const resolvingContext = resolvingContextStore((state) => state.context);
-    const backendSdkConfig = resolvingContextStore(
+    const resolvingContext = useStore(
+        resolvingContextStore,
+        (state) => state.context
+    );
+    const backendSdkConfig = useStore(
+        resolvingContextStore,
         (state) => state.backendSdkConfig
     );
     // The current UI request
@@ -208,6 +214,10 @@ export function ListenerUiProvider({ children }: PropsWithChildren) {
             style.remove();
         };
     }, [placementCss]);
+
+    // Subscribe to the UI bus so RPC handlers (Ring 0) can request UI
+    // displays without holding a reference to React state.
+    useEffect(() => uiBus.attach(setRequest), [setRequest]);
 
     const populateI18nResources = useCallback(
         (i18n: i18n, lang: Language, request?: UIRequest) => {

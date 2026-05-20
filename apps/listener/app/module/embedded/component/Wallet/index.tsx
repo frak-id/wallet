@@ -1,18 +1,24 @@
 import { Overlay } from "@frak-labs/design-system/components/Overlay";
 import { InAppBrowserToast } from "@frak-labs/wallet-shared/common";
+import { usePersistentPairingClient } from "@frak-labs/wallet-shared/pairing/usePersistentPairingClient";
 import { sessionStore } from "@frak-labs/wallet-shared/stores/sessionStore";
 import clsx from "clsx";
 import { Toaster } from "sonner";
+import { useStore } from "zustand";
 import { prefixWalletCss } from "@/module/common/utils/prefixWalletCss";
 import { ListenerWalletHeader } from "@/module/embedded/component/WalletHeader";
 import { LoggedInComponent } from "@/module/embedded/component/WalletLoggedIn";
 import { LoggedOutComponent } from "@/module/embedded/component/WalletLoggedOut";
 import { useGetMergeToken } from "@/module/hooks/useGetMergeToken";
-import { BlockchainProvider } from "@/module/providers/BlockchainProvider";
-import { useEmbeddedListenerUI } from "@/module/providers/ListenerUiProvider";
 import { resolvingContextStore } from "@/module/stores/resolvingContextStore";
+import { BlockchainProvider } from "@/ui/BlockchainProvider";
+import { useEmbeddedListenerUI } from "@/ui/ListenerUiProvider";
 import { ToastLoading } from "../../../component/ToastLoading";
 import * as styles from "./index.css";
+
+// Re-export the lazy handler body so it lands in the Wallet default chunk
+// instead of its own .impl shim chunk. See useDisplayEmbeddedWallet.ts.
+export { handleDisplayEmbeddedWallet } from "@/module/hooks/useDisplayEmbeddedWallet.impl";
 
 export function ListenerWallet() {
     return (
@@ -29,6 +35,10 @@ function ListenerWalletInner() {
             params: { metadata },
         },
     } = useEmbeddedListenerUI();
+    // Pairing reconnect lives inside the lazy embedded-wallet tree so the
+    // WebSocket only opens when a partner site actually displays the wallet
+    // — keeping idle iframes off the backend pairing socket.
+    usePersistentPairingClient();
 
     return (
         <>
@@ -53,7 +63,10 @@ function ListenerWalletInner() {
 function CurrentEmbeddedViewComponent() {
     const session = sessionStore.getState().session;
     const getMergeToken = useGetMergeToken();
-    const parentUrl = resolvingContextStore((s) => s.context?.sourceUrl);
+    const parentUrl = useStore(
+        resolvingContextStore,
+        (s) => s.context?.sourceUrl
+    );
     return (
         <div
             className={clsx(

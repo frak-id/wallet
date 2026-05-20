@@ -11,7 +11,6 @@ import {
     getSafeSession,
 } from "@frak-labs/wallet-shared/common/utils/safeSession";
 import { sessionStore } from "@frak-labs/wallet-shared/stores/sessionStore";
-import { useCallback, useEffect, useRef } from "react";
 import type { WalletRpcContext } from "@/module/types/context";
 import { pushBackupData } from "@/module/utils/backup";
 
@@ -30,100 +29,59 @@ type OnListenToWallet = RpcStreamHandler<
 >;
 
 /**
- * Hook use to listen to the wallet status
+ * Vanilla factory for the `frak_listenToWalletStatus` stream handler.
+ *
+ * Subscribes to the session store and emits status updates to the SDK.
+ * Each new RPC stream supersedes the previous one (only one partner site
+ * per iframe), so we keep a single module-level unsubscribe handle.
  */
-export function useWalletStatusListener(): OnListenToWallet {
-    // Read from the zustand store
-    const session = sessionStore((state) => state.session);
-    const sdkSession = sessionStore((state) => state.sdkSession);
-    const sessionsRef = useRef<{
-        wallet: typeof session;
-        sdk: typeof sdkSession;
-    }>({ wallet: session, sdk: sdkSession });
-    const unsubscribeRef = useRef<(() => void) | null>(null);
+export function createWalletStatusHandler(): OnListenToWallet {
+    let activeUnsubscribe: (() => void) | null = null;
 
-    useEffect(() => {
-        sessionsRef.current = { wallet: session, sdk: sdkSession };
-    }, [session, sdkSession]);
+    async function emitCurrentStatus(
+        emitter: StreamEmitter<WalletStatusReturnType>,
+        domain: string,
+        signal: AbortSignal
+    ) {
+        if (signal.aborted) return;
 
-    const emitCurrentStatus = useCallback(
-        async (
-            emitter: StreamEmitter<WalletStatusReturnType>,
-            domain: string,
-            signal?: AbortSignal
-        ) => {
-            // Check if the operation has been aborted
-            if (signal?.aborted) {
-                console.info("emitCurrentStatus operation aborted");
-                return;
-            }
+        const wallet = sessionStore.getState().session ?? getSafeSession();
+        const sdk = sessionStore.getState().sdkSession ?? getSafeSdkSession();
 
-            // If ref not loaded yet, early exit
-            const current = sessionsRef.current;
-            if (!current) {
-                return;
-            }
-
-            const wallet = current.wallet ?? getSafeSession();
-            const sdk = current.sdk ?? getSafeSdkSession();
-
-            // If no wallet present, just return the not logged in status
-            if (!wallet?.address) {
-                emitter({
-                    key: "not-connected",
-                });
-                await pushBackupData({ domain });
-                return;
-            }
-
-            // Check again if aborted before emitting
-            if (signal?.aborted) {
-                console.info("emitCurrentStatus operation aborted");
-                return;
-            }
-
-            // Emit the event
-            emitter({
-                key: "connected",
-                wallet: wallet.address,
-                interactionToken: sdk?.token,
-            });
-
-            // Check again if aborted before pushing backup data
-            if (signal?.aborted) {
-                console.info("emitCurrentStatus operation aborted");
-                return;
-            }
-
+        if (!wallet?.address) {
+            emitter({ key: "not-connected" });
             await pushBackupData({ domain });
-        },
-        []
-    );
+            return;
+        }
 
-    // Clean up on unmount
-    useEffect(() => {
-        return () => {
-            unsubscribeRef.current?.();
-        };
-    }, []);
+        if (signal.aborted) return;
 
-    return useCallback(
-        async (_params, emitter, context) => {
-            // Clean up previous subscription if it exists
-            unsubscribeRef.current?.();
+        emitter({
+            key: "connected",
+            wallet: wallet.address,
+            interactionToken: sdk?.token,
+        });
 
-            let abortController = new AbortController();
+        if (signal.aborted) return;
 
-            const domain = extractDomainFromUrl(context.sourceUrl);
+        await pushBackupData({ domain });
+    }
 
-            await emitCurrentStatus(emitter, domain, abortController.signal);
+    return async (_params, emitter, context) => {
+        // Tear down any previous subscription before starting a new one.
+        activeUnsubscribe?.();
+        activeUnsubscribe = null;
 
-            unsubscribeRef.current = sessionStore.subscribe(() => {
-                abortController.abort();
-                abortController = new AbortController();
-                emitCurrentStatus(emitter, domain, abortController.signal);
-            });
-        },
-        [emitCurrentStatus]
-    );
+        let abortController = new AbortController();
+        const domain = extractDomainFromUrl(context.sourceUrl);
+
+        await emitCurrentStatus(emitter, domain, abortController.signal);
+
+        const unsubscribe = sessionStore.subscribe(() => {
+            abortController.abort();
+            abortController = new AbortController();
+            void emitCurrentStatus(emitter, domain, abortController.signal);
+        });
+        activeUnsubscribe = unsubscribe;
+    };
 }

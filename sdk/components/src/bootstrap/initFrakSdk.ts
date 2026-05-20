@@ -1,7 +1,13 @@
 import * as coreSdkIndex from "@frak-labs/core-sdk";
-import { setupClient, trackEvent, withCache } from "@frak-labs/core-sdk";
+import {
+    type FrakWalletSdkConfig,
+    setupClient,
+    trackEvent,
+    withCache,
+} from "@frak-labs/core-sdk";
 import * as coreSdkActions from "@frak-labs/core-sdk/actions";
 import { openSharingPage } from "../actions/sharingPage";
+import { detectListenerPreloads } from "../utils/dom/detectListenerPreloads";
 import { decodeProductsParam } from "../utils/sharingPageProducts";
 import { dispatchClientReadyEvent } from "./clientReady";
 
@@ -57,7 +63,7 @@ async function doInit(): Promise<void> {
     console.log("[Frak SDK] Starting initialization");
 
     const client = await setupClient({
-        config: window.FrakSetup.config,
+        config: withDynamicPreload(window.FrakSetup.config),
     });
 
     if (!client) {
@@ -80,24 +86,22 @@ async function doInit(): Promise<void> {
 }
 
 /**
- * Check the query param for an auto-opening of the Frak sharing page.
+ * Inject a dynamically-computed `preload` list when the caller hasn't set
+ * one explicitly.
  *
- * Supported params (all optional except `frakAction`):
- * - `frakAction=share` triggers the auto-open.
- * - `link` overrides the URL the sharing page generates outbound shares for.
- *   When omitted, the listener falls back to the merchant domain.
- * - `products` is a base64-encoded compressed JSON payload of
- *   `SharingPageProduct[]` — produced by `compressJsonToB64(productsArray)`
- *   on the sender side (e.g. a Klaviyo email template). Used by
- *   post-purchase emails to surface the items the customer just bought as
- *   product cards on the sharing page.
- * - `placement` lets the caller scope backend-driven CSS / config to a
- *   specific placement (mirrors the prop on the components).
- *
- * The four params are stripped from the URL via `history.replaceState` as
- * soon as they are read, so refreshes / shares of the current URL do not
- * re-trigger the auto-open. Matches the `fmt` (merge token) and `sso`
- * cleanup patterns elsewhere in the SDK.
+ * Rationale: the listener iframe warms Ring 1/Ring 2 chunks based on the
+ * `#preload=...` hash. The components CDN entry can detect which Frak
+ * components are actually on the page and avoid the warm-up cost when none
+ * are mounted. An explicit `config.preload` (including `[]`) is respected
+ * as an escape hatch.
+ */
+function withDynamicPreload(config: FrakWalletSdkConfig): FrakWalletSdkConfig {
+    if (config.preload !== undefined) return config;
+    return { ...config, preload: detectListenerPreloads() };
+}
+
+/**
+ * Check the query param contain params for an auto opening of the frak modal
  */
 function handleActionQueryParam() {
     const url = new URL(window.location.href);

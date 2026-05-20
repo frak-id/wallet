@@ -121,15 +121,16 @@ function buildChunkGroups() {
             priority: 35,
             minShareCount: 1,
         },
-        // Forms vendor — react-hook-form, cuer (QR component) and the underlying
-        // `qr` package. All three are reached only via lazy code paths (recovery
-        // routes, tokens.send route, PairingView in lazy auth routes, and the
-        // now-lazy Keypass modal in ModalOutlet). Split out from `ui-vendor`
-        // because ui-vendor's other members (@radix-ui/vaul/sonner) are eager via
-        // the app shell, which dragged forms + cuer along when they shared a chunk.
+        // Forms vendor — react-hook-form + the underlying `qr` package
+        // (used by `wallet-shared/pairing/component/PairingQrCode`). Both are
+        // reached only via lazy code paths (recovery routes, tokens.send
+        // route, PairingView in lazy auth routes, and the now-lazy Keypass
+        // modal in ModalOutlet). Split out from `ui-vendor` because
+        // ui-vendor's other members (@radix-ui/vaul/sonner) are eager via the
+        // app shell, which dragged forms + qr along when they shared a chunk.
         {
             name: "forms-vendor",
-            test: /[\\/]node_modules[\\/](?:react-hook-form|cuer|qr)[\\/]/,
+            test: /[\\/]node_modules[\\/](?:react-hook-form|qr)[\\/]/,
             priority: 31,
             minShareCount: 1,
         },

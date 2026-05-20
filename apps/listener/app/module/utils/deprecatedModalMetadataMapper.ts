@@ -4,7 +4,7 @@ import type {
     ModalRpcStepsInput,
     ModalStepMetadata,
 } from "@frak-labs/core-sdk";
-import type { UIRequest } from "../providers/ListenerUiProvider";
+import type { UIRequest } from "@/ui/ListenerUiProvider";
 
 // Replacing `{REWARD}` with `{{ estimatedReward }}`
 const replaceReward = (text: string) =>

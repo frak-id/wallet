@@ -16,23 +16,30 @@ import { clientIdStore } from "@frak-labs/wallet-shared/stores/clientIdStore";
 import { sessionStore } from "@frak-labs/wallet-shared/stores/sessionStore";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
+import { useStore } from "zustand";
 import { useTrackSharing } from "@/module/hooks/useTrackSharing";
+import { useSafeResolvingContext } from "@/module/stores/hooks";
+import { resolvingContextStore } from "@/module/stores/resolvingContextStore";
 import {
     useListenerTranslation,
     useSharingListenerUI,
-} from "@/module/providers/ListenerUiProvider";
-import { useSafeResolvingContext } from "@/module/stores/hooks";
-import { resolvingContextStore } from "@/module/stores/resolvingContextStore";
+} from "@/ui/ListenerUiProvider";
+
+// Re-export the lazy handler body so it lands in the lazy-shared chunk
+// (which already hosts both the sharing UI and the impl regex match).
+// See useDisplaySharingPageListener.ts.
+export { handleDisplaySharingPage } from "@/module/hooks/useDisplaySharingPageListener.impl";
 
 export function ListenerSharingPage() {
     const { currentRequest, clearRequest } = useSharingListenerUI();
     const { t } = useListenerTranslation();
     const { sourceUrl, merchantId } = useSafeResolvingContext();
-    const defaultAttribution = resolvingContextStore(
+    const defaultAttribution = useStore(
+        resolvingContextStore,
         (s) => s.backendSdkConfig?.attribution
     );
-    const clientId = clientIdStore((s) => s.clientId);
-    const walletAddress = sessionStore((s) => s.session?.address);
+    const clientId = useStore(clientIdStore, (s) => s.clientId);
+    const walletAddress = useStore(sessionStore, (s) => s.session?.address);
     const { copy } = useCopyToClipboardWithState();
     const { mutate: trackSharing } = useTrackSharing();
 

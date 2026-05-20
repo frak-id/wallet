@@ -7,7 +7,7 @@ import {
 } from "react";
 import { Trans } from "react-i18next";
 import { Arrow } from "@/module/embedded/component/Onboarding/assets/Arrow";
-import { useListenerTranslation } from "@/module/providers/ListenerUiProvider";
+import { useListenerTranslation } from "@/ui/ListenerUiProvider";
 import * as styles from "./index.css";
 
 function Onboarding({

@@ -217,7 +217,6 @@ export function EmailInputStep({
                     <Text
                         variant="bodySmall"
                         className={styles.checkError}
-                        role="alert"
                     >
                         {t("onboarding.email.checkError")}
                     </Text>

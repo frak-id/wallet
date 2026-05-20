@@ -9,6 +9,7 @@ import {
 } from "@frak-labs/wallet-shared";
 import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
+import { useStore } from "zustand";
 import { InfoCard, InfoRow } from "@/module/common/component/InfoCard";
 import { Title } from "@/module/common/component/Title";
 // import { Logout } from "@/module/authentication/component/Logout";
@@ -26,7 +27,8 @@ export function ProfilePage() {
     const version = process.env.APP_VERSION;
     const displayVersion =
         version && version !== "UNKNOWN" ? version : undefined;
-    const lastAuthenticationAt = authenticationStore(
+    const lastAuthenticationAt = useStore(
+        authenticationStore,
         selectLastAuthenticationAt
     );
     const formattedLastAuthentication = useMemo(() => {

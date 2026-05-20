@@ -17,6 +17,7 @@ import { sessionStore } from "@frak-labs/wallet-shared/stores/sessionStore";
 import { useGetUserBalance } from "@frak-labs/wallet-shared/tokens/hook/useGetUserBalance";
 import { clsx as cx } from "clsx";
 import { toast } from "sonner";
+import { useStore } from "zustand";
 import { Copy } from "@/module/common/icons/Copy";
 import { Share } from "@/module/common/icons/Share";
 import { prefixWalletCss } from "@/module/common/utils/prefixWalletCss";
@@ -25,12 +26,12 @@ import {
     OnboardingShare,
     OnboardingWelcome,
 } from "@/module/embedded/component/Onboarding";
+import { useSafeResolvingContext } from "@/module/stores/hooks";
+import { resolvingContextStore } from "@/module/stores/resolvingContextStore";
 import {
     useEmbeddedListenerUI,
     useListenerTranslation,
-} from "@/module/providers/ListenerUiProvider";
-import { useSafeResolvingContext } from "@/module/stores/hooks";
-import { resolvingContextStore } from "@/module/stores/resolvingContextStore";
+} from "@/ui/ListenerUiProvider";
 import { useTrackSharing } from "../../../hooks/useTrackSharing";
 import * as styles from "./index.css";
 
@@ -93,9 +94,10 @@ function ActionButtons() {
 
     const link = loggedIn?.action?.options?.link;
     const { sourceUrl, merchantId } = useSafeResolvingContext();
-    const clientId = clientIdStore((s) => s.clientId);
-    const walletAddress = sessionStore((s) => s.session?.address);
-    const defaultAttribution = resolvingContextStore(
+    const clientId = useStore(clientIdStore, (s) => s.clientId);
+    const walletAddress = useStore(sessionStore, (s) => s.session?.address);
+    const defaultAttribution = useStore(
+        resolvingContextStore,
         (s) => s.backendSdkConfig?.attribution
     );
 
