@@ -1,17 +1,10 @@
 import type { Stablecoin } from "@frak-labs/app-essentials";
-import { isRunningInProd } from "@frak-labs/app-essentials";
 import { Inline } from "@frak-labs/design-system/components/Inline";
 import { Spinner } from "@frak-labs/design-system/components/Spinner";
 import { Stack } from "@frak-labs/design-system/components/Stack";
 import { Switch } from "@frak-labs/design-system/components/Switch";
 import { useWalletStatus } from "@frak-labs/react-sdk";
-import {
-    AlertTriangle,
-    ArrowUpCircle,
-    Download,
-    PauseCircle,
-    Wallet,
-} from "lucide-react";
+import { AlertTriangle, ArrowUpCircle, Download, Wallet } from "lucide-react";
 import { useState } from "react";
 import { type Address, formatUnits, parseUnits } from "viem";
 import { Badge } from "@/module/common/component/Badge";
@@ -28,8 +21,9 @@ import {
 } from "@/module/common/utils/currencyOptions";
 import { FormLayout } from "@/module/forms/Form";
 import { Input } from "@/module/forms/Input";
+import { AddFundsSheet } from "@/module/merchant/component/AddFundsSheet";
+import { PauseRewardsConfirmSheet } from "@/module/merchant/component/PauseRewardsConfirmSheet";
 import { useBankAllowanceMutation } from "@/module/merchant/hook/useBankAllowanceMutation";
-import { useFundTestBank } from "@/module/merchant/hook/useFundTestBank";
 import { useGetMerchantBank } from "@/module/merchant/hook/useGetMerchantBank";
 import { useSetBankOpenStatus } from "@/module/merchant/hook/useSetBankOpenStatus";
 import { useSyncMerchantBank } from "@/module/merchant/hook/useSyncMerchantBank";
@@ -165,18 +159,7 @@ function RewardBudgetView({
                 />
 
                 <div className={styles.fundActionsRow}>
-                    <Button
-                        as="a"
-                        href={process.env.FUNDING_ON_RAMP_URL ?? "#"}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        variant="primary"
-                    >
-                        Add funds via Stripe
-                    </Button>
-                    {!isRunningInProd && (
-                        <TestFundButton bankAddress={bankAddress} />
-                    )}
+                    <AddFundsSheet tokens={tokens} bankAddress={bankAddress} />
                 </div>
             </Stack>
         </Panel>
@@ -423,12 +406,6 @@ function TokenActions({
             merchantId,
             action: "update",
         });
-    const { mutate: revokeAllowance, isPending: isRevokingAllowance } =
-        useBankAllowanceMutation({
-            bankAddress,
-            merchantId,
-            action: "revoke",
-        });
     const { mutate: withdraw, isPending: isWithdrawing } = useWithdrawFromBank({
         bankAddress,
         merchantId,
@@ -437,8 +414,7 @@ function TokenActions({
     const { data: walletStatusData } = useWalletStatus();
     const walletAddress = walletStatusData?.wallet;
 
-    const isPending =
-        isUpdatingAllowance || isRevokingAllowance || isWithdrawing;
+    const isPending = isUpdatingAllowance || isWithdrawing;
 
     const handleUpdateAllowance = () => {
         if (!inputValue) return;
@@ -571,18 +547,12 @@ function TokenActions({
                     </Button>
                 )}
                 {token.allowance > 0n && (
-                    <Button
-                        size="small"
-                        variant="ghost"
-                        onClick={() =>
-                            revokeAllowance({ token: token.address })
-                        }
+                    <PauseRewardsConfirmSheet
+                        token={token}
+                        merchantId={merchantId}
+                        bankAddress={bankAddress}
                         disabled={isPending}
-                        loading={isRevokingAllowance}
-                    >
-                        <PauseCircle width={14} height={14} />
-                        Pause rewards
-                    </Button>
+                    />
                 )}
                 {!isBankOpen && token.balance > 0n && (
                     <Button
@@ -596,21 +566,5 @@ function TokenActions({
                 )}
             </Inline>
         </div>
-    );
-}
-
-function TestFundButton({ bankAddress }: { bankAddress: Address }) {
-    const { mutate: fundTestBank, isPending } = useFundTestBank();
-
-    return (
-        <Button
-            variant="secondary"
-            onClick={() => fundTestBank({ bank: bankAddress })}
-            disabled={isPending}
-            loading={isPending}
-        >
-            <Wallet width={16} height={16} />
-            Fund with Test Tokens
-        </Button>
     );
 }
