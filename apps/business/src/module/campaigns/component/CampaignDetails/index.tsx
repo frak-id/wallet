@@ -9,6 +9,7 @@ import { CampaignRewardToken } from "@/module/campaigns/component/CampaignDetail
 import { CampaignStatus } from "@/module/campaigns/component/CampaignDetails/CampaignStatus";
 import { CampaignTerritory } from "@/module/campaigns/component/CampaignDetails/CampaignTerritory";
 import { CampaignParametersSheet } from "@/module/campaigns/component/CampaignParametersSheet";
+import { CampaignPerformanceSheet } from "@/module/campaigns/component/CampaignPerformanceSheet";
 import { FormBudgetRow } from "@/module/campaigns/component/Creation/NewCampaign/FormBudgetRow";
 import { FormAdvertising } from "@/module/campaigns/component/Creation/ValidationCampaign/FormAdvertising";
 import { FormGoal } from "@/module/campaigns/component/Creation/ValidationCampaign/FormGoal";
@@ -96,6 +97,10 @@ export function CampaignDetails({
             <ActionsWrapper
                 right={
                     <>
+                        <CampaignPerformanceSheet
+                            campaign={campaign}
+                            campaignId={campaignId}
+                        />
                         <CampaignParametersSheet
                             campaign={campaign}
                             campaignId={campaignId}
