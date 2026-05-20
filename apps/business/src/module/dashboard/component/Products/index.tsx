@@ -1,7 +1,7 @@
-import { useNavigate } from "@tanstack/react-router";
 import { Plus } from "lucide-react";
 import { Button } from "@/module/common/component/Button";
 import { Panel } from "@/module/common/component/Panel";
+import { AddMerchantSheet } from "@/module/dashboard/component/AddMerchantSheet";
 import { MerchantItem } from "@/module/dashboard/component/MerchantItem";
 import { useMyMerchants } from "@/module/dashboard/hooks/useMyMerchants";
 import * as styles from "./products.css";
@@ -21,33 +21,29 @@ function MerchantListSection({
 }: {
     merchants: { id: string; name: string; domain: string }[];
 }) {
-    const navigate = useNavigate();
     return (
         <div className={styles.contentListSection}>
             {merchants.map((merchant) => (
                 <MerchantListItem key={merchant.id} merchant={merchant} />
             ))}
 
-            <Button
-                size={"none"}
-                width={"auto"}
-                variant={"ghost"}
-                onClick={() => {
-                    navigate({ to: "/mint" });
-                }}
-            >
-                <MerchantItem
-                    name={
-                        <>
-                            <Plus />
-                            Add a Merchant
-                        </>
-                    }
-                    domain={"domain.com"}
-                    showActions={false}
-                    isLink={false}
-                />
-            </Button>
+            <AddMerchantSheet
+                trigger={
+                    <Button size={"none"} width={"auto"} variant={"ghost"}>
+                        <MerchantItem
+                            name={
+                                <>
+                                    <Plus />
+                                    Add a Merchant
+                                </>
+                            }
+                            domain={"domain.com"}
+                            showActions={false}
+                            isLink={false}
+                        />
+                    </Button>
+                }
+            />
         </div>
     );
 }

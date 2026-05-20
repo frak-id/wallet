@@ -44,6 +44,13 @@ vi.mock("@/module/dashboard/component/MerchantItem", () => ({
 
 vi.mock("lucide-react", () => ({
     Plus: () => <span data-testid="plus-icon">+</span>,
+    X: () => <span data-testid="x-icon" />,
+}));
+
+vi.mock("@/module/dashboard/component/AddMerchantSheet", () => ({
+    AddMerchantSheet: ({ trigger }: { trigger: React.ReactNode }) => (
+        <div data-testid="add-merchant-sheet">{trigger}</div>
+    ),
 }));
 
 // Import after mocks
