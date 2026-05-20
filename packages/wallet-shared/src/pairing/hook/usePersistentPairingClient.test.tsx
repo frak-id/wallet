@@ -10,13 +10,19 @@ import {
 import { usePersistentPairingClient } from "./usePersistentPairingClient";
 
 // Mock dependencies
-vi.mock("../../stores/sessionStore", () => ({
-    sessionStore: vi.fn(),
-    selectWebauthnSession: vi.fn((state) => state.webauthnSession),
-    selectDistantWebauthnSession: vi.fn(
-        (state) => state.distantWebauthnSession
-    ),
-}));
+vi.mock("../../stores/sessionStore", async () => {
+    const { createStore } = await import("zustand/vanilla");
+    return {
+        sessionStore: createStore<any>(() => ({
+            webauthnSession: null,
+            distantWebauthnSession: null,
+        })),
+        selectWebauthnSession: vi.fn((state) => state.webauthnSession),
+        selectDistantWebauthnSession: vi.fn(
+            (state) => state.distantWebauthnSession
+        ),
+    };
+});
 
 vi.mock("../clients/store", () => ({
     getOriginPairingClient: vi.fn(),
@@ -34,11 +40,18 @@ describe("usePersistentPairingClient", () => {
     beforeEach(async () => {
         vi.clearAllMocks();
 
-        // Setup mock store state
-        mockSessionState = {
-            webauthnSession: null,
-            distantWebauthnSession: null,
-        };
+        const { sessionStore } = await import("../../stores/sessionStore");
+        sessionStore.setState(
+            { webauthnSession: null, distantWebauthnSession: null },
+            true
+        );
+        mockSessionState = new Proxy({} as any, {
+            get: (_, key: string) => (sessionStore.getState() as any)[key],
+            set: (_, key: string, value) => {
+                sessionStore.setState({ [key]: value });
+                return true;
+            },
+        });
 
         // Setup mock pairing clients
         mockOriginClient = {
@@ -47,25 +60,6 @@ describe("usePersistentPairingClient", () => {
         mockTargetClient = {
             reconnect: vi.fn(),
         };
-
-        const {
-            sessionStore,
-            selectWebauthnSession,
-            selectDistantWebauthnSession,
-        } = await import("../../stores/sessionStore");
-        // Mock sessionStore to work with selectors
-        vi.mocked(sessionStore).mockImplementation((selector: any) => {
-            if (typeof selector === "function") {
-                return selector(mockSessionState as any);
-            }
-            return mockSessionState;
-        });
-        vi.mocked(selectWebauthnSession).mockImplementation(
-            (state: any) => state.webauthnSession
-        );
-        vi.mocked(selectDistantWebauthnSession).mockImplementation(
-            (state: any) => state.distantWebauthnSession
-        );
 
         const { getOriginPairingClient, getTargetPairingClient } = await import(
             "../clients/store"

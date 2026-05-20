@@ -14,42 +14,23 @@ vi.mock("react-i18next", () => ({
     }),
 }));
 
-// Mock sessionStore
-let mockSessionState: {
-    distantWebauthnSession: null | { address: `0x${string}` };
-} = {
-    distantWebauthnSession: null,
-};
-
-vi.mock("../../../stores/sessionStore", () => ({
-    sessionStore: vi.fn((selector: any) => {
-        if (typeof selector === "function") {
-            return selector(mockSessionState);
-        }
-        return mockSessionState;
-    }),
-    selectDistantWebauthnSession: vi.fn(
-        (state: typeof mockSessionState) => state.distantWebauthnSession
-    ),
-}));
-
-// Mock pairing client store
-let mockPairingState: {
-    status: "idle" | "connecting" | "paired" | "retry-error" | "error";
-    signatureRequests: Map<string, unknown>;
-} = {
-    status: "idle",
-    signatureRequests: new Map(),
-};
-
-const createMockStore = () => ({
-    getState: () => mockPairingState,
-    subscribe: vi.fn(() => () => {}),
-    setState: vi.fn(),
-    destroy: vi.fn(),
+vi.mock("../../../stores/sessionStore", async () => {
+    const { createStore } = await import("zustand/vanilla");
+    return {
+        sessionStore: createStore<any>(() => ({
+            distantWebauthnSession: null,
+        })),
+        selectDistantWebauthnSession: vi.fn(
+            (state: any) => state.distantWebauthnSession
+        ),
+    };
 });
 
-const mockStore = createMockStore();
+// Mock pairing client store
+type PairingState = {
+    status: "idle" | "connecting" | "paired" | "retry-error" | "error";
+    signatureRequests: Map<string, unknown>;
+};
 
 // Mock PairingStatusBox components to avoid needing to mock getTargetPairingClient
 vi.mock("../PairingStatusBox", () => ({
@@ -65,22 +46,47 @@ vi.mock("../PairingStatusBox", () => ({
     ),
 }));
 
-vi.mock("../../clients/store", () => ({
-    getOriginPairingClient: vi.fn(() => ({
-        store: mockStore,
-    })),
-}));
+vi.mock("../../clients/store", async () => {
+    const { createStore } = await import("zustand/vanilla");
+    const pairingStore = createStore<PairingState>(() => ({
+        status: "idle",
+        signatureRequests: new Map(),
+    }));
+    return {
+        getOriginPairingClient: vi.fn(() => ({ store: pairingStore })),
+    };
+});
 
 describe("OriginPairingState", () => {
-    beforeEach(() => {
+    let mockSessionState: { distantWebauthnSession: any };
+    let mockPairingState: PairingState;
+
+    beforeEach(async () => {
         vi.clearAllMocks();
-        mockSessionState = {
-            distantWebauthnSession: null,
-        };
-        mockPairingState = {
-            status: "idle",
-            signatureRequests: new Map(),
-        };
+        const { sessionStore } = await import("../../../stores/sessionStore");
+        sessionStore.setState({ distantWebauthnSession: null }, true);
+        mockSessionState = new Proxy({} as any, {
+            get: (_, key: string) => (sessionStore.getState() as any)[key],
+            set: (_, key: string, value) => {
+                sessionStore.setState({ [key]: value });
+                return true;
+            },
+        });
+
+        const { getOriginPairingClient } = await import("../../clients/store");
+        const pairingStore = (getOriginPairingClient() as any)
+            .store as import("zustand/vanilla").StoreApi<PairingState>;
+        pairingStore.setState(
+            { status: "idle", signatureRequests: new Map() },
+            true
+        );
+        mockPairingState = new Proxy({} as any, {
+            get: (_, key: string) => (pairingStore.getState() as any)[key],
+            set: (_, key: string, value) => {
+                pairingStore.setState({ [key]: value });
+                return true;
+            },
+        });
     });
 
     describe("conditional rendering", () => {

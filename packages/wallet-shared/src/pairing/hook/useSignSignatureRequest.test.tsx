@@ -15,10 +15,13 @@ import {
     useSignSignatureRequest,
 } from "./useSignSignatureRequest";
 
-vi.mock("../../stores/sessionStore", () => ({
-    sessionStore: vi.fn(),
-    selectWebauthnSession: vi.fn(),
-}));
+vi.mock("../../stores/sessionStore", async () => {
+    const { createStore } = await import("zustand/vanilla");
+    return {
+        sessionStore: createStore<any>(() => ({ webauthnSession: null })),
+        selectWebauthnSession: vi.fn((state) => state.webauthnSession),
+    };
+});
 
 vi.mock("../../wallet/smartWallet/signature", () => ({
     signHashViaWebAuthN: vi.fn(),
@@ -50,7 +53,7 @@ describe("useSignSignatureRequest", () => {
     }) => {
         const { sessionStore } = await import("../../stores/sessionStore");
 
-        vi.mocked(sessionStore).mockReturnValue(null);
+        sessionStore.setState({ webauthnSession: null }, true);
 
         const { result } = renderHook(
             () => useSignSignatureRequest({ client: mockClient }),
@@ -77,7 +80,7 @@ describe("useSignSignatureRequest", () => {
 
         const mockSignature = "0xsignature" as Address;
 
-        vi.mocked(sessionStore).mockReturnValue(mockSession);
+        sessionStore.setState({ webauthnSession: mockSession }, true);
         vi.mocked(signHashViaWebAuthN).mockResolvedValue(mockSignature);
 
         const { result } = renderHook(
@@ -116,7 +119,7 @@ describe("useSignSignatureRequest", () => {
 
         const mockError = new Error("User cancelled");
 
-        vi.mocked(sessionStore).mockReturnValue(mockSession);
+        sessionStore.setState({ webauthnSession: mockSession }, true);
         vi.mocked(signHashViaWebAuthN).mockRejectedValue(mockError);
 
         const { result } = renderHook(
@@ -157,7 +160,7 @@ describe("useSignSignatureRequest", () => {
             .spyOn(console, "warn")
             .mockImplementation(() => {});
 
-        vi.mocked(sessionStore).mockReturnValue(mockSession);
+        sessionStore.setState({ webauthnSession: mockSession }, true);
         vi.mocked(signHashViaWebAuthN).mockRejectedValue("String error");
 
         const { result } = renderHook(

@@ -12,16 +12,28 @@ import type { SdkSession, Session } from "../../types/Session";
 import { useGetSafeSdkSession } from "./useGetSafeSdkSession";
 
 // Mock dependencies
-vi.mock("../../stores/sessionStore", () => ({
-    sessionStore: vi.fn(),
-    selectSdkSession: vi.fn((state) => state.sdkSession),
-    selectSession: vi.fn((state) => state.session),
-}));
+vi.mock("../../stores/sessionStore", async () => {
+    const { createStore } = await import("zustand/vanilla");
+    return {
+        sessionStore: createStore<any>(() => ({
+            sdkSession: null,
+            session: null,
+            setSdkSession: () => {},
+        })),
+        selectSdkSession: vi.fn((state) => state.sdkSession),
+        selectSession: vi.fn((state) => state.session),
+    };
+});
 
-vi.mock("../../stores/authenticationStore", () => ({
-    authenticationStore: vi.fn(),
-    selectLastWebAuthNAction: vi.fn((state) => state.lastWebAuthNAction),
-}));
+vi.mock("../../stores/authenticationStore", async () => {
+    const { createStore } = await import("zustand/vanilla");
+    return {
+        authenticationStore: createStore<any>(() => ({
+            lastWebAuthNAction: null,
+        })),
+        selectLastWebAuthNAction: vi.fn((state) => state.lastWebAuthNAction),
+    };
+});
 
 vi.mock("../api/backendClient", () => ({
     authenticatedWalletApi: {
@@ -82,51 +94,39 @@ describe("useGetSafeSdkSession", () => {
     beforeEach(async () => {
         vi.clearAllMocks();
 
-        // Setup mock store state
-        mockSetSdkSession = vi.fn();
-        mockSessionState = {
-            sdkSession: null,
-            session: null,
-            setSdkSession: mockSetSdkSession,
-        };
-        mockAuthState = {
-            lastWebAuthNAction: null,
-        };
-
-        const { sessionStore, selectSdkSession, selectSession } = await import(
-            "../../stores/sessionStore"
-        );
-        // Mock sessionStore to work with selectors (Zustand stores are functions)
-        vi.mocked(sessionStore).mockImplementation((selector: any) => {
-            // Zustand stores accept selector functions
-            if (typeof selector === "function") {
-                return selector(mockSessionState);
-            }
-            // Fallback if called without selector
-            return mockSessionState;
-        });
-        // Selectors are just functions, no need to mock them differently
-        vi.mocked(selectSdkSession).mockImplementation(
-            (state: typeof mockSessionState) => state.sdkSession
-        );
-        vi.mocked(selectSession).mockImplementation(
-            (state: typeof mockSessionState) => state.session
-        );
-
-        const { authenticationStore, selectLastWebAuthNAction } = await import(
+        const { sessionStore } = await import("../../stores/sessionStore");
+        const { authenticationStore } = await import(
             "../../stores/authenticationStore"
         );
-        // Mock authenticationStore to work with selectors
-        vi.mocked(authenticationStore).mockImplementation((selector: any) => {
-            if (typeof selector === "function") {
-                return selector(mockAuthState);
-            }
-            return mockAuthState;
-        });
-        vi.mocked(selectLastWebAuthNAction).mockImplementation(
-            (state: { lastWebAuthNAction: LastWebAuthNAction | null }) =>
-                state.lastWebAuthNAction
+
+        // Setup mock store state - Proxy bridges property assignments to
+        // vanilla store setState so existing test mutations still work.
+        mockSetSdkSession = vi.fn();
+        sessionStore.setState(
+            {
+                sdkSession: null,
+                session: null,
+                setSdkSession: mockSetSdkSession,
+            },
+            true
         );
+        mockSessionState = new Proxy({} as any, {
+            get: (_, key: string) => (sessionStore.getState() as any)[key],
+            set: (_, key: string, value) => {
+                sessionStore.setState({ [key]: value });
+                return true;
+            },
+        });
+
+        authenticationStore.setState({ lastWebAuthNAction: null }, true);
+        mockAuthState = new Proxy({} as any, {
+            get: (_, key: string) =>
+                (authenticationStore.getState() as any)[key],
+            set: (_, key: string, value) => {
+                authenticationStore.setState({ [key]: value });
+                return true;
+            },
+        });
 
         // Setup mock API
         const { authenticatedWalletApi } = await import("../api/backendClient");
