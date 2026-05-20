@@ -1,4 +1,14 @@
 import { Inline } from "@frak-labs/design-system/components/Inline";
+import {
+    Sheet,
+    SheetClose,
+    SheetContent,
+    SheetDescription,
+    SheetFooter,
+    SheetHeader,
+    SheetTitle,
+    SheetTrigger,
+} from "@frak-labs/design-system/components/Sheet";
 import { BadgeCheck } from "lucide-react";
 import {
     type PropsWithChildren,
@@ -8,7 +18,6 @@ import {
 } from "react";
 import { useForm, useFormContext } from "react-hook-form";
 import { type Address, isAddress } from "viem";
-import { AlertDialog } from "@/module/common/component/AlertDialog";
 import { Button } from "@/module/common/component/Button";
 import {
     Form,
@@ -30,7 +39,7 @@ export function ButtonAddTeam({
     merchantId,
     children,
 }: PropsWithChildren<{ merchantId: string }>) {
-    const [isModalOpen, setIsModalOpen] = useState(false);
+    const [isOpen, setIsOpen] = useState(false);
     const {
         mutateAsync: addAdmin,
         isPending: isAddingMember,
@@ -40,9 +49,9 @@ export function ButtonAddTeam({
     const form = useForm<FormAddTeamMembers>();
 
     useEffect(() => {
-        if (isModalOpen) return;
+        if (isOpen) return;
         form.reset();
-    }, [isModalOpen, form.reset, form]);
+    }, [isOpen, form.reset, form]);
 
     const onSubmit = useCallback(
         async (data: FormAddTeamMembers) => {
@@ -51,57 +60,53 @@ export function ButtonAddTeam({
                 merchantId,
                 wallet: data.wallet,
             });
-            setIsModalOpen(false);
+            setIsOpen(false);
         },
         [addAdmin, merchantId]
     );
 
     return (
-        <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)}>
-                <AlertDialog
-                    open={isModalOpen}
-                    onOpenChange={setIsModalOpen}
-                    title={
-                        <>
-                            <BadgeCheck color={"#0DDB84"} /> Add a new member
-                        </>
-                    }
-                    buttonElement={children}
-                    showCloseButton={false}
-                    text={
-                        <>
-                            {isAddingMember && (
-                                <p>
-                                    Adding the new admin
-                                    <span className={"dotsLoading"}>...</span>
-                                </p>
-                            )}
-                            <FormWallet disabled={isAddingMember} />
-                            {error && (
-                                <p>
-                                    Error when adding the admin: {error.message}
-                                </p>
-                            )}
-                        </>
-                    }
-                    cancel={
+        <Sheet open={isOpen} onOpenChange={setIsOpen}>
+            <SheetTrigger asChild>{children}</SheetTrigger>
+            <SheetContent side="right">
+                <SheetHeader>
+                    <SheetTitle>
+                        <BadgeCheck color={"#0DDB84"} /> Add a new member
+                    </SheetTitle>
+                    <SheetDescription>
+                        Invite an admin to your merchant team by wallet address.
+                    </SheetDescription>
+                </SheetHeader>
+                <Form {...form}>
+                    <form onSubmit={form.handleSubmit(onSubmit)}>
+                        {isAddingMember && (
+                            <p>
+                                Adding the new admin
+                                <span className={"dotsLoading"}>...</span>
+                            </p>
+                        )}
+                        <FormWallet disabled={isAddingMember} />
+                        {error && (
+                            <p>Error when adding the admin: {error.message}</p>
+                        )}
+                    </form>
+                </Form>
+                <SheetFooter>
+                    <SheetClose asChild>
                         <Button variant={"secondary"} disabled={isAddingMember}>
                             Cancel
                         </Button>
-                    }
-                    action={
-                        <Button
-                            variant={"primary"}
-                            disabled={!form.formState.isValid || isAddingMember}
-                            onClick={form.handleSubmit(onSubmit)}
-                        >
-                            Add Member
-                        </Button>
-                    }
-                />
-            </form>
-        </Form>
+                    </SheetClose>
+                    <Button
+                        variant={"primary"}
+                        disabled={!form.formState.isValid || isAddingMember}
+                        onClick={form.handleSubmit(onSubmit)}
+                    >
+                        Add Member
+                    </Button>
+                </SheetFooter>
+            </SheetContent>
+        </Sheet>
     );
 }
 
