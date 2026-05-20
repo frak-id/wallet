@@ -20,6 +20,7 @@ import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import { I18nextProvider, initReactI18next } from "react-i18next";
 import { drainPendingI18nOverrides } from "@/i18nOverrideQueue";
+import { ensureI18nBundle } from "@/i18nPreload";
 import { useListenerDataPreload } from "@/module/hooks/useListenerDataPreload";
 import { ListenerUiProvider } from "@/ui/ListenerUiProvider";
 import { ListenerUiRenderer } from "@/ui/ListenerUiRenderer";
@@ -32,12 +33,23 @@ let mounted = false;
  * Mount the Preact UI runtime exactly once. Subsequent calls are no-ops so
  * a partner site that fires multiple `frak_displayModal` calls in quick
  * succession does not trigger duplicate roots.
+ *
+ * Returns a promise so callers (tests) can await mount completion. Production
+ * callers fire-and-forget — the `mounted` flag prevents double mounts.
  */
-export function mountUiRuntime(): void {
+export async function mountUiRuntime(): Promise<void> {
     if (mounted) return;
     mounted = true;
 
-    initI18n();
+    // Init i18next first so the detector resolves the active language and
+    // the React bindings are wired up. Then await the locale bundle
+    // registration (shared promise — reuses the warm-up fetch kicked off
+    // from `bootstrap.ts`/`uiRuntime.ts`). Only then mount the React tree,
+    // so the first paint never sees raw translation keys.
+    await initI18n();
+    await ensureI18nBundle(i18next.language, i18next);
+
+    drainPendingI18nOverrides(i18next);
 
     const root = document.getElementById("root");
     if (!root) {
@@ -68,38 +80,17 @@ function ListenerHost() {
     return <ListenerUiRenderer />;
 }
 
-function initI18n(): void {
-    // Lazy-load the English bundle on demand. French is bundled by default
-    // (it's our fallbackLng) so most loads avoid pulling EN translations
-    // (~13 KB gzipped saved). Listener registered before init() so the initial
-    // `languageChanged` event emitted by the language detector is captured.
-    i18next.on("languageChanged", async (lng) => {
-        if (lng === "fr" && !i18next.hasResourceBundle("fr", "translation")) {
-            const { translation, customized } = await import(
-                "@frak-labs/wallet-shared/i18n/locales/fr"
-            );
-            i18next.addResourceBundle("fr", "translation", translation);
-            i18next.addResourceBundle("fr", "customized", customized);
-            return;
-        }
-
-        // Otherwise, if we didn't loaded en translation, load them
-        if (!i18next.hasResourceBundle("en", "translation")) {
-            const { translation, customized } = await import(
-                "@frak-labs/wallet-shared/i18n/locales/en"
-            );
-            i18next.addResourceBundle("en", "translation", translation);
-            i18next.addResourceBundle("en", "customized", customized);
-            return;
-        }
+async function initI18n(): Promise<void> {
+    // Subsequent language switches (SDK `resolved-config.lang` overrides, or
+    // any explicit `changeLanguage` call) reuse the same shared loader so
+    // the JSON for the new locale is only fetched + registered once. Fire-
+    // and-forget here is fine: the shared promise dedupes concurrent calls
+    // and the listener doesn't gate render.
+    i18next.on("languageChanged", (lng) => {
+        void ensureI18nBundle(lng, i18next);
     });
 
-    // Kick off i18next in parallel with the React render. The bundled French
-    // resources resolve synchronously; English is added later via the listener
-    // above. `react-i18next` re-renders consumers when `addResourceBundle`
-    // fires its `added` event. `useSuspense: false` keeps `useTranslation`
-    // from suspending if it's ever called before init completes.
-    i18next
+    await i18next
         .use(initReactI18next)
         .use(I18nextBrowserLanguageDetector)
         .init({
@@ -111,7 +102,6 @@ function initI18n(): void {
             partialBundledLanguages: true,
             debug: isRunningLocally,
             interpolation,
-
             detection: {
                 order: [
                     "querystring",
@@ -122,10 +112,5 @@ function initI18n(): void {
                 ],
             },
             react: { useSuspense: false },
-        })
-        .then(() => {
-            // Replay any lifecycle overrides that arrived while Ring 0 was
-            // running solo (modal-i18n, resolved-config.lang).
-            drainPendingI18nOverrides(i18next);
         });
 }

@@ -11,10 +11,17 @@
  * the eager bundle.
  */
 
+import { warmI18nLocale } from "@/i18nPreload";
+
 let runtimePromise: Promise<unknown> | null = null;
 
 export function ensureUiRuntime(): Promise<unknown> {
     if (runtimePromise) return runtimePromise;
+    // Kick off locale preload in parallel with the Ring 1 import so the
+    // first modal paint has translations available. Idempotent — if the
+    // `?preload=...` hash already triggered the fetch on boot, this is a
+    // no-op.
+    warmI18nLocale();
     runtimePromise = import("@/ui/runtime").then((mod) => {
         mod.mountUiRuntime();
     });

@@ -17,6 +17,7 @@
 
 import type { FrakLifecycleEvent } from "@frak-labs/core-sdk";
 import { createRpcListener } from "@frak-labs/frame-connector";
+import { warmI18nLocale } from "@/i18nPreload";
 import {
     clientLifecycleHandler,
     emitConnected,
@@ -80,6 +81,11 @@ function setupPreloadHints(): void {
     const wantsWallet = preloads.includes("wallet");
 
     if (!wantsModal && !wantsSharing && !wantsWallet) return;
+
+    // Kick off the i18n locale fetch immediately — no need to wait for
+    // requestIdleCallback. Translations gate the first paint of any UI, so
+    // we want the JSON bundle in memory by the time Ring 1 mounts.
+    warmI18nLocale();
 
     const handler = async () => {
         // Always warm Ring 1 (preact + provider tree) when any UI is hinted.
