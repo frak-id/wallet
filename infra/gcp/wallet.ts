@@ -20,13 +20,12 @@ import {
 } from "../config";
 import { isProd, normalizedStageName } from "../utils";
 
-/**
- * Whether the native mobile app is available for install prompts.
- * When false, install CTAs are hidden and the sharing flow stays web-only.
- */
-const isAppAvailable = isProd ? "false" : "true";
-
-import { baseDomainName, getRegistryPath, walletNamespace } from "./utils";
+import {
+    baseDomainName,
+    cachedImage,
+    getRegistryPath,
+    walletNamespace,
+} from "./utils";
 
 // Resolve backend service name only in non-dev (avoids triggering Docker builds locally)
 const backendServiceName = $dev
@@ -56,7 +55,6 @@ export const walletEnv = {
     // Monerium API host the in-pod nginx proxy forwards `/monerium-api/*` to.
     // Workaround for their broken CORS preflight (see apps/wallet/nginx.conf).
     MONERIUM_API_HOST: isProd ? "api.monerium.app" : "api.monerium.dev",
-    IS_APP_AVAILABLE: isAppAvailable,
 };
 
 let imageRefs = {
@@ -66,10 +64,8 @@ let imageRefs = {
 const dependency: Resource[] = [];
 
 if (!$dev) {
-    const { baseImage } = await import("./images");
-
     // Build the custom Nginx image with frontend files built-in
-    const walletImage = new dockerbuild.Image("wallet", {
+    const walletImage = cachedImage("wallet", {
         context: {
             location: $cli.paths.root,
         },
@@ -79,13 +75,11 @@ if (!$dev) {
         // Non-secret build args
         buildArgs: {
             NODE_ENV: "production",
-            BASE_IMAGE: baseImage.ref,
             STAGE: walletEnv.STAGE,
             BACKEND_URL: walletEnv.BACKEND_URL,
             ERPC_URL: walletEnv.ERPC_URL,
             FRAK_WALLET_URL: walletEnv.FRAK_WALLET_URL,
             OPEN_PANEL_API_URL: walletEnv.OPEN_PANEL_API_URL,
-            IS_APP_AVAILABLE: walletEnv.IS_APP_AVAILABLE,
         },
         // Secrets passed via BuildKit (not stored in layers)
         secrets: {
@@ -103,7 +97,7 @@ if (!$dev) {
     });
 
     // Build the custom Nginx image with frontend files built-in
-    const listenerImage = new dockerbuild.Image("wallet-listener", {
+    const listenerImage = cachedImage("wallet-listener", {
         context: {
             location: $cli.paths.root,
         },
@@ -113,13 +107,11 @@ if (!$dev) {
         // Non-secret build args
         buildArgs: {
             NODE_ENV: "production",
-            BASE_IMAGE: baseImage.ref,
             STAGE: walletEnv.STAGE,
             BACKEND_URL: walletEnv.BACKEND_URL,
             ERPC_URL: walletEnv.ERPC_URL,
             FRAK_WALLET_URL: walletEnv.FRAK_WALLET_URL,
             OPEN_PANEL_API_URL: walletEnv.OPEN_PANEL_API_URL,
-            IS_APP_AVAILABLE: walletEnv.IS_APP_AVAILABLE,
         },
         // Secrets passed via BuildKit (not stored in layers)
         secrets: {

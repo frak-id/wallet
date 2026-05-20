@@ -1,0 +1,1 @@
+CREATE INDEX `authenticators_email_lower_idx` ON `authenticators` (LOWER("email"));

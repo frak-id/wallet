@@ -1,5 +1,5 @@
-import type { FrakClient } from "@frak-labs/core-sdk";
-import { getClientId } from "@frak-labs/core-sdk";
+import type { FrakClient, SharingPageProduct } from "@frak-labs/core-sdk";
+import { compressJsonToB64, getClientId } from "@frak-labs/core-sdk";
 import { displayModal, displaySharingPage } from "@frak-labs/core-sdk/actions";
 
 function log(
@@ -149,6 +149,90 @@ async function handleSharingPage(withProduct: boolean) {
     }
 }
 
+const sampleProducts: SharingPageProduct[] = [
+    {
+        title: "Babies camel cuir velours bout carré",
+        imageUrl:
+            "https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=200",
+        link: "https://example.com/product-1",
+    },
+    {
+        title: "Sneakers blanches classiques",
+        imageUrl:
+            "https://images.unsplash.com/photo-1549298916-b41d501d3772?w=200",
+        link: "https://example.com/product-2",
+    },
+];
+
+function buildShareLink(
+    params: { products?: SharingPageProduct[]; link?: string } = {}
+): string {
+    const url = new URL(window.location.href);
+    // Strip existing query so each generated link is reproducible.
+    url.search = "";
+    url.searchParams.set("frakAction", "share");
+    if (params.link) url.searchParams.set("link", params.link);
+    if (params.products?.length) {
+        url.searchParams.set("products", compressJsonToB64(params.products));
+    }
+    return url.toString();
+}
+
+async function copyShareLink(text: string, label: string) {
+    const statusBoxId = "share-link-status";
+    try {
+        await navigator.clipboard.writeText(text);
+        log(`${label} link copied to clipboard`, "success", statusBoxId);
+    } catch (e) {
+        log(`Copy failed: ${e}`, "error", statusBoxId);
+    }
+}
+
+function bindShareLinkSamples() {
+    const noProductLink = buildShareLink();
+    const withProductLink = buildShareLink({
+        link: "https://example.com",
+        products: sampleProducts,
+    });
+
+    const samples: Array<{
+        label: string;
+        link: string;
+        codeId: string;
+        openId: string;
+        copyId: string;
+    }> = [
+        {
+            label: "No-product",
+            link: noProductLink,
+            codeId: "share-link-no-product",
+            openId: "open-share-link-no-product",
+            copyId: "btn-copy-share-link-no-product",
+        },
+        {
+            label: "With-products",
+            link: withProductLink,
+            codeId: "share-link-with-product",
+            openId: "open-share-link-with-product",
+            copyId: "btn-copy-share-link-with-product",
+        },
+    ];
+
+    for (const sample of samples) {
+        const codeEl = document.getElementById(sample.codeId);
+        if (codeEl) codeEl.textContent = sample.link;
+        const openEl = document.getElementById(
+            sample.openId
+        ) as HTMLAnchorElement | null;
+        if (openEl) openEl.href = sample.link;
+        document
+            .getElementById(sample.copyId)
+            ?.addEventListener("click", () =>
+                copyShareLink(sample.link, sample.label)
+            );
+    }
+}
+
 function bindTestButtons() {
     document
         .getElementById("btn-modal-no-placement")
@@ -171,6 +255,7 @@ function bindTestButtons() {
     document
         .getElementById("btn-sharing-page-product")
         ?.addEventListener("click", () => handleSharingPage(true));
+    bindShareLinkSamples();
 }
 
 async function init() {

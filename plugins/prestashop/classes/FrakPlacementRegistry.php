@@ -88,10 +88,10 @@ class FrakPlacementRegistry
      * `hook` prefix so we keep the canonical PrestaShop names here.
      *
      * `default` controls whether the placement is opt-in (`false`) or
-     * opt-out (`true`) on a fresh install. The current product/order
-     * placements are opt-out (existing module behaviour); the new auxiliary
-     * surfaces (cart, top banner, customer-account) are opt-in so we don't
-     * change merchants' storefronts on upgrade without their consent.
+     * opt-out (`true`) on a fresh install. Every storefront-visible placement
+     * ships opt-in (`false`) so installing the module never paints Frak UI on
+     * the merchant's shop until they explicitly tick the placement on the
+     * configuration page.
      *
      * `placement_attr` is forwarded as the `placement="..."` HTML attribute
      * on the rendered web component. The Frak business dashboard keys
@@ -140,7 +140,7 @@ class FrakPlacementRegistry
             'component' => self::COMPONENT_SHARE_BUTTON,
             'hook' => 'displayProductAdditionalInfo',
             'config_key' => 'FRAK_PLACEMENT_SHARE_PRODUCT',
-            'default' => true,
+            'default' => false,
             'placement_attr' => 'product',
             'label' => 'Share button on product pages',
             'description' => 'Renders the share-and-earn button under each product\'s additional info block.',
@@ -154,7 +154,7 @@ class FrakPlacementRegistry
             'component' => self::COMPONENT_BANNER,
             'hook' => 'displayNavFullWidth',
             'config_key' => 'FRAK_PLACEMENT_BANNER_TOP',
-            'default' => true,
+            'default' => false,
             'placement_attr' => 'top',
             'label' => 'Banner above the storefront content (full-width)',
             'description' => 'Renders the referral / in-app browser banner full-width below the header (via the `displayNavFullWidth` hook). Auto-hides when the SDK has nothing to surface.',
@@ -168,7 +168,7 @@ class FrakPlacementRegistry
             'component' => self::COMPONENT_POST_PURCHASE,
             'hook' => 'displayOrderConfirmation',
             'config_key' => 'FRAK_PLACEMENT_POST_PURCHASE_CONFIRMATION',
-            'default' => true,
+            'default' => false,
             'placement_attr' => 'order-confirmation',
             'label' => 'Post-purchase card on the order confirmation page',
             'description' => 'Shows the post-purchase reward card on the thank-you page so referrers can share immediately.',
@@ -177,7 +177,7 @@ class FrakPlacementRegistry
             'component' => self::COMPONENT_POST_PURCHASE,
             'hook' => 'displayOrderDetail',
             'config_key' => 'FRAK_PLACEMENT_POST_PURCHASE_DETAIL',
-            'default' => true,
+            'default' => false,
             'placement_attr' => 'view-order',
             'label' => 'Post-purchase card on My Account → Orders → Detail',
             'description' => 'Re-fires the post-purchase tracker + card when the customer revisits the order from the account area or the order email link.',

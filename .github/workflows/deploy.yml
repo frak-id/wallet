@@ -29,7 +29,10 @@ defaults:
 jobs:
   deploy:
     name: "☁️ Deploy"
-    runs-on: 'ubuntu-latest'
+    # In-cluster hetzner runner. `frak-hetzner-wallet` scale set in
+    # infra-core (`infra/hetzner/arc.ts`). ARC autoscales pods on demand
+    # (min=0, max=3), so the first run has a 30-60s cold start.
+    runs-on: 'frak-hetzner-wallet'
     steps:
       - name: Checkout Repo
         uses: actions/checkout@v6
@@ -97,6 +100,29 @@ jobs:
           role-to-assume: arn:aws:iam::262732185023:role/github-action-deploy-role
           aws-region: eu-west-1
           retry-max-attempts: 5
+
+      # Use the in-cluster buildkit pod (see infra-core's infra/hetzner/buildkit.ts)
+      # instead of spinning up local buildkit on the runner. Wins:
+      #   - persistent 50Gi PVC cache survives across runs (every runner pod is fresh)
+      #   - shared cache across all CI runs in the cluster
+      #   - drops setup-qemu — the buildkit pod ships QEMU emulators for cross-arch
+      #
+      # mTLS client cert is mounted at /buildkit-certs by the unprivileged
+      # `frak-hetzner-wallet` scale set (see infra-core arc.ts). The action
+      # marks this builder as active (default `use: true`) so
+      # `@pulumi/docker-build` Image resources in infra/gcp/*.ts pick it up
+      # automatically (no `builder` field set).
+      - name: "🐳 Setup remote buildkit builder"
+        if: steps.changes.outputs.services == 'true' || github.event.inputs.force_deploy == 'true'
+        uses: docker/setup-buildx-action@v4
+        with:
+          name: hetzner
+          driver: remote
+          endpoint: tcp://buildkitd.buildkit.svc.cluster.local:1234
+          driver-opts: |
+            cacert=/buildkit-certs/ca.crt
+            cert=/buildkit-certs/tls.crt
+            key=/buildkit-certs/tls.key
 
       - name: "👥 Login to Google Cloud"
         uses: 'google-github-actions/auth@v3'

@@ -8,43 +8,39 @@ import { authenticatorStorage } from "../common/storage/authenticators";
 import type { Session } from "../types/Session";
 import type { AuthenticationStore } from "./types";
 
+export type { PendingRegistration } from "./types";
+
 /**
  * Authentication store managing last authenticator, webauthn actions, and SSO context
- * lastAuthenticator and lastWebAuthNAction use persist middleware
+ * Persists lastAuthenticator, lastAuthenticationAt, lastWebAuthNAction, and pendingRegistration
  * ssoContext is in-memory only (not persisted)
  */
 export const authenticationStore = create<AuthenticationStore>()(
     persist(
         (set) => ({
-            // Initial state
             lastAuthenticator: null,
+            pendingRegistration: null,
             lastAuthenticationAt: null,
             lastWebAuthNAction: null,
             ssoContext: null,
 
-            // Actions
             setLastAuthenticator: (lastAuthenticator) =>
                 set({ lastAuthenticator }),
+            setPendingRegistration: (pendingRegistration) =>
+                set({ pendingRegistration }),
             setLastAuthenticationAt: (lastAuthenticationAt) =>
                 set({ lastAuthenticationAt }),
             setLastWebAuthNAction: (lastWebAuthNAction) =>
                 set({ lastWebAuthNAction }),
             setSsoContext: (ssoContext) => set({ ssoContext }),
-            clearAuthentication: () =>
-                set({
-                    lastAuthenticator: null,
-                    lastAuthenticationAt: null,
-                    lastWebAuthNAction: null,
-                    ssoContext: null,
-                }),
         }),
         {
             name: "frak_authentication_store",
             partialize: (state) => ({
                 lastAuthenticator: state.lastAuthenticator,
+                pendingRegistration: state.pendingRegistration,
                 lastAuthenticationAt: state.lastAuthenticationAt,
                 lastWebAuthNAction: state.lastWebAuthNAction,
-                // ssoContext is not persisted (in-memory only)
             }),
         }
     )

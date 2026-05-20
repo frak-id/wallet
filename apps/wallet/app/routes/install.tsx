@@ -52,12 +52,9 @@ export const Route = createFileRoute("/install")({
 function InstallPage() {
     const search = Route.useSearch();
 
-    // Web + not logged in + app available → show install code + store download links
+    // Web + not logged in → show install code + store download links
     // Otherwise → use the web processing flow (ensure + register/login)
-    const shouldShowCodeView =
-        process.env.IS_APP_AVAILABLE === "true" &&
-        !IS_TAURI &&
-        !getSafeSession()?.token;
+    const shouldShowCodeView = !IS_TAURI && !getSafeSession()?.token;
 
     useEffect(() => {
         trackEvent("install_page_viewed", {

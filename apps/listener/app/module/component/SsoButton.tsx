@@ -96,8 +96,8 @@ export function SsoButton({
         return null;
     }
 
-    // On mobile + app available, use deep link redirect flow (tries native app first)
-    if (ua.isMobile && process.env.IS_APP_AVAILABLE === "true") {
+    // On mobile, use deep link redirect flow (tries native app first)
+    if (ua.isMobile) {
         return (
             <MobileSsoButton link={link} text={text} className={className} />
         );

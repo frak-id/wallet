@@ -131,4 +131,35 @@ export class IdentityOrchestrator {
     async getWalletForGroup(groupId: string): Promise<Address | null> {
         return this.identityRepository.getWalletForGroup(groupId);
     }
+
+    /**
+     * Anchor a wallet to its anonymous fingerprint (when both are known) and
+     * swallow any failure. Used by the auth routes after a successful login or
+     * registration so an identity-graph hiccup never blocks the auth response.
+     */
+    async linkWalletToFingerprint(params: {
+        walletAddress: Address;
+        clientId?: string;
+        merchantId?: string;
+    }): Promise<void> {
+        const { walletAddress, clientId, merchantId } = params;
+        try {
+            const nodes: IdentityNode[] = [
+                { type: "wallet", value: walletAddress },
+            ];
+            if (clientId && merchantId) {
+                nodes.push({
+                    type: "anonymous_fingerprint",
+                    value: clientId,
+                    merchantId,
+                });
+            }
+            await this.resolveAndAssociate(nodes);
+        } catch (err: unknown) {
+            log.error(
+                { err, walletAddress, merchantId },
+                "Failed to connect wallet to identity"
+            );
+        }
+    }
 }

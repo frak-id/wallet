@@ -104,9 +104,7 @@ export const merchantSdkConfigRoutes = new Elysia({
                 processedConfig
             );
 
-            MerchantContext.services.resolve.invalidateForDomain(
-                merchant.domain
-            );
+            MerchantContext.services.resolve.invalidateForMerchant(merchant);
 
             return status(204);
         },

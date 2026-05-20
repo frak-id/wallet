@@ -29,6 +29,7 @@ import {
     applyRewardPlaceholder,
     formatEstimatedReward,
 } from "@/utils/format/formatReward";
+import { sanitizeProductList } from "@/utils/sharingPageProducts";
 import { GiftIcon } from "../icons/GiftIcon";
 import {
     badge,
@@ -45,7 +46,6 @@ import {
     imageWrapper,
     message,
 } from "./PostPurchase.css";
-import { coerceProductCandidates, normalizeProductCandidate } from "./products";
 import type { PostPurchaseProps } from "./types";
 
 /**
@@ -302,16 +302,10 @@ export function PostPurchase({
     // `javascript:` link would be a XSS sink in any consumer that binds the
     // value to an `href`. Unparseable / empty payloads are silently dropped
     // so the share still works without the product card section.
-    const parsedProducts = useMemo<SharingPageProduct[] | undefined>(() => {
-        const candidates = coerceProductCandidates(products);
-        if (!candidates) return undefined;
-        const sanitized: SharingPageProduct[] = [];
-        for (const candidate of candidates) {
-            const entry = normalizeProductCandidate(candidate);
-            if (entry) sanitized.push(entry);
-        }
-        return sanitized.length > 0 ? sanitized : undefined;
-    }, [products]);
+    const parsedProducts = useMemo<SharingPageProduct[] | undefined>(
+        () => sanitizeProductList(products),
+        [products]
+    );
 
     // Click handler — opens the full-page sharing UI. The sharing page
     // already renders a product card section when `products` is provided

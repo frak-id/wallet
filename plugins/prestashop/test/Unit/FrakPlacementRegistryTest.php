@@ -136,19 +136,18 @@ final class FrakPlacementRegistryTest extends TestCase
         $this->assertSame([], FrakPlacementRegistry::forHook('displaySomethingElse'));
     }
 
-    public function testProductAndOrderPlacementsAreOptOut(): void
+    public function testEveryPlacementShipsOptIn(): void
     {
-        // Existing module behaviour: the legacy product / order placements
-        // are on by default so upgrading shops do not lose render coverage.
-        $this->assertTrue(FrakPlacementRegistry::PLACEMENTS['share_product']['default']);
-        $this->assertTrue(FrakPlacementRegistry::PLACEMENTS['post_purchase_confirmation']['default']);
-        $this->assertTrue(FrakPlacementRegistry::PLACEMENTS['post_purchase_detail']['default']);
-    }
-
-    public function testAuxiliaryBannerSurfaceIsOptOut(): void
-    {
-        // The auxiliary top-banner surface is on by default so upgrading
-        // shops get banner coverage without an extra opt-in step.
-        $this->assertTrue(FrakPlacementRegistry::PLACEMENTS['banner_top']['default']);
+        // Storefront-visible placements default OFF so installing the module
+        // never paints Frak UI on the merchant's shop without an explicit
+        // opt-in on the configuration page. Existing installs survive the
+        // flip because `seedDefaults()` no-ops when `FRAK_PLACEMENTS` is
+        // already populated.
+        foreach (FrakPlacementRegistry::PLACEMENTS as $id => $placement) {
+            $this->assertFalse(
+                $placement['default'],
+                "Placement '{$id}' must ship opt-in (default=false)"
+            );
+        }
     }
 }

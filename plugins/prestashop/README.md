@@ -44,10 +44,10 @@ Three Frak web components are available: `<frak-button-share>`, `<frak-banner>`,
 
 | Component | Placement id | PrestaShop hook | Default | `placement` attr |
 | --- | --- | --- | --- | --- |
-| `<frak-button-share>` | `share_product` | `displayProductAdditionalInfo` | enabled | `product` |
-| `<frak-banner>` | `banner_top` | `displayTop` | enabled | `top` |
-| `<frak-post-purchase>` | `post_purchase_confirmation` | `displayOrderConfirmation` | enabled | `order-confirmation` |
-| `<frak-post-purchase>` | `post_purchase_detail` | `displayOrderDetail` | enabled | `view-order` |
+| `<frak-button-share>` | `share_product` | `displayProductAdditionalInfo` | disabled | `product` |
+| `<frak-banner>` | `banner_top` | `displayNavFullWidth` | disabled | `top` |
+| `<frak-post-purchase>` | `post_purchase_confirmation` | `displayOrderConfirmation` | disabled | `order-confirmation` |
+| `<frak-post-purchase>` | `post_purchase_detail` | `displayOrderDetail` | disabled | `view-order` |
 
 Adding / removing a placement is a single edit in [`classes/FrakPlacementRegistry.php`](classes/FrakPlacementRegistry.php) plus a matching `hookXxx()` callback in [`frakintegration.php`](frakintegration.php) that delegates to `FrakDisplayDispatcher::dispatch()`.
 

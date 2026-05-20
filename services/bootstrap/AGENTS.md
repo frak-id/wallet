@@ -9,7 +9,8 @@ One-shot orchestrator that runs before the backend can serve traffic. Packaged a
 
 ## Quick Commands
 ```bash
-bun -F @frak-labs/bootstrap start                 # Run the orchestrator (all steps)
+bun -F @frak-labs/bootstrap start                 # Run the orchestrator from source (all steps)
+bun -F @frak-labs/bootstrap build                 # Bundle to dist/index.js (used by the Docker image)
 bun -F @frak-labs/bootstrap db:generate           # Generate Postgres migration
 bun -F @frak-labs/bootstrap db:migrate            # Apply Postgres migrations only
 bun -F @frak-labs/bootstrap db:studio             # Drizzle Studio (Postgres)

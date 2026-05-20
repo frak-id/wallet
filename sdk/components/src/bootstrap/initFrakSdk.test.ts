@@ -1,7 +1,8 @@
 import * as coreSdkIndex from "@frak-labs/core-sdk";
+import { compressJsonToB64 } from "@frak-labs/core-sdk";
 import * as coreSdkActions from "@frak-labs/core-sdk/actions";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import * as buttonWalletUtils from "../components/ButtonWallet/utils";
+import * as sharingPageUtils from "../actions/sharingPage";
 import * as clientReadyUtils from "./clientReady";
 import { initFrakSdk } from "./initFrakSdk";
 
@@ -25,8 +26,8 @@ vi.mock("./clientReady", () => ({
     dispatchClientReadyEvent: vi.fn(),
 }));
 
-vi.mock("../components/ButtonWallet/utils", () => ({
-    openWalletModal: vi.fn(),
+vi.mock("../actions/sharingPage", () => ({
+    openSharingPage: vi.fn(),
 }));
 
 // Sequential: tests mutate window.FrakSetup and vi.mock module state,
@@ -49,10 +50,12 @@ describe.sequential("initFrakSdk", () => {
         // Reset URL search params
         Object.defineProperty(window, "location", {
             value: {
-                search: "",
+                href: "https://example.com/",
             },
             writable: true,
         });
+        // Spy on history.replaceState so we can assert URL cleanup
+        window.history.replaceState = vi.fn();
     });
 
     afterEach(() => {
@@ -184,7 +187,7 @@ describe.sequential("initFrakSdk", () => {
         vi.useRealTimers();
     });
 
-    it("should open wallet modal when frakAction=share query param is present", async () => {
+    it("should open sharing page when frakAction=share query param is present", async () => {
         const mockClient = {
             config: {
                 domain: "example.com",
@@ -196,7 +199,7 @@ describe.sequential("initFrakSdk", () => {
         // Set up URL search params
         Object.defineProperty(window, "location", {
             value: {
-                search: "?frakAction=share",
+                href: "https://example.com/?frakAction=share",
             },
             writable: true,
         });
@@ -207,15 +210,101 @@ describe.sequential("initFrakSdk", () => {
 
         await initFrakSdk();
 
-        expect(buttonWalletUtils.openWalletModal).toHaveBeenCalled();
+        expect(sharingPageUtils.openSharingPage).toHaveBeenCalledWith(
+            undefined,
+            undefined,
+            { link: undefined, products: undefined }
+        );
         expect(consoleLogSpy).toHaveBeenCalledWith(
-            "[Frak SDK] Auto open query param found"
+            "[Frak SDK] Auto open share via query param"
+        );
+        // URL should be cleaned so a refresh does not re-trigger auto-open
+        expect(window.history.replaceState).toHaveBeenCalledWith(
+            {},
+            "",
+            "https://example.com/"
         );
 
         consoleLogSpy.mockRestore();
     });
 
-    it("should not open wallet modal when frakAction query param is not present", async () => {
+    it("should forward link, placement and products query params to openSharingPage", async () => {
+        const mockClient = {
+            config: { domain: "example.com" },
+        } as any;
+        vi.mocked(coreSdkIndex.setupClient).mockResolvedValue(mockClient);
+
+        const products = [
+            { title: "Boots", link: "https://shop.example.com/boots" },
+        ];
+        const productsParam = compressJsonToB64(products);
+
+        Object.defineProperty(window, "location", {
+            value: {
+                href: `https://example.com/order/42?frakAction=share&link=https%3A%2F%2Fexample.com%2Forder%2F1&placement=klaviyo-post-purchase&products=${encodeURIComponent(productsParam)}&keep=me`,
+            },
+            writable: true,
+        });
+
+        const consoleLogSpy = vi
+            .spyOn(console, "log")
+            .mockImplementation(() => {});
+
+        await initFrakSdk();
+
+        expect(sharingPageUtils.openSharingPage).toHaveBeenCalledWith(
+            undefined,
+            "klaviyo-post-purchase",
+            {
+                link: "https://example.com/order/1",
+                products,
+            }
+        );
+        // Only the four frak-managed params are stripped; unrelated query
+        // params on the merchant URL (e.g. `keep=me`) survive.
+        expect(window.history.replaceState).toHaveBeenCalledWith(
+            {},
+            "",
+            "https://example.com/order/42?keep=me"
+        );
+
+        consoleLogSpy.mockRestore();
+    });
+
+    it("should drop a malformed products param without crashing", async () => {
+        const mockClient = {
+            config: { domain: "example.com" },
+        } as any;
+        vi.mocked(coreSdkIndex.setupClient).mockResolvedValue(mockClient);
+
+        Object.defineProperty(window, "location", {
+            value: {
+                href: "https://example.com/?frakAction=share&products=$$$not-base64$$$",
+            },
+            writable: true,
+        });
+
+        const consoleLogSpy = vi
+            .spyOn(console, "log")
+            .mockImplementation(() => {});
+
+        await initFrakSdk();
+
+        expect(sharingPageUtils.openSharingPage).toHaveBeenCalledWith(
+            undefined,
+            undefined,
+            { link: undefined, products: undefined }
+        );
+        expect(window.history.replaceState).toHaveBeenCalledWith(
+            {},
+            "",
+            "https://example.com/"
+        );
+
+        consoleLogSpy.mockRestore();
+    });
+
+    it("should not open sharing page when frakAction query param is not present", async () => {
         const mockClient = {
             config: {
                 domain: "example.com",
@@ -226,10 +315,10 @@ describe.sequential("initFrakSdk", () => {
 
         await initFrakSdk();
 
-        expect(buttonWalletUtils.openWalletModal).not.toHaveBeenCalled();
+        expect(sharingPageUtils.openSharingPage).not.toHaveBeenCalled();
     });
 
-    it("should not open wallet modal when frakAction has different value", async () => {
+    it("should not open sharing page when frakAction has different value", async () => {
         const mockClient = {
             config: {
                 domain: "example.com",
@@ -240,13 +329,15 @@ describe.sequential("initFrakSdk", () => {
 
         Object.defineProperty(window, "location", {
             value: {
-                search: "?frakAction=other",
+                href: "https://example.com/?frakAction=other",
             },
             writable: true,
         });
 
         await initFrakSdk();
 
-        expect(buttonWalletUtils.openWalletModal).not.toHaveBeenCalled();
+        expect(sharingPageUtils.openSharingPage).not.toHaveBeenCalled();
+        // No share intent means we never touch the URL either
+        expect(window.history.replaceState).not.toHaveBeenCalled();
     });
 });

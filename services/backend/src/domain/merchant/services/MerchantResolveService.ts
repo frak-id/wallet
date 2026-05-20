@@ -36,7 +36,7 @@ export class MerchantResolveService {
         { value: MerchantResolveResponse }
     >({
         max: 512,
-        ttl: 60 * 60 * 1000,
+        ttl: 10 * 60 * 1000,
     });
 
     constructor(readonly merchantRepository: MerchantRepository) {}
@@ -124,10 +124,21 @@ export class MerchantResolveService {
         return response;
     }
 
-    invalidateForDomain(domain: string): void {
-        this.responseCache.delete(`${domain}:`);
-        this.responseCache.delete(`${domain}:fr`);
-        this.responseCache.delete(`${domain}:en`);
+    invalidateForMerchant(merchant: {
+        id: string;
+        domain: string;
+        allowedDomains?: string[] | null;
+    }): void {
+        const langs = ["", "fr", "en"] as const;
+        const domains = [merchant.domain, ...(merchant.allowedDomains ?? [])];
+        for (const domain of domains) {
+            for (const lang of langs) {
+                this.responseCache.delete(`${domain}:${lang}`);
+            }
+        }
+        for (const lang of langs) {
+            this.responseCache.delete(`${merchant.id}:${lang}`);
+        }
     }
 
     private processPlacementCss(
