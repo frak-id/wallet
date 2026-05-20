@@ -19,6 +19,7 @@ import type {
     GetMembersPageItem,
     GetMembersParam,
 } from "@/module/members/api/getMerchantMembers";
+import { MemberDetailsSheet } from "@/module/members/component/MemberDetailsSheet";
 import { TableMembersFilters } from "@/module/members/component/TableMembers/Filters";
 import { Pagination } from "@/module/members/component/TableMembers/Pagination";
 import { membersPageQueryOptions } from "@/module/members/queries/queryOptions";
@@ -64,6 +65,13 @@ export function TableMembers() {
     const [sortingState, setSorting] = useState<SortingState>([]);
 
     /**
+     * Member currently displayed in the right-side details sheet.
+     */
+    const [selectedMember, setSelectedMember] = useState<
+        GetMembersPageItem | undefined
+    >();
+
+    /**
      * Every time sorting state changes, update the filters
      */
     useEffect(() => {
@@ -100,22 +108,31 @@ export function TableMembers() {
                     id: "select",
                     cell: ({ row }) => {
                         return (
-                            <Checkbox
-                                id={`select-${row.id}`}
-                                checked={
-                                    !!selectedMembers?.find((a) =>
-                                        isAddressEqual(a, row.original.user)
-                                    )
-                                }
-                                onCheckedChange={(checked) => {
-                                    if (checked) {
-                                        addSelectedMember(row.original.user);
-                                    } else {
-                                        removeSelectedMember(row.original.user);
+                            <div
+                                onClick={(e) => e.stopPropagation()}
+                                onKeyDown={(e) => e.stopPropagation()}
+                            >
+                                <Checkbox
+                                    id={`select-${row.id}`}
+                                    checked={
+                                        !!selectedMembers?.find((a) =>
+                                            isAddressEqual(a, row.original.user)
+                                        )
                                     }
-                                }}
-                                disabled={false}
-                            />
+                                    onCheckedChange={(checked) => {
+                                        if (checked) {
+                                            addSelectedMember(
+                                                row.original.user
+                                            );
+                                        } else {
+                                            removeSelectedMember(
+                                                row.original.user
+                                            );
+                                        }
+                                    }}
+                                    disabled={false}
+                                />
+                            </div>
                         );
                     },
                 }),
@@ -123,7 +140,12 @@ export function TableMembers() {
                     enableSorting: true,
                     header: () => "Wallet",
                     cell: ({ getValue }) => (
-                        <WalletAddress wallet={getValue()} />
+                        <span
+                            onClick={(e) => e.stopPropagation()}
+                            onKeyDown={(e) => e.stopPropagation()}
+                        >
+                            <WalletAddress wallet={getValue()} />
+                        </span>
                     ),
                 }),
                 columnHelper.accessor("merchantNames", {
@@ -170,6 +192,7 @@ export function TableMembers() {
                     pagination={paginationState}
                     sorting={sortingState}
                     onSortingChange={setSorting}
+                    onRowClick={(row) => setSelectedMember(row.original)}
                     postTable={
                         <>
                             {(selectedMembers?.length ?? 0) > 0 && (
@@ -200,6 +223,12 @@ export function TableMembers() {
                     }
                 />
             )}
+            <MemberDetailsSheet
+                member={selectedMember}
+                onOpenChange={(open) =>
+                    setSelectedMember(open ? selectedMember : undefined)
+                }
+            />
         </>
     );
 }
