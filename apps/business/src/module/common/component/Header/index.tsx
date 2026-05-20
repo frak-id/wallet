@@ -1,4 +1,4 @@
-import { Link } from "@tanstack/react-router";
+import { Link, useLocation } from "@tanstack/react-router";
 import { Plus, User } from "lucide-react";
 import { ButtonNewCampaign } from "@/module/campaigns/component/ButtonNewCampaign";
 import { useIsDemoMode } from "@/module/common/atoms/demoMode";
@@ -19,6 +19,10 @@ import {
 
 export function Header() {
     const isDemoMode = useIsDemoMode();
+    const { pathname } = useLocation();
+    const showCreateCampaign = pathname.startsWith("/campaigns");
+    const showAddMerchant =
+        pathname === "/dashboard" || pathname.startsWith("/merchant/");
 
     return (
         <div>
@@ -37,15 +41,17 @@ export function Header() {
                         </Link>
                     )}
                     <ButtonRefresh />
-                    <ButtonNewCampaign />
-                    <AddMerchantSheet
-                        trigger={
-                            <Button variant="primary">
-                                <Plus size={16} />
-                                Add merchant
-                            </Button>
-                        }
-                    />
+                    {showCreateCampaign && <ButtonNewCampaign />}
+                    {showAddMerchant && (
+                        <AddMerchantSheet
+                            trigger={
+                                <Button variant="primary">
+                                    <Plus size={16} />
+                                    Add merchant
+                                </Button>
+                            }
+                        />
+                    )}
                     <span
                         className={navigationProfileSeparator}
                         aria-hidden="true"

@@ -8,6 +8,7 @@ vi.mock("@tanstack/react-router", () => ({
             {children}
         </a>
     ),
+    useLocation: () => ({ pathname: "/test" }),
 }));
 
 vi.mock("@/module/common/component/ButtonRefresh", () => ({
