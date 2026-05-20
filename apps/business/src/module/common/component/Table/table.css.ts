@@ -70,3 +70,11 @@ globalStyle(`${table} > tbody > tr > td, ${table} > tfoot > tr > th`, {
 globalStyle(`${table} a`, {
     color: vars.text.action,
 });
+
+globalStyle(`${table} > tbody > tr[data-clickable="true"]`, {
+    cursor: "pointer",
+});
+
+globalStyle(`${table} > tbody > tr[data-clickable="true"]:hover`, {
+    backgroundColor: vars.surface.muted,
+});

@@ -7,6 +7,7 @@ import {
     getFilteredRowModel,
     getSortedRowModel,
     type PaginationState,
+    type Row,
     type RowPinningState,
     type RowSelectionState,
     useReactTable,
@@ -30,6 +31,7 @@ export type ReactTableProps<TData> = {
     postTable?: ReactNode;
     // Some custom configs
     enableFiltering?: boolean;
+    onRowClick?: (row: Row<TData>) => void;
     // Some states
     sorting?: SortingState;
     columnFilters?: ColumnFiltersState;
@@ -50,6 +52,7 @@ export function Table<TData extends object>({
     postTable,
     sorting,
     enableFiltering = false,
+    onRowClick,
     columnFilters,
     rowSelection,
     rowPinning,
@@ -127,7 +130,15 @@ export function Table<TData extends object>({
                         </tr>
                     ) : (
                         rowModel.rows.map((row) => (
-                            <tr key={row.id}>
+                            <tr
+                                key={row.id}
+                                data-clickable={onRowClick ? "true" : undefined}
+                                onClick={
+                                    onRowClick
+                                        ? () => onRowClick(row)
+                                        : undefined
+                                }
+                            >
                                 {row.getVisibleCells().map((cell) => (
                                     <td key={cell.id}>
                                         {flexRender(
