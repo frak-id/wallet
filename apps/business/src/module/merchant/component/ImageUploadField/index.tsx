@@ -1,12 +1,14 @@
-import { Input } from "@frak-labs/ui/component/forms/Input";
+import { Inline } from "@frak-labs/design-system/components/Inline";
+import { Stack } from "@frak-labs/design-system/components/Stack";
 import { useCallback, useMemo } from "react";
 import { useDropzone } from "react-dropzone";
+import { Input } from "@/module/forms/Input";
 import {
     useMediaDelete,
     useMediaList,
     useMediaUpload,
 } from "@/module/merchant/hook/useMediaUpload";
-import styles from "./index.module.css";
+import * as styles from "./image-upload-field.css";
 
 type ImageUploadFieldProps = {
     merchantId: string;
@@ -80,8 +82,8 @@ export function ImageUploadField({
     const errorMessage = getUploadErrorMessage(uploadError);
 
     return (
-        <div className={styles.imageUploadField}>
-            <div className={styles.controls}>
+        <Inline space="s" alignY="top">
+            <Stack space="xs">
                 <div className={styles.inputRow}>
                     <Input
                         length={"medium"}
@@ -126,8 +128,8 @@ export function ImageUploadField({
                         onUploadSuccess(url);
                     }}
                 />
-            </div>
-        </div>
+            </Stack>
+        </Inline>
     );
 }
 
@@ -176,7 +178,7 @@ function ExistingFilePicker({
     return (
         <div className={styles.existingFiles}>
             <p className={styles.existingFilesLabel}>Use an existing image:</p>
-            <div className={styles.existingFilesList}>
+            <Inline space="xs">
                 {pickableFiles.map((file) => (
                     <button
                         key={file.url}
@@ -188,7 +190,7 @@ function ExistingFilePicker({
                         <img src={file.url} alt={file.type} loading="lazy" />
                     </button>
                 ))}
-            </div>
+            </Inline>
         </div>
     );
 }

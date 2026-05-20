@@ -3,18 +3,24 @@ import {
     AccordionContent,
     AccordionItem,
     AccordionTrigger,
-} from "@frak-labs/ui/component/Accordion";
-import type { VariantProps } from "class-variance-authority";
+} from "@frak-labs/design-system/components/Accordion";
+import type { RecipeVariants } from "@vanilla-extract/recipes";
 import type { ComponentPropsWithRef } from "react";
 import {
     Panel,
     PanelTitle,
     type panelVariants,
 } from "@/module/common/component/Panel";
-import styles from "./index.module.css";
+import {
+    panelAccordionContent,
+    panelAccordionItem,
+    panelAccordionTrigger,
+} from "./panel-accordion.css";
+
+type PanelRecipeVariants = NonNullable<RecipeVariants<typeof panelVariants>>;
 
 export type PanelProps = ComponentPropsWithRef<typeof Panel> &
-    VariantProps<typeof panelVariants> & {
+    PanelRecipeVariants & {
         title?: string;
         withBadge?: boolean;
         className?: string;
@@ -41,15 +47,11 @@ export const PanelAccordion = ({
                 defaultValue={defaultValue}
                 onValueChange={onValueChange}
             >
-                <AccordionItem value={"item-1"}>
-                    <AccordionTrigger
-                        className={styles.panelAccordion__trigger}
-                    >
+                <AccordionItem value={"item-1"} className={panelAccordionItem}>
+                    <AccordionTrigger className={panelAccordionTrigger}>
                         <PanelTitle title={title} />
                     </AccordionTrigger>
-                    <AccordionContent
-                        className={styles.panelAccordion__content}
-                    >
+                    <AccordionContent className={panelAccordionContent}>
                         {children}
                     </AccordionContent>
                 </AccordionItem>

@@ -12,7 +12,7 @@ import { Head } from "@/module/common/component/Head";
 import { Panel } from "@/module/common/component/Panel";
 import { Form, FormLayout } from "@/module/forms/Form";
 import { type CampaignDraft, campaignStore } from "@/stores/campaignStore";
-import styles from "./index.module.css";
+import * as styles from "./validation-campaign.css";
 
 export function ValidationCampaign() {
     const navigate = useNavigate();
@@ -101,7 +101,7 @@ export function ValidationCampaign() {
 function SuccessMessage() {
     return (
         <Panel title="Campaign published">
-            <p className={styles.validationCampaign__message}>
+            <p className={styles.validationCampaignMessage}>
                 Your campaign was successfully created and published!
             </p>
         </Panel>

@@ -1,39 +1,36 @@
-import { keyframes, styleVariants } from "@vanilla-extract/css";
-import { vars } from "../../theme.css";
-import { alias } from "../../tokens.css";
+import { keyframes, style, styleVariants } from "@vanilla-extract/css";
+import { alias, brand } from "../../tokens.css";
 
-const shimmer = keyframes({
-    "0%": { backgroundPosition: "-200px 0" },
-    "100%": { backgroundPosition: "calc(200px + 100%) 0" },
+const pulse = keyframes({
+    "0%, 100%": { opacity: 1 },
+    "50%": { opacity: 0.4 },
 });
 
-const base = {
-    display: "inline-block" as const,
-    backgroundColor: vars.surface.muted,
-    backgroundImage: `linear-gradient(90deg, ${vars.surface.muted} 0px, ${vars.surface.tertiary} 40px, ${vars.surface.muted} 80px)`,
-    backgroundSize: "200px 100%" as const,
-    backgroundRepeat: "no-repeat" as const,
-    // biome-ignore lint/suspicious/noExplicitAny: vanilla-extract keyframes type incompatibility
-    animationName: shimmer as any,
-    animationDuration: "1.5s" as const,
-    animationTimingFunction: "ease-in-out" as const,
-    animationIterationCount: "infinite" as const,
-};
+export const skeletonBase = style({
+    display: "inline-block",
+    backgroundColor: brand.colors.neutral.grey300,
+    animationName: pulse,
+    animationDuration: "1.5s",
+    animationTimingFunction: "cubic-bezier(0.4, 0, 0.6, 1)",
+    animationIterationCount: "infinite",
+    selectors: {
+        "[data-theme='dark'] &": {
+            backgroundColor: brand.colors.neutral.grey500,
+        },
+    },
+});
 
 export const skeletonVariants = styleVariants({
     text: {
-        ...base,
-        height: "16px" as const,
+        height: "16px",
         borderRadius: alias.cornerRadius.s,
-        width: "100%" as const,
+        width: "100%",
     },
     circle: {
-        ...base,
         borderRadius: alias.cornerRadius.full,
     },
     rect: {
-        ...base,
         borderRadius: alias.cornerRadius.m,
-        width: "100%" as const,
+        width: "100%",
     },
 });

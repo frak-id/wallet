@@ -1,4 +1,3 @@
-import { Input } from "@frak-labs/ui/component/forms/Input";
 import { useFormContext } from "react-hook-form";
 import { Panel } from "@/module/common/component/Panel";
 import {
@@ -7,6 +6,7 @@ import {
     FormItem,
     FormMessage,
 } from "@/module/forms/Form";
+import { Input } from "@/module/forms/Input";
 import type { FormCreatePushNotification } from "@/module/members/component/CreatePush/types";
 
 /**

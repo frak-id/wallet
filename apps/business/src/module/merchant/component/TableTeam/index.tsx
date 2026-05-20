@@ -1,12 +1,12 @@
+import { Skeleton } from "@frak-labs/design-system/components/Skeleton";
 import { useWalletStatus } from "@frak-labs/react-sdk";
-import { Button } from "@frak-labs/ui/component/Button";
-import { WalletAddress } from "@frak-labs/ui/component/HashDisplay";
-import { Skeleton } from "@frak-labs/ui/component/Skeleton";
 import type { ColumnDef } from "@tanstack/react-table";
 import { type CellContext, createColumnHelper } from "@tanstack/react-table";
 import { useMemo } from "react";
 import { isAddressEqual, zeroAddress } from "viem";
 import { Badge } from "@/module/common/component/Badge";
+import { Button } from "@/module/common/component/Button";
+import { WalletAddress } from "@/module/common/component/HashDisplay";
 import { Table } from "@/module/common/component/Table";
 import { useHasRoleOnMerchant } from "@/module/common/hook/useHasRoleOnMerchant";
 import { ButtonAddTeam } from "@/module/merchant/component/ButtonAddTeam";
@@ -15,7 +15,7 @@ import {
     type MerchantAdministrator,
     useGetMerchantAdministrators,
 } from "@/module/merchant/hook/useGetMerchantAdministrators";
-import styles from "./index.module.css";
+import * as styles from "./table-team.css";
 
 export type ManageTeamTableData = MerchantAdministrator;
 
@@ -60,7 +60,7 @@ export function TableTeam({ merchantId }: { merchantId: string }) {
     );
 
     if (!administrators || isLoading) {
-        return <Skeleton />;
+        return <Skeleton variant="rect" height={250} />;
     }
 
     return (
@@ -70,7 +70,7 @@ export function TableTeam({ merchantId }: { merchantId: string }) {
             preTable={
                 hasAccess && (
                     <ButtonAddTeam merchantId={merchantId}>
-                        <Button variant={"submit"}>Add Team Member</Button>
+                        <Button variant={"primary"}>Add Team Member</Button>
                     </ButtonAddTeam>
                 )
             }
@@ -100,7 +100,7 @@ function CellActions({
     if (!canDoActions) return null;
 
     return (
-        <div className={styles.table__actions}>
+        <div className={styles.tableActions}>
             <DeleteTeamMemberModal row={row} merchantId={merchantId} />
         </div>
     );

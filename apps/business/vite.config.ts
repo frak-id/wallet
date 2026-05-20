@@ -21,7 +21,7 @@ export default defineConfig(async () => {
             tanstackRouter({
                 routesDirectory: "./src/routes",
                 generatedRouteTree: "./src/routeTree.gen.ts",
-                routeFileIgnorePattern: "test",
+                routeFileIgnorePattern: "test|\\.css\\.ts$",
                 autoCodeSplitting: true,
             }),
             viteReact(),
@@ -85,7 +85,7 @@ export default defineConfig(async () => {
                             },
                             {
                                 name: "ui-vendor",
-                                test: /node_modules[\\/](@radix-ui|lucide-react|class-variance-authority|cmdk|react-hook-form)/,
+                                test: /node_modules[\\/](@radix-ui|lucide-react|cmdk|react-hook-form)/,
                                 priority: 30,
                             },
                             {

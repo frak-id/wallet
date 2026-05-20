@@ -1,15 +1,15 @@
-import { Input } from "@frak-labs/ui/component/forms/Input";
 import { useMemo } from "react";
 import { useForm } from "react-hook-form";
 import type { Address } from "viem";
 import { Form, FormDescription, FormItem } from "@/module/forms/Form";
+import { Input } from "@/module/forms/Input";
 import { PushPreviewNotification } from "@/module/members/component/CreatePush/PushPreview";
 import type { FormCreatePushNotification } from "@/module/members/component/CreatePush/types";
 import {
     type FormMembersFiltering,
     MembersFiltering,
 } from "@/module/members/component/MembersFiltering";
-import styles from "./PushRecap.module.css";
+import * as styles from "./push-recap.css";
 
 /**
  * Component with a recap of the push notification
@@ -36,13 +36,13 @@ export function PushRecap({
             </FormItem>
             <FormItem>
                 <FormDescription label={"Message"} />
-                <div className={styles.pushRecap__notificationWrapper}>
+                <div className={styles.pushRecapNotificationWrapper}>
                     <PushPreviewNotification
                         title={pushForm.payload.title}
                         message={pushForm.payload.body}
                         icon={pushForm.payload.icon}
-                        className={styles.pushRecap__notification}
-                        classNameDate={styles.pushRecap__notificationDate}
+                        className={styles.pushRecapNotification}
+                        classNameDate={styles.pushRecapNotificationDate}
                     />
                 </div>
             </FormItem>

@@ -1,5 +1,4 @@
 import type { SdkConfig } from "@frak-labs/backend-elysia/domain/merchant";
-import { Input } from "@frak-labs/ui/component/forms/Input";
 import type { UseFormReturn } from "react-hook-form";
 import {
     FormControl,
@@ -9,7 +8,8 @@ import {
     FormLabel,
     FormMessage,
 } from "@/module/forms/Form";
-import styles from "../index.module.css";
+import { Input } from "@/module/forms/Input";
+import * as styles from "../customize.css";
 import type {
     ComponentSettingsFormValues,
     PostPurchaseFormValues,
@@ -38,7 +38,7 @@ export function PostPurchaseFields({
     form: UseFormReturn<ComponentSettingsFormValues>;
 }) {
     return (
-        <div className={styles.customize__settingsGrid}>
+        <div className={styles.customizeSettingsGrid}>
             <FormField
                 control={form.control}
                 name="postPurchase.refereeText"
@@ -243,7 +243,7 @@ export function PostPurchaseFields({
                         </FormDescription>
                         <FormControl>
                             <textarea
-                                className={styles.customize__textarea}
+                                className={styles.customizeTextarea}
                                 placeholder={".post-purchase { ... }"}
                                 rows={4}
                                 {...field}

@@ -22,6 +22,14 @@ export const button = recipe({
             color: vars.text.disabled,
             cursor: "not-allowed",
         },
+        selectors: {
+            '&[aria-disabled="true"]': {
+                backgroundColor: vars.surface.disabled,
+                color: vars.text.disabled,
+                cursor: "not-allowed",
+                pointerEvents: "none",
+            },
+        },
         lineHeight: "100%",
     },
     variants: {

@@ -1,11 +1,21 @@
+import { Text } from "@frak-labs/design-system/components/Text";
 import { TanStackDevtools } from "@tanstack/react-devtools";
 import { createRootRoute, Link, Outlet } from "@tanstack/react-router";
 import { TanStackRouterDevtoolsPanel } from "@tanstack/react-router-devtools";
 import { RootProvider } from "@/module/common/provider/RootProvider";
 import "@/polyfill/bigint-serialization";
-import "@/styles/all.css";
+import "@/styles/all";
 import "nprogress/nprogress.css";
-import styles from "./__root.module.css";
+import {
+    errorContainer,
+    errorContainerMessage,
+    errorContainerStack,
+    errorContainerTitle,
+    notFoundLink,
+    notFoundMessage,
+    notFoundSubtitle,
+    notFoundTitle,
+} from "./__root.css";
 
 export const Route = createRootRoute({
     component: RootComponent,
@@ -15,15 +25,19 @@ export const Route = createRootRoute({
 
 function ErrorComponent({ error }: { error: Error }) {
     return (
-        <div className={styles.errorContainer}>
-            <h1 className={styles.errorContainer__title}>
+        <div className={errorContainer}>
+            <Text as="h1" variant="display" className={errorContainerTitle}>
                 Something went wrong
-            </h1>
-            <p className={styles.errorContainer__message}>{error.message}</p>
+            </Text>
+            <Text
+                variant="body"
+                color="tertiary"
+                className={errorContainerMessage}
+            >
+                {error.message}
+            </Text>
             {import.meta.env.DEV && (
-                <pre className={styles.errorContainer__stack}>
-                    {error.stack}
-                </pre>
+                <pre className={errorContainerStack}>{error.stack}</pre>
             )}
         </div>
     );
@@ -52,13 +66,17 @@ function RootComponent() {
 
 function NotFound() {
     return (
-        <div className={styles.errorContainer}>
-            <h1 className={styles.notFound__title}>404</h1>
-            <h2 className={styles.notFound__subtitle}>Page Not Found</h2>
-            <p className={styles.notFound__message}>
+        <div className={errorContainer}>
+            <Text as="h1" variant="display1" className={notFoundTitle}>
+                404
+            </Text>
+            <Text as="h2" variant="heading2" className={notFoundSubtitle}>
+                Page Not Found
+            </Text>
+            <Text variant="body" color="tertiary" className={notFoundMessage}>
                 The page you're looking for doesn't exist or has been moved.
-            </p>
-            <Link to="/dashboard" className={styles.notFound__link}>
+            </Text>
+            <Link to="/dashboard" className={notFoundLink}>
                 Go to Dashboard
             </Link>
         </div>

@@ -9,7 +9,11 @@ import { MerchantInformationPanel } from "./MerchantInformationPanel";
 import { RegistrationPanel } from "./RegistrationPanel";
 import { ValidationPanel } from "./ValidationPanel";
 
-export function MintMerchant() {
+export function MintMerchant({
+    onSuccess,
+}: {
+    onSuccess?: (merchantId: string) => void;
+} = {}) {
     const [step, setStep] = useState(1);
     const [domainError, setDomainError] = useState<string | undefined>();
     const [openAccordion, setOpenAccordion] = useState<string>("product-info");
@@ -36,9 +40,10 @@ export function MintMerchant() {
         },
         infoTxt,
     } = useRegisterMerchant({
-        onSuccess: () => {
+        onSuccess: (data) => {
             setStep(4);
             setOpenAccordion("registration");
+            onSuccess?.(data.merchantId);
         },
     });
 

@@ -1,7 +1,7 @@
 import type { CSSProperties } from "react";
 
 import { Box } from "../Box";
-import { skeletonVariants } from "./skeleton.css";
+import { skeletonBase, skeletonVariants } from "./skeleton.css";
 
 type SkeletonVariant = "text" | "circle" | "rect";
 
@@ -29,7 +29,7 @@ export function Skeleton({
         <Box
             as="span"
             className={
-                [skeletonVariants[variant], className]
+                [skeletonBase, skeletonVariants[variant], className]
                     .filter(Boolean)
                     .join(" ") || undefined
             }

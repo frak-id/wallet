@@ -1,4 +1,3 @@
-import { Button } from "@frak-labs/ui/component/Button";
 import { useNavigate } from "@tanstack/react-router";
 import { useMemo } from "react";
 import { useForm } from "react-hook-form";
@@ -7,6 +6,7 @@ import { FormSchedule } from "@/module/campaigns/component/Creation/NewCampaign/
 import { FormTitle } from "@/module/campaigns/component/Creation/NewCampaign/FormTitle";
 import { useSaveCampaign } from "@/module/campaigns/hook/useSaveCampaign";
 import { ActionsWrapper } from "@/module/common/component/ActionsWrapper";
+import { Button } from "@/module/common/component/Button";
 import { Head } from "@/module/common/component/Head";
 import { Form, FormLayout } from "@/module/forms/Form";
 import { type CampaignDraft, campaignStore } from "@/stores/campaignStore";
@@ -42,9 +42,9 @@ export function CampaignEdit({ campaignId }: { campaignId: string }) {
                         right={
                             <Button
                                 type="submit"
-                                variant="submit"
+                                variant="primary"
                                 disabled={saveCampaign.isPending}
-                                isLoading={saveCampaign.isPending}
+                                loading={saveCampaign.isPending}
                             >
                                 Save Changes
                             </Button>

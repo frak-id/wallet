@@ -1,7 +1,7 @@
-import { Button } from "@frak-labs/ui/component/Button";
 import { X } from "lucide-react";
 import { type ReactNode, useState } from "react";
 import { AlertDialog } from "@/module/common/component/AlertDialog";
+import { Button } from "@/module/common/component/Button";
 
 export function ButtonWithConfirmationAlert({
     description,
@@ -25,8 +25,8 @@ export function ButtonWithConfirmationAlert({
             title={title}
             buttonElement={
                 <Button
-                    variant={"outline"}
-                    leftIcon={<X size={20} />}
+                    variant={"secondary"}
+                    icon={<X size={20} />}
                     disabled={disabled}
                 >
                     {buttonText}
@@ -35,7 +35,7 @@ export function ButtonWithConfirmationAlert({
             description={description}
             action={
                 <Button
-                    variant={"danger"}
+                    variant={"destructive"}
                     onClick={() => {
                         onClick?.();
                         setOpen(false);

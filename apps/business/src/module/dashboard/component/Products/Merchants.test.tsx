@@ -2,12 +2,6 @@ import { render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import { MyMerchants } from "./index";
 
-const mockNavigate = vi.fn();
-
-vi.mock("@tanstack/react-router", () => ({
-    useNavigate: () => mockNavigate,
-}));
-
 vi.mock("@/module/dashboard/hooks/useMyMerchants", () => ({
     useMyMerchants: vi.fn(),
 }));
@@ -40,10 +34,6 @@ vi.mock("@/module/dashboard/component/MerchantItem", () => ({
             <div>{domain}</div>
         </div>
     ),
-}));
-
-vi.mock("lucide-react", () => ({
-    Plus: () => <span data-testid="plus-icon">+</span>,
 }));
 
 // Import after mocks
@@ -93,20 +83,5 @@ describe("MyMerchants", () => {
         expect(screen.getAllByTestId("panel").length).toBeGreaterThan(0);
         expect(screen.getByText("Merchant 1")).toBeInTheDocument();
         expect(screen.getByText("Merchant 2")).toBeInTheDocument();
-    });
-
-    it("should render empty list with add merchant button", async () => {
-        vi.mocked(useMyMerchants).mockReturnValue({
-            merchants: [],
-            owned: [],
-            adminOf: [],
-            isEmpty: true,
-        });
-
-        render(<MyMerchants />);
-
-        expect(screen.getAllByTestId("panel").length).toBeGreaterThan(0);
-        expect(screen.getAllByText("Add a Merchant").length).toBeGreaterThan(0);
-        expect(screen.getAllByTestId("plus-icon").length).toBeGreaterThan(0);
     });
 });

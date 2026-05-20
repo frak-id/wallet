@@ -1,5 +1,6 @@
+import { Text } from "@frak-labs/design-system/components/Text";
 import type { ReactNode } from "react";
-import styles from "./index.module.css";
+import { previewWrapper } from "./preview-wrapper.css";
 
 export function PreviewWrapper({
     label = "Preview",
@@ -9,8 +10,10 @@ export function PreviewWrapper({
     children: ReactNode;
 }) {
     return (
-        <div className={styles.previewWrapper}>
-            <p className={styles.previewWrapper__label}>{label}</p>
+        <div className={previewWrapper}>
+            <Text variant="overline" color="tertiary">
+                {label}
+            </Text>
             {children}
         </div>
     );

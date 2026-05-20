@@ -1,9 +1,9 @@
-import { Button } from "@frak-labs/ui/component/Button";
 import { useMutation } from "@tanstack/react-query";
 import { useEffect } from "react";
 import { useFormContext } from "react-hook-form";
 import type { Address } from "viem";
 import { useIsDemoMode } from "@/module/common/atoms/demoMode";
+import { Button } from "@/module/common/component/Button";
 import { Panel } from "@/module/common/component/Panel";
 import { FormField, FormItem, FormMessage } from "@/module/forms/Form";
 import {
@@ -71,7 +71,7 @@ function PreSelectedMembers({ members }: { members: Address[] }) {
                     setValue("target", undefined);
                     setValue("targetCount", 0);
                 }}
-                variant={"danger"}
+                variant={"destructive"}
             >
                 Clear selected members
             </Button>

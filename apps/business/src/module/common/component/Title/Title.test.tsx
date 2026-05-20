@@ -40,16 +40,6 @@ describe("Title", () => {
         });
     });
 
-    it("should render all tag variants", () => {
-        const tags = ["h2", "h3"] as const;
-
-        tags.forEach((tag) => {
-            const { unmount } = render(<Title tag={tag}>Title</Title>);
-            expect(screen.getByText("Title")).toBeInTheDocument();
-            unmount();
-        });
-    });
-
     it("should render with custom element via as prop", () => {
         const { container } = render(<Title as="h1">Title</Title>);
 

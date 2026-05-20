@@ -1,6 +1,6 @@
-import { Column, Columns } from "@frak-labs/ui/component/Columns";
-import { Input } from "@frak-labs/ui/component/forms/Input";
-import { TextArea } from "@frak-labs/ui/component/forms/TextArea";
+import { Column } from "@frak-labs/design-system/components/Column";
+import { Columns } from "@frak-labs/design-system/components/Columns";
+import { TextArea } from "@frak-labs/design-system/components/TextArea";
 import { useFormContext } from "react-hook-form";
 import { Panel } from "@/module/common/component/Panel";
 import {
@@ -10,6 +10,7 @@ import {
     FormItem,
     FormMessage,
 } from "@/module/forms/Form";
+import { Input } from "@/module/forms/Input";
 import { PushPreview } from "@/module/members/component/CreatePush/PushPreview";
 import type { FormCreatePushNotification } from "@/module/members/component/CreatePush/types";
 
@@ -27,8 +28,8 @@ export function PushPayloadPanel() {
 
     return (
         <Panel title={"Message"}>
-            <Columns align={"start"}>
-                <Column>
+            <Columns space="xs" alignY="top">
+                <Column width="1/2">
                     {/*Title field*/}
                     <FormField
                         control={control}
@@ -153,7 +154,7 @@ export function PushPayloadPanel() {
                         )}
                     />
                 </Column>
-                <Column justify={"start"}>
+                <Column width="1/2">
                     <PushPreview
                         title={title !== "" ? title : "Brand new shoes"}
                         message={

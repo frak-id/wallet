@@ -1,4 +1,4 @@
-import { Checkbox } from "@frak-labs/ui/component/forms/Checkbox";
+import { Checkbox } from "@frak-labs/design-system/components/Checkbox";
 import { useFormContext } from "react-hook-form";
 import { Panel } from "@/module/common/component/Panel";
 import {
@@ -10,7 +10,7 @@ import {
     FormMessage,
 } from "@/module/forms/Form";
 import type { CampaignDraft } from "@/stores/campaignStore";
-import styles from "./FormSpecialAdvertising.module.css";
+import * as styles from "./form-special-advertising.css";
 
 const itemsSpecialAdvertising = [
     {
@@ -18,7 +18,7 @@ const itemsSpecialAdvertising = [
         label: (
             <>
                 Credit
-                <span className={styles.checkbox__information}>
+                <span className={styles.checkboxInformation}>
                     Advertisements for credit card offers, car loans, long-term
                     financing or similar offers.
                 </span>
@@ -30,7 +30,7 @@ const itemsSpecialAdvertising = [
         label: (
             <>
                 Jobs
-                <span className={styles.checkbox__information}>
+                <span className={styles.checkboxInformation}>
                     Advertisements for job offers, internships, professional
                     certification programs or other similar offers.
                 </span>
@@ -42,7 +42,7 @@ const itemsSpecialAdvertising = [
         label: (
             <>
                 Housing
-                <span className={styles.checkbox__information}>
+                <span className={styles.checkboxInformation}>
                     Advertisements for real estate ads, home insurance,
                     mortgages or similar offers.
                 </span>
@@ -54,7 +54,7 @@ const itemsSpecialAdvertising = [
         label: (
             <>
                 Social, electoral or political issues
-                <span className={styles.checkbox__information}>
+                <span className={styles.checkboxInformation}>
                     Advertisements concerning social issues, elections, or
                     political figures or campaigns.
                 </span>

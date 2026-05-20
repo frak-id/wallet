@@ -1,11 +1,10 @@
-import type { InputNumberProps } from "@frak-labs/ui/component/forms/InputNumber";
+import { Inline } from "@frak-labs/design-system/components/Inline";
+import { Stack } from "@frak-labs/design-system/components/Stack";
 import { CircleDollarSign, Wallet } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { useFormContext } from "react-hook-form";
 import { getCapPeriod } from "@/module/campaigns/utils/capPeriods";
-import { Column } from "@/module/common/component/Column";
 import { InputAmount } from "@/module/common/component/InputAmount";
-import { Row } from "@/module/common/component/Row";
 import { tokenAddressToCurrency } from "@/module/common/utils/currencyOptions";
 import {
     FormControl,
@@ -15,10 +14,11 @@ import {
     FormLabel,
     FormMessage,
 } from "@/module/forms/Form";
+import type { InputNumberProps } from "@/module/forms/InputNumber";
 import { RadioGroup, RadioGroupItem } from "@/module/forms/RadioGroup";
 import type { CampaignDraft } from "@/stores/campaignStore";
 import { currencyStore } from "@/stores/currencyStore";
-import styles from "./FormBudgetRow.module.css";
+import * as styles from "./form-budget-row.css";
 
 type BudgetPeriod = "daily" | "weekly" | "monthly" | "global";
 
@@ -74,7 +74,7 @@ export function FormBudgetRow({ disabled }: { disabled?: boolean }) {
     }, [currentAmount]);
 
     return (
-        <Column>
+        <Stack space="m">
             <FormItem>
                 <FormDescription label="Budget Period" />
                 <RadioGroup
@@ -86,7 +86,7 @@ export function FormBudgetRow({ disabled }: { disabled?: boolean }) {
                     }}
                     className={styles.periodGroup}
                 >
-                    <Row>
+                    <Inline space="m" alignY="bottom">
                         {periods.map((p) => (
                             <FormItem
                                 key={p.value}
@@ -102,11 +102,11 @@ export function FormBudgetRow({ disabled }: { disabled?: boolean }) {
                                 <FormLabel variant="radio">{p.label}</FormLabel>
                             </FormItem>
                         ))}
-                    </Row>
+                    </Inline>
                 </RadioGroup>
             </FormItem>
 
-            <Row>
+            <Inline space="m" alignY="bottom">
                 <FormField
                     control={control}
                     name="budgetConfig"
@@ -144,39 +144,39 @@ export function FormBudgetRow({ disabled }: { disabled?: boolean }) {
                         </FormItem>
                     )}
                 />
-            </Row>
+            </Inline>
 
             <div>
-                <div className={styles.budget__section}>
-                    <div className={styles.budget__iconGroup}>
-                        <div className={styles.budget__icon}>
+                <div className={styles.budgetSection}>
+                    <div className={styles.budgetIconGroup}>
+                        <div className={styles.budgetIcon}>
                             <CircleDollarSign />
                         </div>
-                        <span className={styles.budget__label}>
+                        <span className={styles.budgetLabel}>
                             Frak commission (20%)
                         </span>
                     </div>
-                    <div className={styles.budget__value}>
+                    <div className={styles.budgetValue}>
                         {frakCommission.toFixed(2)} {currencyLabel}
                     </div>
                 </div>
 
-                <div className={styles.budget__divider} />
+                <div className={styles.budgetDivider} />
 
-                <div className={styles.budget__section}>
-                    <div className={styles.budget__iconGroup}>
-                        <div className={styles.budget__icon}>
+                <div className={styles.budgetSection}>
+                    <div className={styles.budgetIconGroup}>
+                        <div className={styles.budgetIcon}>
                             <Wallet />
                         </div>
-                        <span className={styles.budget__label}>
+                        <span className={styles.budgetLabel}>
                             Rewards distributed (80%)
                         </span>
                     </div>
-                    <div className={styles.budget__value}>
+                    <div className={styles.budgetValue}>
                         {remainingBudget.toFixed(2)} {currencyLabel}
                     </div>
                 </div>
             </div>
-        </Column>
+        </Stack>
     );
 }

@@ -1,14 +1,14 @@
 import type { SdkConfig } from "@frak-labs/backend-elysia/domain/merchant";
-import { Button } from "@frak-labs/ui/component/Button";
 import { Trash2 } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import { AlertDialog } from "@/module/common/component/AlertDialog";
+import { Button } from "@/module/common/component/Button";
 import { Panel } from "@/module/common/component/Panel";
 import { Form } from "@/module/forms/Form";
 import { FormActions } from "@/module/forms/FormActions";
 import { useMerchantUpdate } from "@/module/merchant/hook/useMerchantUpdate";
-import styles from "./index.module.css";
+import * as styles from "./customize.css";
 import { SharingPagePreview } from "./ModalPreview";
 import { CssEditor, TranslationEditor } from "./TranslationEditor";
 import type {
@@ -67,7 +67,7 @@ export function PlacementCssPanel({
 
     return (
         <Panel title={`Placement CSS · ${placementId}`}>
-            <p className={styles.customize__fieldDescription}>
+            <p className={styles.customizeFieldDescription}>
                 Global CSS overrides for this placement. Styles defined here
                 apply to all SDK components within this placement.
             </p>
@@ -214,7 +214,7 @@ export function DeletePlacementPanel({
 
     return (
         <Panel title={`Delete placement · ${placementId}`}>
-            <p className={styles.customize__hint}>
+            <p className={styles.customizeHint}>
                 This removes all overrides for this placement.
             </p>
             <AlertDialog
@@ -224,18 +224,18 @@ export function DeletePlacementPanel({
                 buttonElement={
                     <button
                         type="button"
-                        className={styles.customize__deleteButton}
+                        className={styles.customizeDeleteButton}
                     >
                         <Trash2 size={16} />
                         Delete {placementId}
                     </button>
                 }
                 description={`This will remove all overrides for placement ${placementId}.`}
-                cancel={<Button variant={"outline"}>Cancel</Button>}
+                cancel={<Button variant={"secondary"}>Cancel</Button>}
                 action={
                     <Button
-                        variant={"danger"}
-                        isLoading={isPending}
+                        variant={"destructive"}
+                        loading={isPending}
                         disabled={isPending}
                         onClick={async () => {
                             const currentPlacements = {

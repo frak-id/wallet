@@ -1,6 +1,4 @@
-import { mergeElement } from "@frak-labs/ui/utils/mergeElement";
 import { Link, useMatchRoute } from "@tanstack/react-router";
-import { cx } from "class-variance-authority";
 import type { PropsWithChildren, ReactNode } from "react";
 import { Cash } from "@/assets/icons/Cash";
 import { Gear } from "@/assets/icons/Gear";
@@ -9,13 +7,22 @@ import { Info } from "@/assets/icons/Info";
 import { Message } from "@/assets/icons/Message";
 import { Users } from "@/assets/icons/Users";
 import { Wallet } from "@/assets/icons/Wallet";
-import styles from "./index.module.css";
+import { mergeElement } from "@/module/common/utils/mergeElement";
 import { NavigationCampaignsSwitcher } from "./NavigationCampaignsSwitcher";
+import {
+    navigation,
+    navigationItemButton,
+    navigationItemButtonActive,
+    navigationItemLabel,
+    navigationItemRightSection,
+    navigationItemToBottom,
+    navigationList,
+} from "./navigation.css";
 
 export function Navigation() {
     return (
-        <nav className={styles.navigation}>
-            <ul className={styles.navigation__list}>
+        <nav className={navigation}>
+            <ul className={navigationList}>
                 <NavigationItem url="/dashboard">
                     <NavigationLabel icon={<Home />}>Dashboard</NavigationLabel>
                 </NavigationItem>
@@ -33,7 +40,7 @@ export function Navigation() {
                 </NavigationItem>
                 <NavigationItem
                     url={process.env.FRAK_WALLET_URL}
-                    className={styles.navigation__itemToBottom}
+                    className={navigationItemToBottom}
                 >
                     <NavigationLabel icon={<Wallet />}>Wallet</NavigationLabel>
                 </NavigationItem>
@@ -73,26 +80,22 @@ export function NavigationItem({
     const isRouteActive = url ? matchRoute({ to: url, fuzzy: true }) : false;
 
     const activeClassName =
-        isRouteActive || isActive
-            ? styles["navigationItem__button--active"]
-            : "";
+        isRouteActive || isActive ? ` ${navigationItemButtonActive}` : "";
 
-    const buttonClassName = cx(
-        styles.navigationItem__button,
-        !isSub && activeClassName
-    );
+    const buttonClassName = `${navigationItemButton}${
+        !isSub ? activeClassName : ""
+    }`;
 
     const content = (
         <>
             {children}
             {rightSection &&
                 mergeElement(rightSection, {
-                    className: styles.navigationItem__rightSection,
+                    className: navigationItemRightSection,
                 })}
         </>
     );
 
-    // Disabled items render as buttons without navigation
     if (disabled) {
         return (
             <li className={className}>
@@ -108,7 +111,6 @@ export function NavigationItem({
         );
     }
 
-    // External links open in new tab
     if (url?.startsWith("http")) {
         return (
             <li className={className}>
@@ -126,7 +128,6 @@ export function NavigationItem({
         );
     }
 
-    // Internal links use TanStack Router Link for preloading
     if (url) {
         return (
             <li className={className}>
@@ -137,7 +138,6 @@ export function NavigationItem({
         );
     }
 
-    // No URL provided, render as button
     return (
         <li className={className}>
             <button type="button" className={buttonClassName} {...props}>
@@ -165,7 +165,7 @@ export function NavigationLabel({
     return (
         <>
             {icon}
-            <span className={styles.navigationItem__label}>{children}</span>
+            <span className={navigationItemLabel}>{children}</span>
         </>
     );
 }

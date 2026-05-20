@@ -16,7 +16,6 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as EmbeddedAuthRouteImport } from './routes/embedded/auth'
 import { Route as EmbeddedLayoutRouteImport } from './routes/embedded/_layout'
 import { Route as RestrictedSettingsRouteImport } from './routes/_restricted/settings'
-import { Route as RestrictedMintRouteImport } from './routes/_restricted/mint'
 import { Route as RestrictedMembersRouteImport } from './routes/_restricted/members'
 import { Route as RestrictedDashboardRouteImport } from './routes/_restricted/dashboard'
 import { Route as EmbeddedLayoutMintRouteImport } from './routes/embedded/_layout/mint'
@@ -68,11 +67,6 @@ const EmbeddedLayoutRoute = EmbeddedLayoutRouteImport.update({
 const RestrictedSettingsRoute = RestrictedSettingsRouteImport.update({
   id: '/settings',
   path: '/settings',
-  getParentRoute: () => RestrictedRoute,
-} as any)
-const RestrictedMintRoute = RestrictedMintRouteImport.update({
-  id: '/mint',
-  path: '/mint',
   getParentRoute: () => RestrictedRoute,
 } as any)
 const RestrictedMembersRoute = RestrictedMembersRouteImport.update({
@@ -184,7 +178,6 @@ export interface FileRoutesByFullPath {
   '/login': typeof LoginRoute
   '/dashboard': typeof RestrictedDashboardRoute
   '/members': typeof RestrictedMembersRoute
-  '/mint': typeof RestrictedMintRoute
   '/settings': typeof RestrictedSettingsRoute
   '/embedded': typeof EmbeddedLayoutRouteWithChildren
   '/embedded/auth': typeof EmbeddedAuthRoute
@@ -211,7 +204,6 @@ export interface FileRoutesByTo {
   '/login': typeof LoginRoute
   '/dashboard': typeof RestrictedDashboardRoute
   '/members': typeof RestrictedMembersRoute
-  '/mint': typeof RestrictedMintRoute
   '/settings': typeof RestrictedSettingsRoute
   '/embedded': typeof EmbeddedLayoutRouteWithChildren
   '/embedded/auth': typeof EmbeddedAuthRoute
@@ -240,7 +232,6 @@ export interface FileRoutesById {
   '/login': typeof LoginRoute
   '/_restricted/dashboard': typeof RestrictedDashboardRoute
   '/_restricted/members': typeof RestrictedMembersRoute
-  '/_restricted/mint': typeof RestrictedMintRoute
   '/_restricted/settings': typeof RestrictedSettingsRoute
   '/embedded/_layout': typeof EmbeddedLayoutRouteWithChildren
   '/embedded/auth': typeof EmbeddedAuthRoute
@@ -269,7 +260,6 @@ export interface FileRouteTypes {
     | '/login'
     | '/dashboard'
     | '/members'
-    | '/mint'
     | '/settings'
     | '/embedded'
     | '/embedded/auth'
@@ -296,7 +286,6 @@ export interface FileRouteTypes {
     | '/login'
     | '/dashboard'
     | '/members'
-    | '/mint'
     | '/settings'
     | '/embedded'
     | '/embedded/auth'
@@ -324,7 +313,6 @@ export interface FileRouteTypes {
     | '/login'
     | '/_restricted/dashboard'
     | '/_restricted/members'
-    | '/_restricted/mint'
     | '/_restricted/settings'
     | '/embedded/_layout'
     | '/embedded/auth'
@@ -404,13 +392,6 @@ declare module '@tanstack/react-router' {
       path: '/settings'
       fullPath: '/settings'
       preLoaderRoute: typeof RestrictedSettingsRouteImport
-      parentRoute: typeof RestrictedRoute
-    }
-    '/_restricted/mint': {
-      id: '/_restricted/mint'
-      path: '/mint'
-      fullPath: '/mint'
-      preLoaderRoute: typeof RestrictedMintRouteImport
       parentRoute: typeof RestrictedRoute
     }
     '/_restricted/members': {
@@ -545,7 +526,6 @@ declare module '@tanstack/react-router' {
 interface RestrictedRouteChildren {
   RestrictedDashboardRoute: typeof RestrictedDashboardRoute
   RestrictedMembersRoute: typeof RestrictedMembersRoute
-  RestrictedMintRoute: typeof RestrictedMintRoute
   RestrictedSettingsRoute: typeof RestrictedSettingsRoute
   RestrictedCampaignsCampaignIdRoute: typeof RestrictedCampaignsCampaignIdRoute
   RestrictedCampaignsListRoute: typeof RestrictedCampaignsListRoute
@@ -567,7 +547,6 @@ interface RestrictedRouteChildren {
 const RestrictedRouteChildren: RestrictedRouteChildren = {
   RestrictedDashboardRoute: RestrictedDashboardRoute,
   RestrictedMembersRoute: RestrictedMembersRoute,
-  RestrictedMintRoute: RestrictedMintRoute,
   RestrictedSettingsRoute: RestrictedSettingsRoute,
   RestrictedCampaignsCampaignIdRoute: RestrictedCampaignsCampaignIdRoute,
   RestrictedCampaignsListRoute: RestrictedCampaignsListRoute,

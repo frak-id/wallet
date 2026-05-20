@@ -1,6 +1,8 @@
-import { ButtonAuth } from "@frak-labs/ui/component/ButtonAuth";
+import { Stack } from "@frak-labs/design-system/components/Stack";
+import { Text } from "@frak-labs/design-system/components/Text";
+import { ButtonAuth } from "@/module/common/component/ButtonAuth";
 import { PanelAccordion } from "@/module/common/component/PanelAccordion";
-import styles from "./index.module.css";
+import * as styles from "./mint-merchant.css";
 
 interface RegistrationPanelProps {
     step: number;
@@ -36,15 +38,20 @@ export function RegistrationPanel({
                     <p>Complete validation in the previous step to continue</p>
                 </div>
             ) : step === 3 ? (
-                <div className={styles.registrationSection}>
-                    <h3 className={styles.sectionHeading}>
+                <Stack space="m" align="left">
+                    <Text
+                        as="h3"
+                        variant="bodySmall"
+                        weight="semiBold"
+                        color="primary"
+                    >
                         Launch Your Product
-                    </h3>
-                    <p className={styles.description}>
+                    </Text>
+                    <Text variant="bodySmall" color="secondary">
                         Click below to register your product on the blockchain.
                         This requires authentication with your wallet and will
                         create your product permanently on-chain.
-                    </p>
+                    </Text>
                     <ButtonAuth onClick={onSubmit} disabled={isPending}>
                         Launch Product
                     </ButtonAuth>
@@ -57,7 +64,7 @@ export function RegistrationPanel({
                             <span className="dotsLoading">...</span>
                         </p>
                     )}
-                </div>
+                </Stack>
             ) : (
                 <div className={styles.successSection}>
                     <p className="success">

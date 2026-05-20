@@ -1,4 +1,6 @@
-import { Checkbox } from "@frak-labs/ui/component/forms/Checkbox";
+import { Box } from "@frak-labs/design-system/components/Box";
+import { Checkbox } from "@frak-labs/design-system/components/Checkbox";
+import { Inline } from "@frak-labs/design-system/components/Inline";
 import { format, startOfDay } from "date-fns";
 import { memo, useEffect, useState } from "react";
 import { useFormContext, useWatch } from "react-hook-form";
@@ -9,7 +11,6 @@ import {
     PopoverContent,
     PopoverTrigger,
 } from "@/module/common/component/Popover";
-import { Row } from "@/module/common/component/Row";
 import {
     FormControl,
     FormDescription,
@@ -19,7 +20,7 @@ import {
     FormMessage,
 } from "@/module/forms/Form";
 import type { FormMembersFiltering } from "@/module/members/component/MembersFiltering";
-import styles from "./index.module.css";
+import * as styles from "./members-filtering.css";
 
 export const MembershipDateFiltering = memo(function MembershipDateFiltering({
     disabled,
@@ -82,122 +83,134 @@ export const MembershipDateFiltering = memo(function MembershipDateFiltering({
                     Membership Date
                 </FormLabel>
             </FormItem>
-            <Row className={styles.formFromTo__row}>
-                <FormField
-                    control={control}
-                    name={"firstInteractionTimestamp.min"}
-                    render={({ field }) => {
-                        const { value, ...rest } = field;
-                        return (
-                            <FormItem>
-                                <FormLabel variant={"light"} weight={"medium"}>
-                                    From
-                                </FormLabel>
-                                <Popover>
-                                    <PopoverTrigger {...rest} asChild>
-                                        <FormControl>
-                                            <ButtonCalendar
-                                                disabled={
-                                                    checked === false ||
-                                                    disabled
+            <Box className={styles.formFromToRow}>
+                <Inline space="m" alignY="bottom">
+                    <FormField
+                        control={control}
+                        name={"firstInteractionTimestamp.min"}
+                        render={({ field }) => {
+                            const { value, ...rest } = field;
+                            return (
+                                <FormItem>
+                                    <FormLabel
+                                        variant={"light"}
+                                        weight={"medium"}
+                                    >
+                                        From
+                                    </FormLabel>
+                                    <Popover>
+                                        <PopoverTrigger {...rest} asChild>
+                                            <FormControl>
+                                                <ButtonCalendar
+                                                    disabled={
+                                                        checked === false ||
+                                                        disabled
+                                                    }
+                                                >
+                                                    {field.value ? (
+                                                        format(
+                                                            field.value * 1000,
+                                                            "PPP"
+                                                        )
+                                                    ) : (
+                                                        <span>Pick a date</span>
+                                                    )}
+                                                </ButtonCalendar>
+                                            </FormControl>
+                                        </PopoverTrigger>
+                                        <PopoverContent align="start">
+                                            <Calendar
+                                                mode="single"
+                                                selected={
+                                                    field.value
+                                                        ? new Date(
+                                                              field.value * 1000
+                                                          )
+                                                        : undefined
                                                 }
-                                            >
-                                                {field.value ? (
-                                                    format(
-                                                        field.value * 1000,
-                                                        "PPP"
-                                                    )
-                                                ) : (
-                                                    <span>Pick a date</span>
+                                                onSelect={(value) => {
+                                                    if (!value) return;
+                                                    field.onChange(
+                                                        (value.getTime() ?? 0) /
+                                                            1000
+                                                    );
+                                                    handleSubmit(onSubmit)();
+                                                }}
+                                                startMonth={startOfDay(
+                                                    new Date()
                                                 )}
-                                            </ButtonCalendar>
-                                        </FormControl>
-                                    </PopoverTrigger>
-                                    <PopoverContent align="start">
-                                        <Calendar
-                                            mode="single"
-                                            selected={
-                                                field.value
-                                                    ? new Date(
-                                                          field.value * 1000
-                                                      )
-                                                    : undefined
-                                            }
-                                            onSelect={(value) => {
-                                                if (!value) return;
-                                                field.onChange(
-                                                    (value.getTime() ?? 0) /
-                                                        1000
-                                                );
-                                                handleSubmit(onSubmit)();
-                                            }}
-                                            startMonth={startOfDay(new Date())}
-                                        />
-                                    </PopoverContent>
-                                </Popover>
-                                <FormMessage />
-                            </FormItem>
-                        );
-                    }}
-                />
-                <FormField
-                    control={control}
-                    name={"firstInteractionTimestamp.max"}
-                    render={({ field }) => {
-                        const { value, ...rest } = field;
-                        return (
-                            <FormItem>
-                                <FormLabel variant={"light"} weight={"medium"}>
-                                    To
-                                </FormLabel>
-                                <Popover>
-                                    <PopoverTrigger {...rest} asChild>
-                                        <FormControl>
-                                            <ButtonCalendar
-                                                disabled={
-                                                    checked === false ||
-                                                    disabled
+                                            />
+                                        </PopoverContent>
+                                    </Popover>
+                                    <FormMessage />
+                                </FormItem>
+                            );
+                        }}
+                    />
+                    <FormField
+                        control={control}
+                        name={"firstInteractionTimestamp.max"}
+                        render={({ field }) => {
+                            const { value, ...rest } = field;
+                            return (
+                                <FormItem>
+                                    <FormLabel
+                                        variant={"light"}
+                                        weight={"medium"}
+                                    >
+                                        To
+                                    </FormLabel>
+                                    <Popover>
+                                        <PopoverTrigger {...rest} asChild>
+                                            <FormControl>
+                                                <ButtonCalendar
+                                                    disabled={
+                                                        checked === false ||
+                                                        disabled
+                                                    }
+                                                >
+                                                    {field.value ? (
+                                                        format(
+                                                            field.value * 1000,
+                                                            "PPP"
+                                                        )
+                                                    ) : (
+                                                        <span>Pick a date</span>
+                                                    )}
+                                                </ButtonCalendar>
+                                            </FormControl>
+                                        </PopoverTrigger>
+                                        <PopoverContent align="start">
+                                            <Calendar
+                                                mode="single"
+                                                selected={
+                                                    field.value
+                                                        ? new Date(
+                                                              field.value * 1000
+                                                          )
+                                                        : undefined
                                                 }
-                                            >
-                                                {field.value ? (
-                                                    format(
-                                                        field.value * 1000,
-                                                        "PPP"
-                                                    )
-                                                ) : (
-                                                    <span>Pick a date</span>
+                                                onSelect={(value) => {
+                                                    if (!value) return;
+                                                    field.onChange(
+                                                        (value.getTime() ?? 0) /
+                                                            1000
+                                                    );
+                                                    handleSubmit(onSubmit)();
+                                                }}
+                                                startMonth={startOfDay(
+                                                    new Date()
                                                 )}
-                                            </ButtonCalendar>
-                                        </FormControl>
-                                    </PopoverTrigger>
-                                    <PopoverContent align="start">
-                                        <Calendar
-                                            mode="single"
-                                            selected={
-                                                field.value
-                                                    ? new Date(
-                                                          field.value * 1000
-                                                      )
-                                                    : undefined
-                                            }
-                                            onSelect={(value) => {
-                                                if (!value) return;
-                                                field.onChange(
-                                                    (value.getTime() ?? 0) /
-                                                        1000
-                                                );
-                                                handleSubmit(onSubmit)();
-                                            }}
-                                            startMonth={startOfDay(new Date())}
-                                        />
-                                    </PopoverContent>
-                                </Popover>
-                                <FormMessage />
-                            </FormItem>
-                        );
-                    }}
-                />
-            </Row>
+                                            />
+                                        </PopoverContent>
+                                    </Popover>
+                                    <FormMessage />
+                                </FormItem>
+                            );
+                        }}
+                    />
+                </Inline>
+            </Box>
         </>
     );
 });

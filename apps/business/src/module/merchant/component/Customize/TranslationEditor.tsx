@@ -1,9 +1,10 @@
-import { Input } from "@frak-labs/ui/component/forms/Input";
+import clsx from "clsx";
 import { ChevronDown, ChevronRight } from "lucide-react";
 import { useState } from "react";
 import type { UseFormReturn } from "react-hook-form";
 import { FormActions } from "@/module/forms/FormActions";
-import styles from "./index.module.css";
+import { Input } from "@/module/forms/Input";
+import * as styles from "./customize.css";
 import {
     EMBEDDED_TRANSLATION_GROUPS,
     MODAL_TRANSLATION_GROUPS,
@@ -43,11 +44,11 @@ function TranslationGroupList({
                 return (
                     <div
                         key={groupName}
-                        className={styles.customize__translationGroup}
+                        className={styles.customizeTranslationGroup}
                     >
                         <button
                             type="button"
-                            className={styles.customize__translationGroupHeader}
+                            className={styles.customizeTranslationGroupHeader}
                             onClick={() => onToggleGroup(groupName)}
                         >
                             {isExpanded ? (
@@ -60,9 +61,7 @@ function TranslationGroupList({
 
                         {isExpanded && (
                             <div
-                                className={
-                                    styles.customize__translationGroupBody
-                                }
+                                className={styles.customizeTranslationGroupBody}
                             >
                                 {keys.map((translationKey) => {
                                     const fieldName =
@@ -86,12 +85,12 @@ function TranslationGroupList({
                                         <div
                                             key={translationKey}
                                             className={
-                                                styles.customize__translationRow
+                                                styles.customizeTranslationRow
                                             }
                                         >
                                             <label
                                                 className={
-                                                    styles.customize__translationLabel
+                                                    styles.customizeTranslationLabel
                                                 }
                                                 htmlFor={`${fieldPrefix}.${fieldName}`}
                                             >
@@ -101,7 +100,7 @@ function TranslationGroupList({
                                             {meta?.description && (
                                                 <p
                                                     className={
-                                                        styles.customize__fieldDescription
+                                                        styles.customizeFieldDescription
                                                     }
                                                 >
                                                     {meta.description}
@@ -110,7 +109,7 @@ function TranslationGroupList({
 
                                             <p
                                                 className={
-                                                    styles.customize__translationKeyMuted
+                                                    styles.customizeTranslationKeyMuted
                                                 }
                                             >
                                                 {translationKey}
@@ -119,7 +118,7 @@ function TranslationGroupList({
                                             {inheritedValue && (
                                                 <p
                                                     className={
-                                                        styles.customize__hint
+                                                        styles.customizeHint
                                                     }
                                                 >
                                                     Inherited default:{" "}
@@ -215,36 +214,36 @@ export function TranslationEditor({
 
     return (
         <div>
-            <div className={styles.customize__translationLangTabs}>
+            <div className={styles.customizeTranslationLangTabs}>
                 <button
                     type="button"
-                    className={`${styles.customize__translationLangTab} ${
-                        lang === "default"
-                            ? styles["customize__translationLangTab--active"]
-                            : ""
-                    }`}
+                    className={clsx(
+                        styles.customizeTranslationLangTab,
+                        lang === "default" &&
+                            styles.customizeTranslationLangTabActive
+                    )}
                     onClick={() => onLangChange("default")}
                 >
                     Default (all languages)
                 </button>
                 <button
                     type="button"
-                    className={`${styles.customize__translationLangTab} ${
-                        lang === "en"
-                            ? styles["customize__translationLangTab--active"]
-                            : ""
-                    }`}
+                    className={clsx(
+                        styles.customizeTranslationLangTab,
+                        lang === "en" &&
+                            styles.customizeTranslationLangTabActive
+                    )}
                     onClick={() => onLangChange("en")}
                 >
                     English (EN)
                 </button>
                 <button
                     type="button"
-                    className={`${styles.customize__translationLangTab} ${
-                        lang === "fr"
-                            ? styles["customize__translationLangTab--active"]
-                            : ""
-                    }`}
+                    className={clsx(
+                        styles.customizeTranslationLangTab,
+                        lang === "fr" &&
+                            styles.customizeTranslationLangTabActive
+                    )}
                     onClick={() => onLangChange("fr")}
                 >
                     French (FR)
@@ -256,10 +255,10 @@ export function TranslationEditor({
                 {...sharedProps}
             />
 
-            <div className={styles.customize__advancedSection}>
+            <div className={styles.customizeAdvancedSection}>
                 <button
                     type="button"
-                    className={styles.customize__advancedToggle}
+                    className={styles.customizeAdvancedToggle}
                     onClick={() => setShowAdvanced(!showAdvanced)}
                 >
                     {showAdvanced ? (
@@ -271,11 +270,11 @@ export function TranslationEditor({
                 </button>
 
                 {showAdvanced && (
-                    <div className={styles.customize__advancedBody}>
-                        <p className={styles.customize__hint}>
+                    <div className={styles.customizeAdvancedBody}>
+                        <p className={styles.customizeHint}>
                             Advanced — Embedded Wallet translations
                         </p>
-                        <p className={styles.customize__fieldDescription}>
+                        <p className={styles.customizeFieldDescription}>
                             These translations apply to the embedded wallet
                             flow.
                         </p>
@@ -286,10 +285,10 @@ export function TranslationEditor({
 
                         <hr />
 
-                        <p className={styles.customize__hint}>
+                        <p className={styles.customizeHint}>
                             Modal Flow translations
                         </p>
-                        <p className={styles.customize__fieldDescription}>
+                        <p className={styles.customizeFieldDescription}>
                             These translations apply to the pop-up modal flow.
                         </p>
                         <TranslationGroupList
@@ -325,7 +324,7 @@ export function CssEditor({
     return (
         <>
             <textarea
-                className={styles.customize__textarea}
+                className={styles.customizeTextarea}
                 value={value}
                 onChange={(event) => onChange(event.target.value)}
                 placeholder={placeholder}

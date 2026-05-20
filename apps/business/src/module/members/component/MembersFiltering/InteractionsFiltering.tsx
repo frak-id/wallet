@@ -1,16 +1,17 @@
-import { Checkbox } from "@frak-labs/ui/component/forms/Checkbox";
-import { Input } from "@frak-labs/ui/component/forms/Input";
+import { Box } from "@frak-labs/design-system/components/Box";
+import { Checkbox } from "@frak-labs/design-system/components/Checkbox";
+import { Inline } from "@frak-labs/design-system/components/Inline";
 import { useEffect, useState } from "react";
 import { useFormContext, useWatch } from "react-hook-form";
-import { Row } from "@/module/common/component/Row";
 import {
     FormField,
     FormItem,
     FormLabel,
     FormMessage,
 } from "@/module/forms/Form";
+import { Input } from "@/module/forms/Input";
 import type { FormMembersFiltering } from "@/module/members/component/MembersFiltering";
-import styles from "./index.module.css";
+import * as styles from "./members-filtering.css";
 
 export function InteractionsFiltering({
     disabled,
@@ -65,84 +66,93 @@ export function InteractionsFiltering({
                     Interactions
                 </FormLabel>
             </FormItem>
-            <Row className={styles.formFromTo__row}>
-                <FormField
-                    control={control}
-                    name={"interactions.min"}
-                    disabled={inputDisabled || disabled}
-                    rules={{
-                        required: false,
-                        min: {
-                            value: 0,
-                            message:
-                                "Minimum interactions count must be greater than 0",
-                        },
-                    }}
-                    render={({ field }) => (
-                        <FormItem>
-                            <FormLabel variant={"light"} weight={"medium"}>
-                                From
-                            </FormLabel>
-                            <Input
-                                type={"number"}
-                                {...field}
-                                value={inputDisabled ? "" : (field.value ?? "")}
-                                placeholder={"Min interactions"}
-                                length={"small"}
-                                onBlur={handleSubmit(onSubmit)}
-                            />
-                            <FormMessage />
-                        </FormItem>
-                    )}
-                />
-                <FormField
-                    control={control}
-                    name={"interactions.max"}
-                    disabled={inputDisabled || disabled}
-                    rules={{
-                        required: false,
-                        min: {
-                            value: 0,
-                            message:
-                                "Maximum interactions count must be greater than 0",
-                        },
-                        validate: (value) => {
-                            if (
-                                !value ||
-                                Number.isNaN(value) ||
-                                Number.isNaN(currentInteractions?.min)
-                            )
-                                return;
+            <Box className={styles.formFromToRow}>
+                <Inline space="m" alignY="bottom">
+                    <FormField
+                        control={control}
+                        name={"interactions.min"}
+                        disabled={inputDisabled || disabled}
+                        rules={{
+                            required: false,
+                            min: {
+                                value: 0,
+                                message:
+                                    "Minimum interactions count must be greater than 0",
+                            },
+                        }}
+                        render={({ field }) => (
+                            <FormItem>
+                                <FormLabel variant={"light"} weight={"medium"}>
+                                    From
+                                </FormLabel>
+                                <Input
+                                    type={"number"}
+                                    {...field}
+                                    value={
+                                        inputDisabled ? "" : (field.value ?? "")
+                                    }
+                                    placeholder={"Min interactions"}
+                                    length={"small"}
+                                    onBlur={handleSubmit(onSubmit)}
+                                />
+                                <FormMessage />
+                            </FormItem>
+                        )}
+                    />
+                    <FormField
+                        control={control}
+                        name={"interactions.max"}
+                        disabled={inputDisabled || disabled}
+                        rules={{
+                            required: false,
+                            min: {
+                                value: 0,
+                                message:
+                                    "Maximum interactions count must be greater than 0",
+                            },
+                            validate: (value) => {
+                                if (
+                                    !value ||
+                                    Number.isNaN(value) ||
+                                    Number.isNaN(currentInteractions?.min)
+                                )
+                                    return;
 
-                            if (
-                                Number.parseInt(
-                                    currentInteractions?.min as unknown as string,
-                                    10
-                                ) >=
-                                Number.parseInt(value as unknown as string, 10)
-                            ) {
-                                return "Max interactions should be greater than minimum";
-                            }
-                        },
-                    }}
-                    render={({ field }) => (
-                        <FormItem>
-                            <FormLabel variant={"light"} weight={"medium"}>
-                                To
-                            </FormLabel>
-                            <Input
-                                type={"number"}
-                                {...field}
-                                value={inputDisabled ? "" : (field.value ?? "")}
-                                placeholder={"Max interactions"}
-                                length={"small"}
-                                onBlur={handleSubmit(onSubmit)}
-                            />
-                            <FormMessage />
-                        </FormItem>
-                    )}
-                />
-            </Row>
+                                if (
+                                    Number.parseInt(
+                                        currentInteractions?.min as unknown as string,
+                                        10
+                                    ) >=
+                                    Number.parseInt(
+                                        value as unknown as string,
+                                        10
+                                    )
+                                ) {
+                                    return "Max interactions should be greater than minimum";
+                                }
+                            },
+                        }}
+                        render={({ field }) => (
+                            <FormItem>
+                                <FormLabel variant={"light"} weight={"medium"}>
+                                    To
+                                </FormLabel>
+                                <Input
+                                    type={"number"}
+                                    {...field}
+                                    value={
+                                        inputDisabled ? "" : (field.value ?? "")
+                                    }
+                                    placeholder={"Max interactions"}
+                                    length={"small"}
+                                    onBlur={handleSubmit(onSubmit)}
+                                />
+                                <FormMessage />
+                            </FormItem>
+                        )}
+                    />
+                </Inline>
+            </Box>
         </>
     );
 }

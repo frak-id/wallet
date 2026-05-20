@@ -1,4 +1,4 @@
-import { Spinner } from "@frak-labs/ui/component/Spinner";
+import { Spinner } from "@frak-labs/design-system/components/Spinner";
 import { Panel } from "@/module/common/component/Panel";
 import { FormLayout } from "@/module/forms/Form";
 import { TableTeam } from "@/module/merchant/component/TableTeam";

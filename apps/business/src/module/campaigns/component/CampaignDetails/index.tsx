@@ -1,4 +1,4 @@
-import { Skeleton } from "@frak-labs/ui/component/Skeleton";
+import { Skeleton } from "@frak-labs/design-system/components/Skeleton";
 import { useQuery } from "@tanstack/react-query";
 import { useEffect, useMemo } from "react";
 import { useForm } from "react-hook-form";
@@ -8,6 +8,8 @@ import { CampaignConditions } from "@/module/campaigns/component/CampaignDetails
 import { CampaignRewardToken } from "@/module/campaigns/component/CampaignDetails/CampaignRewardToken";
 import { CampaignStatus } from "@/module/campaigns/component/CampaignDetails/CampaignStatus";
 import { CampaignTerritory } from "@/module/campaigns/component/CampaignDetails/CampaignTerritory";
+import { CampaignParametersSheet } from "@/module/campaigns/component/CampaignParametersSheet";
+import { CampaignPerformanceSheet } from "@/module/campaigns/component/CampaignPerformanceSheet";
 import { FormBudgetRow } from "@/module/campaigns/component/Creation/NewCampaign/FormBudgetRow";
 import { FormAdvertising } from "@/module/campaigns/component/Creation/ValidationCampaign/FormAdvertising";
 import { FormGoal } from "@/module/campaigns/component/Creation/ValidationCampaign/FormGoal";
@@ -67,7 +69,7 @@ export function CampaignDetails({
     }, [campaign, setDraft]);
 
     if (isLoading || isPending) {
-        return <Skeleton />;
+        return <Skeleton variant="rect" height={250} />;
     }
 
     if (!campaign) {
@@ -94,9 +96,19 @@ export function CampaignDetails({
             </Panel>
             <ActionsWrapper
                 right={
-                    <LinkButton to="/campaigns/list" variant="submit">
-                        Close
-                    </LinkButton>
+                    <>
+                        <CampaignPerformanceSheet
+                            campaign={campaign}
+                            campaignId={campaignId}
+                        />
+                        <CampaignParametersSheet
+                            campaign={campaign}
+                            campaignId={campaignId}
+                        />
+                        <LinkButton to="/campaigns/list" variant="primary">
+                            Close
+                        </LinkButton>
+                    </>
                 }
             />
         </FormLayout>

@@ -1,6 +1,6 @@
-import { Button } from "@frak-labs/ui/component/Button";
 import { SlidersHorizontal } from "lucide-react";
 import { useState } from "react";
+import { Button } from "@/module/common/component/Button";
 import {
     Popover,
     PopoverContent,
@@ -9,7 +9,7 @@ import {
 import { MembersFiltering } from "@/module/members/component/MembersFiltering";
 import { FiltersCount } from "@/module/members/component/TableMembers/FiltersCount";
 import { membersStore } from "@/stores/membersStore";
-import styles from "./Filters.module.css";
+import * as styles from "./filters.css";
 
 export function TableMembersFilters() {
     const [isPopoverOpen, setIsPopoverOpen] = useState(false);
@@ -20,18 +20,18 @@ export function TableMembersFilters() {
 
     return (
         <div className={styles.filters}>
-            {/*<div className={styles.filters__item}>
+            {/*<div className={styles.filtersItem}>
                 <InputSearch
                     placeholder={"Search members..."}
                     classNameWrapper={styles.filters__search}
                 />
             </div>*/}
-            <div className={styles.filters__item}>
+            <div className={styles.filtersItem}>
                 <Popover open={isPopoverOpen} onOpenChange={setIsPopoverOpen}>
                     <PopoverTrigger asChild>
                         <Button
                             variant={"secondary"}
-                            leftIcon={<SlidersHorizontal size={20} />}
+                            icon={<SlidersHorizontal size={20} />}
                         >
                             Filters{" "}
                             <FiltersCount filter={tableMembersFilters.filter} />
@@ -40,7 +40,7 @@ export function TableMembersFilters() {
                     <PopoverContent
                         align="end"
                         onEscapeKeyDown={() => setIsPopoverOpen(false)}
-                        className={styles.filters__popoverContent}
+                        className={styles.filtersPopoverContent}
                     >
                         <MembersFiltering
                             initialValue={tableMembersFilters.filter}

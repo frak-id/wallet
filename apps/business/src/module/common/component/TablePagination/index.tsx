@@ -8,7 +8,7 @@ import {
     PaginationNext,
     PaginationPrevious,
 } from "@/module/common/component/Pagination";
-import styles from "./index.module.css";
+import { pagination } from "./table-pagination.css";
 
 type TablePaginationProps = {
     onPageChange: (page: number) => void;
@@ -42,7 +42,7 @@ export function TablePagination({
     });
 
     return (
-        <div className={styles.pagination}>
+        <div className={pagination}>
             <p>
                 Showing {fromItem}-{toItem} from {totalItems}
             </p>

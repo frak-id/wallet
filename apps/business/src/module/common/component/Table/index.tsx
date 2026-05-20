@@ -7,14 +7,22 @@ import {
     getFilteredRowModel,
     getSortedRowModel,
     type PaginationState,
+    type Row,
     type RowPinningState,
     type RowSelectionState,
     useReactTable,
 } from "@tanstack/react-table";
+import clsx from "clsx";
 import { ArrowDown, ArrowDownUp, ArrowUp } from "lucide-react";
 import type { ReactNode } from "react";
 import { type PropsWithChildren, useMemo, useState } from "react";
-import styles from "./index.module.css";
+import {
+    preTable as preTableStyle,
+    tableButton,
+    tableFilterIcon,
+    table as tableStyle,
+    tableWrapper,
+} from "./table.css";
 
 export type ReactTableProps<TData> = {
     classNameWrapper?: string;
@@ -23,6 +31,7 @@ export type ReactTableProps<TData> = {
     postTable?: ReactNode;
     // Some custom configs
     enableFiltering?: boolean;
+    onRowClick?: (row: Row<TData>) => void;
     // Some states
     sorting?: SortingState;
     columnFilters?: ColumnFiltersState;
@@ -43,6 +52,7 @@ export function Table<TData extends object>({
     postTable,
     sorting,
     enableFiltering = false,
+    onRowClick,
     columnFilters,
     rowSelection,
     rowPinning,
@@ -88,10 +98,10 @@ export function Table<TData extends object>({
     );
 
     return (
-        <div className={`${styles.tableWrapper} ${classNameWrapper}`}>
-            {preTable && <div className={styles.preTable}>{preTable}</div>}
+        <div className={clsx(tableWrapper, classNameWrapper)}>
+            {preTable && <div className={preTableStyle}>{preTable}</div>}
 
-            <table className={`${styles.table} ${className}`}>
+            <table className={clsx(tableStyle, className)}>
                 <thead>
                     {table.getHeaderGroups().map((headerGroup) => (
                         <tr key={headerGroup.id}>
@@ -120,7 +130,15 @@ export function Table<TData extends object>({
                         </tr>
                     ) : (
                         rowModel.rows.map((row) => (
-                            <tr key={row.id}>
+                            <tr
+                                key={row.id}
+                                data-clickable={onRowClick ? "true" : undefined}
+                                onClick={
+                                    onRowClick
+                                        ? () => onRowClick(row)
+                                        : undefined
+                                }
+                            >
                                 {row.getVisibleCells().map((cell) => (
                                     <td key={cell.id}>
                                         {flexRender(
@@ -182,12 +200,12 @@ function Sorting<TData>({
               : ArrowDown;
     return (
         <button
-            className={styles.table__button}
+            className={tableButton}
             type={"button"}
             onClick={column.getToggleSortingHandler()}
         >
             {children}
-            {Icon && <Icon className={styles.table__filterIcon} />}
+            {Icon && <Icon className={tableFilterIcon} />}
         </button>
     );
 }

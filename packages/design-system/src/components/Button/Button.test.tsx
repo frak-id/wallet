@@ -28,6 +28,24 @@ describe("Button", () => {
         expect(screen.getByText("With Icon")).toBeInTheDocument();
     });
 
+    it("should render rightIcon after children", () => {
+        const left = <span data-testid="left">L</span>;
+        const right = <span data-testid="right">R</span>;
+        render(
+            <Button icon={left} rightIcon={right}>
+                Label
+            </Button>
+        );
+        const leftEl = screen.getByTestId("left");
+        const rightEl = screen.getByTestId("right");
+        // Assert relative order via DOM position rather than child indices so
+        // the test survives future wrappers (e.g. Box) around children.
+        expect(
+            leftEl.compareDocumentPosition(rightEl) &
+                Node.DOCUMENT_POSITION_FOLLOWING
+        ).toBeTruthy();
+    });
+
     it("should call onClick handler when clicked", () => {
         const handleClick = vi.fn();
         render(<Button onClick={handleClick}>Click</Button>);
