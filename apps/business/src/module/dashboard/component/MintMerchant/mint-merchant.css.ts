@@ -86,15 +86,10 @@ export const domainSection = style({
 });
 
 export const domainFields = style({
-    display: "grid",
-    gridTemplateColumns: "1fr 1fr",
+    display: "flex",
+    flexDirection: "column",
     gap: alias.spacing.m,
     margin: "16px 0",
-    "@media": {
-        "screen and (max-width: 768px)": {
-            gridTemplateColumns: "1fr",
-        },
-    },
 });
 
 export const domainField = style({
