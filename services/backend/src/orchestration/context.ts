@@ -148,7 +148,8 @@ const walletMergeOrchestrator = new WalletMergeOrchestrator(
     IdentityContext.repositories.identity,
     identityWeightService,
     identityMergeService,
-    webAuthNValidatorReader
+    webAuthNValidatorReader,
+    AuthContext.services.webAuthN
 );
 
 const authenticatorLookupOrchestrator = new AuthenticatorLookupOrchestrator(

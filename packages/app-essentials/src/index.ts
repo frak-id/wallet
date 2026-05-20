@@ -25,4 +25,10 @@ export {
     isRunningInProd,
     isRunningLocally,
 } from "./utils";
-export { WebAuthN } from "./webauthn";
+export {
+    buildMergeConsentChallenge,
+    buildMergeConsentChallengeSlots,
+    formatMergeConsentHourSlot,
+    MERGE_CONSENT_PREFIX,
+    WebAuthN,
+} from "./webauthn";

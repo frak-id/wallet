@@ -3,7 +3,14 @@ import { KernelWallet, kernelAddresses } from "@frak-labs/app-essentials";
 import { type Signature, WebAuthnP256 } from "ox";
 import type { SignMetadata } from "ox/WebAuthnP256";
 import { getSenderAddress } from "permissionless/actions";
-import { type Address, concatHex, type Hex, keccak256, toHex } from "viem";
+import {
+    type Address,
+    concatHex,
+    type Hex,
+    keccak256,
+    stringToHex,
+    toHex,
+} from "viem";
 import { entryPoint06Address } from "viem/account-abstraction";
 import type { AuthenticatorRepository } from "../repositories/AuthenticatorRepository";
 
@@ -127,5 +134,67 @@ export class WebAuthNService {
             publicKey: authenticator.publicKey,
             transports: authenticator.transports,
         };
+    }
+
+    /**
+     * Verify a webauthn assertion produced by the loser side during a wallet
+     * merge. The caller passes the candidate challenge strings (current UTC
+     * hour ±1h, built via `buildMergeConsentChallengeSlots`); the assertion
+     * is accepted if it verifies against any one of them.
+     *
+     * Returns `false` for every rejection path (parse failure, wrong
+     * credential, missing authenticator row, no matching challenge) so the
+     * caller can map a single 401 to the user without leaking which sub-check
+     * failed.
+     */
+    async verifyConsentSignature({
+        compressedSignature,
+        expectedAuthenticatorId,
+        expectedChallenges,
+    }: {
+        compressedSignature: string;
+        expectedAuthenticatorId: string;
+        expectedChallenges: string[];
+    }): Promise<boolean> {
+        let result: AuthenticationResponseJSON;
+        try {
+            result =
+                this.parseCompressedResponse<AuthenticationResponseJSON>(
+                    compressedSignature
+                );
+        } catch {
+            return false;
+        }
+
+        // Bind the assertion to the credential the merge preview pinned down.
+        // Without this an attacker holding any valid assertion from any other
+        // credential could pass it off as loser consent.
+        if (result.id !== expectedAuthenticatorId) {
+            return false;
+        }
+
+        const authenticator =
+            await this.authenticatorRepository.getByCredentialId(result.id);
+        if (!authenticator) {
+            return false;
+        }
+
+        const { signature, metadata } = result.response;
+        return expectedChallenges.some((challenge) =>
+            WebAuthnP256.verify({
+                publicKey: {
+                    x: BigInt(authenticator.publicKey.x),
+                    y: BigInt(authenticator.publicKey.y),
+                    prefix: 4,
+                },
+                signature: {
+                    r: BigInt(signature.r),
+                    s: BigInt(signature.s),
+                    yParity: signature.yParity,
+                },
+                metadata,
+                challenge: stringToHex(challenge),
+            })
+        );
     }
 }

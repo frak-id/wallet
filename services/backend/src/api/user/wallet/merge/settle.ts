@@ -32,6 +32,7 @@ export const mergeSettleRoutes = new Elysia().use(sessionContext).post(
             requesterAuthenticatorId: walletSession.authenticatorId,
             targetAuthenticatorId: body.targetAuthenticatorId,
             onChainTxHash: body.onChainTxHash,
+            loserConsentSignature: body.loserConsentSignature,
         });
     },
     {

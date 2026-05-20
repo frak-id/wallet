@@ -295,6 +295,7 @@ class WalletMergeOrchestrator {
         private identityRepo: IdentityRepository,
         private identityWeightSvc: IdentityWeightService,
         private identityMergeSvc: IdentityMergeService,
+        private webAuthNService: WebAuthNService,           // verifies loser consent
         private webAuthNValidatorReader: ContractReader,    // wraps publicClient.readContract
     ) {}
 
@@ -339,56 +340,105 @@ class WalletMergeOrchestrator {
             identitiesBeingMerged: /* loser's identity_nodes */,
         };
     }
-
-    async settle({ requesterWallet, targetAuthenticatorId, chainId, onChainTxHash }): Promise<void> {
-        // Recompute preview deterministically (no stored snapshot in Phase 1)
-        const preview = await this.preview({ requesterWallet, targetAuthenticatorId, chainId });
-
-        // 1. Verify the userOp landed and produced the expected on-chain state
-        const receipt = await this.webAuthNValidatorReader.waitForReceipt(chainId, onChainTxHash);
-        if (receipt.status !== "success") throw new MergeError("user-op-reverted");
-
-        const onChainPubkey = await this.webAuthNValidatorReader.getPasskey(
-            chainId,
-            preview.winner,
-            keccak256(toHex(preview.loserAuthenticatorId)),
-        );
-        if (
-            onChainPubkey.x !== BigInt(preview.loserPublicKey.x) ||
-            onChainPubkey.y !== BigInt(preview.loserPublicKey.y)
-        ) throw new MergeError("on-chain-passkey-mismatch");
-
-        // 2. libSQL repoint (atomic in libSQL tx)
-        await this.authRepo.repointBinding({
-            credentialId: preview.loserAuthenticatorId,
-            chainId,
-            toSmartWalletAddress: preview.winner,
-            reason: "merged",
-        });
-
-        // 3. PG identity merge (atomic in PG tx). The loser group's
-        //    `identity_nodes` rows — including the email — are bulk-moved onto
-        //    the winner group as part of `mergeGroups`. If both sides had a
-        //    different email, the winner ends up with two active email nodes;
-        //    `findEmailForGroup` returns the oldest (the winner's original).
-        await this.identityMergeSvc.mergeGroupsByWallet(preview.winner, preview.loser, {
-            migratePushTokens: true,
-            migrateAssetLogsRecipient: true,
-            referralCodePolicy: "migrate-revoke-on-conflict",
-        });
-
-        // 4. Emit event (in-process)
-        eventEmitter.emit("walletMerged", {
-            chainId,
-            winner: preview.winner,
-            loser:  preview.loser,
-            credentialId: preview.loserAuthenticatorId,
-        });
-    }
 }
 ```
 
-Cross-DB safety: each step is independently idempotent (verified in D.3 of the Phase 2 doc, same shape). A crashed `settle` can be safely retried by re-invoking the API endpoint — step 1 is a pure read, step 2 is a no-op if the binding already points to winner (the active row check), step 3 is a no-op if the loser's group has already been merged into winner's.
+### Loser consent signature
+
+`addPassKey` on its own only proves the **winner-side** owner approved the change — they signed the on-chain userOp with their own passkey. Nothing in that flow proves the **loser-side** owner consented to having their identity absorbed. Without an explicit consent check, a malicious wallet owner could craft an `addPasskey` userOp on their own account using a victim's publicly-readable credential id + pubkey (both visible from `multiWebAuthNValidatorV2.getPasskey` once the victim has registered), then call `/merge/settle` against that victim's wallet without the victim ever interacting. The backend would observe a valid on-chain state, repoint the binding, and hand the victim's identity graph over to the attacker.
+
+To close that gap, `/merge/settle` requires a WebAuthn assertion from the **loser's** credential over a backend-deterministic challenge string:
+
+```
+frak-merge-consent:{YYYY-MM-DDTHH}:{winner_wallet_lowercased}:{loser_authenticator_id}
+```
+
+- `YYYY-MM-DDTHH` is the current UTC hour slot.
+- `winner_wallet_lowercased` is the lowercased hex address of the winner (matches the normalisation used elsewhere in the identity-node store).
+- `loser_authenticator_id` is the base64url credential id of the credential being repointed.
+
+To tolerate clock skew between the device clock and the backend, and to absorb slow user flows that straddle an hour boundary, the backend accepts a signature over **three candidate challenges**: the current hour, one hour earlier, and one hour later. Each candidate is recomputed server-side from the preview (`winner` + `loserAuthenticatorId`); nothing is persisted in a DB and there is no cleanup cron.
+
+Why this shape:
+
+- The challenge is **deterministic from public values**, so no `merge_consent_challenges` table, no nonce issuance step, no expiry cron.
+- The replay window is bounded to roughly three hours, but a captured signature alone cannot complete a merge — the attacker still needs the **winner-side biometric** to submit the on-chain `addPasskey` userOp. The consent signature is one half of an AND-gate (loser consent + winner userOp), not a sole gating factor. That dual-biometric requirement is what makes a replayable challenge design acceptable here; on a single-factor flow we would have to issue and persist short-lived nonces instead.
+- Including the **loser authenticator id** in the challenge prevents cross-victim replay — a signature collected for a merge into victim X cannot be replayed against victim Y on the same UTC day.
+- The static `frak-merge-consent:` prefix prevents cross-protocol replay — a WebAuthn assertion captured from a login, pairing, or any other flow cannot be passed off as merge consent.
+- The three-slot window (`current`, `current - 1h`, `current + 1h`) prevents flaky failures around hour boundaries without meaningfully widening the replay window.
+
+Verification at settle time:
+
+1. Build all three candidate challenge strings from the preview (`winner`, `loserAuthenticatorId`).
+2. Call `webAuthNService.verifyConsentSignature({ compressedSignature, expectedAuthenticatorId: preview.loserAuthenticatorId, expectedChallenges })`.
+3. Inside that helper: parse the compressed assertion, confirm `result.id === expectedAuthenticatorId` (so a signature from an unrelated credential can't be substituted), look up the loser credential's pubkey via `AuthenticatorRepository.getByCredentialId`, and verify against the candidate challenge bytes using `ox/WebAuthnP256.verify`. Any matching candidate counts as success.
+4. Reject **before** any on-chain reads or DB writes — this is a cheap rejection of unauthenticated attempts. The new error code is `MERGE_INVALID_CONSENT` → HTTP 401.
+
+The challenge-building helper is reusable: it lives in `packages/app-essentials/src/webauthn/` so the frontend computes the exact same string before calling `navigator.credentials.get({ challenge: stringToBytes(buildMergeConsentChallenge(...)) })`. Backend and frontend share one source of truth for the challenge format.
+
+The updated `settle()` pseudo-code:
+
+```ts
+async settle({ requesterWallet, targetAuthenticatorId, chainId, onChainTxHash, loserConsentSignature }): Promise<void> {
+    // Recompute preview deterministically (no stored snapshot in Phase 1)
+    const preview = await this.preview({ requesterWallet, targetAuthenticatorId, chainId });
+
+    // 0. Verify loser consent — cheap, runs before any on-chain or DB work
+    const expectedChallenges = buildMergeConsentChallengeSlots({
+        winner: preview.winner,
+        loserAuthenticatorId: preview.loserAuthenticatorId,
+    });
+    const consentOk = await this.webAuthNService.verifyConsentSignature({
+        compressedSignature: loserConsentSignature,
+        expectedAuthenticatorId: preview.loserAuthenticatorId,
+        expectedChallenges,
+    });
+    if (!consentOk) throw new MergeError("MERGE_INVALID_CONSENT");
+
+    // 1. Verify the userOp landed and produced the expected on-chain state
+    const receipt = await this.webAuthNValidatorReader.waitForReceipt(chainId, onChainTxHash);
+    if (receipt.status !== "success") throw new MergeError("user-op-reverted");
+
+    const onChainPubkey = await this.webAuthNValidatorReader.getPasskey(
+        chainId,
+        preview.winner,
+        keccak256(toHex(preview.loserAuthenticatorId)),
+    );
+    if (
+        onChainPubkey.x !== BigInt(preview.loserPublicKey.x) ||
+        onChainPubkey.y !== BigInt(preview.loserPublicKey.y)
+    ) throw new MergeError("on-chain-passkey-mismatch");
+
+    // 2. libSQL repoint (atomic in libSQL tx)
+    await this.authRepo.repointBinding({
+        credentialId: preview.loserAuthenticatorId,
+        chainId,
+        toSmartWalletAddress: preview.winner,
+        reason: "merged",
+    });
+
+    // 3. PG identity merge (atomic in PG tx). The loser group's
+    //    `identity_nodes` rows — including the email — are bulk-moved onto
+    //    the winner group as part of `mergeGroups`. If both sides had a
+    //    different email, the winner ends up with two active email nodes;
+    //    `findEmailForGroup` returns the oldest (the winner's original).
+    await this.identityMergeSvc.mergeGroupsByWallet(preview.winner, preview.loser, {
+        migratePushTokens: true,
+        migrateAssetLogsRecipient: true,
+        referralCodePolicy: "migrate-revoke-on-conflict",
+    });
+
+    // 4. Emit event (in-process)
+    eventEmitter.emit("walletMerged", {
+        chainId,
+        winner: preview.winner,
+        loser:  preview.loser,
+        credentialId: preview.loserAuthenticatorId,
+    });
+}
+```
+
+Cross-DB safety: each step is independently idempotent (verified in D.3 of the Phase 2 doc, same shape). A crashed `settle` can be safely retried by re-invoking the API endpoint — step 0 is a pure read + crypto check, step 1 is a pure read, step 2 is a no-op if the binding already points to winner (the active row check), step 3 is a no-op if the loser's group has already been merged into winner's.
 
 ---
 
@@ -399,7 +449,7 @@ New routes under `services/backend/src/api/user/wallet/merge/`:
 | Method + path | Auth | Body / query | Response |
 |---|---|---|---|
 | `GET /user/wallet/merge/preview` | webauthn JWT (the requester) | `?targetAuthenticatorId=...&chainId=...` (chainId optional, defaults to env) | `MergePreview` |
-| `POST /user/wallet/merge/settle` | webauthn JWT (the requester) | `{ targetAuthenticatorId, chainId?, onChainTxHash }` | `{ status: "merged", winner, loser }` |
+| `POST /user/wallet/merge/settle` | webauthn JWT (the requester) | `{ targetAuthenticatorId, chainId?, onChainTxHash, loserConsentSignature }` | `{ status: "merged", winner, loser }` |
 
 Both wired in `services/backend/src/api/user/wallet/index.ts`. Existing `POST /user/wallet/auth/email` is updated to return the target authenticator id and wallet on the conflict branch:
 
@@ -494,6 +544,7 @@ On success the user sees the existing AddEmail success screen with copy adjusted
 | Local `useProveLocalAuthenticator` returns `unavailable` or `cancelled` | UI shows the Phase 1 "this needs your other device" placeholder. No state change. Phase 2 replaces this with the QR flow. |
 | `useSwitchAuthenticator` fails (biometric cancel, mismatched credential, etc.) | `popSession()` runs in the hook's catch; user lands back on the current session with the merge form re-enabled. |
 | `useMergeFinaliseLocal` userOp reverts on-chain | Hook throws; UI shows error toast. Settle endpoint is never called. No data mutated. If we switched session for this attempt, the user is still on wallet B and can retry the on-chain step; if it succeeds the merge completes; if they give up, `popSession()` restores wallet A. |
+| `/merge/settle` called without a valid `loserConsentSignature` | 401 with `MERGE_INVALID_CONSENT`. No state mutated (rejection happens before any on-chain read or DB write). UI re-prompts the loser passkey and retries. |
 | `/merge/settle` returns 4xx (verification failure) | UI shows error toast. The on-chain `addPassKey` is now in effect (B's passkey is a co-signer of winner), but backend hasn't merged. Retry button re-calls `/merge/settle` — idempotent by design. |
 | `/merge/settle` succeeds on-chain verification and libSQL repoint but PG merge crashes | Manual replay needed — for Phase 1 the simplest answer is "log error, surface in admin tooling". A retry endpoint or cron-based reconciler is deferred to Phase 2 (the cleanup logic lands there as part of the `merge_state` row work). |
 | User reloads the AddEmail page mid-flow | React Query cache invalidates; preview re-fetches; flow restarts from the input state. Pending on-chain tx (if any) keeps its course — the next `/merge/settle` retry picks it up. |
@@ -519,13 +570,14 @@ On success the user sees the existing AddEmail success screen with copy adjusted
 | `services/backend/src/api/user/wallet/auth/email.ts` | Conflict branch routes through `AuthenticatorLookupOrchestrator.findByEmail`. Email read/write hit `IdentityRepository.findEmailForGroup` + `addNode` directly. |
 | `services/backend/src/api/user/wallet/auth/emailStatus.ts` | Same lookup orchestrator. |
 | `services/backend/src/orchestration/identity/IdentityMergeService.ts` | Add options bag + 3 new SQL ops (push_tokens, asset_logs.recipient_wallet pending, referral_codes migrate-with-conflict-revoke). No special handling required for the email identity node — it migrates as part of the existing bulk node move. |
-| `services/backend/src/orchestration/identity/WalletMergeOrchestrator.ts` *(new)* | `preview`, `settle`. |
+| `services/backend/src/orchestration/identity/WalletMergeOrchestrator.ts` *(new)* | `preview`, `settle`. Constructor gains a `WebAuthNService` dependency; `settle()` accepts a required `loserConsentSignature` and verifies it first, before any on-chain read or DB write. |
+| `services/backend/src/domain/auth/services/WebAuthNService.ts` | New `verifyConsentSignature({ compressedSignature, expectedAuthenticatorId, expectedChallenges })` method. Parses the compressed assertion, asserts `result.id === expectedAuthenticatorId`, loads the credential pubkey via `AuthenticatorRepository.getByCredentialId`, verifies against the candidate challenge bytes using `ox/WebAuthnP256.verify`, returns `boolean`. |
 | `services/backend/src/infrastructure/blockchain/WebAuthNValidatorReader.ts` *(new)* | Thin wrapper around `publicClient.readContract` for `getPasskey` and `waitForTransactionReceipt`. Chain-aware. |
 | `services/backend/src/api/user/wallet/merge/preview.ts` *(new)* | `GET /user/wallet/merge/preview`. |
 | `services/backend/src/api/user/wallet/merge/settle.ts` *(new)* | `POST /user/wallet/merge/settle`. |
 | `services/backend/src/api/user/wallet/index.ts` | Wire the new merge routes. |
-| `services/backend/src/api/schemas/authenticationSchemas.ts` | Extend `AssociateEmailResponseSchema` conflict branch with optional `authenticatorId`, `wallet`. Drop the email property from `AuthenticatorDocument`. |
-| `services/backend/src/orchestration/context.ts` | Wire `authenticatorLookupOrchestrator`. |
+| `services/backend/src/api/schemas/authenticationSchemas.ts` | Extend `AssociateEmailResponseSchema` conflict branch with optional `authenticatorId`, `wallet`. Drop the email property from `AuthenticatorDocument`. `MergeSettleBodySchema` gains a required `loserConsentSignature: t.String()`. |
+| `services/backend/src/orchestration/context.ts` | Wire `authenticatorLookupOrchestrator`. Wire `webAuthNService` into the `walletMergeOrchestrator` constructor so it can verify the loser consent signature. |
 | `services/backend/src/jobs/` *(or env config)* | Expose the list of configured chain ids as a single source of truth used by register, login, bootstrap back-fill, and the merge orchestrator. |
 
 ### Bootstrap
@@ -536,6 +588,13 @@ On success the user sees the existing AddEmail success screen with copy adjusted
 | `services/bootstrap/src/index.ts` | Insert the new step between `runLibsqlMigrations` and `ensureBuckets`. |
 | `services/bootstrap/AGENTS.md` | Add the new step to the sequential list. |
 | `services/bootstrap/package.json` (if needed) | Add the libSQL client dependency if not already present. |
+
+### Shared — `packages/app-essentials`
+
+| File | Change |
+|---|---|
+| `packages/app-essentials/src/webauthn/mergeConsent.ts` *(new)* | Exports `buildMergeConsentChallenge({ winner, loserAuthenticatorId, hourSlot })`, `buildMergeConsentChallengeSlots({ winner, loserAuthenticatorId, now? })` (returns the three candidate strings — current hour, ±1h), and `formatMergeConsentHourSlot(date)` (`YYYY-MM-DDTHH` UTC formatter). Pure functions, no I/O, shared by backend verification and frontend signing. |
+| `packages/app-essentials/src/webauthn/index.ts` | Re-export the new helpers — either on the existing `WebAuthN` namespace or as a sibling `MergeConsent` namespace (match whichever the implementer chose). Backend imports them via `services/backend`'s usual `@frak-labs/app-essentials` path; frontend imports them in the merge hooks before calling `navigator.credentials.get({ challenge: stringToBytes(buildMergeConsentChallenge(...)) })`. |
 
 ### Frontend — `packages/wallet-shared`
 
@@ -572,6 +631,7 @@ No new routes — the merge flow stays inside the existing `/profile/add-email` 
 - Multiple emails per identity group are tolerated post-merge. `findEmailForGroup` returns the oldest active one deterministically.
 - Both Arbitrum mainnet and Arbitrum Sepolia bindings inserted at register time, and back-filled for every existing row.
 - Same-device fast path only in Phase 1. Cross-device pairing-with-hint is Phase 2.
+- Loser consent is collected as a WebAuthn assertion at `/merge/settle` over a backend-deterministic challenge string (`frak-merge-consent:{UTC hour}:{winner}:{loser authid}`). Three slots are accepted (current ±1h) for clock skew and slow user flows. No DB storage — the dual-biometric AND-gate (loser consent + winner userOp) makes a replayable challenge acceptable for the threat model. Rejection happens before any on-chain read or DB write; failure surfaces as `MERGE_INVALID_CONSENT` (HTTP 401).
 
 ---
 

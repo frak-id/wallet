@@ -348,10 +348,42 @@ On confirm, **mobile branches on `preview.winner`**:
 
 #### Step 7a — Winner = Wallet B (mobile)
 
-Mobile holds the winning passkey, so mobile does everything locally:
+Mobile holds the winning passkey, so mobile does everything locally. The earlier framing — "mobile's transaction IS the consent" — was incomplete: B signing the on-chain `addPasskey` userOp only proves **B's owner** approved adding A as a co-signer to B. It says nothing about **A's owner**, whose identity graph (interactions, referrals, asset_logs, push tokens, email node) is the part being absorbed. Without A's consent, a malicious owner of B could craft this userOp against an unsuspecting A and have the backend hand A's identity graph over.
+
+The unified Phase 1 consent design fixes this: mobile collects A's biometric over the merge-consent challenge **before** switching to B's session, then passes the assertion through to `/merge/settle` like any other caller.
+
+Concretely, BEFORE the `pushSession` + `useLogin` step that switches to B (in Step 3 Case B), mobile collects the consent over A's credential — A is still the active session at that point:
 
 ```ts
-// useMergeFinaliseLocal hook (mobile-side)
+// Still logged in as wallet A (loser) at this point — collect consent now
+const expectedChallenges = buildMergeConsentChallengeSlots({
+  winner: preview.winner,            // 0xAbC… (B, lowercased)
+  loserAuthenticatorId: authId_A,
+});
+const loserConsentAssertion = await navigator.credentials.get({
+  publicKey: {
+    challenge: stringToBytes(buildMergeConsentChallenge({
+      winner: preview.winner,
+      loserAuthenticatorId: authId_A,
+      hourSlot: formatMergeConsentHourSlot(new Date()),
+    })),
+    allowCredentials: [{ id: base64UrlToBytes(authId_A), type: "public-key" }],
+    userVerification: "required",
+  },
+});
+const loserConsentSignature = encodeCompressedAssertion(loserConsentAssertion);
+// Stash for the settle call — survives the session switch
+mergeFlowState.set({ loserConsentSignature });
+
+// NOW switch sessions
+sessionStore.getState().pushSession();
+await login({ lastAuthentication: { authenticatorId: authId_B, wallet: preview.winner } });
+```
+
+Once mobile is on B's session, the rest of the local merge proceeds:
+
+```ts
+// useMergeFinaliseLocal hook (mobile-side, now as wallet B)
 const { sendTransactionAsync } = useSendTransaction();
 
 // 1. Build the userOp call data
@@ -376,12 +408,14 @@ const txHash = await sendTransactionAsync({
 // 3. Wait for receipt (already handled by the existing sendTransactionAction)
 //    The hook resolves once the bundler confirms; if it fails, we get a thrown error.
 
-// 4. Tell backend to settle
+// 4. Tell backend to settle — pass the stashed A-side consent signature
 await authenticatedWalletApi.user.wallet.merge.settle.post({
   pairingId,
   onChainTxHash: txHash,
+  loserConsentSignature: mergeFlowState.get().loserConsentSignature,
 });
 // Server-side: WalletMergeOrchestrator.settle()
+//   - verifies loserConsentSignature against authId_A's public key + three candidate challenges
 //   - verifies on-chain getPasskey returns the expected pubkey
 //   - libSQL repointBinding(loserAuthId, chainId → winnerAddress)
 //   - PG IdentityMergeService.mergeGroups(winner, loser, { migratePushTokens, ... })
@@ -394,7 +428,29 @@ await authenticatedWalletApi.user.wallet.merge.settle.post({
 
 #### Step 7b — Winner = Wallet A (desktop)
 
-Mobile only needs to consent. The user's "Confirm merge" tap is the consent signal. Mobile sends a `merge-consent` message back to desktop:
+Mobile holds the loser-side passkey (B), so mobile collects A-side… no — in this branch **B is the loser**, A is the winner. Mobile owns the loser's credential and must produce the consent assertion. On "Confirm merge", mobile builds the deterministic challenge from the preview, prompts B's biometric, and ships the resulting assertion to desktop:
+
+```ts
+// Mobile-side, still on wallet B's session (the loser)
+const challenge = buildMergeConsentChallenge({
+  winner: preview.winner,            // 0xDeF… (A, lowercased)
+  loserAuthenticatorId: authId_B,
+  hourSlot: formatMergeConsentHourSlot(new Date()),
+});
+const loserConsentAssertion = await navigator.credentials.get({
+  publicKey: {
+    challenge: stringToBytes(challenge),
+    allowCredentials: [{ id: base64UrlToBytes(authId_B), type: "public-key" }],
+    userVerification: "required",
+  },
+});
+const loserConsentSignature = encodeCompressedAssertion(loserConsentAssertion);
+
+// Send to desktop over the pairing
+await targetPairingClient.sendMergeConsent({ pairingId, loserConsentSignature });
+```
+
+The `merge-consent` message still flows over the pairing WS, but the signed challenge is now the unified Phase 1 deterministic string — **not** the old `keccak256("frak-merge-consent" || pairingId)` framing:
 
 ```ts
 // target → server → origin topic
@@ -402,8 +458,9 @@ Mobile only needs to consent. The user's "Confirm merge" tap is the consent sign
   "type": "merge-consent",
   "payload": {
     "pairingId": "...",
-    "consentSignature": "0x…"   // WebAuthn assertion of keccak256("frak-merge-consent" || pairingId)
-                                 //   produced with wallet B's session — proves B's owner approved
+    "loserConsentSignature": "0x…"   // WebAuthn assertion over
+                                      //   frak-merge-consent:{UTC hour}:{winner_lowercased}:{loser authid}
+                                      //   produced with wallet B's credential — proves B's owner approved
   }
 }
 ```
@@ -431,34 +488,48 @@ const txHash = await sendTransactionAsync({
   data: calldata,
 });
 
-// 3. Tell backend to settle, passing the consent signature
+// 3. Tell backend to settle, passing the consent signature received over pairing
 await authenticatedWalletApi.user.wallet.merge.settle.post({
   pairingId,
   onChainTxHash: txHash,
-  consentSignature,
+  loserConsentSignature,
 });
-// Server verifies consentSignature against authId_B's public key before applying merge.
+// Server verifies loserConsentSignature against authId_B's public key over the three
+// deterministic candidate challenges (current hour ±1h) before applying merge.
 
 // 4. Desktop shows success screen
 //    Backend publishes "merge-completed" to TARGET topic so mobile also shows success.
 ```
 
-In **both** sub-cases the device that performs the on-chain transaction is the device that owns the winning passkey, using its own wagmi/smart-account client. **No userOp hash crosses the pairing channel.** The pairing only carries: the proposal (`merge-proposal`) and, when needed, the consent (`merge-consent`).
+In **both** sub-cases the device that performs the on-chain transaction is the device that owns the winning passkey, using its own wagmi/smart-account client. **No userOp hash crosses the pairing channel.** The pairing only carries: the proposal (`merge-proposal`) and the loser's consent (`merge-consent`).
 
 ### Step 8 — Backend settles
 
-`WalletMergeOrchestrator.settle({ pairingId, onChainTxHash, consentSignature? })`:
+`WalletMergeOrchestrator.settle({ pairingId, onChainTxHash, loserConsentSignature })` — consent is **always required**, regardless of which side wins, because the loser side always exists and always needs to approve being absorbed:
 
 ```ts
-async settle({ pairingId, onChainTxHash, consentSignature }) {
+async settle({ pairingId, onChainTxHash, loserConsentSignature }) {
   const pairing = await pairingRepo.getByPairingId(pairingId);
   assert(pairing.kind === "remote-sig");
 
-  // 1. Verify the on-chain state (idempotent read)
+  const preview = await previewSvc.recompute(pairing); // or load stored snapshot
+
+  // 1. Verify loser consent FIRST — cheap, no on-chain or DB cost
+  const expectedChallenges = buildMergeConsentChallengeSlots({
+    winner: preview.winner,
+    loserAuthenticatorId: preview.loserAuthenticatorId,
+  });
+  const consentOk = await webAuthNService.verifyConsentSignature({
+    compressedSignature: loserConsentSignature,
+    expectedAuthenticatorId: preview.loserAuthenticatorId,
+    expectedChallenges,
+  });
+  if (!consentOk) throw new MergeError("MERGE_INVALID_CONSENT");
+
+  // 2. Verify the on-chain state (idempotent read)
   const receipt = await publicClient.waitForTransactionReceipt({ hash: onChainTxHash });
   if (receipt.status !== "success") throw new MergeError("user-op-reverted");
 
-  const preview = await previewSvc.recompute(pairing); // or load stored snapshot
   const onChainPubkey = await readContract({
     address: WEBAUTHN_VALIDATOR,
     abi: multiWebAuthNValidatorV2Abi,
@@ -467,20 +538,6 @@ async settle({ pairingId, onChainTxHash, consentSignature }) {
   });
   assert(onChainPubkey.x === BigInt(preview.loserPublicKey.x));
   assert(onChainPubkey.y === BigInt(preview.loserPublicKey.y));
-
-  // 2. If winner = requester (wallet A), verify B's consent signature
-  if (preview.winner === preview.requesterWallet) {
-    assert(consentSignature, "missing consent signature");
-    const consentMessage = keccak256(
-      concat([toBytes("frak-merge-consent"), toBytes(pairingId)])
-    );
-    const ok = await webAuthNService.verifyAssertion({
-      authenticatorId: preview.targetAuthenticatorId,
-      challenge: consentMessage,
-      signature: consentSignature,
-    });
-    if (!ok) throw new MergeError("invalid-consent");
-  }
 
   // 3. libSQL repoint (chain-scoped)
   await authRepo.repointBinding({
@@ -564,7 +621,7 @@ All messages flow through the existing pairing WS. The router (`PairingRouterRep
 | Type | Direction | Payload | Purpose |
 |---|---|---|---|
 | `merge-proposal` | origin → target | `{ pairingId, preview: MergePreview }` | Desktop tells mobile what's about to happen. |
-| `merge-consent` | target → origin | `{ pairingId, consentSignature }` | Mobile's owner approves; only used when winner = requester. |
+| `merge-consent` | target → origin | `{ pairingId, loserConsentSignature }` | Loser's owner approves the merge. `loserConsentSignature` is a WebAuthn assertion over the deterministic challenge `frak-merge-consent:{UTC hour}:{winner_lowercased}:{loser authid}` (not the legacy `keccak256("frak-merge-consent" \|\| pairingId)` framing). Sent in both winner=A and winner=B flows — only the source of the assertion differs (collected on mobile pre-switch in winner=B, collected on mobile post-confirm in winner=A). |
 | `merge-completed` | server → both | `{ winner, loser }` | Backend confirms the merge has settled. |
 
 No new persisted table is required for Phase 2. The pairing row itself (with `kind = "remote-sig"`) is the canonical resource. Add one tracking column if needed: `device_pairing.merge_state` enum (`pending | proposed | consented | settling | merged | failed`). This is a nice-to-have for the admin dashboard; the orchestrator works without it because each step is idempotent.
@@ -619,6 +676,7 @@ Phase 1 already lands: `kind` + `targetAuthenticatorHint` columns, the new email
 | Mobile cancels on the confirm screen | Mobile sends `signature-reject` (existing) or just disconnects; desktop transitions back to `awaiting-target` until user retries or cleanup fires. |
 | Mobile's on-chain `addPasskey` reverts (winner = B) | Mobile shows error, does NOT call `/merge/settle`. Pairing stays in `paired` state until cron cleanup. Desktop never sees `merge-completed`. User retries the confirm action. |
 | Desktop's on-chain `addPasskey` reverts (winner = A) | Same as above, swap roles. Consent signature stays valid for the pairing's lifetime — retry doesn't require re-prompting mobile. |
+| `/merge/settle` called with a missing or invalid `loserConsentSignature` | 401 with `MERGE_INVALID_CONSENT`. Pairing stays in `paired` state, no on-chain read or DB write happens. Cross-references Phase 1's identical handling — the verifier is shared. UI re-prompts the loser passkey and retries. |
 | `/merge/settle` succeeds on-chain verification but PG merge fails | Orchestrator marks pairing state, reconciliation cron retries. Each step idempotent. |
 | `/merge/settle` succeeds but `merge-completed` push to topics fails | Desktop's status-polling endpoint covers it. |
 | Mobile disconnects after sending `merge-consent` but before receiving `merge-completed` | Desktop continues, submits userOp + settle. On reconnect (origin or target), backend replays the latest `merge-completed` event. (Add: `PairingConnectionRepository.handleReconnection` replays terminal state events similarly to how it replays unprocessed signature requests today.) |
@@ -632,7 +690,7 @@ Phase 1 already lands: `kind` + `targetAuthenticatorHint` columns, the new email
 
 - **No new shared infra.** The pairing WS, the topics, the push fallback, the reconnect logic, the cleanup cron — all reused. Phase 2 only adds two pairing columns, three message types, and three REST endpoints.
 - **One device, one transaction.** The winner's device builds, signs, and submits the `addPassKey` userOp with its own wagmi client. No hash crosses the wire for the on-chain step. Failures are localised (a revert on mobile doesn't leave desktop in a half-state, and vice versa).
-- **Consent is explicit only when needed.** Winner = B → mobile's transaction IS the consent (no separate signature). Winner = A → mobile sends one consent signature, desktop submits the transaction. Either way, both sides participate but nobody signs anything they wouldn't have signed in their own normal flow.
+- **Consent is explicit on both branches.** Loser consent is an explicit WebAuthn assertion in both winner-side branches, signed over a backend-deterministic challenge that includes the loser's authenticator id (`frak-merge-consent:{UTC hour}:{winner_lowercased}:{loser authid}`). Server-side verification rejects before any on-chain read or DB write. The earlier "mobile's transaction IS the consent" simplification was unsafe: it only proved the winner-side owner approved adding a co-signer to their own account, never the loser-side owner whose identity graph is being absorbed.
 - **The hint enforcement is server-side**, so a mobile UI bug can't accidentally pair with the wrong passkey. The `target_authenticator_hint` is checked at `action=join` against the JWT's `authenticatorId`.
 - **Session isolation is enforced by skipping the `setSession` call** on the origin side for `kind = "remote-sig"`. There is no concept of a "temporary session" — desktop's session simply never changes.
 

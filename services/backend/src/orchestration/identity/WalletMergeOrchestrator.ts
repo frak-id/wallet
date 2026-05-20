@@ -1,8 +1,10 @@
 import { log } from "@backend-infrastructure";
 import { HttpError } from "@backend-utils";
+import { buildMergeConsentChallengeSlots } from "@frak-labs/app-essentials";
 import { currentChainId } from "@frak-labs/app-essentials/blockchain";
 import type { Address, Hex } from "viem";
 import type { AuthenticatorRepository } from "../../domain/auth/repositories/AuthenticatorRepository";
+import type { WebAuthNService } from "../../domain/auth/services/WebAuthNService";
 import type { IdentityRepository } from "../../domain/identity/repositories/IdentityRepository";
 import type { WebAuthNValidatorReader } from "../../infrastructure/blockchain/WebAuthNValidatorReader";
 import type { MergePreviewResponse, MergeSettleResponse } from "../schemas";
@@ -25,7 +27,8 @@ export class WalletMergeOrchestrator {
         private readonly identityRepository: IdentityRepository,
         private readonly identityWeightService: IdentityWeightService,
         private readonly identityMergeService: IdentityMergeService,
-        private readonly webAuthNValidatorReader: WebAuthNValidatorReader
+        private readonly webAuthNValidatorReader: WebAuthNValidatorReader,
+        private readonly webAuthNService: WebAuthNService
     ) {}
 
     /**
@@ -166,12 +169,37 @@ export class WalletMergeOrchestrator {
         requesterAuthenticatorId: string;
         targetAuthenticatorId: string;
         onChainTxHash: Hex;
+        loserConsentSignature: string;
     }): Promise<MergeSettleResponse> {
         const preview = await this.preview({
             requesterWallet: params.requesterWallet,
             requesterAuthenticatorId: params.requesterAuthenticatorId,
             targetAuthenticatorId: params.targetAuthenticatorId,
         });
+
+        // 0. Verify the loser's webauthn consent. Done before any on-chain
+        //    reads so unauthenticated attempts are rejected cheaply. The
+        //    challenge is deterministic (`frak-merge-consent:{UTC hour}:
+        //    {winner}:{loser authid}`); we accept the current hour and the
+        //    two adjacent slots to absorb clock skew and flows that span an
+        //    hour boundary. No DB storage — the dual-biometric AND-gate
+        //    (loser consent + winner userOp at step 1) makes a replayable
+        //    challenge format acceptable for the threat model.
+        const consentChallenges = buildMergeConsentChallengeSlots({
+            winner: preview.winner,
+            loserAuthenticatorId: preview.loserAuthenticatorId,
+        });
+        const consentOk = await this.webAuthNService.verifyConsentSignature({
+            compressedSignature: params.loserConsentSignature,
+            expectedAuthenticatorId: preview.loserAuthenticatorId,
+            expectedChallenges: consentChallenges,
+        });
+        if (!consentOk) {
+            throw HttpError.unauthorized(
+                "MERGE_INVALID_CONSENT",
+                `Loser consent signature missing or invalid for ${preview.loserAuthenticatorId}`
+            );
+        }
 
         // 1. Confirm the addPassKey userOp landed on-chain.
         const receipt = await this.webAuthNValidatorReader.waitForReceipt({

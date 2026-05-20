@@ -40,6 +40,15 @@ export const MergePreviewQuerySchema = t.Object({
 export const MergeSettleBodySchema = t.Object({
     targetAuthenticatorId: t.String({ minLength: 1, maxLength: 512 }),
     onChainTxHash: t.Hex(),
+    /**
+     * Base64-encoded webauthn assertion produced by the loser side over the
+     * deterministic merge-consent challenge (see
+     * `buildMergeConsentChallengeSlots`). Verified server-side before any
+     * on-chain reads — closes the "absorb-other-user's-identity" path where
+     * a malicious winner could craft the on-chain `addPasskey` against
+     * public credential data without the victim consenting.
+     */
+    loserConsentSignature: t.String({ minLength: 1 }),
 });
 
 export const MergeSettleResponseSchema = t.Object({
