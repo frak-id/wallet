@@ -1,5 +1,20 @@
 # @frak-labs/components
 
+## 1.0.6
+
+### Patch Changes
+
+- [#215](https://github.com/frak-id/wallet/pull/215) [`c233c99`](https://github.com/frak-id/wallet/commit/c233c9959a0a4448bfd665e8271b1f570071a214) Thanks [@KONFeature](https://github.com/KONFeature)! - ✨ feat: `?frakAction=share` now auto-opens the full-page sharing UI instead of the legacy embedded-wallet modal, and accepts two extra query params so email tools (Klaviyo, Omnisend, Customer.io …) can deep-link straight into a contextualised share.
+
+  - `link` — overrides the URL the sharing page generates outbound shares for. Falls back to the merchant domain when omitted (mirrors `displaySharingPage({ link })`).
+  - `products` — base64url-encoded `compressJsonToB64` payload of `SharingPageProduct[]`. Surfaces the items the customer just bought as product cards on the sharing page (post-purchase email flow). Malformed / tampered payloads degrade gracefully to "no products".
+  - `placement` — scopes backend-driven CSS / config to a specific placement, same as the prop on the components.
+
+  Internals: the `coerceProductCandidates` / `normalizeProductCandidate` sanitisers previously colocated with `<frak-post-purchase>` move to `@/utils/sharingPageProducts` and are reused by both surfaces, so every untrusted product payload is normalised through the same `http(s)://`-only URL gate before reaching `new URL(...)` downstream.
+
+- Updated dependencies [[`2df08c0`](https://github.com/frak-id/wallet/commit/2df08c0286f5850b1fddf7a3250e89e4c05ee61a)]:
+  - @frak-labs/core-sdk@1.1.1
+
 ## 1.0.5
 
 ### Patch Changes
