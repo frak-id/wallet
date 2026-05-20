@@ -10,10 +10,12 @@ import {
     sheetDescriptionStyle,
     sheetFooterStyle,
     sheetHeaderStyle,
+    sheetSizeVariants,
     sheetTitleStyle,
 } from "./sheet.css";
 
 export type SheetSide = "top" | "right" | "bottom" | "left";
+export type SheetSize = "default" | "wide";
 
 /**
  * Stateless root — pairs trigger + content.
@@ -81,6 +83,8 @@ export function SheetFooter({ className, ...props }: ComponentProps<"div">) {
 
 type SheetContentProps = ComponentPropsWithRef<typeof RadixDialog.Content> & {
     side?: SheetSide;
+    /** Tablet+ width preset for right / left sheets. Ignored for top / bottom. */
+    size?: SheetSize;
     children: ReactNode;
     /** Hides the built-in close (X) button. */
     hideCloseButton?: boolean;
@@ -91,11 +95,13 @@ type SheetContentProps = ComponentPropsWithRef<typeof RadixDialog.Content> & {
  */
 export function SheetContent({
     side = "right",
+    size = "default",
     className,
     children,
     hideCloseButton = false,
     ...props
 }: SheetContentProps) {
+    const isHorizontal = side === "right" || side === "left";
     return (
         <RadixDialog.Portal>
             <RadixDialog.Overlay asChild>
@@ -105,6 +111,7 @@ export function SheetContent({
                 className={clsx(
                     sheetContentBaseStyle,
                     sheetContentVariants[side],
+                    isHorizontal && sheetSizeVariants[size],
                     className
                 )}
                 {...props}

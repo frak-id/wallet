@@ -32,6 +32,8 @@ export const sheetContentBaseStyle = style({
     flexDirection: "column",
     gap: alias.spacing.m,
     padding: alias.spacing.l,
+    width: "100vw",
+    maxWidth: "100vw",
     overflowY: "auto",
     animationDuration: transition.base,
     animationTimingFunction: easing.smooth,
@@ -46,13 +48,9 @@ export const sheetContentVariants = styleVariants({
             top: 0,
             right: 0,
             height: "100dvh",
-            width: "100vw",
-            maxWidth: "100vw",
             animationName: slideInRight,
             "@media": {
                 [`screen and (min-width: ${tablet}px)`]: {
-                    width: "420px",
-                    maxWidth: "min(420px, 100vw)",
                     borderTopLeftRadius: alias.cornerRadius.l,
                     borderBottomLeftRadius: alias.cornerRadius.l,
                 },
@@ -64,13 +62,9 @@ export const sheetContentVariants = styleVariants({
             top: 0,
             left: 0,
             height: "100dvh",
-            width: "100vw",
-            maxWidth: "100vw",
             animationName: slideInLeft,
             "@media": {
                 [`screen and (min-width: ${tablet}px)`]: {
-                    width: "420px",
-                    maxWidth: "min(420px, 100vw)",
                     borderTopRightRadius: alias.cornerRadius.l,
                     borderBottomRightRadius: alias.cornerRadius.l,
                 },
@@ -82,7 +76,6 @@ export const sheetContentVariants = styleVariants({
             top: 0,
             left: 0,
             right: 0,
-            width: "100vw",
             maxHeight: "85dvh",
             animationName: slideInTop,
             borderBottomLeftRadius: alias.cornerRadius.l,
@@ -94,11 +87,37 @@ export const sheetContentVariants = styleVariants({
             bottom: 0,
             left: 0,
             right: 0,
-            width: "100vw",
             maxHeight: "85dvh",
             animationName: slideInBottom,
             borderTopLeftRadius: alias.cornerRadius.l,
             borderTopRightRadius: alias.cornerRadius.l,
+        },
+    ],
+});
+
+/**
+ * Tablet+ width override for `right` / `left` sheets. Mobile keeps the
+ * full-width base. `top` / `bottom` ignore size (always full width).
+ */
+export const sheetSizeVariants = styleVariants({
+    default: [
+        {
+            "@media": {
+                [`screen and (min-width: ${tablet}px)`]: {
+                    width: "420px",
+                    maxWidth: "min(420px, 100vw)",
+                },
+            },
+        },
+    ],
+    wide: [
+        {
+            "@media": {
+                [`screen and (min-width: ${tablet}px)`]: {
+                    width: "600px",
+                    maxWidth: "min(600px, 100vw)",
+                },
+            },
         },
     ],
 });
