@@ -140,7 +140,8 @@ export class CampaignStatsOrchestrator {
                         identityNodesTable.groupId
                     ),
                     eq(identityNodesTable.identityType, "wallet"),
-                    sql`${identityNodesTable.merchantId} IS NULL`
+                    sql`${identityNodesTable.merchantId} IS NULL`,
+                    sql`${identityNodesTable.unlinkedAt} IS NULL`
                 )
             )
             .where(inArray(assetLogsTable.campaignRuleId, campaignIds))

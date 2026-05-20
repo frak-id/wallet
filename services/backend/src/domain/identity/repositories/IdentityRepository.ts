@@ -115,11 +115,17 @@ export class IdentityRepository {
             return cached.value;
         }
 
+        // Filter out soft-unlinked nodes (loser wallets from a prior
+        // merge) so the resolution is deterministic. `ORDER BY createdAt`
+        // gives a stable choice when a group legitimately holds multiple
+        // active wallets (e.g. multi-passkey accounts post-Phase-1).
         const walletNode = await db.query.identityNodesTable.findFirst({
             where: and(
                 eq(identityNodesTable.groupId, groupId),
-                eq(identityNodesTable.identityType, "wallet")
+                eq(identityNodesTable.identityType, "wallet"),
+                isNull(identityNodesTable.unlinkedAt)
             ),
+            orderBy: (nodes, { asc }) => [asc(nodes.createdAt)],
         });
 
         const wallet = (walletNode?.identityValue as Address) ?? null;

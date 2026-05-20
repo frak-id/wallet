@@ -39,6 +39,12 @@ export const identityNodesTable = pgTable(
         validationData:
             jsonb("validation_data").$type<PendingPurchaseValidation>(),
         createdAt: timestamp("created_at").defaultNow(),
+        // Soft-unlink marker. Stamped on the loser wallet identity node
+        // during a wallet merge so `getWalletForGroup` can deterministically
+        // resolve to the winner while keeping the loser->group mapping
+        // available for `findGroupByIdentity` (prevents stray references to
+        // the loser wallet from accidentally creating a new identity group).
+        unlinkedAt: timestamp("unlinked_at"),
     },
     (table) => [
         unique("identity_nodes_unique_identity")

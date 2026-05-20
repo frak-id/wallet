@@ -103,7 +103,11 @@ export class IdentityMergeService {
                 .where(
                     and(
                         inArray(identityNodesTable.groupId, allGroupIds),
-                        eq(identityNodesTable.identityType, "wallet")
+                        eq(identityNodesTable.identityType, "wallet"),
+                        // Skip wallets already soft-unlinked by a prior
+                        // merge — their push_tokens are already migrated and
+                        // they're no longer the canonical destination.
+                        isNull(identityNodesTable.unlinkedAt)
                     )
                 );
             const anchorWallets = walletNodes
@@ -118,6 +122,28 @@ export class IdentityMergeService {
                 .set({ groupId: anchorGroupId })
                 .where(inArray(identityNodesTable.groupId, mergingGroupIds))
                 .returning({ id: identityNodesTable.id });
+
+            // Soft-unlink the loser wallet identity nodes so
+            // `getWalletForGroup` deterministically resolves to the
+            // winner's wallet. We keep the rows in place (`groupId` now
+            // points at the anchor) so `findGroupByIdentity` on the loser
+            // wallet still resolves to the merged group — preventing stray
+            // references from accidentally re-orphaning the address.
+            if (loserWallets.length > 0) {
+                await trx
+                    .update(identityNodesTable)
+                    .set({ unlinkedAt: new Date() })
+                    .where(
+                        and(
+                            eq(identityNodesTable.groupId, anchorGroupId),
+                            eq(identityNodesTable.identityType, "wallet"),
+                            inArray(
+                                identityNodesTable.identityValue,
+                                loserWallets
+                            )
+                        )
+                    );
+            }
 
             const migratedPurchasesResult = await trx
                 .update(purchasesTable)
@@ -426,7 +452,10 @@ export class IdentityMergeService {
      */
     private async migrateReferralCodesInTrx(
         trx: Parameters<Parameters<typeof db.transaction>[0]>[0],
-        params: {
+        {
+            anchorGroupId,
+            mergingGroupIds,
+        }: {
             anchorGroupId: string;
             mergingGroupIds: string[];
         }
@@ -434,7 +463,6 @@ export class IdentityMergeService {
         revokedConflictingReferralCodes: number;
         migratedReferralCodes: number;
     }> {
-        const { anchorGroupId, mergingGroupIds } = params;
         if (mergingGroupIds.length === 0) {
             return {
                 revokedConflictingReferralCodes: 0,

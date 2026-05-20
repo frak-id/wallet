@@ -106,7 +106,8 @@ export class MemberQueryOrchestrator {
                 .where(
                     and(
                         eq(identityNodesTable.identityType, "wallet"),
-                        sql`${identityNodesTable.merchantId} IS NULL`
+                        sql`${identityNodesTable.merchantId} IS NULL`,
+                        sql`${identityNodesTable.unlinkedAt} IS NULL`
                     )
                 )
                 .groupBy(identityNodesTable.groupId)
@@ -168,7 +169,8 @@ export class MemberQueryOrchestrator {
             .where(
                 and(
                     eq(identityNodesTable.identityType, "wallet"),
-                    sql`${identityNodesTable.merchantId} IS NULL`
+                    sql`${identityNodesTable.merchantId} IS NULL`,
+                    sql`${identityNodesTable.unlinkedAt} IS NULL`
                 )
             )
             .groupBy(
@@ -268,7 +270,8 @@ export class MemberQueryOrchestrator {
                 .where(
                     and(
                         eq(identityNodesTable.identityType, "wallet"),
-                        sql`${identityNodesTable.merchantId} IS NULL`
+                        sql`${identityNodesTable.merchantId} IS NULL`,
+                        sql`${identityNodesTable.unlinkedAt} IS NULL`
                     )
                 )
                 .groupBy(identityNodesTable.groupId)
