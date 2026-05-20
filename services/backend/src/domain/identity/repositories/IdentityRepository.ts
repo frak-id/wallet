@@ -29,6 +29,9 @@ export class IdentityRepository {
         if (type === "wallet") {
             return value.toLowerCase();
         }
+        if (type === "email") {
+            return value.trim().toLowerCase();
+        }
         return value;
     }
 
@@ -143,6 +146,24 @@ export class IdentityRepository {
                 eq(identityNodesTable.identityType, "anonymous_fingerprint"),
                 eq(identityNodesTable.merchantId, params.merchantId)
             ),
+        });
+        return node?.identityValue ?? null;
+    }
+
+    /**
+     * Return the active email currently attached to a group, or `null` when
+     * none exists. A group may hold several emails (a merged wallet keeps the
+     * loser's email as historical context); the oldest active node wins so
+     * the result is stable across subsequent merges that absorb newer rows.
+     */
+    async findEmailForGroup(groupId: string): Promise<string | null> {
+        const node = await db.query.identityNodesTable.findFirst({
+            where: and(
+                eq(identityNodesTable.groupId, groupId),
+                eq(identityNodesTable.identityType, "email"),
+                isNull(identityNodesTable.unlinkedAt)
+            ),
+            orderBy: (nodes, { asc }) => [asc(nodes.createdAt)],
         });
         return node?.identityValue ?? null;
     }

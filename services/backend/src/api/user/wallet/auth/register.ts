@@ -123,7 +123,6 @@ export const registerRoutes = new Elysia()
                         credentialBackedUp,
                         publicKey,
                         transports: credential.transports,
-                        email: cleanEmail,
                     }
                 );
 
@@ -173,6 +172,7 @@ export const registerRoutes = new Elysia()
                         walletAddress,
                         clientId: headers["x-frak-client-id"],
                         merchantId: cleanMerchantId,
+                        email: cleanEmail,
                     }
                 );
             }

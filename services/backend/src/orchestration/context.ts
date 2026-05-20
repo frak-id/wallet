@@ -16,6 +16,7 @@ import { CampaignStatsOrchestrator } from "./CampaignStatsOrchestrator";
 import { ExplorerOrchestrator } from "./ExplorerOrchestrator";
 import {
     AnonymousMergeOrchestrator,
+    AuthenticatorLookupOrchestrator,
     IdentityMergeService,
     IdentityOrchestrator,
     IdentityWeightService,
@@ -150,6 +151,11 @@ const walletMergeOrchestrator = new WalletMergeOrchestrator(
     webAuthNValidatorReader
 );
 
+const authenticatorLookupOrchestrator = new AuthenticatorLookupOrchestrator(
+    AuthContext.repositories.authenticator,
+    IdentityContext.repositories.identity
+);
+
 export namespace OrchestrationContext {
     export const orchestrators = {
         explorer: explorerOrchestrator,
@@ -168,5 +174,6 @@ export namespace OrchestrationContext {
         webhookResolver: webhookResolverOrchestrator,
         referralCodeRedemption: referralCodeRedemptionOrchestrator,
         walletMerge: walletMergeOrchestrator,
+        authenticatorLookup: authenticatorLookupOrchestrator,
     };
 }

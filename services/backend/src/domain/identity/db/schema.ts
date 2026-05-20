@@ -9,7 +9,14 @@ import {
     uuid,
     varchar,
 } from "drizzle-orm/pg-core";
-import type { IdentityType } from "../schemas";
+
+/**
+ * Source of truth for the identity-node taxonomy. Defined here (next to the
+ * column that consumes it) rather than in `../schemas/index.ts` so the
+ * runtime Drizzle table can be imported from environments that don't pull
+ * in the backend's TypeBox helpers (e.g. the bootstrap migration job).
+ */
+export type IdentityType = "anonymous_fingerprint" | "wallet" | "email";
 
 export type PendingPurchaseValidation = {
     orderId: string;

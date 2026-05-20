@@ -1,32 +1,35 @@
 import { t } from "@backend-utils";
-import { currentChainId } from "@frak-labs/app-essentials";
 import { Elysia } from "elysia";
-import { AuthContext } from "../../../../domain/auth";
+import { OrchestrationContext } from "../../../../orchestration/context";
 import { EmailStatusResponseSchema } from "../../../schemas";
 
 /**
  * Pre-registration check: lets the frontend warn a user before triggering
  * the WebAuthn ceremony if the email is already attached to a credential.
- * When the email matches, also returns the credential + wallet pair so the
- * client can run a targeted `login()` (skipping a WebAuthn account chooser
- * on platforms that honor `credentialId`).
+ *
+ * Resolution path: `email identity node → group → wallet identity node →
+ * authenticator binding on active chain`. When the wallet has an active
+ * binding the client receives the credential id so a targeted `login()` can
+ * skip the WebAuthn account chooser on platforms that honor `credentialId`.
+ *
  * Strict format validation here is fine — no passkey has been created yet,
  * so a 422 just bounces the input back to the form.
  */
 export const emailStatusRoutes = new Elysia().post(
     "/emailStatus",
     async ({ body: { email } }) => {
-        const match = await AuthContext.repositories.authenticator.findByEmail({
-            chainId: currentChainId,
-            email,
-        });
-        if (!match) {
+        const lookup =
+            await OrchestrationContext.orchestrators.authenticatorLookup.findByEmail(
+                email
+            );
+        if (!lookup) {
             return { used: false } as const;
         }
+
         return {
             used: true,
-            authenticatorId: match.authenticatorId,
-            wallet: match.smartWalletAddress ?? undefined,
+            authenticatorId: lookup.authenticatorId,
+            wallet: lookup.wallet,
         } as const;
     },
     {

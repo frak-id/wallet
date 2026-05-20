@@ -206,14 +206,16 @@ export class WalletMergeOrchestrator {
             );
         }
 
-        // 3. Repoint the loser's binding to the winner wallet. Drops the
-        //    loser email (winner's email is preserved) to keep the email <>
-        //    wallet relationship 1:1 post-merge.
+        // 3. Repoint the loser's binding to the winner wallet. Email is
+        //    stored as an identity node on the wallet's identity group, so it
+        //    moves with the loser group during the PG merge (step 4). When
+        //    both sides held a different email the anchor group ends up with
+        //    multiple active email nodes; `findEmailForGroup` returns the
+        //    oldest one deterministically (the surviving credential's email).
         await this.authenticatorRepository.repointBinding({
             credentialId: preview.loserAuthenticatorId,
             chainId: currentChainId,
             toSmartWalletAddress: preview.winner,
-            emailPolicy: "clear",
             reason: "merged",
         });
 

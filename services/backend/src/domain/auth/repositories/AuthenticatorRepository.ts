@@ -3,7 +3,7 @@ import {
     type FrakChainId,
     frakChainIds,
 } from "@frak-labs/app-essentials/blockchain";
-import { and, eq, isNull, sql } from "drizzle-orm";
+import { and, eq, isNull } from "drizzle-orm";
 import type { Address } from "viem";
 import {
     type AuthenticatorBindingSelect,
@@ -12,13 +12,6 @@ import {
     type BindingReason,
 } from "../db/schema";
 import type { AuthenticatorDocument } from "../models/dto/AuthenticatorDocument";
-
-/**
- * Email reconciliation policy when repointing a binding (e.g. during a merge).
- * `keep` carries the previous email forward; `clear` drops it; passing an
- * explicit string sets the new value verbatim.
- */
-export type RepointEmailPolicy = "keep" | "clear" | { email: string };
 
 /**
  * libSQL transaction handle as passed to `db.transaction(async (tx) => …)`.
@@ -32,9 +25,9 @@ type LibsqlTx = Parameters<
 export class AuthenticatorRepository {
     /**
      * Get an authenticator by credential id. Pure credential lookup — the
-     * returned `smartWalletAddress` / `email` fields are the legacy denormalised
-     * values from the `authenticators` row. Callers that need chain-scoped
-     * answers should use `getActiveBinding(s)`.
+     * returned `smartWalletAddress` is the legacy denormalised value from the
+     * `authenticators` row. Callers that need chain-scoped answers should use
+     * `getActiveBinding(s)`.
      */
     public async getByCredentialId(
         credentialId: string
@@ -62,7 +55,6 @@ export class AuthenticatorRepository {
                 row.credentialDeviceType as AuthenticatorDocument["credentialDeviceType"],
             credentialBackedUp: row.credentialBackedUp,
             transports: row.transports as AuthenticatorDocument["transports"],
-            email: row.email ?? undefined,
         };
     }
 
@@ -126,7 +118,6 @@ export class AuthenticatorRepository {
                 row.credentialDeviceType as AuthenticatorDocument["credentialDeviceType"],
             credentialBackedUp: row.credentialBackedUp,
             transports: row.transports as AuthenticatorDocument["transports"],
-            email: row.email ?? undefined,
         };
     }
 
@@ -158,7 +149,6 @@ export class AuthenticatorRepository {
                     credentialDeviceType: authenticator.credentialDeviceType,
                     credentialBackedUp: authenticator.credentialBackedUp,
                     transports: authenticator.transports,
-                    email: authenticator.email,
                 })
                 .onConflictDoNothing()
                 .returning();
@@ -167,7 +157,6 @@ export class AuthenticatorRepository {
                 await this.seedInitialBindings(tx, {
                     credentialId: authenticator._id,
                     smartWalletAddress: authenticator.smartWalletAddress,
-                    email: authenticator.email ?? null,
                 });
             }
 
@@ -185,136 +174,6 @@ export class AuthenticatorRepository {
             );
         }
         return { created: false, document: existingDoc };
-    }
-
-    /**
-     * Case-insensitive lookup of the most recent active binding carrying the
-     * given email on the requested chain. Falls back to the legacy
-     * `authenticators.email` column for credentials that haven't been
-     * back-filled yet.
-     */
-    public async findByEmail({
-        chainId,
-        email,
-    }: {
-        chainId: FrakChainId;
-        email: string;
-    }): Promise<{
-        authenticatorId: string;
-        smartWalletAddress: Address | null;
-    } | null> {
-        const db = getLibsqlDb();
-        const normalized = email.trim().toLowerCase();
-
-        const [bindingRow] = await db
-            .select({
-                authenticatorId:
-                    authenticatorWalletBindingsTable.authenticatorId,
-                smartWalletAddress:
-                    authenticatorWalletBindingsTable.smartWalletAddress,
-            })
-            .from(authenticatorWalletBindingsTable)
-            .where(
-                and(
-                    sql`LOWER(${authenticatorWalletBindingsTable.email}) = ${normalized}`,
-                    eq(authenticatorWalletBindingsTable.chainId, chainId),
-                    isNull(authenticatorWalletBindingsTable.unlinkedAt)
-                )
-            )
-            .limit(1);
-        if (bindingRow) {
-            return {
-                authenticatorId: bindingRow.authenticatorId,
-                smartWalletAddress: bindingRow.smartWalletAddress as Address,
-            };
-        }
-
-        const [row] = await db
-            .select({
-                id: authenticatorsTable.id,
-                smartWalletAddress: authenticatorsTable.smartWalletAddress,
-            })
-            .from(authenticatorsTable)
-            .where(sql`LOWER(${authenticatorsTable.email}) = ${normalized}`)
-            .limit(1);
-        if (!row) return null;
-        return {
-            authenticatorId: row.id,
-            smartWalletAddress:
-                (row.smartWalletAddress as Address | null) ?? null,
-        };
-    }
-
-    /**
-     * Get the email currently attached to a credential. Reads from any active
-     * binding (the email is denormalised across a credential's bindings so any
-     * active row carries the same value).
-     *
-     * Assumes the bootstrap back-fill has run, which is a precondition of the
-     * backend boot sequence — no legacy-column fallback.
-     */
-    public async getEmail(credentialId: string): Promise<string | null> {
-        const db = getLibsqlDb();
-        const [bindingRow] = await db
-            .select({ email: authenticatorWalletBindingsTable.email })
-            .from(authenticatorWalletBindingsTable)
-            .where(
-                and(
-                    eq(
-                        authenticatorWalletBindingsTable.authenticatorId,
-                        credentialId
-                    ),
-                    isNull(authenticatorWalletBindingsTable.unlinkedAt)
-                )
-            )
-            .limit(1);
-        return bindingRow?.email ?? null;
-    }
-
-    /**
-     * Attach an email to an existing authenticator. Used by the post-auth
-     * "add my email" flow on a credential that was registered without one.
-     *
-     * Updates every active binding for the credential (denormalised across
-     * chains) AND the legacy `authenticators.email` column so reads stay
-     * consistent regardless of which column the consumer hits first.
-     *
-     * Returns whether at least one row was updated so callers can distinguish
-     * a missing credential from a successful update.
-     */
-    public async updateEmail({
-        credentialId,
-        email,
-    }: {
-        credentialId: string;
-        email: string;
-    }): Promise<{ updated: boolean }> {
-        const db = getLibsqlDb();
-        return db.transaction(async (tx) => {
-            const legacyUpdate = await tx
-                .update(authenticatorsTable)
-                .set({ email })
-                .where(eq(authenticatorsTable.id, credentialId))
-                .returning({ id: authenticatorsTable.id });
-            if (legacyUpdate.length === 0) {
-                return { updated: false };
-            }
-
-            await tx
-                .update(authenticatorWalletBindingsTable)
-                .set({ email })
-                .where(
-                    and(
-                        eq(
-                            authenticatorWalletBindingsTable.authenticatorId,
-                            credentialId
-                        ),
-                        isNull(authenticatorWalletBindingsTable.unlinkedAt)
-                    )
-                );
-
-            return { updated: true };
-        });
     }
 
     /**
@@ -376,11 +235,11 @@ export class AuthenticatorRepository {
      * insert a new active binding pointing at `toSmartWalletAddress`. Used by
      * the merge orchestrator.
      *
-     * Also updates the legacy `authenticators.smart_wallet_address` and
-     * `authenticators.email` columns so dual-write consumers stay in sync.
+     * Also updates the legacy `authenticators.smart_wallet_address` column so
+     * dual-write consumers stay in sync.
      *
      * All four statements (read existing, stamp `unlinked_at`, insert new
-     * active binding, update legacy columns) run inside a single libSQL
+     * active binding, update legacy column) run inside a single libSQL
      * transaction so a crash mid-way can never strand the credential without
      * an active binding.
      */
@@ -388,13 +247,11 @@ export class AuthenticatorRepository {
         credentialId,
         chainId,
         toSmartWalletAddress,
-        emailPolicy,
         reason,
     }: {
         credentialId: string;
         chainId: FrakChainId;
         toSmartWalletAddress: Address;
-        emailPolicy: RepointEmailPolicy;
         reason: BindingReason;
     }): Promise<AuthenticatorBindingSelect> {
         const db = getLibsqlDb();
@@ -416,11 +273,6 @@ export class AuthenticatorRepository {
                 )
                 .limit(1);
 
-            const resolvedEmail = resolveEmailPolicy(
-                existingRow?.email ?? null,
-                emailPolicy
-            );
-
             if (existingRow) {
                 await tx
                     .update(authenticatorWalletBindingsTable)
@@ -436,7 +288,6 @@ export class AuthenticatorRepository {
                     authenticatorId: credentialId,
                     chainId,
                     smartWalletAddress: toSmartWalletAddress,
-                    email: resolvedEmail,
                     createdAt: now,
                     reason,
                 })
@@ -444,10 +295,7 @@ export class AuthenticatorRepository {
 
             await tx
                 .update(authenticatorsTable)
-                .set({
-                    smartWalletAddress: toSmartWalletAddress,
-                    email: resolvedEmail,
-                })
+                .set({ smartWalletAddress: toSmartWalletAddress })
                 .where(eq(authenticatorsTable.id, credentialId));
 
             const [freshRow] = await tx
@@ -492,15 +340,12 @@ export class AuthenticatorRepository {
         if (frakChainIds.every((chainId) => haveChains.has(chainId))) return;
 
         const credential = await this.getByCredentialId(credentialId);
-        const email =
-            existing.find((b) => b.email)?.email ?? credential?.email ?? null;
 
         const db = getLibsqlDb();
         await db.transaction(async (tx) => {
             await this.seedInitialBindings(tx, {
                 credentialId,
                 smartWalletAddress,
-                email,
             });
 
             if (credential && !credential.smartWalletAddress) {
@@ -534,11 +379,9 @@ export class AuthenticatorRepository {
         {
             credentialId,
             smartWalletAddress,
-            email,
         }: {
             credentialId: string;
             smartWalletAddress: Address;
-            email: string | null;
         }
     ): Promise<void> {
         const now = nowSeconds();
@@ -549,22 +392,12 @@ export class AuthenticatorRepository {
                     authenticatorId: credentialId,
                     chainId,
                     smartWalletAddress,
-                    email,
                     createdAt: now,
                     reason: "initial" as const,
                 }))
             )
             .onConflictDoNothing();
     }
-}
-
-function resolveEmailPolicy(
-    current: string | null,
-    policy: RepointEmailPolicy
-): string | null {
-    if (policy === "keep") return current;
-    if (policy === "clear") return null;
-    return policy.email;
 }
 
 function nowSeconds(): number {

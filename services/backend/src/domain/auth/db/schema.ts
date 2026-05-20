@@ -20,15 +20,22 @@ export type BindingReason = "initial" | "merged" | "recovery";
  *  - Stored in sqld (libSQL) instead of MongoDB
  *  - Append-only at the credential level: a row is inserted once at register
  *    and never updated or deleted afterwards.
- *  - Shared across all environments (origin-bound WebAuthn credentials)
+ *  - Shared across all environments (origin-bound WebAuthn credentials).
  *
- * Note on `smart_wallet_address` / `email`:
- *  - Authoritative source of truth is `authenticator_wallet_bindings` below.
- *  - These columns are KEPT during the dual-write window for backwards
- *    compatibility; readers should prefer the bindings table and fall back
- *    here only if no active binding exists yet (legacy rows pre back-fill).
- *  - They are dropped in a follow-up PR once every consumer reads from the
- *    bindings table.
+ * Note on `smart_wallet_address`:
+ *  - Authoritative source of truth is `authenticator_wallet_bindings` below
+ *    (chain-scoped). The column on this table is the legacy denormalised
+ *    value kept for backwards-compatible reads and only updated through
+ *    `repointBinding` for consistency.
+ *
+ * Note on `email`:
+ *  - Authoritative source of truth is the postgres `identity_nodes` row
+ *    of type `email` attached to the wallet's identity group. Reads go
+ *    through `IdentityRepository.findEmailForGroup`.
+ *  - The column on this table is only read by the bootstrap back-fill to
+ *    migrate legacy values into `identity_nodes`. Once every environment
+ *    has run the back-fill cleanly the column + its index get dropped in
+ *    a follow-up PR.
  */
 export const authenticatorsTable = sqliteTable(
     "authenticators",
@@ -45,12 +52,16 @@ export const authenticatorsTable = sqliteTable(
             mode: "boolean",
         }).notNull(),
         transports: text("transports", { mode: "json" }).$type<string[]>(),
-        // Legacy email column kept during dual-write. Authoritative source is
-        // `authenticator_wallet_bindings.email`.
+        // Legacy email column. Authoritative source is the postgres
+        // `identity_nodes` row of type `email` attached to the wallet's
+        // identity group. This column is read once per row by the bootstrap
+        // back-fill (`runAuthBindingBackfill`) and is otherwise dead weight;
+        // drop in a follow-up PR once every env has migrated cleanly.
         email: text("email"),
     },
-    // Case-insensitive expression index — matches the `LOWER(email) = ?`
-    // legacy lookup performed by `AuthenticatorRepository.findByEmail`.
+    // Case-insensitive expression index used by the back-fill job to look up
+    // legacy email rows in bulk. Dropped alongside the column once the
+    // identity-node migration has fully rolled out.
     (table) => [
         index("authenticators_email_lower_idx").on(sql`LOWER(${table.email})`),
     ]
@@ -64,8 +75,6 @@ export const authenticatorsTable = sqliteTable(
  *  - History is preserved on every mutation: the previous row gets stamped
  *    with `unlinked_at = unixepoch()` and a new row is inserted with the
  *    incoming binding. Useful audit trail for merges and recoveries.
- *  - `email` is denormalised across a credential's active bindings (the same
- *    value on every chain). Reads can target any active binding.
  *  - `recovery_blob` is declared but unused in Phase 1; it will hold the
  *    encrypted recovery material when the recovery flow lands on this table.
  */
@@ -80,7 +89,6 @@ export const authenticatorWalletBindingsTable = sqliteTable(
         smartWalletAddress: text("smart_wallet_address")
             .notNull()
             .$type<Address>(),
-        email: text("email"),
         recoveryBlob: text("recovery_blob"),
         createdAt: integer("created_at").notNull(),
         unlinkedAt: integer("unlinked_at"),
@@ -96,10 +104,6 @@ export const authenticatorWalletBindingsTable = sqliteTable(
         index("awb_wallet_chain_idx")
             .on(table.smartWalletAddress, table.chainId)
             .where(sql`"unlinked_at" IS NULL`),
-        // Case-insensitive email lookup scoped to active bindings, per chain.
-        index("awb_email_lower_chain_idx")
-            .on(sql`LOWER(${table.email})`, table.chainId)
-            .where(sql`"unlinked_at" IS NULL AND "email" IS NOT NULL`),
     ]
 );
 

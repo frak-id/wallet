@@ -1,4 +1,8 @@
 export { AnonymousMergeOrchestrator } from "./AnonymousMergeOrchestrator";
+export {
+    AuthenticatorLookupOrchestrator,
+    type IdentityWalletLookup,
+} from "./AuthenticatorLookupOrchestrator";
 export { IdentityMergeService } from "./IdentityMergeService";
 export { IdentityOrchestrator } from "./IdentityOrchestrator";
 export { IdentityWeightService } from "./IdentityWeightService";

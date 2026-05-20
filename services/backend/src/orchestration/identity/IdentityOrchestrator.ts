@@ -139,13 +139,19 @@ export class IdentityOrchestrator {
      * Anchor a wallet to its anonymous fingerprint (when both are known) and
      * swallow any failure. Used by the auth routes after a successful login or
      * registration so an identity-graph hiccup never blocks the auth response.
+     *
+     * When `email` is provided, attach it to the resolved wallet group as a
+     * dedicated email identity node — unless that email already belongs to a
+     * different group, in which case we log + skip (collisions are owned by
+     * the explicit wallet-merge flow, not by silent registration writes).
      */
     async linkWalletToFingerprint(params: {
         walletAddress: Address;
         clientId?: string;
         merchantId?: string;
+        email?: string;
     }): Promise<void> {
-        const { walletAddress, clientId, merchantId } = params;
+        const { walletAddress, clientId, merchantId, email } = params;
         try {
             const nodes: IdentityNode[] = [
                 { type: "wallet", value: walletAddress },
@@ -157,7 +163,27 @@ export class IdentityOrchestrator {
                     merchantId,
                 });
             }
-            await this.resolveAndAssociate(nodes);
+            const result = await this.resolveAndAssociate(nodes);
+
+            if (email) {
+                const existing =
+                    await this.identityRepository.findGroupByIdentity({
+                        type: "email",
+                        value: email,
+                    });
+                if (existing && existing.id !== result.finalGroupId) {
+                    log.warn(
+                        { walletAddress, email, existingGroupId: existing.id },
+                        "Email already belongs to a different identity group; skipping attach at register"
+                    );
+                } else if (!existing) {
+                    await this.identityRepository.addNode({
+                        groupId: result.finalGroupId,
+                        type: "email",
+                        value: email,
+                    });
+                }
+            }
         } catch (err: unknown) {
             log.error(
                 { err, walletAddress, merchantId },

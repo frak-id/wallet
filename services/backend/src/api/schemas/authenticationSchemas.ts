@@ -5,7 +5,7 @@ export const EmailStatusResponseSchema = t.Union([
     t.Object({ used: t.Literal(false) }),
     t.Object({
         used: t.Literal(true),
-        authenticatorId: t.String(),
+        authenticatorId: t.Optional(t.String()),
         wallet: t.Optional(t.Address()),
     }),
 ]);
@@ -35,7 +35,7 @@ export const AssociateEmailResponseSchema = t.Union([
     t.Object({ status: t.Literal("alreadyHasEmail"), email: t.String() }),
     t.Object({
         status: t.Literal("conflict"),
-        authenticatorId: t.String(),
+        authenticatorId: t.Optional(t.String()),
         wallet: t.Optional(t.Address()),
     }),
 ]);
