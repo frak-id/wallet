@@ -9,9 +9,9 @@ export function ButtonNewCampaign() {
         <LinkButton
             to="/campaigns/draft/new"
             onClick={() => reset()}
-            icon={<Plus size={20} />}
+            icon={<Plus size={16} />}
         >
-            Create Campaign
+            Create campaign
         </LinkButton>
     );
 }
