@@ -25,10 +25,10 @@ vi.mock("@frak-labs/design-system/components/Spinner", () => ({
     Spinner: () => <div data-testid="spinner">Loading</div>,
 }));
 
-// Mock Cuer QR code component
-vi.mock("cuer", () => ({
-    Cuer: ({ value, size }: { value: string; size: number }) => (
-        <div data-testid="qr-code" data-value={value} data-size={size}>
+// Mock the QR code component (renders an SVG via `qr` directly).
+vi.mock("../PairingQrCode", () => ({
+    PairingQrCode: ({ value, size }: { value: string; size?: number }) => (
+        <div data-testid="qr-code" data-value={value} data-size={size ?? 224}>
             QR Code
         </div>
     ),

@@ -545,7 +545,12 @@
             "label": "Email",
             "placeholder": "your.email@gmail.com",
             "continue": "Continue",
-            "clearAriaLabel": "Clear email address"
+            "clearAriaLabel": "Clear email address",
+            "alreadyUsed": {
+                "message": "Oops, it looks like this email is already used. Would you like to login instead?",
+                "login": "Login"
+            },
+            "checkError": "Unable to verify this email right now. Please try again."
         },
         "keypass": {
             "title": "Secure your account",

@@ -232,6 +232,28 @@
         }
         .cascade-info .high { color: #4CAF50; }
         .cascade-info .low { color: #666; }
+
+        /* Share Link Sample Styles */
+        .share-link-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            align-items: center;
+            margin: 10px 0;
+        }
+        .share-link-row .share-link-row__url {
+            flex: 1 1 320px;
+            min-width: 0;
+            background: #1e2127;
+            color: #ccc;
+            font-family: monospace;
+            font-size: 0.75rem;
+            padding: 10px;
+            border-radius: 6px;
+            word-break: break-all;
+            max-height: 100px;
+            overflow-y: auto;
+        }
     </style>
 </head>
 <body>
@@ -386,6 +408,42 @@
             preview-mode="referral"
             image-url="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='50' r='44' fill='%230043EF'/><text x='50' y='66' font-size='52' text-anchor='middle' fill='white' font-family='Arial' font-weight='bold'>F</text></svg>"
         ></frak-banner>
+    </div>
+</div>
+
+<!-- ═══════════════════════════════════════════ -->
+<!-- Section 6: Auto-share via Query Param       -->
+<!-- ═══════════════════════════════════════════ -->
+<div class="test-section">
+    <h2 class="test-section__title">6. Auto-share via Query Param</h2>
+    <p class="test-section__text">
+        Visiting a URL with <code>?frakAction=share</code> auto-opens the
+        full-page sharing UI on load. Email tools (Klaviyo, Omnisend, Customer.io…)
+        can deep-link customers straight into a contextualised share by adding
+        optional <code>link</code>, <code>products</code> and <code>placement</code>
+        query params.
+    </p>
+    <p class="test-section__note">
+        Copy a link or open it in a new tab — once the SDK initialises on the
+        new page, the sharing page opens automatically.
+    </p>
+
+    <h3 class="test-section__subtitle">Without product</h3>
+    <div class="share-link-row">
+        <code id="share-link-no-product" class="share-link-row__url">Generating…</code>
+        <button id="btn-copy-share-link-no-product" class="test-section__button">Copy</button>
+        <a id="open-share-link-no-product" class="test-section__button test-section__button--variant" target="_blank" rel="noopener">Open</a>
+    </div>
+
+    <h3 class="test-section__subtitle">With products (Klaviyo-style)</h3>
+    <div class="share-link-row">
+        <code id="share-link-with-product" class="share-link-row__url">Generating…</code>
+        <button id="btn-copy-share-link-with-product" class="test-section__button">Copy</button>
+        <a id="open-share-link-with-product" class="test-section__button test-section__button--variant" target="_blank" rel="noopener">Open</a>
+    </div>
+
+    <div id="share-link-status" class="status-box">
+        <div class="info">[Ready] Copy a link or open it in a new tab</div>
     </div>
 </div>
 

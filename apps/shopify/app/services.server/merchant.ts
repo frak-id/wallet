@@ -2,11 +2,17 @@ import type { AuthenticatedContext } from "app/types/context";
 import { LRUCache } from "lru-cache";
 import { backendApi } from "../utils/backendApi";
 import {
+    buildShareButtonHtml,
+    buildShareUrl,
     getComponentsUrlMetafield,
     getMerchantIdMetafield,
+    getShareButtonHtmlMetafield,
+    getShareUrlMetafield,
     getWalletUrlMetafield,
     writeComponentsUrlMetafield,
     writeMerchantIdMetafield,
+    writeShareButtonHtmlMetafield,
+    writeShareUrlMetafield,
     writeWalletUrlMetafield,
 } from "./metafields";
 import { shopInfo } from "./shop";
@@ -35,6 +41,11 @@ const walletUrlSyncedShops = new LRUCache<string, boolean>({
 });
 
 const componentsUrlSyncedShops = new LRUCache<string, boolean>({
+    max: 512,
+    ttl: 30 * 60_000,
+});
+
+const klaviyoShareSyncedShops = new LRUCache<string, boolean>({
     max: 512,
     ttl: 30 * 60_000,
 });
@@ -210,5 +221,55 @@ export async function ensureComponentsUrlMetafield(
         componentsUrlSyncedShops.set(cacheKey, true);
     } catch (error) {
         console.error("[componentsUrl] metafield sync failed:", error);
+    }
+}
+
+/**
+ * Ensure the Klaviyo share metafields (`frak.share_url` and
+ * `frak.share_button_html`) exist and reflect the current primary
+ * storefront domain.
+ *
+ * Merchants reference these from their email-tool templates (Klaviyo,
+ * Omnisend …) to drop a ready-to-use share CTA without hard-coding the
+ * storefront host — the CTA lands users on the storefront with
+ * `?frakAction=share`, which the SDK loader turns into an auto-open
+ * sharing page (see
+ * `sdk/components/src/bootstrap/initFrakSdk.ts#handleActionQueryParam`).
+ *
+ * Idempotent and cached per shop for 30 min, same pattern as
+ * `ensureWalletUrlMetafield` and `ensureComponentsUrlMetafield`.
+ */
+export async function ensureKlaviyoShareMetafields(
+    context: AuthenticatedContext
+): Promise<void> {
+    const shop = await shopInfo(context);
+    const cacheKey = shop.normalizedDomain;
+
+    if (klaviyoShareSyncedShops.get(cacheKey)) return;
+
+    const expectedShareUrl = buildShareUrl(shop.domain);
+    const expectedShareButtonHtml = buildShareButtonHtml(shop.domain);
+
+    try {
+        const [currentShareUrl, currentShareButtonHtml] = await Promise.all([
+            getShareUrlMetafield(context),
+            getShareButtonHtmlMetafield(context),
+        ]);
+
+        const writes: Promise<unknown>[] = [];
+        if (currentShareUrl !== expectedShareUrl) {
+            writes.push(writeShareUrlMetafield(context, expectedShareUrl));
+        }
+        if (currentShareButtonHtml !== expectedShareButtonHtml) {
+            writes.push(
+                writeShareButtonHtmlMetafield(context, expectedShareButtonHtml)
+            );
+        }
+        if (writes.length > 0) {
+            await Promise.all(writes);
+        }
+        klaviyoShareSyncedShops.set(cacheKey, true);
+    } catch (error) {
+        console.error("[klaviyoShare] metafield sync failed:", error);
     }
 }

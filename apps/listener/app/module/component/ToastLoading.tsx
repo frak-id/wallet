@@ -116,7 +116,9 @@ function StuckToast({
     return (
         <div className={styles.toast} role="status" aria-label={ariaLabel}>
             <div className={styles.warning}>
-                <span className={styles.warningGlyph}>&#9888;</span> {text}
+                <p className={styles.warningContent}>
+                    <span className={styles.warningGlyph}>&#9888;</span> {text}
+                </p>
             </div>
             <button
                 type="button"

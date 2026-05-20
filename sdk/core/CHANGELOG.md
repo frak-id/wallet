@@ -1,5 +1,13 @@
 # @frak-labs/core-sdk
 
+## 1.1.1
+
+### Patch Changes
+
+- [#205](https://github.com/frak-id/wallet/pull/205) [`2df08c0`](https://github.com/frak-id/wallet/commit/2df08c0286f5850b1fddf7a3250e89e4c05ee61a) Thanks [@KONFeature](https://github.com/KONFeature)! - Default `directExit` to `true` in `openSso()` when no `redirectUrl` is provided.
+
+  Previously the JSDoc claimed `directExit` defaulted to `true` but the value was passed through as `undefined`. The SSO popup ended up stuck on the success screen because both the auto-redirect and the "Redirect now" button became no-ops. Callers that did not pass `directExit` (e.g. embedded apps using popup-only SSO) had to manually pass `directExit: true` to get the popup to close. The default is now applied at the action boundary so popup-only flows work out of the box.
+
 ## 1.1.0
 
 ### Minor Changes

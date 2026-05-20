@@ -42,14 +42,14 @@ export function OnboardingStep({
     return (
         <PageLayout
             fixedViewport
-            back={onBack ? <Back onClick={onBack} /> : undefined}
+            back={onBack ? <Back onClick={() => onBack()} /> : undefined}
             footer={
                 <>
-                    <Button onClick={onContinue}>{buttonLabel}</Button>
+                    <Button onClick={() => onContinue()}>{buttonLabel}</Button>
                     {loginLabel && onLoginClick && (
                         <Button
                             variant="secondary"
-                            onClick={onLoginClick}
+                            onClick={() => onLoginClick()}
                             loading={isLoginLoading}
                         >
                             {loginLabel}
@@ -59,7 +59,7 @@ export function OnboardingStep({
                         <Button
                             size="small"
                             variant="ghost"
-                            onClick={onRecoveryCodeClick}
+                            onClick={() => onRecoveryCodeClick()}
                         >
                             {t("onboarding.recoveryCode")}
                         </Button>

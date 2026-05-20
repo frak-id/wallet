@@ -1,10 +1,12 @@
 import { CampaignStatus } from "app/components/Campaign";
+import { ExternalButton } from "app/components/ui/ExternalLink";
 import { PageHeading } from "app/components/ui/PageHeading";
+import type { loader as appLoader } from "app/routes/app";
 import { authenticate } from "app/shopify.server";
 import { buildCampaignRule } from "app/utils/campaignCreation";
 import { useTranslation } from "react-i18next";
 import type { ActionFunctionArgs, LoaderFunctionArgs } from "react-router";
-import { data, useLoaderData } from "react-router";
+import { data, useLoaderData, useRouteLoaderData } from "react-router";
 import {
     archiveMerchantCampaign,
     createMerchantCampaign,
@@ -177,11 +179,38 @@ export async function action({ request }: ActionFunctionArgs) {
 
 export default function CampaignsPage() {
     const { campaigns, bankStatus } = useLoaderData<typeof loader>();
+    const rootData = useRouteLoaderData<typeof appLoader>("routes/app");
+    const businessUrl = rootData?.businessUrl ?? "";
     const { t } = useTranslation();
 
     return (
         <s-page heading={t("campaigns.title")}>
-            <PageHeading>{t("campaigns.title")}</PageHeading>
+            <div
+                style={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                    gap: "var(--s-space-200)",
+                }}
+            >
+                <PageHeading>{t("campaigns.title")}</PageHeading>
+                <div
+                    style={{
+                        display: "flex",
+                        gap: "var(--s-space-200)",
+                    }}
+                >
+                    <ExternalButton href={`${businessUrl}/campaigns/list`}>
+                        {t("campaigns.viewAll")}
+                    </ExternalButton>
+                    <ExternalButton
+                        variant="primary"
+                        href={`${businessUrl}/campaigns/draft/new`}
+                    >
+                        {t("campaigns.createNew")}
+                    </ExternalButton>
+                </div>
+            </div>
             {campaigns && bankStatus ? (
                 <CampaignStatus campaigns={campaigns} bankStatus={bankStatus} />
             ) : (

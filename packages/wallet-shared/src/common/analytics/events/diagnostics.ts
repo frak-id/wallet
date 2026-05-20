@@ -6,6 +6,7 @@
  * platform global properties (isTauri / platform).
  */
 export type AppErrorSource =
+    | "registration"
     | "bootstrap"
     | "window_error"
     | "unhandled_rejection"

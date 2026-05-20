@@ -10,6 +10,12 @@ import {
 } from "@/tests/vitest-fixtures";
 import { useRegister } from "./useRegister";
 
+type AuthState = {
+    pendingRegistration: unknown;
+    setPendingRegistration: ReturnType<typeof vi.fn>;
+};
+let authState: AuthState;
+
 vi.mock("@frak-labs/wallet-shared", async (importOriginal) => {
     const original =
         await importOriginal<typeof import("@frak-labs/wallet-shared")>();
@@ -28,6 +34,10 @@ vi.mock("@frak-labs/wallet-shared", async (importOriginal) => {
         })),
         getTauriCreateFn: vi.fn(() => undefined),
         addLastAuthentication: vi.fn(),
+        recoveryHintStorage: { set: vi.fn() },
+        authenticationStore: {
+            getState: vi.fn(() => authState),
+        },
         sessionStore: {
             getState: vi.fn(() => ({
                 setSession: vi.fn(),
@@ -55,6 +65,10 @@ vi.mock("@/module/authentication/hook/usePreviousAuthenticators", () => ({
 describe("useRegister", () => {
     beforeEach(() => {
         vi.clearAllMocks();
+        authState = {
+            pendingRegistration: null,
+            setPendingRegistration: vi.fn(),
+        };
     });
 
     afterEach(() => {
@@ -294,5 +308,217 @@ describe("useRegister", () => {
         });
 
         expect(onSuccess).toHaveBeenCalled();
+    });
+
+    test("should persist pending registration before the backend POST", async ({
+        queryWrapper,
+    }) => {
+        const { WebAuthnP256 } = await import("ox");
+        const { authenticatedWalletApi, sessionStore } = await import(
+            "@frak-labs/wallet-shared"
+        );
+
+        vi.mocked(WebAuthnP256.createCredential).mockResolvedValue({
+            id: "cred-id",
+            publicKey: { x: 1n, y: 2n, prefix: 4 },
+            raw: { id: "raw-id", type: "public-key" },
+        } as any);
+        vi.mocked(authenticatedWalletApi.auth.register.post).mockResolvedValue({
+            data: { address: "0x123", token: "token", sdkJwt: "sdk" },
+            error: null,
+        } as any);
+        vi.mocked(sessionStore.getState).mockReturnValue({
+            setSession: vi.fn(),
+            setSdkSession: vi.fn(),
+        } as any);
+
+        const callOrder: string[] = [];
+        authState.setPendingRegistration.mockImplementation((value) => {
+            callOrder.push(value === null ? "clear" : "put");
+        });
+        vi.mocked(authenticatedWalletApi.auth.register.post).mockImplementation(
+            async () => {
+                callOrder.push("post");
+                return {
+                    data: { address: "0x123", token: "token", sdkJwt: "sdk" },
+                    error: null,
+                } as any;
+            }
+        );
+
+        const { result } = renderHook(() => useRegister(), {
+            wrapper: queryWrapper.wrapper,
+        });
+
+        await result.current.register({ email: "user@example.com" });
+
+        await waitFor(() => {
+            expect(result.current.isSuccess).toBe(true);
+        });
+
+        expect(callOrder).toEqual(["put", "post", "clear"]);
+        expect(authState.setPendingRegistration).toHaveBeenCalledWith(
+            expect.objectContaining({
+                credentialId: "cred-id",
+                email: "user@example.com",
+            })
+        );
+        expect(authState.setPendingRegistration).toHaveBeenLastCalledWith(null);
+    });
+
+    test("should reuse the persisted credential and skip the ceremony", async ({
+        queryWrapper,
+    }) => {
+        const { WebAuthnP256 } = await import("ox");
+        const { authenticatedWalletApi, sessionStore } = await import(
+            "@frak-labs/wallet-shared"
+        );
+
+        authState.pendingRegistration = {
+            credentialId: "cred-id",
+            publicKey: { x: "0x1", y: "0x2", prefix: 4 },
+            rawEncoded: "base64-raw",
+            email: "pending@example.com",
+            merchantId: undefined,
+            userAgent: "test-ua",
+            createdAt: Date.now(),
+        };
+        vi.mocked(authenticatedWalletApi.auth.register.post).mockResolvedValue({
+            data: { address: "0x123", token: "token", sdkJwt: "sdk" },
+            error: null,
+        } as any);
+        vi.mocked(sessionStore.getState).mockReturnValue({
+            setSession: vi.fn(),
+            setSdkSession: vi.fn(),
+        } as any);
+
+        const { result } = renderHook(() => useRegister(), {
+            wrapper: queryWrapper.wrapper,
+        });
+
+        await result.current.register();
+
+        await waitFor(() => {
+            expect(result.current.isSuccess).toBe(true);
+        });
+
+        expect(WebAuthnP256.createCredential).not.toHaveBeenCalled();
+        expect(authenticatedWalletApi.auth.register.post).toHaveBeenCalledWith(
+            expect.objectContaining({
+                id: "cred-id",
+                email: "pending@example.com",
+                raw: "base64-raw",
+            })
+        );
+        expect(authState.setPendingRegistration).toHaveBeenCalledWith(null);
+    });
+
+    test("should keep the pending record when the backend submit is transient", async ({
+        queryWrapper,
+    }) => {
+        const { WebAuthnP256 } = await import("ox");
+        const { authenticatedWalletApi } = await import(
+            "@frak-labs/wallet-shared"
+        );
+
+        vi.mocked(WebAuthnP256.createCredential).mockResolvedValue({
+            id: "cred-id",
+            publicKey: { x: 1n, y: 2n, prefix: 4 },
+            raw: {},
+        } as any);
+        vi.mocked(authenticatedWalletApi.auth.register.post).mockResolvedValue({
+            data: null,
+            error: { status: 503, value: "Backend down" },
+        } as any);
+
+        const { result } = renderHook(() => useRegister({ retry: false }), {
+            wrapper: queryWrapper.wrapper,
+        });
+
+        await expect(result.current.register()).rejects.toThrow();
+
+        expect(authState.setPendingRegistration).toHaveBeenCalledWith(
+            expect.objectContaining({ credentialId: "cred-id" })
+        );
+        expect(authState.setPendingRegistration).not.toHaveBeenCalledWith(null);
+    });
+
+    test("should drop the pending record when the backend rejects with 4xx", async ({
+        queryWrapper,
+    }) => {
+        const { WebAuthnP256 } = await import("ox");
+        const { authenticatedWalletApi } = await import(
+            "@frak-labs/wallet-shared"
+        );
+
+        vi.mocked(WebAuthnP256.createCredential).mockResolvedValue({
+            id: "cred-id",
+            publicKey: { x: 1n, y: 2n, prefix: 4 },
+            raw: {},
+        } as any);
+        vi.mocked(authenticatedWalletApi.auth.register.post).mockResolvedValue({
+            data: null,
+            error: { status: 409, value: "Credential id conflict" },
+        } as any);
+
+        const { result } = renderHook(() => useRegister(), {
+            wrapper: queryWrapper.wrapper,
+        });
+
+        await expect(result.current.register()).rejects.toThrow();
+
+        expect(authState.setPendingRegistration).toHaveBeenCalledWith(
+            expect.objectContaining({ credentialId: "cred-id" })
+        );
+        expect(authState.setPendingRegistration).toHaveBeenLastCalledWith(null);
+    });
+
+    test("should drop non-string args before persisting", async ({
+        queryWrapper,
+    }) => {
+        const { WebAuthnP256 } = await import("ox");
+        const { authenticatedWalletApi, sessionStore } = await import(
+            "@frak-labs/wallet-shared"
+        );
+
+        vi.mocked(WebAuthnP256.createCredential).mockResolvedValue({
+            id: "cred-id",
+            publicKey: { x: 1n, y: 2n, prefix: 4 },
+            raw: {},
+        } as any);
+        vi.mocked(authenticatedWalletApi.auth.register.post).mockResolvedValue({
+            data: { address: "0x123", token: "token", sdkJwt: "sdk" },
+            error: null,
+        } as any);
+        vi.mocked(sessionStore.getState).mockReturnValue({
+            setSession: vi.fn(),
+            setSdkSession: vi.fn(),
+        } as any);
+
+        const { result } = renderHook(() => useRegister(), {
+            wrapper: queryWrapper.wrapper,
+        });
+
+        await result.current.register({
+            email: { fakeReactEvent: true } as unknown as string,
+            merchantId: "",
+        });
+
+        await waitFor(() => {
+            expect(result.current.isSuccess).toBe(true);
+        });
+
+        expect(authState.setPendingRegistration).toHaveBeenCalledWith(
+            expect.objectContaining({
+                email: undefined,
+                merchantId: undefined,
+            })
+        );
+        expect(authenticatedWalletApi.auth.register.post).toHaveBeenCalledWith(
+            expect.objectContaining({
+                email: undefined,
+                merchantId: undefined,
+            })
+        );
     });
 });

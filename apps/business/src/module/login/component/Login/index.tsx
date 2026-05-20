@@ -51,7 +51,7 @@ export function Login() {
                     src={logo}
                     alt="Frak Labs"
                     width={111}
-                    height={111}
+                    height={42}
                     className={styles.image}
                 />
             </a>

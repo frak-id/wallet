@@ -1,7 +1,14 @@
 import * as coreSdkIndex from "@frak-labs/core-sdk";
-import { setupClient, trackEvent, withCache } from "@frak-labs/core-sdk";
+import {
+    type FrakWalletSdkConfig,
+    setupClient,
+    trackEvent,
+    withCache,
+} from "@frak-labs/core-sdk";
 import * as coreSdkActions from "@frak-labs/core-sdk/actions";
-import { openWalletModal } from "../components/ButtonWallet/utils";
+import { openSharingPage } from "../actions/sharingPage";
+import { detectListenerPreloads } from "../utils/dom/detectListenerPreloads";
+import { decodeProductsParam } from "../utils/sharingPageProducts";
 import { dispatchClientReadyEvent } from "./clientReady";
 
 /**
@@ -56,7 +63,7 @@ async function doInit(): Promise<void> {
     console.log("[Frak SDK] Starting initialization");
 
     const client = await setupClient({
-        config: window.FrakSetup.config,
+        config: withDynamicPreload(window.FrakSetup.config),
     });
 
     if (!client) {
@@ -79,17 +86,42 @@ async function doInit(): Promise<void> {
 }
 
 /**
+ * Inject a dynamically-computed `preload` list when the caller hasn't set
+ * one explicitly.
+ *
+ * Rationale: the listener iframe warms Ring 1/Ring 2 chunks based on the
+ * `#preload=...` hash. The components CDN entry can detect which Frak
+ * components are actually on the page and avoid the warm-up cost when none
+ * are mounted. An explicit `config.preload` (including `[]`) is respected
+ * as an escape hatch.
+ */
+function withDynamicPreload(config: FrakWalletSdkConfig): FrakWalletSdkConfig {
+    if (config.preload !== undefined) return config;
+    return { ...config, preload: detectListenerPreloads() };
+}
+
+/**
  * Check the query param contain params for an auto opening of the frak modal
  */
 function handleActionQueryParam() {
-    const urlParams = new URLSearchParams(window.location.search);
-    const frakAction = urlParams.get("frakAction");
-    if (!frakAction) {
+    const url = new URL(window.location.href);
+    if (url.searchParams.get("frakAction") !== "share") {
         return;
     }
 
-    if (frakAction === "share") {
-        console.log("[Frak SDK] Auto open query param found");
-        openWalletModal();
-    }
+    console.log("[Frak SDK] Auto open share via query param");
+
+    const link = url.searchParams.get("link") ?? undefined;
+    const placement = url.searchParams.get("placement") ?? undefined;
+    const products = decodeProductsParam(url.searchParams.get("products"));
+
+    // Clean URL immediately so a refresh / share of the current URL does
+    // not re-trigger the auto-open. Same idiom as `fmt` / `sso` cleanup.
+    url.searchParams.delete("frakAction");
+    url.searchParams.delete("link");
+    url.searchParams.delete("placement");
+    url.searchParams.delete("products");
+    window.history.replaceState({}, "", url.toString());
+
+    openSharingPage(undefined, placement, { link, products });
 }

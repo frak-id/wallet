@@ -29,7 +29,13 @@ vi.mock("../common/storage/authenticators", () => ({
 describe("authenticationStore", () => {
     beforeEach(() => {
         // Reset store to initial state before each test
-        authenticationStore.getState().clearAuthentication();
+        authenticationStore.setState({
+            lastAuthenticator: null,
+            pendingRegistration: null,
+            lastAuthenticationAt: null,
+            lastWebAuthNAction: null,
+            ssoContext: null,
+        });
         vi.clearAllMocks();
     });
 
@@ -40,6 +46,7 @@ describe("authenticationStore", () => {
             expect(state.lastAuthenticator).toBeNull();
             expect(state.lastWebAuthNAction).toBeNull();
             expect(state.ssoContext).toBeNull();
+            expect(state.pendingRegistration).toBeNull();
         });
     });
 
@@ -179,46 +186,30 @@ describe("authenticationStore", () => {
         });
     });
 
-    describe("clearAuthentication", () => {
-        test("should clear all authentication data", () => {
-            const mockAuthenticator: LastAuthentication = {
-                token: "test-token",
-                address: "0x1234567890123456789012345678901234567890",
-                type: "webauthn",
-                authenticatorId: "auth-123",
+    describe("setPendingRegistration", () => {
+        test("should set and clear pending registration", () => {
+            const pending = {
+                credentialId: "cred-1",
                 publicKey: {
-                    x: "0x1234567890123456789012345678901234567890123456789012345678901234",
-                    y: "0xabcdef1234567890123456789012345678901234567890123456789012345678",
+                    x: "0x1" as const,
+                    y: "0x2" as const,
+                    prefix: 4,
                 },
+                rawEncoded: "encoded",
+                email: "user@example.com",
+                userAgent: "test-ua",
+                createdAt: 1700000000000,
             };
-            const mockAction: LastWebAuthNAction = {
-                wallet: "0x1234567890123456789012345678901234567890",
-                signature: {
-                    id: "test-id",
-                    response: {
-                        metadata: {} as any,
-                        signature: { r: 0n, s: 0n, yParity: 0 },
-                    },
-                } as AuthenticationResponseJSON,
-                challenge: "0x74657374",
-            };
-            const mockSsoContext = { merchantId: "product-123" };
 
-            // Set all values
-            authenticationStore
-                .getState()
-                .setLastAuthenticator(mockAuthenticator);
-            authenticationStore.getState().setLastWebAuthNAction(mockAction);
-            authenticationStore.getState().setSsoContext(mockSsoContext);
+            authenticationStore.getState().setPendingRegistration(pending);
+            expect(authenticationStore.getState().pendingRegistration).toEqual(
+                pending
+            );
 
-            // Clear
-            authenticationStore.getState().clearAuthentication();
-
-            // Verify all cleared
-            const state = authenticationStore.getState();
-            expect(state.lastAuthenticator).toBeNull();
-            expect(state.lastWebAuthNAction).toBeNull();
-            expect(state.ssoContext).toBeNull();
+            authenticationStore.getState().setPendingRegistration(null);
+            expect(
+                authenticationStore.getState().pendingRegistration
+            ).toBeNull();
         });
     });
 

@@ -5,6 +5,7 @@ import { Skeleton } from "app/components/Skeleton";
 import { WalletGated } from "app/components/WalletGated";
 import {
     ensureComponentsUrlMetafield,
+    ensureKlaviyoShareMetafields,
     ensureWalletUrlMetafield,
     resolveMerchantId,
 } from "app/services.server/merchant";
@@ -42,6 +43,10 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     ensureWalletUrlMetafield(context).catch(() => {});
     // Fire-and-forget: sync components CDN URL metafield for listener.liquid
     ensureComponentsUrlMetafield(context).catch(() => {});
+    // Fire-and-forget: sync Klaviyo share metafields so merchants can paste
+    // a ready-to-use share CTA into their email templates without
+    // hard-coding the storefront host.
+    ensureKlaviyoShareMetafields(context).catch(() => {});
 
     return {
         apiKey: process.env.SHOPIFY_API_KEY || "",

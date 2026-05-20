@@ -185,6 +185,45 @@ describe("iframeHelper", () => {
 
             expect(mockIframe.style.zIndex).toBe("2000001");
         });
+
+        it("should append #preload=... when config.preload is non-empty", async () => {
+            const config: FrakWalletSdkConfig = {
+                metadata: { name: "Test" },
+                preload: ["sharing"],
+            };
+
+            await createIframe({ config });
+
+            expect(mockIframe.src).toBe(
+                "https://wallet.frak.id/listener?clientId=mock-client-id-for-test#preload=sharing"
+            );
+        });
+
+        it("should join multiple preload options with comma", async () => {
+            const config: FrakWalletSdkConfig = {
+                metadata: { name: "Test" },
+                preload: ["sharing", "modal"],
+            };
+
+            await createIframe({ config });
+
+            expect(mockIframe.src).toBe(
+                "https://wallet.frak.id/listener?clientId=mock-client-id-for-test#preload=sharing,modal"
+            );
+        });
+
+        it("should omit the preload hash when config.preload is an empty array", async () => {
+            const config: FrakWalletSdkConfig = {
+                metadata: { name: "Test" },
+                preload: [],
+            };
+
+            await createIframe({ config });
+
+            expect(mockIframe.src).toBe(
+                "https://wallet.frak.id/listener?clientId=mock-client-id-for-test"
+            );
+        });
     });
 
     describe("changeIframeVisibility", () => {

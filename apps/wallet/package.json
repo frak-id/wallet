@@ -1,6 +1,6 @@
 {
   "name": "@frak-labs/nexus-wallet",
-  "version": "1.0.63",
+  "version": "1.0.65",
   "description": "The simple and cross-platform wallet to centralise your contents.",
   "private": true,
   "sideEffects": [
@@ -49,6 +49,7 @@
   },
   "dependencies": {
     "@frak-labs/app-essentials": "workspace:*",
+    "@frak-labs/client": "workspace:*",
     "@frak-labs/core-sdk": "workspace:*",
     "@frak-labs/design-system": "workspace:*",
     "@frak-labs/frame-connector": "workspace:*",
@@ -72,6 +73,7 @@
     "lucide-react": "^0.577.0",
     "ox": "^0.14.15",
     "permissionless": "^0.3.5",
+    "qr": "^0.6.0",
     "radash": "^12.1.1",
     "react": "catalog:",
     "react-dom": "catalog:",

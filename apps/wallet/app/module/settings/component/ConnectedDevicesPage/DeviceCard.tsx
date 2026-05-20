@@ -12,6 +12,7 @@ import type { Pairing } from "@frak-labs/wallet-shared/pairing/types";
 import { useQueryClient } from "@tanstack/react-query";
 import type { ReactNode } from "react";
 import { useTranslation } from "react-i18next";
+import { useStore } from "zustand";
 import * as styles from "./index.css";
 
 function formatDate(value: Date | string | number, language: string) {
@@ -26,7 +27,7 @@ function formatDate(value: Date | string | number, language: string) {
 export function DeviceCard({ pairing }: { pairing: Pairing }) {
     const { t, i18n } = useTranslation();
     const queryClient = useQueryClient();
-    const wallet = sessionStore(selectWebauthnSession);
+    const wallet = useStore(sessionStore, selectWebauthnSession);
 
     const { mutate: deletePairing, isPending } = useDeletePairing({
         mutations: {
