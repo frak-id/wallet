@@ -289,19 +289,10 @@ export default defineConfig(async () => {
                     inlineConst: { mode: "all", pass: 3 },
                 },
                 output: {
+                    // TODO: Lazy bundle leaking into eager ones, we removed `includeDependenciesRecursively: false` that was causing issue in some chunks.
                     codeSplitting: {
                         // Only chunk stuff shared by at least 2 modules
                         minShareCount: 2,
-                        // Disable Rolldown's default `pull all transitive deps
-                        // into the same group as the matched module`. With it on,
-                        // `ui-runtime` (preact + @tanstack/react-query) dragged
-                        // every transitive dep (zustand, @tanstack/query-core,
-                        // @elysiajs/eden, idb-keyval) into the lazy chunk — so
-                        // the eager queryClient.ts had to statically import it.
-                        // With it off, each group claims only modules its `test`
-                        // matches; deps land in `vendor` / `common` / default
-                        // chunking based on their own match.
-                        includeDependenciesRecursively: false,
                         groups: [
                             // NOTE: Rolldown's `\0rolldown/runtime.js` is emitted
                             // as its own hardcoded `rolldown-runtime` chunk by the
