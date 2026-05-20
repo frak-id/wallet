@@ -1,7 +1,4 @@
-import { Plus } from "lucide-react";
-import { Button } from "@/module/common/component/Button";
 import { Panel } from "@/module/common/component/Panel";
-import { AddMerchantSheet } from "@/module/dashboard/component/AddMerchantSheet";
 import { MerchantItem } from "@/module/dashboard/component/MerchantItem";
 import { useMyMerchants } from "@/module/dashboard/hooks/useMyMerchants";
 import * as styles from "./products.css";
@@ -26,24 +23,6 @@ function MerchantListSection({
             {merchants.map((merchant) => (
                 <MerchantListItem key={merchant.id} merchant={merchant} />
             ))}
-
-            <AddMerchantSheet
-                trigger={
-                    <Button size={"none"} width={"auto"} variant={"ghost"}>
-                        <MerchantItem
-                            name={
-                                <>
-                                    <Plus />
-                                    Add a Merchant
-                                </>
-                            }
-                            domain={"domain.com"}
-                            showActions={false}
-                            isLink={false}
-                        />
-                    </Button>
-                }
-            />
         </div>
     );
 }
