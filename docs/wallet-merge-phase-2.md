@@ -12,7 +12,7 @@ A user is signed in on **Device X with Wallet A** and types an email that is alr
 4. Have the **winner's owner** sign the `addPassKey` userOp on their own device.
 5. Finalise the merge in the backend (libSQL repoint + PG identity merge).
 
-This document describes only Phase 2. The on-chain primitive (`multiWebAuthNValidatorV2.addPassKey`), the backend `IdentityMergeService` extensions (push_tokens / asset_logs pending / referral_codes conflict), the `WalletMergeOrchestrator.settle`, and the libSQL `repointAuthenticator` repository method are all shared with Phase 1 and assumed to already exist.
+This document describes only Phase 2. The on-chain primitive (`multiWebAuthNValidatorV2.addPassKey`), the backend `IdentityMergeService` extensions (push_tokens / asset_logs pending / referral_codes conflict), the `WalletMergeOrchestrator.settle`, the libSQL `repointBinding` repository method, and the postgres-resident `identity_nodes` email storage are all shared with Phase 1 and assumed to already exist.
 
 ---
 
@@ -383,7 +383,7 @@ await authenticatedWalletApi.user.wallet.merge.settle.post({
 });
 // Server-side: WalletMergeOrchestrator.settle()
 //   - verifies on-chain getPasskey returns the expected pubkey
-//   - libSQL repointAuthenticator(loserAuthId → winnerAddress)
+//   - libSQL repointBinding(loserAuthId, chainId → winnerAddress)
 //   - PG IdentityMergeService.mergeGroups(winner, loser, { migratePushTokens, ... })
 //   - emits walletMerged event
 //   - publishes "merge-completed" to the pairing's ORIGIN topic
@@ -482,14 +482,19 @@ async settle({ pairingId, onChainTxHash, consentSignature }) {
     if (!ok) throw new MergeError("invalid-consent");
   }
 
-  // 3. libSQL repoint
-  await authRepo.repointAuthenticator({
+  // 3. libSQL repoint (chain-scoped)
+  await authRepo.repointBinding({
     credentialId: preview.loserAuthenticatorId,
-    newSmartWalletAddress: preview.winner,
-    mergeEmail: "keep-winner",
+    chainId: preview.chainId,
+    toSmartWalletAddress: preview.winner,
+    reason: "merged",
   });
 
-  // 4. PG merge (single tx)
+  // 4. PG merge (single tx). The loser group's `identity_nodes` rows —
+  //    including the email — move onto the winner group as part of the bulk
+  //    node update inside `mergeGroups`. `findEmailForGroup` is ordered by
+  //    `created_at ASC` so the winner's original email keeps winning even if
+  //    the loser had one of its own.
   await identityMergeSvc.mergeGroupsByWallet(preview.winner, preview.loser, {
     migratePushTokens: true,
     migrateRecipientWallet: true,
@@ -568,7 +573,7 @@ No new persisted table is required for Phase 2. The pairing row itself (with `ki
 
 ## Surface area changes (Phase 2 only)
 
-Phase 1 already lands: `kind` + `targetAuthenticatorHint` columns, the new email-conflict response shape, `repointAuthenticator`, extended `IdentityMergeService`, `WalletMergeOrchestrator.settle`. Phase 2 adds:
+Phase 1 already lands: `kind` + `targetAuthenticatorHint` columns, the new email-conflict response shape (resolved via `AuthenticatorLookupOrchestrator.findByEmail`), `repointBinding`, extended `IdentityMergeService`, `WalletMergeOrchestrator.settle`, and the `identity_nodes` email storage. Phase 2 adds:
 
 ### Backend
 
@@ -641,7 +646,7 @@ Phase 1 already lands: `kind` + `targetAuthenticatorHint` columns, the new email
 
 3. **Does `merge-completed` replay on reconnect?** Recommend yes — implement by reusing the `pairingSignatureRequestTable` replay pattern: add a `pairing_event` table with `(pairingId, eventType, payload, sentAt)` for terminal events, and have `handleReconnection` replay unread events to each side.
 
-4. **Multiple email associations after merge.** Currently `LOWER(email)` is indexed but not unique. Post-merge, both authenticator rows pointing to the winner could legally both carry the email; the orchestrator clears the loser's email to keep lookups unambiguous.
+4. **Multiple email associations after merge.** Resolved in Phase 1: emails live as `identity_nodes` rows on the wallet's identity group, not on the authenticator. The loser's email node migrates into the winner's group with the rest of the bulk node move. If both sides had a different email, the winner ends up holding multiple active email nodes; `findEmailForGroup` orders by `created_at ASC` so the original (winner's) email wins deterministically. The global unique on `(identity_type, identity_value, merchant_id)` guarantees no two groups can hold the same email value, so the merge can never trigger a constraint conflict on the email row itself.
 
 5. **What if the user does the same-device fast path mid-Phase-2?** A user on Device X with both passkeys in the OS keychain could complete a merge entirely locally without needing the pairing flow. Phase 1 ships that local fast path; if it fires for some users they skip Phase 2 entirely. No conflict.
 

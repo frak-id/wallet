@@ -20,27 +20,28 @@ The on-chain primitive (`multiWebAuthNValidatorV2.addPassKey`) and the wagmi sma
 In Phase 1:
 - Same-device merge only — both passkeys must resolve via a local WebAuthn assertion on the requesting device.
 - Both supported chains (Arbitrum mainnet + Arbitrum Sepolia) for the binding model; merge is per-chain.
-- New `authenticator_wallet_bindings` table; dual-write to the existing `authenticators.smart_wallet_address` and `authenticators.email` columns for safety.
-- Bootstrap-driven back-fill of existing rows (idempotent batched job).
+- New `authenticator_wallet_bindings` table; legacy `authenticators.smart_wallet_address` column kept (dual-write through `repointBinding`) until the rollout has run cleanly in prod.
+- Email moves out of libSQL entirely and becomes a postgres `identity_nodes` row of type `email` attached to the wallet's identity group. The legacy `authenticators.email` column is read-only from this point and only consumed once by the bootstrap migration; it gets dropped in a follow-up PR.
+- Bootstrap-driven back-fill of existing rows (idempotent batched job, dual-client libSQL + postgres).
 
 Out of Phase 1 (covered later):
 - Cross-device pairing-with-hint flow (Phase 2).
 - Recovery flow refactor onto the binding model (kept as-is for now; new `reason = 'recovery'` value reserved but unused).
 - Recovery blob column (declared on the binding table, unused).
 - `setPrimaryPassKey` UX, on-chain fund sweep, multi-chain UX (Phase 3+).
-- Dropping the old `authenticators.smart_wallet_address` and `authenticators.email` columns (deferred to a follow-up PR once dual-write has run cleanly in prod).
+- Dropping the legacy `authenticators.smart_wallet_address` and `authenticators.email` columns (deferred to a follow-up PR once back-fill has run cleanly in every env).
 
 ---
 
 ## Schema changes
 
-### `authenticators` (existing, keep all columns during dual-write)
+### `authenticators` (libSQL — existing, kept during the rollout window)
 
 ```
 authenticators:
   id                     TEXT PRIMARY KEY,    -- WebAuthn credentialId
-  smart_wallet_address   TEXT,                -- KEPT (dual-write) — drop in a later PR
-  email                  TEXT,                -- KEPT (dual-write) — drop in a later PR
+  smart_wallet_address   TEXT,                -- legacy, kept; written through `repointBinding`
+  email                  TEXT,                -- legacy, read-only after rollout; drop after back-fill stabilises
   user_agent             TEXT NOT NULL,
   public_key_x           TEXT NOT NULL,
   public_key_y           TEXT NOT NULL,
@@ -51,9 +52,9 @@ authenticators:
   transports             TEXT
 ```
 
-The `authenticators_email_lower_idx` index added in migration `0002` stays in place during dual-write. After cutover the index and the columns get dropped together.
+The `authenticators_email_lower_idx` expression index stays in place so the bootstrap back-fill can resolve the legacy email rows in bulk. Index + column both get dropped together in the follow-up PR.
 
-### `authenticator_wallet_bindings` (new)
+### `authenticator_wallet_bindings` (new, libSQL)
 
 ```
 authenticator_wallet_bindings:
@@ -61,7 +62,6 @@ authenticator_wallet_bindings:
   authenticator_id     TEXT NOT NULL REFERENCES authenticators(id),
   chain_id             INTEGER NOT NULL,
   smart_wallet_address TEXT NOT NULL,
-  email                TEXT,                 -- nullable, denormalized across chains for a credential
   recovery_blob        TEXT,                 -- nullable, declared for Phase 3+; never read or written in Phase 1
   created_at           INTEGER NOT NULL,     -- unix ts
   unlinked_at          INTEGER,              -- null = currently active
@@ -73,32 +73,53 @@ CREATE UNIQUE INDEX awb_active_idx
   WHERE unlinked_at IS NULL;
 
 -- Fast lookup of "which credentials currently bind to this wallet on this chain"
-CREATE INDEX awb_wallet_active_idx
+CREATE INDEX awb_wallet_chain_idx
   ON authenticator_wallet_bindings(smart_wallet_address, chain_id)
   WHERE unlinked_at IS NULL;
-
--- Case-insensitive email lookup scoped to active bindings, per chain
-CREATE INDEX awb_email_lower_active_idx
-  ON authenticator_wallet_bindings(LOWER(email), chain_id)
-  WHERE unlinked_at IS NULL AND email IS NOT NULL;
 ```
+
+Email is **not** on this table. It lives on the wallet's identity group (`identity_nodes`, see below). This is the deliberate design change: email is environment-scoped (the same wallet on dev and prod can legitimately carry different emails) and is a piece of identity, not a property of the authentication credential. The `authenticator_wallet_bindings` row remains chain-scoped and stays clean of identity data.
+
+### `identity_nodes` (existing, postgres) — now also the source of truth for email
+
+```
+identity_nodes:
+  id              UUID PRIMARY KEY,
+  group_id        UUID NOT NULL REFERENCES identity_groups(id),
+  identity_type   TEXT NOT NULL,           -- 'wallet' | 'anonymous_fingerprint' | 'email'
+  identity_value  TEXT NOT NULL,           -- normalised: wallet/email lowercased
+  merchant_id     UUID,                    -- null for wallet + email rows
+  validation_data JSONB,
+  created_at      TIMESTAMP DEFAULT NOW(),
+  unlinked_at     TIMESTAMP                -- soft-unlink marker, used by loser wallet nodes post-merge
+
+-- Existing uniqueness: one identity value per merchant scope, globally
+UNIQUE (identity_type, identity_value, merchant_id) NULLS NOT DISTINCT
+```
+
+The `email` identity-type entry was added in this phase. Resolution is `wallet → identity group → email identity node` via `IdentityRepository.findEmailForGroup(groupId)`. The same global unique index that keeps wallets unambiguous now also enforces that the same email cannot belong to two different identity groups simultaneously — which is what powers the merge-on-conflict flow.
 
 ### Binding semantics
 
 - **One credential, two bindings.** Each authenticator gets one active binding per chain. On register, two rows are inserted (Arb mainnet + Arb Sepolia) with the same `smart_wallet_address` (derivation is deterministic — same passkey ⇒ same address across chains given matching factory addresses).
-- **Email is denormalized across a credential's active bindings.** Updating an email mutates every active row for the credential, keeping the same string on every chain. Reads can target any active binding and will return the same value.
 - **`unlinked_at` is set on merge.** A new row with `reason = 'merged'` and the winner's wallet address gets inserted; the previous row gets `unlinked_at` stamped. The credential keeps every prior wallet binding visible for audit.
 - **`recovery_blob` is reserved.** The column exists but Phase 1 never writes it. The recovery flow refactor lands later.
 
+### Email semantics
+
+- **One email per identity group, normally.** Adding an email through `POST /user/wallet/auth/email` refuses to overwrite when the group already has one. The user has to clear it first (out of Phase 1) or go through the merge flow.
+- **Multiple emails per group post-merge are allowed.** A wallet merge moves the loser's identity nodes — email included — onto the winner's group. If both sides had a different email attached, the winner ends up holding both. `findEmailForGroup` orders by `created_at ASC` so the oldest active email wins deterministically (the surviving credential's, since the loser's email is, by definition, the newer one at this point).
+- **Same-email merge is impossible.** The global unique on `(identity_type, identity_value, merchant_id)` prevents two groups from holding the same email value, which is precisely what triggers the merge flow in the first place — there is never a constraint conflict at merge time.
+
 ### History pattern (matches the brief)
 
-| id | auth_id | chain | wallet | email | created_at | unlinked_at | reason |
-|---|---|---|---|---|---|---|---|
-| 1 | A | 42161 | XX | u@e | t0 | **t1** | `initial` |
-| 2 | A | 42161 | YY | u@e | **t1** | NULL | `merged` |
-| 3 | A | 421614 | XX | u@e | t0 | NULL | `initial` |
+| id | auth_id | chain | wallet | created_at | unlinked_at | reason |
+|---|---|---|---|---|---|---|
+| 1 | A | 42161 | XX | t0 | **t1** | `initial` |
+| 2 | A | 42161 | YY | **t1** | NULL | `merged` |
+| 3 | A | 421614 | XX | t0 | NULL | `initial` |
 
-In this example credential A had its Arbitrum-mainnet binding merged at t1; the Sepolia binding is untouched and still points at the original deterministic wallet.
+In this example credential A had its Arbitrum-mainnet binding merged at t1; the Sepolia binding is untouched and still points at the original deterministic wallet. The user's email is unaffected by the binding repoint — it sits on the postgres identity group and follows whichever wallet absorbs the other during the PG merge step.
 
 ---
 
@@ -119,16 +140,20 @@ await ensureBuckets();
 
 `services/bootstrap/src/backfill-auth-bindings.ts` (new):
 
-- **Reads** the env-configured chain ids (`FRAK_CHAIN_IDS` — e.g. `[42161, 421614]`). If any chain id is missing the script logs and skips that chain (it won't crash the deploy).
-- **Loops in batches of N=500 rows**: `SELECT * FROM authenticators WHERE smart_wallet_address IS NOT NULL ORDER BY id LIMIT 500 OFFSET ?`.
-- For each row, inserts one binding per chain id with `INSERT INTO authenticator_wallet_bindings (authenticator_id, chain_id, smart_wallet_address, email, created_at, reason) VALUES (?, ?, ?, ?, unixepoch(), 'initial') ON CONFLICT (authenticator_id, chain_id) WHERE unlinked_at IS NULL DO NOTHING`.
-- **Skips rows with `smart_wallet_address IS NULL`** (old auth records from before the column existed). These are handled lazily on the next login of that credential — see "Lazy back-fill on login" below.
-- **Idempotent**: running the bootstrap a second time inserts nothing thanks to the partial unique index.
-- **Logs**: rows scanned, bindings inserted per chain, rows skipped (null wallet). One summary line at completion.
+The job is dual-DB. It connects a Drizzle libSQL client (for the authenticator + binding tables) and a Drizzle postgres client (for the identity-node migration of the legacy email column). Both schemas are imported from `services/backend/src/domain/*/db/schema.ts` so the back-fill stays in lockstep with the runtime types — no parallel SQL strings to drift.
 
-The script can be re-run safely if it crashes midway — the `ON CONFLICT DO NOTHING` clause handles partial progress.
+Per batch (`BATCH_SIZE = 500`):
 
-### Lazy back-fill on login
+1. `SELECT id, smart_wallet_address, email FROM authenticators ORDER BY id LIMIT 500 OFFSET ?` (libSQL).
+2. **Seed bindings:** for every row with a non-null `smart_wallet_address`, push one binding per configured chain id. Bulk `INSERT ... ON CONFLICT DO NOTHING` against the partial unique `awb_active_idx` skips rows that already have an active binding. Rows with `smart_wallet_address IS NULL` are counted under `skippedNullWallet`; bindings for those wallets land on the next login through `AuthenticatorRepository.ensureActiveBindings`.
+3. **Migrate emails:** for every row carrying a non-null email, walk the postgres side:
+    - Look up the wallet's active `identity_nodes` row of type `wallet` to find the identity group id. If none exists yet (the wallet has never produced an identity-bearing event in postgres on this env), the email is skipped (`skippedEmailNoGroup`) — the legacy column keeps the data, and the next bootstrap run after the group exists will migrate it.
+    - Check whether the group already holds an active email node. If yes, skip (`skippedEmailAlreadyOnGroup`) — the running application owns the truth past the first migration and we must not silently overwrite with a possibly-stale value.
+    - Otherwise insert a new `(group_id, identity_type='email', identity_value=<lowercased>)` row with `ON CONFLICT DO NOTHING` as a belt-and-braces against the global unique.
+
+Both sides are idempotent and the script can be re-run safely after a crash. Logging emits one summary line: `scanned`, `bindingsInserted`, `emailNodesInserted`, `skippedNullWallet`, `skippedEmailNoGroup`, `skippedEmailAlreadyOnGroup`.
+
+### Lazy back-fill on login (binding rows only)
 
 `AuthenticationService.login()` (or whichever method finalises login post-WebAuthn verification) gets a side-effect after a successful credential lookup:
 
@@ -145,11 +170,10 @@ if (bindings.length === 0) {
             credentialId: credId,
             chainId,
             smartWalletAddress: wallet,
-            email: credential.email ?? null,
             reason: "initial",
         });
     }
-    // If the authenticators column was null too (very old row), also dual-write it back.
+    // If the authenticators column was null too (very old row), also write it back.
     if (!credential.smartWalletAddress) {
         await authRepo.legacyDualWriteWallet(credId, wallet);
     }
@@ -158,39 +182,44 @@ if (bindings.length === 0) {
 
 This guarantees every active credential has its binding within one user session even if bootstrap skipped it. The side-effect is O(2 inserts) on first login post-cutover, then becomes a no-op.
 
+Email is **not** lazy-loaded on login — it lives in postgres and is per-env, while the login path itself has no way to introduce a fresh email value (the credential row's email is per-credential, env-shared, exactly the wrong key for the new placement). Any legacy email that bootstrap couldn't migrate on its first run lands on a subsequent run once the identity group catches up.
+
 ---
 
 ## Repository surface
 
 All changes are in `services/backend/src/domain/auth/repositories/AuthenticatorRepository.ts`. Existing method names are kept where their semantics are unchanged; new methods are added alongside.
 
-### Unchanged signatures (semantics preserved via dual-read)
+All email-related methods (`findByEmail`, `updateEmail`, `getEmail`) are **removed** — email no longer lives in libSQL, so the lookups don't belong on this repository anymore. Email reads route through `IdentityRepository.findEmailForGroup`; the "credential currently bound to this email" lookup is handled by the new `AuthenticatorLookupOrchestrator` (see below) since it crosses the identity ↔ auth boundary.
+
+### Unchanged signatures
 
 | Method | Behavior |
 |---|---|
 | `getByCredentialId(id)` | Returns the row from `authenticators`. Pure credential lookup, no wallet info. |
 
-### Modified signatures (chain-aware)
+### Modified / new signatures
 
 | Method | New shape | Notes |
 |---|---|---|
-| `getBySmartWalletAddress(addr)` | `getByActiveWallet({ chainId, smartWalletAddress })` | Joins `authenticator_wallet_bindings` filtered to active. Falls back to `authenticators.smart_wallet_address` if no binding exists yet (dual-write window). |
-| `findByEmail(email)` | `findByEmail({ chainId, email })` | Reads from `awb_email_lower_active_idx`; same fallback. |
-| `updateEmail({ credentialId, email })` | `updateEmail({ credentialId, email })` | Updates **every active binding** for the credential (denormalised across chains) AND the legacy `authenticators.email` column. |
-| `getEmail({ credentialId })` | `getEmail({ credentialId, chainId? })` | Reads from any active binding; `chainId` argument is optional (any binding works for the email value). |
-| `createAuthenticator({...})` | `createAuthenticator(credentialFields)` + chained `seedInitialBindings({ credentialId, smartWalletAddress, email?, chainIds })` | Register handler calls both inside a transaction; one row in `authenticators`, two rows in `authenticator_wallet_bindings` (one per configured chain). Dual-writes the wallet/email back to the legacy columns. |
+| `getBySmartWalletAddress(addr)` | `getByActiveWallet({ chainId, smartWalletAddress })` | Joins `authenticator_wallet_bindings` filtered to active. Falls back to `authenticators.smart_wallet_address` if no binding exists yet (legacy row pre back-fill). |
+| `createAuthenticator({...})` | `createAuthenticator(credentialFields)` + chained `seedInitialBindings({ credentialId, smartWalletAddress, chainIds })` | Register handler calls both inside a transaction; one row in `authenticators`, two rows in `authenticator_wallet_bindings` (one per configured chain). |
+| `getActiveBindings(credentialId)` | *(new)* | All currently-active binding rows for a credential (across chains). |
+| `getActiveBinding({ credentialId, chainId })` | *(new)* | Single active row or null. |
+| `createBinding({ credentialId, chainId, smartWalletAddress, reason })` | *(new)* | Insert a binding. Used by register, by lazy back-fill, and by the merge orchestrator. |
+| `repointBinding({ credentialId, chainId, toSmartWalletAddress, reason })` | *(new)* | Inside a single libSQL transaction: stamp `unlinked_at` on the active row, insert a new active row pointing at `toSmartWalletAddress`. Also updates the legacy `authenticators.smart_wallet_address` column. No `emailPolicy` argument — email is owned by the identity domain and flows with the PG merge step. |
+| `ensureActiveBindings(credentialId, smartWalletAddress)` | *(new)* | Lazy back-fill hook called from login when `getActiveBindings` returns empty. Idempotent. |
+| `legacyDualWriteWallet(credentialId, smartWalletAddress)` | *(new)* | Used only by the lazy back-fill path to fix rows where the legacy column itself was NULL. |
 
-### New methods
+`repointBinding` is the only place that mutates an existing binding row. Every binding mutation goes through it so the legacy column write and history-insert can't drift out of sync.
+
+### Identity-side helpers
+
+`IdentityRepository` (postgres) gains one helper:
 
 | Method | Purpose |
 |---|---|
-| `getActiveBindings(credentialId)` | All currently-active binding rows for a credential (across chains). |
-| `getActiveBinding({ credentialId, chainId })` | Single active row or null. |
-| `createBinding({ credentialId, chainId, smartWalletAddress, email?, reason })` | Insert a binding. Used by register, by lazy back-fill, and by the merge orchestrator. |
-| `repointBinding({ credentialId, chainId, toSmartWalletAddress, emailPolicy, reason })` | Inside a single libSQL transaction: stamp `unlinked_at` on the active row, insert a new active row pointing at `toSmartWalletAddress`. `emailPolicy` controls whether to carry the email forward (`keep`, `clear`, or a string to set explicitly). Also updates the legacy `authenticators.smart_wallet_address` + `email` columns so dual-write stays in sync. |
-| `legacyDualWriteWallet(credentialId, smartWalletAddress)` | Used only by the lazy back-fill path to fix rows where the legacy column itself was NULL. |
-
-`repointBinding` is the only place that mutates an existing binding row. Every binding mutation goes through it so dual-write and history-insert can't drift out of sync.
+| `findEmailForGroup(groupId)` | Returns the active email attached to a group, or `null`. Orders by `created_at ASC` so the oldest active email wins deterministically when a group holds several (post-merge case). |
 
 ---
 
@@ -334,11 +363,14 @@ class WalletMergeOrchestrator {
             credentialId: preview.loserAuthenticatorId,
             chainId,
             toSmartWalletAddress: preview.winner,
-            emailPolicy: "clear",   // loser's email cleared; winner's preserved
             reason: "merged",
         });
 
-        // 3. PG identity merge (atomic in PG tx)
+        // 3. PG identity merge (atomic in PG tx). The loser group's
+        //    `identity_nodes` rows — including the email — are bulk-moved onto
+        //    the winner group as part of `mergeGroups`. If both sides had a
+        //    different email, the winner ends up with two active email nodes;
+        //    `findEmailForGroup` returns the oldest (the winner's original).
         await this.identityMergeSvc.mergeGroupsByWallet(preview.winner, preview.loser, {
             migratePushTokens: true,
             migrateAssetLogsRecipient: true,
@@ -373,10 +405,10 @@ Both wired in `services/backend/src/api/user/wallet/index.ts`. Existing `POST /u
 
 ```ts
 // AssociateEmailResponseSchema (existing) — extended conflict shape
-| { status: "conflict"; targetAuthenticatorId: string; targetWallet: Address }
+| { status: "conflict"; authenticatorId?: string; wallet?: Address }
 ```
 
-`emailRoutes.ts` already calls `AuthenticatorRepository.findByEmail` internally to detect the conflict — that result now carries the credential id and wallet, both of which feed the response directly.
+Both `POST /user/wallet/auth/email` (conflict branch) and `POST /user/wallet/auth/emailStatus` (pre-registration check) go through the new `AuthenticatorLookupOrchestrator.findByEmail` to resolve `email → identity group → active wallet node → current-chain credential`. The orchestrator lives at `services/backend/src/orchestration/identity/AuthenticatorLookupOrchestrator.ts` because the lookup spans the identity (postgres) and auth (libSQL) domains — same placement rationale as `WalletMergeOrchestrator`.
 
 ---
 
@@ -476,28 +508,34 @@ On success the user sees the existing AddEmail success screen with copy adjusted
 
 | File | Change |
 |---|---|
-| `services/backend/src/domain/auth/db/schema.ts` | Add `authenticatorWalletBindingsTable` Drizzle definition. |
-| `services/backend/drizzle-libsql/00XX_authenticator_bindings.sql` | Hand-written migration: create table + three indexes. (No back-fill SQL here — that lives in the bootstrap script so it can batch and log.) |
-| `services/backend/src/domain/auth/repositories/AuthenticatorRepository.ts` | Add `getActiveBindings`, `getActiveBinding`, `createBinding`, `repointBinding`, `legacyDualWriteWallet`. Adjust `getByActiveWallet`, `findByEmail`, `updateEmail`, `getEmail`, `createAuthenticator` per the table in "Repository surface". |
-| `services/backend/src/domain/auth/services/AuthenticationService.ts` (or wherever `register` and `login` finalise) | On register, call `createBinding` for every configured chain id. On login, run the lazy back-fill side-effect when `getActiveBindings(credId)` returns empty. |
-| `services/backend/src/orchestration/identity/IdentityMergeService.ts` | Add options bag + 3 new SQL ops (push_tokens, asset_logs.recipient_wallet pending, referral_codes migrate-with-conflict-revoke). |
+| `services/backend/src/domain/auth/db/schema.ts` | Add `authenticatorWalletBindingsTable` Drizzle definition (no email column). |
+| `services/backend/drizzle-libsql/00XX_authenticator_bindings.sql` | Hand-written migration: create table + two indexes (`awb_active_idx`, `awb_wallet_chain_idx`). |
+| `services/backend/src/domain/identity/db/schema.ts` | Define `IdentityType = 'wallet' \| 'anonymous_fingerprint' \| 'email'` directly on the schema file so environments that don't pull in the backend's TypeBox helpers (notably the bootstrap migration job) can import the table cleanly. `schemas/index.ts` re-exports the type and adds a compile-time drift guard against the TypeBox union. |
+| `services/backend/src/domain/auth/repositories/AuthenticatorRepository.ts` | Add `getActiveBindings`, `getActiveBinding`, `createBinding`, `repointBinding`, `ensureActiveBindings`, `legacyDualWriteWallet`. Adjust `getByActiveWallet`, `createAuthenticator` per the table in "Repository surface". **Remove** `findByEmail`, `updateEmail`, `getEmail`, `RepointEmailPolicy`. |
+| `services/backend/src/domain/identity/repositories/IdentityRepository.ts` | Add `findEmailForGroup(groupId)` with `ORDER BY created_at ASC`. Update `normalizeValue` to also normalise email values (trim + lowercase). |
+| `services/backend/src/orchestration/identity/AuthenticatorLookupOrchestrator.ts` *(new)* | Cross-domain helper: `findByEmail(email) → { groupId, wallet?, authenticatorId? } \| null`. |
+| `services/backend/src/orchestration/identity/IdentityOrchestrator.ts` | `linkWalletToFingerprint` gains an optional `email` argument: on register, attach an email identity node to the wallet's group unless that exact email already belongs to a different group (in which case log + skip — collisions are owned by the explicit merge flow). |
+| `services/backend/src/api/user/wallet/auth/register.ts` | Wire the optional `email` parameter through `linkWalletToFingerprint`. |
+| `services/backend/src/api/user/wallet/auth/email.ts` | Conflict branch routes through `AuthenticatorLookupOrchestrator.findByEmail`. Email read/write hit `IdentityRepository.findEmailForGroup` + `addNode` directly. |
+| `services/backend/src/api/user/wallet/auth/emailStatus.ts` | Same lookup orchestrator. |
+| `services/backend/src/orchestration/identity/IdentityMergeService.ts` | Add options bag + 3 new SQL ops (push_tokens, asset_logs.recipient_wallet pending, referral_codes migrate-with-conflict-revoke). No special handling required for the email identity node — it migrates as part of the existing bulk node move. |
 | `services/backend/src/orchestration/identity/WalletMergeOrchestrator.ts` *(new)* | `preview`, `settle`. |
 | `services/backend/src/infrastructure/blockchain/WebAuthNValidatorReader.ts` *(new)* | Thin wrapper around `publicClient.readContract` for `getPasskey` and `waitForTransactionReceipt`. Chain-aware. |
 | `services/backend/src/api/user/wallet/merge/preview.ts` *(new)* | `GET /user/wallet/merge/preview`. |
 | `services/backend/src/api/user/wallet/merge/settle.ts` *(new)* | `POST /user/wallet/merge/settle`. |
 | `services/backend/src/api/user/wallet/index.ts` | Wire the new merge routes. |
-| `services/backend/src/api/user/wallet/auth/email.ts` | Conflict response returns `{ targetAuthenticatorId, targetWallet }`. |
-| `services/backend/src/api/schemas/authenticationSchemas.ts` | Extend `AssociateEmailResponseSchema` conflict branch. |
+| `services/backend/src/api/schemas/authenticationSchemas.ts` | Extend `AssociateEmailResponseSchema` conflict branch with optional `authenticatorId`, `wallet`. Drop the email property from `AuthenticatorDocument`. |
+| `services/backend/src/orchestration/context.ts` | Wire `authenticatorLookupOrchestrator`. |
 | `services/backend/src/jobs/` *(or env config)* | Expose the list of configured chain ids as a single source of truth used by register, login, bootstrap back-fill, and the merge orchestrator. |
 
 ### Bootstrap
 
 | File | Change |
 |---|---|
-| `services/bootstrap/src/backfill-auth-bindings.ts` *(new)* | Batched idempotent back-fill (see "Back-fill via bootstrap"). |
+| `services/bootstrap/src/backfill-auth-bindings.ts` *(new)* | Dual-client (libSQL + postgres) Drizzle back-fill (see "Back-fill via bootstrap"). Split into `processAllBatches` / `seedBindingsForBatch` / `migrateEmailForRow` helpers to stay under the biome cognitive-complexity ceiling. |
 | `services/bootstrap/src/index.ts` | Insert the new step between `runLibsqlMigrations` and `ensureBuckets`. |
 | `services/bootstrap/AGENTS.md` | Add the new step to the sequential list. |
-| `services/bootstrap/package.json` (if needed) | Add the libSQL client dependency if not already present via `services/backend`. |
+| `services/bootstrap/package.json` (if needed) | Add the libSQL client dependency if not already present. |
 
 ### Frontend — `packages/wallet-shared`
 
@@ -526,11 +564,12 @@ No new routes — the merge flow stays inside the existing `/profile/add-email` 
 ## Locked decisions
 
 - Authenticator ↔ wallet ↔ chain modeled via a binding table with `unlinked_at` history.
-- Email lives on the binding row, denormalised across a credential's active bindings.
-- `recovery_blob` column declared but unused in Phase 1.
+- **Email lives as a postgres `identity_nodes` row of type `email`**, attached to the wallet's identity group. Authoritative source for any email read. Env-scoped (postgres schema-per-env) and identity-aligned. Removed from the libSQL binding table entirely.
+- `recovery_blob` column declared on the binding table but unused in Phase 1.
 - Reason enum for Phase 1: `'initial'`, `'merged'`. `'recovery'` reserved for later.
-- Dual-write to existing `authenticators.smart_wallet_address` and `authenticators.email` columns; drop the columns in a follow-up PR.
-- Bootstrap-driven back-fill — batched, idempotent, fail-fast. Skips NULL-wallet rows; login lazy-fills those.
+- Legacy `authenticators.smart_wallet_address` written through `repointBinding` for backwards-compatible reads. Legacy `authenticators.email` is read-only post-cutover — consumed once by the bootstrap migration; drop in a follow-up PR once every env has migrated cleanly.
+- Bootstrap-driven back-fill is dual-DB: seeds binding rows in libSQL and migrates legacy emails into postgres identity nodes. Batched, idempotent, fail-fast. Skips NULL-wallet rows (login lazy-fills binding); skips emails when the identity group doesn't exist yet on this env (re-run on next bootstrap once the group catches up).
+- Multiple emails per identity group are tolerated post-merge. `findEmailForGroup` returns the oldest active one deterministically.
 - Both Arbitrum mainnet and Arbitrum Sepolia bindings inserted at register time, and back-filled for every existing row.
 - Same-device fast path only in Phase 1. Cross-device pairing-with-hint is Phase 2.
 
@@ -545,5 +584,7 @@ No new routes — the merge flow stays inside the existing `/profile/add-email` 
 3. **Per-chain merge UX.** Phase 1 ships with a single env-bound chain in practice. The orchestrator accepts a `chainId` but the UI never asks the user for one. Confirm we never want the user to pick a chain at merge time (the active chain is implicit from session).
 
 4. **Manual replay endpoint.** When `/merge/settle` succeeds on-chain + libSQL but PG merge crashes, the user is in a half-merged state. Phase 1 surfaces this in logs only. Should we add a quick "admin replay" route, or wait for Phase 2's reconciler? Recommendation: log-only for Phase 1; add reconciler in Phase 2.
+
+5. **Loser-email policy on merge.** Today the loser group's email identity node migrates into the winner's group as part of the bulk node move, and `findEmailForGroup` resolves the oldest active row (the winner's original). This means the loser's email survives as historical context attached to the merged group, never surfaced through normal reads. Two alternatives if we change our minds later: (a) soft-unlink the loser's email node with `unlinked_at` at merge time, mirroring the wallet-node treatment; (b) hard-delete it. Both are additive — the current behavior is the conservative default and doesn't lock us out.
 
 Once those are answered I can start implementing PR 1 (schema + repository extensions + bootstrap back-fill).
