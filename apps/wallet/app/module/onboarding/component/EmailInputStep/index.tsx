@@ -1,7 +1,6 @@
 import { Box } from "@frak-labs/design-system/components/Box";
-import { Button } from "@frak-labs/design-system/components/Button";
 import { Text } from "@frak-labs/design-system/components/Text";
-import { useCallback, useState } from "react";
+import { useCallback } from "react";
 import { useTranslation } from "react-i18next";
 import type { Address } from "viem";
 import { useCheckEmail } from "@/module/authentication/hook/useCheckEmail";
@@ -10,7 +9,7 @@ import {
     emailFormScreenStyles,
 } from "@/module/common/component/EmailFormScreen";
 
-export type EmailExistingLoginArgs = {
+export type EmailAlreadyUsedArgs = {
     email: string;
     authenticatorId: string;
     wallet?: Address;
@@ -20,33 +19,22 @@ type EmailInputStepProps = {
     onContinue: (email: string) => void;
     onBack: () => void;
     /**
-     * Called when the user opts to log in with the existing wallet attached
-     * to the entered email. Receives the credential id + wallet returned by
-     * the backend so the caller can run a targeted `useLogin` mutation.
+     * Called when the entered email is already attached to another wallet.
+     * The parent owns the screen transition — `EmailInputStep` only collects
+     * the input and delegates the resolution path (login on the existing
+     * wallet, switch email, etc.) to a dedicated screen above.
      */
-    onLoginExisting: (args: EmailExistingLoginArgs) => void;
-    /** Reflects whether the parent login mutation is in-flight. */
-    isLoginLoading?: boolean;
+    onAlreadyUsed: (args: EmailAlreadyUsedArgs) => void;
     initialValue?: string;
-};
-
-type AlreadyUsedState = {
-    email: string;
-    authenticatorId: string;
-    wallet?: Address;
 };
 
 export function EmailInputStep({
     onContinue,
     onBack,
-    onLoginExisting,
-    isLoginLoading = false,
+    onAlreadyUsed,
     initialValue = "",
 }: EmailInputStepProps) {
     const { t } = useTranslation();
-    const [alreadyUsed, setAlreadyUsed] = useState<AlreadyUsedState | null>(
-        null
-    );
     const {
         checkEmail,
         isChecking,
@@ -55,7 +43,6 @@ export function EmailInputStep({
     } = useCheckEmail();
 
     const clearTransientState = useCallback(() => {
-        setAlreadyUsed(null);
         if (checkError) reset();
     }, [checkError, reset]);
 
@@ -64,7 +51,7 @@ export function EmailInputStep({
             try {
                 const result = await checkEmail(email);
                 if (result.used && result.authenticatorId) {
-                    setAlreadyUsed({
+                    onAlreadyUsed({
                         email,
                         authenticatorId: result.authenticatorId,
                         wallet: result.wallet,
@@ -77,20 +64,8 @@ export function EmailInputStep({
                 // the email step so the user can retry.
             }
         },
-        [checkEmail, onContinue]
+        [checkEmail, onContinue, onAlreadyUsed]
     );
-
-    const handleLoginExisting = useCallback(() => {
-        if (!alreadyUsed) return;
-        onLoginExisting({
-            email: alreadyUsed.email,
-            authenticatorId: alreadyUsed.authenticatorId,
-            wallet: alreadyUsed.wallet,
-        });
-    }, [alreadyUsed, onLoginExisting]);
-
-    const showAlreadyUsed = alreadyUsed !== null;
-    const showCheckError = !showAlreadyUsed && !!checkError;
 
     return (
         <EmailFormScreen
@@ -104,32 +79,9 @@ export function EmailInputStep({
             onBack={onBack}
             onSubmit={handleSubmit}
             isSubmitting={isChecking}
-            submitDisabled={showAlreadyUsed}
             onEmailChange={clearTransientState}
         >
-            {showAlreadyUsed && (
-                <Box
-                    className={emailFormScreenStyles.banner}
-                    role="status"
-                    aria-live="polite"
-                >
-                    <Text variant="body">
-                        {t("onboarding.email.alreadyUsed.message")}
-                    </Text>
-                    <Button
-                        type="button"
-                        variant="primary"
-                        size="medium"
-                        width="full"
-                        onClick={handleLoginExisting}
-                        loading={isLoginLoading}
-                    >
-                        {t("onboarding.email.alreadyUsed.login")}
-                    </Button>
-                </Box>
-            )}
-
-            {showCheckError && (
+            {checkError && (
                 <Box role="alert" className={emailFormScreenStyles.inlineError}>
                     <Text variant="bodySmall" color="error">
                         {t("onboarding.email.checkError")}

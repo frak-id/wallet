@@ -111,7 +111,10 @@
             "clearAriaLabel": "Effacer l'adresse e-mail",
             "submitError": "Impossible d'enregistrer cet e-mail pour le moment. Réessaie.",
             "conflict": {
-                "message": "Cet e-mail est déjà associé à un autre portefeuille. La fusion de comptes arrive bientôt, utilise un autre e-mail pour le moment."
+                "title": "E-mail déjà utilisé",
+                "description": "Cet e-mail est déjà associé à un autre portefeuille. La fusion de comptes arrive bientôt — utilise un autre e-mail pour le moment.",
+                "useDifferent": "Utiliser un autre e-mail",
+                "back": "Retour au profil"
             },
             "success": {
                 "title": "E-mail enregistré",
@@ -568,8 +571,10 @@
             "continue": "Continuer",
             "clearAriaLabel": "Effacer l'adresse e-mail",
             "alreadyUsed": {
-                "message": "Oups, il semble que cette adresse e-mail soit déjà utilisée. Veux-tu plutôt te connecter ?",
-                "login": "Se connecter"
+                "title": "E-mail déjà utilisé",
+                "description": "{{email}} est déjà lié à un compte. Connecte-toi pour continuer avec ce portefeuille, ou utilise un autre e-mail.",
+                "login": "Se connecter",
+                "useDifferent": "Utiliser un autre e-mail"
             },
             "checkError": "Impossible de vérifier cet e-mail pour le moment. Réessaie."
         },

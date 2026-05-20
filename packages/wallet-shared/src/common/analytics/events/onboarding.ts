@@ -17,7 +17,11 @@ export type ReferralCodeOutcome =
     | "auto_skipped_existing"
     | "error";
 
-export type EmailInputOutcome = "submitted" | "back" | "login_existing";
+export type EmailInputOutcome =
+    | "submitted"
+    | "back"
+    | "login_existing"
+    | "already_used";
 
 type OnboardingFlow = FlowEvents<"onboarding">;
 

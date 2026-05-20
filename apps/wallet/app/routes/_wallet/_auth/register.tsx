@@ -16,7 +16,11 @@ import { useTranslation } from "react-i18next";
 import { DemoTapZone } from "@/module/authentication/component/DemoTapZone";
 import { useNotificationStatus } from "@/module/notification/hook/useNotificationSetupStatus";
 import { useSubscribeToPushNotification } from "@/module/notification/hook/useSubscribeToPushNotification";
-import { EmailInputStep } from "@/module/onboarding/component/EmailInputStep";
+import { EmailAlreadyUsedStep } from "@/module/onboarding/component/EmailAlreadyUsedStep";
+import {
+    type EmailAlreadyUsedArgs,
+    EmailInputStep,
+} from "@/module/onboarding/component/EmailInputStep";
 import { NotificationOptIn } from "@/module/onboarding/component/NotificationOptIn";
 import { OnboardingStep } from "@/module/onboarding/component/OnboardingStep";
 import { ReferralCodeStep } from "@/module/onboarding/component/ReferralCodeStep";
@@ -70,6 +74,7 @@ type OnboardingFlowStep = (typeof ONBOARDING_FLOW_STEPS)[number];
 type FlowStep =
     | OnboardingFlowStep
     | "emailInput"
+    | "emailAlreadyUsed"
     | "referralCode"
     | "notification"
     | "welcome";
@@ -90,6 +95,12 @@ function RegisterPage() {
     // forwarded to the register endpoint when the user activates their
     // secure space.
     const [email, setEmail] = useState("");
+    // Captured on the `emailAlreadyUsed` step so the dedicated screen knows
+    // which credential to log in with. Cleared once the user navigates back
+    // to the input step.
+    const [alreadyUsed, setAlreadyUsed] = useState<EmailAlreadyUsedArgs | null>(
+        null
+    );
 
     // Detect pairing context once at mount: user landed on /register
     // because they hit a /pairing?id=xxx deep link before authenticating
@@ -362,15 +373,21 @@ function RegisterPage() {
                             "backward"
                         );
                     }}
-                    onLoginExisting={({
-                        email: existingEmail,
-                        authenticatorId,
-                        wallet,
-                    }) => {
-                        setEmail(existingEmail);
+                    onAlreadyUsed={(args) => {
+                        setEmail(args.email);
+                        setAlreadyUsed(args);
                         flowRef.current?.track("email_input_resolved", {
-                            outcome: "login_existing",
+                            outcome: "already_used",
                         });
+                        goToStep("emailAlreadyUsed");
+                    }}
+                />
+            )}
+            {step === "emailAlreadyUsed" && alreadyUsed && (
+                <EmailAlreadyUsedStep
+                    email={alreadyUsed.email}
+                    isLoginLoading={isLoginLoading}
+                    onLogin={() => {
                         flowRef.current?.track("onboarding_action_clicked", {
                             action: "login",
                         });
@@ -378,17 +395,21 @@ function RegisterPage() {
                         // without `smart_wallet_address`); fall back to the
                         // global account chooser when missing.
                         login(
-                            wallet
+                            alreadyUsed.wallet
                                 ? {
                                       lastAuthentication: {
-                                          authenticatorId,
-                                          wallet,
+                                          authenticatorId:
+                                              alreadyUsed.authenticatorId,
+                                          wallet: alreadyUsed.wallet,
                                       },
                                   }
                                 : {}
                         );
                     }}
-                    isLoginLoading={isLoginLoading}
+                    onBack={() => {
+                        setAlreadyUsed(null);
+                        goToStep("emailInput", "backward");
+                    }}
                 />
             )}
             {step === "onboardingThree" && (

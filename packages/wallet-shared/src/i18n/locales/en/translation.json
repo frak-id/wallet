@@ -113,7 +113,10 @@
             "clearAriaLabel": "Clear email address",
             "submitError": "Unable to save this email right now. Please try again.",
             "conflict": {
-                "message": "This email is already linked to another wallet. Account merge is coming soon, for now, please use a different email."
+                "title": "Email already in use",
+                "description": "This email is already linked to another wallet. Account merge is coming soon — for now, please use a different email.",
+                "useDifferent": "Use a different email",
+                "back": "Back to my profile"
             },
             "success": {
                 "title": "Email saved",
@@ -570,8 +573,10 @@
             "continue": "Continue",
             "clearAriaLabel": "Clear email address",
             "alreadyUsed": {
-                "message": "Oops, it looks like this email is already used. Would you like to login instead?",
-                "login": "Login"
+                "title": "Email already used",
+                "description": "{{email}} is already linked to an account. Log in to continue with that wallet, or use a different email.",
+                "login": "Login",
+                "useDifferent": "Use a different email"
             },
             "checkError": "Unable to verify this email right now. Please try again."
         },

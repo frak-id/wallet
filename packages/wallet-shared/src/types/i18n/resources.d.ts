@@ -418,7 +418,7 @@ interface Resources {
             };
             status: {
                 approved: "Verified ✓";
-                created: "Account created — complete verification on Monerium";
+                created: "Account created, complete verification on Monerium";
                 pending: "Verification in progress";
                 rejected: "Verification failed";
                 settingUp: "Setting up...";
@@ -430,8 +430,10 @@ interface Resources {
             continue: "Continue";
             email: {
                 alreadyUsed: {
+                    description: "{{email}} is already linked to an account. Log in to continue with that wallet, or use a different email.";
                     login: "Login";
-                    message: "Oops, it looks like this email is already used. Would you like to login instead?";
+                    title: "Email already used";
+                    useDifferent: "Use a different email";
                 };
                 checkError: "Unable to verify this email right now. Please try again.";
                 clearAriaLabel: "Clear email address";
@@ -500,8 +502,8 @@ interface Resources {
             digitLabel: "Character";
             error: {
                 alreadyLinked: "This code has already been used.";
-                generic: "Something went wrong — please try again.";
-                invalid: "Incorrect or expired code — check the code copied from wallet.frak.id";
+                generic: "Something went wrong, please try again.";
+                invalid: "Incorrect or expired code, check the code copied from wallet.frak.id";
             };
             paste: "Paste the code";
             success: {
@@ -600,7 +602,10 @@ interface Resources {
                 };
                 clearAriaLabel: "Clear email address";
                 conflict: {
-                    message: "This email is already linked to another wallet. Account merge is coming soon — for now, please use a different email.";
+                    back: "Back to my profile";
+                    description: "This email is already linked to another wallet. Account merge is coming soon — for now, please use a different email.";
+                    title: "Email already in use";
+                    useDifferent: "Use a different email";
                 };
                 continue: "Continue";
                 description: "Your email is only used to recover your account if you forget it. It will never be used to send you unsolicited messages.";
@@ -916,7 +921,7 @@ interface Resources {
                     error: "Error during registration, please try again";
                     inProgress: "Wallet creation in progress";
                 };
-                description: "Spin up a temporary wallet to explore Frak. No biometrics, no recovery — just a sandbox.";
+                description: "Spin up a temporary wallet to explore Frak. No biometrics, no recovery, just a sandbox.";
                 title: "Try Frak in demo mode";
             };
             settings: {

@@ -1,19 +1,15 @@
 import { Box } from "@frak-labs/design-system/components/Box";
-import { Button } from "@frak-labs/design-system/components/Button";
-import { Stack } from "@frak-labs/design-system/components/Stack";
 import { Text } from "@frak-labs/design-system/components/Text";
 import { useNavigate } from "@tanstack/react-router";
 import { useCallback, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useAssociateEmail } from "@/module/authentication/hook/useAssociateEmail";
-import { Back } from "@/module/common/component/Back";
 import {
     EmailFormScreen,
     emailFormScreenStyles,
 } from "@/module/common/component/EmailFormScreen";
-import { PageLayout } from "@/module/common/component/PageLayout";
-import { Title } from "@/module/common/component/Title";
-import * as styles from "./index.css";
+import { ConflictStep } from "./ConflictStep";
+import { SuccessStep } from "./SuccessStep";
 
 type FlowState =
     | { kind: "input" }
@@ -25,9 +21,9 @@ type FlowState =
  * from the wallet home card and the profile row when the current credential
  * has no email attached.
  *
- * The conflict branch is intentionally a dead-end for now — full account
- * merge is the next milestone. Until then we surface the situation but offer
- * no recovery path beyond going back.
+ * Each terminal state (success, conflict) renders as a dedicated screen so
+ * the input step stays clean and the user can navigate back without a
+ * patchwork of conditional banners.
  */
 export function AddEmail() {
     const { t } = useTranslation();
@@ -40,16 +36,18 @@ export function AddEmail() {
         reset,
     } = useAssociateEmail();
 
-    const goBack = useCallback(() => {
+    const goToProfile = useCallback(() => {
         navigate({ to: "/profile" });
     }, [navigate]);
 
-    const clearTransientState = useCallback(() => {
-        if (flowState.kind === "conflict") {
-            setFlowState({ kind: "input" });
-        }
+    const backToInput = useCallback(() => {
+        setFlowState({ kind: "input" });
         if (submitError) reset();
-    }, [flowState.kind, submitError, reset]);
+    }, [submitError, reset]);
+
+    const clearSubmitError = useCallback(() => {
+        if (submitError) reset();
+    }, [submitError, reset]);
 
     const handleSubmit = useCallback(
         async (email: string) => {
@@ -72,47 +70,22 @@ export function AddEmail() {
 
     if (flowState.kind === "success") {
         return (
-            <PageLayout fixedViewport back={<Back onClick={goBack} />}>
-                <Stack space="l" className={styles.body}>
-                    <Stack space="s">
-                        <Title size="page">
-                            {t("wallet.addEmail.success.title")}
-                        </Title>
-                        <Text variant="body" color="secondary">
-                            {t("wallet.addEmail.success.description", {
-                                email: flowState.email,
-                            })}
-                        </Text>
-                    </Stack>
-                    <Box className={styles.successActions}>
-                        <Button
-                            type="button"
-                            variant="primary"
-                            size="large"
-                            width="full"
-                            onClick={() => {
-                                // Recovery flow rework is still in flight,
-                                // so this is intentionally a no-op for now.
-                            }}
-                        >
-                            {t("wallet.addEmail.success.setupRecovery")}
-                        </Button>
-                        <Button
-                            type="button"
-                            variant="secondary"
-                            size="large"
-                            width="full"
-                            onClick={goBack}
-                        >
-                            {t("wallet.addEmail.success.back")}
-                        </Button>
-                    </Box>
-                </Stack>
-            </PageLayout>
+            <SuccessStep
+                email={flowState.email}
+                onBack={goToProfile}
+                onSetupRecovery={() => {
+                    // Recovery flow rework is still in flight, so this is
+                    // intentionally a no-op for now.
+                }}
+            />
         );
     }
 
-    const isShowingConflict = flowState.kind === "conflict";
+    if (flowState.kind === "conflict") {
+        return (
+            <ConflictStep onUseDifferent={backToInput} onBack={goToProfile} />
+        );
+    }
 
     return (
         <EmailFormScreen
@@ -122,25 +95,12 @@ export function AddEmail() {
             placeholder={t("wallet.addEmail.placeholder")}
             clearAriaLabel={t("wallet.addEmail.clearAriaLabel")}
             submitLabel={t("wallet.addEmail.continue")}
-            onBack={goBack}
+            onBack={goToProfile}
             onSubmit={handleSubmit}
             isSubmitting={isAssociating}
-            submitDisabled={isShowingConflict}
-            onEmailChange={clearTransientState}
+            onEmailChange={clearSubmitError}
         >
-            {isShowingConflict && (
-                <Box
-                    className={emailFormScreenStyles.banner}
-                    role="status"
-                    aria-live="polite"
-                >
-                    <Text variant="body">
-                        {t("wallet.addEmail.conflict.message")}
-                    </Text>
-                </Box>
-            )}
-
-            {!isShowingConflict && submitError && (
+            {submitError && (
                 <Box role="alert" className={emailFormScreenStyles.inlineError}>
                     <Text variant="bodySmall" color="error">
                         {t("wallet.addEmail.submitError")}
