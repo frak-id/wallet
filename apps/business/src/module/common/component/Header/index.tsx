@@ -1,8 +1,10 @@
 import { Link } from "@tanstack/react-router";
-import { User } from "lucide-react";
+import { Plus, User } from "lucide-react";
 import { useIsDemoMode } from "@/module/common/atoms/demoMode";
+import { Button } from "@/module/common/component/Button";
 import { ButtonRefresh } from "@/module/common/component/ButtonRefresh";
 import { LogoFrak } from "@/module/common/component/LogoFrak";
+import { AddMerchantSheet } from "@/module/dashboard/component/AddMerchantSheet";
 import {
     demoModeBadge,
     header,
@@ -34,6 +36,14 @@ export function Header() {
                         </Link>
                     )}
                     <ButtonRefresh />
+                    <AddMerchantSheet
+                        trigger={
+                            <Button variant="primary">
+                                <Plus size={16} />
+                                Add merchant
+                            </Button>
+                        }
+                    />
                     <span
                         className={navigationProfileSeparator}
                         aria-hidden="true"
