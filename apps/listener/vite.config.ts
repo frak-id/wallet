@@ -127,9 +127,6 @@ export default defineConfig(async () => {
             "process.env.ANDROID_SHA256_FINGERPRINT": JSON.stringify(
                 getSstResource("ANDROID_SHA256_FINGERPRINT")
             ),
-            "process.env.IS_APP_AVAILABLE": JSON.stringify(
-                process.env.IS_APP_AVAILABLE ?? "true"
-            ),
             "process.env.DEEP_LINK_SCHEME": JSON.stringify(deepLinkScheme),
             // Build-time platform constants consumed by
             // `packages/app-essentials/src/utils/platform.ts`. Listener never runs in Tauri,

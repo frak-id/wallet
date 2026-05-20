@@ -64,14 +64,6 @@ if (typeof window !== "undefined") {
     });
 }
 
-// Inject Apple Smart App Banner only when the native app is available
-if (process.env.IS_APP_AVAILABLE === "true") {
-    const meta = document.createElement("meta");
-    meta.name = "apple-itunes-app";
-    meta.content = "app-id=6740261164";
-    document.head.appendChild(meta);
-}
-
 // Import the generated route tree
 import { routeTree } from "./routeTree.gen";
 
