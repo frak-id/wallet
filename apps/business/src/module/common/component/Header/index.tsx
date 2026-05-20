@@ -1,5 +1,6 @@
 import { Link } from "@tanstack/react-router";
 import { Plus, User } from "lucide-react";
+import { ButtonNewCampaign } from "@/module/campaigns/component/ButtonNewCampaign";
 import { useIsDemoMode } from "@/module/common/atoms/demoMode";
 import { Button } from "@/module/common/component/Button";
 import { ButtonRefresh } from "@/module/common/component/ButtonRefresh";
@@ -36,6 +37,7 @@ export function Header() {
                         </Link>
                     )}
                     <ButtonRefresh />
+                    <ButtonNewCampaign />
                     <AddMerchantSheet
                         trigger={
                             <Button variant="primary">
