@@ -35,7 +35,7 @@ vi.mock("react-i18next", () => ({
  */
 function createTestClient(): {
     client: QueryClient;
-    wrapper: (props: { children: ReactNode }) => JSX.Element;
+    wrapper: (props: { children: ReactNode }) => ReactNode;
 } {
     const client = new QueryClient({
         defaultOptions: {
