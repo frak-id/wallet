@@ -46,6 +46,12 @@ export const sessionStore = createStore<SessionStore>()(
                 });
                 return true;
             },
+            discardPreviousSession: () => {
+                const { previousSession } = get();
+                if (!previousSession) return false;
+                set({ previousSession: null });
+                return true;
+            },
         }),
         {
             name: "frak_session_store",

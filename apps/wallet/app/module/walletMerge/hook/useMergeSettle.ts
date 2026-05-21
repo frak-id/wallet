@@ -22,8 +22,17 @@ type UseMergeSettleArgs = {
 };
 
 /**
- * POSTs to `/user/wallet/merge/settle` and, on success, pops the parked
- * session so the user lands back on whichever credential they started from.
+ * POSTs to `/user/wallet/merge/settle` and, on success, drops the parked
+ * snapshot of the original (loser) session.
+ *
+ * We deliberately do **not** restore the original session here: post-merge
+ * the loser binding now points to the winner's wallet, so the loser JWT
+ * still carries the loser's stale wallet address. Staying on the winner
+ * session — which the SwitchStep already swapped in — gives the user a
+ * coherent view of their now-canonical wallet. The rollback paths in
+ * `MergeFlow` still call `popSession` for every non-success exit (aborts,
+ * unmount) so cancelled merges always end up back on the original session.
+ *
  * Endpoint is idempotent — retrying with the same `(loserAuthenticatorId,
  * onChainTxHash, loserConsentSignature)` triplet converges.
  */
@@ -46,10 +55,12 @@ export function useMergeSettle() {
                 throw new Error(extractSettleErrorCode(error.value));
             }
 
-            // Restore the original session now that the merge is durably
-            // applied server-side. No-op when nothing was parked (requester
-            // was already the winner).
-            sessionStore.getState().popSession();
+            // Drop the parked snapshot now that the merge is durably
+            // applied server-side. The live session is already the winner
+            // (set by SwitchStep) — restoring the loser session here would
+            // surface a stale wallet address. No-op when nothing was
+            // parked (requester was already the winner before the flow).
+            sessionStore.getState().discardPreviousSession();
 
             return data;
         },

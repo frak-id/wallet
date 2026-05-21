@@ -63,6 +63,13 @@ export type SessionStore = {
      * restore.
      */
     popSession: () => boolean;
+    /**
+     * Drop the parked snapshot without restoring it. Used by the merge
+     * flow when the swap is permanent — the loser session JWT references
+     * a wallet address that the merge has now rebound, so restoring it
+     * would surface stale data. Returns `false` when nothing is parked.
+     */
+    discardPreviousSession: () => boolean;
 };
 
 /**

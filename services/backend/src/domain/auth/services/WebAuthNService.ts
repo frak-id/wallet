@@ -1,5 +1,6 @@
 import { viemClient } from "@backend-infrastructure";
 import { KernelWallet, kernelAddresses } from "@frak-labs/app-essentials";
+import { currentChainId } from "@frak-labs/app-essentials/blockchain";
 import { type Signature, WebAuthnP256 } from "ox";
 import type { SignMetadata } from "ox/WebAuthnP256";
 import { getSenderAddress } from "permissionless/actions";
@@ -100,11 +101,27 @@ export class WebAuthNService {
             return false;
         }
 
-        // Check if the address match the signature provided
-        const walletAddress = await this.getWalletAddress({
-            authenticatorId: result.id,
-            pubKey: authenticator.publicKey,
-        });
+        // Resolve the wallet the credential is *currently* bound to on the
+        // active chain. Post-merge, the loser credential's binding row has
+        // been repointed to the winner wallet, so we must consult the
+        // binding table rather than re-derive the deterministic address
+        // from the passkey pubkey (which would still return the old loser
+        // address forever). Fall back to derivation only when no binding
+        // exists yet — legacy credentials surviving from before the
+        // bindings rollout, which `ensureActiveBindings` will lazy-init
+        // in the login route right after.
+        const activeBinding = await this.authenticatorRepository
+            .getActiveBinding({
+                credentialId: result.id,
+                chainId: currentChainId,
+            })
+            .catch(() => null);
+        const walletAddress =
+            activeBinding?.smartWalletAddress ??
+            (await this.getWalletAddress({
+                authenticatorId: result.id,
+                pubKey: authenticator.publicKey,
+            }));
 
         // Ensure the verification pass using ox
         const { signature, metadata } = result.response;
