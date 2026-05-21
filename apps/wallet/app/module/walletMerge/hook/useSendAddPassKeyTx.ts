@@ -2,10 +2,11 @@ import {
     addresses,
     multiWebAuthNValidatorV2Abi,
 } from "@frak-labs/app-essentials";
-import { authKey } from "@frak-labs/wallet-shared";
+import { authKey, currentViemClient } from "@frak-labs/wallet-shared";
 import { useMutation } from "@tanstack/react-query";
 import { encodeFunctionData, type Hex, keccak256, toHex } from "viem";
-import { useSendTransaction } from "wagmi";
+import { readContract } from "viem/actions";
+import { useConnection, useSendTransaction } from "wagmi";
 
 type UseSendAddPassKeyTxArgs = {
     /** Credential id of the loser passkey being added to the winner wallet. */
@@ -25,17 +26,39 @@ type UseSendAddPassKeyTxArgs = {
  * hash and finalises the off-chain repoint + identity merge.
  */
 export function useSendAddPassKeyTx() {
-    const { sendTransactionAsync } = useSendTransaction();
+    const { mutateAsync: sendTransactionAsync } = useSendTransaction();
+    const { address } = useConnection();
 
     return useMutation<Hex, Error, UseSendAddPassKeyTxArgs>({
         mutationKey: authKey.merge.sendAddPassKey,
         gcTime: 0,
         mutationFn: async ({ loserAuthenticatorId, loserPublicKey }) => {
+            const loserAuthenticatorIdHash = keccak256(
+                toHex(loserAuthenticatorId)
+            );
+            // Check if loser cred is already present
+            if (address) {
+                const [_, pubKey] = await readContract(currentViemClient, {
+                    address: addresses.webAuthNValidator,
+                    abi: multiWebAuthNValidatorV2Abi,
+                    functionName: "getPasskey",
+                    args: [address, loserAuthenticatorIdHash],
+                });
+
+                // If yes early exit
+                if (
+                    pubKey.x === BigInt(loserPublicKey.x) &&
+                    pubKey.y === BigInt(loserPublicKey.y)
+                ) {
+                    return "0x";
+                }
+            }
+
             const data = encodeFunctionData({
                 abi: multiWebAuthNValidatorV2Abi,
                 functionName: "addPassKey",
                 args: [
-                    keccak256(toHex(loserAuthenticatorId)),
+                    loserAuthenticatorIdHash,
                     BigInt(loserPublicKey.x),
                     BigInt(loserPublicKey.y),
                 ],

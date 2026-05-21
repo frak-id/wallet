@@ -299,10 +299,10 @@ class WalletMergeOrchestrator {
         private webAuthNValidatorReader: ContractReader,    // wraps publicClient.readContract
     ) {}
 
-    async preview({ requesterWallet, targetAuthenticatorId, chainId }): Promise<MergePreview> {
+    async preview({ requesterWallet, targetAuthenticatorId }): Promise<MergePreview> {
         const target = await this.authRepo.getActiveBinding({
             credentialId: targetAuthenticatorId,
-            chainId,
+            chainId: currentChainId,    // env-shared, never on the wire
         });
         if (!target) throw new MergeError("target-binding-not-found");
 
@@ -327,21 +327,20 @@ class WalletMergeOrchestrator {
             : { wallet: requesterWallet, group: requesterGroup };
 
         return {
-            chainId,
             requesterWallet,
             targetWallet: target.smartWalletAddress,
             winner: winner.wallet,
             loser:  loser.wallet,
             loserAuthenticatorId: /* the credential id whose binding points to loser */,
             loserPublicKey:       /* { x, y } from authenticators table */,
-            movedCounts:          /* IdentityWeightService + extra conflict counters */,
-            conflicts:            /* duplicate-referee-link count, etc. */,
-            immutables:           /* settled asset_logs count for loser */,
-            identitiesBeingMerged: /* loser's identity_nodes */,
+            requesterWeight,      /* assets/referrals/interactions counts */
+            targetWeight,         /* same shape */
         };
     }
 }
 ```
+
+The `chainId` is **not** part of the wire shape — it's derived server-side from `currentChainId` (env-shared with the frontend through `@frak-labs/app-essentials/blockchain`). Both `/merge/preview` and `/merge/settle` operate on the active chain implicitly; the binding repository methods take a `chainId` argument internally so the multi-chain back-fill and recovery paths can stay chain-explicit.
 
 ### Loser consent signature
 
@@ -379,9 +378,9 @@ The challenge-building helper is reusable: it lives in `packages/app-essentials/
 The updated `settle()` pseudo-code:
 
 ```ts
-async settle({ requesterWallet, targetAuthenticatorId, chainId, onChainTxHash, loserConsentSignature }): Promise<void> {
+async settle({ requesterWallet, requesterAuthenticatorId, targetAuthenticatorId, onChainTxHash, loserConsentSignature }): Promise<MergeSettleResponse> {
     // Recompute preview deterministically (no stored snapshot in Phase 1)
-    const preview = await this.preview({ requesterWallet, targetAuthenticatorId, chainId });
+    const preview = await this.preview({ requesterWallet, targetAuthenticatorId });
 
     // 0. Verify loser consent — cheap, runs before any on-chain or DB work
     const expectedChallenges = buildMergeConsentChallengeSlots({
@@ -396,14 +395,13 @@ async settle({ requesterWallet, targetAuthenticatorId, chainId, onChainTxHash, l
     if (!consentOk) throw new MergeError("MERGE_INVALID_CONSENT");
 
     // 1. Verify the userOp landed and produced the expected on-chain state
-    const receipt = await this.webAuthNValidatorReader.waitForReceipt(chainId, onChainTxHash);
+    const receipt = await this.webAuthNValidatorReader.waitForReceipt({ txHash: onChainTxHash });
     if (receipt.status !== "success") throw new MergeError("user-op-reverted");
 
-    const onChainPubkey = await this.webAuthNValidatorReader.getPasskey(
-        chainId,
-        preview.winner,
-        keccak256(toHex(preview.loserAuthenticatorId)),
-    );
+    const onChainPubkey = await this.webAuthNValidatorReader.getPasskey({
+        smartWallet: preview.winner,
+        authenticatorId: preview.loserAuthenticatorId,
+    });
     if (
         onChainPubkey.x !== BigInt(preview.loserPublicKey.x) ||
         onChainPubkey.y !== BigInt(preview.loserPublicKey.y)
@@ -412,7 +410,7 @@ async settle({ requesterWallet, targetAuthenticatorId, chainId, onChainTxHash, l
     // 2. libSQL repoint (atomic in libSQL tx)
     await this.authRepo.repointBinding({
         credentialId: preview.loserAuthenticatorId,
-        chainId,
+        chainId: currentChainId,
         toSmartWalletAddress: preview.winner,
         reason: "merged",
     });
@@ -422,19 +420,38 @@ async settle({ requesterWallet, targetAuthenticatorId, chainId, onChainTxHash, l
     //    the winner group as part of `mergeGroups`. If both sides had a
     //    different email, the winner ends up with two active email nodes;
     //    `findEmailForGroup` returns the oldest (the winner's original).
-    await this.identityMergeSvc.mergeGroupsByWallet(preview.winner, preview.loser, {
-        migratePushTokens: true,
-        migrateAssetLogsRecipient: true,
-        referralCodePolicy: "migrate-revoke-on-conflict",
+    await this.identityMergeSvc.mergeGroupsByWallet({
+        winnerWallet: preview.winner,
+        loserWallet:  preview.loser,
     });
 
-    // 4. Emit event (in-process)
-    eventEmitter.emit("walletMerged", {
-        chainId,
+    // 4. Mint a fresh wallet session for the requester when they
+    //    authenticated with the loser credential. The credential's binding
+    //    now points at the winner wallet, so the requester's previous JWT
+    //    references a stale `address`. The frontend applies the returned
+    //    session directly (`setSession`) — no separate `/login` round-trip,
+    //    no second biometric prompt. The consent assertion verified at
+    //    step 0 is the security-equivalent proof of credential ownership.
+    //
+    //    Omitted when the requester is the winner (their existing JWT
+    //    already resolves correctly via the unchanged binding for their
+    //    credential).
+    const requesterIsLoser = requesterAuthenticatorId === preview.loserAuthenticatorId;
+    const session = requesterIsLoser
+        ? await this.walletSessionSvc.mintForCredential({
+              authenticatorId: preview.loserAuthenticatorId,
+              walletAddress:   preview.winner,
+              publicKey:       /* loserCredential.publicKey */,
+              transports:      /* loserCredential.transports */,
+          })
+        : undefined;
+
+    return {
+        status: "merged",
         winner: preview.winner,
         loser:  preview.loser,
-        credentialId: preview.loserAuthenticatorId,
-    });
+        session,    // optional, see above
+    };
 }
 ```
 
@@ -448,8 +465,12 @@ New routes under `services/backend/src/api/user/wallet/merge/`:
 
 | Method + path | Auth | Body / query | Response |
 |---|---|---|---|
-| `GET /user/wallet/merge/preview` | webauthn JWT (the requester) | `?targetAuthenticatorId=...&chainId=...` (chainId optional, defaults to env) | `MergePreview` |
-| `POST /user/wallet/merge/settle` | webauthn JWT (the requester) | `{ targetAuthenticatorId, chainId?, onChainTxHash, loserConsentSignature }` | `{ status: "merged", winner, loser }` |
+| `GET /user/wallet/merge/preview` | webauthn JWT (the requester) | `?targetAuthenticatorId=...` | `MergePreview` |
+| `POST /user/wallet/merge/settle` | webauthn JWT (the requester) | `{ targetAuthenticatorId, onChainTxHash, loserConsentSignature }` | `{ status: "merged", winner, loser, session? }` |
+
+`chainId` is never on the wire — it's env-shared between front and back via `@frak-labs/app-essentials/blockchain` (`currentChainId`). Adding it as a query/body param would just duplicate state the client already knows. The orchestrator reads `currentChainId` to scope binding lookups and writes; binding repository methods take `chainId` explicitly to keep the multi-chain back-fill paths chain-explicit.
+
+`session` is included on the settle response only when the requester authenticated with the loser credential — see the orchestrator's step 4 above. Shape mirrors `WalletAuthResponseDto` (the login response). Frontend applies it via `sessionStore.setSession` + `setSdkSession`; this kills the post-merge "stuck on the stale loser session" path that the earlier draft worked around with `popSession`/`discardPreviousSession` dance.
 
 Both wired in `services/backend/src/api/user/wallet/index.ts`. Existing `POST /user/wallet/auth/email` is updated to return the target authenticator id and wallet on the conflict branch:
 
@@ -474,13 +495,20 @@ interface SessionStoreState {
     sdkSession: SdkSession | null;
     previousSession: { session: Session; sdkSession: SdkSession | null } | null;  // NEW (persisted)
 
-    pushSession: () => void;   // saves current → previousSession; nulls current
-    popSession:  () => boolean; // restores previousSession; returns false if none
+    parkSession: (snapshot) => boolean;          // store the pre-swap snapshot, leave live slot alone
+    popSession:  () => boolean;                  // restore the snapshot into the live slot
+    discardPreviousSession: () => boolean;       // drop the snapshot without restoring
     // existing: setSession, setSdkSession, clearSession
 }
 ```
 
-Persistence: `previousSession` is included in the `persist` config so a tab refresh during the switch flow doesn't lose the restore target.
+The triple is what the swap dance needs:
+
+- `parkSession({ session, sdkSession })` is called **after** `useLogin` has overwritten the live slot with the winner — the snapshot is the loser session, held only briefly in a JS variable before this call. There is no observable null window for components gated on `session?.authenticatorId`.
+- `popSession()` is the rollback used by every non-success exit path in `MergeFlow` (abort, unmount, orphan cleanup on next mount).
+- `discardPreviousSession()` is called by `useMergeSettle` on success — combined with `setSession(response.session)`, it cleanly transitions the requester from the loser snapshot to the freshly minted post-merge session without ever restoring the now-stale loser JWT.
+
+Persistence: `previousSession` is included in the `persist` config so a tab refresh during the in-flight switch doesn't lose the restore target.
 
 ### `apps/wallet` — hooks
 
@@ -488,50 +516,33 @@ New files under `apps/wallet/app/module/walletMerge/hook/`:
 
 | Hook | Purpose |
 |---|---|
-| `useMergePreview(targetAuthenticatorId)` | React Query wrapper around `GET /merge/preview`. Cached by `(targetAuthenticatorId, chainId)`. |
-| `useProveLocalAuthenticator(targetAuthenticatorId)` | Calls `navigator.credentials.get({ publicKey: { allowCredentials: [{ id: <bytes>, type: 'public-key' }] }})` to verify the target passkey is locally usable. Returns `'available'` / `'unavailable'` / `'cancelled'`. Used as a pre-flight before kicking off the switch flow. |
-| `useSwitchAuthenticator()` | Wraps `sessionStore.pushSession()` + `useLogin({ lastAuthentication: { authenticatorId, wallet } })`. On failure auto-`popSession()`. |
-| `useMergeFinaliseLocal()` | Builds `encodeFunctionData({ abi: multiWebAuthNValidatorV2Abi, functionName: "addPassKey", args: [...] })`, submits via the existing smart-account send hook (`useSendTransactionAction` or equivalent), then calls `POST /merge/settle`. Returns terminal state. |
+| `useMergePreview(targetAuthenticatorId)` | React Query wrapper around `GET /merge/preview`. Cached by `targetAuthenticatorId`. |
+| `useLoserConsent()` | Mutation. Triggers `navigator.credentials.get` against the loser passkey with the deterministic merge-consent challenge; returns the base64 assertion ready for `/merge/settle`. Doubles as the local-availability probe — if the OS keychain doesn't surface the loser credential, the prompt fails fast and the UI can fall back to a "use your other device" placeholder. |
+| `useSwitchAuthenticator()` | Mutation. Snapshots the live session in a local JS variable, awaits `useLogin({ lastAuthentication })` to overwrite the live slot with the winner, then calls `parkSession(snapshot)`. Atomic from observers' POV. Rollback on `login()` throw is implicit (nothing was written). Skips the `parkSession` call on retry when a snapshot is already parked. |
+| `useSendAddPassKeyTx()` | Mutation. Builds `encodeFunctionData({ abi: multiWebAuthNValidatorV2Abi, functionName: "addPassKey", args: [...] })` and submits via wagmi's smart-account aware `useSendTransaction`. Returns the on-chain tx hash. Signed by whichever credential the SwitchStep has placed in the live session. |
+| `useMergeSettle()` | Mutation. POSTs `{ targetAuthenticatorId, onChainTxHash, loserConsentSignature }` to `/merge/settle`. On success: if `response.session` is present, applies it via `setSession` + `setSdkSession`; then unconditionally calls `discardPreviousSession`. |
+
+### `apps/wallet` — step components
+
+`MergeFlow` (`apps/wallet/app/module/walletMerge/component/MergeFlow/index.tsx`) drives a 7-step state machine. Each step owns at most one webauthn prompt so the three biometric ceremonies are explicitly sequenced — never fired back-to-back from a single screen:
+
+| Step | Webauthn prompt | Purpose |
+|---|---|---|
+| `preview` | — | Recap UI: which wallet stays primary, what counts move. |
+| `assets` | — | "Move your funds first" speed bump (Phase 1 has no automatic sweep). |
+| `consent` | loser passkey | Collects the deterministic merge-consent assertion. |
+| `switch` *(only when `needsSwitch`)* | winner passkey | User-initiated session swap to the winner so wagmi signs the userOp from the winner's smart-account context. |
+| `sign` | winner passkey | User-initiated `addPassKey` userOp submit. |
+| `settling` | — | Auto-POST `/merge/settle`. Spinner + retry on error. |
+| `success` | — | Terminal screen. |
+
+`switch` is skipped entirely when the requester is the winner — no session swap is needed. The `consent → sign` transition runs directly.
 
 ### `apps/wallet` — `AddEmail` conflict branch refactor
 
 File: `apps/wallet/app/module/settings/component/AddEmail/index.tsx`.
 
-The conflict branch is replaced with the merge flow:
-
-```ts
-case "conflict": {
-    // 1. Fetch preview
-    const { data: preview, isLoading } = useMergePreview(response.targetAuthenticatorId);
-
-    // 2. Show recap UI: "Merging wallet X into wallet Y, you'll gain N referrals..."
-
-    // 3. On confirm:
-    if (preview.winner === currentSession.address) {
-        //   A wins: sign addPasskey on current device with current passkey
-        await finaliseMerge.run({ /* winner=current */ });
-    } else {
-        //   B wins: switch passkey first, then sign addPasskey, then optionally restore
-        const probe = await proveLocalAuthenticator.run(response.targetAuthenticatorId);
-        if (probe !== "available") {
-            //   Local fast path unavailable — Phase 1 shows the "use other device" message
-            return setFlowState({ kind: "needsOtherDevice" });
-        }
-        try {
-            await switchAuthenticator.run({
-                authenticatorId: response.targetAuthenticatorId,
-                wallet: response.targetWallet,
-            });
-            await finaliseMerge.run({ /* winner=B (now current after switch) */ });
-            sessionStore.getState().popSession();   // restore wallet A's session
-        } catch (err) {
-            // popSession already called by useSwitchAuthenticator on its own failure;
-            // if finaliseMerge failed mid-way, we keep the B session so the user can retry.
-            throw err;
-        }
-    }
-}
-```
+The conflict branch captures `currentAuthenticatorId` from the live session at flow entry and snapshots it onto the `merging` flow state. `MergeFlow` reads that snapshot for the lifetime of the flow rather than the live session — the SwitchStep temporarily swaps the live session and gating the parent on it would flicker back to `ConflictStep` mid-flow.
 
 On success the user sees the existing AddEmail success screen with copy adjusted ("Your other wallet is now part of this one"). The "Setup recovery" button stays a no-op until the recovery rework is done.
 

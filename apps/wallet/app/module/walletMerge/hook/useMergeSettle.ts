@@ -2,6 +2,7 @@ import type { MergeSettleResponse } from "@frak-labs/backend-elysia/api/schemas"
 import {
     authenticatedWalletApi,
     authKey,
+    type Session,
     sessionStore,
 } from "@frak-labs/wallet-shared";
 import { useMutation } from "@tanstack/react-query";
@@ -22,14 +23,18 @@ type UseMergeSettleArgs = {
 };
 
 /**
- * POSTs to `/user/wallet/merge/settle` and, on success, drops the parked
- * snapshot of the original (loser) session.
+ * POSTs to `/user/wallet/merge/settle`.
  *
- * We deliberately do **not** restore the original session here: post-merge
- * the loser binding now points to the winner's wallet, so the loser JWT
- * still carries the loser's stale wallet address. Staying on the winner
- * session — which the SwitchStep already swapped in — gives the user a
- * coherent view of their now-canonical wallet. The rollback paths in
+ * On success the backend returns a fresh wallet session when the requester
+ * authenticated with the loser credential (the credential's binding now
+ * points at the winner wallet, so the previous JWT carries a stale
+ * `address`). We apply that session directly via `setSession` /
+ * `setSdkSession` so the user lands on a session that resolves to the
+ * canonical wallet without a separate `/login` round-trip.
+ *
+ * The parked snapshot from {@link useSwitchAuthenticator} is discarded
+ * unconditionally on success — the merge is durable, no path remains where
+ * restoring the loser snapshot is desirable. The rollback paths in
  * `MergeFlow` still call `popSession` for every non-success exit (aborts,
  * unmount) so cancelled merges always end up back on the original session.
  *
@@ -55,11 +60,24 @@ export function useMergeSettle() {
                 throw new Error(extractSettleErrorCode(error.value));
             }
 
+            // Apply the freshly minted session when the backend returned
+            // one (requester authenticated with the loser credential). The
+            // backend always mints a webauthn session for merge — the
+            // narrow here keeps Eden's broader `WalletTokenDto` union from
+            // leaking ecdsa/distant-webauthn shapes into our local Session
+            // store, which only accepts local webauthn sessions in this
+            // path.
+            if (data.session && data.session.type !== "ecdsa") {
+                const { token, sdkJwt, type, ...rest } = data.session;
+                sessionStore
+                    .getState()
+                    .setSession({ ...rest, type, token } as Session);
+                sessionStore.getState().setSdkSession(sdkJwt);
+            }
+
             // Drop the parked snapshot now that the merge is durably
-            // applied server-side. The live session is already the winner
-            // (set by SwitchStep) — restoring the loser session here would
-            // surface a stale wallet address. No-op when nothing was
-            // parked (requester was already the winner before the flow).
+            // applied server-side. No-op when nothing was parked (requester
+            // was already the winner before the flow).
             sessionStore.getState().discardPreviousSession();
 
             return data;

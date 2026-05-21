@@ -2,11 +2,7 @@ import { JwtContext, log, viemClient } from "@backend-infrastructure";
 import { t } from "@backend-utils";
 import { Elysia, status } from "elysia";
 import { verifyMessage } from "viem/actions";
-import {
-    AuthContext,
-    type StaticWalletSdkTokenDto,
-    WalletAuthResponseDto,
-} from "../../../../domain/auth";
+import { AuthContext, WalletAuthResponseDto } from "../../../../domain/auth";
 import { OrchestrationContext } from "../../../../orchestration/context";
 import { FrakClientIdHeaderSchema } from "../../../schemas";
 
@@ -129,28 +125,14 @@ export const loginRoutes = new Elysia()
                 log.warn(error, "Unable to seed initial bindings");
             }
 
-            // Prepare the additional data object
-            const additionalData: StaticWalletSdkTokenDto["additionalData"] =
-                {};
-
-            // Create the token and set the cookie
-            const token = await JwtContext.wallet.sign({
-                type: "webauthn",
-                address,
-                authenticatorId,
-                publicKey,
-                transports,
-                sub: address,
-                iat: Date.now(),
-            });
-
-            const sdkJwt =
-                await AuthContext.services.walletSdkSession.generateSdkJwt({
-                    wallet: address,
-                    additionalData,
+            const session =
+                await AuthContext.services.walletSession.mintForCredential({
+                    authenticatorId,
+                    walletAddress: address,
+                    publicKey,
+                    transports,
                 });
 
-            console.log("link to jwt");
             await OrchestrationContext.orchestrators.identity.linkWalletToFingerprint(
                 {
                     walletAddress: address,
@@ -159,16 +141,7 @@ export const loginRoutes = new Elysia()
                 }
             );
 
-            console.log("return");
-            return {
-                token,
-                type: "webauthn",
-                address,
-                authenticatorId,
-                publicKey,
-                transports,
-                sdkJwt,
-            };
+            return session;
         },
         {
             body: t.Object({

@@ -59,6 +59,7 @@ export class WebAuthNValidatorReader {
     }): Promise<{ status: "success" | "reverted"; blockNumber: bigint }> {
         const receipt = await waitForTransactionReceipt(viemClient, {
             hash: params.txHash,
+            confirmations: 8,
         });
         return {
             status: receipt.status === "success" ? "success" : "reverted",

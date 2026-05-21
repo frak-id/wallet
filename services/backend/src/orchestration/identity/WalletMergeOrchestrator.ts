@@ -4,6 +4,7 @@ import { buildMergeConsentChallengeSlots } from "@frak-labs/app-essentials";
 import { currentChainId } from "@frak-labs/app-essentials/blockchain";
 import type { Address, Hex } from "viem";
 import type { AuthenticatorRepository } from "../../domain/auth/repositories/AuthenticatorRepository";
+import type { WalletSessionService } from "../../domain/auth/services/WalletSessionService";
 import type { WebAuthNService } from "../../domain/auth/services/WebAuthNService";
 import type { IdentityRepository } from "../../domain/identity/repositories/IdentityRepository";
 import type { WebAuthNValidatorReader } from "../../infrastructure/blockchain/WebAuthNValidatorReader";
@@ -28,7 +29,8 @@ export class WalletMergeOrchestrator {
         private readonly identityWeightService: IdentityWeightService,
         private readonly identityMergeService: IdentityMergeService,
         private readonly webAuthNValidatorReader: WebAuthNValidatorReader,
-        private readonly webAuthNService: WebAuthNService
+        private readonly webAuthNService: WebAuthNService,
+        private readonly walletSessionService: WalletSessionService
     ) {}
 
     /**
@@ -168,7 +170,7 @@ export class WalletMergeOrchestrator {
         requesterWallet: Address;
         requesterAuthenticatorId: string;
         targetAuthenticatorId: string;
-        onChainTxHash: Hex;
+        onChainTxHash?: Hex;
         loserConsentSignature: string;
     }): Promise<MergeSettleResponse> {
         const preview = await this.preview({
@@ -202,14 +204,16 @@ export class WalletMergeOrchestrator {
         }
 
         // 1. Confirm the addPassKey userOp landed on-chain.
-        const receipt = await this.webAuthNValidatorReader.waitForReceipt({
-            txHash: params.onChainTxHash,
-        });
-        if (receipt.status !== "success") {
-            throw HttpError.unprocessable(
-                "MERGE_USER_OP_REVERTED",
-                `userOp ${params.onChainTxHash} reverted`
-            );
+        if (params.onChainTxHash && params.onChainTxHash !== "0x") {
+            const receipt = await this.webAuthNValidatorReader.waitForReceipt({
+                txHash: params.onChainTxHash,
+            });
+            if (receipt.status !== "success") {
+                throw HttpError.unprocessable(
+                    "MERGE_USER_OP_REVERTED",
+                    `userOp ${params.onChainTxHash} reverted`
+                );
+            }
         }
 
         // 2. Verify the on-chain validator now lists the loser passkey under
@@ -267,10 +271,55 @@ export class WalletMergeOrchestrator {
             "Wallet merge settled"
         );
 
+        // 5. Mint a fresh wallet session for the requester when they
+        //    authenticated with the loser credential. The credential's
+        //    binding now points at the winner wallet (step 3), but the
+        //    requester's existing JWT still references the stale loser
+        //    address. Returning a freshly-minted session here lets the
+        //    frontend `setSession` directly — no separate `/login`
+        //    round-trip, no second biometric prompt. The consent assertion
+        //    verified at step 0 is the security-equivalent proof of
+        //    credential ownership.
+        //
+        //    Omitted when the requester is the winner (their existing JWT
+        //    already resolves correctly via the unchanged binding for
+        //    their credential).
+        const requesterIsLoser =
+            params.requesterAuthenticatorId === preview.loserAuthenticatorId;
+        if (!requesterIsLoser) {
+            return {
+                status: "merged",
+                winner: preview.winner,
+                loser: preview.loser,
+            };
+        }
+
+        const loserCredential =
+            await this.authenticatorRepository.getByCredentialId(
+                preview.loserAuthenticatorId
+            );
+        if (!loserCredential) {
+            // Defensive — preview already loaded the same credential to
+            // surface `loserPublicKey`. If it has vanished between then
+            // and now, something has gone badly wrong, so fail loud rather
+            // than ship a half-applied merge to the client.
+            throw HttpError.notFound(
+                "MERGE_LOSER_CREDENTIAL_NOT_FOUND",
+                `No authenticator row for ${preview.loserAuthenticatorId}`
+            );
+        }
+        const session = await this.walletSessionService.mintForCredential({
+            authenticatorId: preview.loserAuthenticatorId,
+            walletAddress: preview.winner,
+            publicKey: loserCredential.publicKey,
+            transports: loserCredential.transports,
+        });
+
         return {
             status: "merged",
             winner: preview.winner,
             loser: preview.loser,
+            session,
         };
     }
 }

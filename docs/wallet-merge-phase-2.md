@@ -542,7 +542,7 @@ async settle({ pairingId, onChainTxHash, loserConsentSignature }) {
   // 3. libSQL repoint (chain-scoped)
   await authRepo.repointBinding({
     credentialId: preview.loserAuthenticatorId,
-    chainId: preview.chainId,
+    chainId: currentChainId,    // env-shared, never on the wire (see Phase 1 doc)
     toSmartWalletAddress: preview.winner,
     reason: "merged",
   });
@@ -597,18 +597,19 @@ Then desktop:
 
 1. Closes the pairing WS (`originPairingClient.disconnect()`).
 2. Clears the `frak_pairing_in_flight` sessionStorage entry.
-3. Optionally proposes logging out and back in to refresh the session with the new wallet address. **Desktop's current `webauthn` session is still for the old wallet A address — its JWT is still valid but now points to a wallet that has been merged.** On next biometric login, the credential resolves to the new (winning) smart-account address automatically.
+3. Applies the freshly-minted session that the settle endpoint returns whenever the requester authenticated with the loser credential (Phase 1 contract — see `MergeSettleResponseSchema.session`). Desktop is the loser in this branch, so the response carries a fresh JWT bound to desktop's authenticator + the winner wallet; `sessionStore.setSession(response.session)` + `setSdkSession(response.sdkJwt)` rebinds the live session immediately. No logout/login round-trip, no stale-JWT window. The auxiliary safety net at `isValidSignature` (which consults `getActiveBinding` on every login) still backstops any cached JWT that didn't go through this path.
 
 ### Step 10 — Mobile cleanup
 
-If mobile pushed a previous session in Step 3 (Case B switch-passkey), it offers:
+If mobile pushed a previous session in Step 3 (Case B switch-passkey), the cleanup depends on which side of the merge mobile sits on:
 
-> Sign back into your other wallet?
->
-> [Stay signed in as the merged wallet] [Switch back]
-
-"Stay" → leaves the current session, drops `previousSession`.
-"Switch back" → `sessionStore.popSession()`.
+- **Mobile = loser** (the credential that just got absorbed): settle returns `response.session` (Phase 1 contract). Mobile applies it directly via `sessionStore.setSession` + `setSdkSession` and `discardPreviousSession()` — the snapshot in `previousSession` is the old, no-longer-meaningful wallet whose binding has been rebound. No "switch back" prompt makes sense; the loser session is by definition stale.
+- **Mobile = winner**: settle omits `response.session` (mobile's existing JWT already resolves correctly). Mobile then offers:
+  > Sign back into your other wallet?
+  >
+  > [Stay signed in as the merged wallet] [Switch back]
+  >
+  > "Stay" → `discardPreviousSession()`. "Switch back" → `popSession()`.
 
 Either way the merge itself is complete and durable in the backend.
 
