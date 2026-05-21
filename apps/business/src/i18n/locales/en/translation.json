@@ -1,0 +1,16 @@
+{
+    "settings": {
+        "currency": {
+            "label": "Choose your preferred currency",
+            "placeholder": "Select a currency"
+        },
+        "language": {
+            "label": "Choose your preferred language",
+            "placeholder": "Select a language",
+            "options": {
+                "en": "English",
+                "fr": "French"
+            }
+        }
+    }
+}

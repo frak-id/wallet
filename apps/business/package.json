@@ -16,7 +16,8 @@
         "typecheck": "tsgo --noEmit",
         "test": "vitest",
         "test:ui": "vitest --ui",
-        "test:coverage": "vitest --coverage"
+        "test:coverage": "vitest --coverage",
+        "i18n:types": "bun run i18next-resources-for-ts interface -i ./src/i18n/locales/en/ -o src/types/i18n/resources.d.ts"
     },
     "dependencies": {
         "@elysiajs/eden": "^1.4.9",
@@ -46,6 +47,8 @@
         "clsx": "^2.1.1",
         "countries-list": "^3.3.0",
         "date-fns": "^4.1.0",
+        "i18next": "^26.0.3",
+        "i18next-browser-languagedetector": "^8.2.1",
         "lucide-react": "^0.577.0",
         "nprogress": "^0.2.0",
         "radash": "^12.1.1",
@@ -54,6 +57,7 @@
         "react-dom": "catalog:",
         "react-dropzone": "^15.0.0",
         "react-hook-form": "^7.71.2",
+        "react-i18next": "^16.5.8",
         "viem": "catalog:",
         "zustand": "catalog:"
     },
@@ -77,6 +81,7 @@
         "@vitest/coverage-v8": "^4.1.0",
         "@vitest/ui": "^4.1.0",
         "bun-types": "latest",
+        "i18next-resources-for-ts": "^2.0.2",
         "jsdom": "^29.0.0",
         "sst": "3.18.9",
         "typescript": "^6.0.2",

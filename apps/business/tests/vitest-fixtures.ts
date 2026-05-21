@@ -1,28 +1,31 @@
 /**
- * Dashboard V2 app test fixtures extending base fixtures
- * Adds dashboard-specific fixtures to the shared base fixtures
+ * Dashboard V2 app test fixtures.
+ * Self-contained — business does not import from `@frak-labs/wallet-shared`
+ * (per workspace scope rule: wallet-shared is wallet+listener only).
  */
 
-import {
-    type BaseTestFixtures,
-    test as baseTest,
-} from "@frak-labs/wallet-shared/tests/vitest-fixtures";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { createElement, type ReactElement, type ReactNode } from "react";
 import type { Address } from "viem";
+import { test as baseTest } from "vitest";
 import type { AuthSessionClient } from "@/types/AuthSession";
 
 /**
- * Creates a mock Ethereum address for testing
- * Can be used in fixtures or directly in tests/mocks
- * @param seed - Optional seed for generating different addresses (will be hashed to hex)
+ * Creates a mock Ethereum address for testing.
+ * Can be used in fixtures or directly in tests/mocks.
+ *
+ * Hash is position-weighted (`acc * 31 + charCode`) so anagram seeds
+ * (e.g. "ab" vs "ba") produce distinct addresses.
+ *
+ * @param seed - Optional seed for generating different addresses
  * @example
- * createMockAddress("product") // 0x1234567890123456789012345678901234567890
- * createMockAddress("member1") // 0xabcdef1234567890123456789012345678901234
+ * createMockAddress("product") // 0x...
+ * createMockAddress("member1") // 0x...
  */
 export function createMockAddress(seed = "default"): Address {
-    // Create a simple hash from the seed to ensure valid hex chars
     const hash = seed
         .split("")
-        .reduce((acc, char) => acc + char.charCodeAt(0), 0);
+        .reduce((acc, char) => (acc * 31 + char.charCodeAt(0)) >>> 0, 0);
 
     // Generate a repeating pattern based on the hash
     const hexPattern = hash.toString(16).padStart(8, "0").slice(0, 8);
@@ -32,9 +35,9 @@ export function createMockAddress(seed = "default"): Address {
 }
 
 /**
- * Dashboard-specific test fixtures (extends BaseTestFixtures)
+ * Dashboard-specific test fixtures
  */
-export type DashboardTestFixtures = BaseTestFixtures & {
+export type DashboardTestFixtures = {
     /**
      * Mock authentication session for business dashboard
      */
@@ -64,6 +67,15 @@ export type DashboardTestFixtures = BaseTestFixtures & {
      * Fresh push creation store that auto-resets before and after each test
      */
     freshPushCreationStore: typeof import("@/stores/pushCreationStore").pushCreationStore;
+
+    /**
+     * Query wrapper with client and provider component.
+     * Combines a fresh QueryClient with a ready-to-use wrapper for renderHook.
+     */
+    queryWrapper: {
+        client: QueryClient;
+        wrapper: ({ children }: { children: ReactNode }) => ReactElement;
+    };
 };
 
 /**
@@ -74,28 +86,16 @@ export type DashboardTestFixtures = BaseTestFixtures & {
  * ```ts
  * import { test, expect } from '@/tests/fixtures';
  *
- * test('should use fresh campaign store', ({ freshCampaignStore, mockAddress }) => {
- *     // freshCampaignStore from dashboard-specific fixtures
- *     // mockAddress from base fixtures
+ * test('should use fresh campaign store', ({ freshCampaignStore }) => {
  *     freshCampaignStore.getState().setStep(2);
  *     expect(freshCampaignStore.getState().step).toBe(2);
  * });
  * ```
  */
-export const test = baseTest.extend<
-    Pick<
-        DashboardTestFixtures,
-        | "mockAuthSession"
-        | "freshCampaignStore"
-        | "freshCurrencyStore"
-        | "freshAuthStore"
-        | "freshMembersStore"
-        | "freshPushCreationStore"
-    >
->({
+export const test = baseTest.extend<DashboardTestFixtures>({
     /**
-     * Provides a mock authentication session for business dashboard tests
-     * Uses createMockAddress from wallet-shared for proper type safety
+     * Provides a mock authentication session for business dashboard tests.
+     * Uses the local `createMockAddress` for proper type safety.
      */
     // biome-ignore lint/correctness/noEmptyPattern: Vitest requires object destructuring
     mockAuthSession: async ({}, use) => {
@@ -236,6 +236,25 @@ export const test = baseTest.extend<
         pushCreationStore.getState().clearForm();
         localStorage.removeItem("currentPushCampaignForm");
     },
+
+    /**
+     * Provides a fresh QueryClient + provider wrapper for renderHook tests.
+     * Retries and gc disabled so async behaviour is deterministic.
+     */
+    // biome-ignore lint/correctness/noEmptyPattern: Vitest requires object destructuring
+    queryWrapper: async ({}, use) => {
+        const client = new QueryClient({
+            defaultOptions: {
+                queries: { retry: false, gcTime: 0 },
+                mutations: { retry: false },
+            },
+        });
+
+        const wrapper = ({ children }: { children: ReactNode }) =>
+            createElement(QueryClientProvider, { client }, children);
+
+        await use({ client, wrapper });
+    },
 });
 
 /**
@@ -245,8 +264,7 @@ export const test = baseTest.extend<
  * ```ts
  * import { test, beforeEach } from '@/tests/fixtures';
  *
- * beforeEach(({ freshCampaignStore, mockSession }) => {
- *     // Setup with typed fixtures from both base and dashboard-specific
+ * beforeEach(({ freshCampaignStore }) => {
  *     freshCampaignStore.getState().setStep(1);
  * });
  * ```

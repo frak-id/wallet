@@ -6,6 +6,7 @@ import { Button } from "@/module/common/component/Button";
 import { Head } from "@/module/common/component/Head";
 import { Panel } from "@/module/common/component/Panel";
 import { DemoModeSwitch } from "@/module/settings/DemoModeSwitch";
+import { LanguageSelector } from "@/module/settings/LanguageSelector";
 import { SelectCurrency } from "@/module/settings/SelectCurrency";
 import { useAuthStore } from "@/stores/authStore";
 import { logoutButton, walletAddress } from "./settings.css";
@@ -36,6 +37,10 @@ function Settings() {
 
             <Panel title="Currency">
                 <SelectCurrency />
+            </Panel>
+
+            <Panel title="Language">
+                <LanguageSelector />
             </Panel>
 
             {isHydrated && !isDemoMode && (

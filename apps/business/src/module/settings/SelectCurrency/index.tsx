@@ -6,20 +6,19 @@ import {
     SelectTrigger,
     SelectValue,
 } from "@frak-labs/design-system/components/Select";
+import { useTranslation } from "react-i18next";
 import { currencyStore } from "@/stores/currencyStore";
-import * as styles from "./select-currency.css";
+import { settingsField, settingsFieldLabel } from "../settings-field.css";
 
 export function SelectCurrency() {
+    const { t } = useTranslation();
     const preferredCurrency = currencyStore((state) => state.preferredCurrency);
     const setCurrency = currencyStore((state) => state.setCurrency);
 
     return (
-        <div className={styles.selectCurrency}>
-            <label
-                htmlFor="currency-select"
-                className={styles.selectCurrencyLabel}
-            >
-                Choose your preferred currency
+        <div className={settingsField}>
+            <label htmlFor="currency-select" className={settingsFieldLabel}>
+                {t("settings.currency.label")}
             </label>
             <Select
                 name="currency-select"
@@ -30,7 +29,9 @@ export function SelectCurrency() {
                 value={preferredCurrency}
             >
                 <SelectTrigger id="currency-select" length={"medium"}>
-                    <SelectValue placeholder="Select a currency" />
+                    <SelectValue
+                        placeholder={t("settings.currency.placeholder")}
+                    />
                 </SelectTrigger>
                 <SelectContent>
                     <SelectItem value="eur">EUR</SelectItem>

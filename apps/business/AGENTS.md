@@ -25,9 +25,10 @@ bun run test         # business-unit Vitest project
 - **Restricted-route pattern**: `_restricted` layout centralises auth; do NOT add guards per-route.
 - **Consumes legacy UI**: uses `@frak-labs/ui` (Radix) + `@frak-labs/ui-preview`; design-system migration hasn't reached this app.
 - **Type-safe API** via `@frak-labs/client` (Eden Treaty) — do not hand-roll fetches; the client already carries backend types.
+- **i18n location**: translations live in `src/i18n/locales/{en,fr}/translation.json`; FR is the fallback (bundled), EN is lazy-loaded. Regen types via `bun run i18n:types` after adding keys. Single `translation` namespace — no `customized` namespace (wallet-only).
 
 ## Anti-Patterns
-Runtime env var reads · whole-store Zustand subscription · CSS Modules bypass (still CSS Modules here — NOT Vanilla Extract) · Tailwind · adding guards per route instead of via `_restricted`.
+Runtime env var reads · whole-store Zustand subscription · CSS Modules or plain `.css` (use Vanilla Extract `.css.ts`) · Tailwind · adding guards per route instead of via `_restricted`.
 
 ## See Also
 Parent `/AGENTS.md` · `services/backend/AGENTS.md` (API contract) · `packages/client/` (Eden Treaty) · `packages/{ui,ui-preview}/`.

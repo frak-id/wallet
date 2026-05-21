@@ -10,6 +10,7 @@
     /* Bundler mode */
     "moduleResolution": "bundler",
     "allowImportingTsExtensions": true,
+    "resolveJsonModule": true,
     "verbatimModuleSyntax": false,
     "noEmit": true,
 
@@ -24,7 +25,6 @@
       "@/*": ["./src/*"],
       "@/tests/vitest-fixtures": ["./tests/vitest-fixtures.ts"],
       "@/tests/mocks/*": ["./tests/mocks/*"],
-      "@frak-labs/wallet-shared/tests/vitest-fixtures": ["../../packages/wallet-shared/tests/vitest-fixtures.ts"],
       "@backend-utils": ["../../services/backend/src/utils/index.ts"],
       "@backend-infrastructure": ["../../services/backend/src/infrastructure/index.ts"],
       "@backend-infrastructure/*": ["../../services/backend/src/infrastructure/*"],
