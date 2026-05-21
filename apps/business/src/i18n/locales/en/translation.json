@@ -64,7 +64,10 @@
             "demoBadgeTitle": "Demo mode is active. Click to manage settings."
         },
         "breadcrumb": {
-            "merchant": "Merchant"
+            "merchant": "Merchant",
+            "home": "Home",
+            "membersList": "Members List",
+            "campaignsList": "Campaign List"
         }
     },
     "settings": {

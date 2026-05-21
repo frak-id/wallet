@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { useTranslation } from "react-i18next";
 import { isDemoMode } from "@/config/auth";
 import { TableCampaigns } from "@/module/campaigns/component/TableCampaigns";
 import { campaignsListQueryOptions } from "@/module/campaigns/queries/queryOptions";
@@ -18,11 +19,14 @@ export const Route = createFileRoute("/_restricted/campaigns/list")({
 });
 
 function CampaignsListPage() {
+    const { t } = useTranslation();
     return (
         <>
             <Head
-                title={{ content: "Campaigns" }}
-                leftSection={<Breadcrumb current={"Campaign List"} />}
+                title={{ content: t("shell.nav.campaigns") }}
+                leftSection={
+                    <Breadcrumb current={t("shell.breadcrumb.campaignsList")} />
+                }
             />
             <TableCampaigns />
         </>

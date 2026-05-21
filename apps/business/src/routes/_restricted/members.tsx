@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { useTranslation } from "react-i18next";
 import { Breadcrumb } from "@/module/common/component/Breadcrumb";
 import { Head } from "@/module/common/component/Head";
 import { DataLoadError } from "@/module/common/component/RouteError";
@@ -24,11 +25,14 @@ export const Route = createFileRoute("/_restricted/members")({
 });
 
 function MembersListPage() {
+    const { t } = useTranslation();
     return (
         <>
             <Head
-                title={{ content: "Members" }}
-                leftSection={<Breadcrumb current={"Members List"} />}
+                title={{ content: t("shell.nav.members") }}
+                leftSection={
+                    <Breadcrumb current={t("shell.breadcrumb.membersList")} />
+                }
                 rightSection={<ButtonSendPush />}
             />
             <TableMembers />

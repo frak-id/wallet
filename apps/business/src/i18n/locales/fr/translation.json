@@ -64,7 +64,10 @@
             "demoBadgeTitle": "Le mode démo est actif. Cliquez pour gérer les paramètres."
         },
         "breadcrumb": {
-            "merchant": "Marchand"
+            "merchant": "Marchand",
+            "home": "Accueil",
+            "membersList": "Liste des membres",
+            "campaignsList": "Liste des campagnes"
         }
     },
     "settings": {

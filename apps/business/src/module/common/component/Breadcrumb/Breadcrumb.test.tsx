@@ -2,6 +2,10 @@ import { render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 import { Breadcrumb } from "./index";
 
+vi.mock("react-i18next", () => ({
+    useTranslation: () => ({ t: (key: string) => key }),
+}));
+
 vi.mock("@tanstack/react-router", () => ({
     Link: ({ children, to, ...props }: any) => (
         <a href={to} {...props}>

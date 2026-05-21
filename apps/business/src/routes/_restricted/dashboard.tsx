@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { useTranslation } from "react-i18next";
 import { isDemoMode } from "@/config/auth";
 import { Breadcrumb } from "@/module/common/component/Breadcrumb";
 import { Head } from "@/module/common/component/Head";
@@ -16,11 +17,14 @@ export const Route = createFileRoute("/_restricted/dashboard")({
 });
 
 function Dashboard() {
+    const { t } = useTranslation();
     return (
         <>
             <Head
-                title={{ content: "Dashboard" }}
-                leftSection={<Breadcrumb current={"Home"} />}
+                title={{ content: t("shell.nav.dashboard") }}
+                leftSection={
+                    <Breadcrumb current={t("shell.breadcrumb.home")} />
+                }
             />
             <MyMerchants />
         </>

@@ -81,6 +81,9 @@ export default interface Resources {
         };
         shell: {
             breadcrumb: {
+                campaignsList: "Campaign List";
+                home: "Home";
+                membersList: "Members List";
                 merchant: "Merchant";
             };
             header: {

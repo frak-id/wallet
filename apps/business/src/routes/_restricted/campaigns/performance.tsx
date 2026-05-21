@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { useTranslation } from "react-i18next";
 import { isDemoMode } from "@/config/auth";
 import { TableCampaignPerformance } from "@/module/campaigns/component/TableCampaignPerformance";
 import { campaignsStatsQueryOptions } from "@/module/campaigns/queries/queryOptions";
@@ -18,11 +19,14 @@ export const Route = createFileRoute("/_restricted/campaigns/performance")({
 });
 
 function CampaignsPerformancePage() {
+    const { t } = useTranslation();
     return (
         <>
             <Head
-                title={{ content: "Campaigns" }}
-                leftSection={<Breadcrumb current={"Campaign List"} />}
+                title={{ content: t("shell.nav.campaigns") }}
+                leftSection={
+                    <Breadcrumb current={t("shell.nav.campaignsOverview")} />
+                }
             />
             <TableCampaignPerformance />
         </>
