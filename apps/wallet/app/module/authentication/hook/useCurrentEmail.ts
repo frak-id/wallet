@@ -6,6 +6,7 @@ import {
     sessionStore,
 } from "@frak-labs/wallet-shared";
 import { useQuery } from "@tanstack/react-query";
+import { useStore } from "zustand";
 
 /**
  * Read whether the current authenticator has an email attached.
@@ -19,7 +20,7 @@ import { useQuery } from "@tanstack/react-query";
  * no-op rather than a 401.
  */
 export function useCurrentEmail() {
-    const session = sessionStore(selectSession);
+    const session = useStore(sessionStore, selectSession);
 
     return useQuery<MyEmailResponse>({
         queryKey: authKey.myEmail,
