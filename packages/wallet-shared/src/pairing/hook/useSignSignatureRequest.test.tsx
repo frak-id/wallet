@@ -1,6 +1,7 @@
 import { renderHook, waitFor } from "@testing-library/react";
 import type { Address } from "viem";
 import { vi } from "vitest"; // Keep vi from vitest for vi.mock() hoisting
+import type { StoreApi } from "zustand/vanilla";
 import {
     afterEach,
     beforeEach,
@@ -8,6 +9,7 @@ import {
     expect,
     test,
 } from "../../../tests/vitest-fixtures";
+import type { Session } from "../../types/Session";
 import type { TargetPairingClient } from "../clients/target";
 import type { TargetPairingPendingSignature } from "../types";
 import {
@@ -15,13 +17,30 @@ import {
     useSignSignatureRequest,
 } from "./useSignSignatureRequest";
 
+type MockSessionState = { webauthnSession: Session | null };
+
 vi.mock("../../stores/sessionStore", async () => {
     const { createStore } = await import("zustand/vanilla");
     return {
-        sessionStore: createStore<any>(() => ({ webauthnSession: null })),
-        selectWebauthnSession: vi.fn((state) => state.webauthnSession),
+        sessionStore: createStore<MockSessionState>(() => ({
+            webauthnSession: null,
+        })),
+        selectWebauthnSession: vi.fn(
+            (state: MockSessionState) => state.webauthnSession
+        ),
     };
 });
+
+// `vi.mock` swaps `sessionStore` for a vanilla store typed against
+// `MockSessionState`, but TypeScript resolves the import against the real
+// `SessionStore` type. This helper centralises the cast so each test stays
+// fully typed without leaking `any`.
+async function getMockedSessionStore(): Promise<StoreApi<MockSessionState>> {
+    const mod = (await import("../../stores/sessionStore")) as unknown as {
+        sessionStore: StoreApi<MockSessionState>;
+    };
+    return mod.sessionStore;
+}
 
 vi.mock("../../wallet/smartWallet/signature", () => ({
     signHashViaWebAuthN: vi.fn(),
@@ -51,8 +70,7 @@ describe("useSignSignatureRequest", () => {
     test("should throw error when no session is present", async ({
         queryWrapper,
     }) => {
-        const { sessionStore } = await import("../../stores/sessionStore");
-
+        const sessionStore = await getMockedSessionStore();
         sessionStore.setState({ webauthnSession: null }, true);
 
         const { result } = renderHook(
@@ -73,7 +91,7 @@ describe("useSignSignatureRequest", () => {
         queryWrapper,
         mockSession,
     }) => {
-        const { sessionStore } = await import("../../stores/sessionStore");
+        const sessionStore = await getMockedSessionStore();
         const { signHashViaWebAuthN } = await import(
             "../../wallet/smartWallet/signature"
         );
@@ -108,7 +126,7 @@ describe("useSignSignatureRequest", () => {
         queryWrapper,
         mockSession,
     }) => {
-        const { sessionStore } = await import("../../stores/sessionStore");
+        const sessionStore = await getMockedSessionStore();
         const { signHashViaWebAuthN } = await import(
             "../../wallet/smartWallet/signature"
         );
@@ -151,7 +169,7 @@ describe("useSignSignatureRequest", () => {
         queryWrapper,
         mockSession,
     }) => {
-        const { sessionStore } = await import("../../stores/sessionStore");
+        const sessionStore = await getMockedSessionStore();
         const { signHashViaWebAuthN } = await import(
             "../../wallet/smartWallet/signature"
         );

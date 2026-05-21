@@ -5,6 +5,7 @@
 
 import { render, screen } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import type { StoreApi } from "zustand/vanilla";
 import { OriginPairingState } from "./index";
 
 // Mock react-i18next
@@ -14,14 +15,18 @@ vi.mock("react-i18next", () => ({
     }),
 }));
 
+type MockSessionState = {
+    distantWebauthnSession: { address: `0x${string}` } | null;
+};
+
 vi.mock("../../../stores/sessionStore", async () => {
     const { createStore } = await import("zustand/vanilla");
     return {
-        sessionStore: createStore<any>(() => ({
+        sessionStore: createStore<MockSessionState>(() => ({
             distantWebauthnSession: null,
         })),
         selectDistantWebauthnSession: vi.fn(
-            (state: any) => state.distantWebauthnSession
+            (state: MockSessionState) => state.distantWebauthnSession
         ),
     };
 });
@@ -58,32 +63,46 @@ vi.mock("../../clients/store", async () => {
 });
 
 describe("OriginPairingState", () => {
-    let mockSessionState: { distantWebauthnSession: any };
+    let mockSessionState: MockSessionState;
     let mockPairingState: PairingState;
 
     beforeEach(async () => {
         vi.clearAllMocks();
-        const { sessionStore } = await import("../../../stores/sessionStore");
+        // `vi.mock` swaps `sessionStore` for a vanilla store typed against
+        // `MockSessionState`, but TypeScript resolves the import against the
+        // real `SessionStore` type. Cast through the mock shape so
+        // `setState`/`getState` stay typed.
+        const { sessionStore } = (await import(
+            "../../../stores/sessionStore"
+        )) as unknown as { sessionStore: StoreApi<MockSessionState> };
         sessionStore.setState({ distantWebauthnSession: null }, true);
-        mockSessionState = new Proxy({} as any, {
-            get: (_, key: string) => (sessionStore.getState() as any)[key],
-            set: (_, key: string, value) => {
-                sessionStore.setState({ [key]: value });
+        mockSessionState = new Proxy({} as MockSessionState, {
+            get: (_, key) =>
+                sessionStore.getState()[key as keyof MockSessionState],
+            set: (_, key, value) => {
+                sessionStore.setState({
+                    [key as keyof MockSessionState]: value,
+                });
                 return true;
             },
         });
 
         const { getOriginPairingClient } = await import("../../clients/store");
-        const pairingStore = (getOriginPairingClient() as any)
-            .store as import("zustand/vanilla").StoreApi<PairingState>;
+        const pairingStore = (
+            getOriginPairingClient() as unknown as {
+                store: StoreApi<PairingState>;
+            }
+        ).store;
         pairingStore.setState(
             { status: "idle", signatureRequests: new Map() },
             true
         );
-        mockPairingState = new Proxy({} as any, {
-            get: (_, key: string) => (pairingStore.getState() as any)[key],
-            set: (_, key: string, value) => {
-                pairingStore.setState({ [key]: value });
+        mockPairingState = new Proxy({} as PairingState, {
+            get: (_, key) => pairingStore.getState()[key as keyof PairingState],
+            set: (_, key, value) => {
+                pairingStore.setState({
+                    [key as keyof PairingState]: value,
+                });
                 return true;
             },
         });

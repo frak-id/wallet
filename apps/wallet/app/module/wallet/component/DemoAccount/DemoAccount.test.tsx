@@ -1,5 +1,6 @@
 import { render, screen } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import type { StoreApi } from "zustand/vanilla";
 import { DemoAccount } from "./index";
 
 const mockDecodeJwt = vi.fn();
@@ -45,15 +46,23 @@ describe("DemoAccount", () => {
 
     beforeEach(async () => {
         vi.clearAllMocks();
-        const { sessionStore } = await import("@frak-labs/wallet-shared");
+        // `vi.mock` replaces `sessionStore` with a vanilla store typed for the
+        // local `StoreState`, but TypeScript resolves the import against the
+        // real `@frak-labs/wallet-shared` types. Cast to the mock's shape so
+        // `setState` is correctly typed without using `any`.
+        const { sessionStore } = (await import(
+            "@frak-labs/wallet-shared"
+        )) as unknown as { sessionStore: StoreApi<StoreState> };
         sessionStore.setState(
             { demoPrivateKey: undefined, sdkSession: undefined },
             true
         );
         mockStoreState = new Proxy({} as StoreState, {
-            get: (_, key: string) => (sessionStore.getState() as any)[key],
-            set: (_, key: string, value) => {
-                sessionStore.setState({ [key]: value });
+            get: (_, key) => sessionStore.getState()[key as keyof StoreState],
+            set: (_, key, value) => {
+                sessionStore.setState({
+                    [key as keyof StoreState]: value,
+                });
                 return true;
             },
         });

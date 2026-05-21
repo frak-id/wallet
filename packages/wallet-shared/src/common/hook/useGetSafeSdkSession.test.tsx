@@ -1,5 +1,6 @@
 import { renderHook, waitFor } from "@testing-library/react";
 import { vi } from "vitest"; // Keep vi from vitest for vi.mock() hoisting
+import type { StoreApi } from "zustand/vanilla";
 import {
     afterEach,
     beforeEach,
@@ -11,27 +12,39 @@ import type { LastWebAuthNAction } from "../../stores/types";
 import type { SdkSession, Session } from "../../types/Session";
 import { useGetSafeSdkSession } from "./useGetSafeSdkSession";
 
+type MockSessionState = {
+    sdkSession: SdkSession | null;
+    session: Session | null;
+    setSdkSession: (s: SdkSession | null) => void;
+};
+
+type MockAuthState = {
+    lastWebAuthNAction: LastWebAuthNAction | null;
+};
+
 // Mock dependencies
 vi.mock("../../stores/sessionStore", async () => {
     const { createStore } = await import("zustand/vanilla");
     return {
-        sessionStore: createStore<any>(() => ({
+        sessionStore: createStore<MockSessionState>(() => ({
             sdkSession: null,
             session: null,
             setSdkSession: () => {},
         })),
-        selectSdkSession: vi.fn((state) => state.sdkSession),
-        selectSession: vi.fn((state) => state.session),
+        selectSdkSession: vi.fn((state: MockSessionState) => state.sdkSession),
+        selectSession: vi.fn((state: MockSessionState) => state.session),
     };
 });
 
 vi.mock("../../stores/authenticationStore", async () => {
     const { createStore } = await import("zustand/vanilla");
     return {
-        authenticationStore: createStore<any>(() => ({
+        authenticationStore: createStore<MockAuthState>(() => ({
             lastWebAuthNAction: null,
         })),
-        selectLastWebAuthNAction: vi.fn((state) => state.lastWebAuthNAction),
+        selectLastWebAuthNAction: vi.fn(
+            (state: MockAuthState) => state.lastWebAuthNAction
+        ),
     };
 });
 
@@ -72,15 +85,9 @@ vi.mock("../queryKeys/sdk", () => ({
 }));
 
 describe("useGetSafeSdkSession", () => {
-    let mockSetSdkSession: (sdkSession: any) => void;
-    let mockSessionState: {
-        sdkSession: SdkSession | null;
-        session: Session | null;
-        setSdkSession: (sdkSession: any) => void;
-    };
-    let mockAuthState: {
-        lastWebAuthNAction: LastWebAuthNAction | null;
-    };
+    let mockSetSdkSession: (sdkSession: SdkSession | null) => void;
+    let mockSessionState: MockSessionState;
+    let mockAuthState: MockAuthState;
     let mockBackendAPI: {
         isValid: { get: ReturnType<typeof vi.fn> };
         fromWebAuthNSignature: { post: ReturnType<typeof vi.fn> };
@@ -94,10 +101,17 @@ describe("useGetSafeSdkSession", () => {
     beforeEach(async () => {
         vi.clearAllMocks();
 
-        const { sessionStore } = await import("../../stores/sessionStore");
-        const { authenticationStore } = await import(
+        // `vi.mock` swaps the stores for vanilla stores typed against the
+        // local `MockSessionState`/`MockAuthState`, but TypeScript resolves
+        // the imports against the real `SessionStore`/`AuthenticationStore`
+        // types. Cast through the mock shapes so `setState`/`getState`
+        // remain fully typed (no `any` leakage).
+        const { sessionStore } = (await import(
+            "../../stores/sessionStore"
+        )) as unknown as { sessionStore: StoreApi<MockSessionState> };
+        const { authenticationStore } = (await import(
             "../../stores/authenticationStore"
-        );
+        )) as unknown as { authenticationStore: StoreApi<MockAuthState> };
 
         // Setup mock store state - Proxy bridges property assignments to
         // vanilla store setState so existing test mutations still work.
@@ -110,20 +124,25 @@ describe("useGetSafeSdkSession", () => {
             },
             true
         );
-        mockSessionState = new Proxy({} as any, {
-            get: (_, key: string) => (sessionStore.getState() as any)[key],
-            set: (_, key: string, value) => {
-                sessionStore.setState({ [key]: value });
+        mockSessionState = new Proxy({} as MockSessionState, {
+            get: (_, key) =>
+                sessionStore.getState()[key as keyof MockSessionState],
+            set: (_, key, value) => {
+                sessionStore.setState({
+                    [key as keyof MockSessionState]: value,
+                });
                 return true;
             },
         });
 
         authenticationStore.setState({ lastWebAuthNAction: null }, true);
-        mockAuthState = new Proxy({} as any, {
-            get: (_, key: string) =>
-                (authenticationStore.getState() as any)[key],
-            set: (_, key: string, value) => {
-                authenticationStore.setState({ [key]: value });
+        mockAuthState = new Proxy({} as MockAuthState, {
+            get: (_, key) =>
+                authenticationStore.getState()[key as keyof MockAuthState],
+            set: (_, key, value) => {
+                authenticationStore.setState({
+                    [key as keyof MockAuthState]: value,
+                });
                 return true;
             },
         });

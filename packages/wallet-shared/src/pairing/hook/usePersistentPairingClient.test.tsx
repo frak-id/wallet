@@ -1,5 +1,6 @@
 import { renderHook } from "@testing-library/react";
 import { vi } from "vitest"; // Keep vi from vitest for vi.mock() hoisting
+import type { StoreApi } from "zustand/vanilla";
 import {
     afterEach,
     beforeEach,
@@ -9,17 +10,24 @@ import {
 } from "../../../tests/vitest-fixtures";
 import { usePersistentPairingClient } from "./usePersistentPairingClient";
 
+type MockSessionState = {
+    webauthnSession: { address: `0x${string}` } | null;
+    distantWebauthnSession: { address: `0x${string}` } | null;
+};
+
 // Mock dependencies
 vi.mock("../../stores/sessionStore", async () => {
     const { createStore } = await import("zustand/vanilla");
     return {
-        sessionStore: createStore<any>(() => ({
+        sessionStore: createStore<MockSessionState>(() => ({
             webauthnSession: null,
             distantWebauthnSession: null,
         })),
-        selectWebauthnSession: vi.fn((state) => state.webauthnSession),
+        selectWebauthnSession: vi.fn(
+            (state: MockSessionState) => state.webauthnSession
+        ),
         selectDistantWebauthnSession: vi.fn(
-            (state) => state.distantWebauthnSession
+            (state: MockSessionState) => state.distantWebauthnSession
         ),
     };
 });
@@ -30,25 +38,31 @@ vi.mock("../clients/store", () => ({
 }));
 
 describe("usePersistentPairingClient", () => {
-    let mockSessionState: {
-        webauthnSession: null | { address: `0x${string}` };
-        distantWebauthnSession: null | { address: `0x${string}` };
-    };
+    let mockSessionState: MockSessionState;
     let mockOriginClient: { reconnect: ReturnType<typeof vi.fn> };
     let mockTargetClient: { reconnect: ReturnType<typeof vi.fn> };
 
     beforeEach(async () => {
         vi.clearAllMocks();
 
-        const { sessionStore } = await import("../../stores/sessionStore");
+        // `vi.mock` swaps `sessionStore` for a vanilla store typed against
+        // `MockSessionState`, but TypeScript resolves the import against the
+        // real `SessionStore` type. Cast through the mock shape so
+        // `setState`/`getState` stay typed.
+        const { sessionStore } = (await import(
+            "../../stores/sessionStore"
+        )) as unknown as { sessionStore: StoreApi<MockSessionState> };
         sessionStore.setState(
             { webauthnSession: null, distantWebauthnSession: null },
             true
         );
-        mockSessionState = new Proxy({} as any, {
-            get: (_, key: string) => (sessionStore.getState() as any)[key],
-            set: (_, key: string, value) => {
-                sessionStore.setState({ [key]: value });
+        mockSessionState = new Proxy({} as MockSessionState, {
+            get: (_, key) =>
+                sessionStore.getState()[key as keyof MockSessionState],
+            set: (_, key, value) => {
+                sessionStore.setState({
+                    [key as keyof MockSessionState]: value,
+                });
                 return true;
             },
         });
