@@ -1,4 +1,4 @@
-interface Resources {
+export default interface Resources {
     customized: {
         sdk: {
             modal: {
@@ -603,7 +603,9 @@ interface Resources {
                 clearAriaLabel: "Clear email address";
                 conflict: {
                     back: "Back to my profile";
-                    description: "This email is already linked to another wallet. Account merge is coming soon — for now, please use a different email.";
+                    combine: "Combine my accounts";
+                    description: "This email is already linked to another wallet. Use a different email or come back later.";
+                    descriptionMergeable: "This email is already on another of your accounts. You can combine them into one — quick, two confirmations, all on this device.";
                     title: "Email already in use";
                     useDifferent: "Use a different email";
                 };
@@ -646,6 +648,80 @@ interface Resources {
                 useQRCode: "Use QR code to connect";
             };
             manageNotifications: "<strong>Manage notifications</strong> <br /> Open settings to control your notifications";
+            merge: {
+                assets: {
+                    acknowledge: "I've moved any funds, or my other account has none";
+                    back: "Back";
+                    cannotCheck: {
+                        description: "Open your other account first if you're unsure. If it holds tokens, move them before continuing — they cannot be recovered after combining.";
+                        title: "We can't check the other account from here";
+                    };
+                    checking: "Checking your balances…";
+                    continue: "Continue";
+                    description: "Before combining, transfer any tokens from {{loser}} to {{winner}}. Once combined, funds left on the absorbed account can't be moved.";
+                    holdings: {
+                        title: "Tokens detected on the absorbed account";
+                    };
+                    noFunds: "Good news — no tokens to move on the absorbed account.";
+                    title: "Move your funds first";
+                    transferDisabledTitle: "Automatic transfer ships in the next release. For now please move funds manually.";
+                    transferPlaceholder: "Transfer tokens (coming soon)";
+                };
+                consent: {
+                    description: "We need a quick confirmation with the passkey from the other account to make sure both belong to you. You'll see a system prompt.";
+                    error: "We couldn't confirm with the other passkey on this device. Make sure it's available here, then try again.";
+                    help: {
+                        description: "Your device will ask you to confirm with face, fingerprint or PIN — same as when you log in. We never see your biometrics.";
+                        title: "What happens here";
+                    };
+                    retry: "Try again";
+                    title: "Confirm with your other passkey";
+                    verify: "Confirm";
+                };
+                finalize: {
+                    cancel: "Cancel";
+                    description: "Almost done — one more confirmation with the main account to merge everything together.";
+                    error: "The combine couldn't finish. Tap retry — we'll pick up where we left off.";
+                    errorDescription: "Something interrupted the combine. Your accounts are safe — try again to finish.";
+                    progress: {
+                        body: "We're signing the on-chain step and tidying up your accounts. You may see a quick prompt from your device.";
+                        title: "Working on it…";
+                    };
+                    retry: "Retry";
+                    title: "Combining your accounts";
+                };
+                preview: {
+                    cancel: "Cancel";
+                    combineArrow: "↓ combine into ↓";
+                    continue: "Continue";
+                    description: "We found another account of yours using {{email}}. Here's what will move when you combine them — no changes happen until you confirm.";
+                    errorDescription: "Something went wrong while preparing the combine. Please try again.";
+                    errorRetry: "Try again";
+                    errorTitle: "We couldn't load your accounts";
+                    gains: {
+                        description: "{{referrals}} referrals, {{interactions}} interactions and {{assets}} reward events — all on one account.";
+                        title: "What you'll get";
+                    };
+                    labels: {
+                        otherAccount: "Your other account";
+                        thisAccount: "This account";
+                    };
+                    loadingDescription: "We're double-checking both accounts before we show you what will move.";
+                    loadingTitle: "Getting things ready…";
+                    stats: {
+                        assets: "Rewards";
+                        interactions: "Interactions";
+                        referrals: "Referrals";
+                    };
+                    title: "Combine your accounts";
+                    winnerBadge: "Stays as primary";
+                };
+                success: {
+                    back: "Back to my profile";
+                    description: "{{email}} is linked to your wallet. Everything from your other account moved over — referrals, history, rewards.";
+                    title: "Your accounts are now one";
+                };
+            };
             notifications: {
                 noNotifications: "No notifications";
             };
@@ -999,5 +1075,3 @@ interface Resources {
         };
     };
 }
-
-export default Resources;

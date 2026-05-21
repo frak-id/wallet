@@ -4,7 +4,7 @@ import {
     frakChainIds,
 } from "@frak-labs/app-essentials/blockchain";
 import { and, eq, isNull } from "drizzle-orm";
-import type { Address } from "viem";
+import { type Address, getAddress } from "viem";
 import {
     type AuthenticatorBindingSelect,
     authenticatorsTable,
@@ -71,6 +71,7 @@ export class AuthenticatorRepository {
         smartWalletAddress: Address;
     }): Promise<AuthenticatorDocument | null> {
         const db = getLibsqlDb();
+        const formattedAddress = getAddress(smartWalletAddress);
 
         const [bindingRow] = await db
             .select({
@@ -82,7 +83,7 @@ export class AuthenticatorRepository {
                 and(
                     eq(
                         authenticatorWalletBindingsTable.smartWalletAddress,
-                        smartWalletAddress
+                        formattedAddress
                     ),
                     eq(authenticatorWalletBindingsTable.chainId, chainId),
                     isNull(authenticatorWalletBindingsTable.unlinkedAt)
@@ -96,9 +97,7 @@ export class AuthenticatorRepository {
         const [row] = await db
             .select()
             .from(authenticatorsTable)
-            .where(
-                eq(authenticatorsTable.smartWalletAddress, smartWalletAddress)
-            )
+            .where(eq(authenticatorsTable.smartWalletAddress, formattedAddress))
             .limit(1);
 
         if (!row) return null;
@@ -140,7 +139,9 @@ export class AuthenticatorRepository {
                 .insert(authenticatorsTable)
                 .values({
                     id: authenticator._id,
-                    smartWalletAddress: authenticator.smartWalletAddress,
+                    smartWalletAddress: authenticator.smartWalletAddress
+                        ? getAddress(authenticator.smartWalletAddress)
+                        : undefined,
                     userAgent: authenticator.userAgent,
                     publicKeyX: authenticator.publicKey.x,
                     publicKeyY: authenticator.publicKey.y,
@@ -156,7 +157,9 @@ export class AuthenticatorRepository {
             if (authenticator.smartWalletAddress) {
                 await this.seedInitialBindings(tx, {
                     credentialId: authenticator._id,
-                    smartWalletAddress: authenticator.smartWalletAddress,
+                    smartWalletAddress: getAddress(
+                        authenticator.smartWalletAddress
+                    ),
                 });
             }
 
@@ -287,7 +290,7 @@ export class AuthenticatorRepository {
                 .values({
                     authenticatorId: credentialId,
                     chainId,
-                    smartWalletAddress: toSmartWalletAddress,
+                    smartWalletAddress: getAddress(toSmartWalletAddress),
                     createdAt: now,
                     reason,
                 })
@@ -295,7 +298,7 @@ export class AuthenticatorRepository {
 
             await tx
                 .update(authenticatorsTable)
-                .set({ smartWalletAddress: toSmartWalletAddress })
+                .set({ smartWalletAddress: getAddress(toSmartWalletAddress) })
                 .where(eq(authenticatorsTable.id, credentialId));
 
             const [freshRow] = await tx

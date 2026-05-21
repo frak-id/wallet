@@ -114,7 +114,9 @@
             "submitError": "Unable to save this email right now. Please try again.",
             "conflict": {
                 "title": "Email already in use",
-                "description": "This email is already linked to another wallet. Account merge is coming soon — for now, please use a different email.",
+                "description": "This email is already linked to another wallet. Use a different email or come back later.",
+                "descriptionMergeable": "This email is already on another of your accounts. You can combine them into one — quick, two confirmations, all on this device.",
+                "combine": "Combine my accounts",
                 "useDifferent": "Use a different email",
                 "back": "Back to my profile"
             },
@@ -127,6 +129,80 @@
             "card": {
                 "title": "Add your email",
                 "description": "Add your email to be able to recover your wallet later."
+            }
+        },
+        "merge": {
+            "preview": {
+                "title": "Combine your accounts",
+                "description": "We found another account of yours using {{email}}. Here's what will move when you combine them — no changes happen until you confirm.",
+                "loadingTitle": "Getting things ready…",
+                "loadingDescription": "We're double-checking both accounts before we show you what will move.",
+                "errorTitle": "We couldn't load your accounts",
+                "errorDescription": "Something went wrong while preparing the combine. Please try again.",
+                "errorRetry": "Try again",
+                "winnerBadge": "Stays as primary",
+                "labels": {
+                    "thisAccount": "This account",
+                    "otherAccount": "Your other account"
+                },
+                "combineArrow": "↓ combine into ↓",
+                "stats": {
+                    "referrals": "Referrals",
+                    "interactions": "Interactions",
+                    "assets": "Rewards"
+                },
+                "gains": {
+                    "title": "What you'll get",
+                    "description": "{{referrals}} referrals, {{interactions}} interactions and {{assets}} reward events — all on one account."
+                },
+                "continue": "Continue",
+                "cancel": "Cancel"
+            },
+            "assets": {
+                "title": "Move your funds first",
+                "description": "Before combining, transfer any tokens from {{loser}} to {{winner}}. Once combined, funds left on the absorbed account can't be moved.",
+                "checking": "Checking your balances…",
+                "noFunds": "Good news — no tokens to move on the absorbed account.",
+                "holdings": {
+                    "title": "Tokens detected on the absorbed account"
+                },
+                "cannotCheck": {
+                    "title": "We can't check the other account from here",
+                    "description": "Open your other account first if you're unsure. If it holds tokens, move them before continuing — they cannot be recovered after combining."
+                },
+                "transferPlaceholder": "Transfer tokens (coming soon)",
+                "transferDisabledTitle": "Automatic transfer ships in the next release. For now please move funds manually.",
+                "acknowledge": "I've moved any funds, or my other account has none",
+                "continue": "Continue",
+                "back": "Back"
+            },
+            "consent": {
+                "title": "Confirm with your other passkey",
+                "description": "We need a quick confirmation with the passkey from the other account to make sure both belong to you. You'll see a system prompt.",
+                "help": {
+                    "title": "What happens here",
+                    "description": "Your device will ask you to confirm with face, fingerprint or PIN — same as when you log in. We never see your biometrics."
+                },
+                "verify": "Confirm",
+                "retry": "Try again",
+                "error": "We couldn't confirm with the other passkey on this device. Make sure it's available here, then try again."
+            },
+            "finalize": {
+                "title": "Combining your accounts",
+                "description": "Almost done — one more confirmation with the main account to merge everything together.",
+                "errorDescription": "Something interrupted the combine. Your accounts are safe — try again to finish.",
+                "progress": {
+                    "title": "Working on it…",
+                    "body": "We're signing the on-chain step and tidying up your accounts. You may see a quick prompt from your device."
+                },
+                "error": "The combine couldn't finish. Tap retry — we'll pick up where we left off.",
+                "retry": "Retry",
+                "cancel": "Cancel"
+            },
+            "success": {
+                "title": "Your accounts are now one",
+                "description": "{{email}} is linked to your wallet. Everything from your other account moved over — referrals, history, rewards.",
+                "back": "Back to my profile"
             }
         },
         "referral": {

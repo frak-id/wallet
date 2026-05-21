@@ -20,12 +20,26 @@ export type AuthenticationResponseJSON = {
 };
 
 /**
+ * A snapshot of `{ session, sdkSession }` parked on the session store while
+ * the wallet temporarily logs in as a different credential — currently only
+ * the wallet-merge flow, which has to switch to the winner credential to
+ * sign the on-chain `addPassKey` userOp and then restore the original
+ * session afterwards. Persisted alongside the live session so a tab refresh
+ * mid-flow does not lose the restore target.
+ */
+export type PreviousSessionSnapshot = {
+    session: Session;
+    sdkSession: SdkSession | null;
+};
+
+/**
  * Session Store Types
  */
 export type SessionStore = {
     // State
     session: Session | null;
     sdkSession: SdkSession | null;
+    previousSession: PreviousSessionSnapshot | null;
     demoPrivateKey: Hex | null;
 
     // Actions
@@ -33,6 +47,20 @@ export type SessionStore = {
     setSdkSession: (sdkSession: SdkSession | null) => void;
     setDemoPrivateKey: (key: Hex | null) => void;
     clearSession: () => void;
+    /**
+     * Save the current `{ session, sdkSession }` into the `previousSession`
+     * slot and null out the live session. The next `useLogin` call then
+     * writes the swapped-in session in its place. Refuses to overwrite an
+     * existing snapshot (returns `false`) so a flow that fails to pop
+     * cannot quietly lose the original target.
+     */
+    pushSession: () => boolean;
+    /**
+     * Restore the snapshot saved by `pushSession` into the live session
+     * slots. Clears the snapshot. Returns `false` when there is nothing to
+     * restore.
+     */
+    popSession: () => boolean;
 };
 
 /**

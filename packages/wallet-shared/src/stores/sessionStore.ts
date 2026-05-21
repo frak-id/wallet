@@ -12,10 +12,11 @@ import type { SessionStore } from "./types";
  */
 export const sessionStore = createStore<SessionStore>()(
     persist(
-        (set) => ({
+        (set, get) => ({
             // Initial state
             session: null,
             sdkSession: null,
+            previousSession: null,
             demoPrivateKey: null,
 
             // Actions
@@ -26,14 +27,36 @@ export const sessionStore = createStore<SessionStore>()(
                 set({
                     session: null,
                     sdkSession: null,
+                    previousSession: null,
                     demoPrivateKey: null,
                 }),
+            pushSession: () => {
+                const { session, sdkSession, previousSession } = get();
+                if (previousSession || !session) return false;
+                set({
+                    previousSession: { session, sdkSession },
+                    session: null,
+                    sdkSession: null,
+                });
+                return true;
+            },
+            popSession: () => {
+                const { previousSession } = get();
+                if (!previousSession) return false;
+                set({
+                    session: previousSession.session,
+                    sdkSession: previousSession.sdkSession,
+                    previousSession: null,
+                });
+                return true;
+            },
         }),
         {
             name: "frak_session_store",
             partialize: (state) => ({
                 session: state.session,
                 sdkSession: state.sdkSession,
+                previousSession: state.previousSession,
                 demoPrivateKey: state.demoPrivateKey,
             }),
         }
@@ -49,6 +72,10 @@ export const selectSession = (state: SessionStore) => state.session;
 
 // Get the SDK session
 export const selectSdkSession = (state: SessionStore) => state.sdkSession;
+
+// Get the parked previous session (set by `pushSession`, restored by `popSession`)
+export const selectPreviousSession = (state: SessionStore) =>
+    state.previousSession;
 
 // Get the demo private key
 export const selectDemoPrivateKey = (state: SessionStore) =>

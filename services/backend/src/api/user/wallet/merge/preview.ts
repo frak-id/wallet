@@ -29,14 +29,11 @@ export const mergePreviewRoutes = new Elysia().use(sessionContext).get(
             );
         }
 
-        const preview =
-            await OrchestrationContext.orchestrators.walletMerge.preview({
-                requesterWallet: walletSession.address,
-                requesterAuthenticatorId: walletSession.authenticatorId,
-                targetAuthenticatorId: query.targetAuthenticatorId,
-            });
-
-        return preview;
+        return await OrchestrationContext.orchestrators.walletMerge.preview({
+            requesterWallet: walletSession.address,
+            requesterAuthenticatorId: walletSession.authenticatorId,
+            targetAuthenticatorId: query.targetAuthenticatorId,
+        });
     },
     {
         withWalletAuthent: true,

@@ -49,4 +49,18 @@ export namespace authKey {
     const myEmailBase = "myEmail" as const;
     export const myEmail = [base, myEmailBase] as const;
     export const associateEmail = [base, myEmailBase, "associate"] as const;
+
+    /**
+     * Keys for the same-device wallet-merge flow. Preview is read-only and
+     * fully recomputable from the same inputs, so the React Query cache is
+     * keyed by the target credential.
+     */
+    const mergeBase = "merge" as const;
+    export const merge = {
+        preview: (targetAuthenticatorId: string) =>
+            [base, mergeBase, "preview", targetAuthenticatorId] as const,
+        consent: [base, mergeBase, "consent"] as const,
+        finalise: [base, mergeBase, "finalise"] as const,
+        switchAuthenticator: [base, mergeBase, "switchAuthenticator"] as const,
+    };
 }

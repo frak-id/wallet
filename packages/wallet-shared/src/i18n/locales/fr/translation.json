@@ -112,7 +112,9 @@
             "submitError": "Impossible d'enregistrer cet e-mail pour le moment. Réessaie.",
             "conflict": {
                 "title": "E-mail déjà utilisé",
-                "description": "Cet e-mail est déjà associé à un autre portefeuille. La fusion de comptes arrive bientôt — utilise un autre e-mail pour le moment.",
+                "description": "Cet e-mail est déjà associé à un autre portefeuille. Utilise-en un autre, ou reviens plus tard.",
+                "descriptionMergeable": "Cet e-mail est déjà sur un autre de tes comptes. Tu peux les combiner en un seul — rapide, deux confirmations, tout depuis cet appareil.",
+                "combine": "Combiner mes comptes",
                 "useDifferent": "Utiliser un autre e-mail",
                 "back": "Retour au profil"
             },
@@ -125,6 +127,80 @@
             "card": {
                 "title": "Ajoute ton e-mail",
                 "description": "Ajoute ton e-mail pour pouvoir récupérer ton portefeuille plus tard."
+            }
+        },
+        "merge": {
+            "preview": {
+                "title": "Combine tes comptes",
+                "description": "On a trouvé un autre de tes comptes avec {{email}}. Voilà ce qui sera déplacé en les combinant — rien ne change tant que tu n'as pas confirmé.",
+                "loadingTitle": "Préparation en cours…",
+                "loadingDescription": "On vérifie les deux comptes avant de te montrer ce qui va bouger.",
+                "errorTitle": "Impossible de charger tes comptes",
+                "errorDescription": "Quelque chose s'est mal passé pendant la préparation. Réessaie s'il te plaît.",
+                "errorRetry": "Réessayer",
+                "winnerBadge": "Compte principal",
+                "labels": {
+                    "thisAccount": "Ce compte",
+                    "otherAccount": "Ton autre compte"
+                },
+                "combineArrow": "↓ combiner dans ↓",
+                "stats": {
+                    "referrals": "Parrainages",
+                    "interactions": "Interactions",
+                    "assets": "Récompenses"
+                },
+                "gains": {
+                    "title": "Ce que tu vas récupérer",
+                    "description": "{{referrals}} parrainages, {{interactions}} interactions et {{assets}} récompenses — tout sur un seul compte."
+                },
+                "continue": "Continuer",
+                "cancel": "Annuler"
+            },
+            "assets": {
+                "title": "Transfère d'abord tes fonds",
+                "description": "Avant de combiner, transfère tes jetons de {{loser}} vers {{winner}}. Une fois combinés, les fonds laissés sur le compte absorbé ne pourront plus être déplacés.",
+                "checking": "Vérification de tes soldes…",
+                "noFunds": "Bonne nouvelle — rien à déplacer sur le compte absorbé.",
+                "holdings": {
+                    "title": "Jetons détectés sur le compte absorbé"
+                },
+                "cannotCheck": {
+                    "title": "On ne peut pas vérifier l'autre compte depuis ici",
+                    "description": "Ouvre d'abord ton autre compte si tu n'es pas sûr·e. S'il contient des jetons, transfère-les avant de continuer — ils ne pourront pas être récupérés ensuite."
+                },
+                "transferPlaceholder": "Transférer (bientôt disponible)",
+                "transferDisabledTitle": "Le transfert automatique arrive dans la prochaine mise à jour. Pour l'instant, déplace les fonds manuellement.",
+                "acknowledge": "J'ai déplacé mes fonds, ou mon autre compte n'en a pas",
+                "continue": "Continuer",
+                "back": "Retour"
+            },
+            "consent": {
+                "title": "Confirme avec ton autre passkey",
+                "description": "On a besoin d'une rapide confirmation avec la passkey de l'autre compte pour vérifier qu'elles t'appartiennent toutes les deux. Une demande système va apparaître.",
+                "help": {
+                    "title": "Ce qui se passe",
+                    "description": "Ton appareil te demandera de confirmer avec ton visage, ton empreinte ou ton code — comme pour te connecter. Tes données biométriques ne nous sont jamais transmises."
+                },
+                "verify": "Confirmer",
+                "retry": "Réessayer",
+                "error": "Impossible de confirmer avec l'autre passkey sur cet appareil. Vérifie qu'elle est bien disponible ici, puis réessaie."
+            },
+            "finalize": {
+                "title": "Combinaison en cours",
+                "description": "Presque terminé — encore une confirmation avec le compte principal pour tout fusionner.",
+                "errorDescription": "Quelque chose a interrompu la combinaison. Tes comptes sont en sécurité — réessaie pour terminer.",
+                "progress": {
+                    "title": "Un instant…",
+                    "body": "On signe l'étape on-chain et on range tes comptes. Tu verras peut-être une rapide demande de ton appareil."
+                },
+                "error": "La combinaison n'a pas pu se terminer. Réessaie — on reprend là où on s'est arrêté.",
+                "retry": "Réessayer",
+                "cancel": "Annuler"
+            },
+            "success": {
+                "title": "Tes comptes ne font plus qu'un",
+                "description": "{{email}} est lié à ton portefeuille. Tout ce qui était sur ton autre compte a été transféré — parrainages, historique, récompenses.",
+                "back": "Retour au profil"
             }
         },
         "referral": {

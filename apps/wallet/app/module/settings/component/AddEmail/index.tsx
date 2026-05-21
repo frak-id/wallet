@@ -1,19 +1,34 @@
 import { Box } from "@frak-labs/design-system/components/Box";
 import { Text } from "@frak-labs/design-system/components/Text";
+import { selectSession, sessionStore } from "@frak-labs/wallet-shared";
 import { useNavigate } from "@tanstack/react-router";
 import { useCallback, useState } from "react";
 import { useTranslation } from "react-i18next";
+import type { Address } from "viem";
+import { useStore } from "zustand";
 import { useAssociateEmail } from "@/module/authentication/hook/useAssociateEmail";
 import {
     EmailFormScreen,
     emailFormScreenStyles,
 } from "@/module/common/component/EmailFormScreen";
+import { MergeFlow } from "@/module/walletMerge/component/MergeFlow";
 import { ConflictStep } from "./ConflictStep";
 import { SuccessStep } from "./SuccessStep";
 
 type FlowState =
     | { kind: "input" }
-    | { kind: "conflict" }
+    | {
+          kind: "conflict";
+          email: string;
+          targetAuthenticatorId?: string;
+          targetWallet?: Address;
+      }
+    | {
+          kind: "merging";
+          email: string;
+          targetAuthenticatorId: string;
+          targetWallet: Address;
+      }
     | { kind: "success"; email: string };
 
 /**
@@ -21,13 +36,14 @@ type FlowState =
  * from the wallet home card and the profile row when the current credential
  * has no email attached.
  *
- * Each terminal state (success, conflict) renders as a dedicated screen so
- * the input step stays clean and the user can navigate back without a
- * patchwork of conditional banners.
+ * Each terminal state (success, conflict, merging) renders as a dedicated
+ * screen so the input step stays clean and the user can navigate back
+ * without a patchwork of conditional banners.
  */
 export function AddEmail() {
     const { t } = useTranslation();
     const navigate = useNavigate();
+    const session = useStore(sessionStore, selectSession);
     const [flowState, setFlowState] = useState<FlowState>({ kind: "input" });
     const {
         associateEmail,
@@ -54,7 +70,12 @@ export function AddEmail() {
             try {
                 const result = await associateEmail(email);
                 if (result.status === "conflict") {
-                    setFlowState({ kind: "conflict" });
+                    setFlowState({
+                        kind: "conflict",
+                        email,
+                        targetAuthenticatorId: result.authenticatorId,
+                        targetWallet: result.wallet,
+                    });
                     return;
                 }
                 // Both `success` and `alreadyHasEmail` mean the credential
@@ -81,9 +102,65 @@ export function AddEmail() {
         );
     }
 
-    if (flowState.kind === "conflict") {
+    if (flowState.kind === "merging") {
+        if (!session?.authenticatorId) {
+            // Lost session mid-flow — fall back to the conflict screen
+            // which will steer the user to "use a different email" or
+            // restart from the input step.
+            return (
+                <ConflictStep
+                    targetAuthenticatorId={flowState.targetAuthenticatorId}
+                    targetWallet={flowState.targetWallet}
+                    onMerge={() => setFlowState({ kind: "input" })}
+                    onUseDifferent={backToInput}
+                    onBack={goToProfile}
+                />
+            );
+        }
         return (
-            <ConflictStep onUseDifferent={backToInput} onBack={goToProfile} />
+            <MergeFlow
+                email={flowState.email}
+                currentAuthenticatorId={session.authenticatorId}
+                targetAuthenticatorId={flowState.targetAuthenticatorId}
+                targetWallet={flowState.targetWallet}
+                onAbort={() =>
+                    setFlowState({
+                        kind: "conflict",
+                        email: flowState.email,
+                        targetAuthenticatorId: flowState.targetAuthenticatorId,
+                        targetWallet: flowState.targetWallet,
+                    })
+                }
+                onCompleted={goToProfile}
+            />
+        );
+    }
+
+    if (flowState.kind === "conflict") {
+        const canMerge = Boolean(
+            flowState.targetAuthenticatorId && flowState.targetWallet
+        );
+        return (
+            <ConflictStep
+                targetAuthenticatorId={flowState.targetAuthenticatorId}
+                targetWallet={flowState.targetWallet}
+                onMerge={() => {
+                    if (
+                        !canMerge ||
+                        !flowState.targetAuthenticatorId ||
+                        !flowState.targetWallet
+                    )
+                        return;
+                    setFlowState({
+                        kind: "merging",
+                        email: flowState.email,
+                        targetAuthenticatorId: flowState.targetAuthenticatorId,
+                        targetWallet: flowState.targetWallet,
+                    });
+                }}
+                onUseDifferent={backToInput}
+                onBack={goToProfile}
+            />
         );
     }
 
