@@ -1,6 +1,7 @@
 import { useWalletStatus } from "@frak-labs/react-sdk";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useDemoMode } from "@/module/common/atoms/demoMode";
 import { Button } from "@/module/common/component/Button";
 import { Head } from "@/module/common/component/Head";
@@ -16,6 +17,7 @@ export const Route = createFileRoute("/_restricted/settings")({
 });
 
 function Settings() {
+    const { t } = useTranslation();
     const navigate = useNavigate();
     const { data: walletStatus } = useWalletStatus();
     const { isDemoMode, setDemoMode } = useDemoMode();
@@ -25,35 +27,39 @@ function Settings() {
         setIsHydrated(true);
     }, []);
 
+    const showDemoCopy = isHydrated && isDemoMode;
+
     return (
         <>
-            <Head title={{ content: "Settings" }} />
+            <Head title={{ content: t("settings.title") }} />
 
-            <Panel title="Wallet">
+            <Panel title={t("settings.wallet.title")}>
                 <p className={walletAddress}>
-                    Your wallet address is {walletStatus?.wallet}
+                    {t("settings.wallet.address", {
+                        wallet: walletStatus?.wallet ?? "",
+                    })}
                 </p>
             </Panel>
 
-            <Panel title="Currency">
+            <Panel title={t("settings.currency.title")}>
                 <SelectCurrency />
             </Panel>
 
-            <Panel title="Language">
+            <Panel title={t("settings.language.title")}>
                 <LanguageSelector />
             </Panel>
 
             {isHydrated && !isDemoMode && (
-                <Panel title="Demo Mode">
+                <Panel title={t("settings.demo.title")}>
                     <DemoModeSwitch />
                 </Panel>
             )}
 
-            <Panel title="Logout">
+            <Panel title={t("settings.logout.title")}>
                 <p>
-                    {isHydrated && isDemoMode
-                        ? "Exit demo mode and return to the login page."
-                        : "You will be logged out of your account."}
+                    {showDemoCopy
+                        ? t("settings.logout.description_demo")
+                        : t("settings.logout.description")}
                 </p>
                 <Button
                     variant={"primary"}
@@ -66,7 +72,9 @@ function Settings() {
                         navigate({ to: "/login" });
                     }}
                 >
-                    {isHydrated && isDemoMode ? "Exit Demo Mode" : "Logout"}
+                    {showDemoCopy
+                        ? t("settings.logout.action_demo")
+                        : t("settings.logout.action")}
                 </Button>
             </Panel>
         </>

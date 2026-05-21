@@ -1,12 +1,14 @@
 import { Inline } from "@frak-labs/design-system/components/Inline";
 import { Stack } from "@frak-labs/design-system/components/Stack";
 import { Text } from "@frak-labs/design-system/components/Text";
+import { useTranslation } from "react-i18next";
 import { useDemoMode } from "@/module/common/atoms/demoMode";
 import { CallOut } from "@/module/common/component/CallOut";
 import { Switch } from "@/module/forms/Switch";
 import * as styles from "./demo-mode-switch.css";
 
 export function DemoModeSwitch() {
+    const { t } = useTranslation();
     const { isDemoMode, setDemoMode } = useDemoMode();
 
     return (
@@ -16,7 +18,7 @@ export function DemoModeSwitch() {
                     htmlFor="demo-mode-switch"
                     className={styles.demoModeSwitchLabel}
                 >
-                    Enable Demo Mode
+                    {t("settings.demo.label")}
                 </label>
                 <Switch
                     id="demo-mode-switch"
@@ -25,15 +27,10 @@ export function DemoModeSwitch() {
                 />
             </Inline>
             <Text as="p" variant="bodySmall" color="secondary">
-                When enabled, all data will be replaced with mock data for
-                demonstration purposes. This is useful for presentations and
-                testing without affecting real data.
+                {t("settings.demo.description")}
             </Text>
             {isDemoMode && (
-                <CallOut variant="warning">
-                    Demo mode is currently active. All operations will be
-                    simulated locally.
-                </CallOut>
+                <CallOut variant="warning">{t("settings.demo.active")}</CallOut>
             )}
         </Stack>
     );

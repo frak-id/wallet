@@ -1,16 +1,36 @@
 {
     "settings": {
+        "title": "Paramètres",
         "currency": {
+            "title": "Devise",
             "label": "Choisissez votre devise préférée",
             "placeholder": "Sélectionnez une devise"
         },
         "language": {
+            "title": "Langue",
             "label": "Choisissez votre langue préférée",
             "placeholder": "Sélectionnez une langue",
             "options": {
                 "en": "Anglais",
                 "fr": "Français"
             }
+        },
+        "wallet": {
+            "title": "Portefeuille",
+            "address": "Votre adresse de portefeuille est {{wallet}}"
+        },
+        "demo": {
+            "title": "Mode démo",
+            "label": "Activer le mode démo",
+            "description": "Une fois activé, toutes les données sont remplacées par des données fictives à des fins de démonstration. Utile pour des présentations ou des tests sans toucher aux données réelles.",
+            "active": "Le mode démo est actuellement actif. Toutes les opérations sont simulées localement."
+        },
+        "logout": {
+            "title": "Déconnexion",
+            "description": "Vous allez être déconnecté de votre compte.",
+            "description_demo": "Quitter le mode démo et revenir à la page de connexion.",
+            "action": "Se déconnecter",
+            "action_demo": "Quitter le mode démo"
         }
     }
 }

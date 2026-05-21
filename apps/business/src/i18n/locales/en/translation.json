@@ -1,16 +1,36 @@
 {
     "settings": {
+        "title": "Settings",
         "currency": {
+            "title": "Currency",
             "label": "Choose your preferred currency",
             "placeholder": "Select a currency"
         },
         "language": {
+            "title": "Language",
             "label": "Choose your preferred language",
             "placeholder": "Select a language",
             "options": {
                 "en": "English",
                 "fr": "French"
             }
+        },
+        "wallet": {
+            "title": "Wallet",
+            "address": "Your wallet address is {{wallet}}"
+        },
+        "demo": {
+            "title": "Demo Mode",
+            "label": "Enable Demo Mode",
+            "description": "When enabled, all data will be replaced with mock data for demonstration purposes. This is useful for presentations and testing without affecting real data.",
+            "active": "Demo mode is currently active. All operations will be simulated locally."
+        },
+        "logout": {
+            "title": "Logout",
+            "description": "You will be logged out of your account.",
+            "description_demo": "Exit demo mode and return to the login page.",
+            "action": "Logout",
+            "action_demo": "Exit Demo Mode"
         }
     }
 }
