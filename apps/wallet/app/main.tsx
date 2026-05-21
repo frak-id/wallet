@@ -20,6 +20,7 @@ import { StrictMode, startTransition } from "react";
 import { createRoot } from "react-dom/client";
 import { I18nextProvider, initReactI18next } from "react-i18next";
 import { initDeepLinks } from "./utils/deepLink";
+import { initKeyboardInset } from "./utils/keyboardInset";
 import { initSafeAreaInsets } from "./utils/safeArea";
 
 // Setup BigInt serialization polyfill
@@ -111,6 +112,7 @@ async function main() {
     // Initialize Tauri-specific features for mobile devices
     if (IS_TAURI) {
         await initSafeAreaInsets();
+        initKeyboardInset();
         await initDeepLinks((options) => {
             return router.navigate(
                 options as Parameters<typeof router.navigate>[0]
