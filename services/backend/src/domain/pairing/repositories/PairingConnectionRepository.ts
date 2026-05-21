@@ -12,6 +12,7 @@ import type {
 } from "../../auth/models/WalletSessionDto";
 import type { AuthenticatorRepository } from "../../auth/repositories/AuthenticatorRepository";
 import type { WalletSdkSessionService } from "../../auth/services/WalletSdkSessionService";
+import type { WalletBindingRepository } from "../../identity/repositories/WalletBindingRepository";
 import { pairingSignatureRequestTable, pairingTable } from "../db/schema";
 import { WsCloseCode } from "../dto/WebSocketCloseCode";
 import {
@@ -27,7 +28,8 @@ export class PairingConnectionRepository extends PairingRepository {
     constructor(
         // Helpers to generate the auth tokens
         private readonly walletSdkSession: WalletSdkSessionService,
-        private readonly authenticatorRepository: AuthenticatorRepository
+        private readonly authenticatorRepository: AuthenticatorRepository,
+        private readonly walletBindingRepository: WalletBindingRepository
     ) {
         super();
     }
@@ -247,11 +249,15 @@ export class PairingConnectionRepository extends PairingRepository {
 
         // Pairing was resolved while the origin was disconnected. Replay
         // `authenticated` so the origin can settle into its `paired` session.
-        const authenticator =
-            await this.authenticatorRepository.getByActiveWallet({
-                chainId: currentChainId,
-                smartWalletAddress: pairing.wallet,
-            });
+        const binding = await this.walletBindingRepository.getActiveByWallet({
+            chainId: currentChainId,
+            smartWalletAddress: pairing.wallet,
+        });
+        const authenticator = binding
+            ? await this.authenticatorRepository.getByCredentialId(
+                  binding.authenticatorId
+              )
+            : null;
         if (!authenticator) {
             log.warn(
                 {

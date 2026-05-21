@@ -1,8 +1,10 @@
 import { JwtContext, log, viemClient } from "@backend-infrastructure";
 import { t } from "@backend-utils";
+import { currentChainId } from "@frak-labs/app-essentials/blockchain";
 import { Elysia, status } from "elysia";
 import { verifyMessage } from "viem/actions";
 import { AuthContext, WalletAuthResponseDto } from "../../../../domain/auth";
+import { IdentityContext } from "../../../../domain/identity/context";
 import { OrchestrationContext } from "../../../../orchestration/context";
 import { FrakClientIdHeaderSchema } from "../../../schemas";
 
@@ -111,18 +113,41 @@ export const loginRoutes = new Elysia()
             if (!verificationnResult) {
                 return status(404, "Invalid signature");
             }
-            const { address, authenticatorId, publicKey, transports } =
+            const { authenticatorId, publicKey, transports } =
                 verificationnResult;
 
-            try {
-                await AuthContext.repositories.authenticator.ensureActiveBindings(
-                    {
+            // Resolve the wallet the credential is currently bound to on
+            // the active chain. Post-merge, the loser credential's binding
+            // row points at the winner wallet — we must consult the
+            // binding table rather than rely on the deterministic
+            // derivation (which would still return the pre-merge loser
+            // address forever). Fall back to derivation only when no
+            // binding exists yet, and lazy-seed it for next time.
+            const activeBinding =
+                await IdentityContext.repositories.walletBinding
+                    .getActiveBinding({
                         credentialId: authenticatorId,
-                        smartWalletAddress: address,
-                    }
-                );
-            } catch (error) {
-                log.warn(error, "Unable to seed initial bindings");
+                        chainId: currentChainId,
+                    })
+                    .catch(() => null);
+
+            let address = activeBinding?.smartWalletAddress;
+            if (!address) {
+                address = await AuthContext.services.webAuthN.getWalletAddress({
+                    authenticatorId,
+                    pubKey: publicKey,
+                });
+                try {
+                    await IdentityContext.repositories.walletBinding.ensureActiveBinding(
+                        {
+                            credentialId: authenticatorId,
+                            chainId: currentChainId,
+                            smartWalletAddress: address,
+                        }
+                    );
+                } catch (error) {
+                    log.warn(error, "Unable to seed initial binding");
+                }
             }
 
             const session =

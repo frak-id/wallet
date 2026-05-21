@@ -1,8 +1,10 @@
 import { sessionContext } from "@backend-infrastructure";
 import { t } from "@backend-utils";
+import { currentChainId } from "@frak-labs/app-essentials/blockchain";
 import { Elysia, status } from "elysia";
 import { isAddressEqual } from "viem";
 import { AuthContext } from "../../../../domain/auth";
+import { IdentityContext } from "../../../../domain/identity/context";
 
 export const walletSdkRoutes = new Elysia({ prefix: "/sdk" })
     .use(sessionContext)
@@ -41,14 +43,31 @@ export const walletSdkRoutes = new Elysia({ prefix: "/sdk" })
                 return status(403, "Invalid signature");
             }
 
+            // Resolve the credential's active binding on the current chain
+            // to confirm it matches the requested wallet. Falls back to the
+            // deterministic derivation when no binding exists yet so legacy
+            // credentials still go through.
+            const binding = await IdentityContext.repositories.walletBinding
+                .getActiveBinding({
+                    credentialId: verificationnResult.authenticatorId,
+                    chainId: currentChainId,
+                })
+                .catch(() => null);
+            const resolvedWallet =
+                binding?.smartWalletAddress ??
+                (await AuthContext.services.webAuthN.getWalletAddress({
+                    authenticatorId: verificationnResult.authenticatorId,
+                    pubKey: verificationnResult.publicKey,
+                }));
+
             // If it's not the same wallet, return an error
-            if (!isAddressEqual(verificationnResult.address, wallet)) {
+            if (!isAddressEqual(resolvedWallet, wallet)) {
                 return status(403, "Invalid signature");
             }
 
             // Otherwise generate a new token
             return await AuthContext.services.walletSdkSession.generateSdkJwt({
-                wallet: verificationnResult.address,
+                wallet: resolvedWallet,
             });
         },
         {

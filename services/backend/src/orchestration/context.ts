@@ -145,6 +145,7 @@ const referralCodeRedemptionOrchestrator =
 
 const walletMergeOrchestrator = new WalletMergeOrchestrator(
     AuthContext.repositories.authenticator,
+    IdentityContext.repositories.walletBinding,
     IdentityContext.repositories.identity,
     identityWeightService,
     identityMergeService,
@@ -154,7 +155,7 @@ const walletMergeOrchestrator = new WalletMergeOrchestrator(
 );
 
 const authenticatorLookupOrchestrator = new AuthenticatorLookupOrchestrator(
-    AuthContext.repositories.authenticator,
+    IdentityContext.repositories.walletBinding,
     IdentityContext.repositories.identity
 );
 

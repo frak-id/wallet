@@ -1,6 +1,6 @@
 import { viemClient } from "@backend-infrastructure";
 import { KernelWallet, kernelAddresses } from "@frak-labs/app-essentials";
-import { currentChainId } from "@frak-labs/app-essentials/blockchain";
+import type { AuthenticatorTransportFuture } from "@simplewebauthn/server";
 import { type Signature, WebAuthnP256 } from "ox";
 import type { SignMetadata } from "ox/WebAuthnP256";
 import { getSenderAddress } from "permissionless/actions";
@@ -79,7 +79,15 @@ export class WebAuthNService {
     }
 
     /**
-     * Check if a signature is valid for a given wallet
+     * Verify a webauthn assertion against the credential the assertion id
+     * resolves to. Returns the credential's public key + transports on
+     * success; wallet resolution is the caller's responsibility (the active
+     * binding lives in the identity domain, and the deterministic
+     * derivation via {@link getWalletAddress} is the fallback).
+     *
+     * Returns `false` for every rejection path (parse failure, unknown
+     * credential, signature mismatch) so the caller maps to a single
+     * `401 Invalid signature`.
      */
     async isValidSignature({
         compressedSignature,
@@ -87,7 +95,14 @@ export class WebAuthNService {
     }: {
         compressedSignature: string;
         challenge: Hex;
-    }) {
+    }): Promise<
+        | false
+        | {
+              authenticatorId: string;
+              publicKey: { x: Hex; y: Hex };
+              transports?: AuthenticatorTransportFuture[];
+          }
+    > {
         // Decode the authenticator response
         const result =
             this.parseCompressedResponse<AuthenticationResponseJSON>(
@@ -100,28 +115,6 @@ export class WebAuthNService {
         if (!authenticator) {
             return false;
         }
-
-        // Resolve the wallet the credential is *currently* bound to on the
-        // active chain. Post-merge, the loser credential's binding row has
-        // been repointed to the winner wallet, so we must consult the
-        // binding table rather than re-derive the deterministic address
-        // from the passkey pubkey (which would still return the old loser
-        // address forever). Fall back to derivation only when no binding
-        // exists yet — legacy credentials surviving from before the
-        // bindings rollout, which `ensureActiveBindings` will lazy-init
-        // in the login route right after.
-        const activeBinding = await this.authenticatorRepository
-            .getActiveBinding({
-                credentialId: result.id,
-                chainId: currentChainId,
-            })
-            .catch(() => null);
-        const walletAddress =
-            activeBinding?.smartWalletAddress ??
-            (await this.getWalletAddress({
-                authenticatorId: result.id,
-                pubKey: authenticator.publicKey,
-            }));
 
         // Ensure the verification pass using ox
         const { signature, metadata } = result.response;
@@ -144,10 +137,8 @@ export class WebAuthNService {
             return false;
         }
 
-        // All good, return a few info
         return {
             authenticatorId: authenticator._id,
-            address: walletAddress,
             publicKey: authenticator.publicKey,
             transports: authenticator.transports,
         };

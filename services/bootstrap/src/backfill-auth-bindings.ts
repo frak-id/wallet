@@ -1,14 +1,14 @@
-import { frakChainIds } from "@frak-labs/app-essentials/blockchain";
+import { currentChainId } from "@frak-labs/app-essentials/blockchain";
 import { type Client, createClient } from "@libsql/client";
 import { and, eq, isNull } from "drizzle-orm";
 import { drizzle as drizzleLibsql } from "drizzle-orm/libsql";
 import { drizzle as drizzlePg } from "drizzle-orm/postgres-js";
 import postgres from "postgres";
+import { authenticatorsTable } from "../../backend/src/domain/auth/db/schema";
 import {
-    authenticatorsTable,
     authenticatorWalletBindingsTable,
-} from "../../backend/src/domain/auth/db/schema";
-import { identityNodesTable } from "../../backend/src/domain/identity/db/schema";
+    identityNodesTable,
+} from "../../backend/src/domain/identity/db/schema";
 
 const BATCH_SIZE = 500;
 
@@ -36,14 +36,20 @@ type BackfillStats = {
 };
 
 /**
- * Seeds one active binding per configured Frak chain for every existing
- * authenticator that has a non-null `smart_wallet_address` but no binding yet,
- * and migrates the legacy `authenticators.email` value into a dedicated
- * postgres `identity_nodes` row keyed to the wallet's identity group.
+ * Seed one active wallet binding per legacy authenticator into THIS
+ * environment's postgres database and migrate the legacy
+ * `authenticators.email` column into a dedicated `identity_nodes` row keyed
+ * to the wallet's identity group.
+ *
+ * Both writes target postgres (env-scoped), so each environment that runs
+ * the bootstrap step fills its own state from the env-shared libSQL
+ * authenticator rows. The binding is created for `currentChainId` only —
+ * the chain this environment runs on — which is what makes the merge flow
+ * env-isolated (a binding repoint on dev cannot leak into staging).
  *
  * Bindings step is idempotent — relies on the partial unique index
- * `(authenticator_id, chain_id) WHERE unlinked_at IS NULL` to skip rows that
- * already have an active binding.
+ * `(authenticator_id, chain_id) WHERE unlinked_at IS NULL` to skip rows
+ * that already have an active binding.
  *
  * Email step is idempotent — skips when the wallet's identity group already
  * holds an email node, regardless of value. The `identity_nodes` global
@@ -53,10 +59,10 @@ type BackfillStats = {
  * been updated through the post-auth `POST /email` route.
  *
  * Authenticators with a NULL `smart_wallet_address` (very old rows from
- * before the column existed) are SKIPPED here; they get back-filled lazily on
- * the next login via `AuthenticatorRepository.ensureActiveBindings`. Their
- * email — if any — lands on the next bootstrap run once their wallet identity
- * group exists in postgres.
+ * before the column existed) are SKIPPED here; they get back-filled lazily
+ * on the next login via the postgres `WalletBindingRepository.ensureActiveBinding`
+ * call from the login route. Their email — if any — lands on the next
+ * bootstrap run once their wallet identity group exists in postgres.
  */
 export async function runAuthBindingBackfill(): Promise<void> {
     const libsqlUrl = process.env.LIBSQL_URL;
@@ -66,7 +72,7 @@ export async function runAuthBindingBackfill(): Promise<void> {
     }
 
     console.log(
-        `[bootstrap:auth-bindings] Seeding bindings for chains [${frakChainIds.join(", ")}]`
+        `[bootstrap:auth-bindings] Seeding bindings for chain ${currentChainId}`
     );
 
     const libsqlClient = createClient({ url: libsqlUrl });
@@ -108,7 +114,6 @@ async function processAllBatches({
     stats: BackfillStats;
 }): Promise<void> {
     void libsqlClient; // ownership stays with caller
-    const now = Math.floor(Date.now() / 1000);
     let offset = 0;
     while (true) {
         const batch: AuthBatchRow[] = await libsqlDb
@@ -126,9 +131,8 @@ async function processAllBatches({
         stats.scanned += batch.length;
 
         stats.bindingsInserted += await seedBindingsForBatch({
-            libsqlDb,
+            pgDb,
             batch,
-            now,
             stats,
         });
 
@@ -145,21 +149,18 @@ async function processAllBatches({
 }
 
 async function seedBindingsForBatch({
-    libsqlDb,
+    pgDb,
     batch,
-    now,
     stats,
 }: {
-    libsqlDb: ReturnType<typeof drizzleLibsql>;
+    pgDb: ReturnType<typeof drizzlePg>;
     batch: AuthBatchRow[];
-    now: number;
     stats: BackfillStats;
 }): Promise<number> {
     const bindingRows: {
         authenticatorId: string;
         chainId: number;
         smartWalletAddress: WalletAddress;
-        createdAt: number;
         reason: "initial";
     }[] = [];
 
@@ -168,20 +169,18 @@ async function seedBindingsForBatch({
             stats.skippedNullWallet += 1;
             continue;
         }
-        for (const chainId of frakChainIds) {
-            bindingRows.push({
-                authenticatorId: auth.id,
-                chainId,
-                smartWalletAddress: auth.smartWalletAddress as WalletAddress,
-                createdAt: now,
-                reason: "initial",
-            });
-        }
+        bindingRows.push({
+            authenticatorId: auth.id,
+            chainId: currentChainId,
+            smartWalletAddress:
+                auth.smartWalletAddress.toLowerCase() as WalletAddress,
+            reason: "initial",
+        });
     }
 
     if (bindingRows.length === 0) return 0;
 
-    const result = await libsqlDb
+    const result = await pgDb
         .insert(authenticatorWalletBindingsTable)
         .values(bindingRows)
         .onConflictDoNothing()

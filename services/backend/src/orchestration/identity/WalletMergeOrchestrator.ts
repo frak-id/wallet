@@ -1,4 +1,4 @@
-import { log } from "@backend-infrastructure";
+import { db, log } from "@backend-infrastructure";
 import { HttpError } from "@backend-utils";
 import { buildMergeConsentChallengeSlots } from "@frak-labs/app-essentials";
 import { currentChainId } from "@frak-labs/app-essentials/blockchain";
@@ -7,6 +7,7 @@ import type { AuthenticatorRepository } from "../../domain/auth/repositories/Aut
 import type { WalletSessionService } from "../../domain/auth/services/WalletSessionService";
 import type { WebAuthNService } from "../../domain/auth/services/WebAuthNService";
 import type { IdentityRepository } from "../../domain/identity/repositories/IdentityRepository";
+import type { WalletBindingRepository } from "../../domain/identity/repositories/WalletBindingRepository";
 import type { WebAuthNValidatorReader } from "../../infrastructure/blockchain/WebAuthNValidatorReader";
 import type { MergePreviewResponse, MergeSettleResponse } from "../schemas";
 import type { IdentityMergeService } from "./IdentityMergeService";
@@ -25,6 +26,7 @@ export type MergeWeight = {
 export class WalletMergeOrchestrator {
     constructor(
         private readonly authenticatorRepository: AuthenticatorRepository,
+        private readonly walletBindingRepository: WalletBindingRepository,
         private readonly identityRepository: IdentityRepository,
         private readonly identityWeightService: IdentityWeightService,
         private readonly identityMergeService: IdentityMergeService,
@@ -56,7 +58,7 @@ export class WalletMergeOrchestrator {
         }
 
         const targetBinding =
-            await this.authenticatorRepository.getActiveBinding({
+            await this.walletBindingRepository.getActiveBinding({
                 credentialId: targetAuthenticatorId,
                 chainId: currentChainId,
             });
@@ -154,17 +156,14 @@ export class WalletMergeOrchestrator {
     /**
      * Finalise a merge after the user has signed the `addPassKey` userOp.
      *
-     * Each step is independently idempotent:
-     *  1. {@link webAuthNValidatorReader.waitForReceipt} is a pure read.
-     *  2. {@link webAuthNValidatorReader.getPasskey} is a pure read.
-     *  3. {@link AuthenticatorRepository.repointBinding} is a no-op once the
-     *     binding already points at `winner` (the partial unique on active
-     *     bindings makes the second call a no-op via `ON CONFLICT DO NOTHING`).
-     *  4. {@link IdentityMergeService.mergeGroupsByWallet} short-circuits
-     *     when both wallets already resolve to the same group.
-     *
-     * A retried `settle()` therefore converges to the same final state, which
-     * matches the failure-modes table in the Phase 1 design doc.
+     * Steps 0-2 are pure reads. Step 3 wraps the binding repoint and the
+     * identity-graph merge in a single postgres transaction — both commit
+     * together or neither does. A retried `settle()` after a step 0-2
+     * failure runs from scratch (everything before step 3 is read-only);
+     * a retry after step 3 failed mid-transaction sees a fully rolled-back
+     * state and re-runs cleanly. The dual-DB choreography that earlier
+     * drafts spelled out is no longer necessary now that bindings live in
+     * postgres alongside the identity graph.
      */
     async settle(params: {
         requesterWallet: Address;
@@ -238,26 +237,29 @@ export class WalletMergeOrchestrator {
             );
         }
 
-        // 3. Repoint the loser's binding to the winner wallet. Email is
-        //    stored as an identity node on the wallet's identity group, so it
-        //    moves with the loser group during the PG merge (step 4). When
-        //    both sides held a different email the anchor group ends up with
-        //    multiple active email nodes; `findEmailForGroup` returns the
-        //    oldest one deterministically (the surviving credential's email).
-        await this.authenticatorRepository.repointBinding({
-            credentialId: preview.loserAuthenticatorId,
-            chainId: currentChainId,
-            toSmartWalletAddress: preview.winner,
-            reason: "merged",
-        });
-
-        // 4. Collapse the identity graphs. The weight cache has a 30s TTL,
-        //    so we rely on that for staleness rather than chasing the new
-        //    anchor group id back through the repository to issue a
+        // 3. Repoint the loser's binding AND collapse the identity graphs in
+        //    a single postgres transaction. Email is stored as an identity
+        //    node on the wallet's identity group, so it moves with the loser
+        //    group during the merge. When both sides held a different email
+        //    the anchor group ends up with multiple active email nodes;
+        //    `findEmailForGroup` returns the oldest one deterministically
+        //    (the surviving credential's email). The weight cache has a 30s
+        //    TTL, so we rely on that for staleness rather than chasing the
+        //    new anchor group id back through the repository to issue a
         //    targeted `invalidateWeight(groupId)`.
-        await this.identityMergeService.mergeGroupsByWallet({
-            winnerWallet: preview.winner,
-            loserWallet: preview.loser,
+        await db.transaction(async (tx) => {
+            await this.walletBindingRepository.repointBinding({
+                credentialId: preview.loserAuthenticatorId,
+                chainId: currentChainId,
+                toSmartWalletAddress: preview.winner,
+                reason: "merged",
+                tx,
+            });
+            await this.identityMergeService.mergeGroupsByWallet({
+                winnerWallet: preview.winner,
+                loserWallet: preview.loser,
+                tx,
+            });
         });
 
         log.info(

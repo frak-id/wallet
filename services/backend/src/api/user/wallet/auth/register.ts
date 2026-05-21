@@ -1,6 +1,7 @@
 import { JwtContext, log } from "@backend-infrastructure";
 import { t } from "@backend-utils";
 import { WebAuthN } from "@frak-labs/app-essentials";
+import { currentChainId } from "@frak-labs/app-essentials/blockchain";
 import {
     type RegistrationResponseJSON,
     verifyRegistrationResponse,
@@ -12,6 +13,7 @@ import {
     type StaticWalletSdkTokenDto,
     WalletAuthResponseDto,
 } from "../../../../domain/auth";
+import { IdentityContext } from "../../../../domain/identity/context";
 import { OrchestrationContext } from "../../../../orchestration/context";
 import { FrakClientIdHeaderSchema } from "../../../schemas";
 
@@ -144,9 +146,42 @@ export const registerRoutes = new Elysia()
                 return status(409, "Credential id conflict");
             }
 
-            const walletAddress = created
-                ? computedWalletAddress
-                : (document.smartWalletAddress ?? computedWalletAddress);
+            // Resolve the wallet via the current-chain binding when an
+            // active row exists (post-merge credentials may point at a
+            // different wallet than the deterministic derivation). Falls
+            // back to the legacy `authenticators.smart_wallet_address`
+            // column for credentials registered before the bindings
+            // refactor, and finally to the freshly computed address.
+            const existingBinding = !created
+                ? await IdentityContext.repositories.walletBinding
+                      .getActiveBinding({
+                          credentialId: document._id,
+                          chainId: currentChainId,
+                      })
+                      .catch(() => null)
+                : null;
+            const walletAddress =
+                existingBinding?.smartWalletAddress ??
+                (created
+                    ? computedWalletAddress
+                    : (document.smartWalletAddress ?? computedWalletAddress));
+
+            // Seed the initial binding for fresh credentials, and lazy
+            // back-fill for legacy ones (when none exists yet on the
+            // current chain). Idempotent via the partial unique index.
+            if (!existingBinding) {
+                try {
+                    await IdentityContext.repositories.walletBinding.seedInitialBinding(
+                        {
+                            credentialId: document._id,
+                            chainId: currentChainId,
+                            smartWalletAddress: walletAddress,
+                        }
+                    );
+                } catch (error) {
+                    log.warn(error, "Unable to seed initial binding");
+                }
+            }
 
             const additionalData: StaticWalletSdkTokenDto["additionalData"] =
                 {};

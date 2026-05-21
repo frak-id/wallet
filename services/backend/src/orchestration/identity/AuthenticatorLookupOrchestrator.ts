@@ -1,7 +1,7 @@
 import { currentChainId } from "@frak-labs/app-essentials";
 import type { Address } from "viem";
-import type { AuthenticatorRepository } from "../../domain/auth/repositories/AuthenticatorRepository";
 import type { IdentityRepository } from "../../domain/identity/repositories/IdentityRepository";
+import type { WalletBindingRepository } from "../../domain/identity/repositories/WalletBindingRepository";
 
 /**
  * Resolution of a wallet + its current-chain credential from an identity
@@ -23,13 +23,14 @@ export type IdentityWalletLookup = {
 
 /**
  * Cross-domain helper that resolves identity-graph nodes (postgres) to the
- * libSQL credential currently bound to the underlying wallet. Lives in
- * `orchestration/identity/` for the same reason as {@link WalletMergeOrchestrator}:
- * the read path crosses the identity ↔ auth boundary.
+ * credential currently bound to the underlying wallet (postgres binding
+ * table → libSQL credential row). Both reads are postgres-only now, but
+ * the orchestrator placement is kept since the surrounding flow still
+ * spans the identity ↔ auth boundary.
  */
 export class AuthenticatorLookupOrchestrator {
     constructor(
-        private readonly authenticatorRepository: AuthenticatorRepository,
+        private readonly walletBindingRepository: WalletBindingRepository,
         private readonly identityRepository: IdentityRepository
     ) {}
 
@@ -51,8 +52,8 @@ export class AuthenticatorLookupOrchestrator {
 
     private async fromGroupId(groupId: string): Promise<IdentityWalletLookup> {
         const wallet = await this.identityRepository.getWalletForGroup(groupId);
-        const authenticator = wallet
-            ? await this.authenticatorRepository.getByActiveWallet({
+        const binding = wallet
+            ? await this.walletBindingRepository.getActiveByWallet({
                   chainId: currentChainId,
                   smartWalletAddress: wallet,
               })
@@ -60,7 +61,7 @@ export class AuthenticatorLookupOrchestrator {
         return {
             groupId,
             wallet: wallet ?? undefined,
-            authenticatorId: authenticator?._id,
+            authenticatorId: binding?.authenticatorId,
         };
     }
 }
