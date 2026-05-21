@@ -1,6 +1,7 @@
 import { Text } from "@frak-labs/design-system/components/Text";
 import { ChevronDownIcon, ProfileIcon } from "@frak-labs/design-system/icons";
 import { Link } from "@tanstack/react-router";
+import { useTranslation } from "react-i18next";
 import {
     profileAvatar,
     profileChevron,
@@ -10,6 +11,7 @@ import {
 } from "./header.css";
 
 export function ProfileLink() {
+    const { t } = useTranslation();
     return (
         <Link to="/settings" className={profileLink}>
             <span className={profileContent}>
@@ -22,7 +24,7 @@ export function ProfileLink() {
                     weight="medium"
                     className={profileLabel}
                 >
-                    My account
+                    {t("shell.header.myAccount")}
                 </Text>
             </span>
             <span className={profileChevron}>

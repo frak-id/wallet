@@ -9,6 +9,7 @@ import {
 } from "@frak-labs/design-system/icons";
 import { Link, useMatchRoute } from "@tanstack/react-router";
 import type { HTMLAttributes, PropsWithChildren, ReactNode } from "react";
+import { useTranslation } from "react-i18next";
 import { NavigationCampaignsSwitcher } from "./NavigationCampaignsSwitcher";
 import {
     divider,
@@ -29,6 +30,7 @@ import {
 } from "./navigation.css";
 
 export function Navigation() {
+    const { t } = useTranslation();
     return (
         <Stack as="nav" space="none" className={navigation}>
             <div className={logoWrapper}>
@@ -46,7 +48,7 @@ export function Navigation() {
                         url="/dashboard"
                         icon={<TabGridIcon width={20} height={20} />}
                     >
-                        Dashboard
+                        {t("shell.nav.dashboard")}
                     </NavigationItem>
                 </ul>
 
@@ -55,7 +57,7 @@ export function Navigation() {
                 <ul className={itemList}>
                     <li className={sectionLabel}>
                         <Text variant="bodySmall" color="tertiary">
-                            Acquisition
+                            {t("shell.nav.sectionAcquisition")}
                         </Text>
                     </li>
                     <NavigationCampaignsSwitcher />
@@ -63,7 +65,7 @@ export function Navigation() {
                         url="/members"
                         icon={<PeopleFilledIcon width={20} height={20} />}
                     >
-                        Members
+                        {t("shell.nav.members")}
                     </NavigationItem>
                 </ul>
 
@@ -72,14 +74,14 @@ export function Navigation() {
                 <ul className={itemList}>
                     <li className={sectionLabel}>
                         <Text variant="bodySmall" color="tertiary">
-                            Preview
+                            {t("shell.nav.sectionPreview")}
                         </Text>
                     </li>
                     <NavigationItem
                         url={process.env.FRAK_WALLET_URL}
                         icon={<WalletIcon width={20} height={20} />}
                     >
-                        Wallet
+                        {t("shell.nav.wallet")}
                     </NavigationItem>
                 </ul>
             </Stack>

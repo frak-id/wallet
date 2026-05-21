@@ -2,6 +2,10 @@ import { render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import { Header } from "./index";
 
+vi.mock("react-i18next", () => ({
+    useTranslation: () => ({ t: (key: string) => key }),
+}));
+
 vi.mock("@tanstack/react-router", () => ({
     Link: ({ children, to }: { children: React.ReactNode; to: string }) => (
         <a href={to} data-testid={`link-${to.replace(/\//g, "")}`}>
@@ -39,16 +43,18 @@ describe("Header", () => {
     it("should render breadcrumb with current pathname", () => {
         render(<Header />);
         expect(
-            screen.getByRole("navigation", { name: "Breadcrumb" })
+            screen.getByRole("navigation", {
+                name: "shell.header.breadcrumbLabel",
+            })
         ).toBeInTheDocument();
         // /campaigns/list → "Campaigns" (link) / "List" (current)
-        expect(screen.getByText("Campaigns")).toBeInTheDocument();
-        expect(screen.getByText("List")).toBeInTheDocument();
+        expect(screen.getByText("shell.nav.campaigns")).toBeInTheDocument();
+        expect(screen.getByText("shell.nav.campaignsList")).toBeInTheDocument();
     });
 
     it("should render contextual export and create campaign buttons on /campaigns", () => {
         render(<Header />);
-        expect(screen.getByText("Export")).toBeInTheDocument();
+        expect(screen.getByText("shell.header.export")).toBeInTheDocument();
         expect(screen.getByTestId("new-campaign-btn")).toBeInTheDocument();
     });
 
@@ -56,6 +62,6 @@ describe("Header", () => {
         render(<Header />);
         const profileLink = screen.getByTestId("link-settings");
         expect(profileLink).toBeInTheDocument();
-        expect(profileLink).toHaveTextContent("My account");
+        expect(profileLink).toHaveTextContent("shell.header.myAccount");
     });
 });

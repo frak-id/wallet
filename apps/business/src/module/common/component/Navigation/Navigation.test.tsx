@@ -2,6 +2,10 @@ import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { Navigation, NavigationItem, SubNavigationItem } from "./index";
 
+vi.mock("react-i18next", () => ({
+    useTranslation: () => ({ t: (key: string) => key }),
+}));
+
 const mockNavigate = vi.fn();
 const mockMatchRoute = vi.fn();
 
@@ -17,7 +21,7 @@ vi.mock("@tanstack/react-router", () => ({
 
 vi.mock("./NavigationCampaignsSwitcher", () => ({
     NavigationCampaignsSwitcher: () => (
-        <li data-testid="campaigns-switcher">Campaigns</li>
+        <li data-testid="campaigns-switcher">shell.nav.campaigns</li>
     ),
 }));
 
@@ -40,15 +44,19 @@ describe("Navigation", () => {
     it("should render the primary navigation items from the Figma spec", () => {
         render(<Navigation />);
 
-        expect(screen.getByText("Dashboard")).toBeInTheDocument();
-        expect(screen.getByText("Members")).toBeInTheDocument();
-        expect(screen.getByText("Wallet")).toBeInTheDocument();
+        expect(screen.getByText("shell.nav.dashboard")).toBeInTheDocument();
+        expect(screen.getByText("shell.nav.members")).toBeInTheDocument();
+        expect(screen.getByText("shell.nav.wallet")).toBeInTheDocument();
     });
 
     it("should render section labels", () => {
         render(<Navigation />);
-        expect(screen.getByText("Acquisition")).toBeInTheDocument();
-        expect(screen.getByText("Preview")).toBeInTheDocument();
+        expect(
+            screen.getByText("shell.nav.sectionAcquisition")
+        ).toBeInTheDocument();
+        expect(
+            screen.getByText("shell.nav.sectionPreview")
+        ).toBeInTheDocument();
     });
 
     it("should not render dropped items (Revenue, Messenger, Settings, Help)", () => {

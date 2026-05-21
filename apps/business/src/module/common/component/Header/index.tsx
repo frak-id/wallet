@@ -1,5 +1,6 @@
 import { Link, useLocation } from "@tanstack/react-router";
 import { Download, Plus } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { ButtonNewCampaign } from "@/module/campaigns/component/ButtonNewCampaign";
 import { useIsDemoMode } from "@/module/common/atoms/demoMode";
 import { Button } from "@/module/common/component/Button";
@@ -17,6 +18,7 @@ import {
 import { ProfileLink } from "./ProfileLink";
 
 export function Header() {
+    const { t } = useTranslation();
     const isDemoMode = useIsDemoMode();
     const { pathname } = useLocation();
     const showCreateCampaign = pathname.startsWith("/campaigns");
@@ -36,9 +38,9 @@ export function Header() {
                             <Link
                                 to="/settings"
                                 className={demoModeBadge}
-                                title="Demo mode is active. Click to manage settings."
+                                title={t("shell.header.demoBadgeTitle")}
                             >
-                                demo
+                                {t("shell.header.demoBadge")}
                             </Link>
                         )}
                         {showExport && (
@@ -46,7 +48,7 @@ export function Header() {
                                 variant="secondary"
                                 rightIcon={<Download size={16} />}
                             >
-                                Export
+                                {t("shell.header.export")}
                             </Button>
                         )}
                         {showCreateCampaign && <ButtonNewCampaign />}
@@ -55,7 +57,7 @@ export function Header() {
                                 trigger={
                                     <Button variant="primary">
                                         <Plus size={16} />
-                                        Add merchant
+                                        {t("shell.header.addMerchant")}
                                     </Button>
                                 }
                             />

@@ -1,4 +1,27 @@
 {
+    "shell": {
+        "nav": {
+            "sectionAcquisition": "Acquisition",
+            "sectionPreview": "Preview",
+            "dashboard": "Dashboard",
+            "campaigns": "Campaigns",
+            "campaignsOverview": "Data overview",
+            "campaignsList": "List",
+            "members": "Members",
+            "wallet": "Wallet"
+        },
+        "header": {
+            "breadcrumbLabel": "Breadcrumb",
+            "export": "Export",
+            "addMerchant": "Add merchant",
+            "myAccount": "My account",
+            "demoBadge": "demo",
+            "demoBadgeTitle": "Demo mode is active. Click to manage settings."
+        },
+        "breadcrumb": {
+            "merchant": "Merchant"
+        }
+    },
     "settings": {
         "title": "Settings",
         "currency": {

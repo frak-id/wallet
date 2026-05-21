@@ -1,4 +1,27 @@
 {
+    "shell": {
+        "nav": {
+            "sectionAcquisition": "Acquisition",
+            "sectionPreview": "Aperçu",
+            "dashboard": "Tableau de bord",
+            "campaigns": "Campagnes",
+            "campaignsOverview": "Vue d'ensemble",
+            "campaignsList": "Liste",
+            "members": "Membres",
+            "wallet": "Portefeuille"
+        },
+        "header": {
+            "breadcrumbLabel": "Fil d'Ariane",
+            "export": "Exporter",
+            "addMerchant": "Ajouter un marchand",
+            "myAccount": "Mon compte",
+            "demoBadge": "démo",
+            "demoBadgeTitle": "Le mode démo est actif. Cliquez pour gérer les paramètres."
+        },
+        "breadcrumb": {
+            "merchant": "Marchand"
+        }
+    },
     "settings": {
         "title": "Paramètres",
         "currency": {

@@ -2,6 +2,10 @@ import { render, screen } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { NavigationCampaignsSwitcher } from "./NavigationCampaignsSwitcher";
 
+vi.mock("react-i18next", () => ({
+    useTranslation: () => ({ t: (key: string) => key }),
+}));
+
 const mockUseMediaQuery = vi.fn();
 const mockUseLocation = vi.fn();
 const mockNavigate = vi.fn();
@@ -64,7 +68,7 @@ describe("NavigationCampaignsSwitcher", () => {
 
         const item = screen.getByTestId("navigation-item");
         expect(item).toHaveAttribute("data-url", "/campaigns/list");
-        expect(screen.getByText("Campaigns")).toBeInTheDocument();
+        expect(screen.getByText("shell.nav.campaigns")).toBeInTheDocument();
     });
 
     it("should render desktop collapsible navigation when not on mobile", () => {
@@ -75,7 +79,7 @@ describe("NavigationCampaignsSwitcher", () => {
 
         const item = screen.getByTestId("navigation-item");
         expect(item).toBeInTheDocument();
-        expect(screen.getByText("Campaigns")).toBeInTheDocument();
+        expect(screen.getByText("shell.nav.campaigns")).toBeInTheDocument();
     });
 
     it("should show both sub-navigation items when expanded", () => {
@@ -91,7 +95,9 @@ describe("NavigationCampaignsSwitcher", () => {
             "/campaigns/performance"
         );
         expect(subItems[1]).toHaveAttribute("data-url", "/campaigns/list");
-        expect(screen.getByText("Datas overview")).toBeInTheDocument();
-        expect(screen.getByText("List")).toBeInTheDocument();
+        expect(
+            screen.getByText("shell.nav.campaignsOverview")
+        ).toBeInTheDocument();
+        expect(screen.getByText("shell.nav.campaignsList")).toBeInTheDocument();
     });
 });

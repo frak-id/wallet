@@ -34,5 +34,28 @@ export default interface Resources {
                 title: "Wallet";
             };
         };
+        shell: {
+            breadcrumb: {
+                merchant: "Merchant";
+            };
+            header: {
+                addMerchant: "Add merchant";
+                breadcrumbLabel: "Breadcrumb";
+                demoBadge: "demo";
+                demoBadgeTitle: "Demo mode is active. Click to manage settings.";
+                export: "Export";
+                myAccount: "My account";
+            };
+            nav: {
+                campaigns: "Campaigns";
+                campaignsList: "List";
+                campaignsOverview: "Data overview";
+                dashboard: "Dashboard";
+                members: "Members";
+                sectionAcquisition: "Acquisition";
+                sectionPreview: "Preview";
+                wallet: "Wallet";
+            };
+        };
     };
 }

@@ -7,10 +7,12 @@ import {
 import * as Collapsible from "@radix-ui/react-collapsible";
 import { useLocation } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { NavigationItem, SubNavigationItem } from "./index";
 import { collapsibleContent } from "./navigation.css";
 
 export function NavigationCampaignsSwitcher() {
+    const { t } = useTranslation();
     const isMobile = useMediaQuery("(max-width : 768px)");
 
     return isMobile ? (
@@ -18,7 +20,7 @@ export function NavigationCampaignsSwitcher() {
             url="/campaigns/list"
             icon={<ChecklistIcon width={20} height={20} />}
         >
-            Campaigns
+            {t("shell.nav.campaigns")}
         </NavigationItem>
     ) : (
         <NavigationCampaigns />
@@ -26,6 +28,7 @@ export function NavigationCampaignsSwitcher() {
 }
 
 function NavigationCampaigns() {
+    const { t } = useTranslation();
     const location = useLocation();
     const isCampaignsRoute = location.pathname.startsWith("/campaigns");
     const [isOpen, setIsOpen] = useState(isCampaignsRoute);
@@ -51,16 +54,16 @@ function NavigationCampaigns() {
                         )
                     }
                 >
-                    Campaigns
+                    {t("shell.nav.campaigns")}
                 </NavigationItem>
             </Collapsible.Trigger>
             <Collapsible.Content className={collapsibleContent}>
                 <ul>
                     <SubNavigationItem url="/campaigns/performance">
-                        Datas overview
+                        {t("shell.nav.campaignsOverview")}
                     </SubNavigationItem>
                     <SubNavigationItem url="/campaigns/list">
-                        List
+                        {t("shell.nav.campaignsList")}
                     </SubNavigationItem>
                 </ul>
             </Collapsible.Content>
