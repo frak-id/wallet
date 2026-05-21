@@ -11,7 +11,7 @@ export function ButtonNewCampaign() {
             onClick={() => reset()}
             icon={<Plus size={16} />}
         >
-            Create campaign
+            Create new campaign
         </LinkButton>
     );
 }

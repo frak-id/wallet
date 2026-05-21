@@ -1,110 +1,138 @@
+import { Stack } from "@frak-labs/design-system/components/Stack";
+import { Text } from "@frak-labs/design-system/components/Text";
+import {
+    LogoFrakBadge,
+    LogoFrakWithName,
+    PeopleFilledIcon,
+    TabGridIcon,
+    WalletIcon,
+} from "@frak-labs/design-system/icons";
 import { Link, useMatchRoute } from "@tanstack/react-router";
-import type { PropsWithChildren, ReactNode } from "react";
-import { Cash } from "@/assets/icons/Cash";
-import { Gear } from "@/assets/icons/Gear";
-import { Home } from "@/assets/icons/Home";
-import { Info } from "@/assets/icons/Info";
-import { Message } from "@/assets/icons/Message";
-import { Users } from "@/assets/icons/Users";
-import { Wallet } from "@/assets/icons/Wallet";
-import { mergeElement } from "@/module/common/utils/mergeElement";
+import type { HTMLAttributes, PropsWithChildren, ReactNode } from "react";
 import { NavigationCampaignsSwitcher } from "./NavigationCampaignsSwitcher";
 import {
+    divider,
+    item,
+    itemActive,
+    itemIcon,
+    itemLabel,
+    itemList,
+    itemListEntry,
+    itemRight,
+    logoBadge,
+    logoFull,
+    logoWrapper,
     navigation,
-    navigationItemButton,
-    navigationItemButtonActive,
-    navigationItemLabel,
-    navigationItemRightSection,
-    navigationItemToBottom,
-    navigationList,
+    sectionLabel,
+    subItem,
+    subItemActive,
 } from "./navigation.css";
 
 export function Navigation() {
     return (
-        <nav className={navigation}>
-            <ul className={navigationList}>
-                <NavigationItem url="/dashboard">
-                    <NavigationLabel icon={<Home />}>Dashboard</NavigationLabel>
-                </NavigationItem>
-                <NavigationCampaignsSwitcher />
-                <NavigationItem url="/members">
-                    <NavigationLabel icon={<Users />}>Members</NavigationLabel>
-                </NavigationItem>
-                <NavigationItem url="/revenue" disabled={true}>
-                    <NavigationLabel icon={<Cash />}>Revenue</NavigationLabel>
-                </NavigationItem>
-                <NavigationItem url="/messenger" disabled={true}>
-                    <NavigationLabel icon={<Message />}>
-                        Messenger
-                    </NavigationLabel>
-                </NavigationItem>
-                <NavigationItem
-                    url={process.env.FRAK_WALLET_URL}
-                    className={navigationItemToBottom}
-                >
-                    <NavigationLabel icon={<Wallet />}>Wallet</NavigationLabel>
-                </NavigationItem>
-                <NavigationItem url="/settings">
-                    <NavigationLabel icon={<Gear />}>Settings</NavigationLabel>
-                </NavigationItem>
-                <NavigationItem url="/help" disabled={true}>
-                    <NavigationLabel icon={<Info />}>
-                        Help & FAQ
-                    </NavigationLabel>
-                </NavigationItem>
-            </ul>
-        </nav>
+        <Stack as="nav" space="none" className={navigation}>
+            <div className={logoWrapper}>
+                <LogoFrakWithName
+                    width={105}
+                    height={40}
+                    className={logoFull}
+                />
+                <LogoFrakBadge width={32} height={32} className={logoBadge} />
+            </div>
+
+            <Stack space="xs">
+                <ul className={itemList}>
+                    <NavigationItem
+                        url="/dashboard"
+                        icon={<TabGridIcon width={20} height={20} />}
+                    >
+                        Dashboard
+                    </NavigationItem>
+                </ul>
+
+                <hr className={divider} />
+
+                <ul className={itemList}>
+                    <li className={sectionLabel}>
+                        <Text variant="bodySmall" color="tertiary">
+                            Acquisition
+                        </Text>
+                    </li>
+                    <NavigationCampaignsSwitcher />
+                    <NavigationItem
+                        url="/members"
+                        icon={<PeopleFilledIcon width={20} height={20} />}
+                    >
+                        Members
+                    </NavigationItem>
+                </ul>
+
+                <hr className={divider} />
+
+                <ul className={itemList}>
+                    <li className={sectionLabel}>
+                        <Text variant="bodySmall" color="tertiary">
+                            Preview
+                        </Text>
+                    </li>
+                    <NavigationItem
+                        url={process.env.FRAK_WALLET_URL}
+                        icon={<WalletIcon width={20} height={20} />}
+                    >
+                        Wallet
+                    </NavigationItem>
+                </ul>
+            </Stack>
+        </Stack>
     );
 }
 
-type NavigationItemProps = {
+type NavigationItemProps = HTMLAttributes<HTMLElement> & {
     url?: string;
-    className?: string;
-    isSub?: boolean;
+    icon?: ReactNode;
     rightSection?: ReactNode;
     isActive?: boolean;
     disabled?: boolean;
+    isSub?: boolean;
 };
 
 export function NavigationItem({
     children,
-    isSub = false,
     url,
-    className = "",
+    icon,
     rightSection,
     isActive,
     disabled,
-    ...props
+    isSub = false,
+    ...rest
 }: PropsWithChildren<NavigationItemProps>) {
     const matchRoute = useMatchRoute();
     const isRouteActive = url ? matchRoute({ to: url, fuzzy: true }) : false;
+    const active = Boolean(isRouteActive || isActive);
 
-    const activeClassName =
-        isRouteActive || isActive ? ` ${navigationItemButtonActive}` : "";
-
-    const buttonClassName = `${navigationItemButton}${
-        !isSub ? activeClassName : ""
-    }`;
+    const baseClass = isSub ? subItem : item;
+    const activeClass = isSub ? subItemActive : itemActive;
+    const className = `${baseClass}${active ? ` ${activeClass}` : ""}`;
 
     const content = (
         <>
-            {children}
-            {rightSection &&
-                mergeElement(rightSection, {
-                    className: navigationItemRightSection,
-                })}
+            {icon && <span className={itemIcon}>{icon}</span>}
+            <Text
+                variant="bodySmall"
+                as="span"
+                className={itemLabel}
+                weight={active ? "medium" : "regular"}
+            >
+                {children}
+            </Text>
+            {rightSection && <span className={itemRight}>{rightSection}</span>}
         </>
     );
 
     if (disabled) {
         return (
-            <li className={className}>
-                <button
-                    type="button"
-                    className={buttonClassName}
-                    disabled={true}
-                    {...props}
-                >
+            <li className={itemListEntry}>
+                <button type="button" className={className} disabled {...rest}>
                     {content}
                 </button>
             </li>
@@ -113,14 +141,14 @@ export function NavigationItem({
 
     if (url?.startsWith("http")) {
         return (
-            <li className={className}>
+            <li className={itemListEntry}>
                 <button
                     type="button"
-                    className={buttonClassName}
+                    className={className}
                     onClick={() =>
                         window.open(url, "_blank", "noopener,noreferrer")
                     }
-                    {...props}
+                    {...rest}
                 >
                     {content}
                 </button>
@@ -130,8 +158,8 @@ export function NavigationItem({
 
     if (url) {
         return (
-            <li className={className}>
-                <Link to={url} className={buttonClassName} {...props}>
+            <li className={itemListEntry}>
+                <Link to={url} className={className} {...rest}>
                     {content}
                 </Link>
             </li>
@@ -139,33 +167,16 @@ export function NavigationItem({
     }
 
     return (
-        <li className={className}>
-            <button type="button" className={buttonClassName} {...props}>
+        <li className={itemListEntry}>
+            <button type="button" className={className} {...rest}>
                 {content}
             </button>
         </li>
     );
 }
 
-export function SubNavigationItem({
-    children,
-    ...props
-}: PropsWithChildren<NavigationItemProps>) {
-    return (
-        <NavigationItem isSub={true} {...props}>
-            {children}
-        </NavigationItem>
-    );
-}
-
-export function NavigationLabel({
-    icon,
-    children,
-}: PropsWithChildren<{ icon: ReactNode }>) {
-    return (
-        <>
-            {icon}
-            <span className={navigationItemLabel}>{children}</span>
-        </>
-    );
+export function SubNavigationItem(
+    props: PropsWithChildren<NavigationItemProps>
+) {
+    return <NavigationItem {...props} isSub />;
 }

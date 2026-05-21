@@ -17,46 +17,25 @@ vi.mock("@tanstack/react-router", () => ({
     useMatchRoute: () => mockMatchRoute,
 }));
 
-vi.mock("@/assets/icons/Laptop", () => ({
-    Laptop: () => <svg data-testid="icon-laptop" />,
-}));
-
-vi.mock("@/assets/icons/ChevronDown", () => ({
-    ChevronDown: () => <svg data-testid="icon-chevron-down" />,
-}));
-
-vi.mock("@/assets/icons/ChevronUp", () => ({
-    ChevronUp: () => <svg data-testid="icon-chevron-up" />,
-}));
-
 vi.mock("./index", () => ({
     NavigationItem: ({
         url,
         children,
         isActive,
+        icon,
         rightSection,
     }: {
         url?: string;
         children: React.ReactNode;
         isActive?: boolean;
+        icon?: React.ReactNode;
         rightSection?: React.ReactNode;
     }) => (
         <li data-testid="navigation-item" data-url={url} data-active={isActive}>
+            {icon}
             {children}
             {rightSection}
         </li>
-    ),
-    NavigationLabel: ({
-        icon,
-        children,
-    }: {
-        icon: React.ReactNode;
-        children: React.ReactNode;
-    }) => (
-        <>
-            {icon}
-            <span>{children}</span>
-        </>
     ),
     SubNavigationItem: ({
         url,
@@ -86,7 +65,6 @@ describe("NavigationCampaignsSwitcher", () => {
         const item = screen.getByTestId("navigation-item");
         expect(item).toHaveAttribute("data-url", "/campaigns/list");
         expect(screen.getByText("Campaigns")).toBeInTheDocument();
-        expect(screen.getByTestId("icon-laptop")).toBeInTheDocument();
     });
 
     it("should render desktop collapsible navigation when not on mobile", () => {
@@ -100,7 +78,7 @@ describe("NavigationCampaignsSwitcher", () => {
         expect(screen.getByText("Campaigns")).toBeInTheDocument();
     });
 
-    it("should show sub-navigation items when expanded", () => {
+    it("should show both sub-navigation items when expanded", () => {
         mockUseMediaQuery.mockReturnValue(false);
         mockUseLocation.mockReturnValue({ pathname: "/campaigns/list" });
 
@@ -108,10 +86,12 @@ describe("NavigationCampaignsSwitcher", () => {
 
         const subItems = screen.getAllByTestId("sub-navigation-item");
         expect(subItems).toHaveLength(2);
-        expect(subItems[0]).toHaveAttribute("data-url", "/campaigns/list");
-        expect(subItems[1]).toHaveAttribute(
+        expect(subItems[0]).toHaveAttribute(
             "data-url",
             "/campaigns/performance"
         );
+        expect(subItems[1]).toHaveAttribute("data-url", "/campaigns/list");
+        expect(screen.getByText("Datas overview")).toBeInTheDocument();
+        expect(screen.getByText("List")).toBeInTheDocument();
     });
 });

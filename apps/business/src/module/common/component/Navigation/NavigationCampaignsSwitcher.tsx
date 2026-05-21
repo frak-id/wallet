@@ -1,18 +1,24 @@
 import { useMediaQuery } from "@frak-labs/design-system/hooks/useMediaQuery";
+import {
+    ChecklistIcon,
+    ChevronDownIcon,
+    ChevronUpIcon,
+} from "@frak-labs/design-system/icons";
 import * as Collapsible from "@radix-ui/react-collapsible";
 import { useLocation } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { ChevronDown } from "@/assets/icons/ChevronDown";
-import { ChevronUp } from "@/assets/icons/ChevronUp";
-import { Laptop } from "@/assets/icons/Laptop";
-import { NavigationItem, NavigationLabel, SubNavigationItem } from "./index";
+import { NavigationItem, SubNavigationItem } from "./index";
+import { collapsibleContent } from "./navigation.css";
 
 export function NavigationCampaignsSwitcher() {
     const isMobile = useMediaQuery("(max-width : 768px)");
 
     return isMobile ? (
-        <NavigationItem url="/campaigns/list">
-            <NavigationLabel icon={<Laptop />}>Campaigns</NavigationLabel>
+        <NavigationItem
+            url="/campaigns/list"
+            icon={<ChecklistIcon width={20} height={20} />}
+        >
+            Campaigns
         </NavigationItem>
     ) : (
         <NavigationCampaigns />
@@ -36,18 +42,25 @@ function NavigationCampaigns() {
             <Collapsible.Trigger asChild>
                 <NavigationItem
                     isActive={isOpen}
-                    rightSection={isOpen ? <ChevronUp /> : <ChevronDown />}
+                    icon={<ChecklistIcon width={20} height={20} />}
+                    rightSection={
+                        isOpen ? (
+                            <ChevronUpIcon width={16} height={16} />
+                        ) : (
+                            <ChevronDownIcon width={16} height={16} />
+                        )
+                    }
                 >
-                    <Laptop /> Campaigns
+                    Campaigns
                 </NavigationItem>
             </Collapsible.Trigger>
-            <Collapsible.Content>
+            <Collapsible.Content className={collapsibleContent}>
                 <ul>
+                    <SubNavigationItem url="/campaigns/performance">
+                        Datas overview
+                    </SubNavigationItem>
                     <SubNavigationItem url="/campaigns/list">
                         List
-                    </SubNavigationItem>
-                    <SubNavigationItem url="/campaigns/performance">
-                        Performance
                     </SubNavigationItem>
                 </ul>
             </Collapsible.Content>
