@@ -54,7 +54,7 @@ describe("safeSession utilities", () => {
                 setDemoPrivateKey: vi.fn(),
                 clearSession: vi.fn(),
                 previousSession: null,
-                pushSession: vi.fn(),
+                parkSession: vi.fn(),
                 popSession: vi.fn(),
             });
 
@@ -76,7 +76,7 @@ describe("safeSession utilities", () => {
                 setDemoPrivateKey: vi.fn(),
                 clearSession: vi.fn(),
                 previousSession: null,
-                pushSession: vi.fn(),
+                parkSession: vi.fn(),
                 popSession: vi.fn(),
             });
 
@@ -112,7 +112,7 @@ describe("safeSession utilities", () => {
                 setDemoPrivateKey: vi.fn(),
                 clearSession: vi.fn(),
                 previousSession: null,
-                pushSession: vi.fn(),
+                parkSession: vi.fn(),
                 popSession: vi.fn(),
             });
 
@@ -133,7 +133,7 @@ describe("safeSession utilities", () => {
                 setDemoPrivateKey: vi.fn(),
                 clearSession: vi.fn(),
                 previousSession: null,
-                pushSession: vi.fn(),
+                parkSession: vi.fn(),
                 popSession: vi.fn(),
             });
 
@@ -163,7 +163,7 @@ describe("safeSession utilities", () => {
                 setDemoPrivateKey: vi.fn(),
                 clearSession: vi.fn(),
                 previousSession: null,
-                pushSession: vi.fn(),
+                parkSession: vi.fn(),
                 popSession: vi.fn(),
             });
 
@@ -187,7 +187,7 @@ describe("safeSession utilities", () => {
                 setDemoPrivateKey: vi.fn(),
                 clearSession: vi.fn(),
                 previousSession: null,
-                pushSession: vi.fn(),
+                parkSession: vi.fn(),
                 popSession: vi.fn(),
             });
 
@@ -219,7 +219,7 @@ describe("safeSession utilities", () => {
                 setDemoPrivateKey: vi.fn(),
                 clearSession: vi.fn(),
                 previousSession: null,
-                pushSession: vi.fn(),
+                parkSession: vi.fn(),
                 popSession: vi.fn(),
             });
 
@@ -250,7 +250,7 @@ describe("safeSession utilities", () => {
                 setDemoPrivateKey: vi.fn(),
                 clearSession: vi.fn(),
                 previousSession: null,
-                pushSession: vi.fn(),
+                parkSession: vi.fn(),
                 popSession: vi.fn(),
             });
 
@@ -280,7 +280,7 @@ describe("safeSession utilities", () => {
                 setDemoPrivateKey: vi.fn(),
                 clearSession: vi.fn(),
                 previousSession: null,
-                pushSession: vi.fn(),
+                parkSession: vi.fn(),
                 popSession: vi.fn(),
             });
 

@@ -185,13 +185,34 @@
                 "retry": "Réessayer",
                 "error": "Impossible de confirmer avec l'autre passkey sur cet appareil. Vérifie qu'elle est bien disponible ici, puis réessaie."
             },
-            "finalize": {
-                "title": "Combinaison en cours",
-                "description": "Presque terminé — encore une confirmation avec le compte principal pour tout fusionner.",
+            "switch": {
+                "title": "Ouvre ton autre compte",
+                "description": "On va te connecter sur {{wallet}} pour que tu puisses autoriser la combinaison depuis ce compte.",
+                "help": {
+                    "title": "Ce qui se passe",
+                    "description": "Ton appareil te demandera de confirmer avec la passkey de l'autre compte — visage, empreinte ou code. Tu reviendras automatiquement sur ce compte une fois la combinaison terminée."
+                },
+                "confirm": "Ouvrir {{wallet}}",
+                "retry": "Réessayer",
+                "error": "Impossible d'ouvrir l'autre compte sur cet appareil. Vérifie que sa passkey est disponible ici, puis réessaie."
+            },
+            "sign": {
+                "title": "Autorise la combinaison",
+                "description": "Une dernière confirmation pour réunir tes deux comptes.",
                 "errorDescription": "Quelque chose a interrompu la combinaison. Tes comptes sont en sécurité — réessaie pour terminer.",
+                "authorise": "Autoriser",
+                "retry": "Réessayer",
+                "cancel": "Annuler",
+                "error": "La combinaison n'a pas pu être autorisée. Réessaie — tes comptes sont en sécurité."
+            },
+            "settling": {
+                "title": "Combinaison de tes comptes…",
+                "description": "On met tout ensemble. Ça prend généralement quelques secondes.",
+                "errorTitle": "Presque fini",
+                "errorDescription": "Quelque chose a coincé de notre côté après ton autorisation. Réessaie — tes comptes sont en sécurité.",
                 "progress": {
                     "title": "Un instant…",
-                    "body": "On signe l'étape on-chain et on range tes comptes. Tu verras peut-être une rapide demande de ton appareil."
+                    "body": "On relie tes comptes et on transfère parrainages et récompenses. Patience."
                 },
                 "error": "La combinaison n'a pas pu se terminer. Réessaie — on reprend là où on s'est arrêté.",
                 "retry": "Réessayer",

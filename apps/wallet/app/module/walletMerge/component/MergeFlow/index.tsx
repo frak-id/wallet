@@ -1,23 +1,30 @@
+import type { MergeSettleResponse } from "@frak-labs/backend-elysia/api/schemas";
 import { Box } from "@frak-labs/design-system/components/Box";
 import { Button } from "@frak-labs/design-system/components/Button";
-import { selectSession, sessionStore } from "@frak-labs/wallet-shared";
-import { useCallback, useState } from "react";
+import { sessionStore } from "@frak-labs/wallet-shared";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { useStore } from "zustand";
+import type { Hex } from "viem";
 import { EmailFlowResultScreen } from "@/module/common/component/EmailFlowResultScreen";
 import { useLoserAssetCheck } from "../../hook/useLoserAssetCheck";
 import { useMergePreview } from "../../hook/useMergePreview";
 import { AssetMigrationStep } from "../AssetMigrationStep";
 import { ConsentStep } from "../ConsentStep";
-import { FinalizeStep } from "../FinalizeStep";
 import { PreviewStep } from "../PreviewStep";
+import { SettlingStep } from "../SettlingStep";
+import { SignStep } from "../SignStep";
 import { SuccessStep } from "../SuccessStep";
+import { SwitchStep } from "../SwitchStep";
 
 type MergeFlowProps = {
     /** Email the user typed in the AddEmail input step. */
     email: string;
-    /** Credential currently logged in — taken from the session. Kept on the
-     *  props so the parent owns the "is the user signed in?" check. */
+    /** Credential currently logged in — captured by the parent at flow
+     *  entry and held constant for the lifetime of the flow. We deliberately
+     *  do **not** read it from the live session store: the SwitchStep
+     *  temporarily swaps the live session and we still need to know who the
+     *  original credential was to compute `needsSwitch` and to pick the
+     *  winner credential id later. */
     currentAuthenticatorId: string;
     /** The conflicting credential identified by the AddEmail backend. */
     targetAuthenticatorId: string;
@@ -31,16 +38,20 @@ type Step =
     | { kind: "preview" }
     | { kind: "assets" }
     | { kind: "consent" }
-    | { kind: "finalize"; consentSignature: string }
-    | { kind: "success" };
+    | { kind: "switch"; consentSignature: string }
+    | { kind: "sign"; consentSignature: string }
+    | { kind: "settling"; consentSignature: string; txHash: Hex }
+    | { kind: "success"; settle: MergeSettleResponse };
 
 /**
  * Multi-step orchestrator for the same-device wallet-merge flow.
  *
- * Mounted from the AddEmail conflict branch once the user accepts the
- * "combine my accounts" CTA. Owns the small bits of cross-step state
- * (consent signature, settle result) and routes user-visible navigation
- * between the dedicated step screens.
+ * Each user-visible step is a self-contained screen owning at most one
+ * webauthn prompt, so the three biometric prompts the same-device merge
+ * needs (loser consent → winner login → addPassKey signing) are explicitly
+ * sequenced — never fired back-to-back from a single screen. The cross-step
+ * state held here is intentionally narrow: the consent signature, the
+ * post-sign tx hash, and the terminal settle response.
  */
 export function MergeFlow({
     email,
@@ -51,18 +62,68 @@ export function MergeFlow({
 }: MergeFlowProps) {
     const { t } = useTranslation();
     const [step, setStep] = useState<Step>({ kind: "preview" });
+    // Held in a ref so the unmount cleanup below reads the latest step kind
+    // without re-binding the effect every transition.
+    const stepKindRef = useRef(step.kind);
+    stepKindRef.current = step.kind;
 
     const preview = useMergePreview(targetAuthenticatorId);
-
-    const session = useStore(sessionStore, selectSession);
 
     const assetCheck = useLoserAssetCheck({
         loser: preview.data?.loser,
     });
 
-    const handleSettleSuccess = useCallback(() => {
-        setStep({ kind: "success" });
+    // Two-layer parked-session cleanup so the user never gets stranded on
+    // the winner session after an unhappy path:
+    //
+    //  1. On mount: pop any orphan snapshot left over by a prior tab session
+    //     that crashed mid-flow. AddEmail's flow state itself is React-only
+    //     and resets on refresh, so a parked snapshot at this point is by
+    //     definition stale — its real owner is gone. Within the same React
+    //     session the unmount cleanup below already popped, so this branch
+    //     is a no-op for the common case.
+    //  2. On unmount: pop unless we landed on the terminal success step,
+    //     which has already popped via `useMergeSettle`. Covers user-driven
+    //     aborts (cancel button, back navigation), AddEmail flipping back
+    //     to the conflict screen, and route-level unmounts.
+    //
+    // `popSession` is a no-op when nothing is parked, so both layers are
+    // safe to call unconditionally.
+    useEffect(() => {
+        sessionStore.getState().popSession();
+        return () => {
+            if (stepKindRef.current === "success") return;
+            sessionStore.getState().popSession();
+        };
     }, []);
+
+    const handleAbort = useCallback(() => {
+        sessionStore.getState().popSession();
+        onAbort();
+    }, [onAbort]);
+
+    const needsSwitch = useMemo(() => {
+        if (!preview.data) return false;
+        return (
+            preview.data.winner.toLowerCase() !==
+            preview.data.requesterWallet.toLowerCase()
+        );
+    }, [preview.data]);
+
+    const winnerAuthenticatorId = needsSwitch
+        ? targetAuthenticatorId
+        : currentAuthenticatorId;
+
+    const handleConsentConfirmed = useCallback(
+        (consentSignature: string) => {
+            setStep(
+                needsSwitch
+                    ? { kind: "switch", consentSignature }
+                    : { kind: "sign", consentSignature }
+            );
+        },
+        [needsSwitch]
+    );
 
     if (preview.isLoading || !preview.data) {
         if (preview.isError) {
@@ -70,7 +131,7 @@ export function MergeFlow({
                 <EmailFlowResultScreen
                     title={t("wallet.merge.preview.errorTitle")}
                     description={t("wallet.merge.preview.errorDescription")}
-                    onBack={onAbort}
+                    onBack={handleAbort}
                 >
                     <Button
                         type="button"
@@ -86,7 +147,7 @@ export function MergeFlow({
                         variant="secondary"
                         size="large"
                         width="full"
-                        onClick={onAbort}
+                        onClick={handleAbort}
                     >
                         {t("wallet.merge.preview.cancel")}
                     </Button>
@@ -99,31 +160,8 @@ export function MergeFlow({
                 description={
                     <Box>{t("wallet.merge.preview.loadingDescription")}</Box>
                 }
-                onBack={onAbort}
+                onBack={handleAbort}
             />
-        );
-    }
-
-    // Guard: settle requires a live webauthn session. If the user lost the
-    // session mid-flow (storage cleared, JWT expired), bail with a clear
-    // message rather than crashing inside the finaliser.
-    if (!session?.authenticatorId) {
-        return (
-            <EmailFlowResultScreen
-                title={t("wallet.merge.preview.errorTitle")}
-                description={t("wallet.merge.preview.errorDescription")}
-                onBack={onAbort}
-            >
-                <Button
-                    type="button"
-                    variant="primary"
-                    size="large"
-                    width="full"
-                    onClick={onAbort}
-                >
-                    {t("wallet.merge.preview.cancel")}
-                </Button>
-            </EmailFlowResultScreen>
         );
     }
 
@@ -133,7 +171,7 @@ export function MergeFlow({
                 preview={preview.data}
                 email={email}
                 onContinue={() => setStep({ kind: "assets" })}
-                onCancel={onAbort}
+                onCancel={handleAbort}
             />
         );
     }
@@ -155,36 +193,58 @@ export function MergeFlow({
             <ConsentStep
                 winner={preview.data.winner}
                 loserAuthenticatorId={preview.data.loserAuthenticatorId}
-                onConfirmed={(consentSignature) =>
-                    setStep({ kind: "finalize", consentSignature })
-                }
+                onConfirmed={handleConsentConfirmed}
                 onBack={() => setStep({ kind: "assets" })}
             />
         );
     }
 
-    if (step.kind === "finalize") {
+    if (step.kind === "switch") {
         return (
-            <FinalizeStep
-                preview={preview.data}
-                currentAuthenticatorId={currentAuthenticatorId}
-                targetAuthenticatorId={targetAuthenticatorId}
+            <SwitchStep
+                winnerWallet={preview.data.winner}
+                winnerAuthenticatorId={winnerAuthenticatorId}
+                onSwitched={() =>
+                    setStep({
+                        kind: "sign",
+                        consentSignature: step.consentSignature,
+                    })
+                }
+                onBack={() => setStep({ kind: "consent" })}
+            />
+        );
+    }
+
+    if (step.kind === "sign") {
+        return (
+            <SignStep
+                loserAuthenticatorId={preview.data.loserAuthenticatorId}
+                loserPublicKey={preview.data.loserPublicKey}
+                onSigned={(txHash) =>
+                    setStep({
+                        kind: "settling",
+                        consentSignature: step.consentSignature,
+                        txHash,
+                    })
+                }
+                onCancel={handleAbort}
+            />
+        );
+    }
+
+    if (step.kind === "settling") {
+        return (
+            <SettlingStep
+                loserAuthenticatorId={preview.data.loserAuthenticatorId}
+                onChainTxHash={step.txHash}
                 loserConsentSignature={step.consentSignature}
-                onComplete={() => handleSettleSuccess()}
-                onCancel={onAbort}
+                onCompleted={(settle) => setStep({ kind: "success", settle })}
+                onCancel={handleAbort}
             />
         );
     }
 
     return (
-        <SuccessStep
-            settle={{
-                status: "merged",
-                winner: preview.data.winner,
-                loser: preview.data.loser,
-            }}
-            email={email}
-            onBack={onCompleted}
-        />
+        <SuccessStep settle={step.settle} email={email} onBack={onCompleted} />
     );
 }

@@ -60,7 +60,8 @@ export namespace authKey {
         preview: (targetAuthenticatorId: string) =>
             [base, mergeBase, "preview", targetAuthenticatorId] as const,
         consent: [base, mergeBase, "consent"] as const,
-        finalise: [base, mergeBase, "finalise"] as const,
         switchAuthenticator: [base, mergeBase, "switchAuthenticator"] as const,
+        sendAddPassKey: [base, mergeBase, "sendAddPassKey"] as const,
+        settle: [base, mergeBase, "settle"] as const,
     };
 }

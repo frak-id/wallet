@@ -678,18 +678,6 @@ export default interface Resources {
                     title: "Confirm with your other passkey";
                     verify: "Confirm";
                 };
-                finalize: {
-                    cancel: "Cancel";
-                    description: "Almost done — one more confirmation with the main account to merge everything together.";
-                    error: "The combine couldn't finish. Tap retry — we'll pick up where we left off.";
-                    errorDescription: "Something interrupted the combine. Your accounts are safe — try again to finish.";
-                    progress: {
-                        body: "We're signing the on-chain step and tidying up your accounts. You may see a quick prompt from your device.";
-                        title: "Working on it…";
-                    };
-                    retry: "Retry";
-                    title: "Combining your accounts";
-                };
                 preview: {
                     cancel: "Cancel";
                     combineArrow: "↓ combine into ↓";
@@ -716,10 +704,43 @@ export default interface Resources {
                     title: "Combine your accounts";
                     winnerBadge: "Stays as primary";
                 };
+                settling: {
+                    cancel: "Cancel";
+                    description: "We're putting everything together. This usually takes a few seconds.";
+                    error: "The combine couldn't finish. Tap retry — we'll pick up where we left off.";
+                    errorDescription: "Something slipped on our side after you authorised. Tap retry — your accounts are safe.";
+                    errorTitle: "Almost there";
+                    progress: {
+                        body: "Linking your accounts, transferring referrals and rewards. Hang tight.";
+                        title: "Working on it…";
+                    };
+                    retry: "Retry";
+                    title: "Combining your accounts…";
+                };
+                sign: {
+                    authorise: "Authorise";
+                    cancel: "Cancel";
+                    description: "One last confirmation to bring your two accounts together.";
+                    error: "The combine couldn't be authorised. Tap try again — your accounts are safe.";
+                    errorDescription: "Something interrupted the combine. Your accounts are safe — try again to finish.";
+                    retry: "Try again";
+                    title: "Authorise the combine";
+                };
                 success: {
                     back: "Back to my profile";
                     description: "{{email}} is linked to your wallet. Everything from your other account moved over — referrals, history, rewards.";
                     title: "Your accounts are now one";
+                };
+                switch: {
+                    confirm: "Open {{wallet}}";
+                    description: "We'll log you in on {{wallet}} so you can authorise the combine from that account.";
+                    error: "We couldn't open the other account on this device. Make sure its passkey is available here, then try again.";
+                    help: {
+                        description: "Your device will ask you to confirm with the other account's passkey — face, fingerprint or PIN. You'll be moved back to this account as soon as the combine finishes.";
+                        title: "What happens here";
+                    };
+                    retry: "Try again";
+                    title: "Open your other account";
                 };
             };
             notifications: {

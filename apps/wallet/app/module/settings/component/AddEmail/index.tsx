@@ -26,6 +26,10 @@ type FlowState =
     | {
           kind: "merging";
           email: string;
+          /** Credential the user was signed in as when they entered the
+           *  merge flow. Snapshotted here so the SwitchStep can later swap
+           *  the live session without losing the original target. */
+          currentAuthenticatorId: string;
           targetAuthenticatorId: string;
           targetWallet: Address;
       }
@@ -103,26 +107,18 @@ export function AddEmail() {
     }
 
     if (flowState.kind === "merging") {
-        if (!session?.authenticatorId) {
-            // Lost session mid-flow — fall back to the conflict screen
-            // which will steer the user to "use a different email" or
-            // restart from the input step.
-            return (
-                <ConflictStep
-                    targetAuthenticatorId={flowState.targetAuthenticatorId}
-                    targetWallet={flowState.targetWallet}
-                    onMerge={() => setFlowState({ kind: "input" })}
-                    onUseDifferent={backToInput}
-                    onBack={goToProfile}
-                />
-            );
-        }
+        // `currentAuthenticatorId` is captured from the session at flow
+        // entry (see the `onMerge` handler below) and held on the flow
+        // state for the lifetime of the merge. We deliberately do **not**
+        // re-read it from the live session here: the merge's SwitchStep
+        // swaps the live session to the winner credential mid-flow, and
+        // gating this branch on the current session would flicker the user
+        // back to the ConflictStep during that swap.
         return (
             <MergeFlow
                 email={flowState.email}
-                currentAuthenticatorId={session.authenticatorId}
+                currentAuthenticatorId={flowState.currentAuthenticatorId}
                 targetAuthenticatorId={flowState.targetAuthenticatorId}
-                targetWallet={flowState.targetWallet}
                 onAbort={() =>
                     setFlowState({
                         kind: "conflict",
@@ -138,7 +134,9 @@ export function AddEmail() {
 
     if (flowState.kind === "conflict") {
         const canMerge = Boolean(
-            flowState.targetAuthenticatorId && flowState.targetWallet
+            flowState.targetAuthenticatorId &&
+                flowState.targetWallet &&
+                session?.authenticatorId
         );
         return (
             <ConflictStep
@@ -148,12 +146,14 @@ export function AddEmail() {
                     if (
                         !canMerge ||
                         !flowState.targetAuthenticatorId ||
-                        !flowState.targetWallet
+                        !flowState.targetWallet ||
+                        !session?.authenticatorId
                     )
                         return;
                     setFlowState({
                         kind: "merging",
                         email: flowState.email,
+                        currentAuthenticatorId: session.authenticatorId,
                         targetAuthenticatorId: flowState.targetAuthenticatorId,
                         targetWallet: flowState.targetWallet,
                     });

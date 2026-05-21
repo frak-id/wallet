@@ -14,22 +14,21 @@ type UseSwitchAuthenticatorArgs = {
 };
 
 /**
- * Temporarily switches the live wallet session to a different credential so
- * the merge flow can sign the winner-side `addPassKey` userOp from the
- * winner's smart account context.
+ * Temporarily swaps the live wallet session to a different credential so the
+ * merge flow can sign the winner-side `addPassKey` userOp from the winner's
+ * smart-account context.
  *
- * The session is **parked** rather than overwritten:
- *  - `pushSession()` saves the current `{ session, sdkSession }` into the
- *    persisted `previousSession` slot — so a tab refresh mid-flow doesn't
- *    lose the restore target.
- *  - `useLogin({ lastAuthentication })` writes the swapped-in winner
- *    session in its place.
- *  - On any failure (biometric cancel, mismatched credential, network), the
- *    snapshot is popped back so the user lands on their original session.
+ * Atomic swap: the previous session is held in a local JS variable while
+ * `useLogin` overwrites the live session slot with the winner. Only **after**
+ * the login resolves do we write the snapshot into `previousSession` via
+ * `parkSession`. Observers therefore see a single transition (loser → winner)
+ * with no intermediate null — components that gate on `session?.authenticatorId`
+ * never flicker to their unauthenticated branch.
  *
- * Re-entry safe: if a previous attempt already pushed the snapshot, we skip
- * the push and just retry the login, leaving the snapshot intact for the
- * eventual `popSession()` at the end of the merge.
+ * Failure rollback is implicit: if `login` throws, the snapshot is still only
+ * in JS scope and the live session is unchanged. Nothing to undo. We only
+ * `popSession` on retry when an earlier successful call already parked a
+ * snapshot — that flag is the presence check on `previousSession`.
  */
 export function useSwitchAuthenticator() {
     const { login } = useLogin();
@@ -38,31 +37,33 @@ export function useSwitchAuthenticator() {
         mutationKey: authKey.merge.switchAuthenticator,
         gcTime: 0,
         mutationFn: async ({ wallet, authenticatorId, transports }) => {
+            const current = sessionStore.getState();
+            if (!current.session) {
+                throw new Error("MERGE_SWITCH_NO_SESSION");
+            }
+            const snapshot = {
+                session: current.session,
+                sdkSession: current.sdkSession,
+            };
+
+            const next = await login({
+                lastAuthentication: {
+                    wallet,
+                    authenticatorId,
+                    transports,
+                },
+            });
+
+            // Login wrote the winner into the live slot. Park the snapshot
+            // now that the swap is complete. Skip the park when an earlier
+            // attempt already parked (re-entry after a partial failure) so
+            // we don't lose the original target.
             const { previousSession } = sessionStore.getState();
-            const didPushThisCall = previousSession === null;
-            if (didPushThisCall) {
-                const ok = sessionStore.getState().pushSession();
-                if (!ok) {
-                    throw new Error("MERGE_SWITCH_PUSH_FAILED");
-                }
+            if (!previousSession) {
+                sessionStore.getState().parkSession(snapshot);
             }
-            try {
-                return await login({
-                    lastAuthentication: {
-                        wallet,
-                        authenticatorId,
-                        transports,
-                    },
-                });
-            } catch (error) {
-                // Only roll back the snapshot we just took. If the snapshot
-                // pre-existed (retry after a partial failure), keep it in
-                // place so the caller can retry without re-parking.
-                if (didPushThisCall) {
-                    sessionStore.getState().popSession();
-                }
-                throw error;
-            }
+
+            return next;
         },
     });
 }

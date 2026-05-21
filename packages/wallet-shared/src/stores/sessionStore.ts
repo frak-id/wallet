@@ -30,14 +30,10 @@ export const sessionStore = createStore<SessionStore>()(
                     previousSession: null,
                     demoPrivateKey: null,
                 }),
-            pushSession: () => {
-                const { session, sdkSession, previousSession } = get();
-                if (previousSession || !session) return false;
-                set({
-                    previousSession: { session, sdkSession },
-                    session: null,
-                    sdkSession: null,
-                });
+            parkSession: (snapshot) => {
+                const { previousSession } = get();
+                if (previousSession) return false;
+                set({ previousSession: snapshot });
                 return true;
             },
             popSession: () => {
@@ -73,7 +69,7 @@ export const selectSession = (state: SessionStore) => state.session;
 // Get the SDK session
 export const selectSdkSession = (state: SessionStore) => state.sdkSession;
 
-// Get the parked previous session (set by `pushSession`, restored by `popSession`)
+// Get the parked previous session (set by `parkSession`, restored by `popSession`)
 export const selectPreviousSession = (state: SessionStore) =>
     state.previousSession;
 

@@ -48,15 +48,17 @@ export type SessionStore = {
     setDemoPrivateKey: (key: Hex | null) => void;
     clearSession: () => void;
     /**
-     * Save the current `{ session, sdkSession }` into the `previousSession`
-     * slot and null out the live session. The next `useLogin` call then
-     * writes the swapped-in session in its place. Refuses to overwrite an
-     * existing snapshot (returns `false`) so a flow that fails to pop
-     * cannot quietly lose the original target.
+     * Park a previously-captured snapshot of `{ session, sdkSession }` into
+     * the `previousSession` slot. Caller must take the snapshot **before**
+     * swapping the live session (e.g. before calling `useLogin`) and invoke
+     * this once the swap has completed. The live session slots are left
+     * untouched — there is no null window for observers. Refuses to
+     * overwrite an existing snapshot (returns `false`) so a flow that
+     * fails to pop cannot quietly lose the original target.
      */
-    pushSession: () => boolean;
+    parkSession: (snapshot: PreviousSessionSnapshot) => boolean;
     /**
-     * Restore the snapshot saved by `pushSession` into the live session
+     * Restore the snapshot saved by `parkSession` into the live session
      * slots. Clears the snapshot. Returns `false` when there is nothing to
      * restore.
      */

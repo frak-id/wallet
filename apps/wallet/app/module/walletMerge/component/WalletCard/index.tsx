@@ -4,6 +4,7 @@ import { Stack } from "@frak-labs/design-system/components/Stack";
 import { Text } from "@frak-labs/design-system/components/Text";
 import { useTranslation } from "react-i18next";
 import type { Address } from "viem";
+import { shortenAddress } from "../../utils/shortenAddress";
 import * as styles from "./index.css";
 
 type WalletCardProps = {
@@ -89,9 +90,4 @@ function StatRow({ label, value }: { label: string; value: number }) {
             </Text>
         </Box>
     );
-}
-
-function shortenAddress(address: Address): string {
-    if (address.length <= 12) return address;
-    return `${address.slice(0, 6)}…${address.slice(-4)}`;
 }
