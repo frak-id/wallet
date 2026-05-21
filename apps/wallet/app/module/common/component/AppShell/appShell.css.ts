@@ -16,7 +16,11 @@ export const shellContainer = style({
     position: "relative",
     display: "flex",
     flexDirection: "column",
-    height: "100dvh",
+    // `--viewport-height` is mirrored from `window.visualViewport.height` by
+    // `initKeyboardInset` on Tauri so the shell shrinks when the soft keyboard
+    // opens (WKWebView and edge-to-edge Android WebView do not honor `dvh` or
+    // `adjustResize`). Falls back to `100dvh` everywhere else.
+    height: "var(--viewport-height, 100dvh)",
     paddingTop: safeTop,
     overflow: "hidden",
     width: "100%",
@@ -24,15 +28,15 @@ export const shellContainer = style({
         [`(min-width: ${tablet}px)`]: {
             width: "393px",
             minHeight: "unset",
-            height: "min(100dvh, 852px)",
+            height: "min(var(--viewport-height, 100dvh), 852px)",
         },
     },
     selectors: {
         // Native app: opt out of the tablet phone-frame and fill the whole device.
         ':root[data-platform="tauri"] &': {
             width: "100%",
-            height: "100dvh",
-            minHeight: "100dvh",
+            height: "var(--viewport-height, 100dvh)",
+            minHeight: "var(--viewport-height, 100dvh)",
         },
     },
 });
