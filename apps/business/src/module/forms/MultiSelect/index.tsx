@@ -2,6 +2,7 @@ import clsx from "clsx";
 import { CheckIcon, ChevronDown, X, XIcon } from "lucide-react";
 import type { ButtonHTMLAttributes, Ref } from "react";
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Badge } from "@/module/common/component/Badge";
 import { Button } from "@/module/common/component/Button";
 import {
@@ -49,10 +50,13 @@ export const MultiSelect = ({
     options,
     onValueChange,
     value,
-    placeholder = "Select options",
+    placeholder,
     className,
     ...props
 }: MultiSelectProps) => {
+    const { t } = useTranslation();
+    const resolvedPlaceholder =
+        placeholder ?? t("forms.multiSelect.placeholder");
     const namesFromValue = Array.isArray(value)
         ? value.map(
               (v: string) =>
@@ -102,7 +106,7 @@ export const MultiSelect = ({
                         />
                     ) : (
                         <div className={styles.multiSelectTriggerInner}>
-                            <span>{placeholder}</span>
+                            <span>{resolvedPlaceholder}</span>
                             <ChevronDown size={20} />
                         </div>
                     )}
@@ -113,10 +117,12 @@ export const MultiSelect = ({
                 onEscapeKeyDown={() => setIsPopoverOpen(false)}
             >
                 <Command>
-                    <CommandInput placeholder="Search..." />
+                    <CommandInput placeholder={t("forms.multiSelect.search")} />
                     <CommandSeparator />
                     <CommandList>
-                        <CommandEmpty>No results found.</CommandEmpty>
+                        <CommandEmpty>
+                            {t("forms.multiSelect.noResults")}
+                        </CommandEmpty>
                         <CommandGroup>
                             <OptionsList
                                 selectedValues={selectedNames}
@@ -134,7 +140,7 @@ export const MultiSelect = ({
                                         onSelect={handleClear}
                                         className={styles.multiSelectButton}
                                     >
-                                        Clear
+                                        {t("forms.multiSelect.clear")}
                                     </CommandItem>
                                     <Separator
                                         orientation="vertical"
@@ -146,7 +152,7 @@ export const MultiSelect = ({
                                 onSelect={() => setIsPopoverOpen(false)}
                                 className={styles.multiSelectButton}
                             >
-                                Close
+                                {t("forms.multiSelect.close")}
                             </CommandItem>
                         </div>
                     </CommandGroup>
@@ -214,6 +220,7 @@ function SelectedValues({
 }
 
 function SelectedValuesMore({ size }: { size: number }) {
+    const { t } = useTranslation();
     return (
         <div className={styles.multiSelectTriggerInner}>
             <div className={styles.multiSelectTriggerBadges}>
@@ -221,7 +228,7 @@ function SelectedValuesMore({ size }: { size: number }) {
                     variant={"secondary"}
                     className={styles.multiSelectBadge}
                 >
-                    {size} selected
+                    {t("forms.multiSelect.selectedCount", { count: size })}
                 </Badge>
             </div>
         </div>

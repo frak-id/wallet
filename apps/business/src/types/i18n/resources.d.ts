@@ -29,6 +29,22 @@ export default interface Resources {
                 title: "Page Not Found";
             };
         };
+        forms: {
+            currencySelector: {
+                circleDescription: "Best for blockchain-native users. Widely used across DeFi platforms and exchanges.";
+                moneriumDescription: "Best for easy IBAN transfers. Your users can fund their wallets directly via bank transfer, making it simple for non-crypto users.";
+                recommendedTooltip: "Recommended";
+            };
+            multiSelect: {
+                clear: "Clear";
+                close: "Close";
+                noResults: "No results found.";
+                placeholder: "Select options";
+                search: "Search...";
+                selectedCount_one: "{{count}} selected";
+                selectedCount_other: "{{count}} selected";
+            };
+        };
         settings: {
             currency: {
                 label: "Choose your preferred currency";

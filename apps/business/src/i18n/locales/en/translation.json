@@ -18,6 +18,22 @@
             "action": "Authenticate"
         }
     },
+    "forms": {
+        "multiSelect": {
+            "placeholder": "Select options",
+            "search": "Search...",
+            "noResults": "No results found.",
+            "clear": "Clear",
+            "close": "Close",
+            "selectedCount_one": "{{count}} selected",
+            "selectedCount_other": "{{count}} selected"
+        },
+        "currencySelector": {
+            "recommendedTooltip": "Recommended",
+            "moneriumDescription": "Best for easy IBAN transfers. Your users can fund their wallets directly via bank transfer, making it simple for non-crypto users.",
+            "circleDescription": "Best for blockchain-native users. Widely used across DeFi platforms and exchanges."
+        }
+    },
     "errors": {
         "generic": {
             "title": "Something went wrong"

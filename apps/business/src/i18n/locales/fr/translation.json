@@ -18,6 +18,22 @@
             "action": "S'authentifier"
         }
     },
+    "forms": {
+        "multiSelect": {
+            "placeholder": "Sélectionnez des options",
+            "search": "Rechercher...",
+            "noResults": "Aucun résultat trouvé.",
+            "clear": "Effacer",
+            "close": "Fermer",
+            "selectedCount_one": "{{count}} sélectionné",
+            "selectedCount_other": "{{count}} sélectionnés"
+        },
+        "currencySelector": {
+            "recommendedTooltip": "Recommandé",
+            "moneriumDescription": "Idéal pour les virements IBAN simples. Vos utilisateurs peuvent alimenter leur porte-monnaie par virement bancaire, simplifiant l'expérience pour les utilisateurs non-crypto.",
+            "circleDescription": "Idéal pour les utilisateurs habitués à la blockchain. Largement utilisé sur les plateformes DeFi et les échanges."
+        }
+    },
     "errors": {
         "generic": {
             "title": "Une erreur est survenue"

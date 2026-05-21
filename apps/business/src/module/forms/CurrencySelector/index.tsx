@@ -2,6 +2,7 @@ import type { Stablecoin } from "@frak-labs/app-essentials";
 import { Stack } from "@frak-labs/design-system/components/Stack";
 import clsx from "clsx";
 import { CheckCircle2, Star } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { Badge } from "@/module/common/component/Badge";
 import { currencyOptions } from "@/module/common/utils/currencyOptions";
 import * as styles from "./currency-selector.css";
@@ -19,6 +20,7 @@ export function CurrencySelector({
     disabled = false,
     excludeCurrencies = [],
 }: CurrencySelectorProps) {
+    const { t } = useTranslation();
     const availableCurrencies = currencyOptions
         .reduce<
             Array<{
@@ -80,7 +82,9 @@ export function CurrencySelector({
                                     {isRecommended && (
                                         <div
                                             className={styles.recommendedBadge}
-                                            title="Recommended"
+                                            title={t(
+                                                "forms.currencySelector.recommendedTooltip"
+                                            )}
                                         >
                                             <Star
                                                 size={16}
@@ -98,13 +102,12 @@ export function CurrencySelector({
 
             <div className={styles.currencyExplanation}>
                 <div className={styles.explanationSection}>
-                    <strong>Monerium:</strong> Best for easy IBAN transfers.
-                    Your users can fund their wallets directly via bank
-                    transfer, making it simple for non-crypto users.
+                    <strong>Monerium:</strong>{" "}
+                    {t("forms.currencySelector.moneriumDescription")}
                 </div>
                 <div className={styles.explanationSection}>
-                    <strong>Circle (USDC):</strong> Best for blockchain-native
-                    users. Widely used across DeFi platforms and exchanges.
+                    <strong>Circle (USDC):</strong>{" "}
+                    {t("forms.currencySelector.circleDescription")}
                 </div>
             </div>
         </Stack>

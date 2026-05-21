@@ -2,6 +2,10 @@ import { fireEvent, render, screen } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { CurrencySelector } from "./index";
 
+vi.mock("react-i18next", () => ({
+    useTranslation: () => ({ t: (key: string) => key }),
+}));
+
 vi.mock("@/module/common/component/Badge", () => ({
     Badge: ({ children, size, variant }: any) => (
         <span data-testid="badge" data-size={size} data-variant={variant}>
