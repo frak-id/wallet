@@ -1,4 +1,33 @@
 {
+    "auth": {
+        "login": {
+            "frakLabsLogoAlt": "Frak Labs",
+            "heroTitleLine1": "Accédez et découvrez",
+            "heroTitleLine2": "Frak Ad Manager",
+            "heroSubtitle": "Inscrivez-vous en une seconde. Sans email, sans mot de passe.",
+            "heroImageAlt": "Connexion",
+            "disclaimer": "Avant de vous connecter, assurez-vous d'utiliser un appareil qui vous appartient.",
+            "connect": "Se connecter",
+            "footerCopyright": "© 2026 Frak Labs Copyright et tous droits réservés",
+            "footerTerms": "Conditions générales",
+            "footerPrivacy": "Politique de confidentialité"
+        },
+        "embedded": {
+            "title": "Authentification requise",
+            "panelTitle": "Veuillez connecter votre porte-monnaie pour continuer",
+            "action": "S'authentifier"
+        }
+    },
+    "errors": {
+        "generic": {
+            "title": "Une erreur est survenue"
+        },
+        "notFound": {
+            "title": "Page introuvable",
+            "description": "La page que vous recherchez n'existe pas ou a été déplacée.",
+            "action": "Aller au tableau de bord"
+        }
+    },
     "shell": {
         "nav": {
             "sectionAcquisition": "Acquisition",
@@ -8,7 +37,7 @@
             "campaignsOverview": "Vue d'ensemble",
             "campaignsList": "Liste",
             "members": "Membres",
-            "wallet": "Portefeuille"
+            "wallet": "Porte-monnaie"
         },
         "header": {
             "breadcrumbLabel": "Fil d'Ariane",
@@ -39,8 +68,8 @@
             }
         },
         "wallet": {
-            "title": "Portefeuille",
-            "address": "Votre adresse de portefeuille est {{wallet}}"
+            "title": "Porte-monnaie",
+            "address": "Votre adresse de porte-monnaie est {{wallet}}"
         },
         "demo": {
             "title": "Mode démo",

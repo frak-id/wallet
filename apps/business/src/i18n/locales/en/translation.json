@@ -1,4 +1,33 @@
 {
+    "auth": {
+        "login": {
+            "frakLabsLogoAlt": "Frak Labs",
+            "heroTitleLine1": "Access and discover",
+            "heroTitleLine2": "Frak Ad Manager",
+            "heroSubtitle": "Register in a second. No email, no password.",
+            "heroImageAlt": "Login",
+            "disclaimer": "Before connecting, please ensure that you are using a device that belongs to you.",
+            "connect": "Connect",
+            "footerCopyright": "© 2026 Frak Labs Copyright and rights reserved",
+            "footerTerms": "Terms and Conditions",
+            "footerPrivacy": "Privacy Policy"
+        },
+        "embedded": {
+            "title": "Authentication required",
+            "panelTitle": "Please connect your wallet to continue",
+            "action": "Authenticate"
+        }
+    },
+    "errors": {
+        "generic": {
+            "title": "Something went wrong"
+        },
+        "notFound": {
+            "title": "Page Not Found",
+            "description": "The page you're looking for doesn't exist or has been moved.",
+            "action": "Go to Dashboard"
+        }
+    },
     "shell": {
         "nav": {
             "sectionAcquisition": "Acquisition",

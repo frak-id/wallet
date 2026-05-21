@@ -1,5 +1,34 @@
 export default interface Resources {
     translation: {
+        auth: {
+            embedded: {
+                action: "Authenticate";
+                panelTitle: "Please connect your wallet to continue";
+                title: "Authentication required";
+            };
+            login: {
+                connect: "Connect";
+                disclaimer: "Before connecting, please ensure that you are using a device that belongs to you.";
+                footerCopyright: "© 2026 Frak Labs Copyright and rights reserved";
+                footerPrivacy: "Privacy Policy";
+                footerTerms: "Terms and Conditions";
+                frakLabsLogoAlt: "Frak Labs";
+                heroImageAlt: "Login";
+                heroSubtitle: "Register in a second. No email, no password.";
+                heroTitleLine1: "Access and discover";
+                heroTitleLine2: "Frak Ad Manager";
+            };
+        };
+        errors: {
+            generic: {
+                title: "Something went wrong";
+            };
+            notFound: {
+                action: "Go to Dashboard";
+                description: "The page you're looking for doesn't exist or has been moved.";
+                title: "Page Not Found";
+            };
+        };
         settings: {
             currency: {
                 label: "Choose your preferred currency";

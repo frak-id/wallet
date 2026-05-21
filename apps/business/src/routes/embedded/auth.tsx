@@ -2,6 +2,7 @@ import { Spinner } from "@frak-labs/design-system/components/Spinner";
 import { useSiweAuthenticate } from "@frak-labs/react-sdk";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useTransition } from "react";
+import { useTranslation } from "react-i18next";
 import { authenticatedBackendApi } from "@/api/backendClient";
 import { Button } from "@/module/common/component/Button";
 import { Panel } from "@/module/common/component/Panel";
@@ -19,6 +20,7 @@ export const Route = createFileRoute("/embedded/auth")({
 });
 
 function EmbeddedAuthPage() {
+    const { t } = useTranslation();
     const navigate = useNavigate();
     const { redirect } = Route.useSearch();
     const [, startTransition] = useTransition();
@@ -70,11 +72,8 @@ function EmbeddedAuthPage() {
 
     return (
         <div className={container}>
-            <Title className={title}>Authentication required</Title>
-            <Panel
-                withBadge={false}
-                title="Please connect your wallet to continue"
-            >
+            <Title className={title}>{t("auth.embedded.title")}</Title>
+            <Panel withBadge={false} title={t("auth.embedded.panelTitle")}>
                 <Button
                     variant="secondary"
                     size="small"
@@ -90,7 +89,7 @@ function EmbeddedAuthPage() {
                     loading={isPending}
                     disabled={isPending}
                 >
-                    {isPending && <Spinner />} Authenticate
+                    {isPending && <Spinner />} {t("auth.embedded.action")}
                 </Button>
             </Panel>
         </div>

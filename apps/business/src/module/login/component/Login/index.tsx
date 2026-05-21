@@ -4,6 +4,7 @@ import { useSiweAuthenticate } from "@frak-labs/react-sdk";
 import { useNavigate } from "@tanstack/react-router";
 import clsx from "clsx";
 import { useTransition } from "react";
+import { useTranslation } from "react-i18next";
 import { authenticatedBackendApi } from "@/api/backendClient";
 import { ClientOnly } from "@/module/common/component/ClientOnly";
 import { useAuthStore } from "@/stores/authStore";
@@ -11,6 +12,7 @@ import * as styles from "./login.css";
 import logo from "./logo-frak.svg";
 
 export function Login() {
+    const { t } = useTranslation();
     const navigate = useNavigate();
     const [, startTransition] = useTransition();
     const isMobile = useMediaQuery("(max-width : 768px)");
@@ -49,7 +51,7 @@ export function Login() {
             <a href="https://frak.id" target="_blank" rel="noreferrer">
                 <img
                     src={logo}
-                    alt="Frak Labs"
+                    alt={t("auth.login.frakLabsLogoAlt")}
                     width={111}
                     height={42}
                     className={styles.image}
@@ -63,18 +65,18 @@ export function Login() {
             <div>
                 {isMobile && logoFrakLabs}
                 <h1 className={styles.title}>
-                    Access and discover
+                    {t("auth.login.heroTitleLine1")}
                     <br />
-                    Frak Ad Manager
+                    {t("auth.login.heroTitleLine2")}
                 </h1>
                 <p className={styles.subTitle}>
-                    Register in a second. No email, no password.
+                    {t("auth.login.heroSubtitle")}
                 </p>
                 {!isMobile && (
                     <ClientOnly>
                         <img
                             src="/assets/login-phone.webp"
-                            alt="Login"
+                            alt={t("auth.login.heroImageAlt")}
                             width={430}
                             height={449}
                             className={clsx(styles.phone, styles.image)}
@@ -85,10 +87,7 @@ export function Login() {
             <div>
                 <div className={styles.panel}>
                     {logoFrakLabs}
-                    <p className={styles.text}>
-                        Before connecting, please ensure that you are using a
-                        device that belongs to you.
-                    </p>
+                    <p className={styles.text}>{t("auth.login.disclaimer")}</p>
                     <button
                         className={styles.button}
                         type="button"
@@ -103,18 +102,18 @@ export function Login() {
                             })
                         }
                     >
-                        {isPending && <Spinner />} Connect
+                        {isPending && <Spinner />} {t("auth.login.connect")}
                     </button>
                 </div>
             </div>
             <footer className={styles.footer}>
-                <p>© 2026 Frak Labs Copyright and rights reserved</p>
+                <p>{t("auth.login.footerCopyright")}</p>
                 <ul className={styles.list}>
                     <li className={styles.listItem}>
-                        <a href="/">Terms and Conditions</a>
+                        <a href="/">{t("auth.login.footerTerms")}</a>
                     </li>
                     <li className={styles.listItem}>
-                        <a href="/">Privacy Policy</a>
+                        <a href="/">{t("auth.login.footerPrivacy")}</a>
                     </li>
                 </ul>
             </footer>
