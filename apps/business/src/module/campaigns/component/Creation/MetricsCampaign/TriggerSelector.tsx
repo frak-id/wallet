@@ -8,7 +8,7 @@ import {
 } from "@/module/forms/Form";
 import { RadioGroup, RadioGroupItem } from "@/module/forms/RadioGroup";
 import { campaignStore } from "@/stores/campaignStore";
-import styles from "./index.module.css";
+import * as styles from "./metrics-campaign.css";
 import { getTriggersForGoal } from "./utils";
 
 export function TriggerSelector() {

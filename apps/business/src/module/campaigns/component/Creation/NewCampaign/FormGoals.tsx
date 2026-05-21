@@ -1,3 +1,6 @@
+import { Inline } from "@frak-labs/design-system/components/Inline";
+import { Stack } from "@frak-labs/design-system/components/Stack";
+import clsx from "clsx";
 import {
     MousePointer,
     RotateCw,
@@ -8,9 +11,7 @@ import {
 import { type ReactElement, useEffect, useState } from "react";
 import { useFormContext } from "react-hook-form";
 import { Badge } from "@/module/common/component/Badge";
-import { Column } from "@/module/common/component/Column";
 import { Panel } from "@/module/common/component/Panel";
-import { Row } from "@/module/common/component/Row";
 import {
     FormControl,
     FormDescription,
@@ -21,7 +22,7 @@ import {
 } from "@/module/forms/Form";
 import { RadioGroup, RadioGroupItem } from "@/module/forms/RadioGroup";
 import type { CampaignDraft } from "@/stores/campaignStore";
-import styles from "./FormGoals.module.css";
+import * as styles from "./form-goals.css";
 
 type ItemGoals = {
     id: string;
@@ -107,13 +108,13 @@ export function FormGoals() {
 
     return (
         <Panel title="Goals">
-            <Column>
+            <Stack space="m">
                 <FormDescription>
                     The choice of your goal defines the event that generates the
                     distribution of rewards.
                 </FormDescription>
-            </Column>
-            <Column fullWidth={true}>
+            </Stack>
+            <Stack space="m">
                 <FormField
                     control={control}
                     name="metadata.goal"
@@ -121,7 +122,7 @@ export function FormGoals() {
                     render={({ field }) => (
                         <FormItem>
                             <FormDescription label="Campaign goal" />
-                            <Row align="start">
+                            <Inline space="m" alignY="top">
                                 <div>
                                     <FormControl>
                                         <RadioGroup
@@ -152,8 +153,8 @@ export function FormGoals() {
                                                         variant="radio"
                                                         className={
                                                             item.disabled
-                                                                ? styles.formGoals__label_disabled
-                                                                : styles.formGoals__label
+                                                                ? styles.formGoalsLabelDisabled
+                                                                : styles.formGoalsLabel
                                                         }
                                                     >
                                                         {item.icon}
@@ -166,17 +167,17 @@ export function FormGoals() {
                                 </div>
                                 <div
                                     className={
-                                        styles.formGoals__informationWrapper
+                                        styles.formGoalsInformationWrapper
                                     }
                                 >
                                     {goal && <GoalInformation goal={goal} />}
                                 </div>
-                            </Row>
+                            </Inline>
                             <FormMessage />
                         </FormItem>
                     )}
                 />
-            </Column>
+            </Stack>
         </Panel>
     );
 }
@@ -188,12 +189,15 @@ function GoalInformation({ goal }: { goal: ItemGoals }) {
     return (
         <>
             <div
-                className={`${styles.formGoals__information} ${styles[`formGoals__information--${goal.id}`]}`}
+                className={clsx(
+                    styles.formGoalsInformation,
+                    styles.formGoalsInformationByGoal[goal.id]
+                )}
             >
-                <h4 className={styles.formGoals__title}>{title}</h4>
+                <h4 className={styles.formGoalsTitle}>{title}</h4>
                 <p>{description}</p>
             </div>
-            <div className={styles.formGoals__badges}>
+            <div className={styles.formGoalsBadges}>
                 {badges?.map((badge) => (
                     <Badge key={badge} variant="secondary">
                         {badge}

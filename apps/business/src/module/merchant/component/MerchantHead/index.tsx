@@ -12,8 +12,8 @@ export function MerchantHead({ merchantId }: { merchantId: string }) {
             rightSection={
                 <LinkButton
                     to="/dashboard"
-                    variant="outline"
-                    leftIcon={<X size={20} />}
+                    variant="secondary"
+                    icon={<X size={20} />}
                 >
                     Cancel
                 </LinkButton>

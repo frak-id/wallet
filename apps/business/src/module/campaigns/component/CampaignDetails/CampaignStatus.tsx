@@ -1,16 +1,16 @@
-import { Button } from "@frak-labs/ui/component/Button";
+import { Box } from "@frak-labs/design-system/components/Box";
+import { Inline } from "@frak-labs/design-system/components/Inline";
+import { Stack } from "@frak-labs/design-system/components/Stack";
 import { capitalize } from "radash";
 import { CampaignStateTag } from "@/module/campaigns/component/TableCampaigns/CampaignStateTag";
 import {
     getAvailableTransitions,
     useStatusTransition,
 } from "@/module/campaigns/hook/useStatusTransition";
-import { Column } from "@/module/common/component/Column";
+import { Button } from "@/module/common/component/Button";
 import { Panel } from "@/module/common/component/Panel";
-import { Row } from "@/module/common/component/Row";
 import { formatDate } from "@/module/common/utils/formatDate";
 import type { Campaign } from "@/types/Campaign";
-import styles from "./CampaignStatus.module.css";
 
 export function CampaignStatus({ campaign }: { campaign: Campaign }) {
     const { mutate: transition, isPending } = useStatusTransition();
@@ -18,45 +18,45 @@ export function CampaignStatus({ campaign }: { campaign: Campaign }) {
 
     return (
         <Panel title={campaign.name}>
-            <Column fullWidth={true}>
-                <Row>
+            <Stack space="m">
+                <Inline space="m" alignY="bottom">
                     <strong>Status:</strong>
                     <CampaignStateTag
                         status={campaign.status}
                         bankDistributionStatus={campaign.bankDistributionStatus}
                     />
-                </Row>
-                <Row>
+                </Inline>
+                <Inline space="m" alignY="bottom">
                     <strong>Created:</strong>
                     <span>{formatDate(new Date(campaign.createdAt))}</span>
-                </Row>
+                </Inline>
                 {campaign.publishedAt && (
-                    <Row>
+                    <Inline space="m" alignY="bottom">
                         <strong>Published:</strong>
                         <span>
                             {formatDate(new Date(campaign.publishedAt))}
                         </span>
-                    </Row>
+                    </Inline>
                 )}
                 {campaign.expiresAt && (
-                    <Row>
+                    <Inline space="m" alignY="bottom">
                         <strong>Expires:</strong>
                         <span>{formatDate(new Date(campaign.expiresAt))}</span>
-                    </Row>
+                    </Inline>
                 )}
 
                 {transitions.length > 0 && (
-                    <div className={styles.campaignStatus__actions}>
+                    <Box display="flex" gap="m" marginTop="m">
                         {transitions.map((action) => (
                             <Button
                                 key={action}
                                 variant={
                                     action === "archive"
-                                        ? "danger"
+                                        ? "destructive"
                                         : "secondary"
                                 }
                                 disabled={isPending}
-                                isLoading={isPending}
+                                loading={isPending}
                                 onClick={() =>
                                     transition({
                                         merchantId: campaign.merchantId,
@@ -68,9 +68,9 @@ export function CampaignStatus({ campaign }: { campaign: Campaign }) {
                                 {capitalize(action)}
                             </Button>
                         ))}
-                    </div>
+                    </Box>
                 )}
-            </Column>
+            </Stack>
         </Panel>
     );
 }

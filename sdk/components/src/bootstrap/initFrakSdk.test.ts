@@ -136,7 +136,10 @@ describe.sequential("initFrakSdk", () => {
         await initFrakSdk();
 
         expect(coreSdkIndex.setupClient).toHaveBeenCalledWith({
-            config: window.FrakSetup.config,
+            config: {
+                ...window.FrakSetup.config,
+                preload: [],
+            },
         });
         expect(window.FrakSetup.client).toBe(mockClient);
         expect(clientReadyUtils.dispatchClientReadyEvent).toHaveBeenCalled();
@@ -148,6 +151,50 @@ describe.sequential("initFrakSdk", () => {
             "[Frak SDK] Client initialized successfully"
         );
 
+        consoleLogSpy.mockRestore();
+    });
+
+    it("should pass preload=['sharing'] when a Frak component is mounted", async () => {
+        document.body.innerHTML = "<frak-button-share></frak-button-share>";
+
+        const mockClient = { config: { domain: "example.com" } } as any;
+        vi.mocked(coreSdkIndex.setupClient).mockResolvedValue(mockClient);
+
+        const consoleLogSpy = vi
+            .spyOn(console, "log")
+            .mockImplementation(() => {});
+
+        await initFrakSdk();
+
+        expect(coreSdkIndex.setupClient).toHaveBeenCalledWith({
+            config: expect.objectContaining({ preload: ["sharing"] }),
+        });
+
+        document.body.innerHTML = "";
+        consoleLogSpy.mockRestore();
+    });
+
+    it("should respect an explicit preload override (including empty array)", async () => {
+        document.body.innerHTML = "<frak-button-share></frak-button-share>";
+        window.FrakSetup.config = {
+            ...window.FrakSetup.config,
+            preload: [],
+        } as any;
+
+        const mockClient = { config: { domain: "example.com" } } as any;
+        vi.mocked(coreSdkIndex.setupClient).mockResolvedValue(mockClient);
+
+        const consoleLogSpy = vi
+            .spyOn(console, "log")
+            .mockImplementation(() => {});
+
+        await initFrakSdk();
+
+        expect(coreSdkIndex.setupClient).toHaveBeenCalledWith({
+            config: expect.objectContaining({ preload: [] }),
+        });
+
+        document.body.innerHTML = "";
         consoleLogSpy.mockRestore();
     });
 

@@ -9,7 +9,7 @@ import { TransferModal } from "@/module/tokens/component/TransferModal";
 
 // Lazy-loaded: each modal is reached only via explicit user action and pulls a
 // non-trivial subtree (e.g. MoneriumBankFlow ~70KB across 12 files; Keypass pulls
-// AuthenticateWithPhone → LaunchPairing → cuer + react-hook-form). Keeping them
+// AuthenticateWithPhone → LaunchPairing → qr + react-hook-form). Keeping them
 // out of the entry chunk shrinks first paint by ~150KB. Modal animations mask
 // the ~50ms chunk fetch so `fallback={null}` is fine.
 const ExplorerDetail = lazy(() =>

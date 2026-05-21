@@ -1,12 +1,13 @@
+import { Spinner } from "@frak-labs/design-system/components/Spinner";
+import { useMediaQuery } from "@frak-labs/design-system/hooks/useMediaQuery";
 import { useSiweAuthenticate } from "@frak-labs/react-sdk";
-import { ClientOnly } from "@frak-labs/ui/component/ClientOnly";
-import { Spinner } from "@frak-labs/ui/component/Spinner";
-import { useMediaQuery } from "@frak-labs/ui/hook/useMediaQuery";
 import { useNavigate } from "@tanstack/react-router";
+import clsx from "clsx";
 import { useTransition } from "react";
 import { authenticatedBackendApi } from "@/api/backendClient";
+import { ClientOnly } from "@/module/common/component/ClientOnly";
 import { useAuthStore } from "@/stores/authStore";
-import styles from "./index.module.css";
+import * as styles from "./login.css";
 import logo from "./logo-frak.svg";
 
 export function Login() {
@@ -76,7 +77,7 @@ export function Login() {
                             alt="Login"
                             width={430}
                             height={449}
-                            className={`${styles.phone} ${styles.image}`}
+                            className={clsx(styles.phone, styles.image)}
                         />
                     </ClientOnly>
                 )}
@@ -109,10 +110,10 @@ export function Login() {
             <footer className={styles.footer}>
                 <p>© 2026 Frak Labs Copyright and rights reserved</p>
                 <ul className={styles.list}>
-                    <li className={styles.list__item}>
+                    <li className={styles.listItem}>
                         <a href="/">Terms and Conditions</a>
                     </li>
-                    <li className={styles.list__item}>
+                    <li className={styles.listItem}>
                         <a href="/">Privacy Policy</a>
                     </li>
                 </ul>

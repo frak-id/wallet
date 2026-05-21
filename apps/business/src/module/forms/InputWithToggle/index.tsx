@@ -1,13 +1,13 @@
-import { Input, type InputProps } from "@frak-labs/ui/component/forms/Input";
+import { Inline } from "@frak-labs/design-system/components/Inline";
 import { Pencil } from "lucide-react";
 import { useState } from "react";
-import { Row } from "@/module/common/component/Row";
-import styles from "./index.module.css";
+import { Input, type InputProps } from "@/module/forms/Input";
+import { inputWithToggleButton } from "./input-with-toggle.css";
 
 export const InputWithToggle = ({ ref, disabled, ...props }: InputProps) => {
     const [isDisabled, setIsDisabled] = useState(true);
     return (
-        <Row align={"center"}>
+        <Inline space="m" alignY="center">
             <Input
                 {...props}
                 ref={ref}
@@ -16,13 +16,13 @@ export const InputWithToggle = ({ ref, disabled, ...props }: InputProps) => {
             />
             <button
                 type={"button"}
-                className={styles.inputWithToggle__button}
+                className={inputWithToggleButton}
                 onClick={() => setIsDisabled(!isDisabled)}
                 disabled={disabled}
             >
                 <Pencil size={20} />
             </button>
-        </Row>
+        </Inline>
     );
 };
 InputWithToggle.displayName = "InputWithToggle";

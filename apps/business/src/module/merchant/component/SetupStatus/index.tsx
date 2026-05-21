@@ -1,17 +1,17 @@
-import { Button } from "@frak-labs/ui/component/Button";
-import { Spinner } from "@frak-labs/ui/component/Spinner";
+import { Inline } from "@frak-labs/design-system/components/Inline";
+import { Spinner } from "@frak-labs/design-system/components/Spinner";
 import type { LinkProps } from "@tanstack/react-router";
 import { AlertCircle, BadgeCheck } from "lucide-react";
+import { Button } from "@/module/common/component/Button";
 import { CallOut } from "@/module/common/component/CallOut";
 import { LinkButton } from "@/module/common/component/LinkButton";
 import { Panel } from "@/module/common/component/Panel";
-import { Row } from "@/module/common/component/Row";
 import { FormLayout } from "@/module/forms/Form";
 import {
     type MerchantSetupStatusItem,
     useMerchantSetupStatus,
 } from "@/module/merchant/hook/useMerchantSetupStatus";
-import styles from "./index.module.css";
+import * as styles from "./setup-status.css";
 
 export function MerchantSetupStatus({ merchantId }: { merchantId: string }) {
     const { data } = useMerchantSetupStatus({ merchantId });
@@ -41,7 +41,7 @@ function SetupStatusItems({
 }) {
     return (
         <div>
-            <Row>
+            <Inline space="m" alignY="bottom">
                 <OverallStatus hasWarning={hasWarning} />
 
                 {items.map((item, index) => (
@@ -51,7 +51,7 @@ function SetupStatusItems({
                         position={index + 1}
                     />
                 ))}
-            </Row>
+            </Inline>
         </div>
     );
 }
@@ -129,7 +129,7 @@ function WarningStatusItem({
             <div className={styles.actions}>
                 <LinkButton
                     to={item.resolvingPage as LinkProps["to"]}
-                    variant="information"
+                    variant="secondary"
                 >
                     Complete this step
                 </LinkButton>

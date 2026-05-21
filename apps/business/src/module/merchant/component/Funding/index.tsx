@@ -1,38 +1,34 @@
 import type { Stablecoin } from "@frak-labs/app-essentials";
-import { isRunningInProd } from "@frak-labs/app-essentials";
+import { Inline } from "@frak-labs/design-system/components/Inline";
+import { Spinner } from "@frak-labs/design-system/components/Spinner";
+import { Stack } from "@frak-labs/design-system/components/Stack";
+import { Switch } from "@frak-labs/design-system/components/Switch";
 import { useWalletStatus } from "@frak-labs/react-sdk";
-import { Button, buttonVariants } from "@frak-labs/ui/component/Button";
-import { Input } from "@frak-labs/ui/component/forms/Input";
-import { IconInfo } from "@frak-labs/ui/component/IconInfo";
-import { Spinner } from "@frak-labs/ui/component/Spinner";
-import { Switch } from "@frak-labs/ui/component/Switch";
-import { Tooltip } from "@frak-labs/ui/component/Tooltip";
-import {
-    AlertTriangle,
-    ArrowUpCircle,
-    Download,
-    PauseCircle,
-    Wallet,
-} from "lucide-react";
+import { AlertTriangle, ArrowUpCircle, Download, Wallet } from "lucide-react";
 import { useState } from "react";
 import { type Address, formatUnits, parseUnits } from "viem";
 import { Badge } from "@/module/common/component/Badge";
+import { Button } from "@/module/common/component/Button";
+import { CallOut } from "@/module/common/component/CallOut";
+import { IconInfo } from "@/module/common/component/IconInfo";
 import { Panel } from "@/module/common/component/Panel";
-import { Row } from "@/module/common/component/Row";
 import { Title } from "@/module/common/component/Title";
+import { Tooltip } from "@/module/common/component/Tooltip";
 import { useTokenMetadata } from "@/module/common/hook/useTokenMetadata";
 import {
     currencyMetadata,
     formatTokenBalance,
 } from "@/module/common/utils/currencyOptions";
 import { FormLayout } from "@/module/forms/Form";
+import { Input } from "@/module/forms/Input";
+import { AddFundsSheet } from "@/module/merchant/component/AddFundsSheet";
+import { PauseRewardsConfirmSheet } from "@/module/merchant/component/PauseRewardsConfirmSheet";
 import { useBankAllowanceMutation } from "@/module/merchant/hook/useBankAllowanceMutation";
-import { useFundTestBank } from "@/module/merchant/hook/useFundTestBank";
 import { useGetMerchantBank } from "@/module/merchant/hook/useGetMerchantBank";
 import { useSetBankOpenStatus } from "@/module/merchant/hook/useSetBankOpenStatus";
 import { useSyncMerchantBank } from "@/module/merchant/hook/useSyncMerchantBank";
 import { useWithdrawFromBank } from "@/module/merchant/hook/useWithdrawFromBank";
-import styles from "./index.module.css";
+import * as styles from "./funding.css";
 import { LegacyBankMigration } from "./LegacyBankMigration";
 
 export function MerchantFunding({ merchantId }: { merchantId: string }) {
@@ -65,7 +61,7 @@ export function MerchantFunding({ merchantId }: { merchantId: string }) {
         return (
             <FormLayout>
                 <Panel className={styles.bankPanel}>
-                    <div className={styles.bankContent}>
+                    <Stack space="l">
                         <Title as="h3" size="small" icon={<Wallet />}>
                             Reward Budget
                         </Title>
@@ -74,14 +70,14 @@ export function MerchantFunding({ merchantId }: { merchantId: string }) {
                             rewards to your users.
                         </p>
                         <Button
-                            variant="submit"
+                            variant="primary"
                             onClick={() => syncBank()}
-                            isLoading={isSyncing}
+                            loading={isSyncing}
                             disabled={isSyncing}
                         >
                             Set Up Budget
                         </Button>
-                    </div>
+                    </Stack>
                 </Panel>
             </FormLayout>
         );
@@ -124,13 +120,13 @@ function RewardBudgetView({
 
     return (
         <Panel className={styles.bankPanel}>
-            <div className={styles.bankContent}>
+            <Stack space="l">
                 <div className={styles.bankHeaderRow}>
-                    <div className={styles.bankTitleGroup}>
+                    <Inline space="s" alignY="center">
                         <Title as="h3" size="small" icon={<Wallet />}>
                             Reward Budget
                         </Title>
-                    </div>
+                    </Inline>
 
                     {isManager && (
                         <DistributionToggle
@@ -147,13 +143,11 @@ function RewardBudgetView({
                 />
 
                 {allTokensEmpty && isOpen && (
-                    <div className={styles.bankWarning}>
-                        <AlertTriangle width={16} height={16} />
-                        <span>
-                            Your bank has no funds. Active campaigns cannot
-                            distribute rewards until you add funds.
-                        </span>
-                    </div>
+                    <CallOut variant="warning">
+                        <AlertTriangle width={16} height={16} /> Your bank has
+                        no funds. Active campaigns cannot distribute rewards
+                        until you add funds.
+                    </CallOut>
                 )}
 
                 <TokenGridSections
@@ -165,19 +159,9 @@ function RewardBudgetView({
                 />
 
                 <div className={styles.fundActionsRow}>
-                    <a
-                        href={process.env.FUNDING_ON_RAMP_URL ?? "#"}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className={buttonVariants({ variant: "submit" })}
-                    >
-                        Add funds via Stripe
-                    </a>
-                    {!isRunningInProd && (
-                        <TestFundButton bankAddress={bankAddress} />
-                    )}
+                    <AddFundsSheet tokens={tokens} bankAddress={bankAddress} />
                 </div>
-            </div>
+            </Stack>
         </Panel>
     );
 }
@@ -249,14 +233,14 @@ function TokenGridSections({
     }
 
     return (
-        <div className={styles.tokenSections}>
+        <Stack space="m">
             <div className={styles.tokenGrid}>{renderCards(fundedTokens)}</div>
             {emptyTokens.length > 0 && (
                 <div className={styles.tokenGrid}>
                     {renderCards(emptyTokens)}
                 </div>
             )}
-        </div>
+        </Stack>
     );
 }
 
@@ -296,44 +280,44 @@ function TokenCard({
 
     const cardClassName = [
         styles.tokenCard,
-        status === "empty" && styles["tokenCard--empty"],
-        status === "active" && styles["tokenCard--active"],
-        status === "warning" && styles["tokenCard--warning"],
-        status === "paused" && styles["tokenCard--paused"],
+        status === "empty" && styles.tokenCardEmpty,
+        status === "active" && styles.tokenCardActive,
+        status === "warning" && styles.tokenCardWarning,
+        status === "paused" && styles.tokenCardPaused,
     ]
         .filter(Boolean)
         .join(" ");
 
     return (
         <div className={cardClassName}>
-            <div className={styles.tokenCard__header}>
-                <div className={styles.tokenCard__currencyGroup}>
-                    <span className={styles.tokenCard__currency}>
+            <Inline space="xs" alignY="center" align="space-between">
+                <Inline space="xs" alignY="center">
+                    <span className={styles.tokenCardCurrency}>
                         {meta.currencySymbol}
                     </span>
                     <Tooltip content={meta.providerDescription}>
-                        <Badge size="small" variant="information">
+                        <Badge size="small" variant="secondary">
                             {meta.provider}
                         </Badge>
                     </Tooltip>
-                </div>
+                </Inline>
                 <TokenStatusBadge
                     token={token}
                     status={status}
                     decimals={decimals}
                 />
-            </div>
+            </Inline>
 
             <div>
-                <div className={styles.tokenCard__balance}>
+                <div className={styles.tokenCardBalance}>
                     {formattedBalance}
                 </div>
                 {hasBalance ? (
-                    <span className={styles.tokenCard__availableLabel}>
+                    <span className={styles.tokenCardAvailableLabel}>
                         available
                     </span>
                 ) : (
-                    <span className={styles.tokenCard__emptyLabel}>
+                    <span className={styles.tokenCardEmptyLabel}>
                         No funds — add funds to start distributing rewards
                     </span>
                 )}
@@ -422,12 +406,6 @@ function TokenActions({
             merchantId,
             action: "update",
         });
-    const { mutate: revokeAllowance, isPending: isRevokingAllowance } =
-        useBankAllowanceMutation({
-            bankAddress,
-            merchantId,
-            action: "revoke",
-        });
     const { mutate: withdraw, isPending: isWithdrawing } = useWithdrawFromBank({
         bankAddress,
         merchantId,
@@ -436,8 +414,7 @@ function TokenActions({
     const { data: walletStatusData } = useWalletStatus();
     const walletAddress = walletStatusData?.wallet;
 
-    const isPending =
-        isUpdatingAllowance || isRevokingAllowance || isWithdrawing;
+    const isPending = isUpdatingAllowance || isWithdrawing;
 
     const handleUpdateAllowance = () => {
         if (!inputValue) return;
@@ -474,91 +451,95 @@ function TokenActions({
 
     if (action === "allowance") {
         return (
-            <div className={styles.tokenCard__actions}>
-                <Row align="center" className={styles.actionRow}>
-                    <Input
-                        type="number"
-                        placeholder="Amount"
-                        value={inputValue}
-                        onChange={(e) => setInputValue(e.target.value)}
-                        className={styles.smallInput}
-                        autoFocus
-                    />
-                    <Button
-                        size="small"
-                        variant="submit"
-                        onClick={handleUpdateAllowance}
-                        disabled={!inputValue || isPending}
-                        isLoading={isUpdatingAllowance}
-                    >
-                        Confirm
-                    </Button>
-                    <Button
-                        size="small"
-                        variant="ghost"
-                        onClick={() => {
-                            setAction(null);
-                            setInputValue(defaultAllowanceValue);
-                        }}
-                        disabled={isPending}
-                    >
-                        Cancel
-                    </Button>
-                </Row>
+            <div className={styles.tokenCardActions}>
+                <div className={styles.actionRow}>
+                    <Inline space="m" alignY="center">
+                        <Input
+                            type="number"
+                            placeholder="Amount"
+                            value={inputValue}
+                            onChange={(e) => setInputValue(e.target.value)}
+                            className={styles.smallInput}
+                            autoFocus
+                        />
+                        <Button
+                            size="small"
+                            variant="primary"
+                            onClick={handleUpdateAllowance}
+                            disabled={!inputValue || isPending}
+                            loading={isUpdatingAllowance}
+                        >
+                            Confirm
+                        </Button>
+                        <Button
+                            size="small"
+                            variant="ghost"
+                            onClick={() => {
+                                setAction(null);
+                                setInputValue(defaultAllowanceValue);
+                            }}
+                            disabled={isPending}
+                        >
+                            Cancel
+                        </Button>
+                    </Inline>
+                </div>
             </div>
         );
     }
 
     if (action === "withdraw") {
         return (
-            <div className={styles.tokenCard__actions}>
-                <Row align="center" className={styles.actionRow}>
-                    <Input
-                        type="number"
-                        placeholder="Amount"
-                        value={inputValue}
-                        onChange={(e) => setInputValue(e.target.value)}
-                        className={styles.smallInput}
-                        autoFocus
-                    />
-                    <Button
-                        size="small"
-                        variant="submit"
-                        onClick={handleWithdraw}
-                        disabled={!inputValue || isPending}
-                        isLoading={isWithdrawing}
-                    >
-                        Withdraw
-                    </Button>
-                    <Button
-                        size="small"
-                        variant="ghost"
-                        onClick={() => {
-                            setAction(null);
-                            setInputValue("");
-                        }}
-                        disabled={isPending}
-                    >
-                        Cancel
-                    </Button>
-                </Row>
+            <div className={styles.tokenCardActions}>
+                <div className={styles.actionRow}>
+                    <Inline space="m" alignY="center">
+                        <Input
+                            type="number"
+                            placeholder="Amount"
+                            value={inputValue}
+                            onChange={(e) => setInputValue(e.target.value)}
+                            className={styles.smallInput}
+                            autoFocus
+                        />
+                        <Button
+                            size="small"
+                            variant="primary"
+                            onClick={handleWithdraw}
+                            disabled={!inputValue || isPending}
+                            loading={isWithdrawing}
+                        >
+                            Withdraw
+                        </Button>
+                        <Button
+                            size="small"
+                            variant="ghost"
+                            onClick={() => {
+                                setAction(null);
+                                setInputValue("");
+                            }}
+                            disabled={isPending}
+                        >
+                            Cancel
+                        </Button>
+                    </Inline>
+                </div>
             </div>
         );
     }
 
     return (
-        <div className={styles.tokenCard__actions}>
+        <div className={styles.tokenCardActions}>
             {needsAllowanceIncrease && (
-                <div className={styles.tokenCard__warning}>
+                <div className={styles.tokenCardWarningBox}>
                     <AlertTriangle width={14} height={14} />
                     <span>Distribution limit too low</span>
                 </div>
             )}
-            <div className={styles.tokenCard__actionButtons}>
+            <Inline space="xs" alignY="center">
                 {needsAllowanceIncrease && (
                     <Button
                         size="small"
-                        variant="outline"
+                        variant="secondary"
                         onClick={() => setAction("allowance")}
                     >
                         <ArrowUpCircle width={14} height={14} />
@@ -566,18 +547,12 @@ function TokenActions({
                     </Button>
                 )}
                 {token.allowance > 0n && (
-                    <Button
-                        size="small"
-                        variant="ghost"
-                        onClick={() =>
-                            revokeAllowance({ token: token.address })
-                        }
+                    <PauseRewardsConfirmSheet
+                        token={token}
+                        merchantId={merchantId}
+                        bankAddress={bankAddress}
                         disabled={isPending}
-                        isLoading={isRevokingAllowance}
-                    >
-                        <PauseCircle width={14} height={14} />
-                        Pause rewards
-                    </Button>
+                    />
                 )}
                 {!isBankOpen && token.balance > 0n && (
                     <Button
@@ -589,23 +564,7 @@ function TokenActions({
                         Withdraw
                     </Button>
                 )}
-            </div>
+            </Inline>
         </div>
-    );
-}
-
-function TestFundButton({ bankAddress }: { bankAddress: Address }) {
-    const { mutate: fundTestBank, isPending } = useFundTestBank();
-
-    return (
-        <Button
-            variant="secondary"
-            onClick={() => fundTestBank({ bank: bankAddress })}
-            disabled={isPending}
-            isLoading={isPending}
-        >
-            <Wallet width={16} height={16} />
-            Fund with Test Tokens
-        </Button>
     );
 }

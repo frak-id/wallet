@@ -1,8 +1,8 @@
-import { Button } from "@frak-labs/ui/component/Button";
 import { useNavigate } from "@tanstack/react-router";
 import { useCallback } from "react";
 import { useForm } from "react-hook-form";
 import { ActionsWrapper } from "@/module/common/component/ActionsWrapper";
+import { Button } from "@/module/common/component/Button";
 import { ButtonWithConfirmationAlert } from "@/module/common/component/ButtonWithConfirmationAlert";
 import { Head } from "@/module/common/component/Head";
 import { Form, FormLayout } from "@/module/forms/Form";
@@ -105,7 +105,7 @@ export function CreatePushNotification() {
                             />
                         }
                         right={
-                            <Button type={"submit"} variant={"information"}>
+                            <Button type={"submit"} variant={"secondary"}>
                                 Next
                             </Button>
                         }

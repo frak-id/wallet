@@ -1,6 +1,6 @@
 import { updateGlobalProperties } from "@frak-labs/wallet-shared/common/analytics";
 import { clientIdStore } from "@frak-labs/wallet-shared/stores/clientIdStore";
-import { create } from "zustand";
+import { createStore } from "zustand/vanilla";
 import type { ResolvingContextStore, TrustLevel } from "./types";
 
 /**
@@ -26,37 +26,39 @@ if (iframeClientId) {
 
 export { iframeClientId };
 
-export const resolvingContextStore = create<ResolvingContextStore>((set) => ({
-    context: undefined,
-    backendSdkConfig: undefined,
-    trustLevel: "pending" as TrustLevel,
+export const resolvingContextStore = createStore<ResolvingContextStore>()(
+    (set) => ({
+        context: undefined,
+        backendSdkConfig: undefined,
+        trustLevel: "pending" as TrustLevel,
 
-    setContext: (context) => {
-        set({ context });
-        updateGlobalProperties({
-            isIframe: true,
-            contextUrl: context.sourceUrl,
-        });
-    },
+        setContext: (context) => {
+            set({ context });
+            updateGlobalProperties({
+                isIframe: true,
+                contextUrl: context.sourceUrl,
+            });
+        },
 
-    clearContext: () =>
-        set({
-            context: undefined,
-            backendSdkConfig: undefined,
-            trustLevel: "pending" as TrustLevel,
-        }),
+        clearContext: () =>
+            set({
+                context: undefined,
+                backendSdkConfig: undefined,
+                trustLevel: "pending" as TrustLevel,
+            }),
 
-    setTrustLevel: (level: TrustLevel) => set({ trustLevel: level }),
+        setTrustLevel: (level: TrustLevel) => set({ trustLevel: level }),
 
-    setBackendConfig: (merchantId, config) => {
-        set((state) => ({
-            backendSdkConfig: config,
-            context: state.context
-                ? {
-                      ...state.context,
-                      merchantId: merchantId || state.context.merchantId,
-                  }
-                : state.context,
-        }));
-    },
-}));
+        setBackendConfig: (merchantId, config) => {
+            set((state) => ({
+                backendSdkConfig: config,
+                context: state.context
+                    ? {
+                          ...state.context,
+                          merchantId: merchantId || state.context.merchantId,
+                      }
+                    : state.context,
+            }));
+        },
+    })
+);

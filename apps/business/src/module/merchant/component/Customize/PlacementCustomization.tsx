@@ -1,11 +1,11 @@
 import type { SdkConfig } from "@frak-labs/backend-elysia/domain/merchant";
 import type { Currency } from "@frak-labs/core-sdk";
-import { Input } from "@frak-labs/ui/component/forms/Input";
 import {
     BannerPreview,
     PostPurchasePreview,
     ShareButtonPreview,
 } from "@frak-labs/ui-preview";
+import clsx from "clsx";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { type UseFormReturn, useForm } from "react-hook-form";
 import { Panel } from "@/module/common/component/Panel";
@@ -20,14 +20,15 @@ import {
     FormMessage,
 } from "@/module/forms/Form";
 import { FormActions } from "@/module/forms/FormActions";
+import { Input } from "@/module/forms/Input";
 import { useMerchantUpdate } from "@/module/merchant/hook/useMerchantUpdate";
+import * as styles from "./customize.css";
 import { BannerFields, getBannerDefaults } from "./fields/BannerFields";
 import { ButtonShareFields } from "./fields/ButtonShareFields";
 import {
     getPostPurchaseDefaults,
     PostPurchaseFields,
 } from "./fields/PostPurchaseFields";
-import styles from "./index.module.css";
 import {
     DeletePlacementPanel,
     PlacementCssPanel,
@@ -247,7 +248,7 @@ function PlacementSettingsPanel({
     return (
         <Form {...form}>
             <Panel title={`Placement settings · ${placementId}`}>
-                <div className={styles.customize__settingsGrid}>
+                <div className={styles.customizeSettingsGrid}>
                     <FormField
                         control={form.control}
                         name="targetInteraction"
@@ -281,16 +282,16 @@ function PlacementSettingsPanel({
                     />
                 </div>
 
-                <div className={styles.customize__componentSelector}>
+                <div className={styles.customizeComponentSelector}>
                     {COMPONENT_TYPES.map((componentType) => (
                         <button
                             key={componentType}
                             type="button"
-                            className={`${styles.customize__tab} ${
-                                selectedComponent === componentType
-                                    ? styles["customize__tab--active"]
-                                    : ""
-                            }`}
+                            className={clsx(
+                                styles.customizeTab,
+                                selectedComponent === componentType &&
+                                    styles.customizeTabActive
+                            )}
                             onClick={() => setSelectedComponent(componentType)}
                         >
                             {COMPONENT_LABELS[componentType]}

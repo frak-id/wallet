@@ -1,6 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { isDemoMode } from "@/config/auth";
-import { ButtonNewCampaign } from "@/module/campaigns/component/ButtonNewCampaign";
 import { TableCampaigns } from "@/module/campaigns/component/TableCampaigns";
 import { campaignsListQueryOptions } from "@/module/campaigns/queries/queryOptions";
 import { Breadcrumb } from "@/module/common/component/Breadcrumb";
@@ -24,7 +23,6 @@ function CampaignsListPage() {
             <Head
                 title={{ content: "Campaigns" }}
                 leftSection={<Breadcrumb current={"Campaign List"} />}
-                rightSection={<ButtonNewCampaign />}
             />
             <TableCampaigns />
         </>

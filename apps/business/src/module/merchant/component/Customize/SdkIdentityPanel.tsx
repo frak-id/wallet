@@ -1,5 +1,4 @@
 import type { SdkConfig } from "@frak-labs/backend-elysia/domain/merchant";
-import { Input } from "@frak-labs/ui/component/forms/Input";
 import { useCallback, useEffect, useMemo } from "react";
 import { useForm } from "react-hook-form";
 import { Panel } from "@/module/common/component/Panel";
@@ -13,10 +12,11 @@ import {
     FormMessage,
 } from "@/module/forms/Form";
 import { FormActions } from "@/module/forms/FormActions";
+import { Input } from "@/module/forms/Input";
 import { Switch } from "@/module/forms/Switch";
 import { ImageUploadField } from "@/module/merchant/component/ImageUploadField";
 import { useMerchantUpdate } from "@/module/merchant/hook/useMerchantUpdate";
-import styles from "./index.module.css";
+import * as styles from "./customize.css";
 import type { SdkIdentityFormValues } from "./types";
 import { valueOrNull } from "./utils";
 
@@ -172,7 +172,7 @@ export function SdkIdentityPanel({
                             </FormDescription>
                             <FormControl>
                                 <select
-                                    className={styles.customize__select}
+                                    className={styles.customizeSelect}
                                     {...field}
                                 >
                                     <option value="">Auto</option>
@@ -197,7 +197,7 @@ export function SdkIdentityPanel({
                             </FormDescription>
                             <FormControl>
                                 <select
-                                    className={styles.customize__select}
+                                    className={styles.customizeSelect}
                                     {...field}
                                 >
                                     <option value="">
@@ -215,7 +215,7 @@ export function SdkIdentityPanel({
                     control={form.control}
                     name="hidden"
                     render={({ field }) => (
-                        <FormItem className={styles.customize__switchRow}>
+                        <FormItem className={styles.customizeSwitchRow}>
                             <FormLabel weight={"medium"}>
                                 Frak SDK displayed
                             </FormLabel>

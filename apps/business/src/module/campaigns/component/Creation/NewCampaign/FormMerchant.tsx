@@ -4,7 +4,7 @@ import {
     SelectItem,
     SelectTrigger,
     SelectValue,
-} from "@frak-labs/ui/component/Select";
+} from "@frak-labs/design-system/components/Select";
 import { useEffect } from "react";
 import { useFormContext } from "react-hook-form";
 import { Panel } from "@/module/common/component/Panel";

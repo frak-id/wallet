@@ -2,8 +2,8 @@
  * Zustand store for authentication management
  */
 
-import { create } from "zustand";
 import { persist } from "zustand/middleware";
+import { createStore } from "zustand/vanilla";
 import { authenticatorStorage } from "../common/storage/authenticators";
 import type { Session } from "../types/Session";
 import type { AuthenticationStore } from "./types";
@@ -15,7 +15,7 @@ export type { PendingRegistration } from "./types";
  * Persists lastAuthenticator, lastAuthenticationAt, lastWebAuthNAction, and pendingRegistration
  * ssoContext is in-memory only (not persisted)
  */
-export const authenticationStore = create<AuthenticationStore>()(
+export const authenticationStore = createStore<AuthenticationStore>()(
     persist(
         (set) => ({
             lastAuthenticator: null,

@@ -9,7 +9,7 @@ export function ButtonSendPush() {
         <LinkButton
             to="/push/create"
             onClick={() => setForm(undefined)}
-            leftIcon={<Plus size={20} />}
+            icon={<Plus size={20} />}
         >
             Send Push
         </LinkButton>

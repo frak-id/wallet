@@ -6,12 +6,13 @@ import { selectWebauthnSession, sessionStore } from "@frak-labs/wallet-shared";
 import { Link } from "@tanstack/react-router";
 import { ChevronRight, Shield } from "lucide-react";
 import { useTranslation } from "react-i18next";
+import { useStore } from "zustand";
 import { useRecoverySetupStatus } from "@/module/recovery-setup/hook/useRecoverySetupStatus";
 import * as styles from "./index.css";
 
 export function ProfileSecurityCard() {
     const { t } = useTranslation();
-    const webauthnSession = sessionStore(selectWebauthnSession);
+    const webauthnSession = useStore(sessionStore, selectWebauthnSession);
     const { recoverySetupStatus } = useRecoverySetupStatus();
 
     if (!webauthnSession) {

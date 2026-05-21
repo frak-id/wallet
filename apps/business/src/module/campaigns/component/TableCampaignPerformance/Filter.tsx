@@ -1,9 +1,9 @@
-import { Button } from "@frak-labs/ui/component/Button";
-import { InputSearch } from "@frak-labs/ui/component/forms/InputSearch";
 import type { ColumnFiltersState } from "@tanstack/react-table";
 import { SlidersHorizontal } from "lucide-react";
 import { useMemo } from "react";
-import styles from "./index.module.css";
+import { Button } from "@/module/common/component/Button";
+import { InputSearch } from "@/module/forms/InputSearch";
+import * as styles from "./table-campaign-performance.css";
 
 type TablePerformanceFiltersProps = {
     columnFilters: ColumnFiltersState;
@@ -38,18 +38,18 @@ export function TablePerformanceFilters({
 
     return (
         <div className={styles.filters}>
-            <div className={styles.filters__item}>
+            <div className={styles.filtersItem}>
                 <InputSearch
                     placeholder={"Search campaign..."}
-                    classNameWrapper={styles.filters__search}
+                    className={styles.filtersSearch}
                     value={currentTitle}
                     onChange={(e) => setTitleFilter(e.target.value)}
                 />
             </div>
-            <div className={styles.filters__item}>
+            <div className={styles.filtersItem}>
                 <Button
                     variant={"secondary"}
-                    leftIcon={<SlidersHorizontal size={20} />}
+                    icon={<SlidersHorizontal size={20} />}
                     onClick={() => resetFilters()}
                 >
                     Reset filters

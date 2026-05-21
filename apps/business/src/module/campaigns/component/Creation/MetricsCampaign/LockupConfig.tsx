@@ -7,7 +7,7 @@ import {
     FormItem,
     FormLabel,
 } from "@/module/forms/Form";
-import styles from "./index.module.css";
+import * as styles from "./metrics-campaign.css";
 import type { RewardFormState } from "./utils";
 
 /**
@@ -36,7 +36,7 @@ export function LockupConfig() {
                                 min={REWARD_LOCKUP.MIN_DAYS}
                                 max={REWARD_LOCKUP.MAX_DAYS}
                                 step={1}
-                                className={styles.chaining__input}
+                                className={styles.chainingInput}
                                 value={value}
                                 onChange={(e) => {
                                     const n = e.target.valueAsNumber;

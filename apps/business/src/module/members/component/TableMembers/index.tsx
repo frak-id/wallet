@@ -1,8 +1,8 @@
 import { formatAmount } from "@frak-labs/core-sdk";
-import { Button } from "@frak-labs/ui/component/Button";
-import { Checkbox } from "@frak-labs/ui/component/forms/Checkbox";
-import { WalletAddress } from "@frak-labs/ui/component/HashDisplay";
-import { Skeleton } from "@frak-labs/ui/component/Skeleton";
+import { Box } from "@frak-labs/design-system/components/Box";
+import { Checkbox } from "@frak-labs/design-system/components/Checkbox";
+import { Inline } from "@frak-labs/design-system/components/Inline";
+import { Skeleton } from "@frak-labs/design-system/components/Skeleton";
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import {
     type ColumnDef,
@@ -12,17 +12,19 @@ import {
 import { useEffect, useMemo, useState } from "react";
 import { isAddressEqual } from "viem";
 import { useIsDemoMode } from "@/module/common/atoms/demoMode";
-import { Row } from "@/module/common/component/Row";
+import { Button } from "@/module/common/component/Button";
+import { WalletAddress } from "@/module/common/component/HashDisplay";
 import { Table } from "@/module/common/component/Table";
 import type {
     GetMembersPageItem,
     GetMembersParam,
 } from "@/module/members/api/getMerchantMembers";
+import { MemberDetailsSheet } from "@/module/members/component/MemberDetailsSheet";
 import { TableMembersFilters } from "@/module/members/component/TableMembers/Filters";
 import { Pagination } from "@/module/members/component/TableMembers/Pagination";
 import { membersPageQueryOptions } from "@/module/members/queries/queryOptions";
 import { membersStore } from "@/stores/membersStore";
-import styles from "./index.module.css";
+import * as styles from "./table-members.css";
 
 const columnHelper = createColumnHelper<GetMembersPageItem>();
 
@@ -63,6 +65,13 @@ export function TableMembers() {
     const [sortingState, setSorting] = useState<SortingState>([]);
 
     /**
+     * Member currently displayed in the right-side details sheet.
+     */
+    const [selectedMember, setSelectedMember] = useState<
+        GetMembersPageItem | undefined
+    >();
+
+    /**
      * Every time sorting state changes, update the filters
      */
     useEffect(() => {
@@ -99,22 +108,31 @@ export function TableMembers() {
                     id: "select",
                     cell: ({ row }) => {
                         return (
-                            <Checkbox
-                                id={`select-${row.id}`}
-                                checked={
-                                    !!selectedMembers?.find((a) =>
-                                        isAddressEqual(a, row.original.user)
-                                    )
-                                }
-                                onCheckedChange={(checked) => {
-                                    if (checked) {
-                                        addSelectedMember(row.original.user);
-                                    } else {
-                                        removeSelectedMember(row.original.user);
+                            <div
+                                onClick={(e) => e.stopPropagation()}
+                                onKeyDown={(e) => e.stopPropagation()}
+                            >
+                                <Checkbox
+                                    id={`select-${row.id}`}
+                                    checked={
+                                        !!selectedMembers?.find((a) =>
+                                            isAddressEqual(a, row.original.user)
+                                        )
                                     }
-                                }}
-                                disabled={false}
-                            />
+                                    onCheckedChange={(checked) => {
+                                        if (checked) {
+                                            addSelectedMember(
+                                                row.original.user
+                                            );
+                                        } else {
+                                            removeSelectedMember(
+                                                row.original.user
+                                            );
+                                        }
+                                    }}
+                                    disabled={false}
+                                />
+                            </div>
                         );
                     },
                 }),
@@ -122,7 +140,12 @@ export function TableMembers() {
                     enableSorting: true,
                     header: () => "Wallet",
                     cell: ({ getValue }) => (
-                        <WalletAddress wallet={getValue()} />
+                        <span
+                            onClick={(e) => e.stopPropagation()}
+                            onKeyDown={(e) => e.stopPropagation()}
+                        >
+                            <WalletAddress wallet={getValue()} />
+                        </span>
                     ),
                 }),
                 columnHelper.accessor("merchantNames", {
@@ -153,7 +176,7 @@ export function TableMembers() {
     );
 
     if (!page || isPending) {
-        return <Skeleton />;
+        return <Skeleton variant="rect" height={250} />;
     }
 
     return (
@@ -169,28 +192,28 @@ export function TableMembers() {
                     pagination={paginationState}
                     sorting={sortingState}
                     onSortingChange={setSorting}
+                    onRowClick={(row) => setSelectedMember(row.original)}
                     postTable={
                         <>
                             {(selectedMembers?.length ?? 0) > 0 && (
-                                <Row
-                                    align={"center"}
-                                    className={styles.selectedMembersRow}
-                                >
-                                    <p>
-                                        You have selected{" "}
-                                        <strong>
-                                            {selectedMembers?.length}
-                                        </strong>{" "}
-                                        Members
-                                    </p>
-                                    <Button
-                                        type={"button"}
-                                        onClick={() => clearSelection()}
-                                        variant={"outline"}
-                                    >
-                                        Clear selection
-                                    </Button>
-                                </Row>
+                                <Box className={styles.selectedMembersRow}>
+                                    <Inline space="m" alignY="center">
+                                        <p>
+                                            You have selected{" "}
+                                            <strong>
+                                                {selectedMembers?.length}
+                                            </strong>{" "}
+                                            Members
+                                        </p>
+                                        <Button
+                                            type={"button"}
+                                            onClick={() => clearSelection()}
+                                            variant={"secondary"}
+                                        >
+                                            Clear selection
+                                        </Button>
+                                    </Inline>
+                                </Box>
                             )}
 
                             {page.totalResult > (filters.limit ?? 10) && (
@@ -200,6 +223,12 @@ export function TableMembers() {
                     }
                 />
             )}
+            <MemberDetailsSheet
+                member={selectedMember}
+                onOpenChange={(open) =>
+                    setSelectedMember(open ? selectedMember : undefined)
+                }
+            />
         </>
     );
 }

@@ -1,5 +1,4 @@
-import { Skeleton } from "@frak-labs/ui/component/Skeleton";
-import { computeWithPrecision } from "@frak-labs/ui/utils/computeWithPrecision";
+import { Skeleton } from "@frak-labs/design-system/components/Skeleton";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import type {
     CellContext,
@@ -18,6 +17,7 @@ import { useIsDemoMode } from "@/module/common/atoms/demoMode";
 import { Table } from "@/module/common/component/Table";
 import { TooltipTable } from "@/module/common/component/TooltipTable";
 import { useConvertToPreferredCurrency } from "@/module/common/hook/useConversionRate";
+import { computeWithPrecision } from "@/module/common/utils/computeWithPrecision";
 
 type TableData = CampaignStats;
 
@@ -232,7 +232,7 @@ export function TableCampaignPerformance() {
     );
 
     if (!data) {
-        return <Skeleton />;
+        return <Skeleton variant="rect" height={250} />;
     }
 
     return (

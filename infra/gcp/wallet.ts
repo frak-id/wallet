@@ -20,12 +20,6 @@ import {
 } from "../config";
 import { isProd, normalizedStageName } from "../utils";
 
-/**
- * Whether the native mobile app is available for install prompts.
- * When false, install CTAs are hidden and the sharing flow stays web-only.
- */
-const isAppAvailable = isProd ? "false" : "true";
-
 import {
     baseDomainName,
     cachedImage,
@@ -61,7 +55,6 @@ export const walletEnv = {
     // Monerium API host the in-pod nginx proxy forwards `/monerium-api/*` to.
     // Workaround for their broken CORS preflight (see apps/wallet/nginx.conf).
     MONERIUM_API_HOST: isProd ? "api.monerium.app" : "api.monerium.dev",
-    IS_APP_AVAILABLE: isAppAvailable,
 };
 
 let imageRefs = {
@@ -87,7 +80,6 @@ if (!$dev) {
             ERPC_URL: walletEnv.ERPC_URL,
             FRAK_WALLET_URL: walletEnv.FRAK_WALLET_URL,
             OPEN_PANEL_API_URL: walletEnv.OPEN_PANEL_API_URL,
-            IS_APP_AVAILABLE: walletEnv.IS_APP_AVAILABLE,
         },
         // Secrets passed via BuildKit (not stored in layers)
         secrets: {
@@ -120,7 +112,6 @@ if (!$dev) {
             ERPC_URL: walletEnv.ERPC_URL,
             FRAK_WALLET_URL: walletEnv.FRAK_WALLET_URL,
             OPEN_PANEL_API_URL: walletEnv.OPEN_PANEL_API_URL,
-            IS_APP_AVAILABLE: walletEnv.IS_APP_AVAILABLE,
         },
         // Secrets passed via BuildKit (not stored in layers)
         secrets: {

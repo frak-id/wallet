@@ -1,23 +1,25 @@
 import { render, screen } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import type { StoreApi } from "zustand/vanilla";
 import { DemoAccount } from "./index";
 
 const mockDecodeJwt = vi.fn();
-let mockStoreState: {
+type StoreState = {
     demoPrivateKey?: string;
     sdkSession?: { token: string } | null;
-} = {
-    demoPrivateKey: undefined,
-    sdkSession: undefined,
 };
 
-vi.mock("@frak-labs/wallet-shared", () => ({
-    selectDemoPrivateKey: vi.fn((state: any) => state?.demoPrivateKey),
-    selectSdkSession: vi.fn((state: any) => state?.sdkSession),
-    sessionStore: vi.fn((selector: any) => {
-        return selector(mockStoreState);
-    }),
-}));
+vi.mock("@frak-labs/wallet-shared", async () => {
+    const { createStore } = await import("zustand/vanilla");
+    return {
+        selectDemoPrivateKey: vi.fn((state: any) => state?.demoPrivateKey),
+        selectSdkSession: vi.fn((state: any) => state?.sdkSession),
+        sessionStore: createStore<StoreState>(() => ({
+            demoPrivateKey: undefined,
+            sdkSession: undefined,
+        })),
+    };
+});
 
 vi.mock("jose", () => ({
     decodeJwt: (token: string) => mockDecodeJwt(token),
@@ -40,12 +42,30 @@ vi.mock("@/module/common/component/Panel", () => ({
 }));
 
 describe("DemoAccount", () => {
-    beforeEach(() => {
+    let mockStoreState: StoreState;
+
+    beforeEach(async () => {
         vi.clearAllMocks();
-        mockStoreState = {
-            demoPrivateKey: undefined,
-            sdkSession: undefined,
-        };
+        // `vi.mock` replaces `sessionStore` with a vanilla store typed for the
+        // local `StoreState`, but TypeScript resolves the import against the
+        // real `@frak-labs/wallet-shared` types. Cast to the mock's shape so
+        // `setState` is correctly typed without using `any`.
+        const { sessionStore } = (await import(
+            "@frak-labs/wallet-shared"
+        )) as unknown as { sessionStore: StoreApi<StoreState> };
+        sessionStore.setState(
+            { demoPrivateKey: undefined, sdkSession: undefined },
+            true
+        );
+        mockStoreState = new Proxy({} as StoreState, {
+            get: (_, key) => sessionStore.getState()[key as keyof StoreState],
+            set: (_, key, value) => {
+                sessionStore.setState({
+                    [key as keyof StoreState]: value,
+                });
+                return true;
+            },
+        });
     });
 
     it("should return null when not a demo account", () => {

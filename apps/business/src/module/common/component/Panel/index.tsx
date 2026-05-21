@@ -1,29 +1,20 @@
-import type { VariantProps } from "class-variance-authority";
-import { cva } from "class-variance-authority";
+import type { RecipeVariants } from "@vanilla-extract/recipes";
+import clsx from "clsx";
 import { BadgeCheck } from "lucide-react";
 import type { ComponentPropsWithRef } from "react";
 import { Title } from "@/module/common/component/Title";
-import styles from "./index.module.css";
+import { panelTitle, panelTitleGhost, panelVariants } from "./panel.css";
+
+type PanelRecipeVariants = NonNullable<RecipeVariants<typeof panelVariants>>;
 
 export type PanelProps = ComponentPropsWithRef<"div"> &
-    VariantProps<typeof panelVariants> & {
+    PanelRecipeVariants & {
         title?: string;
         withBadge?: boolean;
         className?: string;
     };
 
-export const panelVariants = cva(styles.panel, {
-    variants: {
-        variant: {
-            primary: styles.primary,
-            secondary: styles.secondary,
-            ghost: styles.ghost,
-        },
-    },
-    defaultVariants: {
-        variant: "primary",
-    },
-});
+export { panelVariants };
 
 export const Panel = ({
     ref,
@@ -37,10 +28,10 @@ export const Panel = ({
     return (
         <div
             ref={ref}
-            className={panelVariants({ variant, className })}
+            className={clsx(panelVariants({ variant }), className)}
             {...props}
         >
-            <PanelTitle title={title} withBadge={withBadge} />
+            <PanelTitle title={title} withBadge={withBadge} variant={variant} />
             {children}
         </div>
     );
@@ -49,16 +40,21 @@ export const Panel = ({
 export function PanelTitle({
     withBadge = true,
     title,
+    variant,
 }: {
     withBadge?: boolean;
     title?: string;
+    variant?: PanelRecipeVariants["variant"];
 }) {
     return (
         title && (
             <Title
                 icon={withBadge && <BadgeCheck color={"#0DDB84"} />}
                 size={"small"}
-                className={styles.panel__title}
+                className={clsx(
+                    panelTitle,
+                    variant === "ghost" && panelTitleGhost
+                )}
             >
                 {title}
             </Title>

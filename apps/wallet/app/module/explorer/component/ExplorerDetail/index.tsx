@@ -38,6 +38,7 @@ import {
 import { useQuery } from "@tanstack/react-query";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Trans, useTranslation } from "react-i18next";
+import { useStore } from "zustand";
 import { GlassButton } from "@/module/common/component/GlassButton";
 import { GlassCloseButton } from "@/module/common/component/GlassCloseButton";
 import { InfoCard, InfoRow } from "@/module/common/component/InfoCard";
@@ -51,8 +52,8 @@ type ExplorerDetailProps = {
 };
 
 export function ExplorerDetail({ merchant, onClose }: ExplorerDetailProps) {
-    const clientId = clientIdStore((s) => s.clientId);
-    const walletAddress = sessionStore((s) => s.session?.address);
+    const clientId = useStore(clientIdStore, (s) => s.clientId);
+    const walletAddress = useStore(sessionStore, (s) => s.session?.address);
     const [isDescriptionExpanded, setIsDescriptionExpanded] = useState(false);
     const [needsReadMore, setNeedsReadMore] = useState(false);
     const descriptionRef = useRef<HTMLElement>(null);

@@ -7,7 +7,7 @@ const mockUseLocation = vi.fn();
 const mockNavigate = vi.fn();
 const mockMatchRoute = vi.fn();
 
-vi.mock("@frak-labs/ui/hook/useMediaQuery", () => ({
+vi.mock("@frak-labs/design-system/hooks/useMediaQuery", () => ({
     useMediaQuery: () => mockUseMediaQuery(),
 }));
 

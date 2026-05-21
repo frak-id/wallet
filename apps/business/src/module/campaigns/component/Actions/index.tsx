@@ -1,10 +1,11 @@
-import { Button } from "@frak-labs/ui/component/Button";
+import { Inline } from "@frak-labs/design-system/components/Inline";
+import { Text } from "@frak-labs/design-system/components/Text";
 import { useLocation, useNavigate } from "@tanstack/react-router";
 import { Check, X } from "lucide-react";
 import { memo, useCallback, useEffect } from "react";
 import { ActionsWrapper } from "@/module/common/component/ActionsWrapper";
+import { Button } from "@/module/common/component/Button";
 import { campaignStore } from "@/stores/campaignStore";
-import styles from "./index.module.css";
 
 function getStepFromPath(pathname: string): number {
     if (pathname.endsWith("/validation")) return 3;
@@ -62,10 +63,10 @@ export const Actions = memo(function Actions({
                 <>
                     <Button
                         type={"button"}
-                        variant={"outline"}
+                        variant={"secondary"}
                         onClick={onSaveDraft}
                         disabled={isLoading || isSaving}
-                        isLoading={isSaving}
+                        loading={isSaving}
                     >
                         Save Draft
                     </Button>
@@ -75,10 +76,7 @@ export const Actions = memo(function Actions({
             right={
                 <>
                     {previousPath && !isSuccess && (
-                        <Button
-                            variant={"informationOutline"}
-                            onClick={handlePrevious}
-                        >
+                        <Button variant={"secondary"} onClick={handlePrevious}>
                             Previous
                         </Button>
                     )}
@@ -104,14 +102,14 @@ function ButtonNext({
     return isLastStep ? (
         <Button
             type={"submit"}
-            variant={"submit"}
-            isLoading={isLoading}
+            variant={"primary"}
+            loading={isLoading}
             disabled={isLoading}
         >
             Publish
         </Button>
     ) : (
-        <Button type={"submit"} variant={"information"}>
+        <Button type={"submit"} variant={"secondary"}>
             Next
         </Button>
     );
@@ -119,22 +117,22 @@ function ButtonNext({
 
 export function ActionsMessageSuccess() {
     return (
-        <span
-            className={`${styles.action__message} ${styles["action__message--success"]}`}
-        >
+        <Inline space="s" alignY="center">
             <Check />
-            All changes have been saved
-        </span>
+            <Text as="span" color="success" weight="semiBold">
+                All changes have been saved
+            </Text>
+        </Inline>
     );
 }
 
 export function ActionsMessageError({ error }: { error?: Error }) {
     return (
-        <span
-            className={`${styles.action__message} ${styles["action__message--error"]}`}
-        >
+        <Inline space="s" alignY="center">
             <X />
-            {error?.message ?? "An error occurred"}
-        </span>
+            <Text as="span" color="error" weight="semiBold">
+                {error?.message ?? "An error occurred"}
+            </Text>
+        </Inline>
     );
 }

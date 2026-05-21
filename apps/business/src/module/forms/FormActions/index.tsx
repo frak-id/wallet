@@ -1,6 +1,8 @@
-import { Button } from "@frak-labs/ui/component/Button";
-import { Column, Columns } from "@frak-labs/ui/component/Columns";
+import { Column } from "@frak-labs/design-system/components/Column";
+import { Columns } from "@frak-labs/design-system/components/Columns";
+import { Inline } from "@frak-labs/design-system/components/Inline";
 import { ActionsMessageSuccess } from "@/module/campaigns/component/Actions";
+import { Button } from "@/module/common/component/Button";
 
 type FormActionsProps = {
     isSuccess: boolean;
@@ -18,24 +20,28 @@ export function FormActions({
     onSubmit,
 }: FormActionsProps) {
     return (
-        <Columns>
-            <Column>{isSuccess && <ActionsMessageSuccess />}</Column>
-            <Column>
-                <Button
-                    variant={"informationOutline"}
-                    onClick={onDiscard}
-                    disabled={isPending || !isDirty}
-                >
-                    Discard Changes
-                </Button>
-                <Button
-                    variant={"submit"}
-                    onClick={onSubmit}
-                    disabled={isPending || !isDirty}
-                    isLoading={isPending}
-                >
-                    Validate
-                </Button>
+        <Columns space="xs" alignY="center">
+            <Column width="1/2">
+                {isSuccess && <ActionsMessageSuccess />}
+            </Column>
+            <Column width="1/2">
+                <Inline space="s" align="right">
+                    <Button
+                        variant={"secondary"}
+                        onClick={onDiscard}
+                        disabled={isPending || !isDirty}
+                    >
+                        Discard Changes
+                    </Button>
+                    <Button
+                        variant={"primary"}
+                        onClick={onSubmit}
+                        disabled={isPending || !isDirty}
+                        loading={isPending}
+                    >
+                        Validate
+                    </Button>
+                </Inline>
             </Column>
         </Columns>
     );

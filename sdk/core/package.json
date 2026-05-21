@@ -11,7 +11,7 @@
       "url": "https://twitter.com/QNivelais"
     }
   ],
-  "version": "1.1.0",
+  "version": "1.1.1",
   "description": "Core SDK of the Frak wallet, low level library to interact directly with the frak ecosystem.",
   "repository": {
     "url": "https://github.com/frak-id/wallet",
@@ -41,6 +41,7 @@
   "exports": {
     ".": {
       "development": "./src/index.ts",
+      "production": "./src/index.ts",
       "import": {
         "types": "./dist/index.d.ts",
         "default": "./dist/index.js"
@@ -52,6 +53,7 @@
     },
     "./actions": {
       "development": "./src/actions/index.ts",
+      "production": "./src/actions/index.ts",
       "import": {
         "types": "./dist/actions.d.ts",
         "default": "./dist/actions.js"

@@ -24,8 +24,8 @@ import type { Hex } from "viem";
 import { useStore } from "zustand";
 import { useDeepLinkFallback } from "@/module/hooks/useDeepLinkFallback";
 import { useSsoLink } from "@/module/hooks/useSsoLink";
-import { useListenerWithRequestUI } from "@/module/providers/ListenerUiProvider";
 import { resolvingContextStore } from "@/module/stores/resolvingContextStore";
+import { useListenerWithRequestUI } from "@/ui/ListenerUiProvider";
 
 function buildDeepLinkHref(pairing: { id: string }): string {
     const id = encodeURIComponent(pairing.id);
@@ -96,8 +96,8 @@ export function SsoButton({
         return null;
     }
 
-    // On mobile + app available, use deep link redirect flow (tries native app first)
-    if (ua.isMobile && process.env.IS_APP_AVAILABLE === "true") {
+    // On mobile, use deep link redirect flow (tries native app first)
+    if (ua.isMobile) {
         return (
             <MobileSsoButton link={link} text={text} className={className} />
         );

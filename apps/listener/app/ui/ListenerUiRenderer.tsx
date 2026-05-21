@@ -1,0 +1,73 @@
+import { lazy, Suspense } from "react";
+import { useListenerUI } from "@/ui/ListenerUiProvider";
+
+/**
+ * Lazy import of the modal UI
+ */
+const modalImport = () =>
+    import("@/module/modal/component/Modal").then((module) => ({
+        default: module.ListenerModal,
+    }));
+const ListenerModal = lazy(modalImport);
+
+/**
+ * Lazy import of the embedded wallet UI
+ */
+const walletImport = () =>
+    import("@/module/embedded/component/Wallet").then((module) => ({
+        default: module.ListenerWallet,
+    }));
+const ListenerWallet = lazy(walletImport);
+
+/**
+ * Lazy import of the sharing page UI
+ */
+const sharingImport = () =>
+    import("@/module/sharing/component/SharingPage").then((module) => ({
+        default: module.ListenerSharingPage,
+    }));
+const ListenerSharingPage = lazy(sharingImport);
+
+/**
+ * Render the listener UI if needed
+ */
+export function ListenerUiRenderer() {
+    const { currentRequest } = useListenerUI();
+    /**
+     * If no request, do not display anything
+     */
+    if (!currentRequest) {
+        return null;
+    }
+
+    /**
+     * If the request is an embedded wallet, display it
+     */
+    if (currentRequest.type === "embedded") {
+        return (
+            <Suspense fallback={null}>
+                <ListenerWallet />
+            </Suspense>
+        );
+    }
+
+    /**
+     * If the request is a sharing page, display it
+     */
+    if (currentRequest.type === "sharing") {
+        return (
+            <Suspense fallback={null}>
+                <ListenerSharingPage />
+            </Suspense>
+        );
+    }
+
+    /**
+     * If the request is a modal, display it
+     */
+    return (
+        <Suspense fallback={null}>
+            <ListenerModal {...currentRequest} />
+        </Suspense>
+    );
+}

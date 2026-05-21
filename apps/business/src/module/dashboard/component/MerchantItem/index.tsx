@@ -1,13 +1,15 @@
 import { Link } from "@tanstack/react-router";
 import { Palette, Pen, Users, WalletMinimal } from "lucide-react";
 import type { HTMLAttributes, PropsWithChildren, ReactElement } from "react";
-import styles from "./index.module.css";
+import {
+    merchantItem,
+    merchantItemActions,
+    merchantItemDomain,
+    merchantItemName,
+} from "./merchant-item.css";
 
 interface MerchantItemProps
     extends Omit<HTMLAttributes<HTMLSpanElement>, "className"> {
-    /**
-     * Merchant UUID for navigation
-     */
     merchantId?: string;
     name?: string | ReactElement<unknown>;
     domain?: string;
@@ -25,23 +27,21 @@ export function MerchantItem({
     ...props
 }: PropsWithChildren<MerchantItemProps>) {
     return (
-        <span className={styles.merchantItem} {...props}>
-            <p className={styles.merchantItem__name}>
+        <span className={merchantItem} {...props}>
+            <p className={merchantItemName}>
                 {name}
                 {domain && isLink && (
                     <a
                         href={`//${domain}`}
                         target={"_blank"}
                         rel={"noreferrer"}
-                        className={styles.merchantItem__domain}
+                        className={merchantItemDomain}
                     >
                         {domain}
                     </a>
                 )}
                 {domain && !isLink && (
-                    <span className={styles.merchantItem__domain}>
-                        {domain}
-                    </span>
+                    <span className={merchantItemDomain}>{domain}</span>
                 )}
             </p>
             {showActions && <MerchantActions merchantId={merchantId} />}
@@ -53,7 +53,7 @@ function MerchantActions({ merchantId }: { merchantId?: string }) {
     if (!merchantId) return null;
 
     return (
-        <ul className={styles.merchantItem__actions}>
+        <ul className={merchantItemActions}>
             <li>
                 <Link
                     to="/merchant/$id/funding"

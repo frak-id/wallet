@@ -3,11 +3,11 @@ import { clsx as cx } from "clsx";
 import { prefixWalletCss } from "@/module/common/utils/prefixWalletCss";
 import { SsoButton } from "@/module/component/SsoButton";
 import { AuthenticateWithPhone } from "@/module/modal/component/AuthenticateWithPhone";
+import { useSafeResolvingContext } from "@/module/stores/hooks";
 import {
     useEmbeddedListenerUI,
     useListenerTranslation,
-} from "@/module/providers/ListenerUiProvider";
-import { useSafeResolvingContext } from "@/module/stores/hooks";
+} from "@/ui/ListenerUiProvider";
 import * as styles from "./index.css";
 
 /**

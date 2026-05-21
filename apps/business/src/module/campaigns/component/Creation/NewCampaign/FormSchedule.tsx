@@ -1,4 +1,4 @@
-import { Checkbox } from "@frak-labs/ui/component/forms/Checkbox";
+import { Checkbox } from "@frak-labs/design-system/components/Checkbox";
 import { format, isBefore, startOfDay } from "date-fns";
 import { useEffect, useState } from "react";
 import { useFormContext } from "react-hook-form";
@@ -19,7 +19,7 @@ import {
     FormMessage,
 } from "@/module/forms/Form";
 import type { CampaignDraft } from "@/stores/campaignStore";
-import styles from "./FormSchedule.module.css";
+import * as styles from "./form-schedule.css";
 
 export function FormSchedule() {
     const { control, watch, setValue, getValues } =
@@ -96,7 +96,7 @@ export function FormSchedule() {
                     <>
                         <FormItem
                             variant="checkbox"
-                            className={styles.formSchedule__endDate}
+                            className={styles.formScheduleEndDate}
                         >
                             <Checkbox
                                 onCheckedChange={(checked) => {

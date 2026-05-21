@@ -1,9 +1,9 @@
-import { Button } from "@frak-labs/ui/component/Button";
-import { WalletAddress } from "@frak-labs/ui/component/HashDisplay";
 import type { CellContext } from "@tanstack/react-table";
 import { Trash2 } from "lucide-react";
 import { useState } from "react";
 import { AlertDialog } from "@/module/common/component/AlertDialog";
+import { Button } from "@/module/common/component/Button";
+import { WalletAddress } from "@/module/common/component/HashDisplay";
 import type { ManageTeamTableData } from "@/module/merchant/component/TableTeam/index";
 import { useAdminMutation } from "@/module/merchant/hook/useAdminMutation";
 
@@ -41,11 +41,11 @@ export function DeleteTeamMemberModal({
                     <p className={"error"}>An error occurred, try again</p>
                 ) : undefined
             }
-            cancel={<Button variant={"outline"}>Cancel</Button>}
+            cancel={<Button variant={"secondary"}>Cancel</Button>}
             action={
                 <Button
-                    variant={"danger"}
-                    isLoading={isDeleting}
+                    variant={"destructive"}
+                    loading={isDeleting}
                     disabled={isDeleting}
                     onClick={async () => {
                         await onDeleteClick({

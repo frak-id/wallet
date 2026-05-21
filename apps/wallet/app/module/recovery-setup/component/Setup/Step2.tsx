@@ -1,6 +1,7 @@
 import { selectWebauthnSession, sessionStore } from "@frak-labs/wallet-shared";
 import { useEffect } from "react";
 import { useTranslation } from "react-i18next";
+import { useStore } from "zustand";
 import { AccordionRecoveryItem } from "@/module/common/component/AccordionRecoveryItem";
 import { useGenerateRecoveryOptions } from "@/module/recovery-setup/hook/useGenerateRecoveryOptions";
 import {
@@ -19,7 +20,7 @@ export function Step2() {
     const password = recoveryStore(selectRecoveryPassword);
 
     // Get the current session
-    const session = sessionStore(selectWebauthnSession);
+    const session = useStore(sessionStore, selectWebauthnSession);
 
     // Generate recovery options
     const { generateRecoveryOptionsAsync } = useGenerateRecoveryOptions();

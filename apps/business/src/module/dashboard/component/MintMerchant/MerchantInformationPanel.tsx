@@ -3,15 +3,16 @@ import {
     AccordionContent,
     AccordionItem,
     AccordionTrigger,
-} from "@frak-labs/ui/component/Accordion";
-import { Button } from "@frak-labs/ui/component/Button";
-import { Input } from "@frak-labs/ui/component/forms/Input";
-import { Spinner } from "@frak-labs/ui/component/Spinner";
-import { TextWithCopy } from "@frak-labs/ui/component/TextWithCopy";
-import { validateUrl } from "@frak-labs/ui/utils/validateUrl";
+} from "@frak-labs/design-system/components/Accordion";
+import { Box } from "@frak-labs/design-system/components/Box";
+import { Spinner } from "@frak-labs/design-system/components/Spinner";
+import { Text } from "@frak-labs/design-system/components/Text";
 import { CheckCircle2, ExternalLink, XCircle } from "lucide-react";
 import type { UseFormReturn } from "react-hook-form";
+import { Button } from "@/module/common/component/Button";
 import { PanelAccordion } from "@/module/common/component/PanelAccordion";
+import { TextWithCopy } from "@/module/common/component/TextWithCopy";
+import { validateUrl } from "@/module/common/utils/validateUrl";
 import { useDnsTxtRecordToSet } from "@/module/dashboard/hooks/dnsRecordHooks";
 import { CurrencySelector } from "@/module/forms/CurrencySelector";
 import {
@@ -22,8 +23,9 @@ import {
     FormLabel,
     FormMessage,
 } from "@/module/forms/Form";
+import { Input } from "@/module/forms/Input";
 import type { MerchantNew } from "@/types/Merchant";
-import styles from "./index.module.css";
+import * as styles from "./mint-merchant.css";
 
 interface MerchantInformationPanelProps {
     form: UseFormReturn<MerchantNew>;
@@ -69,7 +71,7 @@ export function MerchantInformationPanel({
             onValueChange={(value) => onOpenChange(value === "item-1")}
         >
             <Form {...form}>
-                <form className={styles.form}>
+                <Box as="form" display="flex" flexDirection="column" gap="m">
                     <FormField
                         control={form.control}
                         name="name"
@@ -141,10 +143,10 @@ export function MerchantInformationPanel({
                                             Domain Name
                                         </FormLabel>
                                         <FormControl>
-                                            <div
-                                                className={
-                                                    styles.domainInputWrapper
-                                                }
+                                            <Box
+                                                position="relative"
+                                                display="flex"
+                                                alignItems="center"
                                             >
                                                 <Input
                                                     length="medium"
@@ -170,7 +172,7 @@ export function MerchantInformationPanel({
                                                             size={20}
                                                         />
                                                     )}
-                                            </div>
+                                            </Box>
                                         </FormControl>
                                         <FormMessage />
                                     </FormItem>
@@ -208,10 +210,14 @@ export function MerchantInformationPanel({
                                 <FormLabel weight="medium">
                                     DNS TXT Record Required
                                 </FormLabel>
-                                <p className={styles.dnsDescription}>
+                                <Text
+                                    as="p"
+                                    variant="bodySmall"
+                                    color="secondary"
+                                >
                                     Add this TXT record to your domain's DNS
                                     settings:
-                                </p>
+                                </Text>
                                 {isDnsLoading ? (
                                     <Spinner />
                                 ) : (
@@ -267,16 +273,15 @@ export function MerchantInformationPanel({
 
                     <div className={styles.continueSection}>
                         <Button
-                            variant="information"
+                            variant="secondary"
                             onClick={onVerifyDomain}
                             type="button"
                             disabled={step > 1}
-                            className={styles.continueButton}
                         >
                             Continue
                         </Button>
                     </div>
-                </form>
+                </Box>
             </Form>
         </PanelAccordion>
     );

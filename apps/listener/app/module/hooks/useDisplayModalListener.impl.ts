@@ -14,13 +14,13 @@ import {
 } from "@frak-labs/frame-connector";
 import { trackEvent } from "@frak-labs/wallet-shared/common/analytics";
 import { sessionStore } from "@frak-labs/wallet-shared/stores/sessionStore";
-import type { UIRequest } from "@/module/providers/ListenerUiProvider";
 import { modalStore, selectShouldFinish } from "@/module/stores/modalStore";
 import { resolvingContextStore } from "@/module/stores/resolvingContextStore";
 import type { DisplayedModalStep } from "@/module/stores/types";
 import type { WalletRpcContext } from "@/module/types/context";
 import { normalizeTargetInteraction } from "@/module/utils/normalizeTargetInteraction";
 import { resolveBackendMetadata } from "@/module/utils/resolveBackendMetadata";
+import type { UIRequest } from "@/ui/ListenerUiProvider";
 
 type OnDisplayModalRequest = RpcPromiseHandler<
     IFrameRpcSchema,

@@ -1,4 +1,3 @@
-import { Input } from "@frak-labs/ui/component/forms/Input";
 import type { UseFormReturn } from "react-hook-form";
 import {
     FormControl,
@@ -8,8 +7,9 @@ import {
     FormLabel,
     FormMessage,
 } from "@/module/forms/Form";
+import { Input } from "@/module/forms/Input";
 import { Switch } from "@/module/forms/Switch";
-import styles from "../index.module.css";
+import * as styles from "../customize.css";
 import type { ComponentSettingsFormValues } from "../types";
 
 export function ButtonShareFields({
@@ -18,7 +18,7 @@ export function ButtonShareFields({
     form: UseFormReturn<ComponentSettingsFormValues>;
 }) {
     return (
-        <div className={styles.customize__settingsGrid}>
+        <div className={styles.customizeSettingsGrid}>
             <FormField
                 control={form.control}
                 name="buttonShare.text"
@@ -89,7 +89,7 @@ export function ButtonShareFields({
                         </FormDescription>
                         <FormControl>
                             <select
-                                className={styles.customize__select}
+                                className={styles.customizeSelect}
                                 value={field.value}
                                 onChange={(e) => field.onChange(e.target.value)}
                             >
@@ -111,7 +111,7 @@ export function ButtonShareFields({
                 control={form.control}
                 name="buttonShare.useReward"
                 render={({ field }) => (
-                    <FormItem className={styles.customize__switchRow}>
+                    <FormItem className={styles.customizeSwitchRow}>
                         <FormLabel weight={"medium"}>
                             Display estimated reward
                         </FormLabel>
@@ -141,7 +141,7 @@ export function ButtonShareFields({
                         </FormDescription>
                         <FormControl>
                             <textarea
-                                className={styles.customize__textarea}
+                                className={styles.customizeTextarea}
                                 placeholder={".frak-button-share { ... }"}
                                 rows={4}
                                 {...field}

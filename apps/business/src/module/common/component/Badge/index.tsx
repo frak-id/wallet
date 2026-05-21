@@ -1,49 +1,47 @@
-import type { VariantProps } from "class-variance-authority";
-import { cva } from "class-variance-authority";
-import type { ComponentPropsWithRef } from "react";
-import styles from "./index.module.css";
+import type { RecipeVariants } from "@vanilla-extract/recipes";
+import clsx from "clsx";
+import type { ComponentPropsWithRef, KeyboardEvent } from "react";
+import { badgeClickable, badgeDisabled, badgeVariants } from "./badge.css";
 
-const badgeVariants = cva(styles.badge, {
-    variants: {
-        variant: {
-            primary: styles.primary,
-            secondary: styles.secondary,
-            success: styles.success,
-            danger: styles.danger,
-            information: styles.information,
-            informationReverse: styles.informationReverse,
-            warning: styles.warning,
-        },
-        size: {
-            none: styles["size--none"],
-            small: styles["size--small"],
-            medium: styles["size--medium"],
-        },
-    },
-    defaultVariants: {
-        variant: "primary",
-        size: "medium",
-    },
-});
+type BadgeRecipeVariants = NonNullable<RecipeVariants<typeof badgeVariants>>;
 
 export type BadgeProps = ComponentPropsWithRef<"span"> &
-    VariantProps<typeof badgeVariants>;
+    BadgeRecipeVariants & {
+        disabled?: boolean;
+    };
 
 export const Badge = ({
     ref,
     className,
     variant,
     size,
+    disabled,
+    onClick,
+    onKeyDown,
     ...props
 }: BadgeProps) => {
+    const isInteractive = !disabled && !!onClick;
+    const handleKeyDown = (event: KeyboardEvent<HTMLSpanElement>) => {
+        onKeyDown?.(event);
+        if (!isInteractive || event.defaultPrevented) return;
+        if (event.key === "Enter" || event.key === " ") {
+            event.preventDefault();
+            onClick?.(event as unknown as React.MouseEvent<HTMLSpanElement>);
+        }
+    };
     return (
         <span
-            className={badgeVariants({
-                variant,
-                size,
-                className,
-            })}
+            className={clsx(
+                badgeVariants({ variant, size }),
+                disabled && badgeDisabled,
+                isInteractive && badgeClickable,
+                className
+            )}
             ref={ref}
+            onClick={disabled ? undefined : onClick}
+            onKeyDown={isInteractive ? handleKeyDown : onKeyDown}
+            role={isInteractive ? "button" : undefined}
+            tabIndex={isInteractive ? 0 : undefined}
             {...props}
         />
     );

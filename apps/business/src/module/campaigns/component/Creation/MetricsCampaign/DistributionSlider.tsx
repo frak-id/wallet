@@ -1,4 +1,6 @@
-import { Slider } from "@frak-labs/ui/component/Slider";
+import { Inline } from "@frak-labs/design-system/components/Inline";
+import { Slider } from "@frak-labs/design-system/components/Slider";
+import { Stack } from "@frak-labs/design-system/components/Stack";
 import { useMemo } from "react";
 import { useFormContext, useWatch } from "react-hook-form";
 import { tokenAddressToCurrency } from "@/module/common/utils/currencyOptions";
@@ -10,7 +12,7 @@ import {
 } from "@/module/forms/Form";
 import { campaignStore } from "@/stores/campaignStore";
 import { currencyStore } from "@/stores/currencyStore";
-import styles from "./index.module.css";
+import * as styles from "./metrics-campaign.css";
 import { calculateDistribution } from "./utils";
 
 export function DistributionSlider() {
@@ -32,21 +34,21 @@ export function DistributionSlider() {
     const refereePercent = 100 - ratio;
 
     return (
-        <div className={styles.distribution}>
+        <Stack space="m">
             <FormField
                 control={control}
                 name="ratio"
                 render={({ field }) => (
                     <FormItem>
-                        <div className={styles.distribution__labelRow}>
+                        <Inline space="xs" alignY="center">
                             <FormLabel>Repartition</FormLabel>
-                            <span className={styles.distribution__percentage}>
+                            <span className={styles.distributionPercentage}>
                                 {refereePercent}%
                             </span>
-                        </div>
+                        </Inline>
                         <FormControl>
-                            <div className={styles.distribution__slider}>
-                                <span className={styles.distribution__label}>
+                            <div className={styles.distributionSlider}>
+                                <span className={styles.distributionLabel}>
                                     Referee
                                 </span>
                                 <Slider
@@ -61,7 +63,7 @@ export function DistributionSlider() {
                                         });
                                     }}
                                 />
-                                <span className={styles.distribution__label}>
+                                <span className={styles.distributionLabel}>
                                     Referrer
                                 </span>
                             </div>
@@ -70,24 +72,24 @@ export function DistributionSlider() {
                 )}
             />
 
-            <div className={styles.distribution__preview}>
-                <div className={styles.distribution__card}>
-                    <span className={styles.distribution__cardLabel}>
+            <div className={styles.distributionPreview}>
+                <div className={styles.distributionCard}>
+                    <span className={styles.distributionCardLabel}>
                         Referee Earnings
                     </span>
-                    <span className={styles.distribution__cardAmount}>
+                    <span className={styles.distributionCardAmount}>
                         {refereeAmount.toFixed(2)} {currencyLabel}
                     </span>
                 </div>
-                <div className={styles.distribution__card}>
-                    <span className={styles.distribution__cardLabel}>
+                <div className={styles.distributionCard}>
+                    <span className={styles.distributionCardLabel}>
                         Referrer Earnings
                     </span>
-                    <span className={styles.distribution__cardAmount}>
+                    <span className={styles.distributionCardAmount}>
                         {referrerAmount.toFixed(2)} {currencyLabel}
                     </span>
                 </div>
             </div>
-        </div>
+        </Stack>
     );
 }

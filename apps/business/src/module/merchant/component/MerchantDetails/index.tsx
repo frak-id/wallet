@@ -1,38 +1,21 @@
-import {
-    currentStablecoins,
-    getTokenAddressForStablecoin,
-    type Stablecoin,
-} from "@frak-labs/app-essentials";
-import { Button } from "@frak-labs/ui/component/Button";
-import { Column, Columns } from "@frak-labs/ui/component/Columns";
-import { useEffect, useMemo } from "react";
-import { useForm } from "react-hook-form";
+import { currentStablecoins, type Stablecoin } from "@frak-labs/app-essentials";
+import { Spinner } from "@frak-labs/design-system/components/Spinner";
+import { Stack } from "@frak-labs/design-system/components/Stack";
 import type { Address } from "viem";
-import { ActionsMessageSuccess } from "@/module/campaigns/component/Actions";
+import { Badge } from "@/module/common/component/Badge";
 import { Panel } from "@/module/common/component/Panel";
-import { CurrencySelector } from "@/module/forms/CurrencySelector";
-import {
-    Form,
-    FormControl,
-    FormField,
-    FormItem,
-    FormLabel,
-    FormLayout,
-    FormMessage,
-} from "@/module/forms/Form";
-import { InputWithToggle } from "@/module/forms/InputWithToggle";
+import { currencyMetadata } from "@/module/common/utils/currencyOptions";
+import { FormLayout } from "@/module/forms/Form";
 import { MerchantHead } from "@/module/merchant/component/MerchantHead";
 import { useMerchant } from "@/module/merchant/hook/useMerchant";
-import { useMerchantUpdate } from "@/module/merchant/hook/useMerchantUpdate";
-import { AllowedDomains } from "./AllowedDomains";
+import { usePurchaseWebhookStatus } from "@/module/merchant/hook/usePurchaseWebhookStatus";
+import { AllowedDomainsSheet } from "../AllowedDomainsSheet";
+import { MerchantEditSheet } from "../MerchantEditSheet";
+import { PurchaseTrackerSheet } from "../PurchaseTrackerSheet";
 import { ExplorerSettings } from "./ExplorerSettings";
-import { PurchasseTrackerSetup } from "./PurchaseTracker";
+import * as styles from "./merchant-summary.css";
 
-type FormMerchant = {
-    name: string;
-    domain: string;
-    defaultCurrency: Stablecoin;
-};
+const DOMAIN_PREVIEW_COUNT = 3;
 
 function detectStablecoinFromAddress(address: Address): Stablecoin | undefined {
     for (const [key, value] of Object.entries(currentStablecoins)) {
@@ -45,162 +28,155 @@ function detectStablecoinFromAddress(address: Address): Stablecoin | undefined {
 
 export function MerchantDetails({ merchantId }: { merchantId: string }) {
     const { data: merchant } = useMerchant({ merchantId });
-    const {
-        mutate: editMerchant,
-        isSuccess: editMerchantSuccess,
-        isPending: editMerchantPending,
-    } = useMerchantUpdate({ merchantId, target: "base" });
 
-    const formValues = useMemo(
-        () =>
-            merchant
-                ? {
-                      name: merchant.name,
-                      domain: merchant.domain,
-                      defaultCurrency:
-                          detectStablecoinFromAddress(
-                              merchant.defaultRewardToken
-                          ) ?? "eure",
-                  }
-                : undefined,
-        [merchant]
-    );
-
-    const form = useForm<FormMerchant>({
-        values: formValues,
-        defaultValues: {
-            name: "",
-            domain: "",
-            defaultCurrency: "eure",
-        },
-    });
-
-    useEffect(() => {
-        if (!editMerchantSuccess) return;
-        form.reset(form.getValues());
-    }, [editMerchantSuccess, form.reset, form.getValues, form]);
-
-    function onSubmit(values: FormMerchant) {
-        editMerchant({
-            name: values.name,
-            defaultRewardToken: getTokenAddressForStablecoin(
-                values.defaultCurrency
-            ),
-        });
-    }
+    const stablecoin = merchant
+        ? (detectStablecoinFromAddress(merchant.defaultRewardToken) ?? "eure")
+        : undefined;
+    const currency = stablecoin ? currencyMetadata[stablecoin] : undefined;
 
     return (
         <FormLayout>
             <MerchantHead merchantId={merchantId} />
-            <Form {...form}>
-                {merchant && (
-                    <Panel title={"Details of the merchant"}>
-                        <FormField
-                            control={form.control}
-                            name="name"
-                            rules={{
-                                required: "Missing merchant name",
-                            }}
-                            render={({ field }) => (
-                                <FormItem>
-                                    <FormLabel weight={"medium"}>
-                                        Enter your merchant name
-                                    </FormLabel>
-                                    <FormControl>
-                                        <InputWithToggle
-                                            length={"medium"}
-                                            placeholder={"Merchant name...."}
-                                            {...field}
-                                        />
-                                    </FormControl>
-                                    <FormMessage />
-                                </FormItem>
-                            )}
+            {merchant && (
+                <Panel title={"Details of the merchant"}>
+                    <Stack space="m">
+                        <Row label="Name" value={merchant.name} />
+                        <Row label="Domain" value={merchant.domain} />
+                        <Row
+                            label="Default reward currency"
+                            value={
+                                currency ? (
+                                    <>
+                                        {currency.label}
+                                        <span className={styles.providerBadge}>
+                                            {currency.provider}
+                                        </span>
+                                    </>
+                                ) : (
+                                    "—"
+                                )
+                            }
                         />
-                        <FormField
-                            control={form.control}
-                            name="domain"
-                            rules={{
-                                required: "Missing domain name",
-                            }}
-                            render={({ field }) => (
-                                <FormItem>
-                                    <FormLabel weight={"medium"}>
-                                        Your domain name
-                                    </FormLabel>
-                                    <FormControl>
-                                        <InputWithToggle
-                                            length={"medium"}
-                                            placeholder={"Domain name...."}
-                                            {...field}
-                                            disabled={true}
-                                        />
-                                    </FormControl>
-                                    <FormMessage />
-                                </FormItem>
-                            )}
-                        />
-                        <FormField
-                            control={form.control}
-                            name="defaultCurrency"
-                            render={({ field }) => (
-                                <FormItem>
-                                    <FormLabel weight={"medium"}>
-                                        Default reward currency
-                                    </FormLabel>
-                                    <FormControl>
-                                        <CurrencySelector
-                                            value={field.value}
-                                            onChange={field.onChange}
-                                        />
-                                    </FormControl>
-                                    <FormMessage />
-                                </FormItem>
-                            )}
-                        />
-                        <Columns>
-                            <Column>
-                                {editMerchantSuccess && (
-                                    <ActionsMessageSuccess />
+                        <div className={styles.summaryActions}>
+                            <MerchantEditSheet
+                                merchant={merchant}
+                                merchantId={merchantId}
+                            />
+                        </div>
+                    </Stack>
+                </Panel>
+            )}
+            {merchant && (
+                <Panel title={"Allowed domains"}>
+                    <Stack space="m">
+                        <p className={styles.summaryDescription}>
+                            Additional domains authorized to access this
+                            merchant (e.g. Shopify myshopify.com domains).
+                        </p>
+                        {merchant.allowedDomains.length > 0 ? (
+                            <div className={styles.domainTagList}>
+                                {merchant.allowedDomains
+                                    .slice(0, DOMAIN_PREVIEW_COUNT)
+                                    .map((domain) => (
+                                        <span
+                                            key={domain}
+                                            className={styles.domainTag}
+                                        >
+                                            {domain}
+                                        </span>
+                                    ))}
+                                {merchant.allowedDomains.length >
+                                    DOMAIN_PREVIEW_COUNT && (
+                                    <span className={styles.domainTag}>
+                                        +
+                                        {merchant.allowedDomains.length -
+                                            DOMAIN_PREVIEW_COUNT}{" "}
+                                        more
+                                    </span>
                                 )}
-                            </Column>
-                            <Column>
-                                <Button
-                                    variant={"informationOutline"}
-                                    onClick={() => {
-                                        form.reset(formValues);
-                                    }}
-                                    disabled={
-                                        editMerchantPending ||
-                                        !form.formState.isDirty
-                                    }
-                                >
-                                    Discard Changes
-                                </Button>
-                                <Button
-                                    variant={"submit"}
-                                    onClick={() => {
-                                        form.handleSubmit(onSubmit)();
-                                    }}
-                                    disabled={
-                                        editMerchantPending ||
-                                        !form.formState.isDirty
-                                    }
-                                    isLoading={editMerchantPending}
-                                >
-                                    Validate
-                                </Button>
-                            </Column>
-                        </Columns>
-                    </Panel>
-                )}
-            </Form>
-            <AllowedDomains
-                merchantId={merchantId}
-                allowedDomains={merchant?.allowedDomains ?? []}
-            />
+                            </div>
+                        ) : (
+                            <p className={styles.summaryDescription}>
+                                No additional domains yet.
+                            </p>
+                        )}
+                        <div className={styles.summaryActions}>
+                            <AllowedDomainsSheet
+                                merchantId={merchantId}
+                                allowedDomains={merchant.allowedDomains}
+                            />
+                        </div>
+                    </Stack>
+                </Panel>
+            )}
             <ExplorerSettings merchantId={merchantId} />
-            <PurchasseTrackerSetup merchantId={merchantId} />
+            <PurchaseTrackerSummary merchantId={merchantId} />
         </FormLayout>
+    );
+}
+
+function PurchaseTrackerSummary({ merchantId }: { merchantId: string }) {
+    const { data: webhookStatus, isLoading } = usePurchaseWebhookStatus({
+        merchantId,
+    });
+
+    return (
+        <Panel title={"Purchase tracker"}>
+            <Stack space="m">
+                <p className={styles.summaryDescription}>
+                    Track purchases from your store to power campaigns and
+                    distribute rewards.
+                </p>
+                {isLoading || !webhookStatus ? (
+                    <Spinner />
+                ) : (
+                    <>
+                        <Row
+                            label="Status"
+                            value={
+                                <Badge
+                                    variant={
+                                        webhookStatus.setup
+                                            ? "success"
+                                            : "warning"
+                                    }
+                                >
+                                    {webhookStatus.setup
+                                        ? "Webhook registered"
+                                        : "Not registered"}
+                                </Badge>
+                            }
+                        />
+                        {webhookStatus.setup && (
+                            <Row
+                                label="Platform"
+                                value={webhookStatus.platform}
+                            />
+                        )}
+                        {webhookStatus.setup && webhookStatus.stats && (
+                            <Row
+                                label="Purchases tracked"
+                                value={
+                                    webhookStatus.stats.totalPurchaseHandled ??
+                                    0
+                                }
+                            />
+                        )}
+                    </>
+                )}
+                <div className={styles.summaryActions}>
+                    <PurchaseTrackerSheet merchantId={merchantId} />
+                </div>
+            </Stack>
+        </Panel>
+    );
+}
+
+function Row({ label, value }: { label: string; value: React.ReactNode }) {
+    return (
+        <div className={styles.summaryRow}>
+            <span className={styles.summaryLabel}>{label}</span>
+            <span className={styles.summaryValue}>{value}</span>
+        </div>
     );
 }

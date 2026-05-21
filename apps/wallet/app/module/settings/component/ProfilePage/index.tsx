@@ -10,6 +10,7 @@ import {
 import { Mail } from "lucide-react";
 import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
+import { useStore } from "zustand";
 import { useCurrentEmail } from "@/module/authentication/hook/useCurrentEmail";
 import { InfoCard, InfoRow } from "@/module/common/component/InfoCard";
 import { Title } from "@/module/common/component/Title";
@@ -28,7 +29,8 @@ export function ProfilePage() {
     const version = process.env.APP_VERSION;
     const displayVersion =
         version && version !== "UNKNOWN" ? version : undefined;
-    const lastAuthenticationAt = authenticationStore(
+    const lastAuthenticationAt = useStore(
+        authenticationStore,
         selectLastAuthenticationAt
     );
     const formattedLastAuthentication = useMemo(() => {

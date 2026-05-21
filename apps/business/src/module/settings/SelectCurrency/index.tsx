@@ -5,9 +5,9 @@ import {
     SelectItem,
     SelectTrigger,
     SelectValue,
-} from "@frak-labs/ui/component/Select";
+} from "@frak-labs/design-system/components/Select";
 import { currencyStore } from "@/stores/currencyStore";
-import styles from "./index.module.css";
+import * as styles from "./select-currency.css";
 
 export function SelectCurrency() {
     const preferredCurrency = currencyStore((state) => state.preferredCurrency);
@@ -17,7 +17,7 @@ export function SelectCurrency() {
         <div className={styles.selectCurrency}>
             <label
                 htmlFor="currency-select"
-                className={styles.selectCurrency__label}
+                className={styles.selectCurrencyLabel}
             >
                 Choose your preferred currency
             </label>

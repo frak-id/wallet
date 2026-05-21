@@ -1,4 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
+import { useStore } from "zustand";
 import { authenticatedWalletApi } from "../../common/api/backendClient";
 import { selectSession, sessionStore } from "../../stores/sessionStore";
 import { referralKey } from "../queryKeys";
@@ -15,7 +16,7 @@ export function useReferralStatus({
 }: {
     merchantId?: string;
 } = {}) {
-    const session = sessionStore(selectSession);
+    const session = useStore(sessionStore, selectSession);
 
     return useQuery({
         queryKey: referralKey.status(merchantId),

@@ -37,6 +37,7 @@ import i18next from "i18next";
 import { useCallback, useMemo, useState } from "react";
 import { Trans, useTranslation } from "react-i18next";
 import { type Address, slice } from "viem";
+import { useStore } from "zustand";
 import * as layout from "@/module/authentication/component/authLayout.css";
 import * as styles from "@/module/authentication/component/Sso/index.css";
 import { SsoHeader } from "@/module/authentication/component/Sso/SsoHeader";
@@ -131,7 +132,10 @@ function Sso() {
     /**
      * The current metadata
      */
-    const ssoContext = authenticationStore((state) => state.ssoContext);
+    const ssoContext = useStore(
+        authenticationStore,
+        (state) => state.ssoContext
+    );
     const currentMetadata = useMemo(
         () => ssoContext?.metadata,
         [ssoContext?.metadata]
@@ -140,7 +144,8 @@ function Sso() {
     /**
      * Whether we know of a previously-used passkey on this device.
      */
-    const lastAuthenticator = authenticationStore(
+    const lastAuthenticator = useStore(
+        authenticationStore,
         (state) => state.lastAuthenticator
     );
 
@@ -170,7 +175,7 @@ function Sso() {
      * webauthn login. When true, the user can complete SSO with a single
      * click; no biometry / no re-pair.
      */
-    const session = sessionStore((state) => state.session);
+    const session = useStore(sessionStore, (state) => state.session);
 
     /**
      * One-shot opt-out: if the user clicks "Use another account", we keep
@@ -514,13 +519,15 @@ function Actions({
     onSuccess: () => void;
     onError: (error: Error | null) => void;
 }) {
-    const lastAuthenticator = authenticationStore(
+    const lastAuthenticator = useStore(
+        authenticationStore,
         (state) => state.lastAuthenticator
     );
-    const merchantId = authenticationStore(
+    const merchantId = useStore(
+        authenticationStore,
         (state) => state.ssoContext?.merchantId
     );
-    const privateKey = sessionStore((state) => state.demoPrivateKey);
+    const privateKey = useStore(sessionStore, (state) => state.demoPrivateKey);
     const { login, isLoginInProgress } = useLoginDemo({
         onSuccess: () => onSuccess(),
         onError: (error: Error | null) => onError(error),

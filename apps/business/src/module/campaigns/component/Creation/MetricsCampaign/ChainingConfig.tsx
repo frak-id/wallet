@@ -1,7 +1,9 @@
-import { Switch } from "@frak-labs/ui/component/Switch";
+import { Inline } from "@frak-labs/design-system/components/Inline";
+import { Stack } from "@frak-labs/design-system/components/Stack";
+import { Switch } from "@frak-labs/design-system/components/Switch";
+import { Text } from "@frak-labs/design-system/components/Text";
 import { useMemo } from "react";
 import { useFormContext, useWatch } from "react-hook-form";
-import { Row } from "@/module/common/component/Row";
 import { tokenAddressToCurrency } from "@/module/common/utils/currencyOptions";
 import {
     FormControl,
@@ -12,7 +14,7 @@ import {
 } from "@/module/forms/Form";
 import { campaignStore } from "@/stores/campaignStore";
 import { currencyStore } from "@/stores/currencyStore";
-import styles from "./index.module.css";
+import * as styles from "./metrics-campaign.css";
 import { calculateChainDistribution, calculateDistribution } from "./utils";
 
 export function ChainingConfig() {
@@ -49,16 +51,16 @@ export function ChainingConfig() {
     );
 
     return (
-        <div className={styles.chaining}>
-            <div className={styles.chaining__header}>
-                <div className={styles.chaining__headerText}>
-                    <span className={styles.chaining__title}>
+        <Stack space="m">
+            <Inline space="m" align="space-between" alignY="center">
+                <Stack space="xxs">
+                    <span className={styles.chainingTitle}>
                         Enable Chain Rewards
                     </span>
-                    <span className={styles.chaining__description}>
+                    <Text as="span" variant="bodySmall" color="secondary">
                         Distribute referrer rewards through the referral chain
-                    </span>
-                </div>
+                    </Text>
+                </Stack>
                 <FormField
                     control={control}
                     name="chainingEnabled"
@@ -73,11 +75,11 @@ export function ChainingConfig() {
                         </FormItem>
                     )}
                 />
-            </div>
+            </Inline>
 
             {chainingEnabled && (
                 <>
-                    <Row>
+                    <Inline space="m" alignY="bottom">
                         <FormField
                             control={control}
                             name="deperditionPerLevel"
@@ -89,7 +91,7 @@ export function ChainingConfig() {
                                             type="number"
                                             min={1}
                                             max={100}
-                                            className={styles.chaining__input}
+                                            className={styles.chainingInput}
                                             value={field.value ?? 80}
                                             onChange={(e) =>
                                                 setValue(
@@ -123,7 +125,7 @@ export function ChainingConfig() {
                                             type="number"
                                             min={1}
                                             max={10}
-                                            className={styles.chaining__input}
+                                            className={styles.chainingInput}
                                             value={field.value ?? 5}
                                             onChange={(e) =>
                                                 setValue(
@@ -146,22 +148,17 @@ export function ChainingConfig() {
                                 </FormItem>
                             )}
                         />
-                    </Row>
+                    </Inline>
 
                     {chainDistribution.length > 0 && referrerAmount > 0 && (
                         <FormItem>
                             <FormDescription
                                 label={`Chain Distribution Preview (${referrerAmount.toFixed(2)} ${currencyLabel} referrer pool)`}
                             />
-                            <div className={styles.chaining__bars}>
+                            <Stack space="xs">
                                 {chainDistribution.map((item) => (
-                                    <div
-                                        key={item.level}
-                                        className={styles.chaining__bar}
-                                    >
-                                        <div
-                                            className={styles.chaining__barInfo}
-                                        >
+                                    <Stack key={item.level} space="xxs">
+                                        <div className={styles.chainingBarInfo}>
                                             <span>Level {item.level}</span>
                                             <span>
                                                 {item.amount.toFixed(2)}{" "}
@@ -170,26 +167,24 @@ export function ChainingConfig() {
                                             </span>
                                         </div>
                                         <div
-                                            className={
-                                                styles.chaining__barTrack
-                                            }
+                                            className={styles.chainingBarTrack}
                                         >
                                             <div
                                                 className={
-                                                    styles.chaining__barFill
+                                                    styles.chainingBarFill
                                                 }
                                                 style={{
                                                     width: `${item.percentage}%`,
                                                 }}
                                             />
                                         </div>
-                                    </div>
+                                    </Stack>
                                 ))}
-                            </div>
+                            </Stack>
                         </FormItem>
                     )}
                 </>
             )}
-        </div>
+        </Stack>
     );
 }

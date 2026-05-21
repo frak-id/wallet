@@ -23,6 +23,7 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
+import { useStore } from "zustand";
 import { useMerchantResolvedConfig } from "@/module/common/hook/useMerchantResolvedConfig";
 
 /**
@@ -127,8 +128,8 @@ function WalletSharingPage() {
     } = Route.useSearch();
     const { t: rawT } = useTranslation();
     const navigate = useNavigate();
-    const storeClientId = clientIdStore((s) => s.clientId);
-    const walletAddress = sessionStore((s) => s.session?.address);
+    const storeClientId = useStore(clientIdStore, (s) => s.clientId);
+    const walletAddress = useStore(sessionStore, (s) => s.session?.address);
     const { copy } = useCopyToClipboardWithState();
 
     // Product selection state — default to first product

@@ -1,9 +1,9 @@
+import { Inline } from "@frak-labs/design-system/components/Inline";
 import { ExplorerCardPreview } from "@frak-labs/ui-preview";
 import { useCallback, useEffect, useMemo } from "react";
 import { useForm } from "react-hook-form";
 import { Panel } from "@/module/common/component/Panel";
 import { PreviewWrapper } from "@/module/common/component/PreviewWrapper";
-import { Row } from "@/module/common/component/Row";
 import {
     Form,
     FormControl,
@@ -18,7 +18,7 @@ import { ImageUploadField } from "@/module/merchant/component/ImageUploadField";
 import { MultiHeroImagesField } from "@/module/merchant/component/MultiHeroImagesField";
 import { useMerchant } from "@/module/merchant/hook/useMerchant";
 import { useMerchantUpdate } from "@/module/merchant/hook/useMerchantUpdate";
-import styles from "./index.module.css";
+import * as styles from "./merchant-details.css";
 
 type ExplorerFormValues = {
     enabled: boolean;
@@ -110,7 +110,7 @@ export function ExplorerSettings({ merchantId }: { merchantId: string }) {
                     name="enabled"
                     render={({ field }) => (
                         <FormItem>
-                            <Row align={"center"}>
+                            <Inline space="m" alignY="center">
                                 <FormLabel weight={"medium"}>
                                     Listed in explorer
                                 </FormLabel>
@@ -120,7 +120,7 @@ export function ExplorerSettings({ merchantId }: { merchantId: string }) {
                                         onCheckedChange={field.onChange}
                                     />
                                 </FormControl>
-                            </Row>
+                            </Inline>
                             <FormMessage />
                         </FormItem>
                     )}

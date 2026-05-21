@@ -1,14 +1,16 @@
-import { Button } from "@frak-labs/ui/component/Button";
-import { Spinner } from "@frak-labs/ui/component/Spinner";
+import { Box } from "@frak-labs/design-system/components/Box";
+import { Spinner } from "@frak-labs/design-system/components/Spinner";
+import clsx from "clsx";
 import { ArrowRightLeft } from "lucide-react";
 import type { Address } from "viem";
 import { formatUnits } from "viem";
+import { Button } from "@/module/common/component/Button";
 import { useTokenMetadata } from "@/module/common/hook/useTokenMetadata";
 import { useGetLegacyBankStatus } from "@/module/merchant/hook/useGetLegacyBankStatus";
 import { useMerchant } from "@/module/merchant/hook/useMerchant";
 import { useMigrateLegacyBank } from "@/module/merchant/hook/useMigrateLegacyBank";
 import { legacyBankMap } from "@/module/merchant/utils/legacyBanks";
-import styles from "./LegacyBankMigration.module.css";
+import * as styles from "./legacy-bank-migration.css";
 
 export function LegacyBankMigration({
     merchantId,
@@ -70,61 +72,67 @@ function LegacyBankMigrationContent({
 
     return (
         <div className={styles.legacyPanel}>
-            <div className={styles.legacyPanel__header}>
+            <div className={styles.legacyPanelHeader}>
                 <ArrowRightLeft width={16} height={16} />
                 <span>Legacy Bank Migration</span>
             </div>
 
-            <p className={styles.legacyPanel__description}>
+            <p className={styles.legacyPanelDescription}>
                 Your old campaign bank still holds funds. Migrate them to your
                 new bank to continue distributing rewards.
             </p>
 
-            <div className={styles.legacyPanel__stats}>
-                <div className={styles.legacyPanel__statRow}>
-                    <span className={styles.legacyPanel__statLabel}>
+            <div className={styles.legacyPanelStats}>
+                <div className={styles.legacyPanelStatRow}>
+                    <span className={styles.legacyPanelStatLabel}>
                         Total balance
                     </span>
-                    <span className={styles.legacyPanel__statValue}>
+                    <span className={styles.legacyPanelStatValue}>
                         {formattedBalance} {symbol}
                     </span>
                 </div>
                 {status.totalPending > 0n && (
-                    <div className={styles.legacyPanel__statRow}>
-                        <span className={styles.legacyPanel__statLabel}>
+                    <div className={styles.legacyPanelStatRow}>
+                        <span className={styles.legacyPanelStatLabel}>
                             Pending rewards (locked)
                         </span>
                         <span
-                            className={`${styles.legacyPanel__statValue} ${styles["legacyPanel__statValue--pending"]}`}
+                            className={clsx(
+                                styles.legacyPanelStatValue,
+                                styles.legacyPanelStatValuePending
+                            )}
                         >
                             {formattedPending} {symbol}
                         </span>
                     </div>
                 )}
-                <div className={styles.legacyPanel__statRow}>
-                    <span className={styles.legacyPanel__statLabel}>
+                <div className={styles.legacyPanelStatRow}>
+                    <span className={styles.legacyPanelStatLabel}>
                         Available to migrate
                     </span>
                     <span
-                        className={`${styles.legacyPanel__statValue} ${styles["legacyPanel__statValue--withdrawable"]}`}
+                        className={clsx(
+                            styles.legacyPanelStatValue,
+                            styles.legacyPanelStatValueWithdrawable
+                        )}
                     >
                         {formattedWithdrawable} {symbol}
                     </span>
                 </div>
             </div>
 
-            <div className={styles.legacyPanel__actions}>
+            <Box display="flex" alignItems="center" gap="xs" marginTop="xxs">
                 <Button
-                    variant="submit"
+                    variant="primary"
                     size="small"
                     onClick={handleMigrate}
-                    isLoading={isPending}
+                    loading={isPending}
                     disabled={isPending}
                 >
                     <ArrowRightLeft width={14} height={14} />
                     Migrate funds to new bank
                 </Button>
-            </div>
+            </Box>
         </div>
     );
 }

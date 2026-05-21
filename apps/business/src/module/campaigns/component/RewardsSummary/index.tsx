@@ -2,7 +2,7 @@ import { capitalize } from "radash";
 import { FormDescription, FormItem } from "@/module/forms/Form";
 import { currencyStore } from "@/stores/currencyStore";
 import type { RewardDefinition } from "@/types/Campaign";
-import styles from "./index.module.css";
+import * as styles from "./rewards-summary.css";
 
 type RewardsSummaryProps = {
     rewards: RewardDefinition[];
@@ -15,7 +15,7 @@ export function RewardsSummary({ rewards }: RewardsSummaryProps) {
         return (
             <FormItem>
                 <FormDescription label="Rewards" />
-                <span className={styles.rewards__empty}>
+                <span className={styles.rewardsEmpty}>
                     No rewards configured
                 </span>
             </FormItem>
@@ -25,7 +25,7 @@ export function RewardsSummary({ rewards }: RewardsSummaryProps) {
     return (
         <FormItem>
             <FormDescription label="Rewards" />
-            <ul className={styles.rewards__list}>
+            <ul className={styles.rewardsList}>
                 {rewards.map((reward, index) => (
                     <RewardItem
                         key={`${reward.recipient}-${index}`}
@@ -51,7 +51,7 @@ function RewardAmount({
 }) {
     if (reward.amountType === "fixed") {
         return (
-            <span className={styles.rewards__amount}>
+            <span className={styles.rewardsAmount}>
                 {reward.amount} {currency}
             </span>
         );
@@ -67,11 +67,11 @@ function RewardAmount({
         }
         return (
             <>
-                <span className={styles.rewards__amount}>
+                <span className={styles.rewardsAmount}>
                     {reward.percent}% of {formatPercentOf(reward.percentOf)}
                 </span>
                 {bounds.length > 0 && (
-                    <span className={styles.rewards__details}>
+                    <span className={styles.rewardsDetails}>
                         ({bounds.join(", ")})
                     </span>
                 )}
@@ -81,10 +81,10 @@ function RewardAmount({
 
     if (reward.amountType === "tiered") {
         return (
-            <span className={styles.rewards__amount}>
+            <span className={styles.rewardsAmount}>
                 Tiered by {reward.tierField}
                 {reward.tiers.map((tier, i) => (
-                    <span key={i} className={styles.rewards__details}>
+                    <span key={i} className={styles.rewardsDetails}>
                         {" "}
                         {tier.minValue}
                         {tier.maxValue !== undefined
@@ -110,14 +110,14 @@ function RewardItem({
     const hasChaining = !!reward.chaining;
 
     return (
-        <li className={styles.rewards__item}>
-            <span className={styles.rewards__recipient}>
+        <li className={styles.rewardsItem}>
+            <span className={styles.rewardsRecipient}>
                 {capitalize(reward.recipient)}
             </span>
-            <span className={styles.rewards__separator}>:</span>
+            <span className={styles.rewardsSeparator}>:</span>
             <RewardAmount reward={reward} currency={currency} />
             {hasChaining && (
-                <span className={styles.rewards__chaining}>
+                <span className={styles.rewardsChaining}>
                     — Chaining enabled ({reward.chaining?.deperditionPerLevel}%
                     decay, {reward.chaining?.maxDepth ?? "∞"} max depth)
                 </span>
