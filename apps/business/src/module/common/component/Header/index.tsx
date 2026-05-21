@@ -3,7 +3,6 @@ import { Download, Plus } from "lucide-react";
 import { ButtonNewCampaign } from "@/module/campaigns/component/ButtonNewCampaign";
 import { useIsDemoMode } from "@/module/common/atoms/demoMode";
 import { Button } from "@/module/common/component/Button";
-import { ButtonRefresh } from "@/module/common/component/ButtonRefresh";
 import { AddMerchantSheet } from "@/module/dashboard/component/AddMerchantSheet";
 import { HeaderBreadcrumb } from "./HeaderBreadcrumb";
 import {
@@ -42,7 +41,6 @@ export function Header() {
                                 demo
                             </Link>
                         )}
-                        <ButtonRefresh />
                         {showExport && (
                             <Button
                                 variant="secondary"

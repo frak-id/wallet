@@ -11,10 +11,6 @@ vi.mock("@tanstack/react-router", () => ({
     useLocation: () => ({ pathname: "/campaigns/list" }),
 }));
 
-vi.mock("@/module/common/component/ButtonRefresh", () => ({
-    ButtonRefresh: () => <button type="button" data-testid="refresh-btn" />,
-}));
-
 vi.mock("@/module/common/atoms/demoMode", () => ({
     useIsDemoMode: () => false,
 }));
@@ -61,10 +57,5 @@ describe("Header", () => {
         const profileLink = screen.getByTestId("link-settings");
         expect(profileLink).toBeInTheDocument();
         expect(profileLink).toHaveTextContent("My account");
-    });
-
-    it("should render refresh button", () => {
-        render(<Header />);
-        expect(screen.getByTestId("refresh-btn")).toBeInTheDocument();
     });
 });
