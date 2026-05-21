@@ -1,4 +1,4 @@
-import { JwtContext, viemClient } from "@backend-infrastructure";
+import { JwtContext, log, viemClient } from "@backend-infrastructure";
 import { t } from "@backend-utils";
 import { Elysia, status } from "elysia";
 import { verifyMessage } from "viem/actions";
@@ -118,10 +118,16 @@ export const loginRoutes = new Elysia()
             const { address, authenticatorId, publicKey, transports } =
                 verificationnResult;
 
-            await AuthContext.repositories.authenticator.ensureActiveBindings({
-                credentialId: authenticatorId,
-                smartWalletAddress: address,
-            });
+            try {
+                await AuthContext.repositories.authenticator.ensureActiveBindings(
+                    {
+                        credentialId: authenticatorId,
+                        smartWalletAddress: address,
+                    }
+                );
+            } catch (error) {
+                log.warn(error, "Unable to seed initial bindings");
+            }
 
             // Prepare the additional data object
             const additionalData: StaticWalletSdkTokenDto["additionalData"] =
@@ -144,6 +150,7 @@ export const loginRoutes = new Elysia()
                     additionalData,
                 });
 
+            console.log("link to jwt");
             await OrchestrationContext.orchestrators.identity.linkWalletToFingerprint(
                 {
                     walletAddress: address,
@@ -152,6 +159,7 @@ export const loginRoutes = new Elysia()
                 }
             );
 
+            console.log("return");
             return {
                 token,
                 type: "webauthn",
