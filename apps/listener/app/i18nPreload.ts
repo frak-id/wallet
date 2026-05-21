@@ -72,10 +72,7 @@ export function warmI18nLocale(): void {
  *  - `mountUiRuntime` after `i18next.init()` resolves (blocks first render).
  *  - The `languageChanged` listener when the SDK forces a different locale.
  */
-export function ensureI18nBundle(
-    lang: string,
-    i18n: I18nType
-): Promise<void> {
+export function ensureI18nBundle(lang: string, i18n: I18nType): Promise<void> {
     if (lang !== "en" && lang !== "fr") return Promise.resolve();
     const existing = registrationPromises.get(lang);
     if (existing) return existing;

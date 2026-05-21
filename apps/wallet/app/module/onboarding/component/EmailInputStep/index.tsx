@@ -214,10 +214,7 @@ export function EmailInputStep({
                 )}
 
                 {!showAlreadyUsed && checkError && (
-                    <Text
-                        variant="bodySmall"
-                        className={styles.checkError}
-                    >
+                    <Text variant="bodySmall" className={styles.checkError}>
                         {t("onboarding.email.checkError")}
                     </Text>
                 )}
