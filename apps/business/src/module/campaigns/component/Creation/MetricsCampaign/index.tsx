@@ -114,125 +114,134 @@ export function MetricsCampaign() {
         <FormLayout>
             <Form {...form}>
                 <form onSubmit={form.handleSubmit(onSubmit)}>
-                    <Head
-                        title={{ content: "Campaign Rules", size: "small" }}
-                        rightSection={
-                            <ButtonCancel
-                                onClick={() => form.reset(defaultValues)}
-                            />
-                        }
-                    />
-
-                    <Card>
-                        <CardHeader>
-                            <CardTitle>Campaign type</CardTitle>
-                        </CardHeader>
-                        <Stack space="m">
-                            <Inline
-                                space="m"
-                                align="space-between"
-                                alignY="center"
-                            >
-                                <Stack space="xxs">
-                                    <span className={styles.chainingTitle}>
-                                        Referral campaign
-                                    </span>
-                                    <Text
-                                        as="span"
-                                        variant="bodySmall"
-                                        color="secondary"
-                                    >
-                                        Only reward users who were referred by
-                                        another user
-                                    </Text>
-                                </Stack>
-                                <FormField
-                                    control={form.control}
-                                    name="referralOnly"
-                                    render={({ field }) => (
-                                        <FormItem>
-                                            <FormControl>
-                                                <Switch
-                                                    checked={
-                                                        field.value ?? true
-                                                    }
-                                                    onCheckedChange={
-                                                        field.onChange
-                                                    }
-                                                />
-                                            </FormControl>
-                                        </FormItem>
-                                    )}
+                    <Stack space="l">
+                        <Head
+                            title={{
+                                content: "Campaign Rules",
+                                size: "small",
+                            }}
+                            rightSection={
+                                <ButtonCancel
+                                    onClick={() => form.reset(defaultValues)}
                                 />
-                            </Inline>
-                        </Stack>
-                    </Card>
+                            }
+                        />
 
-                    <Card>
-                        <CardHeader>
-                            <CardTitle>Set a target cost per action</CardTitle>
-                        </CardHeader>
-                        <p className={styles.panelDescription}>
-                            "Target CPA" defines your overall acquisition cost
-                            per target action (your goal) to generate the
-                            maximum number of conversions at a cost equal to or
-                            lower than the target cost per action you set.
-                        </p>
-                        <CacInput />
-                        <TriggerSelector />
-                    </Card>
-
-                    <Card>
-                        <CardHeader>
-                            <CardTitle>Set reward amounts</CardTitle>
-                        </CardHeader>
-                        <p className={styles.panelDescription}>
-                            When your goal is reached, the rewards are
-                            distributed instantly and automatically to the
-                            business introducer and the new customer, directly
-                            into their wallets, in the set proportions.
-                        </p>
-                        <DistributionSlider />
-                    </Card>
-
-                    <Card>
-                        <CardHeader>
-                            <CardTitle>Referral Chain</CardTitle>
-                        </CardHeader>
-                        <ChainingConfig />
-                    </Card>
-
-                    {showConditionsPanel && (
                         <Card>
                             <CardHeader>
-                                <CardTitle>Conditions</CardTitle>
+                                <CardTitle>Campaign type</CardTitle>
+                            </CardHeader>
+                            <Stack space="m">
+                                <Inline
+                                    space="m"
+                                    align="space-between"
+                                    alignY="center"
+                                >
+                                    <Stack space="xxs">
+                                        <span className={styles.chainingTitle}>
+                                            Referral campaign
+                                        </span>
+                                        <Text
+                                            as="span"
+                                            variant="bodySmall"
+                                            color="secondary"
+                                        >
+                                            Only reward users who were referred
+                                            by another user
+                                        </Text>
+                                    </Stack>
+                                    <FormField
+                                        control={form.control}
+                                        name="referralOnly"
+                                        render={({ field }) => (
+                                            <FormItem>
+                                                <FormControl>
+                                                    <Switch
+                                                        checked={
+                                                            field.value ?? true
+                                                        }
+                                                        onCheckedChange={
+                                                            field.onChange
+                                                        }
+                                                    />
+                                                </FormControl>
+                                            </FormItem>
+                                        )}
+                                    />
+                                </Inline>
+                            </Stack>
+                        </Card>
+
+                        <Card>
+                            <CardHeader>
+                                <CardTitle>
+                                    Set a target cost per action
+                                </CardTitle>
                             </CardHeader>
                             <p className={styles.panelDescription}>
-                                Filter which purchases qualify for a reward.
+                                "Target CPA" defines your overall acquisition
+                                cost per target action (your goal) to generate
+                                the maximum number of conversions at a cost
+                                equal to or lower than the target cost per
+                                action you set.
                             </p>
-                            <MinPurchaseAmount />
+                            <CacInput />
+                            <TriggerSelector />
                         </Card>
-                    )}
 
-                    <Card>
-                        <CardHeader>
-                            <CardTitle>Reward lockup</CardTitle>
-                        </CardHeader>
-                        <p className={styles.panelDescription}>
-                            Rewards stay locked for a grace period after a
-                            purchase before being settled on-chain. This
-                            protects the campaign budget against refunds. Set to
-                            0 to settle immediately.
-                        </p>
-                        <LockupConfig />
-                    </Card>
+                        <Card>
+                            <CardHeader>
+                                <CardTitle>Set reward amounts</CardTitle>
+                            </CardHeader>
+                            <p className={styles.panelDescription}>
+                                When your goal is reached, the rewards are
+                                distributed instantly and automatically to the
+                                business introducer and the new customer,
+                                directly into their wallets, in the set
+                                proportions.
+                            </p>
+                            <DistributionSlider />
+                        </Card>
 
-                    <Actions
-                        isLoading={saveCampaign.isPending}
-                        onSaveDraft={handleSaveDraft}
-                        isSaving={saveCampaign.isPending}
-                        isSaved={saveCampaign.isSuccess}
-                    />
+                        <Card>
+                            <CardHeader>
+                                <CardTitle>Referral Chain</CardTitle>
+                            </CardHeader>
+                            <ChainingConfig />
+                        </Card>
+
+                        {showConditionsPanel && (
+                            <Card>
+                                <CardHeader>
+                                    <CardTitle>Conditions</CardTitle>
+                                </CardHeader>
+                                <p className={styles.panelDescription}>
+                                    Filter which purchases qualify for a reward.
+                                </p>
+                                <MinPurchaseAmount />
+                            </Card>
+                        )}
+
+                        <Card>
+                            <CardHeader>
+                                <CardTitle>Reward lockup</CardTitle>
+                            </CardHeader>
+                            <p className={styles.panelDescription}>
+                                Rewards stay locked for a grace period after a
+                                purchase before being settled on-chain. This
+                                protects the campaign budget against refunds.
+                                Set to 0 to settle immediately.
+                            </p>
+                            <LockupConfig />
+                        </Card>
+
+                        <Actions
+                            isLoading={saveCampaign.isPending}
+                            onSaveDraft={handleSaveDraft}
+                            isSaving={saveCampaign.isPending}
+                            isSaved={saveCampaign.isSuccess}
+                        />
+                    </Stack>
                 </form>
             </Form>
         </FormLayout>

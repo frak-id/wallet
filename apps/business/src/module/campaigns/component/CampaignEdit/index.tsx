@@ -1,3 +1,4 @@
+import { Stack } from "@frak-labs/design-system/components/Stack";
 import { useNavigate } from "@tanstack/react-router";
 import { useMemo } from "react";
 import { useForm } from "react-hook-form";
@@ -40,21 +41,23 @@ export function CampaignEdit({ campaignId }: { campaignId: string }) {
             <Head title={{ content: "Edit campaign", size: "small" }} />
             <Form {...form}>
                 <form onSubmit={form.handleSubmit(onSubmit)}>
-                    <FormTitle />
-                    <FormBudget />
-                    <FormSchedule />
-                    <ActionsWrapper
-                        right={
-                            <Button
-                                type="submit"
-                                variant="primary"
-                                disabled={saveCampaign.isPending}
-                                loading={saveCampaign.isPending}
-                            >
-                                Save Changes
-                            </Button>
-                        }
-                    />
+                    <Stack space="l">
+                        <FormTitle />
+                        <FormBudget />
+                        <FormSchedule />
+                        <ActionsWrapper
+                            right={
+                                <Button
+                                    type="submit"
+                                    variant="primary"
+                                    disabled={saveCampaign.isPending}
+                                    loading={saveCampaign.isPending}
+                                >
+                                    Save Changes
+                                </Button>
+                            }
+                        />
+                    </Stack>
                 </form>
             </Form>
         </FormLayout>

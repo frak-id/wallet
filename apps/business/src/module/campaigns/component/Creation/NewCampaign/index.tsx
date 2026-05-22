@@ -1,3 +1,4 @@
+import { Stack } from "@frak-labs/design-system/components/Stack";
 import { useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo } from "react";
 import { useForm } from "react-hook-form";
@@ -62,19 +63,21 @@ export function NewCampaign({ title }: { title: string }) {
             />
             <Form {...form}>
                 <form onSubmit={form.handleSubmit(onSubmit)}>
-                    <FormTitle />
-                    <FormRewardToken />
-                    <FormGoals />
-                    <FormSpecialAdvertising />
-                    <FormBudget />
-                    <FormTerritory />
-                    <FormSchedule />
-                    <Actions
-                        isLoading={saveCampaign.isPending}
-                        onSaveDraft={handleSaveDraft}
-                        isSaving={saveCampaign.isPending}
-                        isSaved={saveCampaign.isSuccess}
-                    />
+                    <Stack space="l">
+                        <FormTitle />
+                        <FormRewardToken />
+                        <FormGoals />
+                        <FormSpecialAdvertising />
+                        <FormBudget />
+                        <FormTerritory />
+                        <FormSchedule />
+                        <Actions
+                            isLoading={saveCampaign.isPending}
+                            onSaveDraft={handleSaveDraft}
+                            isSaving={saveCampaign.isPending}
+                            isSaved={saveCampaign.isSuccess}
+                        />
+                    </Stack>
                 </form>
             </Form>
         </FormLayout>

@@ -1,3 +1,4 @@
+import { Stack } from "@frak-labs/design-system/components/Stack";
 import { useNavigate } from "@tanstack/react-router";
 import { useCallback } from "react";
 import { useForm } from "react-hook-form";
@@ -90,41 +91,43 @@ export function CreatePushNotification() {
             />
             <Form {...form}>
                 <form onSubmit={form.handleSubmit(onSubmit)}>
-                    <PushTitlePanel />
-                    <PushPayloadPanel />
-                    <AudiencePanel />
-                    <ActionsWrapper
-                        left={
-                            <ButtonWithConfirmationAlert
-                                description={
-                                    <>
-                                        <p>
-                                            Do you want to stop this push
-                                            notification campaign creation?
-                                        </p>
-                                        <p>
-                                            You will be able to continue it's
-                                            creation later
-                                        </p>
-                                    </>
-                                }
-                                title={"Close"}
-                                buttonText={"Close"}
-                                onClick={() => {
-                                    // Save the current form state
-                                    // (scoped to the active merchant)
-                                    setForm(form.getValues(), merchantId);
-                                    // And go back
-                                    window.history.back();
-                                }}
-                            />
-                        }
-                        right={
-                            <Button type={"submit"} variant={"secondary"}>
-                                Next
-                            </Button>
-                        }
-                    />
+                    <Stack space="l">
+                        <PushTitlePanel />
+                        <PushPayloadPanel />
+                        <AudiencePanel />
+                        <ActionsWrapper
+                            left={
+                                <ButtonWithConfirmationAlert
+                                    description={
+                                        <>
+                                            <p>
+                                                Do you want to stop this push
+                                                notification campaign creation?
+                                            </p>
+                                            <p>
+                                                You will be able to continue
+                                                it's creation later
+                                            </p>
+                                        </>
+                                    }
+                                    title={"Close"}
+                                    buttonText={"Close"}
+                                    onClick={() => {
+                                        // Save the current form state
+                                        // (scoped to the active merchant)
+                                        setForm(form.getValues(), merchantId);
+                                        // And go back
+                                        window.history.back();
+                                    }}
+                                />
+                            }
+                            right={
+                                <Button type={"submit"} variant={"secondary"}>
+                                    Next
+                                </Button>
+                            }
+                        />
+                    </Stack>
                 </form>
             </Form>
         </FormLayout>

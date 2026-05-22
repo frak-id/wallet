@@ -3,6 +3,7 @@ import {
     CardHeader,
     CardTitle,
 } from "@frak-labs/design-system/components/Card";
+import { Stack } from "@frak-labs/design-system/components/Stack";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
 import { useMemo } from "react";
@@ -93,14 +94,16 @@ export function ValidationCampaign() {
             />
             <Form {...form}>
                 <form onSubmit={form.handleSubmit(handleSubmit)}>
-                    {!isSuccess && <FormCheck />}
-                    {isSuccess && <SuccessMessage />}
-                    <Actions
-                        isLoading={isLoading}
-                        onSaveDraft={handleSaveDraft}
-                        isSaving={saveCampaign.isPending}
-                        isSaved={saveCampaign.isSuccess}
-                    />
+                    <Stack space="l">
+                        {!isSuccess && <FormCheck />}
+                        {isSuccess && <SuccessMessage />}
+                        <Actions
+                            isLoading={isLoading}
+                            onSaveDraft={handleSaveDraft}
+                            isSaving={saveCampaign.isPending}
+                            isSaved={saveCampaign.isSuccess}
+                        />
+                    </Stack>
                 </form>
             </Form>
         </FormLayout>
