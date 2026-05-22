@@ -39,14 +39,14 @@ export function Navigation() {
     const membersUrl = merchantId ? `/m/${merchantId}/members` : "/members";
     return (
         <Stack as="nav" space="none" className={navigation}>
-            <div className={logoWrapper}>
+            <Link to={dashboardUrl} className={logoWrapper}>
                 <LogoFrakWithName
                     width={105}
                     height={40}
                     className={logoFull}
                 />
                 <LogoFrakBadge width={32} height={32} className={logoBadge} />
-            </div>
+            </Link>
 
             <Stack space="xs">
                 <ul className={itemList}>
