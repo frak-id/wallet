@@ -8,6 +8,7 @@
             "!**/_types",
             "!**/dist",
             "!**/build",
+            "!**/.build",
             "!**/cdn",
             "!**/node_modules",
             "!**/.sst",
