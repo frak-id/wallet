@@ -1,6 +1,7 @@
 import type { Address } from "viem";
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
+import { pushCreationStore } from "@/stores/pushCreationStore";
 
 type AuthState = {
     token: string | null;
@@ -30,6 +31,13 @@ export const useAuthStore = create<AuthState>()(
                     wallet: null,
                     expiresAt: null,
                 });
+                // Wipe transient stores that hold draft data the next
+                // user (or unauthenticated viewer) shouldn't see — the
+                // push composition can carry targeting + payload data.
+                // Other persisted stores (campaign draft, members
+                // filters) are merchant-scoped and access-checked by
+                // the layout loader, so they stay put for now.
+                pushCreationStore.getState().clearForm();
             },
 
             isAuthenticated: () => {

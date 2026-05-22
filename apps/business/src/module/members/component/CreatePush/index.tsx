@@ -5,6 +5,7 @@ import { ActionsWrapper } from "@/module/common/component/ActionsWrapper";
 import { Button } from "@/module/common/component/Button";
 import { ButtonWithConfirmationAlert } from "@/module/common/component/ButtonWithConfirmationAlert";
 import { Head } from "@/module/common/component/Head";
+import { useActiveMerchantId } from "@/module/common/hook/useActiveMerchantId";
 import { Form, FormLayout } from "@/module/forms/Form";
 import { AudiencePanel } from "@/module/members/component/CreatePush/AudiencePanel";
 import { PushPayloadPanel } from "@/module/members/component/CreatePush/PushPayloadPanel";
@@ -20,11 +21,19 @@ export function CreatePushNotification() {
     const previousPushCreationForm = pushCreationStore(
         (state) => state.currentPushCreationForm
     );
+    const draftMerchantId = pushCreationStore((state) => state.draftMerchantId);
     const setForm = pushCreationStore((state) => state.setForm);
     const navigate = useNavigate();
+    const merchantId = useActiveMerchantId();
+
+    // Only resume the persisted draft when it belongs to the merchant in
+    // the URL. A draft from another merchant would otherwise leak its
+    // targeting + payload data into this composer.
+    const resumableDraft =
+        draftMerchantId === merchantId ? previousPushCreationForm : undefined;
 
     const form = useForm<FormCreatePushNotification>({
-        values: previousPushCreationForm,
+        values: resumableDraft,
         defaultValues: {
             pushCampaignTitle: "",
             payload: {
@@ -45,12 +54,17 @@ export function CreatePushNotification() {
             // If no target is selected, we can't go to the next step
             if (data.targetCount === 0) return;
 
-            // Save the form in the push creation form
-            setForm(data);
+            // Save the form in the push creation form, scoped to the
+            // active merchant so the confirm route can reject drafts
+            // that don't belong to the current URL.
+            setForm(data, merchantId);
             // And go to the confirmation page
-            navigate({ to: "/push/confirm" });
+            navigate({
+                to: "/m/$merchantId/push/confirm",
+                params: { merchantId },
+            });
         },
-        [setForm, navigate]
+        [setForm, navigate, merchantId]
     );
 
     return (
@@ -98,7 +112,8 @@ export function CreatePushNotification() {
                                 buttonText={"Close"}
                                 onClick={() => {
                                     // Save the current form state
-                                    setForm(form.getValues());
+                                    // (scoped to the active merchant)
+                                    setForm(form.getValues(), merchantId);
                                     // And go back
                                     window.history.back();
                                 }}

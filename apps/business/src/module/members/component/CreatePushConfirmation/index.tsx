@@ -8,10 +8,32 @@ import { Button } from "@/module/common/component/Button";
 import { ButtonWithConfirmationAlert } from "@/module/common/component/ButtonWithConfirmationAlert";
 import { Head } from "@/module/common/component/Head";
 import { Panel } from "@/module/common/component/Panel";
-import { useMyMerchants } from "@/module/dashboard/hooks/useMyMerchants";
+import { useActiveMerchantId } from "@/module/common/hook/useActiveMerchantId";
 import { FormLayout } from "@/module/forms/Form";
 import { PushRecap } from "@/module/members/component/CreatePushConfirmation/PushRecap";
 import { pushCreationStore } from "@/stores/pushCreationStore";
+
+/**
+ * Pull a human-readable message out of an Eden Treaty error.
+ *
+ * Eden returns `{ value, status }` where `value` is the body returned by
+ * the Elysia handler — usually `{ message: string }`, sometimes a plain
+ * string (legacy handlers). We walk both shapes before falling back to
+ * a generic message so backend errors surface to the user.
+ */
+function extractSendError(error: unknown): string {
+    if (typeof error === "string") return error;
+    if (typeof error !== "object" || error === null) {
+        return "Failed to send push notification";
+    }
+    const value = (error as { value?: unknown }).value;
+    if (typeof value === "string" && value.length > 0) return value;
+    if (typeof value === "object" && value !== null) {
+        const message = (value as { message?: unknown }).message;
+        if (typeof message === "string" && message.length > 0) return message;
+    }
+    return "Failed to send push notification";
+}
 
 /**
  * Confirm the creation of a push notification
@@ -19,6 +41,8 @@ import { pushCreationStore } from "@/stores/pushCreationStore";
  */
 export function CreatePushNotificationConfirmation() {
     const setForm = pushCreationStore((state) => state.setForm);
+    const navigate = useNavigate();
+    const merchantId = useActiveMerchantId();
 
     return (
         <>
@@ -34,25 +58,27 @@ export function CreatePushNotificationConfirmation() {
                         }
                         onClick={() => {
                             setForm(undefined);
-                            window.location.href = "/members";
+                            navigate({
+                                to: "/m/$merchantId/members",
+                                params: { merchantId },
+                            });
                         }}
                     />
                 }
             />
             <FormLayout>
-                <ConfirmationContent />
+                <ConfirmationContent merchantId={merchantId} />
             </FormLayout>
         </>
     );
 }
 
-function ConfirmationContent() {
+function ConfirmationContent({ merchantId }: { merchantId: string }) {
     const currentPushCreation = pushCreationStore(
         (state) => state.currentPushCreationForm
     );
     const setForm = pushCreationStore((state) => state.setForm);
     const navigate = useNavigate();
-    const { merchants } = useMyMerchants();
 
     const {
         mutate: publishPushCampaign,
@@ -65,32 +91,42 @@ function ConfirmationContent() {
                 throw new Error("No target specified");
             }
 
-            const firstMerchant = merchants[0];
-            if (!firstMerchant) {
-                throw new Error("No merchant available");
-            }
-
             const { payload, target } = currentPushCreation;
-            await authenticatedBackendApi.notifications.send.post({
-                merchantId: firstMerchant.id,
-                targets: target,
-                payload: {
-                    ...payload,
-                    body: payload.body ?? "",
-                    silent: payload.silent ?? false,
-                },
-            });
-
-            console.log("Push submitted, resetting everything");
+            // Eden Treaty returns `{ data, error }` rather than throwing —
+            // surface the error so the mutation's `onError` fires and we
+            // don't clear the draft on failure (the user may want to
+            // retry without losing their work).
+            const { error: sendError } =
+                await authenticatedBackendApi.notifications.send.post({
+                    merchantId,
+                    targets: target,
+                    payload: {
+                        ...payload,
+                        body: payload.body ?? "",
+                        silent: payload.silent ?? false,
+                    },
+                });
+            if (sendError) {
+                throw new Error(extractSendError(sendError));
+            }
+        },
+        onSuccess: () => {
+            // Cleanup belongs on the success path so a transient backend
+            // failure leaves the draft intact for retry.
             setForm(undefined);
-            navigate({ to: "/members" });
+            navigate({
+                to: "/m/$merchantId/members",
+                params: { merchantId },
+            });
         },
     });
 
     if (!currentPushCreation) {
         return (
             <Panel title={"Check your push"}>
-                <Link to={"/members"}>Push not found, go back</Link>
+                <Link to="/m/$merchantId/members" params={{ merchantId }}>
+                    Push not found, go back
+                </Link>
             </Panel>
         );
     }
@@ -119,7 +155,13 @@ function ConfirmationContent() {
                             title={"Close"}
                             buttonText={"Close"}
                             onClick={() => {
-                                navigate({ to: "/members" });
+                                // Intentionally preserves the draft so the
+                                // user can resume later (matches the
+                                // confirmation copy above).
+                                navigate({
+                                    to: "/m/$merchantId/members",
+                                    params: { merchantId },
+                                });
                             }}
                             disabled={isPending}
                         />

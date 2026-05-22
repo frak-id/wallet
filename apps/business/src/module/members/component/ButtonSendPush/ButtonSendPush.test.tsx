@@ -7,18 +7,28 @@ const mockSetForm = vi.fn();
 
 vi.mock("@tanstack/react-router", () => ({
     useNavigate: () => mockNavigate,
-    Link: ({ to, children, onClick }: any) => (
-        <a
-            href={to}
-            onClick={(e) => {
-                e.preventDefault();
-                onClick?.();
-                mockNavigate({ to });
-            }}
-        >
-            {children}
-        </a>
-    ),
+    useParams: () => ({ merchantId: "merchant-1" }),
+    Link: ({ to, params, children, onClick }: any) => {
+        const href =
+            params && typeof to === "string" && to.includes("$")
+                ? to.replace(
+                      /\$(\w+)/g,
+                      (_: string, name: string) => params[name] ?? ""
+                  )
+                : to;
+        return (
+            <a
+                href={href}
+                onClick={(e) => {
+                    e.preventDefault();
+                    onClick?.();
+                    mockNavigate({ to: href });
+                }}
+            >
+                {children}
+            </a>
+        );
+    },
 }));
 
 vi.mock("@/stores/pushCreationStore", () => ({
@@ -52,13 +62,15 @@ describe("ButtonSendPush", () => {
         expect(icon).toHaveAttribute("data-size", "20");
     });
 
-    it("should call setForm(undefined) and navigate when clicked", () => {
+    it("should call setForm(undefined) and navigate to the merchant-scoped push route when clicked", () => {
         render(<ButtonSendPush />);
 
         const button = screen.getByText("Send Push");
         fireEvent.click(button);
 
         expect(mockSetForm).toHaveBeenCalledWith(undefined);
-        expect(mockNavigate).toHaveBeenCalledWith({ to: "/push/create" });
+        expect(mockNavigate).toHaveBeenCalledWith({
+            to: "/m/merchant-1/push/create",
+        });
     });
 });
