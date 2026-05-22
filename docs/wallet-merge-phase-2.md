@@ -1,36 +1,32 @@
 # Wallet Merge — Phase 2: Cross-Device Flow
 
-> **Status:** Design draft. Phase 1 (same-device fast path) ships first; this document covers the Phase 2 cross-device path where wallet A is on one device and wallet B is on another.
+> **Status:** Design draft. Supersedes the prior `remote-sig`-based draft. Phase 1 (same-device merge through `MergeFlow`) is in place; this doc describes how the same flow is extended to the cross-device case where the loser's passkey and the winner's passkey live on different devices.
 
 ## Goal
 
-A user is signed in on **Device X with Wallet A** and types an email that is already attached to **Wallet B** (a different smart-account address controlled by a different passkey, likely on **Device Y**, typically the same person who has two wallets). We need to:
+A user is signed in on **Device X with Wallet A** and types an email already attached to **Wallet B** (a different smart-account, controlled by a different passkey on **Device Y**). We want to merge A and B without forcing the user to recreate the wallet, and without changing the visible step ordering of the merge flow that already ships for the same-device case.
 
-1. Establish a side-channel from Device X to Device Y that does **not** swap Device X's session.
-2. Ensure Device Y is authenticated specifically with **the passkey associated with the email** (not whatever other passkey the user might be using on Device Y).
-3. Show the user a dry-merge preview.
-4. Have the **winner's owner** sign the `addPassKey` userOp on their own device.
-5. Finalise the merge in the backend (libSQL repoint + PG identity merge).
-
-This document describes only Phase 2. The on-chain primitive (`multiWebAuthNValidatorV2.addPassKey`), the backend `IdentityMergeService` extensions (push_tokens / asset_logs pending / referral_codes conflict), the `WalletMergeOrchestrator.settle`, the libSQL `repointBinding` repository method, and the postgres-resident `identity_nodes` email storage are all shared with Phase 1 and assumed to already exist.
+The deterministic merge primitives (preview, consent challenge, on-chain `addPassKey`, `WalletMergeOrchestrator.settle`, post-merge binding rewrite, fresh loser-session minting) all stay as they are. Phase 2 is purely a transport extension: turning a pairing WS into the carrier for the parts of the flow that have to leave the originating device.
 
 ---
 
 ## Core idea
 
-Reuse the existing pairing flow with **two small additions**:
+Reuse the existing pairing flow exactly. Two additions only:
 
-1. A new pairing **`kind`**: `"remote-sig"` (alongside today's implicit `"session"`).
-2. A new pairing field **`target_authenticator_hint`**: the credential ID the target device MUST be authenticated as in order to join.
+1. **One new optional column on `device_pairing`**: `authenticator_hint` — the credential ID the joining session must match.
+2. **One new optional field on `signature-request`**: `signatureKind: "onchain" | "raw-assertion"` — lets the target return a base64 WebAuthn assertion JSON (the shape `WebAuthNService.verifyConsentSignature` already parses) instead of the smart-account-formatted on-chain signature blob.
 
-In `remote-sig` mode:
+No `kind` column. No `remote-sig-paired` / `merge-proposal` / `merge-consent` messages. One new server-emitted event (`merge-completed`) for the post-merge loser-side session refresh.
 
-- The origin keeps its existing session (no `distant-webauthn` JWT is ever issued).
-- The pairing WS becomes a one-shot RPC channel between Device X and Device Y.
-- The target device, before joining, verifies its current session matches the hint. If not, it offers to switch passkeys (with a primitive to restore the previous session after).
-- After both sides have computed the preview, the **winner's device** signs and submits the on-chain `addPassKey` userOp **using its own wagmi client** — there is no signature round-trip across the pairing. The pairing carries the **intent + parameters**, not a hash to sign.
+On the desktop side, **the pairing decision splits at `initiatePairing` time** on a single boolean `applySession`:
 
-This last point is the simplification over earlier drafts: the device that has the winning passkey is the device that submits the transaction. We avoid round-tripping a userOp hash + signature across the WS.
+| `applySession` | When | What happens on `authenticated` |
+|---|---|---|
+| `true` (default) | Desktop is the **loser** (needs winner-context for the on-chain step) — i.e. today's `needsSwitch` would have triggered a local session swap | Park current session, set sessionStore to the new distant-webauthn=B JWT. wagmi tunnels every signing op through pairing → mobile. Same effect as `useSwitchAuthenticator` in the local flow, just routed over WS instead of a local biometric. |
+| `false` | Desktop is the **winner** (no swap needed) — today's "no `needsSwitch`" case | Upgrade the WS connection to distant-webauthn=B internally (so backend's `PairingRouterRepository` keeps accepting our messages) but do **not** write to sessionStore. Desktop stays session=A locally. wagmi keeps signing with A. Pairing client uses B-token in an instance field for `connect()`/`reconnect()`. |
+
+That single switch is the entire Phase 2 abstraction. Each side runs its own session for the actions it owns. Pairing is just a message bus that occasionally carries a signature payload.
 
 ---
 
@@ -38,676 +34,346 @@ This last point is the simplification over earlier drafts: the device that has t
 
 | Term | Meaning |
 |---|---|
-| **Wallet A** | The smart-account address tied to the passkey currently active on Device X. |
-| **Wallet B** | The smart-account address tied to the passkey associated with the email the user just typed. Likely on Device Y. |
-| **Loser** | The wallet whose passkey gets added to the other wallet's `multiWebAuthNValidatorV2` and whose backend data migrates. |
-| **Winner** | The wallet that survives — receives the loser's passkey as a co-signer and absorbs the loser's identity-graph data. |
+| **Wallet A** | The smart-account address tied to the passkey currently active on Device X (the device that initiates the merge from the AddEmail conflict screen). |
+| **Wallet B** | The smart-account address tied to the passkey associated with the email the user just typed. |
+| **Loser** | The wallet whose passkey gets added to the other wallet's `multiWebAuthNValidatorV2` and whose identity-graph data migrates. Decided by `pickWinner()` from preview weights + `createdAt` tiebreaker. |
+| **Winner** | The wallet that survives. Receives the loser's passkey as a co-signer and absorbs the loser's identity-graph data. |
 | **`authId_X`** | The base64url WebAuthn credential ID for the passkey on wallet X. |
-| **Hint** | The `target_authenticator_hint` value persisted on the pairing row — the credential ID the joining session must match. |
-
-The winner is determined by `IdentityWeightService.getGroupWeight` with `createdAt` as tiebreaker (older wallet wins). Result is snapshotted into the preview, frozen until merge completes.
-
----
-
-## State diagram
-
-```
-            ┌──────────────────────┐
-            │ idle (no merge)      │
-            └──────────┬───────────┘
-                       │ user types conflicting email
-                       ▼
-            ┌──────────────────────┐
-            │ initiating-pairing    │ ← desktop calls initiateRemoteSig
-            └──────────┬───────────┘    backend creates device_pairing
-                       │                  (kind=remote-sig, hint=authId_B)
-                       ▼                  emits pairingCode + originResumeToken
-            ┌──────────────────────┐
-            │ awaiting-target       │ ← QR shown, status=connected
-            └──────────┬───────────┘
-                       │ mobile scans, authenticates as authId_B
-                       │ (auto if matches, or via switch-passkey flow)
-                       │ mobile sends action=join with matching session
-                       │ server validates hint match → emits "remote-sig-paired"
-                       ▼
-            ┌──────────────────────┐
-            │ paired                │ ← both devices now exchange messages
-            └──────────┬───────────┘    desktop fetches preview
-                       │ desktop sends "merge-proposal" message with
-                       │ all required data (instructions, addresses, preview)
-                       ▼
-            ┌──────────────────────┐
-            │ awaiting-confirm      │ ← mobile shows preview, biometric
-            └──────────┬───────────┘
-                       │
-        ┌──────────────┴────────────────┐
-        │                               │
-        ▼                               ▼
-  winner = A                      winner = B
-  desktop signs locally            mobile signs locally
-  (wagmi useSendTransaction)       (wagmi useSendTransaction)
-  → submits addPasskey userOp      → submits addPasskey userOp
-  → polls receipt                  → polls receipt
-  → calls /merge/settle            → calls /merge/settle
-  → backend runs orchestrator       → backend runs orchestrator
-  → desktop shows success          → mobile shows success
-                                   → desktop receives "merge-completed"
-                                     event, double-checks with backend,
-                                     shows success
-        │                               │
-        └───────────────┬───────────────┘
-                        ▼
-            ┌──────────────────────┐
-            │ merged                │
-            └──────────────────────┘
-```
-
-Failure transitions: any step can transition to `failed` with a `failure_reason`. The orchestrator is idempotent — a stuck `signed` or `settling` state is picked up by the existing pairing cleanup cron.
+| **Hint** | The `authenticator_hint` column on the pairing row. Enforced at `handleJoinRequest`: a mobile that joins with a different `authenticatorId` is closed with `FORBIDDEN`. |
+| **`applySession`** | Desktop-side flag on `initiatePairing`. Controls whether the `authenticated` payload also flips `sessionStore`. |
+| **`signatureKind`** | Per-request discriminator on `signature-request` payloads. `"onchain"` (default) returns today's `formatSignature`-wrapped on-chain blob. `"raw-assertion"` returns `btoa(JSON({id, response: {metadata, signature}}))`, parseable by `verifyConsentSignature`. |
 
 ---
 
-## End-to-end flow
+## How it maps onto today's `MergeFlow`
 
-### Step 1 — Desktop initiates the merge
-
-**Trigger:** User is logged in on Device X as wallet A, no email attached. They open the AddEmail page (`/profile/add-email`) and submit an email already taken.
-
-**Backend (`POST /user/wallet/auth/email`):**
-
-```http
-POST /user/wallet/auth/email
-Body: { "email": "user@example.com" }
-
-Response (conflict branch):
-{
-  "status": "conflict",
-  "targetAuthenticatorId": "<base64url credId of authId_B>",
-  "targetWallet": "0xAbC…"
-}
-```
-
-**Desktop UI (`AddEmail` conflict branch):**
-
-- Shows: "This email is already on another wallet of yours (`0xAbC…`). Want to merge?"
-- "Start merge" button → calls:
+The local flow (`apps/wallet/app/module/walletMerge/component/MergeFlow/index.tsx`) is already shaped around a single discriminator:
 
 ```ts
-originPairingClient.initiateRemoteSig({
-  targetAuthenticatorHint: response.targetAuthenticatorId,
-  targetWallet: response.targetWallet,
-});
-// → WS open: action=initiate&kind=remote-sig&targetAuthenticatorHint=<authId_B>
+const needsSwitch = preview.winner !== preview.requesterWallet;
+// ...
+handleConsentConfirmed: setStep(needsSwitch ? "switch" : "sign");
 ```
 
-**Backend (`PairingConnectionRepository.handleInitiateRequest`):**
+`needsSwitch=false` (requester is winner) → Consent → Sign → Settle. No SwitchStep.
+`needsSwitch=true` (requester is loser) → Consent → Switch (parkSession + useLogin) → Sign → Settle.
 
-```ts
-await db.insert(pairingTable).values({
-  pairingId,
-  pairingCode,
-  originUserAgent,
-  originName,
-  kind: "remote-sig",                            // NEW
-  targetAuthenticatorHint: targetAuthenticatorHint, // NEW
-});
-// emits "pairing-initiated" with { pairingId, pairingCode, originResumeToken }
-```
+Phase 2 preserves the same dichotomy. The only swap is at the boundary — what `useLoserConsent`, `useSwitchAuthenticator`, `useSendAddPassKeyTx`, `useMergeSettle` actually do under the hood. We introduce two strategies:
 
-**Desktop:**
+- **`useLocalMergeStrategy()`** — wraps today's hooks, unchanged.
+- **`useRemoteMergeStrategy()`** — wraps pairing-driven equivalents. Detailed below.
 
-- Receives `pairing-initiated`, persists `{ pairingId, pairingCode, originResumeToken, kind: "remote-sig" }` in sessionStorage (`frak_pairing_in_flight`).
-- Navigates to `/merge/start` showing a QR code: `${FRAK_WALLET_URL}/p/${pairingId}` (existing QR pattern) plus the 6-digit code as fallback.
-- Desktop session is **unchanged** — still wallet A.
+`MergeFlow` consumes whichever it's given. Step ordering, animations, copy, and back-navigation all stay the same.
 
-### Step 2 — Mobile scans the QR
-
-Mobile opens `/pairing?id=<pairingId>` (existing deep link, behind `_protected`). The pairing page fetches:
-
-```http
-GET /pairings/find/:id
-
-Response:
-{
-  "id": "...",
-  "originName": "Chrome on macOS",
-  "createdAt": "...",
-  "pairingCode": "123456",
-  "kind": "remote-sig",              // NEW
-  "targetAuthenticatorHint": "<authId_B>", // NEW
-  "targetWallet": "0xAbC…"           // NEW
-}
-```
-
-The pairing page branches on `kind`:
-
-- `"session"` → existing `PairingPage` component (today's behavior).
-- `"remote-sig"` → new **`MergeApprovalPairing`** component.
-
-### Step 3 — Mobile resolves the authenticator
-
-`MergeApprovalPairing` compares the current session's `authenticatorId` against `targetAuthenticatorHint`.
-
-**Case A — match:**
-
-The user is already logged in as wallet B on Device Y. Show the standard "Confirm pairing" UI with merge-specific copy ("Device X wants to merge a wallet into this one") + the 6-digit code for confirmation. On confirm:
-
-```ts
-await targetPairingClient.joinPairing(id, pairingCode);
-```
-
-**Case B — mismatch:**
-
-Mobile is logged in as some other wallet on Device Y (the user has multiple passkeys). Show a "Switch passkey" modal:
-
-> This action needs the passkey associated with `0xAbC…`. Sign in with that passkey to continue?
->
-> [Cancel] [Switch passkey]
-
-On confirm:
-
-```ts
-// 1. Save current session
-sessionStore.getState().pushSession();
-
-try {
-  // 2. Force biometric prompt limited to authId_B
-  await login({
-    lastAuthentication: {
-      authenticatorId: targetAuthenticatorHint,
-      wallet: targetWallet,
-    },
-  });
-  // sessionStore now holds wallet B's session
-  // 3. Join the pairing with the new session
-  await targetPairingClient.joinPairing(id, pairingCode);
-} catch (err) {
-  // Restore previous session if anything failed before join
-  sessionStore.getState().popSession();
-  throw err;
-}
-```
-
-`pushSession`/`popSession` are new primitives on `sessionStore`. `pushSession` snapshots `{ session, sdkSession }` into a `previousSession` slot (persisted). `popSession` restores it without a new biometric ceremony — the previous JWT is reused as-is, valid as long as the backend hasn't expired it. If the JWT is rejected on the next request, the existing 401 handler clears the session and routes to `/register`. Acceptable degradation.
-
-### Step 4 — Backend resolves the pairing
-
-`PairingConnectionRepository.handleJoinRequest`:
-
-1. Validates `pairingCode`.
-2. **NEW:** Enforces the hint:
-   ```ts
-   if (pairing.targetAuthenticatorHint && wallet.authenticatorId !== pairing.targetAuthenticatorHint) {
-     ws.close(WsCloseCode.FORBIDDEN, "Authenticator mismatch");
-     return;
-   }
-   ```
-3. Updates the pairing row: sets `wallet`, `resolvedAt`, `targetUserAgent`, `targetName`.
-4. Branches on `pairing.kind`:
-   - `"session"` → existing behavior: sign `distant-webauthn` JWT, publish `"authenticated"`.
-   - `"remote-sig"` → **NEW**: publish `"remote-sig-paired"` to the origin topic. Payload contains only `{ partnerDevice, pairingId, targetWallet }` — no JWT, no session.
-
-### Step 5 — Desktop receives `remote-sig-paired`
-
-`OriginPairingClient.handleMessage` gets a new branch:
-
-```ts
-if (message.type === "remote-sig-paired") {
-  this.setState({
-    status: "paired",
-    partnerDevice: message.payload.partnerDevice,
-    pairing: undefined, // in-flight done, originResumeToken still authorises the WS
-  });
-  this.onPairingSuccess?.();
-  // CRITICAL: no sessionStore.setSession()
-  // CRITICAL: no forceConnect(reconnect()) — keep the WS alive on originResumeToken
-  return;
-}
-```
-
-Desktop's session is still wallet A. The WS stays open using the original `originResumeToken`. Desktop can now exchange merge-specific messages with mobile.
-
-### Step 6 — Desktop computes & shares the merge proposal
-
-Desktop calls:
-
-```http
-GET /user/wallet/merge/preview?pairingId=<pairingId>
-Auth: origin-resume-token (in WS context) or webauthn JWT (in REST context)
-
-Response: MergePreview
-{
-  "requesterWallet": "0xDeF…",       // wallet A
-  "targetWallet":    "0xAbC…",       // wallet B
-  "winner":          "0xAbC…",       // resolved by getGroupWeight + createdAt tiebreaker
-  "loser":           "0xDeF…",
-  "loserAuthenticatorId": "<authId_A>",
-  "loserPublicKey":  { "x": "0x…", "y": "0x…" },
-  "winnerAuthenticatorId": "<authId_B>",
-  "winnerPublicKey":  { "x": "0x…", "y": "0x…" },
-  "movedCounts": {
-    "interactions": 7,
-    "purchases": 2,
-    "assetLogsPending": 3,
-    "assetLogsSettled": 4,     // historical, NOT migrated
-    "referralsAsReferrer": 5,
-    "referralsAsReferee": 1
-  },
-  "conflicts": {
-    "selfLoops": 0,
-    "duplicateRefereeLinks": 0,
-    "duplicateActiveReferralCode": false
-  },
-  "identitiesBeingMerged": [
-    { "type": "wallet", "value": "0xDeF…" },
-    { "type": "email", "value": "user@example.com" }
-  ]
-}
-```
-
-The preview is computed read-only in a `REPEATABLE READ` Postgres transaction. It is **the source of truth** for both devices during the rest of the flow.
-
-Desktop shows the recap UI, and sends the proposal to mobile **via a new pairing message type**:
-
-```ts
-originPairingClient.sendMergeProposal({
-  pairingId,
-  preview,                         // entire MergePreview JSON
-});
-```
-
-The new message:
-
-```ts
-// origin → server → target topic
-{
-  "type": "merge-proposal",
-  "payload": {
-    "pairingId": "...",
-    "preview": { /* MergePreview */ }
-  }
-}
-```
-
-The backend forwards it like any other pairing message (no DB persistence needed for this one — it's a transient instruction). Persistence for replay-on-reconnect could be added later if mobile reconnects mid-flow; for now the desktop can resend on `remote-sig-paired` re-emission.
-
-### Step 7 — Mobile shows the recap and confirms
-
-`MergeApprovalPairing` receives the `merge-proposal` message and renders the preview:
-
-> Confirm merge
-> 
-> Wallet `0xDeF…` will be merged into this wallet (`0xAbC…`).
-> - 7 interactions
-> - 5 referrals (as referrer)
-> - 3 pending rewards will be redirected here
-> - 4 historical rewards stay attributed to the original address
-> 
-> [Cancel] [Confirm merge]
-
-On confirm, **mobile branches on `preview.winner`**:
-
-#### Step 7a — Winner = Wallet B (mobile)
-
-Mobile holds the winning passkey, so mobile does everything locally. The earlier framing — "mobile's transaction IS the consent" — was incomplete: B signing the on-chain `addPasskey` userOp only proves **B's owner** approved adding A as a co-signer to B. It says nothing about **A's owner**, whose identity graph (interactions, referrals, asset_logs, push tokens, email node) is the part being absorbed. Without A's consent, a malicious owner of B could craft this userOp against an unsuspecting A and have the backend hand A's identity graph over.
-
-The unified Phase 1 consent design fixes this: mobile collects A's biometric over the merge-consent challenge **before** switching to B's session, then passes the assertion through to `/merge/settle` like any other caller.
-
-Concretely, BEFORE the `pushSession` + `useLogin` step that switches to B (in Step 3 Case B), mobile collects the consent over A's credential — A is still the active session at that point:
-
-```ts
-// Still logged in as wallet A (loser) at this point — collect consent now
-const expectedChallenges = buildMergeConsentChallengeSlots({
-  winner: preview.winner,            // 0xAbC… (B, lowercased)
-  loserAuthenticatorId: authId_A,
-});
-const loserConsentAssertion = await navigator.credentials.get({
-  publicKey: {
-    challenge: stringToBytes(buildMergeConsentChallenge({
-      winner: preview.winner,
-      loserAuthenticatorId: authId_A,
-      hourSlot: formatMergeConsentHourSlot(new Date()),
-    })),
-    allowCredentials: [{ id: base64UrlToBytes(authId_A), type: "public-key" }],
-    userVerification: "required",
-  },
-});
-const loserConsentSignature = encodeCompressedAssertion(loserConsentAssertion);
-// Stash for the settle call — survives the session switch
-mergeFlowState.set({ loserConsentSignature });
-
-// NOW switch sessions
-sessionStore.getState().pushSession();
-await login({ lastAuthentication: { authenticatorId: authId_B, wallet: preview.winner } });
-```
-
-Once mobile is on B's session, the rest of the local merge proceeds:
-
-```ts
-// useMergeFinaliseLocal hook (mobile-side, now as wallet B)
-const { sendTransactionAsync } = useSendTransaction();
-
-// 1. Build the userOp call data
-const calldata = encodeFunctionData({
-  abi: multiWebAuthNValidatorV2Abi,
-  functionName: "addPassKey",
-  args: [
-    keccak256(toHex(preview.loserAuthenticatorId)),  // authId_A hash
-    BigInt(preview.loserPublicKey.x),
-    BigInt(preview.loserPublicKey.y),
-  ],
-});
-
-// 2. Submit via the standard wagmi/permissionless smart-account hook
-//    (whatever the existing useSendTransactionAction wraps)
-const txHash = await sendTransactionAsync({
-  to: WEBAUTHN_VALIDATOR_ADDRESS,
-  data: calldata,
-  // smart account: wallet B's address (current session)
-});
-
-// 3. Wait for receipt (already handled by the existing sendTransactionAction)
-//    The hook resolves once the bundler confirms; if it fails, we get a thrown error.
-
-// 4. Tell backend to settle — pass the stashed A-side consent signature
-await authenticatedWalletApi.user.wallet.merge.settle.post({
-  pairingId,
-  onChainTxHash: txHash,
-  loserConsentSignature: mergeFlowState.get().loserConsentSignature,
-});
-// Server-side: WalletMergeOrchestrator.settle()
-//   - verifies loserConsentSignature against authId_A's public key + three candidate challenges
-//   - verifies on-chain getPasskey returns the expected pubkey
-//   - libSQL repointBinding(loserAuthId, chainId → winnerAddress)
-//   - PG IdentityMergeService.mergeGroups(winner, loser, { migratePushTokens, ... })
-//   - emits walletMerged event
-//   - publishes "merge-completed" to the pairing's ORIGIN topic
-
-// 5. Mobile shows success screen and proposes "log back into your other wallet?"
-//    If previousSession was stashed: sessionStore.popSession() (or stay as wallet B — user's choice)
-```
-
-#### Step 7b — Winner = Wallet A (desktop)
-
-Mobile holds the loser-side passkey (B), so mobile collects A-side… no — in this branch **B is the loser**, A is the winner. Mobile owns the loser's credential and must produce the consent assertion. On "Confirm merge", mobile builds the deterministic challenge from the preview, prompts B's biometric, and ships the resulting assertion to desktop:
-
-```ts
-// Mobile-side, still on wallet B's session (the loser)
-const challenge = buildMergeConsentChallenge({
-  winner: preview.winner,            // 0xDeF… (A, lowercased)
-  loserAuthenticatorId: authId_B,
-  hourSlot: formatMergeConsentHourSlot(new Date()),
-});
-const loserConsentAssertion = await navigator.credentials.get({
-  publicKey: {
-    challenge: stringToBytes(challenge),
-    allowCredentials: [{ id: base64UrlToBytes(authId_B), type: "public-key" }],
-    userVerification: "required",
-  },
-});
-const loserConsentSignature = encodeCompressedAssertion(loserConsentAssertion);
-
-// Send to desktop over the pairing
-await targetPairingClient.sendMergeConsent({ pairingId, loserConsentSignature });
-```
-
-The `merge-consent` message still flows over the pairing WS, but the signed challenge is now the unified Phase 1 deterministic string — **not** the old `keccak256("frak-merge-consent" || pairingId)` framing:
-
-```ts
-// target → server → origin topic
-{
-  "type": "merge-consent",
-  "payload": {
-    "pairingId": "...",
-    "loserConsentSignature": "0x…"   // WebAuthn assertion over
-                                      //   frak-merge-consent:{UTC hour}:{winner_lowercased}:{loser authid}
-                                      //   produced with wallet B's credential — proves B's owner approved
-  }
-}
-```
-
-Desktop receives `merge-consent`, then locally:
-
-```ts
-// useMergeFinaliseLocal hook (desktop-side)
-const { sendTransactionAsync } = useSendTransaction();
-
-// 1. Build userOp adding authId_B to wallet A
-const calldata = encodeFunctionData({
-  abi: multiWebAuthNValidatorV2Abi,
-  functionName: "addPassKey",
-  args: [
-    keccak256(toHex(preview.loserAuthenticatorId)),  // authId_B hash (because A is winner, B is loser)
-    BigInt(preview.loserPublicKey.x),
-    BigInt(preview.loserPublicKey.y),
-  ],
-});
-
-// 2. Submit via wagmi/permissionless from wallet A's session
-const txHash = await sendTransactionAsync({
-  to: WEBAUTHN_VALIDATOR_ADDRESS,
-  data: calldata,
-});
-
-// 3. Tell backend to settle, passing the consent signature received over pairing
-await authenticatedWalletApi.user.wallet.merge.settle.post({
-  pairingId,
-  onChainTxHash: txHash,
-  loserConsentSignature,
-});
-// Server verifies loserConsentSignature against authId_B's public key over the three
-// deterministic candidate challenges (current hour ±1h) before applying merge.
-
-// 4. Desktop shows success screen
-//    Backend publishes "merge-completed" to TARGET topic so mobile also shows success.
-```
-
-In **both** sub-cases the device that performs the on-chain transaction is the device that owns the winning passkey, using its own wagmi/smart-account client. **No userOp hash crosses the pairing channel.** The pairing only carries: the proposal (`merge-proposal`) and the loser's consent (`merge-consent`).
-
-### Step 8 — Backend settles
-
-`WalletMergeOrchestrator.settle({ pairingId, onChainTxHash, loserConsentSignature })` — consent is **always required**, regardless of which side wins, because the loser side always exists and always needs to approve being absorbed:
-
-```ts
-async settle({ pairingId, onChainTxHash, loserConsentSignature }) {
-  const pairing = await pairingRepo.getByPairingId(pairingId);
-  assert(pairing.kind === "remote-sig");
-
-  const preview = await previewSvc.recompute(pairing); // or load stored snapshot
-
-  // 1. Verify loser consent FIRST — cheap, no on-chain or DB cost
-  const expectedChallenges = buildMergeConsentChallengeSlots({
-    winner: preview.winner,
-    loserAuthenticatorId: preview.loserAuthenticatorId,
-  });
-  const consentOk = await webAuthNService.verifyConsentSignature({
-    compressedSignature: loserConsentSignature,
-    expectedAuthenticatorId: preview.loserAuthenticatorId,
-    expectedChallenges,
-  });
-  if (!consentOk) throw new MergeError("MERGE_INVALID_CONSENT");
-
-  // 2. Verify the on-chain state (idempotent read)
-  const receipt = await publicClient.waitForTransactionReceipt({ hash: onChainTxHash });
-  if (receipt.status !== "success") throw new MergeError("user-op-reverted");
-
-  const onChainPubkey = await readContract({
-    address: WEBAUTHN_VALIDATOR,
-    abi: multiWebAuthNValidatorV2Abi,
-    functionName: "getPasskey",
-    args: [preview.winner, keccak256(toHex(preview.loserAuthenticatorId))],
-  });
-  assert(onChainPubkey.x === BigInt(preview.loserPublicKey.x));
-  assert(onChainPubkey.y === BigInt(preview.loserPublicKey.y));
-
-  // 3. libSQL repoint (chain-scoped)
-  await authRepo.repointBinding({
-    credentialId: preview.loserAuthenticatorId,
-    chainId: currentChainId,    // env-shared, never on the wire (see Phase 1 doc)
-    toSmartWalletAddress: preview.winner,
-    reason: "merged",
-  });
-
-  // 4. PG merge (single tx). The loser group's `identity_nodes` rows —
-  //    including the email — move onto the winner group as part of the bulk
-  //    node update inside `mergeGroups`. `findEmailForGroup` is ordered by
-  //    `created_at ASC` so the winner's original email keeps winning even if
-  //    the loser had one of its own.
-  await identityMergeSvc.mergeGroupsByWallet(preview.winner, preview.loser, {
-    migratePushTokens: true,
-    migrateRecipientWallet: true,
-    referralCodeConflict: "keep-winner",
-  });
-
-  // 5. Emit "merge-completed" to both pairing topics
-  await pairingRepo.publishToBoth(pairingId, {
-    type: "merge-completed",
-    payload: { winner: preview.winner, loser: preview.loser },
-  });
-
-  // 6. Mark pairing as terminal so cron can clean it up
-  await pairingRepo.markRemoteSigCompleted(pairingId);
-}
-```
-
-Cross-DB safety is the same as Phase 1: each step is idempotent, so a crashed `settle()` is safely re-runnable by the reconciliation cron.
-
-### Step 9 — Desktop double-checks and shows success
-
-Desktop receives the `merge-completed` event over the WS. As a safety net, desktop also calls:
-
-```http
-GET /user/wallet/merge/status?pairingId=<pairingId>
-Response:
-{
-  "state": "merged",
-  "winner": "0xAbC…",
-  "loser": "0xDeF…",
-  "completedAt": "..."
-}
-```
-
-If `state === "merged"`, desktop shows a success screen:
-
-> Merge complete!
->
-> Your wallet `0xDeF…` is now part of wallet `0xAbC…`.
-> All your data has been migrated. The next time you log in with this device, you'll automatically be signed into the merged wallet.
-
-Then desktop:
-
-1. Closes the pairing WS (`originPairingClient.disconnect()`).
-2. Clears the `frak_pairing_in_flight` sessionStorage entry.
-3. Applies the freshly-minted session that the settle endpoint returns whenever the requester authenticated with the loser credential (Phase 1 contract — see `MergeSettleResponseSchema.session`). Desktop is the loser in this branch, so the response carries a fresh JWT bound to desktop's authenticator + the winner wallet; `sessionStore.setSession(response.session)` + `setSdkSession(response.sdkJwt)` rebinds the live session immediately. No logout/login round-trip, no stale-JWT window. The auxiliary safety net at `isValidSignature` (which consults `getActiveBinding` on every login) still backstops any cached JWT that didn't go through this path.
-
-### Step 10 — Mobile cleanup
-
-If mobile pushed a previous session in Step 3 (Case B switch-passkey), the cleanup depends on which side of the merge mobile sits on:
-
-- **Mobile = loser** (the credential that just got absorbed): settle returns `response.session` (Phase 1 contract). Mobile applies it directly via `sessionStore.setSession` + `setSdkSession` and `discardPreviousSession()` — the snapshot in `previousSession` is the old, no-longer-meaningful wallet whose binding has been rebound. No "switch back" prompt makes sense; the loser session is by definition stale.
-- **Mobile = winner**: settle omits `response.session` (mobile's existing JWT already resolves correctly). Mobile then offers:
-  > Sign back into your other wallet?
-  >
-  > [Stay signed in as the merged wallet] [Switch back]
-  >
-  > "Stay" → `discardPreviousSession()`. "Switch back" → `popSession()`.
-
-Either way the merge itself is complete and durable in the backend.
+The strategy choice is surfaced on the existing `ConflictStep`: alongside the current "Combine accounts" primary CTA, add a secondary "Use my other device" CTA. Clicking it starts `MergeFlow` with the remote strategy.
 
 ---
 
-## New message types
+## Two remote branches (mirrors `needsSwitch`)
 
-All messages flow through the existing pairing WS. The router (`PairingRouterRepository`) gains three new branches; all of them are simple forwarding with light validation.
+### Branch 1 — Desktop is the loser, mobile is the winner (`needsSwitch=true` equivalent)
 
-| Type | Direction | Payload | Purpose |
-|---|---|---|---|
-| `merge-proposal` | origin → target | `{ pairingId, preview: MergePreview }` | Desktop tells mobile what's about to happen. |
-| `merge-consent` | target → origin | `{ pairingId, loserConsentSignature }` | Loser's owner approves the merge. `loserConsentSignature` is a WebAuthn assertion over the deterministic challenge `frak-merge-consent:{UTC hour}:{winner_lowercased}:{loser authid}` (not the legacy `keccak256("frak-merge-consent" \|\| pairingId)` framing). Sent in both winner=A and winner=B flows — only the source of the assertion differs (collected on mobile pre-switch in winner=B, collected on mobile post-confirm in winner=A). |
-| `merge-completed` | server → both | `{ winner, loser }` | Backend confirms the merge has settled. |
+Mirrors today's "requester is loser, swap to winner" path. Desktop ends up tunneling everything through the pairing.
 
-No new persisted table is required for Phase 2. The pairing row itself (with `kind = "remote-sig"`) is the canonical resource. Add one tracking column if needed: `device_pairing.merge_state` enum (`pending | proposed | consented | settling | merged | failed`). This is a nice-to-have for the admin dashboard; the orchestrator works without it because each step is idempotent.
+1. **Preview** — `useMergePreview` runs from session=A. Same backend call as local. Returns `winner=B`, `loser=A`.
+2. **Assets** — `useLoserAssetCheck` runs from session=A. Loser is A and A is the current session → enumerates A's stablecoin balances exactly like today.
+3. **Consent** — `useLoserConsent({winner: B, loserAuthenticatorId: authId_A})` runs locally on desktop with A's passkey. Stashed in step state.
+4. **Switch (= pair-with-applySession-true)** — `originPairingClient.initiatePairing({ authenticatorHint: authId_B, applySession: true })`. Shows the existing QR + 6-digit code from `LaunchPairing`. Mobile scans `/p/<id>`:
+   - If mobile's current credential ≠ `authId_B`, mobile's pairing route uses the existing `parkSession`+`useLogin` primitive to switch into the right credential before joining.
+   - Mobile joins. Backend's `handleJoinRequest` enforces the hint, otherwise unchanged.
+   - Backend emits `authenticated`. Desktop's `OriginPairingClient` first calls `sessionStore.parkSession({session: A, sdkSession})`, then `setSession(B-distant-webauthn)`. Same atomicity as `useSwitchAuthenticator` today.
+5. **Sign** — `useSendAddPassKeyTx` runs from session=B-distant-webauthn. wagmi's smart-account is built via `frakPairedWalletSmartAccount` → `signHash` is `originPairingClient.sendSignatureRequest(...)` → mobile signs the userOp hash with B → bundler submits. Tx hash returns to desktop.
+6. **Settling** — `useMergeSettle` waits for receipt (8 confirmations) locally, then POSTs `/merge/settle` from session=B-distant-webauthn with the stashed A-consent signature. **Requires `settle` to accept distant-webauthn** (see backend changes).
+7. **Success** — settle returns. Backend additionally publishes `merge-completed` to **both** pairing topics (see Post-merge session refresh below). Desktop applies the freshly minted local-webauthn session for A (now bound to wallet B), drops the parked snapshot via `discardPreviousSession`. Mobile receives an info-only event and shows success.
+
+### Branch 2 — Desktop is the winner, mobile is the loser (`needsSwitch=false` equivalent)
+
+Mirrors today's "requester is winner, no swap" path. Desktop stays as A locally; pairing carries only the loser consent.
+
+1. **Preview** — same as branch 1. Returns `winner=A`, `loser=B`.
+2. **Assets** — `useLoserAssetCheck` returns "can't check, generic warning" (loser is B, but the current session is A). Same as today's local same-device A-wins case. Optional optimisation later: ship a balance summary from mobile over the pairing.
+3. **Switch (= pair-with-applySession-false)** — `originPairingClient.initiatePairing({ authenticatorHint: authId_B, applySession: false })`. QR + code as in branch 1. Mobile joins under the hint check.
+   - `authenticated` arrives. Desktop's client **only** upgrades its WS connection to distant-webauthn=B (it calls `forceConnect(() => connect({wallet: token}))`). It does **not** touch `sessionStore`. The token sits in an `OriginPairingClient` instance field so reconnects use it. `sessionStore.session` stays A. wagmi keeps using A.
+4. **Consent (remote)** — desktop calls `originPairingClient.sendSignatureRequest(challenge, {signatureKind: "raw-assertion"})` with the deterministic merge-consent challenge for `{winner: A, loserAuthenticatorId: authId_B}`. The signature-request flows through the existing pairing infra, lands in mobile's `TargetSignatureModal`. Mobile's `useSignSignatureRequest` branches on `signatureKind`: the `"raw-assertion"` branch calls `WebAuthnP256.sign` with the challenge and returns the base64 assertion JSON. Desktop's promise resolves with that string.
+5. **Sign** — `useSendAddPassKeyTx` runs from session=A (local webauthn). wagmi signs locally with A. Bundler submits userOp adding `authId_B` to wallet A.
+6. **Settling** — `useMergeSettle` waits for receipt locally, POSTs `/merge/settle` from session=A (local webauthn — current gate passes as-is) with the consent signature received in step 4.
+7. **Success** — backend publishes `merge-completed` to both topics. Mobile (loser) applies the freshly minted local-webauthn session for B (now bound to wallet A) — its `TargetPairingClient` writes to sessionStore for the first time. Desktop is the winner and stays unchanged.
+
+The two branches share the same `MergeFlow` shell, the same step components, and identical visible copy. The differences live entirely inside the strategy hooks and the desktop's `applySession` flag.
 
 ---
 
-## Surface area changes (Phase 2 only)
+## End-to-end sequence (winner = mobile, the more involved branch)
 
-Phase 1 already lands: `kind` + `targetAuthenticatorHint` columns, the new email-conflict response shape (resolved via `AuthenticatorLookupOrchestrator.findByEmail`), `repointBinding`, extended `IdentityMergeService`, `WalletMergeOrchestrator.settle`, and the `identity_nodes` email storage. Phase 2 adds:
+```
+Desktop                          Backend                          Mobile
+session=A                                                         session=B (after switch-passkey, if needed)
+   │
+   │── POST /user/wallet/auth/email
+   │   conflict + targetAuthenticatorId=authId_B + targetWallet
+   │<──────────
+   │
+   │── GET /merge/preview?targetAuthenticatorId=authId_B
+   │   { winner: B, loser: A, loserAuthenticatorId: authId_A, … }
+   │<──────────
+   │
+   │── useLoserConsent({winner: B, loserAuthenticatorId: authId_A})
+   │   navigator.credentials.get on A → assertion → base64 JSON. Stash.
+   │
+   │── pairing WS: action=initiate, authenticatorHint=authId_B
+   │── ─────────► pairing-initiated { pairingId, pairingCode, originResumeToken }
+   │
+   │   QR + 6-digit code rendered                                          (user scans QR)
+   │
+   │                                                       ◄────────────  pairing WS: action=join, wallet=B's JWT
+   │                                                       backend checks pairing.authenticator_hint
+   │                                                       backend writes resolvedAt, …
+   │                                                       backend mints distant-webauthn JWT for B
+   │                                ◄────  publish target → "partner-connected"
+   │   "authenticated" {token, sdkJwt, wallet: distant-B}
+   │<──────────                              ─────────►  target-side handled (existing flow)
+   │   parkSession(A); setSession(distant-B); pairing.status="paired"
+   │
+   │── useSendAddPassKeyTx (wagmi, session=distant-B)
+   │   wagmi computes userOp hash, calls signHash → originPairingClient.sendSignatureRequest(hash)
+   │── ─────────► signature-request { id, request: hash, signatureKind: "onchain" }
+   │                                ─────────►  TargetSignatureModal prompts user
+   │                                              useSignSignatureRequest → signHashViaWebAuthN with B
+   │                                ◄────────  signature-response { id, signature: formatted }
+   │   Promise resolves, bundler submits userOp
+   │── waitForTransactionReceipt(8 confirmations)
+   │
+   │── POST /user/wallet/merge/settle
+   │   Auth header: distant-webauthn=B JWT
+   │   Body: { targetAuthenticatorId: authId_A, loserConsentSignature: <stashed A-assertion>, pairingId }
+   │
+   │                                  WalletMergeOrchestrator.settle runs:
+   │                                   - verifyConsentSignature(A-assertion, …)
+   │                                   - webAuthNValidatorReader.getPasskey(B, authId_A) → matches preview pubkey
+   │                                   - db.transaction:
+   │                                       repointBinding(authId_A, B, reason=merged)
+   │                                       mergeGroupsByWallet(winner=B, loser=A)
+   │                                   - mintForCredential(authId_A, walletAddress=B) → fresh session for desktop
+   │                                   - publish to origin topic: merge-completed { winner: B, loser: A, session, sdkJwt }
+   │                                   - publish to target topic: merge-completed { winner: B, loser: A }    (info only)
+   │  ◄─── 200 { status: "merged", winner, loser }
+   │
+   │   merge-completed (origin topic) — payload.session present
+   │   OriginPairingClient.handleMessage("merge-completed"):
+   │     sessionStore.setSession(session.session); setSdkSession(sdkJwt)
+   │     discardPreviousSession() — drop parked A
+   │     pairing.disconnect()
+   │   SuccessStep renders.
+   │
+                                                                  merge-completed (target topic)
+                                                                  TargetPairingClient.handleMessage("merge-completed"):
+                                                                    info only — render success card if a flow was active
+```
+
+When **winner = desktop**, the diagram is shorter:
+
+- No `parkSession` / `setSession` on desktop after `authenticated` (because `applySession=false`).
+- A single `signature-request` with `signatureKind: "raw-assertion"` carries the consent.
+- `addPassKey` is signed locally on desktop and `/merge/settle` is called from session=A. No backend gate relaxation.
+- `merge-completed` to target topic carries the loser session (for mobile). Origin topic gets the info-only variant.
+
+---
+
+## Surface area changes
 
 ### Backend
 
 | File | Change |
 |---|---|
-| `services/backend/src/domain/pairing/repositories/PairingConnectionRepository.ts` | `handleInitiateRequest`: persist `kind` + `targetAuthenticatorHint` from query. `handleJoinRequest`: enforce hint match; branch on `kind` (existing `"session"` path unchanged; new `"remote-sig"` emits `"remote-sig-paired"` with no JWT). |
-| `services/backend/src/domain/pairing/repositories/PairingRouterRepository.ts` | Add `merge-proposal`, `merge-consent`, `merge-completed` forwarding branches. Relax the `wallet.type === "distant-webauthn"` check to also accept origin-resume connections when `pairing.kind === "remote-sig"`. |
-| `services/backend/src/api/user/wallet/pairing/management.ts` | `GET /pairings/find/:id` returns `kind`, `targetAuthenticatorHint`, `targetWallet`. |
-| `services/backend/src/api/user/wallet/merge/preview.ts` *(new)* | `GET /user/wallet/merge/preview?pairingId=...`. |
-| `services/backend/src/api/user/wallet/merge/settle.ts` *(new)* | `POST /user/wallet/merge/settle` body `{ pairingId, onChainTxHash, consentSignature? }`. |
-| `services/backend/src/api/user/wallet/merge/status.ts` *(new)* | `GET /user/wallet/merge/status?pairingId=...` for the desktop double-check. |
-| `services/backend/src/api/user/wallet/auth/email.ts` | Conflict response gains `{ targetAuthenticatorId, targetWallet }`. |
+| `services/backend/src/domain/pairing/db/schema.ts` | New nullable column on `pairingTable`: `authenticator_hint: varchar`. Migration. |
+| `services/backend/src/domain/pairing/repositories/PairingConnectionRepository.ts` | `handleInitiateRequest`: read `authenticatorHint` from query, persist to row. `handleJoinRequest`: if `pairing.authenticator_hint` is set and `wallet.authenticatorId !== hint`, `ws.close(FORBIDDEN, "Authenticator mismatch")`. Other paths untouched. |
+| `services/backend/src/domain/pairing/repositories/PairingRouterRepository.ts` | `handleSignatureRequest`: forward `payload.signatureKind` (default `"onchain"`) through to the target topic. No new branch, just an extra field passed along. Add a single new server-emitter `publishMergeCompleted(pairingId, payload)` used by `WalletMergeOrchestrator.settle`. |
+| `services/backend/src/domain/pairing/dto/WebsocketDirectMessage.ts` | Add `signatureKind?: "onchain" \| "raw-assertion"` to `WsSignatureRequest` payload. Add `WsMergeCompletedTopicMessage`. |
+| `services/backend/src/api/user/wallet/pairing/management.ts` | `GET /pairings/find/:id` returns `authenticatorHint` so mobile can self-check before joining. |
+| `services/backend/src/api/user/wallet/merge/settle.ts` | Body gains optional `pairingId`. The local-webauthn gate (`isLocalWebAuthnSession`) is relaxed to accept distant-webauthn too — equivalent crypto proof, the consent verifier and on-chain readback are the real gates. ECDSA stays excluded. |
+| `services/backend/src/orchestration/identity/WalletMergeOrchestrator.ts` | `settle` accepts an optional `pairingId`. After the merge transaction commits (existing logic), always mint a fresh local-webauthn session for the loser credential (already done conditionally today via `mintForCredential`) and publish `merge-completed` to both pairing topics: loser-side topic with `{winner, loser, session, sdkJwt}`, winner-side with `{winner, loser}`. HTTP response shape unchanged. |
+| (optional) `services/backend/src/domain/pairing/db/schema.ts` | Partial unique index `(authenticator_hint) WHERE resolved_at IS NULL AND authenticator_hint IS NOT NULL` to fail-fast on concurrent merges targeting the same credential. |
+
+Nothing else. No new endpoints. No new tables.
 
 ### Frontend — `packages/wallet-shared`
 
 | File | Change |
 |---|---|
-| `pairing/clients/origin.ts` | New `initiateRemoteSig(opts)`. New `handleMessage` branches: `remote-sig-paired` (no session write), `merge-consent` (resolves a promise on the desktop's hook), `merge-completed` (resolves the "wait for merge" promise). |
-| `pairing/clients/target.ts` | New `handleMessage` branches: `merge-proposal` (sets state on the client, exposed via a hook), `merge-completed`. |
-| `pairing/clients/base.ts` | `ConnectionParams` `"initiate"` branch accepts `kind` + `targetAuthenticatorHint`; encoded as plain query params. |
-| `pairing/hook/usePairingInfo.tsx` | Surfaces the new fields. |
-| `stores/sessionStore.ts` | New `previousSession` slot, `pushSession`, `popSession`. |
+| `pairing/clients/base.ts` | `ConnectionParams.initiate` branch accepts `authenticatorHint`. |
+| `pairing/clients/origin.ts` | `initiatePairing({ authenticatorHint, applySession })`. New private field `pendingDistantToken: string \| null` for the `applySession=false` mode. `handleMessage("authenticated")` branches on `applySession`: `true` → today's path (also `parkSession` first); `false` → call `forceConnect(() => connect({wallet: token}))` to upgrade WS, store token in `pendingDistantToken`, set `status: "paired"`, skip `setSession`. `reconnect()` uses `pendingDistantToken` if present before falling back to sessionStore. `handleMessage("merge-completed")` — apply pushed session if present, otherwise render terminal state. |
+| `pairing/clients/target.ts` | `handleMessage("merge-completed")` — apply pushed session if present; emit a store event so the active mobile-side merge flow can transition to success. |
+| `pairing/clients/target.ts` (signature-request handling) | When server forwards `signatureKind`, surface it in `TargetPairingPendingSignature`. |
+| `pairing/types/ws.ts` | `WsSignatureRequest` payload gains `signatureKind`. `WsTargetMessage` / `WsOriginMessage` gain `merge-completed`. `WsTopicSignatureRequest` is extended in the same way. |
+| `pairing/types/index.ts` (`TargetPairingPendingSignature`) | Optional `signatureKind` field. |
+| `pairing/hook/useSignSignatureRequest.tsx` | Branch on `request.signatureKind`. Default → existing `signHashViaWebAuthN` + return Hex. `"raw-assertion"` → call `WebAuthnP256.sign({challenge: request.request, credentialId: session.authenticatorId})` and return `btoa(JSON.stringify({id: raw.id, response: {metadata, signature}}))`. Either way it lands in `sendSignatureResponse` — type the response payload to carry either shape. |
+| `pairing/clients/origin.ts` (`sendSignatureRequest`) | Generic over the return type per `signatureKind`. For `"raw-assertion"` the resolved value is the base64 string, not a Hex. |
+| `pairing/hook/usePairingInfo.tsx` | Surface `authenticatorHint`. |
+
+`sessionStore.parkSession` / `popSession` / `discardPreviousSession` are already in place and reused as-is. `usePersistentPairingClient` is not extended for the `applySession=false` case — known limitation: mid-merge tab refresh on the desktop-is-winner branch drops the pairing. Acceptable given the bounded duration of the flow.
 
 ### Frontend — `apps/wallet`
 
 | File | Change |
 |---|---|
-| `app/module/settings/component/AddEmail/index.tsx` | Conflict branch: shows a "Start merge" CTA wired to `originPairingClient.initiateRemoteSig`. |
-| `app/module/walletMerge/component/MergeStartPage/` *(new)* | Desktop page: QR + status banner + preview + winner-side execution. Mounted at `/merge/start` (or as the conflict view of the AddEmail page — TBD). |
-| `app/module/walletMerge/component/MergeApprovalPairing/` *(new)* | Mobile page rendered when `pairingInfo.kind === "remote-sig"`. Handles auth-match check, optional switch-passkey flow, preview display, confirm action. |
-| `app/module/walletMerge/hook/useSwitchAuthenticator.ts` *(new)* | Wraps `sessionStore.pushSession` + `useLogin` + restore on failure. |
-| `app/module/walletMerge/hook/useMergeFinaliseLocal.ts` *(new)* | Builds the `addPassKey` calldata, submits via wagmi, calls `/merge/settle`. Used by mobile (winner = B) and desktop (winner = A) symmetrically. |
-| `app/routes/_wallet/_protected-fullscreen/pairing.tsx` | Branches on `pairingInfo.kind`: existing `PairingPage` for `session`, new `MergeApprovalPairing` for `remote-sig`. |
-| `app/module/pairing/component/TargetSignatureModal/index.tsx` | No change for Phase 2. (`merge-proposal` doesn't go through this modal — it lives in `MergeApprovalPairing`.) |
+| `app/module/settings/component/AddEmail/ConflictStep.tsx` | New secondary CTA "Use my other device" that resolves to a new `FlowState` (`{kind: "merging", mode: "remote"}`). The existing "Combine accounts" CTA keeps its current behavior with `mode: "local"`. |
+| `app/module/settings/component/AddEmail/index.tsx` | Thread the `mode` through to `MergeFlow`. |
+| `app/module/walletMerge/strategy/useLocalMergeStrategy.ts` *(new)* | Wraps today's hooks (`useLoserConsent`, `useSwitchAuthenticator`, `useSendAddPassKeyTx`, `useMergeSettle`) into a strategy interface. |
+| `app/module/walletMerge/strategy/useRemoteMergeStrategy.ts` *(new)* | Pairing-driven implementation. Internals: `useInitiatePairing({applySession})`, `useRemoteLoserConsent({signatureKind: "raw-assertion"})`, `useWaitForMergeCompleted()`. The `addPassKey` and `settle` hooks are reused as-is — wagmi + the existing `useMergeSettle` handle both branches because their behavior is fully driven by the live session. |
+| `app/module/walletMerge/component/MergeFlow/index.tsx` | Accept a `strategy` prop. Replace direct hook usage with strategy calls at the boundary actions. Visible step ordering unchanged. |
+| `app/module/walletMerge/component/SwitchStep/index.tsx` | Render variant: `local` shows today's "switch passkey" copy + biometric prompt; `remote-applySession-true` shows pair QR + status banner + parks A on `authenticated`; `remote-applySession-false` is a no-op step (skipped in `MergeFlow` because requester is winner, mirroring today's `!needsSwitch`). |
+| `app/module/walletMerge/component/ConsentStep/index.tsx` | Render variant: `local` (today) prompts loser passkey on this device; `remote` (only used when desktop is the winner) renders "Confirm on your other device" + the pair QR + waits for the remote consent assertion. |
+| `app/routes/_wallet/_protected-fullscreen/pairing.tsx` | Branch on `pairingInfo.authenticatorHint`: if present, mount `MergeApprovalPairing` instead of the default `PairingPage`. |
+| `app/module/walletMerge/component/MergeApprovalPairing/` *(new)* | Mobile-side entry. Step 1 verifies `currentSession.authenticatorId === pairingInfo.authenticatorHint`; on mismatch, offer the existing switch-passkey flow (`parkSession` + `useLogin`). On match (or after switch), `joinPairing(id, pairingCode)`. Then either:<br>- Renders `TargetSignatureModal` as today for the merge-consent signature-request (covers winner=desktop branch).<br>- Renders `MergeFlow` with `useRemoteMergeStrategy({ side: "target" })` for the winner=mobile branch — mobile runs the full mobile-side merge UI (preview confirmation, sign+settle locally).<br>The branch decision comes from a `merge-proposal` ... no, see Open Questions §1: we don't need an explicit "this is a remote merge" message because `authenticatorHint` is enough to identify the intent; the mobile-side branch is decided locally from the preview the mobile fetches via `useMergePreview(authId_A)`. |
+
+---
+
+## Backend changes — concrete diffs
+
+### `pairingTable` migration
+
+```ts
+authenticatorHint: varchar("authenticator_hint"), // nullable
+// optional, fail-fast on concurrent merges:
+// uniqueIndex(...) where authenticator_hint is not null and resolved_at is null
+```
+
+### `PairingConnectionRepository.handleInitiateRequest`
+
+```diff
+- const { action, pairingCode, id, originResumeToken, originNode: originNodeRaw } = query;
++ const { action, pairingCode, id, originResumeToken, originNode: originNodeRaw, authenticatorHint } = query;
+
+  await db.insert(pairingTable).values({
+      pairingId,
+      pairingCode,
+      originUserAgent: userAgent ?? "Unknown",
+      originName: deviceName,
+      originNode,
++     authenticatorHint: authenticatorHint || null,
+  });
+```
+
+### `PairingConnectionRepository.handleJoinRequest`
+
+```diff
+  if (pairing.resolvedAt) {
+      ws.close(WsCloseCode.FORBIDDEN, "Pairing already resolved");
+      return;
+  }
+
++ if (pairing.authenticatorHint && wallet.authenticatorId !== pairing.authenticatorHint) {
++     ws.close(WsCloseCode.FORBIDDEN, "Authenticator mismatch");
++     return;
++ }
+
+  if (wallet.type !== undefined && wallet.type !== "webauthn") {
+      ws.close(WsCloseCode.FORBIDDEN, "Can't resolve non-webauthn wallet");
+      return;
+  }
+```
+
+### `signature-request` payload
+
+```diff
+  payload: {
+      id: string;
+      request: Hex;
+      context?: object;
++     signatureKind?: "onchain" | "raw-assertion";
+  };
+```
+
+Forwarded as-is by `PairingRouterRepository.handleSignatureRequest`. `signature-response` payload similarly gains the same field (so the receiver knows how to interpret).
+
+### `settle` relaxation + `merge-completed` emission
+
+```diff
+- if (!isLocalWebAuthnSession(walletSession)) { throw HttpError.badRequest("MERGE_UNSUPPORTED_SESSION", …); }
++ if (walletSession.type === "ecdsa") { throw HttpError.badRequest("MERGE_UNSUPPORTED_SESSION", …); }
+
+  // ... existing settle logic ...
+
++ if (params.pairingId) {
++     await pairingRepo.publishMergeCompleted({
++         pairingId: params.pairingId,
++         loserAuthenticatorId: preview.loserAuthenticatorId,
++         winner: preview.winner,
++         loser: preview.loser,
++         loserSessionPayload: { session, sdkJwt }, // minted from authId_loser
++     });
++ }
+```
+
+The HTTP response shape stays `{ status: "merged", winner, loser, session? }`. `session` is still returned when `requesterIsLoser` (matches today's contract), redundant but harmless when the WS event also delivered it.
+
+---
+
+## Post-merge session refresh — symmetric design
+
+`merge-completed` is the only new server-emitted topic message. Backend publishes it after `settle` succeeds, to **both** topics:
+
+- **Loser-side topic** payload: `{ winner, loser, session, sdkJwt }`. A freshly minted **local-webauthn** session keyed to the loser credential, now bound to the winner wallet via `repointBinding`.
+- **Winner-side topic** payload: `{ winner, loser }`. Informational only.
+
+Loser-side clients (`OriginPairingClient` when desktop is the loser, `TargetPairingClient` when mobile is the loser) handle this by:
+
+```ts
+sessionStore.setSession(payload.session);
+sessionStore.setSdkSession(payload.sdkJwt);
+sessionStore.discardPreviousSession(); // drop parked A if any
+// emit a "merge-completed" event on the client store for the active flow UI
+```
+
+Effect:
+- **Desktop loser** (winner=mobile): desktop transitions from session=distant-webauthn=B (during the on-chain step) to session=local-webauthn{authId_A, address=B}. The A passkey is on desktop, so wagmi can sign directly from now on. No further pairing dependence.
+- **Mobile loser** (winner=desktop): mobile transitions from session=local-webauthn{authId_B, address=B-as-of-pre-merge} to session=local-webauthn{authId_B, address=A}. Same local-webauthn shape, just rebound.
+
+Both end states match the local same-device merge's "loser session is replaced with a freshly minted JWT pointing at the merged wallet" contract.
 
 ---
 
 ## Failure modes
 
-| Scenario | Behavior |
+| Scenario | Behaviour |
 |---|---|
-| Mobile cancels in the "switch passkey" modal | `popSession` restores the previous session; pairing not joined; desktop's `awaiting-target` state times out via the standard 10-min unresolved pairing cleanup cron. |
-| Mobile cancels on the confirm screen | Mobile sends `signature-reject` (existing) or just disconnects; desktop transitions back to `awaiting-target` until user retries or cleanup fires. |
-| Mobile's on-chain `addPasskey` reverts (winner = B) | Mobile shows error, does NOT call `/merge/settle`. Pairing stays in `paired` state until cron cleanup. Desktop never sees `merge-completed`. User retries the confirm action. |
-| Desktop's on-chain `addPasskey` reverts (winner = A) | Same as above, swap roles. Consent signature stays valid for the pairing's lifetime — retry doesn't require re-prompting mobile. |
-| `/merge/settle` called with a missing or invalid `loserConsentSignature` | 401 with `MERGE_INVALID_CONSENT`. Pairing stays in `paired` state, no on-chain read or DB write happens. Cross-references Phase 1's identical handling — the verifier is shared. UI re-prompts the loser passkey and retries. |
-| `/merge/settle` succeeds on-chain verification but PG merge fails | Orchestrator marks pairing state, reconciliation cron retries. Each step idempotent. |
-| `/merge/settle` succeeds but `merge-completed` push to topics fails | Desktop's status-polling endpoint covers it. |
-| Mobile disconnects after sending `merge-consent` but before receiving `merge-completed` | Desktop continues, submits userOp + settle. On reconnect (origin or target), backend replays the latest `merge-completed` event. (Add: `PairingConnectionRepository.handleReconnection` replays terminal state events similarly to how it replays unprocessed signature requests today.) |
-| Desktop disconnects after sending `merge-proposal` | Mobile holds the proposal locally; desktop reconnects via `originResumeToken`; mobile retries the proposal via `merge-proposal` re-emission if needed. |
-| `previousSession` JWT is expired by the time mobile pops it | Next backend call returns 401 → existing `backendClient.onResponse` clears the session → mobile lands on `/register`. User has to log back in once. |
-| Two `remote-sig` pairings targeting the same wallet B concurrently | The second `action=join` will conflict on `resolvedAt is null` and be rejected. First-write-wins. Optional: add a partial unique on `(target_wallet) WHERE state='pending' AND kind='remote-sig'` to fail-fast on the requester side too. |
+| Mobile cancels the switch-passkey modal before joining | `popSession` restores the previous mobile session. Pairing not joined. Desktop times out via the standard 10-min unresolved pairing cleanup cron. |
+| Mobile cancels the `merge-consent` `signature-request` (winner=desktop branch) | Existing `signature-reject` path fires. Desktop's `sendSignatureRequest` promise rejects with `user-declined`. UI offers retry or back to ConflictStep. |
+| Mobile signs the wrong credential in `raw-assertion` mode (only possible if hint check is bypassed somehow) | `verifyConsentSignature` at `/merge/settle` rejects with `MERGE_INVALID_CONSENT`. No DB write, no on-chain effect. |
+| On-chain `addPassKey` reverts (winner=desktop branch) | Local error from wagmi. Settle is never called. Consent assertion is fresh on each retry (the deterministic challenge accepts ±1h slot). Retry the SignStep. |
+| On-chain `addPassKey` reverts (winner=mobile branch) | wagmi error tunneled back through `signature-request` rejection. Same recovery. |
+| `/merge/settle` succeeds on-chain but PG merge fails | Today: idempotent. Retry settle on the same inputs. `merge-completed` only emitted on full success. |
+| Desktop disconnects after sending consent (winner=mobile branch) | The userOp + settle both happen on mobile, independently of desktop's WS state. Mobile sends `merge-completed` to origin topic — buffered server-side (existing topic semantics) and replayed when desktop reconnects via `originResumeToken` (same path as today's signature-request replay). |
+| Mobile disconnects mid-flow | The next `handleReconnection` already re-publishes outstanding signature requests. We extend the same path to also re-emit the last `merge-completed` for any of the wallet's pairings whose `state` is still pending the loser-side ack. |
+| `pairingId` missing on settle body | settle still works (legacy / local-merge path). No `merge-completed` emission. |
+| Two desktops initiating remote merges to the same B | Partial unique index on `(authenticator_hint) WHERE resolved_at IS NULL` rejects the second `INSERT`. Without the index, the first `join` wins and the second `handleJoinRequest` would also succeed if the second pairing has a different `pairingId` — undefined behavior. Recommended to add the index. |
 
 ---
 
 ## Why this is the right shape
 
-- **No new shared infra.** The pairing WS, the topics, the push fallback, the reconnect logic, the cleanup cron — all reused. Phase 2 only adds two pairing columns, three message types, and three REST endpoints.
-- **One device, one transaction.** The winner's device builds, signs, and submits the `addPassKey` userOp with its own wagmi client. No hash crosses the wire for the on-chain step. Failures are localised (a revert on mobile doesn't leave desktop in a half-state, and vice versa).
-- **Consent is explicit on both branches.** Loser consent is an explicit WebAuthn assertion in both winner-side branches, signed over a backend-deterministic challenge that includes the loser's authenticator id (`frak-merge-consent:{UTC hour}:{winner_lowercased}:{loser authid}`). Server-side verification rejects before any on-chain read or DB write. The earlier "mobile's transaction IS the consent" simplification was unsafe: it only proved the winner-side owner approved adding a co-signer to their own account, never the loser-side owner whose identity graph is being absorbed.
-- **The hint enforcement is server-side**, so a mobile UI bug can't accidentally pair with the wrong passkey. The `target_authenticator_hint` is checked at `action=join` against the JWT's `authenticatorId`.
-- **Session isolation is enforced by skipping the `setSession` call** on the origin side for `kind = "remote-sig"`. There is no concept of a "temporary session" — desktop's session simply never changes.
+- **Almost no new infra.** One nullable pairing column, one optional signature-request field, one server-emitted event. The pairing transport, signature-request lifecycle, topic forwarding, reconnect logic, cleanup cron — all unchanged.
+- **Reuses the existing wagmi-over-pairing connector.** When desktop is the loser and swaps to distant-webauthn=B, every wagmi operation (preview transactions, gas estimation, userOp signing) already routes correctly through `frakPairedWalletSmartAccount`. Zero new on-chain code.
+- **Reuses the existing `MergeFlow` step shell.** Same components, same ordering, same animations. The user sees one extra option on the conflict screen ("Use my other device") and otherwise lives in the same flow they would on a same-device merge.
+- **Each device runs `addPassKey` from a session it actually owns.** No userOp hash crosses the wire as anything other than what `wagmi` already routes through `signature-request`. The "winner device builds, signs, and submits the on-chain step" property is preserved.
+- **Consent is explicit on both branches** via the same deterministic challenge format. The verifier (`WebAuthNService.verifyConsentSignature`) is unchanged. The only difference is which device's WebAuthn ceremony produces the assertion.
+- **Loser-side JWT refresh is symmetric.** Whether desktop or mobile is the loser, the backend pushes the freshly minted local-webauthn session through the same `merge-completed` mechanism, mirroring the Phase 1 HTTP `MergeSettleResponse.session` contract.
+- **The hint enforcement is server-side**, so a mobile UI bug can't accidentally pair with the wrong passkey.
+- **Settle's session-type gate stays meaningful.** Distant-webauthn is just WebAuthn signing routed through a paired device — same crypto proof. The relaxation is from "local webauthn only" to "any webauthn (local or distant)". ECDSA stays excluded.
 
 ---
 
 ## Open questions for review
 
-1. **Where does the merge proposal live before `/merge/settle` runs?** Today the document assumes the preview is recomputed by the backend at settle time. If the merge takes minutes (likely fine) the snapshot can drift — usually irrelevant because the preview is mostly counts. Decision: recompute on settle but store the preview in a `device_pairing.preview` JSONB column for the desktop's display + audit.
+1. **Does mobile need an explicit "you're joining a merge" message?** Today, `pairingInfo.authenticatorHint` being non-null is the only signal that this is a merge-mode pairing. Mobile's `MergeApprovalPairing` route key off that and renders the merge UI. No new `merge-proposal` message is needed because mobile fetches the preview itself via `GET /merge/preview?targetAuthenticatorId=<authId_A>` (mobile's session is B, the preview is symmetric). One round-trip vs. forwarding the preview through the WS — preference for the round-trip because it avoids cross-device staleness if weights change between desktop's preview and mobile's display.
 
-2. **Should the loser's smart account be marked "merged" anywhere on-chain?** No on-chain primitive supports this; the loser's account still exists and is still controllable by anyone holding its passkey. Documentation must surface this. Phase 3 could add a "sweep funds to winner" helper.
+2. **Should `applySession=false` mode persist its WS-only token in sessionStorage so a desktop tab refresh during a winner=desktop remote merge can recover?** Probably yes for symmetry with the existing `pairing` persist slot, but it's a niche path — the merge takes ~tens of seconds, refresh-mid-flow is rare. Defer to a follow-up.
 
-3. **Does `merge-completed` replay on reconnect?** Recommend yes — implement by reusing the `pairingSignatureRequestTable` replay pattern: add a `pairing_event` table with `(pairingId, eventType, payload, sentAt)` for terminal events, and have `handleReconnection` replay unread events to each side.
+3. **Do we want `pairingId` in the `/merge/settle` body to be required when the pairing was opened with `authenticator_hint`, so we always emit `merge-completed`?** Recommended yes. The orchestrator can lookup the active pairing by `authenticator_hint` if the body omits it, but explicit is safer.
 
-4. **Multiple email associations after merge.** Resolved in Phase 1: emails live as `identity_nodes` rows on the wallet's identity group, not on the authenticator. The loser's email node migrates into the winner's group with the rest of the bulk node move. If both sides had a different email, the winner ends up holding multiple active email nodes; `findEmailForGroup` orders by `created_at ASC` so the original (winner's) email wins deterministically. The global unique on `(identity_type, identity_value, merchant_id)` guarantees no two groups can hold the same email value, so the merge can never trigger a constraint conflict on the email row itself.
+4. **Mobile-side asset summary for the winner=desktop branch** — Phase 1 punts on this (loser-balance check fails when current session isn't the loser). Optional Phase 2 addition: mobile pushes a signed asset-summary payload (or just a count) over the WS so desktop's `AssetMigrationStep` can render the same list it would in the local flow. Not blocking.
 
-5. **What if the user does the same-device fast path mid-Phase-2?** A user on Device X with both passkeys in the OS keychain could complete a merge entirely locally without needing the pairing flow. Phase 1 ships that local fast path; if it fires for some users they skip Phase 2 entirely. No conflict.
+5. **Push notification when desktop is the loser and mobile receives the implicit "go sign" event** — today's `signature-request` already triggers a push (`PairingRouterRepository.handleSignatureRequest` → `notificationsService.sendNotification`). The winner=mobile branch piggybacks on that path because the userOp signing IS a signature-request. The winner=desktop branch (consent over WS) also flows through the same handler, so it gets the push for free. Confirmed by inspection — no extra wiring needed.
 
 ---
 
@@ -715,7 +381,7 @@ Phase 1 already lands: `kind` + `targetAuthenticatorHint` columns, the new email
 
 - Setting up recovery for the merged wallet (Phase 3).
 - Promoting the loser's passkey to primary via `setPrimaryPassKey` (Phase 3).
-- Sweeping ERC-20 / native funds from the loser's address (Phase 3 / manual for now).
-- Reattribution of historical `asset_logs` with `onchain_tx_hash` set (impossible — on-chain state is final).
+- Sweeping ERC-20 / native funds from the loser's address (Phase 3 / manual).
+- Reattribution of historical `asset_logs` with `onchain_tx_hash` set.
 - Cross-merchant identity merges that aren't keyed by wallet address.
-- Allowing more than one pending merge per target wallet at a time.
+- Allowing more than one pending remote-sig merge per target wallet at a time (the partial unique index forbids it).

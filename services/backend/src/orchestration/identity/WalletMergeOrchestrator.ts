@@ -238,7 +238,7 @@ export class WalletMergeOrchestrator {
         //    TTL, so we rely on that for staleness rather than chasing the
         //    new anchor group id back through the repository to issue a
         //    targeted `invalidateWeight(groupId)`.
-        await db.transaction(async (tx) => {
+        const mergeResult = await db.transaction(async (tx) => {
             await this.walletBindingRepository.repointBinding({
                 credentialId: preview.loserAuthenticatorId,
                 chainId: currentChainId,
@@ -246,12 +246,26 @@ export class WalletMergeOrchestrator {
                 reason: "merged",
                 tx,
             });
-            await this.identityMergeService.mergeGroupsByWallet({
+            return this.identityMergeService.mergeGroupsByWallet({
                 winnerWallet: preview.winner,
                 loserWallet: preview.loser,
                 tx,
             });
         });
+
+        // Evict cached `groupId → wallet` entries for every absorbed group
+        // (the loser plus any group it had previously absorbed). Without
+        // this, a caller holding a stale `loserGroupId` reference would
+        // resolve to the loser wallet for up to the cache TTL (60s) even
+        // though the group is now deleted and its identity nodes have been
+        // re-anchored to the winner. The merge tx itself doesn't go through
+        // the repository, so the cache never observed the deletion.
+        for (const absorbedGroupId of [
+            ...mergeResult.mergedGroupIds,
+            ...mergeResult.previouslyMergedGroupIds,
+        ]) {
+            this.identityRepository.invalidateCachesForGroup(absorbedGroupId);
+        }
 
         log.info(
             {
