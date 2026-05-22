@@ -117,6 +117,7 @@
                 "description": "This email is already linked to another wallet. Use a different email or come back later.",
                 "descriptionMergeable": "This email is already on another of your accounts. You can combine them into one — quick, two confirmations, all on this device.",
                 "combine": "Combine my accounts",
+                "combineRemote": "Use my other device",
                 "useDifferent": "Use a different email",
                 "back": "Back to my profile"
             },
@@ -185,7 +186,13 @@
                 },
                 "verify": "Confirm",
                 "retry": "Try again",
-                "error": "We couldn't confirm with the other passkey on this device. Make sure it's available here, then try again."
+                "error": "We couldn't confirm with the other passkey on this device. Make sure it's available here, then try again.",
+                "remote": {
+                    "title": "Confirm on your other device",
+                    "description": "Scan this QR code with the device that holds your other passkey and approve the prompt there. We'll continue automatically.",
+                    "preparing": "Preparing a secure connection…",
+                    "error": "We couldn't reach your other device. Try again, or pick a different email."
+                }
             },
             "switch": {
                 "title": "Open your other account",
@@ -196,7 +203,13 @@
                 },
                 "confirm": "Open {{wallet}}",
                 "retry": "Try again",
-                "error": "We couldn't open the other account on this device. Make sure its passkey is available here, then try again."
+                "error": "We couldn't open the other account on this device. Make sure its passkey is available here, then try again.",
+                "remote": {
+                    "title": "Connect your other device",
+                    "description": "Scan this QR code with the device that holds your other passkey. We'll use it to authorise the combine — no need to switch passkeys here.",
+                    "preparing": "Preparing a secure connection…",
+                    "error": "We couldn't reach your other device. Try again, or pick a different email."
+                }
             },
             "sign": {
                 "title": "Authorise the combine",
@@ -492,6 +505,11 @@
             },
             "cancel": "Cancel",
             "confirm": "Confirm the code",
+            "switchPasskey": {
+                "title": "Different passkey required",
+                "description": "This pairing was started with another passkey from your wallet. Switch to it on this device to continue.",
+                "confirm": "Switch passkey"
+            },
             "pendingPairing": {
                 "title": "Pairing in progress",
                 "description": "Please authenticate to continue.",

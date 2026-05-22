@@ -115,6 +115,7 @@
                 "description": "Cet e-mail est déjà associé à un autre portefeuille. Utilise-en un autre, ou reviens plus tard.",
                 "descriptionMergeable": "Cet e-mail est déjà sur un autre de tes comptes. Tu peux les combiner en un seul — rapide, deux confirmations, tout depuis cet appareil.",
                 "combine": "Combiner mes comptes",
+                "combineRemote": "Utiliser mon autre appareil",
                 "useDifferent": "Utiliser un autre e-mail",
                 "back": "Retour au profil"
             },
@@ -183,7 +184,13 @@
                 },
                 "verify": "Confirmer",
                 "retry": "Réessayer",
-                "error": "Impossible de confirmer avec l'autre passkey sur cet appareil. Vérifie qu'elle est bien disponible ici, puis réessaie."
+                "error": "Impossible de confirmer avec l'autre passkey sur cet appareil. Vérifie qu'elle est bien disponible ici, puis réessaie.",
+                "remote": {
+                    "title": "Confirme sur ton autre appareil",
+                    "description": "Scanne ce QR code avec l'appareil qui contient ton autre passkey et valide la demande là-bas. On continue automatiquement.",
+                    "preparing": "Préparation d'une connexion sécurisée…",
+                    "error": "Impossible de joindre ton autre appareil. Réessaie, ou choisis un autre e-mail."
+                }
             },
             "switch": {
                 "title": "Ouvre ton autre compte",
@@ -194,7 +201,13 @@
                 },
                 "confirm": "Ouvrir {{wallet}}",
                 "retry": "Réessayer",
-                "error": "Impossible d'ouvrir l'autre compte sur cet appareil. Vérifie que sa passkey est disponible ici, puis réessaie."
+                "error": "Impossible d'ouvrir l'autre compte sur cet appareil. Vérifie que sa passkey est disponible ici, puis réessaie.",
+                "remote": {
+                    "title": "Connecte ton autre appareil",
+                    "description": "Scanne ce QR code avec l'appareil qui contient ton autre passkey. On l'utilisera pour autoriser la combinaison — pas besoin de changer de passkey ici.",
+                    "preparing": "Préparation d'une connexion sécurisée…",
+                    "error": "Impossible de joindre ton autre appareil. Réessaie, ou choisis un autre e-mail."
+                }
             },
             "sign": {
                 "title": "Autorise la combinaison",
@@ -490,6 +503,11 @@
             },
             "cancel": "Annuler",
             "confirm": "Confirmer le code",
+            "switchPasskey": {
+                "title": "Autre passkey requise",
+                "description": "Cet appairage a été lancé avec une autre passkey de ton portefeuille. Change-en pour continuer sur cet appareil.",
+                "confirm": "Changer de passkey"
+            },
             "pendingPairing": {
                 "title": "Jumelage en cours",
                 "description": "Veuillez vous authentifier pour continuer.",

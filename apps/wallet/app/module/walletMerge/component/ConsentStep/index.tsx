@@ -1,50 +1,76 @@
 import { Box } from "@frak-labs/design-system/components/Box";
 import { Button } from "@frak-labs/design-system/components/Button";
 import { Card } from "@frak-labs/design-system/components/Card";
+import { Spinner } from "@frak-labs/design-system/components/Spinner";
 import { Stack } from "@frak-labs/design-system/components/Stack";
 import { Text } from "@frak-labs/design-system/components/Text";
-import { useCallback } from "react";
+import { PairingQrCode, PairingStatus } from "@frak-labs/wallet-shared";
+import { useCallback, useEffect, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import type { Address } from "viem";
 import { Back } from "@/module/common/component/Back";
 import { PageLayout } from "@/module/common/component/PageLayout";
 import { Title } from "@/module/common/component/Title";
-import { useLoserConsent } from "../../hook/useLoserConsent";
+import type { LoserConsentMutation, MergeStrategy } from "../../strategy/types";
 import * as styles from "./index.css";
 
 type ConsentStepProps = {
     winner: Address;
     loserAuthenticatorId: string;
-    /** Called with the base64 signature once the user confirms locally. */
+    /** Called with the base64 signature once the consent has been signed. */
     onConfirmed: (loserConsentSignature: string) => void;
     onBack: () => void;
+    /** Loser-consent mutation supplied by the active merge strategy. */
+    consent: LoserConsentMutation;
+    /** Active merge strategy — used to surface the pairing QR/status when
+     *  this step needs to wait for a remote signer. */
+    strategy: MergeStrategy;
+    /**
+     * `true` when the consent must come from the paired device (desktop is
+     * the merge winner, loser passkey lives on mobile). The step kicks the
+     * mutation off automatically on mount and renders the pair QR + status
+     * while waiting for the mobile to scan + sign.
+     */
+    remoteConsent: boolean;
 };
 
 /**
- * Single-purpose step that asks the user to confirm on the *loser* passkey:
+ * Single-purpose step that gathers the loser's webauthn consent.
  *
- *  - It's the only place a same-device merge cannot bypass: the loser side
- *    must produce a cryptographic consent over a backend-deterministic
- *    challenge before settle accepts the merge.
- *  - It doubles as the local-availability probe — if the OS doesn't surface
- *    the loser credential on this device, the `navigator.credentials.get`
- *    prompt fails and we can fall back to the "use your other device"
- *    placeholder (Phase 2 closes this gap with cross-device pairing).
+ *  - Local consent (default): the user confirms on the *loser* passkey on
+ *    this device. It's the only place a same-device merge cannot bypass:
+ *    the loser side must produce a cryptographic consent over a backend-
+ *    deterministic challenge before settle accepts the merge. Also doubles
+ *    as the local-availability probe — if the OS doesn't surface the loser
+ *    credential locally, the `navigator.credentials.get` prompt fails and
+ *    we fall back to the "use your other device" path.
  *
- * Failure surface: any biometric cancel or "no credential available" lands
- * here as a retryable error. The mutation's `gcTime: 0` means each retry
- * is a fresh prompt, no stale signature is ever reused.
+ *  - Remote consent (cross-device merge, desktop is winner): the loser
+ *    passkey lives on the paired mobile. The strategy mutation drives the
+ *    pairing handshake and forwards the consent challenge as a
+ *    `signatureKind: "raw-assertion"` signature-request, ultimately
+ *    resolving with the same base64 assertion the local flow would
+ *    produce. This step renders the QR + status banner while waiting; no
+ *    biometric prompt is fired on this device.
+ *
+ * Failure surface: any biometric cancel or "no credential available"
+ * lands here as a retryable error. The mutation's `gcTime: 0` means each
+ * retry is a fresh prompt, no stale signature is ever reused.
  */
 export function ConsentStep({
     winner,
     loserAuthenticatorId,
     onConfirmed,
     onBack,
+    consent,
+    strategy,
+    remoteConsent,
 }: ConsentStepProps) {
     const { t } = useTranslation();
-    const consent = useLoserConsent();
 
-    const onVerify = useCallback(() => {
+    const startedRef = useRef(false);
+
+    const runMutation = useCallback(() => {
         consent.mutate(
             { winner, loserAuthenticatorId },
             {
@@ -54,6 +80,33 @@ export function ConsentStep({
             }
         );
     }, [consent, winner, loserAuthenticatorId, onConfirmed]);
+
+    // Remote consent auto-fires on mount — the user is being asked to
+    // approve on the OTHER device, so there's no local CTA to click first.
+    // Local consent still gates behind the explicit "verify" button.
+    useEffect(() => {
+        if (!remoteConsent) return;
+        if (startedRef.current) return;
+        startedRef.current = true;
+        runMutation();
+    }, [remoteConsent, runMutation]);
+
+    if (remoteConsent) {
+        return (
+            <RemoteConsentBody
+                strategy={strategy}
+                isError={consent.isError}
+                onRetry={() => {
+                    startedRef.current = false;
+                    consent.reset();
+                    strategy.remote?.onRetry();
+                    startedRef.current = true;
+                    runMutation();
+                }}
+                onBack={onBack}
+            />
+        );
+    }
 
     return (
         <PageLayout
@@ -65,7 +118,7 @@ export function ConsentStep({
                         variant="primary"
                         size="large"
                         width="full"
-                        onClick={onVerify}
+                        onClick={runMutation}
                         loading={consent.isPending}
                         disabled={consent.isPending}
                     >
@@ -99,6 +152,85 @@ export function ConsentStep({
                     <Card variant="muted" padding="default">
                         <Text variant="bodySmall" color="error">
                             {t("wallet.merge.consent.error")}
+                        </Text>
+                    </Card>
+                )}
+            </Stack>
+        </PageLayout>
+    );
+}
+
+/**
+ * Render-only body for the cross-device consent variant. Reads the
+ * pairing QR + status straight off the strategy so the strategy stays the
+ * single source of truth for the remote handshake.
+ */
+function RemoteConsentBody({
+    strategy,
+    isError,
+    onRetry,
+    onBack,
+}: {
+    strategy: MergeStrategy;
+    isError: boolean;
+    onRetry: () => void;
+    onBack: () => void;
+}) {
+    const { t } = useTranslation();
+    const pairingInfo = strategy.remote?.pairingState.pairing;
+    const status = strategy.remote?.pairingState.status ?? "idle";
+
+    return (
+        <PageLayout
+            back={<Back onClick={onBack} />}
+            footer={
+                isError ? (
+                    <Box className={styles.footer}>
+                        <Button
+                            type="button"
+                            variant="primary"
+                            size="large"
+                            width="full"
+                            onClick={onRetry}
+                        >
+                            {t("wallet.merge.consent.retry")}
+                        </Button>
+                    </Box>
+                ) : undefined
+            }
+        >
+            <Stack space="l" className={styles.body}>
+                <Stack space="s">
+                    <Title size="page">
+                        {t("wallet.merge.consent.remote.title")}
+                    </Title>
+                    <Text variant="body" color="secondary">
+                        {t("wallet.merge.consent.remote.description")}
+                    </Text>
+                </Stack>
+
+                {pairingInfo ? (
+                    <Stack space="m" align="center">
+                        <PairingQrCode
+                            value={`${process.env.FRAK_WALLET_URL ?? ""}/p/${pairingInfo.id}`}
+                            size={200}
+                            errorCorrection="quartile"
+                        />
+                        <PairingStatus status={status} />
+                    </Stack>
+                ) : (
+                    <Stack space="m" align="center">
+                        <Spinner />
+                        <Text variant="bodySmall" color="secondary">
+                            {t("wallet.merge.consent.remote.preparing")}
+                        </Text>
+                    </Stack>
+                )}
+
+                {isError && (
+                    <Card variant="muted" padding="default">
+                        <Text variant="bodySmall" color="error">
+                            {t("wallet.merge.consent.remote.error")}
                         </Text>
                     </Card>
                 )}

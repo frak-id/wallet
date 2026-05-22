@@ -26,6 +26,15 @@ type ConnectionParams =
     | {
           action: "initiate";
           originNode?: OriginIdentityNode;
+          /**
+           * Optional WebAuthn credential id the joining target must match.
+           * Persisted on the pairing row server-side; `handleJoinRequest`
+           * closes the WS with `FORBIDDEN` if a target joins with a
+           * different `authenticatorId`. Used by the cross-device wallet
+           * merge to pin the pairing to the wallet whose passkey actually
+           * needs to participate.
+           */
+          authenticatorHint?: string;
       }
     | {
           action: "join";

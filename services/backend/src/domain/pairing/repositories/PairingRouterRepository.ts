@@ -7,7 +7,6 @@ import type { NotificationsService } from "../../notifications/services/Notifica
 import { pairingSignatureRequestTable, pairingTable } from "../db/schema";
 import type { SignatureRejectReason } from "../dto/SignatureRejectReason";
 import { WsCloseCode } from "../dto/WebSocketCloseCode";
-import type { WsMergeCompleted } from "../dto/WebsocketTopicMessage";
 import type {
     WsPingRequest,
     WsPongRequest,
@@ -16,6 +15,7 @@ import type {
     WsSignatureRequest,
     WsSignatureResponseRequest,
 } from "../dto/WebsocketDirectMessage";
+import type { WsMergeCompleted } from "../dto/WebsocketTopicMessage";
 import {
     originTopic,
     PairingRepository,

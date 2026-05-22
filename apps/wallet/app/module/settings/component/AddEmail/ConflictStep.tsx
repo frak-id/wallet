@@ -13,7 +13,14 @@ type ConflictStepProps = {
     targetAuthenticatorId?: string;
     /** Wallet bound to the conflicting credential. */
     targetWallet?: Address;
+    /** Start the same-device merge (both passkeys live on this device). */
     onMerge: () => void;
+    /**
+     * Start the cross-device merge through pairing. The user will scan a
+     * QR with the device holding the other passkey; the rest of the merge
+     * runs through the existing flow with one tunneled step.
+     */
+    onMergeRemote: () => void;
     onUseDifferent: () => void;
     onBack: () => void;
 };
@@ -28,6 +35,7 @@ export function ConflictStep({
     targetAuthenticatorId,
     targetWallet,
     onMerge,
+    onMergeRemote,
     onUseDifferent,
     onBack,
 }: ConflictStepProps) {
@@ -44,15 +52,26 @@ export function ConflictStep({
             onBack={onBack}
         >
             {canMerge && (
-                <Button
-                    type="button"
-                    variant="primary"
-                    size="large"
-                    width="full"
-                    onClick={onMerge}
-                >
-                    {t("wallet.addEmail.conflict.combine")}
-                </Button>
+                <>
+                    <Button
+                        type="button"
+                        variant="primary"
+                        size="large"
+                        width="full"
+                        onClick={onMerge}
+                    >
+                        {t("wallet.addEmail.conflict.combine")}
+                    </Button>
+                    <Button
+                        type="button"
+                        variant="secondary"
+                        size="large"
+                        width="full"
+                        onClick={onMergeRemote}
+                    >
+                        {t("wallet.addEmail.conflict.combineRemote")}
+                    </Button>
+                </>
             )}
             <Button
                 type="button"

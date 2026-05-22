@@ -604,6 +604,7 @@ export default interface Resources {
                 conflict: {
                     back: "Back to my profile";
                     combine: "Combine my accounts";
+                    combineRemote: "Use my other device";
                     description: "This email is already linked to another wallet. Use a different email or come back later.";
                     descriptionMergeable: "This email is already on another of your accounts. You can combine them into one — quick, two confirmations, all on this device.";
                     title: "Email already in use";
@@ -674,6 +675,12 @@ export default interface Resources {
                         description: "Your device will ask you to confirm with face, fingerprint or PIN — same as when you log in. We never see your biometrics.";
                         title: "What happens here";
                     };
+                    remote: {
+                        description: "Scan this QR code with the device that holds your other passkey and approve the prompt there. We'll continue automatically.";
+                        error: "We couldn't reach your other device. Try again, or pick a different email.";
+                        preparing: "Preparing a secure connection…";
+                        title: "Confirm on your other device";
+                    };
                     retry: "Try again";
                     title: "Confirm with your other passkey";
                     verify: "Confirm";
@@ -738,6 +745,12 @@ export default interface Resources {
                     help: {
                         description: "Your device will ask you to confirm with the other account's passkey — face, fingerprint or PIN. You'll be moved back to this account as soon as the combine finishes.";
                         title: "What happens here";
+                    };
+                    remote: {
+                        description: "Scan this QR code with the device that holds your other passkey. We'll use it to authorise the combine — no need to switch passkeys here.";
+                        error: "We couldn't reach your other device. Try again, or pick a different email.";
+                        preparing: "Preparing a secure connection…";
+                        title: "Connect your other device";
                     };
                     retry: "Try again";
                     title: "Open your other account";
@@ -843,6 +856,11 @@ export default interface Resources {
                     idle: "Idle";
                     paired: "Paired";
                     retryError: "Reconnecting…";
+                };
+                switchPasskey: {
+                    confirm: "Switch passkey";
+                    description: "This pairing was started with another passkey from your wallet. Switch to it on this device to continue.";
+                    title: "Different passkey required";
                 };
                 text: "You're about to connect a device to your account.";
                 title: "Confirm device pairing";

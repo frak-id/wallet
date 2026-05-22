@@ -1,3 +1,4 @@
+import type { WsSignatureKind } from "@frak-labs/backend-elysia/domain/pairing";
 import type { Hex } from "viem";
 
 export type BasePairingState = {
@@ -20,9 +21,19 @@ export type OriginPairingState = BasePairingState & {
          */
         originResumeToken: string;
     };
+    /**
+     * Pending signature requests waiting on the paired target. The resolved
+     * value is `Hex` for the default `signatureKind: "onchain"` flow and a
+     * base64-encoded WebAuthn assertion JSON `string` for the cross-device
+     * merge `signatureKind: "raw-assertion"` flow. Callers narrow off the
+     * `sendSignatureRequest` overload that they invoked.
+     */
     signatureRequests: Map<
         string,
-        { resolve: (value: Hex) => void; reject: (reason: unknown) => void }
+        {
+            resolve: (value: Hex | string) => void;
+            reject: (reason: unknown) => void;
+        }
     >;
 };
 
@@ -42,4 +53,11 @@ export type TargetPairingPendingSignature = {
     request: Hex;
     context?: object;
     from: string;
+    /**
+     * Forwarded from the origin's `signature-request`. When `"raw-assertion"`,
+     * `useSignSignatureRequest` produces a base64 WebAuthn assertion JSON
+     * (consumed by `WebAuthNService.verifyConsentSignature`) instead of the
+     * default on-chain Hex blob.
+     */
+    signatureKind?: WsSignatureKind;
 };

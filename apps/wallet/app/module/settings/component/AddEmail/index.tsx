@@ -39,6 +39,13 @@ type FlowState =
           currentAuthenticatorId: string;
           targetAuthenticatorId: string;
           targetWallet: Address;
+          /**
+           * `"local"` when the user picked "Combine accounts" (both passkeys
+           * on this device). `"remote"` when they picked "Use my other
+           * device" (one passkey lives on the device that scans the QR).
+           * Threaded straight through to {@link MergeFlow}.
+           */
+          mode: "local" | "remote";
       }
     | { kind: "success"; email: string };
 
@@ -126,6 +133,7 @@ export function AddEmail() {
                 email={flowState.email}
                 currentAuthenticatorId={flowState.currentAuthenticatorId}
                 targetAuthenticatorId={flowState.targetAuthenticatorId}
+                mode={flowState.mode}
                 onAbort={() =>
                     setFlowState({
                         kind: "conflict",
@@ -159,26 +167,29 @@ export function AddEmail() {
                 flowState.targetWallet &&
                 session?.authenticatorId
         );
+        const startMerge = (mode: "local" | "remote") => {
+            if (
+                !canMerge ||
+                !targetAuthenticatorId ||
+                !flowState.targetWallet ||
+                !session?.authenticatorId
+            )
+                return;
+            setFlowState({
+                kind: "merging",
+                email: flowState.email,
+                currentAuthenticatorId: session.authenticatorId,
+                targetAuthenticatorId,
+                targetWallet: flowState.targetWallet,
+                mode,
+            });
+        };
         return (
             <ConflictStep
                 targetAuthenticatorId={targetAuthenticatorId}
                 targetWallet={flowState.targetWallet}
-                onMerge={() => {
-                    if (
-                        !canMerge ||
-                        !targetAuthenticatorId ||
-                        !flowState.targetWallet ||
-                        !session?.authenticatorId
-                    )
-                        return;
-                    setFlowState({
-                        kind: "merging",
-                        email: flowState.email,
-                        currentAuthenticatorId: session.authenticatorId,
-                        targetAuthenticatorId,
-                        targetWallet: flowState.targetWallet,
-                    });
-                }}
+                onMerge={() => startMerge("local")}
+                onMergeRemote={() => startMerge("remote")}
                 onUseDifferent={backToInput}
                 onBack={goToProfile}
             />

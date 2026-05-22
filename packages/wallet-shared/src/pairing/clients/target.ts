@@ -1,5 +1,7 @@
 import type { Hex } from "viem";
 import { getSafeSession } from "../../common/utils/safeSession";
+import { sessionStore } from "../../stores/sessionStore";
+import type { Session } from "../../types/Session";
 import type {
     PairingSignatureFailure,
     SignatureRejectReason,
@@ -153,6 +155,7 @@ export class TargetPairingClient extends BasePairingClient<
                     request: request.request,
                     context: request.context,
                     from: request.partnerDeviceName,
+                    signatureKind: request.signatureKind,
                 });
                 const pairingIdState = new Map(state.pairingIdState);
                 pairingIdState.set(request.pairingId, {
@@ -182,14 +185,40 @@ export class TargetPairingClient extends BasePairingClient<
             });
             return;
         }
+
+        // Cross-device wallet merge completed. Backend pushes a freshly-
+        // minted local-webauthn session on the loser-side topic; winner-side
+        // gets an info-only event with no `session`. The mobile (target)
+        // side is typically the loser in the winner=desktop branch, so this
+        // is where the rebind actually happens.
+        if (message.type === "merge-completed") {
+            if (message.payload.session) {
+                // Backend's webauthn DTO carries `transports: string[]`,
+                // local `Session` narrows to `AuthenticatorTransport[]`.
+                // Cast mirrors the same narrowing useMergeSettle relies on.
+                const { token, sdkJwt, wallet } = message.payload.session;
+                sessionStore
+                    .getState()
+                    .setSession({ ...wallet, token } as Session);
+                sessionStore.getState().setSdkSession(sdkJwt);
+            }
+            return;
+        }
     }
 
     /**
-     * Send back a signature response or rejection to the pairing server
+     * Send back a signature response or rejection to the pairing server.
+     *
+     * The `signature` payload's encoding is discriminated by the request's
+     * original `signatureKind` (preserved here from `pendingSignatures`).
+     * `Hex` for the default on-chain flow; base64 WebAuthn assertion JSON
+     * `string` for the cross-device merge raw-assertion flow.
      */
     sendSignatureResponse(
         requestId: string,
-        response: { signature: Hex } | { reason: SignatureRejectReason }
+        response:
+            | { signature: Hex | string }
+            | { reason: SignatureRejectReason }
     ) {
         const request = this.state.pendingSignatures.get(requestId);
         if (!request) {
@@ -205,6 +234,7 @@ export class TargetPairingClient extends BasePairingClient<
                     pairingId: request.pairingId,
                     id: requestId,
                     signature: response.signature,
+                    signatureKind: request.signatureKind,
                 },
             });
         } else {

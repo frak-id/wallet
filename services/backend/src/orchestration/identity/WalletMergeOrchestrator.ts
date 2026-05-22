@@ -3,9 +3,12 @@ import { HttpError } from "@backend-utils";
 import { buildMergeConsentChallengeSlots } from "@frak-labs/app-essentials";
 import { currentChainId } from "@frak-labs/app-essentials/blockchain";
 import { eq } from "drizzle-orm";
-import { isAddressEqual, type Address } from "viem";
+import { type Address, isAddressEqual } from "viem";
 import type { AuthenticatorRepository } from "../../domain/auth/repositories/AuthenticatorRepository";
-import type { MintForCredentialResult, WalletSessionService } from "../../domain/auth/services/WalletSessionService";
+import type {
+    MintForCredentialResult,
+    WalletSessionService,
+} from "../../domain/auth/services/WalletSessionService";
 import type { WebAuthNService } from "../../domain/auth/services/WebAuthNService";
 import type { IdentityRepository } from "../../domain/identity/repositories/IdentityRepository";
 import type { WalletBindingRepository } from "../../domain/identity/repositories/WalletBindingRepository";

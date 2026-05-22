@@ -8,6 +8,8 @@ import type { Hex } from "viem";
 import { EmailFlowResultScreen } from "@/module/common/component/EmailFlowResultScreen";
 import { useLoserAssetCheck } from "../../hook/useLoserAssetCheck";
 import { useMergePreview } from "../../hook/useMergePreview";
+import { useLocalMergeStrategy } from "../../strategy/useLocalMergeStrategy";
+import { useRemoteMergeStrategy } from "../../strategy/useRemoteMergeStrategy";
 import { AssetMigrationStep } from "../AssetMigrationStep";
 import { ConsentStep } from "../ConsentStep";
 import { PreviewStep } from "../PreviewStep";
@@ -28,6 +30,12 @@ type MergeFlowProps = {
     currentAuthenticatorId: string;
     /** The conflicting credential identified by the AddEmail backend. */
     targetAuthenticatorId: string;
+    /**
+     * `"local"` — same-device merge (default; both passkeys on this device).
+     * `"remote"` — cross-device merge through pairing (one passkey lives on
+     * another device, identified by `targetAuthenticatorId`).
+     */
+    mode: "local" | "remote";
     /** Bail out of the flow without merging — back to the conflict screen. */
     onAbort: () => void;
     /** Merge finished successfully — typically navigates back to profile. */
@@ -44,7 +52,7 @@ type Step =
     | { kind: "success"; settle: MergeSettleResponse };
 
 /**
- * Multi-step orchestrator for the same-device wallet-merge flow.
+ * Multi-step orchestrator for the wallet-merge flow.
  *
  * Each user-visible step is a self-contained screen owning at most one
  * webauthn prompt, so the three biometric prompts the same-device merge
@@ -52,11 +60,17 @@ type Step =
  * sequenced — never fired back-to-back from a single screen. The cross-step
  * state held here is intentionally narrow: the consent signature, the
  * post-sign tx hash, and the terminal settle response.
+ *
+ * The same-device vs cross-device behaviour is encapsulated by the
+ * `MergeStrategy` chosen on `mode`. Step ordering, animations, copy, and
+ * back-navigation are identical between the two — only what happens inside
+ * the consent / switch mutations differs.
  */
 export function MergeFlow({
     email,
     currentAuthenticatorId,
     targetAuthenticatorId,
+    mode,
     onAbort,
     onCompleted,
 }: MergeFlowProps) {
@@ -72,6 +86,32 @@ export function MergeFlow({
     const assetCheck = useLoserAssetCheck({
         loser: preview.data?.loser,
     });
+
+    const needsSwitch = useMemo(() => {
+        if (!preview.data) return undefined;
+        return (
+            preview.data.winner.toLowerCase() !==
+            preview.data.requesterWallet.toLowerCase()
+        );
+    }, [preview.data]);
+
+    const winnerAuthenticatorId = useMemo(() => {
+        if (needsSwitch === undefined) return undefined;
+        return needsSwitch ? targetAuthenticatorId : currentAuthenticatorId;
+    }, [needsSwitch, targetAuthenticatorId, currentAuthenticatorId]);
+
+    // Both strategy hooks must run unconditionally to honour the rules of
+    // hooks; the one we use is picked off `mode`.
+    const localStrategy = useLocalMergeStrategy();
+    const remoteStrategy = useRemoteMergeStrategy({
+        needsSwitch,
+        winnerAuthenticatorId,
+        loserAuthenticatorId: preview.data?.loserAuthenticatorId,
+    });
+    const strategy = mode === "remote" ? remoteStrategy : localStrategy;
+
+    const consent = strategy.useLoserConsent();
+    const switchToWinner = strategy.useSwitchToWinner();
 
     // Two-layer parked-session cleanup so the user never gets stranded on
     // the winner session after an unhappy path:
@@ -101,18 +141,6 @@ export function MergeFlow({
         sessionStore.getState().popSession();
         onAbort();
     }, [onAbort]);
-
-    const needsSwitch = useMemo(() => {
-        if (!preview.data) return false;
-        return (
-            preview.data.winner.toLowerCase() !==
-            preview.data.requesterWallet.toLowerCase()
-        );
-    }, [preview.data]);
-
-    const winnerAuthenticatorId = needsSwitch
-        ? targetAuthenticatorId
-        : currentAuthenticatorId;
 
     const handleConsentConfirmed = useCallback(
         (consentSignature: string) => {
@@ -195,6 +223,17 @@ export function MergeFlow({
                 loserAuthenticatorId={preview.data.loserAuthenticatorId}
                 onConfirmed={handleConsentConfirmed}
                 onBack={() => setStep({ kind: "assets" })}
+                consent={consent}
+                strategy={strategy}
+                /**
+                 * Remote consent is only mobile-driven when the desktop is
+                 * the winner (loser passkey lives on mobile). When desktop
+                 * is the loser the consent is signed locally with the loser
+                 * passkey on this device, identical to the same-device flow.
+                 */
+                remoteConsent={
+                    strategy.mode === "remote" && needsSwitch === false
+                }
             />
         );
     }
@@ -203,7 +242,9 @@ export function MergeFlow({
         return (
             <SwitchStep
                 winnerWallet={preview.data.winner}
-                winnerAuthenticatorId={winnerAuthenticatorId}
+                winnerAuthenticatorId={
+                    winnerAuthenticatorId ?? targetAuthenticatorId
+                }
                 onSwitched={() =>
                     setStep({
                         kind: "sign",
@@ -211,6 +252,8 @@ export function MergeFlow({
                     })
                 }
                 onBack={() => setStep({ kind: "consent" })}
+                switchAuth={switchToWinner}
+                strategy={strategy}
             />
         );
     }
@@ -238,6 +281,7 @@ export function MergeFlow({
                 loserAuthenticatorId={preview.data.loserAuthenticatorId}
                 onChainTxHash={step.txHash}
                 loserConsentSignature={step.consentSignature}
+                pairingId={strategy.pairingId}
                 onCompleted={(settle) => setStep({ kind: "success", settle })}
                 onCancel={handleAbort}
             />

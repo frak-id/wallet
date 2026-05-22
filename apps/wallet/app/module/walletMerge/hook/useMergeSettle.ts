@@ -24,6 +24,14 @@ type UseMergeSettleArgs = {
     onChainTxHash?: Hex;
     /** Base64 webauthn assertion produced by `useLoserConsent`. */
     loserConsentSignature: string;
+    /**
+     * Pairing id used by the cross-device (Phase 2) merge flow. When
+     * present, the backend pushes a `merge-completed` event on both
+     * pairing topics after settlement — the loser-side payload carries a
+     * freshly-minted webauthn session so the loser device can swap its
+     * stale one without a separate login. Omitted for same-device merges.
+     */
+    pairingId?: string;
 };
 
 /**
@@ -56,6 +64,7 @@ export function useMergeSettle() {
             loserAuthenticatorId,
             onChainTxHash,
             loserConsentSignature,
+            pairingId,
         }) => {
             if (onChainTxHash && onChainTxHash !== "0x") {
                 const receipt = await waitForTransactionReceipt(
@@ -74,6 +83,7 @@ export function useMergeSettle() {
                 await authenticatedWalletApi.merge.settle.post({
                     targetAuthenticatorId: loserAuthenticatorId,
                     loserConsentSignature,
+                    pairingId,
                 });
             if (error) {
                 throw new Error(extractSettleErrorCode(error.value));

@@ -16,6 +16,12 @@ type SettlingStepProps = {
     loserAuthenticatorId: string;
     onChainTxHash?: Hex;
     loserConsentSignature: string;
+    /**
+     * Set by the cross-device strategy once the pairing is live. Forwarded
+     * to `/merge/settle` so the backend pushes `merge-completed` on both
+     * pairing topics after settlement. Omitted by the same-device flow.
+     */
+    pairingId?: string;
     onCompleted: (settle: MergeSettleResponse) => void;
     onCancel: () => void;
 };
@@ -31,6 +37,7 @@ export function SettlingStep({
     loserAuthenticatorId,
     onChainTxHash,
     loserConsentSignature,
+    pairingId,
     onCompleted,
     onCancel,
 }: SettlingStepProps) {
@@ -44,6 +51,7 @@ export function SettlingStep({
                 loserAuthenticatorId,
                 onChainTxHash,
                 loserConsentSignature,
+                pairingId,
             },
             {
                 onSuccess: (data) => onCompleted(data),

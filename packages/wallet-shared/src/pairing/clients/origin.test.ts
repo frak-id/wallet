@@ -91,9 +91,13 @@ vi.mock("../../stores/sessionStore", () => ({
                 pairingId: "pairing-1",
                 address: "0xabc",
             },
+            sdkSession: null,
             clearSession: vi.fn(),
             setSession: vi.fn(),
             setSdkSession: vi.fn(),
+            parkSession: vi.fn(() => true),
+            popSession: vi.fn(() => false),
+            discardPreviousSession: vi.fn(() => false),
         }),
     },
 }));
