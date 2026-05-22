@@ -1,15 +1,16 @@
+import { vars } from "@frak-labs/design-system/theme";
 import { alias, brand } from "@frak-labs/design-system/tokens";
 import { globalStyle, style } from "@vanilla-extract/css";
 
 export const tableBudgetAmount = style({
-    fontSize: "0.875rem",
+    fontSize: "14px",
     fontWeight: brand.typography.fontWeight.medium,
-    color: "#333843", // TODO: token
+    color: vars.text.primary,
 });
 
 export const tableBudgetType = style({
-    fontSize: "0.75rem",
-    color: "#818c9c", // TODO: token
+    fontSize: "12px",
+    color: vars.text.tertiary,
 });
 
 export const tableActions = style({
@@ -26,11 +27,11 @@ globalStyle(`${tableActions} button, ${tableActions} a`, {
     border: "none",
     background: "transparent",
     cursor: "pointer",
-    color: "#818c9c !important", // TODO: token
+    color: vars.icon.tertiary,
     transition: "color 0.2s",
     textDecoration: "none",
 });
 
 globalStyle(`${tableActions} button:hover, ${tableActions} a:hover`, {
-    color: "#333843 !important", // TODO: token
+    color: vars.icon.primary,
 });

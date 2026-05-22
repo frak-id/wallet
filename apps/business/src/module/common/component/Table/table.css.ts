@@ -1,70 +1,84 @@
 import { vars } from "@frak-labs/design-system/theme";
-import { alias, brand, shadow } from "@frak-labs/design-system/tokens";
+import { alias, brand } from "@frak-labs/design-system/tokens";
 import { globalStyle, style } from "@vanilla-extract/css";
 
 export const tableWrapper = style({
-    backgroundColor: vars.surface.elevated,
-    borderRadius: alias.cornerRadius.s,
     overflowX: "auto",
     color: vars.text.secondary,
-    border: `1px solid ${vars.border.default}`,
-    boxShadow: shadow.elevated,
+    backgroundColor: vars.surface.elevated,
+    border: `1px solid ${vars.border.subtle}`,
+    borderRadius: alias.cornerRadius.s,
 });
 
 export const table = style({
     width: "100%",
     borderCollapse: "collapse",
+    fontSize: "14px",
 });
 
 export const preTable = style({
     display: "flex",
     justifyContent: "flex-end",
-    padding: "18px 24px",
+    padding: `${alias.spacing.m} ${alias.spacing.s}`,
 });
 
 export const tableButton = style({
     all: "unset",
     boxSizing: "border-box",
-    display: "flex",
+    display: "inline-flex",
     alignItems: "center",
+    gap: alias.spacing.xxs,
     cursor: "pointer",
     width: "100%",
-    padding: "18px 22px",
-    selectors: {
-        "&:has(span)": { padding: 0 },
-    },
-});
-
-globalStyle(`button${tableButton} > span`, {
-    display: "inline-block",
-    width: "100%",
-    padding: "18px 22px",
+    height: "100%",
 });
 
 export const tableFilterIcon = style({
-    marginLeft: "auto",
-    color: brand.colors.neutral.grey400,
+    color: vars.icon.secondary,
+    width: "16px",
+    height: "16px",
+    transition: "transform 0.15s ease",
+});
+
+export const tableFilterIconDesc = style({
+    transform: "rotate(180deg)",
 });
 
 globalStyle(`${table} > thead > tr > th`, {
     position: "relative",
-    padding: "18px 22px",
+    height: "48px",
+    padding: `0 ${alias.spacing.s}`,
     background: vars.surface.muted,
     textAlign: "left",
     whiteSpace: "nowrap",
+    color: vars.text.secondary,
+    fontWeight: brand.typography.fontWeight.medium,
+    lineHeight: "22px",
+    boxShadow: `inset 0 -1px 0 0 ${vars.border.subtle}`,
+});
+
+globalStyle(`${table} > tbody > tr > td`, {
+    height: "56px",
+    padding: `0 ${alias.spacing.s}`,
+    textAlign: "left",
+    color: vars.text.primary,
+    fontWeight: brand.typography.fontWeight.regular,
+    lineHeight: "22px",
+    boxShadow: `inset 0 -1px 0 0 ${vars.border.subtle}`,
+});
+
+globalStyle(`${table} > tfoot > tr > th`, {
+    height: "56px",
+    padding: `0 ${alias.spacing.s}`,
+    textAlign: "left",
     color: vars.text.primary,
     fontWeight: brand.typography.fontWeight.medium,
+    lineHeight: "22px",
+    boxShadow: `inset 0 1px 0 0 ${vars.border.subtle}`,
 });
 
-globalStyle(`${table} > thead > tr > th:has(button${tableButton})`, {
-    padding: 0,
-});
-
-globalStyle(`${table} > tbody > tr > td, ${table} > tfoot > tr > th`, {
-    padding: "18px 22px",
-    textAlign: "left",
-    borderTop: `1px solid ${vars.border.subtle}`,
-    fontWeight: brand.typography.fontWeight.medium,
+globalStyle(`${table} > tbody > tr:last-child > td`, {
+    boxShadow: "none",
 });
 
 globalStyle(`${table} a`, {

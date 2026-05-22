@@ -1,5 +1,5 @@
+import { Badge } from "@frak-labs/design-system/components/Badge";
 import { Box } from "@frak-labs/design-system/components/Box";
-import { Badge } from "@/module/common/component/Badge";
 import { Tooltip } from "@/module/common/component/Tooltip";
 import type { CampaignStatus, DistributionStatus } from "@/types/Campaign";
 
@@ -27,15 +27,35 @@ export function CampaignStateTag({
     const statusBadge = (() => {
         switch (status) {
             case "draft":
-                return <Badge variant={"secondary"}>Draft</Badge>;
+                return (
+                    <Badge variant="neutral" size="small">
+                        Draft
+                    </Badge>
+                );
             case "active":
-                return <Badge variant={"success"}>Active</Badge>;
+                return (
+                    <Badge variant="success" size="small">
+                        Active
+                    </Badge>
+                );
             case "paused":
-                return <Badge variant={"warning"}>Paused</Badge>;
+                return (
+                    <Badge variant="warning" size="small">
+                        Paused
+                    </Badge>
+                );
             case "archived":
-                return <Badge variant={"secondary"}>Archived</Badge>;
+                return (
+                    <Badge variant="disabled" size="small">
+                        Archived
+                    </Badge>
+                );
             default:
-                return <Badge variant={"danger"}>Unknown</Badge>;
+                return (
+                    <Badge variant="error" size="small">
+                        Unknown
+                    </Badge>
+                );
         }
     })();
 
@@ -58,7 +78,7 @@ export function CampaignStateTag({
                 <Badge
                     variant={
                         bankDistributionStatus === "depleted"
-                            ? "danger"
+                            ? "error"
                             : "warning"
                     }
                     size="small"

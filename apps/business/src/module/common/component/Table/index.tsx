@@ -1,3 +1,4 @@
+import { ArrowUpIcon } from "@frak-labs/design-system/icons";
 import type { SortingState, TableOptions } from "@tanstack/react-table";
 import {
     type Column,
@@ -13,13 +14,13 @@ import {
     useReactTable,
 } from "@tanstack/react-table";
 import clsx from "clsx";
-import { ArrowDown, ArrowDownUp, ArrowUp } from "lucide-react";
 import type { ReactNode } from "react";
 import { type PropsWithChildren, useMemo, useState } from "react";
 import {
     preTable as preTableStyle,
     tableButton,
     tableFilterIcon,
+    tableFilterIconDesc,
     table as tableStyle,
     tableWrapper,
 } from "./table.css";
@@ -191,13 +192,7 @@ function Sorting<TData>({
     if (!column.getCanSort()) {
         return <span>{children}</span>;
     }
-    const isSorted = column.getIsSorted();
-    const Icon =
-        isSorted === false
-            ? ArrowDownUp
-            : isSorted === "asc"
-              ? ArrowUp
-              : ArrowDown;
+    const isSortedDesc = column.getIsSorted() === "desc";
     return (
         <button
             className={tableButton}
@@ -205,7 +200,12 @@ function Sorting<TData>({
             onClick={column.getToggleSortingHandler()}
         >
             {children}
-            {Icon && <Icon className={tableFilterIcon} />}
+            <ArrowUpIcon
+                className={clsx(
+                    tableFilterIcon,
+                    isSortedDesc && tableFilterIconDesc
+                )}
+            />
         </button>
     );
 }
