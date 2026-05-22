@@ -1,3 +1,4 @@
+import { style } from "@vanilla-extract/css";
 import { recipe } from "@vanilla-extract/recipes";
 import { vars } from "../../theme.css";
 import { alias } from "../../tokens.css";
@@ -29,4 +30,11 @@ export const card = recipe({
         variant: "elevated",
         padding: "default",
     },
+});
+
+export const cardHeader = style({
+    display: "flex",
+    flexDirection: "column",
+    gap: alias.spacing.xxs,
+    paddingBottom: alias.spacing.m,
 });
