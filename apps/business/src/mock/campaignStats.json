@@ -1,7 +1,8 @@
 [
     {
         "title": "Summer Referral Campaign",
-        "id": "507f1f77bcf86cd799439011",
+        "id": "camp_001",
+        "merchantId": "11111111-1111-1111-1111-111111111111",
         "bank": "0x1234567890123456789012345678901234567890",
         "token": "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48",
         "eventType": "Purchase",
@@ -20,8 +21,9 @@
         "costPerPurchase": 20.0
     },
     {
-        "title": "Awareness Campaign",
-        "id": "507f1f77bcf86cd799439012",
+        "title": "Awareness Campaign Q1",
+        "id": "camp_002",
+        "merchantId": "22222222-2222-2222-2222-222222222222",
         "bank": "0x2345678901234567890123456789012345678901",
         "token": "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48",
         "eventType": "Share",
@@ -40,8 +42,9 @@
         "costPerPurchase": 3.0
     },
     {
-        "title": "Traffic Boost",
-        "id": "507f1f77bcf86cd799439014",
+        "title": "Traffic Boost Campaign",
+        "id": "camp_004",
+        "merchantId": "22222222-2222-2222-2222-222222222222",
         "bank": "0x4567890123456789012345678901234567890123",
         "token": "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48",
         "eventType": "Opt-in",
@@ -60,8 +63,9 @@
         "costPerPurchase": 5.0
     },
     {
-        "title": "Retention / Loyal",
-        "id": "507f1f77bcf86cd799439015",
+        "title": "Retention Campaign - Loyal Customers",
+        "id": "camp_005",
+        "merchantId": "33333333-3333-3333-3333-333333333333",
         "bank": "0x5678901234567890123456789012345678901234",
         "token": "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48",
         "eventType": "Repeat Purchase",

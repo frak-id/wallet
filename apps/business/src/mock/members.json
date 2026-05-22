@@ -6,9 +6,7 @@
             "totalInteractions": 245,
             "totalRewardsUsd": 125.0,
             "firstInteractionTimestamp": "1704067200",
-            "merchantIds": [
-                "0x0000000000000000000000000000000000000000000000000000000000000001"
-            ],
+            "merchantIds": ["11111111-1111-1111-1111-111111111111"],
             "productNames": ["E-Commerce Store"]
         },
         {
@@ -17,8 +15,8 @@
             "totalRewardsUsd": 89.0,
             "firstInteractionTimestamp": "1704153600",
             "merchantIds": [
-                "0x0000000000000000000000000000000000000000000000000000000000000001",
-                "0x0000000000000000000000000000000000000000000000000000000000000002"
+                "11111111-1111-1111-1111-111111111111",
+                "22222222-2222-2222-2222-222222222222"
             ],
             "productNames": ["E-Commerce Store", "Digital Media Platform"]
         },
@@ -27,9 +25,7 @@
             "totalInteractions": 156,
             "totalRewardsUsd": 78.0,
             "firstInteractionTimestamp": "1704240000",
-            "merchantIds": [
-                "0x0000000000000000000000000000000000000000000000000000000000000002"
-            ],
+            "merchantIds": ["22222222-2222-2222-2222-222222222222"],
             "productNames": ["Digital Media Platform"]
         },
         {
@@ -37,9 +33,7 @@
             "totalInteractions": 134,
             "totalRewardsUsd": 67.0,
             "firstInteractionTimestamp": "1704326400",
-            "merchantIds": [
-                "0x0000000000000000000000000000000000000000000000000000000000000001"
-            ],
+            "merchantIds": ["11111111-1111-1111-1111-111111111111"],
             "productNames": ["E-Commerce Store"]
         },
         {
@@ -48,9 +42,10 @@
             "totalRewardsUsd": 64.0,
             "firstInteractionTimestamp": "1704412800",
             "merchantIds": [
-                "0x0000000000000000000000000000000000000000000000000000000000000003"
+                "33333333-3333-3333-3333-333333333333",
+                "44444444-4444-4444-4444-444444444444"
             ],
-            "productNames": ["SaaS Application"]
+            "productNames": ["SaaS Application", "Partner Marketplace"]
         },
         {
             "user": "0x10A19e7eE7d7F8a52822f6817de8ea18204F2e4f",
@@ -58,8 +53,8 @@
             "totalRewardsUsd": 56.0,
             "firstInteractionTimestamp": "1704499200",
             "merchantIds": [
-                "0x0000000000000000000000000000000000000000000000000000000000000001",
-                "0x0000000000000000000000000000000000000000000000000000000000000003"
+                "11111111-1111-1111-1111-111111111111",
+                "33333333-3333-3333-3333-333333333333"
             ],
             "productNames": ["E-Commerce Store", "SaaS Application"]
         },
@@ -68,9 +63,7 @@
             "totalInteractions": 98,
             "totalRewardsUsd": 49.0,
             "firstInteractionTimestamp": "1704585600",
-            "merchantIds": [
-                "0x0000000000000000000000000000000000000000000000000000000000000002"
-            ],
+            "merchantIds": ["22222222-2222-2222-2222-222222222222"],
             "productNames": ["Digital Media Platform"]
         },
         {
@@ -78,9 +71,7 @@
             "totalInteractions": 87,
             "totalRewardsUsd": 43.5,
             "firstInteractionTimestamp": "1704672000",
-            "merchantIds": [
-                "0x0000000000000000000000000000000000000000000000000000000000000001"
-            ],
+            "merchantIds": ["11111111-1111-1111-1111-111111111111"],
             "productNames": ["E-Commerce Store"]
         },
         {
@@ -88,9 +79,7 @@
             "totalInteractions": 76,
             "totalRewardsUsd": 38.0,
             "firstInteractionTimestamp": "1704758400",
-            "merchantIds": [
-                "0x0000000000000000000000000000000000000000000000000000000000000003"
-            ],
+            "merchantIds": ["33333333-3333-3333-3333-333333333333"],
             "productNames": ["SaaS Application"]
         },
         {
@@ -99,9 +88,10 @@
             "totalRewardsUsd": 32.5,
             "firstInteractionTimestamp": "1704844800",
             "merchantIds": [
-                "0x0000000000000000000000000000000000000000000000000000000000000002"
+                "22222222-2222-2222-2222-222222222222",
+                "44444444-4444-4444-4444-444444444444"
             ],
-            "productNames": ["Digital Media Platform"]
+            "productNames": ["Digital Media Platform", "Partner Marketplace"]
         },
         {
             "user": "0x8626f6940E2eb28930eFb4CeF49B2d1F2C9C1198",
@@ -109,8 +99,8 @@
             "totalRewardsUsd": 27.0,
             "firstInteractionTimestamp": "1704931200",
             "merchantIds": [
-                "0x0000000000000000000000000000000000000000000000000000000000000001",
-                "0x0000000000000000000000000000000000000000000000000000000000000002"
+                "11111111-1111-1111-1111-111111111111",
+                "22222222-2222-2222-2222-222222222222"
             ],
             "productNames": ["E-Commerce Store", "Digital Media Platform"]
         },
@@ -119,9 +109,7 @@
             "totalInteractions": 43,
             "totalRewardsUsd": 21.5,
             "firstInteractionTimestamp": "1705017600",
-            "merchantIds": [
-                "0x0000000000000000000000000000000000000000000000000000000000000003"
-            ],
+            "merchantIds": ["33333333-3333-3333-3333-333333333333"],
             "productNames": ["SaaS Application"]
         },
         {
@@ -129,9 +117,7 @@
             "totalInteractions": 38,
             "totalRewardsUsd": 19.0,
             "firstInteractionTimestamp": "1705104000",
-            "merchantIds": [
-                "0x0000000000000000000000000000000000000000000000000000000000000001"
-            ],
+            "merchantIds": ["11111111-1111-1111-1111-111111111111"],
             "productNames": ["E-Commerce Store"]
         },
         {
@@ -139,9 +125,7 @@
             "totalInteractions": 32,
             "totalRewardsUsd": 16.0,
             "firstInteractionTimestamp": "1705190400",
-            "merchantIds": [
-                "0x0000000000000000000000000000000000000000000000000000000000000002"
-            ],
+            "merchantIds": ["22222222-2222-2222-2222-222222222222"],
             "productNames": ["Digital Media Platform"]
         },
         {
@@ -150,18 +134,17 @@
             "totalRewardsUsd": 13.5,
             "firstInteractionTimestamp": "1705276800",
             "merchantIds": [
-                "0x0000000000000000000000000000000000000000000000000000000000000003"
+                "33333333-3333-3333-3333-333333333333",
+                "44444444-4444-4444-4444-444444444444"
             ],
-            "productNames": ["SaaS Application"]
+            "productNames": ["SaaS Application", "Partner Marketplace"]
         },
         {
             "user": "0x71bE63f3384f5fb98995898A86B02Fb2426c5788",
             "totalInteractions": 21,
             "totalRewardsUsd": 10.5,
             "firstInteractionTimestamp": "1705363200",
-            "merchantIds": [
-                "0x0000000000000000000000000000000000000000000000000000000000000001"
-            ],
+            "merchantIds": ["11111111-1111-1111-1111-111111111111"],
             "productNames": ["E-Commerce Store"]
         },
         {
@@ -169,9 +152,7 @@
             "totalInteractions": 18,
             "totalRewardsUsd": 9.0,
             "firstInteractionTimestamp": "1705449600",
-            "merchantIds": [
-                "0x0000000000000000000000000000000000000000000000000000000000000002"
-            ],
+            "merchantIds": ["22222222-2222-2222-2222-222222222222"],
             "productNames": ["Digital Media Platform"]
         },
         {
@@ -180,8 +161,8 @@
             "totalRewardsUsd": 7.5,
             "firstInteractionTimestamp": "1705536000",
             "merchantIds": [
-                "0x0000000000000000000000000000000000000000000000000000000000000001",
-                "0x0000000000000000000000000000000000000000000000000000000000000003"
+                "11111111-1111-1111-1111-111111111111",
+                "33333333-3333-3333-3333-333333333333"
             ],
             "productNames": ["E-Commerce Store", "SaaS Application"]
         },
@@ -190,9 +171,7 @@
             "totalInteractions": 12,
             "totalRewardsUsd": 6.0,
             "firstInteractionTimestamp": "1705622400",
-            "merchantIds": [
-                "0x0000000000000000000000000000000000000000000000000000000000000003"
-            ],
+            "merchantIds": ["33333333-3333-3333-3333-333333333333"],
             "productNames": ["SaaS Application"]
         },
         {
@@ -201,9 +180,10 @@
             "totalRewardsUsd": 4.5,
             "firstInteractionTimestamp": "1705708800",
             "merchantIds": [
-                "0x0000000000000000000000000000000000000000000000000000000000000002"
+                "22222222-2222-2222-2222-222222222222",
+                "44444444-4444-4444-4444-444444444444"
             ],
-            "productNames": ["Digital Media Platform"]
+            "productNames": ["Digital Media Platform", "Partner Marketplace"]
         }
     ]
 }
