@@ -1,9 +1,13 @@
 import type { Stablecoin } from "@frak-labs/app-essentials";
+import {
+    Card,
+    CardHeader,
+    CardTitle,
+} from "@frak-labs/design-system/components/Card";
 import { Spinner } from "@frak-labs/design-system/components/Spinner";
 import { useSearch } from "@tanstack/react-router";
 import { useCallback, useMemo } from "react";
 import { Button } from "@/module/common/component/Button";
-import { Panel } from "@/module/common/component/Panel";
 import { Title } from "@/module/common/component/Title";
 import { useListenToDomainNameSetup } from "@/module/dashboard/hooks/dnsRecordHooks";
 import { useRegisterMerchant } from "@/module/dashboard/hooks/useMintMyMerchant";
@@ -48,7 +52,10 @@ export function EmbeddedMint() {
     return (
         <>
             <Title className={styles.title}>Register your shop on Frak</Title>
-            <Panel withBadge={false} title={`Registering ${domain}`}>
+            <Card>
+                <CardHeader>
+                    <CardTitle>{`Registering ${domain}`}</CardTitle>
+                </CardHeader>
                 {/* Domain validation info */}
                 {isDomainValidLoading ? (
                     <Spinner />
@@ -84,7 +91,7 @@ export function EmbeddedMint() {
                         </Button>
                     </>
                 )}
-            </Panel>
+            </Card>
         </>
     );
 }

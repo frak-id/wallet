@@ -3,13 +3,17 @@ import {
     getTokenAddressForStablecoin,
     type Stablecoin,
 } from "@frak-labs/app-essentials";
+import {
+    Card,
+    CardHeader,
+    CardTitle,
+} from "@frak-labs/design-system/components/Card";
 import clsx from "clsx";
 import { CheckCircle2, Pin, Star } from "lucide-react";
 import { useFormContext } from "react-hook-form";
 import type { Address } from "viem";
 import { formatUnits } from "viem";
 import { Badge } from "@/module/common/component/Badge";
-import { Panel } from "@/module/common/component/Panel";
 import { useTokenMetadata } from "@/module/common/hook/useTokenMetadata";
 import { currencyOptions } from "@/module/common/utils/currencyOptions";
 import {
@@ -70,7 +74,10 @@ export function FormRewardToken() {
     }
 
     return (
-        <Panel title="Reward currency">
+        <Card>
+            <CardHeader>
+                <CardTitle>Reward currency</CardTitle>
+            </CardHeader>
             <FormDescription>
                 Select the token used to distribute rewards for this campaign.
                 The balance shown is available in your campaign bank.
@@ -268,7 +275,7 @@ export function FormRewardToken() {
                     );
                 }}
             />
-        </Panel>
+        </Card>
     );
 }
 

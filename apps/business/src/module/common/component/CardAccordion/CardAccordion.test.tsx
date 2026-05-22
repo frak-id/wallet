@@ -1,13 +1,13 @@
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
-import { PanelAccordion } from "./index";
+import { CardAccordion } from "./index";
 
-describe("PanelAccordion", () => {
+describe("CardAccordion", () => {
     it("should render children within accordion when open", () => {
         render(
-            <PanelAccordion title="Test Panel" defaultValue="item-1">
+            <CardAccordion title="Test Panel" defaultValue="item-1">
                 <div>Test Content</div>
-            </PanelAccordion>
+            </CardAccordion>
         );
 
         expect(screen.getByText("Test Content")).toBeInTheDocument();
@@ -15,9 +15,9 @@ describe("PanelAccordion", () => {
 
     it("should render with title", () => {
         render(
-            <PanelAccordion title="Test Panel Title">
+            <CardAccordion title="Test Panel Title">
                 <div>Content</div>
-            </PanelAccordion>
+            </CardAccordion>
         );
 
         expect(screen.getByText("Test Panel Title")).toBeInTheDocument();
@@ -25,9 +25,9 @@ describe("PanelAccordion", () => {
 
     it("should render accordion structure with data-state", () => {
         const { container } = render(
-            <PanelAccordion title="Test Panel" defaultValue="item-1">
+            <CardAccordion title="Test Panel" defaultValue="item-1">
                 <div>Content</div>
-            </PanelAccordion>
+            </CardAccordion>
         );
 
         // Accordion renders with data-state attribute
@@ -37,9 +37,9 @@ describe("PanelAccordion", () => {
 
     it("should pass defaultValue prop to accordion", () => {
         const { container } = render(
-            <PanelAccordion title="Test Panel" defaultValue="item-1">
+            <CardAccordion title="Test Panel" defaultValue="item-1">
                 <div>Content</div>
-            </PanelAccordion>
+            </CardAccordion>
         );
 
         // When defaultValue is "item-1", accordion item should be open
@@ -49,9 +49,9 @@ describe("PanelAccordion", () => {
 
     it("should support controlled value prop", () => {
         const { container } = render(
-            <PanelAccordion title="Test Panel" value="item-1">
+            <CardAccordion title="Test Panel" value="item-1">
                 <div>Content</div>
-            </PanelAccordion>
+            </CardAccordion>
         );
 
         // When value is "item-1", accordion item should be open

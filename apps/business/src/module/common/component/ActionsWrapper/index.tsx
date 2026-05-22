@@ -1,6 +1,6 @@
+import { Card } from "@frak-labs/design-system/components/Card";
 import { Inline } from "@frak-labs/design-system/components/Inline";
 import type { ReactNode } from "react";
-import { Panel } from "@/module/common/component/Panel";
 
 export function ActionsWrapper({
     left,
@@ -10,7 +10,7 @@ export function ActionsWrapper({
     right?: ReactNode;
 }) {
     return (
-        <Panel variant={"secondary"}>
+        <Card>
             <Inline align="space-between" alignY="center" space="m">
                 <Inline space="s" alignY="center">
                     {left}
@@ -19,6 +19,6 @@ export function ActionsWrapper({
                     {right}
                 </Inline>
             </Inline>
-        </Panel>
+        </Card>
     );
 }

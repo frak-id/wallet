@@ -1,8 +1,12 @@
+import {
+    Card,
+    CardHeader,
+    CardTitle,
+} from "@frak-labs/design-system/components/Card";
 import { Column } from "@frak-labs/design-system/components/Column";
 import { Columns } from "@frak-labs/design-system/components/Columns";
 import { TextArea } from "@frak-labs/design-system/components/TextArea";
 import { useFormContext } from "react-hook-form";
-import { Panel } from "@/module/common/component/Panel";
 import {
     FormControl,
     FormDescription,
@@ -27,7 +31,10 @@ export function PushPayloadPanel() {
     ]);
 
     return (
-        <Panel title={"Message"}>
+        <Card>
+            <CardHeader>
+                <CardTitle>Message</CardTitle>
+            </CardHeader>
             <Columns space="xs" alignY="top">
                 <Column width="1/2">
                     {/*Title field*/}
@@ -166,6 +173,6 @@ export function PushPayloadPanel() {
                     />
                 </Column>
             </Columns>
-        </Panel>
+        </Card>
     );
 }

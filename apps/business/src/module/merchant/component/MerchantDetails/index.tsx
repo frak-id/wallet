@@ -1,9 +1,13 @@
 import { currentStablecoins, type Stablecoin } from "@frak-labs/app-essentials";
+import {
+    Card,
+    CardHeader,
+    CardTitle,
+} from "@frak-labs/design-system/components/Card";
 import { Spinner } from "@frak-labs/design-system/components/Spinner";
 import { Stack } from "@frak-labs/design-system/components/Stack";
 import type { Address } from "viem";
 import { Badge } from "@/module/common/component/Badge";
-import { Panel } from "@/module/common/component/Panel";
 import { currencyMetadata } from "@/module/common/utils/currencyOptions";
 import { FormLayout } from "@/module/forms/Form";
 import { MerchantHead } from "@/module/merchant/component/MerchantHead";
@@ -38,7 +42,10 @@ export function MerchantDetails({ merchantId }: { merchantId: string }) {
         <FormLayout>
             <MerchantHead />
             {merchant && (
-                <Panel title={"Details of the merchant"}>
+                <Card>
+                    <CardHeader>
+                        <CardTitle>Details of the merchant</CardTitle>
+                    </CardHeader>
                     <Stack space="m">
                         <Row label="Name" value={merchant.name} />
                         <Row label="Domain" value={merchant.domain} />
@@ -64,10 +71,13 @@ export function MerchantDetails({ merchantId }: { merchantId: string }) {
                             />
                         </div>
                     </Stack>
-                </Panel>
+                </Card>
             )}
             {merchant && (
-                <Panel title={"Allowed domains"}>
+                <Card>
+                    <CardHeader>
+                        <CardTitle>Allowed domains</CardTitle>
+                    </CardHeader>
                     <Stack space="m">
                         <p className={styles.summaryDescription}>
                             Additional domains authorized to access this
@@ -107,7 +117,7 @@ export function MerchantDetails({ merchantId }: { merchantId: string }) {
                             />
                         </div>
                     </Stack>
-                </Panel>
+                </Card>
             )}
             <ExplorerSettings merchantId={merchantId} />
             <PurchaseTrackerSummary merchantId={merchantId} />
@@ -121,7 +131,10 @@ function PurchaseTrackerSummary({ merchantId }: { merchantId: string }) {
     });
 
     return (
-        <Panel title={"Purchase tracker"}>
+        <Card>
+            <CardHeader>
+                <CardTitle>Purchase tracker</CardTitle>
+            </CardHeader>
             <Stack space="m">
                 <p className={styles.summaryDescription}>
                     Track purchases from your store to power campaigns and
@@ -168,7 +181,7 @@ function PurchaseTrackerSummary({ merchantId }: { merchantId: string }) {
                     <PurchaseTrackerSheet merchantId={merchantId} />
                 </div>
             </Stack>
-        </Panel>
+        </Card>
     );
 }
 

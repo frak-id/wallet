@@ -1,6 +1,10 @@
+import {
+    Card,
+    CardHeader,
+    CardTitle,
+} from "@frak-labs/design-system/components/Card";
 import { getCountryDataList } from "countries-list";
 import { useFormContext } from "react-hook-form";
-import { Panel } from "@/module/common/component/Panel";
 import {
     FormControl,
     FormDescription,
@@ -16,7 +20,10 @@ export function FormTerritory() {
     const { control } = useFormContext<CampaignDraft>();
 
     return (
-        <Panel title="Territory">
+        <Card>
+            <CardHeader>
+                <CardTitle>Territory</CardTitle>
+            </CardHeader>
             <FormField
                 control={control}
                 name="metadata.territories"
@@ -45,6 +52,6 @@ export function FormTerritory() {
                     </FormItem>
                 )}
             />
-        </Panel>
+        </Card>
     );
 }

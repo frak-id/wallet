@@ -1,4 +1,9 @@
 import { Box } from "@frak-labs/design-system/components/Box";
+import {
+    Card,
+    CardHeader,
+    CardTitle,
+} from "@frak-labs/design-system/components/Card";
 import { Inline } from "@frak-labs/design-system/components/Inline";
 import { Stack } from "@frak-labs/design-system/components/Stack";
 import { capitalize } from "radash";
@@ -8,7 +13,6 @@ import {
     useStatusTransition,
 } from "@/module/campaigns/hook/useStatusTransition";
 import { Button } from "@/module/common/component/Button";
-import { Panel } from "@/module/common/component/Panel";
 import { formatDate } from "@/module/common/utils/formatDate";
 import type { Campaign } from "@/types/Campaign";
 
@@ -17,7 +21,10 @@ export function CampaignStatus({ campaign }: { campaign: Campaign }) {
     const transitions = getAvailableTransitions(campaign.status);
 
     return (
-        <Panel title={campaign.name}>
+        <Card>
+            <CardHeader>
+                <CardTitle>{campaign.name}</CardTitle>
+            </CardHeader>
             <Stack space="m">
                 <Inline space="m" alignY="bottom">
                     <strong>Status:</strong>
@@ -72,6 +79,6 @@ export function CampaignStatus({ campaign }: { campaign: Campaign }) {
                     </Box>
                 )}
             </Stack>
-        </Panel>
+        </Card>
     );
 }

@@ -1,4 +1,5 @@
 import type { Stablecoin } from "@frak-labs/app-essentials";
+import { Card } from "@frak-labs/design-system/components/Card";
 import { Inline } from "@frak-labs/design-system/components/Inline";
 import { Spinner } from "@frak-labs/design-system/components/Spinner";
 import { Stack } from "@frak-labs/design-system/components/Stack";
@@ -11,7 +12,6 @@ import { Badge } from "@/module/common/component/Badge";
 import { Button } from "@/module/common/component/Button";
 import { CallOut } from "@/module/common/component/CallOut";
 import { IconInfo } from "@/module/common/component/IconInfo";
-import { Panel } from "@/module/common/component/Panel";
 import { Title } from "@/module/common/component/Title";
 import { Tooltip } from "@/module/common/component/Tooltip";
 import { useTokenMetadata } from "@/module/common/hook/useTokenMetadata";
@@ -48,11 +48,11 @@ export function MerchantFunding({ merchantId }: { merchantId: string }) {
     if (isError || !data) {
         return (
             <FormLayout>
-                <Panel>
+                <Card>
                     <p className={styles.errorText}>
                         Failed to load reward budget data.
                     </p>
-                </Panel>
+                </Card>
             </FormLayout>
         );
     }
@@ -60,7 +60,7 @@ export function MerchantFunding({ merchantId }: { merchantId: string }) {
     if (!data.deployed || !data.bankAddress) {
         return (
             <FormLayout>
-                <Panel className={styles.bankPanel}>
+                <Card>
                     <Stack space="l">
                         <Title as="h3" size="small" icon={<Wallet />}>
                             Reward Budget
@@ -78,7 +78,7 @@ export function MerchantFunding({ merchantId }: { merchantId: string }) {
                             Set Up Budget
                         </Button>
                     </Stack>
-                </Panel>
+                </Card>
             </FormLayout>
         );
     }
@@ -119,7 +119,7 @@ function RewardBudgetView({
     const allTokensEmpty = tokens.every((t) => t.balance === 0n);
 
     return (
-        <Panel className={styles.bankPanel}>
+        <Card>
             <Stack space="l">
                 <div className={styles.bankHeaderRow}>
                     <Inline space="s" alignY="center">
@@ -162,7 +162,7 @@ function RewardBudgetView({
                     <AddFundsSheet tokens={tokens} bankAddress={bankAddress} />
                 </div>
             </Stack>
-        </Panel>
+        </Card>
     );
 }
 

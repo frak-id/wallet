@@ -2,9 +2,6 @@ import { vars } from "@frak-labs/design-system/theme";
 import { alias, brand } from "@frak-labs/design-system/tokens";
 import { style } from "@vanilla-extract/css";
 
-export const bankPanel = style({
-    marginBottom: "20px",
-});
 export const bankHeaderRow = style({
     display: "flex",
     alignItems: "center",

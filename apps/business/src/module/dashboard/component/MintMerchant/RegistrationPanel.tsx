@@ -1,7 +1,7 @@
 import { Stack } from "@frak-labs/design-system/components/Stack";
 import { Text } from "@frak-labs/design-system/components/Text";
 import { ButtonAuth } from "@/module/common/component/ButtonAuth";
-import { PanelAccordion } from "@/module/common/component/PanelAccordion";
+import { CardAccordion } from "@/module/common/component/CardAccordion";
 import * as styles from "./mint-merchant.css";
 
 interface RegistrationPanelProps {
@@ -26,10 +26,9 @@ export function RegistrationPanel({
     onOpenChange,
 }: RegistrationPanelProps) {
     return (
-        <PanelAccordion
+        <CardAccordion
             title="Product Registration"
             className={styles.panel}
-            withBadge={step > 2}
             value={isOpen ? "item-1" : ""}
             onValueChange={(value) => onOpenChange(value === "item-1")}
         >
@@ -73,6 +72,6 @@ export function RegistrationPanel({
                     {merchantId && <p>Merchant ID: {merchantId}</p>}
                 </div>
             )}
-        </PanelAccordion>
+        </CardAccordion>
     );
 }

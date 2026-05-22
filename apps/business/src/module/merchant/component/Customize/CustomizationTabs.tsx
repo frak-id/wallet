@@ -1,10 +1,14 @@
+import {
+    Card,
+    CardHeader,
+    CardTitle,
+} from "@frak-labs/design-system/components/Card";
 import { Inline } from "@frak-labs/design-system/components/Inline";
 import clsx from "clsx";
 import { Plus } from "lucide-react";
 import { useEffect, useState } from "react";
 import { AlertDialog } from "@/module/common/component/AlertDialog";
 import { Button } from "@/module/common/component/Button";
-import { Panel } from "@/module/common/component/Panel";
 import { Input } from "@/module/forms/Input";
 import * as styles from "./customize.css";
 
@@ -33,7 +37,10 @@ export function CustomizationTabs({
     }, [activeTab]);
 
     return (
-        <Panel title={"SDK Customization"}>
+        <Card>
+            <CardHeader>
+                <CardTitle>SDK Customization</CardTitle>
+            </CardHeader>
             <p className={styles.customizeFieldDescription}>
                 Global defaults apply to every SDK component. Placements are
                 variants you can use on the same website to display your
@@ -101,7 +108,7 @@ export function CustomizationTabs({
                     isCreatePlacementSuccess={isCreatePlacementSuccess}
                 />
             </Inline>
-        </Panel>
+        </Card>
     );
 }
 

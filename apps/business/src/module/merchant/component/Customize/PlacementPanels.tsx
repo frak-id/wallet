@@ -1,10 +1,14 @@
 import type { SdkConfig } from "@frak-labs/backend-elysia/domain/merchant";
+import {
+    Card,
+    CardHeader,
+    CardTitle,
+} from "@frak-labs/design-system/components/Card";
 import { Trash2 } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import { AlertDialog } from "@/module/common/component/AlertDialog";
 import { Button } from "@/module/common/component/Button";
-import { Panel } from "@/module/common/component/Panel";
 import { Form } from "@/module/forms/Form";
 import { FormActions } from "@/module/forms/FormActions";
 import { useMerchantUpdate } from "@/module/merchant/hook/useMerchantUpdate";
@@ -66,7 +70,10 @@ export function PlacementCssPanel({
     }, [isSuccess, form.reset, form.getValues, form]);
 
     return (
-        <Panel title={`Placement CSS · ${placementId}`}>
+        <Card>
+            <CardHeader>
+                <CardTitle>{`Placement CSS · ${placementId}`}</CardTitle>
+            </CardHeader>
             <p className={styles.customizeFieldDescription}>
                 Global CSS overrides for this placement. Styles defined here
                 apply to all SDK components within this placement.
@@ -94,7 +101,7 @@ export function PlacementCssPanel({
                     })
                 }
             />
-        </Panel>
+        </Card>
     );
 }
 
@@ -167,7 +174,10 @@ export function PlacementTranslationsPanel({
 
     return (
         <Form {...form}>
-            <Panel title={`Placement translations · ${placementId}`}>
+            <Card>
+                <CardHeader>
+                    <CardTitle>{`Placement translations · ${placementId}`}</CardTitle>
+                </CardHeader>
                 <SharingPagePreview
                     form={form}
                     logoUrl={sdkConfig.logoUrl ?? undefined}
@@ -190,7 +200,7 @@ export function PlacementTranslationsPanel({
                     onDiscard={() => form.reset(values)}
                     onSubmit={handleSubmit}
                 />
-            </Panel>
+            </Card>
         </Form>
     );
 }
@@ -213,7 +223,10 @@ export function DeletePlacementPanel({
     const [open, setOpen] = useState(false);
 
     return (
-        <Panel title={`Delete placement · ${placementId}`}>
+        <Card>
+            <CardHeader>
+                <CardTitle>{`Delete placement · ${placementId}`}</CardTitle>
+            </CardHeader>
             <p className={styles.customizeHint}>
                 This removes all overrides for this placement.
             </p>
@@ -253,6 +266,6 @@ export function DeletePlacementPanel({
                     </Button>
                 }
             />
-        </Panel>
+        </Card>
     );
 }

@@ -2,7 +2,7 @@ import { Inline } from "@frak-labs/design-system/components/Inline";
 import { Text } from "@frak-labs/design-system/components/Text";
 import type { UseFormReturn } from "react-hook-form";
 import { Button } from "@/module/common/component/Button";
-import { PanelAccordion } from "@/module/common/component/PanelAccordion";
+import { CardAccordion } from "@/module/common/component/CardAccordion";
 import type { MerchantNew } from "@/types/Merchant";
 import * as styles from "./mint-merchant.css";
 
@@ -26,10 +26,9 @@ export function ValidationPanel({
     const values = form.getValues();
 
     return (
-        <PanelAccordion
+        <CardAccordion
             title="Validate and Launch"
             className={styles.panel}
-            withBadge={step > 2}
             value={isOpen ? "item-1" : ""}
             onValueChange={(value) => onOpenChange(value === "item-1")}
         >
@@ -115,6 +114,6 @@ export function ValidationPanel({
                     Information validated for "{values.name}" on {values.domain}
                 </div>
             )}
-        </PanelAccordion>
+        </CardAccordion>
     );
 }

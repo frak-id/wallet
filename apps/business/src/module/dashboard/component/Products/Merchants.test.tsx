@@ -1,24 +1,9 @@
 import { render, screen } from "@testing-library/react";
-import { describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { MyMerchants } from "./index";
 
 vi.mock("@/module/dashboard/hooks/useMyMerchants", () => ({
     useMyMerchants: vi.fn(),
-}));
-
-vi.mock("@/module/common/component/Panel", () => ({
-    Panel: ({
-        children,
-        title,
-    }: {
-        children: React.ReactNode;
-        title: string;
-    }) => (
-        <div data-testid="panel">
-            <h2>{title}</h2>
-            {children}
-        </div>
-    ),
 }));
 
 vi.mock("@/module/dashboard/component/MerchantItem", () => ({
@@ -80,7 +65,7 @@ describe("MyMerchants", () => {
 
         render(<MyMerchants />);
 
-        expect(screen.getAllByTestId("panel").length).toBeGreaterThan(0);
+        expect(screen.getAllByTestId("merchant-item").length).toBe(2);
         expect(screen.getByText("Merchant 1")).toBeInTheDocument();
         expect(screen.getByText("Merchant 2")).toBeInTheDocument();
     });

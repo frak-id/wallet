@@ -1,10 +1,14 @@
+import {
+    Card,
+    CardHeader,
+    CardTitle,
+} from "@frak-labs/design-system/components/Card";
 import { useMutation } from "@tanstack/react-query";
 import { useEffect } from "react";
 import { useFormContext } from "react-hook-form";
 import type { Address } from "viem";
 import { useIsDemoMode } from "@/module/common/atoms/demoMode";
 import { Button } from "@/module/common/component/Button";
-import { Panel } from "@/module/common/component/Panel";
 import { FormField, FormItem, FormMessage } from "@/module/forms/Form";
 import {
     type GetMembersParam,
@@ -23,7 +27,10 @@ export function AudiencePanel() {
     const selectedMembers = membersStore((state) => state.selectedMembers);
 
     return (
-        <Panel title={"Audience"}>
+        <Card>
+            <CardHeader>
+                <CardTitle>Audience</CardTitle>
+            </CardHeader>
             <FormField
                 control={control}
                 name={"target"}
@@ -40,7 +47,7 @@ export function AudiencePanel() {
                     </FormItem>
                 )}
             />
-        </Panel>
+        </Card>
     );
 }
 

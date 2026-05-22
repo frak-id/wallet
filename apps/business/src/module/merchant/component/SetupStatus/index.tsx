@@ -1,3 +1,8 @@
+import {
+    Card,
+    CardHeader,
+    CardTitle,
+} from "@frak-labs/design-system/components/Card";
 import { Inline } from "@frak-labs/design-system/components/Inline";
 import { Spinner } from "@frak-labs/design-system/components/Spinner";
 import type { LinkProps } from "@tanstack/react-router";
@@ -5,7 +10,6 @@ import { AlertCircle, BadgeCheck } from "lucide-react";
 import { Button } from "@/module/common/component/Button";
 import { CallOut } from "@/module/common/component/CallOut";
 import { LinkButton } from "@/module/common/component/LinkButton";
-import { Panel } from "@/module/common/component/Panel";
 import { FormLayout } from "@/module/forms/Form";
 import {
     type MerchantSetupStatusItem,
@@ -18,7 +22,10 @@ export function MerchantSetupStatus({ merchantId }: { merchantId: string }) {
 
     return (
         <FormLayout>
-            <Panel title={"Merchant setup status"} withBadge={false}>
+            <Card>
+                <CardHeader>
+                    <CardTitle>Merchant setup status</CardTitle>
+                </CardHeader>
                 {!data ? (
                     <Spinner />
                 ) : (
@@ -27,7 +34,7 @@ export function MerchantSetupStatus({ merchantId }: { merchantId: string }) {
                         hasWarning={data.hasWarning}
                     />
                 )}
-            </Panel>
+            </Card>
         </FormLayout>
     );
 }

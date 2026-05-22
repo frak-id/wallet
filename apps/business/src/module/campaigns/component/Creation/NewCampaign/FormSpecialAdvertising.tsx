@@ -1,6 +1,10 @@
+import {
+    Card,
+    CardHeader,
+    CardTitle,
+} from "@frak-labs/design-system/components/Card";
 import { Checkbox } from "@frak-labs/design-system/components/Checkbox";
 import { useFormContext } from "react-hook-form";
-import { Panel } from "@/module/common/component/Panel";
 import {
     FormControl,
     FormDescription,
@@ -67,7 +71,10 @@ export function FormSpecialAdvertising() {
     const { control } = useFormContext<CampaignDraft>();
 
     return (
-        <Panel title="Special advertising categories">
+        <Card>
+            <CardHeader>
+                <CardTitle>Special advertising categories</CardTitle>
+            </CardHeader>
             <FormField
                 control={control}
                 name="metadata.specialCategories"
@@ -130,6 +137,6 @@ export function FormSpecialAdvertising() {
                     </FormItem>
                 )}
             />
-        </Panel>
+        </Card>
     );
 }

@@ -10,7 +10,7 @@ import { Text } from "@frak-labs/design-system/components/Text";
 import { CheckCircle2, ExternalLink, XCircle } from "lucide-react";
 import type { UseFormReturn } from "react-hook-form";
 import { Button } from "@/module/common/component/Button";
-import { PanelAccordion } from "@/module/common/component/PanelAccordion";
+import { CardAccordion } from "@/module/common/component/CardAccordion";
 import { TextWithCopy } from "@/module/common/component/TextWithCopy";
 import { validateUrl } from "@/module/common/utils/validateUrl";
 import { useDnsTxtRecordToSet } from "@/module/dashboard/hooks/dnsRecordHooks";
@@ -63,10 +63,9 @@ export function MerchantInformationPanel({
     });
 
     return (
-        <PanelAccordion
+        <CardAccordion
             title="Merchant Information"
             className={styles.panel}
-            withBadge={step > 1}
             value={isOpen ? "item-1" : ""}
             onValueChange={(value) => onOpenChange(value === "item-1")}
         >
@@ -283,6 +282,6 @@ export function MerchantInformationPanel({
                     </div>
                 </Box>
             </Form>
-        </PanelAccordion>
+        </CardAccordion>
     );
 }

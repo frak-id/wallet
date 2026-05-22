@@ -1,3 +1,9 @@
+import {
+    Card,
+    CardHeader,
+    CardTitle,
+} from "@frak-labs/design-system/components/Card";
+import { Stack } from "@frak-labs/design-system/components/Stack";
 import { useWalletStatus } from "@frak-labs/react-sdk";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
@@ -5,7 +11,6 @@ import { useTranslation } from "react-i18next";
 import { useDemoMode } from "@/module/common/atoms/demoMode";
 import { Button } from "@/module/common/component/Button";
 import { Head } from "@/module/common/component/Head";
-import { Panel } from "@/module/common/component/Panel";
 import { DemoModeSwitch } from "@/module/settings/DemoModeSwitch";
 import { LanguageSelector } from "@/module/settings/LanguageSelector";
 import { SelectCurrency } from "@/module/settings/SelectCurrency";
@@ -33,50 +38,67 @@ function Settings() {
         <>
             <Head title={{ content: t("settings.title") }} />
 
-            <Panel title={t("settings.wallet.title")}>
-                <p className={walletAddress}>
-                    {t("settings.wallet.address", {
-                        wallet: walletStatus?.wallet ?? "",
-                    })}
-                </p>
-            </Panel>
+            <Stack space="l">
+                <Card>
+                    <CardHeader>
+                        <CardTitle>{t("settings.wallet.title")}</CardTitle>
+                    </CardHeader>
+                    <p className={walletAddress}>
+                        {t("settings.wallet.address", {
+                            wallet: walletStatus?.wallet ?? "",
+                        })}
+                    </p>
+                </Card>
 
-            <Panel title={t("settings.currency.title")}>
-                <SelectCurrency />
-            </Panel>
+                <Card>
+                    <CardHeader>
+                        <CardTitle>{t("settings.currency.title")}</CardTitle>
+                    </CardHeader>
+                    <SelectCurrency />
+                </Card>
 
-            <Panel title={t("settings.language.title")}>
-                <LanguageSelector />
-            </Panel>
+                <Card>
+                    <CardHeader>
+                        <CardTitle>{t("settings.language.title")}</CardTitle>
+                    </CardHeader>
+                    <LanguageSelector />
+                </Card>
 
-            {isHydrated && !isDemoMode && (
-                <Panel title={t("settings.demo.title")}>
-                    <DemoModeSwitch />
-                </Panel>
-            )}
+                {isHydrated && !isDemoMode && (
+                    <Card>
+                        <CardHeader>
+                            <CardTitle>{t("settings.demo.title")}</CardTitle>
+                        </CardHeader>
+                        <DemoModeSwitch />
+                    </Card>
+                )}
 
-            <Panel title={t("settings.logout.title")}>
-                <p>
-                    {showDemoCopy
-                        ? t("settings.logout.description_demo")
-                        : t("settings.logout.description")}
-                </p>
-                <Button
-                    variant={"primary"}
-                    className={logoutButton}
-                    onClick={() => {
-                        if (isDemoMode) {
-                            setDemoMode(false);
-                        }
-                        useAuthStore.getState().clearAuth();
-                        navigate({ to: "/login" });
-                    }}
-                >
-                    {showDemoCopy
-                        ? t("settings.logout.action_demo")
-                        : t("settings.logout.action")}
-                </Button>
-            </Panel>
+                <Card>
+                    <CardHeader>
+                        <CardTitle>{t("settings.logout.title")}</CardTitle>
+                    </CardHeader>
+                    <p>
+                        {showDemoCopy
+                            ? t("settings.logout.description_demo")
+                            : t("settings.logout.description")}
+                    </p>
+                    <Button
+                        variant={"primary"}
+                        className={logoutButton}
+                        onClick={() => {
+                            if (isDemoMode) {
+                                setDemoMode(false);
+                            }
+                            useAuthStore.getState().clearAuth();
+                            navigate({ to: "/login" });
+                        }}
+                    >
+                        {showDemoCopy
+                            ? t("settings.logout.action_demo")
+                            : t("settings.logout.action")}
+                    </Button>
+                </Card>
+            </Stack>
         </>
     );
 }

@@ -1,3 +1,8 @@
+import {
+    Card,
+    CardHeader,
+    CardTitle,
+} from "@frak-labs/design-system/components/Card";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
 import { useMemo } from "react";
@@ -9,7 +14,6 @@ import { useSaveCampaign } from "@/module/campaigns/hook/useSaveCampaign";
 import { useStatusTransition } from "@/module/campaigns/hook/useStatusTransition";
 import { useIsDemoMode } from "@/module/common/atoms/demoMode";
 import { Head } from "@/module/common/component/Head";
-import { Panel } from "@/module/common/component/Panel";
 import { useActiveMerchantId } from "@/module/common/hook/useActiveMerchantId";
 import { Form, FormLayout } from "@/module/forms/Form";
 import { type CampaignDraft, campaignStore } from "@/stores/campaignStore";
@@ -105,10 +109,13 @@ export function ValidationCampaign() {
 
 function SuccessMessage() {
     return (
-        <Panel title="Campaign published">
+        <Card>
+            <CardHeader>
+                <CardTitle>Campaign published</CardTitle>
+            </CardHeader>
             <p className={styles.validationCampaignMessage}>
                 Your campaign was successfully created and published!
             </p>
-        </Panel>
+        </Card>
     );
 }

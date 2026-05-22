@@ -1,9 +1,13 @@
 import type { SdkConfig } from "@frak-labs/backend-elysia/domain/merchant";
 import type { Currency } from "@frak-labs/core-sdk";
+import {
+    Card,
+    CardHeader,
+    CardTitle,
+} from "@frak-labs/design-system/components/Card";
 import clsx from "clsx";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
-import { Panel } from "@/module/common/component/Panel";
 import { PreviewWrapper } from "@/module/common/component/PreviewWrapper";
 import { Form } from "@/module/forms/Form";
 import { FormActions } from "@/module/forms/FormActions";
@@ -101,7 +105,10 @@ function GlobalCssPanel({
     }, [isSuccess, form.reset, form.getValues, form]);
 
     return (
-        <Panel title={"Global CSS"}>
+        <Card>
+            <CardHeader>
+                <CardTitle>Global CSS</CardTitle>
+            </CardHeader>
             <p className={styles.customizeFieldDescription}>
                 CSS styles applied to all SDK components across every placement.
                 Placement-level CSS can override these defaults.
@@ -137,7 +144,7 @@ function GlobalCssPanel({
                     </div>
                 )}
             </div>
-        </Panel>
+        </Card>
     );
 }
 
@@ -183,7 +190,10 @@ function GlobalTranslationsPanel({
 
     return (
         <Form {...form}>
-            <Panel title={"Global translations"}>
+            <Card>
+                <CardHeader>
+                    <CardTitle>Global translations</CardTitle>
+                </CardHeader>
                 <p className={styles.customizeFieldDescription}>
                     Translations applied to all SDK components across every
                     placement.
@@ -216,7 +226,7 @@ function GlobalTranslationsPanel({
                         });
                     }}
                 />
-            </Panel>
+            </Card>
         </Form>
     );
 }
@@ -332,7 +342,10 @@ function GlobalComponentsPanel({
 
     return (
         <Form {...form}>
-            <Panel title={"Global component defaults"}>
+            <Card>
+                <CardHeader>
+                    <CardTitle>Global component defaults</CardTitle>
+                </CardHeader>
                 <p className={styles.customizeFieldDescription}>
                     Default text and styles for SDK components. Placement-level
                     settings override these values.
@@ -379,7 +392,7 @@ function GlobalComponentsPanel({
                     onDiscard={() => form.reset(values)}
                     onSubmit={() => form.handleSubmit(onSubmit)()}
                 />
-            </Panel>
+            </Card>
         </Form>
     );
 }

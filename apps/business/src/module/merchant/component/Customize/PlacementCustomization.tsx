@@ -1,6 +1,11 @@
 import type { SdkConfig } from "@frak-labs/backend-elysia/domain/merchant";
 import type { Currency } from "@frak-labs/core-sdk";
 import {
+    Card,
+    CardHeader,
+    CardTitle,
+} from "@frak-labs/design-system/components/Card";
+import {
     BannerPreview,
     PostPurchasePreview,
     ShareButtonPreview,
@@ -8,7 +13,6 @@ import {
 import clsx from "clsx";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { type UseFormReturn, useForm } from "react-hook-form";
-import { Panel } from "@/module/common/component/Panel";
 import { PreviewWrapper } from "@/module/common/component/PreviewWrapper";
 import {
     Form,
@@ -247,7 +251,10 @@ function PlacementSettingsPanel({
 
     return (
         <Form {...form}>
-            <Panel title={`Placement settings · ${placementId}`}>
+            <Card>
+                <CardHeader>
+                    <CardTitle>{`Placement settings · ${placementId}`}</CardTitle>
+                </CardHeader>
                 <div className={styles.customizeSettingsGrid}>
                     <FormField
                         control={form.control}
@@ -323,7 +330,7 @@ function PlacementSettingsPanel({
                     onDiscard={() => form.reset(values)}
                     onSubmit={() => form.handleSubmit(onSubmit)()}
                 />
-            </Panel>
+            </Card>
         </Form>
     );
 }

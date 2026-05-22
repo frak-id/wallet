@@ -1,4 +1,5 @@
-import { Panel } from "@/module/common/component/Panel";
+import { Stack } from "@frak-labs/design-system/components/Stack";
+import { Title } from "@/module/common/component/Title";
 import { MerchantItem } from "@/module/dashboard/component/MerchantItem";
 import { useMyMerchants } from "@/module/dashboard/hooks/useMyMerchants";
 import * as styles from "./products.css";
@@ -7,9 +8,10 @@ export function MyMerchants() {
     const { merchants } = useMyMerchants();
 
     return (
-        <Panel variant={"ghost"} title={"My Merchants"} withBadge={false}>
+        <Stack as="section" space="m">
+            <Title size="small">My Merchants</Title>
             <MerchantListSection merchants={merchants} />
-        </Panel>
+        </Stack>
     );
 }
 

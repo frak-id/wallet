@@ -1,8 +1,12 @@
+import {
+    Card,
+    CardHeader,
+    CardTitle,
+} from "@frak-labs/design-system/components/Card";
 import { Inline } from "@frak-labs/design-system/components/Inline";
 import { ExplorerCardPreview } from "@frak-labs/ui-preview";
 import { useCallback, useEffect, useMemo } from "react";
 import { useForm } from "react-hook-form";
-import { Panel } from "@/module/common/component/Panel";
 import { PreviewWrapper } from "@/module/common/component/PreviewWrapper";
 import {
     Form,
@@ -104,7 +108,10 @@ export function ExplorerSettings({ merchantId }: { merchantId: string }) {
 
     return (
         <Form {...form}>
-            <Panel title={"Explorer"}>
+            <Card>
+                <CardHeader>
+                    <CardTitle>Explorer</CardTitle>
+                </CardHeader>
                 <FormField
                     control={form.control}
                     name="enabled"
@@ -227,7 +234,7 @@ export function ExplorerSettings({ merchantId }: { merchantId: string }) {
                         />
                     </PreviewWrapper>
                 )}
-            </Panel>
+            </Card>
         </Form>
     );
 }

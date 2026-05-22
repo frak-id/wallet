@@ -1,3 +1,8 @@
+import {
+    Card,
+    CardHeader,
+    CardTitle,
+} from "@frak-labs/design-system/components/Card";
 import { Spinner } from "@frak-labs/design-system/components/Spinner";
 import { useMutation } from "@tanstack/react-query";
 import { Link, useNavigate } from "@tanstack/react-router";
@@ -7,7 +12,6 @@ import { ActionsWrapper } from "@/module/common/component/ActionsWrapper";
 import { Button } from "@/module/common/component/Button";
 import { ButtonWithConfirmationAlert } from "@/module/common/component/ButtonWithConfirmationAlert";
 import { Head } from "@/module/common/component/Head";
-import { Panel } from "@/module/common/component/Panel";
 import { useActiveMerchantId } from "@/module/common/hook/useActiveMerchantId";
 import { FormLayout } from "@/module/forms/Form";
 import { PushRecap } from "@/module/members/component/CreatePushConfirmation/PushRecap";
@@ -123,19 +127,25 @@ function ConfirmationContent({ merchantId }: { merchantId: string }) {
 
     if (!currentPushCreation) {
         return (
-            <Panel title={"Check your push"}>
+            <Card>
+                <CardHeader>
+                    <CardTitle>Check your push</CardTitle>
+                </CardHeader>
                 <Link to="/m/$merchantId/members" params={{ merchantId }}>
                     Push not found, go back
                 </Link>
-            </Panel>
+            </Card>
         );
     }
 
     return (
         <>
-            <Panel title={"Check your push"}>
+            <Card>
+                <CardHeader>
+                    <CardTitle>Check your push</CardTitle>
+                </CardHeader>
                 <PushRecap pushForm={currentPushCreation} />
-            </Panel>
+            </Card>
             <ActionsWrapper
                 left={
                     <>

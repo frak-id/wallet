@@ -35,11 +35,7 @@ type CardHeaderProps = HTMLAttributes<HTMLDivElement> & {
  * Header slot for a Card. Pairs `CardTitle` (and optionally
  * `CardDescription`) and adds bottom spacing before the body.
  */
-export function CardHeader({
-    children,
-    className,
-    ...rest
-}: CardHeaderProps) {
+export function CardHeader({ children, className, ...rest }: CardHeaderProps) {
     return (
         <div
             className={`${cardHeader}${className ? ` ${className}` : ""}`}
@@ -61,7 +57,12 @@ type CardTitleProps = {
  */
 export function CardTitle({ children, className }: CardTitleProps) {
     return (
-        <Text as="h3" variant="heading4" weight="semiBold" className={className}>
+        <Text
+            as="h3"
+            variant="heading4"
+            weight="semiBold"
+            className={className}
+        >
             {children}
         </Text>
     );

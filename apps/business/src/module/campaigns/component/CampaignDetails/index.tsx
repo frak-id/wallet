@@ -1,3 +1,8 @@
+import {
+    Card,
+    CardHeader,
+    CardTitle,
+} from "@frak-labs/design-system/components/Card";
 import { Skeleton } from "@frak-labs/design-system/components/Skeleton";
 import { useQuery } from "@tanstack/react-query";
 import { useEffect, useMemo } from "react";
@@ -18,7 +23,6 @@ import { RewardsSummary } from "@/module/campaigns/component/RewardsSummary";
 import { useIsDemoMode } from "@/module/common/atoms/demoMode";
 import { ActionsWrapper } from "@/module/common/component/ActionsWrapper";
 import { LinkButton } from "@/module/common/component/LinkButton";
-import { Panel } from "@/module/common/component/Panel";
 import { useActiveMerchantId } from "@/module/common/hook/useActiveMerchantId";
 import { Form, FormLayout } from "@/module/forms/Form";
 import {
@@ -78,7 +82,14 @@ export function CampaignDetails({
     }
 
     if (!campaign) {
-        return <Panel title={"Campaign Status"}>Campaign not found</Panel>;
+        return (
+            <Card>
+                <CardHeader>
+                    <CardTitle>Campaign Status</CardTitle>
+                </CardHeader>
+                Campaign not found
+            </Card>
+        );
     }
 
     const rewards = campaign.rule.rewards ?? [];
@@ -86,7 +97,10 @@ export function CampaignDetails({
     return (
         <FormLayout>
             <CampaignStatus campaign={campaign} />
-            <Panel title={"Campaign Details"}>
+            <Card>
+                <CardHeader>
+                    <CardTitle>Campaign Details</CardTitle>
+                </CardHeader>
                 <Form {...form}>
                     <FormAdvertising />
                     <FormGoal />
@@ -98,7 +112,7 @@ export function CampaignDetails({
                     <BudgetUsage campaign={campaign} />
                     <CampaignTerritory campaign={campaign} />
                 </Form>
-            </Panel>
+            </Card>
             <ActionsWrapper
                 right={
                     <>

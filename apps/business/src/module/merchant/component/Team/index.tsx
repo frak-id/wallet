@@ -1,5 +1,9 @@
+import {
+    Card,
+    CardHeader,
+    CardTitle,
+} from "@frak-labs/design-system/components/Card";
 import { Spinner } from "@frak-labs/design-system/components/Spinner";
-import { Panel } from "@/module/common/component/Panel";
 import { FormLayout } from "@/module/forms/Form";
 import { TableTeam } from "@/module/merchant/component/TableTeam";
 import { useMerchant } from "@/module/merchant/hook/useMerchant";
@@ -28,10 +32,13 @@ export function MerchantTeam({ merchantId }: { merchantId: string }) {
 
     return (
         <FormLayout>
-            <Panel title={"Manage your team"}>
+            <Card>
+                <CardHeader>
+                    <CardTitle>Manage your team</CardTitle>
+                </CardHeader>
                 {/* Display the administrators */}
                 <TableTeam merchantId={merchantId} />
-            </Panel>
+            </Card>
         </FormLayout>
     );
 }

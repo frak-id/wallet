@@ -1,3 +1,8 @@
+import {
+    Card,
+    CardHeader,
+    CardTitle,
+} from "@frak-labs/design-system/components/Card";
 import { Inline } from "@frak-labs/design-system/components/Inline";
 import { Stack } from "@frak-labs/design-system/components/Stack";
 import clsx from "clsx";
@@ -11,7 +16,6 @@ import {
 import { type ReactElement, useEffect, useState } from "react";
 import { useFormContext } from "react-hook-form";
 import { Badge } from "@/module/common/component/Badge";
-import { Panel } from "@/module/common/component/Panel";
 import {
     FormControl,
     FormDescription,
@@ -107,7 +111,10 @@ export function FormGoals() {
     }, [watchGoal]);
 
     return (
-        <Panel title="Goals">
+        <Card>
+            <CardHeader>
+                <CardTitle>Goals</CardTitle>
+            </CardHeader>
             <Stack space="m">
                 <FormDescription>
                     The choice of your goal defines the event that generates the
@@ -178,7 +185,7 @@ export function FormGoals() {
                     )}
                 />
             </Stack>
-        </Panel>
+        </Card>
     );
 }
 

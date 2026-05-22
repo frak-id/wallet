@@ -27,6 +27,9 @@ export const formItem = recipe({
 
 export const formLayout = style({
     maxWidth: "850px",
+    display: "flex",
+    flexDirection: "column",
+    gap: alias.spacing.l,
 });
 
 export const formLabel = recipe({

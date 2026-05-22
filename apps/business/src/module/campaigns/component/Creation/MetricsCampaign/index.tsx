@@ -1,3 +1,8 @@
+import {
+    Card,
+    CardHeader,
+    CardTitle,
+} from "@frak-labs/design-system/components/Card";
 import { Inline } from "@frak-labs/design-system/components/Inline";
 import { Stack } from "@frak-labs/design-system/components/Stack";
 import { Switch } from "@frak-labs/design-system/components/Switch";
@@ -9,7 +14,6 @@ import { Actions } from "@/module/campaigns/component/Actions";
 import { ButtonCancel } from "@/module/campaigns/component/Creation/NewCampaign/ButtonCancel";
 import { useSaveCampaign } from "@/module/campaigns/hook/useSaveCampaign";
 import { Head } from "@/module/common/component/Head";
-import { Panel } from "@/module/common/component/Panel";
 import { useActiveMerchantId } from "@/module/common/hook/useActiveMerchantId";
 import {
     Form,
@@ -119,7 +123,10 @@ export function MetricsCampaign() {
                         }
                     />
 
-                    <Panel title="Campaign type">
+                    <Card>
+                        <CardHeader>
+                            <CardTitle>Campaign type</CardTitle>
+                        </CardHeader>
                         <Stack space="m">
                             <Inline
                                 space="m"
@@ -159,9 +166,12 @@ export function MetricsCampaign() {
                                 />
                             </Inline>
                         </Stack>
-                    </Panel>
+                    </Card>
 
-                    <Panel title="Set a target cost per action">
+                    <Card>
+                        <CardHeader>
+                            <CardTitle>Set a target cost per action</CardTitle>
+                        </CardHeader>
                         <p className={styles.panelDescription}>
                             "Target CPA" defines your overall acquisition cost
                             per target action (your goal) to generate the
@@ -170,9 +180,12 @@ export function MetricsCampaign() {
                         </p>
                         <CacInput />
                         <TriggerSelector />
-                    </Panel>
+                    </Card>
 
-                    <Panel title="Set reward amounts">
+                    <Card>
+                        <CardHeader>
+                            <CardTitle>Set reward amounts</CardTitle>
+                        </CardHeader>
                         <p className={styles.panelDescription}>
                             When your goal is reached, the rewards are
                             distributed instantly and automatically to the
@@ -180,22 +193,31 @@ export function MetricsCampaign() {
                             into their wallets, in the set proportions.
                         </p>
                         <DistributionSlider />
-                    </Panel>
+                    </Card>
 
-                    <Panel title="Referral Chain">
+                    <Card>
+                        <CardHeader>
+                            <CardTitle>Referral Chain</CardTitle>
+                        </CardHeader>
                         <ChainingConfig />
-                    </Panel>
+                    </Card>
 
                     {showConditionsPanel && (
-                        <Panel title="Conditions">
+                        <Card>
+                            <CardHeader>
+                                <CardTitle>Conditions</CardTitle>
+                            </CardHeader>
                             <p className={styles.panelDescription}>
                                 Filter which purchases qualify for a reward.
                             </p>
                             <MinPurchaseAmount />
-                        </Panel>
+                        </Card>
                     )}
 
-                    <Panel title="Reward lockup">
+                    <Card>
+                        <CardHeader>
+                            <CardTitle>Reward lockup</CardTitle>
+                        </CardHeader>
                         <p className={styles.panelDescription}>
                             Rewards stay locked for a grace period after a
                             purchase before being settled on-chain. This
@@ -203,7 +225,7 @@ export function MetricsCampaign() {
                             0 to settle immediately.
                         </p>
                         <LockupConfig />
-                    </Panel>
+                    </Card>
 
                     <Actions
                         isLoading={saveCampaign.isPending}

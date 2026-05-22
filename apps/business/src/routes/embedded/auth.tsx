@@ -1,3 +1,8 @@
+import {
+    Card,
+    CardHeader,
+    CardTitle,
+} from "@frak-labs/design-system/components/Card";
 import { Spinner } from "@frak-labs/design-system/components/Spinner";
 import { useSiweAuthenticate } from "@frak-labs/react-sdk";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
@@ -5,7 +10,6 @@ import { useTransition } from "react";
 import { useTranslation } from "react-i18next";
 import { authenticatedBackendApi } from "@/api/backendClient";
 import { Button } from "@/module/common/component/Button";
-import { Panel } from "@/module/common/component/Panel";
 import { Title } from "@/module/common/component/Title";
 import { useAuthStore } from "@/stores/authStore";
 import { button, container, title } from "./auth.css";
@@ -73,7 +77,10 @@ function EmbeddedAuthPage() {
     return (
         <div className={container}>
             <Title className={title}>{t("auth.embedded.title")}</Title>
-            <Panel withBadge={false} title={t("auth.embedded.panelTitle")}>
+            <Card>
+                <CardHeader>
+                    <CardTitle>{t("auth.embedded.panelTitle")}</CardTitle>
+                </CardHeader>
                 <Button
                     variant="secondary"
                     size="small"
@@ -91,7 +98,7 @@ function EmbeddedAuthPage() {
                 >
                     {isPending && <Spinner />} {t("auth.embedded.action")}
                 </Button>
-            </Panel>
+            </Card>
         </div>
     );
 }

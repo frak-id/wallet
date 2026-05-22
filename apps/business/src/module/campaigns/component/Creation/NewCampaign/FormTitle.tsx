@@ -1,5 +1,9 @@
+import {
+    Card,
+    CardHeader,
+    CardTitle,
+} from "@frak-labs/design-system/components/Card";
 import { useFormContext } from "react-hook-form";
-import { Panel } from "@/module/common/component/Panel";
 import {
     FormControl,
     FormField,
@@ -13,7 +17,10 @@ export function FormTitle() {
     const { control } = useFormContext<CampaignDraft>();
 
     return (
-        <Panel title="Campaign Title">
+        <Card>
+            <CardHeader>
+                <CardTitle>Campaign Title</CardTitle>
+            </CardHeader>
             <FormField
                 control={control}
                 name="name"
@@ -30,6 +37,6 @@ export function FormTitle() {
                     </FormItem>
                 )}
             />
-        </Panel>
+        </Card>
     );
 }

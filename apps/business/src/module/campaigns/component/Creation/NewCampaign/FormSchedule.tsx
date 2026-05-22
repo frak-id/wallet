@@ -1,10 +1,14 @@
+import {
+    Card,
+    CardHeader,
+    CardTitle,
+} from "@frak-labs/design-system/components/Card";
 import { Checkbox } from "@frak-labs/design-system/components/Checkbox";
 import { format, isBefore, startOfDay } from "date-fns";
 import { useEffect, useState } from "react";
 import { useFormContext } from "react-hook-form";
 import { ButtonCalendar } from "@/module/common/component/ButtonCalendar";
 import { Calendar } from "@/module/common/component/Calendar";
-import { Panel } from "@/module/common/component/Panel";
 import {
     Popover,
     PopoverContent,
@@ -33,7 +37,10 @@ export function FormSchedule() {
     }, [watchEndDate]);
 
     return (
-        <Panel title="Schedule">
+        <Card>
+            <CardHeader>
+                <CardTitle>Schedule</CardTitle>
+            </CardHeader>
             <FormDescription>
                 You can choose to run your ads continuously or only during a
                 specific period. If you don't set an end date, the campaign will
@@ -161,6 +168,6 @@ export function FormSchedule() {
                     </>
                 )}
             />
-        </Panel>
+        </Card>
     );
 }

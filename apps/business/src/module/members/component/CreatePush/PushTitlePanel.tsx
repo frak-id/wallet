@@ -1,5 +1,9 @@
+import {
+    Card,
+    CardHeader,
+    CardTitle,
+} from "@frak-labs/design-system/components/Card";
 import { useFormContext } from "react-hook-form";
-import { Panel } from "@/module/common/component/Panel";
 import {
     FormControl,
     FormField,
@@ -16,7 +20,10 @@ import type { FormCreatePushNotification } from "@/module/members/component/Crea
 export function PushTitlePanel() {
     const form = useFormContext<FormCreatePushNotification>();
     return (
-        <Panel title={"Push Notification Title"}>
+        <Card>
+            <CardHeader>
+                <CardTitle>Push Notification Title</CardTitle>
+            </CardHeader>
             <FormField
                 control={form.control}
                 name={"pushCampaignTitle"}
@@ -46,6 +53,6 @@ export function PushTitlePanel() {
                     </FormItem>
                 )}
             />
-        </Panel>
+        </Card>
     );
 }

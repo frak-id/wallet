@@ -1,3 +1,8 @@
+import {
+    Card,
+    CardHeader,
+    CardTitle,
+} from "@frak-labs/design-system/components/Card";
 import { Inline } from "@frak-labs/design-system/components/Inline";
 import { capitalize } from "radash";
 import { useFormContext } from "react-hook-form";
@@ -5,7 +10,6 @@ import { FormBudgetRow } from "@/module/campaigns/component/Creation/NewCampaign
 import { FormAdvertising } from "@/module/campaigns/component/Creation/ValidationCampaign/FormAdvertising";
 import { FormGoal } from "@/module/campaigns/component/Creation/ValidationCampaign/FormGoal";
 import { RewardsSummary } from "@/module/campaigns/component/RewardsSummary";
-import { Panel } from "@/module/common/component/Panel";
 import { FormDescription, FormItem } from "@/module/forms/Form";
 import { Input } from "@/module/forms/Input";
 import type { CampaignDraft } from "@/stores/campaignStore";
@@ -27,7 +31,10 @@ export function FormCheck() {
     };
 
     return (
-        <Panel title="Check your campaign">
+        <Card>
+            <CardHeader>
+                <CardTitle>Check your campaign</CardTitle>
+            </CardHeader>
             <FormItem>
                 <FormDescription label={"Campaign Title"} />
                 <Input disabled={true} {...form.register("name")} />
@@ -79,6 +86,6 @@ export function FormCheck() {
             <RewardsSummary rewards={rewards} />
 
             <FormBudgetRow disabled={true} />
-        </Panel>
+        </Card>
     );
 }

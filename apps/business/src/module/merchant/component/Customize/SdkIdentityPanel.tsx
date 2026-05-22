@@ -1,7 +1,11 @@
 import type { SdkConfig } from "@frak-labs/backend-elysia/domain/merchant";
+import {
+    Card,
+    CardHeader,
+    CardTitle,
+} from "@frak-labs/design-system/components/Card";
 import { useCallback, useEffect, useMemo } from "react";
 import { useForm } from "react-hook-form";
-import { Panel } from "@/module/common/component/Panel";
 import {
     Form,
     FormControl,
@@ -93,7 +97,10 @@ export function SdkIdentityPanel({
 
     return (
         <Form {...form}>
-            <Panel title={"SDK Identity"}>
+            <Card>
+                <CardHeader>
+                    <CardTitle>SDK Identity</CardTitle>
+                </CardHeader>
                 <FormField
                     control={form.control}
                     name="name"
@@ -242,7 +249,7 @@ export function SdkIdentityPanel({
                     onDiscard={() => form.reset(values)}
                     onSubmit={() => form.handleSubmit(onSubmit)()}
                 />
-            </Panel>
+            </Card>
         </Form>
     );
 }
