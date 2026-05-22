@@ -1,14 +1,7 @@
 import { brand } from "@frak-labs/design-system/tokens";
 import { globalStyle, style } from "@vanilla-extract/css";
 
-export const placeholder = style({
-    color: "#858d9d",
-    fontStyle: "italic",
-    textAlign: "center",
-    padding: "20px",
-});
-
-export const overallStatusSuccess = style({
+const overallStatusSuccess = style({
     width: "100%",
     padding: "16px",
     backgroundColor: "#e0f7fa",
@@ -23,7 +16,7 @@ globalStyle(`${overallStatusSuccess} p`, {
     fontSize: "14px",
 });
 
-export const overallStatusWarning = style({
+const overallStatusWarning = style({
     width: "100%",
     padding: "16px",
     backgroundColor: brand.colors.neutral.grey200,

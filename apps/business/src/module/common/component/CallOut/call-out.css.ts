@@ -3,7 +3,7 @@ import { globalStyle, style } from "@vanilla-extract/css";
 import { recipe } from "@vanilla-extract/recipes";
 import { brandColors } from "@/styles/brand";
 
-export const callOutBase = style({});
+const callOutBase = style({});
 
 globalStyle(`${callOutBase} a`, {
     color: "inherit",

@@ -33,23 +33,23 @@ export const formGoalsInformation = style({
     color: "#667085", // TODO: token
 });
 
-export const formGoalsInformationAwareness = style({
+const formGoalsInformationAwareness = style({
     background: "#fdf1e8", // TODO: token
 });
 
-export const formGoalsInformationTraffic = style({
+const formGoalsInformationTraffic = style({
     background: "#d8e1ff", // TODO: token
 });
 
-export const formGoalsInformationRegistration = style({
+const formGoalsInformationRegistration = style({
     background: "#e8fde9", // TODO: token
 });
 
-export const formGoalsInformationSales = style({
+const formGoalsInformationSales = style({
     background: "#fde8eb", // TODO: token
 });
 
-export const formGoalsInformationRetention = style({
+const formGoalsInformationRetention = style({
     background: "#fdfce8", // TODO: token
 });
 
@@ -67,7 +67,7 @@ export const formGoalsTitle = style({
     fontWeight: brand.typography.fontWeight.medium,
 });
 
-export const formGoalsWarning = style({
+const formGoalsWarning = style({
     display: "flex",
     alignItems: "flex-start",
     gap: "10px",

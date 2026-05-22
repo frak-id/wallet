@@ -102,20 +102,9 @@ export const chainingBarFill = style({
     transition: "width 0.2s ease",
 });
 
-export const separator = style({
-    height: "1px",
-    background: brand.colors.neutral.grey250,
-    margin: `${alias.spacing.xs} 0`,
-});
-
 export const triggerGroup = style({
     display: "flex",
     flexDirection: "column",
     gap: alias.spacing.xs,
     marginTop: alias.spacing.xs,
-});
-
-export const triggerDisabled = style({
-    opacity: 0.5,
-    cursor: "not-allowed",
 });

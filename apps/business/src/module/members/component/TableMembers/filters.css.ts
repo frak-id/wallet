@@ -19,10 +19,6 @@ export const filtersItem = style({
     },
 });
 
-export const filtersSearch = style({
-    maxWidth: "320px",
-});
-
 export const filtersPopoverContent = style({
     padding: alias.spacing.m,
 });

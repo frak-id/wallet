@@ -2,12 +2,6 @@ import { vars } from "@frak-labs/design-system/theme";
 import { alias } from "@frak-labs/design-system/tokens";
 import { style } from "@vanilla-extract/css";
 
-export const description = style({
-    margin: 0,
-    fontSize: "14px",
-    color: vars.text.secondary,
-});
-
 export const domainList = style({
     listStyle: "none",
     padding: 0,

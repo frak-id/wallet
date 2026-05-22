@@ -40,12 +40,6 @@ export const valueText = style({
     fontWeight: 500,
 });
 
-export const description = style({
-    margin: 0,
-    fontSize: "14px",
-    color: vars.text.secondary,
-});
-
 /**
  * Preserves the legacy spacing inside the registration sub-forms, which rely
  * on top-margin on every paragraph/form/button so the documentation steps
