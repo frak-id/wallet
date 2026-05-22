@@ -1,7 +1,7 @@
 import NProgress from "nprogress";
 import { useEffect } from "react";
 
-export function configurePendingLoader(options?: NProgress.NProgressOptions) {
+function configurePendingLoader(options?: NProgress.NProgressOptions) {
     NProgress.configure({
         showSpinner: false,
         minimum: 0.08,

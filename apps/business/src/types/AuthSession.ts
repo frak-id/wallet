@@ -1,12 +1,4 @@
-import type { Address, Hex } from "viem";
-
-export type AuthSession = {
-    wallet: Address;
-    siwe: {
-        message: string;
-        signature: Hex;
-    };
-};
+import type { Address } from "viem";
 
 export type AuthSessionClient = {
     wallet: Address;

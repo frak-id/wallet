@@ -106,13 +106,13 @@ export function buildScheduleConditions(
     return conditions;
 }
 
-export const REFERRAL_CONDITION = {
+const REFERRAL_CONDITION = {
     field: "attribution.referrerIdentityGroupId",
     operator: "exists" as const,
     value: true,
 };
 
-export const MIN_PURCHASE_AMOUNT_FIELD = "purchase.amount";
+const MIN_PURCHASE_AMOUNT_FIELD = "purchase.amount";
 
 export function buildApiPayload(draft: CampaignDraft) {
     const scheduleConditions = buildScheduleConditions(draft.scheduled);

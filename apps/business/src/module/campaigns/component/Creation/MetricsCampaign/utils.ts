@@ -88,7 +88,7 @@ export function calculateChainDistribution(
     return distribution;
 }
 
-export function buildRewardsFromFormState(
+function buildRewardsFromFormState(
     state: RewardFormState
 ): FixedRewardDefinition[] {
     const { refereeAmount, referrerAmount } = calculateDistribution(
@@ -218,7 +218,7 @@ export type TriggerOption = {
     label: string;
 };
 
-export const allTriggerOptions: TriggerOption[] = [
+const allTriggerOptions: TriggerOption[] = [
     { value: "referral", label: "Referral" },
     { value: "create_referral_link", label: "Referral Link Created" },
     { value: "purchase", label: "Purchase completed" },

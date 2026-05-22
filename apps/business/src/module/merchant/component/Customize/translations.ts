@@ -87,15 +87,6 @@ export const MODAL_TRANSLATION_GROUPS = {
     ],
 } as const;
 
-/**
- * Combined groups for validation and payload building.
- */
-export const ALL_TRANSLATION_GROUPS = {
-    ...EMBEDDED_TRANSLATION_GROUPS,
-    ...SHARING_PAGE_TRANSLATION_GROUPS,
-    ...MODAL_TRANSLATION_GROUPS,
-} as const;
-
 export const TRANSLATION_KEY_META: Record<
     string,
     { label: string; description: string }

@@ -38,9 +38,7 @@ type ComponentFormFields<T> = Required<Omit<T, "css" | "rawCss">> & {
     css: string;
 };
 
-export type ButtonShareFormValues = ComponentFormFields<
-    ComponentOf<"buttonShare">
->;
+type ButtonShareFormValues = ComponentFormFields<ComponentOf<"buttonShare">>;
 export type PostPurchaseFormValues = ComponentFormFields<
     ComponentOf<"postPurchase">
 >;

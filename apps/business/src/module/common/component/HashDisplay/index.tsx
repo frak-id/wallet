@@ -43,29 +43,3 @@ export function WalletAddress({
     );
 }
 
-export function TransactionHash({
-    hash,
-    copiedText,
-}: {
-    hash: Hex;
-    copiedText?: string;
-}) {
-    const { copied, copy } = useCopyToClipboardWithState();
-
-    const hashedAddress = useMemo(
-        () => formatHash({ hash, format: { start: 4, end: 4 } }),
-        [hash]
-    );
-    const copiedMessage = copiedText ?? "Copied";
-
-    if (!hash) return null;
-    return (
-        <button
-            type="button"
-            className={walletAddress}
-            onClick={() => copy(hash)}
-        >
-            {copied ? copiedMessage : hashedAddress}
-        </button>
-    );
-}

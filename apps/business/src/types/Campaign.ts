@@ -3,24 +3,18 @@ import type { CampaignResponse } from "@frak-labs/backend-elysia/domain/campaign
 export type {
     BudgetConfig,
     BudgetConfigItem,
-    BudgetUsed,
     CampaignGoal,
     CampaignMetadata,
-    CampaignResponse,
     CampaignResponse as Campaign,
     CampaignRuleDefinition,
     CampaignStatus,
     CampaignTrigger,
     ConditionGroup,
-    ConditionOperator,
     FixedRewardDefinition,
-    PercentageRewardDefinition,
-    RewardChaining,
     RewardDefinition,
     RuleCondition,
     RuleConditions,
     SpecialCategory,
-    TieredRewardDefinition,
 } from "@frak-labs/backend-elysia/domain/campaign";
 
 export type CampaignActions = {

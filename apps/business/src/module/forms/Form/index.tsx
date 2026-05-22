@@ -85,8 +85,7 @@ const FormItemContext = createContext<FormItemContextValue>(
 
 type FormItemRecipeVariants = NonNullable<RecipeVariants<typeof formItem>>;
 
-export type FormItemProps = ComponentPropsWithRef<"div"> &
-    FormItemRecipeVariants;
+type FormItemProps = ComponentPropsWithRef<"div"> & FormItemRecipeVariants;
 
 const FormItem = ({ ref, variant, className, ...props }: FormItemProps) => {
     const id = useId();
@@ -105,7 +104,7 @@ FormItem.displayName = "FormItem";
 
 type FormLabelRecipeVariants = NonNullable<RecipeVariants<typeof formLabel>>;
 
-export type FormLabelProps = ComponentPropsWithRef<typeof LabelPrimitive.Root> &
+type FormLabelProps = ComponentPropsWithRef<typeof LabelPrimitive.Root> &
     FormLabelRecipeVariants;
 
 const FormLabel = ({
@@ -152,7 +151,7 @@ const FormControl = ({ ref, ...props }: ComponentPropsWithRef<typeof Slot>) => {
 };
 FormControl.displayName = "FormControl";
 
-export type FormDescriptionProps = ComponentPropsWithRef<"p"> & {
+type FormDescriptionProps = ComponentPropsWithRef<"p"> & {
     label?: string | ReactNode;
     classNameTitle?: string;
 };
