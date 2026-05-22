@@ -1,6 +1,7 @@
 export { ArrowDownIcon } from "./ArrowDownIcon";
 export { ArrowLeftIcon } from "./ArrowLeftIcon";
 export { ArrowLeftRightIcon } from "./ArrowLeftRightIcon";
+export { ArrowUpIcon } from "./ArrowUpIcon";
 export { BankIcon } from "./BankIcon";
 export { BarChartIcon } from "./BarChartIcon";
 export { BellIcon } from "./BellIcon";
