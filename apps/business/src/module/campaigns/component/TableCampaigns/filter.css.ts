@@ -3,7 +3,10 @@ import { style } from "@vanilla-extract/css";
 
 export const filters = style({
     display: "flex",
-    gap: alias.spacing.s,
+    flexWrap: "wrap",
+    justifyContent: "space-between",
+    columnGap: alias.spacing.s,
+    rowGap: alias.spacing.s,
     marginBottom: alias.spacing.m,
     alignItems: "center",
 });

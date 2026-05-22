@@ -16,7 +16,11 @@ import {
     ModalResume,
 } from "@/module/campaigns/component/CampaignActionModals";
 import { CampaignStateTag } from "@/module/campaigns/component/TableCampaigns/CampaignStateTag";
-import { TableCampaignFilters } from "@/module/campaigns/component/TableCampaigns/Filter";
+import {
+    type CampaignTab,
+    TableCampaignFilters,
+} from "@/module/campaigns/component/TableCampaigns/Filter";
+import { isEnded } from "@/module/campaigns/component/TableCampaigns/isEnded";
 import { useGetCampaigns } from "@/module/campaigns/hook/useGetCampaigns";
 import { Table } from "@/module/common/component/Table";
 import { useActiveMerchantId } from "@/module/common/hook/useActiveMerchantId";
@@ -72,11 +76,21 @@ export function TableCampaigns() {
                     cell: ({ getValue, row }) => (
                         <CampaignStateTag
                             status={getValue()}
+                            expiresAt={row.original.expiresAt}
                             bankDistributionStatus={
                                 row.original.bankDistributionStatus
                             }
                         />
                     ),
+                    filterFn: (row, _, value: CampaignTab) => {
+                        if (value === "all") return true;
+                        const { status, expiresAt } = row.original;
+                        const ended = isEnded(status, expiresAt);
+                        if (value === "ended") return ended;
+                        // An ended campaign is no longer "active" for filter purposes.
+                        if (ended) return false;
+                        return status === value;
+                    },
                 }),
                 {
                     id: "date",

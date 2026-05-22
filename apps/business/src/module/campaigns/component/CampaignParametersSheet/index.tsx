@@ -53,6 +53,7 @@ export function CampaignParametersSheet({ campaign, campaignId }: Props) {
                         <span>
                             <CampaignStateTag
                                 status={campaign.status}
+                                expiresAt={campaign.expiresAt}
                                 bankDistributionStatus={
                                     campaign.bankDistributionStatus
                                 }

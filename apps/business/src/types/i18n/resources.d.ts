@@ -19,6 +19,16 @@ export default interface Resources {
                 heroTitleLine2: "Frak Ad Manager";
             };
         };
+        campaigns: {
+            tabs: {
+                active: "Active";
+                all: "All";
+                archived: "Archived";
+                draft: "Draft";
+                ended: "Ended";
+                paused: "Paused";
+            };
+        };
         dashboard: {
             empty: {
                 description: "You don't have any merchant yet. Add one to start running campaigns.";

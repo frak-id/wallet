@@ -85,6 +85,16 @@
             "description": "You don't have any merchant yet. Add one to start running campaigns."
         }
     },
+    "campaigns": {
+        "tabs": {
+            "all": "All",
+            "active": "Active",
+            "paused": "Paused",
+            "draft": "Draft",
+            "ended": "Ended",
+            "archived": "Archived"
+        }
+    },
     "settings": {
         "title": "Settings",
         "currency": {

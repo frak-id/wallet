@@ -85,6 +85,16 @@
             "description": "Vous n'avez encore aucun marchand. Ajoutez-en un pour lancer vos campagnes."
         }
     },
+    "campaigns": {
+        "tabs": {
+            "all": "Tout",
+            "active": "Active",
+            "paused": "En pause",
+            "draft": "Brouillon",
+            "ended": "Terminée",
+            "archived": "Archivée"
+        }
+    },
     "settings": {
         "title": "Paramètres",
         "currency": {

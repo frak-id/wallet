@@ -1,5 +1,6 @@
 import { Badge } from "@frak-labs/design-system/components/Badge";
 import { Box } from "@frak-labs/design-system/components/Box";
+import { isEnded } from "@/module/campaigns/component/TableCampaigns/isEnded";
 import { Tooltip } from "@/module/common/component/Tooltip";
 import type { CampaignStatus, DistributionStatus } from "@/types/Campaign";
 
@@ -19,12 +20,23 @@ const bankBadgeLabels: Record<string, string> = {
 
 export function CampaignStateTag({
     status,
+    expiresAt,
     bankDistributionStatus,
 }: {
     status: CampaignStatus;
+    expiresAt: string | null;
     bankDistributionStatus?: DistributionStatus | null;
 }) {
+    const ended = isEnded(status, expiresAt);
+
     const statusBadge = (() => {
+        if (ended) {
+            return (
+                <Badge variant="disabled" size="small">
+                    Ended
+                </Badge>
+            );
+        }
         switch (status) {
             case "draft":
                 return (
@@ -59,7 +71,9 @@ export function CampaignStateTag({
         }
     })();
 
+    // Bank warning is only relevant while the campaign is still running.
     const showBankWarning =
+        !ended &&
         status === "active" &&
         bankDistributionStatus &&
         bankDistributionStatus !== "distributing";
