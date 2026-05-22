@@ -1,4 +1,3 @@
-import type { Hex } from "viem";
 import { authenticatedBackendApi } from "@/api/backendClient";
 import {
     getMerchantMembersMock,
@@ -27,7 +26,9 @@ export type GetMembersParam = {
         order: "asc" | "desc";
     };
     filter?: {
-        merchantIds?: Hex[];
+        // Merchant ids are opaque UUIDs (not addresses) — the backend
+        // accepts them as plain strings.
+        merchantIds?: string[];
         interactions?: { min?: number; max?: number };
         firstInteractionTimestamp?: { min?: number; max?: number };
     };
@@ -48,9 +49,7 @@ export async function getMerchantMembers(
             sort: params.sort,
             filter: params.filter
                 ? {
-                      merchantIds: params.filter.merchantIds as
-                          | string[]
-                          | undefined,
+                      merchantIds: params.filter.merchantIds,
                       interactions: params.filter.interactions,
                       firstInteractionTimestamp:
                           params.filter.firstInteractionTimestamp,
@@ -78,9 +77,7 @@ export async function getMerchantsMembersCount(
         await authenticatedBackendApi.merchant.members.count.post({
             filter: params.filter
                 ? {
-                      merchantIds: params.filter.merchantIds as
-                          | string[]
-                          | undefined,
+                      merchantIds: params.filter.merchantIds,
                       interactions: params.filter.interactions,
                       firstInteractionTimestamp:
                           params.filter.firstInteractionTimestamp,

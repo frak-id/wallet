@@ -15,6 +15,7 @@ import { useIsDemoMode } from "@/module/common/atoms/demoMode";
 import { Button } from "@/module/common/component/Button";
 import { WalletAddress } from "@/module/common/component/HashDisplay";
 import { Table } from "@/module/common/component/Table";
+import { useActiveMerchantId } from "@/module/common/hook/useActiveMerchantId";
 import type {
     GetMembersPageItem,
     GetMembersParam,
@@ -41,6 +42,19 @@ export function TableMembers() {
     const removeSelectedMember = membersStore((state) => state.removeMember);
     const clearSelection = membersStore((state) => state.clearSelection);
     const isDemoMode = useIsDemoMode();
+    const merchantId = useActiveMerchantId();
+
+    // Reset pagination when the active merchant changes — the previous
+    // merchant's page index doesn't carry over to a different dataset
+    // and would otherwise land the user on an empty page until they
+    // reset manually. Lives in the component (not the route loader) so
+    // hover-preloading on the merchant switcher doesn't mutate the
+    // currently-viewed list's pagination.
+    useEffect(() => {
+        setFilters((prev) =>
+            prev.offset && prev.offset !== 0 ? { ...prev, offset: 0 } : prev
+        );
+    }, [merchantId, setFilters]);
 
     /**
      * Replicate pagination state for the table using the filter
@@ -96,7 +110,7 @@ export function TableMembers() {
     }, [sortingState, setFilters]);
 
     const { data: page, isPending } = useQuery({
-        ...membersPageQueryOptions(filters, isDemoMode),
+        ...membersPageQueryOptions({ merchantId, filters, isDemoMode }),
         placeholderData: keepPreviousData,
     });
 

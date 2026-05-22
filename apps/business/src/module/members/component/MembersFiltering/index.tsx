@@ -6,7 +6,6 @@ import { Form } from "@/module/forms/Form";
 import type { GetMembersParam } from "@/module/members/api/getMerchantMembers";
 import { InteractionsFiltering } from "@/module/members/component/MembersFiltering/InteractionsFiltering";
 import { MembershipDateFiltering } from "@/module/members/component/MembersFiltering/MembershipDateFiltering";
-import { MerchantFiltering } from "@/module/members/component/MembersFiltering/MerchantFiltering";
 import { membersStore } from "@/stores/membersStore";
 
 /**
@@ -15,7 +14,11 @@ import { membersStore } from "@/stores/membersStore";
 export type FormMembersFiltering = GetMembersParam["filter"] & {};
 
 /**
- * Members filtering
+ * Members filtering — scoped to the active merchant.
+ *
+ * The `merchantIds` filter is set by the route loader and is intentionally
+ * not editable here: members are always scoped to the merchant in the URL
+ * (the header switcher is the source of truth for cross-merchant moves).
  */
 export function MembersFiltering({
     onFilterSet,
@@ -38,8 +41,9 @@ export function MembersFiltering({
     });
 
     function resetForm() {
-        const defaultValues = {
-            merchantIds: undefined,
+        const merchantIds = initialValue?.merchantIds;
+        const defaultValues: FormMembersFiltering = {
+            merchantIds,
             interactions: undefined,
             firstInteractionTimestamp: undefined,
         };
@@ -52,8 +56,8 @@ export function MembersFiltering({
         async (data: FormMembersFiltering) => {
             data.interactions = fixInteractions(data.interactions);
 
-            // Fix merchantIds if no filter provided
-            data.merchantIds = fixMerchantIds(data.merchantIds);
+            // Always preserve the merchant scope set by the route loader.
+            data.merchantIds = initialValue?.merchantIds;
 
             // Fix firstInteractionTimestamp if no filter provided
             data.firstInteractionTimestamp = fixFirstInteractionTimestamp(
@@ -62,7 +66,7 @@ export function MembersFiltering({
 
             onFilterSet(data);
         },
-        [onFilterSet]
+        [onFilterSet, initialValue?.merchantIds]
     );
 
     const commonProps = {
@@ -72,7 +76,6 @@ export function MembersFiltering({
 
     return (
         <Form {...form}>
-            <MerchantFiltering {...commonProps} />
             <MembershipDateFiltering {...commonProps} />
             <InteractionsFiltering {...commonProps} />
             <Inline space="m" alignY="bottom">
@@ -101,13 +104,6 @@ const fixInteractions = (
         return undefined;
     }
     return interactions;
-};
-
-const fixMerchantIds = (merchantIds: FormMembersFiltering["merchantIds"]) => {
-    if (!merchantIds?.length) {
-        return undefined;
-    }
-    return merchantIds;
 };
 
 /**

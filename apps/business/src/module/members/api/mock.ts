@@ -1,4 +1,3 @@
-import type { Hex } from "viem";
 import membersData from "@/mock/members.json";
 import type {
     GetMembersPageItem,
@@ -17,10 +16,10 @@ type MemberData = {
 
 function filterByMerchantIds(
     members: MemberData[],
-    merchantIds: Hex[]
+    merchantIds: string[]
 ): MemberData[] {
     return members.filter((member) =>
-        member.merchantIds.some((id) => merchantIds.includes(id as Hex))
+        member.merchantIds.some((id) => merchantIds.includes(id))
     );
 }
 
@@ -85,6 +84,9 @@ function applyFilters(
     }
 
     if (filter.merchantIds && filter.merchantIds.length > 0) {
+        // Mock dataset is keyed by the real merchant UUIDs from
+        // `merchants.json`, so this is a straight filter — a merchant
+        // with no members surfaces an empty state, same as production.
         filtered = filterByMerchantIds(filtered, filter.merchantIds);
     }
 
