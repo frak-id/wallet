@@ -157,6 +157,11 @@ export const handlers = [
         });
     }),
 
+    // OpenPanel analytics (silence tracking noise in tests)
+    http.all("https://openpanel-test.frak.id/*", () => {
+        return new HttpResponse(null, { status: 200 });
+    }),
+
     // Default 404 handler
     http.all(`${BACKEND_URL}/*`, () => {
         return new HttpResponse(null, { status: 404 });
