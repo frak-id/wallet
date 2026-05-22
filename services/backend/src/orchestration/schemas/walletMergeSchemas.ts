@@ -49,6 +49,15 @@ export const MergeSettleBodySchema = t.Object({
      * public credential data without the victim consenting.
      */
     loserConsentSignature: t.String({ minLength: 1 }),
+    /**
+     * Set by the cross-device (Phase 2) merge flow. When present, the
+     * orchestrator publishes a `merge-completed` event on both pairing
+     * topics once settlement succeeds — the loser-side payload carries a
+     * freshly-minted webauthn session so the loser device can swap its
+     * stale one without a separate login. Omitted by same-device merges:
+     * those rebind their session via the HTTP response's `session` field.
+     */
+    pairingId: t.Optional(t.String({ minLength: 1, maxLength: 128 })),
 });
 
 export const MergeSettleResponseSchema = t.Object({

@@ -1,11 +1,13 @@
 import { db, log } from "@backend-infrastructure";
 import { and, eq, isNull } from "drizzle-orm";
 import type { ElysiaWS } from "elysia/ws";
+import type { Hex } from "viem";
 import type { StaticWalletTokenDto } from "../../auth/models/WalletSessionDto";
 import type { NotificationsService } from "../../notifications/services/NotificationsService";
 import { pairingSignatureRequestTable, pairingTable } from "../db/schema";
 import type { SignatureRejectReason } from "../dto/SignatureRejectReason";
 import { WsCloseCode } from "../dto/WebSocketCloseCode";
+import type { WsMergeCompleted } from "../dto/WebsocketTopicMessage";
 import type {
     WsPingRequest,
     WsPongRequest,
@@ -98,6 +100,64 @@ export class PairingRouterRepository extends PairingRepository {
             default:
                 ws.close(WsCloseCode.INVALID_MSG, "Invalid message type");
         }
+    }
+
+    /**
+     * Server-emit `merge-completed` after `WalletMergeOrchestrator.settle`
+     * succeeds for a cross-device merge. Pushed on both pairing topics:
+     *
+     *  - Loser-side topic carries a freshly-minted webauthn session so the
+     *    loser client can swap its stale session in a single round-trip.
+     *  - Winner-side topic carries the same envelope but with no `session`
+     *    — the winner already has the correct session.
+     *
+     * Topic assignment is decided here from the loser address: whoever's
+     * wallet equals `loser` receives the session payload. Topic role
+     * (origin vs target) is supplied by the caller because only the
+     * orchestrator knows which side initiated the pairing.
+     */
+    publishMergeCompleted({
+        pairingId,
+        loserSide,
+        payload,
+    }: {
+        pairingId: string;
+        loserSide: "origin" | "target";
+        payload: WsMergeCompleted["payload"];
+    }): void {
+        if (!this.serverPublisher) {
+            log.warn(
+                { pairingId },
+                "[Pairing] server publisher not wired — dropping merge-completed"
+            );
+            return;
+        }
+
+        const winnerSide: "origin" | "target" =
+            loserSide === "origin" ? "target" : "origin";
+
+        // Loser-side payload keeps the freshly-minted session so the
+        // client can replace its stale one. Winner-side payload strips
+        // `session` — the winner's existing session is already correct.
+        const { session: _session, ...winnerPayload } = payload;
+
+        const loserTopicName =
+            loserSide === "origin"
+                ? originTopic(pairingId)
+                : targetTopic(pairingId);
+        const winnerTopicName =
+            winnerSide === "origin"
+                ? originTopic(pairingId)
+                : targetTopic(pairingId);
+
+        this.serverPublisher(loserTopicName, {
+            type: "merge-completed",
+            payload,
+        });
+        this.serverPublisher(winnerTopicName, {
+            type: "merge-completed",
+            payload: winnerPayload,
+        });
     }
 
     /**
@@ -229,6 +289,7 @@ export class PairingRouterRepository extends PairingRepository {
                     request: message.payload.request,
                     context: message.payload.context,
                     partnerDeviceName: pairing.originName,
+                    signatureKind: message.payload.signatureKind,
                 },
             },
             topic: "target",
@@ -290,11 +351,23 @@ export class PairingRouterRepository extends PairingRepository {
             return;
         }
 
+        // `signature` is a `customHex` (bytea) column — it can only hold
+        // the `"onchain"` response shape. For `"raw-assertion"` (base64
+        // WebAuthn assertion JSON, used by the cross-device merge consent
+        // forwarding) we still mark the row processed so it stops being
+        // replayed to the target on reconnect, but skip the signature
+        // payload itself. Origin's in-memory tracking Map resolves
+        // synchronously off the topic broadcast below.
+        const isOnchain =
+            !message.payload.signatureKind ||
+            message.payload.signatureKind === "onchain";
         await db
             .update(pairingSignatureRequestTable)
             .set({
                 processedAt: new Date(),
-                signature: message.payload.signature,
+                ...(isOnchain
+                    ? { signature: message.payload.signature as Hex }
+                    : {}),
             })
             .where(
                 and(
@@ -318,6 +391,7 @@ export class PairingRouterRepository extends PairingRepository {
                     pairingId: message.payload.pairingId,
                     id: message.payload.id,
                     signature: message.payload.signature,
+                    signatureKind: message.payload.signatureKind,
                 },
             },
             topic: "origin",

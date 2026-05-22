@@ -1,3 +1,4 @@
+import { sql } from "drizzle-orm";
 import {
     index,
     json,
@@ -26,6 +27,14 @@ export const pairingTable = pgTable(
         // so the legacy window is bounded).
         authenticatorId: varchar("authenticator_id"),
 
+        // Credential the joiner MUST match when resolving this pairing.
+        // Used by the cross-device wallet merge (Phase 2): the desktop
+        // (origin) initiating a merge pins the credential of the wallet
+        // it intends to merge with, and `handleJoinRequest` rejects any
+        // mobile joining with a different `authenticatorId`. Null for
+        // regular pairings — no enforcement.
+        authenticatorHint: varchar("authenticator_hint"),
+
         // Origin device info
         originUserAgent: varchar("origin_user_agent").notNull(),
         originName: varchar("origin_name").notNull(), // "Chrome on Windows", etc.
@@ -48,6 +57,16 @@ export const pairingTable = pgTable(
         uniqueIndex("pairing_id_idx").on(table.pairingId),
         index("wallet_id_idx").on(table.wallet),
         uniqueIndex("pairing_code_idx").on(table.pairingCode),
+        // Fail-fast on concurrent cross-device merges targeting the same
+        // credential: at most one unresolved pairing may pin a given
+        // `authenticator_hint` at a time. Resolved pairings drop out of
+        // the index, so a follow-up merge against the same credential
+        // can be initiated immediately after the previous one settles.
+        uniqueIndex("pairing_pending_hint_idx")
+            .on(table.authenticatorHint)
+            .where(
+                sql`${table.authenticatorHint} IS NOT NULL AND ${table.resolvedAt} IS NULL`
+            ),
     ]
 );
 

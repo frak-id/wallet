@@ -17,7 +17,7 @@ type MintForCredentialArgs = {
     transports?: AuthenticatorTransportFuture[];
 };
 
-type MintForCredentialResult = {
+export type MintForCredentialResult = {
     token: string;
     sdkJwt: { token: string; expires: number };
     type: "webauthn";

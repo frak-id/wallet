@@ -51,6 +51,7 @@ export class PairingConnectionRepository extends PairingRepository {
             id,
             originResumeToken,
             originNode: originNodeRaw,
+            authenticatorHint,
         } = query;
         if (!action && !wallet) {
             log.debug("No action or wallet token");
@@ -65,7 +66,12 @@ export class PairingConnectionRepository extends PairingRepository {
 
         // If that's an initiate request
         if (action === "initiate" && !wallet) {
-            await this.handleInitiateRequest({ userAgent, ws, originNode });
+            await this.handleInitiateRequest({
+                userAgent,
+                ws,
+                originNode,
+                authenticatorHint,
+            });
             return;
         }
 
@@ -123,10 +129,12 @@ export class PairingConnectionRepository extends PairingRepository {
         userAgent,
         ws,
         originNode,
+        authenticatorHint,
     }: {
         userAgent?: string;
         ws: ElysiaWS;
         originNode?: IdentityNode;
+        authenticatorHint?: string;
     }) {
         const deviceName = this.uaToDeviceName(userAgent);
 
@@ -143,6 +151,7 @@ export class PairingConnectionRepository extends PairingRepository {
             originUserAgent: userAgent ?? "Unknown",
             originName: deviceName,
             originNode,
+            authenticatorHint: authenticatorHint || null,
         });
         // Subscribe the client to the pairing topic
         ws.subscribe(originTopic(pairingId));
@@ -351,6 +360,18 @@ export class PairingConnectionRepository extends PairingRepository {
                 WsCloseCode.FORBIDDEN,
                 "Can't resolve non-webauthn wallet"
             );
+            return;
+        }
+
+        // Cross-device merge: enforce credential pinning. The origin
+        // pre-declared which credential must resolve this pairing; a
+        // mobile joining with anything else is rejected so the desktop
+        // can never end up tunnelling actions through the wrong wallet.
+        if (
+            pairing.authenticatorHint &&
+            wallet.authenticatorId !== pairing.authenticatorHint
+        ) {
+            ws.close(WsCloseCode.FORBIDDEN, "Authenticator mismatch");
             return;
         }
 

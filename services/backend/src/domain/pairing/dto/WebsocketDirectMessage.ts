@@ -2,6 +2,21 @@ import type { Hex } from "viem";
 import type { SignatureRejectReason } from "./SignatureRejectReason";
 
 /**
+ * Discriminates how the target should produce and how the origin should
+ * interpret the value carried back in `signature-response.signature`.
+ *
+ * - `"onchain"` (default, omitted on the wire for legacy clients): target
+ *   wraps a WebAuthn assertion with `formatSignature` and returns it as a
+ *   Hex blob ready to plug into a userOp / smart-account validator.
+ * - `"raw-assertion"`: target returns the raw base64-encoded WebAuthn
+ *   assertion JSON (`{id, response: {metadata, signature}}`), parseable by
+ *   `WebAuthNService.verifyConsentSignature`. Used by the cross-device
+ *   wallet merge to ferry the loser's deterministic merge-consent
+ *   assertion back to the requester without an on-chain wrapping step.
+ */
+export type WsSignatureKind = "onchain" | "raw-assertion";
+
+/**
  * When a pairing is initiated by the origin
  *
  * `originResumeToken` is a short-lived JWT that authorises the origin to
@@ -40,6 +55,9 @@ export type WsSignatureRequest = {
         request: Hex;
         // Some optional context
         context?: object;
+        // How the response should be shaped. Defaults to "onchain" when
+        // omitted (legacy clients).
+        signatureKind?: WsSignatureKind;
     };
 };
 
@@ -66,8 +84,14 @@ export type WsSignatureResponseRequest = {
         pairingId: string;
         // The id of the request
         id: string;
-        // The signature response
-        signature: Hex;
+        // The signature response. Hex for `signatureKind: "onchain"`
+        // (default), base64 WebAuthn assertion JSON for
+        // `signatureKind: "raw-assertion"`.
+        signature: Hex | string;
+        // Echoes the kind from the matching `signature-request` so the
+        // origin can pick the right decoder without consulting its own
+        // bookkeeping. Optional for legacy `onchain` clients.
+        signatureKind?: WsSignatureKind;
     };
 };
 /**

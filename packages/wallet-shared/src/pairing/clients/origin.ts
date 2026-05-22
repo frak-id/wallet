@@ -431,7 +431,13 @@ export class OriginPairingClient extends BasePairingClient<
                 message.payload.id
             );
             if (request) {
-                request.resolve(message.payload.signature);
+                // Backend now ships `signature` as `Hex | string` to
+                // support the cross-device merge `signatureKind:
+                // "raw-assertion"` branch (base64 assertion JSON). The
+                // generic typing of `sendSignatureRequest` will land
+                // alongside the FE Phase 2 work — for now cast through
+                // since today's only caller still requests onchain Hex.
+                request.resolve(message.payload.signature as Hex);
                 this.removeSignatureRequest(message.payload.id);
             }
             return;

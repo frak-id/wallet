@@ -5,6 +5,7 @@ import { CampaignBankContext } from "../domain/campaign-bank/context";
 import { IdentityContext } from "../domain/identity/context";
 import { MerchantContext } from "../domain/merchant/context";
 import { NotificationContext } from "../domain/notifications/context";
+import { PairingContext } from "../domain/pairing/context";
 import { PurchasesContext } from "../domain/purchases/context";
 import { ReferralCodeContext } from "../domain/referral-code/context";
 import { RewardsContext } from "../domain/rewards/context";
@@ -151,7 +152,8 @@ const walletMergeOrchestrator = new WalletMergeOrchestrator(
     identityMergeService,
     webAuthNValidatorReader,
     AuthContext.services.webAuthN,
-    AuthContext.services.walletSession
+    AuthContext.services.walletSession,
+    PairingContext.repositories.router
 );
 
 const authenticatorLookupOrchestrator = new AuthenticatorLookupOrchestrator(
