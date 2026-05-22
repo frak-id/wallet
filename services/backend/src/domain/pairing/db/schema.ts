@@ -17,6 +17,14 @@ export const pairingTable = pgTable(
         id: serial("id").primaryKey(),
         pairingId: varchar("pairing_id").notNull(), // Public ID for the pairing
         wallet: customHex("wallet"), // Null until target resolves pairing
+        // Credential the target used to resolve this pairing. Captured at
+        // join so resume can replay the exact `authenticated` payload (id +
+        // pubkey + transports) without a wallet -> binding lookup. Null
+        // until the pairing is resolved; null for legacy rows created
+        // before this column existed (those resumes fall through to the
+        // "no authenticator" close branch — pairings TTL out within minutes
+        // so the legacy window is bounded).
+        authenticatorId: varchar("authenticator_id"),
 
         // Origin device info
         originUserAgent: varchar("origin_user_agent").notNull(),

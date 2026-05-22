@@ -4,7 +4,7 @@ import type { IdentityRepository } from "../../domain/identity/repositories/Iden
 import type { WalletBindingRepository } from "../../domain/identity/repositories/WalletBindingRepository";
 
 /**
- * Resolution of a wallet + its current-chain credential from an identity
+ * Resolution of a wallet + its current-chain credentials from an identity
  * input (today: an email). Returned shape is shared by:
  *  - `POST /user/wallet/auth/email` conflict branch — when a user types an
  *    email already attached to another wallet.
@@ -12,13 +12,16 @@ import type { WalletBindingRepository } from "../../domain/identity/repositories
  *    the UI to short-circuit the WebAuthn ceremony.
  *
  * `wallet` is omitted when the resolved identity group has no active wallet
- * node (anonymous-only group). `authenticatorId` is omitted when the wallet
- * has no active binding on the current chain (e.g. cross-env account).
+ * node (anonymous-only group). `authenticatorIds` is an empty array when the
+ * wallet has no active binding on the current chain (e.g. cross-env
+ * account); it holds every active binding so the WebAuthn ceremony can offer
+ * the user any passkey currently routed to the wallet — post-merge a wallet
+ * routinely accepts 2+ credentials.
  */
 export type IdentityWalletLookup = {
     groupId: string;
     wallet?: Address;
-    authenticatorId?: string;
+    authenticatorIds: string[];
 };
 
 /**
@@ -52,16 +55,18 @@ export class AuthenticatorLookupOrchestrator {
 
     private async fromGroupId(groupId: string): Promise<IdentityWalletLookup> {
         const wallet = await this.identityRepository.getWalletForGroup(groupId);
-        const binding = wallet
-            ? await this.walletBindingRepository.getActiveByWallet({
-                  chainId: currentChainId,
-                  smartWalletAddress: wallet,
-              })
-            : null;
+        const authenticatorIds = wallet
+            ? await this.walletBindingRepository.getActiveAuthenticatorIdsByWallet(
+                  {
+                      chainId: currentChainId,
+                      smartWalletAddress: wallet,
+                  }
+              )
+            : [];
         return {
             groupId,
             wallet: wallet ?? undefined,
-            authenticatorId: binding?.authenticatorId,
+            authenticatorIds,
         };
     }
 }

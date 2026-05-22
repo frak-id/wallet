@@ -391,17 +391,17 @@ function RegisterPage() {
                         flowRef.current?.track("onboarding_action_clicked", {
                             action: "login",
                         });
-                        // Wallet is optional in the response (legacy rows
-                        // without `smart_wallet_address`); fall back to the
-                        // global account chooser when missing.
+                        // Pass every credential id bound to the resolved
+                        // wallet to WebAuthn's `allowCredentials` — a wallet
+                        // routinely accepts multiple passkeys post-merge.
+                        // No `lastAuthentication` here: that store is per
+                        // device, and the resolution we have is from the
+                        // server, not the local hint cache.
                         login(
-                            alreadyUsed.wallet
+                            alreadyUsed.authenticatorIds.length > 0
                                 ? {
-                                      lastAuthentication: {
-                                          authenticatorId:
-                                              alreadyUsed.authenticatorId,
-                                          wallet: alreadyUsed.wallet,
-                                      },
+                                      allowedCredentialIds:
+                                          alreadyUsed.authenticatorIds,
                                   }
                                 : {}
                         );

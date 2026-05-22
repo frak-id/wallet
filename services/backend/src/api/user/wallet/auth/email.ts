@@ -87,9 +87,10 @@ export const emailRoutes = new Elysia({ prefix: "/email" })
             }
 
             // Email already attached to a different identity group -> defer
-            // to the wallet-merge flow. Resolve the conflicting wallet + the
+            // to the wallet-merge flow. Resolve the conflicting wallet + every
             // credential currently bound to it on the active chain so the UI
-            // can later propose a recovery-by-merge action.
+            // can pick one as the merge target / advertise the full list to a
+            // login ceremony.
             const conflicting =
                 await OrchestrationContext.orchestrators.authenticatorLookup.findByEmail(
                     email
@@ -97,7 +98,7 @@ export const emailRoutes = new Elysia({ prefix: "/email" })
             if (conflicting && conflicting.groupId !== walletGroup.id) {
                 return {
                     status: "conflict" as const,
-                    authenticatorId: conflicting.authenticatorId,
+                    authenticatorIds: conflicting.authenticatorIds,
                     wallet: conflicting.wallet,
                 };
             }

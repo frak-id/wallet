@@ -38,7 +38,7 @@ function renderStep(overrides?: {
     onBack?: () => void;
     onAlreadyUsed?: (args: {
         email: string;
-        authenticatorId: string;
+        authenticatorIds: string[];
         wallet?: `0x${string}`;
     }) => void;
     initialValue?: string;
@@ -145,7 +145,7 @@ describe("EmailInputStep", () => {
     it("bubbles already-used result up via onAlreadyUsed", async () => {
         checkEmailMock.mockResolvedValue({
             used: true,
-            authenticatorId: "cred-123",
+            authenticatorIds: ["cred-123", "cred-456"],
             wallet: "0xabc0000000000000000000000000000000000def",
         });
         const { onContinue, onAlreadyUsed } = renderStep();
@@ -155,11 +155,26 @@ describe("EmailInputStep", () => {
         await waitFor(() => {
             expect(onAlreadyUsed).toHaveBeenCalledWith({
                 email: "taken@frak.id",
-                authenticatorId: "cred-123",
+                authenticatorIds: ["cred-123", "cred-456"],
                 wallet: "0xabc0000000000000000000000000000000000def",
             });
         });
         expect(onContinue).not.toHaveBeenCalled();
+    });
+
+    it("treats a used result with no active bindings as a fresh email", async () => {
+        checkEmailMock.mockResolvedValue({
+            used: true,
+            authenticatorIds: [],
+        });
+        const { onContinue, onAlreadyUsed } = renderStep();
+        fireEvent.change(getInput(), { target: { value: "stale@frak.id" } });
+        fireEvent.click(getContinueButton());
+
+        await waitFor(() => {
+            expect(onContinue).toHaveBeenCalledWith("stale@frak.id");
+        });
+        expect(onAlreadyUsed).not.toHaveBeenCalled();
     });
 
     it("shows a retryable error when the check itself fails", async () => {

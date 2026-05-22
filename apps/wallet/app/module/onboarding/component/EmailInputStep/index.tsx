@@ -11,7 +11,7 @@ import {
 
 export type EmailAlreadyUsedArgs = {
     email: string;
-    authenticatorId: string;
+    authenticatorIds: string[];
     wallet?: Address;
 };
 
@@ -50,10 +50,10 @@ export function EmailInputStep({
         async (email: string) => {
             try {
                 const result = await checkEmail(email);
-                if (result.used && result.authenticatorId) {
+                if (result.used && result.authenticatorIds.length > 0) {
                     onAlreadyUsed({
                         email,
-                        authenticatorId: result.authenticatorId,
+                        authenticatorIds: result.authenticatorIds,
                         wallet: result.wallet,
                     });
                     return;

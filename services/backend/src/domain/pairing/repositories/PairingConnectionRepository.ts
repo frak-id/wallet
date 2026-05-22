@@ -1,6 +1,5 @@
 import { randomInt, randomUUID } from "node:crypto";
 import { db, JwtContext, log } from "@backend-infrastructure";
-import { currentChainId } from "@frak-labs/app-essentials/blockchain";
 import { and, eq, gt, inArray, isNull } from "drizzle-orm";
 import type { ElysiaWS } from "elysia/ws";
 import { UAParser } from "ua-parser-js";
@@ -12,7 +11,6 @@ import type {
 } from "../../auth/models/WalletSessionDto";
 import type { AuthenticatorRepository } from "../../auth/repositories/AuthenticatorRepository";
 import type { WalletSdkSessionService } from "../../auth/services/WalletSdkSessionService";
-import type { WalletBindingRepository } from "../../identity/repositories/WalletBindingRepository";
 import { pairingSignatureRequestTable, pairingTable } from "../db/schema";
 import { WsCloseCode } from "../dto/WebSocketCloseCode";
 import {
@@ -28,8 +26,7 @@ export class PairingConnectionRepository extends PairingRepository {
     constructor(
         // Helpers to generate the auth tokens
         private readonly walletSdkSession: WalletSdkSessionService,
-        private readonly authenticatorRepository: AuthenticatorRepository,
-        private readonly walletBindingRepository: WalletBindingRepository
+        private readonly authenticatorRepository: AuthenticatorRepository
     ) {
         super();
     }
@@ -248,14 +245,16 @@ export class PairingConnectionRepository extends PairingRepository {
         }
 
         // Pairing was resolved while the origin was disconnected. Replay
-        // `authenticated` so the origin can settle into its `paired` session.
-        const binding = await this.walletBindingRepository.getActiveByWallet({
-            chainId: currentChainId,
-            smartWalletAddress: pairing.wallet,
-        });
-        const authenticator = binding
+        // `authenticated` so the origin can settle into its `paired` session
+        // using the exact credential the target joined with (persisted at
+        // join time on the pairing row). A wallet merge that happens between
+        // join and resume leaves `pairing.wallet` stale — we accept that
+        // edge case here: the join+resume window is short (lastActiveAt
+        // cleanup cron) and a stale session simply forces the user to
+        // re-pair, no on-chain damage.
+        const authenticator = pairing.authenticatorId
             ? await this.authenticatorRepository.getByCredentialId(
-                  binding.authenticatorId
+                  pairing.authenticatorId
               )
             : null;
         if (!authenticator) {
@@ -263,12 +262,13 @@ export class PairingConnectionRepository extends PairingRepository {
                 {
                     pairingId: pairing.pairingId,
                     wallet: pairing.wallet,
+                    authenticatorId: pairing.authenticatorId,
                 },
-                "[Pairing] resume: no authenticator found for resolved wallet"
+                "[Pairing] resume: no authenticator on file for resolved pairing"
             );
             ws.close(
                 WsCloseCode.PAIRING_NOT_FOUND,
-                "No authenticator for resolved wallet"
+                "No authenticator for resolved pairing"
             );
             return;
         }
@@ -354,12 +354,16 @@ export class PairingConnectionRepository extends PairingRepository {
             return;
         }
 
-        // Update the pairing with the wallet address and everything
+        // Update the pairing with the wallet address and everything.
+        // `authenticatorId` is captured here so resume can replay the
+        // `authenticated` payload using the exact credential the target
+        // joined with — no later wallet -> binding lookup needed.
         const targetName = this.uaToDeviceName(userAgent);
         await db
             .update(pairingTable)
             .set({
                 wallet: wallet.address,
+                authenticatorId: wallet.authenticatorId,
                 targetUserAgent: userAgent ?? "Unknown",
                 targetName,
                 resolvedAt: new Date(),

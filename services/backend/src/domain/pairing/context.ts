@@ -1,5 +1,4 @@
 import { AuthContext } from "../auth";
-import { IdentityContext } from "../identity/context";
 import { NotificationContext } from "../notifications/context";
 import { PairingConnectionRepository } from "./repositories/PairingConnectionRepository";
 import { PairingRouterRepository } from "./repositories/PairingRouterRepository";
@@ -7,8 +6,7 @@ import { PairingRouterRepository } from "./repositories/PairingRouterRepository"
 export namespace PairingContext {
     const connectionRepository = new PairingConnectionRepository(
         AuthContext.services.walletSdkSession,
-        AuthContext.repositories.authenticator,
-        IdentityContext.repositories.walletBinding
+        AuthContext.repositories.authenticator
     );
     const routerRepository = new PairingRouterRepository(
         NotificationContext.services.notifications

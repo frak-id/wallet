@@ -23,6 +23,14 @@ import { getTauriGetFn } from "../webauthn/tauriBridge";
 
 type UseLoginArgs = {
     lastAuthentication?: PreviousAuthenticatorModel;
+    /**
+     * Explicit allow-list passed to WebAuthn's `allowCredentials`. Used by
+     * email-scoped login paths where the backend resolves an email to every
+     * credential currently bound to the wallet (post-merge a single wallet
+     * routinely accepts multiple passkeys). When provided, takes precedence
+     * over `lastAuthentication.authenticatorId`.
+     */
+    allowedCredentialIds?: string[];
     merchantId?: string;
     // biome-ignore lint/suspicious/noConfusingVoidType: required for optional mutation arguments
 } | void;
@@ -58,8 +66,11 @@ export function useLogin(
             // Only pass getFn if defined (Android), omit for iOS/web to use browser default
             const challenge = generatePrivateKey();
             const tauriGetFn = getTauriGetFn();
+            const allowedCredentialIds =
+                args?.allowedCredentialIds ??
+                args?.lastAuthentication?.authenticatorId;
             const { metadata, signature, raw } = await WebAuthnP256.sign({
-                credentialId: args?.lastAuthentication?.authenticatorId,
+                credentialId: allowedCredentialIds,
                 rpId: WebAuthN.rpId,
                 userVerification: "required",
                 challenge,
@@ -113,7 +124,12 @@ export function useLogin(
             return session;
         },
         onMutate: (vars, mutationCtx) => {
-            const method = vars?.lastAuthentication ? "specific" : "global";
+            const hasSpecificHint = Boolean(
+                vars?.lastAuthentication ||
+                    (vars?.allowedCredentialIds &&
+                        vars.allowedCredentialIds.length > 0)
+            );
+            const method = hasSpecificHint ? "specific" : "global";
             const flow = startFlow("auth_login", { method });
             options?.onMutate?.(vars, mutationCtx);
             return { flow, method };

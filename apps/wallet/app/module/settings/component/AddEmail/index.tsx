@@ -20,7 +20,14 @@ type FlowState =
     | {
           kind: "conflict";
           email: string;
-          targetAuthenticatorId?: string;
+          /**
+           * Every credential currently bound to the conflicting wallet. Empty
+           * when the backend resolved a wallet but no active binding on the
+           * current chain (legacy / cross-env). The merge target is the
+           * first id of this list — picked arbitrarily but deterministically,
+           * since any binding repoints to the same wallet on settle.
+           */
+          targetAuthenticatorIds: string[];
           targetWallet?: Address;
       }
     | {
@@ -77,7 +84,7 @@ export function AddEmail() {
                     setFlowState({
                         kind: "conflict",
                         email,
-                        targetAuthenticatorId: result.authenticatorId,
+                        targetAuthenticatorIds: result.authenticatorIds,
                         targetWallet: result.wallet,
                     });
                     return;
@@ -123,7 +130,16 @@ export function AddEmail() {
                     setFlowState({
                         kind: "conflict",
                         email: flowState.email,
-                        targetAuthenticatorId: flowState.targetAuthenticatorId,
+                        // Resurface the single merge-target id as the
+                        // single-element array the conflict branch expects.
+                        // The original list is not preserved across the merge
+                        // step (we only retained the chosen one), and the
+                        // login path on this branch is unused — ConflictStep
+                        // only needs `targetAuthenticatorIds[0]` for the
+                        // merge CTA.
+                        targetAuthenticatorIds: [
+                            flowState.targetAuthenticatorId,
+                        ],
                         targetWallet: flowState.targetWallet,
                     })
                 }
@@ -133,19 +149,24 @@ export function AddEmail() {
     }
 
     if (flowState.kind === "conflict") {
+        // Merge target is the first cred bound to the conflicting wallet —
+        // any active binding on that wallet repoints onto the winner, so the
+        // specific choice doesn't matter on settle. Deterministic via the
+        // server-side `ORDER BY binding id` ensures retries hit the same id.
+        const targetAuthenticatorId = flowState.targetAuthenticatorIds[0];
         const canMerge = Boolean(
-            flowState.targetAuthenticatorId &&
+            targetAuthenticatorId &&
                 flowState.targetWallet &&
                 session?.authenticatorId
         );
         return (
             <ConflictStep
-                targetAuthenticatorId={flowState.targetAuthenticatorId}
+                targetAuthenticatorId={targetAuthenticatorId}
                 targetWallet={flowState.targetWallet}
                 onMerge={() => {
                     if (
                         !canMerge ||
-                        !flowState.targetAuthenticatorId ||
+                        !targetAuthenticatorId ||
                         !flowState.targetWallet ||
                         !session?.authenticatorId
                     )
@@ -154,7 +175,7 @@ export function AddEmail() {
                         kind: "merging",
                         email: flowState.email,
                         currentAuthenticatorId: session.authenticatorId,
-                        targetAuthenticatorId: flowState.targetAuthenticatorId,
+                        targetAuthenticatorId,
                         targetWallet: flowState.targetWallet,
                     });
                 }}

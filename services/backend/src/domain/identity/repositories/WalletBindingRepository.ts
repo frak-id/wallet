@@ -105,46 +105,23 @@ export class WalletBindingRepository {
     }
 
     /**
-     * Every currently-active binding for a credential, ordered by chain id
-     * (deterministic). Empty array when the credential has no bindings yet.
+     * Every credential currently bound to the given wallet on the given
+     * chain. Ordered by binding id (deterministic). Used by:
+     *  - email-scoped login: advertise every valid passkey to the WebAuthn
+     *    ceremony — post-merge a wallet routinely holds 2+ bindings (winner
+     *    cred + each repointed loser cred).
+     *  - pairing resume: picks `[0]` since any binding signs the same
+     *    userOps for the wallet; the deterministic order keeps retried
+     *    resumes stable.
      */
-    async getActiveBindings(
-        credentialId: string,
-        { tx }: { tx?: PgTx } = {}
-    ): Promise<AuthenticatorWalletBindingSelect[]> {
-        const runner: PgRunner = tx ?? db;
-        return runner
-            .select()
-            .from(authenticatorWalletBindingsTable)
-            .where(
-                and(
-                    eq(
-                        authenticatorWalletBindingsTable.authenticatorId,
-                        credentialId
-                    ),
-                    isNull(authenticatorWalletBindingsTable.unlinkedAt)
-                )
-            )
-            .orderBy(authenticatorWalletBindingsTable.chainId);
-    }
-
-    /**
-     * Resolve the credential currently bound to the given wallet on the given
-     * chain. Returns only the credential id; the caller composes with
-     * `AuthenticatorRepository.getByCredentialId` when the full credential
-     * row is needed (the join crosses the libSQL ↔ postgres boundary).
-     */
-    async getActiveByWallet({
+    async getActiveAuthenticatorIdsByWallet({
         chainId,
         smartWalletAddress,
-        tx,
     }: {
         chainId: FrakChainId;
         smartWalletAddress: Address;
-        tx?: PgTx;
-    }): Promise<{ authenticatorId: string } | null> {
-        const runner: PgRunner = tx ?? db;
-        const [row] = await runner
+    }): Promise<string[]> {
+        const rows = await db
             .select({
                 authenticatorId:
                     authenticatorWalletBindingsTable.authenticatorId,
@@ -160,8 +137,8 @@ export class WalletBindingRepository {
                     isNull(authenticatorWalletBindingsTable.unlinkedAt)
                 )
             )
-            .limit(1);
-        return row ?? null;
+            .orderBy(authenticatorWalletBindingsTable.id);
+        return rows.map((row) => row.authenticatorId);
     }
 
     /**

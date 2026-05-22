@@ -7,10 +7,11 @@ import { EmailStatusResponseSchema } from "../../../schemas";
  * Pre-registration check: lets the frontend warn a user before triggering
  * the WebAuthn ceremony if the email is already attached to a credential.
  *
- * Resolution path: `email identity node → group → wallet identity node →
- * authenticator binding on active chain`. When the wallet has an active
- * binding the client receives the credential id so a targeted `login()` can
- * skip the WebAuthn account chooser on platforms that honor `credentialId`.
+ * Resolution path: `email identity node → group → wallet identity nodes →
+ * authenticator bindings on active chain`. When the wallet has active
+ * bindings the client receives every credential id so a targeted `login()`
+ * can advertise all of them via WebAuthn's `allowCredentials` — a wallet
+ * routinely accepts multiple passkeys after a merge.
  *
  * Strict format validation here is fine — no passkey has been created yet,
  * so a 422 just bounces the input back to the form.
@@ -28,7 +29,7 @@ export const emailStatusRoutes = new Elysia().post(
 
         return {
             used: true,
-            authenticatorId: lookup.authenticatorId,
+            authenticatorIds: lookup.authenticatorIds,
             wallet: lookup.wallet,
         } as const;
     },
