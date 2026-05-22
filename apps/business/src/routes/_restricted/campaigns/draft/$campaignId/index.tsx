@@ -1,21 +1,25 @@
-import { createFileRoute } from "@tanstack/react-router";
-import { NewCampaign } from "@/module/campaigns/component/Creation/NewCampaign";
-import {
-    draftCampaignLoader,
-    useCampaignDraftSync,
-} from "@/module/campaigns/hook/useCampaignDraftSync";
-import { CampaignError } from "@/module/common/component/RouteError";
+import { createFileRoute, redirect } from "@tanstack/react-router";
+import { resolveActiveMerchant } from "@/module/common/utils/resolveActiveMerchant";
 
+/**
+ * Legacy redirect: `/campaigns/draft/$campaignId` → new tree.
+ */
 export const Route = createFileRoute(
     "/_restricted/campaigns/draft/$campaignId/"
 )({
-    loader: draftCampaignLoader,
-    component: CampaignsDraftPage,
-    errorComponent: CampaignError,
+    beforeLoad: async ({ params }) => {
+        const resolved = await resolveActiveMerchant();
+        if (resolved.status === "ok") {
+            throw redirect({
+                to: "/m/$merchantId/campaigns/draft/$campaignId",
+                params: {
+                    merchantId: resolved.merchant.id,
+                    campaignId: params.campaignId,
+                },
+                replace: true,
+            });
+        }
+        throw redirect({ to: "/dashboard", replace: true });
+    },
+    component: () => null,
 });
-
-function CampaignsDraftPage() {
-    const { campaignId } = Route.useParams();
-    useCampaignDraftSync(campaignId);
-    return <NewCampaign title="Edit campaign" />;
-}

@@ -6,33 +6,38 @@ import {
     validateDraftCampaign,
 } from "@/module/campaigns/queries/queryOptions";
 import { useIsDemoMode } from "@/module/common/atoms/demoMode";
+import { useActiveMerchantId } from "@/module/common/hook/useActiveMerchantId";
 import { queryClient } from "@/module/common/provider/RootProvider";
 import { campaignStore, campaignToDraft } from "@/stores/campaignStore";
 
 export function draftCampaignLoader({
     params,
 }: {
-    params: { campaignId: string };
+    params: { merchantId: string; campaignId: string };
 }) {
     queryClient.prefetchQuery(
-        campaignQueryOptions(
-            params.campaignId,
-            isDemoMode(),
-            "",
-            validateDraftCampaign(params.campaignId)
-        )
+        campaignQueryOptions({
+            merchantId: params.merchantId,
+            campaignId: params.campaignId,
+            isDemoMode: isDemoMode(),
+            validateState: validateDraftCampaign(
+                params.merchantId,
+                params.campaignId
+            ),
+        })
     );
 }
 
 export function useCampaignDraftSync(campaignId: string) {
     const isDemo = useIsDemoMode();
+    const merchantId = useActiveMerchantId();
     const { data: campaign } = useSuspenseQuery(
-        campaignQueryOptions(
+        campaignQueryOptions({
+            merchantId,
             campaignId,
-            isDemo,
-            "",
-            validateDraftCampaign(campaignId)
-        )
+            isDemoMode: isDemo,
+            validateState: validateDraftCampaign(merchantId, campaignId),
+        })
     );
 
     const setDraft = campaignStore((state) => state.setDraft);

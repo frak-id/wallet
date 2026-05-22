@@ -45,10 +45,25 @@ function draftToCampaign(draft: CampaignDraft): Campaign {
     } as Campaign;
 }
 
-export async function getMyCampaignsMock(): Promise<CampaignWithActions[]> {
+/**
+ * Returns the demo campaigns for a given merchant.
+ *
+ * Mock dataset is keyed by the real merchant UUIDs from
+ * `merchants.json`, so the filter is a straight `merchantId` match. No
+ * fallback / re-stamping — a demo merchant with no campaigns naturally
+ * surfaces the empty state, matching production behaviour.
+ */
+export async function getMyCampaignsMock(
+    merchantId?: string
+): Promise<CampaignWithActions[]> {
     await new Promise((resolve) => setTimeout(resolve, 300));
 
-    return (campaignsData as unknown as Campaign[]).map((campaign) => ({
+    const all = campaignsData as unknown as Campaign[];
+    const scoped = merchantId
+        ? all.filter((c) => c.merchantId === merchantId)
+        : all;
+
+    return scoped.map((campaign) => ({
         ...campaign,
         actions: mapStatusToActions(campaign.status),
     }));
@@ -56,42 +71,48 @@ export async function getMyCampaignsMock(): Promise<CampaignWithActions[]> {
 
 export async function getCampaignDetailsMock({
     campaignId,
+    merchantId,
 }: {
     campaignId: string;
+    merchantId: string;
 }): Promise<Campaign | null> {
     await new Promise((resolve) => setTimeout(resolve, 250));
-
-    // Check mock JSON first (existing campaigns)
-    const campaign = (campaignsData as unknown as Campaign[]).find(
-        (c) => c.id === campaignId
-    );
-    if (campaign) {
-        return campaign;
-    }
-
-    // Fall back to draft store (newly created campaigns not in mock JSON)
-    const draft = campaignStore.getState().draft;
-    if (draft.id === campaignId) {
-        return draftToCampaign(draft);
-    }
-
-    return null;
+    return findScopedCampaign({ campaignId, merchantId });
 }
 
-export function getCampaignDetailsMockSync(
-    campaignId: string
-): Campaign | null {
+export function getCampaignDetailsMockSync({
+    campaignId,
+    merchantId,
+}: {
+    campaignId: string;
+    merchantId: string;
+}): Campaign | null {
+    return findScopedCampaign({ campaignId, merchantId });
+}
+
+/**
+ * Look up a demo campaign by id, but only return it when the merchantId
+ * matches the active URL — mirrors the backend's per-merchant scoping so
+ * `/m/A/campaigns/<id-of-B>` doesn't leak merchant B's campaign into
+ * merchant A's view, and the `campaignQueryOptions` redirect-on-null
+ * still fires.
+ */
+function findScopedCampaign({
+    campaignId,
+    merchantId,
+}: {
+    campaignId: string;
+    merchantId: string;
+}): Campaign | null {
     // Check mock JSON first (existing campaigns)
     const campaign = (campaignsData as unknown as Campaign[]).find(
-        (c) => c.id === campaignId
+        (c) => c.id === campaignId && c.merchantId === merchantId
     );
-    if (campaign) {
-        return campaign;
-    }
+    if (campaign) return campaign;
 
     // Fall back to draft store (newly created campaigns not in mock JSON)
     const draft = campaignStore.getState().draft;
-    if (draft.id === campaignId) {
+    if (draft.id === campaignId && draft.merchantId === merchantId) {
         return draftToCampaign(draft);
     }
 

@@ -36,7 +36,7 @@ export function MerchantDetails({ merchantId }: { merchantId: string }) {
 
     return (
         <FormLayout>
-            <MerchantHead merchantId={merchantId} />
+            <MerchantHead />
             {merchant && (
                 <Panel title={"Details of the merchant"}>
                     <Stack space="m">

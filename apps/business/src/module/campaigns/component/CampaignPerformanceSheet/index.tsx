@@ -8,12 +8,13 @@ import {
     SheetTitle,
     SheetTrigger,
 } from "@frak-labs/design-system/components/Sheet";
-import { useQuery } from "@tanstack/react-query";
+import { useSuspenseQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import type { CampaignStats } from "@/module/campaigns/api/campaignStatsApi";
 import { campaignsStatsQueryOptions } from "@/module/campaigns/queries/queryOptions";
 import { useIsDemoMode } from "@/module/common/atoms/demoMode";
 import { Button } from "@/module/common/component/Button";
+import { useActiveMerchantId } from "@/module/common/hook/useActiveMerchantId";
 import { useConvertToPreferredCurrency } from "@/module/common/hook/useConversionRate";
 import type { Campaign } from "@/types/Campaign";
 import * as styles from "./campaign-performance-sheet.css";
@@ -26,7 +27,10 @@ type Props = {
 export function CampaignPerformanceSheet({ campaignId, campaign }: Props) {
     const [open, setOpen] = useState(false);
     const isDemoMode = useIsDemoMode();
-    const { data: stats } = useQuery(campaignsStatsQueryOptions(isDemoMode));
+    const merchantId = useActiveMerchantId();
+    const { data: stats } = useSuspenseQuery(
+        campaignsStatsQueryOptions({ merchantId, isDemoMode })
+    );
     const campaignStats = stats?.find((s) => s.campaignId === campaignId);
 
     return (

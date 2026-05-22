@@ -16,6 +16,7 @@ import { campaignsStatsQueryOptions } from "@/module/campaigns/queries/queryOpti
 import { useIsDemoMode } from "@/module/common/atoms/demoMode";
 import { Table } from "@/module/common/component/Table";
 import { TooltipTable } from "@/module/common/component/TooltipTable";
+import { useActiveMerchantId } from "@/module/common/hook/useActiveMerchantId";
 import { useConvertToPreferredCurrency } from "@/module/common/hook/useConversionRate";
 import { computeWithPrecision } from "@/module/common/utils/computeWithPrecision";
 
@@ -49,8 +50,11 @@ function avgPercentages(table: TableReact<TableData>, column: keyof TableData) {
 export function TableCampaignPerformance() {
     const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
     const isDemoMode = useIsDemoMode();
+    const merchantId = useActiveMerchantId();
 
-    const { data } = useSuspenseQuery(campaignsStatsQueryOptions(isDemoMode));
+    const { data } = useSuspenseQuery(
+        campaignsStatsQueryOptions({ merchantId, isDemoMode })
+    );
 
     const columns = useMemo(
         () =>

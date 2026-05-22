@@ -19,6 +19,7 @@ import { useIsDemoMode } from "@/module/common/atoms/demoMode";
 import { ActionsWrapper } from "@/module/common/component/ActionsWrapper";
 import { LinkButton } from "@/module/common/component/LinkButton";
 import { Panel } from "@/module/common/component/Panel";
+import { useActiveMerchantId } from "@/module/common/hook/useActiveMerchantId";
 import { Form, FormLayout } from "@/module/forms/Form";
 import {
     type CampaignDraft,
@@ -34,7 +35,11 @@ export function CampaignDetails({
     campaignId: string;
     campaign?: Campaign;
 }) {
-    const merchantId = preloadedCampaign?.merchantId ?? "";
+    // Active merchant from the URL — equal to the campaign's merchantId
+    // under the `/m/$merchantId/campaigns/$campaignId` layout guard, but
+    // we trust the URL so navigation away always returns the user to the
+    // section they were viewing.
+    const merchantId = useActiveMerchantId();
     const isDemoMode = useIsDemoMode();
 
     const {
@@ -105,7 +110,11 @@ export function CampaignDetails({
                             campaign={campaign}
                             campaignId={campaignId}
                         />
-                        <LinkButton to="/campaigns/list" variant="primary">
+                        <LinkButton
+                            to="/m/$merchantId/campaigns/list"
+                            params={{ merchantId }}
+                            variant="primary"
+                        >
                             Close
                         </LinkButton>
                     </>

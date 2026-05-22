@@ -10,6 +10,7 @@ import { ButtonCancel } from "@/module/campaigns/component/Creation/NewCampaign/
 import { useSaveCampaign } from "@/module/campaigns/hook/useSaveCampaign";
 import { Head } from "@/module/common/component/Head";
 import { Panel } from "@/module/common/component/Panel";
+import { useActiveMerchantId } from "@/module/common/hook/useActiveMerchantId";
 import {
     Form,
     FormControl,
@@ -67,6 +68,7 @@ function formValuesToDraft(
 
 export function MetricsCampaign() {
     const navigate = useNavigate();
+    const merchantId = useActiveMerchantId();
     const draft = campaignStore((s) => s.draft);
     const updateDraft = campaignStore((s) => s.updateDraft);
     const saveCampaign = useSaveCampaign();
@@ -91,8 +93,8 @@ export function MetricsCampaign() {
         updateDraft(() => updatedDraft);
         const saved = await saveCampaign.mutateAsync(updatedDraft);
         navigate({
-            to: "/campaigns/draft/$campaignId/validation",
-            params: { campaignId: saved.id },
+            to: "/m/$merchantId/campaigns/draft/$campaignId/validation",
+            params: { merchantId, campaignId: saved.id },
         });
     }
 

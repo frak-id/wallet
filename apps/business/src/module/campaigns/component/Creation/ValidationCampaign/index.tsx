@@ -10,6 +10,7 @@ import { useStatusTransition } from "@/module/campaigns/hook/useStatusTransition
 import { useIsDemoMode } from "@/module/common/atoms/demoMode";
 import { Head } from "@/module/common/component/Head";
 import { Panel } from "@/module/common/component/Panel";
+import { useActiveMerchantId } from "@/module/common/hook/useActiveMerchantId";
 import { Form, FormLayout } from "@/module/forms/Form";
 import { type CampaignDraft, campaignStore } from "@/stores/campaignStore";
 import * as styles from "./validation-campaign.css";
@@ -18,6 +19,7 @@ export function ValidationCampaign() {
     const navigate = useNavigate();
     const queryClient = useQueryClient();
     const isDemoMode = useIsDemoMode();
+    const merchantId = useActiveMerchantId();
 
     const draft = campaignStore((s) => s.draft);
     const isSuccess = campaignStore((s) => s.isSuccess);
@@ -58,7 +60,10 @@ export function ValidationCampaign() {
     function handleSubmit(values: CampaignDraft) {
         if (isSuccess) {
             reset();
-            navigate({ to: "/campaigns/list" });
+            navigate({
+                to: "/m/$merchantId/campaigns/list",
+                params: { merchantId },
+            });
             return;
         }
 

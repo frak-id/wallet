@@ -3,22 +3,29 @@ import { redirect } from "@tanstack/react-router";
 import campaignsMockData from "@/mock/campaigns.json";
 import {
     getCampaignDetail,
-    getMyCampaigns,
+    getMerchantCampaigns,
 } from "@/module/campaigns/api/campaignApi";
 import {
-    getMyCampaignsStats,
-    getMyCampaignsStatsMock,
+    getMerchantCampaignsStats,
+    getMerchantCampaignsStatsMock,
 } from "@/module/campaigns/api/campaignStatsApi";
 import { getCampaignDetailsMockSync } from "@/module/campaigns/api/mock";
 import type { Campaign, CampaignWithActions } from "@/types/Campaign";
 
 type CampaignStateValidator = (campaign: Campaign) => {
     shouldRedirect: boolean;
-    redirectTo?: { to: string; params: { campaignId: string } };
+    redirectTo?: {
+        to: string;
+        params: { merchantId: string; campaignId: string };
+    };
 };
 
-function getCampaignsInitialData(): CampaignWithActions[] {
-    return (campaignsMockData as unknown as Campaign[]).map((campaign) => ({
+function getCampaignsInitialData(merchantId?: string): CampaignWithActions[] {
+    const all = campaignsMockData as unknown as Campaign[];
+    const scoped = merchantId
+        ? all.filter((c) => c.merchantId === merchantId)
+        : all;
+    return scoped.map((campaign) => ({
         ...campaign,
         actions: {
             canEdit: campaign.status === "draft",
@@ -32,30 +39,69 @@ function getCampaignsInitialData(): CampaignWithActions[] {
     }));
 }
 
-export const campaignsListQueryOptions = (isDemoMode: boolean) =>
+export const campaignsListQueryOptions = ({
+    merchantId,
+    isDemoMode,
+}: {
+    merchantId: string;
+    isDemoMode: boolean;
+}) =>
     queryOptions<CampaignWithActions[]>({
-        queryKey: ["campaigns", "my-campaigns", isDemoMode ? "demo" : "live"],
-        queryFn: () => getMyCampaigns(isDemoMode),
+        queryKey: [
+            "campaigns",
+            "list",
+            merchantId,
+            isDemoMode ? "demo" : "live",
+        ],
+        queryFn: () => getMerchantCampaigns({ merchantId, isDemoMode }),
         staleTime: isDemoMode ? Number.POSITIVE_INFINITY : 5 * 60 * 1000,
-        initialData: isDemoMode ? getCampaignsInitialData() : undefined,
+        initialData: isDemoMode
+            ? getCampaignsInitialData(merchantId)
+            : undefined,
     });
 
-export const campaignsStatsQueryOptions = (isDemoMode: boolean) =>
+export const campaignsStatsQueryOptions = ({
+    merchantId,
+    isDemoMode,
+}: {
+    merchantId: string;
+    isDemoMode: boolean;
+}) =>
     queryOptions({
-        queryKey: ["campaigns", "stats", isDemoMode ? "demo" : "live"],
-        queryFn: () => getMyCampaignsStats(isDemoMode),
+        queryKey: [
+            "campaigns",
+            "stats",
+            merchantId,
+            isDemoMode ? "demo" : "live",
+        ],
+        queryFn: () => getMerchantCampaignsStats({ merchantId, isDemoMode }),
         staleTime: isDemoMode ? Number.POSITIVE_INFINITY : 5 * 60 * 1000,
-        initialData: isDemoMode ? getMyCampaignsStatsMock() : undefined,
+        // initialData must be scoped to the active merchant — with
+        // `staleTime: Infinity` in demo, unscoped seed data would stick
+        // around forever under a merchant-keyed cache entry.
+        initialData: isDemoMode
+            ? getMerchantCampaignsStatsMock(merchantId)
+            : undefined,
     });
 
-export const campaignQueryOptions = (
-    campaignId: string,
-    isDemoMode: boolean,
-    merchantId?: string,
-    validateState?: CampaignStateValidator
-) =>
+export const campaignQueryOptions = ({
+    merchantId,
+    campaignId,
+    isDemoMode,
+    validateState,
+}: {
+    merchantId: string;
+    campaignId: string;
+    isDemoMode: boolean;
+    validateState?: CampaignStateValidator;
+}) =>
     queryOptions({
-        queryKey: ["campaign", campaignId, isDemoMode ? "demo" : "live"],
+        queryKey: [
+            "campaign",
+            merchantId,
+            campaignId,
+            isDemoMode ? "demo" : "live",
+        ],
         queryFn: async () => {
             const campaign = await getCampaignDetail({
                 merchantId,
@@ -64,7 +110,10 @@ export const campaignQueryOptions = (
             });
 
             if (!campaign) {
-                throw redirect({ to: "/campaigns/list" });
+                throw redirect({
+                    to: "/m/$merchantId/campaigns/list",
+                    params: { merchantId },
+                });
             }
 
             if (validateState) {
@@ -77,20 +126,25 @@ export const campaignQueryOptions = (
             return campaign;
         },
         staleTime: isDemoMode ? Number.POSITIVE_INFINITY : 5 * 60 * 1000,
+        // initialData must be merchant-scoped: with a merchant-keyed
+        // cache entry and `staleTime: Infinity`, seeding the wrong
+        // merchant's campaign here would short-circuit the queryFn's
+        // redirect-on-null and show stale content.
         initialData: isDemoMode
-            ? (getCampaignDetailsMockSync(campaignId) ?? undefined)
+            ? (getCampaignDetailsMockSync({ campaignId, merchantId }) ??
+              undefined)
             : undefined,
     });
 
-export function validateDraftCampaign(campaignId: string) {
+export function validateDraftCampaign(merchantId: string, campaignId: string) {
     return (campaign: Campaign): ReturnType<CampaignStateValidator> => {
         const isPublished = campaign.status !== "draft";
         if (isPublished) {
             return {
                 shouldRedirect: true,
                 redirectTo: {
-                    to: "/campaigns/edit/$campaignId",
-                    params: { campaignId },
+                    to: "/m/$merchantId/campaigns/edit/$campaignId",
+                    params: { merchantId, campaignId },
                 },
             };
         }
@@ -98,15 +152,15 @@ export function validateDraftCampaign(campaignId: string) {
     };
 }
 
-export function validateEditCampaign(campaignId: string) {
+export function validateEditCampaign(merchantId: string, campaignId: string) {
     return (campaign: Campaign): ReturnType<CampaignStateValidator> => {
         const isDraft = campaign.status === "draft";
         if (isDraft) {
             return {
                 shouldRedirect: true,
                 redirectTo: {
-                    to: "/campaigns/draft/$campaignId",
-                    params: { campaignId },
+                    to: "/m/$merchantId/campaigns/draft/$campaignId",
+                    params: { merchantId, campaignId },
                 },
             };
         }

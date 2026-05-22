@@ -1,19 +1,12 @@
-import { createFileRoute } from "@tanstack/react-router";
-import { isDemoMode } from "@/config/auth";
-import { queryClient } from "@/module/common/provider/RootProvider";
-import { MerchantTeam } from "@/module/merchant/component/Team";
-import { merchantQueryOptions } from "@/module/merchant/queries/queryOptions";
+import { createFileRoute, redirect } from "@tanstack/react-router";
 
 export const Route = createFileRoute("/_restricted/merchant/$id/team")({
-    loader: ({ params }) => {
-        const demoMode = isDemoMode();
-        queryClient.prefetchQuery(merchantQueryOptions(params.id, demoMode));
+    beforeLoad: ({ params }) => {
+        throw redirect({
+            to: "/m/$merchantId/merchant/team",
+            params: { merchantId: params.id },
+            replace: true,
+        });
     },
-    component: MerchantTeamPage,
+    component: () => null,
 });
-
-function MerchantTeamPage() {
-    const { id } = Route.useParams();
-
-    return <MerchantTeam merchantId={id} />;
-}

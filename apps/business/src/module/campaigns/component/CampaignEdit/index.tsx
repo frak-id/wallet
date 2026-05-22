@@ -8,11 +8,13 @@ import { useSaveCampaign } from "@/module/campaigns/hook/useSaveCampaign";
 import { ActionsWrapper } from "@/module/common/component/ActionsWrapper";
 import { Button } from "@/module/common/component/Button";
 import { Head } from "@/module/common/component/Head";
+import { useActiveMerchantId } from "@/module/common/hook/useActiveMerchantId";
 import { Form, FormLayout } from "@/module/forms/Form";
 import { type CampaignDraft, campaignStore } from "@/stores/campaignStore";
 
 export function CampaignEdit({ campaignId }: { campaignId: string }) {
     const navigate = useNavigate();
+    const merchantId = useActiveMerchantId();
     const draft = campaignStore((state) => state.draft);
     const saveCampaign = useSaveCampaign();
 
@@ -27,7 +29,10 @@ export function CampaignEdit({ campaignId }: { campaignId: string }) {
 
     async function onSubmit(values: CampaignDraft) {
         await saveCampaign.mutateAsync(values);
-        navigate({ to: "/campaigns/list" });
+        navigate({
+            to: "/m/$merchantId/campaigns/list",
+            params: { merchantId },
+        });
     }
 
     return (

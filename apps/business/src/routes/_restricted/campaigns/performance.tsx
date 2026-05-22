@@ -1,34 +1,20 @@
-import { createFileRoute } from "@tanstack/react-router";
-import { useTranslation } from "react-i18next";
-import { isDemoMode } from "@/config/auth";
-import { TableCampaignPerformance } from "@/module/campaigns/component/TableCampaignPerformance";
-import { campaignsStatsQueryOptions } from "@/module/campaigns/queries/queryOptions";
-import { Breadcrumb } from "@/module/common/component/Breadcrumb";
-import { Head } from "@/module/common/component/Head";
-import { DataLoadError } from "@/module/common/component/RouteError";
-import { queryClient } from "@/module/common/provider/RootProvider";
+import { createFileRoute, redirect } from "@tanstack/react-router";
+import { resolveActiveMerchant } from "@/module/common/utils/resolveActiveMerchant";
 
+/**
+ * Legacy redirect: `/campaigns/performance` → `/m/$first/campaigns/performance`.
+ */
 export const Route = createFileRoute("/_restricted/campaigns/performance")({
-    loader: () => {
-        queryClient.prefetchQuery(campaignsStatsQueryOptions(isDemoMode()));
+    beforeLoad: async () => {
+        const resolved = await resolveActiveMerchant();
+        if (resolved.status === "ok") {
+            throw redirect({
+                to: "/m/$merchantId/campaigns/performance",
+                params: { merchantId: resolved.merchant.id },
+                replace: true,
+            });
+        }
+        throw redirect({ to: "/dashboard", replace: true });
     },
-    component: CampaignsPerformancePage,
-    errorComponent: (props) => (
-        <DataLoadError {...props} resourceName="campaign performance data" />
-    ),
+    component: () => null,
 });
-
-function CampaignsPerformancePage() {
-    const { t } = useTranslation();
-    return (
-        <>
-            <Head
-                title={{ content: t("shell.nav.campaigns") }}
-                leftSection={
-                    <Breadcrumb current={t("shell.nav.campaignsOverview")} />
-                }
-            />
-            <TableCampaignPerformance />
-        </>
-    );
-}

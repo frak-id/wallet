@@ -91,8 +91,11 @@ export function CampaignParametersSheet({ campaign, campaignId }: Props) {
                 <SheetFooter>
                     {canEdit && (
                         <LinkButton
-                            to="/campaigns/edit/$campaignId"
-                            params={{ campaignId }}
+                            to="/m/$merchantId/campaigns/edit/$campaignId"
+                            params={{
+                                merchantId: campaign.merchantId,
+                                campaignId,
+                            }}
                             variant="secondary"
                             onClick={() => reset()}
                         >

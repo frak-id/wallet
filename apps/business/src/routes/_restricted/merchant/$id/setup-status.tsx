@@ -1,19 +1,12 @@
-import { createFileRoute } from "@tanstack/react-router";
-import { isDemoMode } from "@/config/auth";
-import { queryClient } from "@/module/common/provider/RootProvider";
-import { MerchantSetupStatus } from "@/module/merchant/component/SetupStatus";
-import { merchantQueryOptions } from "@/module/merchant/queries/queryOptions";
+import { createFileRoute, redirect } from "@tanstack/react-router";
 
 export const Route = createFileRoute("/_restricted/merchant/$id/setup-status")({
-    loader: ({ params }) => {
-        const demoMode = isDemoMode();
-        queryClient.prefetchQuery(merchantQueryOptions(params.id, demoMode));
+    beforeLoad: ({ params }) => {
+        throw redirect({
+            to: "/m/$merchantId/merchant/setup-status",
+            params: { merchantId: params.id },
+            replace: true,
+        });
     },
-    component: MerchantSetupStatusPage,
+    component: () => null,
 });
-
-function MerchantSetupStatusPage() {
-    const { id } = Route.useParams();
-
-    return <MerchantSetupStatus merchantId={id} />;
-}

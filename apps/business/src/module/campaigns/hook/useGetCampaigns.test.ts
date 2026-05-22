@@ -28,17 +28,28 @@ function createSuspenseWrapper(
     return SuspenseWrapper;
 }
 
-const { mockGetMyCampaigns, mockUseIsDemoMode } = vi.hoisted(() => ({
-    mockGetMyCampaigns: vi.fn(),
-    mockUseIsDemoMode: vi.fn(() => false),
-}));
+// Use one of the real demo UUIDs from `merchants.json` so the demo-mode
+// branch of `getCampaignsInitialData` returns a populated list.
+const { mockGetMerchantCampaigns, mockUseIsDemoMode, mockUseActiveMerchantId } =
+    vi.hoisted(() => ({
+        mockGetMerchantCampaigns: vi.fn(),
+        mockUseIsDemoMode: vi.fn(() => false),
+        mockUseActiveMerchantId: vi.fn(
+            () => "11111111-1111-1111-1111-111111111111"
+        ),
+    }));
 
 vi.mock("@/module/campaigns/api/campaignApi", () => ({
-    getMyCampaigns: mockGetMyCampaigns,
+    getMerchantCampaigns: mockGetMerchantCampaigns,
 }));
 
 vi.mock("@/module/common/atoms/demoMode", () => ({
     useIsDemoMode: mockUseIsDemoMode,
+}));
+
+vi.mock("@/module/common/hook/useActiveMerchantId", () => ({
+    useActiveMerchantId: mockUseActiveMerchantId,
+    useOptionalActiveMerchantId: mockUseActiveMerchantId,
 }));
 
 const mockCampaign: CampaignWithActions = {
@@ -76,7 +87,7 @@ describe("useGetCampaigns", () => {
             queryWrapper,
         }: TestContext) => {
             mockUseIsDemoMode.mockReturnValue(false);
-            mockGetMyCampaigns.mockResolvedValue([mockCampaign]);
+            mockGetMerchantCampaigns.mockResolvedValue([mockCampaign]);
 
             const { result } = renderHook(() => useGetCampaigns(), {
                 wrapper: createSuspenseWrapper(queryWrapper.wrapper),
@@ -88,14 +99,14 @@ describe("useGetCampaigns", () => {
 
             expect(result.current.data).toEqual([mockCampaign]);
             expect(result.current.data[0].actions.canEdit).toBe(true);
-            expect(mockGetMyCampaigns).toHaveBeenCalled();
+            expect(mockGetMerchantCampaigns).toHaveBeenCalled();
         });
 
         test("should return empty array when no campaigns exist", async ({
             queryWrapper,
         }: TestContext) => {
             mockUseIsDemoMode.mockReturnValue(false);
-            mockGetMyCampaigns.mockResolvedValue([]);
+            mockGetMerchantCampaigns.mockResolvedValue([]);
 
             const { result } = renderHook(() => useGetCampaigns(), {
                 wrapper: createSuspenseWrapper(queryWrapper.wrapper),
@@ -113,7 +124,7 @@ describe("useGetCampaigns", () => {
         test("should fetch campaigns in demo mode", async ({
             queryWrapper,
         }: TestContext) => {
-            mockGetMyCampaigns.mockClear();
+            mockGetMerchantCampaigns.mockClear();
             mockUseIsDemoMode.mockReturnValue(true);
 
             const { result } = renderHook(() => useGetCampaigns(), {
@@ -126,7 +137,7 @@ describe("useGetCampaigns", () => {
 
             // In demo mode, data comes from initialData (mock JSON), not queryFn
             expect(result.current.data.length).toBeGreaterThan(0);
-            expect(mockGetMyCampaigns).not.toHaveBeenCalled();
+            expect(mockGetMerchantCampaigns).not.toHaveBeenCalled();
         });
     });
 
@@ -135,7 +146,7 @@ describe("useGetCampaigns", () => {
             queryWrapper,
         }: TestContext) => {
             mockUseIsDemoMode.mockReturnValue(false);
-            mockGetMyCampaigns.mockResolvedValue([]);
+            mockGetMerchantCampaigns.mockResolvedValue([]);
 
             const { result: result1 } = renderHook(() => useGetCampaigns(), {
                 wrapper: createSuspenseWrapper(queryWrapper.wrapper),
@@ -162,7 +173,7 @@ describe("useGetCampaigns", () => {
             queryWrapper,
         }: TestContext) => {
             mockUseIsDemoMode.mockReturnValue(false);
-            mockGetMyCampaigns.mockImplementation(
+            mockGetMerchantCampaigns.mockImplementation(
                 () =>
                     new Promise((resolve) => setTimeout(() => resolve([]), 100))
             );

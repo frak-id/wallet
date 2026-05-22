@@ -7,8 +7,22 @@ export type CampaignStats = CampaignStatsItem & {
     createReferredLinkInteractions: number;
 };
 
-export function getMyCampaignsStatsMock(): CampaignStats[] {
-    return campaignStatsData.map((stat) => ({
+/**
+ * Returns demo stats for a given merchant.
+ *
+ * Mock dataset is keyed by the real merchant UUIDs from `merchants.json`
+ * (same scheme as campaigns + members). When `merchantId` is omitted the
+ * full dataset is returned — used only by tests that need deterministic
+ * data regardless of routing.
+ */
+export function getMerchantCampaignsStatsMock(
+    merchantId?: string
+): CampaignStats[] {
+    const scoped = merchantId
+        ? campaignStatsData.filter((stat) => stat.merchantId === merchantId)
+        : campaignStatsData;
+
+    return scoped.map((stat) => ({
         campaignId: stat.id,
         campaignName: stat.title,
         trigger: stat.eventType.toLowerCase(),
@@ -26,38 +40,28 @@ export function getMyCampaignsStatsMock(): CampaignStats[] {
     }));
 }
 
-export async function getMyCampaignsStats(
-    isDemoMode: boolean
-): Promise<CampaignStats[]> {
+export async function getMerchantCampaignsStats({
+    merchantId,
+    isDemoMode,
+}: {
+    merchantId: string;
+    isDemoMode: boolean;
+}): Promise<CampaignStats[]> {
     if (isDemoMode) {
-        return getMyCampaignsStatsMock();
+        return getMerchantCampaignsStatsMock(merchantId);
     }
 
-    const { data: merchantsData, error: merchantsError } =
-        await authenticatedBackendApi.merchant.my.get();
+    const { data, error } = await authenticatedBackendApi
+        .merchant({ merchantId })
+        .campaigns.stats.get();
 
-    if (!merchantsData || merchantsError) {
+    if (!data || error) {
         return [];
     }
 
-    const allMerchantIds = [
-        ...merchantsData.owned.map((m) => m.id),
-        ...merchantsData.adminOf.map((m) => m.id),
-    ];
-
-    const statsResults = await Promise.all(
-        allMerchantIds.map(async (merchantId) => {
-            const { data, error } = await authenticatedBackendApi
-                .merchant({ merchantId })
-                .campaigns.stats.get();
-            if (!data || error) return [];
-            return data.stats.map((stat) => ({
-                ...stat,
-                createReferredLinkInteractions: 0,
-                tokenAddress: stat.tokenAddress as Address | null,
-            })) as CampaignStats[];
-        })
-    );
-
-    return statsResults.flat();
+    return data.stats.map((stat) => ({
+        ...stat,
+        createReferredLinkInteractions: 0,
+        tokenAddress: stat.tokenAddress as Address | null,
+    })) as CampaignStats[];
 }

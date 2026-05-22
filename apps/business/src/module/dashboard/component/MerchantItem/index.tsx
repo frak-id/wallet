@@ -56,8 +56,8 @@ function MerchantActions({ merchantId }: { merchantId?: string }) {
         <ul className={merchantItemActions}>
             <li>
                 <Link
-                    to="/merchant/$id/funding"
-                    params={{ id: merchantId }}
+                    to="/m/$merchantId/merchant/funding"
+                    params={{ merchantId }}
                     title={"Manage the merchant balance"}
                 >
                     <WalletMinimal />
@@ -65,8 +65,8 @@ function MerchantActions({ merchantId }: { merchantId?: string }) {
             </li>
             <li>
                 <Link
-                    to="/merchant/$id/customize"
-                    params={{ id: merchantId }}
+                    to="/m/$merchantId/merchant/customize"
+                    params={{ merchantId }}
                     title={"Customize SDK appearance"}
                 >
                     <Palette />
@@ -74,8 +74,8 @@ function MerchantActions({ merchantId }: { merchantId?: string }) {
             </li>
             <li>
                 <Link
-                    to="/merchant/$id"
-                    params={{ id: merchantId }}
+                    to="/m/$merchantId/merchant"
+                    params={{ merchantId }}
                     title={"Edit your merchant"}
                 >
                     <Pen />
@@ -83,8 +83,8 @@ function MerchantActions({ merchantId }: { merchantId?: string }) {
             </li>
             <li>
                 <Link
-                    to="/merchant/$id/team"
-                    params={{ id: merchantId }}
+                    to="/m/$merchantId/merchant/team"
+                    params={{ merchantId }}
                     title={"Manage your team"}
                 >
                     <Users />

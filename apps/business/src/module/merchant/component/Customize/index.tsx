@@ -86,7 +86,7 @@ export function CustomizePage({ merchantId }: { merchantId: string }) {
 
     return (
         <FormLayout>
-            <MerchantHead merchantId={merchantId} />
+            <MerchantHead />
 
             <SdkIdentityPanel
                 merchantId={merchantId}

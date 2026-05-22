@@ -19,6 +19,7 @@ import { CampaignStateTag } from "@/module/campaigns/component/TableCampaigns/Ca
 import { TableCampaignFilters } from "@/module/campaigns/component/TableCampaigns/Filter";
 import { useGetCampaigns } from "@/module/campaigns/hook/useGetCampaigns";
 import { Table } from "@/module/common/component/Table";
+import { useActiveMerchantId } from "@/module/common/hook/useActiveMerchantId";
 import { formatDate } from "@/module/common/utils/formatDate";
 import { formatPrice } from "@/module/common/utils/formatPrice";
 import { campaignStore } from "@/stores/campaignStore";
@@ -29,6 +30,7 @@ const columnHelper = createColumnHelper<CampaignWithActions>();
 
 export function TableCampaigns() {
     const { data } = useGetCampaigns();
+    const merchantId = useActiveMerchantId();
     const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
 
     const columns = useMemo(
@@ -42,15 +44,21 @@ export function TableCampaigns() {
                         const name = getValue() as string;
                         return isDraft ? (
                             <Link
-                                to="/campaigns/draft/$campaignId"
-                                params={{ campaignId: row.original.id }}
+                                to="/m/$merchantId/campaigns/draft/$campaignId"
+                                params={{
+                                    merchantId,
+                                    campaignId: row.original.id,
+                                }}
                             >
                                 {name}
                             </Link>
                         ) : (
                             <Link
-                                to="/campaigns/$campaignId"
-                                params={{ campaignId: row.original.id }}
+                                to="/m/$merchantId/campaigns/$campaignId"
+                                params={{
+                                    merchantId,
+                                    campaignId: row.original.id,
+                                }}
                             >
                                 {name}
                             </Link>
@@ -88,10 +96,12 @@ export function TableCampaigns() {
                 }),
                 columnHelper.display({
                     header: "Action",
-                    cell: ({ row }) => <CellActions row={row} />,
+                    cell: ({ row }) => (
+                        <CellActions row={row} merchantId={merchantId} />
+                    ),
                 }),
             ] as ColumnDef<CampaignWithActions>[],
-        []
+        [merchantId]
     );
 
     if (!data) {
@@ -146,7 +156,10 @@ function CellBudget({
 
 function CellActions({
     row,
-}: Pick<CellContext<CampaignWithActions, unknown>, "row">) {
+    merchantId,
+}: Pick<CellContext<CampaignWithActions, unknown>, "row"> & {
+    merchantId: string;
+}) {
     const actions = useMemo(() => row.original.actions, [row.original.actions]);
     const reset = campaignStore((state) => state.reset);
     const status = row.original.status;
@@ -157,24 +170,24 @@ function CellActions({
         <div className={styles.tableActions}>
             {isDraft ? (
                 <Link
-                    to="/campaigns/draft/$campaignId"
-                    params={{ campaignId: row.original.id }}
+                    to="/m/$merchantId/campaigns/draft/$campaignId"
+                    params={{ merchantId, campaignId: row.original.id }}
                     onClick={() => reset()}
                 >
                     <Eye size={20} absoluteStrokeWidth={true} />
                 </Link>
             ) : (
                 <Link
-                    to="/campaigns/$campaignId"
-                    params={{ campaignId: row.original.id }}
+                    to="/m/$merchantId/campaigns/$campaignId"
+                    params={{ merchantId, campaignId: row.original.id }}
                 >
                     <Eye size={20} absoluteStrokeWidth={true} />
                 </Link>
             )}
             {isDraft && (
                 <Link
-                    to="/campaigns/draft/$campaignId"
-                    params={{ campaignId: row.original.id }}
+                    to="/m/$merchantId/campaigns/draft/$campaignId"
+                    params={{ merchantId, campaignId: row.original.id }}
                     onClick={() => reset()}
                 >
                     <Pencil size={20} absoluteStrokeWidth={true} />
@@ -182,8 +195,8 @@ function CellActions({
             )}
             {!isDraft && !isArchived && (
                 <Link
-                    to="/campaigns/edit/$campaignId"
-                    params={{ campaignId: row.original.id }}
+                    to="/m/$merchantId/campaigns/edit/$campaignId"
+                    params={{ merchantId, campaignId: row.original.id }}
                     onClick={() => reset()}
                 >
                     <Pencil size={20} absoluteStrokeWidth={true} />
