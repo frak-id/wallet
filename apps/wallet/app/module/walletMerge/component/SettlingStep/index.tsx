@@ -14,17 +14,18 @@ import * as styles from "./index.css";
 
 type SettlingStepProps = {
     loserAuthenticatorId: string;
-    onChainTxHash: Hex;
+    onChainTxHash?: Hex;
     loserConsentSignature: string;
     onCompleted: (settle: MergeSettleResponse) => void;
     onCancel: () => void;
 };
 
 /**
- * Final off-chain step. No user prompt — just POSTs to `/merge/settle` and
- * waits. Surfaces a spinner card while in flight and an actionable retry
- * card on error. The `onChainTxHash` is invariant across retries (the
- * on-chain step already succeeded), so retries are pure network re-tries.
+ * Final off-chain step. No user prompt — delegates the full "wait for the
+ * addPassKey receipt then POST `/merge/settle`" pipeline to
+ * {@link useMergeSettle}. Surfaces a spinner card while in flight and an
+ * actionable retry card on error. All inputs are invariant across retries
+ * (the on-chain step already succeeded), so retries re-run the same pipe.
  */
 export function SettlingStep({
     loserAuthenticatorId,

@@ -40,7 +40,7 @@ type Step =
     | { kind: "consent" }
     | { kind: "switch"; consentSignature: string }
     | { kind: "sign"; consentSignature: string }
-    | { kind: "settling"; consentSignature: string; txHash: Hex }
+    | { kind: "settling"; consentSignature: string; txHash?: Hex }
     | { kind: "success"; settle: MergeSettleResponse };
 
 /**

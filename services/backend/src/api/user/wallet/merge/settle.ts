@@ -10,12 +10,14 @@ import {
 
 /**
  * Finalise a wallet merge after the user has signed the `addPassKey` userOp
- * on-chain. The endpoint is idempotent — see
- * `WalletMergeOrchestrator.settle` for the per-step contract.
+ * on-chain AND the frontend has confirmed the receipt landed. The endpoint
+ * is idempotent — see `WalletMergeOrchestrator.settle` for the per-step
+ * contract.
  *
- * The body carries `onChainTxHash`; the backend re-derives the rest of the
- * merge state from the (wallet session, target credential) pair so the
- * client cannot tamper with the winner/loser decision.
+ * The backend re-derives the merge state from the (wallet session, target
+ * credential) pair so the client cannot tamper with the winner/loser
+ * decision. The on-chain landed check is the validator readback at step 2,
+ * which already proves the userOp was applied (no separate tx-hash needed).
  */
 export const mergeSettleRoutes = new Elysia().use(sessionContext).post(
     "/settle",
@@ -31,7 +33,6 @@ export const mergeSettleRoutes = new Elysia().use(sessionContext).post(
             requesterWallet: walletSession.address,
             requesterAuthenticatorId: walletSession.authenticatorId,
             targetAuthenticatorId: body.targetAuthenticatorId,
-            onChainTxHash: body.onChainTxHash,
             loserConsentSignature: body.loserConsentSignature,
         });
     },

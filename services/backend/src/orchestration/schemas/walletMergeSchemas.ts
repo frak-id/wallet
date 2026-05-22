@@ -40,7 +40,6 @@ export const MergePreviewQuerySchema = t.Object({
 
 export const MergeSettleBodySchema = t.Object({
     targetAuthenticatorId: t.String({ minLength: 1, maxLength: 512 }),
-    onChainTxHash: t.Optional(t.Hex()),
     /**
      * Base64-encoded webauthn assertion produced by the loser side over the
      * deterministic merge-consent challenge (see

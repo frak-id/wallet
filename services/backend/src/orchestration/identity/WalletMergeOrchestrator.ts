@@ -2,7 +2,7 @@ import { db, log } from "@backend-infrastructure";
 import { HttpError } from "@backend-utils";
 import { buildMergeConsentChallengeSlots } from "@frak-labs/app-essentials";
 import { currentChainId } from "@frak-labs/app-essentials/blockchain";
-import type { Address, Hex } from "viem";
+import type { Address } from "viem";
 import type { AuthenticatorRepository } from "../../domain/auth/repositories/AuthenticatorRepository";
 import type { WalletSessionService } from "../../domain/auth/services/WalletSessionService";
 import type { WebAuthNService } from "../../domain/auth/services/WebAuthNService";
@@ -155,12 +155,15 @@ export class WalletMergeOrchestrator {
 
     /**
      * Finalise a merge after the user has signed the `addPassKey` userOp.
+     * The frontend is responsible for waiting on the tx receipt (≥8
+     * confirmations) before invoking this endpoint, so the backend only
+     * needs to confirm the validator state reflects the merge (step 2).
      *
-     * Steps 0-2 are pure reads. Step 3 wraps the binding repoint and the
+     * Steps 0-1 are pure reads. Step 2 wraps the binding repoint and the
      * identity-graph merge in a single postgres transaction — both commit
-     * together or neither does. A retried `settle()` after a step 0-2
-     * failure runs from scratch (everything before step 3 is read-only);
-     * a retry after step 3 failed mid-transaction sees a fully rolled-back
+     * together or neither does. A retried `settle()` after a step 0-1
+     * failure runs from scratch (everything before step 2 is read-only);
+     * a retry after step 2 failed mid-transaction sees a fully rolled-back
      * state and re-runs cleanly. The dual-DB choreography that earlier
      * drafts spelled out is no longer necessary now that bindings live in
      * postgres alongside the identity graph.
@@ -169,7 +172,6 @@ export class WalletMergeOrchestrator {
         requesterWallet: Address;
         requesterAuthenticatorId: string;
         targetAuthenticatorId: string;
-        onChainTxHash?: Hex;
         loserConsentSignature: string;
     }): Promise<MergeSettleResponse> {
         const preview = await this.preview({
@@ -184,7 +186,7 @@ export class WalletMergeOrchestrator {
         //    {winner}:{loser authid}`); we accept the current hour and the
         //    two adjacent slots to absorb clock skew and flows that span an
         //    hour boundary. No DB storage — the dual-biometric AND-gate
-        //    (loser consent + winner userOp at step 1) makes a replayable
+        //    (loser consent + winner userOp verified at step 1) makes a replayable
         //    challenge format acceptable for the threat model.
         const consentChallenges = buildMergeConsentChallengeSlots({
             winner: preview.winner,
@@ -202,22 +204,11 @@ export class WalletMergeOrchestrator {
             );
         }
 
-        // 1. Confirm the addPassKey userOp landed on-chain.
-        if (params.onChainTxHash && params.onChainTxHash !== "0x") {
-            const receipt = await this.webAuthNValidatorReader.waitForReceipt({
-                txHash: params.onChainTxHash,
-            });
-            if (receipt.status !== "success") {
-                throw HttpError.unprocessable(
-                    "MERGE_USER_OP_REVERTED",
-                    `userOp ${params.onChainTxHash} reverted`
-                );
-            }
-        }
-
-        // 2. Verify the on-chain validator now lists the loser passkey under
-        //    the winner wallet. Guards against tx-hash forgery and against
-        //    races where the userOp landed for a different credential.
+        // 1. Verify the on-chain validator now lists the loser passkey under
+        //    the winner wallet. The frontend has already waited on the tx
+        //    receipt with 8 confirmations before invoking this endpoint, so
+        //    a missing or mismatched pubkey here means either the userOp
+        //    never landed for this credential or the client raced ahead.
         const onChainPubkey = await this.webAuthNValidatorReader.getPasskey({
             smartWallet: preview.winner,
             authenticatorId: preview.loserAuthenticatorId,
@@ -237,7 +228,7 @@ export class WalletMergeOrchestrator {
             );
         }
 
-        // 3. Repoint the loser's binding AND collapse the identity graphs in
+        // 2. Repoint the loser's binding AND collapse the identity graphs in
         //    a single postgres transaction. Email is stored as an identity
         //    node on the wallet's identity group, so it moves with the loser
         //    group during the merge. When both sides held a different email
@@ -268,14 +259,13 @@ export class WalletMergeOrchestrator {
                 winner: preview.winner,
                 loser: preview.loser,
                 credentialId: preview.loserAuthenticatorId,
-                onChainTxHash: params.onChainTxHash,
             },
             "Wallet merge settled"
         );
 
-        // 5. Mint a fresh wallet session for the requester when they
+        // 3. Mint a fresh wallet session for the requester when they
         //    authenticated with the loser credential. The credential's
-        //    binding now points at the winner wallet (step 3), but the
+        //    binding now points at the winner wallet (step 2), but the
         //    requester's existing JWT still references the stale loser
         //    address. Returning a freshly-minted session here lets the
         //    frontend `setSession` directly — no separate `/login`

@@ -19,7 +19,7 @@ type SignStepProps = {
      * on-chain step. The hash is then handed to the settling step so a
      * follow-up failure can retry settlement without re-prompting.
      */
-    onSigned: (txHash: Hex) => void;
+    onSigned: (txHash?: Hex) => void;
     onCancel: () => void;
 };
 
@@ -43,7 +43,7 @@ export function SignStep({
         sendTx.mutate(
             { loserAuthenticatorId, loserPublicKey },
             {
-                onSuccess: (txHash) => onSigned(txHash),
+                onSuccess: (txHash) => onSigned(txHash ?? undefined),
             }
         );
     }, [sendTx, loserAuthenticatorId, loserPublicKey, onSigned]);

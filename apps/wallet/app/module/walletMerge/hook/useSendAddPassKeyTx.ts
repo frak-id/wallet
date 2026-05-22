@@ -29,7 +29,7 @@ export function useSendAddPassKeyTx() {
     const { mutateAsync: sendTransactionAsync } = useSendTransaction();
     const { address } = useConnection();
 
-    return useMutation<Hex, Error, UseSendAddPassKeyTxArgs>({
+    return useMutation<Hex | null, Error, UseSendAddPassKeyTxArgs>({
         mutationKey: authKey.merge.sendAddPassKey,
         gcTime: 0,
         mutationFn: async ({ loserAuthenticatorId, loserPublicKey }) => {
@@ -50,7 +50,7 @@ export function useSendAddPassKeyTx() {
                     pubKey.x === BigInt(loserPublicKey.x) &&
                     pubKey.y === BigInt(loserPublicKey.y)
                 ) {
-                    return "0x";
+                    return null;
                 }
             }
 

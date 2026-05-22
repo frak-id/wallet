@@ -2,11 +2,13 @@ import type { MergeSettleResponse } from "@frak-labs/backend-elysia/api/schemas"
 import {
     authenticatedWalletApi,
     authKey,
+    currentViemClient,
     type Session,
     sessionStore,
 } from "@frak-labs/wallet-shared";
 import { useMutation } from "@tanstack/react-query";
 import type { Hex } from "viem";
+import { waitForTransactionReceipt } from "viem/actions";
 
 type UseMergeSettleArgs = {
     /**
@@ -16,14 +18,19 @@ type UseMergeSettleArgs = {
      * session, so the client cannot tamper with it.
      */
     loserAuthenticatorId: string;
-    /** Tx hash returned by {@link useSendAddPassKeyTx}. */
-    onChainTxHash: Hex;
+    /** Tx hash returned by {@link useSendAddPassKeyTx}. The hook waits for
+     *  this receipt with ≥8 confirmations before POSTing to settle, so the
+     *  backend only needs the validator readback to confirm the merge. */
+    onChainTxHash?: Hex;
     /** Base64 webauthn assertion produced by `useLoserConsent`. */
     loserConsentSignature: string;
 };
 
 /**
- * POSTs to `/user/wallet/merge/settle`.
+ * Waits for the `addPassKey` tx receipt (≥8 confirmations) then POSTs to
+ * `/user/wallet/merge/settle`. The on-chain wait is bundled here so callers
+ * get a single mutation covering the whole finalise pipeline — retries
+ * re-run wait + post against the same invariant inputs.
  *
  * On success the backend returns a fresh wallet session when the requester
  * authenticated with the loser credential (the credential's binding now
@@ -50,10 +57,22 @@ export function useMergeSettle() {
             onChainTxHash,
             loserConsentSignature,
         }) => {
+            if (onChainTxHash && onChainTxHash !== "0x") {
+                const receipt = await waitForTransactionReceipt(
+                    currentViemClient,
+                    {
+                        hash: onChainTxHash,
+                        confirmations: 8,
+                    }
+                );
+                if (receipt.status !== "success") {
+                    throw new Error("MERGE_USER_OP_REVERTED");
+                }
+            }
+
             const { data, error } =
                 await authenticatedWalletApi.merge.settle.post({
                     targetAuthenticatorId: loserAuthenticatorId,
-                    onChainTxHash,
                     loserConsentSignature,
                 });
             if (error) {

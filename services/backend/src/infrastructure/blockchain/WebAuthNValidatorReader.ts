@@ -3,13 +3,13 @@ import {
     addresses,
     multiWebAuthNValidatorV2Abi,
 } from "@frak-labs/app-essentials";
-import { type Address, type Hex, keccak256, toHex } from "viem";
-import { readContract, waitForTransactionReceipt } from "viem/actions";
+import { type Address, keccak256, toHex } from "viem";
+import { readContract } from "viem/actions";
 
 /**
  * Thin wrapper around the on-chain reads we need to verify a wallet merge:
- * fetching the passkey registered for a smart wallet, and confirming a
- * user-operation hash has actually landed.
+ * fetching the passkey registered for a smart wallet. The frontend handles
+ * receipt waiting, so the backend only needs the validator readback.
  *
  * Single-chain by design — the backend deployment is pinned to one chain
  * (`currentChainId`), so `viemClient` is the only relevant client. If we
@@ -47,24 +47,6 @@ export class WebAuthNValidatorReader {
             return null;
         }
         return { x: pubKey.x, y: pubKey.y };
-    }
-
-    /**
-     * Block until the merge transaction lands (or fails). Returns the
-     * receipt-level status so the orchestrator can short-circuit when the
-     * userOp reverted on-chain.
-     */
-    async waitForReceipt(params: {
-        txHash: Hex;
-    }): Promise<{ status: "success" | "reverted"; blockNumber: bigint }> {
-        const receipt = await waitForTransactionReceipt(viemClient, {
-            hash: params.txHash,
-            confirmations: 8,
-        });
-        return {
-            status: receipt.status === "success" ? "success" : "reverted",
-            blockNumber: receipt.blockNumber,
-        };
     }
 }
 
