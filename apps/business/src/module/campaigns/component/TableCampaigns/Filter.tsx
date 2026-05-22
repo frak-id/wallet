@@ -4,10 +4,12 @@ import {
     TabsList,
     TabsTrigger,
 } from "@frak-labs/design-system/components/Tabs";
+import { CalendarIcon } from "@frak-labs/design-system/icons";
 import type { ColumnFiltersState } from "@tanstack/react-table";
 import { format } from "date-fns";
-import { CalendarIcon, SlidersHorizontal } from "lucide-react";
+import { SlidersHorizontal } from "lucide-react";
 import { useMemo, useState } from "react";
+import type { DateRange } from "react-day-picker";
 import { useTranslation } from "react-i18next";
 import { Button } from "@/module/common/component/Button";
 import { Calendar } from "@/module/common/component/Calendar";
@@ -53,7 +55,9 @@ export function TableCampaignFilters({
 
     const currentDate = useMemo(
         () =>
-            columnFilters.find((filter) => filter.id === "date")?.value as Date,
+            columnFilters.find((filter) => filter.id === "date")?.value as
+                | DateRange
+                | undefined,
         [columnFilters]
     );
 
@@ -74,10 +78,10 @@ export function TableCampaignFilters({
     };
 
     // Helper to update date filter
-    const setDateFilter = (value?: Date) => {
+    const setDateFilter = (value?: DateRange) => {
         setColumnFilters((prev) => {
             const filtered = prev.filter((f) => f.id !== "date");
-            if (!value) return filtered;
+            if (!value?.from) return filtered;
             return [...filtered, { id: "date", value }];
         });
     };
@@ -108,31 +112,45 @@ export function TableCampaignFilters({
                 />
                 <Popover open={isPopoverOpen} onOpenChange={setIsPopoverOpen}>
                     <PopoverTrigger asChild>
-                        <Button
-                            variant={"secondary"}
-                            className={styles.filtersDatePickerTrigger}
-                        >
-                            <CalendarIcon size={20} />
+                        <Button variant="filter" size="filter">
+                            <CalendarIcon />
                             <span>
-                                {currentDate && format(currentDate, "PPP")}
+                                {currentDate?.from ? (
+                                    currentDate.to ? (
+                                        <>
+                                            {format(
+                                                currentDate.from,
+                                                "LLL dd, y"
+                                            )}{" "}
+                                            -{" "}
+                                            {format(
+                                                currentDate.to,
+                                                "LLL dd, y"
+                                            )}
+                                        </>
+                                    ) : (
+                                        format(currentDate.from, "LLL dd, y")
+                                    )
+                                ) : (
+                                    "Date range"
+                                )}
                             </span>
                         </Button>
                     </PopoverTrigger>
-                    <PopoverContent align="end">
+                    <PopoverContent align="start">
                         <Calendar
-                            mode="single"
+                            mode="range"
+                            defaultMonth={currentDate?.from}
                             selected={currentDate}
-                            onSelect={(value) => {
-                                if (!value) return;
-                                setDateFilter(value);
-                                setIsPopoverOpen(false);
-                            }}
+                            onSelect={setDateFilter}
+                            numberOfMonths={1}
                         />
                     </PopoverContent>
                 </Popover>
                 <Button
-                    variant={"secondary"}
-                    icon={<SlidersHorizontal size={20} />}
+                    variant="filter"
+                    size="filter"
+                    icon={<SlidersHorizontal size={16} />}
                     onClick={resetFilters}
                 >
                     Reset filters

@@ -78,6 +78,26 @@ export const button = recipe({
                 color: vars.text.error,
                 border: "none",
             },
+            /**
+             * Filter chip — neutral grey card used for dashboard
+             * filter triggers (date range, status, etc.). Square-ish
+             * 12px radius, Body-Secondary Medium label.
+             */
+            filter: {
+                backgroundColor: vars.surface.disabled,
+                color: vars.text.primary,
+                borderRadius: alias.cornerRadius.m,
+                border: "none",
+                "@media": {
+                    "(hover: hover)": {
+                        selectors: {
+                            "&:not(:disabled):hover": {
+                                backgroundColor: "#d4d4d4",
+                            },
+                        },
+                    },
+                },
+            },
         },
         size: {
             small: {
@@ -101,6 +121,14 @@ export const button = recipe({
                 padding: 0,
                 fontSize: fontSize.s,
                 fontWeight: 600,
+            },
+            filter: {
+                height: "36px",
+                paddingBlock: 0,
+                paddingInline: alias.spacing.m,
+                fontSize: fontSize.s,
+                lineHeight: "22px",
+                fontWeight: 500,
             },
         },
         width: {

@@ -1,5 +1,5 @@
 import { alias, brand } from "@frak-labs/design-system/tokens";
-import { style } from "@vanilla-extract/css";
+import { globalStyle, style } from "@vanilla-extract/css";
 
 export const root = style({ padding: alias.spacing.s });
 
@@ -91,3 +91,43 @@ export const dayToday = style({
 export const dayOutside = style({ opacity: 0.5 });
 
 export const dayDisabled = style({ opacity: 0.5 });
+
+/**
+ * Range-mode helpers. The middle days get a flat fill that bleeds to
+ * the cell edges so the selected range reads as a continuous band;
+ * the endpoints keep their rounded corners on the outer side. When
+ * `range_start` and `range_end` apply to the same cell (single-day
+ * range, or only `from` picked), both outer sides stay rounded and
+ * the cell reads as a normal selected pill.
+ */
+export const rangeMiddle = style({
+    backgroundColor: brand.colors.primary[100],
+    borderRadius: 0,
+});
+
+export const rangeStart = style({
+    backgroundColor: brand.colors.primary[100],
+    borderTopLeftRadius: alias.cornerRadius.s,
+    borderBottomLeftRadius: alias.cornerRadius.s,
+    borderTopRightRadius: 0,
+    borderBottomRightRadius: 0,
+});
+
+export const rangeEnd = style({
+    backgroundColor: brand.colors.primary[100],
+    borderTopRightRadius: alias.cornerRadius.s,
+    borderBottomRightRadius: alias.cornerRadius.s,
+    borderTopLeftRadius: 0,
+    borderBottomLeftRadius: 0,
+});
+
+/**
+ * Single-day range: react-day-picker stamps `{from: date, to: date}`
+ * on the first click (see `addToRange.js`), so the cell carries both
+ * `range_start` and `range_end`. Without this rule the later class
+ * (rangeEnd) would zero the outer-left corners. Force fully rounded
+ * when both apply.
+ */
+globalStyle(`${rangeStart}${rangeEnd}`, {
+    borderRadius: alias.cornerRadius.s,
+});

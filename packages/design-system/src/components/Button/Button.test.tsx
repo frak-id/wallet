@@ -52,4 +52,15 @@ describe("Button", () => {
         fireEvent.click(screen.getByRole("button"));
         expect(handleClick).toHaveBeenCalledOnce();
     });
+
+    it("should render filter variant with filter size", () => {
+        render(
+            <Button variant="filter" size="filter">
+                Date range
+            </Button>
+        );
+        const btn = screen.getByRole("button", { name: "Date range" });
+        expect(btn).toBeInTheDocument();
+        expect(btn.className).toBeTruthy();
+    });
 });

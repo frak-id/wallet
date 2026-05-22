@@ -14,9 +14,3 @@ export const filters = style({
 export const filtersSearch = style({
     width: "300px",
 });
-
-export const filtersDatePickerTrigger = style({
-    display: "flex",
-    alignItems: "center",
-    gap: alias.spacing.xs,
-});

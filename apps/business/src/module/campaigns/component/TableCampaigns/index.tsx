@@ -9,6 +9,7 @@ import {
 } from "@tanstack/react-table";
 import { Eye, Pencil } from "lucide-react";
 import { useMemo, useState } from "react";
+import type { DateRange } from "react-day-picker";
 import {
     ModalArchive,
     ModalDelete,
@@ -97,11 +98,16 @@ export function TableCampaigns() {
                     header: () => "Date",
                     accessorFn: (row) =>
                         formatDate(new Date(row.publishedAt || row.createdAt)),
-                    filterFn: (row, _, value) => {
+                    filterFn: (row, _, value: DateRange) => {
+                        if (!value?.from) return true;
                         const date = new Date(
                             row.original.publishedAt || row.original.createdAt
                         );
-                        return date.getDate() > new Date(value).getDate();
+                        const from = new Date(value.from);
+                        from.setHours(0, 0, 0, 0);
+                        const to = value.to ? new Date(value.to) : from;
+                        to.setHours(23, 59, 59, 999);
+                        return date >= from && date <= to;
                     },
                 },
                 columnHelper.accessor("budgetConfig", {
