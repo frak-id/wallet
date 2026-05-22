@@ -40,7 +40,6 @@ export function TablePerformanceFilters({
         <div className={styles.filters}>
             <div className={styles.filtersItem}>
                 <InputSearch
-                    placeholder={"Search campaign..."}
                     className={styles.filtersSearch}
                     value={currentTitle}
                     onChange={(e) => setTitleFilter(e.target.value)}

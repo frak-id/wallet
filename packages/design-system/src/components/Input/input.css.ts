@@ -1,6 +1,6 @@
 import { recipe } from "@vanilla-extract/recipes";
 import { vars } from "../../theme.css";
-import { alias, transition } from "../../tokens.css";
+import { alias, fontSize, transition } from "../../tokens.css";
 
 export const inputWrapper = recipe({
     base: {
@@ -37,6 +37,19 @@ export const inputWrapper = recipe({
                 height: "56px",
                 paddingInline: alias.spacing.m,
                 gap: alias.spacing.xs,
+            },
+            /**
+             * Borderless soft search field — white surface, no focus
+             * ring, compact padding. Designed for dashboard table
+             * filters (campaigns, members) where the input sits
+             * directly on a coloured page background.
+             */
+            soft: {
+                borderRadius: "10px",
+                backgroundColor: vars.surface.background,
+                padding: "6px 8px",
+                gap: alias.spacing.xs,
+                color: vars.icon.tertiary,
             },
         },
         length: {
@@ -129,6 +142,21 @@ export const inputField = recipe({
                     color: vars.text.tertiary,
                 },
             },
+            soft: {
+                flex: "1 1 auto",
+                minWidth: 0,
+                border: "none",
+                outline: "none",
+                padding: 0,
+                margin: 0,
+                fontSize: fontSize.s,
+                lineHeight: "22px",
+                fontWeight: 400,
+                "::placeholder": {
+                    color: vars.text.tertiary,
+                    opacity: 1,
+                },
+            },
         },
     },
     defaultVariants: {
@@ -144,9 +172,10 @@ export const inputSection = recipe({
     },
     variants: {
         variant: {
-            // Default keeps the inset paddings; bare's wrapper already pads.
+            // Default keeps the inset paddings; bare and soft wrappers already pad.
             default: {},
             bare: {},
+            soft: {},
         },
         side: {
             left: {},

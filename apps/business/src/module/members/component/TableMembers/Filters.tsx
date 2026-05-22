@@ -21,10 +21,7 @@ export function TableMembersFilters() {
     return (
         <div className={styles.filters}>
             {/*<div className={styles.filtersItem}>
-                <InputSearch
-                    placeholder={"Search members..."}
-                    classNameWrapper={styles.filters__search}
-                />
+                <InputSearch classNameWrapper={styles.filters__search} />
             </div>*/}
             <div className={styles.filtersItem}>
                 <Popover open={isPopoverOpen} onOpenChange={setIsPopoverOpen}>

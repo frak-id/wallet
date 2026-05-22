@@ -102,7 +102,6 @@ export function TableCampaignFilters({
         <div className={styles.filters}>
             <Inline space="xs" alignY="center">
                 <InputSearch
-                    placeholder={"Search campaign..."}
                     className={styles.filtersSearch}
                     value={currentTitle}
                     onChange={(e) => setTitleFilter(e.target.value)}

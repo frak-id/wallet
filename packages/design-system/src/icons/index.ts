@@ -50,6 +50,7 @@ export { ProgressCheckIcon } from "./ProgressCheckIcon";
 export { ProgressCheckIconAnimated } from "./ProgressCheckIconAnimated";
 export { ReferralIcon } from "./ReferralIcon";
 export { SafetyIcon } from "./SafetyIcon";
+export { SearchIcon } from "./SearchIcon";
 export { SettingsIcon } from "./SettingsIcon";
 export { ShareIcon } from "./ShareIcon";
 export { ShieldIcon } from "./ShieldIcon";

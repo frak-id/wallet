@@ -9,8 +9,9 @@ type InputProps = Omit<
     /**
      * - `"default"` — standard bordered field
      * - `"bare"` — borderless 56px flat card (pair with `tone`)
+     * - `"soft"` — borderless white search field with compact padding
      */
-    variant?: "default" | "bare";
+    variant?: "default" | "bare" | "soft";
     length?: "small" | "medium" | "big";
     /**
      * Surface tone for `variant="bare"`. Use `elevated` (default, white)
