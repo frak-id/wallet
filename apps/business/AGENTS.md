@@ -1,6 +1,6 @@
 # apps/business — Compass
 
-TanStack Router SPA merchant dashboard. Largest app (345 TS/TSX). Campaigns/products/analytics. Served behind nginx in production.
+TanStack Router SPA merchant dashboard. Largest app (415 TS/TSX). Campaigns/members/analytics. Served behind nginx in production.
 
 ## Quick Commands
 ```bash
@@ -12,8 +12,8 @@ bun run test         # business-unit Vitest project
 
 ## Key Files
 - `src/routes/__root.tsx` — root shell · `src/routes/_restricted/` — auth guards for dashboard
-- `src/module/{campaigns,product,merchant,members,dashboard,forms,login,settings,embedded,common}/` — features
-  - `campaigns/` = 29 hooks · `product/` = 29 hooks · `merchant/` = 17 hooks
+- `src/module/{campaigns,merchant,members,dashboard,forms,login,settings,embedded,common}/` — features
+  - `campaigns/` = 8 hooks · `merchant/` = 23 hooks
 - `src/stores/` — Zustand stores (separate from modules)
 - `nginx.conf` — production SPA fallback; local `preview` differs from prod
 - `vite.config.ts` — `define` block bakes config at build time
