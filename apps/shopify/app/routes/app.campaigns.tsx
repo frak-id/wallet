@@ -181,6 +181,14 @@ export default function CampaignsPage() {
     const { campaigns, bankStatus } = useLoaderData<typeof loader>();
     const rootData = useRouteLoaderData<typeof appLoader>("routes/app");
     const businessUrl = rootData?.businessUrl ?? "";
+    const merchantId = rootData?.merchantId;
+    // Path prefix that targets the merchant-scoped business app routes when
+    // we know the merchant id, otherwise falls back to the legacy URL which
+    // the business app redirects to the user's first merchant. The fallback
+    // protects deep links generated before onboarding step 1 completes.
+    const merchantPrefix = merchantId
+        ? `${businessUrl}/m/${merchantId}/campaigns`
+        : `${businessUrl}/campaigns`;
     const { t } = useTranslation();
 
     return (
@@ -200,12 +208,12 @@ export default function CampaignsPage() {
                         gap: "var(--s-space-200)",
                     }}
                 >
-                    <ExternalButton href={`${businessUrl}/campaigns/list`}>
+                    <ExternalButton href={`${merchantPrefix}/list`}>
                         {t("campaigns.viewAll")}
                     </ExternalButton>
                     <ExternalButton
                         variant="primary"
-                        href={`${businessUrl}/campaigns/draft/new`}
+                        href={`${merchantPrefix}/draft/new`}
                     >
                         {t("campaigns.createNew")}
                     </ExternalButton>

@@ -276,12 +276,18 @@ function CampaignTableRow({
                     ))}
                     <s-button
                         variant="tertiary"
-                        onClick={() =>
-                            window.open(
-                                `${rootData?.businessUrl ?? ""}/campaigns/${campaign.id}`,
-                                "_blank"
-                            )
-                        }
+                        onClick={() => {
+                            // Prefer the merchant-scoped URL when we know
+                            // the merchant id; fall back to the legacy URL
+                            // (the business app redirects to the user's
+                            // first merchant).
+                            const base = rootData?.businessUrl ?? "";
+                            const merchantId = rootData?.merchantId;
+                            const url = merchantId
+                                ? `${base}/m/${merchantId}/campaigns/${campaign.id}`
+                                : `${base}/campaigns/${campaign.id}`;
+                            window.open(url, "_blank");
+                        }}
                     >
                         {t("status.campaign.viewDetails")}
                     </s-button>
