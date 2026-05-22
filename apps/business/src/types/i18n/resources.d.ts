@@ -19,6 +19,12 @@ export default interface Resources {
                 heroTitleLine2: "Frak Ad Manager";
             };
         };
+        dashboard: {
+            empty: {
+                description: "You don't have any merchant yet. Add one to start running campaigns.";
+                title: "Welcome to Frak";
+            };
+        };
         errors: {
             generic: {
                 title: "Something went wrong";
@@ -82,9 +88,12 @@ export default interface Resources {
         shell: {
             breadcrumb: {
                 campaignsList: "Campaign List";
+                confirm: "Confirm";
+                create: "Create";
                 home: "Home";
                 membersList: "Members List";
                 merchant: "Merchant";
+                push: "Push";
             };
             header: {
                 addMerchant: "Add merchant";
@@ -92,6 +101,12 @@ export default interface Resources {
                 demoBadge: "demo";
                 demoBadgeTitle: "Demo mode is active. Click to manage settings.";
                 export: "Export";
+                merchantSwitcher: {
+                    adminOf: "Admin of";
+                    empty: "No merchant available";
+                    label: "Switch merchant";
+                    owned: "Owned";
+                };
                 myAccount: "My account";
             };
             nav: {

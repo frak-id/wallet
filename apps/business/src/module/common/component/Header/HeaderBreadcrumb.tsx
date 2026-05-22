@@ -1,5 +1,5 @@
 import { Text } from "@frak-labs/design-system/components/Text";
-import { Link, useLocation } from "@tanstack/react-router";
+import { Link, useLocation, useParams } from "@tanstack/react-router";
 import type { TFunction } from "i18next";
 import { Fragment } from "react";
 import { useTranslation } from "react-i18next";
@@ -9,6 +9,7 @@ import {
     breadcrumbLink,
     breadcrumbSeparator,
 } from "./header.css";
+import { MerchantSwitcher } from "./MerchantSwitcher";
 
 /**
  * Maps a route segment to its translated label. Falls back to a
@@ -30,6 +31,12 @@ function labelFor(segment: string, t: TFunction): string {
             return t("shell.nav.campaignsOverview");
         case "members":
             return t("shell.nav.members");
+        case "push":
+            return t("shell.breadcrumb.push");
+        case "create":
+            return t("shell.breadcrumb.create");
+        case "confirm":
+            return t("shell.breadcrumb.confirm");
         case "settings":
             return t("settings.title");
         case "merchant":
@@ -42,21 +49,39 @@ function labelFor(segment: string, t: TFunction): string {
 export function HeaderBreadcrumb() {
     const { t } = useTranslation();
     const { pathname } = useLocation();
-    const segments = pathname.split("/").filter(Boolean);
+    const params = useParams({ strict: false }) as {
+        merchantId?: string;
+    };
 
-    if (segments.length === 0) return null;
+    const rawSegments = pathname.split("/").filter(Boolean);
+
+    // Strip the `/m/$merchantId` prefix — the switcher renders in its place.
+    const segments = (() => {
+        if (params.merchantId && rawSegments[0] === "m") {
+            return rawSegments.slice(2);
+        }
+        return rawSegments;
+    })();
+
+    const hasSwitcher = Boolean(params.merchantId);
+
+    if (segments.length === 0 && !hasSwitcher) return null;
 
     return (
         <nav
             aria-label={t("shell.header.breadcrumbLabel")}
             className={breadcrumb}
         >
+            {hasSwitcher && <MerchantSwitcher />}
             {segments.map((segment, index) => {
                 const isLast = index === segments.length - 1;
-                const href = `/${segments.slice(0, index + 1).join("/")}`;
+                const tail = segments.slice(0, index + 1).join("/");
+                const href = params.merchantId
+                    ? `/m/${params.merchantId}/${tail}`
+                    : `/${tail}`;
                 return (
                     <Fragment key={href}>
-                        {index > 0 && (
+                        {(hasSwitcher || index > 0) && (
                             <span
                                 aria-hidden="true"
                                 className={breadcrumbSeparator}

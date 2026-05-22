@@ -61,13 +61,28 @@
             "addMerchant": "Add merchant",
             "myAccount": "My account",
             "demoBadge": "demo",
-            "demoBadgeTitle": "Demo mode is active. Click to manage settings."
+            "demoBadgeTitle": "Demo mode is active. Click to manage settings.",
+            "merchantSwitcher": {
+                "label": "Switch merchant",
+                "owned": "Owned",
+                "adminOf": "Admin of",
+                "empty": "No merchant available"
+            }
         },
         "breadcrumb": {
             "merchant": "Merchant",
             "home": "Home",
             "membersList": "Members List",
-            "campaignsList": "Campaign List"
+            "campaignsList": "Campaign List",
+            "push": "Push",
+            "create": "Create",
+            "confirm": "Confirm"
+        }
+    },
+    "dashboard": {
+        "empty": {
+            "title": "Welcome to Frak",
+            "description": "You don't have any merchant yet. Add one to start running campaigns."
         }
     },
     "settings": {

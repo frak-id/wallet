@@ -17,14 +17,26 @@ import {
 } from "./header.css";
 import { ProfileLink } from "./ProfileLink";
 
+const CAMPAIGNS_PATH = /^\/m\/[^/]+\/campaigns(\/|$)/;
+const DASHBOARD_PATH = /^\/m\/[^/]+\/dashboard$/;
+const MERCHANT_PATH = /^\/m\/[^/]+\/merchant(\/|$)/;
+
+// TODO: drop the legacy `/campaigns`, `/dashboard`, `/merchant/` branches
+// once all entry points are merchant-scoped and the legacy redirect
+// routes (`_restricted/{campaigns,dashboard,merchant}.tsx`) are removed.
 export function Header() {
     const { t } = useTranslation();
     const isDemoMode = useIsDemoMode();
     const { pathname } = useLocation();
-    const showCreateCampaign = pathname.startsWith("/campaigns");
+    const showCreateCampaign =
+        CAMPAIGNS_PATH.test(pathname) || pathname.startsWith("/campaigns");
     const showAddMerchant =
-        pathname === "/dashboard" || pathname.startsWith("/merchant/");
-    const showExport = pathname.startsWith("/campaigns");
+        DASHBOARD_PATH.test(pathname) ||
+        pathname === "/dashboard" ||
+        MERCHANT_PATH.test(pathname) ||
+        pathname.startsWith("/merchant/");
+    const showExport =
+        CAMPAIGNS_PATH.test(pathname) || pathname.startsWith("/campaigns");
 
     return (
         <header className={header}>

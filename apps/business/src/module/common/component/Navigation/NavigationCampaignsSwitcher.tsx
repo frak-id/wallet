@@ -8,29 +8,51 @@ import * as Collapsible from "@radix-ui/react-collapsible";
 import { useLocation } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { useOptionalActiveMerchantId } from "@/module/common/hook/useActiveMerchantId";
 import { NavigationItem, SubNavigationItem } from "./index";
 import { collapsibleContent } from "./navigation.css";
 
 export function NavigationCampaignsSwitcher() {
     const { t } = useTranslation();
     const isMobile = useMediaQuery("(max-width : 768px)");
+    const merchantId = useOptionalActiveMerchantId();
+
+    // TODO: remove the legacy fallback once all entry points land users
+    // inside a `/m/$merchantId/...` route.
+    const listUrl = merchantId
+        ? `/m/${merchantId}/campaigns/list`
+        : "/campaigns/list";
+    const performanceUrl = merchantId
+        ? `/m/${merchantId}/campaigns/performance`
+        : "/campaigns/performance";
 
     return isMobile ? (
         <NavigationItem
-            url="/campaigns/list"
+            url={listUrl}
             icon={<ChecklistIcon width={20} height={20} />}
         >
             {t("shell.nav.campaigns")}
         </NavigationItem>
     ) : (
-        <NavigationCampaigns />
+        <NavigationCampaigns
+            listUrl={listUrl}
+            performanceUrl={performanceUrl}
+        />
     );
 }
 
-function NavigationCampaigns() {
+function NavigationCampaigns({
+    listUrl,
+    performanceUrl,
+}: {
+    listUrl: string;
+    performanceUrl: string;
+}) {
     const { t } = useTranslation();
     const location = useLocation();
-    const isCampaignsRoute = location.pathname.startsWith("/campaigns");
+    const isCampaignsRoute =
+        location.pathname.startsWith("/campaigns") ||
+        /^\/m\/[^/]+\/campaigns/.test(location.pathname);
     const [isOpen, setIsOpen] = useState(isCampaignsRoute);
 
     // Keep menu open when navigating to any campaigns route
@@ -59,10 +81,10 @@ function NavigationCampaigns() {
             </Collapsible.Trigger>
             <Collapsible.Content className={collapsibleContent}>
                 <ul>
-                    <SubNavigationItem url="/campaigns/performance">
+                    <SubNavigationItem url={performanceUrl}>
                         {t("shell.nav.campaignsOverview")}
                     </SubNavigationItem>
-                    <SubNavigationItem url="/campaigns/list">
+                    <SubNavigationItem url={listUrl}>
                         {t("shell.nav.campaignsList")}
                     </SubNavigationItem>
                 </ul>

@@ -10,6 +10,7 @@ import {
 import { Link, useMatchRoute } from "@tanstack/react-router";
 import type { HTMLAttributes, PropsWithChildren, ReactNode } from "react";
 import { useTranslation } from "react-i18next";
+import { useOptionalActiveMerchantId } from "@/module/common/hook/useActiveMerchantId";
 import { NavigationCampaignsSwitcher } from "./NavigationCampaignsSwitcher";
 import {
     divider,
@@ -31,6 +32,11 @@ import {
 
 export function Navigation() {
     const { t } = useTranslation();
+    const merchantId = useOptionalActiveMerchantId();
+    const dashboardUrl = merchantId
+        ? `/m/${merchantId}/dashboard`
+        : "/dashboard";
+    const membersUrl = merchantId ? `/m/${merchantId}/members` : "/members";
     return (
         <Stack as="nav" space="none" className={navigation}>
             <div className={logoWrapper}>
@@ -45,7 +51,7 @@ export function Navigation() {
             <Stack space="xs">
                 <ul className={itemList}>
                     <NavigationItem
-                        url="/dashboard"
+                        url={dashboardUrl}
                         icon={<TabGridIcon width={20} height={20} />}
                     >
                         {t("shell.nav.dashboard")}
@@ -62,7 +68,7 @@ export function Navigation() {
                     </li>
                     <NavigationCampaignsSwitcher />
                     <NavigationItem
-                        url="/members"
+                        url={membersUrl}
                         icon={<PeopleFilledIcon width={20} height={20} />}
                     >
                         {t("shell.nav.members")}

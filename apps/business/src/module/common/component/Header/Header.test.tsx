@@ -12,7 +12,8 @@ vi.mock("@tanstack/react-router", () => ({
             {children}
         </a>
     ),
-    useLocation: () => ({ pathname: "/campaigns/list" }),
+    useLocation: () => ({ pathname: "/m/merchant-1/campaigns/list" }),
+    useParams: () => ({ merchantId: "merchant-1" }),
 }));
 
 vi.mock("@/module/common/atoms/demoMode", () => ({
@@ -31,6 +32,15 @@ vi.mock("@/module/dashboard/component/AddMerchantSheet", () => ({
     AddMerchantSheet: ({ trigger }: { trigger: React.ReactNode }) => (
         <>{trigger}</>
     ),
+}));
+
+vi.mock("@/module/dashboard/hooks/useMyMerchants", () => ({
+    useMyMerchants: () => ({
+        merchants: [{ id: "merchant-1", name: "Acme", domain: "acme.example" }],
+        owned: [{ id: "merchant-1", name: "Acme", domain: "acme.example" }],
+        adminOf: [],
+        isEmpty: false,
+    }),
 }));
 
 describe("Header", () => {

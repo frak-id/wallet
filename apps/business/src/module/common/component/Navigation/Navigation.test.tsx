@@ -12,6 +12,7 @@ const mockMatchRoute = vi.fn();
 vi.mock("@tanstack/react-router", () => ({
     useNavigate: () => mockNavigate,
     useMatchRoute: () => mockMatchRoute,
+    useParams: () => ({}),
     Link: ({ to, children, className, ...props }: any) => (
         <a href={to} className={className} {...props}>
             {children}

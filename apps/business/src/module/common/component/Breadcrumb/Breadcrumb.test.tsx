@@ -12,6 +12,7 @@ vi.mock("@tanstack/react-router", () => ({
             {children}
         </a>
     ),
+    useParams: () => ({}),
 }));
 
 describe("Breadcrumb", () => {

@@ -19,6 +19,7 @@ vi.mock("@tanstack/react-router", () => ({
     useLocation: () => mockUseLocation(),
     useNavigate: () => mockNavigate,
     useMatchRoute: () => mockMatchRoute,
+    useParams: () => ({}),
 }));
 
 vi.mock("./index", () => ({
