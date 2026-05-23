@@ -100,8 +100,12 @@ export function MergeFlow({
         return needsSwitch ? targetAuthenticatorId : currentAuthenticatorId;
     }, [needsSwitch, targetAuthenticatorId, currentAuthenticatorId]);
 
-    // Both strategy hooks must run unconditionally to honour the rules of
-    // hooks; the one we use is picked off `mode`.
+    // Both strategies must run unconditionally to honour the rules of hooks;
+    // the one we use is picked off `mode`. Each strategy calls its own
+    // React Query hooks INTERNALLY and exposes the resulting mutation
+    // objects as plain fields — we read them as data, never re-invoke them,
+    // so the count of hook calls inside this component stays stable across
+    // a `mode` switch.
     const localStrategy = useLocalMergeStrategy();
     const remoteStrategy = useRemoteMergeStrategy({
         needsSwitch,
@@ -110,37 +114,39 @@ export function MergeFlow({
     });
     const strategy = mode === "remote" ? remoteStrategy : localStrategy;
 
-    const consent = strategy.useLoserConsent();
-    const switchToWinner = strategy.useSwitchToWinner();
+    const consent = strategy.loserConsent;
+    const switchToWinner = strategy.switchToWinner;
 
-    // Two-layer parked-session cleanup so the user never gets stranded on
-    // the winner session after an unhappy path:
+    // Tear down on every non-success unmount: cancel any in-flight pairing
+    // handshake and restore the parked session. Cancelling the pairing
+    // matters most for the cross-device flow — a late `authenticated`
+    // event arriving after the user aborted would otherwise apply a
+    // distant session to the live slot. `popSession` handles user-driven
+    // aborts, AddEmail flipping back to the conflict screen, and
+    // route-level unmounts. Both ops are no-ops when there's nothing to
+    // clean up.
     //
-    //  1. On mount: pop any orphan snapshot left over by a prior tab session
-    //     that crashed mid-flow. AddEmail's flow state itself is React-only
-    //     and resets on refresh, so a parked snapshot at this point is by
-    //     definition stale — its real owner is gone. Within the same React
-    //     session the unmount cleanup below already popped, so this branch
-    //     is a no-op for the common case.
-    //  2. On unmount: pop unless we landed on the terminal success step,
-    //     which has already popped via `useMergeSettle`. Covers user-driven
-    //     aborts (cancel button, back navigation), AddEmail flipping back
-    //     to the conflict screen, and route-level unmounts.
+    // No mount-side pop: orphan snapshots from a crashed tab would have to
+    // be cleaned by their real owner anyway, and a blind pop on mount can
+    // clobber an unrelated flow's snapshot (e.g. pairing.tsx parked one
+    // before the user navigated here).
     //
-    // `popSession` is a no-op when nothing is parked, so both layers are
-    // safe to call unconditionally.
+    // `strategy.cancel` is a stable reference (useCallback for remote,
+    // undefined for local) so this effect's dep list never invalidates
+    // during a flow's lifetime.
     useEffect(() => {
-        sessionStore.getState().popSession();
         return () => {
             if (stepKindRef.current === "success") return;
+            strategy.cancel?.();
             sessionStore.getState().popSession();
         };
-    }, []);
+    }, [strategy.cancel]);
 
     const handleAbort = useCallback(() => {
+        strategy.cancel?.();
         sessionStore.getState().popSession();
         onAbort();
-    }, [onAbort]);
+    }, [onAbort, strategy.cancel]);
 
     const handleConsentConfirmed = useCallback(
         (consentSignature: string) => {

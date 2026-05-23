@@ -392,9 +392,16 @@ describe("OriginPairingClient", () => {
         expect(subscribeMock).not.toHaveBeenCalled();
     });
 
-    test("authenticated message clears the persisted pairing state", () => {
+    test("authenticated message keeps the pairing id around for downstream consumers", () => {
+        // The cross-device wallet merge calls `/merge/settle` with the
+        // pairing id AFTER `authenticated` has landed; clearing the
+        // `pairing` slot here would force the backend to skip the
+        // `merge-completed` topic emission and leave the loser device
+        // stuck on its stale distant-webauthn session. Keep `pairing`
+        // around past auth — `reconnect()` already prefers the
+        // distant-webauthn / pendingDistantToken paths so the stale
+        // resume token never gets picked up.
         const ws = bringClientToPaired();
-        // Seed a pairing in state to simulate having gone through pairing-initiated.
         client.store.setState((prev) => ({
             ...prev,
             pairing: {
@@ -403,7 +410,6 @@ describe("OriginPairingClient", () => {
                 originResumeToken: "resume-token-xyz",
             },
         }));
-        expect(client.state.pairing).toBeDefined();
 
         ws.fire("message", {
             data: {
@@ -423,7 +429,8 @@ describe("OriginPairingClient", () => {
             },
         });
 
-        expect(client.state.pairing).toBeUndefined();
+        expect(client.state.status).toBe("paired");
+        expect(client.state.pairing?.id).toBe("pairing-1");
     });
 
     test("RESUME_TOKEN_EXPIRED close auto-reinitiates with the last options", async () => {

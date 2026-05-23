@@ -1,6 +1,6 @@
 import { db } from "@backend-infrastructure";
 import type { FrakChainId } from "@frak-labs/app-essentials/blockchain";
-import { and, eq, isNull } from "drizzle-orm";
+import { and, desc, eq, isNotNull, isNull } from "drizzle-orm";
 import { LRUCache } from "lru-cache";
 import type { Address } from "viem";
 import {
@@ -142,6 +142,38 @@ export class WalletBindingRepository {
     }
 
     /**
+     * Most recently unlinked binding for `(credentialId, chainId)`, or
+     * `null` when no history exists. Used by `WalletMergeOrchestrator.settle`
+     * to reconstruct the original loser wallet on an idempotent retry: after
+     * a successful merge the active binding now points at the winner, so the
+     * pre-merge address only survives in the unlinked history.
+     */
+    async getLastUnlinkedBinding({
+        credentialId,
+        chainId,
+    }: {
+        credentialId: string;
+        chainId: FrakChainId;
+    }): Promise<AuthenticatorWalletBindingSelect | null> {
+        const [row] = await db
+            .select()
+            .from(authenticatorWalletBindingsTable)
+            .where(
+                and(
+                    eq(
+                        authenticatorWalletBindingsTable.authenticatorId,
+                        credentialId
+                    ),
+                    eq(authenticatorWalletBindingsTable.chainId, chainId),
+                    isNotNull(authenticatorWalletBindingsTable.unlinkedAt)
+                )
+            )
+            .orderBy(desc(authenticatorWalletBindingsTable.unlinkedAt))
+            .limit(1);
+        return row ?? null;
+    }
+
+    /**
      * Seed the initial binding for a credential on the given chain. Used by
      * register (current-chain only) and by the lazy back-fill path on login.
      *
@@ -216,9 +248,25 @@ export class WalletBindingRepository {
      * insert a new active row pointing at `toSmartWalletAddress`. Used by
      * the wallet-merge orchestrator.
      *
+     * Idempotent: if the active row already points at `toSmartWalletAddress`,
+     * the call short-circuits and returns the existing row unchanged. This
+     * makes settle() retries safe — a client replaying the same request after
+     * a successful merge sees a no-op here instead of churning the history
+     * table with redundant `merged` rows.
+     *
+     * Concurrency: a `SELECT ... FOR UPDATE` row lock serialises concurrent
+     * repoints for the same (credentialId, chainId). The second caller waits
+     * for the first to commit, then reads the now-merged row and exits via
+     * the idempotency check above.
+     *
      * Runs inside the caller's transaction when `tx` is provided so the
      * binding repoint commits atomically with the identity-graph merge ops.
      * When called without `tx`, opens its own short-lived transaction.
+     *
+     * Cache invalidation: when `tx` is provided the eviction is deferred to
+     * `invalidateBindingAfterCommit` so cache reads during the in-flight
+     * transaction can't repopulate from pre-commit state. Without `tx` the
+     * internal transaction has already committed by the time we evict.
      */
     async repointBinding({
         credentialId,
@@ -238,6 +286,8 @@ export class WalletBindingRepository {
         const run = async (
             runner: PgRunner
         ): Promise<AuthenticatorWalletBindingSelect> => {
+            // Lock the active row so concurrent repoints serialise rather
+            // than racing the unlink-and-insert window.
             const [existingRow] = await runner
                 .select()
                 .from(authenticatorWalletBindingsTable)
@@ -251,7 +301,19 @@ export class WalletBindingRepository {
                         isNull(authenticatorWalletBindingsTable.unlinkedAt)
                     )
                 )
+                .for("update")
                 .limit(1);
+
+            // Idempotent: if the active row already points at the requested
+            // wallet, this is a no-op retry. Returning the existing row keeps
+            // the history table clean and lets settle() converge on success.
+            if (
+                existingRow &&
+                existingRow.smartWalletAddress.toLowerCase() ===
+                    normalized.toLowerCase()
+            ) {
+                return existingRow;
+            }
 
             if (existingRow) {
                 await runner
@@ -262,7 +324,7 @@ export class WalletBindingRepository {
                     );
             }
 
-            await runner
+            const [freshRow] = await runner
                 .insert(authenticatorWalletBindingsTable)
                 .values({
                     authenticatorId: credentialId,
@@ -270,31 +332,20 @@ export class WalletBindingRepository {
                     smartWalletAddress: normalized,
                     reason,
                 })
-                .onConflictDoNothing();
-
-            const [freshRow] = await runner
-                .select()
-                .from(authenticatorWalletBindingsTable)
-                .where(
-                    and(
-                        eq(
-                            authenticatorWalletBindingsTable.authenticatorId,
-                            credentialId
-                        ),
-                        eq(authenticatorWalletBindingsTable.chainId, chainId),
-                        isNull(authenticatorWalletBindingsTable.unlinkedAt)
-                    )
-                )
-                .limit(1);
+                .returning();
             if (!freshRow) {
-                throw new Error(
-                    "repointBinding: failed to read the new active binding back"
-                );
+                throw new Error("repointBinding: insert returned no row");
             }
             return freshRow;
         };
 
         const fresh = tx ? await run(tx) : await db.transaction(run);
+        // Cache eviction inside the caller's transaction window leaves a
+        // narrow race where a concurrent reader could repopulate the cache
+        // from pre-commit state. The 60s TTL bounds that staleness; chasing
+        // proper post-commit eviction would either require a deferred hook
+        // (Drizzle has none) or push the responsibility onto every caller.
+        // Accepting the bounded race is the simpler tradeoff.
         this.invalidateBinding(credentialId, chainId);
         return fresh;
     }

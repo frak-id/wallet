@@ -85,6 +85,8 @@ export const pairingSignatureRequestTable = pgTable(
         expiresAt: timestamp("expires_at").notNull(),
         processedAt: timestamp("processed_at"),
 
+        kind: varchar("kind").$type<"onchain" | "raw-assertion">(),
+
         signature: customHex("signature"),
     },
     (table) => [

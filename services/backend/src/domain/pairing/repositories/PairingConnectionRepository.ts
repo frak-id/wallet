@@ -1,8 +1,10 @@
 import { randomInt, randomUUID } from "node:crypto";
 import { db, JwtContext, log } from "@backend-infrastructure";
+import { currentChainId } from "@frak-labs/app-essentials/blockchain";
 import { and, eq, gt, inArray, isNull } from "drizzle-orm";
 import type { ElysiaWS } from "elysia/ws";
 import { UAParser } from "ua-parser-js";
+import { isAddressEqual } from "viem";
 import { OrchestrationContext } from "../../../orchestration/context";
 import type { IdentityNode } from "../../../orchestration/identity/types";
 import type {
@@ -11,6 +13,7 @@ import type {
 } from "../../auth/models/WalletSessionDto";
 import type { AuthenticatorRepository } from "../../auth/repositories/AuthenticatorRepository";
 import type { WalletSdkSessionService } from "../../auth/services/WalletSdkSessionService";
+import type { WalletBindingRepository } from "../../identity/repositories/WalletBindingRepository";
 import { pairingSignatureRequestTable, pairingTable } from "../db/schema";
 import { WsCloseCode } from "../dto/WebSocketCloseCode";
 import {
@@ -26,7 +29,8 @@ export class PairingConnectionRepository extends PairingRepository {
     constructor(
         // Helpers to generate the auth tokens
         private readonly walletSdkSession: WalletSdkSessionService,
-        private readonly authenticatorRepository: AuthenticatorRepository
+        private readonly authenticatorRepository: AuthenticatorRepository,
+        private readonly walletBindingRepository: WalletBindingRepository
     ) {
         super();
     }
@@ -256,11 +260,16 @@ export class PairingConnectionRepository extends PairingRepository {
         // Pairing was resolved while the origin was disconnected. Replay
         // `authenticated` so the origin can settle into its `paired` session
         // using the exact credential the target joined with (persisted at
-        // join time on the pairing row). A wallet merge that happens between
-        // join and resume leaves `pairing.wallet` stale — we accept that
-        // edge case here: the join+resume window is short (lastActiveAt
-        // cleanup cron) and a stale session simply forces the user to
-        // re-pair, no on-chain damage.
+        // join time on the pairing row).
+        //
+        // A wallet merge that happens between join and resume leaves
+        // `pairing.wallet` stale — the credential has been repointed at
+        // the winner. We rebind the replayed JWT to the credential's
+        // CURRENT binding rather than the pairing row's snapshot, so a
+        // resumed desktop never holds a session against a merged-away
+        // wallet. When no merge happened the active binding matches
+        // `pairing.wallet` and the payload is identical to the previous
+        // behaviour.
         const authenticator = pairing.authenticatorId
             ? await this.authenticatorRepository.getByCredentialId(
                   pairing.authenticatorId
@@ -282,9 +291,43 @@ export class PairingConnectionRepository extends PairingRepository {
             return;
         }
 
+        const activeBinding =
+            await this.walletBindingRepository.getActiveBinding({
+                credentialId: authenticator._id,
+                chainId: currentChainId,
+            });
+        if (!activeBinding) {
+            log.warn(
+                {
+                    pairingId: pairing.pairingId,
+                    wallet: pairing.wallet,
+                    authenticatorId: authenticator._id,
+                    chainId: currentChainId,
+                },
+                "[Pairing] resume: no active binding for credential, refusing to mint a stale session"
+            );
+            ws.close(
+                WsCloseCode.PAIRING_NOT_FOUND,
+                "No active binding for resumed credential"
+            );
+            return;
+        }
+        const walletAddress = activeBinding.smartWalletAddress;
+        if (!isAddressEqual(walletAddress, pairing.wallet)) {
+            log.info(
+                {
+                    pairingId: pairing.pairingId,
+                    pairingWallet: pairing.wallet,
+                    currentWallet: walletAddress,
+                    authenticatorId: authenticator._id,
+                },
+                "[Pairing] resume: credential was repointed (merge) — replaying with current binding"
+            );
+        }
+
         const walletPayload: StaticWalletTokenDto = {
             type: "distant-webauthn",
-            address: pairing.wallet,
+            address: walletAddress,
             authenticatorId: authenticator._id,
             publicKey: authenticator.publicKey,
             transports: undefined,
@@ -293,11 +336,11 @@ export class PairingConnectionRepository extends PairingRepository {
 
         const [walletToken, sdkJwt] = await Promise.all([
             JwtContext.wallet.sign(walletPayload),
-            this.walletSdkSession.generateSdkJwt({ wallet: pairing.wallet }),
+            this.walletSdkSession.generateSdkJwt({ wallet: walletAddress }),
         ]);
 
         log.debug(
-            { pairingId: pairing.pairingId, wallet: pairing.wallet },
+            { pairingId: pairing.pairingId, wallet: walletAddress },
             "[Pairing] origin resumed a resolved pairing — replaying authenticated"
         );
 

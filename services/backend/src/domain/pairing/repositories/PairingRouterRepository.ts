@@ -274,11 +274,12 @@ export class PairingRouterRepository extends PairingRepository {
                 requestId: message.payload.id,
                 request: message.payload.request,
                 context: message.payload.context,
+                kind: message.payload.signatureKind,
                 expiresAt: new Date(Date.now() + SIGNATURE_REQUEST_TTL_MS),
             })
             .onConflictDoNothing();
 
-        await this.sendTopicMessage({
+        this.sendTopicMessage({
             ws,
             pairingId: wallet.pairingId,
             message: {

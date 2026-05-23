@@ -45,14 +45,17 @@ export const walletSdkRoutes = new Elysia({ prefix: "/sdk" })
 
             // Resolve the credential's active binding on the current chain
             // to confirm it matches the requested wallet. Falls back to the
-            // deterministic derivation when no binding exists yet so legacy
-            // credentials still go through.
-            const binding = await IdentityContext.repositories.walletBinding
-                .getActiveBinding({
-                    credentialId: verificationnResult.authenticatorId,
-                    chainId: currentChainId,
-                })
-                .catch(() => null);
+            // deterministic derivation when no binding row exists yet so
+            // legacy credentials still go through; DB errors propagate so
+            // we fail closed instead of issuing an SDK JWT for the
+            // pre-merge wallet address.
+            const binding =
+                await IdentityContext.repositories.walletBinding.getActiveBinding(
+                    {
+                        credentialId: verificationnResult.authenticatorId,
+                        chainId: currentChainId,
+                    }
+                );
             const resolvedWallet =
                 binding?.smartWalletAddress ??
                 (await AuthContext.services.webAuthN.getWalletAddress({

@@ -247,19 +247,29 @@ export abstract class BasePairingClient<
     }
 
     /**
-     * Hard reset: close the WS, reject any pending requests, clear the
-     * local session token, and put the client back into its initial state.
-     * Used as the recovery action after a non-retryable server rejection
-     * (e.g. 4401 invalid token) so the app can route the user back to a
-     * fresh sign-in flow.
+     * Flow-level teardown: close the WS, reject any pending requests, and
+     * put the client back into its initial state — without touching
+     * `sessionStore`. Used when a caller wants to abandon a pairing
+     * handshake (e.g. wallet merge cancelled by the user) but keep the
+     * live wallet session intact.
      */
-    reset() {
+    softReset() {
         this.closeSocket();
         this.rejectPending({
             code: "connection-lost",
             detail: "client reset",
         });
         this.resetState();
+    }
+
+    /**
+     * Hard reset: `softReset` + clear the local session token. Used as the
+     * recovery action after a non-retryable server rejection (e.g. 4401
+     * invalid token) so the app can route the user back to a fresh sign-in
+     * flow.
+     */
+    reset() {
+        this.softReset();
         sessionStore.getState().clearSession();
     }
 

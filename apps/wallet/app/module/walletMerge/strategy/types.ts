@@ -33,16 +33,23 @@ export type SwitchToWinnerMutation = UseMutationResult<
  * `MergeFlow` is the same shell either way — same step components, same
  * ordering, same animations. The strategy plugs in the mutations that
  * differ between the same-device and cross-device flows:
- *  - `useLoserConsent` produces the merge-consent assertion locally on
+ *  - `loserConsent` produces the merge-consent assertion locally on
  *    desktop OR ferries the request through pairing as a raw-assertion
  *    signature-request.
- *  - `useSwitchToWinner` performs a local `useLogin` swap OR drives the
+ *  - `switchToWinner` performs a local `useLogin` swap OR drives the
  *    pairing handshake whose `authenticated` message swaps the live
  *    session to a distant-webauthn one.
  *
  * The remote strategy additionally exposes its underlying pairing state
  * so the SwitchStep / ConsentStep remote variants can render the QR and
  * status banner without re-deriving the client themselves.
+ *
+ * Both strategies must call their underlying React Query hooks
+ * **internally** and surface the resulting mutation objects directly on
+ * the strategy. `MergeFlow` reads them as plain fields — it must NOT call
+ * them as hook factories, otherwise the rules of hooks would be violated
+ * when `mode` switches mid-render (the count of useMutation calls inside
+ * MergeFlow would change).
  */
 export type MergeStrategy = {
     mode: "local" | "remote";
@@ -61,6 +68,14 @@ export type MergeStrategy = {
         pairingState: OriginPairingState;
         onRetry: () => void;
     };
-    useLoserConsent: () => LoserConsentMutation;
-    useSwitchToWinner: () => SwitchToWinnerMutation;
+    /**
+     * Optional teardown hook. Called from `MergeFlow` on abort, unmount, or
+     * any other non-success exit so a lingering pairing WS or in-flight
+     * signature request doesn't apply a late `authenticated` event after
+     * the user has already backed out. No-op for the local strategy —
+     * `useSwitchAuthenticator`'s rollback is implicit in its catch path.
+     */
+    cancel?: () => void;
+    loserConsent: LoserConsentMutation;
+    switchToWinner: SwitchToWinnerMutation;
 };

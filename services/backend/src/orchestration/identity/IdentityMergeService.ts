@@ -57,6 +57,18 @@ export class IdentityMergeService {
     ) {}
 
     /**
+     * Expose the referral chain cache clear to callers that own an outer
+     * transaction boundary. When `mergeGroups` runs inside a caller-supplied
+     * `tx` it deliberately skips the auto-clear (would run before the outer
+     * commit and let a racing reader cache pre-commit chain state); the
+     * caller must invoke this after their `await db.transaction(...)`
+     * resolves.
+     */
+    public clearReferralChainCache(): void {
+        this.referralLinkRepository.clearChainCache();
+    }
+
+    /**
      * Merge one-or-many `mergingGroupIds` into `anchorGroupId`. Every
      * identity-keyed table is rewritten in a single PG transaction; the
      * wallet-keyed `push_tokens` rows are migrated too when both sides
@@ -85,7 +97,15 @@ export class IdentityMergeService {
                   this.runMergeInTrx(trx, anchorGroupId, mergingGroupIds)
               );
 
-        this.referralLinkRepository.clearChainCache();
+        // Only clear the chain cache when we opened the transaction
+        // ourselves — by this point the tx has committed and concurrent
+        // readers will repopulate from durable state. When `tx` is
+        // supplied by an outer caller, the caller owns the cache clear:
+        // doing it here would run before their commit and let a racing
+        // reader cache the pre-commit chain state for the TTL window.
+        if (!tx) {
+            this.referralLinkRepository.clearChainCache();
+        }
 
         return result;
     }

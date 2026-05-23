@@ -80,12 +80,12 @@ export function useRemoteMergeStrategy({
               ? winnerAuthenticatorId
               : loserAuthenticatorId;
 
-    const useLoserConsent = useRemoteLoserConsent({
+    const loserConsent = useRemoteLoserConsent({
         needsSwitch,
         remoteCredentialId,
         client,
     });
-    const useSwitchToWinner = useRemoteSwitchToWinner({
+    const switchToWinner = useRemoteSwitchToWinner({
         remoteCredentialId,
         client,
     });
@@ -102,6 +102,21 @@ export function useRemoteMergeStrategy({
         // to let the user retry from a clean state.
     }, [client]);
 
+    // Tear down the pairing session when MergeFlow exits via any path that
+    // isn't the terminal success step. Without this, a late `authenticated`
+    // event arriving after the user has aborted would still apply a distant
+    // session to the live slot (handleAuthenticated is unconditional in the
+    // OriginPairingClient). `softReset()` clears the in-flight handshake +
+    // rejects any pending signature-request promise WITHOUT touching
+    // `sessionStore` — `reset()` would call `clearSession()` and log the
+    // user out (`session`, `previousSession`, and `sdkSession` are all
+    // wiped), which is fine after a 4401 but catastrophic on a user-driven
+    // merge cancel.
+    const cancel = useCallback(() => {
+        client.cancelAllSignatureRequests("merge-aborted");
+        client.softReset();
+    }, [client]);
+
     return {
         mode: "remote",
         pairingId,
@@ -109,8 +124,9 @@ export function useRemoteMergeStrategy({
             pairingState,
             onRetry,
         },
-        useLoserConsent: () => useLoserConsent,
-        useSwitchToWinner: () => useSwitchToWinner,
+        cancel,
+        loserConsent,
+        switchToWinner,
     };
 }
 

@@ -122,14 +122,16 @@ export const loginRoutes = new Elysia()
             // binding table rather than rely on the deterministic
             // derivation (which would still return the pre-merge loser
             // address forever). Fall back to derivation only when no
-            // binding exists yet, and lazy-seed it for next time.
+            // binding row exists yet (legacy credential pre-backfill); a
+            // DB error here must propagate so login fails closed instead
+            // of silently reviving a stale loser-wallet session.
             const activeBinding =
-                await IdentityContext.repositories.walletBinding
-                    .getActiveBinding({
+                await IdentityContext.repositories.walletBinding.getActiveBinding(
+                    {
                         credentialId: authenticatorId,
                         chainId: currentChainId,
-                    })
-                    .catch(() => null);
+                    }
+                );
 
             let address = activeBinding?.smartWalletAddress;
             if (!address) {

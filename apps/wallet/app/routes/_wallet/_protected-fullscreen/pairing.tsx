@@ -95,11 +95,15 @@ function PairingPage() {
     const onSwitchCredential = useCallback(async () => {
         if (!pairingInfo?.authenticatorHint) return;
         // Park the current session so the user can recover their original
-        // credential if they cancel out without joining. Safe to call
-        // unconditionally — refused if a previous snapshot already exists.
+        // credential if they cancel out without joining. `parkSession`
+        // refuses to overwrite an existing snapshot — we capture its
+        // boolean return value so the rollback path only restores if this
+        // very call acquired the slot, otherwise we'd pop a stale snapshot
+        // that belongs to a previous (still-active) flow.
         const current = sessionStore.getState();
+        let didPark = false;
         if (current.session) {
-            sessionStore.getState().parkSession({
+            didPark = sessionStore.getState().parkSession({
                 session: current.session,
                 sdkSession: current.sdkSession,
             });
@@ -109,9 +113,9 @@ function PairingPage() {
                 allowedCredentialIds: [pairingInfo.authenticatorHint],
             });
         } catch (err) {
-            // If login failed, restore the original session so the user
-            // isn't stranded on a half-applied state.
-            sessionStore.getState().popSession();
+            // Only pop the snapshot we just parked. A prior parked snapshot
+            // belongs to its own flow and must not be restored here.
+            if (didPark) sessionStore.getState().popSession();
             console.warn("Failed to switch passkey before pairing join", err);
         }
     }, [login, pairingInfo?.authenticatorHint]);

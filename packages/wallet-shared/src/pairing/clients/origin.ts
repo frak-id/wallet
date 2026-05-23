@@ -213,15 +213,16 @@ export class OriginPairingClient extends BasePairingClient<
     }
 
     /**
-     * Override of base hook — also clear stashed initiate options. After a
-     * hard reset the consumer is expected to start fresh, so any leftover
-     * options would be misleading.
+     * Override of base hook — also clear stashed initiate options. Runs on
+     * both soft and hard resets (the base `reset` dispatches through
+     * `this.softReset`), so any leftover options would be misleading once
+     * the consumer is back to an idle client.
      */
-    override reset(): void {
+    override softReset(): void {
         this.lastInitiateOptions = null;
         this.onPairingSuccess = null;
         this.pendingDistantToken = null;
-        super.reset();
+        super.softReset();
     }
 
     async initiatePairing(options?: InitiatePairingOptions) {
@@ -572,10 +573,14 @@ export class OriginPairingClient extends BasePairingClient<
     private handleAuthenticated(
         payload: Extract<WsOriginMessage, { type: "authenticated" }>["payload"]
     ) {
-        // The pairing handshake is complete — the SDK session takes over
-        // from the in-flight pairing state. Drop `pairing` so future
-        // reconnects use the wallet token path and sessionStorage clears.
-        this.setState({ status: "paired", pairing: undefined });
+        // Keep `pairing.id` around past `authenticated` so consumers (e.g.
+        // the cross-device merge strategy) can still reference the pairing
+        // when calling `/merge/settle` — the backend needs `pairingId` to
+        // emit `merge-completed` on both topics. `reconnect()` already
+        // prefers `pendingDistantToken` / distant-webauthn session paths
+        // over the resume action, so a lingering `pairing` is harmless; it
+        // is fully cleared by `reset()` via `resetState()`.
+        this.setState({ status: "paired" });
 
         const applySession = this.lastInitiateOptions?.applySession !== false;
 
@@ -650,11 +655,17 @@ export class OriginPairingClient extends BasePairingClient<
             { type: "merge-completed" }
         >["payload"]
     ) {
+        // Merge lifecycle is terminal — drop `pairing` so a refresh does not
+        // trigger a stale `resume` against a finalised handshake. Runs on
+        // both winner- and loser-side messages; the winner path returns
+        // early below (no session payload), so do this first.
+        this.pendingDistantToken = null;
+        this.setState({ pairing: undefined });
+
         if (!payload.session) return;
         // Backend's webauthn DTO carries `transports: string[]`; the local
         // `Session` narrows to `AuthenticatorTransport[]`. Cast mirrors the
         // same narrowing useMergeSettle relies on.
-        this.pendingDistantToken = null;
         const { token, sdkJwt, wallet } = payload.session;
         sessionStore.getState().setSession({ ...wallet, token } as Session);
         sessionStore.getState().setSdkSession(sdkJwt);
