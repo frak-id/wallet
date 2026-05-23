@@ -3,6 +3,10 @@ import type { OriginPairingState } from "@frak-labs/wallet-shared/pairing/types"
 import type { UseMutationResult } from "@tanstack/react-query";
 import type { Address } from "viem";
 import type { LoserConsentResult } from "../hook/useLoserConsent";
+import type {
+    MigrateLoserAssetsArgs,
+    MigrateLoserAssetsResult,
+} from "../hook/useMigrateLoserAssets";
 
 /**
  * Narrow projection of {@link OriginPairingState} consumed by the remote
@@ -34,6 +38,12 @@ export type SwitchToWinnerMutation = UseMutationResult<
     Session | undefined,
     Error,
     SwitchToWinnerArgs
+>;
+
+export type MigrateLoserAssetsMutation = UseMutationResult<
+    MigrateLoserAssetsResult,
+    Error,
+    MigrateLoserAssetsArgs
 >;
 
 /**
@@ -87,4 +97,15 @@ export type MergeStrategy = {
     cancel?: () => void;
     loserConsent: LoserConsentMutation;
     switchToWinner: SwitchToWinnerMutation;
+    /**
+     * Mutation that drains the loser smart wallet of transferable assets
+     * (claims pending rewarder balances, then transfers stablecoins to the
+     * winner) in a single batched UserOp. Transport selection is baked in
+     * per-strategy: same-device + cross-device-desktop-is-loser sign
+     * locally; cross-device-desktop-is-winner routes the loser signing
+     * through the same origin pairing that ferried the consent assertion.
+     * A successful run with no funds resolves to `{ txHash: undefined }`
+     * so the migrate step can auto-advance to settle.
+     */
+    migrateLoserAssets: MigrateLoserAssetsMutation;
 };

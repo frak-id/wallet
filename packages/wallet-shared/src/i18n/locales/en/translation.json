@@ -156,26 +156,25 @@
                     "title": "What you'll get",
                     "description": "{{referrals}} referrals, {{interactions}} interactions and {{assets}} reward events — all on one account."
                 },
+                "funds": {
+                    "title": "Funds to move",
+                    "description": "We'll transfer these from your other account to your primary account before combining."
+                },
                 "continue": "Continue",
                 "cancel": "Cancel"
             },
-            "assets": {
-                "title": "Move your funds first",
-                "description": "Before combining, transfer any tokens from {{loser}} to {{winner}}. Once combined, funds left on the absorbed account can't be moved.",
-                "checking": "Checking your balances…",
-                "noFunds": "Good news — no tokens to move on the absorbed account.",
+            "migrate": {
+                "title": "Moving your funds…",
+                "description": "Transferring everything to {{winner}} before we finalise the combine. This takes a few seconds.",
+                "errorTitle": "We couldn't move your funds",
+                "errorDescription": "Something interrupted the transfer. Your accounts are safe — tap retry to try again with the latest balances.",
                 "holdings": {
-                    "title": "Tokens detected on the absorbed account"
+                    "title": "Funds being moved"
                 },
-                "cannotCheck": {
-                    "title": "We can't check the other account from here",
-                    "description": "Open your other account first if you're unsure. If it holds tokens, move them before continuing — they cannot be recovered after combining."
-                },
-                "transferPlaceholder": "Transfer tokens (coming soon)",
-                "transferDisabledTitle": "Automatic transfer ships in the next release. For now please move funds manually.",
-                "acknowledge": "I've moved any funds, or my other account has none",
-                "continue": "Continue",
-                "back": "Back"
+                "pending": "Sending the transfer on-chain — hang tight.",
+                "error": "The transfer didn't go through. Tap retry — we'll re-check your balances and try again.",
+                "retry": "Retry",
+                "cancel": "Cancel"
             },
             "consent": {
                 "title": "Confirm with your other passkey",

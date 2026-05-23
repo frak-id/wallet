@@ -154,26 +154,25 @@
                     "title": "Ce que tu vas récupérer",
                     "description": "{{referrals}} parrainages, {{interactions}} interactions et {{assets}} récompenses — tout sur un seul compte."
                 },
+                "funds": {
+                    "title": "Fonds à transférer",
+                    "description": "On déplacera tout vers ton compte principal avant de combiner les deux comptes."
+                },
                 "continue": "Continuer",
                 "cancel": "Annuler"
             },
-            "assets": {
-                "title": "Transfère d'abord tes fonds",
-                "description": "Avant de combiner, transfère tes jetons de {{loser}} vers {{winner}}. Une fois combinés, les fonds laissés sur le compte absorbé ne pourront plus être déplacés.",
-                "checking": "Vérification de tes soldes…",
-                "noFunds": "Bonne nouvelle — rien à déplacer sur le compte absorbé.",
+            "migrate": {
+                "title": "Transfert de tes fonds…",
+                "description": "On transfère tout vers {{winner}} avant de finaliser. Ça prend quelques secondes.",
+                "errorTitle": "Impossible de transférer tes fonds",
+                "errorDescription": "Le transfert a été interrompu. Tes comptes sont en sécurité — réessaie avec les soldes mis à jour.",
                 "holdings": {
-                    "title": "Jetons détectés sur le compte absorbé"
+                    "title": "Fonds en cours de transfert"
                 },
-                "cannotCheck": {
-                    "title": "On ne peut pas vérifier l'autre compte depuis ici",
-                    "description": "Ouvre d'abord ton autre compte si tu n'es pas sûr·e. S'il contient des jetons, transfère-les avant de continuer — ils ne pourront pas être récupérés ensuite."
-                },
-                "transferPlaceholder": "Transférer (bientôt disponible)",
-                "transferDisabledTitle": "Le transfert automatique arrive dans la prochaine mise à jour. Pour l'instant, déplace les fonds manuellement.",
-                "acknowledge": "J'ai déplacé mes fonds, ou mon autre compte n'en a pas",
-                "continue": "Continuer",
-                "back": "Retour"
+                "pending": "Envoi du transfert on-chain — patiente quelques instants.",
+                "error": "Le transfert n'est pas passé. Réessaie — on relit tes soldes avant de relancer.",
+                "retry": "Réessayer",
+                "cancel": "Annuler"
             },
             "consent": {
                 "title": "Confirme avec ton autre passkey",

@@ -3,121 +3,167 @@ import { Button } from "@frak-labs/design-system/components/Button";
 import { Card } from "@frak-labs/design-system/components/Card";
 import { Stack } from "@frak-labs/design-system/components/Stack";
 import { Text } from "@frak-labs/design-system/components/Text";
-import { useState } from "react";
+import { useEffect, useRef } from "react";
 import { useTranslation } from "react-i18next";
-import type { Address } from "viem";
-import { Back } from "@/module/common/component/Back";
+import { type Address, formatUnits, type Hex } from "viem";
 import { PageLayout } from "@/module/common/component/PageLayout";
 import { Title } from "@/module/common/component/Title";
-import type { LoserAssetCheckResult } from "../../hook/useLoserAssetCheck";
+import type { LoserAssetSummary } from "../../hook/useLoserAssetSummary";
+import type { MigrateLoserAssetsMutation } from "../../strategy/types";
 import { shortenAddress } from "../../utils/shortenAddress";
 import * as styles from "./index.css";
 
 type AssetMigrationStepProps = {
     loser: Address;
     winner: Address;
-    assets: LoserAssetCheckResult;
-    onContinue: () => void;
-    onBack: () => void;
+    loserAuthenticatorId: string;
+    loserPublicKey: { x: Hex; y: Hex };
+    /** Pre-fetched summary captured by the preview step. We don't trust it
+     *  for the actual submission — the mutation re-reads on entry — but we
+     *  use it to decide whether the step renders at all and to populate
+     *  the initial recap. */
+    summary: LoserAssetSummary | null | undefined;
+    migrate: MigrateLoserAssetsMutation;
+    onCompleted: () => void;
+    onCancel: () => void;
 };
 
 /**
- * Pre-merge step that warns the user about funds on the account being
- * absorbed. Phase 1 does NOT actually move funds — the dedicated transfer
- * action lands in a later phase — so this step's job is purely to make the
- * trade-off explicit and gate the merge behind an "I understand" checkbox.
+ * Pre-settle step that drains the loser smart wallet of its remaining
+ * stablecoin balances and pending rewarder claims, moving everything to
+ * the winner in a single batched UserOp. Auto-fires on mount — by this
+ * point the user has already authorised the addPassKey and the settle
+ * step is one tx away, so an extra confirmation buys nothing.
  *
- * Two display modes:
- *  - `canCheckLoser` true (the loser wallet is the live session): we list
- *    every non-zero stablecoin balance so the user knows exactly what's at
- *    stake. The "Transfer" CTA is rendered but disabled (Phase 1 placeholder).
- *  - `canCheckLoser` false (the loser is the *other* wallet, we don't have a
- *    JWT for it): a generic warning, no list. The backend balance endpoint
- *    only answers for the JWT owner; Phase 2 will close this gap.
+ * On revert / error the user gets a retry CTA. The mutation re-reads the
+ * summary on every run, so a stale-read revert (e.g. claimable raced to
+ * zero) self-heals on retry. Cancel returns to the home screen via the
+ * MergeFlow abort path.
  */
 export function AssetMigrationStep({
     loser,
     winner,
-    assets,
-    onContinue,
-    onBack,
+    loserAuthenticatorId,
+    loserPublicKey,
+    summary,
+    migrate,
+    onCompleted,
+    onCancel,
 }: AssetMigrationStepProps) {
     const { t } = useTranslation();
-    const [acknowledged, setAcknowledged] = useState(false);
 
-    const showList = assets.canCheckLoser && !assets.isLoading;
-    const hasFunds = showList && assets.hasDetectableFunds;
+    // Idempotency guard for the auto-fire effect: StrictMode + dev would
+    // otherwise pump the mutation twice on mount. The mutationKey already
+    // dedupes at the React Query layer, but tracking a local flag keeps
+    // the intent explicit.
+    const startedRef = useRef(false);
+    useEffect(() => {
+        if (startedRef.current) return;
+        if (!summary?.hasFunds) return;
+        if (migrate.isPending || migrate.isSuccess || migrate.isError) return;
+        startedRef.current = true;
+        migrate.mutate(
+            {
+                loser,
+                winner,
+                loserAuthenticatorId,
+                loserPublicKey,
+            },
+            { onSuccess: () => onCompleted() }
+        );
+    }, [
+        summary,
+        migrate,
+        loser,
+        winner,
+        loserAuthenticatorId,
+        loserPublicKey,
+        onCompleted,
+    ]);
+
+    const retry = () => {
+        startedRef.current = true;
+        migrate.reset();
+        migrate.mutate(
+            {
+                loser,
+                winner,
+                loserAuthenticatorId,
+                loserPublicKey,
+            },
+            { onSuccess: () => onCompleted() }
+        );
+    };
 
     return (
         <PageLayout
-            back={<Back onClick={onBack} />}
             footer={
-                <Box className={styles.footer}>
-                    <Button
-                        type="button"
-                        variant="primary"
-                        size="large"
-                        width="full"
-                        onClick={onContinue}
-                        disabled={!acknowledged}
-                    >
-                        {t("wallet.merge.assets.continue")}
-                    </Button>
-                    <Button
-                        type="button"
-                        variant="secondary"
-                        size="large"
-                        width="full"
-                        onClick={onBack}
-                    >
-                        {t("wallet.merge.assets.back")}
-                    </Button>
-                </Box>
+                migrate.isError ? (
+                    <Box className={styles.footer}>
+                        <Button
+                            type="button"
+                            variant="primary"
+                            size="large"
+                            width="full"
+                            onClick={retry}
+                        >
+                            {t("wallet.merge.migrate.retry")}
+                        </Button>
+                        <Button
+                            type="button"
+                            variant="secondary"
+                            size="large"
+                            width="full"
+                            onClick={onCancel}
+                        >
+                            {t("wallet.merge.migrate.cancel")}
+                        </Button>
+                    </Box>
+                ) : undefined
             }
         >
             <Stack space="l" className={styles.body}>
                 <Stack space="s">
-                    <Title size="page">{t("wallet.merge.assets.title")}</Title>
+                    <Title size="page">
+                        {migrate.isError
+                            ? t("wallet.merge.migrate.errorTitle")
+                            : t("wallet.merge.migrate.title")}
+                    </Title>
                     <Text variant="body" color="secondary">
-                        {t("wallet.merge.assets.description", {
-                            loser: shortenAddress(loser),
-                            winner: shortenAddress(winner),
-                        })}
+                        {migrate.isError
+                            ? t("wallet.merge.migrate.errorDescription")
+                            : t("wallet.merge.migrate.description", {
+                                  winner: shortenAddress(winner),
+                              })}
                     </Text>
                 </Stack>
 
-                {assets.isLoading && (
-                    <Card variant="muted" padding="default">
-                        <Text variant="bodySmall" color="secondary">
-                            {t("wallet.merge.assets.checking")}
-                        </Text>
-                    </Card>
-                )}
-
-                {showList && hasFunds && assets.stablecoinBalances && (
+                {summary?.hasFunds && (
                     <Card variant="elevated" padding="default">
                         <Stack space="s">
                             <Text variant="bodySmall" weight="semiBold">
-                                {t("wallet.merge.assets.holdings.title")}
+                                {t("wallet.merge.migrate.holdings.title")}
                             </Text>
                             <Stack space="xs">
-                                {assets.stablecoinBalances.map((token) => (
+                                {summary.entries.map((entry) => (
                                     <Box
-                                        key={token.token}
+                                        key={entry.token}
                                         className={styles.balanceRow}
                                     >
                                         <Text
                                             variant="bodySmall"
                                             weight="medium"
                                         >
-                                            {token.symbol}
+                                            {entry.symbol}
                                         </Text>
                                         <Text
                                             variant="bodySmall"
                                             color="secondary"
                                         >
-                                            {formatAmount(token.amount)} (
-                                            {formatFiat(token.fiatAmount)})
+                                            {formatAmount(
+                                                entry.balance + entry.claimable,
+                                                entry.decimals
+                                            )}
                                         </Text>
                                     </Box>
                                 ))}
@@ -126,68 +172,39 @@ export function AssetMigrationStep({
                     </Card>
                 )}
 
-                {showList && !hasFunds && (
-                    <Card variant="muted" padding="default">
+                {migrate.isPending && (
+                    <Card
+                        variant="muted"
+                        padding="default"
+                        role="status"
+                        aria-live="polite"
+                    >
                         <Text variant="bodySmall" color="secondary">
-                            {t("wallet.merge.assets.noFunds")}
+                            {t("wallet.merge.migrate.pending")}
                         </Text>
                     </Card>
                 )}
 
-                {!assets.canCheckLoser && !assets.isLoading && (
-                    <Card variant="muted" padding="default">
-                        <Stack space="xs">
-                            <Text variant="bodySmall" weight="semiBold">
-                                {t("wallet.merge.assets.cannotCheck.title")}
-                            </Text>
-                            <Text variant="bodySmall" color="secondary">
-                                {t(
-                                    "wallet.merge.assets.cannotCheck.description"
-                                )}
-                            </Text>
-                        </Stack>
+                {migrate.isError && (
+                    <Card
+                        variant="muted"
+                        padding="default"
+                        role="alert"
+                        aria-live="assertive"
+                    >
+                        <Text variant="bodySmall" color="error">
+                            {t("wallet.merge.migrate.error")}
+                        </Text>
                     </Card>
                 )}
-
-                {hasFunds && (
-                    <Button
-                        type="button"
-                        variant="secondary"
-                        size="large"
-                        width="full"
-                        disabled
-                        title={t("wallet.merge.assets.transferDisabledTitle")}
-                    >
-                        {t("wallet.merge.assets.transferPlaceholder")}
-                    </Button>
-                )}
-
-                <Box as="label" className={styles.checkboxRow}>
-                    <input
-                        type="checkbox"
-                        checked={acknowledged}
-                        onChange={(e) => setAcknowledged(e.target.checked)}
-                        className={styles.checkboxInput}
-                    />
-                    <Text variant="bodySmall">
-                        {t("wallet.merge.assets.acknowledge")}
-                    </Text>
-                </Box>
             </Stack>
         </PageLayout>
     );
 }
 
-function formatAmount(amount: number): string {
-    return amount.toLocaleString(undefined, {
+function formatAmount(amount: bigint, decimals: number): string {
+    const value = Number(formatUnits(amount, decimals));
+    return value.toLocaleString(undefined, {
         maximumFractionDigits: 4,
-    });
-}
-
-function formatFiat(amount: number): string {
-    return amount.toLocaleString(undefined, {
-        style: "currency",
-        currency: "EUR",
-        maximumFractionDigits: 2,
     });
 }

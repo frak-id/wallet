@@ -9,16 +9,3 @@ export const balanceRow = style({
     justifyContent: "space-between",
     gap: alias.spacing.s,
 });
-
-export const checkboxRow = style({
-    display: "flex",
-    alignItems: "flex-start",
-    gap: alias.spacing.s,
-    cursor: "pointer",
-});
-
-export const checkboxInput = style({
-    marginTop: "3px",
-    width: "16px",
-    height: "16px",
-});

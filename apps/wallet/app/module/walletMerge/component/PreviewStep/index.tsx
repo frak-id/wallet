@@ -6,9 +6,11 @@ import { Stack } from "@frak-labs/design-system/components/Stack";
 import { Text } from "@frak-labs/design-system/components/Text";
 import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
+import { formatUnits } from "viem";
 import { Back } from "@/module/common/component/Back";
 import { PageLayout } from "@/module/common/component/PageLayout";
 import { Title } from "@/module/common/component/Title";
+import type { LoserAssetSummary } from "../../hook/useLoserAssetSummary";
 import { WalletCard } from "../WalletCard";
 import * as styles from "./index.css";
 
@@ -16,6 +18,10 @@ type PreviewStepProps = {
     preview: MergePreviewResponse;
     /** Email the user just tried to add — surfaced in the recap copy. */
     email: string;
+    /** Pre-fetched on-chain summary of what the loser holds. Rendered as an
+     *  inline "Funds to move" card when non-empty; hidden when empty so the
+     *  preview stays tight in the common case. */
+    assetSummary: LoserAssetSummary | null | undefined;
     onContinue: () => void;
     onCancel: () => void;
 };
@@ -28,6 +34,7 @@ type PreviewStepProps = {
 export function PreviewStep({
     preview,
     email,
+    assetSummary,
     onContinue,
     onCancel,
 }: PreviewStepProps) {
@@ -50,6 +57,8 @@ export function PreviewStep({
         }),
         [preview.requesterWeight, preview.targetWeight]
     );
+
+    const fundsToMove = assetSummary?.hasFunds ? assetSummary.entries : null;
 
     return (
         <PageLayout
@@ -119,7 +128,55 @@ export function PreviewStep({
                         </Text>
                     </Stack>
                 </Card>
+
+                {fundsToMove && (
+                    <Card variant="elevated" padding="default">
+                        <Stack space="s">
+                            <Stack space="xxs">
+                                <Text variant="bodySmall" weight="semiBold">
+                                    {t("wallet.merge.preview.funds.title")}
+                                </Text>
+                                <Text variant="bodySmall" color="secondary">
+                                    {t(
+                                        "wallet.merge.preview.funds.description"
+                                    )}
+                                </Text>
+                            </Stack>
+                            <Stack space="xs">
+                                {fundsToMove.map((entry) => (
+                                    <Box
+                                        key={entry.token}
+                                        className={styles.balanceRow}
+                                    >
+                                        <Text
+                                            variant="bodySmall"
+                                            weight="medium"
+                                        >
+                                            {entry.symbol}
+                                        </Text>
+                                        <Text
+                                            variant="bodySmall"
+                                            color="secondary"
+                                        >
+                                            {formatAmount(
+                                                entry.balance + entry.claimable,
+                                                entry.decimals
+                                            )}
+                                        </Text>
+                                    </Box>
+                                ))}
+                            </Stack>
+                        </Stack>
+                    </Card>
+                )}
             </Stack>
         </PageLayout>
     );
+}
+
+function formatAmount(amount: bigint, decimals: number): string {
+    const value = Number(formatUnits(amount, decimals));
+    return value.toLocaleString(undefined, {
+        maximumFractionDigits: 4,
+    });
 }

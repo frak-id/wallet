@@ -8,3 +8,10 @@ export const arrow = style({
     justifyContent: "center",
     paddingBlock: alias.spacing.xxs,
 });
+
+export const balanceRow = style({
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: alias.spacing.s,
+});

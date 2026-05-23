@@ -5,7 +5,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import type { Hex } from "viem";
 import { EmailFlowResultScreen } from "@/module/common/component/EmailFlowResultScreen";
-import { useLoserAssetCheck } from "../../hook/useLoserAssetCheck";
+import { useLoserAssetSummary } from "../../hook/useLoserAssetSummary";
 import { useMergePreview } from "../../hook/useMergePreview";
 import { useLocalMergeStrategy } from "../../strategy/useLocalMergeStrategy";
 import { useRemoteMergeStrategy } from "../../strategy/useRemoteMergeStrategy";
@@ -43,10 +43,10 @@ type MergeFlowProps = {
 
 type Step =
     | { kind: "preview" }
-    | { kind: "assets" }
     | { kind: "consent" }
     | { kind: "switch"; consentSignature: string }
     | { kind: "sign"; consentSignature: string }
+    | { kind: "migrate"; consentSignature: string; addPassKeyTxHash?: Hex }
     | { kind: "settling"; consentSignature: string; txHash?: Hex }
     | { kind: "success" };
 
@@ -101,7 +101,7 @@ export function MergeFlow({
         currentAuthenticatorId
     );
 
-    const assetCheck = useLoserAssetCheck({
+    const assetSummary = useLoserAssetSummary({
         loser: preview.data?.loser,
     });
 
@@ -222,20 +222,9 @@ export function MergeFlow({
             <PreviewStep
                 preview={preview.data}
                 email={email}
-                onContinue={() => setStep({ kind: "assets" })}
-                onCancel={handleAbort}
-            />
-        );
-    }
-
-    if (step.kind === "assets") {
-        return (
-            <AssetMigrationStep
-                loser={preview.data.loser}
-                winner={preview.data.winner}
-                assets={assetCheck}
+                assetSummary={assetSummary.data}
                 onContinue={() => setStep({ kind: "consent" })}
-                onBack={() => setStep({ kind: "preview" })}
+                onCancel={handleAbort}
             />
         );
     }
@@ -246,7 +235,7 @@ export function MergeFlow({
                 winner={preview.data.winner}
                 loserAuthenticatorId={preview.data.loserAuthenticatorId}
                 onConfirmed={handleConsentConfirmed}
-                onBack={() => setStep({ kind: "assets" })}
+                onBack={() => setStep({ kind: "preview" })}
                 consent={consent}
                 strategy={strategy}
                 /**
@@ -289,9 +278,30 @@ export function MergeFlow({
                 loserPublicKey={preview.data.loserPublicKey}
                 onSigned={(txHash) =>
                     setStep({
+                        kind: "migrate",
+                        consentSignature: step.consentSignature,
+                        addPassKeyTxHash: txHash,
+                    })
+                }
+                onCancel={handleAbort}
+            />
+        );
+    }
+
+    if (step.kind === "migrate") {
+        return (
+            <AssetMigrationStep
+                loser={preview.data.loser}
+                winner={preview.data.winner}
+                loserAuthenticatorId={preview.data.loserAuthenticatorId}
+                loserPublicKey={preview.data.loserPublicKey}
+                summary={assetSummary.data}
+                migrate={strategy.migrateLoserAssets}
+                onCompleted={() =>
+                    setStep({
                         kind: "settling",
                         consentSignature: step.consentSignature,
-                        txHash,
+                        txHash: step.addPassKeyTxHash,
                     })
                 }
                 onCancel={handleAbort}

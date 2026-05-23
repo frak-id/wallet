@@ -1,4 +1,5 @@
 import { useLoserConsent } from "../hook/useLoserConsent";
+import { useMigrateLoserAssets } from "../hook/useMigrateLoserAssets";
 import { useSwitchAuthenticator } from "../hook/useSwitchAuthenticator";
 import type { MergeStrategy } from "./types";
 
@@ -11,10 +12,12 @@ import type { MergeStrategy } from "./types";
 export function useLocalMergeStrategy(): MergeStrategy {
     const loserConsent = useLoserConsent();
     const switchToWinner = useSwitchAuthenticator();
+    const migrateLoserAssets = useMigrateLoserAssets({ transport: "local" });
     return {
         mode: "local",
         pairingId: undefined,
         loserConsent,
         switchToWinner,
+        migrateLoserAssets,
     };
 }

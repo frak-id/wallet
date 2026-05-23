@@ -13,6 +13,7 @@ import { stringToHex } from "viem";
 import { useStore } from "zustand";
 import { useShallow } from "zustand/react/shallow";
 import type { LoserConsentResult } from "../hook/useLoserConsent";
+import { useMigrateLoserAssets } from "../hook/useMigrateLoserAssets";
 import { signMergeConsentLocally } from "../utils/signMergeConsentLocally";
 import type {
     LoserConsentArgs,
@@ -97,6 +98,15 @@ export function useRemoteMergeStrategy({
         remoteCredentialId,
         client,
     });
+    // Loser passkey is local when desktop is the loser (needsSwitch=true);
+    // otherwise it lives on the paired mobile and the loser UserOp is
+    // signed over the existing merge pairing. `undefined` during preview
+    // loading defaults to "paired" — the mutation's args check kicks in
+    // before that gets exercised since MergeFlow guards the migrate step
+    // behind `preview.data` being resolved.
+    const migrateLoserAssets = useMigrateLoserAssets({
+        transport: needsSwitch ? "local" : "paired",
+    });
 
     const onRetry = useCallback(() => {
         if (
@@ -135,6 +145,7 @@ export function useRemoteMergeStrategy({
         cancel,
         loserConsent,
         switchToWinner,
+        migrateLoserAssets,
     };
 }
 

@@ -650,24 +650,6 @@ export default interface Resources {
             };
             manageNotifications: "<strong>Manage notifications</strong> <br /> Open settings to control your notifications";
             merge: {
-                assets: {
-                    acknowledge: "I've moved any funds, or my other account has none";
-                    back: "Back";
-                    cannotCheck: {
-                        description: "Open your other account first if you're unsure. If it holds tokens, move them before continuing — they cannot be recovered after combining.";
-                        title: "We can't check the other account from here";
-                    };
-                    checking: "Checking your balances…";
-                    continue: "Continue";
-                    description: "Before combining, transfer any tokens from {{loser}} to {{winner}}. Once combined, funds left on the absorbed account can't be moved.";
-                    holdings: {
-                        title: "Tokens detected on the absorbed account";
-                    };
-                    noFunds: "Good news — no tokens to move on the absorbed account.";
-                    title: "Move your funds first";
-                    transferDisabledTitle: "Automatic transfer ships in the next release. For now please move funds manually.";
-                    transferPlaceholder: "Transfer tokens (coming soon)";
-                };
                 consent: {
                     description: "We need a quick confirmation with the passkey from the other account to make sure both belong to you. You'll see a system prompt.";
                     error: "We couldn't confirm with the other passkey on this device. Make sure it's available here, then try again.";
@@ -685,6 +667,19 @@ export default interface Resources {
                     title: "Confirm with your other passkey";
                     verify: "Confirm";
                 };
+                migrate: {
+                    cancel: "Cancel";
+                    description: "Transferring everything to {{winner}} before we finalise the combine. This takes a few seconds.";
+                    error: "The transfer didn't go through. Tap retry — we'll re-check your balances and try again.";
+                    errorDescription: "Something interrupted the transfer. Your accounts are safe — tap retry to try again with the latest balances.";
+                    errorTitle: "We couldn't move your funds";
+                    holdings: {
+                        title: "Funds being moved";
+                    };
+                    pending: "Sending the transfer on-chain — hang tight.";
+                    retry: "Retry";
+                    title: "Moving your funds…";
+                };
                 preview: {
                     cancel: "Cancel";
                     combineArrow: "↓ combine into ↓";
@@ -693,6 +688,10 @@ export default interface Resources {
                     errorDescription: "Something went wrong while preparing the combine. Please try again.";
                     errorRetry: "Try again";
                     errorTitle: "We couldn't load your accounts";
+                    funds: {
+                        description: "We'll transfer these from your other account to your primary account before combining.";
+                        title: "Funds to move";
+                    };
                     gains: {
                         description: "{{referrals}} referrals, {{interactions}} interactions and {{assets}} reward events — all on one account.";
                         title: "What you'll get";

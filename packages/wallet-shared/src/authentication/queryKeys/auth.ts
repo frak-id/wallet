@@ -71,6 +71,7 @@ export namespace authKey {
         consent: [base, mergeBase, "consent"] as const,
         switchAuthenticator: [base, mergeBase, "switchAuthenticator"] as const,
         sendAddPassKey: [base, mergeBase, "sendAddPassKey"] as const,
+        migrateLoserAssets: [base, mergeBase, "migrateLoserAssets"] as const,
         settle: [base, mergeBase, "settle"] as const,
     };
 }
