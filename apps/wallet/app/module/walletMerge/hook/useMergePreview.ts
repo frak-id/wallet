@@ -6,17 +6,21 @@ import { useQuery } from "@tanstack/react-query";
  * Read-only recap of the same-device wallet merge that would happen if the
  * current credential merged with `targetAuthenticatorId`. The backend
  * recomputes the preview deterministically from the same inputs every call,
- * so the cache key only needs the target credential id.
- *
- * The hook is intentionally a `useQuery` rather than a mutation: the recap
- * must render before the user clicks "Continue", and the data also feeds the
- * downstream steps (consent challenge, on-chain calldata). Re-fetching is
- * cheap and idempotent.
+ * but the result depends on BOTH the target credential and the requester's
+ * (the one carried in the JWT), so the cache key includes both — a
+ * session switch between renders must not return a stale preview that
+ * still resolves to the previous requester's winner.
  */
-export function useMergePreview(targetAuthenticatorId?: string) {
+export function useMergePreview(
+    targetAuthenticatorId?: string,
+    requesterAuthenticatorId?: string
+) {
     return useQuery<MergePreviewResponse, Error>({
         queryKey: targetAuthenticatorId
-            ? authKey.merge.preview(targetAuthenticatorId)
+            ? authKey.merge.preview(
+                  targetAuthenticatorId,
+                  requesterAuthenticatorId ?? ""
+              )
             : authKey.merge.preview("none"),
         enabled: Boolean(targetAuthenticatorId),
         queryFn: async () => {

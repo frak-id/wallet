@@ -1,24 +1,24 @@
 import {
     buildMergeConsentChallenge,
     formatMergeConsentHourSlot,
-    WebAuthN,
 } from "@frak-labs/app-essentials";
 import {
     authKey,
     getOriginPairingClient,
-    getTauriGetFn,
     type Session,
 } from "@frak-labs/wallet-shared";
 import { useMutation } from "@tanstack/react-query";
-import { WebAuthnP256 } from "ox";
 import { useCallback, useMemo } from "react";
 import { stringToHex } from "viem";
 import { useStore } from "zustand";
+import { useShallow } from "zustand/react/shallow";
 import type { LoserConsentResult } from "../hook/useLoserConsent";
+import { signMergeConsentLocally } from "../utils/signMergeConsentLocally";
 import type {
     LoserConsentArgs,
     LoserConsentMutation,
     MergeStrategy,
+    RemotePairingSlice,
     SwitchToWinnerArgs,
     SwitchToWinnerMutation,
 } from "./types";
@@ -67,7 +67,15 @@ export function useRemoteMergeStrategy({
     loserAuthenticatorId,
 }: UseRemoteMergeStrategyArgs): MergeStrategy {
     const client = useMemo(() => getOriginPairingClient(), []);
-    const pairingState = useStore(client.store);
+    const pairingState = useStore(
+        client.store,
+        useShallow(
+            (state): RemotePairingSlice => ({
+                pairing: state.pairing,
+                status: state.status,
+            })
+        )
+    );
     const pairingId = pairingState.pairing?.id;
 
     // Credential the mobile is expected to hold. Derived from `needsSwitch`:
@@ -156,36 +164,14 @@ function useRemoteLoserConsent({
                 throw new Error("MERGE_REMOTE_CONSENT_PREVIEW_NOT_READY");
             }
 
-            const challengeString = buildMergeConsentChallenge({
-                winner,
-                loserAuthenticatorId,
-                hourSlot: formatMergeConsentHourSlot(new Date()),
-            });
-            const challenge = stringToHex(challengeString);
-
             if (needsSwitch) {
-                // Desktop is the loser — passkey is local. Reproduces
-                // today's `useLoserConsent` body verbatim; kept inline so
-                // the strategy doesn't depend on the local hook's
-                // internals.
-                const tauriGetFn = getTauriGetFn();
-                const { metadata, signature, raw } = await WebAuthnP256.sign({
-                    credentialId: loserAuthenticatorId,
-                    rpId: WebAuthN.rpId,
-                    userVerification: "required",
-                    challenge,
-                    ...(tauriGetFn && { getFn: tauriGetFn }),
+                // Desktop is the loser — passkey is local. Defer to the
+                // shared util so the local same-device contract is
+                // single-sourced.
+                return signMergeConsentLocally({
+                    winner,
+                    loserAuthenticatorId,
                 });
-                if (raw.id !== loserAuthenticatorId) {
-                    throw new Error("MERGE_CONSENT_WRONG_CREDENTIAL");
-                }
-                const assertion = {
-                    id: raw.id,
-                    response: { metadata, signature },
-                };
-                return {
-                    loserConsentSignature: btoa(JSON.stringify(assertion)),
-                };
             }
 
             // Desktop is the winner — loser passkey is on the paired
@@ -196,6 +182,12 @@ function useRemoteLoserConsent({
             if (!remoteCredentialId) {
                 throw new Error("MERGE_REMOTE_CONSENT_HINT_MISSING");
             }
+            const challengeString = buildMergeConsentChallenge({
+                winner,
+                loserAuthenticatorId,
+                hourSlot: formatMergeConsentHourSlot(new Date()),
+            });
+            const challenge = stringToHex(challengeString);
             await ensurePairingReady({
                 client,
                 applySession: false,

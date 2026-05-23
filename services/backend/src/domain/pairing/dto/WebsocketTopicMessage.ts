@@ -1,31 +1,24 @@
-import type { Address, Hex } from "viem";
+import type { Address } from "viem";
 import type {
     StaticWalletTokenDto,
     StaticWalletWebauthnTokenDto,
 } from "../../auth/models/WalletSessionDto";
 import type { SignatureRejectReason } from "./SignatureRejectReason";
-import type { WsSignatureKind } from "./WebsocketDirectMessage";
+import type {
+    WsSignatureRequestBase,
+    WsSignatureResponseBase,
+} from "./WebsocketDirectMessage";
 
 /**
  * When the origin send the request to the target
  */
 export type WsSignatureRequest = {
     type: "signature-request";
-    payload: {
+    payload: WsSignatureRequestBase & {
         // The pairing id
         pairingId: string;
-        // The id of the request
-        id: string;
-        // The request
-        request: Hex;
-        // Some optional context
-        context?: object;
         // The name of the partner device
         partnerDeviceName: string;
-        // Forwarded as-is from the origin so the target's
-        // `useSignSignatureRequest` can branch on it. Defaults to
-        // `"onchain"` when omitted.
-        signatureKind?: WsSignatureKind;
     };
 };
 
@@ -60,16 +53,7 @@ export type WsPartnerConnected = {
  */
 export type WsSignatureResponse = {
     type: "signature-response";
-    payload: {
-        pairingId: string;
-        id: string;
-        // Hex for `signatureKind: "onchain"` (default), base64 WebAuthn
-        // assertion JSON for `signatureKind: "raw-assertion"`.
-        signature: Hex | string;
-        // Echoes the kind the origin asked for so the receiver can pick
-        // the right decoder.
-        signatureKind?: WsSignatureKind;
-    };
+    payload: WsSignatureResponseBase;
 };
 
 /**

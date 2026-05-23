@@ -4,6 +4,15 @@ import type { UseMutationResult } from "@tanstack/react-query";
 import type { Address } from "viem";
 import type { LoserConsentResult } from "../hook/useLoserConsent";
 
+/**
+ * Narrow projection of {@link OriginPairingState} consumed by the remote
+ * step UIs (`RemotePairingPanel`, `useRemoteMergeStrategy`). Keeping it
+ * tight lets the strategy subscribe to the underlying store with a
+ * shallow selector and avoid re-rendering on every WS-tick mutation of
+ * `signatureRequests`/`partnerDevice`.
+ */
+export type RemotePairingSlice = Pick<OriginPairingState, "pairing" | "status">;
+
 export type LoserConsentArgs = {
     winner: Address;
     loserAuthenticatorId: string;
@@ -65,7 +74,7 @@ export type MergeStrategy = {
      * + status banner. `undefined` for the local strategy.
      */
     remote?: {
-        pairingState: OriginPairingState;
+        pairingState: RemotePairingSlice;
         onRetry: () => void;
     };
     /**

@@ -1,10 +1,8 @@
 import { Box } from "@frak-labs/design-system/components/Box";
 import { Button } from "@frak-labs/design-system/components/Button";
 import { Card } from "@frak-labs/design-system/components/Card";
-import { Spinner } from "@frak-labs/design-system/components/Spinner";
 import { Stack } from "@frak-labs/design-system/components/Stack";
 import { Text } from "@frak-labs/design-system/components/Text";
-import { PairingQrCode, PairingStatus } from "@frak-labs/wallet-shared";
 import { useCallback, useEffect, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import type { Address } from "viem";
@@ -12,7 +10,8 @@ import { Back } from "@/module/common/component/Back";
 import { PageLayout } from "@/module/common/component/PageLayout";
 import { Title } from "@/module/common/component/Title";
 import type { LoserConsentMutation, MergeStrategy } from "../../strategy/types";
-import * as styles from "./index.css";
+import { RemotePairingPanel } from "../RemotePairingPanel";
+import * as styles from "../stepLayout.css";
 
 type ConsentStepProps = {
     winner: Address;
@@ -160,81 +159,22 @@ export function ConsentStep({
     );
 }
 
-/**
- * Render-only body for the cross-device consent variant. Reads the
- * pairing QR + status straight off the strategy so the strategy stays the
- * single source of truth for the remote handshake.
- */
-function RemoteConsentBody({
-    strategy,
-    isError,
-    onRetry,
-    onBack,
-}: {
+function RemoteConsentBody(props: {
     strategy: MergeStrategy;
     isError: boolean;
     onRetry: () => void;
     onBack: () => void;
 }) {
-    const { t } = useTranslation();
-    const pairingInfo = strategy.remote?.pairingState.pairing;
-    const status = strategy.remote?.pairingState.status ?? "idle";
-
     return (
-        <PageLayout
-            back={<Back onClick={onBack} />}
-            footer={
-                isError ? (
-                    <Box className={styles.footer}>
-                        <Button
-                            type="button"
-                            variant="primary"
-                            size="large"
-                            width="full"
-                            onClick={onRetry}
-                        >
-                            {t("wallet.merge.consent.retry")}
-                        </Button>
-                    </Box>
-                ) : undefined
-            }
-        >
-            <Stack space="l" className={styles.body}>
-                <Stack space="s">
-                    <Title size="page">
-                        {t("wallet.merge.consent.remote.title")}
-                    </Title>
-                    <Text variant="body" color="secondary">
-                        {t("wallet.merge.consent.remote.description")}
-                    </Text>
-                </Stack>
-
-                {pairingInfo ? (
-                    <Stack space="m" align="center">
-                        <PairingQrCode
-                            value={`${process.env.FRAK_WALLET_URL ?? ""}/p/${pairingInfo.id}`}
-                            size={200}
-                            errorCorrection="quartile"
-                        />
-                        <PairingStatus status={status} />
-                    </Stack>
-                ) : (
-                    <Stack space="m" align="center">
-                        <Spinner />
-                        <Text variant="bodySmall" color="secondary">
-                            {t("wallet.merge.consent.remote.preparing")}
-                        </Text>
-                    </Stack>
-                )}
-
-                {isError && (
-                    <Card variant="muted" padding="default">
-                        <Text variant="bodySmall" color="error">
-                            {t("wallet.merge.consent.remote.error")}
-                        </Text>
-                    </Card>
-                )}
-            </Stack>
-        </PageLayout>
+        <RemotePairingPanel
+            {...props}
+            i18nKeys={{
+                title: "wallet.merge.consent.remote.title",
+                description: "wallet.merge.consent.remote.description",
+                preparing: "wallet.merge.consent.remote.preparing",
+                error: "wallet.merge.consent.remote.error",
+                retry: "wallet.merge.consent.retry",
+            }}
+        />
     );
 }

@@ -1,4 +1,4 @@
-import { JwtContext, log } from "@backend-infrastructure";
+import { log } from "@backend-infrastructure";
 import { t } from "@backend-utils";
 import { WebAuthN } from "@frak-labs/app-essentials";
 import { currentChainId } from "@frak-labs/app-essentials/blockchain";
@@ -8,11 +8,7 @@ import {
 } from "@simplewebauthn/server";
 import { Elysia, getSchemaValidator, status } from "elysia";
 import type { PublicKeyCredential } from "ox/WebAuthnP256";
-import {
-    AuthContext,
-    type StaticWalletSdkTokenDto,
-    WalletAuthResponseDto,
-} from "../../../../domain/auth";
+import { AuthContext, WalletAuthResponseDto } from "../../../../domain/auth";
 import { IdentityContext } from "../../../../domain/identity/context";
 import { OrchestrationContext } from "../../../../orchestration/context";
 import { FrakClientIdHeaderSchema } from "../../../schemas";
@@ -183,23 +179,13 @@ export const registerRoutes = new Elysia()
                 }
             }
 
-            const additionalData: StaticWalletSdkTokenDto["additionalData"] =
-                {};
-
-            const sdkJwt =
-                await AuthContext.services.walletSdkSession.generateSdkJwt({
-                    wallet: walletAddress,
-                    additionalData,
+            const session =
+                await AuthContext.services.walletSession.mintForCredential({
+                    authenticatorId: document._id,
+                    walletAddress,
+                    publicKey,
+                    transports: document.transports,
                 });
-
-            const token = await JwtContext.wallet.sign({
-                address: walletAddress,
-                type: "webauthn",
-                authenticatorId: document._id,
-                publicKey: publicKey,
-                sub: walletAddress,
-                iat: Date.now(),
-            });
 
             if (created) {
                 await OrchestrationContext.orchestrators.identity.linkWalletToFingerprint(
@@ -212,15 +198,7 @@ export const registerRoutes = new Elysia()
                 );
             }
 
-            return {
-                token,
-                type: "webauthn",
-                address: walletAddress,
-                authenticatorId: document._id,
-                publicKey: document.publicKey,
-                transports: document.transports,
-                sdkJwt,
-            };
+            return session;
         },
         {
             body: t.Object({

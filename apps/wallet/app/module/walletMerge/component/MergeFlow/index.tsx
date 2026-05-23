@@ -1,4 +1,3 @@
-import type { MergeSettleResponse } from "@frak-labs/backend-elysia/api/schemas";
 import { Box } from "@frak-labs/design-system/components/Box";
 import { Button } from "@frak-labs/design-system/components/Button";
 import { sessionStore } from "@frak-labs/wallet-shared";
@@ -49,7 +48,7 @@ type Step =
     | { kind: "switch"; consentSignature: string }
     | { kind: "sign"; consentSignature: string }
     | { kind: "settling"; consentSignature: string; txHash?: Hex }
-    | { kind: "success"; settle: MergeSettleResponse };
+    | { kind: "success" };
 
 /**
  * Multi-step orchestrator for the wallet-merge flow.
@@ -58,8 +57,8 @@ type Step =
  * webauthn prompt, so the three biometric prompts the same-device merge
  * needs (loser consent → winner login → addPassKey signing) are explicitly
  * sequenced — never fired back-to-back from a single screen. The cross-step
- * state held here is intentionally narrow: the consent signature, the
- * post-sign tx hash, and the terminal settle response.
+ * state held here is intentionally narrow: the consent signature and the
+ * post-sign tx hash.
  *
  * The same-device vs cross-device behaviour is encapsulated by the
  * `MergeStrategy` chosen on `mode`. Step ordering, animations, copy, and
@@ -81,7 +80,10 @@ export function MergeFlow({
     const stepKindRef = useRef(step.kind);
     stepKindRef.current = step.kind;
 
-    const preview = useMergePreview(targetAuthenticatorId);
+    const preview = useMergePreview(
+        targetAuthenticatorId,
+        currentAuthenticatorId
+    );
 
     const assetCheck = useLoserAssetCheck({
         loser: preview.data?.loser,
@@ -288,13 +290,11 @@ export function MergeFlow({
                 onChainTxHash={step.txHash}
                 loserConsentSignature={step.consentSignature}
                 pairingId={strategy.pairingId}
-                onCompleted={(settle) => setStep({ kind: "success", settle })}
+                onCompleted={() => setStep({ kind: "success" })}
                 onCancel={handleAbort}
             />
         );
     }
 
-    return (
-        <SuccessStep settle={step.settle} email={email} onBack={onCompleted} />
-    );
+    return <SuccessStep email={email} onBack={onCompleted} />;
 }

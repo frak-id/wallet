@@ -40,7 +40,7 @@ export const mergePreviewRoutes = new Elysia().use(sessionContext).get(
         query: MergePreviewQuerySchema,
         response: {
             400: t.ErrorResponse,
-            401: t.String(),
+            401: t.ErrorResponse,
             404: t.ErrorResponse,
             409: t.ErrorResponse,
             200: MergePreviewSchema,

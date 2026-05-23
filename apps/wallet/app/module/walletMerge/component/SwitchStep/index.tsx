@@ -1,10 +1,8 @@
 import { Box } from "@frak-labs/design-system/components/Box";
 import { Button } from "@frak-labs/design-system/components/Button";
 import { Card } from "@frak-labs/design-system/components/Card";
-import { Spinner } from "@frak-labs/design-system/components/Spinner";
 import { Stack } from "@frak-labs/design-system/components/Stack";
 import { Text } from "@frak-labs/design-system/components/Text";
-import { PairingQrCode, PairingStatus } from "@frak-labs/wallet-shared";
 import { useCallback, useEffect, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import type { Address } from "viem";
@@ -16,7 +14,8 @@ import type {
     SwitchToWinnerMutation,
 } from "../../strategy/types";
 import { shortenAddress } from "../../utils/shortenAddress";
-import * as styles from "./index.css";
+import { RemotePairingPanel } from "../RemotePairingPanel";
+import * as styles from "../stepLayout.css";
 
 type SwitchStepProps = {
     /** Wallet of the credential we're about to switch the live session to. */
@@ -152,76 +151,22 @@ export function SwitchStep({
     );
 }
 
-function RemoteSwitchBody({
-    strategy,
-    isError,
-    onRetry,
-    onBack,
-}: {
+function RemoteSwitchBody(props: {
     strategy: MergeStrategy;
     isError: boolean;
     onRetry: () => void;
     onBack: () => void;
 }) {
-    const { t } = useTranslation();
-    const pairingInfo = strategy.remote?.pairingState.pairing;
-    const status = strategy.remote?.pairingState.status ?? "idle";
-
     return (
-        <PageLayout
-            back={<Back onClick={onBack} />}
-            footer={
-                isError ? (
-                    <Box className={styles.footer}>
-                        <Button
-                            type="button"
-                            variant="primary"
-                            size="large"
-                            width="full"
-                            onClick={onRetry}
-                        >
-                            {t("wallet.merge.switch.retry")}
-                        </Button>
-                    </Box>
-                ) : undefined
-            }
-        >
-            <Stack space="l" className={styles.body}>
-                <Stack space="s">
-                    <Title size="page">
-                        {t("wallet.merge.switch.remote.title")}
-                    </Title>
-                    <Text variant="body" color="secondary">
-                        {t("wallet.merge.switch.remote.description")}
-                    </Text>
-                </Stack>
-
-                {pairingInfo ? (
-                    <Stack space="m" align="center">
-                        <PairingQrCode
-                            value={`${process.env.FRAK_WALLET_URL ?? ""}/p/${pairingInfo.id}`}
-                            size={200}
-                            errorCorrection="quartile"
-                        />
-                        <PairingStatus status={status} />
-                    </Stack>
-                ) : (
-                    <Stack space="m" align="center">
-                        <Spinner />
-                        <Text variant="bodySmall" color="secondary">
-                            {t("wallet.merge.switch.remote.preparing")}
-                        </Text>
-                    </Stack>
-                )}
-
-                {isError && (
-                    <Card variant="muted" padding="default">
-                        <Text variant="bodySmall" color="error">
-                            {t("wallet.merge.switch.remote.error")}
-                        </Text>
-                    </Card>
-                )}
-            </Stack>
-        </PageLayout>
+        <RemotePairingPanel
+            {...props}
+            i18nKeys={{
+                title: "wallet.merge.switch.remote.title",
+                description: "wallet.merge.switch.remote.description",
+                preparing: "wallet.merge.switch.remote.preparing",
+                error: "wallet.merge.switch.remote.error",
+                retry: "wallet.merge.switch.retry",
+            }}
+        />
     );
 }

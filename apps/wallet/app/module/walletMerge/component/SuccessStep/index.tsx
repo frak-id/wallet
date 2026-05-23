@@ -1,12 +1,8 @@
-import type { MergeSettleResponse } from "@frak-labs/backend-elysia/api/schemas";
 import { Button } from "@frak-labs/design-system/components/Button";
 import { useTranslation } from "react-i18next";
 import { EmailFlowResultScreen } from "@/module/common/component/EmailFlowResultScreen";
 
 type SuccessStepProps = {
-    /** Backend confirmation. Kept on the props so future copy can name the
-     *  surviving wallet without re-deriving it on the client. */
-    settle: MergeSettleResponse;
     /** Email the user had just typed when the conflict was raised. */
     email: string;
     onBack: () => void;

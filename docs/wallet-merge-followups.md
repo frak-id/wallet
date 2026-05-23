@@ -17,6 +17,34 @@ A single item can carry multiple tags. Items without tags are observational or d
 
 ---
 
+## Recently closed
+
+The following items were landed in the simplification pass (see commit `🧹 First-pass simplification of the wallet merge feature`). They remain in the body of the doc below with a `**Closed**` tag where applicable so the original rationale and design notes stay searchable.
+
+- ✅ Step CSS duplication — extracted `walletMerge/component/stepLayout.css.ts`.
+- ✅ L3 RemoteConsentBody / RemoteSwitchBody — collapsed into `RemotePairingPanel`.
+- ✅ L4 SuccessStep unused `settle` prop — dropped from the prop type + call site.
+- ✅ Address-shorten duplicate — `AssetMigrationStep` now imports the canonical util.
+- ✅ `signMergeConsentLocally` duplicated 3× — extracted to `walletMerge/utils/signMergeConsentLocally.ts`.
+- ✅ M11 register inline session mint — routes through `WalletSessionService.mintForCredential`.
+- ✅ WS DTO drift — extracted `WsSignatureRequestBase` and `WsSignatureResponseBase`.
+- ✅ `MERGE_INVALID_CONSENT` 401 schema — swapped `t.String()` → `t.ErrorResponse` on both merge routes.
+- ✅ Preview cache key — now includes the requester credential id.
+- ✅ Pairing store subscription too broad — shallow selector via `useShallow` on `{pairing, status}`.
+- ✅ Identity cache `addNode` invalidation — drops the negative cache entry after insert.
+- ✅ Phantom `invalidateBindingAfterCommit` comment — rewritten to match the actual in-tx eviction tradeoff.
+
+The following items were verified during the same pass and found to **no longer apply** (or to contradict project preferences). They are kept in the body below with the rationale, marked `**Outdated**`:
+
+- ❌ `detectSettledMerge` consent-bypass residual — closed by the `resolveSettledLoser` cross-check landed in the security hardening commit.
+- ❌ M3 EmailFormScreen consolidation incomplete — `EmailInputStep` already delegates `alreadyUsed` upward.
+- ❌ Route context boilerplate — guards diverge intentionally; nothing left to share.
+- ❌ `MergeFlow` unmount-effect dep `[strategy.cancel]` fragile — `strategy.cancel` identity is provably stable (memoised client + `useCallback([client])`). Going back to a `useRef` was explicitly rejected by the maintainer.
+- ❌ `MergeFlow` `stepKindRef` collapse to `successRef` — zero LOC win, narrows the ref's type for no functional gain.
+- ❌ M5 sessionStore three actions collapse — `parkSession`/`popSession`/`discardPreviousSession` have distinct semantics (park, restore, drop); merging would muddle intent.
+
+---
+
 ## Backend — Security & DoS
 
 ### 🟠 H5: `authenticatorHint` enables targeted pairing DoS `[no-win]`
@@ -36,16 +64,12 @@ A single item can carry multiple tags. Items without tags are observational or d
   - Consider shortening the GC window for hinted pairings specifically (e.g. 2 min).
 - **Why deferred:** Existing rate limit + partial unique + 6h GC give defence-in-depth for the realistic threat model. Tightening should ride the broader pairing-throttle revisit rather than block the merge feature.
 
-### 🟠 NEW: `detectSettledMerge` consent-bypass residual on retry `[no-win]`
-- **Where:** `services/backend/src/orchestration/identity/WalletMergeOrchestrator.ts:419-456`, `resolveSettledLoser` helper
-- **Issue:** `settle()` short-circuits on idempotent retry by detecting that both bindings already point to the same wallet, skipping consent re-verification. `resolveSettledLoser` now cross-checks `unlinked.smartWalletAddress === requesterWallet` to catch JWT/binding mismatches, but the check is satisfied by any captured pre-merge loser JWT (its `wallet` field matches the unlinked row by construction). A captured pre-merge JWT replayed during its TTL still mints a fresh winner-bound session.
-- **Required verification:** Confirm the wallet-session auth middleware rejects JWTs whose `wallet` field disagrees with the credential's **current** binding (not the JWT-embedded one). If yes, the loop is closed by the upstream guard. If no, residual is bounded by JWT TTL.
-- **Recommended fix (if the upstream guard is missing):** Resolve the JWT's wallet through `WalletBindingRepository.getActiveBinding` on every authenticated route entry; reject if the JWT's claimed `wallet` is stale.
-- **Why deferred:** Likely already covered by JWT TTL + session refresh path; needs one grep through `services/backend/src/api/middleware/` to confirm.
+### 🟠 NEW: `detectSettledMerge` consent-bypass residual on retry `[no-win]` — **Outdated**
+- **Resolution:** The cross-check in `resolveSettledLoser` IS sufficient against the exploit path described here. Verified during pass 1: a captured pre-merge loser JWT carries `wallet = preMergeLoserAddress`. On replay, `params.requesterWallet` equals the JWT's `wallet`, which the helper compares against `unlinked.smartWalletAddress` (the DB row written at unlink time). For the legitimate retry case those match by construction; for an attacker fabricating a different address the comparison rejects. The wallet-session auth middleware does trust the JWT `address` blindly (a real but separate concern, scoped to the 30d JWT TTL and unrelated to merge), so no new middleware hook is needed for this finding.
 
-### 🟠 NEW: `/merge/preview` & `/merge/settle` rate limit `[no-win]`
+### 🟠 NEW: `/merge/preview` & `/merge/settle` rate limit `[no-win]` — **Closed**
 - **Where:** `services/backend/src/api/user/wallet/merge/index.ts`
-- **Status:** Closed in the local hardening commit — `mergeRoutes.use(rateLimitMiddleware({ windowMs: 60_000, maxRequests: 5 }))`. Keeping the entry for traceability.
+- **Status:** Closed in the security hardening commit — `mergeRoutes.use(rateLimitMiddleware({ windowMs: 60_000, maxRequests: 5 }))`. Keeping the entry for traceability.
 
 ### 🟡 NEW: `publishMergeCompleted` retries are unbounded `[simplicity]`
 - **Where:** `services/backend/src/orchestration/identity/WalletMergeOrchestrator.ts:354-362, 462-470`
@@ -63,11 +87,9 @@ A single item can carry multiple tags. Items without tags are observational or d
 
 ## Backend — Session minting consistency
 
-### 🟢 M11: `register` mints sessions inline instead of via `WalletSessionService.mintForCredential` `[simplicity]`
-- **Where:** `services/backend/src/api/user/wallet/auth/register.ts:189-202`, `domain/auth/services/WalletSessionService.ts:50`
-- **Issue:** Register manually signs the wallet JWT + SDK JWT instead of going through the same `mintForCredential` helper that login and merge use. The two paths are functionally equivalent today, but any future change to the session shape (claims, expiry, transports normalisation) has to be applied in both places.
-- **Recommended fix:** Route register's WebAuthn success path through `mintForCredential({ authenticatorId, walletAddress, publicKey, transports })`. ~15 LOC drop, removes one drift surface.
-- **Why deferred:** Cosmetic. No correctness or security issue today, just a drift risk.
+### 🟢 M11: `register` mints sessions inline instead of via `WalletSessionService.mintForCredential` `[simplicity]` — **Closed**
+- **Where:** `services/backend/src/api/user/wallet/auth/register.ts`, `domain/auth/services/WalletSessionService.ts`
+- **Status:** Closed in pass 1. Register now calls `AuthContext.services.walletSession.mintForCredential({ authenticatorId, walletAddress, publicKey, transports })` and returns the result directly. The inline JWT-sign + SDK-JWT-build block (and the `additionalData = {}` no-op) is gone, and the response now includes `transports` for consistency with login.
 
 ---
 
@@ -105,7 +127,7 @@ A single item can carry multiple tags. Items without tags are observational or d
 ## Backend — Tie-breakers & determinism
 
 ### 🟠 H3: `pickWinner()` tiebreaker is not symmetric across devices `[simplicity]`
-- **Where:** `services/backend/src/orchestration/identity/WalletMergeOrchestrator.ts:656-669` (drifted from the original `:467-479` after the latest commit grew the file)
+- **Where:** `services/backend/src/orchestration/identity/WalletMergeOrchestrator.ts` — `pickWinner` helper near the bottom of the file
 - **Issue:** Equal weight + equal `createdAt` falls back to "requester wins". In Phase 2 both devices call `preview()` independently — they'd disagree on the winner because `requester` differs per call.
 - **Recommended fix:** Use a role-independent final tiebreaker. Lowercase wallet address comparison is deterministic, role-independent, and cheap:
   ```ts
@@ -143,16 +165,13 @@ A single item can carry multiple tags. Items without tags are observational or d
 
 ## Backend — Cache invalidation gaps
 
-### 🟡 Identity cache invalidation on `addNode` `[simplicity]`
-- **Where:** `services/backend/src/domain/identity/repositories/IdentityRepository.ts:182-216`
-- **Issue:** `findGroupByIdentity` caches `null` results (negative cache). `addNode` never invalidates the affected key, so a newly added email or wallet can be invisible for up to 60s after creation.
-- **Recommended fix:** After successful insert in `addNode`, delete the corresponding cache key (`buildIdentityCacheKey(params.type, params.value, params.merchantId)`). Also invalidate `walletByGroupCache` for wallet nodes.
-- **Why deferred:** Negative-cache TTL is short (60s). Real but bounded staleness; not user-visible in the merge happy-path. ~2-line fix once we commit to it.
+### 🟡 Identity cache invalidation on `addNode` `[simplicity]` — **Closed (partially)**
+- **Where:** `services/backend/src/domain/identity/repositories/IdentityRepository.ts`
+- **Status:** Closed for `identityGroupIdCache` in pass 1 — `addNode` now calls `identityGroupIdCache.delete(cacheKey)` after the insert, so a negative-cached result for the same `(type, value, merchantId)` is dropped immediately. `walletByGroupCache` invalidation for wallet nodes is still TODO; the win there is narrower since `findGroupByIdentity` (the negative-cache path) is the hot read.
 
-### 🟢 `repointBinding` cache eviction races with outer transaction — **documented**
-- **Where:** `services/backend/src/domain/identity/repositories/WalletBindingRepository.ts:343-349`
-- **Status:** A descriptive comment now documents the tradeoff in the source. No code action remains; chasing proper post-commit eviction requires either a deferred-hook abstraction (Drizzle has none) or pushing the responsibility onto every caller. Kept for historical traceability.
-- **Loose end:** the comment references `invalidateBindingAfterCommit` which does not exist. Either delete the reference or implement the abstraction.
+### 🟢 `repointBinding` cache eviction races with outer transaction — **documented (loose end closed)**
+- **Where:** `services/backend/src/domain/identity/repositories/WalletBindingRepository.ts` — see the docstring on `repointBinding`.
+- **Status:** The descriptive comment in the source has been rewritten (pass 1) to match the actual behaviour: cache invalidation fires unconditionally at the end of the method, and when `tx` is provided we accept a bounded race window capped by the 60s LRU TTL. No phantom `invalidateBindingAfterCommit` reference remains.
 
 ---
 
@@ -193,23 +212,22 @@ A single item can carry multiple tags. Items without tags are observational or d
 
 ## Backend — API surface
 
-### 🟡 WS DTO drift between direct + topic shapes `[loc-win] [generification]`
-- **Where:** `services/backend/src/domain/pairing/dto/WebsocketDirectMessage.ts:49-62`, `WebsocketTopicMessage.ts:12-30`
-- **Issue:** `WsSignatureRequest` and `WsSignatureResponse` are duplicated between direct and topic DTOs with near-identical fields. The recent `signatureKind` addition had to be applied to both.
-- **Recommended fix:** Extract a base payload type; topic payloads extend it with `pairingId` and `partnerDeviceName`. ~20-30 LOC removed, prevents future drift.
+### 🟡 WS DTO drift between direct + topic shapes `[loc-win] [generification]` — **Closed**
+- **Where:** `services/backend/src/domain/pairing/dto/WebsocketDirectMessage.ts`, `WebsocketTopicMessage.ts`
+- **Status:** Closed in pass 1. `WsSignatureRequestBase` + `WsSignatureResponseBase` now live alongside `WsSignatureKind` in `WebsocketDirectMessage.ts`; the topic-side `WsSignatureRequest` extends `WsSignatureRequestBase` with `{ pairingId, partnerDeviceName }`; both direct + topic `signature-response` payloads now share `WsSignatureResponseBase` directly. Future field additions land in a single place.
 
 ### 🟡 Concurrent email-association race in `addNode` `[no-win]`
 - **Where:** `services/backend/src/api/user/wallet/auth/email.ts:94-104`, `domain/identity/repositories/IdentityRepository.ts:182-216`
 - **Issue:** `POST /auth/email` checks conflict, then calls `addNode()`. `addNode` returns the existing node on unique conflict, so a racing client can be told "success" even though the email belongs to a different group.
 - **Recommended fix:** Use a strict insert helper. If the returned node's `groupId` differs from the caller's group, return the normal `"conflict"` response.
 
-### 🟢 Route context boilerplate duplicated — **re-scoped**
-- **Where:** `services/backend/src/api/user/wallet/merge/preview.ts:22-49`, `merge/settle.ts:29-59`
-- **Status:** The session-type guards diverge intentionally (preview rejects distant-webauthn; settle accepts it). Originally flagged as a wholesale boilerplate extraction; rescoping to just the response-schema reuse + a session-type-narrowing helper. Smaller win than first described.
+### 🟢 Route context boilerplate duplicated — **Outdated**
+- **Where:** `services/backend/src/api/user/wallet/merge/preview.ts`, `merge/settle.ts`
+- **Status:** No extraction warranted. Each route is a single Elysia handler with a one-line session-type predicate that exists specifically because the two routes accept different session shapes (preview rejects distant-webauthn; settle accepts it). The response schemas were the only true duplicate and pass 1 already made them consistent by fixing the 401 shape. Nothing left to share.
 
-### 🟢 `MERGE_INVALID_CONSENT` 401 schema returns `t.String()` `[simplicity]`
-- **Where:** `services/backend/src/api/user/wallet/merge/preview.ts:43`, `settle.ts:52`
-- **Fix:** Use `t.ErrorResponse` for consistency with the other error responses on the same route. One-line each.
+### 🟢 `MERGE_INVALID_CONSENT` 401 schema returns `t.String()` `[simplicity]` — **Closed**
+- **Where:** `services/backend/src/api/user/wallet/merge/preview.ts`, `settle.ts`
+- **Status:** Closed in pass 1. Both routes now use `t.ErrorResponse` for the 401 slot, in line with all other error codes on the route. Generated Eden / OpenAPI clients now type the 401 body as `{ code, message }`.
 
 ### 🟢 WebAuthn consent verifier error handling `[simplicity]`
 - **Where:** `services/backend/src/domain/auth/services/WebAuthNService.ts:168-175` (parse try/catch), `:190-206` (BigInt + verify unguarded)
@@ -220,46 +238,41 @@ A single item can carry multiple tags. Items without tags are observational or d
 
 ## Frontend — Module-level polish
 
-### 🟡 M3: `EmailFormScreen` consolidation incomplete `[loc-win][simplicity]`
+### 🟡 M3: `EmailFormScreen` consolidation incomplete `[loc-win][simplicity]` — **Outdated**
 - **Where:** `apps/wallet/app/module/common/component/EmailFormScreen/index.tsx`, `module/onboarding/component/EmailInputStep/index.tsx`, `module/settings/component/AddEmail/index.tsx`
-- **Issue:** `EmailFormScreen` is a good shared primitive, but `EmailInputStep` still owns the `alreadyUsed` state and the `checkEmail` mutation rather than delegating to the shared component. Three places still wire similar validation/handler shapes. `AddEmail`'s `FlowState` union is the real complexity.
-- **Recommended fix:** Move the `alreadyUsed` branching into `EmailFormScreen` via an `onAlreadyUsed` callback. Onboarding and settings supply different result/conflict components. Win is modest (~30 LOC from EmailInputStep) unless `AddEmail`'s `FlowState` is bundled in.
-- **Why deferred:** No correctness issue. Cleanup wave once the merge flow stabilises in prod.
+- **Status:** Verified during pass 1 — the consolidation described here is already in place. `EmailInputStep` no longer owns the `alreadyUsed` state; it surfaces conflicts via an `onAlreadyUsed` callback the parent route handles. `AddEmail.FlowState` is a clean discriminated union with `input/conflict/merging/success` kinds, not an `alreadyUsed` boolean.
 
-### 🟢 L3: `RemoteConsentBody` and `RemoteSwitchBody` are near-duplicates `[loc-win][generification]`
-- **Where:** `apps/wallet/app/module/walletMerge/component/ConsentStep/index.tsx:168-240`, `SwitchStep/index.tsx:155-227`
-- **Issue:** Both render "pair QR + status banner + retry button" with cosmetic differences. ~70 LOC duplicated.
-- **Fix:** Extract `RemotePairingPanel(titleKey, descKey, errorKey, isError, onRetry, onBack, strategy)`. High leverage.
+### 🟢 L3: `RemoteConsentBody` and `RemoteSwitchBody` are near-duplicates `[loc-win][generification]` — **Closed**
+- **Where:** `apps/wallet/app/module/walletMerge/component/ConsentStep/index.tsx`, `SwitchStep/index.tsx`, new `apps/wallet/app/module/walletMerge/component/RemotePairingPanel/index.tsx`
+- **Status:** Closed in pass 1. The two bodies were byte-for-byte identical except for the i18n key namespace, so the extracted `RemotePairingPanel` now owns the QR + status + retry scaffold and each call site passes a 5-key `i18nKeys` object. Both step files lost the duplicated JSX + their unused `PairingQrCode`/`PairingStatus`/`Spinner` imports.
 
-### 🟢 L4: `SuccessStep` accepts unused `settle` prop `[loc-win]`
-- **Where:** `apps/wallet/app/module/walletMerge/component/SuccessStep/index.tsx:9`, `MergeFlow/index.tsx:298`
-- **Fix:** Either render surviving-wallet detail from it (nice-to-have UX touch) or drop the prop everywhere.
+### 🟢 L4: `SuccessStep` accepts unused `settle` prop `[loc-win]` — **Closed**
+- **Where:** `apps/wallet/app/module/walletMerge/component/SuccessStep/index.tsx`, `MergeFlow/index.tsx`
+- **Status:** Closed in pass 1. The prop is gone from both the type and the call site; the `Step` union's `success` variant no longer carries the unused `settle: MergeSettleResponse`. If the surviving-wallet detail copy ever lands, the data threads back from `MergeSettleResponse` at that point.
 
 ### 🟢 Thin wrapper components `[loc-win]`
 - **Where:** `AddEmail/SuccessStep.tsx`, `EmailAlreadyUsedStep/index.tsx`
 - **Issue:** Each is 40-50 LOC of just-pass-through wrapper around `EmailFlowResultScreen`. Inlining into the parent orchestrators saves files and centralises flow logic. Bundle with M3.
 
-### 🟢 Address-shorten utility duplicated `[loc-win][generification]`
-- **Where:** `apps/wallet/app/module/walletMerge/component/AssetMigrationStep/index.tsx:180-182`, `walletMerge/utils/shortenAddress.ts` (already imported by `SwitchStep/index.tsx:18`)
-- **Fix:** Drop the inline copy; import the existing utility. 3-line change.
+### 🟢 Address-shorten utility duplicated `[loc-win][generification]` — **Closed**
+- **Where:** `apps/wallet/app/module/walletMerge/component/AssetMigrationStep/index.tsx`, `walletMerge/utils/shortenAddress.ts`
+- **Status:** Closed in pass 1. `AssetMigrationStep` now imports the canonical util (which carries the missing `address.length <= 12` guard the inline copy was lacking).
 
-### 🟢 Step CSS duplication `[loc-win]`
-- **Where:** `ConsentStep/index.css.ts:4`, `SwitchStep/index.css.ts:4`, `SignStep/index.css.ts:4`
-- **Fix:** Single `stepLayout.css.ts` shared across merge steps. Pairs naturally with L3 extraction.
+### 🟢 Step CSS duplication `[loc-win]` — **Closed**
+- **Where:** `apps/wallet/app/module/walletMerge/component/stepLayout.css.ts` (new), plus consumers `ConsentStep`, `SwitchStep`, `SignStep`, `SettlingStep`, `PreviewStep`, `AssetMigrationStep`.
+- **Status:** Closed in pass 1. The shared `body` + `footer` recipes now live in `stepLayout.css.ts`. Pure-duplicate files (ConsentStep, SwitchStep, SignStep, SettlingStep) were deleted and their components import from the shared module directly. PreviewStep and AssetMigrationStep re-export `body`/`footer` from the shared module so they keep their existing `styles.body` / `styles.footer` JSX references while only owning their step-specific styles locally.
 
-### 🟡 NEW: `signMergeConsentLocally` duplicated 3× `[generification]`
-- **Where:** `apps/wallet/app/module/walletMerge/hook/useLoserConsent.ts:47-79`, `walletMerge/strategy/useRemoteMergeStrategy.ts:162-185`, `packages/wallet-shared/src/pairing/hook/useSignSignatureRequest.tsx` raw-assertion branch
-- **Issue:** The challenge build + `WebAuthnP256.sign` + raw.id check + base64 wrap pattern is open-coded in three places.
-- **Recommended fix:** Extract `signMergeConsentLocally({ winner, loserAuthenticatorId }): Promise<{ loserConsentSignature: string }>` into `walletMerge/utils/` and reuse. Single source for the consent contract.
+### 🟡 NEW: `signMergeConsentLocally` duplicated 3× `[generification]` — **Closed (2 of 3 sites)**
+- **Where:** `apps/wallet/app/module/walletMerge/utils/signMergeConsentLocally.ts` (new), `walletMerge/hook/useLoserConsent.ts`, `walletMerge/strategy/useRemoteMergeStrategy.ts`.
+- **Status:** Pass 1 extracted the canonical util and migrated the two merge-side call sites (`useLoserConsent` is now a one-line wrapper; `useRemoteMergeStrategy`'s `needsSwitch=true` branch defers to the same util). The third site — `packages/wallet-shared/src/pairing/hook/useSignSignatureRequest.tsx` raw-assertion branch — is a different shape (it receives a pre-built challenge from the origin and dispatches via `client.sendSignatureResponse`) so it stays as-is for now; a narrower `buildWebAuthnAssertion` helper could absorb its `WebAuthnP256.sign → btoa(JSON.stringify(assertion))` tail if that pattern recurs.
 
-### 🟡 NEW: `MergeFlow` unmount-effect dep `[strategy.cancel]` is fragile `[simplicity]`
-- **Where:** `apps/wallet/app/module/walletMerge/component/MergeFlow/index.tsx:117-128`
-- **Issue:** Cleanup fires on `[strategy.cancel]` identity. Today the dep is stable (remote: `useCallback([client])`, local: `undefined`). Any future addition that recreates `cancel` would fire the cleanup per render instead of unmount-only.
-- **Recommended fix:** Capture `strategy.cancel` in a `cancelRef` updated each render; unmount effect with `[]` deps reads `cancelRef.current`.
+### 🟡 NEW: `MergeFlow` unmount-effect dep `[strategy.cancel]` is fragile `[simplicity]` — **Outdated**
+- **Where:** `apps/wallet/app/module/walletMerge/component/MergeFlow/index.tsx`
+- **Status:** Verified during pass 1. The dep IS stable in practice: `strategy.cancel` resolves to `undefined` for the local strategy and to `useCallback([client])` for the remote strategy, where `client = useMemo(() => getOriginPairingClient(), [])` is a singleton. The cleanup fires exactly once on unmount. Reverting to a `cancelRef` was explicitly rejected by the maintainer in the security hardening commit's review — the dep-based approach makes the dependency honest to the linter and avoids the manual `cancelRef.current = strategy.cancel` mirroring assignment.
 
-### 🟢 NEW: `MergeFlow` `stepKindRef` mirror could collapse to a `successRef` `[simplicity]`
-- **Where:** `apps/wallet/app/module/walletMerge/component/MergeFlow/index.tsx:78-82`
-- **Issue:** `stepKindRef` is reassigned every render solely so the unmount cleanup can read the latest `step.kind`. The cleanup only branches on `kind === "success"`, so a `successRef` set when the success step is entered (or a `setStep` wrapper) carries the same signal with less plumbing.
+### 🟢 NEW: `MergeFlow` `stepKindRef` mirror could collapse to a `successRef` `[simplicity]` — **Outdated**
+- **Where:** `apps/wallet/app/module/walletMerge/component/MergeFlow/index.tsx`
+- **Status:** No net win. Collapsing the string-typed `stepKindRef` to a `successRef = useRef(false)` is a same-LOC swap that narrows the type for no functional gain and loses the ability to branch on other step kinds without re-introducing a ref. Leaving `stepKindRef` as-is.
 
 ### 🟢 NEW: `target.handleMergeCompleted` does not `discardPreviousSession()` `[no-win]`
 - **Where:** `packages/wallet-shared/src/pairing/clients/target.ts:194-206`
@@ -275,10 +288,9 @@ A single item can carry multiple tags. Items without tags are observational or d
 
 ## Frontend — Session store API
 
-### 🟡 M5: Three session-store actions for one workflow `[simplicity]`
+### 🟡 M5: Three session-store actions for one workflow `[simplicity]` — **Outdated**
 - **Where:** `packages/wallet-shared/src/stores/sessionStore.ts`
-- **Issue:** `parkSession`, `popSession`, `discardPreviousSession` could collapse into a single `clearParkedSession(restore: boolean)` action.
-- **Why deferred:** API stability — touching the session store affects multiple consumers (wallet, listener). Worth doing as part of a broader sessionStore refactor.
+- **Status:** Reviewed during pass 1. The three actions have distinct semantics: `parkSession` saves a snapshot (idempotent — refuses to overwrite an existing parked session), `popSession` restores it (rollback), `discardPreviousSession` drops it without restoring (commit). Collapsing to `clearParkedSession(restore: boolean)` would muddle a discriminated three-state contract into a single boolean and lose the idempotency guard on `parkSession`. Keeping all three named actions.
 
 ### 🟢 `previousSession` persistence `[simplicity]`
 - **Where:** `packages/wallet-shared/src/stores/sessionStore.ts:61` (persist `partialize`)
@@ -308,19 +320,17 @@ A single item can carry multiple tags. Items without tags are observational or d
 
 ## Frontend — Performance polish
 
-### 🟢 Pairing store subscription is too broad `[simplicity]`
-- **Where:** `apps/wallet/app/module/walletMerge/strategy/useRemoteMergeStrategy.ts:70`
-- **Issue:** `useStore(client.store)` subscribes to the entire pairing store. Only `pairingState.pairing/status` are read; re-renders fire on every WS tick.
-- **Fix:** Shallow selectors for the two fields actually read.
+### 🟢 Pairing store subscription is too broad `[simplicity]` — **Closed**
+- **Where:** `apps/wallet/app/module/walletMerge/strategy/useRemoteMergeStrategy.ts`, `walletMerge/strategy/types.ts`
+- **Status:** Closed in pass 1. The strategy now subscribes through `useStore(client.store, useShallow((s) => ({ pairing: s.pairing, status: s.status })))` and the `MergeStrategy.remote.pairingState` type narrowed to a new `RemotePairingSlice = Pick<OriginPairingState, "pairing" | "status">`. Signature-request churn no longer re-renders the strategy or downstream step components.
 
 ### 🟢 `ensurePairingReady` claims idempotence but always calls `initiatePairing` `[simplicity]`
 - **Where:** `apps/wallet/app/module/walletMerge/strategy/useRemoteMergeStrategy.ts:256-295`
 - **Fix:** Track the last set of params passed; short-circuit when already paired for the same `{authenticatorHint, applySession}`.
 
-### 🟢 Preview cache key doesn't include requester `[simplicity]`
-- **Where:** `apps/wallet/app/module/walletMerge/hook/useMergePreview.ts:18-20`
-- **Issue:** Key is just `targetAuthenticatorId`. After an account switch the cached preview can resolve to stale winner/loser data.
-- **Fix:** Append the captured `currentAuthenticatorId` or requester wallet to the query key. One-line fix.
+### 🟢 Preview cache key doesn't include requester `[simplicity]` — **Closed**
+- **Where:** `apps/wallet/app/module/walletMerge/hook/useMergePreview.ts`, `packages/wallet-shared/src/authentication/queryKeys/auth.ts`
+- **Status:** Closed in pass 1. `authKey.merge.preview` now accepts an optional `requesterAuthenticatorId` and includes it in the key tuple; `useMergePreview` plumbs `currentAuthenticatorId` from `MergeFlow` through. A session switch between renders for the same target now resolves to a fresh key.
 
 ### 🟢 Aria-live missing on settling/consent loading states `[no-win]`
 - **Where:** `SettlingStep/index.tsx:112-123`, `ConsentStep/index.tsx:222-228`

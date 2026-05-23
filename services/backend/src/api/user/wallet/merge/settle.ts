@@ -49,7 +49,7 @@ export const mergeSettleRoutes = new Elysia().use(sessionContext).post(
         body: MergeSettleBodySchema,
         response: {
             400: t.ErrorResponse,
-            401: t.String(),
+            401: t.ErrorResponse,
             404: t.ErrorResponse,
             409: t.ErrorResponse,
             422: t.ErrorResponse,

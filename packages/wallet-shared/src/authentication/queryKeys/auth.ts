@@ -57,8 +57,17 @@ export namespace authKey {
      */
     const mergeBase = "merge" as const;
     export const merge = {
-        preview: (targetAuthenticatorId: string) =>
-            [base, mergeBase, "preview", targetAuthenticatorId] as const,
+        preview: (
+            targetAuthenticatorId: string,
+            requesterAuthenticatorId = ""
+        ) =>
+            [
+                base,
+                mergeBase,
+                "preview",
+                targetAuthenticatorId,
+                requesterAuthenticatorId,
+            ] as const,
         consent: [base, mergeBase, "consent"] as const,
         switchAuthenticator: [base, mergeBase, "switchAuthenticator"] as const,
         sendAddPassKey: [base, mergeBase, "sendAddPassKey"] as const,

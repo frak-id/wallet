@@ -9,7 +9,7 @@ import type { Hex } from "viem";
 import { PageLayout } from "@/module/common/component/PageLayout";
 import { Title } from "@/module/common/component/Title";
 import { useSendAddPassKeyTx } from "../../hook/useSendAddPassKeyTx";
-import * as styles from "./index.css";
+import * as styles from "../stepLayout.css";
 
 type SignStepProps = {
     loserAuthenticatorId: string;

@@ -10,7 +10,7 @@ import type { Hex } from "viem";
 import { PageLayout } from "@/module/common/component/PageLayout";
 import { Title } from "@/module/common/component/Title";
 import { useMergeSettle } from "../../hook/useMergeSettle";
-import * as styles from "./index.css";
+import * as styles from "../stepLayout.css";
 
 type SettlingStepProps = {
     loserAuthenticatorId: string;

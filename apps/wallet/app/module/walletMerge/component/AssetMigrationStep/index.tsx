@@ -10,6 +10,7 @@ import { Back } from "@/module/common/component/Back";
 import { PageLayout } from "@/module/common/component/PageLayout";
 import { Title } from "@/module/common/component/Title";
 import type { LoserAssetCheckResult } from "../../hook/useLoserAssetCheck";
+import { shortenAddress } from "../../utils/shortenAddress";
 import * as styles from "./index.css";
 
 type AssetMigrationStepProps = {
@@ -175,10 +176,6 @@ export function AssetMigrationStep({
             </Stack>
         </PageLayout>
     );
-}
-
-function shortenAddress(address: Address): string {
-    return `${address.slice(0, 6)}…${address.slice(-4)}`;
 }
 
 function formatAmount(amount: number): string {

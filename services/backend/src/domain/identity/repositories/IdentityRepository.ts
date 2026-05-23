@@ -186,6 +186,11 @@ export class IdentityRepository {
         merchantId?: string;
     }): Promise<IdentityNodeSelect> {
         const normalizedValue = this.normalizeValue(params.type, params.value);
+        const cacheKey = this.buildIdentityCacheKey(
+            params.type,
+            normalizedValue,
+            params.merchantId
+        );
         const [result] = await db
             .insert(identityNodesTable)
             .values({
@@ -196,6 +201,12 @@ export class IdentityRepository {
             })
             .onConflictDoNothing()
             .returning();
+
+        // Drop the negative cache entry — `findGroupByIdentity` caches
+        // `null` for 60s, so a "does this email exist?" check fired
+        // moments before this insert would otherwise keep returning null
+        // for up to a minute after we just created the row.
+        this.identityGroupIdCache.delete(cacheKey);
 
         if (!result) {
             const existing = await db.query.identityNodesTable.findFirst({

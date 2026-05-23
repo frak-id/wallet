@@ -252,10 +252,13 @@ export class WalletBindingRepository {
      * binding repoint commits atomically with the identity-graph merge ops.
      * When called without `tx`, opens its own short-lived transaction.
      *
-     * Cache invalidation: when `tx` is provided the eviction is deferred to
-     * `invalidateBindingAfterCommit` so cache reads during the in-flight
-     * transaction can't repopulate from pre-commit state. Without `tx` the
-     * internal transaction has already committed by the time we evict.
+     * Cache invalidation fires unconditionally at the end of this method
+     * — see `invalidateBinding` below. When `tx` is provided we accept a
+     * bounded race window (cache reads during the outer in-flight
+     * transaction may repopulate from pre-commit state). The 60s TTL caps
+     * the staleness; chasing proper post-commit eviction would require a
+     * deferred-hook abstraction Drizzle doesn't provide and isn't worth
+     * the extra plumbing for the actual merge flow's read pattern.
      */
     async repointBinding({
         credentialId,
