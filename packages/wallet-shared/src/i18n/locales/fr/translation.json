@@ -229,7 +229,24 @@
                 },
                 "error": "La combinaison n'a pas pu se terminer. Réessaie — on reprend là où on s'est arrêté.",
                 "retry": "Réessayer",
-                "cancel": "Annuler"
+                "cancel": "Annuler",
+                "recover": {
+                    "userOpReverted": {
+                        "title": "La signature n'est pas passée",
+                        "body": "L'autorisation on-chain n'a pas abouti. Signe à nouveau pour terminer — tes comptes sont en sécurité.",
+                        "cta": "Signer à nouveau"
+                    },
+                    "invalidConsent": {
+                        "title": "Confirmation expirée",
+                        "body": "Trop de temps s'est écoulé depuis ta confirmation sur l'autre passkey. Reconfirme pour continuer — tes comptes sont en sécurité.",
+                        "cta": "Reconfirmer"
+                    },
+                    "onChainMismatch": {
+                        "title": "Quelque chose a changé",
+                        "body": "Tes comptes ont bougé pendant qu'on les combinait. On recommence depuis l'aperçu — rien n'est perdu.",
+                        "cta": "Recommencer"
+                    }
+                }
             },
             "success": {
                 "title": "Tes comptes ne font plus qu'un",

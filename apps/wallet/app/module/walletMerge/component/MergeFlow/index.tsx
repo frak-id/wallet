@@ -1,6 +1,6 @@
 import { Box } from "@frak-labs/design-system/components/Box";
 import { Button } from "@frak-labs/design-system/components/Button";
-import { sessionStore } from "@frak-labs/wallet-shared";
+import { type Flow, sessionStore, startFlow } from "@frak-labs/wallet-shared";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import type { Hex } from "viem";
@@ -76,9 +76,25 @@ export function MergeFlow({
     const { t } = useTranslation();
     const [step, setStep] = useState<Step>({ kind: "preview" });
     // Held in a ref so the unmount cleanup below reads the latest step kind
-    // without re-binding the effect every transition.
+    // without re-binding the effect every transition. The same ref feeds
+    // the analytics `last_step` field on abandoned flows.
     const stepKindRef = useRef(step.kind);
     stepKindRef.current = step.kind;
+
+    // Funnel: started on mount, ended as `succeeded` from the settling
+    // onCompleted callback below, ended as `abandoned` from this unmount
+    // cleanup. No `failed` outcome — coded settle errors are recoverable
+    // in-flow (see SettlingStep.onRecover) so abandons carry the
+    // diagnostic via `last_step`.
+    const flowRef = useRef<Flow<"wallet_merge"> | undefined>(undefined);
+    useEffect(() => {
+        const flow = startFlow("wallet_merge", { mode });
+        flowRef.current = flow;
+        return () => {
+            if (flow.ended) return;
+            flow.end("abandoned", { last_step: stepKindRef.current });
+        };
+    }, [mode]);
 
     const preview = useMergePreview(
         targetAuthenticatorId,
@@ -290,8 +306,26 @@ export function MergeFlow({
                 onChainTxHash={step.txHash}
                 loserConsentSignature={step.consentSignature}
                 pairingId={strategy.pairingId}
-                onCompleted={() => setStep({ kind: "success" })}
+                onCompleted={() => {
+                    flowRef.current?.end("succeeded", {
+                        last_step: "settling",
+                        requester_was_loser: needsSwitch === true,
+                    });
+                    setStep({ kind: "success" });
+                }}
                 onCancel={handleAbort}
+                onRecover={(target) => {
+                    if (target === "sign") {
+                        setStep({
+                            kind: "sign",
+                            consentSignature: step.consentSignature,
+                        });
+                    } else if (target === "consent") {
+                        setStep({ kind: "consent" });
+                    } else {
+                        setStep({ kind: "preview" });
+                    }
+                }}
             />
         );
     }

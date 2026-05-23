@@ -3,12 +3,12 @@ import { Button } from "@frak-labs/design-system/components/Button";
 import { Card } from "@frak-labs/design-system/components/Card";
 import { Stack } from "@frak-labs/design-system/components/Stack";
 import { Text } from "@frak-labs/design-system/components/Text";
-import { useCallback, useEffect, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import type { Address } from "viem";
 import { Back } from "@/module/common/component/Back";
 import { PageLayout } from "@/module/common/component/PageLayout";
 import { Title } from "@/module/common/component/Title";
+import { useAutoMutation } from "../../hook/useAutoMutation";
 import type { LoserConsentMutation, MergeStrategy } from "../../strategy/types";
 import { RemotePairingPanel } from "../RemotePairingPanel";
 import * as styles from "../stepLayout.css";
@@ -67,28 +67,15 @@ export function ConsentStep({
 }: ConsentStepProps) {
     const { t } = useTranslation();
 
-    const startedRef = useRef(false);
-
-    const runMutation = useCallback(() => {
-        consent.mutate(
-            { winner, loserAuthenticatorId },
-            {
-                onSuccess: ({ loserConsentSignature }) => {
-                    onConfirmed(loserConsentSignature);
-                },
-            }
-        );
-    }, [consent, winner, loserAuthenticatorId, onConfirmed]);
-
     // Remote consent auto-fires on mount — the user is being asked to
     // approve on the OTHER device, so there's no local CTA to click first.
     // Local consent still gates behind the explicit "verify" button.
-    useEffect(() => {
-        if (!remoteConsent) return;
-        if (startedRef.current) return;
-        startedRef.current = true;
-        runMutation();
-    }, [remoteConsent, runMutation]);
+    const { run } = useAutoMutation(consent, {
+        enabled: remoteConsent,
+        vars: { winner, loserAuthenticatorId },
+        onSuccess: ({ loserConsentSignature }) =>
+            onConfirmed(loserConsentSignature),
+    });
 
     if (remoteConsent) {
         return (
@@ -96,11 +83,9 @@ export function ConsentStep({
                 strategy={strategy}
                 isError={consent.isError}
                 onRetry={() => {
-                    startedRef.current = false;
                     consent.reset();
                     strategy.remote?.onRetry();
-                    startedRef.current = true;
-                    runMutation();
+                    run();
                 }}
                 onBack={onBack}
             />
@@ -117,7 +102,7 @@ export function ConsentStep({
                         variant="primary"
                         size="large"
                         width="full"
-                        onClick={runMutation}
+                        onClick={run}
                         loading={consent.isPending}
                         disabled={consent.isPending}
                     >

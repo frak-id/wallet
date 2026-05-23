@@ -208,6 +208,12 @@ export class IdentityRepository {
         // for up to a minute after we just created the row.
         this.identityGroupIdCache.delete(cacheKey);
 
+        // Mirror eviction for the per-group wallet resolver — only wallet
+        // inserts can flip a prior `null` cache hit.
+        if (params.type === "wallet") {
+            this.walletByGroupCache.delete(params.groupId);
+        }
+
         if (!result) {
             const existing = await db.query.identityNodesTable.findFirst({
                 where: and(

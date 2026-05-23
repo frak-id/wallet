@@ -3,12 +3,12 @@ import { Button } from "@frak-labs/design-system/components/Button";
 import { Card } from "@frak-labs/design-system/components/Card";
 import { Stack } from "@frak-labs/design-system/components/Stack";
 import { Text } from "@frak-labs/design-system/components/Text";
-import { useCallback, useEffect, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import type { Address } from "viem";
 import { Back } from "@/module/common/component/Back";
 import { PageLayout } from "@/module/common/component/PageLayout";
 import { Title } from "@/module/common/component/Title";
+import { useAutoMutation } from "../../hook/useAutoMutation";
 import type {
     MergeStrategy,
     SwitchToWinnerMutation,
@@ -53,30 +53,19 @@ export function SwitchStep({
     strategy,
 }: SwitchStepProps) {
     const { t } = useTranslation();
-    const startedRef = useRef(false);
     const short = shortenAddress(winnerWallet);
-
-    const runMutation = useCallback(() => {
-        switchAuth.mutate(
-            {
-                wallet: winnerWallet,
-                authenticatorId: winnerAuthenticatorId,
-            },
-            {
-                onSuccess: () => onSwitched(),
-            }
-        );
-    }, [switchAuth, winnerWallet, winnerAuthenticatorId, onSwitched]);
 
     // Remote switch is driven by a paired device — there's nothing for the
     // user to click locally, so auto-kick the mutation on mount. Local
     // switch still waits for explicit confirmation.
-    useEffect(() => {
-        if (strategy.mode !== "remote") return;
-        if (startedRef.current) return;
-        startedRef.current = true;
-        runMutation();
-    }, [strategy.mode, runMutation]);
+    const { run } = useAutoMutation(switchAuth, {
+        enabled: strategy.mode === "remote",
+        vars: {
+            wallet: winnerWallet,
+            authenticatorId: winnerAuthenticatorId,
+        },
+        onSuccess: () => onSwitched(),
+    });
 
     if (strategy.mode === "remote") {
         return (
@@ -84,11 +73,9 @@ export function SwitchStep({
                 strategy={strategy}
                 isError={switchAuth.isError}
                 onRetry={() => {
-                    startedRef.current = false;
                     switchAuth.reset();
                     strategy.remote?.onRetry();
-                    startedRef.current = true;
-                    runMutation();
+                    run();
                 }}
                 onBack={onBack}
             />
@@ -105,7 +92,7 @@ export function SwitchStep({
                         variant="primary"
                         size="large"
                         width="full"
-                        onClick={runMutation}
+                        onClick={run}
                         loading={switchAuth.isPending}
                         disabled={switchAuth.isPending}
                     >

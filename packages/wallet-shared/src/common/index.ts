@@ -49,6 +49,9 @@ export type {
     SharingSource,
     TokensEventMap,
     TokensSendAmountBucket,
+    WalletMergeEventMap,
+    WalletMergeMode,
+    WalletMergeStep,
     WalletModalEventMap,
 } from "./analytics";
 export {

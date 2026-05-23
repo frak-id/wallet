@@ -72,25 +72,34 @@ export function RemotePairingPanel({
                 </Stack>
 
                 {pairingInfo ? (
-                    <Stack space="m" align="center">
-                        <PairingQrCode
-                            value={`${process.env.FRAK_WALLET_URL ?? ""}/p/${pairingInfo.id}`}
-                            size={200}
-                            errorCorrection="quartile"
-                        />
-                        <PairingStatus status={status} />
-                    </Stack>
+                    <Box role="status" aria-live="polite">
+                        <Stack space="m" align="center">
+                            <PairingQrCode
+                                value={`${process.env.FRAK_WALLET_URL ?? ""}/p/${pairingInfo.id}`}
+                                size={200}
+                                errorCorrection="quartile"
+                            />
+                            <PairingStatus status={status} />
+                        </Stack>
+                    </Box>
                 ) : (
-                    <Stack space="m" align="center">
-                        <Spinner />
-                        <Text variant="bodySmall" color="secondary">
-                            {t(i18nKeys.preparing)}
-                        </Text>
-                    </Stack>
+                    <Box role="status" aria-live="polite">
+                        <Stack space="m" align="center">
+                            <Spinner />
+                            <Text variant="bodySmall" color="secondary">
+                                {t(i18nKeys.preparing)}
+                            </Text>
+                        </Stack>
+                    </Box>
                 )}
 
                 {isError && (
-                    <Card variant="muted" padding="default">
+                    <Card
+                        variant="muted"
+                        padding="default"
+                        role="alert"
+                        aria-live="assertive"
+                    >
                         <Text variant="bodySmall" color="error">
                             {t(i18nKeys.error)}
                         </Text>

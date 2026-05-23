@@ -231,7 +231,24 @@
                 },
                 "error": "The combine couldn't finish. Tap retry — we'll pick up where we left off.",
                 "retry": "Retry",
-                "cancel": "Cancel"
+                "cancel": "Cancel",
+                "recover": {
+                    "userOpReverted": {
+                        "title": "Signing didn't go through",
+                        "body": "The on-chain authorisation didn't land. Sign again to finish — your accounts are safe.",
+                        "cta": "Sign again"
+                    },
+                    "invalidConsent": {
+                        "title": "Confirmation expired",
+                        "body": "Too much time passed since you confirmed with your other passkey. Reconfirm to continue — your accounts are safe.",
+                        "cta": "Reconfirm"
+                    },
+                    "onChainMismatch": {
+                        "title": "Something looks different",
+                        "body": "Your accounts moved while we were combining them. Let's start over from the preview — nothing is lost.",
+                        "cta": "Start over"
+                    }
+                }
             },
             "success": {
                 "title": "Your accounts are now one",

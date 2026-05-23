@@ -721,6 +721,23 @@ export default interface Resources {
                         body: "Linking your accounts, transferring referrals and rewards. Hang tight.";
                         title: "Working on it…";
                     };
+                    recover: {
+                        invalidConsent: {
+                            body: "Too much time passed since you confirmed with your other passkey. Reconfirm to continue — your accounts are safe.";
+                            cta: "Reconfirm";
+                            title: "Confirmation expired";
+                        };
+                        onChainMismatch: {
+                            body: "Your accounts moved while we were combining them. Let's start over from the preview — nothing is lost.";
+                            cta: "Start over";
+                            title: "Something looks different";
+                        };
+                        userOpReverted: {
+                            body: "The on-chain authorisation didn't land. Sign again to finish — your accounts are safe.";
+                            cta: "Sign again";
+                            title: "Signing didn't go through";
+                        };
+                    };
                     retry: "Retry";
                     title: "Combining your accounts…";
                 };

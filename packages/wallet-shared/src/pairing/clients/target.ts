@@ -202,6 +202,11 @@ export class TargetPairingClient extends BasePairingClient<
                     .setSession({ ...wallet, token } as Session);
                 sessionStore.getState().setSdkSession(sdkJwt);
             }
+            // Target never parks during merge, so this is normally a no-op.
+            // Kept defensively to mirror origin's `useMergeSettle` cleanup
+            // and avoid an orphaned snapshot if mobile ever participates
+            // in a parked-session flow elsewhere.
+            sessionStore.getState().discardPreviousSession();
             return;
         }
     }
