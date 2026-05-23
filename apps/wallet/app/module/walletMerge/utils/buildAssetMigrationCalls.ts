@@ -14,9 +14,10 @@ export type AssetMigrationCall = {
  * loser's kernel `executeBatch` will run atomically:
  *
  *  - One `RewarderHub.claim(token)` per stablecoin with a non-zero
- *    claimable. The contract reverts on an empty claim — that revert is
- *    treated by the migrate mutation as a stale-read signal so the caller
- *    refetches and rebuilds.
+ *    claimable. RewarderHub reverts on an empty claim, so a stale read
+ *    here surfaces as a `MERGE_MIGRATE_USER_OP_REVERTED` failure that the
+ *    migrate mutation re-runs from scratch (fresh summary, fresh calls)
+ *    on user-triggered retry.
  *  - One `ERC20.transfer(winner, balance + claimable)` per stablecoin that
  *    has any value to move. The transfer is sized off the values captured
  *    at read-time; sequencing claim → transfer within the same UserOp

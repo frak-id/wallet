@@ -22,6 +22,12 @@ type UseMergeSettleArgs = {
      *  this receipt with ≥8 confirmations before POSTing to settle, so the
      *  backend only needs the validator readback to confirm the merge. */
     onChainTxHash?: Hex;
+    /** Tx hash returned by `useMigrateLoserAssets`. Waited on with the same
+     *  ≥8-confirmation threshold so the loser is observably drained before
+     *  the backend reconciliation runs — avoids a settle-before-funds-moved
+     *  race window where a concurrent reader could see the loser holding
+     *  funds it no longer logically owns. Omitted when nothing was migrated. */
+    migrateTxHash?: Hex;
     /** Base64 webauthn assertion produced by `useLoserConsent`. */
     loserConsentSignature: string;
     /**
@@ -63,21 +69,19 @@ export function useMergeSettle() {
         mutationFn: async ({
             loserAuthenticatorId,
             onChainTxHash,
+            migrateTxHash,
             loserConsentSignature,
             pairingId,
         }) => {
-            if (onChainTxHash && onChainTxHash !== "0x") {
-                const receipt = await waitForTransactionReceipt(
-                    currentViemClient,
-                    {
-                        hash: onChainTxHash,
-                        confirmations: 8,
-                    }
-                );
-                if (receipt.status !== "success") {
-                    throw new Error("MERGE_USER_OP_REVERTED");
-                }
-            }
+            // Both UserOps are submitted from independent smart accounts
+            // (winner for addPassKey, loser for migrate) so their receipts
+            // settle independently. Parallelising the waits cuts the worst
+            // case from ~2× block time down to ~1× — relevant since each
+            // wait requires 8 confirmations.
+            await Promise.all([
+                waitForMergeTx(onChainTxHash, "MERGE_USER_OP_REVERTED"),
+                waitForMergeTx(migrateTxHash, "MERGE_MIGRATE_USER_OP_REVERTED"),
+            ]);
 
             const { data, error } =
                 await authenticatedWalletApi.merge.settle.post({
@@ -112,6 +116,20 @@ export function useMergeSettle() {
             return data;
         },
     });
+}
+
+async function waitForMergeTx(
+    hash: Hex | undefined,
+    revertCode: string
+): Promise<void> {
+    if (!hash || hash === "0x") return;
+    const receipt = await waitForTransactionReceipt(currentViemClient, {
+        hash,
+        confirmations: 8,
+    });
+    if (receipt.status !== "success") {
+        throw new Error(revertCode);
+    }
 }
 
 function extractSettleErrorCode(value: unknown): string {

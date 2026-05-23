@@ -6,11 +6,11 @@ import { Stack } from "@frak-labs/design-system/components/Stack";
 import { Text } from "@frak-labs/design-system/components/Text";
 import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
-import { formatUnits } from "viem";
 import { Back } from "@/module/common/component/Back";
 import { PageLayout } from "@/module/common/component/PageLayout";
 import { Title } from "@/module/common/component/Title";
 import type { LoserAssetSummary } from "../../hook/useLoserAssetSummary";
+import { FundsList } from "../FundsList";
 import { WalletCard } from "../WalletCard";
 import * as styles from "./index.css";
 
@@ -142,41 +142,11 @@ export function PreviewStep({
                                     )}
                                 </Text>
                             </Stack>
-                            <Stack space="xs">
-                                {fundsToMove.map((entry) => (
-                                    <Box
-                                        key={entry.token}
-                                        className={styles.balanceRow}
-                                    >
-                                        <Text
-                                            variant="bodySmall"
-                                            weight="medium"
-                                        >
-                                            {entry.symbol}
-                                        </Text>
-                                        <Text
-                                            variant="bodySmall"
-                                            color="secondary"
-                                        >
-                                            {formatAmount(
-                                                entry.balance + entry.claimable,
-                                                entry.decimals
-                                            )}
-                                        </Text>
-                                    </Box>
-                                ))}
-                            </Stack>
+                            <FundsList entries={fundsToMove} />
                         </Stack>
                     </Card>
                 )}
             </Stack>
         </PageLayout>
     );
-}
-
-function formatAmount(amount: bigint, decimals: number): string {
-    const value = Number(formatUnits(amount, decimals));
-    return value.toLocaleString(undefined, {
-        maximumFractionDigits: 4,
-    });
 }

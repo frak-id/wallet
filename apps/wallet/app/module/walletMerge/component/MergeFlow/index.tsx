@@ -47,7 +47,12 @@ type Step =
     | { kind: "switch"; consentSignature: string }
     | { kind: "sign"; consentSignature: string }
     | { kind: "migrate"; consentSignature: string; addPassKeyTxHash?: Hex }
-    | { kind: "settling"; consentSignature: string; txHash?: Hex }
+    | {
+          kind: "settling";
+          consentSignature: string;
+          addPassKeyTxHash?: Hex;
+          migrateTxHash?: Hex;
+      }
     | { kind: "success" };
 
 /**
@@ -58,7 +63,7 @@ type Step =
  * needs (loser consent → winner login → addPassKey signing) are explicitly
  * sequenced — never fired back-to-back from a single screen. The cross-step
  * state held here is intentionally narrow: the consent signature and the
- * post-sign tx hash.
+ * two post-sign tx hashes (addPassKey + migrate).
  *
  * The same-device vs cross-device behaviour is encapsulated by the
  * `MergeStrategy` chosen on `mode`. Step ordering, animations, copy, and
@@ -134,6 +139,7 @@ export function MergeFlow({
 
     const consent = strategy.loserConsent;
     const switchToWinner = strategy.switchToWinner;
+    const migrate = strategy.migrateLoserAssets;
 
     // Tear down on every non-success unmount: cancel any in-flight pairing
     // handshake and restore the parked session. Cancelling the pairing
@@ -175,6 +181,35 @@ export function MergeFlow({
             );
         },
         [needsSwitch]
+    );
+
+    // Sign → migrate vs sign → settling routing. When the on-chain summary
+    // has resolved with `hasFunds: false` by the time the user hits sign,
+    // the migrate step would render a misleading "Move your funds" CTA
+    // over an empty list. Short-circuit straight to settling instead;
+    // AssetMigrationStep still defends the same case if the user lands
+    // there with a stale or pending summary.
+    const handleSigned = useCallback(
+        (txHash: Hex | undefined) => {
+            setStep((prev) => {
+                if (prev.kind !== "sign") return prev;
+                const summary = assetSummary.data;
+                const skipMigrate = summary !== undefined && !summary?.hasFunds;
+                if (skipMigrate) {
+                    return {
+                        kind: "settling",
+                        consentSignature: prev.consentSignature,
+                        addPassKeyTxHash: txHash,
+                    };
+                }
+                return {
+                    kind: "migrate",
+                    consentSignature: prev.consentSignature,
+                    addPassKeyTxHash: txHash,
+                };
+            });
+        },
+        [assetSummary.data]
     );
 
     if (preview.isLoading || !preview.data) {
@@ -276,13 +311,7 @@ export function MergeFlow({
             <SignStep
                 loserAuthenticatorId={preview.data.loserAuthenticatorId}
                 loserPublicKey={preview.data.loserPublicKey}
-                onSigned={(txHash) =>
-                    setStep({
-                        kind: "migrate",
-                        consentSignature: step.consentSignature,
-                        addPassKeyTxHash: txHash,
-                    })
-                }
+                onSigned={handleSigned}
                 onCancel={handleAbort}
             />
         );
@@ -295,13 +324,14 @@ export function MergeFlow({
                 winner={preview.data.winner}
                 loserAuthenticatorId={preview.data.loserAuthenticatorId}
                 loserPublicKey={preview.data.loserPublicKey}
-                summary={assetSummary.data}
-                migrate={strategy.migrateLoserAssets}
+                summary={assetSummary}
+                migrate={migrate}
                 onCompleted={() =>
                     setStep({
                         kind: "settling",
                         consentSignature: step.consentSignature,
-                        txHash: step.addPassKeyTxHash,
+                        addPassKeyTxHash: step.addPassKeyTxHash,
+                        migrateTxHash: migrate.data?.txHash,
                     })
                 }
                 onCancel={handleAbort}
@@ -313,13 +343,16 @@ export function MergeFlow({
         return (
             <SettlingStep
                 loserAuthenticatorId={preview.data.loserAuthenticatorId}
-                onChainTxHash={step.txHash}
+                onChainTxHash={step.addPassKeyTxHash}
+                migrateTxHash={step.migrateTxHash}
                 loserConsentSignature={step.consentSignature}
                 pairingId={strategy.pairingId}
                 onCompleted={() => {
                     flowRef.current?.end("succeeded", {
                         last_step: "settling",
                         requester_was_loser: needsSwitch === true,
+                        migrated: !!migrate.data?.txHash,
+                        migrate_token_count: migrate.data?.entriesMigrated ?? 0,
                     });
                     setStep({ kind: "success" });
                 }}
@@ -329,6 +362,12 @@ export function MergeFlow({
                         setStep({
                             kind: "sign",
                             consentSignature: step.consentSignature,
+                        });
+                    } else if (target === "migrate") {
+                        setStep({
+                            kind: "migrate",
+                            consentSignature: step.consentSignature,
+                            addPassKeyTxHash: step.addPassKeyTxHash,
                         });
                     } else if (target === "consent") {
                         setStep({ kind: "consent" });

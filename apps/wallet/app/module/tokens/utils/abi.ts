@@ -32,8 +32,9 @@ export const rewarderClaimBatchAbi = {
 /**
  * RewarderHub `claim(token) -> uint256` write. Used by the merge asset
  * migration to batch per-token claims inside the loser's kernel
- * `executeBatch`. A revert on an empty claim is treated as a stale-read
- * signal and surfaces as a retryable error.
+ * `executeBatch`. Reverts on an empty claim — the migrate mutation
+ * surfaces that as a retryable error so the next attempt rebuilds calls
+ * from a fresh summary read.
  */
 export const rewarderClaimAbi = {
     type: "function",

@@ -104,6 +104,17 @@ export async function fetchLoserAssetSummary(
         }
     );
 
+    // Largest holdings first so dust never pushes a meaningful balance
+    // off the visible area. Comparator returns the bigint sign instead of
+    // a Number cast — keeps full precision when balances differ by sub-cent
+    // amounts at high decimals.
+    entries.sort((a, b) => {
+        const aTotal = a.balance + a.claimable;
+        const bTotal = b.balance + b.claimable;
+        if (bTotal === aTotal) return 0;
+        return bTotal > aTotal ? 1 : -1;
+    });
+
     return {
         loser,
         entries,

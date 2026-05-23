@@ -162,12 +162,22 @@
                 "cancel": "Annuler"
             },
             "migrate": {
+                "loadingTitle": "Lecture de tes soldes…",
+                "loadingDescription": "On vérifie ce qu'il y a sur ton autre compte avant de le déplacer.",
+                "loading": "Chargement de tes soldes — un instant.",
+                "readyTitle": "Transfère tes fonds",
+                "readyDescription": "Appuie ci-dessous pour transférer tout depuis ton autre compte vers ton compte principal, en une seule étape.",
+                "start": "Transférer mes fonds",
                 "title": "Transfert de tes fonds…",
-                "description": "On transfère tout vers {{winner}} avant de finaliser. Ça prend quelques secondes.",
+                "description": "On envoie tout vers ton compte principal avant de finaliser. Ça prend quelques secondes.",
                 "errorTitle": "Impossible de transférer tes fonds",
                 "errorDescription": "Le transfert a été interrompu. Tes comptes sont en sécurité — réessaie avec les soldes mis à jour.",
+                "summaryErrorTitle": "Impossible de lire tes soldes",
+                "summaryErrorDescription": "Réessaie — on en a besoin avant de pouvoir transférer.",
+                "summaryError": "La lecture de tes soldes a échoué. Réessaie.",
+                "summaryRetry": "Réessayer",
                 "holdings": {
-                    "title": "Fonds en cours de transfert"
+                    "title": "Fonds à transférer"
                 },
                 "pending": "Envoi du transfert on-chain — patiente quelques instants.",
                 "error": "Le transfert n'est pas passé. Réessaie — on relit tes soldes avant de relancer.",
@@ -244,6 +254,11 @@
                         "title": "Quelque chose a changé",
                         "body": "Tes comptes ont bougé pendant qu'on les combinait. On recommence depuis l'aperçu — rien n'est perdu.",
                         "cta": "Recommencer"
+                    },
+                    "migrateReverted": {
+                        "title": "Les fonds n'ont pas bougé",
+                        "body": "Le transfert n'est pas passé on-chain. Relance-le pour terminer — tes comptes sont en sécurité.",
+                        "cta": "Relancer le transfert"
                     }
                 }
             },

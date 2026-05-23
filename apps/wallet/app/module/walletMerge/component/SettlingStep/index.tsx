@@ -16,11 +16,14 @@ import * as styles from "../stepLayout.css";
  * Step we bounce the user back to when a coded settle error tells us
  * exactly which earlier mutation needs to re-run.
  */
-export type SettleRecoveryTarget = "preview" | "consent" | "sign";
+export type SettleRecoveryTarget = "preview" | "consent" | "sign" | "migrate";
 
 type SettlingStepProps = {
     loserAuthenticatorId: string;
     onChainTxHash?: Hex;
+    /** Tx hash from the migrate UserOp. Forwarded to `useMergeSettle`
+     *  which waits for ≥8 confirmations on it before calling settle. */
+    migrateTxHash?: Hex;
     loserConsentSignature: string;
     /**
      * Set by the cross-device strategy once the pairing is live. Forwarded
@@ -59,6 +62,13 @@ function mapSettleError(code: string | undefined): SettleRecovery | null {
                 ctaKey: "wallet.merge.settling.recover.userOpReverted.cta",
                 target: "sign",
             };
+        case "MERGE_MIGRATE_USER_OP_REVERTED":
+            return {
+                titleKey: "wallet.merge.settling.recover.migrateReverted.title",
+                bodyKey: "wallet.merge.settling.recover.migrateReverted.body",
+                ctaKey: "wallet.merge.settling.recover.migrateReverted.cta",
+                target: "migrate",
+            };
         case "MERGE_INVALID_CONSENT":
             return {
                 titleKey: "wallet.merge.settling.recover.invalidConsent.title",
@@ -91,6 +101,7 @@ function mapSettleError(code: string | undefined): SettleRecovery | null {
 export function SettlingStep({
     loserAuthenticatorId,
     onChainTxHash,
+    migrateTxHash,
     loserConsentSignature,
     pairingId,
     onCompleted,
@@ -103,6 +114,7 @@ export function SettlingStep({
         vars: {
             loserAuthenticatorId,
             onChainTxHash,
+            migrateTxHash,
             loserConsentSignature,
             pairingId,
         },

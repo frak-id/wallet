@@ -3,14 +3,15 @@ import { Button } from "@frak-labs/design-system/components/Button";
 import { Card } from "@frak-labs/design-system/components/Card";
 import { Stack } from "@frak-labs/design-system/components/Stack";
 import { Text } from "@frak-labs/design-system/components/Text";
-import { useEffect, useRef } from "react";
+import type { UseQueryResult } from "@tanstack/react-query";
+import { useCallback, useEffect } from "react";
 import { useTranslation } from "react-i18next";
-import { type Address, formatUnits, type Hex } from "viem";
+import type { Address, Hex } from "viem";
 import { PageLayout } from "@/module/common/component/PageLayout";
 import { Title } from "@/module/common/component/Title";
 import type { LoserAssetSummary } from "../../hook/useLoserAssetSummary";
 import type { MigrateLoserAssetsMutation } from "../../strategy/types";
-import { shortenAddress } from "../../utils/shortenAddress";
+import { FundsList } from "../FundsList";
 import * as styles from "./index.css";
 
 type AssetMigrationStepProps = {
@@ -18,11 +19,10 @@ type AssetMigrationStepProps = {
     winner: Address;
     loserAuthenticatorId: string;
     loserPublicKey: { x: Hex; y: Hex };
-    /** Pre-fetched summary captured by the preview step. We don't trust it
-     *  for the actual submission — the mutation re-reads on entry — but we
-     *  use it to decide whether the step renders at all and to populate
-     *  the initial recap. */
-    summary: LoserAssetSummary | null | undefined;
+    /** Full query handle — we need `data` for the holdings card and the
+     *  loading/error/refetch trio to surface a useful screen while the
+     *  on-chain summary is still resolving. */
+    summary: UseQueryResult<LoserAssetSummary | null, Error>;
     migrate: MigrateLoserAssetsMutation;
     onCompleted: () => void;
     onCancel: () => void;
@@ -31,14 +31,17 @@ type AssetMigrationStepProps = {
 /**
  * Pre-settle step that drains the loser smart wallet of its remaining
  * stablecoin balances and pending rewarder claims, moving everything to
- * the winner in a single batched UserOp. Auto-fires on mount — by this
- * point the user has already authorised the addPassKey and the settle
- * step is one tx away, so an extra confirmation buys nothing.
+ * the winner in a single batched UserOp.
  *
- * On revert / error the user gets a retry CTA. The mutation re-reads the
- * summary on every run, so a stale-read revert (e.g. claimable raced to
- * zero) self-heals on retry. Cancel returns to the home screen via the
- * MergeFlow abort path.
+ * The user explicitly taps "Move my funds" — we deliberately do NOT
+ * auto-fire on mount. The previous addPassKey prompt was a system passkey
+ * prompt, and stacking another on top with no intermediate user action
+ * reads as a double-prompt bug on mobile.
+ *
+ * The summary query is read here (not just at preview time) so the screen
+ * stays useful when its load is slow, fails, or drains to empty between
+ * preview and migrate — including the defensive auto-advance to settle
+ * when the loser has nothing left to move.
  */
 export function AssetMigrationStep({
     loser,
@@ -52,27 +55,23 @@ export function AssetMigrationStep({
 }: AssetMigrationStepProps) {
     const { t } = useTranslation();
 
-    // Idempotency guard for the auto-fire effect: StrictMode + dev would
-    // otherwise pump the mutation twice on mount. The mutationKey already
-    // dedupes at the React Query layer, but tracking a local flag keeps
-    // the intent explicit.
-    const startedRef = useRef(false);
+    // Defensive auto-advance: if we land here with a fully resolved summary
+    // that has no funds (e.g. someone drained the loser between preview and
+    // sign), skip the screen instead of stranding the user on a CTA that
+    // would no-op. The MergeFlow's branch already tries to skip this step
+    // in the same condition; this is the belt-and-braces safety net.
     useEffect(() => {
-        if (startedRef.current) return;
-        if (!summary?.hasFunds) return;
-        if (migrate.isPending || migrate.isSuccess || migrate.isError) return;
-        startedRef.current = true;
+        if (summary.isLoading || summary.isError) return;
+        if (summary.data && !summary.data.hasFunds) onCompleted();
+    }, [summary.isLoading, summary.isError, summary.data, onCompleted]);
+
+    const start = useCallback(() => {
+        migrate.reset();
         migrate.mutate(
-            {
-                loser,
-                winner,
-                loserAuthenticatorId,
-                loserPublicKey,
-            },
+            { loser, winner, loserAuthenticatorId, loserPublicKey },
             { onSuccess: () => onCompleted() }
         );
     }, [
-        summary,
         migrate,
         loser,
         winner,
@@ -81,93 +80,68 @@ export function AssetMigrationStep({
         onCompleted,
     ]);
 
-    const retry = () => {
-        startedRef.current = true;
-        migrate.reset();
-        migrate.mutate(
-            {
-                loser,
-                winner,
-                loserAuthenticatorId,
-                loserPublicKey,
-            },
-            { onSuccess: () => onCompleted() }
-        );
-    };
+    // Title + description are state-driven so the screen reads correctly
+    // in every state without juggling five JSX branches.
+    const { titleKey, descriptionKey } = (() => {
+        if (summary.isLoading)
+            return {
+                titleKey: "wallet.merge.migrate.loadingTitle",
+                descriptionKey: "wallet.merge.migrate.loadingDescription",
+            };
+        if (summary.isError)
+            return {
+                titleKey: "wallet.merge.migrate.summaryErrorTitle",
+                descriptionKey: "wallet.merge.migrate.summaryErrorDescription",
+            };
+        if (migrate.isError)
+            return {
+                titleKey: "wallet.merge.migrate.errorTitle",
+                descriptionKey: "wallet.merge.migrate.errorDescription",
+            };
+        if (migrate.isPending)
+            return {
+                titleKey: "wallet.merge.migrate.title",
+                descriptionKey: "wallet.merge.migrate.description",
+            };
+        // Loaded, with funds, not yet started.
+        return {
+            titleKey: "wallet.merge.migrate.readyTitle",
+            descriptionKey: "wallet.merge.migrate.readyDescription",
+        };
+    })();
+
+    const showHoldings = !!summary.data?.hasFunds;
 
     return (
-        <PageLayout
-            footer={
-                migrate.isError ? (
-                    <Box className={styles.footer}>
-                        <Button
-                            type="button"
-                            variant="primary"
-                            size="large"
-                            width="full"
-                            onClick={retry}
-                        >
-                            {t("wallet.merge.migrate.retry")}
-                        </Button>
-                        <Button
-                            type="button"
-                            variant="secondary"
-                            size="large"
-                            width="full"
-                            onClick={onCancel}
-                        >
-                            {t("wallet.merge.migrate.cancel")}
-                        </Button>
-                    </Box>
-                ) : undefined
-            }
-        >
+        <PageLayout footer={renderFooter()}>
             <Stack space="l" className={styles.body}>
                 <Stack space="s">
-                    <Title size="page">
-                        {migrate.isError
-                            ? t("wallet.merge.migrate.errorTitle")
-                            : t("wallet.merge.migrate.title")}
-                    </Title>
+                    <Title size="page">{t(titleKey)}</Title>
                     <Text variant="body" color="secondary">
-                        {migrate.isError
-                            ? t("wallet.merge.migrate.errorDescription")
-                            : t("wallet.merge.migrate.description", {
-                                  winner: shortenAddress(winner),
-                              })}
+                        {t(descriptionKey)}
                     </Text>
                 </Stack>
 
-                {summary?.hasFunds && (
+                {summary.isLoading && (
+                    <Card
+                        variant="muted"
+                        padding="default"
+                        role="status"
+                        aria-live="polite"
+                    >
+                        <Text variant="bodySmall" color="secondary">
+                            {t("wallet.merge.migrate.loading")}
+                        </Text>
+                    </Card>
+                )}
+
+                {showHoldings && summary.data && (
                     <Card variant="elevated" padding="default">
                         <Stack space="s">
                             <Text variant="bodySmall" weight="semiBold">
                                 {t("wallet.merge.migrate.holdings.title")}
                             </Text>
-                            <Stack space="xs">
-                                {summary.entries.map((entry) => (
-                                    <Box
-                                        key={entry.token}
-                                        className={styles.balanceRow}
-                                    >
-                                        <Text
-                                            variant="bodySmall"
-                                            weight="medium"
-                                        >
-                                            {entry.symbol}
-                                        </Text>
-                                        <Text
-                                            variant="bodySmall"
-                                            color="secondary"
-                                        >
-                                            {formatAmount(
-                                                entry.balance + entry.claimable,
-                                                entry.decimals
-                                            )}
-                                        </Text>
-                                    </Box>
-                                ))}
-                            </Stack>
+                            <FundsList entries={summary.data.entries} />
                         </Stack>
                     </Card>
                 )}
@@ -197,14 +171,96 @@ export function AssetMigrationStep({
                         </Text>
                     </Card>
                 )}
+
+                {summary.isError && (
+                    <Card
+                        variant="muted"
+                        padding="default"
+                        role="alert"
+                        aria-live="assertive"
+                    >
+                        <Text variant="bodySmall" color="error">
+                            {t("wallet.merge.migrate.summaryError")}
+                        </Text>
+                    </Card>
+                )}
             </Stack>
         </PageLayout>
     );
-}
 
-function formatAmount(amount: bigint, decimals: number): string {
-    const value = Number(formatUnits(amount, decimals));
-    return value.toLocaleString(undefined, {
-        maximumFractionDigits: 4,
-    });
+    function renderFooter() {
+        if (summary.isError) {
+            return (
+                <Box className={styles.footer}>
+                    <Button
+                        type="button"
+                        variant="primary"
+                        size="large"
+                        width="full"
+                        onClick={() => summary.refetch()}
+                    >
+                        {t("wallet.merge.migrate.summaryRetry")}
+                    </Button>
+                    <Button
+                        type="button"
+                        variant="secondary"
+                        size="large"
+                        width="full"
+                        onClick={onCancel}
+                    >
+                        {t("wallet.merge.migrate.cancel")}
+                    </Button>
+                </Box>
+            );
+        }
+        if (migrate.isError) {
+            return (
+                <Box className={styles.footer}>
+                    <Button
+                        type="button"
+                        variant="primary"
+                        size="large"
+                        width="full"
+                        onClick={start}
+                    >
+                        {t("wallet.merge.migrate.retry")}
+                    </Button>
+                    <Button
+                        type="button"
+                        variant="secondary"
+                        size="large"
+                        width="full"
+                        onClick={onCancel}
+                    >
+                        {t("wallet.merge.migrate.cancel")}
+                    </Button>
+                </Box>
+            );
+        }
+        if (showHoldings && !migrate.isPending) {
+            return (
+                <Box className={styles.footer}>
+                    <Button
+                        type="button"
+                        variant="primary"
+                        size="large"
+                        width="full"
+                        onClick={start}
+                    >
+                        {t("wallet.merge.migrate.start")}
+                    </Button>
+                    <Button
+                        type="button"
+                        variant="secondary"
+                        size="large"
+                        width="full"
+                        onClick={onCancel}
+                    >
+                        {t("wallet.merge.migrate.cancel")}
+                    </Button>
+                </Box>
+            );
+        }
+        return undefined;
+    }
 }

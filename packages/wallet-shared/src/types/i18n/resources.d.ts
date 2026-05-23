@@ -669,15 +669,25 @@ export default interface Resources {
                 };
                 migrate: {
                     cancel: "Cancel";
-                    description: "Transferring everything to {{winner}} before we finalise the combine. This takes a few seconds.";
+                    description: "Sending everything to your primary account before we finalise the combine. This takes a few seconds.";
                     error: "The transfer didn't go through. Tap retry — we'll re-check your balances and try again.";
                     errorDescription: "Something interrupted the transfer. Your accounts are safe — tap retry to try again with the latest balances.";
                     errorTitle: "We couldn't move your funds";
                     holdings: {
-                        title: "Funds being moved";
+                        title: "Funds to move";
                     };
+                    loading: "Loading your balances — one second.";
+                    loadingDescription: "We need to know what's on your other account before we move it.";
+                    loadingTitle: "Checking your balances…";
                     pending: "Sending the transfer on-chain — hang tight.";
+                    readyDescription: "Tap below to transfer everything from your other account to your primary account in one go.";
+                    readyTitle: "Move your funds";
                     retry: "Retry";
+                    start: "Move my funds";
+                    summaryError: "Loading your balances failed. Tap retry to try again.";
+                    summaryErrorDescription: "Tap retry — we need this before we can move your funds.";
+                    summaryErrorTitle: "We couldn't load your balances";
+                    summaryRetry: "Retry";
                     title: "Moving your funds…";
                 };
                 preview: {
@@ -725,6 +735,11 @@ export default interface Resources {
                             body: "Too much time passed since you confirmed with your other passkey. Reconfirm to continue — your accounts are safe.";
                             cta: "Reconfirm";
                             title: "Confirmation expired";
+                        };
+                        migrateReverted: {
+                            body: "The transfer didn't land on-chain. Run it again to finish — your accounts are safe.";
+                            cta: "Move funds again";
+                            title: "Funds didn't move";
                         };
                         onChainMismatch: {
                             body: "Your accounts moved while we were combining them. Let's start over from the preview — nothing is lost.";

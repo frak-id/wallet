@@ -1,17 +1,13 @@
 import { addresses } from "@frak-labs/app-essentials";
-import { describe, expect, it } from "vitest";
 import {
-    type Address,
     decodeFunctionData,
     getAddress,
     type Hex,
     keccak256,
     toHex,
 } from "viem";
-import {
-    erc20TransferAbi,
-    rewarderClaimAbi,
-} from "@/module/tokens/utils/abi";
+import { describe, expect, it } from "vitest";
+import { erc20TransferAbi, rewarderClaimAbi } from "@/module/tokens/utils/abi";
 import type {
     LoserAssetSummary,
     LoserAssetSummaryEntry,
