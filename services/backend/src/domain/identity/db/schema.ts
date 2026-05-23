@@ -13,6 +13,7 @@ import {
     varchar,
 } from "drizzle-orm/pg-core";
 import type { Address } from "viem";
+import { customHex } from "../../../utils/drizzle/customTypes";
 
 /**
  * Source of truth for the identity-node taxonomy. Defined here (next to the
@@ -97,7 +98,7 @@ export const authenticatorWalletBindingsTable = pgTable(
         id: bigserial("id", { mode: "number" }).primaryKey(),
         authenticatorId: text("authenticator_id").notNull(),
         chainId: integer("chain_id").notNull(),
-        smartWalletAddress: text("smart_wallet_address")
+        smartWalletAddress: customHex("smart_wallet_address")
             .$type<Address>()
             .notNull(),
         createdAt: timestamp("created_at").notNull().defaultNow(),

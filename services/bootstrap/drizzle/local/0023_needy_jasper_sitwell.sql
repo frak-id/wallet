@@ -1,0 +1,2 @@
+ALTER TABLE "authenticator_wallet_bindings" ALTER COLUMN "smart_wallet_address" SET DATA TYPE "bytea" USING decode(substring(smart_wallet_address from 3), 'hex');--> statement-breakpoint
+ALTER TABLE "pairing_signature_request" ADD COLUMN "kind" varchar;

@@ -2,7 +2,7 @@ import { db } from "@backend-infrastructure";
 import { HttpError } from "@backend-utils";
 import { count, eq, or } from "drizzle-orm";
 import { LRUCache } from "lru-cache";
-import type { Address } from "viem";
+import { type Address, isAddressEqual } from "viem";
 import { referralLinksTable } from "../../domain/attribution/db/schema";
 import type { IdentityRepository } from "../../domain/identity/repositories/IdentityRepository";
 import {
@@ -166,7 +166,11 @@ export class IdentityWeightService {
         anchorWallet: Address | null;
     } | null {
         if (weight1.hasWallet && weight2.hasWallet) {
-            if (weight1.wallet !== weight2.wallet) {
+            if (
+                weight1.wallet &&
+                weight2.wallet &&
+                !isAddressEqual(weight1.wallet, weight2.wallet)
+            ) {
                 throw HttpError.conflict(
                     "WALLET_CONFLICT",
                     `Cannot merge groups with different wallets: ${weight1.wallet} vs ${weight2.wallet}`

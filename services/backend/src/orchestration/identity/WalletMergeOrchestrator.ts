@@ -80,7 +80,7 @@ export class WalletMergeOrchestrator {
         }
 
         const targetWallet = targetBinding.smartWalletAddress;
-        if (targetWallet.toLowerCase() === requesterWallet.toLowerCase()) {
+        if (isAddressEqual(targetWallet, requesterWallet)) {
             throw HttpError.conflict(
                 "MERGE_SAME_WALLET",
                 "Requester and target resolve to the same wallet"

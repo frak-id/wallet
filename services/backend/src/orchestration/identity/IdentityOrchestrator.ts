@@ -1,6 +1,6 @@
 import { log } from "@backend-infrastructure";
 import { HttpError } from "@backend-utils";
-import type { Address } from "viem";
+import { type Address, isAddressEqual } from "viem";
 import type { IdentityRepository } from "../../domain/identity/repositories/IdentityRepository";
 import type { IdentityMergeService } from "./IdentityMergeService";
 import type { IdentityWeightService } from "./IdentityWeightService";
@@ -62,7 +62,7 @@ export class IdentityOrchestrator {
         if (
             weight1.wallet &&
             weight2.wallet &&
-            weight1.wallet !== weight2.wallet
+            !isAddressEqual(weight1.wallet, weight2.wallet)
         ) {
             throw HttpError.conflict(
                 "WALLET_CONFLICT",

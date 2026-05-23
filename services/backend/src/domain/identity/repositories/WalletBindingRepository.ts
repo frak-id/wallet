@@ -2,7 +2,7 @@ import { db } from "@backend-infrastructure";
 import type { FrakChainId } from "@frak-labs/app-essentials/blockchain";
 import { and, desc, eq, isNotNull, isNull } from "drizzle-orm";
 import { LRUCache } from "lru-cache";
-import type { Address } from "viem";
+import { type Address, isAddressEqual } from "viem";
 import {
     type AuthenticatorWalletBindingSelect,
     authenticatorWalletBindingsTable,
@@ -17,17 +17,6 @@ import {
  */
 type PgTx = Parameters<Parameters<typeof db.transaction>[0]>[0];
 type PgRunner = typeof db | PgTx;
-
-/**
- * Wallet addresses are stored lowercased on the binding table to match the
- * normalisation used by `identity_nodes` (see `IdentityRepository.normalizeValue`).
- * That keeps the partial unique on `(authenticator_id, chain_id)` and the
- * by-wallet lookup index coherent regardless of which entry point inserted
- * the row.
- */
-function normalizeWallet(address: Address): Address {
-    return address.toLowerCase() as Address;
-}
 
 type ActiveBindingCacheValue = {
     value: AuthenticatorWalletBindingSelect | null;
@@ -131,7 +120,7 @@ export class WalletBindingRepository {
                 and(
                     eq(
                         authenticatorWalletBindingsTable.smartWalletAddress,
-                        normalizeWallet(smartWalletAddress)
+                        smartWalletAddress
                     ),
                     eq(authenticatorWalletBindingsTable.chainId, chainId),
                     isNull(authenticatorWalletBindingsTable.unlinkedAt)
@@ -205,7 +194,7 @@ export class WalletBindingRepository {
             .values({
                 authenticatorId: credentialId,
                 chainId,
-                smartWalletAddress: normalizeWallet(smartWalletAddress),
+                smartWalletAddress,
                 reason: "initial",
             })
             .onConflictDoNothing();
@@ -281,8 +270,6 @@ export class WalletBindingRepository {
         reason: BindingReason;
         tx?: PgTx;
     }): Promise<AuthenticatorWalletBindingSelect> {
-        const normalized = normalizeWallet(toSmartWalletAddress);
-
         const run = async (
             runner: PgRunner
         ): Promise<AuthenticatorWalletBindingSelect> => {
@@ -309,8 +296,10 @@ export class WalletBindingRepository {
             // the history table clean and lets settle() converge on success.
             if (
                 existingRow &&
-                existingRow.smartWalletAddress.toLowerCase() ===
-                    normalized.toLowerCase()
+                isAddressEqual(
+                    existingRow.smartWalletAddress,
+                    toSmartWalletAddress
+                )
             ) {
                 return existingRow;
             }
@@ -329,7 +318,7 @@ export class WalletBindingRepository {
                 .values({
                     authenticatorId: credentialId,
                     chainId,
-                    smartWalletAddress: normalized,
+                    smartWalletAddress: toSmartWalletAddress,
                     reason,
                 })
                 .returning();

@@ -172,8 +172,7 @@ async function seedBindingsForBatch({
         bindingRows.push({
             authenticatorId: auth.id,
             chainId: currentChainId,
-            smartWalletAddress:
-                auth.smartWalletAddress.toLowerCase() as WalletAddress,
+            smartWalletAddress: auth.smartWalletAddress as WalletAddress,
             reason: "initial",
         });
     }
