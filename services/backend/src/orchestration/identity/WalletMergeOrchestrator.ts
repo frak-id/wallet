@@ -133,14 +133,27 @@ export class WalletMergeOrchestrator {
 
         const winner = requesterWins ? requesterWallet : targetWallet;
         const loser = requesterWins ? targetWallet : requesterWallet;
+        const winnerAuthenticatorId = requesterWins
+            ? requesterAuthenticatorId
+            : targetAuthenticatorId;
         const loserAuthenticatorId = requesterWins
             ? targetAuthenticatorId
             : requesterAuthenticatorId;
 
-        const loserCredential =
-            await this.authenticatorRepository.getByCredentialId(
+        const [winnerCredential, loserCredential] = await Promise.all([
+            this.authenticatorRepository.getByCredentialId(
+                winnerAuthenticatorId
+            ),
+            this.authenticatorRepository.getByCredentialId(
                 loserAuthenticatorId
+            ),
+        ]);
+        if (!winnerCredential) {
+            throw HttpError.notFound(
+                "MERGE_WINNER_CREDENTIAL_NOT_FOUND",
+                `No authenticator row for ${winnerAuthenticatorId}`
             );
+        }
         if (!loserCredential) {
             throw HttpError.notFound(
                 "MERGE_LOSER_CREDENTIAL_NOT_FOUND",
@@ -153,6 +166,11 @@ export class WalletMergeOrchestrator {
             targetWallet,
             winner,
             loser,
+            winnerAuthenticatorId,
+            winnerPublicKey: {
+                x: winnerCredential.publicKey.x,
+                y: winnerCredential.publicKey.y,
+            },
             loserAuthenticatorId,
             loserPublicKey: {
                 x: loserCredential.publicKey.x,

@@ -34,8 +34,9 @@ type FlowState =
           kind: "merging";
           email: string;
           /** Credential the user was signed in as when they entered the
-           *  merge flow. Snapshotted here so the SwitchStep can later swap
-           *  the live session without losing the original target. */
+           *  merge flow. Snapshotted here so MergeFlow can derive
+           *  winner/loser without depending on a session that may shift
+           *  outside the flow's control. */
           currentAuthenticatorId: string;
           targetAuthenticatorId: string;
           targetWallet: Address;
@@ -124,10 +125,9 @@ export function AddEmail() {
         // `currentAuthenticatorId` is captured from the session at flow
         // entry (see the `onMerge` handler below) and held on the flow
         // state for the lifetime of the merge. We deliberately do **not**
-        // re-read it from the live session here: the merge's SwitchStep
-        // swaps the live session to the winner credential mid-flow, and
-        // gating this branch on the current session would flicker the user
-        // back to the ConflictStep during that swap.
+        // re-read it from the live session here: keeping it stable lets
+        // MergeFlow derive winner/loser invariants without re-resolving
+        // them every render.
         return (
             <MergeFlow
                 email={flowState.email}

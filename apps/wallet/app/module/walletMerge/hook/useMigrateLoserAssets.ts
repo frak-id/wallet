@@ -3,7 +3,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import type { Address, Hex } from "viem";
 import { waitForTransactionReceipt } from "viem/actions";
 import { buildAssetMigrationCalls } from "../utils/buildAssetMigrationCalls";
-import { buildLoserBundlerClient } from "../utils/buildLoserBundlerClient";
+import { buildMergeBundlerClient } from "../utils/buildMergeBundlerClient";
 import {
     fetchLoserAssetSummary,
     loserAssetSummaryQueryKey,
@@ -89,10 +89,10 @@ export function useMigrateLoserAssets({
                     return { txHash: undefined, entriesMigrated: 0 };
                 }
 
-                const client = await buildLoserBundlerClient({
-                    loser,
-                    loserAuthenticatorId,
-                    loserPublicKey,
+                const client = await buildMergeBundlerClient({
+                    address: loser,
+                    authenticatorId: loserAuthenticatorId,
+                    publicKey: loserPublicKey,
                     transport,
                 });
 

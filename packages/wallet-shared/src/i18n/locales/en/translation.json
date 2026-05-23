@@ -203,23 +203,6 @@
                     "error": "We couldn't reach your other device. Try again, or pick a different email."
                 }
             },
-            "switch": {
-                "title": "Open your other account",
-                "description": "We'll log you in on {{wallet}} so you can authorise the combine from that account.",
-                "help": {
-                    "title": "What happens here",
-                    "description": "Your device will ask you to confirm with the other account's passkey — face, fingerprint or PIN. You'll be moved back to this account as soon as the combine finishes."
-                },
-                "confirm": "Open {{wallet}}",
-                "retry": "Try again",
-                "error": "We couldn't open the other account on this device. Make sure its passkey is available here, then try again.",
-                "remote": {
-                    "title": "Connect your other device",
-                    "description": "Scan this QR code with the device that holds your other passkey. We'll use it to authorise the combine — no need to switch passkeys here.",
-                    "preparing": "Preparing a secure connection…",
-                    "error": "We couldn't reach your other device. Try again, or pick a different email."
-                }
-            },
             "sign": {
                 "title": "Authorise the combine",
                 "description": "One last confirmation to bring your two accounts together.",

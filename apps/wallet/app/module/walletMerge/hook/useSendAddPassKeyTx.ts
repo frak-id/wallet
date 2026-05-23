@@ -4,55 +4,103 @@ import {
 } from "@frak-labs/app-essentials";
 import { authKey, currentViemClient } from "@frak-labs/wallet-shared";
 import { useMutation } from "@tanstack/react-query";
-import { encodeFunctionData, type Hex, keccak256, toHex } from "viem";
+import {
+    type Address,
+    encodeFunctionData,
+    type Hex,
+    keccak256,
+    toHex,
+} from "viem";
 import { readContract } from "viem/actions";
-import { useConnection, useSendTransaction } from "wagmi";
+import { buildMergeBundlerClient } from "../utils/buildMergeBundlerClient";
 
-type UseSendAddPassKeyTxArgs = {
+export type SendAddPassKeyResult = {
+    /**
+     * `undefined` when the loser passkey is already bound to the winner
+     * wallet on-chain (idempotent no-op success — happens on retries after
+     * a previous landed userOp).
+     */
+    txHash?: Hex;
+};
+
+export type SendAddPassKeyArgs = {
+    /** Winner smart wallet — owner of the addPassKey userOp. */
+    winner: Address;
+    /** Credential id of the winner passkey (signs the userOp). */
+    winnerAuthenticatorId: string;
+    /** Winner passkey pubkey, as taken from the merge preview. */
+    winnerPublicKey: { x: Hex; y: Hex };
     /** Credential id of the loser passkey being added to the winner wallet. */
     loserAuthenticatorId: string;
     /** Loser passkey pubkey, as taken from the merge preview. */
     loserPublicKey: { x: Hex; y: Hex };
 };
 
-/**
- * Sends the on-chain `addPassKey(authenticatorIdHash, x, y)` userOp through
- * the live wagmi smart-account session. The caller is expected to have
- * already switched the live session to the winner credential
- * (`useSwitchAuthenticator`) so the userOp is produced from the winner's
- * smart-account context.
- *
- * Returns the transaction hash. The settle step (`useMergeSettle`) takes that
- * hash and finalises the off-chain repoint + identity merge.
- */
-export function useSendAddPassKeyTx() {
-    const { mutateAsync: sendTransactionAsync } = useSendTransaction();
-    const { address } = useConnection();
+type UseSendAddPassKeyTxArgs = {
+    /**
+     * `"local"` for the same-device merge and for the cross-device case
+     * where the WINNER passkey lives on this device. `"paired"` for the
+     * cross-device case where the winner passkey lives on the peer
+     * (signing routes through the merge's already-open origin pairing).
+     */
+    transport: "local" | "paired";
+};
 
-    return useMutation<Hex | null, Error, UseSendAddPassKeyTxArgs>({
+/**
+ * Sends the on-chain `addPassKey(authenticatorIdHash, x, y)` userOp from
+ * the winner smart wallet, binding the loser passkey to it.
+ *
+ * Builds a dedicated bundler client pinned to the winner identity instead
+ * of going through wagmi — this lets the merge run without ever swapping
+ * the live wagmi session, so the flow is symmetric with the loser-side
+ * asset migration step. Transport selection mirrors `useMigrateLoserAssets`.
+ *
+ * Idempotent: a read of the on-chain validator first short-circuits with
+ * `{ txHash: undefined }` if the loser passkey is already bound, so a
+ * retry after a previously-landed addPassKey skips straight to settle.
+ *
+ * Returns the userOp hash. The settle step (`useMergeSettle`) takes that
+ * hash and waits for ≥8 confirmations before finalising the off-chain
+ * repoint + identity merge.
+ */
+export function useSendAddPassKeyTx({ transport }: UseSendAddPassKeyTxArgs) {
+    return useMutation<SendAddPassKeyResult, Error, SendAddPassKeyArgs>({
         mutationKey: authKey.merge.sendAddPassKey,
         gcTime: 0,
-        mutationFn: async ({ loserAuthenticatorId, loserPublicKey }) => {
+        mutationFn: async ({
+            winner,
+            winnerAuthenticatorId,
+            winnerPublicKey,
+            loserAuthenticatorId,
+            loserPublicKey,
+        }) => {
             const loserAuthenticatorIdHash = keccak256(
                 toHex(loserAuthenticatorId)
             );
-            // Check if loser cred is already present
-            if (address) {
-                const [_, pubKey] = await readContract(currentViemClient, {
-                    address: addresses.webAuthNValidator,
-                    abi: multiWebAuthNValidatorV2Abi,
-                    functionName: "getPasskey",
-                    args: [address, loserAuthenticatorIdHash],
-                });
 
-                // If yes early exit
-                if (
-                    pubKey.x === BigInt(loserPublicKey.x) &&
-                    pubKey.y === BigInt(loserPublicKey.y)
-                ) {
-                    return null;
-                }
+            // Idempotent early exit if loser cred already lives under winner
+            // on-chain (a previously-landed addPassKey from an earlier
+            // run-through). The settle step will treat `txHash: undefined`
+            // as "nothing to wait for" and skip straight to the POST.
+            const [_, existing] = await readContract(currentViemClient, {
+                address: addresses.webAuthNValidator,
+                abi: multiWebAuthNValidatorV2Abi,
+                functionName: "getPasskey",
+                args: [winner, loserAuthenticatorIdHash],
+            });
+            if (
+                existing.x === BigInt(loserPublicKey.x) &&
+                existing.y === BigInt(loserPublicKey.y)
+            ) {
+                return { txHash: undefined };
             }
+
+            const client = await buildMergeBundlerClient({
+                address: winner,
+                authenticatorId: winnerAuthenticatorId,
+                publicKey: winnerPublicKey,
+                transport,
+            });
 
             const data = encodeFunctionData({
                 abi: multiWebAuthNValidatorV2Abi,
@@ -63,10 +111,17 @@ export function useSendAddPassKeyTx() {
                     BigInt(loserPublicKey.y),
                 ],
             });
-            return sendTransactionAsync({
-                to: addresses.webAuthNValidator,
-                data,
+
+            const txHash = await client.sendUserOperation({
+                calls: [
+                    {
+                        to: addresses.webAuthNValidator,
+                        data,
+                    },
+                ],
             });
+
+            return { txHash };
         },
     });
 }

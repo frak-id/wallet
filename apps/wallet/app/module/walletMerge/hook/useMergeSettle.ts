@@ -53,12 +53,6 @@ type UseMergeSettleArgs = {
  * `setSdkSession` so the user lands on a session that resolves to the
  * canonical wallet without a separate `/login` round-trip.
  *
- * The parked snapshot from {@link useSwitchAuthenticator} is discarded
- * unconditionally on success — the merge is durable, no path remains where
- * restoring the loser snapshot is desirable. The rollback paths in
- * `MergeFlow` still call `popSession` for every non-success exit (aborts,
- * unmount) so cancelled merges always end up back on the original session.
- *
  * Endpoint is idempotent — retrying with the same `(loserAuthenticatorId,
  * onChainTxHash, loserConsentSignature)` triplet converges.
  */
@@ -107,11 +101,6 @@ export function useMergeSettle() {
                     .setSession({ ...rest, type, token } as Session);
                 sessionStore.getState().setSdkSession(sdkJwt);
             }
-
-            // Drop the parked snapshot now that the merge is durably
-            // applied server-side. No-op when nothing was parked (requester
-            // was already the winner before the flow).
-            sessionStore.getState().discardPreviousSession();
 
             return data;
         },

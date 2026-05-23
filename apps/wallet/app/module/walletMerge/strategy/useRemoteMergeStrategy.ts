@@ -2,11 +2,7 @@ import {
     buildMergeConsentChallenge,
     formatMergeConsentHourSlot,
 } from "@frak-labs/app-essentials";
-import {
-    authKey,
-    getOriginPairingClient,
-    type Session,
-} from "@frak-labs/wallet-shared";
+import { authKey, getOriginPairingClient } from "@frak-labs/wallet-shared";
 import { useMutation } from "@tanstack/react-query";
 import { useCallback, useMemo } from "react";
 import { stringToHex } from "viem";
@@ -14,24 +10,22 @@ import { useStore } from "zustand";
 import { useShallow } from "zustand/react/shallow";
 import type { LoserConsentResult } from "../hook/useLoserConsent";
 import { useMigrateLoserAssets } from "../hook/useMigrateLoserAssets";
+import { useSendAddPassKeyTx } from "../hook/useSendAddPassKeyTx";
 import { signMergeConsentLocally } from "../utils/signMergeConsentLocally";
 import type {
     LoserConsentArgs,
     LoserConsentMutation,
     MergeStrategy,
     RemotePairingSlice,
-    SwitchToWinnerArgs,
-    SwitchToWinnerMutation,
 } from "./types";
 
 type UseRemoteMergeStrategyArgs = {
     /**
      * `true` when desktop is the loser (mobile holds the winner passkey) —
-     * pairing must swap the live session to distant-webauthn so wagmi
-     * tunnels the on-chain step through the paired peer.
+     * pairing must ferry the winner's addPassKey signing through to mobile.
      * `false` when desktop is the winner (mobile holds the loser passkey) —
-     * pairing only carries the consent assertion; desktop keeps its own
-     * local session for signing the userOp.
+     * pairing ferries the loser's consent + asset-migration signing through
+     * to mobile while addPassKey signs locally.
      * `undefined` while preview is still loading; the returned mutations
      * throw if invoked before this resolves.
      */
@@ -45,17 +39,14 @@ type UseRemoteMergeStrategyArgs = {
 /**
  * Cross-device merge strategy backed by the existing `OriginPairingClient`.
  *
- * Mirrors the two branches of the same-device flow:
- *  - `needsSwitch=true` (desktop=loser, mobile=winner): pairing is
- *    initiated with `applySession=true` so `OriginPairingClient` swaps the
- *    live session for distant-webauthn=B. Wagmi then routes the on-chain
- *    `addPassKey` userOp through the pairing automatically via
- *    `frakPairedWalletSmartAccount`.
- *  - `needsSwitch=false` (desktop=winner, mobile=loser): pairing is
- *    initiated with `applySession=false` so the WS connection is upgraded
- *    but `sessionStore` stays on the local winner session. The loser
- *    consent assertion is ferried back as a `signatureKind: "raw-assertion"`
- *    signature-request.
+ * The pairing is opened in WS-only mode (no `sessionStore` swap) and acts
+ * purely as a signing transport for whichever credential is not physically
+ * on this device. Transport selection per mutation:
+ *
+ *  | needsSwitch | who is on mobile | sendAddPassKey | migrateLoserAssets | loserConsent |
+ *  |-------------|------------------|----------------|--------------------|--------------|
+ *  | true        | winner           | paired         | local              | local        |
+ *  | false       | loser            | local          | paired             | paired       |
  *
  * The hint passed to `initiatePairing` always points at the credential we
  * expect the mobile to authenticate as — i.e. the credential that is NOT
@@ -94,16 +85,19 @@ export function useRemoteMergeStrategy({
         remoteCredentialId,
         client,
     });
-    const switchToWinner = useRemoteSwitchToWinner({
-        remoteCredentialId,
-        client,
+    // Winner passkey is local when desktop is the winner (needsSwitch=false);
+    // otherwise the winner cred lives on the paired mobile and the
+    // addPassKey userOp routes through the merge pairing. `undefined`
+    // during preview loading defaults to "local" — the mutation's args
+    // check kicks in before that gets exercised since MergeFlow guards the
+    // sign step behind `preview.data` being resolved.
+    const sendAddPassKey = useSendAddPassKeyTx({
+        transport: needsSwitch ? "paired" : "local",
     });
-    // Loser passkey is local when desktop is the loser (needsSwitch=true);
-    // otherwise it lives on the paired mobile and the loser UserOp is
-    // signed over the existing merge pairing. `undefined` during preview
-    // loading defaults to "paired" — the mutation's args check kicks in
-    // before that gets exercised since MergeFlow guards the migrate step
-    // behind `preview.data` being resolved.
+    // Mirror of `sendAddPassKey`: loser passkey is local when desktop is
+    // the loser (needsSwitch=true); otherwise it lives on the paired
+    // mobile and the migration UserOp is signed over the existing merge
+    // pairing.
     const migrateLoserAssets = useMigrateLoserAssets({
         transport: needsSwitch ? "local" : "paired",
     });
@@ -121,15 +115,10 @@ export function useRemoteMergeStrategy({
     }, [client]);
 
     // Tear down the pairing session when MergeFlow exits via any path that
-    // isn't the terminal success step. Without this, a late `authenticated`
-    // event arriving after the user has aborted would still apply a distant
-    // session to the live slot (handleAuthenticated is unconditional in the
-    // OriginPairingClient). `softReset()` clears the in-flight handshake +
-    // rejects any pending signature-request promise WITHOUT touching
-    // `sessionStore` — `reset()` would call `clearSession()` and log the
-    // user out (`session`, `previousSession`, and `sdkSession` are all
-    // wiped), which is fine after a 4401 but catastrophic on a user-driven
-    // merge cancel.
+    // isn't the terminal success step. `softReset()` clears the in-flight
+    // handshake + rejects any pending signature-request promise — the
+    // pairing never swaps the live session in this flow so there's no
+    // `sessionStore` mutation to undo.
     const cancel = useCallback(() => {
         client.cancelAllSignatureRequests("merge-aborted");
         client.softReset();
@@ -144,7 +133,7 @@ export function useRemoteMergeStrategy({
         },
         cancel,
         loserConsent,
-        switchToWinner,
+        sendAddPassKey,
         migrateLoserAssets,
     };
 }
@@ -188,8 +177,7 @@ function useRemoteLoserConsent({
             // Desktop is the winner — loser passkey is on the paired
             // mobile. Initiate the pairing if it isn't live yet, then ask
             // the peer for the consent assertion over the WS as
-            // `raw-assertion`. `applySession: false` keeps the local
-            // session intact for the subsequent local userOp signing.
+            // `raw-assertion`.
             if (!remoteCredentialId) {
                 throw new Error("MERGE_REMOTE_CONSENT_HINT_MISSING");
             }
@@ -201,7 +189,6 @@ function useRemoteLoserConsent({
             const challenge = stringToHex(challengeString);
             await ensurePairingReady({
                 client,
-                applySession: false,
                 authenticatorHint: remoteCredentialId,
             });
             const loserConsentSignature = await client.sendSignatureRequest(
@@ -214,55 +201,16 @@ function useRemoteLoserConsent({
 }
 
 /**
- * Cross-device equivalent of `useSwitchAuthenticator`. Drives the pairing
- * handshake with `applySession=true` so `OriginPairingClient.handleMessage`
- * parks the existing session and swaps the live slot for the freshly
- * minted distant-webauthn session. Resolves once `authenticated` has
- * landed and the live slot has been updated.
- *
- * Only used in the `needsSwitch=true` branch (desktop is the loser);
- * MergeFlow skips this step otherwise.
- */
-function useRemoteSwitchToWinner({
-    remoteCredentialId,
-    client,
-}: {
-    remoteCredentialId: string | undefined;
-    client: ReturnType<typeof getOriginPairingClient>;
-}): SwitchToWinnerMutation {
-    return useMutation<Session | undefined, Error, SwitchToWinnerArgs>({
-        mutationKey: authKey.merge.switchAuthenticator,
-        gcTime: 0,
-        mutationFn: async () => {
-            if (!remoteCredentialId) {
-                throw new Error("MERGE_REMOTE_SWITCH_HINT_MISSING");
-            }
-            await ensurePairingReady({
-                client,
-                applySession: true,
-                authenticatorHint: remoteCredentialId,
-            });
-            // The pairing client wrote the distant-webauthn session into
-            // sessionStore during `authenticated` handling. Wagmi will pick
-            // it up on next render — no explicit return value needed by
-            // MergeFlow.
-        },
-    });
-}
-
-/**
  * Initiate the pairing (if not already authenticated for the supplied
- * params) and resolve once the WS handshake completes. Idempotent at the
+ * hint) and resolve once the WS handshake completes. Idempotent at the
  * Promise level — multiple callers waiting on the same handshake all
  * resolve from the single backend `authenticated` event.
  */
 function ensurePairingReady({
     client,
-    applySession,
     authenticatorHint,
 }: {
     client: ReturnType<typeof getOriginPairingClient>;
-    applySession: boolean;
     authenticatorHint: string;
 }): Promise<void> {
     return new Promise<void>((resolve, reject) => {
@@ -291,7 +239,6 @@ function ensurePairingReady({
 
         void client.initiatePairing({
             authenticatorHint,
-            applySession,
             onSuccess: () => finish(() => resolve()),
         });
     });

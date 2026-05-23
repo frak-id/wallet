@@ -1,6 +1,6 @@
 import { Box } from "@frak-labs/design-system/components/Box";
 import { Button } from "@frak-labs/design-system/components/Button";
-import { type Flow, sessionStore, startFlow } from "@frak-labs/wallet-shared";
+import { type Flow, startFlow } from "@frak-labs/wallet-shared";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import type { Hex } from "viem";
@@ -15,17 +15,11 @@ import { PreviewStep } from "../PreviewStep";
 import { SettlingStep } from "../SettlingStep";
 import { SignStep } from "../SignStep";
 import { SuccessStep } from "../SuccessStep";
-import { SwitchStep } from "../SwitchStep";
 
 type MergeFlowProps = {
     /** Email the user typed in the AddEmail input step. */
     email: string;
-    /** Credential currently logged in — captured by the parent at flow
-     *  entry and held constant for the lifetime of the flow. We deliberately
-     *  do **not** read it from the live session store: the SwitchStep
-     *  temporarily swaps the live session and we still need to know who the
-     *  original credential was to compute `needsSwitch` and to pick the
-     *  winner credential id later. */
+    /** Credential currently logged in — captured by the parent at flow entry. */
     currentAuthenticatorId: string;
     /** The conflicting credential identified by the AddEmail backend. */
     targetAuthenticatorId: string;
@@ -44,31 +38,25 @@ type MergeFlowProps = {
 type Step =
     | { kind: "preview" }
     | { kind: "consent" }
-    | { kind: "switch"; consentSignature: string }
     | { kind: "sign"; consentSignature: string }
     | { kind: "migrate"; consentSignature: string; addPassKeyTxHash?: Hex }
-    | {
-          kind: "settling";
-          consentSignature: string;
-          addPassKeyTxHash?: Hex;
-          migrateTxHash?: Hex;
-      }
+    | { kind: "settling"; consentSignature: string; txHash?: Hex }
     | { kind: "success" };
 
 /**
  * Multi-step orchestrator for the wallet-merge flow.
  *
  * Each user-visible step is a self-contained screen owning at most one
- * webauthn prompt, so the three biometric prompts the same-device merge
- * needs (loser consent → winner login → addPassKey signing) are explicitly
- * sequenced — never fired back-to-back from a single screen. The cross-step
- * state held here is intentionally narrow: the consent signature and the
- * two post-sign tx hashes (addPassKey + migrate).
+ * webauthn prompt. The merge owns its own bundler clients (winner +
+ * loser) via the active strategy, so the live wagmi session is never
+ * mutated — the consent, addPassKey, and migration userOps each sign
+ * with the appropriate credential through either the local WebAuthn
+ * ceremony or the merge's origin pairing, never by swapping the live
+ * session.
  *
- * The same-device vs cross-device behaviour is encapsulated by the
- * `MergeStrategy` chosen on `mode`. Step ordering, animations, copy, and
- * back-navigation are identical between the two — only what happens inside
- * the consent / switch mutations differs.
+ * Step ordering, animations, copy, and back-navigation are identical
+ * between local and remote — only what happens inside each mutation
+ * differs, encapsulated by the `MergeStrategy` chosen on `mode`.
  */
 export function MergeFlow({
     email,
@@ -137,80 +125,21 @@ export function MergeFlow({
     });
     const strategy = mode === "remote" ? remoteStrategy : localStrategy;
 
-    const consent = strategy.loserConsent;
-    const switchToWinner = strategy.switchToWinner;
-    const migrate = strategy.migrateLoserAssets;
-
     // Tear down on every non-success unmount: cancel any in-flight pairing
-    // handshake and restore the parked session. Cancelling the pairing
-    // matters most for the cross-device flow — a late `authenticated`
-    // event arriving after the user aborted would otherwise apply a
-    // distant session to the live slot. `popSession` handles user-driven
-    // aborts, AddEmail flipping back to the conflict screen, and
-    // route-level unmounts. Both ops are no-ops when there's nothing to
-    // clean up.
-    //
-    // No mount-side pop: orphan snapshots from a crashed tab would have to
-    // be cleaned by their real owner anyway, and a blind pop on mount can
-    // clobber an unrelated flow's snapshot (e.g. pairing.tsx parked one
-    // before the user navigated here).
-    //
-    // `strategy.cancel` is a stable reference (useCallback for remote,
-    // undefined for local) so this effect's dep list never invalidates
-    // during a flow's lifetime.
+    // handshake. Matters for the cross-device flow — `softReset` clears
+    // pending signature-requests so a late peer reply doesn't apply to a
+    // flow the user has already aborted. No-op for the local strategy.
     useEffect(() => {
         return () => {
             if (stepKindRef.current === "success") return;
             strategy.cancel?.();
-            sessionStore.getState().popSession();
         };
     }, [strategy.cancel]);
 
     const handleAbort = useCallback(() => {
         strategy.cancel?.();
-        sessionStore.getState().popSession();
         onAbort();
     }, [onAbort, strategy.cancel]);
-
-    const handleConsentConfirmed = useCallback(
-        (consentSignature: string) => {
-            setStep(
-                needsSwitch
-                    ? { kind: "switch", consentSignature }
-                    : { kind: "sign", consentSignature }
-            );
-        },
-        [needsSwitch]
-    );
-
-    // Sign → migrate vs sign → settling routing. When the on-chain summary
-    // has resolved with `hasFunds: false` by the time the user hits sign,
-    // the migrate step would render a misleading "Move your funds" CTA
-    // over an empty list. Short-circuit straight to settling instead;
-    // AssetMigrationStep still defends the same case if the user lands
-    // there with a stale or pending summary.
-    const handleSigned = useCallback(
-        (txHash: Hex | undefined) => {
-            setStep((prev) => {
-                if (prev.kind !== "sign") return prev;
-                const summary = assetSummary.data;
-                const skipMigrate = summary !== undefined && !summary?.hasFunds;
-                if (skipMigrate) {
-                    return {
-                        kind: "settling",
-                        consentSignature: prev.consentSignature,
-                        addPassKeyTxHash: txHash,
-                    };
-                }
-                return {
-                    kind: "migrate",
-                    consentSignature: prev.consentSignature,
-                    addPassKeyTxHash: txHash,
-                };
-            });
-        },
-        [assetSummary.data]
-    );
 
     if (preview.isLoading || !preview.data) {
         if (preview.isError) {
@@ -257,7 +186,7 @@ export function MergeFlow({
             <PreviewStep
                 preview={preview.data}
                 email={email}
-                assetSummary={assetSummary.data}
+                assetSummary={assetSummary.data ?? null}
                 onContinue={() => setStep({ kind: "consent" })}
                 onCancel={handleAbort}
             />
@@ -269,9 +198,11 @@ export function MergeFlow({
             <ConsentStep
                 winner={preview.data.winner}
                 loserAuthenticatorId={preview.data.loserAuthenticatorId}
-                onConfirmed={handleConsentConfirmed}
+                onConfirmed={(consentSignature) =>
+                    setStep({ kind: "sign", consentSignature })
+                }
                 onBack={() => setStep({ kind: "preview" })}
-                consent={consent}
+                consent={strategy.loserConsent}
                 strategy={strategy}
                 /**
                  * Remote consent is only mobile-driven when the desktop is
@@ -286,32 +217,29 @@ export function MergeFlow({
         );
     }
 
-    if (step.kind === "switch") {
-        return (
-            <SwitchStep
-                winnerWallet={preview.data.winner}
-                winnerAuthenticatorId={
-                    winnerAuthenticatorId ?? targetAuthenticatorId
-                }
-                onSwitched={() =>
-                    setStep({
-                        kind: "sign",
-                        consentSignature: step.consentSignature,
-                    })
-                }
-                onBack={() => setStep({ kind: "consent" })}
-                switchAuth={switchToWinner}
-                strategy={strategy}
-            />
-        );
-    }
-
     if (step.kind === "sign") {
+        if (!winnerAuthenticatorId || !preview.data.winnerPublicKey) {
+            // Should never hit — `winnerAuthenticatorId` is derived from a
+            // resolved preview, and `winnerPublicKey` is part of the same
+            // preview payload. Keeps the type narrowing tight without
+            // adding a runtime branch the user would ever see.
+            return null;
+        }
         return (
             <SignStep
+                winner={preview.data.winner}
+                winnerAuthenticatorId={winnerAuthenticatorId}
+                winnerPublicKey={preview.data.winnerPublicKey}
                 loserAuthenticatorId={preview.data.loserAuthenticatorId}
                 loserPublicKey={preview.data.loserPublicKey}
-                onSigned={handleSigned}
+                sendAddPassKey={strategy.sendAddPassKey}
+                onSigned={(txHash) =>
+                    setStep({
+                        kind: "migrate",
+                        consentSignature: step.consentSignature,
+                        addPassKeyTxHash: txHash,
+                    })
+                }
                 onCancel={handleAbort}
             />
         );
@@ -325,13 +253,12 @@ export function MergeFlow({
                 loserAuthenticatorId={preview.data.loserAuthenticatorId}
                 loserPublicKey={preview.data.loserPublicKey}
                 summary={assetSummary}
-                migrate={migrate}
+                migrate={strategy.migrateLoserAssets}
                 onCompleted={() =>
                     setStep({
                         kind: "settling",
                         consentSignature: step.consentSignature,
-                        addPassKeyTxHash: step.addPassKeyTxHash,
-                        migrateTxHash: migrate.data?.txHash,
+                        txHash: step.addPassKeyTxHash,
                     })
                 }
                 onCancel={handleAbort}
@@ -343,16 +270,13 @@ export function MergeFlow({
         return (
             <SettlingStep
                 loserAuthenticatorId={preview.data.loserAuthenticatorId}
-                onChainTxHash={step.addPassKeyTxHash}
-                migrateTxHash={step.migrateTxHash}
+                onChainTxHash={step.txHash}
                 loserConsentSignature={step.consentSignature}
                 pairingId={strategy.pairingId}
                 onCompleted={() => {
                     flowRef.current?.end("succeeded", {
                         last_step: "settling",
                         requester_was_loser: needsSwitch === true,
-                        migrated: !!migrate.data?.txHash,
-                        migrate_token_count: migrate.data?.entriesMigrated ?? 0,
                     });
                     setStep({ kind: "success" });
                 }}
@@ -362,12 +286,6 @@ export function MergeFlow({
                         setStep({
                             kind: "sign",
                             consentSignature: step.consentSignature,
-                        });
-                    } else if (target === "migrate") {
-                        setStep({
-                            kind: "migrate",
-                            consentSignature: step.consentSignature,
-                            addPassKeyTxHash: step.addPassKeyTxHash,
                         });
                     } else if (target === "consent") {
                         setStep({ kind: "consent" });

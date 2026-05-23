@@ -5,48 +5,71 @@ import { Stack } from "@frak-labs/design-system/components/Stack";
 import { Text } from "@frak-labs/design-system/components/Text";
 import { useCallback } from "react";
 import { useTranslation } from "react-i18next";
-import type { Hex } from "viem";
+import type { Address, Hex } from "viem";
 import { PageLayout } from "@/module/common/component/PageLayout";
 import { Title } from "@/module/common/component/Title";
-import { useSendAddPassKeyTx } from "../../hook/useSendAddPassKeyTx";
+import type { SendAddPassKeyMutation } from "../../strategy/types";
 import * as styles from "../stepLayout.css";
 
 type SignStepProps = {
+    winner: Address;
+    winnerAuthenticatorId: string;
+    winnerPublicKey: { x: Hex; y: Hex };
     loserAuthenticatorId: string;
     loserPublicKey: { x: Hex; y: Hex };
     /**
      * Called with the resulting tx hash once the user has authorised the
-     * on-chain step. The hash is then handed to the settling step so a
-     * follow-up failure can retry settlement without re-prompting.
+     * on-chain step. `undefined` is passed through when the addPassKey is
+     * a no-op (loser cred already bound on-chain — idempotent retry path).
      */
     onSigned: (txHash?: Hex) => void;
     onCancel: () => void;
+    /** addPassKey mutation provided by the active merge strategy. */
+    sendAddPassKey: SendAddPassKeyMutation;
 };
 
 /**
- * Step that asks the user to authorise the final merge action. The on-chain
- * mechanics are hidden — the screen only frames it as a confirmation that
- * brings everything together. Re-using the existing wagmi `useSendTransaction`
- * means the prompt is signed by whichever credential the previous SwitchStep
- * has placed in the live session.
+ * Step that asks the user to authorise the final merge action. The
+ * mutation is built by the active strategy with a transport selected from
+ * `mode + needsSwitch` — same-device + cross-device-desktop-is-winner
+ * sign locally; cross-device-desktop-is-loser routes signing through the
+ * same origin pairing that ferried the consent assertion. The biometric
+ * prompt the user sees is for the WINNER credential either way.
  */
 export function SignStep({
+    winner,
+    winnerAuthenticatorId,
+    winnerPublicKey,
     loserAuthenticatorId,
     loserPublicKey,
     onSigned,
     onCancel,
+    sendAddPassKey,
 }: SignStepProps) {
     const { t } = useTranslation();
-    const sendTx = useSendAddPassKeyTx();
 
     const onConfirm = useCallback(() => {
-        sendTx.mutate(
-            { loserAuthenticatorId, loserPublicKey },
+        sendAddPassKey.mutate(
             {
-                onSuccess: (txHash) => onSigned(txHash ?? undefined),
+                winner,
+                winnerAuthenticatorId,
+                winnerPublicKey,
+                loserAuthenticatorId,
+                loserPublicKey,
+            },
+            {
+                onSuccess: ({ txHash }) => onSigned(txHash),
             }
         );
-    }, [sendTx, loserAuthenticatorId, loserPublicKey, onSigned]);
+    }, [
+        sendAddPassKey,
+        winner,
+        winnerAuthenticatorId,
+        winnerPublicKey,
+        loserAuthenticatorId,
+        loserPublicKey,
+        onSigned,
+    ]);
 
     return (
         <PageLayout
@@ -58,14 +81,14 @@ export function SignStep({
                         size="large"
                         width="full"
                         onClick={onConfirm}
-                        loading={sendTx.isPending}
-                        disabled={sendTx.isPending}
+                        loading={sendAddPassKey.isPending}
+                        disabled={sendAddPassKey.isPending}
                     >
-                        {sendTx.isError
+                        {sendAddPassKey.isError
                             ? t("wallet.merge.sign.retry")
                             : t("wallet.merge.sign.authorise")}
                     </Button>
-                    {sendTx.isError && (
+                    {sendAddPassKey.isError && (
                         <Button
                             type="button"
                             variant="secondary"
@@ -83,13 +106,13 @@ export function SignStep({
                 <Stack space="s">
                     <Title size="page">{t("wallet.merge.sign.title")}</Title>
                     <Text variant="body" color="secondary">
-                        {sendTx.isError
+                        {sendAddPassKey.isError
                             ? t("wallet.merge.sign.errorDescription")
                             : t("wallet.merge.sign.description")}
                     </Text>
                 </Stack>
 
-                {sendTx.isError && (
+                {sendAddPassKey.isError && (
                     <Card variant="muted" padding="default">
                         <Text variant="bodySmall" color="error">
                             {t("wallet.merge.sign.error")}

@@ -22,8 +22,8 @@ export type UseAutoMutationOptions<TData, TVars> = {
  *
  * The ref-gated single-shot semantics replace the
  * `startedRef + useCallback + useEffect` boilerplate that was duplicated
- * across the merge step components (ConsentStep, SwitchStep,
- * SettlingStep). Callers compose any upstream resets (e.g.
+ * across the merge step components (ConsentStep, SettlingStep).
+ * Callers compose any upstream resets (e.g.
  * `mutation.reset()`, `strategy.remote?.onRetry()`) around `run` as
  * needed — the hook only owns the auto-fire gate and the latest-vars
  * threading.

@@ -24,6 +24,11 @@ export const MergePreviewSchema = t.Object({
     targetWallet: t.Address(),
     winner: t.Address(),
     loser: t.Address(),
+    winnerAuthenticatorId: t.String(),
+    winnerPublicKey: t.Object({
+        x: t.Hex(),
+        y: t.Hex(),
+    }),
     loserAuthenticatorId: t.String(),
     loserPublicKey: t.Object({
         x: t.Hex(),
