@@ -16,3 +16,4 @@ export {
     type MergeWeight,
     WalletMergeOrchestrator,
 } from "./WalletMergeOrchestrator";
+export { WalletSessionOrchestrator } from "./WalletSessionOrchestrator";

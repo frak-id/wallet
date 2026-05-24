@@ -28,23 +28,16 @@ export type MintForCredentialResult = {
 };
 
 /**
- * Mints webauthn wallet-session JWTs for a credential ↔ wallet pair.
+ * Pure JWT-mint primitive for a `(credential, wallet)` pair. Owns the
+ * wallet-JWT + SDK-companion-JWT pairing and the `WalletAuthResponseDto`
+ * shape, nothing else.
  *
- * Two call sites:
- *  1. `POST /user/wallet/auth/login` — after verifying a fresh biometric
- *     assertion against the credential's pubkey.
- *  2. `WalletMergeOrchestrator.settle` — after a successful merge, when the
- *     requester authenticated with the loser credential and the on-chain
- *     `addPassKey` userOp + loser-consent assertion have both been
- *     verified. The merge ceremony itself constitutes the proof of
- *     credential ownership, so we mint without forcing a separate
- *     re-login round-trip.
- *
- * Centralising the mint here keeps both routes in lockstep with the
- * `WalletAuthResponseDto` shape and ensures the SDK companion JWT is
- * always generated alongside the wallet JWT.
+ * Wallet resolution (current-chain binding lookup, derivation fallback,
+ * lazy back-fill) lives one layer up in `WalletSessionOrchestrator`, which
+ * is the entry point every API handler should call. This service is the
+ * orchestrator's inner mint primitive — direct callers should be rare.
  */
-export class WalletSessionService {
+export class WalletJwtService {
     constructor(private readonly sdkSessionService: WalletSdkSessionService) {}
 
     async mintForCredential({

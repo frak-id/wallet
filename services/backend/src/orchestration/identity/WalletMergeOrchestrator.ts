@@ -5,10 +5,7 @@ import { currentChainId } from "@frak-labs/app-essentials/blockchain";
 import { eq } from "drizzle-orm";
 import { type Address, isAddressEqual } from "viem";
 import type { AuthenticatorRepository } from "../../domain/auth/repositories/AuthenticatorRepository";
-import type {
-    MintForCredentialResult,
-    WalletSessionService,
-} from "../../domain/auth/services/WalletSessionService";
+import type { MintForCredentialResult } from "../../domain/auth/services/WalletJwtService";
 import type { WebAuthNService } from "../../domain/auth/services/WebAuthNService";
 import type { IdentityRepository } from "../../domain/identity/repositories/IdentityRepository";
 import type { WalletBindingRepository } from "../../domain/identity/repositories/WalletBindingRepository";
@@ -18,6 +15,7 @@ import type { WebAuthNValidatorReader } from "../../infrastructure/blockchain/We
 import type { MergePreviewResponse, MergeSettleResponse } from "../schemas";
 import type { IdentityMergeService } from "./IdentityMergeService";
 import type { IdentityWeightService } from "./IdentityWeightService";
+import type { WalletSessionOrchestrator } from "./WalletSessionOrchestrator";
 
 /**
  * Counts used by the UI to render the "you will gain N referrals" recap.
@@ -38,7 +36,7 @@ export class WalletMergeOrchestrator {
         private readonly identityMergeService: IdentityMergeService,
         private readonly webAuthNValidatorReader: WebAuthNValidatorReader,
         private readonly webAuthNService: WebAuthNService,
-        private readonly walletSessionService: WalletSessionService,
+        private readonly walletSessionOrchestrator: WalletSessionOrchestrator,
         // Used by Phase 2 (cross-device merge) to push `merge-completed`
         // to both pairing topics after settlement. Same-device merges
         // pass no `pairingId` and the publish step is skipped.
@@ -363,10 +361,12 @@ export class WalletMergeOrchestrator {
             params.requesterAuthenticatorId === preview.loserAuthenticatorId;
         const needsLoserSession = requesterIsLoser || !!params.pairingId;
         const loserSession = needsLoserSession
-            ? await this.mintSessionForCredential({
-                  credentialId: preview.loserAuthenticatorId,
-                  winnerWallet: preview.winner,
-              })
+            ? await this.walletSessionOrchestrator.mintSessionForExplicitWallet(
+                  {
+                      credentialId: preview.loserAuthenticatorId,
+                      walletAddress: preview.winner,
+                  }
+              )
             : undefined;
 
         if (params.pairingId && loserSession) {
@@ -453,10 +453,12 @@ export class WalletMergeOrchestrator {
         // merge-completed topic).
         const needsLoserSession = requesterIsLoser || !!params.pairingId;
         const loserSession = needsLoserSession
-            ? await this.mintSessionForCredential({
-                  credentialId: loserAuthenticatorId,
-                  winnerWallet: winner,
-              })
+            ? await this.walletSessionOrchestrator.mintSessionForExplicitWallet(
+                  {
+                      credentialId: loserAuthenticatorId,
+                      walletAddress: winner,
+                  }
+              )
             : undefined;
 
         // Re-publish merge-completed on retry so a loser device that
@@ -536,36 +538,6 @@ export class WalletMergeOrchestrator {
                 : unlinked.smartWalletAddress,
             loserAuthenticatorId: credentialId,
         };
-    }
-
-    /**
-     * Mints a fresh webauthn session for the given credential, bound to
-     * the target wallet address. Centralised so both the happy-path settle
-     * and the idempotent-retry branch hit the same minting contract.
-     */
-    private async mintSessionForCredential(params: {
-        credentialId: string;
-        winnerWallet: Address;
-    }): Promise<MintForCredentialResult> {
-        const credential = await this.authenticatorRepository.getByCredentialId(
-            params.credentialId
-        );
-        if (!credential) {
-            // Defensive — preview already loaded the same credential to
-            // surface `loserPublicKey`. If it has vanished between then
-            // and now, something has gone badly wrong, so fail loud rather
-            // than ship a half-applied merge to the client.
-            throw HttpError.notFound(
-                "MERGE_LOSER_CREDENTIAL_NOT_FOUND",
-                `No authenticator row for ${params.credentialId}`
-            );
-        }
-        return this.walletSessionService.mintForCredential({
-            authenticatorId: params.credentialId,
-            walletAddress: params.winnerWallet,
-            publicKey: credential.publicKey,
-            transports: credential.transports,
-        });
     }
 
     /**

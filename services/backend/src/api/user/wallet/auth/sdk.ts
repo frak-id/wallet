@@ -1,10 +1,9 @@
 import { sessionContext } from "@backend-infrastructure";
 import { t } from "@backend-utils";
-import { currentChainId } from "@frak-labs/app-essentials/blockchain";
 import { Elysia, status } from "elysia";
 import { isAddressEqual } from "viem";
 import { AuthContext } from "../../../../domain/auth";
-import { IdentityContext } from "../../../../domain/identity/context";
+import { OrchestrationContext } from "../../../../orchestration/context";
 
 export const walletSdkRoutes = new Elysia({ prefix: "/sdk" })
     .use(sessionContext)
@@ -43,27 +42,14 @@ export const walletSdkRoutes = new Elysia({ prefix: "/sdk" })
                 return status(403, "Invalid signature");
             }
 
-            // Resolve the credential's active binding on the current chain
-            // to confirm it matches the requested wallet. Falls back to the
-            // deterministic derivation when no binding row exists yet so
-            // legacy credentials still go through; DB errors propagate so
-            // we fail closed instead of issuing an SDK JWT for the
-            // pre-merge wallet address.
-            const binding =
-                await IdentityContext.repositories.walletBinding.getActiveBinding(
+            const resolvedWallet =
+                await OrchestrationContext.orchestrators.walletSession.resolveWalletForVerifiedCredential(
                     {
                         credentialId: verificationnResult.authenticatorId,
-                        chainId: currentChainId,
+                        publicKey: verificationnResult.publicKey,
                     }
                 );
-            const resolvedWallet =
-                binding?.smartWalletAddress ??
-                (await AuthContext.services.webAuthN.getWalletAddress({
-                    authenticatorId: verificationnResult.authenticatorId,
-                    pubKey: verificationnResult.publicKey,
-                }));
 
-            // If it's not the same wallet, return an error
             if (!isAddressEqual(resolvedWallet, wallet)) {
                 return status(403, "Invalid signature");
             }

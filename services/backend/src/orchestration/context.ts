@@ -22,6 +22,7 @@ import {
     IdentityOrchestrator,
     IdentityWeightService,
     WalletMergeOrchestrator,
+    WalletSessionOrchestrator,
 } from "./identity";
 import { InteractionSubmissionOrchestrator } from "./interaction-submission";
 import { MemberQueryOrchestrator } from "./MemberQueryOrchestrator";
@@ -144,6 +145,13 @@ const referralCodeRedemptionOrchestrator =
         AttributionContext.repositories.referralLink
     );
 
+const walletSessionOrchestrator = new WalletSessionOrchestrator(
+    IdentityContext.repositories.walletBinding,
+    AuthContext.repositories.authenticator,
+    AuthContext.services.webAuthN,
+    AuthContext.services.walletJwt
+);
+
 const walletMergeOrchestrator = new WalletMergeOrchestrator(
     AuthContext.repositories.authenticator,
     IdentityContext.repositories.walletBinding,
@@ -152,7 +160,7 @@ const walletMergeOrchestrator = new WalletMergeOrchestrator(
     identityMergeService,
     webAuthNValidatorReader,
     AuthContext.services.webAuthN,
-    AuthContext.services.walletSession,
+    walletSessionOrchestrator,
     PairingContext.repositories.router
 );
 
@@ -179,6 +187,7 @@ export namespace OrchestrationContext {
         webhookResolver: webhookResolverOrchestrator,
         referralCodeRedemption: referralCodeRedemptionOrchestrator,
         walletMerge: walletMergeOrchestrator,
+        walletSession: walletSessionOrchestrator,
         authenticatorLookup: authenticatorLookupOrchestrator,
     };
 }
