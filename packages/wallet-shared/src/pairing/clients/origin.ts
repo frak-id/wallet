@@ -9,6 +9,7 @@ import {
 import { createStore, type StoreApi } from "zustand/vanilla";
 import { identifyAuthenticatedUser, trackEvent } from "../../common/analytics";
 import { getSafeSession } from "../../common/utils/safeSession";
+import { detachedPairingSessionStore } from "../../stores/detachedPairingSessionStore";
 import { sessionStore } from "../../stores/sessionStore";
 import type { Session } from "../../types/Session";
 import {
@@ -48,6 +49,19 @@ export type InitiatePairingOptions = {
      * wallet whose passkey actually needs to participate.
      */
     authenticatorHint?: string;
+    /**
+     * When true, the minted distant-webauthn session is written to the
+     * tab-scoped `detachedPairingSessionStore` instead of the live
+     * `sessionStore`. The user's active wallet session stays in place; the
+     * pairing credentials live alongside it just long enough to sign the
+     * merge ceremony. Reserved for flows that explicitly opt in — the
+     * cross-device wallet merge today, and nothing else.
+     *
+     * Defaults to `false`, which preserves the legacy "this device becomes
+     * the paired wallet" behaviour used by SSO / login / onboarding / the
+     * listener auth surfaces.
+     */
+    detached?: boolean;
 };
 
 const PING_INTERVAL_MS = 5_000;
@@ -212,7 +226,11 @@ export class OriginPairingClient extends BasePairingClient<
     /**
      * Reconnect to the pairing websocket.
      *
-     * Three paths:
+     * Four paths, in priority order:
+     *  - detached pairing session present — reconnect using its token. Takes
+     *    precedence over the live `sessionStore` because a refresh
+     *    mid-detached-merge must keep the pairing-scoped credential, not
+     *    fall back to the user's regular wallet.
      *  - distant-webauthn session present in `sessionStore` — reconnect with
      *    the wallet token (the standard already-paired flow).
      *  - no session but `pairing` state persisted — origin is mid-handshake
@@ -224,6 +242,14 @@ export class OriginPairingClient extends BasePairingClient<
      * the app was backgrounded on mobile.
      */
     reconnect() {
+        const detached = detachedPairingSessionStore.getState().detached;
+        if (detached) {
+            if (this.isAlive()) return;
+            this.pendingPings = 0;
+            this.connect({ wallet: detached.session.token });
+            return;
+        }
+
         const session = getSafeSession();
 
         if (session && session.type === "distant-webauthn") {
@@ -544,23 +570,36 @@ export class OriginPairingClient extends BasePairingClient<
     }
 
     /**
-     * Overwrite the live session slot with the freshly minted
-     * distant-webauthn session. The user has explicitly opted in to
-     * becoming the paired wallet on this device (SSO / login / onboarding /
-     * listener auth), so the prior session is intentionally replaced — no
-     * rollback path exists for these flows, and parking it would leave an
-     * orphaned snapshot in `localStorage` that no callsite ever pops.
+     * Apply the freshly minted distant-webauthn session.
      *
-     * The target-side credential-switch flow (`pairing.tsx`) still uses
-     * `parkSession`/`popSession` for its own self-contained rollback.
+     * Two branches based on `lastInitiateOptions.detached`:
+     *  - `detached: true` (cross-device merge) — write into the tab-scoped
+     *    `detachedPairingSessionStore`. The user's live wallet session in
+     *    `sessionStore` stays untouched; the pairing credential lives
+     *    alongside it for the duration of the merge.
+     *  - `detached: false` or omitted (SSO / login / onboarding / listener
+     *    auth) — overwrite the live `sessionStore` slot. The user has
+     *    explicitly opted in to becoming the paired wallet on this device,
+     *    so the prior session is intentionally replaced.
      */
     private applyDistantSession(
         payload: Extract<WsOriginMessage, { type: "authenticated" }>["payload"]
     ) {
-        sessionStore.getState().setSession({
+        const session: Session = {
             token: payload.token,
             ...payload.wallet,
-        });
+        };
+
+        if (this.lastInitiateOptions?.detached) {
+            detachedPairingSessionStore.getState().setDetachedSession({
+                pairingId: payload.wallet.pairingId,
+                session,
+                sdkSession: payload.sdkJwt,
+            });
+            return;
+        }
+
+        sessionStore.getState().setSession(session);
         sessionStore.getState().setSdkSession(payload.sdkJwt);
     }
 
@@ -574,6 +613,13 @@ export class OriginPairingClient extends BasePairingClient<
      *  - Winner-side payload omits `session` (the winner already has the
      *    right session); a no-op here, the active flow UI transitions to
      *    success from the HTTP response of `/merge/settle`.
+     *
+     * Detached path: the paired credential lived in
+     * `detachedPairingSessionStore`, never in the live session. The
+     * merge-completed payload (when present) targets that detached
+     * identity, which is now obsolete — we just drop the detached slot.
+     * The live session is unrelated to the merge in this case and stays
+     * untouched.
      */
     private handleMergeCompleted(
         payload: Extract<
@@ -586,6 +632,12 @@ export class OriginPairingClient extends BasePairingClient<
         // both winner- and loser-side messages; the winner path returns
         // early below (no session payload), so do this first.
         this.setState({ pairing: undefined });
+
+        const detached = detachedPairingSessionStore.getState().detached;
+        if (detached) {
+            detachedPairingSessionStore.getState().clearDetachedSession();
+            return;
+        }
 
         if (!payload.session) return;
         // Backend's webauthn DTO carries `transports: string[]`; the local

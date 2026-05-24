@@ -20,56 +20,45 @@ export type AuthenticationResponseJSON = {
 };
 
 /**
- * A snapshot of `{ session, sdkSession }` parked on the session store while
- * the wallet temporarily logs in as a different credential — currently only
- * the wallet-merge flow, which has to switch to the winner credential to
- * sign the on-chain `addPassKey` userOp and then restore the original
- * session afterwards. Persisted alongside the live session so a tab refresh
- * mid-flow does not lose the restore target.
+ * Detached pairing session — written by the merge flow on both origin and
+ * target sides instead of swapping the live `sessionStore.session`. Lets
+ * the user keep their normal wallet active in the app while a pairing-
+ * scoped credential signs cross-device merge ceremonies in the background.
+ *
+ * Scoped by `pairingId` so consumers can validate the slot still belongs
+ * to the pairing they're driving (and clear stale state from a previous,
+ * abandoned merge).
  */
-export type PreviousSessionSnapshot = {
+export type DetachedPairingSession = {
+    pairingId: string;
     session: Session;
     sdkSession: SdkSession | null;
+};
+
+/**
+ * Tab-scoped store (sessionStorage backing) holding the active detached
+ * pairing session. Single-slot — only one detached pairing can be in
+ * flight per tab at a time, which matches the actual UX (one merge at a
+ * time). Survives tab refreshes mid-flow; dies when the tab closes.
+ */
+export type DetachedPairingSessionStore = {
+    detached: DetachedPairingSession | null;
+    setDetachedSession: (session: DetachedPairingSession) => void;
+    clearDetachedSession: () => void;
 };
 
 /**
  * Session Store Types
  */
 export type SessionStore = {
-    // State
     session: Session | null;
     sdkSession: SdkSession | null;
-    previousSession: PreviousSessionSnapshot | null;
     demoPrivateKey: Hex | null;
 
-    // Actions
     setSession: (session: Session | null) => void;
     setSdkSession: (sdkSession: SdkSession | null) => void;
     setDemoPrivateKey: (key: Hex | null) => void;
     clearSession: () => void;
-    /**
-     * Park a previously-captured snapshot of `{ session, sdkSession }` into
-     * the `previousSession` slot. Caller must take the snapshot **before**
-     * swapping the live session (e.g. before calling `useLogin`) and invoke
-     * this once the swap has completed. The live session slots are left
-     * untouched — there is no null window for observers. Refuses to
-     * overwrite an existing snapshot (returns `false`) so a flow that
-     * fails to pop cannot quietly lose the original target.
-     */
-    parkSession: (snapshot: PreviousSessionSnapshot) => boolean;
-    /**
-     * Restore the snapshot saved by `parkSession` into the live session
-     * slots. Clears the snapshot. Returns `false` when there is nothing to
-     * restore.
-     */
-    popSession: () => boolean;
-    /**
-     * Drop the parked snapshot without restoring it. Used by the merge
-     * flow when the swap is permanent — the loser session JWT references
-     * a wallet address that the merge has now rebound, so restoring it
-     * would surface stale data. Returns `false` when nothing is parked.
-     */
-    discardPreviousSession: () => boolean;
 };
 
 /**

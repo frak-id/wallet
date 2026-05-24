@@ -1,5 +1,6 @@
 import type { Hex } from "viem";
 import { getSafeSession } from "../../common/utils/safeSession";
+import { detachedPairingSessionStore } from "../../stores/detachedPairingSessionStore";
 import { sessionStore } from "../../stores/sessionStore";
 import type { Session } from "../../types/Session";
 import type {
@@ -40,12 +41,22 @@ export class TargetPairingClient extends BasePairingClient<
     }
 
     /**
-     * Join a new pairing request
+     * Join a new pairing request.
+     *
+     * If a detached pairing session has been stashed for this pairing
+     * (cross-device merge — scanner authenticated as a credential other
+     * than their live session), the WS authenticates with the detached
+     * token. Otherwise falls back to the live `sessionStore` session.
      */
     joinPairing(id: string, pairingCode: string) {
-        const session = getSafeSession();
-        if (!session) {
-            console.warn("No session found, skipping reconnection");
+        const detached = detachedPairingSessionStore.getState().detached;
+        const walletToken =
+            detached && detached.pairingId === id
+                ? detached.session.token
+                : getSafeSession()?.token;
+
+        if (!walletToken) {
+            console.warn("No session found, skipping join");
             return;
         }
 
@@ -54,17 +65,28 @@ export class TargetPairingClient extends BasePairingClient<
                 action: "join",
                 id,
                 pairingCode,
-                wallet: session.token,
+                wallet: walletToken,
             })
         );
     }
 
     /**
-     * Reconnect to all the pairing associated with the current wallet.
-     * Uses isAlive() to detect and clean up zombie connections left
-     * after the app was backgrounded on mobile.
+     * Reconnect to all the pairings associated with the active credential.
+     *
+     * A detached pairing session takes precedence over the live
+     * `sessionStore` — a refresh mid-detached-merge must keep using the
+     * pairing-scoped credential rather than fall back to the user's
+     * regular wallet. Uses isAlive() to detect and clean up zombie
+     * connections left after the app was backgrounded on mobile.
      */
     reconnect() {
+        const detached = detachedPairingSessionStore.getState().detached;
+        if (detached) {
+            if (this.isAlive()) return;
+            this.connect({ wallet: detached.session.token });
+            return;
+        }
+
         const session = getSafeSession();
         if (!session) {
             console.warn("No session found, skipping reconnection");
@@ -191,7 +213,18 @@ export class TargetPairingClient extends BasePairingClient<
         // gets an info-only event with no `session`. The mobile (target)
         // side is typically the loser in the winner=desktop branch, so this
         // is where the rebind actually happens.
+        //
+        // Detached path: the loser credential lived in
+        // `detachedPairingSessionStore`, never in the live session. The
+        // payload's freshly-minted session targets that detached identity,
+        // which is being discarded — the user's actual live session is
+        // unrelated to the merge and must not be silently overwritten.
         if (message.type === "merge-completed") {
+            const detached = detachedPairingSessionStore.getState().detached;
+            if (detached) {
+                detachedPairingSessionStore.getState().clearDetachedSession();
+                return;
+            }
             if (message.payload.session) {
                 // Backend's webauthn DTO carries `transports: string[]`,
                 // local `Session` narrows to `AuthenticatorTransport[]`.

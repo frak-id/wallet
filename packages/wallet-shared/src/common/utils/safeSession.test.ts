@@ -53,10 +53,6 @@ describe("safeSession utilities", () => {
                 setSdkSession: vi.fn(),
                 setDemoPrivateKey: vi.fn(),
                 clearSession: vi.fn(),
-                previousSession: null,
-                parkSession: vi.fn(),
-                popSession: vi.fn(),
-                discardPreviousSession: vi.fn(),
             });
 
             const result = getSafeSession();
@@ -76,10 +72,6 @@ describe("safeSession utilities", () => {
                 setSdkSession: vi.fn(),
                 setDemoPrivateKey: vi.fn(),
                 clearSession: vi.fn(),
-                previousSession: null,
-                parkSession: vi.fn(),
-                popSession: vi.fn(),
-                discardPreviousSession: vi.fn(),
             });
 
             const sessionWithDetails = createMockSession({
@@ -113,10 +105,6 @@ describe("safeSession utilities", () => {
                 setSdkSession: vi.fn(),
                 setDemoPrivateKey: vi.fn(),
                 clearSession: vi.fn(),
-                previousSession: null,
-                parkSession: vi.fn(),
-                popSession: vi.fn(),
-                discardPreviousSession: vi.fn(),
             });
 
             const result = getSafeSession();
@@ -135,10 +123,6 @@ describe("safeSession utilities", () => {
                 setSdkSession: vi.fn(),
                 setDemoPrivateKey: vi.fn(),
                 clearSession: vi.fn(),
-                previousSession: null,
-                parkSession: vi.fn(),
-                popSession: vi.fn(),
-                discardPreviousSession: vi.fn(),
             });
 
             localStorage.setItem("frak_session_store", "invalid-json");
@@ -166,10 +150,6 @@ describe("safeSession utilities", () => {
                 setSdkSession: vi.fn(),
                 setDemoPrivateKey: vi.fn(),
                 clearSession: vi.fn(),
-                previousSession: null,
-                parkSession: vi.fn(),
-                popSession: vi.fn(),
-                discardPreviousSession: vi.fn(),
             });
 
             const result = getSafeSdkSession();
@@ -191,10 +171,6 @@ describe("safeSession utilities", () => {
                 setSdkSession: vi.fn(),
                 setDemoPrivateKey: vi.fn(),
                 clearSession: vi.fn(),
-                previousSession: null,
-                parkSession: vi.fn(),
-                popSession: vi.fn(),
-                discardPreviousSession: vi.fn(),
             });
 
             const sdkSessionWithToken = createMockSdkSession({
@@ -224,10 +200,6 @@ describe("safeSession utilities", () => {
                 setSdkSession: vi.fn(),
                 setDemoPrivateKey: vi.fn(),
                 clearSession: vi.fn(),
-                previousSession: null,
-                parkSession: vi.fn(),
-                popSession: vi.fn(),
-                discardPreviousSession: vi.fn(),
             });
 
             const result = getSafeSdkSession();
@@ -256,10 +228,6 @@ describe("safeSession utilities", () => {
                 setSdkSession: vi.fn(),
                 setDemoPrivateKey: vi.fn(),
                 clearSession: vi.fn(),
-                previousSession: null,
-                parkSession: vi.fn(),
-                popSession: vi.fn(),
-                discardPreviousSession: vi.fn(),
             });
 
             localStorage.setItem(
@@ -287,10 +255,6 @@ describe("safeSession utilities", () => {
                 setSdkSession: vi.fn(),
                 setDemoPrivateKey: vi.fn(),
                 clearSession: vi.fn(),
-                previousSession: null,
-                parkSession: vi.fn(),
-                popSession: vi.fn(),
-                discardPreviousSession: vi.fn(),
             });
 
             // Ensure key doesn't exist

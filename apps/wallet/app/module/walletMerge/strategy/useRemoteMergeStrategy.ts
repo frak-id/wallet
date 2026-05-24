@@ -2,7 +2,11 @@ import {
     buildMergeConsentChallenge,
     formatMergeConsentHourSlot,
 } from "@frak-labs/app-essentials";
-import { authKey, getOriginPairingClient } from "@frak-labs/wallet-shared";
+import {
+    authKey,
+    detachedPairingSessionStore,
+    getOriginPairingClient,
+} from "@frak-labs/wallet-shared";
 import { useMutation } from "@tanstack/react-query";
 import { useCallback, useMemo } from "react";
 import { stringToHex } from "viem";
@@ -39,9 +43,12 @@ type UseRemoteMergeStrategyArgs = {
 /**
  * Cross-device merge strategy backed by the existing `OriginPairingClient`.
  *
- * The pairing is opened in WS-only mode (no `sessionStore` swap) and acts
- * purely as a signing transport for whichever credential is not physically
- * on this device. Transport selection per mutation:
+ * The pairing is opened in detached mode — the minted distant-webauthn
+ * session is stashed in `detachedPairingSessionStore` rather than the live
+ * `sessionStore`, so the user's normal app session stays intact while the
+ * paired credential signs cross-device merge ceremonies in the background.
+ * The pairing client is purely a signing transport for whichever credential
+ * is not physically on this device. Transport selection per mutation:
  *
  *  | needsSwitch | who is on mobile | sendAddPassKey | migrateLoserAssets | loserConsent |
  *  |-------------|------------------|----------------|--------------------|--------------|
@@ -116,12 +123,13 @@ export function useRemoteMergeStrategy({
 
     // Tear down the pairing session when MergeFlow exits via any path that
     // isn't the terminal success step. `softReset()` clears the in-flight
-    // handshake + rejects any pending signature-request promise — the
-    // pairing never swaps the live session in this flow so there's no
-    // `sessionStore` mutation to undo.
+    // handshake + rejects any pending signature-request promise; clearing
+    // the detached store drops the paired credential snapshot. Live
+    // `sessionStore` was never touched, so there's no rollback to perform.
     const cancel = useCallback(() => {
         client.cancelAllSignatureRequests("merge-aborted");
         client.softReset();
+        detachedPairingSessionStore.getState().clearDetachedSession();
     }, [client]);
 
     return {
@@ -239,6 +247,7 @@ function ensurePairingReady({
 
         void client.initiatePairing({
             authenticatorHint,
+            detached: true,
             onSuccess: () => finish(() => resolve()),
         });
     });

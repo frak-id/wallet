@@ -7,6 +7,7 @@ import { Text } from "@frak-labs/design-system/components/Text";
 import { WarningIcon } from "@frak-labs/design-system/icons";
 import {
     CodeInput,
+    detachedPairingSessionStore,
     getTargetPairingClient,
     isPairingNotFoundError,
     type PairingMode,
@@ -93,32 +94,16 @@ function PairingPage() {
     const { login, isLoading: isSwitchingCredential } = useLogin();
 
     const onSwitchCredential = useCallback(async () => {
-        if (!pairingInfo?.authenticatorHint) return;
-        // Park the current session so the user can recover their original
-        // credential if they cancel out without joining. `parkSession`
-        // refuses to overwrite an existing snapshot — we capture its
-        // boolean return value so the rollback path only restores if this
-        // very call acquired the slot, otherwise we'd pop a stale snapshot
-        // that belongs to a previous (still-active) flow.
-        const current = sessionStore.getState();
-        let didPark = false;
-        if (current.session) {
-            didPark = sessionStore.getState().parkSession({
-                session: current.session,
-                sdkSession: current.sdkSession,
-            });
-        }
+        if (!pairingInfo?.authenticatorHint || !id) return;
         try {
             await login({
                 allowedCredentialIds: [pairingInfo.authenticatorHint],
+                detachedPairingId: id,
             });
         } catch (err) {
-            // Only pop the snapshot we just parked. A prior parked snapshot
-            // belongs to its own flow and must not be restored here.
-            if (didPark) sessionStore.getState().popSession();
             console.warn("Failed to switch passkey before pairing join", err);
         }
-    }, [login, pairingInfo?.authenticatorHint]);
+    }, [login, pairingInfo?.authenticatorHint, id]);
 
     // Page mount — emit viewed or no_id for funnel analysis
     useEffect(() => {
@@ -157,9 +142,6 @@ function PairingPage() {
                     mode: pairingModeTag,
                     duration_ms,
                 });
-                // Keep the newly-switched credential (if any) — the
-                // joined pairing is now keyed to it.
-                sessionStore.getState().discardPreviousSession();
                 client.joinPairing(id, pairingInfo.pairingCode);
             }
             if (action === "cancel") {
@@ -167,9 +149,7 @@ function PairingPage() {
                     mode: pairingModeTag,
                     duration_ms,
                 });
-                // Restore the user's original credential if we'd parked
-                // it for a switch. No-op when nothing was parked.
-                sessionStore.getState().popSession();
+                detachedPairingSessionStore.getState().clearDetachedSession();
                 client.disconnect();
             }
             navigate({ to: "/wallet", replace: true });

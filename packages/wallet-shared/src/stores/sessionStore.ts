@@ -12,14 +12,11 @@ import type { SessionStore } from "./types";
  */
 export const sessionStore = createStore<SessionStore>()(
     persist(
-        (set, get) => ({
-            // Initial state
+        (set) => ({
             session: null,
             sdkSession: null,
-            previousSession: null,
             demoPrivateKey: null,
 
-            // Actions
             setSession: (session) => set({ session }),
             setSdkSession: (sdkSession) => set({ sdkSession }),
             setDemoPrivateKey: (demoPrivateKey) => set({ demoPrivateKey }),
@@ -27,38 +24,14 @@ export const sessionStore = createStore<SessionStore>()(
                 set({
                     session: null,
                     sdkSession: null,
-                    previousSession: null,
                     demoPrivateKey: null,
                 }),
-            parkSession: (snapshot) => {
-                const { previousSession } = get();
-                if (previousSession) return false;
-                set({ previousSession: snapshot });
-                return true;
-            },
-            popSession: () => {
-                const { previousSession } = get();
-                if (!previousSession) return false;
-                set({
-                    session: previousSession.session,
-                    sdkSession: previousSession.sdkSession,
-                    previousSession: null,
-                });
-                return true;
-            },
-            discardPreviousSession: () => {
-                const { previousSession } = get();
-                if (!previousSession) return false;
-                set({ previousSession: null });
-                return true;
-            },
         }),
         {
             name: "frak_session_store",
             partialize: (state) => ({
                 session: state.session,
                 sdkSession: state.sdkSession,
-                previousSession: state.previousSession,
                 demoPrivateKey: state.demoPrivateKey,
             }),
         }
@@ -74,10 +47,6 @@ export const selectSession = (state: SessionStore) => state.session;
 
 // Get the SDK session
 export const selectSdkSession = (state: SessionStore) => state.sdkSession;
-
-// Get the parked previous session (set by `parkSession`, restored by `popSession`)
-export const selectPreviousSession = (state: SessionStore) =>
-    state.previousSession;
 
 // Get the demo private key
 export const selectDemoPrivateKey = (state: SessionStore) =>

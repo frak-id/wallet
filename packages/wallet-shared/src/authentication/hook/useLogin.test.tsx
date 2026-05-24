@@ -56,6 +56,12 @@ vi.mock("../../stores/sessionStore", () => ({
     },
 }));
 
+vi.mock("../../stores/detachedPairingSessionStore", () => ({
+    detachedPairingSessionStore: {
+        getState: vi.fn(),
+    },
+}));
+
 describe("useLogin", () => {
     const mockAuthResponse = {
         id: "credential-id",
@@ -684,5 +690,91 @@ describe("useLogin", () => {
         expect(result.current).toHaveProperty("error");
         expect(result.current).toHaveProperty("login");
         expect(typeof result.current.login).toBe("function");
+    });
+
+    test("detachedPairingId routes the session to detached store and skips claim side effects", async ({
+        queryWrapper,
+        mockAddress,
+        mockSession,
+        mockSdkSession,
+    }) => {
+        const { WebAuthnP256 } = await import("ox");
+        const { authenticatedWalletApi } = await import(
+            "../../common/api/backendClient"
+        );
+        const { authenticationStore, addLastAuthentication } = await import(
+            "../../stores/authenticationStore"
+        );
+        const { sessionStore } = await import("../../stores/sessionStore");
+        const { detachedPairingSessionStore } = await import(
+            "../../stores/detachedPairingSessionStore"
+        );
+        const { identifyAuthenticatedUser } = await import(
+            "../../common/analytics"
+        );
+
+        const setLastWebAuthNAction = vi.fn();
+        const setSession = vi.fn();
+        const setSdkSession = vi.fn();
+        const setDetachedSession = vi.fn();
+
+        const mockSessionData = {
+            ...mockSession,
+            address: mockAddress,
+            token: "detached-token",
+            sdkJwt: { ...mockSdkSession, token: "sdk-token" },
+        };
+
+        vi.mocked(WebAuthnP256.sign).mockResolvedValue({
+            metadata: {
+                credentialId: mockAuthResponse.id,
+                authenticatorData: mockAuthResponse.response
+                    .authenticatorData as any,
+                clientDataJSON: mockAuthResponse.response.clientDataJSON as any,
+                challengeIndex: 23,
+            },
+            signature: { r: 1n, s: 2n },
+            raw: { id: mockAuthResponse.id },
+        } as any);
+        vi.mocked(authenticatedWalletApi.auth.login.post).mockResolvedValue({
+            data: mockSessionData,
+            error: null,
+        } as any);
+        vi.mocked(authenticationStore.getState).mockReturnValue({
+            setLastWebAuthNAction,
+        } as any);
+        vi.mocked(sessionStore.getState).mockReturnValue({
+            setSession,
+            setSdkSession,
+        } as any);
+        vi.mocked(detachedPairingSessionStore.getState).mockReturnValue({
+            setDetachedSession,
+        } as any);
+
+        const { result } = renderHook(() => useLogin(), {
+            wrapper: queryWrapper.wrapper,
+        });
+
+        await result.current.login({
+            detachedPairingId: "pairing-xyz",
+            allowedCredentialIds: ["hint-credential"],
+        });
+
+        await waitFor(() => {
+            expect(result.current.isSuccess).toBe(true);
+        });
+
+        expect(setDetachedSession).toHaveBeenCalledWith({
+            pairingId: "pairing-xyz",
+            session: expect.objectContaining({
+                token: "detached-token",
+                address: mockAddress,
+            }),
+            sdkSession: mockSessionData.sdkJwt,
+        });
+        expect(setSession).not.toHaveBeenCalled();
+        expect(setSdkSession).not.toHaveBeenCalled();
+        expect(addLastAuthentication).not.toHaveBeenCalled();
+        expect(identifyAuthenticatedUser).not.toHaveBeenCalled();
     });
 });
