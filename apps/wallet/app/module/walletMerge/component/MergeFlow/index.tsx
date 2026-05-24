@@ -233,13 +233,29 @@ export function MergeFlow({
                 loserAuthenticatorId={preview.data.loserAuthenticatorId}
                 loserPublicKey={preview.data.loserPublicKey}
                 sendAddPassKey={strategy.sendAddPassKey}
-                onSigned={(txHash) =>
+                onSigned={(txHash) => {
+                    // Skip the migrate step entirely when the loser has
+                    // already been drained — otherwise we render a "Move
+                    // your funds" CTA over an empty list for one frame
+                    // before `AssetMigrationStep`'s auto-advance effect
+                    // kicks in. AssetMigrationStep keeps the same defence
+                    // for the case where the summary resolves between
+                    // here and its mount.
+                    const summary = assetSummary.data;
+                    if (summary && !summary.hasFunds) {
+                        setStep({
+                            kind: "settling",
+                            consentSignature: step.consentSignature,
+                            txHash,
+                        });
+                        return;
+                    }
                     setStep({
                         kind: "migrate",
                         consentSignature: step.consentSignature,
                         addPassKeyTxHash: txHash,
-                    })
-                }
+                    });
+                }}
                 onCancel={handleAbort}
             />
         );

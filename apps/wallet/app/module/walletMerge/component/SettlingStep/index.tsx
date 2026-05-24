@@ -21,9 +21,6 @@ export type SettleRecoveryTarget = "preview" | "consent" | "sign" | "migrate";
 type SettlingStepProps = {
     loserAuthenticatorId: string;
     onChainTxHash?: Hex;
-    /** Tx hash from the migrate UserOp. Forwarded to `useMergeSettle`
-     *  which waits for ≥8 confirmations on it before calling settle. */
-    migrateTxHash?: Hex;
     loserConsentSignature: string;
     /**
      * Set by the cross-device strategy once the pairing is live. Forwarded
@@ -101,7 +98,6 @@ function mapSettleError(code: string | undefined): SettleRecovery | null {
 export function SettlingStep({
     loserAuthenticatorId,
     onChainTxHash,
-    migrateTxHash,
     loserConsentSignature,
     pairingId,
     onCompleted,
@@ -114,7 +110,6 @@ export function SettlingStep({
         vars: {
             loserAuthenticatorId,
             onChainTxHash,
-            migrateTxHash,
             loserConsentSignature,
             pairingId,
         },

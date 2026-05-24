@@ -45,7 +45,3 @@ export const detachedPairingSessionStore =
             }
         )
     );
-
-export const selectDetachedPairingSession = (
-    state: DetachedPairingSessionStore
-) => state.detached;

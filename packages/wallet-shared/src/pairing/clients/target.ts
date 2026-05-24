@@ -78,6 +78,17 @@ export class TargetPairingClient extends BasePairingClient<
      * pairing-scoped credential rather than fall back to the user's
      * regular wallet. Uses isAlive() to detect and clean up zombie
      * connections left after the app was backgrounded on mobile.
+     *
+     * Asymmetry with `joinPairing` is intentional: `joinPairing` knows
+     * exactly which pairing it's acting on and gates the detached slot on
+     * `detached.pairingId === id`. `reconnect` doesn't — by design the
+     * target client subscribes to every pairing topic the active wallet
+     * token is entitled to, not a specific pairing, so there's no `id` to
+     * gate against. The narrow side-effect is that during the in-flight
+     * window of a detached merge any unrelated incoming pairings keyed to
+     * the user's *live* wallet won't be picked up; they resume on their
+     * own once `merge-completed` clears the detached slot. Bounded by the
+     * tab lifetime via `sessionStorage`, so not promoted to a hard guard.
      */
     reconnect() {
         const detached = detachedPairingSessionStore.getState().detached;

@@ -606,46 +606,26 @@ export class OriginPairingClient extends BasePairingClient<
     /**
      * Cross-device wallet merge completed. Pushed by the backend on both
      * pairing topics after `WalletMergeOrchestrator.settle` succeeds.
-     *  - Loser-side payload carries a freshly-minted local-webauthn
-     *    session for the loser credential (now bound to the winner
-     *    wallet) so the loser device can swap its stale session in a
-     *    single round-trip — no separate login.
-     *  - Winner-side payload omits `session` (the winner already has the
-     *    right session); a no-op here, the active flow UI transitions to
-     *    success from the HTTP response of `/merge/settle`.
      *
-     * Detached path: the paired credential lived in
-     * `detachedPairingSessionStore`, never in the live session. The
-     * merge-completed payload (when present) targets that detached
-     * identity, which is now obsolete — we just drop the detached slot.
-     * The live session is unrelated to the merge in this case and stays
-     * untouched.
+     * On the origin (desktop initiator) side we only need to clean up
+     * pairing-scoped state — the detached pairing slot, and the in-flight
+     * `pairing` block so a refresh doesn't trigger a stale resume against
+     * a finalised handshake. Any live-session refresh the desktop needs
+     * (i.e. when desktop authenticated with the loser credential) is
+     * delivered synchronously through the `/merge/settle` HTTP response
+     * and applied by {@link useMergeSettle}; we deliberately do NOT touch
+     * `sessionStore` here. The payload's `session` is for the loser-side
+     * topic on the cross-device flow — origin is never the receiver of
+     * that refresh in the detached architecture.
      */
     private handleMergeCompleted(
-        payload: Extract<
+        _payload: Extract<
             WsOriginMessage,
             { type: "merge-completed" }
         >["payload"]
     ) {
-        // Merge lifecycle is terminal — drop `pairing` so a refresh does not
-        // trigger a stale `resume` against a finalised handshake. Runs on
-        // both winner- and loser-side messages; the winner path returns
-        // early below (no session payload), so do this first.
         this.setState({ pairing: undefined });
-
-        const detached = detachedPairingSessionStore.getState().detached;
-        if (detached) {
-            detachedPairingSessionStore.getState().clearDetachedSession();
-            return;
-        }
-
-        if (!payload.session) return;
-        // Backend's webauthn DTO carries `transports: string[]`; the local
-        // `Session` narrows to `AuthenticatorTransport[]`. Cast mirrors the
-        // same narrowing useMergeSettle relies on.
-        const { token, sdkJwt, wallet } = payload.session;
-        sessionStore.getState().setSession({ ...wallet, token } as Session);
-        sessionStore.getState().setSdkSession(sdkJwt);
+        detachedPairingSessionStore.getState().clearDetachedSession();
     }
 
     /**
