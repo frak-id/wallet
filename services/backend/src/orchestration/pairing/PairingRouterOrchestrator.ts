@@ -1,12 +1,11 @@
-import { db, log } from "@backend-infrastructure";
-import { and, eq, isNull } from "drizzle-orm";
+import { log } from "@backend-infrastructure";
 import type { ElysiaWS } from "elysia/ws";
-import type { Hex } from "viem";
-import type { StaticWalletTokenDto } from "../../auth/models/WalletSessionDto";
-import type { NotificationsService } from "../../notifications/services/NotificationsService";
-import { pairingSignatureRequestTable, pairingTable } from "../db/schema";
-import type { SignatureRejectReason } from "../dto/SignatureRejectReason";
-import { WsCloseCode } from "../dto/WebSocketCloseCode";
+import { type Address, type Hex, isAddressEqual } from "viem";
+import type { StaticWalletTokenDto } from "../../domain/auth/models/WalletSessionDto";
+import type { MintForCredentialResult } from "../../domain/auth/services/WalletJwtService";
+import type { NotificationsService } from "../../domain/notifications/services/NotificationsService";
+import type { SignatureRejectReason } from "../../domain/pairing/dto/SignatureRejectReason";
+import { WsCloseCode } from "../../domain/pairing/dto/WebSocketCloseCode";
 import type {
     WsPingRequest,
     WsPongRequest,
@@ -14,42 +13,47 @@ import type {
     WsSignatureRejectRequest,
     WsSignatureRequest,
     WsSignatureResponseRequest,
-} from "../dto/WebsocketDirectMessage";
-import type { WsMergeCompleted } from "../dto/WebsocketTopicMessage";
-import {
-    originTopic,
-    PairingRepository,
-    targetTopic,
-} from "./PairingRepository";
+} from "../../domain/pairing/dto/WebsocketDirectMessage";
+import type {
+    WsMergeCompleted,
+    WsTopicMessage,
+} from "../../domain/pairing/dto/WebsocketTopicMessage";
+import type { PairingRepository } from "../../domain/pairing/repositories/PairingRepository";
+import type { PairingSignatureRepository } from "../../domain/pairing/repositories/PairingSignatureRepository";
+import { originTopic, targetTopic } from "../../domain/pairing/topics";
 
 /** Server-driven topic publisher that doesn't require an `ElysiaWS` sender. */
 type TopicPublisher = (topic: string, message: object) => void;
 
-const SIGNATURE_REQUEST_TTL_MS = 10 * 60 * 1_000;
-
-export class PairingRouterRepository extends PairingRepository {
+/**
+ * Owns the WS-message phase of a pairing (everything after `open`):
+ * routes signature flow + ping/pong between origin and target, emits
+ * server-driven topic messages (`merge-completed`, expired
+ * `signature-reject`), and persists the signature-request lifecycle
+ * via `PairingSignatureRepository`.
+ *
+ * Cross-domain reach (notifications, auth session shapes, merge
+ * payloads from the wallet-merge orchestrator) is mediated here so
+ * the pairing domain repos stay DB-only.
+ */
+export class PairingRouterOrchestrator {
     /**
      * Topic publisher for server-emitted messages (no `ws` available).
-     * Wired by the WS route once Elysia is available; until then, server-side
-     * emissions are silently dropped (with a warning).
+     * Wired by the WS route once Elysia is available; until then,
+     * server-side emissions are silently dropped (with a warning).
      */
     private serverPublisher: TopicPublisher | null = null;
 
-    constructor(private readonly notificationsService: NotificationsService) {
-        super();
-    }
+    constructor(
+        private readonly pairingRepository: PairingRepository,
+        private readonly pairingSignatureRepository: PairingSignatureRepository,
+        private readonly notificationsService: NotificationsService
+    ) {}
 
     setServerPublisher(publisher: TopicPublisher): void {
         this.serverPublisher = publisher;
     }
 
-    /* ---------------------------------------------------------------------- */
-    /*                          Public surface                                 */
-    /* ---------------------------------------------------------------------- */
-
-    /**
-     * Handle a websocket message
-     */
     async handleMessage({
         message,
         ws,
@@ -103,28 +107,37 @@ export class PairingRouterRepository extends PairingRepository {
     }
 
     /**
-     * Server-emit `merge-completed` after `WalletMergeOrchestrator.settle`
-     * succeeds for a cross-device merge. Pushed on both pairing topics:
+     * Server-emit `merge-completed` on both pairing topics after
+     * `WalletMergeOrchestrator.settle` succeeds for a cross-device merge.
      *
-     *  - Loser-side topic carries a freshly-minted webauthn session so the
-     *    loser client can swap its stale session in a single round-trip.
-     *  - Winner-side topic carries the same envelope but with no `session`
-     *    — the winner already has the correct session.
+     *  - Loser-side topic carries a freshly-minted webauthn session so
+     *    the loser client can swap its stale session in a single
+     *    round-trip.
+     *  - Winner-side topic carries the same envelope but with no
+     *    `session` — the winner already has the correct session.
      *
-     * Topic assignment is decided here from the loser address: whoever's
-     * wallet equals `loser` receives the session payload. Topic role
-     * (origin vs target) is supplied by the caller because only the
-     * orchestrator knows which side initiated the pairing.
+     * Owns the pairing-row lookup and the loser-side resolution: the
+     * pairing row's `wallet` column was set at join-time to the
+     * target's smart-account address, so it's the source of truth for
+     * who's on the target side. If the loser address doesn't match
+     * either side we log a warning and skip publishing rather than
+     * guess — the on-chain + DB merge already committed, so the worst
+     * case is the loser device needs a manual reload to pick up its
+     * new session.
      */
-    publishMergeCompleted({
+    async broadcastMergeCompleted({
         pairingId,
-        loserSide,
-        payload,
+        winner,
+        loser,
+        loserAuthenticatorId,
+        loserSession,
     }: {
         pairingId: string;
-        loserSide: "origin" | "target";
-        payload: WsMergeCompleted["payload"];
-    }): void {
+        winner: Address;
+        loser: Address;
+        loserAuthenticatorId: string;
+        loserSession: MintForCredentialResult;
+    }): Promise<void> {
         if (!this.serverPublisher) {
             log.warn(
                 { pairingId },
@@ -133,12 +146,57 @@ export class PairingRouterRepository extends PairingRepository {
             return;
         }
 
+        const pairing = await this.pairingRepository.getByPairingId(pairingId);
+        if (!pairing) {
+            log.warn(
+                { pairingId, winner, loser },
+                "[Pairing] cannot broadcast merge-completed: pairing not found"
+            );
+            return;
+        }
+
+        const targetWallet = pairing.wallet;
+        if (!targetWallet) {
+            log.warn(
+                { pairingId },
+                "[Pairing] cannot broadcast merge-completed: pairing unresolved"
+            );
+            return;
+        }
+
+        let loserSide: "origin" | "target";
+        if (isAddressEqual(targetWallet, loser)) {
+            loserSide = "target";
+        } else if (isAddressEqual(targetWallet, winner)) {
+            loserSide = "origin";
+        } else {
+            log.warn(
+                { pairingId, targetWallet, winner, loser },
+                "[Pairing] pairing wallet matches neither winner nor loser; skipping merge-completed"
+            );
+            return;
+        }
+
         const winnerSide: "origin" | "target" =
             loserSide === "origin" ? "target" : "origin";
 
-        // Loser-side payload keeps the freshly-minted session so the
-        // client can replace its stale one. Winner-side payload strips
-        // `session` — the winner's existing session is already correct.
+        const payload: WsMergeCompleted["payload"] = {
+            pairingId,
+            winner,
+            loser,
+            loserAuthenticatorId,
+            session: {
+                token: loserSession.token,
+                sdkJwt: loserSession.sdkJwt,
+                wallet: {
+                    type: "webauthn",
+                    address: loserSession.address,
+                    authenticatorId: loserSession.authenticatorId,
+                    publicKey: loserSession.publicKey,
+                    transports: loserSession.transports,
+                },
+            },
+        };
         const { session: _session, ...winnerPayload } = payload;
 
         const loserTopicName =
@@ -161,32 +219,25 @@ export class PairingRouterRepository extends PairingRepository {
     }
 
     /**
-     * Server-emit `signature-reject` for a single unprocessed request, then
-     * delete the row.
+     * Server-emit `signature-reject` for a single unprocessed request,
+     * then delete the row.
      *
-     * Used by the cleanup cron when individual requests expire. No-op (returns
-     * `false`) if the row is already processed — plain GC of those rows is
-     * handled separately by the cron.
+     * Used by the cleanup cron when individual requests expire. No-op
+     * (returns `false`) if the row is already processed — plain GC of
+     * those rows is handled separately by the cron.
      */
     async cancelSignatureRequest(
         pairingId: string,
         requestId: string,
         reason: SignatureRejectReason
     ): Promise<boolean> {
-        const deleted = await db
-            .delete(pairingSignatureRequestTable)
-            .where(
-                and(
-                    eq(pairingSignatureRequestTable.pairingId, pairingId),
-                    eq(pairingSignatureRequestTable.requestId, requestId),
-                    isNull(pairingSignatureRequestTable.processedAt)
-                )
-            )
-            .returning({
-                requestId: pairingSignatureRequestTable.requestId,
+        const wasDeleted =
+            await this.pairingSignatureRepository.deleteUnprocessed({
+                pairingId,
+                requestId,
             });
 
-        if (deleted.length === 0) return false;
+        if (!wasDeleted) return false;
 
         this.publishSignatureReject({
             pairingId,
@@ -196,10 +247,6 @@ export class PairingRouterRepository extends PairingRepository {
         });
         return true;
     }
-
-    /* ---------------------------------------------------------------------- */
-    /*                          Origin → Target (origin sender)                */
-    /* ---------------------------------------------------------------------- */
 
     private async handlePingRequest({
         ws,
@@ -217,19 +264,18 @@ export class PairingRouterRepository extends PairingRepository {
             return;
         }
 
-        await this.sendTopicMessage({
+        this.sendTopic(
             ws,
-            pairingId: wallet.pairingId,
-            message: {
+            wallet.pairingId,
+            {
                 type: "ping",
-                payload: {
-                    pairingId: wallet.pairingId,
-                },
+                payload: { pairingId: wallet.pairingId },
             },
-            topic: "target",
-            // We can skip the update since we are not sure that the target is connected
-            skipUpdate: true,
-        });
+            "target",
+            // Skip the lastActive update since we are not sure the
+            // target is connected.
+            { skipLastActiveUpdate: true }
+        );
     }
 
     private async handleSignatureRequest({
@@ -254,35 +300,27 @@ export class PairingRouterRepository extends PairingRepository {
             return;
         }
 
-        const pairing = await db.query.pairingTable.findFirst({
-            where: eq(pairingTable.pairingId, wallet.pairingId),
-        });
+        const pairing = await this.pairingRepository.getByPairingId(
+            wallet.pairingId
+        );
 
         if (!pairing) {
             ws.close(WsCloseCode.PAIRING_NOT_FOUND, "Pairing not found");
             return;
         }
 
-        // Idempotent insert: if a request with the same id already exists
-        // (because the origin's outbound queue replayed it after a reconnect),
-        // do nothing. The origin's tracking Map will be settled by either
-        // `signature-response` or `signature-reject` flowing back.
-        await db
-            .insert(pairingSignatureRequestTable)
-            .values({
-                pairingId: wallet.pairingId,
-                requestId: message.payload.id,
-                request: message.payload.request,
-                context: message.payload.context,
-                kind: message.payload.signatureKind,
-                expiresAt: new Date(Date.now() + SIGNATURE_REQUEST_TTL_MS),
-            })
-            .onConflictDoNothing();
-
-        this.sendTopicMessage({
-            ws,
+        await this.pairingSignatureRepository.createIfNotExists({
             pairingId: wallet.pairingId,
-            message: {
+            requestId: message.payload.id,
+            request: message.payload.request,
+            context: message.payload.context,
+            kind: message.payload.signatureKind,
+        });
+
+        this.sendTopic(
+            ws,
+            wallet.pairingId,
+            {
                 type: "signature-request",
                 payload: {
                     pairingId: wallet.pairingId,
@@ -293,8 +331,8 @@ export class PairingRouterRepository extends PairingRepository {
                     signatureKind: message.payload.signatureKind,
                 },
             },
-            topic: "target",
-        });
+            "target"
+        );
 
         if (pairing.wallet) {
             await this.notificationsService.sendNotification({
@@ -306,10 +344,6 @@ export class PairingRouterRepository extends PairingRepository {
             });
         }
     }
-
-    /* ---------------------------------------------------------------------- */
-    /*                          Target → Origin (target sender)                */
-    /* ---------------------------------------------------------------------- */
 
     private async handlePongRequest({
         message,
@@ -323,17 +357,15 @@ export class PairingRouterRepository extends PairingRepository {
             return;
         }
 
-        await this.sendTopicMessage({
+        this.sendTopic(
             ws,
-            pairingId: message.payload.pairingId,
-            message: {
+            message.payload.pairingId,
+            {
                 type: "pong",
-                payload: {
-                    pairingId: message.payload.pairingId,
-                },
+                payload: { pairingId: message.payload.pairingId },
             },
-            topic: "origin",
-        });
+            "origin"
+        );
     }
 
     private async handleSignatureResponseRequest({
@@ -352,41 +384,21 @@ export class PairingRouterRepository extends PairingRepository {
             return;
         }
 
-        // `signature` is a `customHex` (bytea) column — it can only hold
-        // the `"onchain"` response shape. For `"raw-assertion"` (base64
-        // WebAuthn assertion JSON, used by the cross-device merge consent
-        // forwarding) we still mark the row processed so it stops being
-        // replayed to the target on reconnect, but skip the signature
-        // payload itself. Origin's in-memory tracking Map resolves
-        // synchronously off the topic broadcast below.
         const isOnchain =
             !message.payload.signatureKind ||
             message.payload.signatureKind === "onchain";
-        await db
-            .update(pairingSignatureRequestTable)
-            .set({
-                processedAt: new Date(),
-                ...(isOnchain
-                    ? { signature: message.payload.signature as Hex }
-                    : {}),
-            })
-            .where(
-                and(
-                    eq(
-                        pairingSignatureRequestTable.requestId,
-                        message.payload.id
-                    ),
-                    eq(
-                        pairingSignatureRequestTable.pairingId,
-                        message.payload.pairingId
-                    )
-                )
-            );
-
-        await this.sendTopicMessage({
-            ws,
+        await this.pairingSignatureRepository.markProcessed({
             pairingId: message.payload.pairingId,
-            message: {
+            requestId: message.payload.id,
+            signature: isOnchain
+                ? (message.payload.signature as Hex)
+                : undefined,
+        });
+
+        this.sendTopic(
+            ws,
+            message.payload.pairingId,
+            {
                 type: "signature-response",
                 payload: {
                     pairingId: message.payload.pairingId,
@@ -395,21 +407,17 @@ export class PairingRouterRepository extends PairingRepository {
                     signatureKind: message.payload.signatureKind,
                 },
             },
-            topic: "origin",
-        });
+            "origin"
+        );
     }
-
-    /* ---------------------------------------------------------------------- */
-    /*                          Bidirectional reject                          */
-    /* ---------------------------------------------------------------------- */
 
     /**
      * Handle `signature-reject` from EITHER side:
      *   - target → origin: target user declined the prompt.
      *   - origin → target: origin user closed the dApp modal.
      *
-     * In both cases the DB row is deleted and the message is forwarded to
-     * the OPPOSITE topic so the peer's UI/promise settles.
+     * In both cases the DB row is deleted and the message is forwarded
+     * to the OPPOSITE topic so the peer's UI/promise settles.
      */
     private async handleSignatureRejectRequest({
         message,
@@ -425,8 +433,8 @@ export class PairingRouterRepository extends PairingRepository {
             return;
         }
 
-        // Resolve pairing id: target includes it explicitly, origin (distant-
-        // webauthn) carries it on the wallet token.
+        // Resolve pairing id: target includes it explicitly, origin
+        // (distant-webauthn) carries it on the wallet token.
         const pairingId =
             message.payload.pairingId ??
             (wallet.type === "distant-webauthn" ? wallet.pairingId : undefined);
@@ -436,28 +444,21 @@ export class PairingRouterRepository extends PairingRepository {
             return;
         }
 
-        await db
-            .delete(pairingSignatureRequestTable)
-            .where(
-                and(
-                    eq(
-                        pairingSignatureRequestTable.requestId,
-                        message.payload.id
-                    ),
-                    eq(pairingSignatureRequestTable.pairingId, pairingId)
-                )
-            );
+        await this.pairingSignatureRepository.deleteByRequestId({
+            pairingId,
+            requestId: message.payload.id,
+        });
 
-        // Forward to opposite topic. Senders' role is implied by their token:
-        //   distant-webauthn → origin → forward to target
-        //   webauthn         → target → forward to origin
+        // Forward to opposite topic. Senders' role is implied by their
+        // token: distant-webauthn → origin → forward to target;
+        // webauthn → target → forward to origin.
         const oppositeTopic: "origin" | "target" =
             wallet.type === "distant-webauthn" ? "target" : "origin";
 
-        await this.sendTopicMessage({
+        this.sendTopic(
             ws,
             pairingId,
-            message: {
+            {
                 type: "signature-reject",
                 payload: {
                     pairingId,
@@ -465,13 +466,13 @@ export class PairingRouterRepository extends PairingRepository {
                     reason: message.payload.reason,
                 },
             },
-            topic: oppositeTopic,
-        });
+            oppositeTopic
+        );
     }
 
     /**
-     * Server-emit `signature-reject` to one or both topics. Used by the TTL
-     * cleanup cron when individual requests expire.
+     * Server-emit `signature-reject` to one or both topics. Used by
+     * the TTL cleanup cron when individual requests expire.
      */
     private publishSignatureReject({
         pairingId,
@@ -487,7 +488,7 @@ export class PairingRouterRepository extends PairingRepository {
         if (!this.serverPublisher) {
             log.warn(
                 { pairingId, requestId, reason },
-                "[Pairing] server publisher not wired \u2014 dropping signature-reject"
+                "[Pairing] server publisher not wired — dropping signature-reject"
             );
             return;
         }
@@ -505,5 +506,23 @@ export class PairingRouterRepository extends PairingRepository {
                 payload
             );
         }
+    }
+
+    private sendTopic(
+        ws: ElysiaWS,
+        pairingId: string,
+        message: WsTopicMessage,
+        topic: "origin" | "target",
+        opts: { skipLastActiveUpdate?: boolean } = {}
+    ): void {
+        if (!opts.skipLastActiveUpdate) {
+            this.pairingRepository.touchLastActiveBatched(pairingId);
+        }
+        ws.publish(
+            topic === "origin"
+                ? originTopic(pairingId)
+                : targetTopic(pairingId),
+            message
+        );
     }
 }

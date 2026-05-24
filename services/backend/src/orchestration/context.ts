@@ -30,6 +30,7 @@ import { NotificationOrchestrator } from "./NotificationOrchestrator";
 import { PurchaseInteractionCreator } from "./PurchaseInteractionCreator";
 import { PurchaseLinkingOrchestrator } from "./PurchaseLinkingOrchestrator";
 import { PurchaseWebhookOrchestrator } from "./PurchaseWebhookOrchestrator";
+import { PairingOrchestrator, PairingRouterOrchestrator } from "./pairing";
 import { RewardHistoryOrchestrator } from "./RewardHistoryOrchestrator";
 import { RewardLifecycleOrchestrator } from "./RewardLifecycleOrchestrator";
 import { ReferralCodeRedemptionOrchestrator } from "./referral-code";
@@ -152,6 +153,21 @@ const walletSessionOrchestrator = new WalletSessionOrchestrator(
     AuthContext.services.walletJwt
 );
 
+const pairingRouterOrchestrator = new PairingRouterOrchestrator(
+    PairingContext.repositories.pairing,
+    PairingContext.repositories.pairingSignature,
+    NotificationContext.services.notifications
+);
+
+const pairingOrchestrator = new PairingOrchestrator(
+    PairingContext.repositories.pairing,
+    PairingContext.repositories.pairingSignature,
+    AuthContext.repositories.authenticator,
+    IdentityContext.repositories.walletBinding,
+    AuthContext.services.walletSdkSession,
+    identityOrchestrator
+);
+
 const walletMergeOrchestrator = new WalletMergeOrchestrator(
     AuthContext.repositories.authenticator,
     IdentityContext.repositories.walletBinding,
@@ -161,7 +177,7 @@ const walletMergeOrchestrator = new WalletMergeOrchestrator(
     webAuthNValidatorReader,
     AuthContext.services.webAuthN,
     walletSessionOrchestrator,
-    PairingContext.repositories.router
+    pairingRouterOrchestrator
 );
 
 const authenticatorLookupOrchestrator = new AuthenticatorLookupOrchestrator(
@@ -189,5 +205,7 @@ export namespace OrchestrationContext {
         walletMerge: walletMergeOrchestrator,
         walletSession: walletSessionOrchestrator,
         authenticatorLookup: authenticatorLookupOrchestrator,
+        pairing: pairingOrchestrator,
+        pairingRouter: pairingRouterOrchestrator,
     };
 }

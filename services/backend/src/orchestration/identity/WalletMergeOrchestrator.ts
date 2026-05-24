@@ -2,16 +2,13 @@ import { db, log } from "@backend-infrastructure";
 import { HttpError } from "@backend-utils";
 import { buildMergeConsentChallengeSlots } from "@frak-labs/app-essentials";
 import { currentChainId } from "@frak-labs/app-essentials/blockchain";
-import { eq } from "drizzle-orm";
 import { type Address, isAddressEqual } from "viem";
 import type { AuthenticatorRepository } from "../../domain/auth/repositories/AuthenticatorRepository";
-import type { MintForCredentialResult } from "../../domain/auth/services/WalletJwtService";
 import type { WebAuthNService } from "../../domain/auth/services/WebAuthNService";
 import type { IdentityRepository } from "../../domain/identity/repositories/IdentityRepository";
 import type { WalletBindingRepository } from "../../domain/identity/repositories/WalletBindingRepository";
-import { pairingTable } from "../../domain/pairing/db/schema";
-import type { PairingRouterRepository } from "../../domain/pairing/repositories/PairingRouterRepository";
 import type { WebAuthNValidatorReader } from "../../infrastructure/blockchain/WebAuthNValidatorReader";
+import type { PairingRouterOrchestrator } from "../pairing/PairingRouterOrchestrator";
 import type { MergePreviewResponse, MergeSettleResponse } from "../schemas";
 import type { IdentityMergeService } from "./IdentityMergeService";
 import type { IdentityWeightService } from "./IdentityWeightService";
@@ -39,8 +36,8 @@ export class WalletMergeOrchestrator {
         private readonly walletSessionOrchestrator: WalletSessionOrchestrator,
         // Used by Phase 2 (cross-device merge) to push `merge-completed`
         // to both pairing topics after settlement. Same-device merges
-        // pass no `pairingId` and the publish step is skipped.
-        private readonly pairingRouterRepository: PairingRouterRepository
+        // pass no `pairingId` and the broadcast step is skipped.
+        private readonly pairingRouterOrchestrator: PairingRouterOrchestrator
     ) {}
 
     /**
@@ -370,7 +367,7 @@ export class WalletMergeOrchestrator {
             : undefined;
 
         if (params.pairingId && loserSession) {
-            await this.publishMergeCompleted({
+            await this.pairingRouterOrchestrator.broadcastMergeCompleted({
                 pairingId: params.pairingId,
                 winner: preview.winner,
                 loser: preview.loser,
@@ -461,12 +458,12 @@ export class WalletMergeOrchestrator {
               )
             : undefined;
 
-        // Re-publish merge-completed on retry so a loser device that
+        // Re-broadcast merge-completed on retry so a loser device that
         // missed the original event still picks up its fresh session.
         // Cheap and idempotent on the loser side (applySession overrides
         // any stale session).
         if (params.pairingId && loserSession) {
-            await this.publishMergeCompleted({
+            await this.pairingRouterOrchestrator.broadcastMergeCompleted({
                 pairingId: params.pairingId,
                 winner,
                 loser,
@@ -538,100 +535,6 @@ export class WalletMergeOrchestrator {
                 : unlinked.smartWalletAddress,
             loserAuthenticatorId: credentialId,
         };
-    }
-
-    /**
-     * Resolves which side of the pairing holds the loser wallet, then
-     * pushes `merge-completed` on both topics via the router repo.
-     *
-     * The pairing row's `wallet` column was set at join-time to the
-     * target's smart-account address — so it's the source of truth for
-     * who's on the target side. The loser side is determined by
-     * comparing it to the loser address. If the loser address doesn't
-     * match either side we log a warning and skip publishing rather
-     * than guess — the on-chain + DB merge already committed, so the
-     * worst case is the loser device needs a manual reload to pick up
-     * its new session.
-     */
-    private async publishMergeCompleted({
-        pairingId,
-        winner,
-        loser,
-        loserAuthenticatorId,
-        loserSession,
-    }: {
-        pairingId: string;
-        winner: Address;
-        loser: Address;
-        loserAuthenticatorId: string;
-        loserSession: MintForCredentialResult;
-    }): Promise<void> {
-        const pairing = await db.query.pairingTable.findFirst({
-            where: eq(pairingTable.pairingId, pairingId),
-        });
-        if (!pairing) {
-            log.warn(
-                { pairingId, winner, loser },
-                "[WalletMerge] cannot publish merge-completed: pairing not found"
-            );
-            return;
-        }
-
-        // Pairing row's `wallet` is the target wallet (set at join).
-        // The merge moves the loser credential under the winner wallet,
-        // but the pairing row's `wallet` references the address the
-        // target authenticated with at join-time, which may pre-date
-        // the rebind. That's still correct here because we run this
-        // before any other settle on this row, so `pairing.wallet`
-        // still reflects the join-time identity.
-        const targetWallet = pairing.wallet;
-        if (!targetWallet) {
-            log.warn(
-                { pairingId },
-                "[WalletMerge] cannot publish merge-completed: pairing unresolved"
-            );
-            return;
-        }
-
-        let loserSide: "origin" | "target";
-        if (isAddressEqual(targetWallet, loser)) {
-            loserSide = "target";
-        } else if (isAddressEqual(targetWallet, winner)) {
-            loserSide = "origin";
-        } else {
-            log.warn(
-                {
-                    pairingId,
-                    targetWallet,
-                    winner,
-                    loser,
-                },
-                "[WalletMerge] pairing wallet matches neither winner nor loser; skipping merge-completed"
-            );
-            return;
-        }
-
-        this.pairingRouterRepository.publishMergeCompleted({
-            pairingId,
-            loserSide,
-            payload: {
-                pairingId,
-                winner,
-                loser,
-                loserAuthenticatorId,
-                session: {
-                    token: loserSession.token,
-                    sdkJwt: loserSession.sdkJwt,
-                    wallet: {
-                        type: "webauthn",
-                        address: loserSession.address,
-                        authenticatorId: loserSession.authenticatorId,
-                        publicKey: loserSession.publicKey,
-                        transports: loserSession.transports,
-                    },
-                },
-            },
-        });
     }
 }
 
