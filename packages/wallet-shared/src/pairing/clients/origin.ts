@@ -520,9 +520,8 @@ export class OriginPairingClient extends BasePairingClient<
 
     /**
      * Handle a successful pairing handshake. Writes the minted
-     * distant-webauthn session into `sessionStore` after parking any
-     * existing session for rollback, then forces a reconnect with the
-     * new token so the WS keeps flowing as the joined wallet.
+     * distant-webauthn session into `sessionStore` and forces a reconnect
+     * with the new token so the WS keeps flowing as the joined wallet.
      */
     private handleAuthenticated(
         payload: Extract<WsOriginMessage, { type: "authenticated" }>["payload"]
@@ -545,23 +544,19 @@ export class OriginPairingClient extends BasePairingClient<
     }
 
     /**
-     * Park any existing session and overwrite the live slot with the
-     * freshly minted distant-webauthn session. `parkSession` refuses to
-     * overwrite an existing snapshot — intentional, so mid-flow re-entry
-     * doesn't lose the original target.
+     * Overwrite the live session slot with the freshly minted
+     * distant-webauthn session. The user has explicitly opted in to
+     * becoming the paired wallet on this device (SSO / login / onboarding /
+     * listener auth), so the prior session is intentionally replaced — no
+     * rollback path exists for these flows, and parking it would leave an
+     * orphaned snapshot in `localStorage` that no callsite ever pops.
+     *
+     * The target-side credential-switch flow (`pairing.tsx`) still uses
+     * `parkSession`/`popSession` for its own self-contained rollback.
      */
     private applyDistantSession(
         payload: Extract<WsOriginMessage, { type: "authenticated" }>["payload"]
     ) {
-        const previousSession = sessionStore.getState().session;
-        const previousSdk = sessionStore.getState().sdkSession;
-        if (previousSession) {
-            sessionStore.getState().parkSession({
-                session: previousSession,
-                sdkSession: previousSdk,
-            });
-        }
-
         sessionStore.getState().setSession({
             token: payload.token,
             ...payload.wallet,
@@ -579,9 +574,6 @@ export class OriginPairingClient extends BasePairingClient<
      *  - Winner-side payload omits `session` (the winner already has the
      *    right session); a no-op here, the active flow UI transitions to
      *    success from the HTTP response of `/merge/settle`.
-     *
-     * Drop any parked snapshot too — the merge is durable; restoring it
-     * would put the user back on a wallet they no longer own.
      */
     private handleMergeCompleted(
         payload: Extract<
@@ -602,7 +594,6 @@ export class OriginPairingClient extends BasePairingClient<
         const { token, sdkJwt, wallet } = payload.session;
         sessionStore.getState().setSession({ ...wallet, token } as Session);
         sessionStore.getState().setSdkSession(sdkJwt);
-        sessionStore.getState().discardPreviousSession();
     }
 
     /**
