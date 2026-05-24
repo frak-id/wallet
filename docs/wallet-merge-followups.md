@@ -163,6 +163,16 @@ The following items were verified during the same pass and found to **no longer 
 
 ---
 
+## Backend — Layering & domain types
+
+### 🟢 `IdentityNode` lives in the orchestration layer `[generification]`
+- **Where:** `services/backend/src/orchestration/identity/types.ts:3` (definition); consumers in `services/backend/src/domain/pairing/db/schema.ts:12,44` and `services/backend/src/domain/pairing/repositories/PairingRepository.ts:4`.
+- **Issue:** `IdentityNode` (and its `WalletNode` / `EmailNode` / `WebAuthNNode` variants) is a pure domain concept — an identity-graph primitive — but is defined in `orchestration/identity/types.ts`. The pairing schema and the `PairingRepository.create` signature both have to reach UP into the orchestration layer for a type-only import. Type-only imports are erased at compile time so there's no runtime cycle, but conceptually the layering rule is breached: a domain class shouldn't need to know that orchestration exists, even at the type level.
+- **Recommended fix:** Move `IdentityNode` (and the variants in the same file) to a new `services/backend/src/domain/identity/types.ts`. Re-export from `orchestration/identity/types.ts` for backwards compatibility, or update orchestration consumers to import directly from the domain. Update the pairing schema and `PairingRepository` imports.
+- **Why deferred:** Pre-existing — the pairing schema already imported `IdentityNode` from orchestration at HEAD before the pairing repo↔orchestrator untangle (commit `82b332186 ♻️ Untangle pairing repo↔orchestrator inversion`). Type-only erased imports mean zero runtime risk. Worth a focused cleanup the next time someone touches `IdentityNode`'s shape — picking it up in isolation would be one move + a re-export with no behaviour change.
+
+---
+
 ## Backend — Cache invalidation gaps
 
 ### 🟡 Identity cache invalidation on `addNode` `[simplicity]` — **Closed (partially)**
