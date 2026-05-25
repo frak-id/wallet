@@ -4,16 +4,18 @@
 {% endif %}
 
 {% comment %}
-  Resolution chain per text: per-block setting → translatable shop metafield
-  (managed via Translate & Adapt) → storefront-locale fallback (`| t`).
-  Skipping the attribute entirely lets the SDK fall back to its built-ins.
+  Resolution chain per text: per-block setting → translatable metaobject
+  field (`frak_i18n` entry with handle `default`, managed via Translate &
+  Adapt) → storefront-locale fallback (`| t`). Skipping the attribute
+  entirely lets the SDK fall back to its built-ins.
 {% endcomment %}
-{% assign referral_title = block.settings.referral_title | default: shop.metafields.frak.banner_referral_title | default: 'banner.referral.title' | t %}
-{% assign referral_description = block.settings.referral_description | default: shop.metafields.frak.banner_referral_description | default: 'banner.referral.description' | t %}
-{% assign referral_cta = block.settings.referral_cta | default: shop.metafields.frak.banner_referral_cta | default: 'banner.referral.cta' | t %}
-{% assign inapp_title = block.settings.inapp_title | default: shop.metafields.frak.banner_inapp_title | default: 'banner.inapp.title' | t %}
-{% assign inapp_description = block.settings.inapp_description | default: shop.metafields.frak.banner_inapp_description | default: 'banner.inapp.description' | t %}
-{% assign inapp_cta = block.settings.inapp_cta | default: shop.metafields.frak.banner_inapp_cta | default: 'banner.inapp.cta' | t %}
+{% assign frak_i18n = shop.metaobjects.frak_i18n.default %}
+{% assign referral_title = block.settings.referral_title | default: frak_i18n.banner_referral_title | default: 'banner.referral.title' | t %}
+{% assign referral_description = block.settings.referral_description | default: frak_i18n.banner_referral_description | default: 'banner.referral.description' | t %}
+{% assign referral_cta = block.settings.referral_cta | default: frak_i18n.banner_referral_cta | default: 'banner.referral.cta' | t %}
+{% assign inapp_title = block.settings.inapp_title | default: frak_i18n.banner_inapp_title | default: 'banner.inapp.title' | t %}
+{% assign inapp_description = block.settings.inapp_description | default: frak_i18n.banner_inapp_description | default: 'banner.inapp.description' | t %}
+{% assign inapp_cta = block.settings.inapp_cta | default: frak_i18n.banner_inapp_cta | default: 'banner.inapp.cta' | t %}
 
 <frak-banner
   classname="{{ custom_class }}"

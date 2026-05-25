@@ -1,4 +1,5 @@
 import { useMemo } from "preact/hooks";
+import type { PostPurchaseTextOverrides } from "./frakI18n";
 
 const DEFAULT_WALLET_URL = "https://wallet.frak.id";
 
@@ -19,18 +20,6 @@ type PostPurchaseSettings = {
     cta_text?: string;
     badge_text?: string;
     image_url?: string;
-};
-
-/**
- * Translatable text overrides read from shop metafields. Each value is
- * the buyer-locale translation when one exists in Translate & Adapt;
- * `undefined` otherwise.
- */
-export type PostPurchaseTextOverrides = {
-    message?: string;
-    description?: string;
-    ctaText?: string;
-    badgeText?: string;
 };
 
 /**
@@ -131,9 +120,9 @@ export function PostPurchaseCard({
 }: {
     settings: Partial<PostPurchaseSettings>;
     /**
-     * Translatable text overrides from `frak.post_purchase_*` metafields.
-     * Resolved per buyer locale via Translate & Adapt. Lower priority than
-     * per-extension `settings`, higher than `defaults`.
+     * Per-locale text overrides fetched from the `frak_i18n` metaobject
+     * via the Storefront API. Lower priority than per-extension
+     * `settings`, higher than `defaults`.
      */
     textOverrides?: PostPurchaseTextOverrides;
     /** Locale-resolved fallback text from the extension's `locales/` files. */

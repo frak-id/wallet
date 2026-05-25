@@ -6,6 +6,13 @@ type = "ui_extension"
 name = "Frak Post Purchase"
 handle = "checkout-post-purchase"
 
+  [extensions.capabilities]
+  # Required to call shopify.query() against the Storefront API. The
+  # extension queries the `frak_i18n` metaobject for per-locale text
+  # overrides (post_purchase_message / _description / _cta_text /
+  # _badge_text) — Translate & Adapt edits propagate automatically.
+  api_access = true
+
 # Thank You page — shown immediately after checkout completes
 [[extensions.targeting]]
 target = "purchase.thank-you.block.render"
@@ -29,25 +36,6 @@ key = "wallet_url"
 [[extensions.metafields]]
 namespace = "frak"
 key = "appearance"
-
-# Translatable text metafields managed via Translate & Adapt. Read here so
-# the post-purchase card can render the buyer's locale automatically when
-# no per-extension setting overrides it.
-[[extensions.metafields]]
-namespace = "frak"
-key = "post_purchase_message"
-
-[[extensions.metafields]]
-namespace = "frak"
-key = "post_purchase_description"
-
-[[extensions.metafields]]
-namespace = "frak"
-key = "post_purchase_cta_text"
-
-[[extensions.metafields]]
-namespace = "frak"
-key = "post_purchase_badge_text"
 
 # Merchant-configurable text settings
 [extensions.settings]
