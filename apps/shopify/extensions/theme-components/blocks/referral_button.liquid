@@ -11,11 +11,18 @@
 {% endif %}
 
 {% comment %}
-  Resolution chain per text: per-block setting → translatable shop metafield
-  (managed via Translate & Adapt) → storefront-locale fallback (`| t`).
+  Resolution chain per text: per-block setting → translatable metaobject
+  field (`frak_i18n` entry with handle `default`, managed via Translate &
+  Adapt) → storefront-locale fallback. The `| t` filter is applied to the
+  locale-key fallback BEFORE the `default` cascade — otherwise Liquid
+  pipes the resolved value (merchant text or metaobject field) through
+  `| t` and emits "Translation missing: {locale}. <text>".
 {% endcomment %}
-{% assign button_text = block.settings.text | default: shop.metafields.frak.button_share_text | default: 'share_btn.label' | t %}
-{% assign no_reward_text = block.settings.no_reward_text | default: shop.metafields.frak.button_share_no_reward_text | default: 'share_btn.no_reward' | t %}
+{% assign frak_i18n = shop.metaobjects.frak_i18n.default %}
+{% assign button_text_fallback = 'share_btn.label' | t %}
+{% assign no_reward_text_fallback = 'share_btn.no_reward' | t %}
+{% assign button_text = block.settings.text | default: frak_i18n.button_share_text | default: button_text_fallback %}
+{% assign no_reward_text = block.settings.no_reward_text | default: frak_i18n.button_share_no_reward_text | default: no_reward_text_fallback %}
 
 <frak-button-share
   text="{{ button_text }}"
@@ -41,7 +48,8 @@
     {
       "type": "text",
       "id": "text",
-      "label": "Button text"
+      "label": "Button text",
+      "info": "Leave blank for the localized default (e.g. \"Share and earn!\")."
     },
     {
       "type": "checkbox",
@@ -54,7 +62,7 @@
       "type": "text",
       "id": "no_reward_text",
       "label": "Fallback text (no reward)",
-      "info": "Text to show when reward is enabled but no reward is available"
+      "info": "Shown when rewards are enabled but no reward is available. Leave blank for the localized default."
     },
     {
       "type": "select",

@@ -12,48 +12,77 @@ const SHARE_URL_KEY = "share_url";
 const SHARE_BUTTON_HTML_KEY = "share_button_html";
 
 /* -------------------------------------------------------------------------- */
-/*                Translatable text metafield definitions                    */
+/*                Translatable text metaobject (Frak i18n)                    */
 /* -------------------------------------------------------------------------- */
 
 /**
  * Per-locale merchant-customisable strings for the banner block, the
  * referral share button, and the post-purchase checkout extension.
  *
- * These are SHOP-owned metafields with text types (translatable by
- * Shopify's Translate & Adapt app). Each surface falls back through:
- *   block setting (when present) → this metafield → locale JSON (when
- *   surface supports it) → SDK default.
+ * Stored as a single merchant-owned metaobject of type `frak_i18n` with
+ * one "default" entry. Surfaces as a dedicated section in Shopify's
+ * Translate & Adapt app, away from the operational shop metafields
+ * (modal_i18n, appearance, merchant_id, …).
  *
- * Existing block settings still win, so theme upgrades remain backwards
- * compatible.
+ * Why merchant-owned (no `$app:` prefix) despite app-owned being the
+ * default for app-managed data: app-owned metaobjects are not reliably
+ * accessible from Liquid theme app extensions (`shop.metaobjects['$app:…']`
+ * returns empty in production stores; documented workarounds rely on the
+ * fully-resolved `app--{app_id}--…` type name). Merchant-owned types
+ * read cleanly via `shop.metaobjects.frak_i18n.default.<field>`.
+ *
+ * Resolution chain per surface:
+ *   block setting → metaobject field → storefront `| t` → SDK default
  */
-export type FrakI18nMetafieldDefinition = {
+
+const FRAK_I18N_METAOBJECT_TYPE = "frak_i18n";
+const FRAK_I18N_SINGLETON_HANDLE = "default";
+const FRAK_I18N_DEFINITION_NAME = "Frak Translations";
+const FRAK_I18N_DEFINITION_DESCRIPTION =
+    "Per-locale text used by the Frak banner, share button, and post-purchase card. Edit non-default languages via Translate & Adapt.";
+const FRAK_I18N_FR_LOCALE = "fr";
+
+export type FrakI18nFieldDefinition = {
     key: string;
     name: string;
     description: string;
-    /** `single_line_text_field` for one-liners, `multi_line_text_field` for descriptions. */
     type: "single_line_text_field" | "multi_line_text_field";
+    /**
+     * Seed values written on first install. `en` becomes the entry's
+     * field value (source locale); `fr` is registered via
+     * `translationsRegister`. Skipped when undefined.
+     */
+    defaults: { en?: string; fr?: string };
 };
 
-export const FRAK_I18N_METAFIELD_DEFINITIONS: FrakI18nMetafieldDefinition[] = [
+export const FRAK_I18N_FIELDS: FrakI18nFieldDefinition[] = [
     {
         key: "banner_referral_title",
         name: "Banner — Referral title",
         description:
             "Referral banner heading shown to referred storefront visitors.",
         type: "single_line_text_field",
+        defaults: {
+            en: "You've been referred!",
+            fr: "Vous avez été parrainé !",
+        },
     },
     {
         key: "banner_referral_description",
         name: "Banner — Referral description",
         description: "Referral banner body shown under the heading.",
         type: "multi_line_text_field",
+        defaults: {
+            en: "Make your first purchase to unlock your reward.",
+            fr: "Effectuez votre premier achat pour débloquer votre récompense.",
+        },
     },
     {
         key: "banner_referral_cta",
         name: "Banner — Referral button",
         description: "Referral banner call-to-action label.",
         type: "single_line_text_field",
+        defaults: { en: "Got it", fr: "Compris" },
     },
     {
         key: "banner_inapp_title",
@@ -61,6 +90,10 @@ export const FRAK_I18N_METAFIELD_DEFINITIONS: FrakI18nMetafieldDefinition[] = [
         description:
             "Heading shown when the storefront opens in Instagram or Facebook's in-app browser.",
         type: "single_line_text_field",
+        defaults: {
+            en: "Open in your browser",
+            fr: "Ouvrir dans votre navigateur",
+        },
     },
     {
         key: "banner_inapp_description",
@@ -68,12 +101,17 @@ export const FRAK_I18N_METAFIELD_DEFINITIONS: FrakI18nMetafieldDefinition[] = [
         description:
             "Body shown when the storefront opens in an in-app browser.",
         type: "multi_line_text_field",
+        defaults: {
+            en: "For the best experience, open this page in your system browser.",
+            fr: "Pour une meilleure expérience, ouvrez cette page dans le navigateur de votre téléphone.",
+        },
     },
     {
         key: "banner_inapp_cta",
         name: "Banner — In-app browser button",
         description: "Call-to-action label for the in-app browser banner.",
         type: "single_line_text_field",
+        defaults: { en: "Open browser", fr: "Ouvrir le navigateur" },
     },
     {
         key: "button_share_text",
@@ -81,6 +119,7 @@ export const FRAK_I18N_METAFIELD_DEFINITIONS: FrakI18nMetafieldDefinition[] = [
         description:
             "Storefront share button label. Use {REWARD} to embed the reward amount.",
         type: "single_line_text_field",
+        defaults: { en: "Share and earn!", fr: "Partage et gagne !" },
     },
     {
         key: "button_share_no_reward_text",
@@ -88,24 +127,34 @@ export const FRAK_I18N_METAFIELD_DEFINITIONS: FrakI18nMetafieldDefinition[] = [
         description:
             "Label shown when rewards are enabled on the share button but no reward is available.",
         type: "single_line_text_field",
+        defaults: { en: "Share and earn!", fr: "Partage et gagne !" },
     },
     {
         key: "post_purchase_message",
         name: "Post-purchase — Heading",
         description: "Heading on the post-purchase sharing card.",
         type: "single_line_text_field",
+        defaults: {
+            en: "Earn rewards through sharing",
+            fr: "Gagnez des récompenses en partageant",
+        },
     },
     {
         key: "post_purchase_description",
         name: "Post-purchase — Description",
         description: "Body copy on the post-purchase sharing card.",
         type: "multi_line_text_field",
+        defaults: {
+            en: "If they buy, they earn... and so do you!",
+            fr: "S'ils achètent, ils gagnent… et vous aussi !",
+        },
     },
     {
         key: "post_purchase_cta_text",
         name: "Post-purchase — Button",
         description: "Call-to-action label on the post-purchase sharing card.",
         type: "single_line_text_field",
+        defaults: { en: "Share & earn", fr: "Partager & gagner" },
     },
     {
         key: "post_purchase_badge_text",
@@ -113,14 +162,9 @@ export const FRAK_I18N_METAFIELD_DEFINITIONS: FrakI18nMetafieldDefinition[] = [
         description:
             "Optional pill label above the heading. Leave empty to hide.",
         type: "single_line_text_field",
+        defaults: {},
     },
 ];
-
-/**
- * Metafield definition userError codes we can safely ignore.
- * `TAKEN` → the definition already exists (idempotent path).
- */
-const IGNORABLE_DEFINITION_ERROR_CODES = new Set(["TAKEN"]);
 
 export type AppearanceMetafieldValue = {
     logoUrl?: string;
@@ -477,104 +521,333 @@ export async function getShopId(ctx: AuthenticatedContext): Promise<string> {
 }
 
 /* -------------------------------------------------------------------------- */
-/*              Translatable text metafield definition setup                  */
+/*              Frak i18n metaobject — singleton entry orchestrator           */
 /* -------------------------------------------------------------------------- */
 
-const i18nDefinitionsSyncedShops = new LRUCache<string, boolean>({
+const i18nMetaobjectSyncedShops = new LRUCache<string, boolean>({
     max: 512,
     ttl: 30 * 60_000,
 });
 
+const IGNORABLE_METAOBJECT_DEFINITION_ERROR_CODES = new Set(["TAKEN"]);
+
+type GraphQLBody<TData> = {
+    data?: TData;
+    errors?: Array<{ message: string }>;
+};
+
 /**
- * Register a single shop-owned metafield definition.
- *
- * Idempotent: re-running for an existing definition returns the `TAKEN`
- * userError code which we treat as success.
+ * Boilerplate-free GraphQL call. Logs and returns `null` on transport
+ * errors, JSON parse failures, or top-level GraphQL errors; callers
+ * handle `userErrors` from the returned data.
  */
-async function createFrakI18nMetafieldDefinition(
-    { admin: { graphql } }: AuthenticatedContext,
-    definition: FrakI18nMetafieldDefinition
-): Promise<{ ok: boolean; errors: Array<{ code?: string; message: string }> }> {
-    const response = await graphql(
+async function runGraphQL<TData>(
+    graphql: AuthenticatedContext["admin"]["graphql"],
+    label: string,
+    query: string,
+    variables: Record<string, unknown>
+): Promise<TData | null> {
+    try {
+        const response = await graphql(query, { variables });
+        const body = (await response.json()) as GraphQLBody<TData>;
+        if (body.errors?.length) {
+            console.error(`[frakI18n] ${label} top-level errors:`, body.errors);
+            return null;
+        }
+        return body.data ?? null;
+    } catch (error) {
+        console.error(`[frakI18n] ${label} threw:`, error);
+        return null;
+    }
+}
+
+/**
+ * Single round-trip read of the singleton state. The orchestrator uses
+ * this to decide whether to create the definition and/or seed the entry.
+ */
+async function readFrakI18nState(
+    context: AuthenticatedContext
+): Promise<{ definitionExists: boolean; entryId: string | null } | null> {
+    const data = await runGraphQL<{
+        metaobjectDefinitionByType?: { id?: string } | null;
+        metaobject?: { id?: string } | null;
+    }>(
+        context.admin.graphql,
+        "state read",
         `#graphql
-        mutation CreateFrakI18nMetafieldDefinition(
-            $definition: MetafieldDefinitionInput!
+        query ReadFrakI18nState(
+            $type: String!
+            $entryHandle: MetaobjectHandleInput!
         ) {
-            metafieldDefinitionCreate(definition: $definition) {
-                createdDefinition { id }
+            metaobjectDefinitionByType(type: $type) { id }
+            metaobject(handle: $entryHandle) { id }
+        }`,
+        {
+            type: FRAK_I18N_METAOBJECT_TYPE,
+            entryHandle: {
+                type: FRAK_I18N_METAOBJECT_TYPE,
+                handle: FRAK_I18N_SINGLETON_HANDLE,
+            },
+        }
+    );
+    if (!data) return null;
+    return {
+        definitionExists: Boolean(data.metaobjectDefinitionByType?.id),
+        entryId: data.metaobject?.id ?? null,
+    };
+}
+
+async function createFrakI18nDefinition(
+    context: AuthenticatedContext
+): Promise<boolean> {
+    const data = await runGraphQL<{
+        metaobjectDefinitionCreate?: {
+            userErrors?: Array<{ code?: string; message: string }>;
+        };
+    }>(
+        context.admin.graphql,
+        "definition create",
+        `#graphql
+        mutation CreateFrakI18nDefinition(
+            $definition: MetaobjectDefinitionCreateInput!
+        ) {
+            metaobjectDefinitionCreate(definition: $definition) {
+                metaobjectDefinition { id }
                 userErrors { field message code }
             }
         }`,
         {
-            variables: {
-                definition: {
-                    name: definition.name,
-                    namespace: FRAK_NAMESPACE,
-                    key: definition.key,
-                    description: definition.description,
-                    type: definition.type,
-                    ownerType: "SHOP",
-                    access: {
-                        admin: "MERCHANT_READ_WRITE",
-                        storefront: "PUBLIC_READ",
-                    },
+            definition: {
+                type: FRAK_I18N_METAOBJECT_TYPE,
+                name: FRAK_I18N_DEFINITION_NAME,
+                description: FRAK_I18N_DEFINITION_DESCRIPTION,
+                access: { storefront: "PUBLIC_READ" },
+                capabilities: {
+                    publishable: { enabled: true },
+                    translatable: { enabled: true },
                 },
+                fieldDefinitions: FRAK_I18N_FIELDS.map((f) => ({
+                    key: f.key,
+                    name: f.name,
+                    description: f.description,
+                    type: f.type,
+                })),
             },
         }
     );
-
-    const {
-        data: { metafieldDefinitionCreate },
-    } = await response.json();
-
-    const errors = (metafieldDefinitionCreate?.userErrors ?? []) as Array<{
-        code?: string;
-        message: string;
-    }>;
-    const blockingErrors = errors.filter(
-        (e) => !e.code || !IGNORABLE_DEFINITION_ERROR_CODES.has(e.code)
+    if (!data) return false;
+    const errors = data.metaobjectDefinitionCreate?.userErrors ?? [];
+    const blocking = errors.filter(
+        (e) =>
+            !e.code || !IGNORABLE_METAOBJECT_DEFINITION_ERROR_CODES.has(e.code)
     );
-
-    return { ok: blockingErrors.length === 0, errors: blockingErrors };
+    if (blocking.length > 0) {
+        console.error(
+            "[frakI18n] definition create rejected:",
+            JSON.stringify(blocking)
+        );
+        return false;
+    }
+    return true;
 }
 
 /**
- * Ensure every translatable Frak text metafield definition exists on the
- * shop. Definitions enable Shopify's Translate & Adapt app to discover
- * the metafields and offer per-locale translation editors.
- *
- * Fire-and-forget; cached per shop for 30 minutes (same pattern as
- * `ensureWalletUrlMetafield` in merchant.ts).
+ * Create the singleton entry with bundled EN seeds. Only invoked when
+ * the state read confirmed no entry exists yet, so merchant edits on
+ * existing EN values are never overwritten. `publishable.status = ACTIVE`
+ * requires the definition's `publishable: { enabled: true }` capability.
  */
-export async function ensureFrakI18nMetafieldDefinitions(
+async function upsertFrakI18nEntry(
+    context: AuthenticatedContext
+): Promise<string | null> {
+    const fields = FRAK_I18N_FIELDS.flatMap((f) =>
+        f.defaults.en ? [{ key: f.key, value: f.defaults.en }] : []
+    );
+    const data = await runGraphQL<{
+        metaobjectUpsert?: {
+            metaobject?: { id?: string } | null;
+            userErrors?: Array<{
+                field?: string[];
+                message: string;
+                code?: string;
+            }>;
+        };
+    }>(
+        context.admin.graphql,
+        "entry upsert",
+        `#graphql
+        mutation UpsertFrakI18nEntry(
+            $handle: MetaobjectHandleInput!
+            $metaobject: MetaobjectUpsertInput!
+        ) {
+            metaobjectUpsert(handle: $handle, metaobject: $metaobject) {
+                metaobject { id }
+                userErrors { field message code }
+            }
+        }`,
+        {
+            handle: {
+                type: FRAK_I18N_METAOBJECT_TYPE,
+                handle: FRAK_I18N_SINGLETON_HANDLE,
+            },
+            metaobject: {
+                fields,
+                capabilities: { publishable: { status: "ACTIVE" } },
+            },
+        }
+    );
+    if (!data) return null;
+    const result = data.metaobjectUpsert;
+    if (result?.userErrors?.length) {
+        console.error(
+            "[frakI18n] entry upsert userErrors:",
+            JSON.stringify(result.userErrors)
+        );
+    }
+    return result?.metaobject?.id ?? null;
+}
+
+type FrakI18nFieldTranslationState = {
+    digestByKey: Map<string, string>;
+    keysWithFr: Set<string>;
+};
+
+/**
+ * Fetch translatable digests + existing FR translations for the singleton
+ * entry. Unlike metafields (one translatable "value" key), metaobjects
+ * expose one translatable entry PER field — so the digest map is keyed
+ * by our field keys directly.
+ */
+async function readFrakI18nFieldTranslationState(
+    context: AuthenticatedContext,
+    entryId: string
+): Promise<FrakI18nFieldTranslationState | null> {
+    const data = await runGraphQL<{
+        translatableResourcesByIds?: {
+            nodes?: Array<{
+                translatableContent?: Array<{ key: string; digest?: string }>;
+                translations?: Array<{ key: string; value?: string }>;
+            }>;
+        };
+    }>(
+        context.admin.graphql,
+        "translation state read",
+        `#graphql
+        query ReadFrakI18nFieldTranslationState(
+            $resourceIds: [ID!]!
+            $locale: String!
+        ) {
+            translatableResourcesByIds(first: 1, resourceIds: $resourceIds) {
+                nodes {
+                    translatableContent { key digest }
+                    translations(locale: $locale) { key value }
+                }
+            }
+        }`,
+        { resourceIds: [entryId], locale: FRAK_I18N_FR_LOCALE }
+    );
+    if (!data) return null;
+    const node = data.translatableResourcesByIds?.nodes?.[0];
+    const digestByKey = new Map<string, string>();
+    const keysWithFr = new Set<string>();
+    for (const c of node?.translatableContent ?? []) {
+        if (typeof c.digest === "string") digestByKey.set(c.key, c.digest);
+    }
+    for (const t of node?.translations ?? []) {
+        if (typeof t.value === "string" && t.value.length > 0)
+            keysWithFr.add(t.key);
+    }
+    return { digestByKey, keysWithFr };
+}
+
+async function registerFrakI18nFrTranslations(
+    context: AuthenticatedContext,
+    entryId: string,
+    translations: Array<{ key: string; value: string; digest: string }>
+): Promise<boolean> {
+    if (translations.length === 0) return true;
+    const data = await runGraphQL<{
+        translationsRegister?: {
+            userErrors?: Array<{ message: string }>;
+        };
+    }>(
+        context.admin.graphql,
+        "fr register",
+        `#graphql
+        mutation RegisterFrakI18nFrTranslations(
+            $resourceId: ID!
+            $translations: [TranslationInput!]!
+        ) {
+            translationsRegister(
+                resourceId: $resourceId
+                translations: $translations
+            ) {
+                userErrors { field message code }
+            }
+        }`,
+        {
+            resourceId: entryId,
+            translations: translations.map((t) => ({
+                locale: FRAK_I18N_FR_LOCALE,
+                key: t.key,
+                value: t.value,
+                translatableContentDigest: t.digest,
+            })),
+        }
+    );
+    if (!data) return false;
+    const errors = data.translationsRegister?.userErrors ?? [];
+    if (errors.length > 0) {
+        console.error("[frakI18n] fr translations rejected:", errors);
+        return false;
+    }
+    return true;
+}
+
+/**
+ * Idempotent: ensure the `frak_i18n` metaobject definition exists, create
+ * the singleton entry with bundled EN seeds when missing, then register
+ * the bundled FR translations for any field that doesn't already have one.
+ * Merchant EN edits are preserved (the entry is only seeded on first
+ * create); FR overrides are preserved via the `keysWithFr` check.
+ *
+ * Cached per shop for 30 minutes — but only on full success, so partial
+ * failures stay retryable on the next loader call.
+ */
+export async function ensureFrakI18nMetaobject(
     context: AuthenticatedContext
 ): Promise<void> {
     const shop = await shopInfo(context);
     const cacheKey = shop.normalizedDomain;
+    if (i18nMetaobjectSyncedShops.get(cacheKey)) return;
 
-    if (i18nDefinitionsSyncedShops.get(cacheKey)) return;
-
-    const results = await Promise.allSettled(
-        FRAK_I18N_METAFIELD_DEFINITIONS.map((def) =>
-            createFrakI18nMetafieldDefinition(context, def)
-        )
-    );
-
-    for (const [index, result] of results.entries()) {
-        if (result.status === "rejected") {
-            console.error(
-                `[frakI18n] definition create failed for ${FRAK_I18N_METAFIELD_DEFINITIONS[index].key}:`,
-                result.reason
-            );
-        } else if (!result.value.ok) {
-            console.error(
-                `[frakI18n] definition rejected for ${FRAK_I18N_METAFIELD_DEFINITIONS[index].key}:`,
-                result.value.errors
-            );
-        }
+    const state = await readFrakI18nState(context);
+    if (!state) return;
+    if (!state.definitionExists) {
+        const created = await createFrakI18nDefinition(context);
+        if (!created) return;
     }
+    const entryId = state.entryId ?? (await upsertFrakI18nEntry(context));
+    if (!entryId) return;
 
-    i18nDefinitionsSyncedShops.set(cacheKey, true);
+    const frOk = await syncFrakI18nFrTranslations(context, entryId);
+    if (frOk) i18nMetaobjectSyncedShops.set(cacheKey, true);
+}
+
+async function syncFrakI18nFrTranslations(
+    context: AuthenticatedContext,
+    entryId: string
+): Promise<boolean> {
+    const state = await readFrakI18nFieldTranslationState(context, entryId);
+    if (!state) return false;
+    const missing = FRAK_I18N_FIELDS.flatMap((f) => {
+        if (!f.defaults.fr) return [];
+        if (state.keysWithFr.has(f.key)) return [];
+        const digest = state.digestByKey.get(f.key);
+        if (!digest) return [];
+        return [{ key: f.key, value: f.defaults.fr, digest }];
+    });
+    return registerFrakI18nFrTranslations(context, entryId, missing);
 }
 
 /* -------------------------------------------------------------------------- */
