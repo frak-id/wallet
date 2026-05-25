@@ -285,7 +285,7 @@ export function MergeFlow({
     if (step.kind === "settling") {
         return (
             <SettlingStep
-                loserAuthenticatorId={preview.data.loserAuthenticatorId}
+                targetAuthenticatorId={targetAuthenticatorId}
                 onChainTxHash={step.txHash}
                 loserConsentSignature={step.consentSignature}
                 pairingId={strategy.pairingId}

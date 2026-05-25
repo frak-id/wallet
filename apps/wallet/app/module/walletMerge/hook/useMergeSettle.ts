@@ -12,12 +12,17 @@ import { waitForTransactionReceipt } from "viem/actions";
 
 type UseMergeSettleArgs = {
     /**
-     * Credential id of the loser passkey — same value originally passed to
-     * `/merge/preview` as `targetAuthenticatorId`. The backend re-derives the
+     * Credential id of the OTHER wallet being merged with — the same value
+     * originally passed to `/merge/preview` as `targetAuthenticatorId`,
+     * **never** the backend-derived loser. The backend re-derives the
      * winner/loser decision server-side from this credential and the live
      * session, so the client cannot tamper with it.
+     *
+     * Sending the derived loser id here breaks the desktop-is-loser flow:
+     * the requester (JWT) IS the loser, so `requesterAuthenticatorId ===
+     * targetAuthenticatorId` and `preview()` throws `MERGE_SAME_CREDENTIAL`.
      */
-    loserAuthenticatorId: string;
+    targetAuthenticatorId: string;
     /** Tx hash returned by {@link useSendAddPassKeyTx}. The hook waits for
      *  this receipt with ≥8 confirmations before POSTing to settle, so the
      *  backend only needs the validator readback to confirm the merge. */
@@ -51,7 +56,7 @@ type UseMergeSettleArgs = {
  * `setSdkSession` so the user lands on a session that resolves to the
  * canonical wallet without a separate `/login` round-trip.
  *
- * Endpoint is idempotent — retrying with the same `(loserAuthenticatorId,
+ * Endpoint is idempotent — retrying with the same `(targetAuthenticatorId,
  * onChainTxHash, loserConsentSignature)` triplet converges.
  */
 export function useMergeSettle() {
@@ -59,7 +64,7 @@ export function useMergeSettle() {
         mutationKey: authKey.merge.settle,
         gcTime: 0,
         mutationFn: async ({
-            loserAuthenticatorId,
+            targetAuthenticatorId,
             onChainTxHash,
             loserConsentSignature,
             pairingId,
@@ -68,7 +73,7 @@ export function useMergeSettle() {
 
             const { data, error } =
                 await authenticatedWalletApi.merge.settle.post({
-                    targetAuthenticatorId: loserAuthenticatorId,
+                    targetAuthenticatorId,
                     loserConsentSignature,
                     pairingId,
                 });

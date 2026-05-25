@@ -19,7 +19,15 @@ import * as styles from "../stepLayout.css";
 export type SettleRecoveryTarget = "preview" | "consent" | "sign" | "migrate";
 
 type SettlingStepProps = {
-    loserAuthenticatorId: string;
+    /**
+     * Credential id of the OTHER wallet being merged with — the same value
+     * originally passed to `/merge/preview` as `targetAuthenticatorId`.
+     * Forwarded verbatim to `/merge/settle`; the backend re-derives the
+     * loser/winner from it and the live session. Must NOT be the derived
+     * loser id (that'd collide with the requester id on the desktop-is-loser
+     * path and trip `MERGE_SAME_CREDENTIAL`).
+     */
+    targetAuthenticatorId: string;
     onChainTxHash?: Hex;
     loserConsentSignature: string;
     /**
@@ -96,7 +104,7 @@ function mapSettleError(code: string | undefined): SettleRecovery | null {
  * would just re-fail.
  */
 export function SettlingStep({
-    loserAuthenticatorId,
+    targetAuthenticatorId,
     onChainTxHash,
     loserConsentSignature,
     pairingId,
@@ -109,7 +117,7 @@ export function SettlingStep({
     const run = useCallback(() => {
         settle(
             {
-                loserAuthenticatorId,
+                targetAuthenticatorId,
                 onChainTxHash,
                 loserConsentSignature,
                 pairingId,
