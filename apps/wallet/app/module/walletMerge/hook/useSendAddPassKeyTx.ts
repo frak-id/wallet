@@ -131,7 +131,7 @@ export function useSendAddPassKeyTx({
                 ],
             });
 
-            const txHash = await client.sendUserOperation({
+            const userOpHash = await client.sendUserOperation({
                 calls: [
                     {
                         to: addresses.webAuthNValidator,
@@ -140,7 +140,12 @@ export function useSendAddPassKeyTx({
                 ],
             });
 
-            return { txHash };
+            // Wait rapidly for the user op receipt
+            const userOpReceipt = await client.waitForUserOperationReceipt({
+                hash: userOpHash,
+            });
+
+            return { txHash: userOpReceipt.receipt.transactionHash };
         },
     });
 }

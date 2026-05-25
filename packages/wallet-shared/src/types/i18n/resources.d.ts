@@ -746,11 +746,6 @@ export default interface Resources {
                             cta: "Start over";
                             title: "Something looks different";
                         };
-                        userOpReverted: {
-                            body: "The on-chain authorisation didn't land. Sign again to finish — your accounts are safe.";
-                            cta: "Sign again";
-                            title: "Signing didn't go through";
-                        };
                     };
                     retry: "Retry";
                     title: "Combining your accounts…";

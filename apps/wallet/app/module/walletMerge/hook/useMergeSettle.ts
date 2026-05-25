@@ -69,7 +69,7 @@ export function useMergeSettle() {
             loserConsentSignature,
             pairingId,
         }) => {
-            await waitForMergeTx(onChainTxHash, "MERGE_USER_OP_REVERTED");
+            await waitForMergeTx(onChainTxHash);
 
             const { data, error } =
                 await authenticatedWalletApi.merge.settle.post({
@@ -101,17 +101,17 @@ export function useMergeSettle() {
     });
 }
 
-async function waitForMergeTx(
-    hash: Hex | undefined,
-    revertCode: string
-): Promise<void> {
+async function waitForMergeTx(hash: Hex | undefined): Promise<void> {
     if (!hash || hash === "0x") return;
-    const receipt = await waitForTransactionReceipt(currentViemClient, {
-        hash,
-        confirmations: 8,
-    });
-    if (receipt.status !== "success") {
-        throw new Error(revertCode);
+    try {
+        await waitForTransactionReceipt(currentViemClient, {
+            hash,
+            confirmations: 8,
+            // Short timeout of 10sec
+            timeout: 10_000,
+        });
+    } catch (error) {
+        console.warn("Error while waiting for the merge tx receipt", error);
     }
 }
 

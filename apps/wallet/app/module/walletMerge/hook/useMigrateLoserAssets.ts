@@ -111,12 +111,15 @@ export function useMigrateLoserAssets({
                     transport,
                 });
 
-                const txHash = await client.sendUserOperation({ calls });
+                const userOpHash = await client.sendUserOperation({ calls });
+                const userOpReceipt = await client.waitForUserOperationReceipt({
+                    hash: userOpHash,
+                });
 
                 const receipt = await waitForTransactionReceipt(
                     currentViemClient,
                     {
-                        hash: txHash,
+                        hash: userOpReceipt.receipt.transactionHash,
                         confirmations: 8,
                     }
                 );
@@ -125,7 +128,7 @@ export function useMigrateLoserAssets({
                 }
 
                 return {
-                    txHash,
+                    txHash: receipt.transactionHash,
                     entriesMigrated: summary.entries.length,
                 };
             },

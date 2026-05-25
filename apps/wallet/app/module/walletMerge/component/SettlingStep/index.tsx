@@ -60,13 +60,6 @@ type SettleRecovery = {
  */
 function mapSettleError(code: string | undefined): SettleRecovery | null {
     switch (code) {
-        case "MERGE_USER_OP_REVERTED":
-            return {
-                titleKey: "wallet.merge.settling.recover.userOpReverted.title",
-                bodyKey: "wallet.merge.settling.recover.userOpReverted.body",
-                ctaKey: "wallet.merge.settling.recover.userOpReverted.cta",
-                target: "sign",
-            };
         case "MERGE_MIGRATE_USER_OP_REVERTED":
             return {
                 titleKey: "wallet.merge.settling.recover.migrateReverted.title",
