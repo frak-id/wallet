@@ -6,16 +6,24 @@
 {% comment %}
   Resolution chain per text: per-block setting → translatable metaobject
   field (`frak_i18n` entry with handle `default`, managed via Translate &
-  Adapt) → storefront-locale fallback (`| t`). Skipping the attribute
-  entirely lets the SDK fall back to its built-ins.
+  Adapt) → storefront-locale fallback. The `| t` filter is applied to the
+  locale-key fallback BEFORE the `default` cascade — otherwise Liquid
+  pipes the resolved value (merchant text or metaobject field) through
+  `| t` and emits "Translation missing: {locale}. <text>".
 {% endcomment %}
 {% assign frak_i18n = shop.metaobjects.frak_i18n.default %}
-{% assign referral_title = block.settings.referral_title | default: frak_i18n.banner_referral_title | default: 'banner.referral.title' | t %}
-{% assign referral_description = block.settings.referral_description | default: frak_i18n.banner_referral_description | default: 'banner.referral.description' | t %}
-{% assign referral_cta = block.settings.referral_cta | default: frak_i18n.banner_referral_cta | default: 'banner.referral.cta' | t %}
-{% assign inapp_title = block.settings.inapp_title | default: frak_i18n.banner_inapp_title | default: 'banner.inapp.title' | t %}
-{% assign inapp_description = block.settings.inapp_description | default: frak_i18n.banner_inapp_description | default: 'banner.inapp.description' | t %}
-{% assign inapp_cta = block.settings.inapp_cta | default: frak_i18n.banner_inapp_cta | default: 'banner.inapp.cta' | t %}
+{% assign referral_title_fallback = 'banner.referral.title' | t %}
+{% assign referral_description_fallback = 'banner.referral.description' | t %}
+{% assign referral_cta_fallback = 'banner.referral.cta' | t %}
+{% assign inapp_title_fallback = 'banner.inapp.title' | t %}
+{% assign inapp_description_fallback = 'banner.inapp.description' | t %}
+{% assign inapp_cta_fallback = 'banner.inapp.cta' | t %}
+{% assign referral_title = block.settings.referral_title | default: frak_i18n.banner_referral_title | default: referral_title_fallback %}
+{% assign referral_description = block.settings.referral_description | default: frak_i18n.banner_referral_description | default: referral_description_fallback %}
+{% assign referral_cta = block.settings.referral_cta | default: frak_i18n.banner_referral_cta | default: referral_cta_fallback %}
+{% assign inapp_title = block.settings.inapp_title | default: frak_i18n.banner_inapp_title | default: inapp_title_fallback %}
+{% assign inapp_description = block.settings.inapp_description | default: frak_i18n.banner_inapp_description | default: inapp_description_fallback %}
+{% assign inapp_cta = block.settings.inapp_cta | default: frak_i18n.banner_inapp_cta | default: inapp_cta_fallback %}
 
 <frak-banner
   classname="{{ custom_class }}"
@@ -69,19 +77,19 @@
       "type": "text",
       "id": "referral_title",
       "label": "Title",
-      "info": "Override the referral banner title (e.g. \"You've been referred!\")"
+      "info": "Leave blank for the localized default (e.g. \"You've been referred!\")."
     },
     {
       "type": "textarea",
       "id": "referral_description",
       "label": "Description",
-      "info": "Override the referral banner description"
+      "info": "Leave blank for the localized default."
     },
     {
       "type": "text",
       "id": "referral_cta",
       "label": "Button text",
-      "info": "Override the referral banner button text (default: \"Got it\")"
+      "info": "Leave blank for the localized default (e.g. \"Got it\")."
     },
     {
       "type": "header",
@@ -91,19 +99,19 @@
       "type": "text",
       "id": "inapp_title",
       "label": "Title",
-      "info": "Override the in-app browser banner title (e.g. \"Open in your browser\")"
+      "info": "Leave blank for the localized default (e.g. \"Open in your browser\")."
     },
     {
       "type": "textarea",
       "id": "inapp_description",
       "label": "Description",
-      "info": "Override the in-app browser banner description"
+      "info": "Leave blank for the localized default."
     },
     {
       "type": "text",
       "id": "inapp_cta",
       "label": "Button text",
-      "info": "Override the in-app browser banner button text (default: \"Open browser\")"
+      "info": "Leave blank for the localized default (e.g. \"Open browser\")."
     },
     {
       "type": "header",
