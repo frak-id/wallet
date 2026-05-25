@@ -23,9 +23,9 @@ type FlowState =
           /**
            * Every credential currently bound to the conflicting wallet. Empty
            * when the backend resolved a wallet but no active binding on the
-           * current chain (legacy / cross-env). The merge target is the
-           * first id of this list — picked arbitrarily but deterministically,
-           * since any binding repoints to the same wallet on settle.
+           * current chain (legacy / cross-env). Threaded into MergeFlow's
+           * DiscoveryStep so the local probe can target any of them and the
+           * pairing's authenticator-hint set covers all of them.
            */
           targetAuthenticatorIds: string[];
           targetWallet?: Address;
@@ -38,15 +38,8 @@ type FlowState =
            *  winner/loser without depending on a session that may shift
            *  outside the flow's control. */
           currentAuthenticatorId: string;
-          targetAuthenticatorId: string;
+          targetAuthenticatorIds: string[];
           targetWallet: Address;
-          /**
-           * `"local"` when the user picked "Combine accounts" (both passkeys
-           * on this device). `"remote"` when they picked "Use my other
-           * device" (one passkey lives on the device that scans the QR).
-           * Threaded straight through to {@link MergeFlow}.
-           */
-          mode: "local" | "remote";
       }
     | { kind: "success"; email: string };
 
@@ -132,22 +125,13 @@ export function AddEmail() {
             <MergeFlow
                 email={flowState.email}
                 currentAuthenticatorId={flowState.currentAuthenticatorId}
-                targetAuthenticatorId={flowState.targetAuthenticatorId}
-                mode={flowState.mode}
+                targetAuthenticatorIds={flowState.targetAuthenticatorIds}
                 onAbort={() =>
                     setFlowState({
                         kind: "conflict",
                         email: flowState.email,
-                        // Resurface the single merge-target id as the
-                        // single-element array the conflict branch expects.
-                        // The original list is not preserved across the merge
-                        // step (we only retained the chosen one), and the
-                        // login path on this branch is unused — ConflictStep
-                        // only needs `targetAuthenticatorIds[0]` for the
-                        // merge CTA.
-                        targetAuthenticatorIds: [
-                            flowState.targetAuthenticatorId,
-                        ],
+                        targetAuthenticatorIds:
+                            flowState.targetAuthenticatorIds,
                         targetWallet: flowState.targetWallet,
                     })
                 }
@@ -157,20 +141,14 @@ export function AddEmail() {
     }
 
     if (flowState.kind === "conflict") {
-        // Merge target is the first cred bound to the conflicting wallet —
-        // any active binding on that wallet repoints onto the winner, so the
-        // specific choice doesn't matter on settle. Deterministic via the
-        // server-side `ORDER BY binding id` ensures retries hit the same id.
-        const targetAuthenticatorId = flowState.targetAuthenticatorIds[0];
         const canMerge = Boolean(
-            targetAuthenticatorId &&
+            flowState.targetAuthenticatorIds.length &&
                 flowState.targetWallet &&
                 session?.authenticatorId
         );
-        const startMerge = (mode: "local" | "remote") => {
+        const startMerge = () => {
             if (
                 !canMerge ||
-                !targetAuthenticatorId ||
                 !flowState.targetWallet ||
                 !session?.authenticatorId
             )
@@ -179,17 +157,15 @@ export function AddEmail() {
                 kind: "merging",
                 email: flowState.email,
                 currentAuthenticatorId: session.authenticatorId,
-                targetAuthenticatorId,
+                targetAuthenticatorIds: flowState.targetAuthenticatorIds,
                 targetWallet: flowState.targetWallet,
-                mode,
             });
         };
         return (
             <ConflictStep
-                targetAuthenticatorId={targetAuthenticatorId}
+                targetAuthenticatorIds={flowState.targetAuthenticatorIds}
                 targetWallet={flowState.targetWallet}
-                onMerge={() => startMerge("local")}
-                onMergeRemote={() => startMerge("remote")}
+                onMerge={startMerge}
                 onUseDifferent={backToInput}
                 onBack={goToProfile}
             />

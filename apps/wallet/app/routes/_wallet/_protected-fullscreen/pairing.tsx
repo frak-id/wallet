@@ -82,28 +82,29 @@ function PairingPage() {
     const viewedAtRef = useRef<number>(Date.now());
     const errorReportedRef = useRef<"not_found" | "transient" | null>(null);
 
-    // When the origin pinned a credential via `authenticatorHint`, the
-    // backend will close the WS with `FORBIDDEN` if we join with anything
-    // else. Detect the mismatch up-front so the user gets a "switch
-    // passkey" prompt instead of a useless join attempt.
+    // When the origin pinned a credential allow-set via `authenticatorHints`,
+    // the backend will close the WS with `FORBIDDEN` if we join with a
+    // credential outside the set. Detect the mismatch up-front so the user
+    // gets a "switch passkey" prompt instead of a useless join attempt.
     const needsCredentialSwitch = Boolean(
-        pairingInfo?.authenticatorHint &&
-            session?.authenticatorId !== pairingInfo.authenticatorHint
+        pairingInfo?.authenticatorHints?.length &&
+            session?.authenticatorId &&
+            !pairingInfo.authenticatorHints.includes(session.authenticatorId)
     );
 
     const { login, isLoading: isSwitchingCredential } = useLogin();
 
     const onSwitchCredential = useCallback(async () => {
-        if (!pairingInfo?.authenticatorHint || !id) return;
+        if (!pairingInfo?.authenticatorHints?.length || !id) return;
         try {
             await login({
-                allowedCredentialIds: [pairingInfo.authenticatorHint],
+                allowedCredentialIds: pairingInfo.authenticatorHints,
                 detachedPairingId: id,
             });
         } catch (err) {
             console.warn("Failed to switch passkey before pairing join", err);
         }
-    }, [login, pairingInfo?.authenticatorHint, id]);
+    }, [login, pairingInfo?.authenticatorHints, id]);
 
     // Page mount — emit viewed or no_id for funnel analysis
     useEffect(() => {

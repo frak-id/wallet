@@ -92,6 +92,22 @@ export function useRemoteMergeStrategy({
         remoteCredentialId,
         client,
     });
+
+    // Single pairing-readiness gate shared by every paired sign call.
+    // Idempotent across re-entry (status-guarded inside
+    // `ensurePairingReady`) so each mutation can call it unconditionally
+    // when its transport is `"paired"` without tearing down a live
+    // pairing.
+    const ensurePairing = useCallback(async () => {
+        if (!remoteCredentialId) {
+            throw new Error("MERGE_REMOTE_PAIRING_HINT_MISSING");
+        }
+        await ensurePairingReady({
+            client,
+            authenticatorHints: [remoteCredentialId],
+        });
+    }, [client, remoteCredentialId]);
+
     // Winner passkey is local when desktop is the winner (needsSwitch=false);
     // otherwise the winner cred lives on the paired mobile and the
     // addPassKey userOp routes through the merge pairing. `undefined`
@@ -100,6 +116,7 @@ export function useRemoteMergeStrategy({
     // sign step behind `preview.data` being resolved.
     const sendAddPassKey = useSendAddPassKeyTx({
         transport: needsSwitch ? "paired" : "local",
+        ensurePairing,
     });
     // Mirror of `sendAddPassKey`: loser passkey is local when desktop is
     // the loser (needsSwitch=true); otherwise it lives on the paired
@@ -107,6 +124,7 @@ export function useRemoteMergeStrategy({
     // pairing.
     const migrateLoserAssets = useMigrateLoserAssets({
         transport: needsSwitch ? "local" : "paired",
+        ensurePairing,
     });
 
     const onRetry = useCallback(() => {
@@ -197,7 +215,7 @@ function useRemoteLoserConsent({
             const challenge = stringToHex(challengeString);
             await ensurePairingReady({
                 client,
-                authenticatorHint: remoteCredentialId,
+                authenticatorHints: [remoteCredentialId],
             });
             const loserConsentSignature = await client.sendSignatureRequest(
                 challenge,
@@ -209,19 +227,38 @@ function useRemoteLoserConsent({
 }
 
 /**
- * Initiate the pairing (if not already authenticated for the supplied
- * hint) and resolve once the WS handshake completes. Idempotent at the
- * Promise level — multiple callers waiting on the same handshake all
- * resolve from the single backend `authenticated` event.
+ * Wait for the merge pairing to be live, initiating it only if no
+ * pairing is in flight. Branches on current status so re-entry from
+ * any downstream merge mutation never tears down a working pairing
+ * (calling `initiatePairing` while `"paired"` would close the WS via
+ * `forceConnect` and orphan any in-flight signature requests).
+ *
+ * Status contract:
+ *  - `paired`            → resolve synchronously.
+ *  - `error|retry-error` → reject synchronously; caller must reset.
+ *  - `connecting`        → subscribe and wait for the status to flip.
+ *  - `idle`              → start a fresh detached pairing.
  */
 function ensurePairingReady({
     client,
-    authenticatorHint,
+    authenticatorHints,
 }: {
     client: ReturnType<typeof getOriginPairingClient>;
-    authenticatorHint: string;
+    authenticatorHints: string[];
 }): Promise<void> {
     return new Promise<void>((resolve, reject) => {
+        const initialStatus = client.state.status;
+        if (initialStatus === "paired") {
+            resolve();
+            return;
+        }
+        if (initialStatus === "error" || initialStatus === "retry-error") {
+            reject(
+                new Error(`MERGE_REMOTE_PAIRING_${initialStatus.toUpperCase()}`)
+            );
+            return;
+        }
+
         let settled = false;
         const finish = (cb: () => void) => {
             if (settled) return;
@@ -230,11 +267,13 @@ function ensurePairingReady({
             cb();
         };
 
-        // Watch for fatal pairing states so the mutation rejects rather
-        // than hanging on a dead WS (e.g. mobile cancelled the join, retry
-        // budget exhausted, server-side fatal close).
         const unsubscribe = client.store.subscribe((state) => {
-            if (state.status === "error" || state.status === "retry-error") {
+            if (state.status === "paired") {
+                finish(() => resolve());
+            } else if (
+                state.status === "error" ||
+                state.status === "retry-error"
+            ) {
                 finish(() =>
                     reject(
                         new Error(
@@ -245,10 +284,16 @@ function ensurePairingReady({
             }
         });
 
-        void client.initiatePairing({
-            authenticatorHint,
-            detached: true,
-            onSuccess: () => finish(() => resolve()),
-        });
+        // Only initiate when idle. If we're already connecting, an
+        // earlier caller (typically `DiscoveryStep`) opened the pairing;
+        // calling `initiatePairing` again here would forceConnect-tear
+        // it down.
+        if (initialStatus === "idle") {
+            void client.initiatePairing({
+                authenticatorHints,
+                detached: true,
+                onSuccess: () => finish(() => resolve()),
+            });
+        }
     });
 }

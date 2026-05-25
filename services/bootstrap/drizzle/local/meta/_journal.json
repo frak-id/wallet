@@ -169,6 +169,13 @@
             "when": 1779539506525,
             "tag": "0023_needy_jasper_sitwell",
             "breakpoints": true
+        },
+        {
+            "idx": 24,
+            "version": "7",
+            "when": 1779716510612,
+            "tag": "0024_overjoyed_korvac",
+            "breakpoints": true
         }
     ]
 }

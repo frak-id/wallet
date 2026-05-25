@@ -115,9 +115,8 @@
             "conflict": {
                 "title": "Email already in use",
                 "description": "This email is already linked to another wallet. Use a different email or come back later.",
-                "descriptionMergeable": "This email is already on another of your accounts. You can combine them into one — quick, two confirmations, all on this device.",
+                "descriptionMergeable": "This email is already on another of your accounts. You can combine them into one — we'll guide you through, whether the other account is on this device or another one.",
                 "combine": "Combine my accounts",
-                "combineRemote": "Use my other device",
                 "useDifferent": "Use a different email",
                 "back": "Back to my profile"
             },
@@ -133,6 +132,18 @@
             }
         },
         "merge": {
+            "discovery": {
+                "title": "Combine your accounts",
+                "description": "Pick how you want to confirm — on this device, or on the device that holds your other passkey.",
+                "scanHint": "Scan this code with the device that has your other account.",
+                "preparing": "Preparing a secure connection…",
+                "useThisDevice": "Use this device",
+                "localHint": {
+                    "title": "Both passkeys on this device?",
+                    "body": "Tap above to confirm with the passkey of your other account here. Works automatically if you use iCloud Keychain across your devices."
+                },
+                "localError": "We couldn't find the other passkey on this device. Try scanning the code with your other device instead."
+            },
             "preview": {
                 "title": "Combine your accounts",
                 "description": "We found another account of yours using {{email}}. Here's what will move when you combine them — no changes happen until you confirm.",

@@ -44,6 +44,13 @@ type UseSendAddPassKeyTxArgs = {
      * (signing routes through the merge's already-open origin pairing).
      */
     transport: "local" | "paired";
+    /**
+     * Awaited before signing when `transport === "paired"`. Supplied by
+     * the remote strategy; it status-guards `initiatePairing` so an
+     * already-live pairing is reused instead of torn down. Omitted by
+     * the local strategy.
+     */
+    ensurePairing?: () => Promise<void>;
 };
 
 /**
@@ -63,7 +70,10 @@ type UseSendAddPassKeyTxArgs = {
  * hash and waits for ≥8 confirmations before finalising the off-chain
  * repoint + identity merge.
  */
-export function useSendAddPassKeyTx({ transport }: UseSendAddPassKeyTxArgs) {
+export function useSendAddPassKeyTx({
+    transport,
+    ensurePairing,
+}: UseSendAddPassKeyTxArgs) {
     return useMutation<SendAddPassKeyResult, Error, SendAddPassKeyArgs>({
         mutationKey: authKey.merge.sendAddPassKey,
         gcTime: 0,
@@ -93,6 +103,15 @@ export function useSendAddPassKeyTx({ transport }: UseSendAddPassKeyTxArgs) {
                 existing.y === BigInt(loserPublicKey.y)
             ) {
                 return { txHash: undefined };
+            }
+
+            if (transport === "paired") {
+                if (!ensurePairing) {
+                    throw new Error(
+                        "MERGE_SEND_ADD_PASSKEY_MISSING_PAIRING_SETUP"
+                    );
+                }
+                await ensurePairing();
             }
 
             const client = await buildMergeBundlerClient({

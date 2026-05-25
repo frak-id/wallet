@@ -5,42 +5,39 @@ import { EmailFlowResultScreen } from "@/module/common/component/EmailFlowResult
 
 type ConflictStepProps = {
     /**
-     * Conflicting credential id returned by the AddEmail conflict branch.
-     * When present we surface the "Combine accounts" CTA — without it the
-     * same-device merge flow has nothing to point at, so the user can only
-     * pick a different email.
+     * Every credential currently bound to the conflicting wallet. When
+     * non-empty we surface the single "Combine accounts" CTA; the merge
+     * flow's discovery step then decides between same-device and
+     * cross-device based on which path resolves first. Empty / undefined
+     * means the backend resolved a wallet but no active binding on the
+     * current chain — the user can only pick a different email.
      */
-    targetAuthenticatorId?: string;
-    /** Wallet bound to the conflicting credential. */
+    targetAuthenticatorIds?: string[];
+    /** Wallet bound to the conflicting credentials. */
     targetWallet?: Address;
-    /** Start the same-device merge (both passkeys live on this device). */
+    /** Launch the wallet-merge flow. Same CTA for same-device and
+     *  cross-device — the discovery step inside MergeFlow auto-detects
+     *  which path is available. */
     onMerge: () => void;
-    /**
-     * Start the cross-device merge through pairing. The user will scan a
-     * QR with the device holding the other passkey; the rest of the merge
-     * runs through the existing flow with one tunneled step.
-     */
-    onMergeRemote: () => void;
     onUseDifferent: () => void;
     onBack: () => void;
 };
 
 /**
  * Entry point for the "this email is on another wallet" branch. The
- * primary action launches the same-device wallet-merge flow when the
- * backend returned the conflicting credential metadata; otherwise the user
- * is steered back to picking a different email.
+ * primary action launches the wallet-merge flow when the backend returned
+ * the conflicting credential metadata; otherwise the user is steered back
+ * to picking a different email.
  */
 export function ConflictStep({
-    targetAuthenticatorId,
+    targetAuthenticatorIds,
     targetWallet,
     onMerge,
-    onMergeRemote,
     onUseDifferent,
     onBack,
 }: ConflictStepProps) {
     const { t } = useTranslation();
-    const canMerge = Boolean(targetAuthenticatorId) && Boolean(targetWallet);
+    const canMerge = Boolean(targetAuthenticatorIds?.length && targetWallet);
     return (
         <EmailFlowResultScreen
             title={t("wallet.addEmail.conflict.title")}
@@ -52,26 +49,15 @@ export function ConflictStep({
             onBack={onBack}
         >
             {canMerge && (
-                <>
-                    <Button
-                        type="button"
-                        variant="primary"
-                        size="large"
-                        width="full"
-                        onClick={onMerge}
-                    >
-                        {t("wallet.addEmail.conflict.combine")}
-                    </Button>
-                    <Button
-                        type="button"
-                        variant="secondary"
-                        size="large"
-                        width="full"
-                        onClick={onMergeRemote}
-                    >
-                        {t("wallet.addEmail.conflict.combineRemote")}
-                    </Button>
-                </>
+                <Button
+                    type="button"
+                    variant="primary"
+                    size="large"
+                    width="full"
+                    onClick={onMerge}
+                >
+                    {t("wallet.addEmail.conflict.combine")}
+                </Button>
             )}
             <Button
                 type="button"

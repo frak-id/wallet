@@ -27,14 +27,19 @@ type ConnectionParams =
           action: "initiate";
           originNode?: OriginIdentityNode;
           /**
-           * Optional WebAuthn credential id the joining target must match.
-           * Persisted on the pairing row server-side; `handleJoinRequest`
-           * closes the WS with `FORBIDDEN` if a target joins with a
-           * different `authenticatorId`. Used by the cross-device wallet
-           * merge to pin the pairing to the wallet whose passkey actually
-           * needs to participate.
+           * Optional WebAuthn credential-id allow-set the joining target
+           * must match one of. Persisted on the pairing row server-side;
+           * `handleJoin` closes the WS with `FORBIDDEN` if the joiner's
+           * `authenticatorId` is outside the set. Used by the cross-device
+           * wallet merge to pin the pairing to the wallet whose passkeys
+           * may participate — a list (not a single id) so wallets holding
+           * multiple passkeys can be reached from any of them.
+           *
+           * Serialised on the wire as a comma-separated string (query
+           * params are `Record<string, string>` on the backend); the
+           * orchestrator splits on `,` and trims whitespace.
            */
-          authenticatorHint?: string;
+          authenticatorHints?: string[];
       }
     | {
           action: "join";
@@ -83,6 +88,24 @@ function computeBackoffDelay(attempt: number): number {
     );
     // Full jitter: pick a random value in [0, exponentialDelay]
     return Math.round(Math.random() * exponentialDelay);
+}
+
+function serialiseConnectionParams(
+    params: ConnectionParams
+): Record<string, string> {
+    const out: Record<string, string> = {};
+    for (const [key, value] of Object.entries(params)) {
+        if (value === undefined || value === null) continue;
+        if (key === "originNode") {
+            out.originNode = btoa(JSON.stringify(value));
+        } else if (key === "authenticatorHints" && Array.isArray(value)) {
+            if (value.length === 0) continue;
+            out.authenticatorHints = value.join(",");
+        } else if (typeof value === "string") {
+            out[key] = value;
+        }
+    }
+    return out;
 }
 
 export abstract class BasePairingClient<
@@ -317,13 +340,7 @@ export abstract class BasePairingClient<
             return;
         }
 
-        const query =
-            "originNode" in params && params.originNode
-                ? {
-                      ...params,
-                      originNode: btoa(JSON.stringify(params.originNode)),
-                  }
-                : params;
+        const query = serialiseConnectionParams(params);
 
         this.connection = authenticatedWalletApi.pairings.ws.subscribe({
             query,

@@ -43,12 +43,14 @@ export type InitiatePairingOptions = {
     onSuccess?: OnPairingSuccessCallback;
     originNode?: OriginIdentityNode;
     /**
-     * Pin the pairing to a specific WebAuthn credential id. Backend rejects
-     * any joiner that authenticates with a different credential. Used by
-     * the cross-device wallet merge to guarantee the paired device is the
-     * wallet whose passkey actually needs to participate.
+     * Pin the pairing to a set of WebAuthn credential ids. Backend rejects
+     * any joiner whose credential is outside this set. Used by the
+     * cross-device wallet merge to guarantee the paired device is the
+     * wallet whose passkeys may participate — passed as a list so wallets
+     * holding multiple passkeys (post-merge wallets accumulate them) can
+     * be reached from any of those credentials.
      */
-    authenticatorHint?: string;
+    authenticatorHints?: string[];
     /**
      * When true, the minted distant-webauthn session is written to the
      * tab-scoped `detachedPairingSessionStore` instead of the live
@@ -218,7 +220,7 @@ export class OriginPairingClient extends BasePairingClient<
             this.connect({
                 action: "initiate",
                 originNode: options?.originNode,
-                authenticatorHint: options?.authenticatorHint,
+                authenticatorHints: options?.authenticatorHints,
             })
         );
     }

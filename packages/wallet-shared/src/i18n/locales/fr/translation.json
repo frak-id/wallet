@@ -113,9 +113,8 @@
             "conflict": {
                 "title": "E-mail déjà utilisé",
                 "description": "Cet e-mail est déjà associé à un autre portefeuille. Utilise-en un autre, ou reviens plus tard.",
-                "descriptionMergeable": "Cet e-mail est déjà sur un autre de tes comptes. Tu peux les combiner en un seul — rapide, deux confirmations, tout depuis cet appareil.",
+                "descriptionMergeable": "Cet e-mail est déjà sur un autre de tes comptes. Tu peux les combiner en un seul — on te guide, que l'autre compte soit sur cet appareil ou sur un autre.",
                 "combine": "Combiner mes comptes",
-                "combineRemote": "Utiliser mon autre appareil",
                 "useDifferent": "Utiliser un autre e-mail",
                 "back": "Retour au profil"
             },
@@ -131,6 +130,18 @@
             }
         },
         "merge": {
+            "discovery": {
+                "title": "Combine tes comptes",
+                "description": "Choisis comment confirmer — sur cet appareil, ou sur l'appareil qui contient ton autre passkey.",
+                "scanHint": "Scanne ce code avec l'appareil qui a ton autre compte.",
+                "preparing": "Préparation d'une connexion sécurisée…",
+                "useThisDevice": "Utiliser cet appareil",
+                "localHint": {
+                    "title": "Les deux passkeys sur cet appareil ?",
+                    "body": "Touche ci-dessus pour confirmer avec la passkey de ton autre compte ici. Fonctionne automatiquement si tu utilises iCloud Keychain entre tes appareils."
+                },
+                "localError": "On n'a pas trouvé l'autre passkey sur cet appareil. Essaie plutôt en scannant le code avec ton autre appareil."
+            },
             "preview": {
                 "title": "Combine tes comptes",
                 "description": "On a trouvé un autre de tes comptes avec {{email}}. Voilà ce qui sera déplacé en les combinant — rien ne change tant que tu n'as pas confirmé.",

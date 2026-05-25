@@ -59,7 +59,7 @@ export class PairingOrchestrator {
             id,
             originResumeToken,
             originNode: originNodeRaw,
-            authenticatorHint,
+            authenticatorHints: authenticatorHintsRaw,
         } = query;
 
         if (!action && !wallet) {
@@ -72,13 +72,16 @@ export class PairingOrchestrator {
         }
 
         const originNode = this.parseOriginNode(originNodeRaw);
+        const authenticatorHints = this.parseAuthenticatorHints(
+            authenticatorHintsRaw
+        );
 
         if (action === "initiate" && !wallet) {
             await this.handleInitiate({
                 userAgent,
                 ws,
                 originNode,
-                authenticatorHint,
+                authenticatorHints,
             });
             return;
         }
@@ -123,16 +126,25 @@ export class PairingOrchestrator {
         }
     }
 
+    private parseAuthenticatorHints(raw?: string): string[] | null {
+        if (!raw) return null;
+        const ids = raw
+            .split(",")
+            .map((s) => s.trim())
+            .filter((s) => s.length > 0);
+        return ids.length === 0 ? null : ids;
+    }
+
     private async handleInitiate({
         userAgent,
         ws,
         originNode,
-        authenticatorHint,
+        authenticatorHints,
     }: {
         userAgent?: string;
         ws: ElysiaWS;
         originNode?: IdentityNode;
-        authenticatorHint?: string;
+        authenticatorHints?: string[] | null;
     }) {
         const deviceName = this.uaToDeviceName(userAgent);
 
@@ -148,7 +160,7 @@ export class PairingOrchestrator {
             originUserAgent: userAgent ?? "Unknown",
             originName: deviceName,
             originNode,
-            authenticatorHint: authenticatorHint || null,
+            authenticatorHints: authenticatorHints ?? null,
         });
 
         ws.subscribe(originTopic(pairingId));
@@ -380,12 +392,15 @@ export class PairingOrchestrator {
         }
 
         // Cross-device merge credential pinning: the origin pre-declared
-        // which credential must resolve this pairing; a mobile joining
-        // with anything else is rejected so the desktop can never end
-        // up tunnelling actions through the wrong wallet.
+        // the set of credentials that may resolve this pairing (typically
+        // every passkey currently bound to the wallet it intends to
+        // merge with); a mobile joining with a credential outside the
+        // set is rejected so the desktop can never end up tunnelling
+        // actions through the wrong wallet. Empty / null = no pinning.
         if (
-            pairing.authenticatorHint &&
-            wallet.authenticatorId !== pairing.authenticatorHint
+            pairing.authenticatorHints &&
+            pairing.authenticatorHints.length > 0 &&
+            !pairing.authenticatorHints.includes(wallet.authenticatorId)
         ) {
             ws.close(WsCloseCode.FORBIDDEN, "Authenticator mismatch");
             return;

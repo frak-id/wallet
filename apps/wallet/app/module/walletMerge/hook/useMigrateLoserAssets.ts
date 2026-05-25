@@ -32,6 +32,13 @@ type UseMigrateLoserAssetsArgs = {
      * routes through the merge's already-open origin pairing).
      */
     transport: "local" | "paired";
+    /**
+     * Awaited before signing when `transport === "paired"`. Supplied by
+     * the remote strategy; it status-guards `initiatePairing` so an
+     * already-live pairing is reused instead of torn down. Omitted by
+     * the local strategy.
+     */
+    ensurePairing?: () => Promise<void>;
 };
 
 /**
@@ -61,6 +68,7 @@ type UseMigrateLoserAssetsArgs = {
  */
 export function useMigrateLoserAssets({
     transport,
+    ensurePairing,
 }: UseMigrateLoserAssetsArgs) {
     const queryClient = useQueryClient();
     return useMutation<MigrateLoserAssetsResult, Error, MigrateLoserAssetsArgs>(
@@ -87,6 +95,13 @@ export function useMigrateLoserAssets({
                 const calls = buildAssetMigrationCalls({ summary, winner });
                 if (calls.length === 0) {
                     return { txHash: undefined, entriesMigrated: 0 };
+                }
+
+                if (transport === "paired") {
+                    if (!ensurePairing) {
+                        throw new Error("MERGE_MIGRATE_MISSING_PAIRING_SETUP");
+                    }
+                    await ensurePairing();
                 }
 
                 const client = await buildMergeBundlerClient({

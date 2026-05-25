@@ -11,6 +11,7 @@ import { useLocalMergeStrategy } from "../../strategy/useLocalMergeStrategy";
 import { useRemoteMergeStrategy } from "../../strategy/useRemoteMergeStrategy";
 import { AssetMigrationStep } from "../AssetMigrationStep";
 import { ConsentStep } from "../ConsentStep";
+import { type DiscoveryResolution, DiscoveryStep } from "../DiscoveryStep";
 import { PreviewStep } from "../PreviewStep";
 import { SettlingStep } from "../SettlingStep";
 import { SignStep } from "../SignStep";
@@ -21,14 +22,13 @@ type MergeFlowProps = {
     email: string;
     /** Credential currently logged in — captured by the parent at flow entry. */
     currentAuthenticatorId: string;
-    /** The conflicting credential identified by the AddEmail backend. */
-    targetAuthenticatorId: string;
     /**
-     * `"local"` — same-device merge (default; both passkeys on this device).
-     * `"remote"` — cross-device merge through pairing (one passkey lives on
-     * another device, identified by `targetAuthenticatorId`).
+     * Every credential currently bound to the conflicting wallet. The
+     * full set is passed through to DiscoveryStep so both the local
+     * probe (`allowCredentials`) and the pairing (`authenticatorHints`
+     * server-side allow-list) can resolve via any of them.
      */
-    mode: "local" | "remote";
+    targetAuthenticatorIds: string[];
     /** Bail out of the flow without merging — back to the conflict screen. */
     onAbort: () => void;
     /** Merge finished successfully — typically navigates back to profile. */
@@ -36,6 +36,7 @@ type MergeFlowProps = {
 };
 
 type Step =
+    | { kind: "discovery" }
     | { kind: "preview" }
     | { kind: "consent" }
     | { kind: "sign"; consentSignature: string }
@@ -61,36 +62,43 @@ type Step =
 export function MergeFlow({
     email,
     currentAuthenticatorId,
-    targetAuthenticatorId,
-    mode,
+    targetAuthenticatorIds,
     onAbort,
     onCompleted,
 }: MergeFlowProps) {
-    const { t } = useTranslation();
-    const [step, setStep] = useState<Step>({ kind: "preview" });
+    const [step, setStep] = useState<Step>({ kind: "discovery" });
+    // Set by DiscoveryStep once the user's chosen path resolves. `null`
+    // while the race is in progress; preview / strategy selection both
+    // gate on this so neither runs before we know the mode + the cred id
+    // we're merging with.
+    const [discovery, setDiscovery] = useState<DiscoveryResolution | null>(
+        null
+    );
     // Held in a ref so the unmount cleanup below reads the latest step kind
     // without re-binding the effect every transition. The same ref feeds
     // the analytics `last_step` field on abandoned flows.
     const stepKindRef = useRef(step.kind);
     stepKindRef.current = step.kind;
 
-    // Funnel: started on mount, ended as `succeeded` from the settling
-    // onCompleted callback below, ended as `abandoned` from this unmount
-    // cleanup. No `failed` outcome — coded settle errors are recoverable
-    // in-flow (see SettlingStep.onRecover) so abandons carry the
-    // diagnostic via `last_step`.
+    // Funnel: started once discovery resolves (the mode isn't known
+    // before that), ended as `succeeded` from the settling onCompleted
+    // callback below, ended as `abandoned` from this unmount cleanup.
+    // Abandonments during discovery (before a mode is chosen) intentionally
+    // don't fire a funnel event — `wallet_merge_started` requires a known
+    // mode and a discovery-only abandonment isn't a meaningful drop-off.
     const flowRef = useRef<Flow<"wallet_merge"> | undefined>(undefined);
     useEffect(() => {
-        const flow = startFlow("wallet_merge", { mode });
+        if (!discovery) return;
+        const flow = startFlow("wallet_merge", { mode: discovery.mode });
         flowRef.current = flow;
         return () => {
             if (flow.ended) return;
             flow.end("abandoned", { last_step: stepKindRef.current });
         };
-    }, [mode]);
+    }, [discovery]);
 
     const preview = useMergePreview(
-        targetAuthenticatorId,
+        discovery?.targetAuthenticatorId,
         currentAuthenticatorId
     );
 
@@ -107,23 +115,27 @@ export function MergeFlow({
     }, [preview.data]);
 
     const winnerAuthenticatorId = useMemo(() => {
-        if (needsSwitch === undefined) return undefined;
-        return needsSwitch ? targetAuthenticatorId : currentAuthenticatorId;
-    }, [needsSwitch, targetAuthenticatorId, currentAuthenticatorId]);
+        if (needsSwitch === undefined || !discovery) return undefined;
+        return needsSwitch
+            ? discovery.targetAuthenticatorId
+            : currentAuthenticatorId;
+    }, [needsSwitch, discovery, currentAuthenticatorId]);
 
     // Both strategies must run unconditionally to honour the rules of hooks;
-    // the one we use is picked off `mode`. Each strategy calls its own
-    // React Query hooks INTERNALLY and exposes the resulting mutation
+    // the one we use is picked off `discovery.mode`. Each strategy calls its
+    // own React Query hooks INTERNALLY and exposes the resulting mutation
     // objects as plain fields — we read them as data, never re-invoke them,
     // so the count of hook calls inside this component stays stable across
-    // a `mode` switch.
+    // a mode switch. Before discovery resolves we default to `localStrategy`
+    // (harmless — only DiscoveryStep is rendered and it doesn't read it).
     const localStrategy = useLocalMergeStrategy();
     const remoteStrategy = useRemoteMergeStrategy({
         needsSwitch,
         winnerAuthenticatorId,
         loserAuthenticatorId: preview.data?.loserAuthenticatorId,
     });
-    const strategy = mode === "remote" ? remoteStrategy : localStrategy;
+    const strategy =
+        discovery?.mode === "remote" ? remoteStrategy : localStrategy;
 
     // Tear down on every non-success unmount: cancel any in-flight pairing
     // handshake. Matters for the cross-device flow — `softReset` clears
@@ -141,42 +153,25 @@ export function MergeFlow({
         onAbort();
     }, [onAbort, strategy.cancel]);
 
-    if (preview.isLoading || !preview.data) {
-        if (preview.isError) {
-            return (
-                <EmailFlowResultScreen
-                    title={t("wallet.merge.preview.errorTitle")}
-                    description={t("wallet.merge.preview.errorDescription")}
-                    onBack={handleAbort}
-                >
-                    <Button
-                        type="button"
-                        variant="primary"
-                        size="large"
-                        width="full"
-                        onClick={() => preview.refetch()}
-                    >
-                        {t("wallet.merge.preview.errorRetry")}
-                    </Button>
-                    <Button
-                        type="button"
-                        variant="secondary"
-                        size="large"
-                        width="full"
-                        onClick={handleAbort}
-                    >
-                        {t("wallet.merge.preview.cancel")}
-                    </Button>
-                </EmailFlowResultScreen>
-            );
-        }
+    if (step.kind === "discovery") {
         return (
-            <EmailFlowResultScreen
-                title={t("wallet.merge.preview.loadingTitle")}
-                description={
-                    <Box>{t("wallet.merge.preview.loadingDescription")}</Box>
-                }
-                onBack={handleAbort}
+            <DiscoveryStep
+                targetAuthenticatorIds={targetAuthenticatorIds}
+                onResolved={(resolved) => {
+                    setDiscovery(resolved);
+                    setStep({ kind: "preview" });
+                }}
+                onAbort={handleAbort}
+            />
+        );
+    }
+
+    if (preview.isLoading || !preview.data) {
+        return (
+            <PreviewGate
+                isError={preview.isError}
+                onRetry={() => preview.refetch()}
+                onAbort={handleAbort}
             />
         );
     }
@@ -282,10 +277,10 @@ export function MergeFlow({
         );
     }
 
-    if (step.kind === "settling") {
+    if (step.kind === "settling" && discovery) {
         return (
             <SettlingStep
-                targetAuthenticatorId={targetAuthenticatorId}
+                targetAuthenticatorId={discovery.targetAuthenticatorId}
                 onChainTxHash={step.txHash}
                 loserConsentSignature={step.consentSignature}
                 pairingId={strategy.pairingId}
@@ -314,4 +309,53 @@ export function MergeFlow({
     }
 
     return <SuccessStep email={email} onBack={onCompleted} />;
+}
+
+function PreviewGate({
+    isError,
+    onRetry,
+    onAbort,
+}: {
+    isError: boolean;
+    onRetry: () => void;
+    onAbort: () => void;
+}) {
+    const { t } = useTranslation();
+    if (isError) {
+        return (
+            <EmailFlowResultScreen
+                title={t("wallet.merge.preview.errorTitle")}
+                description={t("wallet.merge.preview.errorDescription")}
+                onBack={onAbort}
+            >
+                <Button
+                    type="button"
+                    variant="primary"
+                    size="large"
+                    width="full"
+                    onClick={onRetry}
+                >
+                    {t("wallet.merge.preview.errorRetry")}
+                </Button>
+                <Button
+                    type="button"
+                    variant="secondary"
+                    size="large"
+                    width="full"
+                    onClick={onAbort}
+                >
+                    {t("wallet.merge.preview.cancel")}
+                </Button>
+            </EmailFlowResultScreen>
+        );
+    }
+    return (
+        <EmailFlowResultScreen
+            title={t("wallet.merge.preview.loadingTitle")}
+            description={
+                <Box>{t("wallet.merge.preview.loadingDescription")}</Box>
+            }
+            onBack={onAbort}
+        />
+    );
 }

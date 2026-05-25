@@ -60,7 +60,7 @@ export class PairingRepository {
         originUserAgent: string;
         originName: string;
         originNode: IdentityNode | undefined;
-        authenticatorHint: string | null;
+        authenticatorHints: string[] | null;
     }): Promise<void> {
         await db.insert(pairingTable).values({
             pairingId: params.pairingId,
@@ -68,7 +68,7 @@ export class PairingRepository {
             originUserAgent: params.originUserAgent,
             originName: params.originName,
             originNode: params.originNode,
-            authenticatorHint: params.authenticatorHint,
+            authenticatorHints: params.authenticatorHints,
         });
     }
 
