@@ -82,7 +82,7 @@ export class PurchaseInteractionCreator {
         }
 
         if (!params.cancelled) {
-            eventEmitter.emit("newInteraction", { type: "purchase" });
+            eventEmitter.emit("newInteraction");
         }
 
         log.info(

@@ -1,7 +1,7 @@
-import { viemClient } from "@backend-infrastructure";
 import { LRUCache } from "lru-cache";
 import { type Address, erc20Abi } from "viem";
 import { multicall } from "viem/actions";
+import { viemClient } from "./client";
 
 export type TokenMetadata = {
     name: string;

@@ -1,8 +1,9 @@
-import { log, viemClient } from "@backend-infrastructure";
 import { addresses, rewarderHubAbi } from "@frak-labs/app-essentials";
 import { type Address, encodeFunctionData, getAddress, type Hex } from "viem";
 import { sendTransaction, waitForTransactionReceipt } from "viem/actions";
+import { log } from "../../external/logger";
 import { adminWalletsRepository } from "../../keys/AdminWalletsRepository";
+import { viemClient } from "../client";
 
 type RewardOp = {
     isLock: boolean;

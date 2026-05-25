@@ -1,4 +1,3 @@
-import { log } from "@backend-infrastructure";
 import {
     currentStablecoins,
     stablecoins,
@@ -9,6 +8,7 @@ import { Mutex } from "async-mutex";
 import ky, { type KyInstance } from "ky";
 import { LRUCache } from "lru-cache";
 import { type Address, isAddressEqual } from "viem";
+import { log } from "../external/logger";
 
 export type TokenPrice = {
     eur: number;

@@ -1,11 +1,6 @@
 export { buildAttestation } from "./attestation";
 export { validateBodyHmac } from "./bodyHmac";
 export { noContentPatch } from "./elysiaNoContentPatch";
-export type {
-    FrakEvents,
-    NotificationEvent,
-    NotificationEventItem,
-} from "./events";
 export { HttpError } from "./httpError";
 export { MutexCron } from "./mutexCron";
 export { processCss, processScopedCss } from "./processCss";

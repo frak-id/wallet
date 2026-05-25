@@ -1,10 +1,10 @@
-import { viemClient } from "@backend-infrastructure";
 import {
     addresses,
     multiWebAuthNValidatorV2Abi,
 } from "@frak-labs/app-essentials";
 import { type Address, keccak256, toHex } from "viem";
 import { readContract } from "viem/actions";
+import { viemClient } from "./client";
 
 /**
  * Thin wrapper around the on-chain reads we need to verify a wallet merge:
