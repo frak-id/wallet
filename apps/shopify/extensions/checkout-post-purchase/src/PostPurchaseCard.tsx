@@ -24,6 +24,18 @@ type PostPurchaseSettings = {
     image_url?: string;
 };
 
+/**
+ * Translatable text overrides read from shop metafields. Each value is
+ * the buyer-locale translation when one exists in Translate & Adapt;
+ * `undefined` otherwise.
+ */
+export type PostPurchaseTextOverrides = {
+    message?: string;
+    description?: string;
+    ctaText?: string;
+    badgeText?: string;
+};
+
 export type ProductInfo = {
     title: string;
     imageUrl?: string;
@@ -96,6 +108,7 @@ function constructSharingUrl({
  */
 export function PostPurchaseCard({
     settings,
+    textOverrides,
     clientId,
     shopName,
     storefrontUrl,
@@ -108,6 +121,12 @@ export function PostPurchaseCard({
     isEditor,
 }: {
     settings: Partial<PostPurchaseSettings>;
+    /**
+     * Translatable text overrides from `frak.post_purchase_*` metafields.
+     * Resolved per buyer locale via Translate & Adapt. Lower priority than
+     * per-extension `settings`, higher than the hardcoded defaults.
+     */
+    textOverrides?: PostPurchaseTextOverrides;
     clientId?: string;
     shopName?: string;
     /** Shop storefront URL — fallback when sharing_url setting is empty */
@@ -128,10 +147,14 @@ export function PostPurchaseCard({
 }) {
     const sharingUrl = settings.sharing_url || storefrontUrl;
     const resolvedWalletUrl = walletUrl || DEFAULT_WALLET_URL;
-    const message = settings.message || DEFAULT_MESSAGE;
-    const description = settings.description || DEFAULT_DESCRIPTION;
-    const ctaText = settings.cta_text || DEFAULT_CTA;
-    const badgeText = settings.badge_text;
+    const message =
+        settings.message || textOverrides?.message || DEFAULT_MESSAGE;
+    const description =
+        settings.description ||
+        textOverrides?.description ||
+        DEFAULT_DESCRIPTION;
+    const ctaText = settings.cta_text || textOverrides?.ctaText || DEFAULT_CTA;
+    const badgeText = settings.badge_text || textOverrides?.badgeText;
     const imageUrl = settings.image_url;
 
     // Build external sharing page URL with all params

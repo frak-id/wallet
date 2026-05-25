@@ -3,15 +3,27 @@
   {% assign custom_class = 'frak-banner-custom' %}
 {% endif %}
 
+{% comment %}
+  Resolution chain per text: per-block setting → translatable shop metafield
+  (managed via Translate & Adapt) → storefront-locale fallback (`| t`).
+  Skipping the attribute entirely lets the SDK fall back to its built-ins.
+{% endcomment %}
+{% assign referral_title = block.settings.referral_title | default: shop.metafields.frak.banner_referral_title | default: 'banner.referral.title' | t %}
+{% assign referral_description = block.settings.referral_description | default: shop.metafields.frak.banner_referral_description | default: 'banner.referral.description' | t %}
+{% assign referral_cta = block.settings.referral_cta | default: shop.metafields.frak.banner_referral_cta | default: 'banner.referral.cta' | t %}
+{% assign inapp_title = block.settings.inapp_title | default: shop.metafields.frak.banner_inapp_title | default: 'banner.inapp.title' | t %}
+{% assign inapp_description = block.settings.inapp_description | default: shop.metafields.frak.banner_inapp_description | default: 'banner.inapp.description' | t %}
+{% assign inapp_cta = block.settings.inapp_cta | default: shop.metafields.frak.banner_inapp_cta | default: 'banner.inapp.cta' | t %}
+
 <frak-banner
   classname="{{ custom_class }}"
   {% if block.settings.interaction != 'default' and block.settings.interaction != blank %}interaction="{{ block.settings.interaction }}"{% endif %}
-  {% if block.settings.referral_title != blank %}referral-title="{{ block.settings.referral_title }}"{% endif %}
-  {% if block.settings.referral_description != blank %}referral-description="{{ block.settings.referral_description }}"{% endif %}
-  {% if block.settings.referral_cta != blank %}referral-cta="{{ block.settings.referral_cta }}"{% endif %}
-  {% if block.settings.inapp_title != blank %}inapp-title="{{ block.settings.inapp_title }}"{% endif %}
-  {% if block.settings.inapp_description != blank %}inapp-description="{{ block.settings.inapp_description }}"{% endif %}
-  {% if block.settings.inapp_cta != blank %}inapp-cta="{{ block.settings.inapp_cta }}"{% endif %}
+  {% if referral_title != blank %}referral-title="{{ referral_title }}"{% endif %}
+  {% if referral_description != blank %}referral-description="{{ referral_description }}"{% endif %}
+  {% if referral_cta != blank %}referral-cta="{{ referral_cta }}"{% endif %}
+  {% if inapp_title != blank %}inapp-title="{{ inapp_title }}"{% endif %}
+  {% if inapp_description != blank %}inapp-description="{{ inapp_description }}"{% endif %}
+  {% if inapp_cta != blank %}inapp-cta="{{ inapp_cta }}"{% endif %}
   {% if block.settings.image_url != blank %}image-url="{{ block.settings.image_url | image_url: width: 200 }}"{% endif %}
   {% if block.settings.allow_inapp_redirect %}allow-inapp-redirect="true"{% endif %}
   {% if request.design_mode and block.settings.enable_preview %}preview="true" preview-mode="{{ block.settings.preview_mode }}"{% endif %}

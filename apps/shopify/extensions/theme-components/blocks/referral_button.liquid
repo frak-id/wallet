@@ -10,18 +10,18 @@
   {% assign custom_class = 'frak-share-button-custom' %}
 {% endif %}
 
-{% assign button_text = '' %}
-{% if block.settings.text == '' %}
-  {% assign button_text = 'share_btn.label' | t %}
-{% else %}
-  {% assign button_text = block.settings.text %}
-{% endif %}
+{% comment %}
+  Resolution chain per text: per-block setting → translatable shop metafield
+  (managed via Translate & Adapt) → storefront-locale fallback (`| t`).
+{% endcomment %}
+{% assign button_text = block.settings.text | default: shop.metafields.frak.button_share_text | default: 'share_btn.label' | t %}
+{% assign no_reward_text = block.settings.no_reward_text | default: shop.metafields.frak.button_share_no_reward_text | default: 'share_btn.no_reward' | t %}
 
 <frak-button-share
   text="{{ button_text }}"
   classname="button {{ button_class }} {{ full_width_class }} {{ custom_class }}"
   {% if block.settings.use_reward %}use-reward{% endif %}
-  {% if block.settings.no_reward_text != blank %}no-reward-text="{{ block.settings.no_reward_text }}"{% endif %}
+  {% if no_reward_text != blank %}no-reward-text="{{ no_reward_text }}"{% endif %}
   {% if block.settings.target_interaction != blank %}target-interaction="{{ block.settings.target_interaction }}"{% endif %}
   {% if request.design_mode and block.settings.enable_preview %}preview="true"{% endif %}
 ></frak-button-share>

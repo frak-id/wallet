@@ -41,6 +41,7 @@ function ThankYouExtension() {
     return (
         <PostPurchaseCard
             settings={settings}
+            textOverrides={frakConfig.text}
             clientId={clientId}
             shopName={shop.name}
             storefrontUrl={shop.storefrontUrl}

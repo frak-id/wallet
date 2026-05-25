@@ -1,4 +1,5 @@
 import type { AuthenticatedContext } from "app/types/context";
+import { LRUCache } from "lru-cache";
 import { shopInfo } from "./shop";
 
 const FRAK_NAMESPACE = "frak";
@@ -9,6 +10,117 @@ const WALLET_URL_KEY = "wallet_url";
 const COMPONENTS_URL_KEY = "components_url";
 const SHARE_URL_KEY = "share_url";
 const SHARE_BUTTON_HTML_KEY = "share_button_html";
+
+/* -------------------------------------------------------------------------- */
+/*                Translatable text metafield definitions                    */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * Per-locale merchant-customisable strings for the banner block, the
+ * referral share button, and the post-purchase checkout extension.
+ *
+ * These are SHOP-owned metafields with text types (translatable by
+ * Shopify's Translate & Adapt app). Each surface falls back through:
+ *   block setting (when present) → this metafield → locale JSON (when
+ *   surface supports it) → SDK default.
+ *
+ * Existing block settings still win, so theme upgrades remain backwards
+ * compatible.
+ */
+export type FrakI18nMetafieldDefinition = {
+    key: string;
+    name: string;
+    description: string;
+    /** `single_line_text_field` for one-liners, `multi_line_text_field` for descriptions. */
+    type: "single_line_text_field" | "multi_line_text_field";
+};
+
+export const FRAK_I18N_METAFIELD_DEFINITIONS: FrakI18nMetafieldDefinition[] = [
+    {
+        key: "banner_referral_title",
+        name: "Banner — Referral title",
+        description:
+            "Referral banner heading shown to referred storefront visitors.",
+        type: "single_line_text_field",
+    },
+    {
+        key: "banner_referral_description",
+        name: "Banner — Referral description",
+        description: "Referral banner body shown under the heading.",
+        type: "multi_line_text_field",
+    },
+    {
+        key: "banner_referral_cta",
+        name: "Banner — Referral button",
+        description: "Referral banner call-to-action label.",
+        type: "single_line_text_field",
+    },
+    {
+        key: "banner_inapp_title",
+        name: "Banner — In-app browser title",
+        description:
+            "Heading shown when the storefront opens in Instagram or Facebook's in-app browser.",
+        type: "single_line_text_field",
+    },
+    {
+        key: "banner_inapp_description",
+        name: "Banner — In-app browser description",
+        description:
+            "Body shown when the storefront opens in an in-app browser.",
+        type: "multi_line_text_field",
+    },
+    {
+        key: "banner_inapp_cta",
+        name: "Banner — In-app browser button",
+        description: "Call-to-action label for the in-app browser banner.",
+        type: "single_line_text_field",
+    },
+    {
+        key: "button_share_text",
+        name: "Share button — Label",
+        description:
+            "Storefront share button label. Use {REWARD} to embed the reward amount.",
+        type: "single_line_text_field",
+    },
+    {
+        key: "button_share_no_reward_text",
+        name: "Share button — Fallback label",
+        description:
+            "Label shown when rewards are enabled on the share button but no reward is available.",
+        type: "single_line_text_field",
+    },
+    {
+        key: "post_purchase_message",
+        name: "Post-purchase — Heading",
+        description: "Heading on the post-purchase sharing card.",
+        type: "single_line_text_field",
+    },
+    {
+        key: "post_purchase_description",
+        name: "Post-purchase — Description",
+        description: "Body copy on the post-purchase sharing card.",
+        type: "multi_line_text_field",
+    },
+    {
+        key: "post_purchase_cta_text",
+        name: "Post-purchase — Button",
+        description: "Call-to-action label on the post-purchase sharing card.",
+        type: "single_line_text_field",
+    },
+    {
+        key: "post_purchase_badge_text",
+        name: "Post-purchase — Badge",
+        description:
+            "Optional pill label above the heading. Leave empty to hide.",
+        type: "single_line_text_field",
+    },
+];
+
+/**
+ * Metafield definition userError codes we can safely ignore.
+ * `TAKEN` → the definition already exists (idempotent path).
+ */
+const IGNORABLE_DEFINITION_ERROR_CODES = new Set(["TAKEN"]);
 
 export type AppearanceMetafieldValue = {
     logoUrl?: string;
@@ -362,6 +474,107 @@ export async function writeMerchantIdMetafield(
 export async function getShopId(ctx: AuthenticatedContext): Promise<string> {
     const info = await shopInfo(ctx);
     return info.id;
+}
+
+/* -------------------------------------------------------------------------- */
+/*              Translatable text metafield definition setup                  */
+/* -------------------------------------------------------------------------- */
+
+const i18nDefinitionsSyncedShops = new LRUCache<string, boolean>({
+    max: 512,
+    ttl: 30 * 60_000,
+});
+
+/**
+ * Register a single shop-owned metafield definition.
+ *
+ * Idempotent: re-running for an existing definition returns the `TAKEN`
+ * userError code which we treat as success.
+ */
+async function createFrakI18nMetafieldDefinition(
+    { admin: { graphql } }: AuthenticatedContext,
+    definition: FrakI18nMetafieldDefinition
+): Promise<{ ok: boolean; errors: Array<{ code?: string; message: string }> }> {
+    const response = await graphql(
+        `#graphql
+        mutation CreateFrakI18nMetafieldDefinition(
+            $definition: MetafieldDefinitionInput!
+        ) {
+            metafieldDefinitionCreate(definition: $definition) {
+                createdDefinition { id }
+                userErrors { field message code }
+            }
+        }`,
+        {
+            variables: {
+                definition: {
+                    name: definition.name,
+                    namespace: FRAK_NAMESPACE,
+                    key: definition.key,
+                    description: definition.description,
+                    type: definition.type,
+                    ownerType: "SHOP",
+                    access: {
+                        admin: "MERCHANT_READ_WRITE",
+                        storefront: "PUBLIC_READ",
+                    },
+                },
+            },
+        }
+    );
+
+    const {
+        data: { metafieldDefinitionCreate },
+    } = await response.json();
+
+    const errors = (metafieldDefinitionCreate?.userErrors ?? []) as Array<{
+        code?: string;
+        message: string;
+    }>;
+    const blockingErrors = errors.filter(
+        (e) => !e.code || !IGNORABLE_DEFINITION_ERROR_CODES.has(e.code)
+    );
+
+    return { ok: blockingErrors.length === 0, errors: blockingErrors };
+}
+
+/**
+ * Ensure every translatable Frak text metafield definition exists on the
+ * shop. Definitions enable Shopify's Translate & Adapt app to discover
+ * the metafields and offer per-locale translation editors.
+ *
+ * Fire-and-forget; cached per shop for 30 minutes (same pattern as
+ * `ensureWalletUrlMetafield` in merchant.ts).
+ */
+export async function ensureFrakI18nMetafieldDefinitions(
+    context: AuthenticatedContext
+): Promise<void> {
+    const shop = await shopInfo(context);
+    const cacheKey = shop.normalizedDomain;
+
+    if (i18nDefinitionsSyncedShops.get(cacheKey)) return;
+
+    const results = await Promise.allSettled(
+        FRAK_I18N_METAFIELD_DEFINITIONS.map((def) =>
+            createFrakI18nMetafieldDefinition(context, def)
+        )
+    );
+
+    for (const [index, result] of results.entries()) {
+        if (result.status === "rejected") {
+            console.error(
+                `[frakI18n] definition create failed for ${FRAK_I18N_METAFIELD_DEFINITIONS[index].key}:`,
+                result.reason
+            );
+        } else if (!result.value.ok) {
+            console.error(
+                `[frakI18n] definition rejected for ${FRAK_I18N_METAFIELD_DEFINITIONS[index].key}:`,
+                result.value.errors
+            );
+        }
+    }
+
+    i18nDefinitionsSyncedShops.set(cacheKey, true);
 }
 
 /* -------------------------------------------------------------------------- */
