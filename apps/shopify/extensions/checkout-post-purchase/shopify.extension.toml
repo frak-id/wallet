@@ -30,6 +30,25 @@ key = "wallet_url"
 namespace = "frak"
 key = "appearance"
 
+# Translatable text metafields managed via Translate & Adapt. Read here so
+# the post-purchase card can render the buyer's locale automatically when
+# no per-extension setting overrides it.
+[[extensions.metafields]]
+namespace = "frak"
+key = "post_purchase_message"
+
+[[extensions.metafields]]
+namespace = "frak"
+key = "post_purchase_description"
+
+[[extensions.metafields]]
+namespace = "frak"
+key = "post_purchase_cta_text"
+
+[[extensions.metafields]]
+namespace = "frak"
+key = "post_purchase_badge_text"
+
 # Merchant-configurable text settings
 [extensions.settings]
 
