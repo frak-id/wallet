@@ -6,7 +6,6 @@ import { Stack } from "@frak-labs/design-system/components/Stack";
 import { Text } from "@frak-labs/design-system/components/Text";
 import { useCallback, useEffect } from "react";
 import { useTranslation } from "react-i18next";
-import type { Hex } from "viem";
 import { PageLayout } from "@/module/common/component/PageLayout";
 import { Title } from "@/module/common/component/Title";
 import { useMergeSettle } from "../../hook/useMergeSettle";
@@ -28,7 +27,6 @@ type SettlingStepProps = {
      * path and trip `MERGE_SAME_CREDENTIAL`).
      */
     targetAuthenticatorId: string;
-    onChainTxHash?: Hex;
     loserConsentSignature: string;
     /**
      * Set by the cross-device strategy once the pairing is live. Forwarded
@@ -98,7 +96,6 @@ function mapSettleError(code: string | undefined): SettleRecovery | null {
  */
 export function SettlingStep({
     targetAuthenticatorId,
-    onChainTxHash,
     loserConsentSignature,
     pairingId,
     onCompleted,
@@ -111,7 +108,6 @@ export function SettlingStep({
         settle(
             {
                 targetAuthenticatorId,
-                onChainTxHash,
                 loserConsentSignature,
                 pairingId,
             },

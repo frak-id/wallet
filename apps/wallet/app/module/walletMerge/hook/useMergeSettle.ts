@@ -2,13 +2,10 @@ import type { MergeSettleResponse } from "@frak-labs/backend-elysia/api/schemas"
 import {
     authenticatedWalletApi,
     authKey,
-    currentViemClient,
     type Session,
     sessionStore,
 } from "@frak-labs/wallet-shared";
 import { useMutation } from "@tanstack/react-query";
-import type { Hex } from "viem";
-import { waitForTransactionReceipt } from "viem/actions";
 
 type UseMergeSettleArgs = {
     /**
@@ -23,10 +20,6 @@ type UseMergeSettleArgs = {
      * targetAuthenticatorId` and `preview()` throws `MERGE_SAME_CREDENTIAL`.
      */
     targetAuthenticatorId: string;
-    /** Tx hash returned by {@link useSendAddPassKeyTx}. The hook waits for
-     *  this receipt with ≥8 confirmations before POSTing to settle, so the
-     *  backend only needs the validator readback to confirm the merge. */
-    onChainTxHash?: Hex;
     /** Base64 webauthn assertion produced by `useLoserConsent`. */
     loserConsentSignature: string;
     /**
@@ -40,14 +33,11 @@ type UseMergeSettleArgs = {
 };
 
 /**
- * Waits for the `addPassKey` tx receipt (≥8 confirmations) then POSTs to
- * `/user/wallet/merge/settle`. The on-chain wait is bundled here so callers
- * get a single mutation covering the whole finalise pipeline — retries
- * re-run wait + post against the same invariant inputs.
- *
- * Only the addPassKey hash needs a wait here. The migrate UserOp's receipt
- * is already awaited inside `useMigrateLoserAssets.mutationFn`, so by the
- * time `SettlingStep` mounts the loser is observably drained.
+ * POSTs to `/user/wallet/merge/settle`. No on-chain wait happens here:
+ * `useSendAddPassKeyTx` owns the full "send + wait for chain finality"
+ * pipeline (userOp receipt + ≥8 L2 confirmations + state-recheck
+ * recovery), so by the time `SettlingStep` mounts the validator binding
+ * is observable to the backend.
  *
  * On success the backend returns a fresh wallet session when the requester
  * authenticated with the loser credential (the credential's binding now
@@ -57,7 +47,7 @@ type UseMergeSettleArgs = {
  * canonical wallet without a separate `/login` round-trip.
  *
  * Endpoint is idempotent — retrying with the same `(targetAuthenticatorId,
- * onChainTxHash, loserConsentSignature)` triplet converges.
+ * loserConsentSignature)` pair converges.
  */
 export function useMergeSettle() {
     return useMutation<MergeSettleResponse, Error, UseMergeSettleArgs>({
@@ -65,12 +55,9 @@ export function useMergeSettle() {
         gcTime: 0,
         mutationFn: async ({
             targetAuthenticatorId,
-            onChainTxHash,
             loserConsentSignature,
             pairingId,
         }) => {
-            await waitForMergeTx(onChainTxHash);
-
             const { data, error } =
                 await authenticatedWalletApi.merge.settle.post({
                     targetAuthenticatorId,
@@ -99,20 +86,6 @@ export function useMergeSettle() {
             return data;
         },
     });
-}
-
-async function waitForMergeTx(hash: Hex | undefined): Promise<void> {
-    if (!hash || hash === "0x") return;
-    try {
-        await waitForTransactionReceipt(currentViemClient, {
-            hash,
-            confirmations: 8,
-            // Short timeout of 10sec
-            timeout: 10_000,
-        });
-    } catch (error) {
-        console.warn("Error while waiting for the merge tx receipt", error);
-    }
 }
 
 function extractSettleErrorCode(value: unknown): string {

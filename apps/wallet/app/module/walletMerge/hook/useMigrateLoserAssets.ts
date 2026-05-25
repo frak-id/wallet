@@ -9,6 +9,15 @@ import {
     loserAssetSummaryQueryKey,
 } from "./useLoserAssetSummary";
 
+/**
+ * Bound on every receipt wait inside this hook. Receipts that take
+ * longer than this fall through to the state-recheck recovery path
+ * below — the userOp may have landed without us observing the receipt
+ * (bundler indexing lag, RPC hiccup), so we re-read the loser summary
+ * before failing.
+ */
+const RECEIPT_WAIT_TIMEOUT_MS = 20_000;
+
 export type MigrateLoserAssetsArgs = {
     loser: Address;
     winner: Address;
@@ -81,12 +90,20 @@ export function useMigrateLoserAssets({
                 loserAuthenticatorId,
                 loserPublicKey,
             }) => {
-                const summary = await queryClient.fetchQuery({
-                    queryKey: loserAssetSummaryQueryKey(loser),
-                    queryFn: () => fetchLoserAssetSummary(loser),
-                    staleTime: 0,
-                    gcTime: 0,
-                });
+                // Re-read the loser summary fresh, bypassing cache. Used
+                // both for the idempotent entry short-circuit and for
+                // the post-wait recovery path — a successful drain
+                // empties the summary, so a stale-cache result would
+                // mask the recovered-success case.
+                const refreshSummary = () =>
+                    queryClient.fetchQuery({
+                        queryKey: loserAssetSummaryQueryKey(loser),
+                        queryFn: () => fetchLoserAssetSummary(loser),
+                        staleTime: 0,
+                        gcTime: 0,
+                    });
+
+                const summary = await refreshSummary();
 
                 if (!summary?.hasFunds) {
                     return { txHash: undefined, entriesMigrated: 0 };
@@ -112,25 +129,45 @@ export function useMigrateLoserAssets({
                 });
 
                 const userOpHash = await client.sendUserOperation({ calls });
-                const userOpReceipt = await client.waitForUserOperationReceipt({
-                    hash: userOpHash,
-                });
 
-                const receipt = await waitForTransactionReceipt(
-                    currentViemClient,
-                    {
-                        hash: userOpReceipt.receipt.transactionHash,
-                        confirmations: 8,
+                // Wait for the userOp + L2 confirmations. Any failure —
+                // timeout, network blip, bundler indexing lag, or a
+                // real revert — falls through to the catch where we
+                // re-read the loser summary. If the drain landed the
+                // summary is empty and we resolve as a recovered
+                // success; otherwise we propagate the original error
+                // so the migrate step's retry UI shows up.
+                try {
+                    const userOpReceipt =
+                        await client.waitForUserOperationReceipt({
+                            hash: userOpHash,
+                            timeout: RECEIPT_WAIT_TIMEOUT_MS,
+                        });
+                    if (!userOpReceipt.success) {
+                        throw new Error("MERGE_MIGRATE_USER_OP_REVERTED");
                     }
-                );
-                if (receipt.status !== "success") {
-                    throw new Error("MERGE_MIGRATE_USER_OP_REVERTED");
+                    const receipt = await waitForTransactionReceipt(
+                        currentViemClient,
+                        {
+                            hash: userOpReceipt.receipt.transactionHash,
+                            confirmations: 8,
+                            timeout: RECEIPT_WAIT_TIMEOUT_MS,
+                        }
+                    );
+                    return {
+                        txHash: receipt.transactionHash,
+                        entriesMigrated: summary.entries.length,
+                    };
+                } catch (error) {
+                    const fresh = await refreshSummary();
+                    if (!fresh?.hasFunds) {
+                        return {
+                            txHash: undefined,
+                            entriesMigrated: summary.entries.length,
+                        };
+                    }
+                    throw error;
                 }
-
-                return {
-                    txHash: receipt.transactionHash,
-                    entriesMigrated: summary.entries.length,
-                };
             },
         }
     );

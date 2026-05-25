@@ -3,7 +3,6 @@ import { Button } from "@frak-labs/design-system/components/Button";
 import { type Flow, startFlow } from "@frak-labs/wallet-shared";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-import type { Hex } from "viem";
 import { EmailFlowResultScreen } from "@/module/common/component/EmailFlowResultScreen";
 import { useLoserAssetSummary } from "../../hook/useLoserAssetSummary";
 import { useMergePreview } from "../../hook/useMergePreview";
@@ -40,8 +39,8 @@ type Step =
     | { kind: "preview" }
     | { kind: "consent" }
     | { kind: "sign"; consentSignature: string }
-    | { kind: "migrate"; consentSignature: string; addPassKeyTxHash?: Hex }
-    | { kind: "settling"; consentSignature: string; txHash?: Hex }
+    | { kind: "migrate"; consentSignature: string }
+    | { kind: "settling"; consentSignature: string }
     | { kind: "success" };
 
 /**
@@ -228,7 +227,7 @@ export function MergeFlow({
                 loserAuthenticatorId={preview.data.loserAuthenticatorId}
                 loserPublicKey={preview.data.loserPublicKey}
                 sendAddPassKey={strategy.sendAddPassKey}
-                onSigned={(txHash) => {
+                onSigned={() => {
                     // Skip the migrate step entirely when the loser has
                     // already been drained — otherwise we render a "Move
                     // your funds" CTA over an empty list for one frame
@@ -241,14 +240,12 @@ export function MergeFlow({
                         setStep({
                             kind: "settling",
                             consentSignature: step.consentSignature,
-                            txHash,
                         });
                         return;
                     }
                     setStep({
                         kind: "migrate",
                         consentSignature: step.consentSignature,
-                        addPassKeyTxHash: txHash,
                     });
                 }}
                 onCancel={handleAbort}
@@ -269,7 +266,6 @@ export function MergeFlow({
                     setStep({
                         kind: "settling",
                         consentSignature: step.consentSignature,
-                        txHash: step.addPassKeyTxHash,
                     })
                 }
                 onCancel={handleAbort}
@@ -281,7 +277,6 @@ export function MergeFlow({
         return (
             <SettlingStep
                 targetAuthenticatorId={discovery.targetAuthenticatorId}
-                onChainTxHash={step.txHash}
                 loserConsentSignature={step.consentSignature}
                 pairingId={strategy.pairingId}
                 onCompleted={() => {

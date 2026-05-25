@@ -11,14 +11,23 @@ import {
     keccak256,
     toHex,
 } from "viem";
-import { readContract } from "viem/actions";
+import { readContract, waitForTransactionReceipt } from "viem/actions";
 import { buildMergeBundlerClient } from "../utils/buildMergeBundlerClient";
+
+/**
+ * Bound on every receipt wait inside this hook. Receipts that take longer
+ * than this are caught and routed to the state-recheck recovery path
+ * below — the userOp may have landed without us observing the receipt
+ * (RPC hiccup, bundler lag), so we re-read the validator before failing.
+ */
+const RECEIPT_WAIT_TIMEOUT_MS = 20_000;
 
 export type SendAddPassKeyResult = {
     /**
-     * `undefined` when the loser passkey is already bound to the winner
-     * wallet on-chain (idempotent no-op success — happens on retries after
-     * a previous landed userOp).
+     * `undefined` when the loser passkey was already bound to the winner
+     * wallet on-chain at mutate-time (idempotent no-op) OR when the
+     * receipt wait failed but a follow-up read confirmed the binding
+     * landed anyway (recovered no-op).
      */
     txHash?: Hex;
 };
@@ -62,13 +71,22 @@ type UseSendAddPassKeyTxArgs = {
  * the live wagmi session, so the flow is symmetric with the loser-side
  * asset migration step. Transport selection mirrors `useMigrateLoserAssets`.
  *
- * Idempotent: a read of the on-chain validator first short-circuits with
- * `{ txHash: undefined }` if the loser passkey is already bound, so a
- * retry after a previously-landed addPassKey skips straight to settle.
+ * Owns the full "send + wait for chain finality" pipeline so the settle
+ * step doesn't have to: waits for the userOp receipt, then for ≥8 L2
+ * confirmations, both bounded by {@link RECEIPT_WAIT_TIMEOUT_MS}. On any
+ * wait failure (timeout / RPC / network) we re-read the validator: if
+ * the binding is already there the userOp landed out of band and we
+ * resolve as success; if it isn't, the original error propagates so the
+ * SignStep retry path kicks in.
  *
- * Returns the userOp hash. The settle step (`useMergeSettle`) takes that
- * hash and waits for ≥8 confirmations before finalising the off-chain
- * repoint + identity merge.
+ * Idempotent: the validator read runs both at entry (short-circuit when
+ * a previous run already bound the passkey) and on the recovery path,
+ * so retries converge regardless of where the previous attempt died.
+ *
+ * Returns the included L2 tx hash, or `undefined` for the two no-op
+ * success paths (already-bound at entry, or recovered after a wait
+ * failure). The settle step doesn't read this value any more — it's
+ * kept for analytics / future use.
  */
 export function useSendAddPassKeyTx({
     transport,
@@ -88,20 +106,27 @@ export function useSendAddPassKeyTx({
                 toHex(loserAuthenticatorId)
             );
 
+            // Read the validator for the (winner, loserCredHash) slot
+            // and return true iff the on-chain pubkey matches the loser
+            // pubkey we're trying to bind. Used both for the idempotent
+            // entry short-circuit and the post-wait recovery path.
+            const isLoserBound = async () => {
+                const [_, existing] = await readContract(currentViemClient, {
+                    address: addresses.webAuthNValidator,
+                    abi: multiWebAuthNValidatorV2Abi,
+                    functionName: "getPasskey",
+                    args: [winner, loserAuthenticatorIdHash],
+                });
+                return (
+                    existing.x === BigInt(loserPublicKey.x) &&
+                    existing.y === BigInt(loserPublicKey.y)
+                );
+            };
+
             // Idempotent early exit if loser cred already lives under winner
             // on-chain (a previously-landed addPassKey from an earlier
-            // run-through). The settle step will treat `txHash: undefined`
-            // as "nothing to wait for" and skip straight to the POST.
-            const [_, existing] = await readContract(currentViemClient, {
-                address: addresses.webAuthNValidator,
-                abi: multiWebAuthNValidatorV2Abi,
-                functionName: "getPasskey",
-                args: [winner, loserAuthenticatorIdHash],
-            });
-            if (
-                existing.x === BigInt(loserPublicKey.x) &&
-                existing.y === BigInt(loserPublicKey.y)
-            ) {
+            // run-through).
+            if (await isLoserBound()) {
                 return { txHash: undefined };
             }
 
@@ -140,12 +165,35 @@ export function useSendAddPassKeyTx({
                 ],
             });
 
-            // Wait rapidly for the user op receipt
-            const userOpReceipt = await client.waitForUserOperationReceipt({
-                hash: userOpHash,
-            });
-
-            return { txHash: userOpReceipt.receipt.transactionHash };
+            // Wait for the userOp + L2 confirmations. Any failure —
+            // timeout, network blip, bundler indexing lag, or a real
+            // revert — falls through to the catch where we re-read the
+            // validator. If the binding is already there we treat the
+            // mutation as a recovered success; otherwise we propagate
+            // the original error so the SignStep retry UI shows up.
+            try {
+                const userOpReceipt = await client.waitForUserOperationReceipt({
+                    hash: userOpHash,
+                    timeout: RECEIPT_WAIT_TIMEOUT_MS,
+                });
+                if (!userOpReceipt.success) {
+                    throw new Error("MERGE_ADD_PASSKEY_USER_OP_REVERTED");
+                }
+                const receipt = await waitForTransactionReceipt(
+                    currentViemClient,
+                    {
+                        hash: userOpReceipt.receipt.transactionHash,
+                        confirmations: 8,
+                        timeout: RECEIPT_WAIT_TIMEOUT_MS,
+                    }
+                );
+                return { txHash: receipt.transactionHash };
+            } catch (error) {
+                if (await isLoserBound()) {
+                    return { txHash: undefined };
+                }
+                throw error;
+            }
         },
     });
 }
