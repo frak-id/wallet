@@ -1,8 +1,5 @@
 import { useMemo } from "preact/hooks";
 
-const DEFAULT_MESSAGE = "Earn rewards through sharing";
-const DEFAULT_DESCRIPTION = "If they buy, they earn... and so do you!";
-const DEFAULT_CTA = "Share & earn";
 const DEFAULT_WALLET_URL = "https://wallet.frak.id";
 
 const GIFT_SVG_DATA_URI =
@@ -34,6 +31,17 @@ export type PostPurchaseTextOverrides = {
     description?: string;
     ctaText?: string;
     badgeText?: string;
+};
+
+/**
+ * Locale-resolved defaults produced by the entrypoint via `useTranslate`,
+ * using the extension's `locales/` JSON files. Always populated — used
+ * when neither `settings` nor `textOverrides` provide a value.
+ */
+export type PostPurchaseTextDefaults = {
+    message: string;
+    description: string;
+    cta: string;
 };
 
 export type ProductInfo = {
@@ -109,6 +117,7 @@ function constructSharingUrl({
 export function PostPurchaseCard({
     settings,
     textOverrides,
+    defaults,
     clientId,
     shopName,
     storefrontUrl,
@@ -124,9 +133,11 @@ export function PostPurchaseCard({
     /**
      * Translatable text overrides from `frak.post_purchase_*` metafields.
      * Resolved per buyer locale via Translate & Adapt. Lower priority than
-     * per-extension `settings`, higher than the hardcoded defaults.
+     * per-extension `settings`, higher than `defaults`.
      */
     textOverrides?: PostPurchaseTextOverrides;
+    /** Locale-resolved fallback text from the extension's `locales/` files. */
+    defaults: PostPurchaseTextDefaults;
     clientId?: string;
     shopName?: string;
     /** Shop storefront URL — fallback when sharing_url setting is empty */
@@ -148,12 +159,12 @@ export function PostPurchaseCard({
     const sharingUrl = settings.sharing_url || storefrontUrl;
     const resolvedWalletUrl = walletUrl || DEFAULT_WALLET_URL;
     const message =
-        settings.message || textOverrides?.message || DEFAULT_MESSAGE;
+        settings.message || textOverrides?.message || defaults.message;
     const description =
         settings.description ||
         textOverrides?.description ||
-        DEFAULT_DESCRIPTION;
-    const ctaText = settings.cta_text || textOverrides?.ctaText || DEFAULT_CTA;
+        defaults.description;
+    const ctaText = settings.cta_text || textOverrides?.ctaText || defaults.cta;
     const badgeText = settings.badge_text || textOverrides?.badgeText;
     const imageUrl = settings.image_url;
 

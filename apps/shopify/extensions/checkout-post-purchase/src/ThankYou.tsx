@@ -6,6 +6,7 @@ import {
     useExtensionEditor,
     useSettings,
     useShop,
+    useTranslate,
 } from "@shopify/ui-extensions/checkout/preact";
 import { render } from "preact";
 import { useMemo } from "preact/hooks";
@@ -19,6 +20,7 @@ function ThankYouExtension() {
     const cartLines = useCartLines();
     const checkoutToken = useCheckoutToken();
     const editor = useExtensionEditor();
+    const t = useTranslate();
 
     // Read merchantId, walletUrl, logoUrl from shop metafields
     const frakMetafields = useAppMetafields({ namespace: "frak" });
@@ -42,6 +44,11 @@ function ThankYouExtension() {
         <PostPurchaseCard
             settings={settings}
             textOverrides={frakConfig.text}
+            defaults={{
+                message: t("message"),
+                description: t("description"),
+                cta: t("cta"),
+            }}
             clientId={clientId}
             shopName={shop.name}
             storefrontUrl={shop.storefrontUrl}

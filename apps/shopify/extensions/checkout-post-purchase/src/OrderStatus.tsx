@@ -7,6 +7,7 @@ import {
     useSettings,
     useShop,
     useSubscription,
+    useTranslate,
 } from "@shopify/ui-extensions/customer-account/preact";
 import { render } from "preact";
 import { useMemo } from "preact/hooks";
@@ -19,6 +20,7 @@ function OrderStatusExtension() {
     const shop = useShop();
     const cartLines = useCartLines();
     const editor = useExtensionEditor();
+    const t = useTranslate();
     // Subscribe to the checkout token — correlates with the web pixel payload
     // and gives the backend an identifier for the purchase.
     const api = useApi<"customer-account.order-status.block.render">();
@@ -46,6 +48,11 @@ function OrderStatusExtension() {
         <PostPurchaseCard
             settings={settings}
             textOverrides={frakConfig.text}
+            defaults={{
+                message: t("message"),
+                description: t("description"),
+                cta: t("cta"),
+            }}
             clientId={clientId}
             shopName={shop.name}
             storefrontUrl={shop.storefrontUrl}
