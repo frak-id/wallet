@@ -4,11 +4,11 @@ import { Button } from "@frak-labs/design-system/components/Button";
 import { Card } from "@frak-labs/design-system/components/Card";
 import { Stack } from "@frak-labs/design-system/components/Stack";
 import { Text } from "@frak-labs/design-system/components/Text";
+import { useCallback, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import type { Hex } from "viem";
 import { PageLayout } from "@/module/common/component/PageLayout";
 import { Title } from "@/module/common/component/Title";
-import { useAutoMutation } from "../../hook/useAutoMutation";
 import { useMergeSettle } from "../../hook/useMergeSettle";
 import * as styles from "../stepLayout.css";
 
@@ -105,23 +105,30 @@ export function SettlingStep({
     onRecover,
 }: SettlingStepProps) {
     const { t } = useTranslation();
-    const settle = useMergeSettle();
-    const { run } = useAutoMutation(settle, {
-        vars: {
-            loserAuthenticatorId,
-            onChainTxHash,
-            loserConsentSignature,
-            pairingId,
-        },
-        onSuccess: onCompleted,
-    });
+    const { mutateAsync: settle, error, isError, isPending } = useMergeSettle();
+    const run = useCallback(() => {
+        settle(
+            {
+                loserAuthenticatorId,
+                onChainTxHash,
+                loserConsentSignature,
+                pairingId,
+            },
+            { onSuccess: onCompleted }
+        );
+    }, [settle]);
 
-    const recovery = mapSettleError(settle.error?.message);
+    // Directly trigger a run on mount
+    useEffect(() => {
+        run();
+    }, []);
+
+    const recovery = mapSettleError(error?.message);
 
     return (
         <PageLayout
             footer={
-                settle.isError ? (
+                isError ? (
                     <Box className={styles.footer}>
                         {recovery ? (
                             <Button
@@ -160,7 +167,7 @@ export function SettlingStep({
             <Stack space="l" className={styles.body}>
                 <Stack space="s">
                     <Title size="page">
-                        {settle.isError
+                        {isError
                             ? t(
                                   recovery?.titleKey ??
                                       "wallet.merge.settling.errorTitle"
@@ -168,13 +175,13 @@ export function SettlingStep({
                             : t("wallet.merge.settling.title")}
                     </Title>
                     <Text variant="body" color="secondary">
-                        {settle.isError
+                        {isError
                             ? t("wallet.merge.settling.errorDescription")
                             : t("wallet.merge.settling.description")}
                     </Text>
                 </Stack>
 
-                {settle.isPending && (
+                {isPending && (
                     <Card
                         variant="muted"
                         padding="default"
@@ -192,7 +199,7 @@ export function SettlingStep({
                     </Card>
                 )}
 
-                {settle.isError && (
+                {isError && (
                     <Card
                         variant="muted"
                         padding="default"

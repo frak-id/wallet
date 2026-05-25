@@ -3,12 +3,12 @@ import { Button } from "@frak-labs/design-system/components/Button";
 import { Card } from "@frak-labs/design-system/components/Card";
 import { Stack } from "@frak-labs/design-system/components/Stack";
 import { Text } from "@frak-labs/design-system/components/Text";
+import { useCallback, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import type { Address } from "viem";
 import { Back } from "@/module/common/component/Back";
 import { PageLayout } from "@/module/common/component/PageLayout";
 import { Title } from "@/module/common/component/Title";
-import { useAutoMutation } from "../../hook/useAutoMutation";
 import type { LoserConsentMutation, MergeStrategy } from "../../strategy/types";
 import { RemotePairingPanel } from "../RemotePairingPanel";
 import * as styles from "../stepLayout.css";
@@ -67,15 +67,20 @@ export function ConsentStep({
 }: ConsentStepProps) {
     const { t } = useTranslation();
 
-    // Remote consent auto-fires on mount — the user is being asked to
-    // approve on the OTHER device, so there's no local CTA to click first.
-    // Local consent still gates behind the explicit "verify" button.
-    const { run } = useAutoMutation(consent, {
-        enabled: remoteConsent,
-        vars: { winner, loserAuthenticatorId },
-        onSuccess: ({ loserConsentSignature }) =>
-            onConfirmed(loserConsentSignature),
-    });
+    const run = useCallback(() => {
+        consent.mutateAsync(
+            { winner, loserAuthenticatorId },
+            {
+                onSuccess: ({ loserConsentSignature }) =>
+                    onConfirmed(loserConsentSignature),
+            }
+        );
+    }, [consent.mutateAsync]);
+
+    // Directly trigger a run on mount
+    useEffect(() => {
+        run();
+    }, []);
 
     if (remoteConsent) {
         return (
