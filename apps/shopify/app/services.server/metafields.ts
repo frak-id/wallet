@@ -40,7 +40,6 @@ const FRAK_I18N_SINGLETON_HANDLE = "default";
 const FRAK_I18N_DEFINITION_NAME = "Frak Translations";
 const FRAK_I18N_DEFINITION_DESCRIPTION =
     "Per-locale text used by the Frak banner, share button, and post-purchase card. Edit non-default languages via Translate & Adapt.";
-const FRAK_I18N_DISPLAY_NAME_FIELD = "banner_referral_title";
 const FRAK_I18N_FR_LOCALE = "fr";
 
 export type FrakI18nFieldDefinition = {
@@ -537,30 +536,77 @@ type GraphQLBody<TData> = {
     errors?: Array<{ message: string }>;
 };
 
-async function ensureFrakI18nDefinition({
-    admin: { graphql },
-}: AuthenticatedContext): Promise<{ ok: boolean; alreadyExists: boolean }> {
-    const existing = await graphql(
-        `#graphql
-        query ReadFrakI18nDefinition($type: String!) {
-            metaobjectDefinitionByType(type: $type) { id }
-        }`,
-        { variables: { type: FRAK_I18N_METAOBJECT_TYPE } }
-    );
-    const existingBody = (await existing.json()) as GraphQLBody<{
-        metaobjectDefinitionByType?: { id?: string } | null;
-    }>;
-    if (existingBody.errors?.length) {
-        console.error(
-            "[frakI18n] definition read top-level errors:",
-            existingBody.errors
-        );
+/**
+ * Boilerplate-free GraphQL call. Logs and returns `null` on transport
+ * errors, JSON parse failures, or top-level GraphQL errors; callers
+ * handle `userErrors` from the returned data.
+ */
+async function runGraphQL<TData>(
+    graphql: AuthenticatedContext["admin"]["graphql"],
+    label: string,
+    query: string,
+    variables: Record<string, unknown>
+): Promise<TData | null> {
+    try {
+        const response = await graphql(query, { variables });
+        const body = (await response.json()) as GraphQLBody<TData>;
+        if (body.errors?.length) {
+            console.error(`[frakI18n] ${label} top-level errors:`, body.errors);
+            return null;
+        }
+        return body.data ?? null;
+    } catch (error) {
+        console.error(`[frakI18n] ${label} threw:`, error);
+        return null;
     }
-    if (existingBody.data?.metaobjectDefinitionByType?.id) {
-        return { ok: true, alreadyExists: true };
-    }
+}
 
-    const response = await graphql(
+/**
+ * Single round-trip read of the singleton state. The orchestrator uses
+ * this to decide whether to create the definition and/or seed the entry.
+ */
+async function readFrakI18nState(
+    context: AuthenticatedContext
+): Promise<{ definitionExists: boolean; entryId: string | null } | null> {
+    const data = await runGraphQL<{
+        metaobjectDefinitionByType?: { id?: string } | null;
+        metaobject?: { id?: string } | null;
+    }>(
+        context.admin.graphql,
+        "state read",
+        `#graphql
+        query ReadFrakI18nState(
+            $type: String!
+            $entryHandle: MetaobjectHandleInput!
+        ) {
+            metaobjectDefinitionByType(type: $type) { id }
+            metaobject(handle: $entryHandle) { id }
+        }`,
+        {
+            type: FRAK_I18N_METAOBJECT_TYPE,
+            entryHandle: {
+                type: FRAK_I18N_METAOBJECT_TYPE,
+                handle: FRAK_I18N_SINGLETON_HANDLE,
+            },
+        }
+    );
+    if (!data) return null;
+    return {
+        definitionExists: Boolean(data.metaobjectDefinitionByType?.id),
+        entryId: data.metaobject?.id ?? null,
+    };
+}
+
+async function createFrakI18nDefinition(
+    context: AuthenticatedContext
+): Promise<boolean> {
+    const data = await runGraphQL<{
+        metaobjectDefinitionCreate?: {
+            userErrors?: Array<{ code?: string; message: string }>;
+        };
+    }>(
+        context.admin.graphql,
+        "definition create",
         `#graphql
         mutation CreateFrakI18nDefinition(
             $definition: MetaobjectDefinitionCreateInput!
@@ -571,40 +617,26 @@ async function ensureFrakI18nDefinition({
             }
         }`,
         {
-            variables: {
-                definition: {
-                    type: FRAK_I18N_METAOBJECT_TYPE,
-                    name: FRAK_I18N_DEFINITION_NAME,
-                    description: FRAK_I18N_DEFINITION_DESCRIPTION,
-                    displayNameKey: FRAK_I18N_DISPLAY_NAME_FIELD,
-                    access: { storefront: "PUBLIC_READ" },
-                    capabilities: {
-                        publishable: { enabled: true },
-                        translatable: { enabled: true },
-                    },
-                    fieldDefinitions: FRAK_I18N_FIELDS.map((f) => ({
-                        key: f.key,
-                        name: f.name,
-                        description: f.description,
-                        type: f.type,
-                    })),
+            definition: {
+                type: FRAK_I18N_METAOBJECT_TYPE,
+                name: FRAK_I18N_DEFINITION_NAME,
+                description: FRAK_I18N_DEFINITION_DESCRIPTION,
+                access: { storefront: "PUBLIC_READ" },
+                capabilities: {
+                    publishable: { enabled: true },
+                    translatable: { enabled: true },
                 },
+                fieldDefinitions: FRAK_I18N_FIELDS.map((f) => ({
+                    key: f.key,
+                    name: f.name,
+                    description: f.description,
+                    type: f.type,
+                })),
             },
         }
     );
-    const body = (await response.json()) as GraphQLBody<{
-        metaobjectDefinitionCreate?: {
-            userErrors?: Array<{ code?: string; message: string }>;
-        };
-    }>;
-    if (body.errors?.length) {
-        console.error(
-            "[frakI18n] definition create top-level errors:",
-            body.errors
-        );
-        return { ok: false, alreadyExists: false };
-    }
-    const errors = body.data?.metaobjectDefinitionCreate?.userErrors ?? [];
+    if (!data) return false;
+    const errors = data.metaobjectDefinitionCreate?.userErrors ?? [];
     const blocking = errors.filter(
         (e) =>
             !e.code || !IGNORABLE_METAOBJECT_DEFINITION_ERROR_CODES.has(e.code)
@@ -614,29 +646,35 @@ async function ensureFrakI18nDefinition({
             "[frakI18n] definition create rejected:",
             JSON.stringify(blocking)
         );
+        return false;
     }
-    return { ok: blocking.length === 0, alreadyExists: false };
+    return true;
 }
 
-type FrakI18nUpsertResult = {
-    id: string | null;
-    errorMessages: string[];
-};
-
 /**
- * Atomic create-or-update of the singleton entry. Each EN seed value
- * is overwritten on every run (cheap) so the entry self-heals if a
- * previous attempt left it half-populated. `publishable.status = ACTIVE`
- * requires the definition's `publishable: { enabled: true }` capability
- * — missing that flag yields `CAPABILITY_NOT_ENABLED` from Shopify.
+ * Create the singleton entry with bundled EN seeds. Only invoked when
+ * the state read confirmed no entry exists yet, so merchant edits on
+ * existing EN values are never overwritten. `publishable.status = ACTIVE`
+ * requires the definition's `publishable: { enabled: true }` capability.
  */
-async function upsertFrakI18nEntry({
-    admin: { graphql },
-}: AuthenticatedContext): Promise<FrakI18nUpsertResult> {
+async function upsertFrakI18nEntry(
+    context: AuthenticatedContext
+): Promise<string | null> {
     const fields = FRAK_I18N_FIELDS.flatMap((f) =>
         f.defaults.en ? [{ key: f.key, value: f.defaults.en }] : []
     );
-    const response = await graphql(
+    const data = await runGraphQL<{
+        metaobjectUpsert?: {
+            metaobject?: { id?: string } | null;
+            userErrors?: Array<{
+                field?: string[];
+                message: string;
+                code?: string;
+            }>;
+        };
+    }>(
+        context.admin.graphql,
+        "entry upsert",
         `#graphql
         mutation UpsertFrakI18nEntry(
             $handle: MetaobjectHandleInput!
@@ -648,47 +686,25 @@ async function upsertFrakI18nEntry({
             }
         }`,
         {
-            variables: {
-                handle: {
-                    type: FRAK_I18N_METAOBJECT_TYPE,
-                    handle: FRAK_I18N_SINGLETON_HANDLE,
-                },
-                metaobject: {
-                    fields,
-                    capabilities: { publishable: { status: "ACTIVE" } },
-                },
+            handle: {
+                type: FRAK_I18N_METAOBJECT_TYPE,
+                handle: FRAK_I18N_SINGLETON_HANDLE,
+            },
+            metaobject: {
+                fields,
+                capabilities: { publishable: { status: "ACTIVE" } },
             },
         }
     );
-    const body = (await response.json()) as GraphQLBody<{
-        metaobjectUpsert?: {
-            metaobject?: { id?: string } | null;
-            userErrors?: Array<{
-                field?: string[];
-                message: string;
-                code?: string;
-            }>;
-        };
-    }>;
-    const errorMessages: string[] = [];
-    if (body.errors?.length) {
-        console.error("[frakI18n] entry upsert top-level errors:", body.errors);
-        for (const e of body.errors)
-            errorMessages.push(`top-level: ${e.message}`);
-    }
-    const result = body.data?.metaobjectUpsert;
+    if (!data) return null;
+    const result = data.metaobjectUpsert;
     if (result?.userErrors?.length) {
         console.error(
             "[frakI18n] entry upsert userErrors:",
             JSON.stringify(result.userErrors)
         );
-        for (const e of result.userErrors) {
-            const path = e.field?.join(".") ?? "(no field)";
-            const code = e.code ? `[${e.code}] ` : "";
-            errorMessages.push(`${code}${path}: ${e.message}`);
-        }
     }
-    return { id: result?.metaobject?.id ?? null, errorMessages };
+    return result?.metaobject?.id ?? null;
 }
 
 type FrakI18nFieldTranslationState = {
@@ -703,10 +719,19 @@ type FrakI18nFieldTranslationState = {
  * by our field keys directly.
  */
 async function readFrakI18nFieldTranslationState(
-    { admin: { graphql } }: AuthenticatedContext,
+    context: AuthenticatedContext,
     entryId: string
-): Promise<FrakI18nFieldTranslationState> {
-    const response = await graphql(
+): Promise<FrakI18nFieldTranslationState | null> {
+    const data = await runGraphQL<{
+        translatableResourcesByIds?: {
+            nodes?: Array<{
+                translatableContent?: Array<{ key: string; digest?: string }>;
+                translations?: Array<{ key: string; value?: string }>;
+            }>;
+        };
+    }>(
+        context.admin.graphql,
+        "translation state read",
         `#graphql
         query ReadFrakI18nFieldTranslationState(
             $resourceIds: [ID!]!
@@ -714,21 +739,15 @@ async function readFrakI18nFieldTranslationState(
         ) {
             translatableResourcesByIds(first: 1, resourceIds: $resourceIds) {
                 nodes {
-                    resourceId
-                    translatableContent { key value digest locale }
-                    translations(locale: $locale) { key locale value }
+                    translatableContent { key digest }
+                    translations(locale: $locale) { key value }
                 }
             }
         }`,
-        {
-            variables: {
-                resourceIds: [entryId],
-                locale: FRAK_I18N_FR_LOCALE,
-            },
-        }
+        { resourceIds: [entryId], locale: FRAK_I18N_FR_LOCALE }
     );
-    const { data } = await response.json();
-    const node = data?.translatableResourcesByIds?.nodes?.[0];
+    if (!data) return null;
+    const node = data.translatableResourcesByIds?.nodes?.[0];
     const digestByKey = new Map<string, string>();
     const keysWithFr = new Set<string>();
     for (const c of node?.translatableContent ?? []) {
@@ -742,12 +761,18 @@ async function readFrakI18nFieldTranslationState(
 }
 
 async function registerFrakI18nFrTranslations(
-    { admin: { graphql } }: AuthenticatedContext,
+    context: AuthenticatedContext,
     entryId: string,
     translations: Array<{ key: string; value: string; digest: string }>
-): Promise<{ ok: boolean; errors: Array<{ message: string }> }> {
-    if (translations.length === 0) return { ok: true, errors: [] };
-    const response = await graphql(
+): Promise<boolean> {
+    if (translations.length === 0) return true;
+    const data = await runGraphQL<{
+        translationsRegister?: {
+            userErrors?: Array<{ message: string }>;
+        };
+    }>(
+        context.admin.graphql,
+        "fr register",
         `#graphql
         mutation RegisterFrakI18nFrTranslations(
             $resourceId: ID!
@@ -757,252 +782,72 @@ async function registerFrakI18nFrTranslations(
                 resourceId: $resourceId
                 translations: $translations
             ) {
-                translations { key value locale }
                 userErrors { field message code }
             }
         }`,
         {
-            variables: {
-                resourceId: entryId,
-                translations: translations.map((t) => ({
-                    locale: FRAK_I18N_FR_LOCALE,
-                    key: t.key,
-                    value: t.value,
-                    translatableContentDigest: t.digest,
-                })),
-            },
+            resourceId: entryId,
+            translations: translations.map((t) => ({
+                locale: FRAK_I18N_FR_LOCALE,
+                key: t.key,
+                value: t.value,
+                translatableContentDigest: t.digest,
+            })),
         }
     );
-    const body = (await response.json()) as GraphQLBody<{
-        translationsRegister?: {
-            userErrors?: Array<{ message: string }>;
-        };
-    }>;
-    if (body.errors?.length) {
-        console.error("[frakI18n] fr register top-level errors:", body.errors);
-        return {
-            ok: false,
-            errors: body.errors.map((e) => ({ message: e.message })),
-        };
+    if (!data) return false;
+    const errors = data.translationsRegister?.userErrors ?? [];
+    if (errors.length > 0) {
+        console.error("[frakI18n] fr translations rejected:", errors);
+        return false;
     }
-    const errors = body.data?.translationsRegister?.userErrors ?? [];
-    return { ok: errors.length === 0, errors };
+    return true;
 }
 
-export type FrakI18nSyncResult = {
-    definitionOk: boolean;
-    entryId: string | null;
-    frTranslationsRegistered: number;
-    errors: string[];
-};
-
 /**
- * Idempotent: ensure the `frak_i18n` metaobject definition exists,
- * upsert the singleton entry with bundled EN values, then register the
- * bundled FR translations for any field that doesn't already have one
- * (preserving merchant overrides).
+ * Idempotent: ensure the `frak_i18n` metaobject definition exists, create
+ * the singleton entry with bundled EN seeds when missing, then register
+ * the bundled FR translations for any field that doesn't already have one.
+ * Merchant EN edits are preserved (the entry is only seeded on first
+ * create); FR overrides are preserved via the `keysWithFr` check.
  *
- * Cached per shop for 30 minutes — but only on full success. Partial
- * failures stay retryable so a later loader can recover. Pass
- * `bypassCache=true` to force a re-run (used by the debug action).
+ * Cached per shop for 30 minutes — but only on full success, so partial
+ * failures stay retryable on the next loader call.
  */
 export async function ensureFrakI18nMetaobject(
-    context: AuthenticatedContext,
-    { bypassCache = false }: { bypassCache?: boolean } = {}
-): Promise<FrakI18nSyncResult> {
-    const shop = await shopInfo(context);
-    const cacheKey = shop.normalizedDomain;
-    const result: FrakI18nSyncResult = {
-        definitionOk: false,
-        entryId: null,
-        frTranslationsRegistered: 0,
-        errors: [],
-    };
-    if (!bypassCache && i18nMetaobjectSyncedShops.get(cacheKey)) {
-        result.definitionOk = true;
-        return result;
-    }
-
-    try {
-        const { ok } = await ensureFrakI18nDefinition(context);
-        result.definitionOk = ok;
-        if (!ok) {
-            result.errors.push("definition: create or read failed");
-            return result;
-        }
-    } catch (error) {
-        const message = error instanceof Error ? error.message : String(error);
-        console.error("[frakI18n] definition ensure threw:", error);
-        result.errors.push(`definition: ${message}`);
-        return result;
-    }
-
-    try {
-        const upsert = await upsertFrakI18nEntry(context);
-        result.entryId = upsert.id;
-        for (const msg of upsert.errorMessages) {
-            result.errors.push(`entry: ${msg}`);
-        }
-    } catch (error) {
-        const message = error instanceof Error ? error.message : String(error);
-        console.error("[frakI18n] entry upsert threw:", error);
-        result.errors.push(`entry: ${message}`);
-        return result;
-    }
-    if (!result.entryId) {
-        if (result.errors.length === 0) {
-            result.errors.push(
-                "entry: metaobjectUpsert returned no id (no userErrors surfaced)"
-            );
-        }
-        return result;
-    }
-
-    await syncFrakI18nFrTranslations(context, result);
-
-    if (result.errors.length === 0) {
-        i18nMetaobjectSyncedShops.set(cacheKey, true);
-    }
-    return result;
-}
-
-async function syncFrakI18nFrTranslations(
-    context: AuthenticatedContext,
-    result: FrakI18nSyncResult
-): Promise<void> {
-    if (!result.entryId) return;
-    try {
-        const state = await readFrakI18nFieldTranslationState(
-            context,
-            result.entryId
-        );
-        const missing = FRAK_I18N_FIELDS.flatMap((f) => {
-            if (!f.defaults.fr) return [];
-            if (state.keysWithFr.has(f.key)) return [];
-            const digest = state.digestByKey.get(f.key);
-            if (!digest) return [];
-            return [{ key: f.key, value: f.defaults.fr, digest }];
-        });
-        const { ok, errors } = await registerFrakI18nFrTranslations(
-            context,
-            result.entryId,
-            missing
-        );
-        if (ok) {
-            result.frTranslationsRegistered = missing.length;
-        } else {
-            console.error("[frakI18n] fr translations rejected:", errors);
-            result.errors.push(
-                `fr translations: ${errors.map((e) => e.message).join("; ")}`
-            );
-        }
-    } catch (error) {
-        const message = error instanceof Error ? error.message : String(error);
-        console.error("[frakI18n] fr translation step threw:", error);
-        result.errors.push(`fr translations: ${message}`);
-    }
-}
-
-/* -------------------------------------------------------------------------- */
-/*              Legacy i18n metafield cleanup (one-time migration)            */
-/* -------------------------------------------------------------------------- */
-
-const LEGACY_FRAK_I18N_METAFIELD_KEYS = new Set([
-    "banner_referral_title",
-    "banner_referral_description",
-    "banner_referral_cta",
-    "banner_inapp_title",
-    "banner_inapp_description",
-    "banner_inapp_cta",
-    "button_share_text",
-    "button_share_no_reward_text",
-    "post_purchase_message",
-    "post_purchase_description",
-    "post_purchase_cta_text",
-    "post_purchase_badge_text",
-]);
-
-const legacyI18nCleanupShops = new LRUCache<string, boolean>({
-    max: 512,
-    ttl: 24 * 60 * 60_000,
-});
-
-/**
- * Delete the legacy translatable text metafield definitions on the
- * shop's `frak` namespace, including any merchant-written values and
- * registered translations. Idempotent + LRU-cached 24h so it runs once
- * per shop per day.
- *
- * Other `frak.*` metafields (modal_i18n, appearance, merchant_id,
- * wallet_url, components_url, share_url, share_button_html) are
- * preserved — only the 12 keys in `LEGACY_FRAK_I18N_METAFIELD_KEYS`
- * are removed.
- */
-export async function cleanupLegacyFrakI18nMetafields(
     context: AuthenticatedContext
 ): Promise<void> {
     const shop = await shopInfo(context);
     const cacheKey = shop.normalizedDomain;
-    if (legacyI18nCleanupShops.get(cacheKey)) return;
+    if (i18nMetaobjectSyncedShops.get(cacheKey)) return;
 
-    const { admin } = context;
-    let definitionsToDelete: Array<{ id: string; key: string }>;
-    try {
-        const response = await admin.graphql(
-            `#graphql
-            query ListLegacyFrakI18nDefinitions($namespace: String!) {
-                metafieldDefinitions(
-                    namespace: $namespace
-                    ownerType: SHOP
-                    first: 100
-                ) {
-                    nodes { id key }
-                }
-            }`,
-            { variables: { namespace: FRAK_NAMESPACE } }
-        );
-        const { data } = await response.json();
-        const nodes: Array<{ id: string; key: string }> =
-            data?.metafieldDefinitions?.nodes ?? [];
-        definitionsToDelete = nodes.filter((d) =>
-            LEGACY_FRAK_I18N_METAFIELD_KEYS.has(d.key)
-        );
-    } catch (error) {
-        console.error("[frakI18n] legacy cleanup list failed:", error);
-        return;
+    const state = await readFrakI18nState(context);
+    if (!state) return;
+    if (!state.definitionExists) {
+        const created = await createFrakI18nDefinition(context);
+        if (!created) return;
     }
+    const entryId = state.entryId ?? (await upsertFrakI18nEntry(context));
+    if (!entryId) return;
 
-    if (definitionsToDelete.length === 0) {
-        legacyI18nCleanupShops.set(cacheKey, true);
-        return;
-    }
+    const frOk = await syncFrakI18nFrTranslations(context, entryId);
+    if (frOk) i18nMetaobjectSyncedShops.set(cacheKey, true);
+}
 
-    const results = await Promise.allSettled(
-        definitionsToDelete.map((def) =>
-            admin.graphql(
-                `#graphql
-                mutation DeleteLegacyFrakI18nDefinition($id: ID!) {
-                    metafieldDefinitionDelete(
-                        id: $id
-                        deleteAllAssociatedMetafields: true
-                    ) {
-                        deletedDefinitionId
-                        userErrors { field message code }
-                    }
-                }`,
-                { variables: { id: def.id } }
-            )
-        )
-    );
-    for (const [i, result] of results.entries()) {
-        if (result.status === "rejected") {
-            console.error(
-                `[frakI18n] legacy def delete failed for ${definitionsToDelete[i].key}:`,
-                result.reason
-            );
-        }
-    }
-    legacyI18nCleanupShops.set(cacheKey, true);
+async function syncFrakI18nFrTranslations(
+    context: AuthenticatedContext,
+    entryId: string
+): Promise<boolean> {
+    const state = await readFrakI18nFieldTranslationState(context, entryId);
+    if (!state) return false;
+    const missing = FRAK_I18N_FIELDS.flatMap((f) => {
+        if (!f.defaults.fr) return [];
+        if (state.keysWithFr.has(f.key)) return [];
+        const digest = state.digestByKey.get(f.key);
+        if (!digest) return [];
+        return [{ key: f.key, value: f.defaults.fr, digest }];
+    });
+    return registerFrakI18nFrTranslations(context, entryId, missing);
 }
 
 /* -------------------------------------------------------------------------- */

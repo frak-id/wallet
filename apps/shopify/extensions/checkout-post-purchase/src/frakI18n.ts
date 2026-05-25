@@ -7,6 +7,8 @@
  * `@inContext` directive.
  */
 
+import { useEffect, useState } from "preact/hooks";
+
 export type PostPurchaseTextOverrides = {
     message?: string;
     description?: string;
@@ -44,7 +46,16 @@ function nonEmpty(value: string | null | undefined): string | undefined {
     return value && value.length > 0 ? value : undefined;
 }
 
-export async function fetchPostPurchaseTextOverrides(
+/**
+ * Convert a BCP-47 ISO code (`fr`, `fr-CA`) to Shopify's `LanguageCode`
+ * GraphQL enum (`FR`, `FR_CA`). `useLanguage().isoCode` returns BCP-47
+ * with `-` separators; the GraphQL enum uses `_`.
+ */
+function toLanguageCode(isoCode: string): string {
+    return isoCode.replace("-", "_").toUpperCase();
+}
+
+async function fetchPostPurchaseTextOverrides(
     query: StorefrontQuery,
     languageIsoCode: string
 ): Promise<PostPurchaseTextOverrides> {
@@ -52,7 +63,7 @@ export async function fetchPostPurchaseTextOverrides(
         variables: {
             type: FRAK_I18N_METAOBJECT_TYPE,
             handle: FRAK_I18N_SINGLETON_HANDLE,
-            language: languageIsoCode.toUpperCase(),
+            language: toLanguageCode(languageIsoCode),
         },
     });
     const fields = response?.data?.metaobject?.fields;
@@ -65,4 +76,28 @@ export async function fetchPostPurchaseTextOverrides(
         ctaText: nonEmpty(map.get("post_purchase_cta_text")),
         badgeText: nonEmpty(map.get("post_purchase_badge_text")),
     };
+}
+
+/**
+ * Fetch the post-purchase text overrides for the buyer's locale once on
+ * mount (and whenever the language switches). Shared by the Thank You
+ * and Order Status surfaces.
+ */
+export function usePostPurchaseTextOverrides(
+    query: StorefrontQuery,
+    languageIsoCode: string
+): PostPurchaseTextOverrides | undefined {
+    const [overrides, setOverrides] = useState<PostPurchaseTextOverrides>();
+    useEffect(() => {
+        let cancelled = false;
+        fetchPostPurchaseTextOverrides(query, languageIsoCode)
+            .then((next) => {
+                if (!cancelled) setOverrides(next);
+            })
+            .catch(() => {});
+        return () => {
+            cancelled = true;
+        };
+    }, [query, languageIsoCode]);
+    return overrides;
 }

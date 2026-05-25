@@ -11,11 +11,8 @@ import {
     useTranslate,
 } from "@shopify/ui-extensions/customer-account/preact";
 import { render } from "preact";
-import { useEffect, useMemo, useState } from "preact/hooks";
-import {
-    fetchPostPurchaseTextOverrides,
-    type PostPurchaseTextOverrides,
-} from "./frakI18n";
+import { useMemo } from "preact/hooks";
+import { usePostPurchaseTextOverrides } from "./frakI18n";
 import { extractFrakConfig } from "./frakMetafields";
 import { PostPurchaseCard } from "./PostPurchaseCard";
 
@@ -43,20 +40,10 @@ function OrderStatusExtension() {
     // the Storefront API — useAppMetafields can't resolve metaobject
     // references, so we query directly. The Storefront API resolves the
     // buyer's locale via @inContext (language code passed in the query).
-    const [textOverrides, setTextOverrides] = useState<
-        PostPurchaseTextOverrides | undefined
-    >();
-    useEffect(() => {
-        let cancelled = false;
-        fetchPostPurchaseTextOverrides(api.query, language.isoCode)
-            .then((overrides) => {
-                if (!cancelled) setTextOverrides(overrides);
-            })
-            .catch(() => {});
-        return () => {
-            cancelled = true;
-        };
-    }, [api.query, language.isoCode]);
+    const textOverrides = usePostPurchaseTextOverrides(
+        api.query,
+        language.isoCode
+    );
 
     // Map cart lines to product info for the sharing page
     const products = useMemo(
