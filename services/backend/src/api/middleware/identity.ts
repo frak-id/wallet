@@ -1,8 +1,8 @@
 import { Elysia, status } from "elysia";
 import type { Address } from "viem";
 import type { StaticWalletTokenDto } from "../../domain/auth/models/WalletSessionDto";
+import { JwtContext } from "../../infrastructure/external/jwt";
 import { OrchestrationContext } from "../../orchestration/context";
-import { JwtContext } from "../external/jwt";
 
 /**
  * Wallet session + identity-group resolver. Mirrors `sessionContext` but also

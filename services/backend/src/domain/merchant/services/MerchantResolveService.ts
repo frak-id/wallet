@@ -2,13 +2,14 @@ import { processCss, processScopedCss } from "@backend-utils";
 import type { Language } from "@frak-labs/core-sdk";
 import { LRUCache } from "lru-cache";
 import { keccak256, toHex } from "viem";
+import type { MerchantRepository } from "../repositories/MerchantRepository";
 import type {
     MerchantResolveResponse,
+    Placement,
     ResolvedPlacement,
     ResolvedSdkConfig,
-} from "../../../api/schemas";
-import type { MerchantRepository } from "../repositories/MerchantRepository";
-import type { Placement, SdkConfig } from "../schemas";
+    SdkConfig,
+} from "../schemas";
 
 function processRawCss(rawCss: string | null | undefined): string | undefined {
     if (rawCss) return processCss(rawCss);

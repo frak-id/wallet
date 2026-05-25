@@ -114,7 +114,8 @@ module.exports = {
                 "to `dependencies` or refactor the import out of `src/`.",
             from: {
                 path: "^src/",
-                pathNot: "[.](?:spec|test)[.](?:js|mjs|cjs|jsx|ts|mts|cts|tsx)$",
+                pathNot:
+                    "[.](?:spec|test)[.](?:js|mjs|cjs|jsx|ts|mts|cts|tsx)$",
             },
             to: {
                 dependencyTypes: ["npm-dev"],
@@ -140,8 +141,13 @@ module.exports = {
             comment:
                 "Production code imports a *.test.ts / *.spec.ts file. Tests " +
                 "should only be imported by other tests.",
-            from: { pathNot: "[.](?:spec|test)[.](?:js|mjs|cjs|jsx|ts|mts|cts|tsx)$" },
-            to: { path: "[.](?:spec|test)[.](?:js|mjs|cjs|jsx|ts|mts|cts|tsx)$" },
+            from: {
+                pathNot:
+                    "[.](?:spec|test)[.](?:js|mjs|cjs|jsx|ts|mts|cts|tsx)$",
+            },
+            to: {
+                path: "[.](?:spec|test)[.](?:js|mjs|cjs|jsx|ts|mts|cts|tsx)$",
+            },
         },
 
         /* ────────────────────────────────────────────────────────────────────────
