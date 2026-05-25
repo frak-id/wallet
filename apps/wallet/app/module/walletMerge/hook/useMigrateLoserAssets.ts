@@ -2,8 +2,10 @@ import { authKey, currentViemClient } from "@frak-labs/wallet-shared";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import type { Address, Hex } from "viem";
 import { waitForTransactionReceipt } from "viem/actions";
+import { MergeError } from "../errors";
 import { buildAssetMigrationCalls } from "../utils/buildAssetMigrationCalls";
 import { buildMergeBundlerClient } from "../utils/buildMergeBundlerClient";
+import { gatePairing, type MergeTransport } from "../utils/transport";
 import {
     fetchLoserAssetSummary,
     loserAssetSummaryQueryKey,
@@ -33,22 +35,14 @@ export type MigrateLoserAssetsResult = {
     entriesMigrated: number;
 };
 
-type UseMigrateLoserAssetsArgs = {
-    /**
-     * `"local"` for the same-device merge and for the cross-device case
-     * where the LOSER passkey lives on this device. `"paired"` for the
-     * cross-device case where the loser passkey lives on the peer (signing
-     * routes through the merge's already-open origin pairing).
-     */
-    transport: "local" | "paired";
-    /**
-     * Awaited before signing when `transport === "paired"`. Supplied by
-     * the remote strategy; it status-guards `initiatePairing` so an
-     * already-live pairing is reused instead of torn down. Omitted by
-     * the local strategy.
-     */
-    ensurePairing?: () => Promise<void>;
-};
+/**
+ * `{ transport: "local" }` for the same-device merge and for the
+ * cross-device case where the LOSER passkey lives on this device.
+ * `{ transport: "paired", ensurePairing }` for the cross-device case
+ * where the loser passkey lives on the peer (signing routes through
+ * the merge's already-open origin pairing).
+ */
+type UseMigrateLoserAssetsArgs = MergeTransport;
 
 /**
  * Mutation that moves the loser's transferable assets to the winner just
@@ -75,10 +69,7 @@ type UseMigrateLoserAssetsArgs = {
  * user-triggered retry re-reads the summary so the rebuilt UserOp matches
  * fresh chain state.
  */
-export function useMigrateLoserAssets({
-    transport,
-    ensurePairing,
-}: UseMigrateLoserAssetsArgs) {
+export function useMigrateLoserAssets(args: UseMigrateLoserAssetsArgs) {
     const queryClient = useQueryClient();
     return useMutation<MigrateLoserAssetsResult, Error, MigrateLoserAssetsArgs>(
         {
@@ -114,18 +105,13 @@ export function useMigrateLoserAssets({
                     return { txHash: undefined, entriesMigrated: 0 };
                 }
 
-                if (transport === "paired") {
-                    if (!ensurePairing) {
-                        throw new Error("MERGE_MIGRATE_MISSING_PAIRING_SETUP");
-                    }
-                    await ensurePairing();
-                }
+                await gatePairing(args);
 
                 const client = await buildMergeBundlerClient({
                     address: loser,
                     authenticatorId: loserAuthenticatorId,
                     publicKey: loserPublicKey,
-                    transport,
+                    transport: args.transport,
                 });
 
                 const userOpHash = await client.sendUserOperation({ calls });
@@ -144,7 +130,7 @@ export function useMigrateLoserAssets({
                             timeout: RECEIPT_WAIT_TIMEOUT_MS,
                         });
                     if (!userOpReceipt.success) {
-                        throw new Error("MERGE_MIGRATE_USER_OP_REVERTED");
+                        throw new Error(MergeError.MigrateUserOpReverted);
                     }
                     const receipt = await waitForTransactionReceipt(
                         currentViemClient,

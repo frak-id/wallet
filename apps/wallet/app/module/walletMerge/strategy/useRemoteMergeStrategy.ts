@@ -6,12 +6,14 @@ import {
     authKey,
     detachedPairingSessionStore,
     getOriginPairingClient,
+    PairingNotReadyError,
 } from "@frak-labs/wallet-shared";
 import { useMutation } from "@tanstack/react-query";
 import { useCallback, useMemo } from "react";
 import { stringToHex } from "viem";
 import { useStore } from "zustand";
 import { useShallow } from "zustand/react/shallow";
+import { MergeError } from "../errors";
 import type { LoserConsentResult } from "../hook/useLoserConsent";
 import { useMigrateLoserAssets } from "../hook/useMigrateLoserAssets";
 import { useSendAddPassKeyTx } from "../hook/useSendAddPassKeyTx";
@@ -87,26 +89,39 @@ export function useRemoteMergeStrategy({
               ? winnerAuthenticatorId
               : loserAuthenticatorId;
 
+    // Single pairing-readiness gate shared by every paired sign call.
+    // Wraps the generic `client.ensurePairing` with the merge-specific
+    // hint (the peer credential we expect the mobile to authenticate
+    // as) and translates the generic `PairingNotReadyError` into the
+    // merge-feature error codes. Idempotent across re-entry — the
+    // client status-branches internally.
+    const ensurePairing = useCallback(async () => {
+        if (!remoteCredentialId) {
+            throw new Error(MergeError.RemotePairingHintMissing);
+        }
+        try {
+            await client.ensurePairing({
+                authenticatorHints: [remoteCredentialId],
+                detached: true,
+            });
+        } catch (err) {
+            if (err instanceof PairingNotReadyError) {
+                throw new Error(
+                    err.status === "retry-error"
+                        ? MergeError.RemotePairingRetryError
+                        : MergeError.RemotePairingError
+                );
+            }
+            throw err;
+        }
+    }, [client, remoteCredentialId]);
+
     const loserConsent = useRemoteLoserConsent({
         needsSwitch,
         remoteCredentialId,
         client,
+        ensurePairing,
     });
-
-    // Single pairing-readiness gate shared by every paired sign call.
-    // Idempotent across re-entry (status-guarded inside
-    // `ensurePairingReady`) so each mutation can call it unconditionally
-    // when its transport is `"paired"` without tearing down a live
-    // pairing.
-    const ensurePairing = useCallback(async () => {
-        if (!remoteCredentialId) {
-            throw new Error("MERGE_REMOTE_PAIRING_HINT_MISSING");
-        }
-        await ensurePairingReady({
-            client,
-            authenticatorHints: [remoteCredentialId],
-        });
-    }, [client, remoteCredentialId]);
 
     // Winner passkey is local when desktop is the winner (needsSwitch=false);
     // otherwise the winner cred lives on the paired mobile and the
@@ -114,18 +129,20 @@ export function useRemoteMergeStrategy({
     // during preview loading defaults to "local" — the mutation's args
     // check kicks in before that gets exercised since MergeFlow guards the
     // sign step behind `preview.data` being resolved.
-    const sendAddPassKey = useSendAddPassKeyTx({
-        transport: needsSwitch ? "paired" : "local",
-        ensurePairing,
-    });
+    const sendAddPassKey = useSendAddPassKeyTx(
+        needsSwitch
+            ? { transport: "paired", ensurePairing }
+            : { transport: "local" }
+    );
     // Mirror of `sendAddPassKey`: loser passkey is local when desktop is
     // the loser (needsSwitch=true); otherwise it lives on the paired
     // mobile and the migration UserOp is signed over the existing merge
     // pairing.
-    const migrateLoserAssets = useMigrateLoserAssets({
-        transport: needsSwitch ? "local" : "paired",
-        ensurePairing,
-    });
+    const migrateLoserAssets = useMigrateLoserAssets(
+        needsSwitch
+            ? { transport: "local" }
+            : { transport: "paired", ensurePairing }
+    );
 
     const onRetry = useCallback(() => {
         if (
@@ -177,17 +194,19 @@ function useRemoteLoserConsent({
     needsSwitch,
     remoteCredentialId,
     client,
+    ensurePairing,
 }: {
     needsSwitch: boolean | undefined;
     remoteCredentialId: string | undefined;
     client: ReturnType<typeof getOriginPairingClient>;
+    ensurePairing: () => Promise<void>;
 }): LoserConsentMutation {
     return useMutation<LoserConsentResult, Error, LoserConsentArgs>({
         mutationKey: authKey.merge.consent,
         gcTime: 0,
         mutationFn: async ({ winner, loserAuthenticatorId }) => {
             if (needsSwitch === undefined) {
-                throw new Error("MERGE_REMOTE_CONSENT_PREVIEW_NOT_READY");
+                throw new Error(MergeError.RemoteConsentPreviewNotReady);
             }
 
             if (needsSwitch) {
@@ -201,11 +220,10 @@ function useRemoteLoserConsent({
             }
 
             // Desktop is the winner — loser passkey is on the paired
-            // mobile. Initiate the pairing if it isn't live yet, then ask
-            // the peer for the consent assertion over the WS as
-            // `raw-assertion`.
+            // mobile. Ensure the pairing is live then ask the peer for
+            // the consent assertion over the WS as `raw-assertion`.
             if (!remoteCredentialId) {
-                throw new Error("MERGE_REMOTE_CONSENT_HINT_MISSING");
+                throw new Error(MergeError.RemoteConsentHintMissing);
             }
             const challengeString = buildMergeConsentChallenge({
                 winner,
@@ -213,87 +231,12 @@ function useRemoteLoserConsent({
                 hourSlot: formatMergeConsentHourSlot(new Date()),
             });
             const challenge = stringToHex(challengeString);
-            await ensurePairingReady({
-                client,
-                authenticatorHints: [remoteCredentialId],
-            });
+            await ensurePairing();
             const loserConsentSignature = await client.sendSignatureRequest(
                 challenge,
                 { signatureKind: "raw-assertion" }
             );
             return { loserConsentSignature };
         },
-    });
-}
-
-/**
- * Wait for the merge pairing to be live, initiating it only if no
- * pairing is in flight. Branches on current status so re-entry from
- * any downstream merge mutation never tears down a working pairing
- * (calling `initiatePairing` while `"paired"` would close the WS via
- * `forceConnect` and orphan any in-flight signature requests).
- *
- * Status contract:
- *  - `paired`            → resolve synchronously.
- *  - `error|retry-error` → reject synchronously; caller must reset.
- *  - `connecting`        → subscribe and wait for the status to flip.
- *  - `idle`              → start a fresh detached pairing.
- */
-function ensurePairingReady({
-    client,
-    authenticatorHints,
-}: {
-    client: ReturnType<typeof getOriginPairingClient>;
-    authenticatorHints: string[];
-}): Promise<void> {
-    return new Promise<void>((resolve, reject) => {
-        const initialStatus = client.state.status;
-        if (initialStatus === "paired") {
-            resolve();
-            return;
-        }
-        if (initialStatus === "error" || initialStatus === "retry-error") {
-            reject(
-                new Error(`MERGE_REMOTE_PAIRING_${initialStatus.toUpperCase()}`)
-            );
-            return;
-        }
-
-        let settled = false;
-        const finish = (cb: () => void) => {
-            if (settled) return;
-            settled = true;
-            unsubscribe();
-            cb();
-        };
-
-        const unsubscribe = client.store.subscribe((state) => {
-            if (state.status === "paired") {
-                finish(() => resolve());
-            } else if (
-                state.status === "error" ||
-                state.status === "retry-error"
-            ) {
-                finish(() =>
-                    reject(
-                        new Error(
-                            `MERGE_REMOTE_PAIRING_${state.status.toUpperCase()}`
-                        )
-                    )
-                );
-            }
-        });
-
-        // Only initiate when idle. If we're already connecting, an
-        // earlier caller (typically `DiscoveryStep`) opened the pairing;
-        // calling `initiatePairing` again here would forceConnect-tear
-        // it down.
-        if (initialStatus === "idle") {
-            void client.initiatePairing({
-                authenticatorHints,
-                detached: true,
-                onSuccess: () => finish(() => resolve()),
-            });
-        }
     });
 }

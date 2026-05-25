@@ -6,6 +6,7 @@ import {
     sessionStore,
 } from "@frak-labs/wallet-shared";
 import { useMutation } from "@tanstack/react-query";
+import { MergeError } from "../errors";
 
 type UseMergeSettleArgs = {
     /**
@@ -106,5 +107,5 @@ function extractSettleErrorCode(value: unknown): string {
     ) {
         return (value as { error: string }).error;
     }
-    return "MERGE_SETTLE_FAILED";
+    return MergeError.SettleFailed;
 }

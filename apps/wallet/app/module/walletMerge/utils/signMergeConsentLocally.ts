@@ -6,6 +6,7 @@ import {
 import { getTauriGetFn } from "@frak-labs/wallet-shared";
 import { WebAuthnP256 } from "ox";
 import { type Address, stringToHex } from "viem";
+import { MergeError } from "../errors";
 
 type SignMergeConsentLocallyArgs = {
     winner: Address;
@@ -51,7 +52,7 @@ export async function signMergeConsentLocally({
         // The OS resolved a different credential. Treat as an unrelated
         // assertion — the backend would reject it with the same 401, but
         // failing here is clearer to the user.
-        throw new Error("MERGE_CONSENT_WRONG_CREDENTIAL");
+        throw new Error(MergeError.ConsentWrongCredential);
     }
 
     const assertion = {

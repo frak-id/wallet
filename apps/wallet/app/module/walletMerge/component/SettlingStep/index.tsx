@@ -8,6 +8,7 @@ import { useCallback, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { PageLayout } from "@/module/common/component/PageLayout";
 import { Title } from "@/module/common/component/Title";
+import { MergeError } from "../../errors";
 import { useMergeSettle } from "../../hook/useMergeSettle";
 import * as styles from "../stepLayout.css";
 
@@ -58,22 +59,22 @@ type SettleRecovery = {
  */
 function mapSettleError(code: string | undefined): SettleRecovery | null {
     switch (code) {
-        case "MERGE_MIGRATE_USER_OP_REVERTED":
+        case MergeError.MigrateUserOpReverted:
             return {
                 titleKey: "wallet.merge.settling.recover.migrateReverted.title",
                 bodyKey: "wallet.merge.settling.recover.migrateReverted.body",
                 ctaKey: "wallet.merge.settling.recover.migrateReverted.cta",
                 target: "migrate",
             };
-        case "MERGE_INVALID_CONSENT":
+        case MergeError.InvalidConsent:
             return {
                 titleKey: "wallet.merge.settling.recover.invalidConsent.title",
                 bodyKey: "wallet.merge.settling.recover.invalidConsent.body",
                 ctaKey: "wallet.merge.settling.recover.invalidConsent.cta",
                 target: "consent",
             };
-        case "MERGE_ON_CHAIN_PASSKEY_MISSING":
-        case "MERGE_ON_CHAIN_PASSKEY_MISMATCH":
+        case MergeError.OnChainPasskeyMissing:
+        case MergeError.OnChainPasskeyMismatch:
             return {
                 titleKey: "wallet.merge.settling.recover.onChainMismatch.title",
                 bodyKey: "wallet.merge.settling.recover.onChainMismatch.body",

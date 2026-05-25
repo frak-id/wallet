@@ -15,6 +15,7 @@ import type { Session } from "../../types/Session";
 import {
     type OriginIdentityNode,
     type OriginPairingState,
+    PairingNotReadyError,
     PairingSignatureError,
     type PairingSignatureFailure,
     type SignatureRejectReason,
@@ -223,6 +224,56 @@ export class OriginPairingClient extends BasePairingClient<
                 authenticatorHints: options?.authenticatorHints,
             })
         );
+    }
+
+    /**
+     * Wait for the pairing to reach the `paired` state, initiating it
+     * from `idle` if necessary. Idempotent across re-entry — calling
+     * while already `paired` resolves synchronously; calling while
+     * `connecting` (or any other transitional state) subscribes to the
+     * store and waits for the next status transition.
+     *
+     * Branches by current status:
+     *  - `paired`            → resolve synchronously.
+     *  - `error|retry-error` → reject with {@link PairingNotReadyError};
+     *                          caller must `reset()` before retrying.
+     *  - `idle`              → run `initiatePairing(options)` and wait.
+     *  - other transitional  → subscribe to the store, wait for the
+     *                          next `paired` / `error` / `retry-error`.
+     *
+     * Crucially never re-runs `initiatePairing` while a handshake is
+     * already in flight — that would `forceConnect`-tear the live WS
+     * and orphan any in-flight signature request.
+     */
+    async ensurePairing(options: InitiatePairingOptions): Promise<void> {
+        const status = this.state.status;
+        if (status === "paired") return;
+        if (status === "error" || status === "retry-error") {
+            throw new PairingNotReadyError(status);
+        }
+
+        await new Promise<void>((resolve, reject) => {
+            let settled = false;
+            const finish = (cb: () => void) => {
+                if (settled) return;
+                settled = true;
+                unsubscribe();
+                cb();
+            };
+
+            const unsubscribe = this.store.subscribe((state) => {
+                const next = state.status;
+                if (next === "paired") {
+                    finish(() => resolve());
+                } else if (next === "error" || next === "retry-error") {
+                    finish(() => reject(new PairingNotReadyError(next)));
+                }
+            });
+
+            if (status === "idle") {
+                void this.initiatePairing(options);
+            }
+        });
     }
 
     /**

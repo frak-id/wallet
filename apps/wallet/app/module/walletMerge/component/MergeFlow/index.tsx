@@ -136,13 +136,14 @@ export function MergeFlow({
     const strategy =
         discovery?.mode === "remote" ? remoteStrategy : localStrategy;
 
-    // Tear down on every non-success unmount: cancel any in-flight pairing
-    // handshake. Matters for the cross-device flow — `softReset` clears
-    // pending signature-requests so a late peer reply doesn't apply to a
-    // flow the user has already aborted. No-op for the local strategy.
+    // Tear down on EVERY unmount, success included — `strategy.cancel`
+    // also drops the detached pairing session snapshot, which would
+    // otherwise survive a successful merge and leak into the next flow.
+    // Aborts additionally cancel pending signature-requests so a late
+    // peer reply doesn't land against the abandoned flow. No-op for the
+    // local strategy (which exposes no `cancel`).
     useEffect(() => {
         return () => {
-            if (stepKindRef.current === "success") return;
             strategy.cancel?.();
         };
     }, [strategy.cancel]);

@@ -12,7 +12,9 @@ import {
     toHex,
 } from "viem";
 import { readContract, waitForTransactionReceipt } from "viem/actions";
+import { MergeError } from "../errors";
 import { buildMergeBundlerClient } from "../utils/buildMergeBundlerClient";
+import { gatePairing, type MergeTransport } from "../utils/transport";
 
 /**
  * Bound on every receipt wait inside this hook. Receipts that take longer
@@ -45,22 +47,14 @@ export type SendAddPassKeyArgs = {
     loserPublicKey: { x: Hex; y: Hex };
 };
 
-type UseSendAddPassKeyTxArgs = {
-    /**
-     * `"local"` for the same-device merge and for the cross-device case
-     * where the WINNER passkey lives on this device. `"paired"` for the
-     * cross-device case where the winner passkey lives on the peer
-     * (signing routes through the merge's already-open origin pairing).
-     */
-    transport: "local" | "paired";
-    /**
-     * Awaited before signing when `transport === "paired"`. Supplied by
-     * the remote strategy; it status-guards `initiatePairing` so an
-     * already-live pairing is reused instead of torn down. Omitted by
-     * the local strategy.
-     */
-    ensurePairing?: () => Promise<void>;
-};
+/**
+ * `{ transport: "local" }` for the same-device merge and for the
+ * cross-device case where the WINNER passkey lives on this device.
+ * `{ transport: "paired", ensurePairing }` for the cross-device case
+ * where the winner passkey lives on the peer (signing routes through
+ * the merge's already-open origin pairing).
+ */
+type UseSendAddPassKeyTxArgs = MergeTransport;
 
 /**
  * Sends the on-chain `addPassKey(authenticatorIdHash, x, y)` userOp from
@@ -88,10 +82,7 @@ type UseSendAddPassKeyTxArgs = {
  * failure). The settle step doesn't read this value any more — it's
  * kept for analytics / future use.
  */
-export function useSendAddPassKeyTx({
-    transport,
-    ensurePairing,
-}: UseSendAddPassKeyTxArgs) {
+export function useSendAddPassKeyTx(args: UseSendAddPassKeyTxArgs) {
     return useMutation<SendAddPassKeyResult, Error, SendAddPassKeyArgs>({
         mutationKey: authKey.merge.sendAddPassKey,
         gcTime: 0,
@@ -130,20 +121,13 @@ export function useSendAddPassKeyTx({
                 return { txHash: undefined };
             }
 
-            if (transport === "paired") {
-                if (!ensurePairing) {
-                    throw new Error(
-                        "MERGE_SEND_ADD_PASSKEY_MISSING_PAIRING_SETUP"
-                    );
-                }
-                await ensurePairing();
-            }
+            await gatePairing(args);
 
             const client = await buildMergeBundlerClient({
                 address: winner,
                 authenticatorId: winnerAuthenticatorId,
                 publicKey: winnerPublicKey,
-                transport,
+                transport: args.transport,
             });
 
             const data = encodeFunctionData({
@@ -177,7 +161,7 @@ export function useSendAddPassKeyTx({
                     timeout: RECEIPT_WAIT_TIMEOUT_MS,
                 });
                 if (!userOpReceipt.success) {
-                    throw new Error("MERGE_ADD_PASSKEY_USER_OP_REVERTED");
+                    throw new Error(MergeError.AddPassKeyUserOpReverted);
                 }
                 const receipt = await waitForTransactionReceipt(
                     currentViemClient,
