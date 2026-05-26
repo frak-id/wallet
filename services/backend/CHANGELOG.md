@@ -1,5 +1,12 @@
 # @frak-labs/backend-elysia
 
+## 0.0.22
+
+### Patch Changes
+
+- Updated dependencies [[`2a4c95e`](https://github.com/frak-id/wallet/commit/2a4c95ee770b4eb48cd04c4a434f817643cc8c7a)]:
+  - @frak-labs/core-sdk@1.1.2
+
 ## 0.0.21
 
 ### Patch Changes
