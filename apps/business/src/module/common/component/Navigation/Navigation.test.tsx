@@ -22,7 +22,7 @@ vi.mock("@tanstack/react-router", () => ({
 
 vi.mock("./NavigationCampaignsSwitcher", () => ({
     NavigationCampaignsSwitcher: () => (
-        <li data-testid="campaigns-switcher">shell.nav.campaigns</li>
+        <li data-testid="campaigns-switcher">shell.pages.campaigns.nav</li>
     ),
 }));
 
@@ -45,19 +45,19 @@ describe("Navigation", () => {
     it("should render the primary navigation items from the Figma spec", () => {
         render(<Navigation />);
 
-        expect(screen.getByText("shell.nav.dashboard")).toBeInTheDocument();
-        expect(screen.getByText("shell.nav.members")).toBeInTheDocument();
-        expect(screen.getByText("shell.nav.wallet")).toBeInTheDocument();
+        expect(
+            screen.getByText("shell.pages.dashboard.nav")
+        ).toBeInTheDocument();
+        expect(screen.getByText("shell.pages.members.nav")).toBeInTheDocument();
+        expect(screen.getByText("shell.pages.wallet.nav")).toBeInTheDocument();
     });
 
     it("should render section labels", () => {
         render(<Navigation />);
         expect(
-            screen.getByText("shell.nav.sectionAcquisition")
+            screen.getByText("shell.sections.acquisition")
         ).toBeInTheDocument();
-        expect(
-            screen.getByText("shell.nav.sectionPreview")
-        ).toBeInTheDocument();
+        expect(screen.getByText("shell.sections.preview")).toBeInTheDocument();
     });
 
     it("should not render dropped items (Revenue, Messenger, Settings, Help)", () => {

@@ -1,9 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useTranslation } from "react-i18next";
-import { Head } from "@/module/common/component/Head";
+import { PageShell } from "@/module/common/component/PageShell";
 import { DataLoadError } from "@/module/common/component/RouteError";
 import { queryClient } from "@/module/common/provider/RootProvider";
-import { ButtonSendPush } from "@/module/members/component/ButtonSendPush";
 import { TableMembers } from "@/module/members/component/TableMembers";
 import { membersPageQueryOptions } from "@/module/members/queries/queryOptions";
 import { useAuthStore } from "@/stores/authStore";
@@ -40,14 +38,9 @@ export const Route = createFileRoute("/_restricted/m/$merchantId/members")({
 });
 
 function MembersListPage() {
-    const { t } = useTranslation();
     return (
-        <>
-            <Head
-                title={{ content: t("shell.nav.members") }}
-                rightSection={<ButtonSendPush />}
-            />
+        <PageShell page="members">
             <TableMembers />
-        </>
+        </PageShell>
     );
 }

@@ -1,7 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useTranslation } from "react-i18next";
 import { isDemoMode } from "@/config/auth";
-import { Head } from "@/module/common/component/Head";
+import { PageShell } from "@/module/common/component/PageShell";
 import { CriticalError } from "@/module/common/component/RouteError";
 import { queryClient } from "@/module/common/provider/RootProvider";
 import { MyMerchants } from "@/module/dashboard/component/Products";
@@ -16,11 +15,9 @@ export const Route = createFileRoute("/_restricted/m/$merchantId/dashboard")({
 });
 
 function Dashboard() {
-    const { t } = useTranslation();
     return (
-        <>
-            <Head title={{ content: t("shell.nav.dashboard") }} />
+        <PageShell page="dashboard">
             <MyMerchants />
-        </>
+        </PageShell>
     );
 }

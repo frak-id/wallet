@@ -5,6 +5,7 @@ import { ButtonNewCampaign } from "@/module/campaigns/component/ButtonNewCampaig
 import { useIsDemoMode } from "@/module/common/atoms/demoMode";
 import { Button } from "@/module/common/component/Button";
 import { AddMerchantSheet } from "@/module/dashboard/component/AddMerchantSheet";
+import { ButtonSendPush } from "@/module/members/component/ButtonSendPush";
 import { HeaderBreadcrumb } from "./HeaderBreadcrumb";
 import {
     actionGroup,
@@ -20,6 +21,7 @@ import { ProfileLink } from "./ProfileLink";
 const CAMPAIGNS_PATH = /^\/m\/[^/]+\/campaigns(\/|$)/;
 const DASHBOARD_PATH = /^\/m\/[^/]+\/dashboard$/;
 const MERCHANT_PATH = /^\/m\/[^/]+\/merchant(\/|$)/;
+const MEMBERS_PATH = /^\/m\/[^/]+\/members$/;
 
 // TODO: drop the legacy `/campaigns`, `/dashboard`, `/merchant/` branches
 // once all entry points are merchant-scoped and the legacy redirect
@@ -37,6 +39,7 @@ export function Header() {
         pathname.startsWith("/merchant/");
     const showExport =
         CAMPAIGNS_PATH.test(pathname) || pathname.startsWith("/campaigns");
+    const showSendPush = MEMBERS_PATH.test(pathname);
 
     return (
         <header className={header}>
@@ -64,6 +67,7 @@ export function Header() {
                             </Button>
                         )}
                         {showCreateCampaign && <ButtonNewCampaign />}
+                        {showSendPush && <ButtonSendPush />}
                         {showAddMerchant && (
                             <AddMerchantSheet
                                 trigger={

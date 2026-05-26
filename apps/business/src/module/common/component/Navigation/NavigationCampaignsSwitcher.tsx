@@ -9,6 +9,7 @@ import { useLocation } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useOptionalActiveMerchantId } from "@/module/common/hook/useActiveMerchantId";
+import { pageNav } from "@/module/common/i18n/pageLabel";
 import { NavigationItem, SubNavigationItem } from "./index";
 import { collapsibleContent } from "./navigation.css";
 
@@ -31,7 +32,7 @@ export function NavigationCampaignsSwitcher() {
             url={listUrl}
             icon={<ChecklistIcon width={20} height={20} />}
         >
-            {t("shell.nav.campaigns")}
+            {pageNav(t, "campaigns")}
         </NavigationItem>
     ) : (
         <NavigationCampaigns
@@ -76,16 +77,16 @@ function NavigationCampaigns({
                         )
                     }
                 >
-                    {t("shell.nav.campaigns")}
+                    {pageNav(t, "campaigns")}
                 </NavigationItem>
             </Collapsible.Trigger>
             <Collapsible.Content className={collapsibleContent}>
                 <ul>
                     <SubNavigationItem url={performanceUrl}>
-                        {t("shell.nav.campaignsOverview")}
+                        {pageNav(t, "campaignsOverview")}
                     </SubNavigationItem>
                     <SubNavigationItem url={listUrl}>
-                        {t("shell.nav.campaignsList")}
+                        {pageNav(t, "campaignsList")}
                     </SubNavigationItem>
                 </ul>
             </Collapsible.Content>

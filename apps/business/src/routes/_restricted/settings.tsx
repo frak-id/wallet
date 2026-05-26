@@ -10,7 +10,7 @@ import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useDemoMode } from "@/module/common/atoms/demoMode";
 import { Button } from "@/module/common/component/Button";
-import { Head } from "@/module/common/component/Head";
+import { PageShell } from "@/module/common/component/PageShell";
 import { DemoModeSwitch } from "@/module/settings/DemoModeSwitch";
 import { LanguageSelector } from "@/module/settings/LanguageSelector";
 import { SelectCurrency } from "@/module/settings/SelectCurrency";
@@ -35,9 +35,7 @@ function Settings() {
     const showDemoCopy = isHydrated && isDemoMode;
 
     return (
-        <>
-            <Head title={{ content: t("settings.title") }} />
-
+        <PageShell page="settings">
             <Stack space="l">
                 <Card>
                     <CardHeader>
@@ -99,6 +97,6 @@ function Settings() {
                     </Button>
                 </Card>
             </Stack>
-        </>
+        </PageShell>
     );
 }

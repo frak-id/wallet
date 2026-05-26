@@ -3,7 +3,7 @@ import { EmptyState } from "@frak-labs/design-system/components/EmptyState";
 import { createFileRoute, redirect } from "@tanstack/react-router";
 import { Plus } from "lucide-react";
 import { useTranslation } from "react-i18next";
-import { Head } from "@/module/common/component/Head";
+import { PageShell } from "@/module/common/component/PageShell";
 import { resolveActiveMerchant } from "@/module/common/utils/resolveActiveMerchant";
 import { AddMerchantSheet } from "@/module/dashboard/component/AddMerchantSheet";
 
@@ -35,8 +35,7 @@ export const Route = createFileRoute("/_restricted/dashboard")({
 function OnboardingDashboard() {
     const { t } = useTranslation();
     return (
-        <>
-            <Head title={{ content: t("shell.nav.dashboard") }} />
+        <PageShell page="dashboard">
             <EmptyState
                 title={t("dashboard.empty.title")}
                 description={t("dashboard.empty.description")}
@@ -49,6 +48,6 @@ function OnboardingDashboard() {
                     </Button>
                 }
             />
-        </>
+        </PageShell>
     );
 }

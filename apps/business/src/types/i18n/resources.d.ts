@@ -89,22 +89,12 @@ export default interface Resources {
                 description_demo: "Exit demo mode and return to the login page.";
                 title: "Logout";
             };
-            title: "Settings";
             wallet: {
                 address: "Your wallet address is {{wallet}}";
                 title: "Wallet";
             };
         };
         shell: {
-            breadcrumb: {
-                campaignsList: "Campaign List";
-                confirm: "Confirm";
-                create: "Create";
-                home: "Home";
-                membersList: "Members List";
-                merchant: "Merchant";
-                push: "Push";
-            };
             header: {
                 addMerchant: "Add merchant";
                 breadcrumbLabel: "Breadcrumb";
@@ -119,15 +109,46 @@ export default interface Resources {
                 };
                 myAccount: "My account";
             };
-            nav: {
-                campaigns: "Campaigns";
-                campaignsList: "List";
-                campaignsOverview: "Data overview";
-                dashboard: "Dashboard";
-                members: "Members";
-                sectionAcquisition: "Acquisition";
-                sectionPreview: "Preview";
-                wallet: "Wallet";
+            pages: {
+                campaigns: {
+                    nav: "Campaigns";
+                };
+                campaignsList: {
+                    nav: "List";
+                    title: "Campaign List";
+                };
+                campaignsOverview: {
+                    nav: "Data overview";
+                };
+                dashboard: {
+                    nav: "Dashboard";
+                };
+                members: {
+                    nav: "Members";
+                    title: "Members List";
+                };
+                merchant: {
+                    nav: "Merchant";
+                };
+                push: {
+                    nav: "Push";
+                };
+                pushConfirm: {
+                    nav: "Confirm";
+                };
+                pushCreate: {
+                    nav: "Create";
+                };
+                settings: {
+                    nav: "Settings";
+                };
+                wallet: {
+                    nav: "Wallet";
+                };
+            };
+            sections: {
+                acquisition: "Acquisition";
+                preview: "Preview";
             };
         };
     };

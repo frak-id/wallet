@@ -69,7 +69,9 @@ describe("NavigationCampaignsSwitcher", () => {
 
         const item = screen.getByTestId("navigation-item");
         expect(item).toHaveAttribute("data-url", "/campaigns/list");
-        expect(screen.getByText("shell.nav.campaigns")).toBeInTheDocument();
+        expect(
+            screen.getByText("shell.pages.campaigns.nav")
+        ).toBeInTheDocument();
     });
 
     it("should render desktop collapsible navigation when not on mobile", () => {
@@ -80,7 +82,9 @@ describe("NavigationCampaignsSwitcher", () => {
 
         const item = screen.getByTestId("navigation-item");
         expect(item).toBeInTheDocument();
-        expect(screen.getByText("shell.nav.campaigns")).toBeInTheDocument();
+        expect(
+            screen.getByText("shell.pages.campaigns.nav")
+        ).toBeInTheDocument();
     });
 
     it("should show both sub-navigation items when expanded", () => {
@@ -97,8 +101,10 @@ describe("NavigationCampaignsSwitcher", () => {
         );
         expect(subItems[1]).toHaveAttribute("data-url", "/campaigns/list");
         expect(
-            screen.getByText("shell.nav.campaignsOverview")
+            screen.getByText("shell.pages.campaignsOverview.nav")
         ).toBeInTheDocument();
-        expect(screen.getByText("shell.nav.campaignsList")).toBeInTheDocument();
+        expect(
+            screen.getByText("shell.pages.campaignsList.nav")
+        ).toBeInTheDocument();
     });
 });

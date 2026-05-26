@@ -4,7 +4,6 @@ import { style } from "@vanilla-extract/css";
 export const filters = style({
     display: "flex",
     alignItems: "center",
-    marginBottom: "10px",
     gap: alias.spacing.m,
 });
 

@@ -3,6 +3,7 @@ import { Box } from "@frak-labs/design-system/components/Box";
 import { Checkbox } from "@frak-labs/design-system/components/Checkbox";
 import { Inline } from "@frak-labs/design-system/components/Inline";
 import { Skeleton } from "@frak-labs/design-system/components/Skeleton";
+import { Stack } from "@frak-labs/design-system/components/Stack";
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import {
     type ColumnDef,
@@ -195,48 +196,52 @@ export function TableMembers() {
 
     return (
         <>
-            <TableMembersFilters />
-            {page && (
-                <Table
-                    data={page.members}
-                    columns={columns}
-                    manualPagination={true}
-                    manualSorting={true}
-                    rowCount={page.totalResult}
-                    pagination={paginationState}
-                    sorting={sortingState}
-                    onSortingChange={setSorting}
-                    onRowClick={(row) => setSelectedMember(row.original)}
-                    postTable={
-                        <>
-                            {(selectedMembers?.length ?? 0) > 0 && (
-                                <Box className={styles.selectedMembersRow}>
-                                    <Inline space="m" alignY="center">
-                                        <p>
-                                            You have selected{" "}
-                                            <strong>
-                                                {selectedMembers?.length}
-                                            </strong>{" "}
-                                            Members
-                                        </p>
-                                        <Button
-                                            type={"button"}
-                                            onClick={() => clearSelection()}
-                                            variant={"secondary"}
-                                        >
-                                            Clear selection
-                                        </Button>
-                                    </Inline>
-                                </Box>
-                            )}
+            <Stack space="l">
+                <TableMembersFilters />
+                {page && (
+                    <Table
+                        data={page.members}
+                        columns={columns}
+                        manualPagination={true}
+                        manualSorting={true}
+                        rowCount={page.totalResult}
+                        pagination={paginationState}
+                        sorting={sortingState}
+                        onSortingChange={setSorting}
+                        onRowClick={(row) => setSelectedMember(row.original)}
+                        postTable={
+                            <>
+                                {(selectedMembers?.length ?? 0) > 0 && (
+                                    <Box className={styles.selectedMembersRow}>
+                                        <Inline space="m" alignY="center">
+                                            <p>
+                                                You have selected{" "}
+                                                <strong>
+                                                    {selectedMembers?.length}
+                                                </strong>{" "}
+                                                Members
+                                            </p>
+                                            <Button
+                                                type={"button"}
+                                                onClick={() => clearSelection()}
+                                                variant={"secondary"}
+                                            >
+                                                Clear selection
+                                            </Button>
+                                        </Inline>
+                                    </Box>
+                                )}
 
-                            {page.totalResult > (filters.limit ?? 10) && (
-                                <Pagination totalResult={page.totalResult} />
-                            )}
-                        </>
-                    }
-                />
-            )}
+                                {page.totalResult > (filters.limit ?? 10) && (
+                                    <Pagination
+                                        totalResult={page.totalResult}
+                                    />
+                                )}
+                            </>
+                        }
+                    />
+                )}
+            </Stack>
             <MemberDetailsSheet
                 member={selectedMember}
                 onOpenChange={(open) =>

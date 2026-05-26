@@ -1,9 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useTranslation } from "react-i18next";
 import { isDemoMode } from "@/config/auth";
 import { TableCampaignPerformance } from "@/module/campaigns/component/TableCampaignPerformance";
 import { campaignsStatsQueryOptions } from "@/module/campaigns/queries/queryOptions";
-import { Head } from "@/module/common/component/Head";
+import { PageShell } from "@/module/common/component/PageShell";
 import { DataLoadError } from "@/module/common/component/RouteError";
 import { queryClient } from "@/module/common/provider/RootProvider";
 
@@ -25,11 +24,9 @@ export const Route = createFileRoute(
 });
 
 function CampaignsPerformancePage() {
-    const { t } = useTranslation();
     return (
-        <>
-            <Head title={{ content: t("shell.nav.campaigns") }} />
+        <PageShell page="campaignsOverview">
             <TableCampaignPerformance />
-        </>
+        </PageShell>
     );
 }

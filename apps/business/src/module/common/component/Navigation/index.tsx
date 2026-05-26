@@ -11,6 +11,7 @@ import { Link, useMatchRoute } from "@tanstack/react-router";
 import type { HTMLAttributes, PropsWithChildren, ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 import { useOptionalActiveMerchantId } from "@/module/common/hook/useActiveMerchantId";
+import { pageNav, sectionLabel } from "@/module/common/i18n/pageLabel";
 import { NavigationCampaignsSwitcher } from "./NavigationCampaignsSwitcher";
 import {
     divider,
@@ -25,7 +26,7 @@ import {
     logoFull,
     logoWrapper,
     navigation,
-    sectionLabel,
+    sectionLabel as sectionLabelClass,
     subItem,
     subItemActive,
 } from "./navigation.css";
@@ -54,16 +55,16 @@ export function Navigation() {
                         url={dashboardUrl}
                         icon={<TabGridIcon width={20} height={20} />}
                     >
-                        {t("shell.nav.dashboard")}
+                        {pageNav(t, "dashboard")}
                     </NavigationItem>
                 </ul>
 
                 <hr className={divider} />
 
                 <ul className={itemList}>
-                    <li className={sectionLabel}>
+                    <li className={sectionLabelClass}>
                         <Text variant="bodySmall" color="tertiary">
-                            {t("shell.nav.sectionAcquisition")}
+                            {sectionLabel(t, "acquisition")}
                         </Text>
                     </li>
                     <NavigationCampaignsSwitcher />
@@ -71,23 +72,23 @@ export function Navigation() {
                         url={membersUrl}
                         icon={<PeopleFilledIcon width={20} height={20} />}
                     >
-                        {t("shell.nav.members")}
+                        {pageNav(t, "members")}
                     </NavigationItem>
                 </ul>
 
                 <hr className={divider} />
 
                 <ul className={itemList}>
-                    <li className={sectionLabel}>
+                    <li className={sectionLabelClass}>
                         <Text variant="bodySmall" color="tertiary">
-                            {t("shell.nav.sectionPreview")}
+                            {sectionLabel(t, "preview")}
                         </Text>
                     </li>
                     <NavigationItem
                         url={process.env.FRAK_WALLET_URL}
                         icon={<WalletIcon width={20} height={20} />}
                     >
-                        {t("shell.nav.wallet")}
+                        {pageNav(t, "wallet")}
                     </NavigationItem>
                 </ul>
             </Stack>

@@ -45,15 +45,22 @@
         }
     },
     "shell": {
-        "nav": {
-            "sectionAcquisition": "Acquisition",
-            "sectionPreview": "Preview",
-            "dashboard": "Dashboard",
-            "campaigns": "Campaigns",
-            "campaignsOverview": "Data overview",
-            "campaignsList": "List",
-            "members": "Members",
-            "wallet": "Wallet"
+        "sections": {
+            "acquisition": "Acquisition",
+            "preview": "Preview"
+        },
+        "pages": {
+            "dashboard": { "nav": "Dashboard" },
+            "campaigns": { "nav": "Campaigns" },
+            "campaignsOverview": { "nav": "Data overview" },
+            "campaignsList": { "nav": "List", "title": "Campaign List" },
+            "members": { "nav": "Members", "title": "Members List" },
+            "wallet": { "nav": "Wallet" },
+            "settings": { "nav": "Settings" },
+            "merchant": { "nav": "Merchant" },
+            "push": { "nav": "Push" },
+            "pushCreate": { "nav": "Create" },
+            "pushConfirm": { "nav": "Confirm" }
         },
         "header": {
             "breadcrumbLabel": "Breadcrumb",
@@ -68,15 +75,6 @@
                 "adminOf": "Admin of",
                 "empty": "No merchant available"
             }
-        },
-        "breadcrumb": {
-            "merchant": "Merchant",
-            "home": "Home",
-            "membersList": "Members List",
-            "campaignsList": "Campaign List",
-            "push": "Push",
-            "create": "Create",
-            "confirm": "Confirm"
         }
     },
     "dashboard": {
@@ -96,7 +94,6 @@
         }
     },
     "settings": {
-        "title": "Settings",
         "currency": {
             "title": "Currency",
             "label": "Choose your preferred currency",

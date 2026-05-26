@@ -58,8 +58,12 @@ describe("Header", () => {
             })
         ).toBeInTheDocument();
         // /campaigns/list → "Campaigns" (link) / "List" (current)
-        expect(screen.getByText("shell.nav.campaigns")).toBeInTheDocument();
-        expect(screen.getByText("shell.nav.campaignsList")).toBeInTheDocument();
+        expect(
+            screen.getByText("shell.pages.campaigns.nav")
+        ).toBeInTheDocument();
+        expect(
+            screen.getByText("shell.pages.campaignsList.nav")
+        ).toBeInTheDocument();
     });
 
     it("should render contextual export and create campaign buttons on /campaigns", () => {

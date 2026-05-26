@@ -45,15 +45,22 @@
         }
     },
     "shell": {
-        "nav": {
-            "sectionAcquisition": "Acquisition",
-            "sectionPreview": "Aperçu",
-            "dashboard": "Tableau de bord",
-            "campaigns": "Campagnes",
-            "campaignsOverview": "Vue d'ensemble",
-            "campaignsList": "Liste",
-            "members": "Membres",
-            "wallet": "Porte-monnaie"
+        "sections": {
+            "acquisition": "Acquisition",
+            "preview": "Aperçu"
+        },
+        "pages": {
+            "dashboard": { "nav": "Tableau de bord" },
+            "campaigns": { "nav": "Campagnes" },
+            "campaignsOverview": { "nav": "Vue d'ensemble" },
+            "campaignsList": { "nav": "Liste", "title": "Liste des campagnes" },
+            "members": { "nav": "Membres", "title": "Liste des membres" },
+            "wallet": { "nav": "Porte-monnaie" },
+            "settings": { "nav": "Paramètres" },
+            "merchant": { "nav": "Marchand" },
+            "push": { "nav": "Push" },
+            "pushCreate": { "nav": "Créer" },
+            "pushConfirm": { "nav": "Confirmer" }
         },
         "header": {
             "breadcrumbLabel": "Fil d'Ariane",
@@ -68,15 +75,6 @@
                 "adminOf": "Marchands administrés",
                 "empty": "Aucun marchand disponible"
             }
-        },
-        "breadcrumb": {
-            "merchant": "Marchand",
-            "home": "Accueil",
-            "membersList": "Liste des membres",
-            "campaignsList": "Liste des campagnes",
-            "push": "Push",
-            "create": "Créer",
-            "confirm": "Confirmer"
         }
     },
     "dashboard": {
@@ -96,7 +94,6 @@
         }
     },
     "settings": {
-        "title": "Paramètres",
         "currency": {
             "title": "Devise",
             "label": "Choisissez votre devise préférée",

@@ -1,10 +1,8 @@
-import { Stack } from "@frak-labs/design-system/components/Stack";
-import { Text } from "@frak-labs/design-system/components/Text";
 import { createFileRoute } from "@tanstack/react-router";
-import { useTranslation } from "react-i18next";
 import { isDemoMode } from "@/config/auth";
 import { TableCampaigns } from "@/module/campaigns/component/TableCampaigns";
 import { campaignsListQueryOptions } from "@/module/campaigns/queries/queryOptions";
+import { PageShell } from "@/module/common/component/PageShell";
 import { DataLoadError } from "@/module/common/component/RouteError";
 import { queryClient } from "@/module/common/provider/RootProvider";
 
@@ -26,13 +24,9 @@ export const Route = createFileRoute(
 });
 
 function CampaignsListPage() {
-    const { t } = useTranslation();
     return (
-        <Stack space="xxl">
-            <Text as="h1" variant="heading1" weight="bold">
-                {t("shell.breadcrumb.campaignsList")}
-            </Text>
+        <PageShell page="campaignsList">
             <TableCampaigns />
-        </Stack>
+        </PageShell>
     );
 }

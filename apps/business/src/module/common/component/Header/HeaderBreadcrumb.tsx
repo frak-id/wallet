@@ -3,6 +3,7 @@ import { Link, useLocation, useParams } from "@tanstack/react-router";
 import type { TFunction } from "i18next";
 import { Fragment } from "react";
 import { useTranslation } from "react-i18next";
+import { pageNav } from "@/module/common/i18n/pageLabel";
 import {
     breadcrumb,
     breadcrumbCurrent,
@@ -14,33 +15,29 @@ import { MerchantSwitcher } from "./MerchantSwitcher";
 /**
  * Maps a route segment to its translated label. Falls back to a
  * capitalised version of the segment for dynamic segments (IDs, etc.).
- *
- * Uses a `switch` (not a lookup table) so each `t()` call is literal —
- * the i18next `CustomTypeOptions` augmentation can then narrow the key
- * type and the typecheck catches typos.
  */
 function labelFor(segment: string, t: TFunction): string {
     switch (segment) {
         case "dashboard":
-            return t("shell.nav.dashboard");
+            return pageNav(t, "dashboard");
         case "campaigns":
-            return t("shell.nav.campaigns");
+            return pageNav(t, "campaigns");
         case "list":
-            return t("shell.nav.campaignsList");
+            return pageNav(t, "campaignsList");
         case "performance":
-            return t("shell.nav.campaignsOverview");
+            return pageNav(t, "campaignsOverview");
         case "members":
-            return t("shell.nav.members");
+            return pageNav(t, "members");
         case "push":
-            return t("shell.breadcrumb.push");
+            return pageNav(t, "push");
         case "create":
-            return t("shell.breadcrumb.create");
+            return pageNav(t, "pushCreate");
         case "confirm":
-            return t("shell.breadcrumb.confirm");
+            return pageNav(t, "pushConfirm");
         case "settings":
-            return t("settings.title");
+            return pageNav(t, "settings");
         case "merchant":
-            return t("shell.breadcrumb.merchant");
+            return pageNav(t, "merchant");
         default:
             return segment.charAt(0).toUpperCase() + segment.slice(1);
     }

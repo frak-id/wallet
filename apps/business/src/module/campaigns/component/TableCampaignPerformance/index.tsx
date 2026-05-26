@@ -1,4 +1,5 @@
 import { Skeleton } from "@frak-labs/design-system/components/Skeleton";
+import { Stack } from "@frak-labs/design-system/components/Stack";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import type {
     CellContext,
@@ -240,7 +241,7 @@ export function TableCampaignPerformance() {
     }
 
     return (
-        <>
+        <Stack space="l">
             <TablePerformanceFilters
                 columnFilters={columnFilters}
                 setColumnFilters={setColumnFilters}
@@ -252,7 +253,7 @@ export function TableCampaignPerformance() {
                 enableFiltering={true}
                 columnFilters={columnFilters}
             />
-        </>
+        </Stack>
     );
 }
 
