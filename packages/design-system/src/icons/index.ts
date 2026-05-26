@@ -53,6 +53,7 @@ export { ProfileIcon } from "./ProfileIcon";
 export { ProgressCheckIcon } from "./ProgressCheckIcon";
 export { ProgressCheckIconAnimated } from "./ProgressCheckIconAnimated";
 export { ReferralIcon } from "./ReferralIcon";
+export { RefreshIcon } from "./RefreshIcon";
 export { SafetyIcon } from "./SafetyIcon";
 export { SearchIcon } from "./SearchIcon";
 export { SettingsIcon } from "./SettingsIcon";

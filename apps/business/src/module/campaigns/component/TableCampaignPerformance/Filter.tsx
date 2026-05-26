@@ -1,5 +1,5 @@
+import { RefreshIcon } from "@frak-labs/design-system/icons";
 import type { ColumnFiltersState } from "@tanstack/react-table";
-import { SlidersHorizontal } from "lucide-react";
 import { useMemo } from "react";
 import { Button } from "@/module/common/component/Button";
 import { InputSearch } from "@/module/forms/InputSearch";
@@ -48,7 +48,7 @@ export function TablePerformanceFilters({
             <div className={styles.filtersItem}>
                 <Button
                     variant={"secondary"}
-                    icon={<SlidersHorizontal size={20} />}
+                    icon={<RefreshIcon width={20} height={20} />}
                     onClick={() => resetFilters()}
                 >
                     Reset filters

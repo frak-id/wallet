@@ -9,10 +9,9 @@ import {
     TabsList,
     TabsTrigger,
 } from "@frak-labs/design-system/components/Tabs";
-import { CalendarIcon } from "@frak-labs/design-system/icons";
+import { CalendarIcon, RefreshIcon } from "@frak-labs/design-system/icons";
 import type { ColumnFiltersState } from "@tanstack/react-table";
 import { format } from "date-fns";
-import { SlidersHorizontal } from "lucide-react";
 import { useMemo, useState } from "react";
 import type { DateRange } from "react-day-picker";
 import { useTranslation } from "react-i18next";
@@ -150,7 +149,7 @@ export function TableCampaignFilters({
                 <Button
                     variant="filter"
                     size="filter"
-                    icon={<SlidersHorizontal size={16} />}
+                    icon={<RefreshIcon width={16} height={16} />}
                     onClick={resetFilters}
                 >
                     Reset filters
