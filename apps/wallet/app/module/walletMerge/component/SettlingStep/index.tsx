@@ -4,8 +4,9 @@ import { Button } from "@frak-labs/design-system/components/Button";
 import { Card } from "@frak-labs/design-system/components/Card";
 import { Stack } from "@frak-labs/design-system/components/Stack";
 import { Text } from "@frak-labs/design-system/components/Text";
-import { useCallback, useEffect } from "react";
+import { type ReactNode, useCallback, useEffect } from "react";
 import { useTranslation } from "react-i18next";
+import { Back } from "@/module/common/component/Back";
 import { PageLayout } from "@/module/common/component/PageLayout";
 import { Title } from "@/module/common/component/Title";
 import { MergeError } from "../../errors";
@@ -36,6 +37,12 @@ type SettlingStepProps = {
      */
     pairingId?: string;
     onCompleted: (settle: MergeSettleResponse) => void;
+    /**
+     * Step back to the previous step in the flow. Disabled while settle
+     * is in flight to avoid leaving the backend mid-RPC. Settle itself is
+     * idempotent server-side so a back+retry round-trip is safe.
+     */
+    onBack: () => void;
     onCancel: () => void;
     /**
      * Send the user back to an earlier step when the settle error has a
@@ -43,6 +50,8 @@ type SettlingStepProps = {
      * target; generic / retryable errors stay on this step.
      */
     onRecover: (target: SettleRecoveryTarget) => void;
+    /** Optional step indicator rendered in the header center (e.g. "5/5"). */
+    stepIndicator?: ReactNode;
 };
 
 type SettleRecovery = {
@@ -100,8 +109,10 @@ export function SettlingStep({
     loserConsentSignature,
     pairingId,
     onCompleted,
+    onBack,
     onCancel,
     onRecover,
+    stepIndicator,
 }: SettlingStepProps) {
     const { t } = useTranslation();
     const { mutateAsync: settle, error, isError, isPending } = useMergeSettle();
@@ -125,6 +136,8 @@ export function SettlingStep({
 
     return (
         <PageLayout
+            back={<Back onClick={onBack} disabled={isPending} />}
+            headerCenter={stepIndicator}
             footer={
                 isError ? (
                     <Box className={styles.footer}>

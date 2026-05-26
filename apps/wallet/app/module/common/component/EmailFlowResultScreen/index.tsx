@@ -12,9 +12,17 @@ export type EmailFlowResultScreenProps = {
     description: ReactNode;
     onBack?: () => void;
     /**
-     * Action buttons stacked at the bottom of the content (primary CTA on top,
-     * secondary below). The parent decides which buttons make sense per state
-     * (login, retry, set up recovery, back to profile, etc.).
+     * Optional content rendered centered on the header row next to the back
+     * button. Used by the merge flow to drop a "Step N/M" indicator without
+     * each result screen having to know about the stepper.
+     */
+    headerCenter?: ReactNode;
+    /**
+     * Action buttons stacked at the bottom of the screen (primary CTA on
+     * top, secondary below). Rendered into `PageLayout`'s footer slot so
+     * they sit above the home indicator instead of floating right under
+     * the description — keeps the visual contract consistent with the rest
+     * of the wallet's page-style screens.
      */
     children?: ReactNode;
 };
@@ -29,12 +37,19 @@ export function EmailFlowResultScreen({
     title,
     description,
     onBack,
+    headerCenter,
     children,
 }: EmailFlowResultScreenProps) {
     return (
         <PageLayout
             fixedViewport
             back={onBack ? <Back onClick={onBack} /> : undefined}
+            headerCenter={headerCenter}
+            footer={
+                children ? (
+                    <Box className={styles.actions}>{children}</Box>
+                ) : undefined
+            }
         >
             <Stack space="l" className={styles.body}>
                 <Stack space="s">
@@ -43,7 +58,6 @@ export function EmailFlowResultScreen({
                         {description}
                     </Text>
                 </Stack>
-                {children && <Box className={styles.actions}>{children}</Box>}
             </Stack>
         </PageLayout>
     );

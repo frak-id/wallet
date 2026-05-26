@@ -3,7 +3,7 @@ import { Button } from "@frak-labs/design-system/components/Button";
 import { Card } from "@frak-labs/design-system/components/Card";
 import { Stack } from "@frak-labs/design-system/components/Stack";
 import { Text } from "@frak-labs/design-system/components/Text";
-import { useCallback, useEffect } from "react";
+import { type ReactNode, useCallback, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import type { Address } from "viem";
 import { Back } from "@/module/common/component/Back";
@@ -31,6 +31,8 @@ type ConsentStepProps = {
      * while waiting for the mobile to scan + sign.
      */
     remoteConsent: boolean;
+    /** Optional step indicator rendered in the header center (e.g. "3/5"). */
+    stepIndicator?: ReactNode;
 };
 
 /**
@@ -64,6 +66,7 @@ export function ConsentStep({
     consent,
     strategy,
     remoteConsent,
+    stepIndicator,
 }: ConsentStepProps) {
     const { t } = useTranslation();
 
@@ -93,6 +96,7 @@ export function ConsentStep({
                     run();
                 }}
                 onBack={onBack}
+                stepIndicator={stepIndicator}
             />
         );
     }
@@ -100,6 +104,7 @@ export function ConsentStep({
     return (
         <PageLayout
             back={<Back onClick={onBack} />}
+            headerCenter={stepIndicator}
             footer={
                 <Box className={styles.footer}>
                     <Button
@@ -154,6 +159,7 @@ function RemoteConsentBody(props: {
     isError: boolean;
     onRetry: () => void;
     onBack: () => void;
+    stepIndicator?: ReactNode;
 }) {
     return (
         <RemotePairingPanel

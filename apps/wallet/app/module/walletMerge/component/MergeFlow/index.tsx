@@ -1,10 +1,21 @@
 import { Box } from "@frak-labs/design-system/components/Box";
 import { Button } from "@frak-labs/design-system/components/Button";
+import { Text } from "@frak-labs/design-system/components/Text";
 import { type Flow, startFlow } from "@frak-labs/wallet-shared";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import {
+    type ReactNode,
+    useCallback,
+    useEffect,
+    useMemo,
+    useRef,
+    useState,
+} from "react";
 import { useTranslation } from "react-i18next";
 import { EmailFlowResultScreen } from "@/module/common/component/EmailFlowResultScreen";
-import { useLoserAssetSummary } from "../../hook/useLoserAssetSummary";
+import {
+    type LoserAssetSummary,
+    useLoserAssetSummary,
+} from "../../hook/useLoserAssetSummary";
 import { useMergePreview } from "../../hook/useMergePreview";
 import { useLocalMergeStrategy } from "../../strategy/useLocalMergeStrategy";
 import { useRemoteMergeStrategy } from "../../strategy/useRemoteMergeStrategy";
@@ -12,7 +23,7 @@ import { AssetMigrationStep } from "../AssetMigrationStep";
 import { ConsentStep } from "../ConsentStep";
 import { type DiscoveryResolution, DiscoveryStep } from "../DiscoveryStep";
 import { PreviewStep } from "../PreviewStep";
-import { SettlingStep } from "../SettlingStep";
+import { type SettleRecoveryTarget, SettlingStep } from "../SettlingStep";
 import { SignStep } from "../SignStep";
 import { SuccessStep } from "../SuccessStep";
 
@@ -44,6 +55,27 @@ type Step =
     | { kind: "success" };
 
 /**
+ * Total non-terminal steps in the merge flow. Migrate is intentionally
+ * counted under the same "4" as Sign so the indicator stays at "X/5"
+ * regardless of whether the loser had funds to move — keeps the stepper
+ * stable for the user and avoids the "1/?" flicker on Discovery (before
+ * the asset summary has had a chance to resolve).
+ */
+const MERGE_STEP_TOTAL = 5;
+
+const MERGE_STEP_NUMBER: Record<
+    Exclude<Step["kind"], "success">,
+    1 | 2 | 3 | 4 | 5
+> = {
+    discovery: 1,
+    preview: 2,
+    consent: 3,
+    sign: 4,
+    migrate: 4,
+    settling: 5,
+};
+
+/**
  * Multi-step orchestrator for the wallet-merge flow.
  *
  * Each user-visible step is a self-contained screen owning at most one
@@ -65,6 +97,7 @@ export function MergeFlow({
     onAbort,
     onCompleted,
 }: MergeFlowProps) {
+    const { t } = useTranslation();
     const [step, setStep] = useState<Step>({ kind: "discovery" });
     // Set by DiscoveryStep once the user's chosen path resolves. `null`
     // while the race is in progress; preview / strategy selection both
@@ -153,17 +186,37 @@ export function MergeFlow({
         onAbort();
     }, [onAbort, strategy.cancel]);
 
+    const handleSettlingCompleted = useCallback(() => {
+        flowRef.current?.end("succeeded", {
+            last_step: "settling",
+            requester_was_loser: needsSwitch === true,
+        });
+        setStep({ kind: "success" });
+    }, [needsSwitch]);
+
+    const handleDiscoveryResolved = useCallback(
+        (resolved: DiscoveryResolution) => {
+            setDiscovery(resolved);
+            setStep({ kind: "preview" });
+        },
+        []
+    );
+
+    const stepIndicator = renderStepIndicator(t, step.kind);
+
     if (step.kind === "discovery") {
         return (
             <DiscoveryStep
                 targetAuthenticatorIds={targetAuthenticatorIds}
-                onResolved={(resolved) => {
-                    setDiscovery(resolved);
-                    setStep({ kind: "preview" });
-                }}
+                onResolved={handleDiscoveryResolved}
                 onAbort={handleAbort}
+                stepIndicator={stepIndicator}
             />
         );
+    }
+
+    if (step.kind === "success") {
+        return <SuccessStep email={email} onBack={onCompleted} />;
     }
 
     if (preview.isLoading || !preview.data) {
@@ -172,6 +225,7 @@ export function MergeFlow({
                 isError={preview.isError}
                 onRetry={() => preview.refetch()}
                 onAbort={handleAbort}
+                stepIndicator={stepIndicator}
             />
         );
     }
@@ -184,6 +238,7 @@ export function MergeFlow({
                 assetSummary={assetSummary.data ?? null}
                 onContinue={() => setStep({ kind: "consent" })}
                 onCancel={handleAbort}
+                stepIndicator={stepIndicator}
             />
         );
     }
@@ -208,6 +263,7 @@ export function MergeFlow({
                 remoteConsent={
                     strategy.mode === "remote" && needsSwitch === false
                 }
+                stepIndicator={stepIndicator}
             />
         );
     }
@@ -220,6 +276,7 @@ export function MergeFlow({
             // adding a runtime branch the user would ever see.
             return null;
         }
+        const consentSignature = step.consentSignature;
         return (
             <SignStep
                 winner={preview.data.winner}
@@ -228,33 +285,20 @@ export function MergeFlow({
                 loserAuthenticatorId={preview.data.loserAuthenticatorId}
                 loserPublicKey={preview.data.loserPublicKey}
                 sendAddPassKey={strategy.sendAddPassKey}
-                onSigned={() => {
-                    // Skip the migrate step entirely when the loser has
-                    // already been drained — otherwise we render a "Move
-                    // your funds" CTA over an empty list for one frame
-                    // before `AssetMigrationStep`'s auto-advance effect
-                    // kicks in. AssetMigrationStep keeps the same defence
-                    // for the case where the summary resolves between
-                    // here and its mount.
-                    const summary = assetSummary.data;
-                    if (summary && !summary.hasFunds) {
-                        setStep({
-                            kind: "settling",
-                            consentSignature: step.consentSignature,
-                        });
-                        return;
-                    }
-                    setStep({
-                        kind: "migrate",
-                        consentSignature: step.consentSignature,
-                    });
-                }}
+                onSigned={() =>
+                    setStep(
+                        nextStepAfterSign(consentSignature, assetSummary.data)
+                    )
+                }
+                onBack={() => setStep({ kind: "consent" })}
                 onCancel={handleAbort}
+                stepIndicator={stepIndicator}
             />
         );
     }
 
     if (step.kind === "migrate") {
+        const consentSignature = step.consentSignature;
         return (
             <AssetMigrationStep
                 loser={preview.data.loser}
@@ -264,57 +308,104 @@ export function MergeFlow({
                 summary={assetSummary}
                 migrate={strategy.migrateLoserAssets}
                 onCompleted={() =>
-                    setStep({
-                        kind: "settling",
-                        consentSignature: step.consentSignature,
-                    })
+                    setStep({ kind: "settling", consentSignature })
                 }
+                onBack={() => setStep({ kind: "sign", consentSignature })}
                 onCancel={handleAbort}
+                stepIndicator={stepIndicator}
             />
         );
     }
 
     if (step.kind === "settling" && discovery) {
+        const consentSignature = step.consentSignature;
         return (
             <SettlingStep
                 targetAuthenticatorId={discovery.targetAuthenticatorId}
-                loserConsentSignature={step.consentSignature}
+                loserConsentSignature={consentSignature}
                 pairingId={strategy.pairingId}
-                onCompleted={() => {
-                    flowRef.current?.end("succeeded", {
-                        last_step: "settling",
-                        requester_was_loser: needsSwitch === true,
-                    });
-                    setStep({ kind: "success" });
-                }}
+                onCompleted={handleSettlingCompleted}
+                onBack={() =>
+                    setStep(
+                        settlingBackStep(consentSignature, assetSummary.data)
+                    )
+                }
                 onCancel={handleAbort}
-                onRecover={(target) => {
-                    if (target === "sign") {
-                        setStep({
-                            kind: "sign",
-                            consentSignature: step.consentSignature,
-                        });
-                    } else if (target === "consent") {
-                        setStep({ kind: "consent" });
-                    } else {
-                        setStep({ kind: "preview" });
-                    }
-                }}
+                onRecover={(target) =>
+                    setStep(settlingRecoveryStep(target, consentSignature))
+                }
+                stepIndicator={stepIndicator}
             />
         );
     }
 
-    return <SuccessStep email={email} onBack={onCompleted} />;
+    return null;
+}
+
+/**
+ * Migrate is skipped entirely when the loser has no funds (see
+ * `nextStepAfterSign`). Mirror that here so the back button lands on the
+ * screen the user actually came from.
+ */
+function settlingBackStep(
+    consentSignature: string,
+    summary: LoserAssetSummary | null | undefined
+): Step {
+    if (summary?.hasFunds === false) return { kind: "sign", consentSignature };
+    return { kind: "migrate", consentSignature };
+}
+
+function settlingRecoveryStep(
+    target: SettleRecoveryTarget,
+    consentSignature: string
+): Step {
+    if (target === "sign" || target === "migrate")
+        return { kind: target, consentSignature };
+    return { kind: target };
+}
+
+/**
+ * Decide which step to move to once the addPassKey has been signed.
+ * Skip Migrate entirely when the loser has already been drained — without
+ * this guard the user sees an empty "Move your funds" CTA for one frame
+ * before AssetMigrationStep's auto-advance effect kicks in. The migrate
+ * screen keeps the same defence for the case where the summary resolves
+ * between here and its own mount.
+ */
+function nextStepAfterSign(
+    consentSignature: string,
+    summary: LoserAssetSummary | null | undefined
+): Step {
+    if (summary && !summary.hasFunds)
+        return { kind: "settling", consentSignature };
+    return { kind: "migrate", consentSignature };
+}
+
+function renderStepIndicator(
+    t: ReturnType<typeof useTranslation>["t"],
+    kind: Step["kind"]
+) {
+    if (kind === "success") return null;
+    return (
+        <Text variant="bodySmall" color="secondary">
+            {t("wallet.merge.stepIndicator", {
+                current: MERGE_STEP_NUMBER[kind],
+                total: MERGE_STEP_TOTAL,
+            })}
+        </Text>
+    );
 }
 
 function PreviewGate({
     isError,
     onRetry,
     onAbort,
+    stepIndicator,
 }: {
     isError: boolean;
     onRetry: () => void;
     onAbort: () => void;
+    stepIndicator?: ReactNode;
 }) {
     const { t } = useTranslation();
     if (isError) {
@@ -323,6 +414,7 @@ function PreviewGate({
                 title={t("wallet.merge.preview.errorTitle")}
                 description={t("wallet.merge.preview.errorDescription")}
                 onBack={onAbort}
+                headerCenter={stepIndicator}
             >
                 <Button
                     type="button"
@@ -352,6 +444,7 @@ function PreviewGate({
                 <Box>{t("wallet.merge.preview.loadingDescription")}</Box>
             }
             onBack={onAbort}
+            headerCenter={stepIndicator}
         />
     );
 }

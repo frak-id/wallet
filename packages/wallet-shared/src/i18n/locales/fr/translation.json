@@ -130,6 +130,7 @@
             }
         },
         "merge": {
+            "stepIndicator": "Étape {{current}}/{{total}}",
             "discovery": {
                 "title": "Combine tes comptes",
                 "description": "Choisis comment confirmer — sur cet appareil, ou sur l'appareil qui contient ton autre passkey.",

@@ -4,9 +4,10 @@ import { Card } from "@frak-labs/design-system/components/Card";
 import { Stack } from "@frak-labs/design-system/components/Stack";
 import { Text } from "@frak-labs/design-system/components/Text";
 import type { UseQueryResult } from "@tanstack/react-query";
-import { useCallback, useEffect } from "react";
+import { type ReactNode, useCallback, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import type { Address, Hex } from "viem";
+import { Back } from "@/module/common/component/Back";
 import { PageLayout } from "@/module/common/component/PageLayout";
 import { Title } from "@/module/common/component/Title";
 import type { LoserAssetSummary } from "../../hook/useLoserAssetSummary";
@@ -25,7 +26,15 @@ type AssetMigrationStepProps = {
     summary: UseQueryResult<LoserAssetSummary | null, Error>;
     migrate: MigrateLoserAssetsMutation;
     onCompleted: () => void;
+    /**
+     * Step back to the sign screen. The migrate mutation drains the loser
+     * smart wallet, so the back button is disabled while it is in flight
+     * to keep the network state predictable.
+     */
+    onBack: () => void;
     onCancel: () => void;
+    /** Optional step indicator rendered in the header center (e.g. "4/5"). */
+    stepIndicator?: ReactNode;
 };
 
 /**
@@ -51,7 +60,9 @@ export function AssetMigrationStep({
     summary,
     migrate,
     onCompleted,
+    onBack,
     onCancel,
+    stepIndicator,
 }: AssetMigrationStepProps) {
     const { t } = useTranslation();
 
@@ -113,7 +124,11 @@ export function AssetMigrationStep({
     const showHoldings = !!summary.data?.hasFunds;
 
     return (
-        <PageLayout footer={renderFooter()}>
+        <PageLayout
+            back={<Back onClick={onBack} disabled={migrate.isPending} />}
+            headerCenter={stepIndicator}
+            footer={renderFooter()}
+        >
             <Stack space="l" className={styles.body}>
                 <Stack space="s">
                     <Title size="page">{t(titleKey)}</Title>

@@ -5,6 +5,7 @@ import { Spinner } from "@frak-labs/design-system/components/Spinner";
 import { Stack } from "@frak-labs/design-system/components/Stack";
 import { Text } from "@frak-labs/design-system/components/Text";
 import { PairingQrCode, PairingStatus } from "@frak-labs/wallet-shared";
+import type { ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 import { Back } from "@/module/common/component/Back";
 import { PageLayout } from "@/module/common/component/PageLayout";
@@ -26,6 +27,8 @@ type RemotePairingPanelProps = {
     onRetry: () => void;
     onBack: () => void;
     i18nKeys: RemotePairingPanelI18nKeys;
+    /** Optional step indicator rendered in the header center (e.g. "3/5"). */
+    stepIndicator?: ReactNode;
 };
 
 /**
@@ -39,6 +42,7 @@ export function RemotePairingPanel({
     onRetry,
     onBack,
     i18nKeys,
+    stepIndicator,
 }: RemotePairingPanelProps) {
     const { t } = useTranslation();
     const pairingInfo = strategy.remote?.pairingState.pairing;
@@ -47,6 +51,7 @@ export function RemotePairingPanel({
     return (
         <PageLayout
             back={<Back onClick={onBack} />}
+            headerCenter={stepIndicator}
             footer={
                 isError ? (
                     <Box className={styles.footer}>

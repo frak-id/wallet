@@ -3,9 +3,10 @@ import { Button } from "@frak-labs/design-system/components/Button";
 import { Card } from "@frak-labs/design-system/components/Card";
 import { Stack } from "@frak-labs/design-system/components/Stack";
 import { Text } from "@frak-labs/design-system/components/Text";
-import { useCallback } from "react";
+import { type ReactNode, useCallback } from "react";
 import { useTranslation } from "react-i18next";
 import type { Address, Hex } from "viem";
+import { Back } from "@/module/common/component/Back";
 import { PageLayout } from "@/module/common/component/PageLayout";
 import { Title } from "@/module/common/component/Title";
 import type { SendAddPassKeyMutation } from "../../strategy/types";
@@ -23,9 +24,17 @@ type SignStepProps = {
      * a no-op (loser cred already bound on-chain — idempotent retry path).
      */
     onSigned: (txHash?: Hex) => void;
+    /**
+     * Step back to consent. The addPassKey mutation is idempotent on retry
+     * (already-bound passkey is a no-op on-chain) so bouncing back to a
+     * previous step and returning here is safe.
+     */
+    onBack: () => void;
     onCancel: () => void;
     /** addPassKey mutation provided by the active merge strategy. */
     sendAddPassKey: SendAddPassKeyMutation;
+    /** Optional step indicator rendered in the header center (e.g. "4/5"). */
+    stepIndicator?: ReactNode;
 };
 
 /**
@@ -43,8 +52,10 @@ export function SignStep({
     loserAuthenticatorId,
     loserPublicKey,
     onSigned,
+    onBack,
     onCancel,
     sendAddPassKey,
+    stepIndicator,
 }: SignStepProps) {
     const { t } = useTranslation();
 
@@ -73,6 +84,8 @@ export function SignStep({
 
     return (
         <PageLayout
+            back={<Back onClick={onBack} disabled={sendAddPassKey.isPending} />}
+            headerCenter={stepIndicator}
             footer={
                 <Box className={styles.footer}>
                     <Button

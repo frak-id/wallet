@@ -13,7 +13,14 @@ import {
     PairingStatus,
 } from "@frak-labs/wallet-shared";
 import { WebAuthnP256 } from "ox";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import {
+    type ReactNode,
+    useCallback,
+    useEffect,
+    useMemo,
+    useRef,
+    useState,
+} from "react";
 import { useTranslation } from "react-i18next";
 import { generatePrivateKey } from "viem/accounts";
 import { useStore } from "zustand";
@@ -52,6 +59,8 @@ type DiscoveryStepProps = {
     /** Whichever path wins fires this once, with mode-specific details. */
     onResolved: (result: DiscoveryResolution) => void;
     onAbort: () => void;
+    /** Optional step indicator rendered in the header center (e.g. "1/5"). */
+    stepIndicator?: ReactNode;
 };
 
 /**
@@ -71,6 +80,7 @@ export function DiscoveryStep({
     targetAuthenticatorIds,
     onResolved,
     onAbort,
+    stepIndicator,
 }: DiscoveryStepProps) {
     const { t } = useTranslation();
     const client = useMemo(() => getOriginPairingClient(), []);
@@ -98,9 +108,7 @@ export function DiscoveryStep({
             if (settledRef.current) return;
             settledRef.current = true;
             if (resolution.mode === "local") {
-                client.cancelAllSignatureRequests(
-                    "merge-discovery-local-won"
-                );
+                client.cancelAllSignatureRequests("merge-discovery-local-won");
                 client.softReset();
                 detachedPairingSessionStore.getState().clearDetachedSession();
             } else {
@@ -169,6 +177,7 @@ export function DiscoveryStep({
     return (
         <PageLayout
             back={<Back onClick={onAbort} />}
+            headerCenter={stepIndicator}
             footer={
                 <Box className={styles.footer}>
                     <Button

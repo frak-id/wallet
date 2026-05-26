@@ -4,7 +4,7 @@ import { Button } from "@frak-labs/design-system/components/Button";
 import { Card } from "@frak-labs/design-system/components/Card";
 import { Stack } from "@frak-labs/design-system/components/Stack";
 import { Text } from "@frak-labs/design-system/components/Text";
-import { useMemo } from "react";
+import { type ReactNode, useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { Back } from "@/module/common/component/Back";
 import { PageLayout } from "@/module/common/component/PageLayout";
@@ -24,6 +24,8 @@ type PreviewStepProps = {
     assetSummary: LoserAssetSummary | null | undefined;
     onContinue: () => void;
     onCancel: () => void;
+    /** Optional step indicator rendered in the header center (e.g. "2/5"). */
+    stepIndicator?: ReactNode;
 };
 
 /**
@@ -37,6 +39,7 @@ export function PreviewStep({
     assetSummary,
     onContinue,
     onCancel,
+    stepIndicator,
 }: PreviewStepProps) {
     const { t } = useTranslation();
 
@@ -63,6 +66,7 @@ export function PreviewStep({
     return (
         <PageLayout
             back={<Back onClick={onCancel} />}
+            headerCenter={stepIndicator}
             footer={
                 <Box className={styles.footer}>
                     <Button

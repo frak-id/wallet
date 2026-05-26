@@ -1,4 +1,4 @@
-export default interface Resources {
+interface Resources {
     customized: {
         sdk: {
             modal: {
@@ -604,9 +604,8 @@ export default interface Resources {
                 conflict: {
                     back: "Back to my profile";
                     combine: "Combine my accounts";
-                    combineRemote: "Use my other device";
                     description: "This email is already linked to another wallet. Use a different email or come back later.";
-                    descriptionMergeable: "This email is already on another of your accounts. You can combine them into one — quick, two confirmations, all on this device.";
+                    descriptionMergeable: "This email is already on another of your accounts. You can combine them into one — we'll guide you through, whether the other account is on this device or another one.";
                     title: "Email already in use";
                     useDifferent: "Use a different email";
                 };
@@ -666,6 +665,18 @@ export default interface Resources {
                     retry: "Try again";
                     title: "Confirm with your other passkey";
                     verify: "Confirm";
+                };
+                discovery: {
+                    description: "Pick how you want to confirm — on this device, or on the device that holds your other passkey.";
+                    localError: "We couldn't find the other passkey on this device. Try scanning the code with your other device instead.";
+                    localHint: {
+                        body: "Tap above to confirm with the passkey of your other account here. Works automatically if you use iCloud Keychain across your devices.";
+                        title: "Both passkeys on this device?";
+                    };
+                    preparing: "Preparing a secure connection…";
+                    scanHint: "Scan this code with the device that has your other account.";
+                    title: "Combine your accounts";
+                    useThisDevice: "Use this device";
                 };
                 migrate: {
                     cancel: "Cancel";
@@ -759,27 +770,11 @@ export default interface Resources {
                     retry: "Try again";
                     title: "Authorise the combine";
                 };
+                stepIndicator: "Step {{current}}/{{total}}";
                 success: {
                     back: "Back to my profile";
                     description: "{{email}} is linked to your wallet. Everything from your other account moved over — referrals, history, rewards.";
                     title: "Your accounts are now one";
-                };
-                switch: {
-                    confirm: "Open {{wallet}}";
-                    description: "We'll log you in on {{wallet}} so you can authorise the combine from that account.";
-                    error: "We couldn't open the other account on this device. Make sure its passkey is available here, then try again.";
-                    help: {
-                        description: "Your device will ask you to confirm with the other account's passkey — face, fingerprint or PIN. You'll be moved back to this account as soon as the combine finishes.";
-                        title: "What happens here";
-                    };
-                    remote: {
-                        description: "Scan this QR code with the device that holds your other passkey. We'll use it to authorise the combine — no need to switch passkeys here.";
-                        error: "We couldn't reach your other device. Try again, or pick a different email.";
-                        preparing: "Preparing a secure connection…";
-                        title: "Connect your other device";
-                    };
-                    retry: "Try again";
-                    title: "Open your other account";
                 };
             };
             notifications: {
@@ -1140,3 +1135,5 @@ export default interface Resources {
         };
     };
 }
+
+export default Resources;

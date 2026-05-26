@@ -132,6 +132,7 @@
             }
         },
         "merge": {
+            "stepIndicator": "Step {{current}}/{{total}}",
             "discovery": {
                 "title": "Combine your accounts",
                 "description": "Pick how you want to confirm — on this device, or on the device that holds your other passkey.",
