@@ -70,18 +70,19 @@ function StepsIntroduction({
 }) {
     const navigate = useNavigate();
     const { t } = useTranslation();
-    const { completedSteps } = validateCompleteOnboarding(onboardingData);
+    const { completedSteps, hasMissedCriticalSteps } =
+        validateCompleteOnboarding(onboardingData);
     const completedStep = completedSteps.length;
     const progress = (completedStep / MAX_STEP) * 100;
 
     useEffect(() => {
-        if (progress === 100 && redirectToApp) {
+        if (!hasMissedCriticalSteps && redirectToApp) {
             // Small delay to ensure the progress bar is updated
             setTimeout(() => {
                 navigate("/app");
             }, 1000);
         }
-    }, [progress, navigate, redirectToApp]);
+    }, [hasMissedCriticalSteps, navigate, redirectToApp]);
 
     return (
         <s-stack gap="small">
