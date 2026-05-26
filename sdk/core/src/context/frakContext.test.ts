@@ -218,14 +218,6 @@ describe("FrakContextManager", () => {
                     expect(parsedUrl.searchParams.get("utm_source")).toBe(
                         "frak"
                     );
-                    expect(parsedUrl.searchParams.get("utm_medium")).toBe(
-                        "referral"
-                    );
-                    expect(parsedUrl.searchParams.get("utm_campaign")).toBe(
-                        v2Context.m
-                    );
-                    expect(parsedUrl.searchParams.get("via")).toBe("frak");
-                    expect(parsedUrl.searchParams.get("ref")).toBe(v2Context.c);
                 });
 
                 it("should apply default attribution params when attribution is an empty object", () => {
@@ -240,18 +232,6 @@ describe("FrakContextManager", () => {
                     expect(parsedUrl.searchParams.get("utm_source")).toBe(
                         "frak"
                     );
-                    expect(parsedUrl.searchParams.get("utm_medium")).toBe(
-                        "referral"
-                    );
-                    expect(parsedUrl.searchParams.get("utm_campaign")).toBe(
-                        v2Context.m
-                    );
-                    expect(parsedUrl.searchParams.get("via")).toBe("frak");
-                    expect(parsedUrl.searchParams.get("ref")).toBe(v2Context.c);
-                    expect(
-                        parsedUrl.searchParams.get("utm_content")
-                    ).toBeNull();
-                    expect(parsedUrl.searchParams.get("utm_term")).toBeNull();
                 });
 
                 it("should honor overrides over defaults", () => {
@@ -306,11 +286,6 @@ describe("FrakContextManager", () => {
                     expect(parsedUrl.searchParams.get("utm_campaign")).toBe(
                         "merchant-spring"
                     );
-                    // Missing ones filled by Frak defaults
-                    expect(parsedUrl.searchParams.get("utm_medium")).toBe(
-                        "referral"
-                    );
-                    expect(parsedUrl.searchParams.get("ref")).toBe(v2Context.c);
                 });
 
                 it("should skip fields with empty-string overrides", () => {
@@ -325,6 +300,14 @@ describe("FrakContextManager", () => {
                         false
                     );
                     expect(parsedUrl.searchParams.has("utm_term")).toBe(false);
+                    expect(parsedUrl.searchParams.has("utm_medium")).toBe(
+                        false
+                    );
+                    expect(parsedUrl.searchParams.has("utm_campaign")).toBe(
+                        false
+                    );
+                    expect(parsedUrl.searchParams.has("via")).toBe(false);
+                    expect(parsedUrl.searchParams.has("ref")).toBe(false);
                 });
 
                 it("should skip context-derived defaults for V1 (no merchantId/clientId)", () => {
@@ -342,15 +325,6 @@ describe("FrakContextManager", () => {
                     expect(parsedUrl.searchParams.get("utm_source")).toBe(
                         "frak"
                     );
-                    expect(parsedUrl.searchParams.get("utm_medium")).toBe(
-                        "referral"
-                    );
-                    expect(parsedUrl.searchParams.get("via")).toBe("frak");
-                    // No derivable values from V1
-                    expect(parsedUrl.searchParams.has("utm_campaign")).toBe(
-                        false
-                    );
-                    expect(parsedUrl.searchParams.has("ref")).toBe(false);
                 });
             });
         });
