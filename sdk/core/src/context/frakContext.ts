@@ -92,11 +92,6 @@ function parse({ url }: { url: string }): FrakContext | null | undefined {
 }
 
 /**
- * Default UTM medium value when attribution is requested.
- */
-const DEFAULT_UTM_MEDIUM = "referral";
-
-/**
  * Default utm_source / via value when attribution is requested.
  */
 const DEFAULT_ATTRIBUTION_SOURCE = "frak";
@@ -110,18 +105,16 @@ const DEFAULT_ATTRIBUTION_SOURCE = "frak";
  * addresses leaking into UTM params. V1 contexts have no equivalent.
  */
 function resolveAttributionValues(
-    context: FrakContextV1 | FrakContextV2,
     overrides: AttributionParams
 ): Record<string, string | undefined> {
-    const isV2 = isV2Context(context);
     return {
         utm_source: overrides.utmSource ?? DEFAULT_ATTRIBUTION_SOURCE,
-        utm_medium: overrides.utmMedium ?? DEFAULT_UTM_MEDIUM,
-        utm_campaign: overrides.utmCampaign ?? (isV2 ? context.m : undefined),
+        utm_medium: overrides.utmMedium ?? undefined,
+        utm_campaign: overrides.utmCampaign ?? undefined,
         utm_content: overrides.utmContent,
         utm_term: overrides.utmTerm,
-        via: overrides.via ?? DEFAULT_ATTRIBUTION_SOURCE,
-        ref: overrides.ref ?? (isV2 ? context.c : undefined),
+        via: overrides.via ?? undefined,
+        ref: overrides.ref ?? undefined,
     };
 }
 
@@ -133,10 +126,9 @@ function resolveAttributionValues(
  */
 function applyAttributionParams(
     urlObj: URL,
-    context: FrakContextV1 | FrakContextV2,
     attribution?: AttributionParams
 ): void {
-    const values = resolveAttributionValues(context, attribution ?? {});
+    const values = resolveAttributionValues(attribution ?? {});
     for (const [key, value] of Object.entries(values)) {
         if (value === undefined || value === "") continue;
         if (urlObj.searchParams.has(key)) continue;
@@ -174,7 +166,7 @@ function update({
 
     const urlObj = new URL(url);
     urlObj.searchParams.set(contextKey, compressedContext);
-    applyAttributionParams(urlObj, context, attribution);
+    applyAttributionParams(urlObj, attribution);
     return urlObj.toString();
 }
 
