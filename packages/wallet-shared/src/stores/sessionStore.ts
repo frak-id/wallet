@@ -13,12 +13,10 @@ import type { SessionStore } from "./types";
 export const sessionStore = createStore<SessionStore>()(
     persist(
         (set) => ({
-            // Initial state
             session: null,
             sdkSession: null,
             demoPrivateKey: null,
 
-            // Actions
             setSession: (session) => set({ session }),
             setSdkSession: (sdkSession) => set({ sdkSession }),
             setDemoPrivateKey: (demoPrivateKey) => set({ demoPrivateKey }),

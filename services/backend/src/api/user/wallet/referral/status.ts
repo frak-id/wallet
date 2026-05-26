@@ -1,8 +1,8 @@
-import { identityContext } from "@backend-infrastructure";
 import { t } from "@backend-utils";
 import { Elysia, status } from "elysia";
 import { AttributionContext } from "../../../../domain/attribution/context";
 import { ReferralCodeContext } from "../../../../domain/referral-code/context";
+import { identityContext } from "../../../middleware/identity";
 
 /**
  * Global referral status for the authenticated wallet. One-stop shop for

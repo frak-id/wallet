@@ -2,11 +2,7 @@ import { JwtContext, viemClient } from "@backend-infrastructure";
 import { t } from "@backend-utils";
 import { Elysia, status } from "elysia";
 import { verifyMessage } from "viem/actions";
-import {
-    AuthContext,
-    type StaticWalletSdkTokenDto,
-    WalletAuthResponseDto,
-} from "../../../../domain/auth";
+import { AuthContext, WalletAuthResponseDto } from "../../../../domain/auth";
 import { OrchestrationContext } from "../../../../orchestration/context";
 import { FrakClientIdHeaderSchema } from "../../../schemas";
 
@@ -115,49 +111,27 @@ export const loginRoutes = new Elysia()
             if (!verificationnResult) {
                 return status(404, "Invalid signature");
             }
-
-            // Otherwise all good, extract a few info
-            const { address, authenticatorId, publicKey, transports } =
+            const { authenticatorId, publicKey, transports } =
                 verificationnResult;
 
-            // Prepare the additional data object
-            const additionalData: StaticWalletSdkTokenDto["additionalData"] =
-                {};
-
-            // Create the token and set the cookie
-            const token = await JwtContext.wallet.sign({
-                type: "webauthn",
-                address,
-                authenticatorId,
-                publicKey,
-                transports,
-                sub: address,
-                iat: Date.now(),
-            });
-
-            const sdkJwt =
-                await AuthContext.services.walletSdkSession.generateSdkJwt({
-                    wallet: address,
-                    additionalData,
-                });
+            const session =
+                await OrchestrationContext.orchestrators.walletSession.sessionForVerifiedCredential(
+                    {
+                        credentialId: authenticatorId,
+                        publicKey,
+                        transports,
+                    }
+                );
 
             await OrchestrationContext.orchestrators.identity.linkWalletToFingerprint(
                 {
-                    walletAddress: address,
+                    walletAddress: session.address,
                     clientId: headers["x-frak-client-id"],
                     merchantId,
                 }
             );
 
-            return {
-                token,
-                type: "webauthn",
-                address,
-                authenticatorId,
-                publicKey,
-                transports,
-                sdkJwt,
-            };
+            return session;
         },
         {
             body: t.Object({

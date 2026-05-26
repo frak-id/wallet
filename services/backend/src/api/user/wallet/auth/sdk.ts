@@ -3,6 +3,7 @@ import { t } from "@backend-utils";
 import { Elysia, status } from "elysia";
 import { isAddressEqual } from "viem";
 import { AuthContext } from "../../../../domain/auth";
+import { OrchestrationContext } from "../../../../orchestration/context";
 
 export const walletSdkRoutes = new Elysia({ prefix: "/sdk" })
     .use(sessionContext)
@@ -41,14 +42,21 @@ export const walletSdkRoutes = new Elysia({ prefix: "/sdk" })
                 return status(403, "Invalid signature");
             }
 
-            // If it's not the same wallet, return an error
-            if (!isAddressEqual(verificationnResult.address, wallet)) {
+            const resolvedWallet =
+                await OrchestrationContext.orchestrators.walletSession.resolveWalletForVerifiedCredential(
+                    {
+                        credentialId: verificationnResult.authenticatorId,
+                        publicKey: verificationnResult.publicKey,
+                    }
+                );
+
+            if (!isAddressEqual(resolvedWallet, wallet)) {
                 return status(403, "Invalid signature");
             }
 
             // Otherwise generate a new token
             return await AuthContext.services.walletSdkSession.generateSdkJwt({
-                wallet: verificationnResult.address,
+                wallet: resolvedWallet,
             });
         },
         {

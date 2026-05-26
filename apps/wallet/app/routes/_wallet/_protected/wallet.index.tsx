@@ -7,6 +7,7 @@ import { useTranslation } from "react-i18next";
 import { useAppShellScroll } from "@/module/common/component/AppShell";
 import { Title } from "@/module/common/component/Title";
 import { Balance } from "@/module/tokens/component/Balance";
+import { AddEmailCard } from "@/module/wallet/component/AddEmailCard";
 import { DemoAccount } from "@/module/wallet/component/DemoAccount";
 import { EarningsSection } from "@/module/wallet/component/EarningsSection";
 import { WelcomeCard } from "@/module/wallet/component/WelcomeCard";
@@ -33,6 +34,7 @@ function WalletPage() {
                 <Title size="page">{t("wallet.pageTitle")}</Title>
                 <DemoAccount />
                 <Balance />
+                <AddEmailCard />
                 <WelcomeCard />
                 <EarningsSection />
             </Box>

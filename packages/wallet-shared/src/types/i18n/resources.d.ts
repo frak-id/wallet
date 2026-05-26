@@ -418,7 +418,7 @@ interface Resources {
             };
             status: {
                 approved: "Verified ✓";
-                created: "Account created — complete verification on Monerium";
+                created: "Account created, complete verification on Monerium";
                 pending: "Verification in progress";
                 rejected: "Verification failed";
                 settingUp: "Setting up...";
@@ -430,8 +430,10 @@ interface Resources {
             continue: "Continue";
             email: {
                 alreadyUsed: {
+                    description: "{{email}} is already linked to an account. Log in to continue with that wallet, or use a different email.";
                     login: "Login";
-                    message: "Oops, it looks like this email is already used. Would you like to login instead?";
+                    title: "Email already used";
+                    useDifferent: "Use a different email";
                 };
                 checkError: "Unable to verify this email right now. Please try again.";
                 clearAriaLabel: "Clear email address";
@@ -500,8 +502,8 @@ interface Resources {
             digitLabel: "Character";
             error: {
                 alreadyLinked: "This code has already been used.";
-                generic: "Something went wrong — please try again.";
-                invalid: "Incorrect or expired code — check the code copied from wallet.frak.id";
+                generic: "Something went wrong, please try again.";
+                invalid: "Incorrect or expired code, check the code copied from wallet.frak.id";
             };
             paste: "Paste the code";
             success: {
@@ -593,6 +595,33 @@ interface Resources {
         };
         wallet: {
             activateNotifications: "Turn on notifs to track your earnings in real time.";
+            addEmail: {
+                card: {
+                    description: "Add your email to be able to recover your wallet later.";
+                    title: "Add your email";
+                };
+                clearAriaLabel: "Clear email address";
+                conflict: {
+                    back: "Back to my profile";
+                    combine: "Combine my accounts";
+                    description: "This email is already linked to another wallet. Use a different email or come back later.";
+                    descriptionMergeable: "This email is already on another of your accounts. You can combine them into one — we'll guide you through, whether the other account is on this device or another one.";
+                    title: "Email already in use";
+                    useDifferent: "Use a different email";
+                };
+                continue: "Continue";
+                description: "Your email is only used to recover your account if you forget it. It will never be used to send you unsolicited messages.";
+                label: "Email";
+                placeholder: "your.email@gmail.com";
+                submitError: "Unable to save this email right now. Please try again.";
+                success: {
+                    back: "Back to my profile";
+                    description: "{{email}} is now linked to your wallet. Set up recovery next so you can recover it if you ever lose access.";
+                    setupRecovery: "Set up recovery";
+                    title: "Email saved";
+                };
+                title: "Add your email";
+            };
             inAppBrowser: {
                 clickToOpen: "Tap to open in your browser.";
                 clipboardAlert: "This browser doesn't support all features needed.\n\nThe link has been copied to your clipboard.\n\nTo continue:\n1. Open Safari\n2. Tap the address bar\n3. Paste and go";
@@ -619,6 +648,139 @@ interface Resources {
                 useQRCode: "Use QR code to connect";
             };
             manageNotifications: "<strong>Manage notifications</strong> <br /> Open settings to control your notifications";
+            merge: {
+                consent: {
+                    description: "We need a quick confirmation with the passkey from the other account to make sure both belong to you. You'll see a system prompt.";
+                    error: "We couldn't confirm with the other passkey on this device. Make sure it's available here, then try again.";
+                    help: {
+                        description: "Your device will ask you to confirm with face, fingerprint or PIN — same as when you log in. We never see your biometrics.";
+                        title: "What happens here";
+                    };
+                    remote: {
+                        description: "Scan this QR code with the device that holds your other passkey and approve the prompt there. We'll continue automatically.";
+                        error: "We couldn't reach your other device. Try again, or pick a different email.";
+                        preparing: "Preparing a secure connection…";
+                        title: "Confirm on your other device";
+                    };
+                    retry: "Try again";
+                    title: "Confirm with your other passkey";
+                    verify: "Confirm";
+                };
+                discovery: {
+                    description: "Pick how you want to confirm — on this device, or on the device that holds your other passkey.";
+                    localError: "We couldn't find the other passkey on this device. Try scanning the code with your other device instead.";
+                    localHint: {
+                        body: "Tap above to confirm with the passkey of your other account here. Works automatically if you use iCloud Keychain across your devices.";
+                        title: "Both passkeys on this device?";
+                    };
+                    preparing: "Preparing a secure connection…";
+                    scanHint: "Scan this code with the device that has your other account.";
+                    title: "Combine your accounts";
+                    useThisDevice: "Use this device";
+                };
+                migrate: {
+                    cancel: "Cancel";
+                    description: "Sending everything to your primary account before we finalise the combine. This takes a few seconds.";
+                    error: "The transfer didn't go through. Tap retry — we'll re-check your balances and try again.";
+                    errorDescription: "Something interrupted the transfer. Your accounts are safe — tap retry to try again with the latest balances.";
+                    errorTitle: "We couldn't move your funds";
+                    holdings: {
+                        title: "Funds to move";
+                    };
+                    loading: "Loading your balances — one second.";
+                    loadingDescription: "We need to know what's on your other account before we move it.";
+                    loadingTitle: "Checking your balances…";
+                    pending: "Sending the transfer on-chain — hang tight.";
+                    readyDescription: "Tap below to transfer everything from your other account to your primary account in one go.";
+                    readyTitle: "Move your funds";
+                    retry: "Retry";
+                    start: "Move my funds";
+                    summaryError: "Loading your balances failed. Tap retry to try again.";
+                    summaryErrorDescription: "Tap retry — we need this before we can move your funds.";
+                    summaryErrorTitle: "We couldn't load your balances";
+                    summaryRetry: "Retry";
+                    title: "Moving your funds…";
+                };
+                peerWaiting: {
+                    description: "We sent the request to your paired device — confirm it there and we'll continue automatically.";
+                    title: "Approve on your other device";
+                };
+                preview: {
+                    cancel: "Cancel";
+                    combineArrow: "↓ combine into ↓";
+                    continue: "Continue";
+                    description: "We found another account of yours using {{email}}. Here's what will move when you combine them — no changes happen until you confirm.";
+                    errorDescription: "Something went wrong while preparing the combine. Please try again.";
+                    errorRetry: "Try again";
+                    errorTitle: "We couldn't load your accounts";
+                    funds: {
+                        description: "We'll transfer these from your other account to your primary account before combining.";
+                        title: "Funds to move";
+                    };
+                    gains: {
+                        description: "{{referrals}} referrals, {{interactions}} interactions and {{assets}} reward events — all on one account.";
+                        title: "What you'll get";
+                    };
+                    labels: {
+                        otherAccount: "Your other account";
+                        thisAccount: "This account";
+                    };
+                    loadingDescription: "We're double-checking both accounts before we show you what will move.";
+                    loadingTitle: "Getting things ready…";
+                    stats: {
+                        assets: "Rewards";
+                        interactions: "Interactions";
+                        referrals: "Referrals";
+                    };
+                    title: "Combine your accounts";
+                    winnerBadge: "Stays as primary";
+                };
+                settling: {
+                    cancel: "Cancel";
+                    description: "We're putting everything together. This usually takes a few seconds.";
+                    error: "The combine couldn't finish. Tap retry — we'll pick up where we left off.";
+                    errorDescription: "Something slipped on our side after you authorised. Tap retry — your accounts are safe.";
+                    errorTitle: "Almost there";
+                    progress: {
+                        body: "Linking your accounts, transferring referrals and rewards. Hang tight.";
+                        title: "Working on it…";
+                    };
+                    recover: {
+                        invalidConsent: {
+                            body: "Too much time passed since you confirmed with your other passkey. Reconfirm to continue — your accounts are safe.";
+                            cta: "Reconfirm";
+                            title: "Confirmation expired";
+                        };
+                        migrateReverted: {
+                            body: "The transfer didn't land on-chain. Run it again to finish — your accounts are safe.";
+                            cta: "Move funds again";
+                            title: "Funds didn't move";
+                        };
+                        onChainMismatch: {
+                            body: "Your accounts moved while we were combining them. Let's start over from the preview — nothing is lost.";
+                            cta: "Start over";
+                            title: "Something looks different";
+                        };
+                    };
+                    retry: "Retry";
+                    title: "Combining your accounts…";
+                };
+                sign: {
+                    authorise: "Authorise";
+                    cancel: "Cancel";
+                    description: "One last confirmation to bring your two accounts together.";
+                    error: "The combine couldn't be authorised. Tap try again — your accounts are safe.";
+                    errorDescription: "Something interrupted the combine. Your accounts are safe — try again to finish.";
+                    retry: "Try again";
+                    title: "Authorise the combine";
+                };
+                stepIndicator: "Step {{current}}/{{total}}";
+                success: {
+                    back: "Back to my profile";
+                    description: "{{email}} is linked to your wallet. Everything from your other account moved over — referrals, history, rewards.";
+                    title: "Your accounts are now one";
+                };
+            };
             notifications: {
                 noNotifications: "No notifications";
             };
@@ -720,6 +882,11 @@ interface Resources {
                     paired: "Paired";
                     retryError: "Reconnecting…";
                 };
+                switchPasskey: {
+                    confirm: "Switch passkey";
+                    description: "This pairing was started with another passkey from your wallet. Switch to it on this device to continue.";
+                    title: "Different passkey required";
+                };
                 text: "You're about to connect a device to your account.";
                 title: "Confirm device pairing";
             };
@@ -747,6 +914,7 @@ interface Resources {
                 title: "Pending referral reward";
             };
             profile: {
+                addEmail: "Add my email";
                 biometricPrompt: "Require {{biometryLabel}} at every app launch";
                 currentDeviceConnected: "Connected";
                 enableNotifications: "Enable notifications";
@@ -893,7 +1061,7 @@ interface Resources {
                     error: "Error during registration, please try again";
                     inProgress: "Wallet creation in progress";
                 };
-                description: "Spin up a temporary wallet to explore Frak. No biometrics, no recovery — just a sandbox.";
+                description: "Spin up a temporary wallet to explore Frak. No biometrics, no recovery, just a sandbox.";
                 title: "Try Frak in demo mode";
             };
             settings: {

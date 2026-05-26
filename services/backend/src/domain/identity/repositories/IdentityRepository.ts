@@ -29,6 +29,9 @@ export class IdentityRepository {
         if (type === "wallet") {
             return value.toLowerCase();
         }
+        if (type === "email") {
+            return value.trim().toLowerCase();
+        }
         return value;
     }
 
@@ -115,11 +118,17 @@ export class IdentityRepository {
             return cached.value;
         }
 
+        // Filter out soft-unlinked nodes (loser wallets from a prior
+        // merge) so the resolution is deterministic. `ORDER BY createdAt`
+        // gives a stable choice when a group legitimately holds multiple
+        // active wallets (e.g. multi-passkey accounts post-Phase-1).
         const walletNode = await db.query.identityNodesTable.findFirst({
             where: and(
                 eq(identityNodesTable.groupId, groupId),
-                eq(identityNodesTable.identityType, "wallet")
+                eq(identityNodesTable.identityType, "wallet"),
+                isNull(identityNodesTable.unlinkedAt)
             ),
+            orderBy: (nodes, { asc }) => [asc(nodes.createdAt)],
         });
 
         const wallet = (walletNode?.identityValue as Address) ?? null;
@@ -137,6 +146,24 @@ export class IdentityRepository {
                 eq(identityNodesTable.identityType, "anonymous_fingerprint"),
                 eq(identityNodesTable.merchantId, params.merchantId)
             ),
+        });
+        return node?.identityValue ?? null;
+    }
+
+    /**
+     * Return the active email currently attached to a group, or `null` when
+     * none exists. A group may hold several emails (a merged wallet keeps the
+     * loser's email as historical context); the oldest active node wins so
+     * the result is stable across subsequent merges that absorb newer rows.
+     */
+    async findEmailForGroup(groupId: string): Promise<string | null> {
+        const node = await db.query.identityNodesTable.findFirst({
+            where: and(
+                eq(identityNodesTable.groupId, groupId),
+                eq(identityNodesTable.identityType, "email"),
+                isNull(identityNodesTable.unlinkedAt)
+            ),
+            orderBy: (nodes, { asc }) => [asc(nodes.createdAt)],
         });
         return node?.identityValue ?? null;
     }
@@ -159,6 +186,11 @@ export class IdentityRepository {
         merchantId?: string;
     }): Promise<IdentityNodeSelect> {
         const normalizedValue = this.normalizeValue(params.type, params.value);
+        const cacheKey = this.buildIdentityCacheKey(
+            params.type,
+            normalizedValue,
+            params.merchantId
+        );
         const [result] = await db
             .insert(identityNodesTable)
             .values({
@@ -169,6 +201,18 @@ export class IdentityRepository {
             })
             .onConflictDoNothing()
             .returning();
+
+        // Drop the negative cache entry — `findGroupByIdentity` caches
+        // `null` for 60s, so a "does this email exist?" check fired
+        // moments before this insert would otherwise keep returning null
+        // for up to a minute after we just created the row.
+        this.identityGroupIdCache.delete(cacheKey);
+
+        // Mirror eviction for the per-group wallet resolver — only wallet
+        // inserts can flip a prior `null` cache hit.
+        if (params.type === "wallet") {
+            this.walletByGroupCache.delete(params.groupId);
+        }
 
         if (!result) {
             const existing = await db.query.identityNodesTable.findFirst({

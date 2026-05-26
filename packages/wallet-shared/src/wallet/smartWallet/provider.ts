@@ -124,25 +124,37 @@ export function getSmartAccountProvider({
 }
 
 /**
- * Build the smart account client on the given chain id
- * @param chainId
- * @param wallet
+ * Build a bundler client (smart account + Pimlico transport + paymaster)
+ * for any concrete wallet shape. Used by the wagmi connector to wire the
+ * live session, and by ad-hoc consumers (e.g. wallet-merge asset migration)
+ * that need to sign as a wallet that is NOT the current wagmi session —
+ * the loser smart wallet during a merge is the canonical example.
+ *
+ * `signViaEcdsa` is only required for `wallet.type === "ecdsa"`. Callers
+ * that only ever pass webauthn / distant-webauthn wallets can omit it; the
+ * builder throws at runtime if an ecdsa wallet is supplied without a signer.
  */
-async function buildSmartAccount({
+export async function buildSmartAccount({
     wallet,
     signViaEcdsa,
 }: {
     wallet: WebAuthNWallet | EcdsaWallet | DistantWebAuthnWallet;
-    signViaEcdsa: (data: Hex, address: Address) => Promise<Hex>;
+    signViaEcdsa?: (data: Hex, address: Address) => Promise<Hex>;
 }) {
     let smartAccount: BaseFrakSmartAccount;
     if (wallet.type === "ecdsa") {
+        if (!signViaEcdsa) {
+            throw new Error(
+                "buildSmartAccount: signViaEcdsa is required for ecdsa wallets"
+            );
+        }
+        const ecdsaSigner = signViaEcdsa;
         // That's a ecdsa wallet
         smartAccount = await frakEcdsaWalletSmartAccount(currentViemClient, {
             ecdsaAddress: wallet.publicKey,
             preDeterminedAccountAddress: wallet.address,
             signatureProvider({ hash }) {
-                return signViaEcdsa(hash, wallet.publicKey);
+                return ecdsaSigner(hash, wallet.publicKey);
             },
         });
     } else if (wallet.type === "distant-webauthn") {
@@ -150,6 +162,7 @@ async function buildSmartAccount({
         smartAccount = await frakPairedWalletSmartAccount(currentViemClient, {
             authenticatorId: wallet.authenticatorId,
             signerPubKey: wallet.publicKey,
+            preDeterminedAccountAddress: wallet.address,
         });
     } else {
         // That's a webauthn wallet

@@ -107,7 +107,7 @@ export class InteractionSubmissionOrchestrator {
 
             if (result) {
                 interactionLog = this.toInteractionLogResult(result);
-                this.emitNewInteraction(type);
+                eventEmitter.emit("newInteraction");
             } else {
                 isDuplicate = true;
             }
@@ -149,9 +149,5 @@ export class InteractionSubmissionOrchestrator {
             merchantId: result.merchantId ?? "",
             createdAt: result.createdAt,
         };
-    }
-
-    private emitNewInteraction(type: InteractionType): void {
-        eventEmitter.emit("newInteraction", { type });
     }
 }

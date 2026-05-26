@@ -1,10 +1,7 @@
 import { db } from "@backend-infrastructure";
 import { and, isNull, lt, lte, or } from "drizzle-orm";
-import {
-    PairingContext,
-    pairingSignatureRequestTable,
-    pairingTable,
-} from "../domain/pairing";
+import { pairingSignatureRequestTable, pairingTable } from "../domain/pairing";
+import { OrchestrationContext } from "../orchestration/context";
 import { MutexCron } from "../utils/mutexCron";
 import { CronRegistry } from "./registry";
 
@@ -84,7 +81,7 @@ CronRegistry.register(
                 );
 
             for (const { pairingId, requestId } of expired) {
-                await PairingContext.repositories.router.cancelSignatureRequest(
+                await OrchestrationContext.orchestrators.pairingRouter.cancelSignatureRequest(
                     pairingId,
                     requestId,
                     { code: "expired" }

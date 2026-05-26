@@ -15,3 +15,13 @@ export {
     MemberQueryResultSchema,
     MemberSortSchema,
 } from "./memberSchemas";
+export {
+    MergePreviewQuerySchema,
+    type MergePreviewResponse,
+    MergePreviewSchema,
+    MergeSettleBodySchema,
+    type MergeSettleResponse,
+    MergeSettleResponseSchema,
+    type MergeWeightResponse,
+    MergeWeightSchema,
+} from "./walletMergeSchemas";

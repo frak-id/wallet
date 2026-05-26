@@ -1,22 +1,28 @@
 import { AttributionContext } from "../domain/attribution/context";
+import { AuthContext } from "../domain/auth";
 import { CampaignContext } from "../domain/campaign/context";
 import { CampaignBankContext } from "../domain/campaign-bank/context";
 import { IdentityContext } from "../domain/identity/context";
 import { MerchantContext } from "../domain/merchant/context";
 import { NotificationContext } from "../domain/notifications/context";
+import { PairingContext } from "../domain/pairing/context";
 import { PurchasesContext } from "../domain/purchases/context";
 import { ReferralCodeContext } from "../domain/referral-code/context";
 import { RewardsContext } from "../domain/rewards/context";
 import { WalletContext } from "../domain/wallet/context";
+import { webAuthNValidatorReader } from "../infrastructure/blockchain/WebAuthNValidatorReader";
 import { pricingRepository } from "../infrastructure/pricing/PricingRepository";
 import { BatchRewardOrchestrator } from "./BatchRewardOrchestrator";
 import { CampaignStatsOrchestrator } from "./CampaignStatsOrchestrator";
 import { ExplorerOrchestrator } from "./ExplorerOrchestrator";
 import {
     AnonymousMergeOrchestrator,
+    AuthenticatorLookupOrchestrator,
     IdentityMergeService,
     IdentityOrchestrator,
     IdentityWeightService,
+    WalletMergeOrchestrator,
+    WalletSessionOrchestrator,
 } from "./identity";
 import { InteractionSubmissionOrchestrator } from "./interaction-submission";
 import { MemberQueryOrchestrator } from "./MemberQueryOrchestrator";
@@ -24,6 +30,7 @@ import { NotificationOrchestrator } from "./NotificationOrchestrator";
 import { PurchaseInteractionCreator } from "./PurchaseInteractionCreator";
 import { PurchaseLinkingOrchestrator } from "./PurchaseLinkingOrchestrator";
 import { PurchaseWebhookOrchestrator } from "./PurchaseWebhookOrchestrator";
+import { PairingOrchestrator, PairingRouterOrchestrator } from "./pairing";
 import { RewardHistoryOrchestrator } from "./RewardHistoryOrchestrator";
 import { RewardLifecycleOrchestrator } from "./RewardLifecycleOrchestrator";
 import { ReferralCodeRedemptionOrchestrator } from "./referral-code";
@@ -41,7 +48,8 @@ const identityWeightService = new IdentityWeightService(
 );
 
 const identityMergeService = new IdentityMergeService(
-    AttributionContext.repositories.referralLink
+    AttributionContext.repositories.referralLink,
+    IdentityContext.repositories.identity
 );
 
 const identityOrchestrator = new IdentityOrchestrator(
@@ -138,6 +146,45 @@ const referralCodeRedemptionOrchestrator =
         AttributionContext.repositories.referralLink
     );
 
+const walletSessionOrchestrator = new WalletSessionOrchestrator(
+    IdentityContext.repositories.walletBinding,
+    AuthContext.repositories.authenticator,
+    AuthContext.services.webAuthN,
+    AuthContext.services.walletJwt
+);
+
+const pairingRouterOrchestrator = new PairingRouterOrchestrator(
+    PairingContext.repositories.pairing,
+    PairingContext.repositories.pairingSignature,
+    NotificationContext.services.notifications
+);
+
+const pairingOrchestrator = new PairingOrchestrator(
+    PairingContext.repositories.pairing,
+    PairingContext.repositories.pairingSignature,
+    AuthContext.repositories.authenticator,
+    IdentityContext.repositories.walletBinding,
+    AuthContext.services.walletSdkSession,
+    identityOrchestrator
+);
+
+const walletMergeOrchestrator = new WalletMergeOrchestrator(
+    AuthContext.repositories.authenticator,
+    IdentityContext.repositories.walletBinding,
+    IdentityContext.repositories.identity,
+    identityWeightService,
+    identityMergeService,
+    webAuthNValidatorReader,
+    AuthContext.services.webAuthN,
+    walletSessionOrchestrator,
+    pairingRouterOrchestrator
+);
+
+const authenticatorLookupOrchestrator = new AuthenticatorLookupOrchestrator(
+    IdentityContext.repositories.walletBinding,
+    IdentityContext.repositories.identity
+);
+
 export namespace OrchestrationContext {
     export const orchestrators = {
         explorer: explorerOrchestrator,
@@ -155,5 +202,10 @@ export namespace OrchestrationContext {
         settlement: settlementOrchestrator,
         webhookResolver: webhookResolverOrchestrator,
         referralCodeRedemption: referralCodeRedemptionOrchestrator,
+        walletMerge: walletMergeOrchestrator,
+        walletSession: walletSessionOrchestrator,
+        authenticatorLookup: authenticatorLookupOrchestrator,
+        pairing: pairingOrchestrator,
+        pairingRouter: pairingRouterOrchestrator,
     };
 }

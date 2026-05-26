@@ -28,6 +28,42 @@ export const content = style({
     paddingBottom: alias.spacing.m,
 });
 
+/**
+ * Header row rendered when any of `back`, `headerCenter` or `headerEnd` is
+ * set. Uses a 3-column grid so the center slot stays truly centered no
+ * matter how wide the left / right slots get — important for the merge
+ * flow's step indicator, which has to read centered next to a variable-
+ * width back button.
+ */
+export const header = style({
+    display: "grid",
+    gridTemplateColumns: "1fr auto 1fr",
+    alignItems: "center",
+    paddingInline: alias.spacing.m,
+    width: "100%",
+});
+
+export const headerLeft = style({
+    justifySelf: "start",
+    display: "flex",
+    alignItems: "center",
+    minWidth: 0,
+});
+
+export const headerCenter = style({
+    justifySelf: "center",
+    display: "flex",
+    alignItems: "center",
+    textAlign: "center",
+});
+
+export const headerEnd = style({
+    justifySelf: "end",
+    display: "flex",
+    alignItems: "center",
+    minWidth: 0,
+});
+
 export const footer = style({
     display: "flex",
     flexDirection: "column",

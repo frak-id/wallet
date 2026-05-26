@@ -1,6 +1,8 @@
 import type {
+    WsMergeCompleted,
     WsPairingCreatedResponse,
     WsPartnerConnected,
+    WsSignatureKind,
     WsSignatureReject,
     WsSignatureResponse,
     WsTopicSignatureRequest,
@@ -30,7 +32,8 @@ export type WsTargetMessage =
     | WsTopicSignatureRequest
     | { type: "ping"; payload: { pairingId: string } }
     | WsPartnerConnected
-    | WsSignatureReject;
+    | WsSignatureReject
+    | WsMergeCompleted;
 
 /**
  * All the messages that could be received by the origin.
@@ -55,7 +58,8 @@ export type WsOriginMessage =
               wallet: DistantWebAuthnWallet;
           };
       }
-    | WsPartnerConnected;
+    | WsPartnerConnected
+    | WsMergeCompleted;
 
 /**
  * All the requests that could be sent to the backend by the origin.
@@ -67,7 +71,19 @@ export type WsOriginRequest =
     | { type: "ping" }
     | {
           type: "signature-request";
-          payload: { id: string; request: Hex; context?: object };
+          payload: {
+              id: string;
+              request: Hex;
+              context?: object;
+              /**
+               * Defaults to `"onchain"` server-side when omitted. Set to
+               * `"raw-assertion"` by the cross-device merge winner-side
+               * flow so the target returns the base64 WebAuthn assertion
+               * JSON parseable by `WebAuthNService.verifyConsentSignature`
+               * rather than a smart-account-formatted on-chain blob.
+               */
+              signatureKind?: WsSignatureKind;
+          };
       }
     | {
           type: "signature-reject";
@@ -80,7 +96,17 @@ export type WsOriginRequest =
 export type WsTargetRequest =
     | {
           type: "signature-response";
-          payload: { pairingId: string; id: string; signature: Hex };
+          payload: {
+              pairingId: string;
+              id: string;
+              /**
+               * `Hex` for `signatureKind: "onchain"` (default) and the
+               * base64 WebAuthn assertion JSON `string` for
+               * `signatureKind: "raw-assertion"`.
+               */
+              signature: Hex | string;
+              signatureKind?: WsSignatureKind;
+          };
       }
     | {
           type: "signature-reject";

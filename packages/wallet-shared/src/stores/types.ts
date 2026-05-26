@@ -20,15 +20,41 @@ export type AuthenticationResponseJSON = {
 };
 
 /**
+ * Detached pairing session — written by the merge flow on both origin and
+ * target sides instead of swapping the live `sessionStore.session`. Lets
+ * the user keep their normal wallet active in the app while a pairing-
+ * scoped credential signs cross-device merge ceremonies in the background.
+ *
+ * Scoped by `pairingId` so consumers can validate the slot still belongs
+ * to the pairing they're driving (and clear stale state from a previous,
+ * abandoned merge).
+ */
+export type DetachedPairingSession = {
+    pairingId: string;
+    session: Session;
+    sdkSession: SdkSession | null;
+};
+
+/**
+ * Tab-scoped store (sessionStorage backing) holding the active detached
+ * pairing session. Single-slot — only one detached pairing can be in
+ * flight per tab at a time, which matches the actual UX (one merge at a
+ * time). Survives tab refreshes mid-flow; dies when the tab closes.
+ */
+export type DetachedPairingSessionStore = {
+    detached: DetachedPairingSession | null;
+    setDetachedSession: (session: DetachedPairingSession) => void;
+    clearDetachedSession: () => void;
+};
+
+/**
  * Session Store Types
  */
 export type SessionStore = {
-    // State
     session: Session | null;
     sdkSession: SdkSession | null;
     demoPrivateKey: Hex | null;
 
-    // Actions
     setSession: (session: Session | null) => void;
     setSdkSession: (sdkSession: SdkSession | null) => void;
     setDemoPrivateKey: (key: Hex | null) => void;

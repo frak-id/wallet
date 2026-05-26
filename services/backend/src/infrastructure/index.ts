@@ -17,8 +17,8 @@ export {
     AdminWalletsRepository,
     adminWalletsRepository,
 } from "./keys/AdminWalletsRepository";
-// Session + identity macros
-export { identityContext, sessionContext } from "./macro";
+// Session macro
+export { sessionContext } from "./macro";
 // Events
 export { eventEmitter } from "./messaging/events";
 // Database

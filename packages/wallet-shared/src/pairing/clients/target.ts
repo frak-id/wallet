@@ -1,5 +1,8 @@
 import type { Hex } from "viem";
 import { getSafeSession } from "../../common/utils/safeSession";
+import { detachedPairingSessionStore } from "../../stores/detachedPairingSessionStore";
+import { sessionStore } from "../../stores/sessionStore";
+import type { Session } from "../../types/Session";
 import type {
     PairingSignatureFailure,
     SignatureRejectReason,
@@ -38,12 +41,22 @@ export class TargetPairingClient extends BasePairingClient<
     }
 
     /**
-     * Join a new pairing request
+     * Join a new pairing request.
+     *
+     * If a detached pairing session has been stashed for this pairing
+     * (cross-device merge — scanner authenticated as a credential other
+     * than their live session), the WS authenticates with the detached
+     * token. Otherwise falls back to the live `sessionStore` session.
      */
     joinPairing(id: string, pairingCode: string) {
-        const session = getSafeSession();
-        if (!session) {
-            console.warn("No session found, skipping reconnection");
+        const detached = detachedPairingSessionStore.getState().detached;
+        const walletToken =
+            detached && detached.pairingId === id
+                ? detached.session.token
+                : getSafeSession()?.token;
+
+        if (!walletToken) {
+            console.warn("No session found, skipping join");
             return;
         }
 
@@ -52,17 +65,39 @@ export class TargetPairingClient extends BasePairingClient<
                 action: "join",
                 id,
                 pairingCode,
-                wallet: session.token,
+                wallet: walletToken,
             })
         );
     }
 
     /**
-     * Reconnect to all the pairing associated with the current wallet.
-     * Uses isAlive() to detect and clean up zombie connections left
-     * after the app was backgrounded on mobile.
+     * Reconnect to all the pairings associated with the active credential.
+     *
+     * A detached pairing session takes precedence over the live
+     * `sessionStore` — a refresh mid-detached-merge must keep using the
+     * pairing-scoped credential rather than fall back to the user's
+     * regular wallet. Uses isAlive() to detect and clean up zombie
+     * connections left after the app was backgrounded on mobile.
+     *
+     * Asymmetry with `joinPairing` is intentional: `joinPairing` knows
+     * exactly which pairing it's acting on and gates the detached slot on
+     * `detached.pairingId === id`. `reconnect` doesn't — by design the
+     * target client subscribes to every pairing topic the active wallet
+     * token is entitled to, not a specific pairing, so there's no `id` to
+     * gate against. The narrow side-effect is that during the in-flight
+     * window of a detached merge any unrelated incoming pairings keyed to
+     * the user's *live* wallet won't be picked up; they resume on their
+     * own once `merge-completed` clears the detached slot. Bounded by the
+     * tab lifetime via `sessionStorage`, so not promoted to a hard guard.
      */
     reconnect() {
+        const detached = detachedPairingSessionStore.getState().detached;
+        if (detached) {
+            if (this.isAlive()) return;
+            this.connect({ wallet: detached.session.token });
+            return;
+        }
+
         const session = getSafeSession();
         if (!session) {
             console.warn("No session found, skipping reconnection");
@@ -153,6 +188,7 @@ export class TargetPairingClient extends BasePairingClient<
                     request: request.request,
                     context: request.context,
                     from: request.partnerDeviceName,
+                    signatureKind: request.signatureKind,
                 });
                 const pairingIdState = new Map(state.pairingIdState);
                 pairingIdState.set(request.pairingId, {
@@ -182,14 +218,51 @@ export class TargetPairingClient extends BasePairingClient<
             });
             return;
         }
+
+        // Cross-device wallet merge completed. Backend pushes a freshly-
+        // minted local-webauthn session on the loser-side topic; winner-side
+        // gets an info-only event with no `session`. The mobile (target)
+        // side is typically the loser in the winner=desktop branch, so this
+        // is where the rebind actually happens.
+        //
+        // Detached path: the loser credential lived in
+        // `detachedPairingSessionStore`, never in the live session. The
+        // payload's freshly-minted session targets that detached identity,
+        // which is being discarded — the user's actual live session is
+        // unrelated to the merge and must not be silently overwritten.
+        if (message.type === "merge-completed") {
+            const detached = detachedPairingSessionStore.getState().detached;
+            if (detached) {
+                detachedPairingSessionStore.getState().clearDetachedSession();
+                return;
+            }
+            if (message.payload.session) {
+                // Backend's webauthn DTO carries `transports: string[]`,
+                // local `Session` narrows to `AuthenticatorTransport[]`.
+                // Cast mirrors the same narrowing useMergeSettle relies on.
+                const { token, sdkJwt, wallet } = message.payload.session;
+                sessionStore
+                    .getState()
+                    .setSession({ ...wallet, token } as Session);
+                sessionStore.getState().setSdkSession(sdkJwt);
+            }
+            return;
+        }
     }
 
     /**
-     * Send back a signature response or rejection to the pairing server
+     * Send back a signature response or rejection to the pairing server.
+     *
+     * The `signature` payload's encoding is discriminated by the request's
+     * original `signatureKind` (preserved here from `pendingSignatures`).
+     * `Hex` for the default on-chain flow; base64 WebAuthn assertion JSON
+     * `string` for the cross-device merge raw-assertion flow.
      */
     sendSignatureResponse(
         requestId: string,
-        response: { signature: Hex } | { reason: SignatureRejectReason }
+        response:
+            | { signature: Hex | string }
+            | { reason: SignatureRejectReason }
     ) {
         const request = this.state.pendingSignatures.get(requestId);
         if (!request) {
@@ -205,6 +278,7 @@ export class TargetPairingClient extends BasePairingClient<
                     pairingId: request.pairingId,
                     id: requestId,
                     signature: response.signature,
+                    signatureKind: request.signatureKind,
                 },
             });
         } else {

@@ -16,8 +16,21 @@ export {
     MemberSortSchema,
 } from "../../orchestration/schemas/memberSchemas";
 export {
+    MergePreviewQuerySchema,
+    type MergePreviewResponse,
+    MergePreviewSchema,
+    MergeSettleBodySchema,
+    type MergeSettleResponse,
+    MergeSettleResponseSchema,
+    MergeWeightSchema,
+} from "../../orchestration/schemas/walletMergeSchemas";
+export {
+    type AssociateEmailResponse,
+    AssociateEmailResponseSchema,
     type EmailStatusResponse,
     EmailStatusResponseSchema,
+    type MyEmailResponse,
+    MyEmailResponseSchema,
 } from "./authenticationSchemas";
 export {
     type BalanceResponse,

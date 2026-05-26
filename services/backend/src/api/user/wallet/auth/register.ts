@@ -1,4 +1,4 @@
-import { JwtContext, log } from "@backend-infrastructure";
+import { log } from "@backend-infrastructure";
 import { t } from "@backend-utils";
 import { WebAuthN } from "@frak-labs/app-essentials";
 import {
@@ -7,11 +7,7 @@ import {
 } from "@simplewebauthn/server";
 import { Elysia, getSchemaValidator, status } from "elysia";
 import type { PublicKeyCredential } from "ox/WebAuthnP256";
-import {
-    AuthContext,
-    type StaticWalletSdkTokenDto,
-    WalletAuthResponseDto,
-} from "../../../../domain/auth";
+import { AuthContext, WalletAuthResponseDto } from "../../../../domain/auth";
 import { OrchestrationContext } from "../../../../orchestration/context";
 import { FrakClientIdHeaderSchema } from "../../../schemas";
 
@@ -123,7 +119,6 @@ export const registerRoutes = new Elysia()
                         credentialBackedUp,
                         publicKey,
                         transports: credential.transports,
-                        email: cleanEmail,
                     }
                 );
 
@@ -145,47 +140,28 @@ export const registerRoutes = new Elysia()
                 return status(409, "Credential id conflict");
             }
 
-            const walletAddress = created
-                ? computedWalletAddress
-                : (document.smartWalletAddress ?? computedWalletAddress);
-
-            const additionalData: StaticWalletSdkTokenDto["additionalData"] =
-                {};
-
-            const sdkJwt =
-                await AuthContext.services.walletSdkSession.generateSdkJwt({
-                    wallet: walletAddress,
-                    additionalData,
-                });
-
-            const token = await JwtContext.wallet.sign({
-                address: walletAddress,
-                type: "webauthn",
-                authenticatorId: document._id,
-                publicKey: publicKey,
-                sub: walletAddress,
-                iat: Date.now(),
-            });
+            const session =
+                await OrchestrationContext.orchestrators.walletSession.sessionForVerifiedCredential(
+                    {
+                        credentialId: document._id,
+                        publicKey,
+                        transports: document.transports,
+                        fallbackWallet: computedWalletAddress,
+                    }
+                );
 
             if (created) {
                 await OrchestrationContext.orchestrators.identity.linkWalletToFingerprint(
                     {
-                        walletAddress,
+                        walletAddress: session.address,
                         clientId: headers["x-frak-client-id"],
                         merchantId: cleanMerchantId,
+                        email: cleanEmail,
                     }
                 );
             }
 
-            return {
-                token,
-                type: "webauthn",
-                address: walletAddress,
-                authenticatorId: document._id,
-                publicKey: document.publicKey,
-                transports: document.transports,
-                sdkJwt,
-            };
+            return session;
         },
         {
             body: t.Object({

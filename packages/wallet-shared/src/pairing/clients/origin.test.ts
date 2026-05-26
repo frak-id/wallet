@@ -57,11 +57,22 @@ type SafeSession =
 
 // Hoisted block: vi.mock factories run before any top-level statement, so
 // any reference they capture must be created via vi.hoisted().
-const { subscribeMock, mockedSafeSession } = vi.hoisted(() => ({
+const {
+    subscribeMock,
+    mockedSafeSession,
+    detachedState,
+    setDetachedSessionMock,
+    clearDetachedSessionMock,
+} = vi.hoisted(() => ({
     subscribeMock: vi.fn(
         (_args?: { query?: Record<string, unknown> }): unknown => undefined
     ),
     mockedSafeSession: vi.fn<() => SafeSession>(() => undefined),
+    // Mutable ref so individual tests can prime the detached slot before
+    // exercising reconnect / handleAuthenticated paths.
+    detachedState: { current: null as unknown },
+    setDetachedSessionMock: vi.fn(),
+    clearDetachedSessionMock: vi.fn(),
 }));
 
 // Wire the FakeWs factory in here so the FakeWs class is in scope. Tests
@@ -82,6 +93,9 @@ vi.mock("../../common/api/backendClient", () => ({
     },
 }));
 
+const sessionStoreSetSession = vi.fn();
+const sessionStoreSetSdkSession = vi.fn();
+
 vi.mock("../../stores/sessionStore", () => ({
     sessionStore: {
         getState: () => ({
@@ -91,9 +105,20 @@ vi.mock("../../stores/sessionStore", () => ({
                 pairingId: "pairing-1",
                 address: "0xabc",
             },
+            sdkSession: null,
             clearSession: vi.fn(),
-            setSession: vi.fn(),
-            setSdkSession: vi.fn(),
+            setSession: sessionStoreSetSession,
+            setSdkSession: sessionStoreSetSdkSession,
+        }),
+    },
+}));
+
+vi.mock("../../stores/detachedPairingSessionStore", () => ({
+    detachedPairingSessionStore: {
+        getState: () => ({
+            detached: detachedState.current,
+            setDetachedSession: setDetachedSessionMock,
+            clearDetachedSession: clearDetachedSessionMock,
         }),
     },
 }));
@@ -129,6 +154,11 @@ describe("OriginPairingClient", () => {
             pairingId: "pairing-1",
             address: "0xabc",
         }));
+        detachedState.current = null;
+        setDetachedSessionMock.mockClear();
+        clearDetachedSessionMock.mockClear();
+        sessionStoreSetSession.mockClear();
+        sessionStoreSetSdkSession.mockClear();
         // Clear sessionStorage so persisted pairing from prior tests doesn't
         // leak (the persist middleware reads it during construction).
         if (typeof window !== "undefined") {
@@ -388,9 +418,16 @@ describe("OriginPairingClient", () => {
         expect(subscribeMock).not.toHaveBeenCalled();
     });
 
-    test("authenticated message clears the persisted pairing state", () => {
+    test("authenticated message keeps the pairing id around for downstream consumers", () => {
+        // The cross-device wallet merge calls `/merge/settle` with the
+        // pairing id AFTER `authenticated` has landed; clearing the
+        // `pairing` slot here would force the backend to skip the
+        // `merge-completed` topic emission and leave the loser device
+        // stuck on its stale distant-webauthn session. Keep `pairing`
+        // around past auth — `reconnect()` already prefers the
+        // distant-webauthn / pendingDistantToken paths so the stale
+        // resume token never gets picked up.
         const ws = bringClientToPaired();
-        // Seed a pairing in state to simulate having gone through pairing-initiated.
         client.store.setState((prev) => ({
             ...prev,
             pairing: {
@@ -399,7 +436,6 @@ describe("OriginPairingClient", () => {
                 originResumeToken: "resume-token-xyz",
             },
         }));
-        expect(client.state.pairing).toBeDefined();
 
         ws.fire("message", {
             data: {
@@ -419,7 +455,8 @@ describe("OriginPairingClient", () => {
             },
         });
 
-        expect(client.state.pairing).toBeUndefined();
+        expect(client.state.status).toBe("paired");
+        expect(client.state.pairing?.id).toBe("pairing-1");
     });
 
     test("RESUME_TOKEN_EXPIRED close auto-reinitiates with the last options", async () => {
@@ -457,6 +494,91 @@ describe("OriginPairingClient", () => {
         });
         // 5. State is NOT in "error" — the close was consumed silently.
         expect(client.state.status).not.toBe("error");
+    });
+
+    test("authenticated message with detached:false writes to live sessionStore", async () => {
+        await client.initiatePairing();
+        const ws = getLastWs();
+        ws.fire("open");
+        ws.fire("message", {
+            data: {
+                type: "authenticated",
+                payload: {
+                    token: "detached-token",
+                    sdkJwt: { token: "sdk-jwt", expires: 0 },
+                    wallet: {
+                        type: "distant-webauthn",
+                        address: "0xabc",
+                        authenticatorId: "auth-1",
+                        publicKey: { x: "0x01", y: "0x02" },
+                        transports: undefined,
+                        pairingId: "pairing-1",
+                    },
+                },
+            },
+        });
+
+        expect(sessionStoreSetSession).toHaveBeenCalledTimes(1);
+        expect(setDetachedSessionMock).not.toHaveBeenCalled();
+    });
+
+    test("authenticated message with detached:true writes to detached store and leaves sessionStore alone", async () => {
+        await client.initiatePairing({ detached: true });
+        const ws = getLastWs();
+        ws.fire("open");
+        ws.fire("message", {
+            data: {
+                type: "authenticated",
+                payload: {
+                    token: "detached-token",
+                    sdkJwt: { token: "sdk-jwt", expires: 0 },
+                    wallet: {
+                        type: "distant-webauthn",
+                        address: "0xabc",
+                        authenticatorId: "auth-1",
+                        publicKey: { x: "0x01", y: "0x02" },
+                        transports: undefined,
+                        pairingId: "pairing-1",
+                    },
+                },
+            },
+        });
+
+        expect(setDetachedSessionMock).toHaveBeenCalledTimes(1);
+        expect(setDetachedSessionMock).toHaveBeenCalledWith({
+            pairingId: "pairing-1",
+            session: expect.objectContaining({
+                token: "detached-token",
+                pairingId: "pairing-1",
+            }),
+            sdkSession: { token: "sdk-jwt", expires: 0 },
+        });
+        expect(sessionStoreSetSession).not.toHaveBeenCalled();
+        expect(sessionStoreSetSdkSession).not.toHaveBeenCalled();
+    });
+
+    test("reconnect prefers detached session token over live distant-webauthn", () => {
+        detachedState.current = {
+            pairingId: "pairing-1",
+            session: {
+                type: "distant-webauthn",
+                token: "detached-token",
+                address: "0xabc",
+                authenticatorId: "auth-1",
+                publicKey: { x: "0x01", y: "0x02" },
+                pairingId: "pairing-1",
+                transports: undefined,
+            },
+            sdkSession: null,
+        };
+
+        subscribeMock.mockClear();
+        client.reconnect();
+
+        expect(subscribeMock).toHaveBeenCalledTimes(1);
+        expect(subscribeMock.mock.calls[0]?.[0]?.query).toEqual({
+            wallet: "detached-token",
+        });
     });
 
     test("RESUME_TOKEN_EXPIRED with no stashed options falls through to error state", () => {

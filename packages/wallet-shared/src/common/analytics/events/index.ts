@@ -12,6 +12,7 @@ import type { PairingEventMap } from "./pairing";
 import type { SharingEventMap } from "./sharing";
 import type { TokensEventMap } from "./tokens";
 import type { ListenerTxEventMap } from "./transaction";
+import type { WalletMergeEventMap } from "./walletMerge";
 
 export type { AuthEventMap } from "./auth";
 export type { DeepLinkEventMap, DeepLinkSource } from "./deepLink";
@@ -57,6 +58,11 @@ export type {
 export type { SharingEventMap, SharingSource } from "./sharing";
 export type { TokensEventMap, TokensSendAmountBucket } from "./tokens";
 export type { ListenerTxEventMap } from "./transaction";
+export type {
+    WalletMergeEventMap,
+    WalletMergeMode,
+    WalletMergeStep,
+} from "./walletMerge";
 
 export type EventMap = AuthEventMap &
     SharingEventMap &
@@ -72,4 +78,5 @@ export type EventMap = AuthEventMap &
     InstallEventMap &
     MoneriumEventMap &
     DeepLinkEventMap &
-    DiagnosticsEventMap;
+    DiagnosticsEventMap &
+    WalletMergeEventMap;
