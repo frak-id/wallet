@@ -17,6 +17,7 @@ import {
     useLoserAssetSummary,
 } from "../../hook/useLoserAssetSummary";
 import { useMergePreview } from "../../hook/useMergePreview";
+import type { MergeStrategy } from "../../strategy/types";
 import { useLocalMergeStrategy } from "../../strategy/useLocalMergeStrategy";
 import { useRemoteMergeStrategy } from "../../strategy/useRemoteMergeStrategy";
 import { AssetMigrationStep } from "../AssetMigrationStep";
@@ -203,6 +204,7 @@ export function MergeFlow({
     );
 
     const stepIndicator = renderStepIndicator(t, step.kind);
+    const peerSigningStep = resolvePeerSigningStep(strategy.mode, needsSwitch);
 
     if (step.kind === "discovery") {
         return (
@@ -293,6 +295,7 @@ export function MergeFlow({
                 onBack={() => setStep({ kind: "consent" })}
                 onCancel={handleAbort}
                 stepIndicator={stepIndicator}
+                isPeerSigning={peerSigningStep === "sign"}
             />
         );
     }
@@ -313,6 +316,7 @@ export function MergeFlow({
                 onBack={() => setStep({ kind: "sign", consentSignature })}
                 onCancel={handleAbort}
                 stepIndicator={stepIndicator}
+                isPeerSigning={peerSigningStep === "migrate"}
             />
         );
     }
@@ -340,6 +344,20 @@ export function MergeFlow({
     }
 
     return null;
+}
+
+/**
+ * Which signing step (if any) is routed through the paired mobile in
+ * the current cross-device direction. Mirrors the transport matrix in
+ * `useRemoteMergeStrategy`. Local merges and pre-preview state both
+ * resolve to `null`.
+ */
+function resolvePeerSigningStep(
+    mode: MergeStrategy["mode"],
+    needsSwitch: boolean | undefined
+): "sign" | "migrate" | null {
+    if (mode !== "remote" || needsSwitch === undefined) return null;
+    return needsSwitch ? "sign" : "migrate";
 }
 
 /**

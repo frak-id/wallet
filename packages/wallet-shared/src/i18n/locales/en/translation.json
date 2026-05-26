@@ -133,6 +133,10 @@
         },
         "merge": {
             "stepIndicator": "Step {{current}}/{{total}}",
+            "peerWaiting": {
+                "title": "Approve on your other device",
+                "description": "We sent the request to your paired device — confirm it there and we'll continue automatically."
+            },
             "discovery": {
                 "title": "Combine your accounts",
                 "description": "Pick how you want to confirm — on this device, or on the device that holds your other passkey.",

@@ -701,6 +701,10 @@ interface Resources {
                     summaryRetry: "Retry";
                     title: "Moving your funds…";
                 };
+                peerWaiting: {
+                    description: "We sent the request to your paired device — confirm it there and we'll continue automatically.";
+                    title: "Approve on your other device";
+                };
                 preview: {
                     cancel: "Cancel";
                     combineArrow: "↓ combine into ↓";

@@ -10,6 +10,7 @@ import { Back } from "@/module/common/component/Back";
 import { PageLayout } from "@/module/common/component/PageLayout";
 import { Title } from "@/module/common/component/Title";
 import type { SendAddPassKeyMutation } from "../../strategy/types";
+import { RemotePeerWaitingCard } from "../RemotePeerWaitingCard";
 import * as styles from "../stepLayout.css";
 
 type SignStepProps = {
@@ -35,6 +36,12 @@ type SignStepProps = {
     sendAddPassKey: SendAddPassKeyMutation;
     /** Optional step indicator rendered in the header center (e.g. "4/5"). */
     stepIndicator?: ReactNode;
+    /**
+     * `true` when the addPassKey signing is routed through the paired
+     * mobile (cross-device, desktop=loser). Surfaces the shared "approve
+     * on your other device" card while the WS request is in flight.
+     */
+    isPeerSigning?: boolean;
 };
 
 /**
@@ -56,6 +63,7 @@ export function SignStep({
     onCancel,
     sendAddPassKey,
     stepIndicator,
+    isPeerSigning = false,
 }: SignStepProps) {
     const { t } = useTranslation();
 
@@ -124,6 +132,10 @@ export function SignStep({
                             : t("wallet.merge.sign.description")}
                     </Text>
                 </Stack>
+
+                {isPeerSigning && sendAddPassKey.isPending && (
+                    <RemotePeerWaitingCard />
+                )}
 
                 {sendAddPassKey.isError && (
                     <Card variant="muted" padding="default">

@@ -13,6 +13,7 @@ import { Title } from "@/module/common/component/Title";
 import type { LoserAssetSummary } from "../../hook/useLoserAssetSummary";
 import type { MigrateLoserAssetsMutation } from "../../strategy/types";
 import { FundsList } from "../FundsList";
+import { RemotePeerWaitingCard } from "../RemotePeerWaitingCard";
 import * as styles from "./index.css";
 
 type AssetMigrationStepProps = {
@@ -35,6 +36,13 @@ type AssetMigrationStepProps = {
     onCancel: () => void;
     /** Optional step indicator rendered in the header center (e.g. "4/5"). */
     stepIndicator?: ReactNode;
+    /**
+     * `true` when the migrate userOp is routed through the paired mobile
+     * (cross-device, desktop=winner). Swaps the on-chain pending hint for
+     * the shared "approve on your other device" card while the WS
+     * signature-request is in flight.
+     */
+    isPeerSigning?: boolean;
 };
 
 /**
@@ -63,6 +71,7 @@ export function AssetMigrationStep({
     onBack,
     onCancel,
     stepIndicator,
+    isPeerSigning = false,
 }: AssetMigrationStepProps) {
     const { t } = useTranslation();
 
@@ -161,18 +170,21 @@ export function AssetMigrationStep({
                     </Card>
                 )}
 
-                {migrate.isPending && (
-                    <Card
-                        variant="muted"
-                        padding="default"
-                        role="status"
-                        aria-live="polite"
-                    >
-                        <Text variant="bodySmall" color="secondary">
-                            {t("wallet.merge.migrate.pending")}
-                        </Text>
-                    </Card>
-                )}
+                {migrate.isPending &&
+                    (isPeerSigning ? (
+                        <RemotePeerWaitingCard />
+                    ) : (
+                        <Card
+                            variant="muted"
+                            padding="default"
+                            role="status"
+                            aria-live="polite"
+                        >
+                            <Text variant="bodySmall" color="secondary">
+                                {t("wallet.merge.migrate.pending")}
+                            </Text>
+                        </Card>
+                    ))}
 
                 {migrate.isError && (
                     <Card

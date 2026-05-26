@@ -86,6 +86,7 @@ export function ConsentStep({
     }, []);
 
     if (remoteConsent) {
+        const peerIsPaired = strategy.remote?.pairingState.status === "paired";
         return (
             <RemoteConsentBody
                 strategy={strategy}
@@ -97,6 +98,7 @@ export function ConsentStep({
                 }}
                 onBack={onBack}
                 stepIndicator={stepIndicator}
+                showPeerWaiting={consent.isPending && peerIsPaired}
             />
         );
     }
@@ -160,6 +162,7 @@ function RemoteConsentBody(props: {
     onRetry: () => void;
     onBack: () => void;
     stepIndicator?: ReactNode;
+    showPeerWaiting?: boolean;
 }) {
     return (
         <RemotePairingPanel

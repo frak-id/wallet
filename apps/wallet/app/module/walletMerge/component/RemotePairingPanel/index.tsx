@@ -11,6 +11,7 @@ import { Back } from "@/module/common/component/Back";
 import { PageLayout } from "@/module/common/component/PageLayout";
 import { Title } from "@/module/common/component/Title";
 import type { MergeStrategy } from "../../strategy/types";
+import { RemotePeerWaitingCard } from "../RemotePeerWaitingCard";
 import * as styles from "../stepLayout.css";
 
 export type RemotePairingPanelI18nKeys = {
@@ -29,6 +30,13 @@ type RemotePairingPanelProps = {
     i18nKeys: RemotePairingPanelI18nKeys;
     /** Optional step indicator rendered in the header center (e.g. "3/5"). */
     stepIndicator?: ReactNode;
+    /**
+     * When true, renders the shared "request sent — approve on your other
+     * device" card under the QR. Callers gate this on the relevant
+     * mutation being in-flight AND the WS being paired so the cue only
+     * surfaces once the peer has actually been asked to sign.
+     */
+    showPeerWaiting?: boolean;
 };
 
 /**
@@ -43,6 +51,7 @@ export function RemotePairingPanel({
     onBack,
     i18nKeys,
     stepIndicator,
+    showPeerWaiting = false,
 }: RemotePairingPanelProps) {
     const { t } = useTranslation();
     const pairingInfo = strategy.remote?.pairingState.pairing;
@@ -97,6 +106,8 @@ export function RemotePairingPanel({
                         </Stack>
                     </Box>
                 )}
+
+                {showPeerWaiting && <RemotePeerWaitingCard />}
 
                 {isError && (
                     <Card

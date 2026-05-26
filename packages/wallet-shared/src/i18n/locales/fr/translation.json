@@ -131,6 +131,10 @@
         },
         "merge": {
             "stepIndicator": "Étape {{current}}/{{total}}",
+            "peerWaiting": {
+                "title": "Valide sur ton autre appareil",
+                "description": "On a envoyé la demande à ton appareil pairé — valide-la là-bas, on continue automatiquement."
+            },
             "discovery": {
                 "title": "Combine tes comptes",
                 "description": "Choisis comment confirmer — sur cet appareil, ou sur l'appareil qui contient ton autre passkey.",
