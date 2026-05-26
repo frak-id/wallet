@@ -39,6 +39,19 @@ export type ReactTableProps<TData> = {
     rowSelection?: RowSelectionState;
     rowPinning?: RowPinningState;
     pagination?: PaginationState;
+    /**
+     * Per-row data-* attributes. Each entry maps an attribute name (e.g.
+     * `data-selected`) to a function returning its stringified value (or
+     * undefined to omit). Used to drive row-level visual states from CSS
+     * without polluting the column definitions.
+     */
+    rowDataAttributes?: Record<string, (row: Row<TData>) => string | undefined>;
+    /**
+     * Whether any row in the dataset is currently selected. When true the
+     * table receives `data-any-selected="true"` so unselected rows can be
+     * dimmed via CSS.
+     */
+    anySelected?: boolean;
 } & Omit<
     TableOptions<TData>,
     "state" | "getCoreRowModel" | "getSortedRowModel" | "getFilteredRowModel"
@@ -58,6 +71,8 @@ export function Table<TData extends object>({
     rowSelection,
     rowPinning,
     pagination,
+    rowDataAttributes,
+    anySelected,
     ...additionalProps
 }: ReactTableProps<TData>) {
     const [sortingInner, setSortingInner] = useState<SortingState>([]);
@@ -102,7 +117,10 @@ export function Table<TData extends object>({
         <div className={clsx(tableWrapper, classNameWrapper)}>
             {preTable && <div className={preTableStyle}>{preTable}</div>}
 
-            <table className={clsx(tableStyle, className)}>
+            <table
+                className={clsx(tableStyle, className)}
+                data-any-selected={anySelected ? "true" : undefined}
+            >
                 <thead>
                     {table.getHeaderGroups().map((headerGroup) => (
                         <tr key={headerGroup.id}>
@@ -130,26 +148,40 @@ export function Table<TData extends object>({
                             </td>
                         </tr>
                     ) : (
-                        rowModel.rows.map((row) => (
-                            <tr
-                                key={row.id}
-                                data-clickable={onRowClick ? "true" : undefined}
-                                onClick={
-                                    onRowClick
-                                        ? () => onRowClick(row)
-                                        : undefined
-                                }
-                            >
-                                {row.getVisibleCells().map((cell) => (
-                                    <td key={cell.id}>
-                                        {flexRender(
-                                            cell.column.columnDef.cell,
-                                            cell.getContext()
-                                        )}
-                                    </td>
-                                ))}
-                            </tr>
-                        ))
+                        rowModel.rows.map((row) => {
+                            const extraAttrs = rowDataAttributes
+                                ? Object.fromEntries(
+                                      Object.entries(rowDataAttributes)
+                                          .map(([name, fn]) => [name, fn(row)])
+                                          .filter(
+                                              ([, value]) => value !== undefined
+                                          )
+                                  )
+                                : undefined;
+                            return (
+                                <tr
+                                    key={row.id}
+                                    data-clickable={
+                                        onRowClick ? "true" : undefined
+                                    }
+                                    onClick={
+                                        onRowClick
+                                            ? () => onRowClick(row)
+                                            : undefined
+                                    }
+                                    {...extraAttrs}
+                                >
+                                    {row.getVisibleCells().map((cell) => (
+                                        <td key={cell.id}>
+                                            {flexRender(
+                                                cell.column.columnDef.cell,
+                                                cell.getContext()
+                                            )}
+                                        </td>
+                                    ))}
+                                </tr>
+                            );
+                        })
                     )}
                 </tbody>
 

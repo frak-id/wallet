@@ -92,3 +92,14 @@ globalStyle(`${table} > tbody > tr[data-clickable="true"]`, {
 globalStyle(`${table} > tbody > tr[data-clickable="true"]:hover`, {
     backgroundColor: vars.surface.muted,
 });
+
+globalStyle(`${table} > tbody > tr[data-selected="true"] > td`, {
+    backgroundColor: vars.surface.secondary,
+});
+
+globalStyle(
+    `${table}[data-any-selected="true"] > tbody > tr:not([data-selected="true"]) > td`,
+    {
+        opacity: 0.5,
+    }
+);

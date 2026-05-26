@@ -1,15 +1,17 @@
+import { Checkbox } from "@frak-labs/design-system/components/Checkbox";
 import { Skeleton } from "@frak-labs/design-system/components/Skeleton";
 import { Stack } from "@frak-labs/design-system/components/Stack";
-import type { ColumnDef } from "@tanstack/react-table";
+import type { ColumnDef, Row } from "@tanstack/react-table";
 import {
     type CellContext,
     type ColumnFiltersState,
     createColumnHelper,
 } from "@tanstack/react-table";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import type { DateRange } from "react-day-picker";
 import { CampaignDetailsSheet } from "@/module/campaigns/component/CampaignDetailsSheet";
 import { CampaignStateTag } from "@/module/campaigns/component/TableCampaigns/CampaignStateTag";
+import { CampaignsEditBar } from "@/module/campaigns/component/TableCampaigns/CampaignsEditBar";
 import { CellRowMenu } from "@/module/campaigns/component/TableCampaigns/CellRowMenu";
 import {
     type CampaignTab,
@@ -21,6 +23,7 @@ import { Table } from "@/module/common/component/Table";
 import { useActiveMerchantId } from "@/module/common/hook/useActiveMerchantId";
 import { formatDate } from "@/module/common/utils/formatDate";
 import { formatPrice } from "@/module/common/utils/formatPrice";
+import { campaignSelectionStore } from "@/stores/campaignSelectionStore";
 import type { CampaignWithActions } from "@/types/Campaign";
 import * as styles from "./table-campaigns.css";
 
@@ -33,10 +36,76 @@ export function TableCampaigns() {
     const [selectedCampaign, setSelectedCampaign] = useState<
         CampaignWithActions | undefined
     >();
+    const selectedIds = campaignSelectionStore((state) => state.selectedIds);
+    const toggleSelection = campaignSelectionStore((state) => state.toggle);
+    const setManySelection = campaignSelectionStore((state) => state.setMany);
+    const clearSelection = campaignSelectionStore((state) => state.clear);
+
+    // Reset bulk selection whenever the active merchant changes — the
+    // previous merchant's campaign ids no longer apply.
+    useEffect(() => {
+        clearSelection();
+    }, [merchantId, clearSelection]);
+
+    const selectedCampaigns = useMemo(
+        () => (data ?? []).filter((c) => selectedIds.has(c.id)),
+        [data, selectedIds]
+    );
 
     const columns = useMemo(
         () =>
             [
+                columnHelper.display({
+                    id: "select",
+                    header: ({ table }) => {
+                        const visibleIds = table
+                            .getRowModel()
+                            .rows.map((r) => r.original.id);
+                        const selectedVisible = visibleIds.filter((id) =>
+                            selectedIds.has(id)
+                        );
+                        const checked =
+                            visibleIds.length > 0 &&
+                            selectedVisible.length === visibleIds.length
+                                ? true
+                                : selectedVisible.length > 0
+                                  ? "indeterminate"
+                                  : false;
+                        return (
+                            <div
+                                onClick={(e) => e.stopPropagation()}
+                                onKeyDown={(e) => e.stopPropagation()}
+                            >
+                                <Checkbox
+                                    id="campaign-select-all"
+                                    checked={checked}
+                                    disabled={visibleIds.length === 0}
+                                    onCheckedChange={() => {
+                                        if (selectedVisible.length > 0) {
+                                            clearSelection();
+                                        } else {
+                                            setManySelection(visibleIds);
+                                        }
+                                    }}
+                                />
+                            </div>
+                        );
+                    },
+                    cell: ({ row }) => (
+                        <div
+                            onClick={(e) => e.stopPropagation()}
+                            onKeyDown={(e) => e.stopPropagation()}
+                        >
+                            <Checkbox
+                                id={`campaign-select-${row.original.id}`}
+                                checked={selectedIds.has(row.original.id)}
+                                onCheckedChange={() =>
+                                    toggleSelection(row.original.id)
+                                }
+                            />
+                        </div>
+                    ),
+                }),
                 columnHelper.accessor("name", {
                     enableSorting: false,
                     header: () => "Campaign",
@@ -96,7 +165,21 @@ export function TableCampaigns() {
                     ),
                 }),
             ] as ColumnDef<CampaignWithActions>[],
-        [merchantId]
+        [
+            merchantId,
+            selectedIds,
+            toggleSelection,
+            setManySelection,
+            clearSelection,
+        ]
+    );
+
+    const rowDataAttributes = useMemo(
+        () => ({
+            "data-selected": (row: Row<CampaignWithActions>) =>
+                selectedIds.has(row.original.id) ? "true" : undefined,
+        }),
+        [selectedIds]
     );
 
     if (!data) {
@@ -110,6 +193,12 @@ export function TableCampaigns() {
                     columnFilters={columnFilters}
                     setColumnFilters={setColumnFilters}
                 />
+                {selectedCampaigns.length > 0 && (
+                    <CampaignsEditBar
+                        merchantId={merchantId}
+                        selected={selectedCampaigns}
+                    />
+                )}
                 <Table
                     data={data}
                     columns={columns}
@@ -117,6 +206,8 @@ export function TableCampaigns() {
                     enableFiltering={true}
                     columnFilters={columnFilters}
                     onRowClick={(row) => setSelectedCampaign(row.original)}
+                    rowDataAttributes={rowDataAttributes}
+                    anySelected={selectedCampaigns.length > 0}
                 />
                 <CampaignDetailsSheet
                     campaign={selectedCampaign}
