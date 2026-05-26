@@ -2,6 +2,10 @@ import { vars } from "@frak-labs/design-system/theme";
 import { alias } from "@frak-labs/design-system/tokens";
 import { style } from "@vanilla-extract/css";
 
+export const body = style({
+    padding: alias.spacing.l,
+});
+
 export const sectionTitle = style({
     margin: 0,
     fontSize: "13px",

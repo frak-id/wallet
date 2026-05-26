@@ -5,13 +5,13 @@ import {
     DetailSheetFooter,
     DetailSheetHero,
 } from "@frak-labs/design-system/components/DetailSheet";
+import { GlassButton } from "@frak-labs/design-system/components/GlassButton";
 import { Text } from "@frak-labs/design-system/components/Text";
 import { ShareIcon } from "@frak-labs/design-system/icons";
 import { ExternalLink, useShareLink } from "@frak-labs/wallet-shared";
 import { useCallback } from "react";
 import { Trans, useTranslation } from "react-i18next";
 import { ButtonLink } from "@/module/common/component/ButtonLink";
-import { GlassButton } from "@/module/common/component/GlassButton";
 import { GlassCloseButton } from "@/module/common/component/GlassCloseButton";
 import { InstructionList } from "@/module/common/component/InstructionList";
 import { Title } from "@/module/common/component/Title";

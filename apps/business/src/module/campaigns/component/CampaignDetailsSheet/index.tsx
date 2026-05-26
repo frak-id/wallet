@@ -1,15 +1,11 @@
+import { GlassCloseButton } from "@frak-labs/design-system/components/GlassCloseButton";
 import {
     Sheet,
-    SheetClose,
     SheetContent,
-    SheetDescription,
-    SheetFooter,
-    SheetHeader,
-    SheetTitle,
+    SheetToolbar,
 } from "@frak-labs/design-system/components/Sheet";
 import { Stack } from "@frak-labs/design-system/components/Stack";
 import { CampaignStateTag } from "@/module/campaigns/component/TableCampaigns/CampaignStateTag";
-import { Button } from "@/module/common/component/Button";
 import { formatDate } from "@/module/common/utils/formatDate";
 import { formatPrice } from "@/module/common/utils/formatPrice";
 import type { CampaignWithActions } from "@/types/Campaign";
@@ -23,8 +19,18 @@ type Props = {
 export function CampaignDetailsSheet({ campaign, onOpenChange }: Props) {
     return (
         <Sheet open={!!campaign} onOpenChange={onOpenChange}>
-            <SheetContent side="right">
-                {campaign && <CampaignDetailsContent campaign={campaign} />}
+            <SheetContent
+                side="right"
+                size="wide"
+                padded={false}
+                hideCloseButton
+            >
+                {campaign && (
+                    <CampaignDetailsContent
+                        campaign={campaign}
+                        onClose={() => onOpenChange(false)}
+                    />
+                )}
             </SheetContent>
         </Sheet>
     );
@@ -32,8 +38,10 @@ export function CampaignDetailsSheet({ campaign, onOpenChange }: Props) {
 
 function CampaignDetailsContent({
     campaign,
+    onClose,
 }: {
     campaign: CampaignWithActions;
+    onClose: () => void;
 }) {
     const startDate = campaign.publishedAt ?? campaign.createdAt;
     const firstBudget = campaign.budgetConfig?.[0];
@@ -43,65 +51,65 @@ function CampaignDetailsContent({
 
     return (
         <>
-            <SheetHeader>
-                <SheetTitle>{campaign.name}</SheetTitle>
-                <SheetDescription asChild>
-                    <span>
-                        <CampaignStateTag
-                            status={campaign.status}
-                            expiresAt={campaign.expiresAt}
-                            bankDistributionStatus={
-                                campaign.bankDistributionStatus
+            <SheetToolbar
+                leading={
+                    <GlassCloseButton
+                        onClick={onClose}
+                        aria-label="Close campaign details"
+                    />
+                }
+                title={campaign.name}
+                subtitle={
+                    <CampaignStateTag
+                        status={campaign.status}
+                        expiresAt={campaign.expiresAt}
+                        bankDistributionStatus={campaign.bankDistributionStatus}
+                    />
+                }
+            />
+
+            <div className={styles.body}>
+                <Stack space="l">
+                    <Section title="Schedule">
+                        <Row
+                            label="Published"
+                            value={
+                                startDate
+                                    ? formatDate(new Date(startDate))
+                                    : "—"
                             }
                         />
-                    </span>
-                </SheetDescription>
-            </SheetHeader>
-
-            <Stack space="l">
-                <Section title="Schedule">
-                    <Row
-                        label="Published"
-                        value={
-                            startDate ? formatDate(new Date(startDate)) : "—"
-                        }
-                    />
-                    <Row
-                        label="End date"
-                        value={
-                            campaign.expiresAt
-                                ? formatDate(new Date(campaign.expiresAt))
-                                : "No end date"
-                        }
-                    />
-                </Section>
-
-                {firstBudget && (
-                    <Section title="Budget">
                         <Row
-                            label="Remaining"
-                            value={`${formatPrice(
-                                remaining,
-                                undefined,
-                                "EUR"
-                            )} / ${formatPrice(
-                                firstBudget.amount,
-                                undefined,
-                                "EUR"
-                            )}`}
+                            label="End date"
+                            value={
+                                campaign.expiresAt
+                                    ? formatDate(new Date(campaign.expiresAt))
+                                    : "No end date"
+                            }
                         />
-                        <div className={styles.budgetType}>
-                            {firstBudget.label || "Global"}
-                        </div>
                     </Section>
-                )}
-            </Stack>
 
-            <SheetFooter>
-                <SheetClose asChild>
-                    <Button variant="ghost">Close</Button>
-                </SheetClose>
-            </SheetFooter>
+                    {firstBudget && (
+                        <Section title="Budget">
+                            <Row
+                                label="Remaining"
+                                value={`${formatPrice(
+                                    remaining,
+                                    undefined,
+                                    "EUR"
+                                )} / ${formatPrice(
+                                    firstBudget.amount,
+                                    undefined,
+                                    "EUR"
+                                )}`}
+                            />
+                            <div className={styles.budgetType}>
+                                {firstBudget.label || "Global"}
+                            </div>
+                        </Section>
+                    )}
+                </Stack>
+            </div>
         </>
     );
 }

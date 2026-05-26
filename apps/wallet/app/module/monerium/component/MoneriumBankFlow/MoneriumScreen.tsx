@@ -4,11 +4,11 @@ import {
     DetailSheet,
     DetailSheetFooter,
 } from "@frak-labs/design-system/components/DetailSheet";
+import { GlassButton } from "@frak-labs/design-system/components/GlassButton";
 import { Stack } from "@frak-labs/design-system/components/Stack";
 import { ArrowLeftIcon, CloseIcon } from "@frak-labs/design-system/icons";
 import type { ReactNode } from "react";
 import { useTranslation } from "react-i18next";
-import { GlassButton } from "@/module/common/component/GlassButton";
 import { Title } from "@/module/common/component/Title";
 import * as styles from "./index.css";
 

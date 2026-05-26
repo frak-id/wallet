@@ -11,6 +11,7 @@ import {
     DetailSheetFooter,
     DetailSheetHero,
 } from "@frak-labs/design-system/components/DetailSheet";
+import { GlassButton } from "@frak-labs/design-system/components/GlassButton";
 import { Text } from "@frak-labs/design-system/components/Text";
 import {
     CalendarIcon,
@@ -39,7 +40,6 @@ import { useQuery } from "@tanstack/react-query";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Trans, useTranslation } from "react-i18next";
 import { useStore } from "zustand";
-import { GlassButton } from "@/module/common/component/GlassButton";
 import { GlassCloseButton } from "@/module/common/component/GlassCloseButton";
 import { InfoCard, InfoRow } from "@/module/common/component/InfoCard";
 import { InstructionList } from "@/module/common/component/InstructionList";

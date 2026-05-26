@@ -6,6 +6,7 @@ import { Overlay } from "../Overlay";
 import {
     sheetCloseStyle,
     sheetContentBaseStyle,
+    sheetContentPaddedStyle,
     sheetContentVariants,
     sheetDescriptionStyle,
     sheetFooterStyle,
@@ -13,6 +14,8 @@ import {
     sheetSizeVariants,
     sheetTitleStyle,
 } from "./sheet.css";
+
+export { SheetToolbar } from "./SheetToolbar";
 
 export type SheetSide = "top" | "right" | "bottom" | "left";
 export type SheetSize = "default" | "wide";
@@ -88,6 +91,12 @@ type SheetContentProps = ComponentPropsWithRef<typeof RadixDialog.Content> & {
     children: ReactNode;
     /** Hides the built-in close (X) button. */
     hideCloseButton?: boolean;
+    /**
+     * Apply the default 24px padding + 16px vertical gap to the content.
+     * Set to `false` when using `SheetToolbar` (or any custom header) that
+     * manages its own padding edge-to-edge.
+     */
+    padded?: boolean;
 };
 
 /**
@@ -99,6 +108,7 @@ export function SheetContent({
     className,
     children,
     hideCloseButton = false,
+    padded = true,
     ...props
 }: SheetContentProps) {
     const isHorizontal = side === "right" || side === "left";
@@ -108,8 +118,10 @@ export function SheetContent({
                 <Overlay />
             </RadixDialog.Overlay>
             <RadixDialog.Content
+                aria-describedby={undefined}
                 className={clsx(
                     sheetContentBaseStyle,
+                    padded && sheetContentPaddedStyle,
                     sheetContentVariants[side],
                     isHorizontal && sheetSizeVariants[size],
                     className

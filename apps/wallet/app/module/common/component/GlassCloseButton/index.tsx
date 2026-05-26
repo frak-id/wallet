@@ -1,6 +1,5 @@
-import { CloseIcon } from "@frak-labs/design-system/icons";
+import { GlassCloseButton as BaseGlassCloseButton } from "@frak-labs/design-system/components/GlassCloseButton";
 import { useTranslation } from "react-i18next";
-import { GlassButton } from "@/module/common/component/GlassButton";
 
 type GlassCloseButtonProps = {
     onClick: () => void;
@@ -14,14 +13,8 @@ type GlassCloseButtonProps = {
 };
 
 /**
- * iOS-26 frosted-glass close affordance. Wraps `GlassButton` so the X
- * sits inside the same liquid-glass circle used by `Back` and the
- * detail-sheet share buttons.
- *
- * Use this for full-screen detail sheets / overlays. For plain X buttons
- * inside small confirmation modals (alert dialogs, empty states), reach
- * for `CloseButton` instead — it renders a flat `<button><CloseIcon/></button>`
- * with no glass background.
+ * Wallet wrapper that injects the i18n default for `aria-label`. The styled
+ * primitive lives in `@frak-labs/design-system`.
  */
 export function GlassCloseButton({
     onClick,
@@ -30,9 +23,7 @@ export function GlassCloseButton({
 }: GlassCloseButtonProps) {
     const { t } = useTranslation();
     return (
-        <GlassButton
-            as="button"
-            icon={<CloseIcon width={22} height={22} />}
+        <BaseGlassCloseButton
             onClick={onClick}
             disabled={disabled}
             aria-label={label ?? t("common.close")}

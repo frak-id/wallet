@@ -26,12 +26,10 @@ const slideInBottom = keyframes({
 export const sheetContentBaseStyle = style({
     position: "fixed",
     zIndex: zIndex.modal + 1,
-    backgroundColor: vars.surface.elevated,
+    backgroundColor: vars.surface.background2,
     boxShadow: shadow.dialog,
     display: "flex",
     flexDirection: "column",
-    gap: alias.spacing.m,
-    padding: alias.spacing.l,
     width: "100vw",
     maxWidth: "100vw",
     overflowY: "auto",
@@ -42,6 +40,11 @@ export const sheetContentBaseStyle = style({
     },
 });
 
+export const sheetContentPaddedStyle = style({
+    gap: alias.spacing.m,
+    padding: alias.spacing.l,
+});
+
 export const sheetContentVariants = styleVariants({
     right: [
         {
@@ -49,12 +52,6 @@ export const sheetContentVariants = styleVariants({
             right: 0,
             height: "100dvh",
             animationName: slideInRight,
-            "@media": {
-                [`screen and (min-width: ${tablet}px)`]: {
-                    borderTopLeftRadius: alias.cornerRadius.l,
-                    borderBottomLeftRadius: alias.cornerRadius.l,
-                },
-            },
         },
     ],
     left: [
@@ -63,12 +60,6 @@ export const sheetContentVariants = styleVariants({
             left: 0,
             height: "100dvh",
             animationName: slideInLeft,
-            "@media": {
-                [`screen and (min-width: ${tablet}px)`]: {
-                    borderTopRightRadius: alias.cornerRadius.l,
-                    borderBottomRightRadius: alias.cornerRadius.l,
-                },
-            },
         },
     ],
     top: [
@@ -114,8 +105,8 @@ export const sheetSizeVariants = styleVariants({
         {
             "@media": {
                 [`screen and (min-width: ${tablet}px)`]: {
-                    width: "600px",
-                    maxWidth: "min(600px, 100vw)",
+                    width: "640px",
+                    maxWidth: "min(640px, 100vw)",
                 },
             },
         },

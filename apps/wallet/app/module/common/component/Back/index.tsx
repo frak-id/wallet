@@ -1,10 +1,10 @@
 import { Box } from "@frak-labs/design-system/components/Box";
+import { GlassButton } from "@frak-labs/design-system/components/GlassButton";
 import { Text } from "@frak-labs/design-system/components/Text";
 import { ArrowLeftIcon } from "@frak-labs/design-system/icons";
 import { Link } from "@tanstack/react-router";
 import type { PropsWithChildren, ReactNode } from "react";
 import { useTranslation } from "react-i18next";
-import { GlassButton } from "@/module/common/component/GlassButton";
 import * as styles from "./index.css";
 
 type BackProps = {

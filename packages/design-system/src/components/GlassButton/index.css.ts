@@ -1,12 +1,6 @@
-import { vars } from "@frak-labs/design-system/theme";
 import { style } from "@vanilla-extract/css";
+import { vars } from "../../theme.css";
 
-/**
- * Liquid Glass circle — iOS 26 style, powered by @tinymomentum/liquid-glass-react.
- *
- * The inner LiquidGlassBase renders a div.liquid-glass-container (width/height: 100%)
- * that fills this wrapper. Our wrapper controls the final 44×44 dimensions.
- */
 export const glassCircle = style({
     position: "relative",
     width: 44,
@@ -20,6 +14,12 @@ export const glassCircle = style({
     background: "none",
     padding: 0,
     color: "inherit",
+    borderRadius: "9999px",
+    outline: "none",
+    selectors: {
+        "&:focus": { outline: "none" },
+        "&:focus-visible": { outline: "none" },
+    },
 });
 
 export const glassCircleDisabled = style({

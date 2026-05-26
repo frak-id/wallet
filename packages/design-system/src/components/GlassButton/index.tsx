@@ -3,9 +3,6 @@ import "@tinymomentum/liquid-glass-react/dist/components/LiquidGlassBase.css";
 import type { ButtonHTMLAttributes, HTMLAttributes, ReactNode } from "react";
 import * as styles from "./index.css";
 
-/**
- * Liquid glass visual config matching the iOS 26 Figma spec.
- */
 const glassConfig = {
     width: 44,
     height: 44,
@@ -19,31 +16,29 @@ const glassConfig = {
     noiseFrequency: 0.008,
     noiseStrength: 1,
 } as const;
+
 type GlassButtonBaseProps = {
-    /** Icon rendered inside the glass circle. */
     icon: ReactNode;
     disabled?: boolean;
 };
 
 type GlassButtonAsButton = GlassButtonBaseProps &
     Omit<ButtonHTMLAttributes<HTMLButtonElement>, "children"> & {
-        /** Render as interactive `<button>`. Use for standalone glass buttons. */
         as: "button";
     };
 
 type GlassButtonAsSpan = GlassButtonBaseProps &
     Omit<HTMLAttributes<HTMLSpanElement>, "children"> & {
-        /** Render as `<span>` (default). Use inside `<Back>` or other interactive wrappers. */
         as?: "span";
     };
 
-type GlassButtonProps = GlassButtonAsButton | GlassButtonAsSpan;
+export type GlassButtonProps = GlassButtonAsButton | GlassButtonAsSpan;
 
 /**
  * Frosted-glass circular icon — iOS 26 liquid glass via @tinymomentum/liquid-glass-react.
  *
  * - `as="button"` (standalone): renders `<button>` — use for close, share, etc.
- * - `as="span"` (default): renders `<span>` — use inside `<Back>` or `<Link>` to avoid nested buttons.
+ * - `as="span"` (default): renders `<span>` — use inside `<Back>` / `<Link>` to avoid nested buttons.
  */
 export function GlassButton({
     icon,
