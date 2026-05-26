@@ -58,6 +58,20 @@
             "link": "Ajouter la bannière Frak à votre thème"
         }
     },
+    "optionalSetup": {
+        "title": "Finalisez votre configuration avec les composants UI pour vos utilisateurs",
+        "description": "Votre boutique est en ligne et peut déjà distribuer des récompenses. Ces deux composants optionnels améliorent le partage organique et la conversion des filleuls. Ajoutez-les quand vous êtes prêt.",
+        "shareButton": {
+            "title": "Ajoutez le bouton de partage à vos pages produit",
+            "description": "Ajoute un bouton de partage en un clic sur chaque page produit. Vos visiteurs partagent la page avec leur réseau, et le lien embarque automatiquement leur identité de parrain pour qu'ils gagnent une récompense lorsqu'un filleul achète.",
+            "cta": "Ouvrir l'éditeur de thème"
+        },
+        "banner": {
+            "title": "Ajoutez la bannière filleul à votre thème",
+            "description": "Affichée uniquement aux visiteurs qui arrivent sur votre boutique via un lien de parrainage. La bannière leur confirme qu'ils ont été invités, explique la récompense qu'ils obtiendront en achetant, et transforme une visite froide en conversion qualifiée.",
+            "cta": "Ouvrir l'éditeur de thème"
+        }
+    },
     "pixel": {
         "title": "Pixel d'application",
         "connected": "Votre pixel est connecté à votre boutique.",
@@ -141,6 +155,13 @@
             "title": "Enregistrer votre boutique",
             "button": "Enregistrer votre boutique dans l'écosystème Frak",
             "close": "Fermer"
+        },
+        "newsletterShare": {
+            "title": "Lien de partage pour newsletter",
+            "description": "Collez ce lien dans votre newsletter ou tout autre e-mail marketing. Lorsqu'un client cliquera dessus, votre boutique s'ouvrira avec la modale de partage Frak, pré-remplie avec les récompenses de vos campagnes en cours, pour qu'il puisse partager et gagner en un clic.",
+            "copy": "Copier le lien",
+            "copied": "Lien de partage copié dans le presse-papiers",
+            "copyError": "Impossible de copier le lien. Merci de le copier manuellement."
         },
 
         "campaign": {

@@ -1,4 +1,5 @@
 import { CampaignStatus } from "app/components/Campaign";
+import { NewsletterShareLink } from "app/components/Sharing";
 import { ExternalButton } from "app/components/ui/ExternalLink";
 import { PageHeading } from "app/components/ui/PageHeading";
 import type { loader as appLoader } from "app/routes/app";
@@ -220,7 +221,13 @@ export default function CampaignsPage() {
                 </div>
             </div>
             {campaigns && bankStatus ? (
-                <CampaignStatus campaigns={campaigns} bankStatus={bankStatus} />
+                <s-stack gap="large">
+                    <CampaignStatus
+                        campaigns={campaigns}
+                        bankStatus={bankStatus}
+                    />
+                    <NewsletterShareLink />
+                </s-stack>
             ) : (
                 // TODO: Link to the settings / setup instructions
                 <p>Nope</p>

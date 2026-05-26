@@ -18,6 +18,7 @@ import { MerchantEditSheet } from "../MerchantEditSheet";
 import { PurchaseTrackerSheet } from "../PurchaseTrackerSheet";
 import { ExplorerSettings } from "./ExplorerSettings";
 import * as styles from "./merchant-summary.css";
+import { NewsletterShareLink } from "./NewsletterShareLink";
 
 const DOMAIN_PREVIEW_COUNT = 3;
 
@@ -119,6 +120,7 @@ export function MerchantDetails({ merchantId }: { merchantId: string }) {
                     </Stack>
                 </Card>
             )}
+            <NewsletterShareLink merchantId={merchantId} />
             <ExplorerSettings merchantId={merchantId} />
             <PurchaseTrackerSummary merchantId={merchantId} />
         </FormLayout>
