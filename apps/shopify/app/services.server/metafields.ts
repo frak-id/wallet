@@ -570,7 +570,7 @@ async function readFrakI18nState(
 ): Promise<{ definitionExists: boolean; entryId: string | null } | null> {
     const data = await runGraphQL<{
         metaobjectDefinitionByType?: { id?: string } | null;
-        metaobject?: { id?: string } | null;
+        metaobjectByHandle?: { id?: string } | null;
     }>(
         context.admin.graphql,
         "state read",
@@ -580,7 +580,7 @@ async function readFrakI18nState(
             $entryHandle: MetaobjectHandleInput!
         ) {
             metaobjectDefinitionByType(type: $type) { id }
-            metaobject(handle: $entryHandle) { id }
+            metaobjectByHandle(handle: $entryHandle) { id }
         }`,
         {
             type: FRAK_I18N_METAOBJECT_TYPE,
@@ -593,7 +593,7 @@ async function readFrakI18nState(
     if (!data) return null;
     return {
         definitionExists: Boolean(data.metaobjectDefinitionByType?.id),
-        entryId: data.metaobject?.id ?? null,
+        entryId: data.metaobjectByHandle?.id ?? null,
     };
 }
 
