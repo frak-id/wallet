@@ -1,5 +1,18 @@
 {
     "share_btn": {
-        "label": "Share and earn!"
+        "label": "Share and earn!",
+        "no_reward": "Share and earn!"
+    },
+    "banner": {
+        "referral": {
+            "title": "You've been referred!",
+            "description": "Make your first purchase to unlock your reward.",
+            "cta": "Got it"
+        },
+        "inapp": {
+            "title": "Open in your browser",
+            "description": "For the best experience, open this page in your system browser.",
+            "cta": "Open browser"
+        }
     }
 }

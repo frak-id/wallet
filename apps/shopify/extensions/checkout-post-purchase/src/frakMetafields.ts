@@ -6,7 +6,13 @@
  *  - frak.wallet_url   → wallet base URL (JSON-encoded string)
  *  - frak.appearance   → { logoUrl?: string } (JSON object)
  *
- * All values are stored via JSON.stringify(), so we JSON.parse() on read.
+ * Per-locale text overrides live on the `frak_i18n` metaobject and are
+ * fetched separately via `fetchPostPurchaseTextOverrides` in
+ * `frakI18n.ts` — `useAppMetafields` cannot resolve metaobject
+ * references, so a Storefront API query is required.
+ *
+ * All JSON values are stored via JSON.stringify(), so we JSON.parse() on
+ * read.
  */
 
 type FrakConfig = {
@@ -25,7 +31,7 @@ function parseJsonValue<T>(raw: string | number | boolean): T | string {
 }
 
 /**
- * Extract merchantId, walletUrl, and logoUrl from app metafield entries.
+ * Extract Frak metafields needed by the post-purchase card.
  *
  * Works with both checkout and customer-account surfaces — the MetafieldEntry
  * shape is compatible with AppMetafieldEntry from either import path.
@@ -37,10 +43,10 @@ export function extractFrakConfig(
         const { key, value } = entry.metafield;
         switch (key) {
             case "merchant_id":
-                config.merchantId = parseJsonValue<string>(value);
+                config.merchantId = parseJsonValue<string>(value) as string;
                 break;
             case "wallet_url":
-                config.walletUrl = parseJsonValue<string>(value);
+                config.walletUrl = parseJsonValue<string>(value) as string;
                 break;
             case "appearance": {
                 const parsed = parseJsonValue<{ logoUrl?: string }>(value);

@@ -6,6 +6,13 @@ type = "ui_extension"
 name = "Frak Post Purchase"
 handle = "checkout-post-purchase"
 
+  [extensions.capabilities]
+  # Required to call shopify.query() against the Storefront API. The
+  # extension queries the `frak_i18n` metaobject for per-locale text
+  # overrides (post_purchase_message / _description / _cta_text /
+  # _badge_text) — Translate & Adapt edits propagate automatically.
+  api_access = true
+
 # Thank You page — shown immediately after checkout completes
 [[extensions.targeting]]
 target = "purchase.thank-you.block.render"

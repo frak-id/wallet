@@ -9,6 +9,7 @@ import {
     ensureWalletUrlMetafield,
     resolveMerchantId,
 } from "app/services.server/merchant";
+import { ensureFrakI18nMetaobject } from "app/services.server/metafields";
 import { shopInfo } from "app/services.server/shop";
 import { doesThemeSupportBlock } from "app/services.server/theme";
 import { shouldShowOutletSkeleton } from "app/utils/navigationLoading";
@@ -47,6 +48,9 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     // a ready-to-use share CTA into their email templates without
     // hard-coding the storefront host.
     ensureKlaviyoShareMetafields(context).catch(() => {});
+    // Fire-and-forget: ensure the frak_i18n metaobject singleton entry
+    // exists with EN seeds + bundled FR translations.
+    ensureFrakI18nMetaobject(context).catch(() => {});
 
     return {
         apiKey: process.env.SHOPIFY_API_KEY || "",
