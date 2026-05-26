@@ -1,3 +1,4 @@
+import { NewsletterShareLink } from "app/components/Sharing";
 import { Stepper } from "app/components/Stepper";
 import { ExternalButton } from "app/components/ui/ExternalLink";
 import { PageHeading } from "app/components/ui/PageHeading";
@@ -135,6 +136,7 @@ function OnBoardingComplete({
 }) {
     return (
         <s-stack gap="large">
+            <NewsletterShareLink />
             <CampaignStatus campaigns={campaigns} bankStatus={bankStatus} />
             <BankingStatus bankStatus={bankStatus} />
         </s-stack>

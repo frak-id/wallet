@@ -141,6 +141,13 @@
             "button": "Register your shop in the Frak ecosystem",
             "close": "Close"
         },
+        "newsletterShare": {
+            "title": "Newsletter sharing link",
+            "description": "Paste this link into your newsletter or any marketing email. When a customer clicks it, your storefront opens with the Frak sharing modal — pre-filled with your current campaign rewards — so they can share and earn in one tap.",
+            "copy": "Copy link",
+            "copied": "Sharing link copied to clipboard",
+            "copyError": "Could not copy link. Please copy it manually."
+        },
 
         "campaign": {
             "title": "Campaigns",

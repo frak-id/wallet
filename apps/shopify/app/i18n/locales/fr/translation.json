@@ -142,6 +142,13 @@
             "button": "Enregistrer votre boutique dans l'écosystème Frak",
             "close": "Fermer"
         },
+        "newsletterShare": {
+            "title": "Lien de partage pour newsletter",
+            "description": "Collez ce lien dans votre newsletter ou tout autre e-mail marketing. Lorsqu'un client cliquera dessus, votre boutique s'ouvrira avec la modale de partage Frak — pré-remplie avec les récompenses de vos campagnes en cours — pour qu'il puisse partager et gagner en un clic.",
+            "copy": "Copier le lien",
+            "copied": "Lien de partage copié dans le presse-papiers",
+            "copyError": "Impossible de copier le lien. Merci de le copier manuellement."
+        },
 
         "campaign": {
             "title": "Campagnes",
