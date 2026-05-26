@@ -1,10 +1,10 @@
+import { Stack } from "@frak-labs/design-system/components/Stack";
+import { Text } from "@frak-labs/design-system/components/Text";
 import { createFileRoute } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
 import { isDemoMode } from "@/config/auth";
 import { TableCampaigns } from "@/module/campaigns/component/TableCampaigns";
 import { campaignsListQueryOptions } from "@/module/campaigns/queries/queryOptions";
-import { Breadcrumb } from "@/module/common/component/Breadcrumb";
-import { Head } from "@/module/common/component/Head";
 import { DataLoadError } from "@/module/common/component/RouteError";
 import { queryClient } from "@/module/common/provider/RootProvider";
 
@@ -28,14 +28,11 @@ export const Route = createFileRoute(
 function CampaignsListPage() {
     const { t } = useTranslation();
     return (
-        <>
-            <Head
-                title={{ content: t("shell.nav.campaigns") }}
-                leftSection={
-                    <Breadcrumb current={t("shell.breadcrumb.campaignsList")} />
-                }
-            />
+        <Stack space="xxl">
+            <Text as="h1" variant="heading1" weight="bold">
+                {t("shell.breadcrumb.campaignsList")}
+            </Text>
             <TableCampaigns />
-        </>
+        </Stack>
     );
 }

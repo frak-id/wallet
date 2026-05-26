@@ -13,6 +13,7 @@ const spacingScale = {
     m: alias.spacing.m,
     l: alias.spacing.l,
     xl: alias.spacing.xl,
+    xxl: alias.spacing.xxl,
 } as const;
 
 const radiusScale = {

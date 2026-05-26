@@ -8,7 +8,6 @@ export const bar = style({
     justifyContent: "space-between",
     gap: alias.spacing.m,
     padding: alias.spacing.m,
-    marginBottom: alias.spacing.s,
     backgroundColor: vars.surface.elevated,
     border: `1px solid ${vars.border.subtle}`,
     borderRadius: alias.cornerRadius.m,

@@ -7,7 +7,6 @@ export const filters = style({
     justifyContent: "space-between",
     columnGap: alias.spacing.s,
     rowGap: alias.spacing.s,
-    marginBottom: alias.spacing.m,
     alignItems: "center",
 });
 

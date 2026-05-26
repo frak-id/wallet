@@ -101,6 +101,7 @@ export const alias = {
         m: "16px",
         l: "24px",
         xl: "32px",
+        xxl: "48px",
     },
     size: {
         none: "0",

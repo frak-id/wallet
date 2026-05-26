@@ -3,7 +3,6 @@ import { useTranslation } from "react-i18next";
 import { isDemoMode } from "@/config/auth";
 import { TableCampaignPerformance } from "@/module/campaigns/component/TableCampaignPerformance";
 import { campaignsStatsQueryOptions } from "@/module/campaigns/queries/queryOptions";
-import { Breadcrumb } from "@/module/common/component/Breadcrumb";
 import { Head } from "@/module/common/component/Head";
 import { DataLoadError } from "@/module/common/component/RouteError";
 import { queryClient } from "@/module/common/provider/RootProvider";
@@ -29,12 +28,7 @@ function CampaignsPerformancePage() {
     const { t } = useTranslation();
     return (
         <>
-            <Head
-                title={{ content: t("shell.nav.campaigns") }}
-                leftSection={
-                    <Breadcrumb current={t("shell.nav.campaignsOverview")} />
-                }
-            />
+            <Head title={{ content: t("shell.nav.campaigns") }} />
             <TableCampaignPerformance />
         </>
     );

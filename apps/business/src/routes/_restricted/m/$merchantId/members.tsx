@@ -1,6 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
-import { Breadcrumb } from "@/module/common/component/Breadcrumb";
 import { Head } from "@/module/common/component/Head";
 import { DataLoadError } from "@/module/common/component/RouteError";
 import { queryClient } from "@/module/common/provider/RootProvider";
@@ -46,9 +45,6 @@ function MembersListPage() {
         <>
             <Head
                 title={{ content: t("shell.nav.members") }}
-                leftSection={
-                    <Breadcrumb current={t("shell.breadcrumb.membersList")} />
-                }
                 rightSection={<ButtonSendPush />}
             />
             <TableMembers />

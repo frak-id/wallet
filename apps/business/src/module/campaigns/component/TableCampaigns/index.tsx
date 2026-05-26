@@ -189,26 +189,32 @@ export function TableCampaigns() {
     return (
         data && (
             <>
-                <TableCampaignFilters
-                    columnFilters={columnFilters}
-                    setColumnFilters={setColumnFilters}
-                />
-                {selectedCampaigns.length > 0 && (
-                    <CampaignsEditBar
-                        merchantId={merchantId}
-                        selected={selectedCampaigns}
+                <Stack space="l">
+                    <TableCampaignFilters
+                        columnFilters={columnFilters}
+                        setColumnFilters={setColumnFilters}
                     />
-                )}
-                <Table
-                    data={data}
-                    columns={columns}
-                    enableSorting={true}
-                    enableFiltering={true}
-                    columnFilters={columnFilters}
-                    onRowClick={(row) => setSelectedCampaign(row.original)}
-                    rowDataAttributes={rowDataAttributes}
-                    anySelected={selectedCampaigns.length > 0}
-                />
+                    <Stack space="m">
+                        {selectedCampaigns.length > 0 && (
+                            <CampaignsEditBar
+                                merchantId={merchantId}
+                                selected={selectedCampaigns}
+                            />
+                        )}
+                        <Table
+                            data={data}
+                            columns={columns}
+                            enableSorting={true}
+                            enableFiltering={true}
+                            columnFilters={columnFilters}
+                            onRowClick={(row) =>
+                                setSelectedCampaign(row.original)
+                            }
+                            rowDataAttributes={rowDataAttributes}
+                            anySelected={selectedCampaigns.length > 0}
+                        />
+                    </Stack>
+                </Stack>
                 <CampaignDetailsSheet
                     campaign={selectedCampaign}
                     onOpenChange={(open) => {
