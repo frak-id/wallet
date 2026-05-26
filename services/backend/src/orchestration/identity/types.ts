@@ -22,4 +22,13 @@ export type GroupWeight = {
     assetsCount: number;
     referralsCount: number;
     interactionsCount: number;
+    /**
+     * Number of merchants whose `owner_wallet` is this group's wallet. Weighted
+     * heavily in the anchor decision: losing business privileges to a higher
+     * activity counter (assets/referrals/interactions) would silently strip
+     * dashboard access on merge.
+     */
+    merchantOwnershipsCount: number;
+    /** Number of `merchant_admins` rows that reference this group's wallet. */
+    merchantAdminshipsCount: number;
 };

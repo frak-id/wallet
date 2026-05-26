@@ -11,17 +11,23 @@ import type { WebAuthNValidatorReader } from "../../infrastructure/blockchain/We
 import type { PairingRouterOrchestrator } from "../pairing/PairingRouterOrchestrator";
 import type { MergePreviewResponse, MergeSettleResponse } from "../schemas";
 import type { IdentityMergeService } from "./IdentityMergeService";
-import type { IdentityWeightService } from "./IdentityWeightService";
+import {
+    computeTotalWeight,
+    type IdentityWeightService,
+} from "./IdentityWeightService";
 import type { WalletSessionOrchestrator } from "./WalletSessionOrchestrator";
 
 /**
  * Counts used by the UI to render the "you will gain N referrals" recap.
- * Mirrors the three weight dimensions of {@link IdentityWeightService}.
+ * Mirrors the weight dimensions of {@link IdentityWeightService}; merchant
+ * counts are surfaced so the recap can call out business-role transfers.
  */
 export type MergeWeight = {
     assetsCount: number;
     referralsCount: number;
     interactionsCount: number;
+    merchantOwnershipsCount: number;
+    merchantAdminshipsCount: number;
 };
 
 export class WalletMergeOrchestrator {
@@ -114,11 +120,15 @@ export class WalletMergeOrchestrator {
             assetsCount: requesterWeightRaw.assetsCount,
             referralsCount: requesterWeightRaw.referralsCount,
             interactionsCount: requesterWeightRaw.interactionsCount,
+            merchantOwnershipsCount: requesterWeightRaw.merchantOwnershipsCount,
+            merchantAdminshipsCount: requesterWeightRaw.merchantAdminshipsCount,
         };
         const targetWeight: MergeWeight = {
             assetsCount: targetWeightRaw.assetsCount,
             referralsCount: targetWeightRaw.referralsCount,
             interactionsCount: targetWeightRaw.interactionsCount,
+            merchantOwnershipsCount: targetWeightRaw.merchantOwnershipsCount,
+            merchantAdminshipsCount: targetWeightRaw.merchantAdminshipsCount,
         };
 
         const requesterWins = pickWinner(
@@ -326,6 +336,13 @@ export class WalletMergeOrchestrator {
         // the auto-clear when an outer `tx` is supplied so we clear it here
         // (the outer transaction is now committed).
         this.identityMergeService.clearReferralChainCache();
+        // Merchant caches need the same post-commit eviction — the merge
+        // rewrote `owner_wallet` and `merchant_admins` for the touched
+        // merchants, and the repository's id/domain/productId LRUs still
+        // serve the pre-merge row otherwise (60-min TTL).
+        this.identityMergeService.invalidateMerchantCaches(
+            mergeResult.affectedMerchantIds
+        );
 
         log.info(
             {
@@ -541,17 +558,18 @@ export class WalletMergeOrchestrator {
 /**
  * Returns `true` when the requester side should win the merge.
  *
- * Total weight = assets + referrals + interactions. Tiebreaker is the older
- * `createdAt` (the wallet that has existed longer keeps its primacy);
- * deterministic fallback is "requester wins" so the result is stable even
- * for two groups created in the same millisecond.
+ * Total weight = `computeTotalWeight` (merchant roles count 10x; see
+ * `IdentityWeightService`). Tiebreaker is the older `createdAt` (the wallet
+ * that has existed longer keeps its primacy); deterministic fallback is
+ * "requester wins" so the result is stable even for two groups created in
+ * the same millisecond.
  */
 function pickWinner(
     requester: { weight: MergeWeight; createdAt: Date | null },
     target: { weight: MergeWeight; createdAt: Date | null }
 ): boolean {
-    const requesterTotal = totalWeight(requester.weight);
-    const targetTotal = totalWeight(target.weight);
+    const requesterTotal = computeTotalWeight(requester.weight);
+    const targetTotal = computeTotalWeight(target.weight);
     if (requesterTotal !== targetTotal) {
         return requesterTotal > targetTotal;
     }
@@ -559,8 +577,4 @@ function pickWinner(
         return requester.createdAt.getTime() <= target.createdAt.getTime();
     }
     return true;
-}
-
-function totalWeight(w: MergeWeight): number {
-    return w.assetsCount + w.referralsCount + w.interactionsCount;
 }

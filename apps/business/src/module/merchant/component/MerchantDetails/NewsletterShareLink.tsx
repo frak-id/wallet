@@ -27,10 +27,10 @@ export function NewsletterShareLink({ merchantId }: { merchantId: string }) {
             </CardHeader>
             <Stack space="m">
                 <p className={summaryDescription}>
-                    Paste this link into your newsletter or any marketing
-                    email. When a customer clicks it, your storefront opens
-                    with the Frak sharing modal, pre-filled with your current
-                    campaign rewards, so they can share and earn in one tap.
+                    Paste this link into your newsletter or any marketing email.
+                    When a customer clicks it, your storefront opens with the
+                    Frak sharing modal, pre-filled with your current campaign
+                    rewards, so they can share and earn in one tap.
                 </p>
                 <TextWithCopy text={shareUrl}>
                     <pre className={styles.shareUrl}>{shareUrl}</pre>

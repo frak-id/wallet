@@ -1,5 +1,5 @@
 import { db, log } from "@backend-infrastructure";
-import { and, eq, inArray, isNull, sql } from "drizzle-orm";
+import { and, eq, inArray, isNull, or, sql } from "drizzle-orm";
 import type { Address } from "viem";
 import { referralLinksTable } from "../../domain/attribution/db/schema";
 import type { ReferralLinkRepository } from "../../domain/attribution/repositories/ReferralLinkRepository";
@@ -9,6 +9,12 @@ import {
     type MergedGroup,
 } from "../../domain/identity/db/schema";
 import type { IdentityRepository } from "../../domain/identity/repositories/IdentityRepository";
+import {
+    merchantAdminsTable,
+    merchantOwnershipTransfersTable,
+    merchantsTable,
+} from "../../domain/merchant/db/schema";
+import type { MerchantRepository } from "../../domain/merchant/repositories/MerchantRepository";
 import { pushTokensTable } from "../../domain/notifications/db/schema";
 import {
     purchaseClaimsTable,
@@ -43,6 +49,16 @@ type MergeResult = {
     // Referral-code counters. Identity-keyed so they always run.
     revokedConflictingReferralCodes: number;
     migratedReferralCodes: number;
+    // Merchant-role migration counters. All wallet-keyed; stay zero when
+    // neither side has any wallet identity node.
+    migratedMerchantOwnerships: number;
+    migratedMerchantAdminships: number;
+    deletedLoserMerchantAdminships: number;
+    deletedMerchantOwnershipTransfers: number;
+    // Merchant ids whose `owner_wallet`, `merchant_admins`, or pending
+    // transfers were touched — surfaced so the caller can evict the matching
+    // `MerchantRepository` caches after the outer transaction commits.
+    affectedMerchantIds: string[];
     // Group ids that were successfully merged into the anchor.
     mergedGroupIds: string[];
     // Groups that the losers had previously absorbed — those ids are now
@@ -53,7 +69,8 @@ type MergeResult = {
 export class IdentityMergeService {
     constructor(
         private readonly referralLinkRepository: ReferralLinkRepository,
-        private readonly identityRepository: IdentityRepository
+        private readonly identityRepository: IdentityRepository,
+        private readonly merchantRepository: MerchantRepository
     ) {}
 
     /**
@@ -66,6 +83,18 @@ export class IdentityMergeService {
      */
     public clearReferralChainCache(): void {
         this.referralLinkRepository.clearChainCache();
+    }
+
+    /**
+     * Drop `MerchantRepository` caches for every merchant id touched by the
+     * merge. Same outer-tx contract as `clearReferralChainCache`: the auto
+     * branch in `mergeGroups` calls this for callers, the explicit-tx branch
+     * defers it so the caller can fire it post-commit.
+     */
+    public invalidateMerchantCaches(merchantIds: string[]): void {
+        for (const id of merchantIds) {
+            this.merchantRepository.invalidateCachesById(id);
+        }
     }
 
     /**
@@ -105,6 +134,7 @@ export class IdentityMergeService {
         // reader cache the pre-commit chain state for the TTL window.
         if (!tx) {
             this.referralLinkRepository.clearChainCache();
+            this.invalidateMerchantCaches(result.affectedMerchantIds);
         }
 
         return result;
@@ -281,6 +311,11 @@ export class IdentityMergeService {
             loserWallets,
         });
 
+        const merchantRoleOps = await this.migrateMerchantRolesInTrx(trx, {
+            anchorWallets,
+            loserWallets,
+        });
+
         await this.updateAnchorMergedGroupsInTrx(
             trx,
             anchorGroupId,
@@ -307,6 +342,15 @@ export class IdentityMergeService {
             revokedConflictingReferralCodes:
                 referralCodeOps.revokedConflictingReferralCodes,
             migratedReferralCodes: referralCodeOps.migratedReferralCodes,
+            migratedMerchantOwnerships:
+                merchantRoleOps.migratedMerchantOwnerships,
+            migratedMerchantAdminships:
+                merchantRoleOps.migratedMerchantAdminships,
+            deletedLoserMerchantAdminships:
+                merchantRoleOps.deletedLoserMerchantAdminships,
+            deletedMerchantOwnershipTransfers:
+                merchantRoleOps.deletedMerchantOwnershipTransfers,
+            affectedMerchantIds: merchantRoleOps.affectedMerchantIds,
             mergedGroupIds: mergingGroupIds,
             previouslyMergedGroupIds,
         };
@@ -448,17 +492,44 @@ export class IdentityMergeService {
         // multi-wallet groups land the policy may want revisiting.
         const primaryWallet = anchorWallets[0];
 
-        const inserted = await trx.execute<{ id: number }>(sql`
-            INSERT INTO push_tokens (wallet, type, endpoint, key_p256dh, key_auth, locale, expire_at, created_at)
-            SELECT ${primaryWallet}, type, endpoint, key_p256dh, key_auth, locale, expire_at, created_at
-            FROM push_tokens
-            WHERE wallet IN (${sql.join(
-                loserWallets.map((w) => sql`${w}`),
-                sql`, `
-            )})
-            ON CONFLICT (wallet, type, endpoint) DO NOTHING
-            RETURNING id
-        `);
+        // Snapshot loser rows then re-insert under the winner wallet via
+        // the typed builder so `customHex.toDriver` fires on the `wallet`
+        // column. Raw-SQL `${primaryWallet}` interpolation would ship a
+        // `0x…` text parameter to a `bytea` column and fail with a type
+        // mismatch — Drizzle only applies the bytea adapter for column-
+        // aware paths (eq / inArray / typed values).
+        const loserRows = await trx
+            .select({
+                type: pushTokensTable.type,
+                endpoint: pushTokensTable.endpoint,
+                keyP256dh: pushTokensTable.keyP256dh,
+                keyAuth: pushTokensTable.keyAuth,
+                locale: pushTokensTable.locale,
+                expireAt: pushTokensTable.expireAt,
+                createdAt: pushTokensTable.createdAt,
+            })
+            .from(pushTokensTable)
+            .where(inArray(pushTokensTable.wallet, loserWallets));
+
+        const inserted =
+            loserRows.length > 0
+                ? await trx
+                      .insert(pushTokensTable)
+                      .values(
+                          loserRows.map((r) => ({
+                              wallet: primaryWallet,
+                              type: r.type,
+                              endpoint: r.endpoint,
+                              keyP256dh: r.keyP256dh,
+                              keyAuth: r.keyAuth,
+                              locale: r.locale,
+                              expireAt: r.expireAt,
+                              createdAt: r.createdAt,
+                          }))
+                      )
+                      .onConflictDoNothing()
+                      .returning({ id: pushTokensTable.id })
+                : [];
 
         const deleted = await trx
             .delete(pushTokensTable)
@@ -468,6 +539,137 @@ export class IdentityMergeService {
         return {
             movedPushTokens: inserted.length,
             deletedPushTokens: deleted.length,
+        };
+    }
+
+    /**
+     * Migrate business-role rows (`merchants.owner_wallet`, `merchant_admins`,
+     * pending `merchant_ownership_transfers`) from the loser wallets onto the
+     * winner. Critical for the merge winner-selection guarantee: a loser
+     * wallet that retains owner/admin rows post-merge would silently keep
+     * dashboard access while the winner — now the canonical wallet of the
+     * surviving identity — has none.
+     *
+     * Wallet-keyed (`merchants` / `merchant_admins` / `merchant_ownership_
+     * transfers` carry no `identity_group_id` column), so this is a no-op
+     * when either side lacks a wallet identity node, mirroring the
+     * push-token migration shape.
+     *
+     * The unique `(merchant_id, wallet)` on `merchant_admins` makes a naive
+     * UPDATE unsafe (winner already admin on the same merchant ⇒ conflict);
+     * we instead INSERT the winner row with ON CONFLICT DO NOTHING, then
+     * DELETE the loser rows.
+     *
+     * Pending ownership transfers referencing the loser are deleted rather
+     * than re-pointed — the merge has invalidated the original consent and
+     * the surviving owner (winner) can re-initiate if still desired. Avoids
+     * a thorny edge case where rewriting both `from_wallet` and `to_wallet`
+     * could produce a self-transfer.
+     */
+    private async migrateMerchantRolesInTrx(
+        trx: PgTx,
+        params: {
+            anchorWallets: Address[];
+            loserWallets: Address[];
+        }
+    ): Promise<{
+        migratedMerchantOwnerships: number;
+        migratedMerchantAdminships: number;
+        deletedLoserMerchantAdminships: number;
+        deletedMerchantOwnershipTransfers: number;
+        affectedMerchantIds: string[];
+    }> {
+        const { anchorWallets, loserWallets } = params;
+        if (loserWallets.length === 0 || anchorWallets.length === 0) {
+            return {
+                migratedMerchantOwnerships: 0,
+                migratedMerchantAdminships: 0,
+                deletedLoserMerchantAdminships: 0,
+                deletedMerchantOwnershipTransfers: 0,
+                affectedMerchantIds: [],
+            };
+        }
+
+        // First anchor wallet is the deterministic destination. Phase 1
+        // groups carry exactly one wallet, so this is unambiguous; mirrors
+        // the push-token migration choice above.
+        const primaryWallet = anchorWallets[0];
+
+        // Snapshot every loser admin row (with its history) BEFORE the
+        // INSERT/DELETE mutation pair. Used twice: to seed the winner-side
+        // INSERT (preserving `addedBy` / `addedAt` audit) and to compute
+        // `affectedMerchantIds` for cache invalidation — the conflict
+        // branch (winner already admin) leaves no insertedAdmins row but
+        // still needs cache eviction because the DELETE drops the loser row.
+        const loserAdminRows = await trx
+            .select({
+                merchantId: merchantAdminsTable.merchantId,
+                addedBy: merchantAdminsTable.addedBy,
+                addedAt: merchantAdminsTable.addedAt,
+            })
+            .from(merchantAdminsTable)
+            .where(inArray(merchantAdminsTable.wallet, loserWallets));
+        const loserAdminMerchantIds = loserAdminRows.map((r) => r.merchantId);
+
+        const ownerUpdates = await trx
+            .update(merchantsTable)
+            .set({ ownerWallet: primaryWallet, updatedAt: new Date() })
+            .where(inArray(merchantsTable.ownerWallet, loserWallets))
+            .returning({ id: merchantsTable.id });
+
+        // Typed insert (not raw SQL) so `customHex.toDriver` fires on the
+        // `wallet` / `addedBy` columns. Raw-SQL interpolation of an
+        // Address would send the `0x…` string to a `bytea` column and
+        // fail with a type mismatch — Drizzle only applies the bytea
+        // adapter for column-aware paths (eq / inArray / typed values).
+        const insertedAdmins =
+            loserAdminRows.length > 0
+                ? await trx
+                      .insert(merchantAdminsTable)
+                      .values(
+                          loserAdminRows.map((r) => ({
+                              merchantId: r.merchantId,
+                              wallet: primaryWallet,
+                              addedBy: r.addedBy,
+                              addedAt: r.addedAt,
+                          }))
+                      )
+                      .onConflictDoNothing()
+                      .returning({ id: merchantAdminsTable.id })
+                : [];
+
+        const deletedAdmins = await trx
+            .delete(merchantAdminsTable)
+            .where(inArray(merchantAdminsTable.wallet, loserWallets))
+            .returning({ id: merchantAdminsTable.id });
+
+        const deletedTransfers = await trx
+            .delete(merchantOwnershipTransfersTable)
+            .where(
+                or(
+                    inArray(
+                        merchantOwnershipTransfersTable.fromWallet,
+                        loserWallets
+                    ),
+                    inArray(
+                        merchantOwnershipTransfersTable.toWallet,
+                        loserWallets
+                    )
+                )
+            )
+            .returning({ id: merchantOwnershipTransfersTable.id });
+
+        return {
+            migratedMerchantOwnerships: ownerUpdates.length,
+            migratedMerchantAdminships: insertedAdmins.length,
+            deletedLoserMerchantAdminships: deletedAdmins.length,
+            deletedMerchantOwnershipTransfers: deletedTransfers.length,
+            affectedMerchantIds: [
+                ...new Set([
+                    ...ownerUpdates.map((m) => m.id),
+                    ...loserAdminMerchantIds,
+                ]),
+            ],
         };
     }
 
@@ -734,6 +936,11 @@ function emptyMergeResult(): MergeResult {
         deletedPushTokens: 0,
         revokedConflictingReferralCodes: 0,
         migratedReferralCodes: 0,
+        migratedMerchantOwnerships: 0,
+        migratedMerchantAdminships: 0,
+        deletedLoserMerchantAdminships: 0,
+        deletedMerchantOwnershipTransfers: 0,
+        affectedMerchantIds: [],
         mergedGroupIds: [],
         previouslyMergedGroupIds: [],
     };

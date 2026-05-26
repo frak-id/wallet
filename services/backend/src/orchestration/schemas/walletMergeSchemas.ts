@@ -4,13 +4,17 @@ import { WalletAuthResponseDto } from "../../domain/auth/models/WalletSessionDto
 
 /**
  * Weight summary surfaced by {@link MergePreviewSchema} so the wallet UI
- * can render "you'll gain N referrals" recaps. Mirrors the three weight
- * dimensions of `IdentityWeightService.getGroupWeight`.
+ * can render "you'll gain N referrals" recaps. Mirrors the dimensions of
+ * `IdentityWeightService.getGroupWeight`. Merchant ownership / admin
+ * counts are weighted 10x in the backend winner-selection — the raw
+ * counts are surfaced here so the UI can decide whether to call them out.
  */
 export const MergeWeightSchema = t.Object({
     assetsCount: t.Number(),
     referralsCount: t.Number(),
     interactionsCount: t.Number(),
+    merchantOwnershipsCount: t.Number(),
+    merchantAdminshipsCount: t.Number(),
 });
 export type MergeWeightResponse = Static<typeof MergeWeightSchema>;
 

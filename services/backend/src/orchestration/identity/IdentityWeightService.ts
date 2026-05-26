@@ -6,10 +6,39 @@ import { type Address, isAddressEqual } from "viem";
 import { referralLinksTable } from "../../domain/attribution/db/schema";
 import type { IdentityRepository } from "../../domain/identity/repositories/IdentityRepository";
 import {
+    merchantAdminsTable,
+    merchantsTable,
+} from "../../domain/merchant/db/schema";
+import {
     assetLogsTable,
     interactionLogsTable,
 } from "../../domain/rewards/db/schema";
 import type { GroupWeight } from "./types";
+
+/**
+ * Multiplier applied to merchant ownership / admin counts when computing total
+ * weight. Each merchant role is worth this many "activity" units (assets,
+ * referrals, interactions). Rationale: losing a business role to a wallet that
+ * merely has more activity would silently strip dashboard access — that signal
+ * must dominate the activity counters.
+ */
+const MERCHANT_ROLE_WEIGHT = 10;
+
+export function computeTotalWeight(w: {
+    assetsCount: number;
+    referralsCount: number;
+    interactionsCount: number;
+    merchantOwnershipsCount: number;
+    merchantAdminshipsCount: number;
+}): number {
+    return (
+        (w.merchantOwnershipsCount + w.merchantAdminshipsCount) *
+            MERCHANT_ROLE_WEIGHT +
+        w.assetsCount +
+        w.referralsCount +
+        w.interactionsCount
+    );
+}
 
 export class IdentityWeightService {
     private readonly weightCache = new LRUCache<string, GroupWeight>({
@@ -41,6 +70,15 @@ export class IdentityWeightService {
             this.countInteractions(groupId),
         ]);
 
+        // Merchant roles are wallet-keyed; groups without a wallet cannot hold
+        // them, so we skip the queries entirely in that branch.
+        const [merchantOwnershipsCount, merchantAdminshipsCount] = walletResult
+            ? await Promise.all([
+                  this.countMerchantOwnerships(walletResult),
+                  this.countMerchantAdminships(walletResult),
+              ])
+            : [0, 0];
+
         const weight: GroupWeight = {
             groupId,
             hasWallet: walletResult !== null,
@@ -48,6 +86,8 @@ export class IdentityWeightService {
             assetsCount: assetsResult,
             referralsCount: referralsResult,
             interactionsCount: interactionsResult,
+            merchantOwnershipsCount,
+            merchantAdminshipsCount,
         };
 
         this.weightCache.set(groupId, weight);
@@ -80,6 +120,22 @@ export class IdentityWeightService {
             .select({ value: count() })
             .from(interactionLogsTable)
             .where(eq(interactionLogsTable.identityGroupId, groupId));
+        return result?.value ?? 0;
+    }
+
+    private async countMerchantOwnerships(wallet: Address): Promise<number> {
+        const [result] = await db
+            .select({ value: count() })
+            .from(merchantsTable)
+            .where(eq(merchantsTable.ownerWallet, wallet));
+        return result?.value ?? 0;
+    }
+
+    private async countMerchantAdminships(wallet: Address): Promise<number> {
+        const [result] = await db
+            .select({ value: count() })
+            .from(merchantAdminsTable)
+            .where(eq(merchantAdminsTable.wallet, wallet));
         return result?.value ?? 0;
     }
 
@@ -206,7 +262,18 @@ export class IdentityWeightService {
         weight1: GroupWeight,
         weight2: GroupWeight
     ): GroupWeight {
+        // Primary signal: weighted total (merchant roles count 10x).
+        const total1 = computeTotalWeight(weight1);
+        const total2 = computeTotalWeight(weight2);
+        if (total1 !== total2) {
+            return total1 > total2 ? weight1 : weight2;
+        }
+
+        // Tiebreaker: per-dimension comparison in priority order so the
+        // result stays deterministic when totals collide.
         const comparisons: [number, number][] = [
+            [weight1.merchantOwnershipsCount, weight2.merchantOwnershipsCount],
+            [weight1.merchantAdminshipsCount, weight2.merchantAdminshipsCount],
             [weight1.assetsCount, weight2.assetsCount],
             [weight1.referralsCount, weight2.referralsCount],
             [weight1.interactionsCount, weight2.interactionsCount],

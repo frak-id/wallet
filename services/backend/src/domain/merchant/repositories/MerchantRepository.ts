@@ -200,6 +200,27 @@ export class MerchantRepository {
         }
     }
 
+    /**
+     * Public invalidation entry-point keyed by merchant id only. Used by the
+     * wallet merge flow, which mutates `merchants` / `merchant_admins` rows
+     * directly via the transaction and needs to evict caches without having
+     * the full merchant row in hand.
+     *
+     * Reads the existing cache entry (if any) to fan out the secondary caches
+     * (`domain`, `productId`) deterministically; falls back to dropping only
+     * the id-keyed caches when the row is not cached yet.
+     */
+    invalidateCachesById(id: string): void {
+        const cached = this.idCache.get(id);
+        if (cached?.value) {
+            this.invalidateCache(cached.value);
+            return;
+        }
+        this.idCache.delete(id);
+        this.bankAddressCache.delete(id);
+        this.defaultRewardTokenCache.delete(id);
+    }
+
     async create(merchant: MerchantInsert): Promise<MerchantSelect> {
         const [result] = await db
             .insert(merchantsTable)
