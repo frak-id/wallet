@@ -16,9 +16,9 @@ export function Checkbox({ ref, className, ...props }: CheckboxProps) {
         <Root className={combinedClassName} ref={ref} {...props}>
             <Indicator className={checkboxIndicator}>
                 {props.checked === "indeterminate" ? (
-                    <Minus size={12} />
+                    <Minus size={14} strokeWidth={3} />
                 ) : (
-                    <Check size={14} />
+                    <Check size={14} strokeWidth={3} />
                 )}
             </Indicator>
         </Root>

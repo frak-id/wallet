@@ -10,10 +10,11 @@ export const checkboxRoot = style({
     width: "20px",
     height: "20px",
     borderRadius: alias.cornerRadius.s,
-    border: `1px solid ${vars.border.default}`,
+    border: `2px solid ${vars.border.default}`,
     backgroundColor: vars.surface.background,
     cursor: "pointer",
     transition: `all ${transition.base} ${easing.default}`,
+    boxSizing: "border-box",
 
     ":focus-visible": {
         boxShadow: `0 0 0 2px ${vars.border.focus}`,
