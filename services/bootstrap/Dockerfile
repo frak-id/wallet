@@ -26,6 +26,13 @@ RUN --mount=type=cache,id=bun-store,target=/root/.bun/install/cache,sharing=lock
 
 FROM deps AS builder
 COPY --link services/bootstrap ./services/bootstrap
+# The backfill step pulls in workspace + cross-service source at bundle time:
+#   - relative imports into `services/backend/src/domain/{auth,identity}/db/schema`
+#   - `@frak-labs/app-essentials/blockchain` (workspace symlink to source)
+# Only `package.json` files land here from the `deps` stage, so the actual
+# source has to be copied explicitly. None of it ships in the runtime image.
+COPY --link services/backend/src ./services/backend/src
+COPY --link packages/app-essentials/src ./packages/app-essentials/src
 
 ENV NODE_ENV=production
 
