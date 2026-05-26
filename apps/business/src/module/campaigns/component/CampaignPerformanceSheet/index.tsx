@@ -22,10 +22,22 @@ import * as styles from "./campaign-performance-sheet.css";
 type Props = {
     campaignId: string;
     campaign: Campaign;
+    trigger?: React.ReactNode;
+    open?: boolean;
+    onOpenChange?: (open: boolean) => void;
 };
 
-export function CampaignPerformanceSheet({ campaignId, campaign }: Props) {
-    const [open, setOpen] = useState(false);
+export function CampaignPerformanceSheet({
+    campaignId,
+    campaign,
+    trigger,
+    open: openProp,
+    onOpenChange: onOpenChangeProp,
+}: Props) {
+    const [internalOpen, setInternalOpen] = useState(false);
+    const isControlled = openProp !== undefined;
+    const open = isControlled ? openProp : internalOpen;
+    const handleOpenChange = onOpenChangeProp ?? setInternalOpen;
     const isDemoMode = useIsDemoMode();
     const merchantId = useActiveMerchantId();
     const { data: stats } = useSuspenseQuery(
@@ -34,10 +46,14 @@ export function CampaignPerformanceSheet({ campaignId, campaign }: Props) {
     const campaignStats = stats?.find((s) => s.campaignId === campaignId);
 
     return (
-        <Sheet open={open} onOpenChange={setOpen}>
-            <SheetTrigger asChild>
-                <Button variant="secondary">View performance</Button>
-            </SheetTrigger>
+        <Sheet open={open} onOpenChange={handleOpenChange}>
+            {!isControlled && (
+                <SheetTrigger asChild>
+                    {trigger ?? (
+                        <Button variant="secondary">View performance</Button>
+                    )}
+                </SheetTrigger>
+            )}
             <SheetContent side="right">
                 <SheetHeader>
                     <SheetTitle>{campaign.name}</SheetTitle>
