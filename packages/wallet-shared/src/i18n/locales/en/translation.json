@@ -115,7 +115,7 @@
             "conflict": {
                 "title": "Email already in use",
                 "description": "This email is already linked to another wallet. Use a different email or come back later.",
-                "descriptionMergeable": "This email is already on another of your accounts. You can combine them into one — we'll guide you through, whether the other account is on this device or another one.",
+                "descriptionMergeable": "This email is already on another of your accounts. You can combine them into one. We'll guide you through, whether the other account is on this device or another one.",
                 "combine": "Combine my accounts",
                 "useDifferent": "Use a different email",
                 "back": "Back to my profile"
@@ -135,11 +135,11 @@
             "stepIndicator": "Step {{current}}/{{total}}",
             "peerWaiting": {
                 "title": "Approve on your other device",
-                "description": "We sent the request to your paired device — confirm it there and we'll continue automatically."
+                "description": "We sent the request to your paired device. Confirm it there and we'll continue automatically."
             },
             "discovery": {
                 "title": "Combine your accounts",
-                "description": "Pick how you want to confirm — on this device, or on the device that holds your other passkey.",
+                "description": "Pick how you want to confirm: on this device, or on the device that holds your other passkey.",
                 "scanHint": "Scan this code with the device that has your other account.",
                 "preparing": "Preparing a secure connection…",
                 "useThisDevice": "Use this device",
@@ -151,7 +151,7 @@
             },
             "preview": {
                 "title": "Combine your accounts",
-                "description": "We found another account of yours using {{email}}. Here's what will move when you combine them — no changes happen until you confirm.",
+                "description": "We found another account of yours using {{email}}. Here's what will move when you combine them. No changes happen until you confirm.",
                 "loadingTitle": "Getting things ready…",
                 "loadingDescription": "We're double-checking both accounts before we show you what will move.",
                 "errorTitle": "We couldn't load your accounts",
@@ -170,7 +170,7 @@
                 },
                 "gains": {
                     "title": "What you'll get",
-                    "description": "{{referrals}} referrals, {{interactions}} interactions and {{assets}} reward events — all on one account."
+                    "description": "{{referrals}} referrals, {{interactions}} interactions and {{assets}} reward events, all on one account."
                 },
                 "funds": {
                     "title": "Funds to move",
@@ -182,23 +182,23 @@
             "migrate": {
                 "loadingTitle": "Checking your balances…",
                 "loadingDescription": "We need to know what's on your other account before we move it.",
-                "loading": "Loading your balances — one second.",
+                "loading": "Loading your balances, one second.",
                 "readyTitle": "Move your funds",
                 "readyDescription": "Tap below to transfer everything from your other account to your primary account in one go.",
                 "start": "Move my funds",
                 "title": "Moving your funds…",
                 "description": "Sending everything to your primary account before we finalise the combine. This takes a few seconds.",
                 "errorTitle": "We couldn't move your funds",
-                "errorDescription": "Something interrupted the transfer. Your accounts are safe — tap retry to try again with the latest balances.",
+                "errorDescription": "Something interrupted the transfer. Your accounts are safe. Tap retry to try again with the latest balances.",
                 "summaryErrorTitle": "We couldn't load your balances",
-                "summaryErrorDescription": "Tap retry — we need this before we can move your funds.",
+                "summaryErrorDescription": "Tap retry. We need this before we can move your funds.",
                 "summaryError": "Loading your balances failed. Tap retry to try again.",
                 "summaryRetry": "Retry",
                 "holdings": {
                     "title": "Funds to move"
                 },
-                "pending": "Sending the transfer on-chain — hang tight.",
-                "error": "The transfer didn't go through. Tap retry — we'll re-check your balances and try again.",
+                "pending": "Sending the transfer on-chain. Hang tight.",
+                "error": "The transfer didn't go through. Tap retry. We'll re-check your balances and try again.",
                 "retry": "Retry",
                 "cancel": "Cancel"
             },
@@ -207,7 +207,7 @@
                 "description": "We need a quick confirmation with the passkey from the other account to make sure both belong to you. You'll see a system prompt.",
                 "help": {
                     "title": "What happens here",
-                    "description": "Your device will ask you to confirm with face, fingerprint or PIN — same as when you log in. We never see your biometrics."
+                    "description": "Your device will ask you to confirm with face, fingerprint or PIN, same as when you log in. We never see your biometrics."
                 },
                 "verify": "Confirm",
                 "retry": "Try again",
@@ -222,45 +222,45 @@
             "sign": {
                 "title": "Authorise the combine",
                 "description": "One last confirmation to bring your two accounts together.",
-                "errorDescription": "Something interrupted the combine. Your accounts are safe — try again to finish.",
+                "errorDescription": "Something interrupted the combine. Your accounts are safe. Try again to finish.",
                 "authorise": "Authorise",
                 "retry": "Try again",
                 "cancel": "Cancel",
-                "error": "The combine couldn't be authorised. Tap try again — your accounts are safe."
+                "error": "The combine couldn't be authorised. Tap try again. Your accounts are safe."
             },
             "settling": {
                 "title": "Combining your accounts…",
                 "description": "We're putting everything together. This usually takes a few seconds.",
                 "errorTitle": "Almost there",
-                "errorDescription": "Something slipped on our side after you authorised. Tap retry — your accounts are safe.",
+                "errorDescription": "Something slipped on our side after you authorised. Tap retry. Your accounts are safe.",
                 "progress": {
                     "title": "Working on it…",
                     "body": "Linking your accounts, transferring referrals and rewards. Hang tight."
                 },
-                "error": "The combine couldn't finish. Tap retry — we'll pick up where we left off.",
+                "error": "The combine couldn't finish. Tap retry. We'll pick up where we left off.",
                 "retry": "Retry",
                 "cancel": "Cancel",
                 "recover": {
                     "invalidConsent": {
                         "title": "Confirmation expired",
-                        "body": "Too much time passed since you confirmed with your other passkey. Reconfirm to continue — your accounts are safe.",
+                        "body": "Too much time passed since you confirmed with your other passkey. Reconfirm to continue. Your accounts are safe.",
                         "cta": "Reconfirm"
                     },
                     "onChainMismatch": {
                         "title": "Something looks different",
-                        "body": "Your accounts moved while we were combining them. Let's start over from the preview — nothing is lost.",
+                        "body": "Your accounts moved while we were combining them. Let's start over from the preview. Nothing is lost.",
                         "cta": "Start over"
                     },
                     "migrateReverted": {
                         "title": "Funds didn't move",
-                        "body": "The transfer didn't land on-chain. Run it again to finish — your accounts are safe.",
+                        "body": "The transfer didn't land on-chain. Run it again to finish. Your accounts are safe.",
                         "cta": "Move funds again"
                     }
                 }
             },
             "success": {
                 "title": "Your accounts are now one",
-                "description": "{{email}} is linked to your wallet. Everything from your other account moved over — referrals, history, rewards.",
+                "description": "{{email}} is linked to your wallet. Everything from your other account moved over: referrals, history, rewards.",
                 "back": "Back to my profile"
             }
         },

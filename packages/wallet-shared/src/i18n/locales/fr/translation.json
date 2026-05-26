@@ -113,7 +113,7 @@
             "conflict": {
                 "title": "E-mail déjà utilisé",
                 "description": "Cet e-mail est déjà associé à un autre portefeuille. Utilise-en un autre, ou reviens plus tard.",
-                "descriptionMergeable": "Cet e-mail est déjà sur un autre de tes comptes. Tu peux les combiner en un seul — on te guide, que l'autre compte soit sur cet appareil ou sur un autre.",
+                "descriptionMergeable": "Cet e-mail est déjà sur un autre de tes comptes. Tu peux les combiner en un seul. On te guide, que l'autre compte soit sur cet appareil ou sur un autre.",
                 "combine": "Combiner mes comptes",
                 "useDifferent": "Utiliser un autre e-mail",
                 "back": "Retour au profil"
@@ -133,11 +133,11 @@
             "stepIndicator": "Étape {{current}}/{{total}}",
             "peerWaiting": {
                 "title": "Valide sur ton autre appareil",
-                "description": "On a envoyé la demande à ton appareil pairé — valide-la là-bas, on continue automatiquement."
+                "description": "On a envoyé la demande à ton appareil pairé. Valide-la là-bas, on continue automatiquement."
             },
             "discovery": {
                 "title": "Combine tes comptes",
-                "description": "Choisis comment confirmer — sur cet appareil, ou sur l'appareil qui contient ton autre passkey.",
+                "description": "Choisis comment confirmer : sur cet appareil, ou sur l'appareil qui contient ton autre passkey.",
                 "scanHint": "Scanne ce code avec l'appareil qui a ton autre compte.",
                 "preparing": "Préparation d'une connexion sécurisée…",
                 "useThisDevice": "Utiliser cet appareil",
@@ -149,7 +149,7 @@
             },
             "preview": {
                 "title": "Combine tes comptes",
-                "description": "On a trouvé un autre de tes comptes avec {{email}}. Voilà ce qui sera déplacé en les combinant — rien ne change tant que tu n'as pas confirmé.",
+                "description": "On a trouvé un autre de tes comptes avec {{email}}. Voilà ce qui sera déplacé en les combinant. Rien ne change tant que tu n'as pas confirmé.",
                 "loadingTitle": "Préparation en cours…",
                 "loadingDescription": "On vérifie les deux comptes avant de te montrer ce qui va bouger.",
                 "errorTitle": "Impossible de charger tes comptes",
@@ -168,7 +168,7 @@
                 },
                 "gains": {
                     "title": "Ce que tu vas récupérer",
-                    "description": "{{referrals}} parrainages, {{interactions}} interactions et {{assets}} récompenses — tout sur un seul compte."
+                    "description": "{{referrals}} parrainages, {{interactions}} interactions et {{assets}} récompenses, tout sur un seul compte."
                 },
                 "funds": {
                     "title": "Fonds à transférer",
@@ -180,23 +180,23 @@
             "migrate": {
                 "loadingTitle": "Lecture de tes soldes…",
                 "loadingDescription": "On vérifie ce qu'il y a sur ton autre compte avant de le déplacer.",
-                "loading": "Chargement de tes soldes — un instant.",
+                "loading": "Chargement de tes soldes, un instant.",
                 "readyTitle": "Transfère tes fonds",
                 "readyDescription": "Appuie ci-dessous pour transférer tout depuis ton autre compte vers ton compte principal, en une seule étape.",
                 "start": "Transférer mes fonds",
                 "title": "Transfert de tes fonds…",
                 "description": "On envoie tout vers ton compte principal avant de finaliser. Ça prend quelques secondes.",
                 "errorTitle": "Impossible de transférer tes fonds",
-                "errorDescription": "Le transfert a été interrompu. Tes comptes sont en sécurité — réessaie avec les soldes mis à jour.",
+                "errorDescription": "Le transfert a été interrompu. Tes comptes sont en sécurité. Réessaie avec les soldes mis à jour.",
                 "summaryErrorTitle": "Impossible de lire tes soldes",
-                "summaryErrorDescription": "Réessaie — on en a besoin avant de pouvoir transférer.",
+                "summaryErrorDescription": "Réessaie, on en a besoin avant de pouvoir transférer.",
                 "summaryError": "La lecture de tes soldes a échoué. Réessaie.",
                 "summaryRetry": "Réessayer",
                 "holdings": {
                     "title": "Fonds à transférer"
                 },
-                "pending": "Envoi du transfert on-chain — patiente quelques instants.",
-                "error": "Le transfert n'est pas passé. Réessaie — on relit tes soldes avant de relancer.",
+                "pending": "Envoi du transfert on-chain. Patiente quelques instants.",
+                "error": "Le transfert n'est pas passé. Réessaie, on relit tes soldes avant de relancer.",
                 "retry": "Réessayer",
                 "cancel": "Annuler"
             },
@@ -205,7 +205,7 @@
                 "description": "On a besoin d'une rapide confirmation avec la passkey de l'autre compte pour vérifier qu'elles t'appartiennent toutes les deux. Une demande système va apparaître.",
                 "help": {
                     "title": "Ce qui se passe",
-                    "description": "Ton appareil te demandera de confirmer avec ton visage, ton empreinte ou ton code — comme pour te connecter. Tes données biométriques ne nous sont jamais transmises."
+                    "description": "Ton appareil te demandera de confirmer avec ton visage, ton empreinte ou ton code, comme pour te connecter. Tes données biométriques ne nous sont jamais transmises."
                 },
                 "verify": "Confirmer",
                 "retry": "Réessayer",
@@ -220,45 +220,45 @@
             "sign": {
                 "title": "Autorise la combinaison",
                 "description": "Une dernière confirmation pour réunir tes deux comptes.",
-                "errorDescription": "Quelque chose a interrompu la combinaison. Tes comptes sont en sécurité — réessaie pour terminer.",
+                "errorDescription": "Quelque chose a interrompu la combinaison. Tes comptes sont en sécurité. Réessaie pour terminer.",
                 "authorise": "Autoriser",
                 "retry": "Réessayer",
                 "cancel": "Annuler",
-                "error": "La combinaison n'a pas pu être autorisée. Réessaie — tes comptes sont en sécurité."
+                "error": "La combinaison n'a pas pu être autorisée. Réessaie. Tes comptes sont en sécurité."
             },
             "settling": {
                 "title": "Combinaison de tes comptes…",
                 "description": "On met tout ensemble. Ça prend généralement quelques secondes.",
                 "errorTitle": "Presque fini",
-                "errorDescription": "Quelque chose a coincé de notre côté après ton autorisation. Réessaie — tes comptes sont en sécurité.",
+                "errorDescription": "Quelque chose a coincé de notre côté après ton autorisation. Réessaie. Tes comptes sont en sécurité.",
                 "progress": {
                     "title": "Un instant…",
                     "body": "On relie tes comptes et on transfère parrainages et récompenses. Patience."
                 },
-                "error": "La combinaison n'a pas pu se terminer. Réessaie — on reprend là où on s'est arrêté.",
+                "error": "La combinaison n'a pas pu se terminer. Réessaie, on reprend là où on s'est arrêté.",
                 "retry": "Réessayer",
                 "cancel": "Annuler",
                 "recover": {
                     "invalidConsent": {
                         "title": "Confirmation expirée",
-                        "body": "Trop de temps s'est écoulé depuis ta confirmation sur l'autre passkey. Reconfirme pour continuer — tes comptes sont en sécurité.",
+                        "body": "Trop de temps s'est écoulé depuis ta confirmation sur l'autre passkey. Reconfirme pour continuer. Tes comptes sont en sécurité.",
                         "cta": "Reconfirmer"
                     },
                     "onChainMismatch": {
                         "title": "Quelque chose a changé",
-                        "body": "Tes comptes ont bougé pendant qu'on les combinait. On recommence depuis l'aperçu — rien n'est perdu.",
+                        "body": "Tes comptes ont bougé pendant qu'on les combinait. On recommence depuis l'aperçu. Rien n'est perdu.",
                         "cta": "Recommencer"
                     },
                     "migrateReverted": {
                         "title": "Les fonds n'ont pas bougé",
-                        "body": "Le transfert n'est pas passé on-chain. Relance-le pour terminer — tes comptes sont en sécurité.",
+                        "body": "Le transfert n'est pas passé on-chain. Relance-le pour terminer. Tes comptes sont en sécurité.",
                         "cta": "Relancer le transfert"
                     }
                 }
             },
             "success": {
                 "title": "Tes comptes ne font plus qu'un",
-                "description": "{{email}} est lié à ton portefeuille. Tout ce qui était sur ton autre compte a été transféré — parrainages, historique, récompenses.",
+                "description": "{{email}} est lié à ton portefeuille. Tout ce qui était sur ton autre compte a été transféré : parrainages, historique, récompenses.",
                 "back": "Retour au profil"
             }
         },
