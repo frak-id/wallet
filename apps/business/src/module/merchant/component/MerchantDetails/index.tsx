@@ -26,6 +26,7 @@ import { useMerchant } from "@/module/merchant/hook/useMerchant";
 import { useMerchantUpdate } from "@/module/merchant/hook/useMerchantUpdate";
 import { AllowedDomains } from "./AllowedDomains";
 import { ExplorerSettings } from "./ExplorerSettings";
+import { NewsletterShareLink } from "./NewsletterShareLink";
 import { PurchasseTrackerSetup } from "./PurchaseTracker";
 
 type FormMerchant = {
@@ -199,6 +200,7 @@ export function MerchantDetails({ merchantId }: { merchantId: string }) {
                 merchantId={merchantId}
                 allowedDomains={merchant?.allowedDomains ?? []}
             />
+            <NewsletterShareLink merchantId={merchantId} />
             <ExplorerSettings merchantId={merchantId} />
             <PurchasseTrackerSetup merchantId={merchantId} />
         </FormLayout>

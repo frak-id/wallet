@@ -58,6 +58,20 @@
             "link": "Add the Frak Banner to your theme"
         }
     },
+    "optionalSetup": {
+        "title": "Finish your setup with end-user UI components",
+        "description": "Your store is live and can already distribute rewards. These two optional storefront components unlock organic sharing and referee conversion. Add them when you are ready.",
+        "shareButton": {
+            "title": "Add the share button to your product pages",
+            "description": "Adds a one-click share button on every product page. Visitors share the page with their network, and the link automatically carries their referral identity so they earn a reward when someone they invited buys.",
+            "cta": "Open the theme editor"
+        },
+        "banner": {
+            "title": "Add the referee banner to your theme",
+            "description": "Shown only to visitors who land on your store through a referral link. The banner confirms they were invited, explains the reward they will earn for buying, and turns a cold visit into a primed conversion.",
+            "cta": "Open the theme editor"
+        }
+    },
     "pixel": {
         "title": "Application pixel",
         "connected": "Your pixel is connected to your store.",
@@ -140,6 +154,13 @@
             "title": "Register your shop",
             "button": "Register your shop in the Frak ecosystem",
             "close": "Close"
+        },
+        "newsletterShare": {
+            "title": "Newsletter sharing link",
+            "description": "Paste this link into your newsletter or any marketing email. When a customer clicks it, your storefront opens with the Frak sharing modal, pre-filled with your current campaign rewards, so they can share and earn in one tap.",
+            "copy": "Copy link",
+            "copied": "Sharing link copied to clipboard",
+            "copyError": "Could not copy link. Please copy it manually."
         },
 
         "campaign": {

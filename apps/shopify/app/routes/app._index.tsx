@@ -1,3 +1,5 @@
+import { OptionalSetup } from "app/components/OptionalSetup";
+import { NewsletterShareLink } from "app/components/Sharing";
 import { Stepper } from "app/components/Stepper";
 import { ExternalButton } from "app/components/ui/ExternalLink";
 import { PageHeading } from "app/components/ui/PageHeading";
@@ -102,7 +104,7 @@ function ThemeSupported({
     const { campaigns, bankStatus } = useLoaderData<typeof loader>();
     const validationResult = validateCompleteOnboarding(onboardingData);
 
-    if (!validationResult.isComplete) {
+    if (validationResult.hasMissedCriticalSteps) {
         return <Stepper redirectToApp={false} />;
     }
 
@@ -121,7 +123,11 @@ function ThemeSupported({
 
     return (
         <s-stack gap="large">
-            <OnBoardingComplete campaigns={campaigns} bankStatus={bankStatus} />
+            <OnBoardingComplete
+                campaigns={campaigns}
+                bankStatus={bankStatus}
+                onboardingData={onboardingData}
+            />
         </s-stack>
     );
 }
@@ -129,14 +135,18 @@ function ThemeSupported({
 function OnBoardingComplete({
     campaigns,
     bankStatus,
+    onboardingData,
 }: {
     campaigns: CampaignResponse[];
     bankStatus: BankStatus;
+    onboardingData: OnboardingStepData;
 }) {
     return (
         <s-stack gap="large">
+            <NewsletterShareLink />
             <CampaignStatus campaigns={campaigns} bankStatus={bankStatus} />
             <BankingStatus bankStatus={bankStatus} />
+            <OptionalSetup onboardingData={onboardingData} />
         </s-stack>
     );
 }
