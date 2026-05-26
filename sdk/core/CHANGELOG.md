@@ -1,5 +1,13 @@
 # @frak-labs/core-sdk
 
+## 1.1.2
+
+### Patch Changes
+
+- [#219](https://github.com/frak-id/wallet/pull/219) [`2a4c95e`](https://github.com/frak-id/wallet/commit/2a4c95ee770b4eb48cd04c4a434f817643cc8c7a) Thanks [@KONFeature](https://github.com/KONFeature)! - Stop injecting default UTM flags when building attribution URLs. Previously `FrakContextManager.update` (and anything routing through `applyAttributionParams`) auto-filled `utm_medium=referral`, `via=frak`, and on V2 contexts also `utm_campaign` / `ref` from the context payload. This polluted merchant analytics and overrode codes integrators wanted to own.
+
+  Only `utm_source` keeps its `frak` default; `utm_medium`, `utm_campaign`, `utm_content`, `utm_term`, `via`, and `ref` are now opt-in via `AttributionParams`.
+
 ## 1.1.1
 
 ### Patch Changes
