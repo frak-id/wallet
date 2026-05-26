@@ -4,16 +4,16 @@ import {
     CardTitle,
 } from "@frak-labs/design-system/components/Card";
 import { Checkbox } from "@frak-labs/design-system/components/Checkbox";
+import {
+    Popover,
+    PopoverContent,
+    PopoverTrigger,
+} from "@frak-labs/design-system/components/Popover";
 import { format, isBefore, startOfDay } from "date-fns";
 import { useEffect, useState } from "react";
 import { useFormContext } from "react-hook-form";
 import { ButtonCalendar } from "@/module/common/component/ButtonCalendar";
 import { Calendar } from "@/module/common/component/Calendar";
-import {
-    Popover,
-    PopoverContent,
-    PopoverTrigger,
-} from "@/module/common/component/Popover";
 import {
     FormControl,
     FormDescription,

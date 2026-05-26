@@ -1,5 +1,5 @@
 import { render, screen } from "@testing-library/react";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { Popover, PopoverContent, PopoverTrigger } from "./index";
 
 vi.mock("@radix-ui/react-popover", () => ({
@@ -21,6 +21,11 @@ vi.mock("@radix-ui/react-popover", () => ({
             data-side-offset={sideOffset}
             {...props}
         >
+            {children}
+        </div>
+    ),
+    Anchor: ({ children, ...props }: any) => (
+        <div data-testid="popover-anchor" {...props}>
             {children}
         </div>
     ),

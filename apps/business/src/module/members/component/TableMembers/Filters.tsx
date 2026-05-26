@@ -1,11 +1,11 @@
-import { SlidersHorizontal } from "lucide-react";
-import { useState } from "react";
-import { Button } from "@/module/common/component/Button";
 import {
     Popover,
     PopoverContent,
     PopoverTrigger,
-} from "@/module/common/component/Popover";
+} from "@frak-labs/design-system/components/Popover";
+import { SlidersHorizontal } from "lucide-react";
+import { useState } from "react";
+import { Button } from "@/module/common/component/Button";
 import { MembersFiltering } from "@/module/members/component/MembersFiltering";
 import { FiltersCount } from "@/module/members/component/TableMembers/FiltersCount";
 import { membersStore } from "@/stores/membersStore";

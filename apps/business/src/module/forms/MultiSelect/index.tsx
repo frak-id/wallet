@@ -1,3 +1,8 @@
+import {
+    Popover,
+    PopoverContent,
+    PopoverTrigger,
+} from "@frak-labs/design-system/components/Popover";
 import clsx from "clsx";
 import { CheckIcon, ChevronDown, X, XIcon } from "lucide-react";
 import type { ButtonHTMLAttributes, Ref } from "react";
@@ -14,11 +19,6 @@ import {
     CommandList,
     CommandSeparator,
 } from "@/module/common/component/Command";
-import {
-    Popover,
-    PopoverContent,
-    PopoverTrigger,
-} from "@/module/common/component/Popover";
 import { Separator } from "@/module/common/component/Separator";
 import { Tooltip } from "@/module/common/component/Tooltip";
 import * as styles from "./multi-select.css";

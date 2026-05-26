@@ -1,14 +1,14 @@
+import {
+    Popover,
+    PopoverContent,
+    PopoverTrigger,
+} from "@frak-labs/design-system/components/Popover";
 import { Text } from "@frak-labs/design-system/components/Text";
 import { CheckIcon, ChevronDownIcon } from "@frak-labs/design-system/icons";
 import { Link, useLocation, useParams } from "@tanstack/react-router";
 import clsx from "clsx";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
-import {
-    Popover,
-    PopoverContent,
-    PopoverTrigger,
-} from "@/module/common/component/Popover";
 import { useMyMerchants } from "@/module/dashboard/hooks/useMyMerchants";
 import * as styles from "./merchant-switcher.css";
 

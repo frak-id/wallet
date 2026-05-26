@@ -1,5 +1,10 @@
 import { Inline } from "@frak-labs/design-system/components/Inline";
 import {
+    Popover,
+    PopoverContent,
+    PopoverTrigger,
+} from "@frak-labs/design-system/components/Popover";
+import {
     Tabs,
     TabsList,
     TabsTrigger,
@@ -13,11 +18,6 @@ import type { DateRange } from "react-day-picker";
 import { useTranslation } from "react-i18next";
 import { Button } from "@/module/common/component/Button";
 import { Calendar } from "@/module/common/component/Calendar";
-import {
-    Popover,
-    PopoverContent,
-    PopoverTrigger,
-} from "@/module/common/component/Popover";
 import { InputSearch } from "@/module/forms/InputSearch";
 import type { CampaignStatus } from "@/types/Campaign";
 import * as styles from "./filter.css";

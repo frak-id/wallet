@@ -1,3 +1,4 @@
+export { ArchiveIcon } from "./ArchiveIcon";
 export { ArrowDownIcon } from "./ArrowDownIcon";
 export { ArrowLeftIcon } from "./ArrowLeftIcon";
 export { ArrowLeftRightIcon } from "./ArrowLeftRightIcon";
@@ -41,10 +42,13 @@ export { LogoFrak } from "./LogoFrak";
 export { LogoFrakBadge } from "./LogoFrakBadge";
 export { LogoFrakWithName } from "./LogoFrakWithName";
 export { MobileIcon } from "./MobileIcon";
+export { MoreVerticalIcon } from "./MoreVerticalIcon";
+export { PauseIcon } from "./PauseIcon";
 export { PencilIcon } from "./PencilIcon";
 export { PeopleFilledIcon } from "./PeopleFilledIcon";
 export { PeopleIcon } from "./PeopleIcon";
 export { PersonIcon } from "./PersonIcon";
+export { PlayIcon } from "./PlayIcon";
 export { ProfileIcon } from "./ProfileIcon";
 export { ProgressCheckIcon } from "./ProgressCheckIcon";
 export { ProgressCheckIconAnimated } from "./ProgressCheckIconAnimated";

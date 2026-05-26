@@ -28,7 +28,7 @@ vi.mock("@/module/dashboard/hooks/useMyMerchants", () => ({
 }));
 
 // Popover renders inline content so we can assert against it in jsdom
-vi.mock("@/module/common/component/Popover", () => ({
+vi.mock("@frak-labs/design-system/components/Popover", () => ({
     Popover: ({ children }: any) => children,
     PopoverTrigger: ({ children }: any) => children,
     PopoverContent: ({ children }: any) => <div>{children}</div>,

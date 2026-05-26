@@ -1,6 +1,6 @@
-import { vars } from "@frak-labs/design-system/theme";
-import { alias } from "@frak-labs/design-system/tokens";
 import { keyframes, style } from "@vanilla-extract/css";
+import { vars } from "../../theme.css";
+import { alias } from "../../tokens.css";
 
 const slideUpAndFade = keyframes({
     from: { opacity: 0, transform: "translateY(2px)" },
@@ -22,11 +22,10 @@ const slideLeftAndFade = keyframes({
     to: { opacity: 1, transform: "translateX(0)" },
 });
 
-export const popover = style({
-    borderRadius: alias.cornerRadius.s,
-    backgroundColor: vars.surface.elevated,
-    boxShadow:
-        "hsl(206 22% 7% / 35%) 0 10px 38px -10px, hsl(206 22% 7% / 20%) 0 10px 20px -15px",
+export const popoverContentStyle = style({
+    borderRadius: alias.cornerRadius.m,
+    backgroundColor: vars.surface.background,
+    boxShadow: "0 4px 16px 0 rgba(115, 115, 115, 0.2)",
     animationDuration: "400ms",
     animationTimingFunction: "cubic-bezier(0.16, 1, 0.3, 1)",
     willChange: "transform, opacity",
