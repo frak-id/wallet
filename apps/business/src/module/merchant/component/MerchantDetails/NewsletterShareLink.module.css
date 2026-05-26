@@ -1,0 +1,5 @@
+.description {
+    margin: 0 0 16px;
+    font-size: 14px;
+    color: var(--text-secondary, #666);
+}
