@@ -40,6 +40,7 @@ export function TopCampaignsCard({
             [
                 columnHelper.display({
                     id: "rank",
+                    size: 40,
                     header: "#",
                     cell: ({ row }) => `0${row.index + 1}`.slice(-2),
                 }),
@@ -49,6 +50,7 @@ export function TopCampaignsCard({
                 }),
                 columnHelper.accessor("status", {
                     header: "Status",
+                    size: 140,
                     cell: ({ getValue }) => {
                         const status = getValue();
                         return (
@@ -63,6 +65,7 @@ export function TopCampaignsCard({
                 }),
                 columnHelper.accessor("sharingRate", {
                     header: () => "Sharing rate",
+                    size: 140,
                     cell: ({ getValue }) => (
                         <Text
                             as="span"
