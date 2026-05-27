@@ -1,5 +1,4 @@
 import { BarChart } from "@frak-labs/design-system/components/BarChart";
-import { Inline } from "@frak-labs/design-system/components/Inline";
 import { Stack } from "@frak-labs/design-system/components/Stack";
 import { Text } from "@frak-labs/design-system/components/Text";
 import type { CampaignsOverview } from "@/module/campaigns/queries/queryOptions";
@@ -31,12 +30,12 @@ export function PurchasesCard({
                 yMax={5000}
                 yTicks={[0, 1000, 2000, 3000, 4000, 5000]}
             />
-            <Inline space="xs" alignY="center">
+            <Stack space="xxs">
                 <span className={styles.legendDotPrimary} />
                 <Text as="span" variant="caption">
                     Purchases generated
                 </Text>
-            </Inline>
+            </Stack>
         </Stack>
     );
 }

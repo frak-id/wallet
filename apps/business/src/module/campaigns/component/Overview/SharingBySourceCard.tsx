@@ -49,13 +49,9 @@ export function SharingBySourceCard({
                             <TabsContent key={mode} value={mode}>
                                 <Stack space="m">
                                     <DonutChart segments={segments} />
-                                    <Inline space="s" align="center" wrap>
+                                    <Inline space="l" align="center" wrap>
                                         {segments.map((s) => (
-                                            <Inline
-                                                key={s.label}
-                                                space="xxs"
-                                                alignY="center"
-                                            >
+                                            <Stack key={s.label} space="xxs">
                                                 <span
                                                     className={local.dot}
                                                     style={{
@@ -69,7 +65,7 @@ export function SharingBySourceCard({
                                                 >
                                                     {s.label}
                                                 </Text>
-                                            </Inline>
+                                            </Stack>
                                         ))}
                                     </Inline>
                                 </Stack>

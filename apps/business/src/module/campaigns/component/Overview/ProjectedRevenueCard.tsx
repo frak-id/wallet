@@ -30,19 +30,19 @@ export function ProjectedRevenueCard({
                 yMax={15000}
                 yTicks={[0, 5000, 10000, 15000]}
             />
-            <Inline space="m">
-                <Inline space="xs" alignY="center">
+            <Inline space="l">
+                <Stack space="xxs">
                     <span className={styles.legendDotSuccess} />
                     <Text as="span" variant="caption">
                         Actual revenue
                     </Text>
-                </Inline>
-                <Inline space="xs" alignY="center">
+                </Stack>
+                <Stack space="xxs">
                     <span className={styles.legendDotForecast} />
                     <Text as="span" variant="caption">
                         Forecast revenue
                     </Text>
-                </Inline>
+                </Stack>
             </Inline>
         </Stack>
     );
