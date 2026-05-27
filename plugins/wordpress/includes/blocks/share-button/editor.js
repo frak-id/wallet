@@ -5,7 +5,7 @@
 	const el = element.createElement;
 	const { Fragment, useEffect, useRef } = element;
 	const { InspectorControls, useBlockProps } = blockEditor;
-	const { PanelBody, TextControl, ToggleControl, SelectControl } = components;
+	const { PanelBody, TextControl, SelectControl } = components;
 	const { __ } = i18n;
 
 	const CLICK_ACTIONS = [
@@ -33,8 +33,7 @@
 	// Return null (not undefined) for missing values so React 18 calls
 	// `removeAttribute()` on custom elements. Passing `undefined` leaves the
 	// attribute stuck in the DOM across re-renders, which corrupts the web
-	// component's state (presence of `use-reward` is treated as truthy even
-	// when the toggle is off).
+	// component's state.
 	function attr( value ) {
 		return value !== '' && value !== undefined && value !== null ? String( value ) : null;
 	}
@@ -82,18 +81,12 @@
 							options: BUTTON_STYLES,
 							onChange: setter( 'buttonStyle' ),
 						} ),
-						el( ToggleControl, {
-							label: __( 'Show potential reward', 'frak' ),
-							help: __( 'Fetches and displays the reward value on the button.', 'frak' ),
-							checked: attributes.useReward,
-							onChange: setter( 'useReward' ),
-						} ),
-						attributes.useReward &&
-							el( TextControl, {
-								label: __( 'Fallback text (no reward)', 'frak' ),
-								value: attributes.noRewardText,
-								onChange: setter( 'noRewardText' ),
-							} )
+						el( TextControl, {
+							label: __( 'Fallback text (no reward)', 'frak' ),
+							help: __( 'Shown when the button text contains {REWARD} but no reward is available.', 'frak' ),
+							value: attributes.noRewardText,
+							onChange: setter( 'noRewardText' ),
+						} )
 					),
 					el(
 						PanelBody,
@@ -130,9 +123,6 @@
 					classname: attr( composeClassname( attributes.buttonStyle, [ attributes.className, attributes.classname ].filter( Boolean ).join( ' ' ).trim() ) ),
 						placement: attr( attributes.placement ),
 						'click-action': attr( attributes.clickAction ),
-						// Boolean HTML attribute: spread the key in only when truthy so
-						// React 18 actually strips it from the DOM when the toggle is off.
-						...( attributes.useReward ? { 'use-reward': '' } : {} ),
 						'no-reward-text': attr( attributes.noRewardText ),
 						'target-interaction': attr( attributes.targetInteraction ),
 					} )

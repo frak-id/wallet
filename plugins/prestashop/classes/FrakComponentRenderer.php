@@ -45,7 +45,6 @@ class FrakComponentRenderer
         'text' => 'text',
         'placement' => 'placement',
         'classname' => 'classname',
-        'useReward' => 'use-reward',
         'noRewardText' => 'no-reward-text',
         'targetInteraction' => 'target-interaction',
         'clickAction' => 'click-action',
@@ -122,18 +121,6 @@ class FrakComponentRenderer
         'token' => 'token',
         'products' => 'products',
         'imageUrl' => 'image-url',
-    ];
-
-    /**
-     * Attribute names rendered as bare presence attributes when truthy.
-     * The web components treat `<frak-x use-reward>` as an "on" toggle —
-     * emitting `use-reward="1"` would coerce to the string "1" which some
-     * components treat as text content, not a toggle.
-     *
-     * @var string[]
-     */
-    private const BOOLEAN_HTML_ATTRS = [
-        'use-reward',
     ];
 
     /**
@@ -299,9 +286,7 @@ class FrakComponentRenderer
     /**
      * Convert an attr map into escaped `name="value"` pairs.
      *
-     * Skips keys that are absent / null / empty-string. Boolean HTML attrs
-     * listed in `BOOLEAN_HTML_ATTRS` are emitted bare (presence = true,
-     * absence = false) rather than as `key="value"`.
+     * Skips keys that are absent / null / empty-string.
      *
      * @param array<string, string> $map   camelCase => kebab-case map.
      * @param array<string, mixed>  $attrs Attribute values.
@@ -316,13 +301,6 @@ class FrakComponentRenderer
             }
             $value = $attrs[$key];
 
-            if (in_array($html_attr, self::BOOLEAN_HTML_ATTRS, true)) {
-                if (self::isTruthy($value)) {
-                    $pairs[] = htmlspecialchars($html_attr, ENT_QUOTES, 'UTF-8');
-                }
-                continue;
-            }
-
             if ($value === '' || $value === null) {
                 continue;
             }
@@ -334,22 +312,5 @@ class FrakComponentRenderer
             );
         }
         return $pairs;
-    }
-
-    /**
-     * Coerce a raw value into a boolean. Mirrors WP's handling so the two
-     * plugins agree on the same truthy set.
-     *
-     * @param mixed $value Raw value.
-     */
-    private static function isTruthy($value): bool
-    {
-        if (is_bool($value)) {
-            return $value;
-        }
-        if (is_string($value)) {
-            return in_array(strtolower($value), ['1', 'true', 'yes', 'on'], true);
-        }
-        return (bool) $value;
     }
 }

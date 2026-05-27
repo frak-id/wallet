@@ -8,7 +8,6 @@ import {
     FormMessage,
 } from "@/module/forms/Form";
 import { Input } from "@/module/forms/Input";
-import { Switch } from "@/module/forms/Switch";
 import * as styles from "../customize.css";
 import type { ComponentSettingsFormValues } from "../types";
 
@@ -32,7 +31,10 @@ export function ButtonShareFields({
                     <FormItem>
                         <FormLabel weight={"medium"}>Button text</FormLabel>
                         <FormDescription>
-                            Label displayed on the share button
+                            Label displayed on the share button. Embed{" "}
+                            <code>{"{REWARD}"}</code> to display the estimated
+                            reward amount inline (e.g.{" "}
+                            <em>Share and earn up to {"{REWARD}"}!</em>).
                         </FormDescription>
                         <FormControl>
                             <Input
@@ -62,8 +64,9 @@ export function ButtonShareFields({
                             No-reward fallback text
                         </FormLabel>
                         <FormDescription>
-                            Shown instead when no reward is available for this
-                            campaign
+                            Shown instead when the button text contains{" "}
+                            <code>{"{REWARD}"}</code> but no reward is available
+                            for this campaign
                         </FormDescription>
                         <FormControl>
                             <Input
@@ -101,29 +104,6 @@ export function ButtonShareFields({
                                     Sharing page
                                 </option>
                             </select>
-                        </FormControl>
-                        <FormMessage />
-                    </FormItem>
-                )}
-            />
-
-            <FormField
-                control={form.control}
-                name="buttonShare.useReward"
-                render={({ field }) => (
-                    <FormItem className={styles.customizeSwitchRow}>
-                        <FormLabel weight={"medium"}>
-                            Display estimated reward
-                        </FormLabel>
-                        <FormDescription>
-                            Show the estimated reward amount directly on the
-                            button
-                        </FormDescription>
-                        <FormControl>
-                            <Switch
-                                checked={field.value}
-                                onCheckedChange={field.onChange}
-                            />
                         </FormControl>
                         <FormMessage />
                     </FormItem>

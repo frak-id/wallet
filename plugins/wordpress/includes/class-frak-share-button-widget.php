@@ -51,13 +51,10 @@ class Frak_Share_Button_Widget extends Frak_Widget_Base {
 					'none'      => __( 'None (custom class only)', 'frak' ),
 				),
 			),
-			'useReward'         => array(
-				'type'  => 'checkbox',
-				'label' => __( 'Show potential reward', 'frak' ),
-			),
 			'noRewardText'      => array(
 				'type'  => 'text',
 				'label' => __( 'Fallback text (no reward)', 'frak' ),
+				'help'  => __( 'Shown when the button text contains {REWARD} but no reward is available.', 'frak' ),
 			),
 			'clickAction'       => array(
 				'type'    => 'select',

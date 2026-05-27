@@ -240,7 +240,6 @@ const getGlobalComponentsValues = ({
         text: c?.buttonShare?.text ?? "",
         noRewardText: c?.buttonShare?.noRewardText ?? "",
         clickAction: c?.buttonShare?.clickAction ?? "sharing-page",
-        useReward: c?.buttonShare?.useReward ?? false,
         css: c?.buttonShare?.rawCss ?? "",
     },
     postPurchase: {
@@ -309,7 +308,6 @@ function GlobalComponentsPanel({
                         text: val(v.buttonShare.text),
                         noRewardText: val(v.buttonShare.noRewardText),
                         clickAction: v.buttonShare.clickAction,
-                        useReward: v.buttonShare.useReward,
                         rawCss: val(v.buttonShare.css),
                     },
                     postPurchase: {

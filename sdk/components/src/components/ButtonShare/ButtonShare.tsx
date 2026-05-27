@@ -37,15 +37,18 @@ import type { ButtonShareProps } from "./types";
  * ```
  *
  * @example
- * Using reward information and fallback text:
+ * Embedding the live reward amount. Include `{REWARD}` in `text` and the
+ * SDK fetches + substitutes the estimated reward at render time. Provide
+ * `no-reward-text` as a fallback when no reward is available:
  * ```html
- * <frak-button-share use-reward text="Share and earn up to {REWARD}!" no-reward-text="Share and earn!"></frak-button-share>
+ * <frak-button-share text="Share and earn up to {REWARD}!" no-reward-text="Share and earn!"></frak-button-share>
  * ```
  *
  * @example
- * Using reward information for specific reward and fallback text:
+ * Same as above, scoped to a specific interaction type so the reward
+ * estimate matches that flow:
  * ```html
- * <frak-button-share use-reward text="Share and earn up to {REWARD}!" no-reward-text="Share and earn!" target-interaction="custom.customerMeeting"></frak-button-share>
+ * <frak-button-share text="Share and earn up to {REWARD}!" no-reward-text="Share and earn!" target-interaction="custom.customerMeeting"></frak-button-share>
  * ```
  *
  * @see {@link @frak-labs/core-sdk!actions.displaySharingPage | `displaySharingPage()`} for more info about the sharing-page flow
@@ -55,7 +58,6 @@ export function ButtonShare({
     placement: placementId,
     text = "Share and earn!",
     classname = "",
-    useReward: rawUseReward,
     noRewardText,
     targetInteraction,
     clickAction: rawClickAction,
@@ -80,9 +82,9 @@ export function ButtonShare({
     const resolvedText = componentConfig?.text ?? text;
     const resolvedNoRewardText = componentConfig?.noRewardText ?? noRewardText;
 
-    const shouldUseReward = useMemo(
-        () => componentConfig?.useReward ?? rawUseReward === true,
-        [componentConfig?.useReward, rawUseReward]
+    const wantsReward = useMemo(
+        () => resolvedText.includes("{REWARD}"),
+        [resolvedText]
     );
     const resolvedClickAction = useMemo(
         () => componentConfig?.clickAction ?? rawClickAction ?? "sharing-page",
@@ -90,23 +92,18 @@ export function ButtonShare({
     );
     const { shouldRender, isHidden, isClientReady } = useClientReady();
     const { reward } = useReward(
-        shouldUseReward && isClientReady,
+        wantsReward && isClientReady,
         resolvedTargetInteraction
     );
 
     const btnText = useMemo(() => {
-        if (!shouldUseReward) return resolvedText;
-        if (!reward) {
-            return (
-                resolvedNoRewardText ??
-                applyRewardPlaceholder(resolvedText, undefined)
-            );
-        }
-
-        return resolvedText.includes("{REWARD}")
-            ? applyRewardPlaceholder(resolvedText, reward)
-            : `${resolvedText} ${reward}`;
-    }, [shouldUseReward, resolvedText, resolvedNoRewardText, reward]);
+        if (!wantsReward) return resolvedText;
+        if (reward) return applyRewardPlaceholder(resolvedText, reward);
+        return (
+            resolvedNoRewardText ??
+            applyRewardPlaceholder(resolvedText, undefined)
+        );
+    }, [wantsReward, resolvedText, resolvedNoRewardText, reward]);
 
     const onClick = useCallback(() => {
         if (isPreview) return;

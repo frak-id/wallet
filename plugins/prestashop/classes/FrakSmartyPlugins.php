@@ -87,7 +87,7 @@ class FrakSmartyPlugins
     }
 
     /**
-     * `{frak_share_button text="Share & earn" use_reward=1}` Smarty handler.
+     * `{frak_share_button text="Share & earn up to {REWARD}" no_reward_text="Share & earn"}` Smarty handler.
      *
      * @param array<string, mixed> $params Smarty-supplied attribute pairs.
      * @param mixed                $smarty Smarty instance (unused).

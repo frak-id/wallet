@@ -187,10 +187,6 @@ return array(
 				'type'    => 'string',
 				'default' => '',
 			),
-			'useReward'         => array(
-				'type'    => 'boolean',
-				'default' => false,
-			),
 			'noRewardText'      => array(
 				'type'    => 'string',
 				'default' => '',

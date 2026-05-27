@@ -6,10 +6,7 @@
  * defaults — and delegates rendering to {@see Frak_Component_Renderer::share_button()}
  * so the emitted HTML matches every other surface byte-for-byte.
  *
- * Schema mirrors `includes/blocks/share-button/block.json`. The
- * `useReward` SWITCHER value is coerced from Elementor's `'yes'` / `''`
- * convention into a real boolean via {@see switcher_to_bool()} before being
- * forwarded to the renderer.
+ * Schema mirrors `includes/blocks/share-button/block.json`.
  *
  * @package Frak_Integration
  */
@@ -64,7 +61,6 @@ class Frak_Elementor_Share_Button_Widget extends Frak_Elementor_Widget_Base {
 		return array(
 			'text',
 			'buttonStyle',
-			'useReward',
 			'noRewardText',
 			'clickAction',
 			'placement',
@@ -113,27 +109,12 @@ class Frak_Elementor_Share_Button_Widget extends Frak_Elementor_Widget_Base {
 		);
 
 		$this->add_control(
-			'useReward',
-			array(
-				'label'        => esc_html__( 'Show potential reward', 'frak' ),
-				'type'         => \Elementor\Controls_Manager::SWITCHER,
-				'label_on'     => esc_html__( 'Show', 'frak' ),
-				'label_off'    => esc_html__( 'Hide', 'frak' ),
-				'return_value' => 'yes',
-				'default'      => '',
-				'description'  => esc_html__( 'Fetches and displays the reward value on the button.', 'frak' ),
-			)
-		);
-
-		$this->add_control(
 			'noRewardText',
 			array(
-				'label'     => esc_html__( 'Fallback text (no reward)', 'frak' ),
-				'type'      => \Elementor\Controls_Manager::TEXT,
-				'condition' => array(
-					'useReward' => 'yes',
-				),
-				'dynamic'   => array( 'active' => true ),
+				'label'       => esc_html__( 'Fallback text (no reward)', 'frak' ),
+				'type'        => \Elementor\Controls_Manager::TEXT,
+				'description' => esc_html__( 'Shown when the button text contains {REWARD} but no reward is available.', 'frak' ),
+				'dynamic'     => array( 'active' => true ),
 			)
 		);
 
@@ -196,18 +177,13 @@ class Frak_Elementor_Share_Button_Widget extends Frak_Elementor_Widget_Base {
 	}
 
 	/**
-	 * Delegate to the shared renderer. Coerces the SWITCHER value into a
-	 * real boolean so the renderer's `is_truthy()` path emits / omits the
-	 * `use-reward` HTML attribute correctly.
+	 * Delegate to the shared renderer.
 	 *
 	 * @param array<string, mixed> $attrs   Filtered renderer attributes.
 	 * @param bool                 $preview Whether the bare `preview` attribute should be emitted.
 	 * @return string
 	 */
 	protected function render_component( array $attrs, bool $preview ): string {
-		if ( array_key_exists( 'useReward', $attrs ) ) {
-			$attrs['useReward'] = self::switcher_to_bool( $attrs['useReward'] );
-		}
 		return Frak_Component_Renderer::share_button( $attrs, '', $preview );
 	}
 }

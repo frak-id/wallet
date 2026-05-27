@@ -103,7 +103,6 @@ function getPlacementFormValues(
             text: bs?.text ?? "",
             noRewardText: bs?.noRewardText ?? "",
             clickAction: bs?.clickAction ?? "sharing-page",
-            useReward: bs?.useReward ?? false,
             css: bs?.rawCss ?? "",
         },
         postPurchase: getPostPurchaseDefaults(components),
@@ -144,7 +143,6 @@ function PlacementSettingsPanel({
                 text: "",
                 noRewardText: "",
                 clickAction: "sharing-page",
-                useReward: false,
                 css: "",
             },
             postPurchase: {
@@ -189,7 +187,6 @@ function PlacementSettingsPanel({
                     currentValues.buttonShare.noRewardText
                 ),
                 clickAction: currentValues.buttonShare.clickAction,
-                useReward: currentValues.buttonShare.useReward,
                 rawCss: valueOrUndefined(currentValues.buttonShare.css),
             };
             const postPurchase = {
