@@ -11,7 +11,14 @@ type DonutChartProps = {
     segments: DonutSegment[];
 };
 
-const renderLabel = ({ percent, cx, cy, midAngle, innerRadius, outerRadius }: {
+const renderLabel = ({
+    percent,
+    cx,
+    cy,
+    midAngle,
+    innerRadius,
+    outerRadius,
+}: {
     percent?: number;
     cx?: number;
     cy?: number;

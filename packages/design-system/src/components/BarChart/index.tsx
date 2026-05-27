@@ -1,7 +1,7 @@
 import {
     Bar,
-    BarChart as RBarChart,
     CartesianGrid,
+    BarChart as RBarChart,
     ReferenceLine,
     ResponsiveContainer,
     XAxis,
@@ -20,25 +20,25 @@ type BarChartProps = {
     avg?: number;
     avgLabel?: string;
     yMax?: number;
+    yTicks?: number[];
     valueFormatter?: (value: number) => string;
 };
 
 const tickStyle = { fontSize: 11, fill: "currentColor" };
+const chartMargin = { top: 8, right: 8, bottom: 0, left: 0 };
 
 export function BarChart({
     data,
     avg,
     avgLabel,
     yMax,
+    yTicks,
     valueFormatter,
 }: BarChartProps) {
     return (
         <div className={barChartStyles.container}>
             <ResponsiveContainer width="100%" height="100%">
-                <RBarChart
-                    data={data}
-                    margin={{ top: 8, right: 8, bottom: 0, left: -16 }}
-                >
+                <RBarChart data={data} margin={chartMargin}>
                     <CartesianGrid
                         horizontal
                         vertical={false}
@@ -55,11 +55,13 @@ export function BarChart({
                         axisLine={false}
                         tickLine={false}
                         tick={tickStyle}
-                        domain={yMax ? [0, yMax] : ["auto", "auto"]}
+                        domain={[0, yMax ?? "auto"]}
+                        ticks={yTicks}
                         tickFormatter={
                             valueFormatter ?? ((v) => `${v / 1000}k`)
                         }
-                        width={32}
+                        width={36}
+                        allowDecimals={false}
                     />
                     <Bar
                         dataKey="value"

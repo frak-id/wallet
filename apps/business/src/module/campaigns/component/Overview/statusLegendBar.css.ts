@@ -44,6 +44,6 @@ export const legendItem = style({
 export const dot = style({
     width: "8px",
     height: "8px",
-    borderRadius: "50%",
+    borderRadius: "2px",
     flexShrink: 0,
 });

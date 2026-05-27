@@ -39,7 +39,7 @@ export function FunnelCard({
                         <Text variant="bodySmall" color="secondary">
                             Global funnel · {labels[variant]}
                         </Text>
-                        <div style={{ marginTop: 16 }}>
+                        <div className={styles.funnelChartWrap}>
                             <FunnelChart steps={funnels[variant]} />
                         </div>
                     </TabsContent>

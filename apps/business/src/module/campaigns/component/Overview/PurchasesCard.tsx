@@ -26,8 +26,13 @@ export function PurchasesCard({
                 avgLabel={`${numberFormatter.format(
                     purchases.avgPerMonth
                 )} avg/mo`}
+                yMax={5000}
+                yTicks={[0, 1000, 2000, 3000, 4000, 5000]}
             />
-            <span className={styles.cardSubtitle}>· Purchases generated</span>
+            <span className={styles.legendRow}>
+                <span className={styles.legendDotPrimary} />
+                Purchases generated
+            </span>
         </div>
     );
 }

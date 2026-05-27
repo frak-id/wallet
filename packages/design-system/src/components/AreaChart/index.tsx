@@ -1,7 +1,7 @@
 import {
     Area,
-    AreaChart as RAreaChart,
     CartesianGrid,
+    AreaChart as RAreaChart,
     ResponsiveContainer,
     XAxis,
     YAxis,
@@ -18,19 +18,23 @@ export type AreaPoint = {
 type AreaChartProps = {
     data: AreaPoint[];
     yMax?: number;
+    yTicks?: number[];
     valueFormatter?: (value: number) => string;
 };
 
 const tickStyle = { fontSize: 11, fill: "currentColor" };
+const chartMargin = { top: 8, right: 8, bottom: 0, left: 0 };
 
-export function AreaChart({ data, yMax, valueFormatter }: AreaChartProps) {
+export function AreaChart({
+    data,
+    yMax,
+    yTicks,
+    valueFormatter,
+}: AreaChartProps) {
     return (
         <div className={areaChartStyles.container}>
             <ResponsiveContainer width="100%" height="100%">
-                <RAreaChart
-                    data={data}
-                    margin={{ top: 8, right: 8, bottom: 0, left: -16 }}
-                >
+                <RAreaChart data={data} margin={chartMargin}>
                     <defs>
                         <linearGradient
                             id="areaActualFill"
@@ -67,11 +71,13 @@ export function AreaChart({ data, yMax, valueFormatter }: AreaChartProps) {
                         axisLine={false}
                         tickLine={false}
                         tick={tickStyle}
-                        domain={yMax ? [0, yMax] : ["auto", "auto"]}
+                        domain={[0, yMax ?? "auto"]}
+                        ticks={yTicks}
                         tickFormatter={
                             valueFormatter ?? ((v) => `${v / 1000}k€`)
                         }
-                        width={40}
+                        width={52}
+                        allowDecimals={false}
                     />
                     <Area
                         type="monotone"

@@ -23,10 +23,20 @@ export function ProjectedRevenueCard({
                     Based on current growth trend
                 </span>
             </div>
-            <AreaChart data={projectedRevenue.series} />
-            <div style={{ display: "flex", gap: 16 }}>
-                <span className={styles.cardSubtitle}>· Actual revenue</span>
-                <span className={styles.cardSubtitle}>· Forecast revenue</span>
+            <AreaChart
+                data={projectedRevenue.series}
+                yMax={15000}
+                yTicks={[0, 5000, 10000, 15000]}
+            />
+            <div className={styles.revenueLegend}>
+                <span className={styles.legendRow}>
+                    <span className={styles.legendDotSuccess} />
+                    Actual revenue
+                </span>
+                <span className={styles.legendRow}>
+                    <span className={styles.legendDotForecast} />
+                    Forecast revenue
+                </span>
             </div>
         </div>
     );
