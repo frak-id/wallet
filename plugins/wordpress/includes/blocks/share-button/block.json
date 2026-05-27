@@ -19,7 +19,6 @@
 		"text": { "type": "string", "default": "Share and earn!" },
 		"placement": { "type": "string", "default": "" },
 		"classname": { "type": "string", "default": "" },
-		"useReward": { "type": "boolean", "default": false },
 		"noRewardText": { "type": "string", "default": "" },
 		"targetInteraction": { "type": "string", "default": "" },
 		"clickAction": { "type": "string", "default": "sharing-page" },

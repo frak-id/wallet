@@ -87,17 +87,6 @@ final class FrakComponentRendererTest extends TestCase
         $this->assertStringNotContainsString('classname="btn', $html);
     }
 
-    public function testBooleanAttributesAreEmittedBareWhenTruthy(): void
-    {
-        // The web component treats `<frak-button-share use-reward>` as an
-        // "on" toggle; emitting `use-reward="1"` would coerce to text content
-        // rather than a boolean toggle.
-        $html = FrakComponentRenderer::shareButton(['useReward' => true]);
-
-        $this->assertStringContainsString(' use-reward', $html);
-        $this->assertStringNotContainsString('use-reward=', $html);
-    }
-
     public function testEmptyAttributesAreOmitted(): void
     {
         // Empty strings / nulls should not produce empty `attr=""` pairs that

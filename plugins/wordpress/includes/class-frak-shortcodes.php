@@ -9,9 +9,7 @@
  *
  * Attribute names follow WP's snake_case convention (e.g. `referral_title`)
  * and are normalised to the renderer's camelCase keys at the boundary via
- * {@see Frak_Component_Renderer::snake_keys_to_camel()}. Boolean attributes
- * (currently `use_reward` on the share button) accept `"1" / "true" / "yes"
- * / "on"` — the renderer coerces them to real booleans.
+ * {@see Frak_Component_Renderer::snake_keys_to_camel()}.
  *
  * Shortcodes are registered unconditionally in every non-CLI request context
  * (via {@see Frak_Plugin::init()}) because `add_shortcode()` only attaches a
@@ -58,7 +56,6 @@ class Frak_Shortcodes {
 		'text'               => '',
 		'placement'          => '',
 		'classname'          => '',
-		'use_reward'         => '',
 		'no_reward_text'     => '',
 		'target_interaction' => '',
 		'click_action'       => '',
@@ -108,7 +105,7 @@ class Frak_Shortcodes {
 	}
 
 	/**
-	 * `[frak_share_button text="Share & earn" use_reward="1" click_action="sharing-page"]`
+	 * `[frak_share_button text="Share & earn up to {REWARD}" no_reward_text="Share & earn" click_action="sharing-page"]`
 	 *
 	 * @param array<string, string>|string $atts Shortcode attributes.
 	 * @return string

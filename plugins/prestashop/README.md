@@ -68,7 +68,7 @@ Theme files and CMS pages can drop Frak components anywhere via three Smarty fun
 
 ```smarty
 {frak_banner placement="hero" referral_title="Welcome back!"}
-{frak_share_button text="Share & earn" use_reward=1 placement="sidebar"}
+{frak_share_button text="Share & earn up to {REWARD}" no_reward_text="Share & earn" placement="sidebar"}
 {frak_post_purchase variant="referrer" cta_text="Earn rewards"}
 ```
 

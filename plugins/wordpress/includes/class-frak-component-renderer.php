@@ -53,7 +53,6 @@ class Frak_Component_Renderer {
 		'text'              => 'text',
 		'placement'         => 'placement',
 		'classname'         => 'classname',
-		'useReward'         => 'use-reward',
 		'noRewardText'      => 'no-reward-text',
 		'targetInteraction' => 'target-interaction',
 		'clickAction'       => 'click-action',
@@ -99,24 +98,12 @@ class Frak_Component_Renderer {
 	);
 
 	/**
-	 * Attribute names rendered as bare presence attributes when truthy. The
-	 * web components treat `<frak-x use-reward>` as an "on" toggle — emitting
-	 * `use-reward="1"` would coerce to the string "1" which some components
-	 * treat as text content, not a toggle.
-	 *
-	 * @var string[]
-	 */
-	private const BOOLEAN_HTML_ATTRS = array(
-		'use-reward',
-	);
-
-	/**
 	 * Attribute names that emit `name="true"` when truthy and are skipped
-	 * entirely when falsy. Distinct from {@see BOOLEAN_HTML_ATTRS} (bare
-	 * presence) because the SDK side reads the value as a string and only
-	 * treats the literal `"true"` as on — a bare `allow-inapp-redirect`
-	 * attribute deserialises to the empty string under preact-custom-element,
-	 * which would be ignored by the component's `=== "true"` check.
+	 * entirely when falsy. Used for HTML attributes whose SDK-side runtime
+	 * reads the value as a string and only treats the literal `"true"` as on
+	 * — a bare HTML attribute deserialises to the empty string under
+	 * preact-custom-element, which would be ignored by the component's
+	 * `=== "true"` check.
 	 *
 	 * @var string[]
 	 */
@@ -383,9 +370,9 @@ class Frak_Component_Renderer {
 	/**
 	 * Convert a block-attr map into escaped `name="value"` pairs.
 	 *
-	 * Skips keys that are absent / null / empty-string. Boolean HTML attrs
-	 * listed in {@see BOOLEAN_HTML_ATTRS} are emitted bare (presence = true,
-	 * absence = false) rather than as `key="value"`.
+	 * Skips keys that are absent / null / empty-string. Attrs listed in
+	 * {@see TRUE_VALUED_HTML_ATTRS} are emitted as `name="true"` when truthy
+	 * and dropped entirely when falsy.
 	 *
 	 * @param array<string,string> $map   Block-attr => HTML-attr map.
 	 * @param array<string, mixed> $attrs Block attribute values.
@@ -398,13 +385,6 @@ class Frak_Component_Renderer {
 				continue;
 			}
 			$value = $attrs[ $block_key ];
-
-			if ( in_array( $html_attr, self::BOOLEAN_HTML_ATTRS, true ) ) {
-				if ( self::is_truthy( $value ) ) {
-					$pairs[] = esc_attr( $html_attr );
-				}
-				continue;
-			}
 
 			if ( in_array( $html_attr, self::TRUE_VALUED_HTML_ATTRS, true ) ) {
 				if ( self::is_truthy( $value ) ) {
