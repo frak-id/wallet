@@ -21,14 +21,14 @@ export const segment = style({
 export const legend = style({
     display: "flex",
     flexWrap: "wrap",
-    gap: alias.spacing.s,
+    gap: alias.spacing.xl,
     rowGap: alias.spacing.xxs,
 });
 
 export const legendItem = style({
     display: "inline-flex",
     alignItems: "center",
-    gap: "6px",
+    gap: alias.spacing.xxs,
 });
 
 export const dot = style({

@@ -133,14 +133,19 @@ export function Table<TData extends object>({
                         <tr key={headerGroup.id}>
                             {headerGroup.headers.map((header) => {
                                 const size = header.column.columnDef.size;
+                                const align =
+                                    header.column.columnDef.meta?.align;
                                 return (
                                     <th
                                         key={header.id}
-                                        style={
-                                            size !== undefined
-                                                ? { width: size }
-                                                : undefined
-                                        }
+                                        style={{
+                                            ...(size !== undefined && {
+                                                width: size,
+                                            }),
+                                            ...(align === "right" && {
+                                                textAlign: "right",
+                                            }),
+                                        }}
                                     >
                                         {header.isPlaceholder ? null : (
                                             <Sorting {...header.column}>
@@ -191,14 +196,19 @@ export function Table<TData extends object>({
                                 >
                                     {row.getVisibleCells().map((cell) => {
                                         const size = cell.column.columnDef.size;
+                                        const align =
+                                            cell.column.columnDef.meta?.align;
                                         return (
                                             <td
                                                 key={cell.id}
-                                                style={
-                                                    size !== undefined
-                                                        ? { width: size }
-                                                        : undefined
-                                                }
+                                                style={{
+                                                    ...(size !== undefined && {
+                                                        width: size,
+                                                    }),
+                                                    ...(align === "right" && {
+                                                        textAlign: "right",
+                                                    }),
+                                                }}
                                             >
                                                 {flexRender(
                                                     cell.column.columnDef.cell,

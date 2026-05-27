@@ -15,7 +15,7 @@ const statusColor: Record<keyof CampaignsOverview["statusBreakdown"], string> =
         active: vars.icon.success,
         paused: vars.icon.warning,
         draft: vars.icon.tertiary,
-        ended: vars.icon.primary,
+        ended: vars.icon.secondary,
     };
 
 const statusLabel: Record<keyof CampaignsOverview["statusBreakdown"], string> =

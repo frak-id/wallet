@@ -63,7 +63,16 @@ export function TopCampaignsCard({
                 }),
                 columnHelper.accessor("sharingRate", {
                     header: () => "Sharing rate",
-                    cell: ({ getValue }) => `${Math.round(getValue() * 100)}%`,
+                    cell: ({ getValue }) => (
+                        <Text
+                            as="span"
+                            variant="bodySmall"
+                            weight="medium"
+                            color="success"
+                        >
+                            {Math.round(getValue() * 100)}%
+                        </Text>
+                    ),
                     meta: { align: "right" },
                 }),
             ] as ColumnDef<TopCampaign>[],
