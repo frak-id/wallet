@@ -12,6 +12,7 @@ import {
     erc20DecimalsAbi,
     rewarderGetClaimableAbi,
 } from "@/module/tokens/utils/abi";
+import { walletMergeKey } from "../queryKeys/walletMerge";
 
 const STABLECOIN_IDS = Object.keys(currentStablecoins) as Stablecoin[];
 
@@ -40,11 +41,6 @@ export type LoserAssetSummary = {
 type UseLoserAssetSummaryArgs = {
     loser?: Address;
 };
-
-/** Shared query key — kept stable so the hook's cache feeds the migrate
- *  mutation's `fetchQuery` call without duplicating the key shape. */
-export const loserAssetSummaryQueryKey = (loser?: Address) =>
-    ["walletMerge", "loserAssetSummary", loser ?? "none"] as const;
 
 /**
  * Read the live on-chain summary in one multicall. Exported (not just used
@@ -126,7 +122,7 @@ export function looserAssetSummaryQueryOpt({
     loser,
 }: UseLoserAssetSummaryArgs) {
     return queryOptions({
-        queryKey: loserAssetSummaryQueryKey(loser),
+        queryKey: walletMergeKey.loserAssetSummary(loser),
         enabled: Boolean(loser),
         gcTime: 0,
         meta: { storable: false },

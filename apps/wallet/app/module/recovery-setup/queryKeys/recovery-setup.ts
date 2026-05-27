@@ -9,6 +9,8 @@ export namespace recoverySetupKey {
      */
     const base = "recovery-setup" as const;
 
+    export const all = [base] as const;
+
     /**
      * Query keys for status
      */

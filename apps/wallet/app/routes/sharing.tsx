@@ -13,6 +13,7 @@ import {
     SharingPage,
     saveConfirmation,
     sessionStore,
+    sharingKey,
     trackEvent,
     useCopyToClipboardWithState,
     useFormattedEstimatedReward,
@@ -167,7 +168,7 @@ function WalletSharingPage() {
 
     // Fallback: resolve clientId from the backend via checkout token when not directly provided
     const { data: resolvedClientId } = useQuery({
-        queryKey: ["order-client", merchantId, checkoutToken],
+        queryKey: sharingKey.orderClient(merchantId, checkoutToken),
         queryFn: async () => {
             if (!merchantId || !checkoutToken) return null;
             const { data, error } = await authenticatedBackendApi.user.identity[

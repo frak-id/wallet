@@ -2,9 +2,12 @@
  * Zustand store for authentication management
  */
 
+import type { Address } from "viem";
+import { isAddressEqual } from "viem/utils";
 import { persist } from "zustand/middleware";
 import { createStore } from "zustand/vanilla";
 import { authenticatorStorage } from "../common/storage/authenticators";
+import { recoveryHintStorage } from "../common/storage/recoveryHint";
 import type { Session } from "../types/Session";
 import type { AuthenticationStore } from "./types";
 
@@ -94,5 +97,45 @@ export async function addLastAuthentication(authentication: Session) {
         wallet: authentication.address,
         authenticatorId: authentication.authenticatorId,
         transports: authentication.transports,
+    });
+}
+
+/**
+ * Apply a freshly-minted wallet-merge session to every "current
+ * authenticator" surface — the zustand `lastAuthenticator`, the
+ * previous-authenticators IDB list, AND the platform-native recovery
+ * hint (iCloud KV / Block Store).
+ *
+ * The merge re-binds an existing credential to a different wallet, so
+ * `addLastAuthentication` on its own leaves the orphan loser-wallet row
+ * in IDB (the list dedupes by NEW wallet key, not by `authenticatorId`).
+ * We drop the loser row explicitly first, then reuse the standard write
+ * path for the new (winner) binding.
+ *
+ * Mirrors the trio of writes `useLogin` performs on successful WebAuthn
+ * authentication, so the wallet behaves identically post-merge as if the
+ * user had freshly logged in with the credential against the winner
+ * wallet.
+ *
+ * No-op when `session.address === previousAddress` (the requester was
+ * the merge winner — their session didn't move).
+ */
+export async function applyMergeSession({
+    previousAddress,
+    session,
+}: {
+    previousAddress?: Address;
+    session: Session;
+}) {
+    if (previousAddress && !isAddressEqual(previousAddress, session.address)) {
+        await authenticatorStorage.remove(previousAddress);
+    }
+
+    await addLastAuthentication(session);
+
+    await recoveryHintStorage.set({
+        lastAuthenticatorId: session.authenticatorId,
+        lastWallet: session.address,
+        lastLoginAt: Date.now(),
     });
 }

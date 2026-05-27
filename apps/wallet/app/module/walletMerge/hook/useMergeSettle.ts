@@ -1,12 +1,25 @@
 import type { MergeSettleResponse } from "@frak-labs/backend-elysia/api/schemas";
 import {
+    applyMergeSession,
     authenticatedWalletApi,
     authKey,
+    balanceKey,
+    claimableKey,
+    mergeTokenKeys,
+    pairingKey,
+    referralKey,
+    rewardsKey,
     type Session,
+    sdkKey,
     sessionStore,
 } from "@frak-labs/wallet-shared";
 import { useMutation } from "@tanstack/react-query";
+import { historyKey } from "@/module/history/queryKeys/history";
+import { moneriumKey } from "@/module/monerium/queryKeys/monerium";
+import { notificationKey } from "@/module/notification/queryKeys/notification";
+import { recoverySetupKey } from "@/module/recovery-setup/queryKeys/recovery-setup";
 import { MergeError } from "../errors";
+import { walletMergeKey } from "../queryKeys/walletMerge";
 
 type UseMergeSettleArgs = {
     /**
@@ -77,27 +90,67 @@ export function useMergeSettle() {
             // store, which only accepts local webauthn sessions in this
             // path.
             if (data.session && data.session.type !== "ecdsa") {
+                // Snapshot the pre-merge address BEFORE swapping the
+                // session — `applyMergeSession` needs it to evict the
+                // orphan loser-wallet entry from the IDB authenticator
+                // list. The requester here is the loser (backend only
+                // returns a fresh session for the loser path), so this
+                // address is the wallet that just stopped existing.
+                const previousAddress =
+                    sessionStore.getState().session?.address;
+
                 const { token, sdkJwt, type, ...rest } = data.session;
-                sessionStore
-                    .getState()
-                    .setSession({ ...rest, type, token } as Session);
+                const newSession = { ...rest, type, token } as Session;
+                sessionStore.getState().setSession(newSession);
                 sessionStore.getState().setSdkSession(sdkJwt);
+
+                // Mirror the trio of writes `useLogin` performs (last-auth
+                // store + IDB list + cross-platform recovery hint) so the
+                // rebound credential behaves identically to a fresh login
+                // for every downstream "what's my current identity?" read.
+                await applyMergeSession({
+                    previousAddress,
+                    session: newSession,
+                });
             }
 
             return data;
         },
         onSuccess: (_data, _variable, _result, { client }) => {
-            // The merge re-binds the credential to the winner wallet, so
-            // any session-scoped caches that were populated against the
-            // loser are now stale. `authKey.myEmail` is the obvious one
-            // (the email the user just typed now lives on the winner),
-            // but we also drop the merge-preview cache so a subsequent
-            // attempt re-fetches against the new binding instead of
-            // returning the now-meaningless pre-merge preview.
+            // The merge re-binds the loser credential to the winner wallet.
+            // Two flavours of stale cache to clean up:
+            //
+            //  1. **Static / ∞-stale / JWT-derived keys** — must refetch
+            //     against the new binding. The cached value belongs to the
+            //     loser identity (email association, recovery hint, SDK
+            //     JWT minted from the loser session, etc.).
+            //
+            //  2. **Address-keyed entries** — auto-refetch under the new
+            //     winner address key, but the loser-keyed entries linger
+            //     in cache. `removeQueries` on the prefix drops them.
+            //
+            // Order doesn't matter — all calls are synchronous cache ops.
             client.invalidateQueries({ queryKey: authKey.myEmail });
             client.invalidateQueries({
-                queryKey: [authKey.merge.settle[0], authKey.merge.settle[1]],
+                queryKey: authKey.previousAuthenticators,
             });
+            client.invalidateQueries({ queryKey: authKey.recoveryHint });
+            client.invalidateQueries({ queryKey: authKey.merge.all });
+            client.invalidateQueries({ queryKey: walletMergeKey.all });
+            client.invalidateQueries({ queryKey: sdkKey.token.all });
+            client.invalidateQueries({ queryKey: mergeTokenKeys.all });
+            client.invalidateQueries({
+                queryKey: notificationKey.push.backendToken,
+            });
+            client.invalidateQueries({ queryKey: moneriumKey.all });
+            client.invalidateQueries({ queryKey: referralKey.all });
+
+            client.removeQueries({ queryKey: balanceKey.baseKey });
+            client.removeQueries({ queryKey: claimableKey.baseKey });
+            client.removeQueries({ queryKey: rewardsKey.all });
+            client.removeQueries({ queryKey: pairingKey.list.all });
+            client.removeQueries({ queryKey: recoverySetupKey.all });
+            client.removeQueries({ queryKey: historyKey.all });
         },
     });
 }

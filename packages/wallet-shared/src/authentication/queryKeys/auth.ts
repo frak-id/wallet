@@ -51,12 +51,21 @@ export namespace authKey {
     export const associateEmail = [base, myEmailBase, "associate"] as const;
 
     /**
+     * Best-known "last authenticator" hint read from the platform's
+     * cross-platform recovery KV (iCloud KV on iOS, Block Store on
+     * Android). Survives uninstall and unlocks the reinstall UX. Wiped
+     * by explicit auth-success paths.
+     */
+    export const recoveryHint = [base, "recoveryHint"] as const;
+
+    /**
      * Keys for the same-device wallet-merge flow. Preview is read-only and
      * fully recomputable from the same inputs, so the React Query cache is
      * keyed by the target credential.
      */
     const mergeBase = "merge" as const;
     export const merge = {
+        all: [base, mergeBase] as const,
         preview: (
             targetAuthenticatorId: string,
             requesterAuthenticatorId = ""

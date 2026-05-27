@@ -7,6 +7,7 @@ import { authenticatedBackendApi } from "@frak-labs/wallet-shared";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import type { PluginListener } from "@tauri-apps/api/core";
 import { useEffect } from "react";
+import { versionKey } from "../queryKeys/version";
 import { isBelow } from "../utils/compareVersions";
 import {
     checkNativeUpdate,
@@ -31,7 +32,7 @@ export type VersionGateState =
 const STALE_TIME_MS = 5 * 60 * 1000;
 
 const minVersionQueryOptions = {
-    queryKey: ["version", "min-supported"] as const,
+    queryKey: versionKey.minSupported,
     queryFn: async () => {
         const { data, error } =
             await authenticatedBackendApi.common.version.get();
@@ -47,7 +48,7 @@ const minVersionQueryOptions = {
 } as const;
 
 const nativeUpdateQueryOptions = {
-    queryKey: ["version", "native-status"] as const,
+    queryKey: versionKey.nativeStatus,
     queryFn: async (): Promise<NativeUpdateStatus> => checkNativeUpdate(),
     staleTime: STALE_TIME_MS,
     refetchOnWindowFocus: true,
@@ -96,7 +97,7 @@ export function useVersionGate(): VersionGateState {
         let cancelled = false;
         listenToNativeUpdateStatus((event) => {
             queryClient.setQueryData<NativeUpdateStatus>(
-                ["version", "native-status"],
+                versionKey.nativeStatus,
                 event
             );
         })

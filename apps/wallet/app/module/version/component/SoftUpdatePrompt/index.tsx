@@ -6,6 +6,7 @@ import { Text } from "@frak-labs/design-system/components/Text";
 import { CheckIcon } from "@frak-labs/design-system/icons";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
+import { versionKey } from "../../queryKeys/version";
 import {
     completeNativeSoftUpdate,
     type NativeUpdateStatus,
@@ -78,7 +79,7 @@ function AvailableBanner({
 }) {
     const queryClient = useQueryClient();
     const start = useMutation({
-        mutationKey: ["version", "start-soft-update"],
+        mutationKey: versionKey.startSoftUpdate,
         mutationFn: startNativeSoftUpdate,
         // Optimistically flip the native-status cache to `in_progress` so
         // the prompt swaps to the progress bar the instant the user taps
@@ -91,7 +92,7 @@ function AvailableBanner({
         onSuccess: (started) => {
             if (!started) return;
             queryClient.setQueryData<NativeUpdateStatus>(
-                ["version", "native-status"],
+                versionKey.nativeStatus,
                 (previous) => ({
                     status: "in_progress",
                     currentVersion:
@@ -138,7 +139,7 @@ function AvailableBanner({
 
 function DownloadedBanner({ t }: { t: Translate }) {
     const complete = useMutation({
-        mutationKey: ["version", "complete-soft-update"],
+        mutationKey: versionKey.completeSoftUpdate,
         mutationFn: completeNativeSoftUpdate,
     });
 

@@ -67,7 +67,8 @@ export function getSmartAccountProvider({
         if (
             signableWallet?.authenticatorId ===
                 currentWebAuthNWallet?.authenticatorId &&
-            signableWallet?.address === currentWebAuthNWallet?.address &&
+            signableWallet?.address?.toLocaleLowerCase() ===
+                currentWebAuthNWallet?.address?.toLocaleLowerCase() &&
             signableWallet?.type === currentWebAuthNWallet?.type
         ) {
             return;

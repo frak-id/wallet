@@ -3,6 +3,7 @@ import { type MutationOptions, useMutation } from "@tanstack/react-query";
 import { trackEvent } from "../../common/analytics";
 import type { SharingSource } from "../../common/analytics/events";
 import { getInvoke } from "../../common/tauri";
+import { sharingKey } from "../queryKeys";
 
 type TauriShareResponse = { shared: boolean };
 
@@ -93,7 +94,7 @@ export function useShareLink(
 
     const mutation = useMutation({
         ...mutationOptions,
-        mutationKey: ["sharing", "trigger", source, link ?? "no-link"],
+        mutationKey: sharingKey.trigger(source, link),
         mutationFn: async () => {
             if (!link) return;
 

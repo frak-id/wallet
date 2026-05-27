@@ -1,5 +1,6 @@
 import type { Hex } from "viem";
 import { getSafeSession } from "../../common/utils/safeSession";
+import { applyMergeSession } from "../../stores/authenticationStore";
 import { detachedPairingSessionStore } from "../../stores/detachedPairingSessionStore";
 import { sessionStore } from "../../stores/sessionStore";
 import type { Session } from "../../types/Session";
@@ -237,14 +238,30 @@ export class TargetPairingClient extends BasePairingClient<
                 return;
             }
             if (message.payload.session) {
+                // Snapshot the pre-merge address BEFORE the session swap
+                // so `applyMergeSession` can evict the orphan loser-wallet
+                // entry from the IDB authenticator list. This client only
+                // hits the rebind path when this device IS the loser, so
+                // `previousAddress` is the wallet that just stopped existing.
+                const previousAddress =
+                    sessionStore.getState().session?.address;
+
                 // Backend's webauthn DTO carries `transports: string[]`,
                 // local `Session` narrows to `AuthenticatorTransport[]`.
                 // Cast mirrors the same narrowing useMergeSettle relies on.
                 const { token, sdkJwt, wallet } = message.payload.session;
-                sessionStore
-                    .getState()
-                    .setSession({ ...wallet, token } as Session);
+                const newSession = { ...wallet, token } as Session;
+                sessionStore.getState().setSession(newSession);
                 sessionStore.getState().setSdkSession(sdkJwt);
+
+                // Same trio of "this is the current authenticator" writes
+                // as the same-device useMergeSettle path. WS handler is
+                // sync from the caller's POV — fire-and-forget the promise;
+                // any IDB / native-KV failure is logged inside the helper.
+                void applyMergeSession({
+                    previousAddress,
+                    session: newSession,
+                });
             }
             return;
         }

@@ -1,5 +1,6 @@
 import {
     authenticationStore,
+    authKey,
     type PreviousAuthenticatorModel,
     recoveryHintStorage,
 } from "@frak-labs/wallet-shared";
@@ -27,7 +28,7 @@ export function useLastAuthenticatorHint(): PreviousAuthenticatorModel | null {
     );
 
     const { data: recoveryHint } = useQuery({
-        queryKey: ["recoveryHint"],
+        queryKey: authKey.recoveryHint,
         queryFn: () => recoveryHintStorage.get(),
         // Static across the session — the hint only changes on auth success,
         // and those paths invalidate it explicitly.

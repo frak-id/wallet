@@ -14,6 +14,7 @@ import {
     ExternalLink,
     getSafeSession,
     LogoFrakWithName,
+    merchantKey,
     PLAY_STORE_URL,
     trackEvent,
     useFormattedEstimatedReward,
@@ -151,7 +152,7 @@ function InstallProcessing({ m: merchantId, a: anonymousId }: InstallSearch) {
 
 function merchantInfoQueryOptions(merchantId?: string) {
     return queryOptions({
-        queryKey: ["merchant", "info", merchantId ?? "none"],
+        queryKey: merchantKey.info(merchantId),
         queryFn: async () => {
             if (!merchantId) return null;
             const { data } =

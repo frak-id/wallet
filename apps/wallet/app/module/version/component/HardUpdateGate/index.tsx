@@ -3,6 +3,7 @@ import { Text } from "@frak-labs/design-system/components/Text";
 import { useMutation } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 import { FullScreenGate } from "@/module/common/component/FullScreenGate";
+import { versionKey } from "../../queryKeys/version";
 import { openNativeStore } from "../../utils/nativeUpdater";
 
 type HardUpdateGateProps = {
@@ -24,7 +25,7 @@ export function HardUpdateGate({
 }: HardUpdateGateProps) {
     const { t } = useTranslation();
     const openStore = useMutation({
-        mutationKey: ["version", "open-store"],
+        mutationKey: versionKey.openStore,
         mutationFn: openNativeStore,
     });
 

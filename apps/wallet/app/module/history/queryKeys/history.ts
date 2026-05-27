@@ -9,11 +9,14 @@ export namespace historyKey {
      */
     const base = "history" as const;
 
+    export const all = [base] as const;
+
     /**
      * Query keys for interactions
      */
     const interactionsBase = "interactions" as const;
     export const interactions = {
+        all: [base, interactionsBase] as const,
         byAddress: (address?: Hex) =>
             [base, interactionsBase, address ?? "no-address"] as const,
     };
@@ -23,6 +26,7 @@ export namespace historyKey {
      */
     const rewardsBase = "rewards" as const;
     export const rewards = {
+        all: [base, rewardsBase] as const,
         byAddress: (address?: Hex) =>
             [base, rewardsBase, address ?? "no-address"] as const,
     };

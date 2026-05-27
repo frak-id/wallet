@@ -4,6 +4,8 @@
 export namespace referralKey {
     const base = "referral" as const;
 
+    export const all = [base] as const;
+
     /**
      * Global referral status (owned code + has-been-referred flags)
      * for the authenticated wallet, optionally scoped to a merchant.

@@ -11,15 +11,12 @@ import {
     getSupportedCurrency,
 } from "@frak-labs/core-sdk";
 import { authenticatedBackendApi } from "../api/backendClient";
+import { merchantKey } from "../queryKeys/merchant";
 import { queryOptions } from "../utils/queryOptions";
 
 export function estimatedRewardsQueryOptions(merchantId?: string) {
     return queryOptions({
-        queryKey: [
-            "merchant",
-            "estimatedRewards",
-            merchantId ?? "no-merchant-id",
-        ] as const,
+        queryKey: merchantKey.estimatedRewards(merchantId),
         queryFn: async (): Promise<EstimatedRewardItem[]> => {
             if (!merchantId) return [];
 
