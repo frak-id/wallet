@@ -1,4 +1,5 @@
 import { FunnelChart } from "@frak-labs/design-system/components/FunnelChart";
+import { Stack } from "@frak-labs/design-system/components/Stack";
 import {
     Tabs,
     TabsContent,
@@ -24,26 +25,28 @@ export function FunnelCard({
     return (
         <div className={styles.card}>
             <Tabs defaultValue="website">
-                <div className={styles.cardTitleRow}>
-                    <TabsList>
-                        <TabsTrigger value="website">
-                            {labels.website}
-                        </TabsTrigger>
-                        <TabsTrigger value="wallet">
-                            {labels.wallet}
-                        </TabsTrigger>
-                    </TabsList>
-                </div>
-                {(Object.keys(labels) as Variant[]).map((variant) => (
-                    <TabsContent key={variant} value={variant}>
-                        <Text variant="bodySmall" color="secondary">
-                            Global funnel · {labels[variant]}
-                        </Text>
-                        <div className={styles.funnelChartWrap}>
-                            <FunnelChart steps={funnels[variant]} />
-                        </div>
-                    </TabsContent>
-                ))}
+                <Stack space="m">
+                    <div className={styles.cardTitleRow}>
+                        <TabsList>
+                            <TabsTrigger value="website">
+                                {labels.website}
+                            </TabsTrigger>
+                            <TabsTrigger value="wallet">
+                                {labels.wallet}
+                            </TabsTrigger>
+                        </TabsList>
+                    </div>
+                    {(Object.keys(labels) as Variant[]).map((variant) => (
+                        <TabsContent key={variant} value={variant}>
+                            <Text variant="bodySmall" color="secondary">
+                                Global funnel · {labels[variant]}
+                            </Text>
+                            <div className={styles.funnelChartWrap}>
+                                <FunnelChart steps={funnels[variant]} />
+                            </div>
+                        </TabsContent>
+                    ))}
+                </Stack>
             </Tabs>
         </div>
     );

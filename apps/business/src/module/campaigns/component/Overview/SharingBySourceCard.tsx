@@ -1,4 +1,5 @@
 import { DonutChart } from "@frak-labs/design-system/components/DonutChart";
+import { Stack } from "@frak-labs/design-system/components/Stack";
 import {
     Tabs,
     TabsContent,
@@ -33,37 +34,41 @@ export function SharingBySourceCard({
     return (
         <div className={styles.card}>
             <Tabs defaultValue="platform">
-                <TabsList>
-                    <TabsTrigger value="platform">Platform</TabsTrigger>
-                    <TabsTrigger value="device">Device</TabsTrigger>
-                </TabsList>
-                <Text variant="bodySmall" color="secondary">
-                    Sharing by source
-                </Text>
-                {(["platform", "device"] as Mode[]).map((mode) => {
-                    const segments = withColors(sharing[mode], mode);
-                    return (
-                        <TabsContent key={mode} value={mode}>
-                            <DonutChart segments={segments} />
-                            <div className={local.legend}>
-                                {segments.map((s) => (
-                                    <Text
-                                        as="span"
-                                        variant="caption"
-                                        key={s.label}
-                                        className={local.item}
-                                    >
-                                        <span
-                                            className={local.dot}
-                                            style={{ backgroundColor: s.color }}
-                                        />
-                                        {s.label}
-                                    </Text>
-                                ))}
-                            </div>
-                        </TabsContent>
-                    );
-                })}
+                <Stack space="m">
+                    <TabsList>
+                        <TabsTrigger value="platform">Platform</TabsTrigger>
+                        <TabsTrigger value="device">Device</TabsTrigger>
+                    </TabsList>
+                    <Text variant="bodySmall" color="secondary">
+                        Sharing by source
+                    </Text>
+                    {(["platform", "device"] as Mode[]).map((mode) => {
+                        const segments = withColors(sharing[mode], mode);
+                        return (
+                            <TabsContent key={mode} value={mode}>
+                                <DonutChart segments={segments} />
+                                <div className={local.legend}>
+                                    {segments.map((s) => (
+                                        <Text
+                                            as="span"
+                                            variant="caption"
+                                            key={s.label}
+                                            className={local.item}
+                                        >
+                                            <span
+                                                className={local.dot}
+                                                style={{
+                                                    backgroundColor: s.color,
+                                                }}
+                                            />
+                                            {s.label}
+                                        </Text>
+                                    ))}
+                                </div>
+                            </TabsContent>
+                        );
+                    })}
+                </Stack>
             </Tabs>
         </div>
     );
