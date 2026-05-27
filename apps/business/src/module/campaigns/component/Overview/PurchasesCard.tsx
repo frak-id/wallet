@@ -1,4 +1,6 @@
 import { BarChart } from "@frak-labs/design-system/components/BarChart";
+import { Inline } from "@frak-labs/design-system/components/Inline";
+import { Stack } from "@frak-labs/design-system/components/Stack";
 import { Text } from "@frak-labs/design-system/components/Text";
 import type { CampaignsOverview } from "@/module/campaigns/queries/queryOptions";
 import * as styles from "./overview.css";
@@ -11,15 +13,15 @@ export function PurchasesCard({
     purchases: CampaignsOverview["purchases"];
 }) {
     return (
-        <div className={styles.card}>
-            <div>
+        <Stack space="m" className={styles.card}>
+            <Stack space="xxs">
                 <span className={styles.chartAmount}>
                     {numberFormatter.format(purchases.total)}
                 </span>
                 <Text variant="bodySmall" color="secondary">
                     Purchases generated
                 </Text>
-            </div>
+            </Stack>
             <BarChart
                 data={purchases.series}
                 avg={purchases.avgPerMonth}
@@ -29,10 +31,12 @@ export function PurchasesCard({
                 yMax={5000}
                 yTicks={[0, 1000, 2000, 3000, 4000, 5000]}
             />
-            <Text as="span" variant="caption" className={styles.legendRow}>
+            <Inline space="xs" alignY="center">
                 <span className={styles.legendDotPrimary} />
-                Purchases generated
-            </Text>
-        </div>
+                <Text as="span" variant="caption">
+                    Purchases generated
+                </Text>
+            </Inline>
+        </Stack>
     );
 }

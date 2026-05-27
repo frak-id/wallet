@@ -1,3 +1,5 @@
+import { Inline } from "@frak-labs/design-system/components/Inline";
+import { Stack } from "@frak-labs/design-system/components/Stack";
 import { Text } from "@frak-labs/design-system/components/Text";
 import { vars } from "@frak-labs/design-system/theme";
 import type { CampaignsOverview } from "@/module/campaigns/queries/queryOptions";
@@ -34,7 +36,7 @@ export function StatusLegendBar({
     const total = statusOrder.reduce((acc, k) => acc + breakdown[k], 0) || 1;
 
     return (
-        <div className={styles.container}>
+        <Stack space="s">
             <Text as="span" variant="bodySmall" color="secondary">
                 Status
             </Text>
@@ -52,22 +54,19 @@ export function StatusLegendBar({
                     ) : null
                 )}
             </div>
-            <div className={styles.legend}>
+            <Inline space="xl" wrap>
                 {statusOrder.map((key) => (
-                    <Text
-                        as="span"
-                        variant="caption"
-                        key={key}
-                        className={styles.legendItem}
-                    >
+                    <Inline key={key} space="xxs" alignY="center">
                         <span
                             className={styles.dot}
                             style={{ backgroundColor: statusColor[key] }}
                         />
-                        {breakdown[key]} {statusLabel[key]}
-                    </Text>
+                        <Text as="span" variant="caption">
+                            {breakdown[key]} {statusLabel[key]}
+                        </Text>
+                    </Inline>
                 ))}
-            </div>
-        </div>
+            </Inline>
+        </Stack>
     );
 }

@@ -1,4 +1,5 @@
 import { Badge } from "@frak-labs/design-system/components/Badge";
+import { Stack } from "@frak-labs/design-system/components/Stack";
 import { Text } from "@frak-labs/design-system/components/Text";
 import { type ColumnDef, createColumnHelper } from "@tanstack/react-table";
 import { useMemo } from "react";
@@ -83,7 +84,7 @@ export function TopCampaignsCard({
     );
 
     return (
-        <div className={styles.card}>
+        <Stack space="m" className={styles.card}>
             <Text as="h2" variant="bodySmall" color="secondary">
                 Top campaigns
             </Text>
@@ -93,6 +94,6 @@ export function TopCampaignsCard({
                 enableSorting={false}
             />
             <StatusLegendBar breakdown={statusBreakdown} />
-        </div>
+        </Stack>
     );
 }

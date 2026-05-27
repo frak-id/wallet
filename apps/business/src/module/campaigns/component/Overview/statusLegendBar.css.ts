@@ -1,12 +1,6 @@
 import { alias } from "@frak-labs/design-system/tokens";
 import { style } from "@vanilla-extract/css";
 
-export const container = style({
-    display: "flex",
-    flexDirection: "column",
-    gap: alias.spacing.s,
-});
-
 export const bar = style({
     display: "flex",
     height: "4px",
@@ -16,19 +10,6 @@ export const bar = style({
 
 export const segment = style({
     height: "100%",
-});
-
-export const legend = style({
-    display: "flex",
-    flexWrap: "wrap",
-    gap: alias.spacing.xl,
-    rowGap: alias.spacing.xxs,
-});
-
-export const legendItem = style({
-    display: "inline-flex",
-    alignItems: "center",
-    gap: alias.spacing.xxs,
 });
 
 export const dot = style({

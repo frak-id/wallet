@@ -6,16 +6,7 @@ export const card = style({
     backgroundColor: vars.surface.background,
     borderRadius: alias.cornerRadius.l,
     padding: alias.spacing.m,
-    display: "flex",
-    flexDirection: "column",
-    gap: alias.spacing.xs,
     minWidth: 0,
-});
-
-export const headerRow = style({
-    display: "flex",
-    alignItems: "baseline",
-    gap: alias.spacing.xs,
 });
 
 export const amount = style({
@@ -24,12 +15,6 @@ export const amount = style({
     fontWeight: 600,
     color: vars.text.primary,
     fontVariantNumeric: "tabular-nums",
-});
-
-export const delta = style({
-    display: "inline-flex",
-    alignItems: "center",
-    gap: "2px",
 });
 
 export const deltaUp = style({ color: vars.text.success });

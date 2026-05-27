@@ -1,3 +1,5 @@
+import { Inline } from "@frak-labs/design-system/components/Inline";
+import { Stack } from "@frak-labs/design-system/components/Stack";
 import { Text } from "@frak-labs/design-system/components/Text";
 import * as styles from "./kpiCard.css";
 
@@ -10,8 +12,8 @@ type Props = {
 
 export function OverviewKpiCard({ label, descriptor, amount, delta }: Props) {
     return (
-        <div className={styles.card}>
-            <div className={styles.headerRow}>
+        <Stack space="xs" className={styles.card}>
+            <Inline space="xs" alignY="baseline">
                 <Text
                     as="span"
                     variant="bodySmall"
@@ -23,21 +25,18 @@ export function OverviewKpiCard({ label, descriptor, amount, delta }: Props) {
                 <Text as="span" variant="caption" color="disabled">
                     {descriptor}
                 </Text>
-            </div>
+            </Inline>
             <span className={styles.amount}>{amount}</span>
             {delta !== undefined && (
                 <Text
                     as="span"
                     variant="bodySmall"
-                    weight="regular"
-                    className={`${styles.delta} ${
-                        delta >= 0 ? styles.deltaUp : styles.deltaDown
-                    }`}
+                    className={delta >= 0 ? styles.deltaUp : styles.deltaDown}
                 >
                     {delta >= 0 ? "▲" : "▼"} {delta > 0 ? "+" : ""}
                     {delta}%
                 </Text>
             )}
-        </div>
+        </Stack>
     );
 }

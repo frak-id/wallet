@@ -1,4 +1,5 @@
 import { DonutChart } from "@frak-labs/design-system/components/DonutChart";
+import { Inline } from "@frak-labs/design-system/components/Inline";
 import { Stack } from "@frak-labs/design-system/components/Stack";
 import {
     Tabs,
@@ -46,25 +47,32 @@ export function SharingBySourceCard({
                         const segments = withColors(sharing[mode], mode);
                         return (
                             <TabsContent key={mode} value={mode}>
-                                <DonutChart segments={segments} />
-                                <div className={local.legend}>
-                                    {segments.map((s) => (
-                                        <Text
-                                            as="span"
-                                            variant="caption"
-                                            key={s.label}
-                                            className={local.item}
-                                        >
-                                            <span
-                                                className={local.dot}
-                                                style={{
-                                                    backgroundColor: s.color,
-                                                }}
-                                            />
-                                            {s.label}
-                                        </Text>
-                                    ))}
-                                </div>
+                                <Stack space="m">
+                                    <DonutChart segments={segments} />
+                                    <Inline space="s" align="center" wrap>
+                                        {segments.map((s) => (
+                                            <Inline
+                                                key={s.label}
+                                                space="xxs"
+                                                alignY="center"
+                                            >
+                                                <span
+                                                    className={local.dot}
+                                                    style={{
+                                                        backgroundColor:
+                                                            s.color,
+                                                    }}
+                                                />
+                                                <Text
+                                                    as="span"
+                                                    variant="caption"
+                                                >
+                                                    {s.label}
+                                                </Text>
+                                            </Inline>
+                                        ))}
+                                    </Inline>
+                                </Stack>
                             </TabsContent>
                         );
                     })}

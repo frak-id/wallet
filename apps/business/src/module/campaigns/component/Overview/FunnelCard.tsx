@@ -26,24 +26,22 @@ export function FunnelCard({
         <div className={styles.card}>
             <Tabs defaultValue="website">
                 <Stack space="m">
-                    <div className={styles.cardTitleRow}>
-                        <TabsList>
-                            <TabsTrigger value="website">
-                                {labels.website}
-                            </TabsTrigger>
-                            <TabsTrigger value="wallet">
-                                {labels.wallet}
-                            </TabsTrigger>
-                        </TabsList>
-                    </div>
+                    <TabsList>
+                        <TabsTrigger value="website">
+                            {labels.website}
+                        </TabsTrigger>
+                        <TabsTrigger value="wallet">
+                            {labels.wallet}
+                        </TabsTrigger>
+                    </TabsList>
                     {(Object.keys(labels) as Variant[]).map((variant) => (
                         <TabsContent key={variant} value={variant}>
-                            <Text variant="bodySmall" color="secondary">
-                                Global funnel · {labels[variant]}
-                            </Text>
-                            <div className={styles.funnelChartWrap}>
+                            <Stack space="m">
+                                <Text variant="bodySmall" color="secondary">
+                                    Global funnel · {labels[variant]}
+                                </Text>
                                 <FunnelChart steps={funnels[variant]} />
-                            </div>
+                            </Stack>
                         </TabsContent>
                     ))}
                 </Stack>

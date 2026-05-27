@@ -48,31 +48,12 @@ export const threeColumns = style({
     },
 });
 
+// Surface-only card chrome. Layout (flex/gap) comes from the DS Stack
+// component wrapping the card content.
 export const card = style({
     backgroundColor: vars.surface.background,
     borderRadius: alias.cornerRadius.l,
     padding: alias.spacing.l,
-    display: "flex",
-    flexDirection: "column",
-    gap: alias.spacing.m,
-});
-
-export const cardHeader = style({
-    display: "flex",
-    flexDirection: "column",
-    gap: alias.spacing.xxs,
-});
-
-export const cardTitleRow = style({
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "space-between",
-    gap: alias.spacing.s,
-});
-
-export const cardSubtitle = style({
-    fontSize: "13px",
-    color: vars.text.secondary,
 });
 
 export const chartAmount = style({
@@ -81,21 +62,6 @@ export const chartAmount = style({
     fontWeight: 600,
     color: vars.text.primary,
     fontVariantNumeric: "tabular-nums",
-});
-
-export const funnelChartWrap = style({
-    marginTop: alias.spacing.m,
-});
-
-export const revenueLegend = style({
-    display: "flex",
-    gap: alias.spacing.m,
-});
-
-export const legendRow = style({
-    display: "inline-flex",
-    alignItems: "center",
-    gap: alias.spacing.xs,
 });
 
 export const legendDot = style({
