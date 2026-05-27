@@ -9,6 +9,7 @@ import {
     maxUint256,
 } from "viem";
 import {
+    getCode,
     multicall,
     readContract,
     sendTransaction,
@@ -19,10 +20,12 @@ import { campaignBankAbi, campaignBankFactoryAbi } from "../abis";
 
 const CAMPAIGN_BANK_MANAGER_ROLE = 1n;
 
+// Safety cap when probing for a usable CREATE2 salt — throws rather than
+// spinning forever on the (never-expected) case of repeated foreign collisions.
+const MAX_SALT_RESOLUTION_ATTEMPTS = 16;
+
 type DeployBankResult = {
     bankAddress: Address;
-    txHash: Hex;
-    blockNumber: bigint;
 };
 
 type RoleOperationResult = {
@@ -43,8 +46,12 @@ export class CampaignBankRepository {
         ttl: 10 * 60 * 1000,
     });
 
-    private computeBankSalt(merchantId: string): Hex {
-        return keccak256(`0x${Buffer.from(merchantId).toString("hex")}` as Hex);
+    private computeBankSalt(merchantId: string, nonce = 0): Hex {
+        // nonce === 0 preserves the historical salt formula so banks already
+        // deployed under it stay addressable; higher nonces are only used to
+        // skip past an unrelated contract occupying the predicted address.
+        const seed = nonce === 0 ? merchantId : `${merchantId}:${nonce}`;
+        return keccak256(`0x${Buffer.from(seed).toString("hex")}` as Hex);
     }
 
     async deployBank(merchantId: string): Promise<DeployBankResult> {
@@ -58,13 +65,36 @@ export class CampaignBankRepository {
                     key: "bank-manager",
                 });
 
-            const salt = this.computeBankSalt(merchantId);
+            // Recovers from a previous deploy tx that landed onchain after
+            // the backend crashed: reuse the existing bank instead of trying
+            // to redeploy at the same (now-occupied) CREATE2 address.
+            const slot = await this.resolveDeploymentSlot(
+                merchantId,
+                bankOwnerAccount.address
+            );
+
+            if (slot.kind === "existing") {
+                log.warn(
+                    {
+                        merchantId,
+                        bankAddress: slot.bankAddress,
+                        bankOwner: bankOwnerAccount.address,
+                        salt: slot.salt,
+                    },
+                    "Reusing pre-existing campaign bank found onchain"
+                );
+
+                return {
+                    bankAddress: slot.bankAddress,
+                };
+            }
 
             log.info(
                 {
                     merchantId,
                     bankOwner: bankOwnerAccount.address,
-                    salt,
+                    salt: slot.salt,
+                    predictedAddress: slot.bankAddress,
                 },
                 "Deploying campaign bank"
             );
@@ -72,7 +102,7 @@ export class CampaignBankRepository {
             const data = encodeFunctionData({
                 abi: campaignBankFactoryAbi,
                 functionName: "deployBank",
-                args: [bankOwnerAccount.address, salt],
+                args: [bankOwnerAccount.address, slot.salt],
             });
 
             const txHash = await sendTransaction(viemClient, {
@@ -87,12 +117,10 @@ export class CampaignBankRepository {
                 confirmations: 4,
             });
 
-            const bankAddress = await this.predictBankAddress(merchantId);
-
             log.info(
                 {
                     merchantId,
-                    bankAddress,
+                    bankAddress: slot.bankAddress,
                     txHash,
                     blockNumber: receipt.blockNumber,
                     gasUsed: receipt.gasUsed,
@@ -101,22 +129,80 @@ export class CampaignBankRepository {
             );
 
             return {
-                bankAddress,
-                txHash,
-                blockNumber: receipt.blockNumber,
+                bankAddress: slot.bankAddress,
             };
         });
     }
 
     async predictBankAddress(merchantId: string): Promise<Address> {
-        const salt = this.computeBankSalt(merchantId);
+        return this.predictBankAddressForSalt(this.computeBankSalt(merchantId));
+    }
 
+    private predictBankAddressForSalt(salt: Hex): Promise<Address> {
         return readContract(viemClient, {
             address: addresses.campaignBankFactory,
             abi: campaignBankFactoryAbi,
             functionName: "predictBankAddress",
             args: [salt],
         });
+    }
+
+    private async resolveDeploymentSlot(
+        merchantId: string,
+        expectedOwner: Address
+    ): Promise<
+        | { kind: "fresh"; salt: Hex; bankAddress: Address }
+        | { kind: "existing"; salt: Hex; bankAddress: Address }
+    > {
+        for (let nonce = 0; nonce < MAX_SALT_RESOLUTION_ATTEMPTS; nonce++) {
+            const salt = this.computeBankSalt(merchantId, nonce);
+            const bankAddress = await this.predictBankAddressForSalt(salt);
+            const code = await getCode(viemClient, { address: bankAddress });
+
+            if (!code || code === "0x") {
+                return { kind: "fresh", salt, bankAddress };
+            }
+
+            const ownerMatches = await this.isBankOwnedBy(
+                bankAddress,
+                expectedOwner
+            );
+
+            if (ownerMatches) {
+                return { kind: "existing", salt, bankAddress };
+            }
+
+            log.warn(
+                {
+                    merchantId,
+                    nonce,
+                    bankAddress,
+                    expectedOwner,
+                },
+                "Predicted bank address is occupied by an unexpected contract, tweaking salt"
+            );
+        }
+
+        throw new Error(
+            `Unable to resolve a deployment slot for merchant ${merchantId} after ${MAX_SALT_RESOLUTION_ATTEMPTS} attempts`
+        );
+    }
+
+    private async isBankOwnedBy(
+        bankAddress: Address,
+        expectedOwner: Address
+    ): Promise<boolean> {
+        try {
+            const owner = await readContract(viemClient, {
+                address: bankAddress,
+                abi: campaignBankAbi,
+                functionName: "owner",
+            });
+            return owner.toLowerCase() === expectedOwner.toLowerCase();
+        } catch {
+            // Address has code but owner() reverts → not a CampaignBank.
+            return false;
+        }
     }
 
     async getRolesOf(bankAddress: Address, user: Address): Promise<bigint> {
