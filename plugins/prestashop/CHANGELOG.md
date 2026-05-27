@@ -11,6 +11,8 @@ version on dispatch.
 
 ## [Unreleased]
 
+## [1.0.7] - 2026-05-27
+
 ### Changed
 
 - **`<frak-button-share>`: the `use_reward` toggle has been retired.** Whether the live reward amount is fetched and substituted is now driven entirely by the presence of the `{REWARD}` placeholder in the button text — e.g. `{frak_share_button text="Share and earn up to {REWARD}!"}` auto-fetches and substitutes; omitting the placeholder renders the text verbatim with no network call. Removes a footgun where the bare HTML attribute `<frak-button-share use-reward>` deserialised to the empty string under preact-custom-element and never satisfied the SDK's strict `=== true` check, so the placeholder stayed literal on the rendered button. `no_reward_text` is unchanged and continues to take over when the placeholder is present but no reward resolves. `FrakComponentRenderer::SHARE_BUTTON_ATTRS` no longer maps `useReward => use-reward`; the supporting `BOOLEAN_HTML_ATTRS` constant, the `isTruthy()` helper, and their branch in `buildHtmlAttrs()` are gone too. Smarty templates still passing `use_reward=1` keep working — the attribute is silently dropped — but the value has no effect.
@@ -205,7 +207,9 @@ version on dispatch.
 - New `views/templates/hook/post-purchase.tpl` Smarty partial: theme-overridable wrapper for the post-purchase markup. Override path: `themes/<theme>/modules/frakintegration/views/templates/hook/post-purchase.tpl`.
 - New `FrakOrderResolver` class: single-pass extraction of customer/order/token context plus product line items from a resolved `Order`, fail-soft on missing images / deleted products. Sibling of the WordPress `Frak_WooCommerce::get_post_purchase_data()` helper.
 
-[Unreleased]: https://github.com/frak-id/wallet/compare/prestashop-1.0.6...HEAD
+[Unreleased]: https://github.com/frak-id/wallet/compare/prestashop-1.0.7...HEAD
+
+[1.0.7]: https://github.com/frak-id/wallet/compare/prestashop-1.0.6...prestashop-1.0.7
 
 [1.0.6]: https://github.com/frak-id/wallet/compare/prestashop-1.0.5...prestashop-1.0.6
 
