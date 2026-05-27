@@ -1,6 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { isDemoMode } from "@/config/auth";
 import { TableCampaigns } from "@/module/campaigns/component/TableCampaigns";
+import { CampaignsListFooter } from "@/module/campaigns/component/TableCampaigns/CampaignsListFooter";
+import * as footerStyles from "@/module/campaigns/component/TableCampaigns/campaigns-list-footer.css";
 import { campaignsListQueryOptions } from "@/module/campaigns/queries/queryOptions";
 import { PageShell } from "@/module/common/component/PageShell";
 import { DataLoadError } from "@/module/common/component/RouteError";
@@ -25,8 +27,11 @@ export const Route = createFileRoute(
 
 function CampaignsListPage() {
     return (
-        <PageShell page="campaignsList">
-            <TableCampaigns />
-        </PageShell>
+        <div className={footerStyles.pageBottomSpacer}>
+            <PageShell page="campaignsList">
+                <TableCampaigns />
+            </PageShell>
+            <CampaignsListFooter />
+        </div>
     );
 }
