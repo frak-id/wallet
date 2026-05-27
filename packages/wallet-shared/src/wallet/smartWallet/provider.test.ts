@@ -472,6 +472,45 @@ describe("getSmartAccountProvider", () => {
 
             expect(onAccountChanged).not.toHaveBeenCalled();
         });
+
+        test("should call onAccountChanged when same authenticator is rebound to a new address (wallet merge)", async () => {
+            const { getSmartAccountProvider } = await import("./provider");
+            const { getSafeSession } = await import(
+                "../../common/utils/safeSession"
+            );
+            const { sessionStore } = await import("../../stores/sessionStore");
+            const { createMockSession, createMockAddress } = await import(
+                "../../test/factories"
+            );
+
+            const loserSession = createMockSession({
+                authenticatorId: "shared-auth",
+                address: createMockAddress("loser"),
+            });
+            const winnerSession = createMockSession({
+                authenticatorId: "shared-auth",
+                address: createMockAddress("winner"),
+            });
+
+            vi.mocked(getSafeSession).mockReturnValue(loserSession);
+
+            const onAccountChanged = vi.fn();
+            let subscribeCallback: any;
+
+            vi.mocked(sessionStore.subscribe).mockImplementation((fn) => {
+                subscribeCallback = fn;
+                return vi.fn();
+            });
+
+            getSmartAccountProvider({
+                onAccountChanged,
+                signViaEcdsa: vi.fn(),
+            });
+
+            subscribeCallback({ session: winnerSession });
+
+            expect(onAccountChanged).toHaveBeenCalledWith(winnerSession);
+        });
     });
 
     describe("signature providers", () => {

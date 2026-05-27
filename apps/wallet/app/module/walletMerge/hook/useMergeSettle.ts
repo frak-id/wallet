@@ -86,6 +86,19 @@ export function useMergeSettle() {
 
             return data;
         },
+        onSuccess: (_data, _variable, _result, { client }) => {
+            // The merge re-binds the credential to the winner wallet, so
+            // any session-scoped caches that were populated against the
+            // loser are now stale. `authKey.myEmail` is the obvious one
+            // (the email the user just typed now lives on the winner),
+            // but we also drop the merge-preview cache so a subsequent
+            // attempt re-fetches against the new binding instead of
+            // returning the now-meaningless pre-merge preview.
+            client.invalidateQueries({ queryKey: authKey.myEmail });
+            client.invalidateQueries({
+                queryKey: [authKey.merge.settle[0], authKey.merge.settle[1]],
+            });
+        },
     });
 }
 

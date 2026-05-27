@@ -1,15 +1,12 @@
 import { authKey, currentViemClient } from "@frak-labs/wallet-shared";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation } from "@tanstack/react-query";
 import type { Address, Hex } from "viem";
 import { waitForTransactionReceipt } from "viem/actions";
 import { MergeError } from "../errors";
 import { buildAssetMigrationCalls } from "../utils/buildAssetMigrationCalls";
 import { buildMergeBundlerClient } from "../utils/buildMergeBundlerClient";
 import { gatePairing, type MergeTransport } from "../utils/transport";
-import {
-    fetchLoserAssetSummary,
-    loserAssetSummaryQueryKey,
-} from "./useLoserAssetSummary";
+import { looserAssetSummaryQueryOpt } from "./useLoserAssetSummary";
 
 /**
  * Bound on every receipt wait inside this hook. Receipts that take
@@ -70,29 +67,23 @@ type UseMigrateLoserAssetsArgs = MergeTransport;
  * fresh chain state.
  */
 export function useMigrateLoserAssets(args: UseMigrateLoserAssetsArgs) {
-    const queryClient = useQueryClient();
     return useMutation<MigrateLoserAssetsResult, Error, MigrateLoserAssetsArgs>(
         {
             mutationKey: authKey.merge.migrateLoserAssets,
             gcTime: 0,
-            mutationFn: async ({
-                loser,
-                winner,
-                loserAuthenticatorId,
-                loserPublicKey,
-            }) => {
+            mutationFn: async (
+                { loser, winner, loserAuthenticatorId, loserPublicKey },
+                { client: queryClient }
+            ) => {
                 // Re-read the loser summary fresh, bypassing cache. Used
                 // both for the idempotent entry short-circuit and for
                 // the post-wait recovery path — a successful drain
                 // empties the summary, so a stale-cache result would
                 // mask the recovered-success case.
                 const refreshSummary = () =>
-                    queryClient.fetchQuery({
-                        queryKey: loserAssetSummaryQueryKey(loser),
-                        queryFn: () => fetchLoserAssetSummary(loser),
-                        staleTime: 0,
-                        gcTime: 0,
-                    });
+                    queryClient.fetchQuery(
+                        looserAssetSummaryQueryOpt({ loser })
+                    );
 
                 const summary = await refreshSummary();
 

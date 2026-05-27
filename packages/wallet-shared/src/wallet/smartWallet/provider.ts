@@ -59,10 +59,16 @@ export function getSmartAccountProvider({
     sessionStore.subscribe((state) => {
         const signableWallet = state.session ?? null;
 
-        // If the session hasn't changed, do nothing
+        // If the session hasn't changed, do nothing.
+        // We compare authenticatorId AND address AND type: a wallet merge
+        // can swap the bound wallet for an existing credential — same
+        // authenticatorId, different address — and we MUST rebuild the
+        // smart account + re-emit `change` for wagmi in that case.
         if (
             signableWallet?.authenticatorId ===
-            currentWebAuthNWallet?.authenticatorId
+                currentWebAuthNWallet?.authenticatorId &&
+            signableWallet?.address === currentWebAuthNWallet?.address &&
+            signableWallet?.type === currentWebAuthNWallet?.type
         ) {
             return;
         }

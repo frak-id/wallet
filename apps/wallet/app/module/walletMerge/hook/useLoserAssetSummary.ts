@@ -4,7 +4,7 @@ import {
     type Stablecoin,
 } from "@frak-labs/app-essentials";
 import { currentViemClient } from "@frak-labs/wallet-shared";
-import { useQuery } from "@tanstack/react-query";
+import { queryOptions } from "@tanstack/react-query";
 import type { Address } from "viem";
 import { multicall } from "viem/actions";
 import {
@@ -53,7 +53,7 @@ export const loserAssetSummaryQueryKey = (loser?: Address) =>
  * the read path single-sourced between the preview surface and the
  * settle-time submission.
  */
-export async function fetchLoserAssetSummary(
+async function fetchLoserAssetSummary(
     loser: Address
 ): Promise<LoserAssetSummary> {
     const contracts = STABLECOIN_IDS.flatMap((id) => {
@@ -122,27 +122,10 @@ export async function fetchLoserAssetSummary(
     };
 }
 
-/**
- * Live on-chain summary of the loser wallet's transferable assets.
- *
- * Independent of the active session — reads `balanceOf` + rewarder
- * `getClaimable` directly via multicall, so the same hook drives both the
- * preview recap (where the live session is usually NOT the loser) and the
- * pre-settle migration step (where the wagmi session may be on the winner
- * yet we still need to know what's left on the loser).
- *
- * Scope is intentionally bounded to {@link currentStablecoins} — the
- * migration only knows how to move stablecoin balances and claim
- * stablecoin-denominated rewards. Other ERC20s the loser may hold are not
- * surfaced (and would not be transferred).
- *
- * Volatile by design: `meta.storable = false` keeps the query out of the
- * persistent cache; the migration mutation re-runs the same fetcher via
- * `queryClient.fetchQuery` so the built UserOp uses values that match the
- * chain state at submission.
- */
-export function useLoserAssetSummary({ loser }: UseLoserAssetSummaryArgs) {
-    return useQuery<LoserAssetSummary | null, Error>({
+export function looserAssetSummaryQueryOpt({
+    loser,
+}: UseLoserAssetSummaryArgs) {
+    return queryOptions({
         queryKey: loserAssetSummaryQueryKey(loser),
         enabled: Boolean(loser),
         gcTime: 0,

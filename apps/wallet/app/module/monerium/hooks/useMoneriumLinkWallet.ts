@@ -1,4 +1,4 @@
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation } from "@tanstack/react-query";
 import { isSmartAccountDeployed } from "permissionless";
 import {
     useClient,
@@ -18,7 +18,6 @@ export function useMoneriumLinkWallet() {
     const client = useClient();
     const { mutateAsync: signMessageAsync } = useSignMessage();
     const { mutateAsync: sendTransactionAsync } = useSendTransaction();
-    const queryClient = useQueryClient();
 
     const { mutate, mutateAsync, ...mutationRest } = useMutation({
         mutationFn: async () => {
@@ -50,8 +49,8 @@ export function useMoneriumLinkWallet() {
                 chain: moneriumConfig.chain,
             });
         },
-        onSuccess: () => {
-            queryClient.invalidateQueries({
+        onSuccess: (_data, _variable, _result, { client }) => {
+            client.invalidateQueries({
                 queryKey: moneriumKey.all,
             });
         },

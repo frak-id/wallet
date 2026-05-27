@@ -2,6 +2,7 @@ import { Box } from "@frak-labs/design-system/components/Box";
 import { Button } from "@frak-labs/design-system/components/Button";
 import { Text } from "@frak-labs/design-system/components/Text";
 import { type Flow, startFlow } from "@frak-labs/wallet-shared";
+import { useQuery } from "@tanstack/react-query";
 import {
     type ReactNode,
     useCallback,
@@ -14,7 +15,7 @@ import { useTranslation } from "react-i18next";
 import { EmailFlowResultScreen } from "@/module/common/component/EmailFlowResultScreen";
 import {
     type LoserAssetSummary,
-    useLoserAssetSummary,
+    looserAssetSummaryQueryOpt,
 } from "../../hook/useLoserAssetSummary";
 import { useMergePreview } from "../../hook/useMergePreview";
 import type { MergeStrategy } from "../../strategy/types";
@@ -135,9 +136,11 @@ export function MergeFlow({
         currentAuthenticatorId
     );
 
-    const assetSummary = useLoserAssetSummary({
-        loser: preview.data?.loser,
-    });
+    const assetSummary = useQuery(
+        looserAssetSummaryQueryOpt({
+            loser: preview.data?.loser,
+        })
+    );
 
     const needsSwitch = useMemo(() => {
         if (!preview.data) return undefined;
