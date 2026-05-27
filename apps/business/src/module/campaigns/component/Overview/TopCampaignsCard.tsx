@@ -75,7 +75,11 @@ export function TopCampaignsCard({
             <Text as="h2" variant="bodySmall" color="secondary">
                 Top campaigns
             </Text>
-            <Table data={topCampaigns} columns={columns} />
+            <Table
+                data={topCampaigns}
+                columns={columns}
+                enableSorting={false}
+            />
             <StatusLegendBar breakdown={statusBreakdown} />
         </div>
     );
