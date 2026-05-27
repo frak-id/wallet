@@ -1,6 +1,7 @@
 import { queryOptions } from "@tanstack/react-query";
 import { redirect } from "@tanstack/react-router";
 import campaignsMockData from "@/mock/campaigns.json";
+import campaignsOverviewMock from "@/mock/campaignsOverview.json";
 import {
     getCampaignDetail,
     getMerchantCampaigns,
@@ -11,6 +12,8 @@ import {
 } from "@/module/campaigns/api/campaignStatsApi";
 import { getCampaignDetailsMockSync } from "@/module/campaigns/api/mock";
 import type { Campaign, CampaignWithActions } from "@/types/Campaign";
+
+export type CampaignsOverview = typeof campaignsOverviewMock;
 
 type CampaignStateValidator = (campaign: Campaign) => {
     shouldRedirect: boolean;
@@ -58,6 +61,29 @@ export const campaignsListQueryOptions = ({
         initialData: isDemoMode
             ? getCampaignsInitialData(merchantId)
             : undefined,
+    });
+
+// Aggregated dashboard data for the campaigns overview page. v1 serves
+// mock data unconditionally; real backend aggregates will swap in here
+// once they ship. Split into per-section keys later if endpoints land
+// piecemeal.
+export const campaignsOverviewQueryOptions = ({
+    merchantId,
+    isDemoMode,
+}: {
+    merchantId: string;
+    isDemoMode: boolean;
+}) =>
+    queryOptions<CampaignsOverview>({
+        queryKey: [
+            "campaigns",
+            "overview",
+            merchantId,
+            isDemoMode ? "demo" : "live",
+        ],
+        queryFn: () => Promise.resolve(campaignsOverviewMock),
+        staleTime: isDemoMode ? Number.POSITIVE_INFINITY : 5 * 60 * 1000,
+        initialData: campaignsOverviewMock,
     });
 
 export const campaignsStatsQueryOptions = ({

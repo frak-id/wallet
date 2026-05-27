@@ -6,6 +6,7 @@ import { useIsDemoMode } from "@/module/common/atoms/demoMode";
 import { Button } from "@/module/common/component/Button";
 import { AddMerchantSheet } from "@/module/dashboard/component/AddMerchantSheet";
 import { ButtonSendPush } from "@/module/members/component/ButtonSendPush";
+import { DateRangeChip } from "./DateRangeChip";
 import { HeaderBreadcrumb } from "./HeaderBreadcrumb";
 import {
     actionGroup,
@@ -19,6 +20,7 @@ import {
 import { ProfileLink } from "./ProfileLink";
 
 const CAMPAIGNS_PATH = /^\/m\/[^/]+\/campaigns(\/|$)/;
+const CAMPAIGNS_OVERVIEW_PATH = /^\/m\/[^/]+\/campaigns\/overview$/;
 const DASHBOARD_PATH = /^\/m\/[^/]+\/dashboard$/;
 const MERCHANT_PATH = /^\/m\/[^/]+\/merchant(\/|$)/;
 const MEMBERS_PATH = /^\/m\/[^/]+\/members$/;
@@ -32,6 +34,9 @@ export function Header() {
     const { pathname } = useLocation();
     const showCreateCampaign =
         CAMPAIGNS_PATH.test(pathname) || pathname.startsWith("/campaigns");
+    const showDateRange =
+        CAMPAIGNS_OVERVIEW_PATH.test(pathname) ||
+        pathname === "/campaigns/overview";
     const showAddMerchant =
         DASHBOARD_PATH.test(pathname) ||
         pathname === "/dashboard" ||
@@ -58,6 +63,7 @@ export function Header() {
                                 {t("shell.header.demoBadge")}
                             </Link>
                         )}
+                        {showDateRange && <DateRangeChip />}
                         {showExport && (
                             <Button
                                 variant="secondary"

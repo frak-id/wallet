@@ -1,0 +1,93 @@
+{
+    "kpis": {
+        "ambassadors": { "value": 14446, "delta": 12 },
+        "shares": { "value": 7210, "delta": 8 },
+        "revenue": { "value": 286000, "delta": 5 },
+        "sharingRate": { "value": 0.493, "delta": -2 },
+        "avgCpa": { "value": 12.4 }
+    },
+    "funnels": {
+        "website": [
+            { "label": "Share CTA seen", "value": 48200, "delta": -30 },
+            { "label": "Share initiated", "value": 14460, "delta": -50 },
+            { "label": "Link shared", "value": 7230, "delta": -35 },
+            { "label": "Referred", "value": 4800, "delta": -50 },
+            { "label": "Converted", "value": 2384 }
+        ],
+        "wallet": [
+            { "label": "Explorer impressions", "value": 24600, "delta": -18 },
+            { "label": "Brand page opened", "value": 4430, "delta": -45 },
+            { "label": "Share initiated", "value": 1990, "delta": -35 },
+            { "label": "Link shared", "value": 700, "delta": -60 },
+            { "label": "Referred", "value": 420, "delta": -50 },
+            { "label": "Converted", "value": 210 }
+        ]
+    },
+    "topCampaigns": [
+        {
+            "id": "camp_001",
+            "name": "Summer referral campaign",
+            "status": "active",
+            "sharingRate": 0.57
+        },
+        {
+            "id": "camp_002",
+            "name": "Special offer spring",
+            "status": "active",
+            "sharingRate": 0.42
+        },
+        {
+            "id": "camp_003",
+            "name": "Launch Prd",
+            "status": "paused",
+            "sharingRate": 0.12
+        },
+        {
+            "id": "camp_004",
+            "name": "Campagne test",
+            "status": "ended",
+            "sharingRate": 0.47
+        }
+    ],
+    "statusBreakdown": {
+        "active": 2,
+        "paused": 1,
+        "draft": 1,
+        "ended": 1
+    },
+    "purchases": {
+        "total": 12100,
+        "avgPerMonth": 2100,
+        "series": [
+            { "label": "Jan", "value": 3500 },
+            { "label": "Feb", "value": 2200 },
+            { "label": "Mar", "value": 4500 },
+            { "label": "Apr", "value": 1200 },
+            { "label": "May", "value": 1700 },
+            { "label": "Jun", "value": 3000 }
+        ]
+    },
+    "projectedRevenue": {
+        "total": 54200,
+        "series": [
+            { "label": "Jan", "actual": 5000 },
+            { "label": "Feb", "actual": 8000 },
+            { "label": "Mar", "actual": 12000 },
+            { "label": "Apr", "actual": 14000 },
+            { "label": "May", "actual": 13500 },
+            { "label": "Jun", "actual": 14200, "forecast": 14200 },
+            { "label": "Jul", "forecast": 15000 }
+        ]
+    },
+    "sharing": {
+        "platform": [
+            { "label": "Merchant Site", "value": 70 },
+            { "label": "Wallet App", "value": 30 }
+        ],
+        "device": [
+            { "label": "iOS", "value": 20 },
+            { "label": "Android", "value": 20 },
+            { "label": "Desktop", "value": 60 }
+        ]
+    }
+}

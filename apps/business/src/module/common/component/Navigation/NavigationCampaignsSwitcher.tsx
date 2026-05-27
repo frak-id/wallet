@@ -35,10 +35,7 @@ export function NavigationCampaignsSwitcher() {
             {pageNav(t, "campaigns")}
         </NavigationItem>
     ) : (
-        <NavigationCampaigns
-            listUrl={listUrl}
-            overviewUrl={overviewUrl}
-        />
+        <NavigationCampaigns listUrl={listUrl} overviewUrl={overviewUrl} />
     );
 }
 

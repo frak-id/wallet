@@ -36,6 +36,7 @@
     "@vanilla-extract/sprinkles": "^1.6.5",
     "clsx": "^2.1.1",
     "lucide-react": "^0.577.0",
+    "recharts": "^2.15.0",
     "vaul": "^1.1.2"
   },
   "devDependencies": {

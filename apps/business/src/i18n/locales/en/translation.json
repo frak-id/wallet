@@ -52,7 +52,7 @@
         "pages": {
             "dashboard": { "nav": "Dashboard" },
             "campaigns": { "nav": "Campaigns" },
-            "campaignsOverview": { "nav": "Datas overview" },
+            "campaignsOverview": { "nav": "Data overview" },
             "campaignsList": { "nav": "List" },
             "members": { "nav": "Members", "title": "Members List" },
             "wallet": { "nav": "Wallet" },

@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { isDemoMode } from "@/config/auth";
-import { TableCampaignPerformance } from "@/module/campaigns/component/TableCampaignPerformance";
-import { campaignsStatsQueryOptions } from "@/module/campaigns/queries/queryOptions";
+import { CampaignsOverview } from "@/module/campaigns/component/Overview";
+import { campaignsOverviewQueryOptions } from "@/module/campaigns/queries/queryOptions";
 import { PageShell } from "@/module/common/component/PageShell";
 import { DataLoadError } from "@/module/common/component/RouteError";
 import { queryClient } from "@/module/common/provider/RootProvider";
@@ -11,7 +11,7 @@ export const Route = createFileRoute(
 )({
     loader: ({ params }) => {
         queryClient.prefetchQuery(
-            campaignsStatsQueryOptions({
+            campaignsOverviewQueryOptions({
                 merchantId: params.merchantId,
                 isDemoMode: isDemoMode(),
             })
@@ -26,7 +26,7 @@ export const Route = createFileRoute(
 function CampaignsOverviewPage() {
     return (
         <PageShell page="campaignsOverview">
-            <TableCampaignPerformance />
+            <CampaignsOverview />
         </PageShell>
     );
 }
