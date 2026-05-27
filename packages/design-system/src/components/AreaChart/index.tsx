@@ -54,6 +54,24 @@ export function AreaChart({
                                 stopOpacity={0}
                             />
                         </linearGradient>
+                        <linearGradient
+                            id="areaForecastFill"
+                            x1="0"
+                            y1="0"
+                            x2="0"
+                            y2="1"
+                        >
+                            <stop
+                                offset="0%"
+                                stopColor={vars.icon.tertiary}
+                                stopOpacity={0.24}
+                            />
+                            <stop
+                                offset="100%"
+                                stopColor={vars.icon.tertiary}
+                                stopOpacity={0}
+                            />
+                        </linearGradient>
                     </defs>
                     <CartesianGrid
                         horizontal
@@ -90,10 +108,10 @@ export function AreaChart({
                     <Area
                         type="monotone"
                         dataKey="forecast"
-                        stroke={vars.icon.success}
+                        stroke={vars.icon.tertiary}
                         strokeWidth={2}
                         strokeDasharray="4 4"
-                        fillOpacity={0}
+                        fill="url(#areaForecastFill)"
                         connectNulls
                     />
                 </RAreaChart>

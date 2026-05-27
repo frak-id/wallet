@@ -84,10 +84,7 @@ export const legendDotSuccess = style([
 
 export const legendDotForecast = style([
     legendDot,
-    {
-        backgroundColor: "transparent",
-        border: `1.5px dashed ${vars.icon.success}`,
-    },
+    { backgroundColor: vars.icon.tertiary },
 ]);
 
 export const floatingFooter = style({
