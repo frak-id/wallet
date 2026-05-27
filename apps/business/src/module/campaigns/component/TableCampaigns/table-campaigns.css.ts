@@ -2,20 +2,43 @@ import { vars } from "@frak-labs/design-system/theme";
 import { alias, brand } from "@frak-labs/design-system/tokens";
 import { globalStyle, style } from "@vanilla-extract/css";
 
-export const tableBudgetAmount = style({
-    fontSize: "14px",
-    fontWeight: brand.typography.fontWeight.medium,
-    color: vars.text.primary,
+export const budgetRow = style({
+    display: "flex",
+    alignItems: "baseline",
+    justifyContent: "space-between",
+    gap: alias.spacing.xs,
 });
 
-export const tableBudgetType = style({
-    fontSize: "12px",
-    color: vars.text.tertiary,
+export const budgetBarTrack = style({
+    height: alias.size.xs,
+    marginTop: alias.spacing.xxs,
+    backgroundColor: vars.surface.disabled,
+    borderRadius: alias.cornerRadius.full,
+    overflow: "hidden",
 });
+
+export const budgetBarFill = style({
+    height: "100%",
+    backgroundColor: vars.surface.primary,
+    borderRadius: alias.cornerRadius.full,
+    transition: "width 200ms ease",
+});
+
+// Empty hook style — used only as a scope selector below so the
+// last-column padding override doesn't leak into other tables.
+export const campaignsTable = style({});
+
+globalStyle(
+    `${campaignsTable} > thead > tr > th:last-child, ${campaignsTable} > tbody > tr > td:last-child`,
+    {
+        paddingLeft: 0,
+        paddingRight: alias.spacing.xs,
+    }
+);
 
 export const rowMenuCell = style({
-    width: 32,
-    textAlign: "right",
+    display: "flex",
+    justifyContent: "flex-end",
 });
 
 export const rowMenuButton = style({

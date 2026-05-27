@@ -16,6 +16,7 @@ import { useIsDemoMode } from "@/module/common/atoms/demoMode";
 import { Button } from "@/module/common/component/Button";
 import { useActiveMerchantId } from "@/module/common/hook/useActiveMerchantId";
 import { useConvertToPreferredCurrency } from "@/module/common/hook/useConversionRate";
+import { formatPercent } from "@/module/common/utils/formatPercent";
 import type { Campaign } from "@/types/Campaign";
 import * as styles from "./campaign-performance-sheet.css";
 
@@ -97,9 +98,9 @@ function PerformanceBody({ stats }: { stats: CampaignStats }) {
             <Section title="Conversion">
                 <Row
                     label="Sharing rate"
-                    value={formatPercent(stats.sharingRate)}
+                    value={formatPercent(stats.sharingRate, 2)}
                 />
-                <Row label="CTR" value={formatPercent(stats.ctr)} />
+                <Row label="CTR" value={formatPercent(stats.ctr, 2)} />
             </Section>
 
             <Section title="Spending">
@@ -161,8 +162,4 @@ function CurrencyRow({
         amount,
     });
     return <Row label={label} value={converted ?? "—"} />;
-}
-
-function formatPercent(value: number): string {
-    return `${(value * 100).toFixed(2)}%`;
 }

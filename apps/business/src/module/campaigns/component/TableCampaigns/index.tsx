@@ -1,9 +1,8 @@
 import { Checkbox } from "@frak-labs/design-system/components/Checkbox";
-import { Skeleton } from "@frak-labs/design-system/components/Skeleton";
 import { Stack } from "@frak-labs/design-system/components/Stack";
+import { Text } from "@frak-labs/design-system/components/Text";
 import type { ColumnDef, Row } from "@tanstack/react-table";
 import {
-    type CellContext,
     type ColumnFiltersState,
     createColumnHelper,
 } from "@tanstack/react-table";
@@ -18,23 +17,38 @@ import {
     TableCampaignFilters,
 } from "@/module/campaigns/component/TableCampaigns/Filter";
 import { isEnded } from "@/module/campaigns/component/TableCampaigns/isEnded";
-import { useGetCampaigns } from "@/module/campaigns/hook/useGetCampaigns";
+import {
+    type CampaignWithStats,
+    useCampaignsWithStats,
+} from "@/module/campaigns/hook/useCampaignsWithStats";
 import { Table } from "@/module/common/component/Table";
 import { useActiveMerchantId } from "@/module/common/hook/useActiveMerchantId";
 import { formatDate } from "@/module/common/utils/formatDate";
+import { formatPercent } from "@/module/common/utils/formatPercent";
 import { formatPrice } from "@/module/common/utils/formatPrice";
 import { campaignSelectionStore } from "@/stores/campaignSelectionStore";
-import type { CampaignWithActions } from "@/types/Campaign";
 import * as styles from "./table-campaigns.css";
 
-const columnHelper = createColumnHelper<CampaignWithActions>();
+const columnHelper = createColumnHelper<CampaignWithStats>();
+
+function MutedText({ children }: { children: React.ReactNode }) {
+    return (
+        <Text variant="bodySmall" as="span" color="tertiary">
+            {children}
+        </Text>
+    );
+}
+
+function MutedDash() {
+    return <MutedText>–</MutedText>;
+}
 
 export function TableCampaigns() {
-    const { data } = useGetCampaigns();
+    const { data } = useCampaignsWithStats();
     const merchantId = useActiveMerchantId();
     const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
     const [selectedCampaign, setSelectedCampaign] = useState<
-        CampaignWithActions | undefined
+        CampaignWithStats | undefined
     >();
     const selectedIds = campaignSelectionStore((state) => state.selectedIds);
     const toggleSelection = campaignSelectionStore((state) => state.toggle);
@@ -57,6 +71,7 @@ export function TableCampaigns() {
             [
                 columnHelper.display({
                     id: "select",
+                    size: 40,
                     header: ({ table }) => {
                         const visibleIds = table
                             .getRowModel()
@@ -108,11 +123,13 @@ export function TableCampaigns() {
                 }),
                 columnHelper.accessor("name", {
                     enableSorting: false,
+                    size: 160,
                     header: () => "Campaign",
                     cell: ({ getValue }) => getValue() as string,
                 }),
                 columnHelper.accessor("status", {
                     enableSorting: true,
+                    size: 110,
                     header: () => "Status",
                     id: "status",
                     cell: ({ getValue, row }) => (
@@ -136,14 +153,31 @@ export function TableCampaigns() {
                 }),
                 {
                     id: "date",
-                    header: () => "Date",
-                    accessorFn: (row) =>
-                        formatDate(new Date(row.publishedAt || row.createdAt)),
-                    filterFn: (row, _, value: DateRange) => {
+                    size: 120,
+                    header: () => "Published",
+                    accessorFn: (row: CampaignWithStats) => row.publishedAt,
+                    cell: ({ row }: { row: Row<CampaignWithStats> }) => {
+                        const published = row.original.publishedAt;
+                        if (!published) return <MutedDash />;
+                        return formatDate(new Date(published));
+                    },
+                    sortingFn: (
+                        a: Row<CampaignWithStats>,
+                        b: Row<CampaignWithStats>
+                    ) =>
+                        sortNullableDate(
+                            a.original.publishedAt,
+                            b.original.publishedAt
+                        ),
+                    filterFn: (
+                        row: Row<CampaignWithStats>,
+                        _: string,
+                        value: DateRange
+                    ) => {
                         if (!value?.from) return true;
-                        const date = new Date(
-                            row.original.publishedAt || row.original.createdAt
-                        );
+                        const ref =
+                            row.original.publishedAt ?? row.original.createdAt;
+                        const date = new Date(ref);
                         const from = new Date(value.from);
                         from.setHours(0, 0, 0, 0);
                         const to = value.to ? new Date(value.to) : from;
@@ -151,12 +185,119 @@ export function TableCampaigns() {
                         return date >= from && date <= to;
                     },
                 },
+                {
+                    id: "endDate",
+                    size: 130,
+                    header: () => "End date",
+                    accessorFn: (row: CampaignWithStats) => row.expiresAt,
+                    cell: ({ row }: { row: Row<CampaignWithStats> }) => {
+                        const expires = row.original.expiresAt;
+                        if (!expires) return <MutedText>No end date</MutedText>;
+                        return formatDate(new Date(expires));
+                    },
+                    sortingFn: (
+                        a: Row<CampaignWithStats>,
+                        b: Row<CampaignWithStats>
+                    ) =>
+                        sortNullableDate(
+                            a.original.expiresAt,
+                            b.original.expiresAt
+                        ),
+                },
+                {
+                    id: "sharingRate",
+                    size: 130,
+                    meta: { align: "right" as const },
+                    header: () => "Sharing rate",
+                    accessorFn: (row: CampaignWithStats) =>
+                        row.stats?.sharingRate ?? null,
+                    cell: ({ row }: { row: Row<CampaignWithStats> }) => {
+                        const value = row.original.stats?.sharingRate;
+                        if (value == null) return <MutedDash />;
+                        return (
+                            <Text variant="bodySmall" as="p" align="right">
+                                {formatPercent(value)}
+                            </Text>
+                        );
+                    },
+                    sortingFn: (
+                        a: Row<CampaignWithStats>,
+                        b: Row<CampaignWithStats>
+                    ) =>
+                        sortNullableNumber(
+                            a.original.stats?.sharingRate,
+                            b.original.stats?.sharingRate
+                        ),
+                },
+                {
+                    id: "ctr",
+                    size: 100,
+                    meta: { align: "right" as const },
+                    header: () => "CTR",
+                    accessorFn: (row: CampaignWithStats) =>
+                        row.stats?.ctr ?? null,
+                    cell: ({ row }: { row: Row<CampaignWithStats> }) => {
+                        const value = row.original.stats?.ctr;
+                        if (value == null) return <MutedDash />;
+                        return (
+                            <Text variant="bodySmall" as="p" align="right">
+                                {formatPercent(value)}
+                            </Text>
+                        );
+                    },
+                    sortingFn: (
+                        a: Row<CampaignWithStats>,
+                        b: Row<CampaignWithStats>
+                    ) =>
+                        sortNullableNumber(
+                            a.original.stats?.ctr,
+                            b.original.stats?.ctr
+                        ),
+                },
+                {
+                    id: "revenue",
+                    size: 130,
+                    meta: { align: "right" as const },
+                    header: () => "Revenue",
+                    accessorFn: (row: CampaignWithStats) =>
+                        row.stats?.totalRewards ?? null,
+                    cell: ({ row }: { row: Row<CampaignWithStats> }) => {
+                        const value = row.original.stats?.totalRewards;
+                        if (value == null) return <MutedDash />;
+                        return (
+                            <Text
+                                variant="bodySmall"
+                                as="p"
+                                align="right"
+                                weight="medium"
+                            >
+                                {formatPrice(value, undefined, "EUR")}
+                            </Text>
+                        );
+                    },
+                    sortingFn: (
+                        a: Row<CampaignWithStats>,
+                        b: Row<CampaignWithStats>
+                    ) =>
+                        sortNullableNumber(
+                            a.original.stats?.totalRewards,
+                            b.original.stats?.totalRewards
+                        ),
+                },
                 columnHelper.accessor("budgetConfig", {
-                    header: () => "Budget",
+                    size: 220,
+                    meta: { align: "right" as const },
+                    header: () => "Budget & Spend",
                     cell: ({ row }) => <CellBudget row={row} />,
+                    sortingFn: (a, b) =>
+                        sortNullableNumber(
+                            a.original.budgetConfig?.[0]?.amount,
+                            b.original.budgetConfig?.[0]?.amount
+                        ),
                 }),
                 columnHelper.display({
                     id: "rowMenu",
+                    size: 32,
                     header: () => null,
                     cell: ({ row }) => (
                         <div className={styles.rowMenuCell}>
@@ -164,7 +305,7 @@ export function TableCampaigns() {
                         </div>
                     ),
                 }),
-            ] as ColumnDef<CampaignWithActions>[],
+            ] as ColumnDef<CampaignWithStats>[],
         [
             merchantId,
             selectedIds,
@@ -176,79 +317,99 @@ export function TableCampaigns() {
 
     const rowDataAttributes = useMemo(
         () => ({
-            "data-selected": (row: Row<CampaignWithActions>) =>
+            "data-selected": (row: Row<CampaignWithStats>) =>
                 selectedIds.has(row.original.id) ? "true" : undefined,
         }),
         [selectedIds]
     );
 
-    if (!data) {
-        return <Skeleton variant="rect" height={250} />;
-    }
-
     return (
-        data && (
-            <>
-                <Stack space="l">
-                    <TableCampaignFilters
-                        columnFilters={columnFilters}
-                        setColumnFilters={setColumnFilters}
-                    />
-                    <Stack space="m">
-                        {selectedCampaigns.length > 0 && (
-                            <CampaignsEditBar
-                                merchantId={merchantId}
-                                selected={selectedCampaigns}
-                            />
-                        )}
-                        <Table
-                            data={data}
-                            columns={columns}
-                            enableSorting={true}
-                            enableFiltering={true}
-                            columnFilters={columnFilters}
-                            onRowClick={(row) =>
-                                setSelectedCampaign(row.original)
-                            }
-                            rowDataAttributes={rowDataAttributes}
-                            anySelected={selectedCampaigns.length > 0}
-                        />
-                    </Stack>
-                </Stack>
-                <CampaignDetailsSheet
-                    campaign={selectedCampaign}
-                    onOpenChange={(open) => {
-                        if (!open) setSelectedCampaign(undefined);
-                    }}
+        <>
+            <Stack space="l">
+                <TableCampaignFilters
+                    columnFilters={columnFilters}
+                    setColumnFilters={setColumnFilters}
                 />
-            </>
-        )
+                <Stack space="m">
+                    {selectedCampaigns.length > 0 && (
+                        <CampaignsEditBar
+                            merchantId={merchantId}
+                            selected={selectedCampaigns}
+                        />
+                    )}
+                    <Table
+                        className={styles.campaignsTable}
+                        data={data}
+                        columns={columns}
+                        enableSorting={true}
+                        enableFiltering={true}
+                        columnFilters={columnFilters}
+                        onRowClick={(row) => setSelectedCampaign(row.original)}
+                        rowDataAttributes={rowDataAttributes}
+                        anySelected={selectedCampaigns.length > 0}
+                    />
+                </Stack>
+            </Stack>
+            <CampaignDetailsSheet
+                campaign={selectedCampaign}
+                onOpenChange={(open) => {
+                    if (!open) setSelectedCampaign(undefined);
+                }}
+            />
+        </>
     );
 }
 
-function CellBudget({
-    row,
-}: Pick<CellContext<CampaignWithActions, unknown>, "row">) {
-    const budgetConfig = row.original.budgetConfig;
-    const budgetUsed = row.original.budgetUsed;
+function CellBudget({ row }: { row: Row<CampaignWithStats> }) {
+    const { budgetConfig, budgetUsed } = row.original;
     const firstBudget = budgetConfig?.[0];
 
-    if (!firstBudget) {
-        return <span>-</span>;
-    }
+    if (!firstBudget) return <MutedDash />;
 
+    const total = firstBudget.amount;
     const used = budgetUsed?.[firstBudget.label]?.used ?? 0;
-    const remaining = firstBudget.amount - used;
+    const pct = total > 0 ? Math.min((used / total) * 100, 100) : 0;
 
     return (
-        <Stack as="span" space="xxs">
-            <span className={styles.tableBudgetAmount}>
-                {formatPrice(remaining, undefined, "EUR")} /{" "}
-                {formatPrice(firstBudget.amount, undefined, "EUR")}
-            </span>
-            <span className={styles.tableBudgetType}>
-                {firstBudget.label || "Global"}
-            </span>
-        </Stack>
+        <div>
+            <div className={styles.budgetRow}>
+                <Text
+                    variant="caption"
+                    as="span"
+                    weight="medium"
+                    color="action"
+                >
+                    {formatPrice(used, undefined, "EUR")}
+                </Text>
+                <Text
+                    variant="caption"
+                    as="span"
+                    weight="medium"
+                    color="secondary"
+                >
+                    /{formatPrice(total, undefined, "EUR")}
+                </Text>
+            </div>
+            <div className={styles.budgetBarTrack}>
+                <div
+                    className={styles.budgetBarFill}
+                    style={{ width: `${pct}%` }}
+                />
+            </div>
+        </div>
     );
+}
+
+function sortNullableNumber(a?: number | null, b?: number | null): number {
+    if (a == null && b == null) return 0;
+    if (a == null) return 1;
+    if (b == null) return -1;
+    return a - b;
+}
+
+function sortNullableDate(a?: string | null, b?: string | null): number {
+    if (a == null && b == null) return 0;
+    if (a == null) return 1;
+    if (b == null) return -1;
+    return new Date(a).getTime() - new Date(b).getTime();
 }

@@ -7,7 +7,7 @@ export const tableWrapper = style({
     color: vars.text.secondary,
     backgroundColor: vars.surface.elevated,
     border: `1px solid ${vars.border.subtle}`,
-    borderRadius: alias.cornerRadius.s,
+    borderRadius: alias.cornerRadius.m,
 });
 
 export const table = style({
@@ -31,6 +31,10 @@ export const tableButton = style({
     cursor: "pointer",
     width: "100%",
     height: "100%",
+});
+
+export const tableButtonEnd = style({
+    justifyContent: "space-between",
 });
 
 export const tableFilterIcon = style({

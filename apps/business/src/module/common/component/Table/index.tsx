@@ -19,11 +19,18 @@ import { type PropsWithChildren, useMemo, useState } from "react";
 import {
     preTable as preTableStyle,
     tableButton,
+    tableButtonEnd,
     tableFilterIcon,
     tableFilterIconDesc,
     table as tableStyle,
     tableWrapper,
 } from "./table.css";
+
+declare module "@tanstack/react-table" {
+    interface ColumnMeta<TData, TValue> {
+        align?: "left" | "right";
+    }
+}
 
 export type ReactTableProps<TData> = {
     classNameWrapper?: string;
@@ -124,18 +131,29 @@ export function Table<TData extends object>({
                 <thead>
                     {table.getHeaderGroups().map((headerGroup) => (
                         <tr key={headerGroup.id}>
-                            {headerGroup.headers.map((header) => (
-                                <th key={header.id}>
-                                    {header.isPlaceholder ? null : (
-                                        <Sorting {...header.column}>
-                                            {flexRender(
-                                                header.column.columnDef.header,
-                                                header.getContext()
-                                            )}
-                                        </Sorting>
-                                    )}
-                                </th>
-                            ))}
+                            {headerGroup.headers.map((header) => {
+                                const size = header.column.columnDef.size;
+                                return (
+                                    <th
+                                        key={header.id}
+                                        style={
+                                            size !== undefined
+                                                ? { width: size }
+                                                : undefined
+                                        }
+                                    >
+                                        {header.isPlaceholder ? null : (
+                                            <Sorting {...header.column}>
+                                                {flexRender(
+                                                    header.column.columnDef
+                                                        .header,
+                                                    header.getContext()
+                                                )}
+                                            </Sorting>
+                                        )}
+                                    </th>
+                                );
+                            })}
                         </tr>
                     ))}
                 </thead>
@@ -171,14 +189,24 @@ export function Table<TData extends object>({
                                     }
                                     {...extraAttrs}
                                 >
-                                    {row.getVisibleCells().map((cell) => (
-                                        <td key={cell.id}>
-                                            {flexRender(
-                                                cell.column.columnDef.cell,
-                                                cell.getContext()
-                                            )}
-                                        </td>
-                                    ))}
+                                    {row.getVisibleCells().map((cell) => {
+                                        const size = cell.column.columnDef.size;
+                                        return (
+                                            <td
+                                                key={cell.id}
+                                                style={
+                                                    size !== undefined
+                                                        ? { width: size }
+                                                        : undefined
+                                                }
+                                            >
+                                                {flexRender(
+                                                    cell.column.columnDef.cell,
+                                                    cell.getContext()
+                                                )}
+                                            </td>
+                                        );
+                                    })}
                                 </tr>
                             );
                         })
@@ -225,9 +253,10 @@ function Sorting<TData>({
         return <span>{children}</span>;
     }
     const isSortedDesc = column.getIsSorted() === "desc";
+    const align = column.columnDef.meta?.align;
     return (
         <button
-            className={tableButton}
+            className={clsx(tableButton, align === "right" && tableButtonEnd)}
             type={"button"}
             onClick={column.getToggleSortingHandler()}
         >
