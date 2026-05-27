@@ -11,6 +11,8 @@ version on dispatch.
 
 ## [Unreleased]
 
+## [1.1.8] - 2026-05-27
+
 ### Changed
 
 - **Frak Share Button: the "Show potential reward" toggle has been retired across every WordPress surface.** Whether the live reward amount is fetched and substituted is now driven entirely by the presence of the `{REWARD}` placeholder in the button text — type `Share and earn up to {REWARD}!` and the SDK auto-fetches and substitutes; omit the placeholder and the button renders the text verbatim with no network call. This removes a footgun where the bare HTML attribute `<frak-button-share use-reward>` deserialised to the empty string under preact-custom-element and never satisfied the SDK's strict `=== true` check, so the placeholder stayed literal on the rendered button. The companion `Fallback text (no reward)` field is unchanged and continues to take over when the placeholder is present but no reward resolves; it's now always editable rather than gated behind the removed toggle.
@@ -176,7 +178,9 @@ version on dispatch.
 
 - Initial release of the Frak WordPress plugin.
 
-[Unreleased]: https://github.com/frak-id/wallet/compare/wordpress-1.1.7...HEAD
+[Unreleased]: https://github.com/frak-id/wallet/compare/wordpress-1.1.8...HEAD
+
+[1.1.8]: https://github.com/frak-id/wallet/compare/wordpress-1.1.7...wordpress-1.1.8
 
 [1.1.7]: https://github.com/frak-id/wallet/compare/wordpress-1.1.6...wordpress-1.1.7
 
