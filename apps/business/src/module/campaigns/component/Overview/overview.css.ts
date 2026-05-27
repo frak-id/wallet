@@ -25,7 +25,8 @@ export const kpiRow = style({
 
 export const twoColumns = style({
     display: "grid",
-    gridTemplateColumns: "minmax(0, 1fr) minmax(0, 1fr)",
+    // Funnel = 451 / Top campaigns = 685 (Figma "mid stats" frame).
+    gridTemplateColumns: "minmax(0, 451fr) minmax(0, 685fr)",
     gap: alias.spacing.m,
     "@media": {
         "screen and (max-width: 960px)": {
