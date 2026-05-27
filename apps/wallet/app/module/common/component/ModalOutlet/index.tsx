@@ -42,6 +42,13 @@ const EditReferralCodeSheet = lazy(() =>
         default: m.EditReferralCodeSheet,
     }))
 );
+const EmailNotFoundModal = lazy(() =>
+    import("@/module/authentication/component/EmailNotFoundModal").then(
+        (m) => ({
+            default: m.EmailNotFoundModal,
+        })
+    )
+);
 const WelcomeDetail = lazy(() =>
     import("@/module/wallet/component/WelcomeCard/WelcomeDetail").then((m) => ({
         default: m.WelcomeDetail,
@@ -161,6 +168,10 @@ function renderModal(
                         />
                     )}
                 </DetailOverlay>
+            );
+        case "emailNotFound":
+            return (
+                <EmailNotFoundModal onClose={closeModal} email={modal.email} />
             );
     }
 }

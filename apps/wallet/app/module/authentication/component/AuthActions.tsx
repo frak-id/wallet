@@ -7,6 +7,7 @@ import {
     trackEvent,
     useLogin,
 } from "@frak-labs/wallet-shared";
+import { useNavigate } from "@tanstack/react-router";
 import { Trans, useTranslation } from "react-i18next";
 import { useLastAuthenticatorHint } from "@/module/authentication/hook/useLastAuthenticatorHint";
 
@@ -36,6 +37,7 @@ export function AuthActions({
     className,
 }: AuthActionsProps) {
     const { t } = useTranslation();
+    const navigate = useNavigate();
     const hint = useLastAuthenticatorHint();
     const { login, isLoading: isLoginLoading } = useLogin({
         onSuccess: () => onSuccess(),
@@ -70,6 +72,12 @@ export function AuthActions({
         login({});
     };
 
+    const handleEmail = () => {
+        onError(null);
+        trackEvent("auth_login_method_selected", { method: "email" });
+        navigate({ to: "/login/email" });
+    };
+
     return (
         <>
             {hint && (
@@ -102,6 +110,16 @@ export function AuthActions({
                                 : "wallet.login.button"
                         }
                     />
+                </Button>
+            </Box>
+            <Box>
+                <Button
+                    variant="ghost"
+                    onClick={handleEmail}
+                    disabled={loading}
+                    className={className}
+                >
+                    <Trans i18nKey="wallet.login.useEmail" />
                 </Button>
             </Box>
         </>

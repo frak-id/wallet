@@ -33,12 +33,39 @@ import { pendingActionsStore } from "@/module/pending-actions/stores/pendingActi
 import { modalStore } from "@/module/stores/modalStore";
 import * as styles from "./register.css";
 
+type RegisterSearch = {
+    /**
+     * Bypasses the "already has passkeys → /login" redirect guard. Set
+     * when the user explicitly chose to create a new account from a
+     * login surface (e.g. `/login/email` not-found modal, `/login` back
+     * button).
+     */
+    new?: boolean;
+    /**
+     * Pre-fills the onboarding email field. Sent by `/login/email` when
+     * the user types an email the backend can't resolve, accepts the
+     * "create an account" CTA, and lands on `/register`. When present,
+     * the flow skips ahead to the `onboardingThree` step.
+     */
+    email?: string;
+};
+
 export const Route = createFileRoute("/_wallet/_auth/register")({
     component: RegisterPage,
-    beforeLoad: async ({ location }) => {
+    validateSearch: (search: Record<string, unknown>): RegisterSearch => ({
+        new:
+            search.new === true ||
+            search.new === "true" ||
+            search.new === "1" ||
+            search.new === 1,
+        email:
+            typeof search.email === "string" && search.email.length > 0
+                ? search.email
+                : undefined,
+    }),
+    beforeLoad: async ({ search }) => {
         // Skip redirect if user explicitly requested new account creation
-        const search = new URLSearchParams(location.search);
-        if (search.has("new")) return;
+        if (search.new) return;
 
         // If the user already has passkeys stored locally, redirect to login
         const previousAuthenticators = await authenticatorStorage.getAll();
@@ -89,12 +116,19 @@ const TOAST_EXIT_MS = 220;
 function RegisterPage() {
     const { t } = useTranslation();
     const navigate = useNavigate();
-    const [step, setStep] = useState<FlowStep>("onboardingOne");
+    const { email: prefilledEmail } = Route.useSearch();
+    // When the user arrives from `/login/email` with a confirmed-unused
+    // email, jump straight to the secure-space step — the email
+    // collection step would just re-ask for something they already
+    // typed. Otherwise start at the marketing slides as usual.
+    const [step, setStep] = useState<FlowStep>(
+        prefilledEmail ? "onboardingThree" : "onboardingOne"
+    );
     // Hold the email collected on the `emailInput` step. Stays in component
     // state so navigating back to the step pre-fills the field, and is
     // forwarded to the register endpoint when the user activates their
     // secure space.
-    const [email, setEmail] = useState("");
+    const [email, setEmail] = useState(prefilledEmail ?? "");
     // Captured on the `emailAlreadyUsed` step so the dedicated screen knows
     // which credential to log in with. Cleared once the user navigates back
     // to the input step.

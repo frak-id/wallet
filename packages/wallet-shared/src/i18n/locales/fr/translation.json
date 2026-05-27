@@ -393,7 +393,20 @@
             "privy": "Connection via Privy",
             "useQRCode": "Utiliser un QR code pour me connecter",
             "useMyAccount": "Continuer avec mon compte",
-            "anotherAccount": "Se connecter avec un autre compte"
+            "anotherAccount": "Se connecter avec un autre compte",
+            "useEmail": "Se connecter avec mon e-mail",
+            "email": {
+                "title": "Connecte-toi avec ton e-mail",
+                "description": "Renseigne l'e-mail lié à ton porte-monnaie. On affichera toutes les clés associées pour que tu choisisses la bonne.",
+                "submit": "Continuer",
+                "checkError": "Impossible de vérifier cet e-mail pour le moment. Réessaie.",
+                "notFound": {
+                    "title": "Aucun compte trouvé",
+                    "description": "On n'a pas trouvé de porte-monnaie lié à {{email}}. Tu veux en créer un avec cet e-mail ?",
+                    "create": "Créer un compte",
+                    "useDifferent": "Utiliser un autre e-mail"
+                }
+            }
         },
         "notifications": {
             "noNotifications": "Aucune notifications"

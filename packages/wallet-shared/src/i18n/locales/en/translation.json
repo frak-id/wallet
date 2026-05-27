@@ -395,7 +395,20 @@
             "privy": "Connect via Privy",
             "useQRCode": "Use QR code to connect",
             "useMyAccount": "Continue with my account",
-            "anotherAccount": "Connect another account"
+            "anotherAccount": "Connect another account",
+            "useEmail": "Sign in with email",
+            "email": {
+                "title": "Sign in with your email",
+                "description": "Enter the email linked to your wallet. We'll surface every passkey attached to it so you can pick the right one.",
+                "submit": "Continue",
+                "checkError": "Unable to verify this email right now. Please try again.",
+                "notFound": {
+                    "title": "No account found",
+                    "description": "We couldn't find a wallet linked to {{email}}. Want to create one with this email?",
+                    "create": "Create an account",
+                    "useDifferent": "Use a different email"
+                }
+            }
         },
         "notifications": {
             "noNotifications": "No notifications"

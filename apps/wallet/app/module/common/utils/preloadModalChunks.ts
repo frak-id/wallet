@@ -18,6 +18,10 @@
 export function preloadModalChunks() {
     // Auth/recovery — Keypass fires on login + post-onboarding flows
     void import("@/module/onboarding/component/Keypass");
+    // Email-login dead-end: opened from /login/email when no wallet is
+    // bound to the typed email. Pre-warm so the first sheet open is
+    // instantaneous.
+    void import("@/module/authentication/component/EmailNotFoundModal");
     // Wallet shell extras
     void import("@/module/wallet/component/WelcomeCard/WelcomeDetail");
     void import("@/module/tokens/component/PendingGainsModal");

@@ -38,7 +38,8 @@ export type ModalState =
     | { id: "moneriumBankFlow" }
     | { id: "moneriumOrderDetail"; order: MoneriumOrder }
     | { id: "rewardDetail"; item: RewardHistoryItem }
-    | { id: "editReferralCode"; onSaved: () => void };
+    | { id: "editReferralCode"; onSaved: () => void }
+    | { id: "emailNotFound"; email: string };
 
 const maxStackDepth = 5;
 

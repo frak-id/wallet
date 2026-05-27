@@ -18,7 +18,7 @@ import { ContentBlock } from "@/module/common/component/ContentBlock";
 import { PageLayout } from "@/module/common/component/PageLayout";
 import { useExecutePendingActions } from "@/module/pending-actions/hook/useExecutePendingActions";
 
-export const Route = createFileRoute("/_wallet/_auth/login")({
+export const Route = createFileRoute("/_wallet/_auth/login/")({
     component: LoginPage,
 });
 
