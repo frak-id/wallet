@@ -47,13 +47,18 @@ export function SharingBySourceCard({
                             <DonutChart segments={segments} />
                             <div className={local.legend}>
                                 {segments.map((s) => (
-                                    <span key={s.label} className={local.item}>
+                                    <Text
+                                        as="span"
+                                        variant="caption"
+                                        key={s.label}
+                                        className={local.item}
+                                    >
                                         <span
                                             className={local.dot}
                                             style={{ backgroundColor: s.color }}
                                         />
                                         {s.label}
-                                    </span>
+                                    </Text>
                                 ))}
                             </div>
                         </TabsContent>

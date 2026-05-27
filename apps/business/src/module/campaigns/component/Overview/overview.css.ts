@@ -75,6 +75,14 @@ export const cardSubtitle = style({
     color: vars.text.secondary,
 });
 
+export const chartAmount = style({
+    fontSize: "32px",
+    lineHeight: "36px",
+    fontWeight: 600,
+    color: vars.text.primary,
+    fontVariantNumeric: "tabular-nums",
+});
+
 export const funnelChartWrap = style({
     marginTop: alias.spacing.m,
 });
@@ -88,8 +96,6 @@ export const legendRow = style({
     display: "inline-flex",
     alignItems: "center",
     gap: alias.spacing.xs,
-    fontSize: "13px",
-    color: vars.text.secondary,
 });
 
 export const legendDot = style({

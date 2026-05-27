@@ -13,9 +13,9 @@ export function PurchasesCard({
     return (
         <div className={styles.card}>
             <div>
-                <Text as="span" variant="heading3" weight="bold">
+                <span className={styles.chartAmount}>
                     {numberFormatter.format(purchases.total)}
-                </Text>
+                </span>
                 <Text variant="bodySmall" color="secondary">
                     Purchases generated
                 </Text>
@@ -29,10 +29,10 @@ export function PurchasesCard({
                 yMax={5000}
                 yTicks={[0, 1000, 2000, 3000, 4000, 5000]}
             />
-            <span className={styles.legendRow}>
+            <Text as="span" variant="caption" className={styles.legendRow}>
                 <span className={styles.legendDotPrimary} />
                 Purchases generated
-            </span>
+            </Text>
         </div>
     );
 }

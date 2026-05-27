@@ -8,11 +8,6 @@ export const container = style({
     gap: alias.spacing.s,
 });
 
-export const label = style({
-    fontSize: "12px",
-    color: vars.text.secondary,
-});
-
 export const bar = style({
     display: "flex",
     height: "8px",
@@ -37,8 +32,6 @@ export const legendItem = style({
     display: "inline-flex",
     alignItems: "center",
     gap: "6px",
-    fontSize: "12px",
-    color: vars.text.primary,
 });
 
 export const dot = style({

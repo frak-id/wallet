@@ -72,7 +72,7 @@ export function TopCampaignsCard({
 
     return (
         <div className={styles.card}>
-            <Text as="h2" variant="heading4" weight="semiBold">
+            <Text as="h2" variant="bodySmall" color="secondary">
                 Top campaigns
             </Text>
             <Table data={topCampaigns} columns={columns} />

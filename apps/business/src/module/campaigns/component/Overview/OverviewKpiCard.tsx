@@ -12,21 +12,31 @@ export function OverviewKpiCard({ label, descriptor, amount, delta }: Props) {
     return (
         <div className={styles.card}>
             <div className={styles.headerRow}>
-                <Text as="span" variant="bodySmall" weight="semiBold">
+                <Text
+                    as="span"
+                    variant="bodySmall"
+                    weight="medium"
+                    color="secondary"
+                >
                     {label}
                 </Text>
-                <span className={styles.descriptor}>{descriptor}</span>
+                <Text as="span" variant="caption" color="disabled">
+                    {descriptor}
+                </Text>
             </div>
             <span className={styles.amount}>{amount}</span>
             {delta !== undefined && (
-                <span
+                <Text
+                    as="span"
+                    variant="bodySmall"
+                    weight="regular"
                     className={`${styles.delta} ${
                         delta >= 0 ? styles.deltaUp : styles.deltaDown
                     }`}
                 >
                     {delta >= 0 ? "▲" : "▼"} {delta > 0 ? "+" : ""}
                     {delta}%
-                </span>
+                </Text>
             )}
         </div>
     );

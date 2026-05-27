@@ -1,3 +1,4 @@
+import { Text } from "@frak-labs/design-system/components/Text";
 import { vars } from "@frak-labs/design-system/theme";
 import type { CampaignsOverview } from "@/module/campaigns/queries/queryOptions";
 import * as styles from "./statusLegendBar.css";
@@ -34,7 +35,9 @@ export function StatusLegendBar({
 
     return (
         <div className={styles.container}>
-            <span className={styles.label}>Status</span>
+            <Text as="span" variant="bodySmall" color="secondary">
+                Status
+            </Text>
             <div className={styles.bar}>
                 {statusOrder.map((key) =>
                     breakdown[key] > 0 ? (
@@ -51,13 +54,18 @@ export function StatusLegendBar({
             </div>
             <div className={styles.legend}>
                 {statusOrder.map((key) => (
-                    <span key={key} className={styles.legendItem}>
+                    <Text
+                        as="span"
+                        variant="caption"
+                        key={key}
+                        className={styles.legendItem}
+                    >
                         <span
                             className={styles.dot}
                             style={{ backgroundColor: statusColor[key] }}
                         />
                         {breakdown[key]} {statusLabel[key]}
-                    </span>
+                    </Text>
                 ))}
             </div>
         </div>

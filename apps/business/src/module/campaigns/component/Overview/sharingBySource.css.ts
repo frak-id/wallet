@@ -1,4 +1,3 @@
-import { vars } from "@frak-labs/design-system/theme";
 import { alias } from "@frak-labs/design-system/tokens";
 import { style } from "@vanilla-extract/css";
 
@@ -13,8 +12,6 @@ export const item = style({
     display: "inline-flex",
     alignItems: "center",
     gap: "6px",
-    fontSize: "12px",
-    color: vars.text.primary,
 });
 
 export const dot = style({

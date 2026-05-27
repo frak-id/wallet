@@ -18,15 +18,10 @@ export const headerRow = style({
     gap: alias.spacing.xs,
 });
 
-export const descriptor = style({
-    fontSize: "12px",
-    color: vars.text.tertiary,
-});
-
 export const amount = style({
-    fontSize: "28px",
-    lineHeight: "32px",
-    fontWeight: 700,
+    fontSize: "32px",
+    lineHeight: "40px",
+    fontWeight: 600,
     color: vars.text.primary,
     fontVariantNumeric: "tabular-nums",
 });
@@ -35,8 +30,6 @@ export const delta = style({
     display: "inline-flex",
     alignItems: "center",
     gap: "2px",
-    fontSize: "12px",
-    fontWeight: 500,
 });
 
 export const deltaUp = style({ color: vars.text.success });

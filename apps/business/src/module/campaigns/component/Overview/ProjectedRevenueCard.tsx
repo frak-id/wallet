@@ -13,15 +13,15 @@ export function ProjectedRevenueCard({
     return (
         <div className={styles.card}>
             <div>
-                <Text as="span" variant="heading3" weight="bold">
+                <span className={styles.chartAmount}>
                     {currencyFormatter.format(projectedRevenue.total)}€
-                </Text>
+                </span>
                 <Text variant="bodySmall" color="secondary">
                     Projected revenue
                 </Text>
-                <span className={styles.cardSubtitle}>
+                <Text variant="bodySmall" color="tertiary">
                     Based on current growth trend
-                </span>
+                </Text>
             </div>
             <AreaChart
                 data={projectedRevenue.series}
@@ -29,14 +29,14 @@ export function ProjectedRevenueCard({
                 yTicks={[0, 5000, 10000, 15000]}
             />
             <div className={styles.revenueLegend}>
-                <span className={styles.legendRow}>
+                <Text as="span" variant="caption" className={styles.legendRow}>
                     <span className={styles.legendDotSuccess} />
                     Actual revenue
-                </span>
-                <span className={styles.legendRow}>
+                </Text>
+                <Text as="span" variant="caption" className={styles.legendRow}>
                     <span className={styles.legendDotForecast} />
                     Forecast revenue
-                </span>
+                </Text>
             </div>
         </div>
     );
