@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo } from "react";
-import { useDropzone } from "react-dropzone";
+import { type FileRejection, useDropzone } from "react-dropzone";
 import { useFetcher } from "react-router";
 import styles from "./index.module.css";
 
@@ -15,6 +15,13 @@ type ImageUploadFieldProps = {
     mediaFiles?: MediaFile[];
 };
 
+// 4 MB cap — the SSR Lambda Function URL (sst.aws.React in infra/shopify.ts)
+// hard-caps request payloads at 6 MB and base64-encodes binary content (~33%
+// overhead), so the effective ceiling is ~4.5 MB. Larger uploads return an
+// opaque 413 from Lambda before the action runs; do not raise this without
+// switching to a direct-to-backend or pre-signed-URL flow.
+const MAX_UPLOAD_BYTES = 4 * 1024 * 1024;
+
 const imageAccept = {
     "image/png": [".png"],
     "image/jpeg": [".jpg", ".jpeg"],
@@ -24,8 +31,8 @@ const imageAccept = {
 };
 
 const restrictionsText = {
-    logo: "PNG, JPEG, WebP, SVG, GIF — Min 128×128px — Ratio 1:2 to 2:1 — Max 10MB",
-    hero: "PNG, JPEG, WebP, SVG, GIF — Min 800×450px — Ratio 4:3 to 2:1 — Max 10MB",
+    logo: "PNG, JPEG, WebP, SVG, GIF — Min 128×128px — Ratio 1:2 to 2:1 — Max 4MB",
+    hero: "PNG, JPEG, WebP, SVG, GIF — Min 800×450px — Ratio 4:3 to 2:1 — Max 4MB",
 } as const;
 
 export function ImageUploadField({
@@ -86,14 +93,16 @@ export function ImageUploadField({
         });
     }, [type, mediaFetcher]);
 
-    const { getRootProps, getInputProps, isDragActive } = useDropzone({
-        onDrop,
-        accept: imageAccept,
-        maxFiles: 1,
-        disabled: isPending,
-    });
+    const { getRootProps, getInputProps, isDragActive, fileRejections } =
+        useDropzone({
+            onDrop,
+            accept: imageAccept,
+            maxFiles: 1,
+            maxSize: MAX_UPLOAD_BYTES,
+            disabled: isPending,
+        });
 
-    const errorMessage = getUploadErrorMessage(mediaFetcher.data);
+    const errorMessage = resolveUploadError(fileRejections, mediaFetcher.data);
     const isUploadSuccess =
         mediaFetcher.data &&
         (mediaFetcher.data as { success: boolean }).success &&
@@ -158,11 +167,46 @@ export function ImageUploadField({
     );
 }
 
-function getUploadErrorMessage(data: unknown): string | null {
-    if (!data) return null;
-    const d = data as { success?: boolean; error?: string };
-    if (d.success === false && d.error) return d.error;
-    return null;
+function resolveUploadError(
+    rejections: readonly FileRejection[],
+    data: unknown
+): string | null {
+    const rejection = rejections[0];
+    if (rejection) return describeRejection(rejection);
+    return describeServerError(data);
+}
+
+function describeRejection(rejection: FileRejection): string {
+    const error = rejection.errors[0];
+    if (!error) return "File rejected.";
+    switch (error.code) {
+        case "file-too-large":
+            return `${rejection.file.name} is ${formatMb(rejection.file.size)} — images must stay under ${formatMb(MAX_UPLOAD_BYTES)}.`;
+        case "file-invalid-type":
+            return `${rejection.file.name} is not a supported image format (PNG, JPEG, WebP, SVG, GIF).`;
+        case "too-many-files":
+            return "Please upload one image at a time.";
+        default:
+            return error.message || "File rejected.";
+    }
+}
+
+function describeServerError(data: unknown): string | null {
+    if (data === undefined || data === null) return null;
+    if (typeof data === "object") {
+        const d = data as { success?: boolean; error?: string };
+        if (d.success === false) {
+            return d.error ?? "Upload failed. Please try again.";
+        }
+        return null;
+    }
+    // Non-object payload — typically a 413/502 from the SSR Lambda or an
+    // upstream proxy returning HTML before the action could respond.
+    return "Upload failed. The image may be too large or the network was interrupted.";
+}
+
+function formatMb(bytes: number): string {
+    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 }
 
 function ExistingFilePicker({
