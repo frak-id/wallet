@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { useDropzone } from "react-dropzone";
+import { type FileRejection, useDropzone } from "react-dropzone";
 import { useFetcher } from "react-router";
 import styles from "./index.module.css";
 
@@ -11,6 +11,11 @@ type MultiHeroImagesFieldProps = {
 
 const MAX_IMAGES = 4;
 
+// 4 MB cap — matches ImageUploadField. The SSR Lambda Function URL hard-caps
+// payloads at 6 MB with base64 encoding (~33% overhead). Larger uploads return
+// an opaque 413 from Lambda before the action runs.
+const MAX_UPLOAD_BYTES = 4 * 1024 * 1024;
+
 const imageAccept = {
     "image/png": [".png"],
     "image/jpeg": [".jpg", ".jpeg"],
@@ -20,7 +25,7 @@ const imageAccept = {
 };
 
 const restrictionsText =
-    "PNG, JPEG, WebP, SVG, GIF — Min 800×450px — Ratio 4:3 to 2:1 — Max 10MB";
+    "PNG, JPEG, WebP, SVG, GIF — Min 800×450px — Ratio 4:3 to 2:1 — Max 4MB";
 
 // Extract storage key (e.g. "hero-abc12345") from a stored URL.
 function urlToType(url: string): string | null {
@@ -90,14 +95,16 @@ export function MultiHeroImagesField({
         [deleteFetcher, onChange, values]
     );
 
-    const { getRootProps, getInputProps, isDragActive } = useDropzone({
-        onDrop,
-        accept: imageAccept,
-        maxFiles: 1,
-        disabled: isPending || reachedLimit,
-    });
+    const { getRootProps, getInputProps, isDragActive, fileRejections } =
+        useDropzone({
+            onDrop,
+            accept: imageAccept,
+            maxFiles: 1,
+            maxSize: MAX_UPLOAD_BYTES,
+            disabled: isPending || reachedLimit,
+        });
 
-    const errorMessage = getUploadErrorMessage(uploadFetcher.data);
+    const errorMessage = resolveUploadError(fileRejections, uploadFetcher.data);
 
     return (
         <div className={styles.field}>
@@ -163,9 +170,44 @@ export function MultiHeroImagesField({
     );
 }
 
-function getUploadErrorMessage(data: unknown): string | null {
-    if (!data) return null;
-    const d = data as { success?: boolean; error?: string };
-    if (d.success === false && d.error) return d.error;
-    return null;
+function resolveUploadError(
+    rejections: readonly FileRejection[],
+    data: unknown
+): string | null {
+    const rejection = rejections[0];
+    if (rejection) return describeRejection(rejection);
+    return describeServerError(data);
+}
+
+function describeRejection(rejection: FileRejection): string {
+    const error = rejection.errors[0];
+    if (!error) return "File rejected.";
+    switch (error.code) {
+        case "file-too-large":
+            return `${rejection.file.name} is ${formatMb(rejection.file.size)} — images must stay under ${formatMb(MAX_UPLOAD_BYTES)}.`;
+        case "file-invalid-type":
+            return `${rejection.file.name} is not a supported image format (PNG, JPEG, WebP, SVG, GIF).`;
+        case "too-many-files":
+            return "Please upload one image at a time.";
+        default:
+            return error.message || "File rejected.";
+    }
+}
+
+function describeServerError(data: unknown): string | null {
+    if (data === undefined || data === null) return null;
+    if (typeof data === "object") {
+        const d = data as { success?: boolean; error?: string };
+        if (d.success === false) {
+            return d.error ?? "Upload failed. Please try again.";
+        }
+        return null;
+    }
+    // Non-object payload — typically a 413/502 from the SSR Lambda or an
+    // upstream proxy returning HTML before the action could respond.
+    return "Upload failed. The image may be too large or the network was interrupted.";
+}
+
+function formatMb(bytes: number): string {
+    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 }

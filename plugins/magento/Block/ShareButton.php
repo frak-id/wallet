@@ -52,14 +52,4 @@ class ShareButton extends Template
     {
         return "Share";
     }
-
-    /**
-     * Check if reward incentive should be shown with the share button
-     *
-     * @return bool
-     */
-    public function useReward(): bool
-    {
-        return true;
-    }
 }

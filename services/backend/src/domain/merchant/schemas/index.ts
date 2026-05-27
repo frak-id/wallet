@@ -33,7 +33,6 @@ const ButtonShareComponentSchema = t.Object({
             t.Literal("sharing-page"),
         ])
     ),
-    useReward: t.Optional(t.Boolean()),
     rawCss: t.Optional(t.String({ maxLength: 50000 })),
     css: t.Optional(t.String({ maxLength: 50000 })),
 });

@@ -11,6 +11,15 @@ version on dispatch.
 
 ## [Unreleased]
 
+### Changed
+
+- **Frak Share Button: the "Show potential reward" toggle has been retired across every WordPress surface.** Whether the live reward amount is fetched and substituted is now driven entirely by the presence of the `{REWARD}` placeholder in the button text — type `Share and earn up to {REWARD}!` and the SDK auto-fetches and substitutes; omit the placeholder and the button renders the text verbatim with no network call. This removes a footgun where the bare HTML attribute `<frak-button-share use-reward>` deserialised to the empty string under preact-custom-element and never satisfied the SDK's strict `=== true` check, so the placeholder stayed literal on the rendered button. The companion `Fallback text (no reward)` field is unchanged and continues to take over when the placeholder is present but no reward resolves; it's now always editable rather than gated behind the removed toggle.
+  - `frak/share-button` Gutenberg block: dropped the `useReward` boolean attribute (`includes/blocks-manifest.php`) and the matching `ToggleControl` in the inspector (`includes/blocks/share-button/editor.js`). The editor preview no longer spreads `use-reward` into the live `<frak-button-share>` props.
+  - `[frak_share_button]` shortcode: dropped the `use_reward` parameter (`includes/class-frak-shortcodes.php`). Existing shortcode invocations carrying `use_reward="1"` keep working — the attribute is silently dropped by `shortcode_atts()` rather than triggering an error — but the value has no effect; merchants should switch to embedding `{REWARD}` in `text`.
+  - Sidebar widget (`Frak_Share_Button_Widget`): dropped the **Show potential reward** checkbox.
+  - Elementor widget (`Frak_Elementor_Share_Button_Widget`): dropped the **Show potential reward** SWITCHER and the now-unnecessary `condition` gate on the fallback-text control.
+  - `Frak_Component_Renderer::SHARE_BUTTON_ATTRS` no longer maps `useReward => use-reward`; the supporting `BOOLEAN_HTML_ATTRS` constant and its branch in `build_html_attrs()` are gone too (the parallel `TRUE_VALUED_HTML_ATTRS` path used by `<frak-banner allow-inapp-redirect>` is untouched).
+
 ## [1.1.7] - 2026-05-20
 
 ### Changed
