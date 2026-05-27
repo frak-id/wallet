@@ -45,7 +45,13 @@ export function FunnelChart({
                             />
                         </div>
                         <div className={funnelChartStyles.valueCell}>
-                            <span className={funnelChartStyles.value}>
+                            <span
+                                className={`${funnelChartStyles.value}${
+                                    isLast
+                                        ? ` ${funnelChartStyles.valueSuccess}`
+                                        : ""
+                                }`}
+                            >
                                 {valueFormatter(step.value)}
                             </span>
                             {step.delta !== undefined && (

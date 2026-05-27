@@ -70,6 +70,9 @@ export const funnelChartStyles = {
         color: vars.text.primary,
         fontVariantNumeric: "tabular-nums",
     }),
+    valueSuccess: style({
+        color: vars.text.success,
+    }),
     delta: style({
         display: "inline-flex",
         alignItems: "center",
