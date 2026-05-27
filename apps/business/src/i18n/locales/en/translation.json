@@ -53,7 +53,7 @@
             "dashboard": { "nav": "Dashboard" },
             "campaigns": { "nav": "Campaigns" },
             "campaignsOverview": { "nav": "Data overview" },
-            "campaignsList": { "nav": "List", "title": "Campaign List" },
+            "campaignsList": { "nav": "List" },
             "members": { "nav": "Members", "title": "Members List" },
             "wallet": { "nav": "Wallet" },
             "settings": { "nav": "Settings" },

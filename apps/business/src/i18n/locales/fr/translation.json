@@ -53,7 +53,7 @@
             "dashboard": { "nav": "Tableau de bord" },
             "campaigns": { "nav": "Campagnes" },
             "campaignsOverview": { "nav": "Vue d'ensemble" },
-            "campaignsList": { "nav": "Liste", "title": "Liste des campagnes" },
+            "campaignsList": { "nav": "Liste" },
             "members": { "nav": "Membres", "title": "Liste des membres" },
             "wallet": { "nav": "Porte-monnaie" },
             "settings": { "nav": "Paramètres" },

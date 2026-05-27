@@ -115,7 +115,6 @@ export default interface Resources {
                 };
                 campaignsList: {
                     nav: "List";
-                    title: "Campaign List";
                 };
                 campaignsOverview: {
                     nav: "Data overview";
