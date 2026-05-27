@@ -47,8 +47,8 @@ const renderLabel = ({
             fill="#ffffff"
             textAnchor="middle"
             dominantBaseline="central"
-            fontSize={12}
-            fontWeight={600}
+            fontSize={10}
+            fontWeight={500}
         >
             {Math.round(percent * 100)}%
         </text>
