@@ -6,6 +6,8 @@ export const tabsStyles = {
     list: style({
         display: "inline-flex",
         alignItems: "center",
+        alignSelf: "flex-start",
+        width: "fit-content",
         padding: "2px",
         borderRadius: "10px",
         backgroundColor: vars.surface.muted,
