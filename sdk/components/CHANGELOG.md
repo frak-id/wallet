@@ -1,5 +1,23 @@
 # @frak-labs/components
 
+## 1.0.8
+
+### Patch Changes
+
+- [#222](https://github.com/frak-id/wallet/pull/222) [`fc984f3`](https://github.com/frak-id/wallet/commit/fc984f3d16f6f2757983ad7bc6e0337ec509422a) Thanks [@KONFeature](https://github.com/KONFeature)! - Drop the `useReward` / `use-reward` opt-in on `<frak-button-share>`. The
+  button now fetches the estimated reward whenever `text` contains the
+  `{REWARD}` placeholder, and uses `no-reward-text` (or strips the
+  placeholder) as the fallback. Same behaviour for placement configs:
+  `components.buttonShare.useReward` is no longer read.
+
+  This removes a footgun where `<frak-button-share use-reward …>` passed
+  the empty-string HTML attribute value to a strict `=== true` check, so
+  the placeholder stayed literal on real merchant pages despite the
+  JSX-driven unit tests passing.
+
+- Updated dependencies [[`fc984f3`](https://github.com/frak-id/wallet/commit/fc984f3d16f6f2757983ad7bc6e0337ec509422a)]:
+  - @frak-labs/core-sdk@1.1.3
+
 ## 1.0.7
 
 ### Patch Changes
