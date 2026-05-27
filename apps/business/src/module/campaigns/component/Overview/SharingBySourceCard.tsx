@@ -32,14 +32,14 @@ export function SharingBySourceCard({
 }) {
     return (
         <div className={styles.card}>
-            <Text variant="bodySmall" color="secondary">
-                Sharing by source
-            </Text>
             <Tabs defaultValue="platform">
                 <TabsList>
                     <TabsTrigger value="platform">Platform</TabsTrigger>
                     <TabsTrigger value="device">Device</TabsTrigger>
                 </TabsList>
+                <Text variant="bodySmall" color="secondary">
+                    Sharing by source
+                </Text>
                 {(["platform", "device"] as Mode[]).map((mode) => {
                     const segments = withColors(sharing[mode], mode);
                     return (
