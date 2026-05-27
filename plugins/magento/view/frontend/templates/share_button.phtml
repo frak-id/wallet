@@ -8,6 +8,5 @@ if (!$block->isEnabled() || !$block->showShareButton()) {
 <div class="fraklabs-share-button">
     <frak-button-share
         text="<?= $escaper->escapeHtmlAttr($block->getShareButtonText()) ?>"
-        <?= $block->useReward() ? 'use-reward' : '' ?>
     ></frak-button-share>
 </div>

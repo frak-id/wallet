@@ -84,24 +84,23 @@ describe.sequential("ButtonShare", () => {
         expect(container.querySelector("button")).not.toBeInTheDocument();
     });
 
-    it("should display reward when useReward is true and reward is available", () => {
+    it("should substitute {REWARD} placeholder when reward is available", () => {
         vi.mocked(useRewardHook.useReward).mockReturnValue({
             reward: "10 eur",
         });
 
-        render(<ButtonShare useReward text="Earn up to {REWARD}!" />);
+        render(<ButtonShare text="Earn up to {REWARD}!" />);
         const button = screen.getByRole("button");
         expect(button).toHaveTextContent("Earn up to 10 eur!");
     });
 
-    it("should use noRewardText when reward is not available", () => {
+    it("should use noRewardText when {REWARD} placeholder is present but no reward is available", () => {
         vi.mocked(useRewardHook.useReward).mockReturnValue({
             reward: undefined,
         });
 
         render(
             <ButtonShare
-                useReward
                 text="Earn up to {REWARD}!"
                 noRewardText="Share and earn!"
             />
@@ -110,14 +109,21 @@ describe.sequential("ButtonShare", () => {
         expect(button).toHaveTextContent("Share and earn!");
     });
 
-    it("should append reward to text when placeholder is not present", () => {
+    it("should strip {REWARD} placeholder when no reward and no noRewardText", () => {
         vi.mocked(useRewardHook.useReward).mockReturnValue({
-            reward: "10 eur",
+            reward: undefined,
         });
 
-        render(<ButtonShare useReward text="Share and earn!" />);
+        render(<ButtonShare text="Earn up to {REWARD}!" />);
         const button = screen.getByRole("button");
-        expect(button).toHaveTextContent("Share and earn! 10 eur");
+        expect(button).toHaveTextContent("Earn up to !");
+    });
+
+    it("should not fetch reward when text has no {REWARD} placeholder", () => {
+        render(<ButtonShare text="Share and earn!" />);
+        const button = screen.getByRole("button");
+        expect(button).toHaveTextContent("Share and earn!");
+        expect(useRewardHook.useReward).toHaveBeenCalledWith(false, undefined);
     });
 
     it("should call openSharingPage on click by default", async () => {
@@ -187,9 +193,12 @@ describe.sequential("ButtonShare", () => {
         );
     });
 
-    it("should pass targetInteraction to useReward hook", () => {
+    it("should pass targetInteraction to useReward hook when {REWARD} placeholder is present", () => {
         render(
-            <ButtonShare useReward targetInteraction="custom.customerMeeting" />
+            <ButtonShare
+                text="Earn up to {REWARD}!"
+                targetInteraction="custom.customerMeeting"
+            />
         );
 
         expect(useRewardHook.useReward).toHaveBeenCalledWith(

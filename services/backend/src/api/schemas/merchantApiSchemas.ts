@@ -14,7 +14,6 @@ const ResolvedComponentsSchema = t.Object({
                     t.Literal("sharing-page"),
                 ])
             ),
-            useReward: t.Optional(t.Boolean()),
             css: t.Optional(t.String()),
         })
     ),

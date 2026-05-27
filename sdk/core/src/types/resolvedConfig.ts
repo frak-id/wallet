@@ -25,7 +25,6 @@ export type ResolvedPlacement = {
             text?: string;
             noRewardText?: string;
             clickAction?: "embedded-wallet" | "share-modal" | "sharing-page";
-            useReward?: boolean;
             css?: string;
         };
         buttonWallet?: {

@@ -7,8 +7,13 @@ import type { InteractionTypeKey } from "@frak-labs/core-sdk";
 export type ButtonShareProps = {
     placement?: string;
     /**
-     * Text to display on the button
-     *  - To specify where the reward should be displayed, use the placeholder `{REWARD}`, e.g. `Share and earn up to \{REWARD\}!`
+     * Text to display on the button.
+     *
+     * Including the placeholder `{REWARD}` (e.g. `Share and earn up to \{REWARD\}!`)
+     * opts the button into the live reward flow: the SDK fetches the
+     * estimated reward and substitutes the placeholder. When no reward is
+     * available, `noRewardText` is used as a fallback (or the placeholder is
+     * stripped if no fallback is provided).
      * @defaultValue `"Share and earn!"`
      */
     text?: string;
@@ -17,12 +22,8 @@ export type ButtonShareProps = {
      */
     classname?: string;
     /**
-     * Do we display the reward on the share modal?
-     * @defaultValue `false`
-     */
-    useReward?: boolean;
-    /**
-     * Fallback text if the reward isn't found
+     * Fallback text when `text` contains the `{REWARD}` placeholder but no
+     * reward is available.
      */
     noRewardText?: string;
     /**

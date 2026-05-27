@@ -27,7 +27,6 @@
 <frak-button-share
   text="{{ button_text }}"
   classname="button {{ button_class }} {{ full_width_class }} {{ custom_class }}"
-  {% if block.settings.use_reward %}use-reward{% endif %}
   {% if no_reward_text != blank %}no-reward-text="{{ no_reward_text }}"{% endif %}
   {% if block.settings.target_interaction != blank %}target-interaction="{{ block.settings.target_interaction }}"{% endif %}
   {% if request.design_mode and block.settings.enable_preview %}preview="true"{% endif %}
@@ -49,20 +48,13 @@
       "type": "text",
       "id": "text",
       "label": "Button text",
-      "info": "Leave blank for the localized default (e.g. \"Share and earn!\")."
-    },
-    {
-      "type": "checkbox",
-      "id": "use_reward",
-      "label": "Show reward amount",
-      "info": "Display the estimated reward in the button text. Use {REWARD} in button text to place the amount.",
-      "default": false
+      "info": "Leave blank for the localized default (e.g. \"Share and earn!\"). Include {REWARD} to embed the estimated reward amount (e.g. \"Share and earn up to {REWARD}!\")."
     },
     {
       "type": "text",
       "id": "no_reward_text",
       "label": "Fallback text (no reward)",
-      "info": "Shown when rewards are enabled but no reward is available. Leave blank for the localized default."
+      "info": "Shown when the button text contains {REWARD} but no reward is available. Leave blank for the localized default."
     },
     {
       "type": "select",

@@ -48,7 +48,6 @@ function replaceNexusShareButton() {
         const buttonShare = document.createElement("frak-button-share");
         buttonShare.setAttribute("text", "PARTAGE ET GAGNE {REWARD} !");
         buttonShare.setAttribute("no-reward-text", "PARTAGE ET GAGNE");
-        buttonShare.setAttribute("use-reward", "true");
         buttonShare.setAttribute("classname", "button w-full");
         button.replaceWith(buttonShare);
     }

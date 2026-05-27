@@ -25,7 +25,6 @@ registerWebComponent(
         "placement",
         "classname",
         "clickAction",
-        "useReward",
         "noRewardText",
         "targetInteraction",
         "preview",
