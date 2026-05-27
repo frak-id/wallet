@@ -43,7 +43,7 @@ function MerchantBadge({ name }: { name: string }) {
 const SAFE_SECTIONS = [
     "/dashboard",
     "/campaigns/list",
-    "/campaigns/performance",
+    "/campaigns/overview",
     "/members",
     "/merchant",
     "/merchant/funding",

@@ -97,7 +97,7 @@ describe("NavigationCampaignsSwitcher", () => {
         expect(subItems).toHaveLength(2);
         expect(subItems[0]).toHaveAttribute(
             "data-url",
-            "/campaigns/performance"
+            "/campaigns/overview"
         );
         expect(subItems[1]).toHaveAttribute("data-url", "/campaigns/list");
         expect(

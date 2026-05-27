@@ -23,9 +23,9 @@ export function NavigationCampaignsSwitcher() {
     const listUrl = merchantId
         ? `/m/${merchantId}/campaigns/list`
         : "/campaigns/list";
-    const performanceUrl = merchantId
-        ? `/m/${merchantId}/campaigns/performance`
-        : "/campaigns/performance";
+    const overviewUrl = merchantId
+        ? `/m/${merchantId}/campaigns/overview`
+        : "/campaigns/overview";
 
     return isMobile ? (
         <NavigationItem
@@ -37,17 +37,17 @@ export function NavigationCampaignsSwitcher() {
     ) : (
         <NavigationCampaigns
             listUrl={listUrl}
-            performanceUrl={performanceUrl}
+            overviewUrl={overviewUrl}
         />
     );
 }
 
 function NavigationCampaigns({
     listUrl,
-    performanceUrl,
+    overviewUrl,
 }: {
     listUrl: string;
-    performanceUrl: string;
+    overviewUrl: string;
 }) {
     const { t } = useTranslation();
     const location = useLocation();
@@ -82,7 +82,7 @@ function NavigationCampaigns({
             </Collapsible.Trigger>
             <Collapsible.Content className={collapsibleContent}>
                 <ul>
-                    <SubNavigationItem url={performanceUrl}>
+                    <SubNavigationItem url={overviewUrl}>
                         {pageNav(t, "campaignsOverview")}
                     </SubNavigationItem>
                     <SubNavigationItem url={listUrl}>
