@@ -8,6 +8,27 @@ export const funnelChartStyles = {
         flexDirection: "column",
         gap: alias.spacing.m,
         width: "100%",
+        position: "relative",
+    }),
+    // Vertical dotted guides at 25/50/75/100% of the bar column, drawn
+    // by absolutely positioned `<span>` children using a real
+    // `border-left: 1px dotted` so the dots render crisp instead of
+    // pixel-doubled like a background gradient would.
+    guides: style({
+        position: "absolute",
+        top: 0,
+        bottom: 0,
+        left: `calc(120px + ${alias.spacing.m})`,
+        right: `calc(96px + ${alias.spacing.m})`,
+        pointerEvents: "none",
+    }),
+    guide: style({
+        position: "absolute",
+        top: 0,
+        bottom: 0,
+        left: 0,
+        width: 0,
+        borderLeft: `1px dotted ${vars.border.default}`,
     }),
     row: style({
         display: "grid",

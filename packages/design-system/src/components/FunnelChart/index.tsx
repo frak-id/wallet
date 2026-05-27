@@ -23,6 +23,9 @@ export function FunnelChart({
 
     return (
         <div className={funnelChartStyles.container}>
+            <div className={funnelChartStyles.guides} aria-hidden>
+                <span className={funnelChartStyles.guide} />
+            </div>
             {steps.map((step, i) => {
                 const width = `${Math.max((step.value / max) * 100, 2)}%`;
                 const isLast = i === lastIndex;
