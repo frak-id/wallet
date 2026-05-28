@@ -298,10 +298,6 @@ function websiteFunnelDefinition(): FunnelStepDefinition[] {
             eventNames: ["sharing_page_viewed"],
         },
         {
-            kind: "share_initiated",
-            eventNames: ["sharing_page_viewed"],
-        },
-        {
             kind: "link_shared",
             eventNames: ["sharing_link_shared", "sharing_link_copied"],
             extraFilters: [websiteSourceFilter],
@@ -329,10 +325,6 @@ function walletFunnelDefinition(): FunnelStepDefinition[] {
             kind: "brand_page_opened",
             eventNames: ["wallet_modal_opened"],
             extraFilters: [explorerModalFilter],
-        },
-        {
-            kind: "share_initiated",
-            eventNames: ["sharing_page_viewed"],
         },
         {
             kind: "link_shared",
