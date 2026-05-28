@@ -19,3 +19,8 @@ export const amount = style({
 
 export const deltaUp = style({ color: vars.text.success });
 export const deltaDown = style({ color: vars.text.warning });
+
+export const hint = style({
+    color: vars.text.disabled,
+    fontStyle: "italic",
+});

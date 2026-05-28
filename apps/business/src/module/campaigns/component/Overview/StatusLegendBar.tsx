@@ -1,37 +1,35 @@
+import type { OverviewStatusBreakdown } from "@frak-labs/backend-elysia/orchestration/schemas";
 import { Inline } from "@frak-labs/design-system/components/Inline";
 import { Stack } from "@frak-labs/design-system/components/Stack";
 import { Text } from "@frak-labs/design-system/components/Text";
 import { vars } from "@frak-labs/design-system/theme";
-import type { CampaignsOverview } from "@/module/campaigns/queries/queryOptions";
 import * as styles from "./statusLegendBar.css";
 
-const statusOrder: Array<keyof CampaignsOverview["statusBreakdown"]> = [
+const statusOrder: Array<keyof OverviewStatusBreakdown> = [
     "active",
     "paused",
     "draft",
     "ended",
 ];
 
-const statusColor: Record<keyof CampaignsOverview["statusBreakdown"], string> =
-    {
-        active: vars.icon.success,
-        paused: vars.icon.warning,
-        draft: vars.icon.tertiary,
-        ended: vars.icon.secondary,
-    };
+const statusColor: Record<keyof OverviewStatusBreakdown, string> = {
+    active: vars.icon.success,
+    paused: vars.icon.warning,
+    draft: vars.icon.tertiary,
+    ended: vars.icon.secondary,
+};
 
-const statusLabel: Record<keyof CampaignsOverview["statusBreakdown"], string> =
-    {
-        active: "active",
-        paused: "paused",
-        draft: "draft",
-        ended: "ended",
-    };
+const statusLabel: Record<keyof OverviewStatusBreakdown, string> = {
+    active: "active",
+    paused: "paused",
+    draft: "draft",
+    ended: "ended",
+};
 
 export function StatusLegendBar({
     breakdown,
 }: {
-    breakdown: CampaignsOverview["statusBreakdown"];
+    breakdown: OverviewStatusBreakdown;
 }) {
     const total = statusOrder.reduce((acc, k) => acc + breakdown[k], 0) || 1;
 

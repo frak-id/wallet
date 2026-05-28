@@ -65,6 +65,12 @@ export type WalletModalEventMap = {
     wallet_modal_opened: {
         modal: string;
         from_stack: boolean;
+        /**
+         * Merchant id of the brand the modal is showing, when the modal
+         * payload carries one (`explorerDetail`, `rewardDetail`). Required
+         * to filter the wallet funnel "Brand page opened" step by merchant.
+         */
+        merchant_id?: string;
     };
     wallet_modal_closed: {
         modal: string;

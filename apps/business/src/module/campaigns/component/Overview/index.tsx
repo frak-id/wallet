@@ -1,50 +1,75 @@
 import { Stack } from "@frak-labs/design-system/components/Stack";
 import { useSuspenseQuery } from "@tanstack/react-query";
-import { campaignsOverviewQueryOptions } from "@/module/campaigns/queries/queryOptions";
+import { Suspense } from "react";
+import {
+    overviewAnalyticsQueryOptions,
+    overviewSummaryQueryOptions,
+} from "@/module/campaigns/queries/queryOptions";
 import { useIsDemoMode } from "@/module/common/atoms/demoMode";
 import { useActiveMerchantId } from "@/module/common/hook/useActiveMerchantId";
 import { FunnelCard } from "./FunnelCard";
+import { FunnelCardSkeleton } from "./FunnelCardSkeleton";
 import { KpiCardsRow } from "./KpiCardsRow";
 import { OverviewFloatingFooter } from "./OverviewFloatingFooter";
 import * as styles from "./overview.css";
 import { ProjectedRevenueCard } from "./ProjectedRevenueCard";
 import { PurchasesCard } from "./PurchasesCard";
 import { SharingBySourceCard } from "./SharingBySourceCard";
+import { SharingBySourceSkeleton } from "./SharingBySourceSkeleton";
 import { TopCampaignsCard } from "./TopCampaignsCard";
 
-export function CampaignsOverview({
-    from,
-    to,
-}: {
-    from?: string;
-    to?: string;
-}) {
+type WindowProps = { from?: string; to?: string };
+
+export function CampaignsOverview({ from, to }: WindowProps) {
     const merchantId = useActiveMerchantId();
     const isDemoMode = useIsDemoMode();
-    const { data } = useSuspenseQuery(
-        campaignsOverviewQueryOptions({ merchantId, isDemoMode, from, to })
+    const { data: summary } = useSuspenseQuery(
+        overviewSummaryQueryOptions({ merchantId, isDemoMode, from, to })
     );
 
     return (
         <div className={styles.page}>
             <Stack space="l">
-                <KpiCardsRow kpis={data.kpis} />
+                <KpiCardsRow kpis={summary.kpis} from={from} to={to} />
                 <div className={styles.twoColumns}>
-                    <FunnelCard funnels={data.funnels} />
+                    <Suspense fallback={<FunnelCardSkeleton />}>
+                        <AnalyticsFunnelCard from={from} to={to} />
+                    </Suspense>
                     <TopCampaignsCard
-                        topCampaigns={data.topCampaigns}
-                        statusBreakdown={data.statusBreakdown}
+                        topCampaigns={summary.topCampaigns}
+                        statusBreakdown={summary.statusBreakdown}
                     />
                 </div>
                 <div className={styles.threeColumns}>
-                    <PurchasesCard purchases={data.purchases} />
+                    <PurchasesCard series={summary.series} />
                     <ProjectedRevenueCard
-                        projectedRevenue={data.projectedRevenue}
+                        series={summary.series}
+                        revenue={summary.kpis.revenue}
                     />
-                    <SharingBySourceCard sharing={data.sharing} />
+                    <Suspense fallback={<SharingBySourceSkeleton />}>
+                        <AnalyticsSharingCard from={from} to={to} />
+                    </Suspense>
                 </div>
             </Stack>
             <OverviewFloatingFooter />
         </div>
     );
+}
+
+function AnalyticsFunnelCard({ from, to }: WindowProps) {
+    const merchantId = useActiveMerchantId();
+    const isDemoMode = useIsDemoMode();
+    const { data } = useSuspenseQuery(
+        overviewAnalyticsQueryOptions({ merchantId, isDemoMode, from, to })
+    );
+    return <FunnelCard funnels={data.funnels} />;
+}
+
+function AnalyticsSharingCard({ from, to }: WindowProps) {
+    const merchantId = useActiveMerchantId();
+    const isDemoMode = useIsDemoMode();
+    const { data } = useSuspenseQuery(
+        overviewAnalyticsQueryOptions({ merchantId, isDemoMode, from, to })
+    );
+    return <SharingBySourceCard sharing={data.sharing} />;
 }

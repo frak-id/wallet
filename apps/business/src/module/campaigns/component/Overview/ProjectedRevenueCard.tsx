@@ -1,3 +1,9 @@
+import type {
+    OverviewGranularity,
+    OverviewSeries,
+    OverviewSeriesBucket,
+    RevenueKpi,
+} from "@frak-labs/backend-elysia/orchestration/schemas";
 import {
     Area,
     AreaChart,
@@ -11,40 +17,51 @@ import { Stack } from "@frak-labs/design-system/components/Stack";
 import { Text } from "@frak-labs/design-system/components/Text";
 import { vars } from "@frak-labs/design-system/theme";
 import { useMemo } from "react";
-import type { CampaignsOverview } from "@/module/campaigns/queries/queryOptions";
+import { useTranslation } from "react-i18next";
 import * as styles from "./overview.css";
 
-const currencyFormatter = new Intl.NumberFormat("en-US");
+const FORECAST_BUCKETS = 2;
+const FORECAST_LOOKBACK = 3;
+const DEFAULT_CURRENCY = "EUR";
 
-const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug"];
+type AreaPoint = {
+    date: Date;
+    actual?: number;
+    forecast?: number;
+};
 
 const chartMargin = { top: 8, right: 44, bottom: 24, left: 8 };
 
 export function ProjectedRevenueCard({
-    projectedRevenue,
+    series,
+    revenue,
 }: {
-    projectedRevenue: CampaignsOverview["projectedRevenue"];
+    series: OverviewSeries;
+    revenue: RevenueKpi;
 }) {
-    // The visx time-series shell keys off a real Date x-axis; our series is
-    // monthly, so map each label to the first of its month.
-    const chartData = useMemo(
-        () =>
-            projectedRevenue.series.map((point, index) => {
-                const month = MONTHS.indexOf(point.label);
-                return {
-                    date: new Date(2024, month === -1 ? index : month, 1),
-                    actual: point.actual,
-                    forecast: point.forecast,
-                };
-            }),
-        [projectedRevenue.series]
-    );
+    const { i18n } = useTranslation();
+    const locale = i18n.language;
+    const currency = revenue.currency ?? DEFAULT_CURRENCY;
+
+    const { data, total, currencyFormatter } = useMemo(() => {
+        const data = buildAreaSeries(series.buckets, series.granularity);
+        const total = data.reduce(
+            (acc, p) => acc + (p.actual ?? p.forecast ?? 0),
+            0
+        );
+        const currencyFormatter = new Intl.NumberFormat(locale, {
+            style: "currency",
+            currency,
+            maximumFractionDigits: 0,
+        });
+        return { data, total, currencyFormatter };
+    }, [series, locale, currency]);
 
     return (
         <Stack space="m" className={styles.card}>
             <Stack space="xxs">
                 <span className={styles.chartAmount}>
-                    {currencyFormatter.format(projectedRevenue.total)}€
+                    {currencyFormatter.format(total)}
                 </span>
                 <Text variant="bodySmall" color="secondary">
                     Projected revenue
@@ -55,7 +72,7 @@ export function ProjectedRevenueCard({
             </Stack>
             <AreaChart
                 className={styles.chartBox}
-                data={chartData}
+                data={data}
                 margin={chartMargin}
                 xDataKey="date"
             >
@@ -92,5 +109,77 @@ export function ProjectedRevenueCard({
                 </Stack>
             </Inline>
         </Stack>
+    );
+}
+
+function buildAreaSeries(
+    buckets: OverviewSeriesBucket[],
+    granularity: OverviewGranularity
+): AreaPoint[] {
+    const data: AreaPoint[] = buckets.map((b) => ({
+        date: new Date(b.bucket),
+        actual: b.revenue,
+    }));
+
+    const forecasts = projectForecast(buckets.map((b) => b.revenue));
+    if (forecasts.length === 0 || buckets.length === 0) return data;
+
+    // The last actual bucket also carries the first forecast value so the
+    // visx area stays continuous across the actual → forecast seam.
+    data[data.length - 1].forecast = forecasts[0];
+
+    const lastBucketDate = new Date(buckets[buckets.length - 1].bucket);
+    for (let i = 1; i < forecasts.length; i += 1) {
+        const nextDate = addBuckets(lastBucketDate, granularity, i);
+        data.push({
+            date: nextDate,
+            forecast: forecasts[i],
+        });
+    }
+
+    return data;
+}
+
+function addBuckets(
+    base: Date,
+    granularity: OverviewGranularity,
+    steps: number
+): Date {
+    const next = new Date(base.getTime());
+    if (granularity === "month") {
+        next.setUTCMonth(next.getUTCMonth() + steps);
+    } else {
+        next.setUTCDate(next.getUTCDate() + steps);
+    }
+    return next;
+}
+
+/**
+ * Naive linear extrapolation — averages the slope across the last
+ * `FORECAST_LOOKBACK` buckets and projects `FORECAST_BUCKETS` ahead.
+ * Same logic that used to live in the backend orchestrator; moved here
+ * so the response stays cacheable and forecast horizon is FE-tunable.
+ */
+function projectForecast(
+    values: number[],
+    steps: number = FORECAST_BUCKETS,
+    lookback: number = FORECAST_LOOKBACK
+): number[] {
+    if (values.length === 0) return [];
+    const recent = values.slice(-lookback);
+    const last = recent[recent.length - 1];
+
+    if (recent.length < 2) {
+        return Array.from({ length: steps }, () => last);
+    }
+
+    let slopeSum = 0;
+    for (let i = 1; i < recent.length; i += 1) {
+        slopeSum += recent[i] - recent[i - 1];
+    }
+    const slope = slopeSum / (recent.length - 1);
+
+    return Array.from({ length: steps }, (_, i) =>
+        Math.max(last + slope * (i + 1), 0)
     );
 }

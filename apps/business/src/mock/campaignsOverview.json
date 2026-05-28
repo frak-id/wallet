@@ -1,26 +1,42 @@
 {
     "kpis": {
-        "ambassadors": { "value": 14446, "delta": 12 },
-        "shares": { "value": 7210, "delta": 8 },
-        "revenue": { "value": 286000, "delta": 5 },
-        "sharingRate": { "value": 0.493, "delta": -2 },
-        "avgCpa": { "value": 12.4 }
+        "ambassadors": { "current": 14446, "previous": 12898 },
+        "shares": { "current": 7210, "previous": 6676 },
+        "revenue": { "current": 286000, "previous": 272381, "currency": "EUR" },
+        "totalRewardsUsd": { "current": 297.6, "previous": 280 },
+        "purchaseCount": { "current": 24, "previous": 22 }
     },
     "funnels": {
         "website": [
-            { "label": "Share CTA seen", "value": 48200, "delta": -30 },
-            { "label": "Share initiated", "value": 14460, "delta": -50 },
-            { "label": "Link shared", "value": 7230, "delta": -35 },
-            { "label": "Referred", "value": 4800, "delta": -50 },
-            { "label": "Converted", "value": 2384 }
+            {
+                "kind": "share_cta_seen",
+                "value": 48200,
+                "previousValue": 68857
+            },
+            {
+                "kind": "share_initiated",
+                "value": 14460,
+                "previousValue": 28920
+            },
+            { "kind": "link_shared", "value": 7230, "previousValue": 11123 },
+            { "kind": "referred", "value": 4800, "previousValue": 9600 },
+            { "kind": "converted", "value": 2384, "previousValue": 2950 }
         ],
         "wallet": [
-            { "label": "Explorer impressions", "value": 24600, "delta": -18 },
-            { "label": "Brand page opened", "value": 4430, "delta": -45 },
-            { "label": "Share initiated", "value": 1990, "delta": -35 },
-            { "label": "Link shared", "value": 700, "delta": -60 },
-            { "label": "Referred", "value": 420, "delta": -50 },
-            { "label": "Converted", "value": 210 }
+            {
+                "kind": "explorer_impressions",
+                "value": 24600,
+                "previousValue": 30000
+            },
+            {
+                "kind": "brand_page_opened",
+                "value": 4430,
+                "previousValue": 8054
+            },
+            { "kind": "share_initiated", "value": 1990, "previousValue": 3062 },
+            { "kind": "link_shared", "value": 700, "previousValue": 1750 },
+            { "kind": "referred", "value": 420, "previousValue": 840 },
+            { "kind": "converted", "value": 210, "previousValue": 270 }
         ]
     },
     "topCampaigns": [
@@ -28,25 +44,25 @@
             "id": "camp_001",
             "name": "Summer referral campaign",
             "status": "active",
-            "sharingRate": 0.57
+            "rewardsCount": 1284
         },
         {
             "id": "camp_002",
             "name": "Special offer spring",
             "status": "active",
-            "sharingRate": 0.42
-        },
-        {
-            "id": "camp_003",
-            "name": "Launch Prd",
-            "status": "paused",
-            "sharingRate": 0.12
+            "rewardsCount": 742
         },
         {
             "id": "camp_004",
             "name": "Campagne test",
             "status": "ended",
-            "sharingRate": 0.47
+            "rewardsCount": 318
+        },
+        {
+            "id": "camp_003",
+            "name": "Launch Prd",
+            "status": "paused",
+            "rewardsCount": 96
         }
     ],
     "statusBreakdown": {
@@ -55,39 +71,53 @@
         "draft": 1,
         "ended": 1
     },
-    "purchases": {
-        "total": 12100,
-        "avgPerMonth": 2100,
-        "series": [
-            { "label": "Jan", "value": 3500 },
-            { "label": "Feb", "value": 2200 },
-            { "label": "Mar", "value": 4500 },
-            { "label": "Apr", "value": 1200 },
-            { "label": "May", "value": 1700 },
-            { "label": "Jun", "value": 3000 }
-        ]
-    },
-    "projectedRevenue": {
-        "total": 54200,
-        "series": [
-            { "label": "Jan", "actual": 5000 },
-            { "label": "Feb", "actual": 8000 },
-            { "label": "Mar", "actual": 12000 },
-            { "label": "Apr", "actual": 14000 },
-            { "label": "May", "actual": 13500 },
-            { "label": "Jun", "actual": 14200, "forecast": 14200 },
-            { "label": "Jul", "forecast": 15000 }
+    "series": {
+        "granularity": "month",
+        "buckets": [
+            {
+                "bucket": "2025-01-01T00:00:00.000Z",
+                "purchaseCount": 3500,
+                "revenue": 5000
+            },
+            {
+                "bucket": "2025-02-01T00:00:00.000Z",
+                "purchaseCount": 2200,
+                "revenue": 8000
+            },
+            {
+                "bucket": "2025-03-01T00:00:00.000Z",
+                "purchaseCount": 4500,
+                "revenue": 12000
+            },
+            {
+                "bucket": "2025-04-01T00:00:00.000Z",
+                "purchaseCount": 1200,
+                "revenue": 14000
+            },
+            {
+                "bucket": "2025-05-01T00:00:00.000Z",
+                "purchaseCount": 1700,
+                "revenue": 13500
+            },
+            {
+                "bucket": "2025-06-01T00:00:00.000Z",
+                "purchaseCount": 3000,
+                "revenue": 14200
+            }
         ]
     },
     "sharing": {
         "platform": [
-            { "label": "Merchant Site", "value": 70 },
-            { "label": "Wallet App", "value": 30 }
+            { "kind": "merchant_site", "value": 70 },
+            { "kind": "wallet_app", "value": 30 }
         ],
         "device": [
-            { "label": "iOS", "value": 20 },
-            { "label": "Android", "value": 20 },
-            { "label": "Desktop", "value": 60 }
+            { "kind": "desktop", "value": 60 },
+            { "kind": "mobile", "value": 40 }
         ]
+    },
+    "accurateKpis": {
+        "ambassadors": { "current": 17920, "previous": 15440 },
+        "shares": { "current": 9180, "previous": 8412 }
     }
 }
