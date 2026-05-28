@@ -119,9 +119,7 @@ export const elysiaEnv = {
     RUSTFS_CDN_BASE_URL: rustfsCdnBaseUrl,
 
     // OpenPanel client
-    OPEN_PANEL_API_URL: isProd
-        ? "https://op-api.gcp.frak.id/"
-        : "https://op-api.gcp-dev.frak.id/",
+    OPEN_PANEL_API_URL: "https://op-api.gcp.frak.id/",
     OPEN_PANEL_WALLET_PROJECT_ID: isProd ? "wallet" : "wallet-dev",
     OPEN_PANEL_BACKEND_CLIENT_ID: new sst.Secret("OPEN_PANEL_BACKEND_CLIENT_ID")
         .value,
