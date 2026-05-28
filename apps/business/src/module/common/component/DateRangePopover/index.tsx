@@ -6,6 +6,7 @@ import {
 import { parseISO, startOfMonth } from "date-fns";
 import { type ReactNode, useState } from "react";
 import type { DateRange } from "react-day-picker";
+import { useTranslation } from "react-i18next";
 import { Calendar } from "@/module/common/component/Calendar";
 import {
     clearButton,
@@ -49,6 +50,7 @@ export function DateRangePopover({
     numberOfMonths = 2,
     liftAboveHeader = false,
 }: DateRangePopoverProps) {
+    const { t } = useTranslation();
     const [open, setOpen] = useState(false);
     const [draft, setDraft] = useState<DateRange | undefined>(value);
     // Controlled displayed month, normalised to the first of the month so the
@@ -112,7 +114,7 @@ export function DateRangePopover({
                                 }
                                 onClick={() => applyPreset(preset.key)}
                             >
-                                {preset.label}
+                                {t(preset.labelKey)}
                             </button>
                         ))}
                         {hasRange && (
@@ -121,7 +123,7 @@ export function DateRangePopover({
                                 className={clearButton}
                                 onClick={clear}
                             >
-                                Clear
+                                {t("common.dateRange.clear")}
                             </button>
                         )}
                     </div>

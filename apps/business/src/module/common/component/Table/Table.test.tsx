@@ -49,7 +49,7 @@ describe("Table", () => {
 
         render(<Table data={data} columns={columns} />);
 
-        expect(screen.getByText("No results")).toBeInTheDocument();
+        expect(screen.getByText("common.table.empty")).toBeInTheDocument();
     });
 
     it("should render preTable content", () => {

@@ -99,6 +99,84 @@
             "archived": "Archived",
             "ended": "Ended",
             "unknown": "Unknown"
+        },
+        "table": {
+            "campaign": "Campaign",
+            "status": "Status",
+            "published": "Published",
+            "endDate": "End date",
+            "noEndDate": "No end date",
+            "sharingRate": "Sharing rate",
+            "ctr": "CTR",
+            "revenue": "Revenue",
+            "budgetSpend": "Budget & Spend"
+        },
+        "filter": {
+            "dateRange": "Date range",
+            "reset": "Reset filters",
+            "tabsLabel": "Filter campaigns by status"
+        },
+        "rowMenu": {
+            "viewParameters": "View parameters",
+            "openPerformance": "Open performance",
+            "edit": "Edit campaign",
+            "pause": "Pause",
+            "resume": "Resume",
+            "archive": "Archive",
+            "delete": "Delete",
+            "ariaActions": "Actions for {{name}}"
+        },
+        "bulk": {
+            "selected_one": "{{count}} selected",
+            "selected_other": "{{count}} selected",
+            "pause": "Pause",
+            "archive": "Archive",
+            "delete": "Delete",
+            "clear": "Clear",
+            "pauseTitle": "Pause campaigns",
+            "archiveTitle": "Archive campaigns",
+            "deleteTitle": "Delete campaigns",
+            "confirmPause_one": "Are you sure you want to pause <strong>{{count}}</strong> campaign?",
+            "confirmPause_other": "Are you sure you want to pause <strong>{{count}}</strong> campaigns?",
+            "confirmArchive_one": "Are you sure you want to archive <strong>{{count}}</strong> campaign?",
+            "confirmArchive_other": "Are you sure you want to archive <strong>{{count}}</strong> campaigns?",
+            "confirmDelete_one": "Are you sure you want to delete <strong>{{count}}</strong> campaign?",
+            "confirmDelete_other": "Are you sure you want to delete <strong>{{count}}</strong> campaigns?"
+        },
+        "actions": {
+            "newCampaign": "Create new campaign",
+            "cancel": "Cancel",
+            "error": "An error occurred, try again",
+            "pauseTitle": "Pause campaign",
+            "resumeTitle": "Resume campaign",
+            "archiveTitle": "Archive campaign",
+            "deleteTitle": "Delete campaign",
+            "pause": "Pause",
+            "resume": "Resume",
+            "archive": "Archive",
+            "delete": "Delete",
+            "confirmPause": "Are you sure you want to pause the campaign <strong>{{name}}</strong>?",
+            "confirmResume": "Are you sure you want to resume the campaign <strong>{{name}}</strong>?",
+            "confirmArchive": "Are you sure you want to archive the campaign <strong>{{name}}</strong>?",
+            "confirmDelete": "Are you sure you want to delete the campaign <strong>{{name}}</strong>?"
+        }
+    },
+    "common": {
+        "table": {
+            "empty": "No results"
+        },
+        "search": {
+            "placeholder": "Search"
+        },
+        "dateRange": {
+            "label": "Date range",
+            "clear": "Clear",
+            "presets": {
+                "last7": "Last 7 days",
+                "last30": "Last 30 days",
+                "last90": "Last 90 days",
+                "thisMonth": "This month"
+            }
         }
     },
     "bank": {

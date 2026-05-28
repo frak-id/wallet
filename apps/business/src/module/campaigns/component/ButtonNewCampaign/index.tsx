@@ -1,5 +1,6 @@
 import { Plus } from "lucide-react";
 import type { ComponentProps } from "react";
+import { useTranslation } from "react-i18next";
 import { LinkButton } from "@/module/common/component/LinkButton";
 import { useOptionalActiveMerchantId } from "@/module/common/hook/useActiveMerchantId";
 import { campaignStore } from "@/stores/campaignStore";
@@ -9,6 +10,7 @@ type Props = {
 };
 
 export function ButtonNewCampaign({ size }: Props = {}) {
+    const { t } = useTranslation();
     const reset = campaignStore((state) => state.reset);
     const merchantId = useOptionalActiveMerchantId();
 
@@ -23,7 +25,7 @@ export function ButtonNewCampaign({ size }: Props = {}) {
             size={size}
             icon={<Plus size={16} />}
         >
-            Create new campaign
+            {t("campaigns.actions.newCampaign")}
         </LinkButton>
     );
 }

@@ -1,12 +1,14 @@
 import { CalendarIcon } from "@frak-labs/design-system/icons";
 import { getRouteApi, useSearch } from "@tanstack/react-router";
 import type { DateRange } from "react-day-picker";
+import { useTranslation } from "react-i18next";
 import { DateRangePopover } from "@/module/common/component/DateRangePopover";
 import {
     formatRangeLabel,
     isoToDateRange,
     toIso,
 } from "@/module/common/component/DateRangePopover/presets";
+import { getDateFnsLocale } from "@/module/common/utils/dateLocale";
 import { chip, chipActive } from "./DateRangeChip.css";
 
 // The chip is gated by the Header via `useLocation` pathname, which flips to
@@ -17,6 +19,7 @@ import { chip, chipActive } from "./DateRangeChip.css";
 const ROUTE_ID = "/_restricted/m/$merchantId/campaigns/";
 
 export function DateRangeChip() {
+    const { t, i18n } = useTranslation();
     const navigate = getRouteApi(ROUTE_ID).useNavigate();
     const { from, to } = useSearch({ strict: false }) as {
         from?: string;
@@ -47,7 +50,12 @@ export function DateRangeChip() {
                     className={hasRange ? `${chip} ${chipActive}` : chip}
                 >
                     <CalendarIcon width={16} height={16} />
-                    {formatRangeLabel(from, to)}
+                    {formatRangeLabel(
+                        from,
+                        to,
+                        t,
+                        getDateFnsLocale(i18n.language)
+                    )}
                 </button>
             }
         />

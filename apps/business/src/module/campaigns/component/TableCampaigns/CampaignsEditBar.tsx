@@ -6,6 +6,7 @@ import {
     PauseIcon,
 } from "@frak-labs/design-system/icons";
 import { useState } from "react";
+import { Trans, useTranslation } from "react-i18next";
 import { AlertDialog } from "@/module/common/component/AlertDialog";
 import { Button } from "@/module/common/component/Button";
 import { campaignSelectionStore } from "@/stores/campaignSelectionStore";
@@ -17,22 +18,26 @@ import {
     useBulkCampaignActions,
 } from "./useBulkCampaignActions";
 
-const COPY: Record<
-    BulkAction,
-    { title: string; verb: string; confirmLabel: string }
-> = {
-    pause: { title: "Pause campaigns", verb: "pause", confirmLabel: "Pause" },
+const ACTION_KEYS = {
+    pause: {
+        titleKey: "campaigns.bulk.pauseTitle",
+        labelKey: "campaigns.bulk.pause",
+        confirmKey: "campaigns.bulk.confirmPause",
+    },
     archive: {
-        title: "Archive campaigns",
-        verb: "archive",
-        confirmLabel: "Archive",
+        titleKey: "campaigns.bulk.archiveTitle",
+        labelKey: "campaigns.bulk.archive",
+        confirmKey: "campaigns.bulk.confirmArchive",
     },
     delete: {
-        title: "Delete campaigns",
-        verb: "delete",
-        confirmLabel: "Delete",
+        titleKey: "campaigns.bulk.deleteTitle",
+        labelKey: "campaigns.bulk.delete",
+        confirmKey: "campaigns.bulk.confirmDelete",
     },
-};
+} as const satisfies Record<
+    BulkAction,
+    { titleKey: string; labelKey: string; confirmKey: string }
+>;
 
 type Props = {
     merchantId: string;
@@ -40,6 +45,7 @@ type Props = {
 };
 
 export function CampaignsEditBar({ merchantId, selected }: Props) {
+    const { t } = useTranslation();
     const clear = campaignSelectionStore((state) => state.clear);
     const { run, pending } = useBulkCampaignActions();
     const [confirm, setConfirm] = useState<BulkAction | null>(null);
@@ -55,7 +61,7 @@ export function CampaignsEditBar({ merchantId, selected }: Props) {
         clear();
     };
 
-    const confirmCopy = confirm ? COPY[confirm] : null;
+    const confirmKeys = confirm ? ACTION_KEYS[confirm] : null;
     const eligibleCount = confirm
         ? selected.filter((c) => eligible(confirm, c)).length
         : 0;
@@ -65,7 +71,9 @@ export function CampaignsEditBar({ merchantId, selected }: Props) {
             <div className={styles.bar}>
                 <Inline space="m" alignY="center">
                     <span className={styles.count}>
-                        {selected.length} selected
+                        {t("campaigns.bulk.selected", {
+                            count: selected.length,
+                        })}
                     </span>
                     <Button
                         variant="secondary"
@@ -74,7 +82,7 @@ export function CampaignsEditBar({ merchantId, selected }: Props) {
                         disabled={!canPauseAny || pending !== null}
                         onClick={() => setConfirm("pause")}
                     >
-                        Pause
+                        {t("campaigns.bulk.pause")}
                     </Button>
                     <Button
                         variant="secondary"
@@ -83,7 +91,7 @@ export function CampaignsEditBar({ merchantId, selected }: Props) {
                         disabled={!canArchiveAny || pending !== null}
                         onClick={() => setConfirm("archive")}
                     >
-                        Archive
+                        {t("campaigns.bulk.archive")}
                     </Button>
                     <Button
                         variant="destructive"
@@ -92,7 +100,7 @@ export function CampaignsEditBar({ merchantId, selected }: Props) {
                         disabled={!canDeleteAny || pending !== null}
                         onClick={() => setConfirm("delete")}
                     >
-                        Delete
+                        {t("campaigns.bulk.delete")}
                     </Button>
                 </Inline>
                 <Button
@@ -102,25 +110,29 @@ export function CampaignsEditBar({ merchantId, selected }: Props) {
                     onClick={() => clear()}
                     disabled={pending !== null}
                 >
-                    Clear
+                    {t("campaigns.bulk.clear")}
                 </Button>
             </div>
 
-            {confirm && confirmCopy && (
+            {confirm && confirmKeys && (
                 <AlertDialog
                     open={confirm !== null}
                     onOpenChange={(open) => {
                         if (!open) setConfirm(null);
                     }}
-                    title={confirmCopy.title}
+                    title={t(confirmKeys.titleKey)}
                     description={
-                        <>
-                            Are you sure you want to {confirmCopy.verb}{" "}
-                            <strong>{eligibleCount}</strong> campaign
-                            {eligibleCount > 1 ? "s" : ""}?
-                        </>
+                        <Trans
+                            i18nKey={confirmKeys.confirmKey}
+                            count={eligibleCount}
+                            components={{ strong: <strong /> }}
+                        />
                     }
-                    cancel={<Button variant="secondary">Cancel</Button>}
+                    cancel={
+                        <Button variant="secondary">
+                            {t("campaigns.actions.cancel")}
+                        </Button>
+                    }
                     action={
                         <Button
                             variant={
@@ -132,7 +144,7 @@ export function CampaignsEditBar({ merchantId, selected }: Props) {
                             disabled={pending !== null}
                             onClick={confirmBulkAction}
                         >
-                            {confirmCopy.confirmLabel}
+                            {t(confirmKeys.labelKey)}
                         </Button>
                     }
                 />

@@ -31,6 +31,55 @@ export default interface Resources {
             };
         };
         campaigns: {
+            actions: {
+                archive: "Archive";
+                archiveTitle: "Archive campaign";
+                cancel: "Cancel";
+                confirmArchive: "Are you sure you want to archive the campaign <strong>{{name}}</strong>?";
+                confirmDelete: "Are you sure you want to delete the campaign <strong>{{name}}</strong>?";
+                confirmPause: "Are you sure you want to pause the campaign <strong>{{name}}</strong>?";
+                confirmResume: "Are you sure you want to resume the campaign <strong>{{name}}</strong>?";
+                delete: "Delete";
+                deleteTitle: "Delete campaign";
+                error: "An error occurred, try again";
+                newCampaign: "Create new campaign";
+                pause: "Pause";
+                pauseTitle: "Pause campaign";
+                resume: "Resume";
+                resumeTitle: "Resume campaign";
+            };
+            bulk: {
+                archive: "Archive";
+                archiveTitle: "Archive campaigns";
+                clear: "Clear";
+                confirmArchive_one: "Are you sure you want to archive <strong>{{count}}</strong> campaign?";
+                confirmArchive_other: "Are you sure you want to archive <strong>{{count}}</strong> campaigns?";
+                confirmDelete_one: "Are you sure you want to delete <strong>{{count}}</strong> campaign?";
+                confirmDelete_other: "Are you sure you want to delete <strong>{{count}}</strong> campaigns?";
+                confirmPause_one: "Are you sure you want to pause <strong>{{count}}</strong> campaign?";
+                confirmPause_other: "Are you sure you want to pause <strong>{{count}}</strong> campaigns?";
+                delete: "Delete";
+                deleteTitle: "Delete campaigns";
+                pause: "Pause";
+                pauseTitle: "Pause campaigns";
+                selected_one: "{{count}} selected";
+                selected_other: "{{count}} selected";
+            };
+            filter: {
+                dateRange: "Date range";
+                reset: "Reset filters";
+                tabsLabel: "Filter campaigns by status";
+            };
+            rowMenu: {
+                archive: "Archive";
+                ariaActions: "Actions for {{name}}";
+                delete: "Delete";
+                edit: "Edit campaign";
+                openPerformance: "Open performance";
+                pause: "Pause";
+                resume: "Resume";
+                viewParameters: "View parameters";
+            };
             status: {
                 active: "Active";
                 archived: "Archived";
@@ -39,6 +88,17 @@ export default interface Resources {
                 paused: "Paused";
                 unknown: "Unknown";
             };
+            table: {
+                budgetSpend: "Budget & Spend";
+                campaign: "Campaign";
+                ctr: "CTR";
+                endDate: "End date";
+                noEndDate: "No end date";
+                published: "Published";
+                revenue: "Revenue";
+                sharingRate: "Sharing rate";
+                status: "Status";
+            };
             tabs: {
                 active: "Active";
                 all: "All";
@@ -46,6 +106,24 @@ export default interface Resources {
                 draft: "Draft";
                 ended: "Ended";
                 paused: "Paused";
+            };
+        };
+        common: {
+            dateRange: {
+                clear: "Clear";
+                label: "Date range";
+                presets: {
+                    last30: "Last 30 days";
+                    last7: "Last 7 days";
+                    last90: "Last 90 days";
+                    thisMonth: "This month";
+                };
+            };
+            search: {
+                placeholder: "Search";
+            };
+            table: {
+                empty: "No results";
             };
         };
         dashboard: {

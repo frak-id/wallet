@@ -1,18 +1,20 @@
 import { format, parseISO, startOfMonth, subDays } from "date-fns";
+import type { Locale } from "date-fns/locale";
+import type { TFunction } from "i18next";
 import type { DateRange } from "react-day-picker";
 
 export type DateRangePresetKey = "last7" | "last30" | "last90" | "thisMonth";
 
 export type DateRangePreset = {
     key: DateRangePresetKey;
-    label: string;
+    labelKey: `common.dateRange.presets.${DateRangePresetKey}`;
 };
 
 export const DATE_RANGE_PRESETS: DateRangePreset[] = [
-    { key: "last7", label: "Last 7 days" },
-    { key: "last30", label: "Last 30 days" },
-    { key: "last90", label: "Last 90 days" },
-    { key: "thisMonth", label: "This month" },
+    { key: "last7", labelKey: "common.dateRange.presets.last7" },
+    { key: "last30", labelKey: "common.dateRange.presets.last30" },
+    { key: "last90", labelKey: "common.dateRange.presets.last90" },
+    { key: "thisMonth", labelKey: "common.dateRange.presets.thisMonth" },
 ];
 
 export type IsoRange = { from: string; to: string };
@@ -61,19 +63,25 @@ export function matchPreset(
 }
 
 /** Trigger label: preset name when the range matches one, else a formatted span. */
-export function formatRangeLabel(from?: string, to?: string): string {
-    if (!from || !to) return "Date range";
+export function formatRangeLabel(
+    from: string | undefined,
+    to: string | undefined,
+    t: TFunction,
+    locale?: Locale
+): string {
+    if (!from || !to) return t("common.dateRange.label");
 
     const presetKey = matchPreset(from, to);
     if (presetKey) {
-        return DATE_RANGE_PRESETS.find((p) => p.key === presetKey)?.label ?? "";
+        const preset = DATE_RANGE_PRESETS.find((p) => p.key === presetKey);
+        return preset ? t(preset.labelKey) : "";
     }
 
-    if (from === to) return format(parseISO(from), "MMM d, yyyy");
+    if (from === to) return format(parseISO(from), "MMM d, yyyy", { locale });
 
     const fromDate = parseISO(from);
     const toDate = parseISO(to);
     const sameYear = fromDate.getFullYear() === toDate.getFullYear();
     const fromFmt = sameYear ? "MMM d" : "MMM d, yyyy";
-    return `${format(fromDate, fromFmt)} – ${format(toDate, "MMM d, yyyy")}`;
+    return `${format(fromDate, fromFmt, { locale })} – ${format(toDate, "MMM d, yyyy", { locale })}`;
 }

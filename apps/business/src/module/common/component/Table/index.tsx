@@ -16,6 +16,7 @@ import {
 import clsx from "clsx";
 import type { ReactNode } from "react";
 import { type PropsWithChildren, useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import {
     preTable as preTableStyle,
     tableButton,
@@ -82,6 +83,7 @@ export function Table<TData extends object>({
     anySelected,
     ...additionalProps
 }: ReactTableProps<TData>) {
+    const { t } = useTranslation();
     const [sortingInner, setSortingInner] = useState<SortingState>([]);
 
     /**
@@ -167,7 +169,7 @@ export function Table<TData extends object>({
                     {rowModel.rows.length === 0 ? (
                         <tr>
                             <td colSpan={table.options.columns.length}>
-                                No results
+                                {t("common.table.empty")}
                             </td>
                         </tr>
                     ) : (

@@ -16,6 +16,7 @@ import {
 import { Link } from "@tanstack/react-router";
 import type { Row } from "@tanstack/react-table";
 import { Fragment, Suspense, useState } from "react";
+import { useTranslation } from "react-i18next";
 import {
     ModalArchive,
     ModalDelete,
@@ -35,6 +36,7 @@ type Props = {
 type SectionId = "nav" | "lifecycle" | "destructive";
 
 export function CellRowMenu({ row, merchantId }: Props) {
+    const { t } = useTranslation();
     const [open, setOpen] = useState(false);
     const [performanceOpen, setPerformanceOpen] = useState(false);
     const reset = campaignStore((state) => state.reset);
@@ -51,7 +53,7 @@ export function CellRowMenu({ row, merchantId }: Props) {
                     className={styles.rowMenuItem}
                 >
                     <EyeIcon width={16} height={16} />
-                    <span>View parameters</span>
+                    <span>{t("campaigns.rowMenu.viewParameters")}</span>
                 </Link>
             ) : (
                 <Link
@@ -60,7 +62,7 @@ export function CellRowMenu({ row, merchantId }: Props) {
                     className={styles.rowMenuItem}
                 >
                     <EyeIcon width={16} height={16} />
-                    <span>View parameters</span>
+                    <span>{t("campaigns.rowMenu.viewParameters")}</span>
                 </Link>
             )}
             {!isDraft && (
@@ -73,7 +75,7 @@ export function CellRowMenu({ row, merchantId }: Props) {
                     }}
                 >
                     <BarChartIcon width={16} height={16} />
-                    <span>Open performance</span>
+                    <span>{t("campaigns.rowMenu.openPerformance")}</span>
                 </button>
             )}
             {actions.canEdit &&
@@ -85,7 +87,7 @@ export function CellRowMenu({ row, merchantId }: Props) {
                         className={styles.rowMenuItem}
                     >
                         <PencilIcon width={16} height={16} />
-                        <span>Edit campaign</span>
+                        <span>{t("campaigns.rowMenu.edit")}</span>
                     </Link>
                 ) : (
                     <Link
@@ -95,7 +97,7 @@ export function CellRowMenu({ row, merchantId }: Props) {
                         className={styles.rowMenuItem}
                     >
                         <PencilIcon width={16} height={16} />
-                        <span>Edit campaign</span>
+                        <span>{t("campaigns.rowMenu.edit")}</span>
                     </Link>
                 ))}
         </div>
@@ -112,7 +114,7 @@ export function CellRowMenu({ row, merchantId }: Props) {
                 trigger={
                     <button type="button" className={styles.rowMenuItem}>
                         <PauseIcon width={16} height={16} />
-                        <span>Pause</span>
+                        <span>{t("campaigns.rowMenu.pause")}</span>
                     </button>
                 }
             />
@@ -128,7 +130,7 @@ export function CellRowMenu({ row, merchantId }: Props) {
                 trigger={
                     <button type="button" className={styles.rowMenuItem}>
                         <PlayIcon width={16} height={16} />
-                        <span>Resume</span>
+                        <span>{t("campaigns.rowMenu.resume")}</span>
                     </button>
                 }
             />
@@ -144,7 +146,7 @@ export function CellRowMenu({ row, merchantId }: Props) {
                 trigger={
                     <button type="button" className={styles.rowMenuItem}>
                         <ArchiveIcon width={16} height={16} />
-                        <span>Archive</span>
+                        <span>{t("campaigns.rowMenu.archive")}</span>
                     </button>
                 }
             />
@@ -165,7 +167,7 @@ export function CellRowMenu({ row, merchantId }: Props) {
                         className={`${styles.rowMenuItem} ${styles.rowMenuItemDestructive}`}
                     >
                         <BinIcon width={16} height={16} />
-                        <span>Delete</span>
+                        <span>{t("campaigns.rowMenu.delete")}</span>
                     </button>
                 }
             />
@@ -198,7 +200,9 @@ export function CellRowMenu({ row, merchantId }: Props) {
                         type="button"
                         className={styles.rowMenuButton}
                         onClick={(e) => e.stopPropagation()}
-                        aria-label={`Actions for ${name}`}
+                        aria-label={t("campaigns.rowMenu.ariaActions", {
+                            name,
+                        })}
                     >
                         <MoreVerticalIcon width={20} height={20} />
                     </button>

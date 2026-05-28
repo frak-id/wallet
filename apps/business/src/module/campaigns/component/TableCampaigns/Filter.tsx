@@ -12,6 +12,7 @@ import type { DateRange } from "react-day-picker";
 import { useTranslation } from "react-i18next";
 import { Button } from "@/module/common/component/Button";
 import { DateRangePopover } from "@/module/common/component/DateRangePopover";
+import { getDateFnsLocale } from "@/module/common/utils/dateLocale";
 import { InputSearch } from "@/module/forms/InputSearch";
 import type { CampaignStatus } from "@/types/Campaign";
 import * as styles from "./filter.css";
@@ -36,7 +37,8 @@ export function TableCampaignFilters({
     columnFilters,
     setColumnFilters,
 }: TableCampaignFiltersProps) {
-    const { t } = useTranslation();
+    const { t, i18n } = useTranslation();
+    const locale = getDateFnsLocale(i18n.language);
 
     // Extract current values from columnFilters
     const currentTitle = useMemo(
@@ -115,19 +117,23 @@ export function TableCampaignFilters({
                                         <>
                                             {format(
                                                 currentDate.from,
-                                                "LLL dd, y"
+                                                "LLL dd, y",
+                                                { locale }
                                             )}{" "}
                                             -{" "}
                                             {format(
                                                 currentDate.to,
-                                                "LLL dd, y"
+                                                "LLL dd, y",
+                                                { locale }
                                             )}
                                         </>
                                     ) : (
-                                        format(currentDate.from, "LLL dd, y")
+                                        format(currentDate.from, "LLL dd, y", {
+                                            locale,
+                                        })
                                     )
                                 ) : (
-                                    "Date range"
+                                    t("campaigns.filter.dateRange")
                                 )}
                             </span>
                         </Button>
@@ -139,14 +145,14 @@ export function TableCampaignFilters({
                     icon={<RefreshIcon width={16} height={16} />}
                     onClick={resetFilters}
                 >
-                    Reset filters
+                    {t("campaigns.filter.reset")}
                 </Button>
             </Inline>
             <Tabs
                 value={currentStatus}
                 onValueChange={(value) => setStatusFilter(value as CampaignTab)}
             >
-                <TabsList aria-label="Filter campaigns by status">
+                <TabsList aria-label={t("campaigns.filter.tabsLabel")}>
                     {tabValues.map((tab) => (
                         <TabsTrigger key={tab} value={tab}>
                             {t(`campaigns.tabs.${tab}`)}

@@ -1,5 +1,6 @@
 import { Archive, Pause, Play, Trash2 } from "lucide-react";
 import { type ReactNode, useState } from "react";
+import { Trans, useTranslation } from "react-i18next";
 import { useDeleteCampaign } from "@/module/campaigns/hook/useDeleteCampaign";
 import { useStatusTransition } from "@/module/campaigns/hook/useStatusTransition";
 import { AlertDialog } from "@/module/common/component/AlertDialog";
@@ -20,6 +21,7 @@ export function ModalPause({
     trigger,
     onDone,
 }: CampaignActionModalProps) {
+    const { t } = useTranslation();
     const [open, setOpen] = useState(false);
     const {
         mutateAsync: onPauseClick,
@@ -31,7 +33,7 @@ export function ModalPause({
         <AlertDialog
             open={open}
             onOpenChange={setOpen}
-            title={"Pause campaign"}
+            title={t("campaigns.actions.pauseTitle")}
             buttonElement={
                 trigger ?? (
                     <button type={"button"}>
@@ -40,17 +42,22 @@ export function ModalPause({
                 )
             }
             description={
-                <>
-                    Are you sure you want to pause the campaign{" "}
-                    <strong>{campaignName}</strong>?
-                </>
+                <Trans
+                    i18nKey="campaigns.actions.confirmPause"
+                    values={{ name: campaignName }}
+                    components={{ strong: <strong /> }}
+                />
             }
             text={
                 isError ? (
-                    <p className={"error"}>An error occurred, try again</p>
+                    <p className={"error"}>{t("campaigns.actions.error")}</p>
                 ) : undefined
             }
-            cancel={<Button variant={"secondary"}>Cancel</Button>}
+            cancel={
+                <Button variant={"secondary"}>
+                    {t("campaigns.actions.cancel")}
+                </Button>
+            }
             action={
                 <Button
                     variant={"secondary"}
@@ -66,7 +73,7 @@ export function ModalPause({
                         onDone?.();
                     }}
                 >
-                    Pause
+                    {t("campaigns.actions.pause")}
                 </Button>
             }
         />
@@ -80,6 +87,7 @@ export function ModalResume({
     trigger,
     onDone,
 }: CampaignActionModalProps) {
+    const { t } = useTranslation();
     const [open, setOpen] = useState(false);
     const {
         mutateAsync: onResumeClick,
@@ -91,7 +99,7 @@ export function ModalResume({
         <AlertDialog
             open={open}
             onOpenChange={setOpen}
-            title={"Resume campaign"}
+            title={t("campaigns.actions.resumeTitle")}
             buttonElement={
                 trigger ?? (
                     <button type={"button"}>
@@ -100,17 +108,22 @@ export function ModalResume({
                 )
             }
             description={
-                <>
-                    Are you sure you want to resume the campaign{" "}
-                    <strong>{campaignName}</strong>?
-                </>
+                <Trans
+                    i18nKey="campaigns.actions.confirmResume"
+                    values={{ name: campaignName }}
+                    components={{ strong: <strong /> }}
+                />
             }
             text={
                 isError ? (
-                    <p className={"error"}>An error occurred, try again</p>
+                    <p className={"error"}>{t("campaigns.actions.error")}</p>
                 ) : undefined
             }
-            cancel={<Button variant={"secondary"}>Cancel</Button>}
+            cancel={
+                <Button variant={"secondary"}>
+                    {t("campaigns.actions.cancel")}
+                </Button>
+            }
             action={
                 <Button
                     variant={"primary"}
@@ -126,7 +139,7 @@ export function ModalResume({
                         onDone?.();
                     }}
                 >
-                    Resume
+                    {t("campaigns.actions.resume")}
                 </Button>
             }
         />
@@ -140,6 +153,7 @@ export function ModalArchive({
     trigger,
     onDone,
 }: CampaignActionModalProps) {
+    const { t } = useTranslation();
     const [open, setOpen] = useState(false);
     const {
         mutateAsync: onArchiveClick,
@@ -151,7 +165,7 @@ export function ModalArchive({
         <AlertDialog
             open={open}
             onOpenChange={setOpen}
-            title={"Archive campaign"}
+            title={t("campaigns.actions.archiveTitle")}
             buttonElement={
                 trigger ?? (
                     <button type={"button"}>
@@ -160,17 +174,22 @@ export function ModalArchive({
                 )
             }
             description={
-                <>
-                    Are you sure you want to archive the campaign{" "}
-                    <strong>{campaignName}</strong>?
-                </>
+                <Trans
+                    i18nKey="campaigns.actions.confirmArchive"
+                    values={{ name: campaignName }}
+                    components={{ strong: <strong /> }}
+                />
             }
             text={
                 isError ? (
-                    <p className={"error"}>An error occurred, try again</p>
+                    <p className={"error"}>{t("campaigns.actions.error")}</p>
                 ) : undefined
             }
-            cancel={<Button variant={"secondary"}>Cancel</Button>}
+            cancel={
+                <Button variant={"secondary"}>
+                    {t("campaigns.actions.cancel")}
+                </Button>
+            }
             action={
                 <Button
                     variant={"secondary"}
@@ -186,7 +205,7 @@ export function ModalArchive({
                         onDone?.();
                     }}
                 >
-                    Archive
+                    {t("campaigns.actions.archive")}
                 </Button>
             }
         />
@@ -200,6 +219,7 @@ export function ModalDelete({
     trigger,
     onDone,
 }: CampaignActionModalProps) {
+    const { t } = useTranslation();
     const [open, setOpen] = useState(false);
     const {
         mutateAsync: onDeleteClick,
@@ -211,7 +231,7 @@ export function ModalDelete({
         <AlertDialog
             open={open}
             onOpenChange={setOpen}
-            title={"Delete campaign"}
+            title={t("campaigns.actions.deleteTitle")}
             buttonElement={
                 trigger ?? (
                     <button type={"button"}>
@@ -220,17 +240,22 @@ export function ModalDelete({
                 )
             }
             description={
-                <>
-                    Are you sure you want to delete the campaign{" "}
-                    <strong>{campaignName}</strong>?
-                </>
+                <Trans
+                    i18nKey="campaigns.actions.confirmDelete"
+                    values={{ name: campaignName }}
+                    components={{ strong: <strong /> }}
+                />
             }
             text={
                 isError ? (
-                    <p className={"error"}>An error occurred, try again</p>
+                    <p className={"error"}>{t("campaigns.actions.error")}</p>
                 ) : undefined
             }
-            cancel={<Button variant={"secondary"}>Cancel</Button>}
+            cancel={
+                <Button variant={"secondary"}>
+                    {t("campaigns.actions.cancel")}
+                </Button>
+            }
             action={
                 <Button
                     variant={"destructive"}
@@ -245,7 +270,7 @@ export function ModalDelete({
                         onDone?.();
                     }}
                 >
-                    Delete
+                    {t("campaigns.actions.delete")}
                 </Button>
             }
         />

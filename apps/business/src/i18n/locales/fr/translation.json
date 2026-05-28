@@ -99,6 +99,84 @@
             "archived": "Archivée",
             "ended": "Terminée",
             "unknown": "Inconnu"
+        },
+        "table": {
+            "campaign": "Campagne",
+            "status": "Statut",
+            "published": "Publiée",
+            "endDate": "Date de fin",
+            "noEndDate": "Pas de date de fin",
+            "sharingRate": "Taux de partage",
+            "ctr": "CTR",
+            "revenue": "Revenu",
+            "budgetSpend": "Budget & Dépenses"
+        },
+        "filter": {
+            "dateRange": "Période",
+            "reset": "Réinitialiser les filtres",
+            "tabsLabel": "Filtrer les campagnes par statut"
+        },
+        "rowMenu": {
+            "viewParameters": "Voir les paramètres",
+            "openPerformance": "Ouvrir les performances",
+            "edit": "Modifier la campagne",
+            "pause": "Mettre en pause",
+            "resume": "Reprendre",
+            "archive": "Archiver",
+            "delete": "Supprimer",
+            "ariaActions": "Actions pour {{name}}"
+        },
+        "bulk": {
+            "selected_one": "{{count}} sélectionnée",
+            "selected_other": "{{count}} sélectionnées",
+            "pause": "Mettre en pause",
+            "archive": "Archiver",
+            "delete": "Supprimer",
+            "clear": "Effacer",
+            "pauseTitle": "Mettre en pause les campagnes",
+            "archiveTitle": "Archiver les campagnes",
+            "deleteTitle": "Supprimer les campagnes",
+            "confirmPause_one": "Voulez-vous vraiment mettre en pause <strong>{{count}}</strong> campagne ?",
+            "confirmPause_other": "Voulez-vous vraiment mettre en pause <strong>{{count}}</strong> campagnes ?",
+            "confirmArchive_one": "Voulez-vous vraiment archiver <strong>{{count}}</strong> campagne ?",
+            "confirmArchive_other": "Voulez-vous vraiment archiver <strong>{{count}}</strong> campagnes ?",
+            "confirmDelete_one": "Voulez-vous vraiment supprimer <strong>{{count}}</strong> campagne ?",
+            "confirmDelete_other": "Voulez-vous vraiment supprimer <strong>{{count}}</strong> campagnes ?"
+        },
+        "actions": {
+            "newCampaign": "Créer une campagne",
+            "cancel": "Annuler",
+            "error": "Une erreur s'est produite, réessayez",
+            "pauseTitle": "Mettre en pause la campagne",
+            "resumeTitle": "Reprendre la campagne",
+            "archiveTitle": "Archiver la campagne",
+            "deleteTitle": "Supprimer la campagne",
+            "pause": "Mettre en pause",
+            "resume": "Reprendre",
+            "archive": "Archiver",
+            "delete": "Supprimer",
+            "confirmPause": "Voulez-vous vraiment mettre en pause la campagne <strong>{{name}}</strong> ?",
+            "confirmResume": "Voulez-vous vraiment reprendre la campagne <strong>{{name}}</strong> ?",
+            "confirmArchive": "Voulez-vous vraiment archiver la campagne <strong>{{name}}</strong> ?",
+            "confirmDelete": "Voulez-vous vraiment supprimer la campagne <strong>{{name}}</strong> ?"
+        }
+    },
+    "common": {
+        "table": {
+            "empty": "Aucun résultat"
+        },
+        "search": {
+            "placeholder": "Rechercher"
+        },
+        "dateRange": {
+            "label": "Période",
+            "clear": "Effacer",
+            "presets": {
+                "last7": "7 derniers jours",
+                "last30": "30 derniers jours",
+                "last90": "90 derniers jours",
+                "thisMonth": "Ce mois-ci"
+            }
         }
     },
     "bank": {

@@ -3,6 +3,8 @@ import clsx from "clsx";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import type { ComponentProps } from "react";
 import { DayPicker } from "react-day-picker";
+import { useTranslation } from "react-i18next";
+import { getDateFnsLocale } from "@/module/common/utils/dateLocale";
 import * as styles from "./calendar.css";
 
 export type CalendarProps = ComponentProps<typeof DayPicker>;
@@ -13,8 +15,10 @@ export function Calendar({
     showOutsideDays = true,
     ...props
 }: CalendarProps) {
+    const { i18n } = useTranslation();
     return (
         <DayPicker
+            locale={getDateFnsLocale(i18n.language)}
             showOutsideDays={showOutsideDays}
             className={clsx(styles.root, className)}
             classNames={{

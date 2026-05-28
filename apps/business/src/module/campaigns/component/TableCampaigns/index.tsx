@@ -8,6 +8,7 @@ import {
 } from "@tanstack/react-table";
 import { useEffect, useMemo, useState } from "react";
 import type { DateRange } from "react-day-picker";
+import { useTranslation } from "react-i18next";
 import { CampaignDetailsSheet } from "@/module/campaigns/component/CampaignDetailsSheet";
 import { CampaignStateTag } from "@/module/campaigns/component/TableCampaigns/CampaignStateTag";
 import { CampaignsEditBar } from "@/module/campaigns/component/TableCampaigns/CampaignsEditBar";
@@ -44,6 +45,7 @@ function MutedDash() {
 }
 
 export function TableCampaigns() {
+    const { t } = useTranslation();
     const { data } = useCampaignsWithStats();
     const merchantId = useActiveMerchantId();
     const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
@@ -124,13 +126,13 @@ export function TableCampaigns() {
                 columnHelper.accessor("name", {
                     enableSorting: false,
                     size: 160,
-                    header: () => "Campaign",
+                    header: () => t("campaigns.table.campaign"),
                     cell: ({ getValue }) => getValue() as string,
                 }),
                 columnHelper.accessor("status", {
                     enableSorting: true,
                     size: 110,
-                    header: () => "Status",
+                    header: () => t("campaigns.table.status"),
                     id: "status",
                     cell: ({ getValue, row }) => (
                         <CampaignStateTag
@@ -151,7 +153,7 @@ export function TableCampaigns() {
                 {
                     id: "date",
                     size: 120,
-                    header: () => "Published",
+                    header: () => t("campaigns.table.published"),
                     accessorFn: (row: CampaignWithStats) => row.publishedAt,
                     cell: ({ row }: { row: Row<CampaignWithStats> }) => {
                         const published = row.original.publishedAt;
@@ -185,11 +187,16 @@ export function TableCampaigns() {
                 {
                     id: "endDate",
                     size: 130,
-                    header: () => "End date",
+                    header: () => t("campaigns.table.endDate"),
                     accessorFn: (row: CampaignWithStats) => row.expiresAt,
                     cell: ({ row }: { row: Row<CampaignWithStats> }) => {
                         const expires = row.original.expiresAt;
-                        if (!expires) return <MutedText>No end date</MutedText>;
+                        if (!expires)
+                            return (
+                                <MutedText>
+                                    {t("campaigns.table.noEndDate")}
+                                </MutedText>
+                            );
                         return formatDate(new Date(expires));
                     },
                     sortingFn: (
@@ -205,7 +212,7 @@ export function TableCampaigns() {
                     id: "sharingRate",
                     size: 130,
                     meta: { align: "right" as const },
-                    header: () => "Sharing rate",
+                    header: () => t("campaigns.table.sharingRate"),
                     accessorFn: (row: CampaignWithStats) =>
                         row.stats?.sharingRate ?? null,
                     cell: ({ row }: { row: Row<CampaignWithStats> }) => {
@@ -230,7 +237,7 @@ export function TableCampaigns() {
                     id: "ctr",
                     size: 100,
                     meta: { align: "right" as const },
-                    header: () => "CTR",
+                    header: () => t("campaigns.table.ctr"),
                     accessorFn: (row: CampaignWithStats) =>
                         row.stats?.ctr ?? null,
                     cell: ({ row }: { row: Row<CampaignWithStats> }) => {
@@ -255,7 +262,7 @@ export function TableCampaigns() {
                     id: "revenue",
                     size: 130,
                     meta: { align: "right" as const },
-                    header: () => "Revenue",
+                    header: () => t("campaigns.table.revenue"),
                     accessorFn: (row: CampaignWithStats) =>
                         row.stats?.totalRewards ?? null,
                     cell: ({ row }: { row: Row<CampaignWithStats> }) => {
@@ -284,7 +291,7 @@ export function TableCampaigns() {
                 columnHelper.accessor("budgetConfig", {
                     size: 220,
                     meta: { align: "right" as const },
-                    header: () => "Budget & Spend",
+                    header: () => t("campaigns.table.budgetSpend"),
                     cell: ({ row }) => <CellBudget row={row} />,
                     sortingFn: (a, b) =>
                         sortNullableNumber(
@@ -304,6 +311,7 @@ export function TableCampaigns() {
                 }),
             ] as ColumnDef<CampaignWithStats>[],
         [
+            t,
             merchantId,
             selectedIds,
             toggleSelection,
