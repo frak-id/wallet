@@ -237,5 +237,83 @@
         "createdAt": "2026-01-22T13:30:00Z",
         "updatedAt": "2026-01-27T09:00:00Z",
         "bankDistributionStatus": null
+    },
+    {
+        "id": "camp_007",
+        "merchantId": "55555555-5555-5555-5555-555555555555",
+        "name": "Spring Launch Referral",
+        "status": "active",
+        "priority": 1,
+        "rule": {
+            "trigger": "purchase",
+            "conditions": [],
+            "rewards": [
+                {
+                    "recipient": "referrer",
+                    "type": "token",
+                    "amountType": "fixed",
+                    "amount": 5000000000000000000,
+                    "description": "5 FRK per purchase"
+                }
+            ]
+        },
+        "metadata": {
+            "goal": "sales",
+            "territories": ["FR", "BE"]
+        },
+        "budgetConfig": [
+            {
+                "label": "Daily",
+                "durationInSeconds": 86400,
+                "amount": 1000
+            }
+        ],
+        "budgetUsed": {
+            "daily": 1000
+        },
+        "expiresAt": null,
+        "publishedAt": "2026-03-01T00:00:00Z",
+        "createdAt": "2026-02-20T10:00:00Z",
+        "updatedAt": "2026-03-15T12:00:00Z",
+        "bankDistributionStatus": "depleted"
+    },
+    {
+        "id": "camp_008",
+        "merchantId": "55555555-5555-5555-5555-555555555555",
+        "name": "Loyalty Boost",
+        "status": "paused",
+        "priority": 2,
+        "rule": {
+            "trigger": "referral",
+            "conditions": [],
+            "rewards": [
+                {
+                    "recipient": "referrer",
+                    "type": "token",
+                    "amountType": "fixed",
+                    "amount": 2000000000000000000,
+                    "description": "2 FRK for referral"
+                }
+            ]
+        },
+        "metadata": {
+            "goal": "retention",
+            "territories": ["FR"]
+        },
+        "budgetConfig": [
+            {
+                "label": "Weekly",
+                "durationInSeconds": 604800,
+                "amount": 500
+            }
+        ],
+        "budgetUsed": {
+            "weekly": 500
+        },
+        "expiresAt": null,
+        "publishedAt": "2026-02-15T00:00:00Z",
+        "createdAt": "2026-02-10T08:00:00Z",
+        "updatedAt": "2026-03-15T12:00:00Z",
+        "bankDistributionStatus": "depleted"
     }
 ]

@@ -41,6 +41,20 @@
             "createdAt": "2026-01-01T00:00:00.000Z",
             "role": "owner",
             "allowedDomains": []
+        },
+        {
+            "id": "55555555-5555-5555-5555-555555555555",
+            "domain": "boutique.example.com",
+            "name": "Boutique (Empty Bank)",
+            "ownerWallet": "0x0000000000000000000000000000000000000000",
+            "bankAddress": "0x5555555555555555555555555555555555555555",
+            "defaultRewardToken": "0xFdEed5cE7E281B4e0F163B70eBe2Cf0B10803b7B",
+            "explorerConfig": null,
+            "explorerEnabledAt": null,
+            "verifiedAt": null,
+            "createdAt": "2026-01-01T00:00:00.000Z",
+            "role": "owner",
+            "allowedDomains": []
         }
     ],
     "adminOf": [

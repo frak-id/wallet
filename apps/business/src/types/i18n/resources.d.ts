@@ -19,7 +19,26 @@ export default interface Resources {
                 heroTitleLine2: "Frak Ad Manager";
             };
         };
+        bank: {
+            banner: {
+                ctaAddFunds: "Add funds";
+                ctaManageBank: "Manage bank";
+                ctaSetup: "Set up";
+                depleted: "Your reward bank is empty — rewards can't be distributed.";
+                notDeployed: "Your reward bank isn't set up yet.";
+                paused: "Your reward bank is paused — distribution is stopped.";
+                warning: "Your reward bank needs attention — check your balance and spending authorization.";
+            };
+        };
         campaigns: {
+            status: {
+                active: "Active";
+                archived: "Archived";
+                draft: "Draft";
+                ended: "Ended";
+                paused: "Paused";
+                unknown: "Unknown";
+            };
             tabs: {
                 active: "Active";
                 all: "All";

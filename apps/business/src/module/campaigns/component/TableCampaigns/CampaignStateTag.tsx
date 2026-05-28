@@ -1,105 +1,55 @@
 import { Badge } from "@frak-labs/design-system/components/Badge";
-import { Box } from "@frak-labs/design-system/components/Box";
+import { useTranslation } from "react-i18next";
 import { isEnded } from "@/module/campaigns/component/TableCampaigns/isEnded";
-import { Tooltip } from "@/module/common/component/Tooltip";
-import type { CampaignStatus, DistributionStatus } from "@/types/Campaign";
-
-const bankHealthLabels: Record<string, string> = {
-    depleted: "Bank empty — rewards can't distribute",
-    paused: "Bank paused — distribution stopped",
-    warning: "Needs attention — check your reward budget",
-    not_deployed: "Bank not set up",
-};
-
-const bankBadgeLabels: Record<string, string> = {
-    depleted: "No funds",
-    paused: "Paused",
-    warning: "Needs attention",
-    not_deployed: "Setup needed",
-};
+import type { CampaignStatus } from "@/types/Campaign";
 
 export function CampaignStateTag({
     status,
     expiresAt,
-    bankDistributionStatus,
 }: {
     status: CampaignStatus;
     expiresAt: string | null;
-    bankDistributionStatus?: DistributionStatus | null;
 }) {
+    const { t } = useTranslation();
     const ended = isEnded(status, expiresAt);
 
-    const statusBadge = (() => {
-        if (ended) {
+    if (ended) {
+        return (
+            <Badge variant="disabled" size="small">
+                {t("campaigns.status.ended")}
+            </Badge>
+        );
+    }
+    switch (status) {
+        case "draft":
             return (
-                <Badge variant="disabled" size="small">
-                    Ended
+                <Badge variant="neutral" size="small">
+                    {t("campaigns.status.draft")}
                 </Badge>
             );
-        }
-        switch (status) {
-            case "draft":
-                return (
-                    <Badge variant="neutral" size="small">
-                        Draft
-                    </Badge>
-                );
-            case "active":
-                return (
-                    <Badge variant="success" size="small">
-                        Active
-                    </Badge>
-                );
-            case "paused":
-                return (
-                    <Badge variant="warning" size="small">
-                        Paused
-                    </Badge>
-                );
-            case "archived":
-                return (
-                    <Badge variant="disabled" size="small">
-                        Archived
-                    </Badge>
-                );
-            default:
-                return (
-                    <Badge variant="error" size="small">
-                        Unknown
-                    </Badge>
-                );
-        }
-    })();
-
-    // Bank warning is only relevant while the campaign is still running.
-    const showBankWarning =
-        !ended &&
-        status === "active" &&
-        bankDistributionStatus &&
-        bankDistributionStatus !== "distributing";
-
-    if (!showBankWarning) {
-        return statusBadge;
-    }
-
-    const bankLabel = bankHealthLabels[bankDistributionStatus] ?? "Bank issue";
-    const badgeLabel = bankBadgeLabels[bankDistributionStatus] ?? "Issue";
-
-    return (
-        <Box as="span" display="inline-flex" alignItems="center" gap="xxs">
-            {statusBadge}
-            <Tooltip content={bankLabel}>
-                <Badge
-                    variant={
-                        bankDistributionStatus === "depleted"
-                            ? "error"
-                            : "warning"
-                    }
-                    size="small"
-                >
-                    {badgeLabel}
+        case "active":
+            return (
+                <Badge variant="success" size="small">
+                    {t("campaigns.status.active")}
                 </Badge>
-            </Tooltip>
-        </Box>
-    );
+            );
+        case "paused":
+            return (
+                <Badge variant="warning" size="small">
+                    {t("campaigns.status.paused")}
+                </Badge>
+            );
+        case "archived":
+            return (
+                <Badge variant="disabled" size="small">
+                    {t("campaigns.status.archived")}
+                </Badge>
+            );
+        default:
+            return (
+                <Badge variant="error" size="small">
+                    {t("campaigns.status.unknown")}
+                </Badge>
+            );
+    }
 }

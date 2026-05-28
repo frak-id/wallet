@@ -31,7 +31,6 @@ export function CampaignStatus({ campaign }: { campaign: Campaign }) {
                     <CampaignStateTag
                         status={campaign.status}
                         expiresAt={campaign.expiresAt}
-                        bankDistributionStatus={campaign.bankDistributionStatus}
                     />
                 </Inline>
                 <Inline space="m" alignY="bottom">

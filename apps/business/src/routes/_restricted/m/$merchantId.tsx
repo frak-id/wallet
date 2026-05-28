@@ -1,6 +1,7 @@
 import { createFileRoute, Outlet, redirect } from "@tanstack/react-router";
 import { isDemoMode } from "@/config/auth";
 import { queryClient } from "@/module/common/provider/RootProvider";
+import { BankStatusBanner } from "@/module/merchant/component/BankStatusBanner";
 import { myMerchantsQueryOptions } from "@/module/merchant/queries/queryOptions";
 
 /**
@@ -44,5 +45,11 @@ export const Route = createFileRoute("/_restricted/m/$merchantId")({
 });
 
 function MerchantLayout() {
-    return <Outlet />;
+    const { merchantId } = Route.useParams();
+    return (
+        <>
+            <BankStatusBanner merchantId={merchantId} />
+            <Outlet />
+        </>
+    );
 }

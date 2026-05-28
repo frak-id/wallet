@@ -63,7 +63,6 @@ function CampaignDetailsContent({
                     <CampaignStateTag
                         status={campaign.status}
                         expiresAt={campaign.expiresAt}
-                        bankDistributionStatus={campaign.bankDistributionStatus}
                     />
                 }
             />

@@ -91,6 +91,25 @@
             "draft": "Draft",
             "ended": "Ended",
             "archived": "Archived"
+        },
+        "status": {
+            "active": "Active",
+            "paused": "Paused",
+            "draft": "Draft",
+            "archived": "Archived",
+            "ended": "Ended",
+            "unknown": "Unknown"
+        }
+    },
+    "bank": {
+        "banner": {
+            "depleted": "Your reward bank is empty — rewards can't be distributed.",
+            "paused": "Your reward bank is paused — distribution is stopped.",
+            "warning": "Your reward bank needs attention — check your balance and spending authorization.",
+            "notDeployed": "Your reward bank isn't set up yet.",
+            "ctaAddFunds": "Add funds",
+            "ctaManageBank": "Manage bank",
+            "ctaSetup": "Set up"
         }
     },
     "settings": {

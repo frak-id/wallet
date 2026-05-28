@@ -136,9 +136,6 @@ export function TableCampaigns() {
                         <CampaignStateTag
                             status={getValue()}
                             expiresAt={row.original.expiresAt}
-                            bankDistributionStatus={
-                                row.original.bankDistributionStatus
-                            }
                         />
                     ),
                     filterFn: (row, _, value: CampaignTab) => {

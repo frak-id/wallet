@@ -91,6 +91,25 @@
             "draft": "Brouillon",
             "ended": "Terminée",
             "archived": "Archivée"
+        },
+        "status": {
+            "active": "Active",
+            "paused": "En pause",
+            "draft": "Brouillon",
+            "archived": "Archivée",
+            "ended": "Terminée",
+            "unknown": "Inconnu"
+        }
+    },
+    "bank": {
+        "banner": {
+            "depleted": "Votre banque de récompenses est vide — les récompenses ne peuvent pas être distribuées.",
+            "paused": "Votre banque de récompenses est en pause — la distribution est arrêtée.",
+            "warning": "Votre banque de récompenses nécessite votre attention — vérifiez votre solde et l'autorisation de dépense.",
+            "notDeployed": "Votre banque de récompenses n'est pas encore configurée.",
+            "ctaAddFunds": "Ajouter des fonds",
+            "ctaManageBank": "Gérer la banque",
+            "ctaSetup": "Configurer"
         }
     },
     "settings": {
