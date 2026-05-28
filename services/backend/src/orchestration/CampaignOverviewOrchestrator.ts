@@ -126,15 +126,18 @@ export class CampaignOverviewOrchestrator {
         const outerFrom = previous.from;
         const outerTo = current.to;
 
+        // FILTER clauses use drizzle's `between()` so Date params flow
+        // through the column encoder (Date → ISO). Raw `${date}` falls
+        // through to `String(date)` and PG rejects the timezone format.
         const [assetRows, sharesRows, purchaseRows] = await Promise.all([
             db
                 .select({
-                    ambassadorsCurrent: sql<string>`COUNT(DISTINCT ${assetLogsTable.identityGroupId}) FILTER (WHERE ${assetLogsTable.recipientType} = 'referrer' AND ${assetLogsTable.createdAt} BETWEEN ${current.from} AND ${current.to})`,
-                    ambassadorsPrevious: sql<string>`COUNT(DISTINCT ${assetLogsTable.identityGroupId}) FILTER (WHERE ${assetLogsTable.recipientType} = 'referrer' AND ${assetLogsTable.createdAt} BETWEEN ${previous.from} AND ${previous.to})`,
-                    rewardsUsdCurrent: sql<string>`COALESCE(SUM(${usdRewardsExpr}) FILTER (WHERE ${assetLogsTable.createdAt} BETWEEN ${current.from} AND ${current.to}), 0)`,
-                    rewardsUsdPrevious: sql<string>`COALESCE(SUM(${usdRewardsExpr}) FILTER (WHERE ${assetLogsTable.createdAt} BETWEEN ${previous.from} AND ${previous.to}), 0)`,
-                    purchaseInteractionsCurrent: sql<string>`COUNT(DISTINCT ${interactionLogsTable.id}) FILTER (WHERE ${interactionLogsTable.type} = 'purchase' AND ${assetLogsTable.createdAt} BETWEEN ${current.from} AND ${current.to})`,
-                    purchaseInteractionsPrevious: sql<string>`COUNT(DISTINCT ${interactionLogsTable.id}) FILTER (WHERE ${interactionLogsTable.type} = 'purchase' AND ${assetLogsTable.createdAt} BETWEEN ${previous.from} AND ${previous.to})`,
+                    ambassadorsCurrent: sql<string>`COUNT(DISTINCT ${assetLogsTable.identityGroupId}) FILTER (WHERE ${assetLogsTable.recipientType} = 'referrer' AND ${between(assetLogsTable.createdAt, current.from, current.to)})`,
+                    ambassadorsPrevious: sql<string>`COUNT(DISTINCT ${assetLogsTable.identityGroupId}) FILTER (WHERE ${assetLogsTable.recipientType} = 'referrer' AND ${between(assetLogsTable.createdAt, previous.from, previous.to)})`,
+                    rewardsUsdCurrent: sql<string>`COALESCE(SUM(${usdRewardsExpr}) FILTER (WHERE ${between(assetLogsTable.createdAt, current.from, current.to)}), 0)`,
+                    rewardsUsdPrevious: sql<string>`COALESCE(SUM(${usdRewardsExpr}) FILTER (WHERE ${between(assetLogsTable.createdAt, previous.from, previous.to)}), 0)`,
+                    purchaseInteractionsCurrent: sql<string>`COUNT(DISTINCT ${interactionLogsTable.id}) FILTER (WHERE ${interactionLogsTable.type} = 'purchase' AND ${between(assetLogsTable.createdAt, current.from, current.to)})`,
+                    purchaseInteractionsPrevious: sql<string>`COUNT(DISTINCT ${interactionLogsTable.id}) FILTER (WHERE ${interactionLogsTable.type} = 'purchase' AND ${between(assetLogsTable.createdAt, previous.from, previous.to)})`,
                 })
                 .from(assetLogsTable)
                 .leftJoin(
@@ -150,8 +153,8 @@ export class CampaignOverviewOrchestrator {
                 ),
             db
                 .select({
-                    sharesCurrent: sql<string>`COUNT(*) FILTER (WHERE ${interactionLogsTable.createdAt} BETWEEN ${current.from} AND ${current.to})`,
-                    sharesPrevious: sql<string>`COUNT(*) FILTER (WHERE ${interactionLogsTable.createdAt} BETWEEN ${previous.from} AND ${previous.to})`,
+                    sharesCurrent: sql<string>`COUNT(*) FILTER (WHERE ${between(interactionLogsTable.createdAt, current.from, current.to)})`,
+                    sharesPrevious: sql<string>`COUNT(*) FILTER (WHERE ${between(interactionLogsTable.createdAt, previous.from, previous.to)})`,
                 })
                 .from(interactionLogsTable)
                 .where(
@@ -168,10 +171,10 @@ export class CampaignOverviewOrchestrator {
                 ),
             db
                 .select({
-                    revenueCurrent: sql<string>`COALESCE(SUM(${purchasesTable.totalPrice}::NUMERIC) FILTER (WHERE ${purchasesTable.createdAt} BETWEEN ${current.from} AND ${current.to}), 0)`,
-                    revenuePrevious: sql<string>`COALESCE(SUM(${purchasesTable.totalPrice}::NUMERIC) FILTER (WHERE ${purchasesTable.createdAt} BETWEEN ${previous.from} AND ${previous.to}), 0)`,
-                    purchaseCountCurrent: sql<string>`COUNT(*) FILTER (WHERE ${purchasesTable.createdAt} BETWEEN ${current.from} AND ${current.to})`,
-                    purchaseCountPrevious: sql<string>`COUNT(*) FILTER (WHERE ${purchasesTable.createdAt} BETWEEN ${previous.from} AND ${previous.to})`,
+                    revenueCurrent: sql<string>`COALESCE(SUM(${purchasesTable.totalPrice}::NUMERIC) FILTER (WHERE ${between(purchasesTable.createdAt, current.from, current.to)}), 0)`,
+                    revenuePrevious: sql<string>`COALESCE(SUM(${purchasesTable.totalPrice}::NUMERIC) FILTER (WHERE ${between(purchasesTable.createdAt, previous.from, previous.to)}), 0)`,
+                    purchaseCountCurrent: sql<string>`COUNT(*) FILTER (WHERE ${between(purchasesTable.createdAt, current.from, current.to)})`,
+                    purchaseCountPrevious: sql<string>`COUNT(*) FILTER (WHERE ${between(purchasesTable.createdAt, previous.from, previous.to)})`,
                     // MODE() returns the most-frequent currency in the
                     // current window. Strictly speaking purchases can
                     // arrive in mixed currencies — taking the mode keeps
@@ -179,7 +182,7 @@ export class CampaignOverviewOrchestrator {
                     // vast majority of merchants who only use one.
                     currency: sql<
                         string | null
-                    >`MODE() WITHIN GROUP (ORDER BY ${purchasesTable.currencyCode}) FILTER (WHERE ${purchasesTable.createdAt} BETWEEN ${current.from} AND ${current.to})`,
+                    >`MODE() WITHIN GROUP (ORDER BY ${purchasesTable.currencyCode}) FILTER (WHERE ${between(purchasesTable.createdAt, current.from, current.to)})`,
                 })
                 .from(purchasesTable)
                 .innerJoin(

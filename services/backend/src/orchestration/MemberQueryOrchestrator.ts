@@ -1,4 +1,14 @@
-import { and, count, eq, inArray, min, type SQL, sql } from "drizzle-orm";
+import {
+    and,
+    count,
+    eq,
+    gte,
+    inArray,
+    lte,
+    min,
+    type SQL,
+    sql,
+} from "drizzle-orm";
 import type { Static } from "elysia";
 import { type Address, getAddress } from "viem";
 import { identityNodesTable } from "../domain/identity/db/schema";
@@ -348,7 +358,7 @@ export class MemberQueryOrchestrator {
                 filter.firstInteractionTimestamp.min * 1000
             );
             conditions.push(
-                sql`MIN(${interactionLogsTable.createdAt}) >= ${minDate}`
+                gte(min(interactionLogsTable.createdAt), minDate)
             );
         }
         if (filter?.firstInteractionTimestamp?.max !== undefined) {
@@ -356,7 +366,7 @@ export class MemberQueryOrchestrator {
                 filter.firstInteractionTimestamp.max * 1000
             );
             conditions.push(
-                sql`MIN(${interactionLogsTable.createdAt}) <= ${maxDate}`
+                lte(min(interactionLogsTable.createdAt), maxDate)
             );
         }
 
