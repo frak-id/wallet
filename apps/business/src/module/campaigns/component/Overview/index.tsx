@@ -1,6 +1,9 @@
 import { Stack } from "@frak-labs/design-system/components/Stack";
 import { useSuspenseQuery } from "@tanstack/react-query";
-import { campaignsOverviewQueryOptions } from "@/module/campaigns/queries/queryOptions";
+import {
+    overviewAnalyticsQueryOptions,
+    overviewSummaryQueryOptions,
+} from "@/module/campaigns/queries/queryOptions";
 import { useIsDemoMode } from "@/module/common/atoms/demoMode";
 import { useActiveMerchantId } from "@/module/common/hook/useActiveMerchantId";
 import { FunnelCard } from "./FunnelCard";
@@ -21,27 +24,30 @@ export function CampaignsOverview({
 }) {
     const merchantId = useActiveMerchantId();
     const isDemoMode = useIsDemoMode();
-    const { data } = useSuspenseQuery(
-        campaignsOverviewQueryOptions({ merchantId, isDemoMode, from, to })
+    const { data: summary } = useSuspenseQuery(
+        overviewSummaryQueryOptions({ merchantId, isDemoMode, from, to })
+    );
+    const { data: analytics } = useSuspenseQuery(
+        overviewAnalyticsQueryOptions({ merchantId, isDemoMode, from, to })
     );
 
     return (
         <div className={styles.page}>
             <Stack space="l">
-                <KpiCardsRow kpis={data.kpis} />
+                <KpiCardsRow kpis={summary.kpis} />
                 <div className={styles.twoColumns}>
-                    <FunnelCard funnels={data.funnels} />
+                    <FunnelCard funnels={analytics.funnels} />
                     <TopCampaignsCard
-                        topCampaigns={data.topCampaigns}
-                        statusBreakdown={data.statusBreakdown}
+                        topCampaigns={summary.topCampaigns}
+                        statusBreakdown={summary.statusBreakdown}
                     />
                 </div>
                 <div className={styles.threeColumns}>
-                    <PurchasesCard purchases={data.purchases} />
+                    <PurchasesCard purchases={summary.purchases} />
                     <ProjectedRevenueCard
-                        projectedRevenue={data.projectedRevenue}
+                        projectedRevenue={summary.projectedRevenue}
                     />
-                    <SharingBySourceCard sharing={data.sharing} />
+                    <SharingBySourceCard sharing={analytics.sharing} />
                 </div>
             </Stack>
             <OverviewFloatingFooter />

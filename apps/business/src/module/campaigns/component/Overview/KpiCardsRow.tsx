@@ -1,10 +1,10 @@
+import type { OverviewKpis } from "@frak-labs/backend-elysia/orchestration/schemas";
 import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
-import type { CampaignsOverview } from "@/module/campaigns/queries/queryOptions";
 import { OverviewKpiCard } from "./OverviewKpiCard";
 import * as styles from "./overview.css";
 
-export function KpiCardsRow({ kpis }: { kpis: CampaignsOverview["kpis"] }) {
+export function KpiCardsRow({ kpis }: { kpis: OverviewKpis }) {
     const { i18n } = useTranslation();
     const locale = i18n.language;
 

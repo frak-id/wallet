@@ -13,6 +13,7 @@ import { WalletContext } from "../domain/wallet/context";
 import { webAuthNValidatorReader } from "../infrastructure/blockchain/WebAuthNValidatorReader";
 import { pricingRepository } from "../infrastructure/pricing/PricingRepository";
 import { BatchRewardOrchestrator } from "./BatchRewardOrchestrator";
+import { CampaignOverviewOrchestrator } from "./CampaignOverviewOrchestrator";
 import { CampaignStatsOrchestrator } from "./CampaignStatsOrchestrator";
 import { ExplorerOrchestrator } from "./ExplorerOrchestrator";
 import {
@@ -128,6 +129,10 @@ const memberQueryOrchestrator = new MemberQueryOrchestrator(pricingRepository);
 
 const campaignStatsOrchestrator = new CampaignStatsOrchestrator();
 
+const campaignOverviewOrchestrator = new CampaignOverviewOrchestrator(
+    pricingRepository
+);
+
 const explorerOrchestrator = new ExplorerOrchestrator();
 
 const interactionSubmissionOrchestrator = new InteractionSubmissionOrchestrator(
@@ -192,6 +197,7 @@ export namespace OrchestrationContext {
         interactionSubmission: interactionSubmissionOrchestrator,
         memberQuery: memberQueryOrchestrator,
         campaignStats: campaignStatsOrchestrator,
+        campaignOverview: campaignOverviewOrchestrator,
         anonymousMerge: anonymousMergeOrchestrator,
         batchReward: batchRewardOrchestrator,
         identity: identityOrchestrator,

@@ -1,3 +1,4 @@
+import type { OverviewProjectedRevenue } from "@frak-labs/backend-elysia/orchestration/schemas";
 import {
     Area,
     AreaChart,
@@ -11,7 +12,6 @@ import { Stack } from "@frak-labs/design-system/components/Stack";
 import { Text } from "@frak-labs/design-system/components/Text";
 import { vars } from "@frak-labs/design-system/theme";
 import { useMemo } from "react";
-import type { CampaignsOverview } from "@/module/campaigns/queries/queryOptions";
 import * as styles from "./overview.css";
 
 const currencyFormatter = new Intl.NumberFormat("en-US");
@@ -23,7 +23,7 @@ const chartMargin = { top: 8, right: 44, bottom: 24, left: 8 };
 export function ProjectedRevenueCard({
     projectedRevenue,
 }: {
-    projectedRevenue: CampaignsOverview["projectedRevenue"];
+    projectedRevenue: OverviewProjectedRevenue;
 }) {
     // The visx time-series shell keys off a real Date x-axis; our series is
     // monthly, so map each label to the first of its month.
