@@ -7,9 +7,12 @@ import { globalStyle, style } from "@vanilla-extract/css";
 // e.g. a wider popover — and drift away from the calendar's edges.
 export const root = style({ position: "relative", padding: alias.spacing.s });
 
+// Lays out the month blocks; multiple months (numberOfMonths > 1) sit
+// side by side. The absolutely-positioned nav is exempt from this flow.
 export const months = style({
     display: "flex",
-    flexDirection: "column",
+    flexDirection: "row",
+    gap: alias.spacing.l,
 });
 
 const captionHeight = "32px";
@@ -130,7 +133,7 @@ export const rangeMiddle = style({
 });
 
 export const rangeStart = style({
-    backgroundColor: brand.colors.primary[100],
+    backgroundColor: brand.colors.primary[500],
     borderTopLeftRadius: alias.cornerRadius.s,
     borderBottomLeftRadius: alias.cornerRadius.s,
     borderTopRightRadius: 0,
@@ -138,11 +141,16 @@ export const rangeStart = style({
 });
 
 export const rangeEnd = style({
-    backgroundColor: brand.colors.primary[100],
+    backgroundColor: brand.colors.primary[500],
     borderTopRightRadius: alias.cornerRadius.s,
     borderBottomRightRadius: alias.cornerRadius.s,
     borderTopLeftRadius: 0,
     borderBottomLeftRadius: 0,
+});
+
+// Solid endpoints need white numbers (the ghost day button is blue).
+globalStyle(`${rangeStart} button, ${rangeEnd} button`, {
+    color: brand.colors.neutral.white,
 });
 
 /**

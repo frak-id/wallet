@@ -5,7 +5,7 @@ import {
 } from "@frak-labs/design-system/components/Popover";
 import { CalendarIcon } from "@frak-labs/design-system/icons";
 import { getRouteApi } from "@tanstack/react-router";
-import { parseISO } from "date-fns";
+import { parseISO, startOfMonth } from "date-fns";
 import { useState } from "react";
 import type { DateRange } from "react-day-picker";
 import { Calendar } from "@/module/common/component/Calendar";
@@ -44,10 +44,13 @@ export function DateRangeChip() {
     const [draft, setDraft] = useState<DateRange | undefined>(() =>
         toDateRange(from, to)
     );
-    // false → next click starts a fresh range; true → next click sets the
-    // end. Driving selection by click (rather than RDP's auto-range) lets a
-    // single day be a valid range: click the same day twice.
-    const [pickingEnd, setPickingEnd] = useState(false);
+    // Controlled displayed month so applying a preset scrolls the calendar
+    // to the selected range (otherwise the highlight can sit off-screen).
+    // Must be the first of a month for the two-month layout to render right.
+    const [month, setMonth] = useState<Date | undefined>(() => {
+        const start = toDateRange(from, to)?.from;
+        return start ? startOfMonth(start) : undefined;
+    });
 
     const activePreset = matchPreset(from, to);
     const hasRange = Boolean(from && to);
@@ -61,40 +64,36 @@ export function DateRangeChip() {
     function applyPreset(key: DateRangePresetKey) {
         const range = resolvePreset(key);
         setDraft(toDateRange(range.from, range.to));
+        setMonth(startOfMonth(parseISO(range.from)));
         commit(range);
-        setOpen(false);
     }
 
-    function handleDayClick(day: Date) {
-        if (!pickingEnd) {
-            setDraft({ from: day, to: day });
-            setPickingEnd(true);
-            return;
-        }
-        const start = draft?.from ?? day;
-        const [rangeFrom, rangeTo] =
-            start.getTime() <= day.getTime() ? [start, day] : [day, start];
-        setDraft({ from: rangeFrom, to: rangeTo });
-        commit({ from: toIso(rangeFrom), to: toIso(rangeTo) });
-        setPickingEnd(false);
-        setOpen(false);
+    // Controlled selection (selected + onSelect) so RDP reflects programmatic
+    // updates from presets. The popover stays open after committing
+    // (shadcn behaviour); the user dismisses via outside-click or Esc.
+    function handleSelect(range: DateRange | undefined) {
+        setDraft(range);
+        commit({
+            from: range?.from ? toIso(range.from) : undefined,
+            to: range?.to ? toIso(range.to) : undefined,
+        });
     }
 
     function clear() {
         setDraft(undefined);
         commit({ from: undefined, to: undefined });
-        setOpen(false);
     }
 
     return (
         <Popover
             open={open}
             onOpenChange={(next) => {
-                // Re-sync the calendar draft with the committed range each open
-                // and start a fresh selection cycle.
+                // Re-sync the calendar draft + displayed month with the
+                // committed range each time the popover opens.
                 if (next) {
-                    setDraft(toDateRange(from, to));
-                    setPickingEnd(false);
+                    const committed = toDateRange(from, to);
+                    setDraft(committed);
+                    setMonth(startOfMonth(committed?.from ?? new Date()));
                 }
                 setOpen(next);
             }}
@@ -138,9 +137,10 @@ export function DateRangeChip() {
                     <Calendar
                         mode="range"
                         selected={draft}
-                        onDayClick={handleDayClick}
-                        defaultMonth={draft?.from}
-                        numberOfMonths={1}
+                        onSelect={handleSelect}
+                        month={month}
+                        onMonthChange={setMonth}
+                        numberOfMonths={2}
                     />
                 </div>
             </PopoverContent>
