@@ -28,16 +28,19 @@ import {
     toIso,
 } from "./dateRangePresets";
 
-// The chip only renders on the overview page (Header gates it via
-// `showDateRange`), so binding to that route's API is safe.
-const routeApi = getRouteApi("/_restricted/m/$merchantId/campaigns/overview");
-
 function toDateRange(from?: string, to?: string): DateRange | undefined {
     if (!from) return undefined;
     return { from: parseISO(from), to: to ? parseISO(to) : undefined };
 }
 
 export function DateRangeChip() {
+    // Resolved inside the component (not at module scope) so importing this
+    // file doesn't call into the router. The chip only renders on the
+    // overview page (Header gates it via `showDateRange`), so binding to that
+    // route's API is safe.
+    const routeApi = getRouteApi(
+        "/_restricted/m/$merchantId/campaigns/overview"
+    );
     const { from, to } = routeApi.useSearch();
     const navigate = routeApi.useNavigate();
     const [open, setOpen] = useState(false);
