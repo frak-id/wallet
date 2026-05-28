@@ -11,10 +11,9 @@ import { Stack } from "@frak-labs/design-system/components/Stack";
 import { Text } from "@frak-labs/design-system/components/Text";
 import { vars } from "@frak-labs/design-system/theme";
 import { useMemo } from "react";
+import { useTranslation } from "react-i18next";
 import type { CampaignsOverview } from "@/module/campaigns/queries/queryOptions";
 import * as styles from "./overview.css";
-
-const currencyFormatter = new Intl.NumberFormat("en-US");
 
 const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug"];
 
@@ -25,6 +24,8 @@ export function ProjectedRevenueCard({
 }: {
     projectedRevenue: CampaignsOverview["projectedRevenue"];
 }) {
+    const { t, i18n } = useTranslation();
+    const currencyFormatter = new Intl.NumberFormat(i18n.language);
     // The visx time-series shell keys off a real Date x-axis; our series is
     // monthly, so map each label to the first of its month.
     const chartData = useMemo(
@@ -47,15 +48,16 @@ export function ProjectedRevenueCard({
                     {currencyFormatter.format(projectedRevenue.total)}€
                 </span>
                 <Text variant="bodySmall" color="secondary">
-                    Projected revenue
+                    {t("campaigns.overview.projected.title")}
                 </Text>
                 <Text variant="bodySmall" color="tertiary">
-                    Based on current growth trend
+                    {t("campaigns.overview.projected.subtitle")}
                 </Text>
             </Stack>
             <AreaChart
                 className={styles.chartBox}
                 data={chartData}
+                locale={i18n.language}
                 margin={chartMargin}
                 xDataKey="date"
             >
@@ -75,19 +77,32 @@ export function ProjectedRevenueCard({
                     formatter={(v) => `${v / 1000}k€`}
                     ticks={[0, 5000, 10000, 15000]}
                 />
-                <ChartTooltip />
+                <ChartTooltip
+                    rows={(point) => [
+                        {
+                            color: vars.icon.success,
+                            label: t("campaigns.overview.projected.actual"),
+                            value: (point.actual as number) ?? 0,
+                        },
+                        {
+                            color: vars.icon.tertiary,
+                            label: t("campaigns.overview.projected.forecast"),
+                            value: (point.forecast as number) ?? 0,
+                        },
+                    ]}
+                />
             </AreaChart>
             <Inline space="l">
                 <Stack space="xxs">
                     <span className={styles.legendDotSuccess} />
                     <Text as="span" variant="caption">
-                        Actual revenue
+                        {t("campaigns.overview.projected.actual")}
                     </Text>
                 </Stack>
                 <Stack space="xxs">
                     <span className={styles.legendDotForecast} />
                     <Text as="span" variant="caption">
-                        Forecast revenue
+                        {t("campaigns.overview.projected.forecast")}
                     </Text>
                 </Stack>
             </Inline>

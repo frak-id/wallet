@@ -32,12 +32,14 @@ const DateTickerInner = memo(function DateTickerInner({
     currentIndex,
     labels,
 }: Omit<DateTickerProps, "visible">) {
-    // Parse labels into month and day parts
+    // Parse labels into month and day parts. Locale-independent: the day is the
+    // token containing digits, the month is the alphabetic token — so both
+    // "Jan 1" (en) and "1 janv." (fr) classify correctly regardless of order.
     const parsedLabels = useMemo(() => {
         return labels.map((label, index) => {
             const parts = label.split(" ");
-            const month = parts[0] || "";
-            const day = parts[1] || "";
+            const day = parts.find((p) => /\d/.test(p)) ?? parts[1] ?? "";
+            const month = parts.find((p) => !/\d/.test(p)) ?? parts[0] ?? "";
             return { month, day, full: label, key: `${label}::${index}` };
         });
     }, [labels]);
@@ -75,6 +77,13 @@ const DateTickerInner = memo(function DateTickerInner({
         return 0;
     }, [currentIndex, parsedLabels.length, monthSegments]);
 
+    // Render order follows the locale: "1 mars" (fr) puts the day first,
+    // "Jan 1" (en) the month. Derived from the first label's leading token.
+    const dayFirst = useMemo(
+        () => /^\s*\d/.test(parsedLabels[0]?.full ?? ""),
+        [parsedLabels]
+    );
+
     // Track previous month index
     const prevMonthIndexRef = useRef(-1);
 
@@ -93,47 +102,45 @@ const DateTickerInner = memo(function DateTickerInner({
         }
     }
 
+    const monthStack = (
+        <div className="relative h-6 overflow-hidden" key="month">
+            <motion.div className="flex flex-col" style={{ y: monthY }}>
+                {monthSegments.map((segment) => (
+                    <div
+                        className="flex h-6 shrink-0 items-center justify-center"
+                        key={segment.key}
+                    >
+                        <span className="whitespace-nowrap font-medium text-sm">
+                            {segment.month}
+                        </span>
+                    </div>
+                ))}
+            </motion.div>
+        </div>
+    );
+
+    const dayStack = (
+        <div className="relative h-6 overflow-hidden" key="day">
+            <motion.div className="flex flex-col" style={{ y: dayY }}>
+                {parsedLabels.map((label) => (
+                    <div
+                        className="flex h-6 shrink-0 items-center justify-center"
+                        key={label.key}
+                    >
+                        <span className="whitespace-nowrap font-medium text-sm">
+                            {label.day}
+                        </span>
+                    </div>
+                ))}
+            </motion.div>
+        </div>
+    );
+
     return (
         <div className="overflow-hidden rounded-full bg-zinc-900 px-4 py-1 text-white shadow-lg dark:bg-zinc-100 dark:text-zinc-900">
             <div className="relative h-6 overflow-hidden">
                 <div className="flex items-center justify-center gap-1">
-                    {/* Month stack */}
-                    <div className="relative h-6 overflow-hidden">
-                        <motion.div
-                            className="flex flex-col"
-                            style={{ y: monthY }}
-                        >
-                            {monthSegments.map((segment) => (
-                                <div
-                                    className="flex h-6 shrink-0 items-center justify-center"
-                                    key={segment.key}
-                                >
-                                    <span className="whitespace-nowrap font-medium text-sm">
-                                        {segment.month}
-                                    </span>
-                                </div>
-                            ))}
-                        </motion.div>
-                    </div>
-
-                    {/* Day stack */}
-                    <div className="relative h-6 overflow-hidden">
-                        <motion.div
-                            className="flex flex-col"
-                            style={{ y: dayY }}
-                        >
-                            {parsedLabels.map((label) => (
-                                <div
-                                    className="flex h-6 shrink-0 items-center justify-center"
-                                    key={label.key}
-                                >
-                                    <span className="whitespace-nowrap font-medium text-sm">
-                                        {label.day}
-                                    </span>
-                                </div>
-                            ))}
-                        </motion.div>
-                    </div>
+                    {dayFirst ? [dayStack, monthStack] : [monthStack, dayStack]}
                 </div>
             </div>
         </div>

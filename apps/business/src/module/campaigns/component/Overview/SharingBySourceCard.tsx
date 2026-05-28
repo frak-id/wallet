@@ -15,6 +15,7 @@ import { Text } from "@frak-labs/design-system/components/Text";
 import { vars } from "@frak-labs/design-system/theme";
 import clsx from "clsx";
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import type { CampaignsOverview } from "@/module/campaigns/queries/queryOptions";
 import * as styles from "./overview.css";
 import * as local from "./sharingBySource.css";
@@ -24,6 +25,23 @@ type Mode = "platform" | "device";
 const palette = {
     platform: [vars.icon.action, vars.icon.success],
     device: [vars.icon.action, vars.icon.success, vars.icon.warning],
+};
+
+// Maps the known data-provided source labels to i18n keys; unknown labels
+// fall through untranslated.
+const sourceLabelKey: Record<
+    string,
+    | "campaigns.overview.sharing.sources.merchantSite"
+    | "campaigns.overview.sharing.sources.walletApp"
+    | "campaigns.overview.sharing.sources.ios"
+    | "campaigns.overview.sharing.sources.android"
+    | "campaigns.overview.sharing.sources.desktop"
+> = {
+    "Merchant Site": "campaigns.overview.sharing.sources.merchantSite",
+    "Wallet App": "campaigns.overview.sharing.sources.walletApp",
+    iOS: "campaigns.overview.sharing.sources.ios",
+    Android: "campaigns.overview.sharing.sources.android",
+    Desktop: "campaigns.overview.sharing.sources.desktop",
 };
 
 function withColors(segments: { label: string; value: number }[], mode: Mode) {
@@ -38,6 +56,7 @@ export function SharingBySourceCard({
 }: {
     sharing: CampaignsOverview["sharing"];
 }) {
+    const { t } = useTranslation();
     const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
 
     return (
@@ -45,11 +64,15 @@ export function SharingBySourceCard({
             <Tabs defaultValue="platform">
                 <Stack space="m">
                     <TabsList>
-                        <TabsTrigger value="platform">Platform</TabsTrigger>
-                        <TabsTrigger value="device">Device</TabsTrigger>
+                        <TabsTrigger value="platform">
+                            {t("campaigns.overview.sharing.platform")}
+                        </TabsTrigger>
+                        <TabsTrigger value="device">
+                            {t("campaigns.overview.sharing.device")}
+                        </TabsTrigger>
                     </TabsList>
                     <Text variant="bodySmall" color="secondary">
-                        Sharing by source
+                        {t("campaigns.overview.sharing.title")}
                     </Text>
                     {(["platform", "device"] as Mode[]).map((mode) => {
                         const segments = withColors(sharing[mode], mode);
@@ -106,7 +129,13 @@ export function SharingBySourceCard({
                                                     as="span"
                                                     variant="caption"
                                                 >
-                                                    {s.label}
+                                                    {sourceLabelKey[s.label]
+                                                        ? t(
+                                                              sourceLabelKey[
+                                                                  s.label
+                                                              ]
+                                                          )
+                                                        : s.label}
                                                 </Text>
                                             </div>
                                         ))}

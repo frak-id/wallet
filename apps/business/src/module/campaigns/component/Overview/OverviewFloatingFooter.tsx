@@ -1,8 +1,10 @@
+import { useTranslation } from "react-i18next";
 import { LinkButton } from "@/module/common/component/LinkButton";
 import { useOptionalActiveMerchantId } from "@/module/common/hook/useActiveMerchantId";
 import * as styles from "./overview.css";
 
 export function OverviewFloatingFooter() {
+    const { t } = useTranslation();
     const merchantId = useOptionalActiveMerchantId();
     if (!merchantId) return null;
     return (
@@ -14,7 +16,7 @@ export function OverviewFloatingFooter() {
                     params={{ merchantId }}
                     size="large"
                 >
-                    View all campaigns
+                    {t("campaigns.overview.footer.viewAll")}
                 </LinkButton>
             </div>
         </div>

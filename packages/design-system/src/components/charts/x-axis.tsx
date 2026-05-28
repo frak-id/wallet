@@ -1,7 +1,7 @@
 import { memo, useEffect, useMemo, useState } from "react";
 import { createPortal } from "react-dom";
 import { useChart, useChartStable } from "./chart-context";
-import { shortDateFmt } from "./chart-formatters";
+import { getShortDateFmt } from "./chart-formatters";
 import { cn } from "./lib/utils";
 
 export interface XAxisProps {
@@ -93,8 +93,9 @@ const XAxisInner = memo(function XAxisInner({
     tickMode = "domain",
     container,
 }: XAxisProps & { container: HTMLDivElement }) {
-    const { xScale, margin, tooltipData, data, xAccessor, dateLabels } =
+    const { xScale, margin, tooltipData, data, xAccessor, dateLabels, locale } =
         useChart();
+    const shortDateFmt = getShortDateFmt(locale);
 
     // Generate tick labels: evenly spaced along the domain, or one per data row
     const labelsToShow = useMemo(() => {
@@ -133,7 +134,16 @@ const XAxisInner = memo(function XAxisInner({
             x: (xScale(date) ?? 0) + margin.left,
             label: shortDateFmt.format(date),
         }));
-    }, [tickMode, data, xAccessor, xScale, margin.left, dateLabels, numTicks]);
+    }, [
+        tickMode,
+        data,
+        xAccessor,
+        xScale,
+        margin.left,
+        dateLabels,
+        numTicks,
+        shortDateFmt,
+    ]);
 
     const isHovering = tooltipData !== null;
     const crosshairX = tooltipData ? tooltipData.x + margin.left : null;

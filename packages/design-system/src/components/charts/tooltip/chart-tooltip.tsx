@@ -8,7 +8,7 @@ import {
     useChart,
     useChartStable,
 } from "../chart-context";
-import { weekdayDateFmt } from "../chart-formatters";
+import { getWeekdayDateFmt } from "../chart-formatters";
 import { DateTicker } from "./date-ticker";
 import { TooltipBox } from "./tooltip-box";
 import { TooltipContent, type TooltipRow } from "./tooltip-content";
@@ -82,6 +82,7 @@ const ChartTooltipInner = memo(function ChartTooltipInner({
         containerRef,
         orientation,
         barXAccessor,
+        locale,
     } = useChart();
 
     const isHorizontal = orientation === "horizontal";
@@ -155,8 +156,8 @@ const ChartTooltipInner = memo(function ChartTooltipInner({
             return barXAccessor(tooltipData.point);
         }
         // For line/area charts, use the date
-        return weekdayDateFmt.format(xAccessor(tooltipData.point));
-    }, [tooltipData, barXAccessor, xAccessor]);
+        return getWeekdayDateFmt(locale).format(xAccessor(tooltipData.point));
+    }, [tooltipData, barXAccessor, xAccessor, locale]);
 
     const tooltipContent = (
         <>
@@ -227,7 +228,11 @@ const ChartTooltipInner = memo(function ChartTooltipInner({
                           index: tooltipData.index,
                       })
                     : !content && (
-                          <TooltipContent rows={tooltipRows} title={title}>
+                          <TooltipContent
+                              locale={locale}
+                              rows={tooltipRows}
+                              title={title}
+                          >
                               {children}
                           </TooltipContent>
                       )}

@@ -70,6 +70,63 @@ export default interface Resources {
                 reset: "Reset filters";
                 tabsLabel: "Filter campaigns by status";
             };
+            overview: {
+                footer: {
+                    viewAll: "View all campaigns";
+                };
+                funnel: {
+                    global: "Global funnel · {{variant}}";
+                    steps: {
+                        converted: "Converted";
+                        linkShared: "Link shared";
+                        referred: "Referred";
+                        shareCtaSeen: "Share CTA seen";
+                        shareInitiated: "Share initiated";
+                    };
+                    walletFrak: "Wallet Frak";
+                    website: "Website";
+                };
+                kpi: {
+                    ambassadors: "Ambassadors";
+                    avgCpa: "Avg. CPA";
+                    descriptorAllCampaigns: "All campaigns";
+                    descriptorTotal: "total";
+                    revenue: "Generated Revenue";
+                    shares: "Shares";
+                    sharingRate: "Sharing rate";
+                };
+                projected: {
+                    actual: "Actual revenue";
+                    forecast: "Forecast revenue";
+                    subtitle: "Based on current growth trend";
+                    title: "Projected revenue";
+                };
+                purchases: {
+                    avgPerMonth: "{{value}}\navg/mo";
+                    title: "Purchases generated";
+                    tooltip: "Purchases";
+                };
+                sharing: {
+                    device: "Device";
+                    platform: "Platform";
+                    sources: {
+                        android: "Android";
+                        desktop: "Desktop";
+                        ios: "iOS";
+                        merchantSite: "Merchant Site";
+                        walletApp: "Wallet App";
+                    };
+                    title: "Sharing by source";
+                };
+                statusLegend: {
+                    title: "Status";
+                };
+                top: {
+                    name: "Campaign name";
+                    rank: "#";
+                    title: "Top campaigns";
+                };
+            };
             rowMenu: {
                 archive: "Archive";
                 ariaActions: "Actions for {{name}}";

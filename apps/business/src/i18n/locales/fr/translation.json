@@ -159,6 +159,63 @@
             "confirmResume": "Voulez-vous vraiment reprendre la campagne <strong>{{name}}</strong> ?",
             "confirmArchive": "Voulez-vous vraiment archiver la campagne <strong>{{name}}</strong> ?",
             "confirmDelete": "Voulez-vous vraiment supprimer la campagne <strong>{{name}}</strong> ?"
+        },
+        "overview": {
+            "kpi": {
+                "ambassadors": "Ambassadeurs",
+                "shares": "Partages",
+                "revenue": "Revenu généré",
+                "sharingRate": "Taux de partage",
+                "avgCpa": "CPA moyen",
+                "descriptorTotal": "total",
+                "descriptorAllCampaigns": "Toutes les campagnes"
+            },
+            "funnel": {
+                "website": "Site web",
+                "walletFrak": "Wallet Frak",
+                "global": "Tunnel global · {{variant}}",
+                "steps": {
+                    "shareCtaSeen": "CTA de partage vu",
+                    "shareInitiated": "Partage initié",
+                    "linkShared": "Lien partagé",
+                    "referred": "Parrainé",
+                    "converted": "Converti"
+                }
+            },
+            "purchases": {
+                "title": "Achats générés",
+                "tooltip": "Achats",
+                "avgPerMonth": "{{value}}\nmoy/mois"
+            },
+            "projected": {
+                "title": "Revenu projeté",
+                "subtitle": "D'après la tendance de croissance actuelle",
+                "actual": "Revenu réel",
+                "forecast": "Revenu prévisionnel"
+            },
+            "sharing": {
+                "platform": "Plateforme",
+                "device": "Appareil",
+                "title": "Partages par source",
+                "sources": {
+                    "merchantSite": "Site marchand",
+                    "walletApp": "App Wallet",
+                    "ios": "iOS",
+                    "android": "Android",
+                    "desktop": "Ordinateur"
+                }
+            },
+            "top": {
+                "rank": "#",
+                "name": "Nom de la campagne",
+                "title": "Meilleures campagnes"
+            },
+            "statusLegend": {
+                "title": "Statut"
+            },
+            "footer": {
+                "viewAll": "Voir toutes les campagnes"
+            }
         }
     },
     "common": {

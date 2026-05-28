@@ -3,6 +3,7 @@ import { Stack } from "@frak-labs/design-system/components/Stack";
 import { Text } from "@frak-labs/design-system/components/Text";
 import { type ColumnDef, createColumnHelper } from "@tanstack/react-table";
 import { useMemo } from "react";
+import { useTranslation } from "react-i18next";
 import type { CampaignsOverview } from "@/module/campaigns/queries/queryOptions";
 import { Table } from "@/module/common/component/Table";
 import * as styles from "./overview.css";
@@ -22,11 +23,17 @@ const badgeVariantForStatus: Record<
     draft: "neutral",
 };
 
-const statusLabel: Record<TopCampaign["status"], string> = {
-    active: "Active",
-    paused: "Paused",
-    ended: "Ended",
-    draft: "Draft",
+const statusLabelKey: Record<
+    string,
+    | "campaigns.status.active"
+    | "campaigns.status.paused"
+    | "campaigns.status.ended"
+    | "campaigns.status.draft"
+> = {
+    active: "campaigns.status.active",
+    paused: "campaigns.status.paused",
+    ended: "campaigns.status.ended",
+    draft: "campaigns.status.draft",
 };
 
 export function TopCampaignsCard({
@@ -36,21 +43,22 @@ export function TopCampaignsCard({
     topCampaigns: CampaignsOverview["topCampaigns"];
     statusBreakdown: CampaignsOverview["statusBreakdown"];
 }) {
+    const { t } = useTranslation();
     const columns = useMemo(
         () =>
             [
                 columnHelper.display({
                     id: "rank",
                     size: 40,
-                    header: "#",
+                    header: t("campaigns.overview.top.rank"),
                     cell: ({ row }) => `0${row.index + 1}`.slice(-2),
                 }),
                 columnHelper.accessor("name", {
-                    header: "Campaign name",
+                    header: t("campaigns.overview.top.name"),
                     cell: ({ getValue }) => getValue(),
                 }),
                 columnHelper.accessor("status", {
-                    header: "Status",
+                    header: t("campaigns.table.status"),
                     size: 140,
                     cell: ({ getValue }) => {
                         const status = getValue();
@@ -59,13 +67,16 @@ export function TopCampaignsCard({
                                 variant={badgeVariantForStatus[status]}
                                 size="small"
                             >
-                                {statusLabel[status]}
+                                {t(
+                                    statusLabelKey[status] ??
+                                        "campaigns.status.unknown"
+                                )}
                             </Badge>
                         );
                     },
                 }),
                 columnHelper.accessor("sharingRate", {
-                    header: () => "Sharing rate",
+                    header: () => t("campaigns.table.sharingRate"),
                     size: 140,
                     cell: ({ getValue }) => (
                         <Text
@@ -80,13 +91,13 @@ export function TopCampaignsCard({
                     meta: { align: "right" },
                 }),
             ] as ColumnDef<TopCampaign>[],
-        []
+        [t]
     );
 
     return (
         <Stack space="m" className={styles.card}>
             <Text as="h2" variant="bodySmall" color="secondary">
-                Top campaigns
+                {t("campaigns.overview.top.title")}
             </Text>
             <Table
                 data={topCampaigns}

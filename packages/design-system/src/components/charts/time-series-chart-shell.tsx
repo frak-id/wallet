@@ -16,7 +16,7 @@ import {
 import { DEFAULT_ANIMATION_EASING } from "./animation";
 import { ChartProvider, type LineConfig, type Margin } from "./chart-context";
 import { isGradientDefComponent, isPatternDefComponent } from "./chart-defs";
-import { shortDateFmt } from "./chart-formatters";
+import { getShortDateFmt } from "./chart-formatters";
 import { ChartRevealClip } from "./chart-reveal-clip";
 import {
     decimateTimeSeries,
@@ -130,6 +130,8 @@ export interface TimeSeriesChartInnerProps {
     composedStackGap?: number;
     /** When set, drives the y-axis max instead of scanning `lines` (e.g. stacked bar totals). */
     yScaleDomainMax?: number;
+    /** BCP-47 locale for date axis/tooltip formatting. Default "en-US". */
+    locale?: string;
 }
 
 export function TimeSeriesChartInner(props: TimeSeriesChartInnerProps) {
@@ -162,6 +164,7 @@ const TimeSeriesChartCore = memo(function TimeSeriesChartCore({
     composedStackOffsets,
     composedStackGap,
     yScaleDomainMax,
+    locale = "en-US",
 }: TimeSeriesChartInnerProps) {
     const [isLoaded, setIsLoaded] = useState(false);
     const [revealEpoch, setRevealEpoch] = useState(0);
@@ -226,10 +229,10 @@ const TimeSeriesChartCore = memo(function TimeSeriesChartCore({
         });
     }, [innerHeight, data, lines, yScaleDomainMax]);
 
-    const dateLabels = useMemo(
-        () => data.map((d) => shortDateFmt.format(xAccessor(d))),
-        [data, xAccessor]
-    );
+    const dateLabels = useMemo(() => {
+        const fmt = getShortDateFmt(locale);
+        return data.map((d) => fmt.format(xAccessor(d)));
+    }, [data, xAccessor, locale]);
 
     // biome-ignore lint/correctness/useExhaustiveDependencies: revealSignature
     useEffect(() => {
@@ -307,6 +310,7 @@ const TimeSeriesChartCore = memo(function TimeSeriesChartCore({
             revealEpoch,
             xAccessor,
             dateLabels,
+            locale,
             selection,
             clearSelection,
             composedBarDataKeys,
@@ -339,6 +343,7 @@ const TimeSeriesChartCore = memo(function TimeSeriesChartCore({
             revealEpoch,
             xAccessor,
             dateLabels,
+            locale,
             selection,
             clearSelection,
             composedBarDataKeys,

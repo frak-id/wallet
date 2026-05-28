@@ -7,14 +7,27 @@ import {
     TabsTrigger,
 } from "@frak-labs/design-system/components/Tabs";
 import { Text } from "@frak-labs/design-system/components/Text";
+import { useTranslation } from "react-i18next";
 import type { CampaignsOverview } from "@/module/campaigns/queries/queryOptions";
 import * as styles from "./overview.css";
 
 type Variant = "website" | "wallet";
 
-const labels: Record<Variant, string> = {
-    website: "Website",
-    wallet: "Wallet Frak",
+// Maps the known data-provided funnel-stage labels to i18n keys; unknown
+// labels fall through untranslated.
+const stepLabelKey: Record<
+    string,
+    | "campaigns.overview.funnel.steps.shareCtaSeen"
+    | "campaigns.overview.funnel.steps.shareInitiated"
+    | "campaigns.overview.funnel.steps.linkShared"
+    | "campaigns.overview.funnel.steps.referred"
+    | "campaigns.overview.funnel.steps.converted"
+> = {
+    "Share CTA seen": "campaigns.overview.funnel.steps.shareCtaSeen",
+    "Share initiated": "campaigns.overview.funnel.steps.shareInitiated",
+    "Link shared": "campaigns.overview.funnel.steps.linkShared",
+    Referred: "campaigns.overview.funnel.steps.referred",
+    Converted: "campaigns.overview.funnel.steps.converted",
 };
 
 export function FunnelCard({
@@ -22,6 +35,18 @@ export function FunnelCard({
 }: {
     funnels: CampaignsOverview["funnels"];
 }) {
+    const { t } = useTranslation();
+    const labels: Record<Variant, string> = {
+        website: t("campaigns.overview.funnel.website"),
+        wallet: t("campaigns.overview.funnel.walletFrak"),
+    };
+
+    const localizeSteps = (steps: CampaignsOverview["funnels"][Variant]) =>
+        steps.map((step) => {
+            const key = stepLabelKey[step.label];
+            return key ? { ...step, label: t(key) } : step;
+        });
+
     return (
         <div className={styles.card}>
             <Tabs defaultValue="website">
@@ -38,9 +63,13 @@ export function FunnelCard({
                         <TabsContent key={variant} value={variant}>
                             <Stack space="m">
                                 <Text variant="bodySmall" color="secondary">
-                                    Global funnel · {labels[variant]}
+                                    {t("campaigns.overview.funnel.global", {
+                                        variant: labels[variant],
+                                    })}
                                 </Text>
-                                <FunnelChart steps={funnels[variant]} />
+                                <FunnelChart
+                                    steps={localizeSteps(funnels[variant])}
+                                />
                             </Stack>
                         </TabsContent>
                     ))}

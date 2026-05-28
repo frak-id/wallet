@@ -2,6 +2,7 @@ import { Inline } from "@frak-labs/design-system/components/Inline";
 import { Stack } from "@frak-labs/design-system/components/Stack";
 import { Text } from "@frak-labs/design-system/components/Text";
 import { vars } from "@frak-labs/design-system/theme";
+import { useTranslation } from "react-i18next";
 import type { CampaignsOverview } from "@/module/campaigns/queries/queryOptions";
 import * as styles from "./statusLegendBar.css";
 
@@ -20,25 +21,18 @@ const statusColor: Record<keyof CampaignsOverview["statusBreakdown"], string> =
         ended: vars.icon.secondary,
     };
 
-const statusLabel: Record<keyof CampaignsOverview["statusBreakdown"], string> =
-    {
-        active: "active",
-        paused: "paused",
-        draft: "draft",
-        ended: "ended",
-    };
-
 export function StatusLegendBar({
     breakdown,
 }: {
     breakdown: CampaignsOverview["statusBreakdown"];
 }) {
+    const { t } = useTranslation();
     const total = statusOrder.reduce((acc, k) => acc + breakdown[k], 0) || 1;
 
     return (
         <Stack space="s">
             <Text as="span" variant="bodySmall" color="secondary">
-                Status
+                {t("campaigns.overview.statusLegend.title")}
             </Text>
             <div className={styles.bar}>
                 {statusOrder.map((key) =>
@@ -62,7 +56,7 @@ export function StatusLegendBar({
                             style={{ backgroundColor: statusColor[key] }}
                         />
                         <Text as="span" variant="caption">
-                            {breakdown[key]} {statusLabel[key]}
+                            {breakdown[key]} {t(`campaigns.status.${key}`)}
                         </Text>
                     </Inline>
                 ))}

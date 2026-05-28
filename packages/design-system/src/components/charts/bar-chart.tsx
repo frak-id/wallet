@@ -58,6 +58,8 @@ export interface BarChartProps {
     stacked?: boolean;
     /** Gap between stacked bar segments in pixels. Default: 0 */
     stackGap?: number;
+    /** BCP-47 locale for date/number formatting in axis & tooltip. Default "en-US". */
+    locale?: string;
     /** Child components (Bar, Grid, ChartTooltip, etc.) */
     children: ReactNode;
 }
@@ -140,6 +142,7 @@ interface ChartInnerProps {
     orientation: BarOrientation;
     stacked: boolean;
     stackGap: number;
+    locale: string;
     children: ReactNode;
     containerRef: React.RefObject<HTMLDivElement | null>;
 }
@@ -167,6 +170,7 @@ const ChartCore = memo(function ChartCore({
     orientation,
     stacked,
     stackGap,
+    locale,
     children,
     containerRef,
 }: ChartInnerProps) {
@@ -520,6 +524,7 @@ const ChartCore = memo(function ChartCore({
         revealEpoch,
         xAccessor: xAccessorDate,
         dateLabels,
+        locale,
         // Bar-specific properties
         barScale: categoryScale,
         bandWidth,
@@ -585,6 +590,7 @@ export function BarChart({
     orientation = "vertical",
     stacked = false,
     stackGap = 0,
+    locale = "en-US",
     children,
 }: BarChartProps) {
     const containerRef = useRef<HTMLDivElement>(null);
@@ -607,6 +613,7 @@ export function BarChart({
                         data={data}
                         enterTransition={enterTransition}
                         height={height}
+                        locale={locale}
                         margin={margin}
                         orientation={orientation}
                         revealSignature={revealSignature}

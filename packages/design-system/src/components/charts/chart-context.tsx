@@ -149,6 +149,9 @@ export interface ChartContextValue extends ChartHoverContextValue {
     // Pre-computed date labels for ticker animation
     dateLabels: string[];
 
+    /** BCP-47 locale for date/number formatting in axes & tooltip. Default "en-US". */
+    locale: string;
+
     // Bar chart specific (optional - only present in BarChart)
     /** Band scale for categorical x-axis (bar charts) */
     barScale?: ScaleBand<string>;
@@ -227,6 +230,7 @@ export function ChartProvider({
             revealEpoch: value.revealEpoch,
             xAccessor: value.xAccessor,
             dateLabels: value.dateLabels,
+            locale: value.locale,
             barScale: value.barScale,
             bandWidth: value.bandWidth,
             barXAccessor: value.barXAccessor,
@@ -261,6 +265,7 @@ export function ChartProvider({
             value.revealEpoch,
             value.xAccessor,
             value.dateLabels,
+            value.locale,
             value.barScale,
             value.bandWidth,
             value.barXAccessor,

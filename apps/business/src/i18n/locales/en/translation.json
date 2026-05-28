@@ -159,6 +159,63 @@
             "confirmResume": "Are you sure you want to resume the campaign <strong>{{name}}</strong>?",
             "confirmArchive": "Are you sure you want to archive the campaign <strong>{{name}}</strong>?",
             "confirmDelete": "Are you sure you want to delete the campaign <strong>{{name}}</strong>?"
+        },
+        "overview": {
+            "kpi": {
+                "ambassadors": "Ambassadors",
+                "shares": "Shares",
+                "revenue": "Generated Revenue",
+                "sharingRate": "Sharing rate",
+                "avgCpa": "Avg. CPA",
+                "descriptorTotal": "total",
+                "descriptorAllCampaigns": "All campaigns"
+            },
+            "funnel": {
+                "website": "Website",
+                "walletFrak": "Wallet Frak",
+                "global": "Global funnel · {{variant}}",
+                "steps": {
+                    "shareCtaSeen": "Share CTA seen",
+                    "shareInitiated": "Share initiated",
+                    "linkShared": "Link shared",
+                    "referred": "Referred",
+                    "converted": "Converted"
+                }
+            },
+            "purchases": {
+                "title": "Purchases generated",
+                "tooltip": "Purchases",
+                "avgPerMonth": "{{value}}\navg/mo"
+            },
+            "projected": {
+                "title": "Projected revenue",
+                "subtitle": "Based on current growth trend",
+                "actual": "Actual revenue",
+                "forecast": "Forecast revenue"
+            },
+            "sharing": {
+                "platform": "Platform",
+                "device": "Device",
+                "title": "Sharing by source",
+                "sources": {
+                    "merchantSite": "Merchant Site",
+                    "walletApp": "Wallet App",
+                    "ios": "iOS",
+                    "android": "Android",
+                    "desktop": "Desktop"
+                }
+            },
+            "top": {
+                "rank": "#",
+                "name": "Campaign name",
+                "title": "Top campaigns"
+            },
+            "statusLegend": {
+                "title": "Status"
+            },
+            "footer": {
+                "viewAll": "View all campaigns"
+            }
         }
     },
     "common": {

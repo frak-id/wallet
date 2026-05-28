@@ -32,6 +32,8 @@ export interface AreaChartProps {
     aspectRatio?: string;
     /** Additional class name for the container */
     className?: string;
+    /** BCP-47 locale for date axis/tooltip formatting. Default "en-US". */
+    locale?: string;
     /** Child components (Area, Grid, ChartTooltip, etc.) */
     children: ReactNode;
 }
@@ -91,6 +93,7 @@ interface ChartInnerProps {
     revealSignature?: string;
     children: ReactNode;
     containerRef: React.RefObject<HTMLDivElement | null>;
+    locale?: string;
 }
 
 function ChartInner({
@@ -105,6 +108,7 @@ function ChartInner({
     revealSignature,
     children,
     containerRef,
+    locale,
 }: ChartInnerProps) {
     const lines = useMemo(() => extractAreaConfigs(children), [children]);
 
@@ -118,6 +122,7 @@ function ChartInner({
             enterTransition={enterTransition}
             height={height}
             lines={lines}
+            locale={locale}
             margin={margin}
             revealSignature={revealSignature}
             width={width}
@@ -138,6 +143,7 @@ export function AreaChart({
     revealSignature,
     aspectRatio = "2 / 1",
     className = "",
+    locale,
     children,
 }: AreaChartProps) {
     const containerRef = useRef<HTMLDivElement>(null);
@@ -158,6 +164,7 @@ export function AreaChart({
                         data={data}
                         enterTransition={enterTransition}
                         height={height}
+                        locale={locale}
                         margin={margin}
                         revealSignature={revealSignature}
                         width={width}

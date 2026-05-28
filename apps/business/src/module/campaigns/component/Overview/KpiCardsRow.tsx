@@ -5,7 +5,7 @@ import { OverviewKpiCard } from "./OverviewKpiCard";
 import * as styles from "./overview.css";
 
 export function KpiCardsRow({ kpis }: { kpis: CampaignsOverview["kpis"] }) {
-    const { i18n } = useTranslation();
+    const { t, i18n } = useTranslation();
     const locale = i18n.language;
 
     const { integerFormatter, currencyFormatter, percentFormatter } = useMemo(
@@ -35,32 +35,32 @@ export function KpiCardsRow({ kpis }: { kpis: CampaignsOverview["kpis"] }) {
     return (
         <div className={styles.kpiRow}>
             <OverviewKpiCard
-                label="Ambassadors"
-                descriptor="total"
+                label={t("campaigns.overview.kpi.ambassadors")}
+                descriptor={t("campaigns.overview.kpi.descriptorTotal")}
                 amount={integerFormatter.format(kpis.ambassadors.value)}
                 delta={kpis.ambassadors.delta}
             />
             <OverviewKpiCard
-                label="Shares"
-                descriptor="total"
+                label={t("campaigns.overview.kpi.shares")}
+                descriptor={t("campaigns.overview.kpi.descriptorTotal")}
                 amount={integerFormatter.format(kpis.shares.value)}
                 delta={kpis.shares.delta}
             />
             <OverviewKpiCard
-                label="Generated Revenue"
-                descriptor="total"
+                label={t("campaigns.overview.kpi.revenue")}
+                descriptor={t("campaigns.overview.kpi.descriptorTotal")}
                 amount={formatRevenue(kpis.revenue.value)}
                 delta={kpis.revenue.delta}
             />
             <OverviewKpiCard
-                label="Sharing rate"
-                descriptor="total"
+                label={t("campaigns.overview.kpi.sharingRate")}
+                descriptor={t("campaigns.overview.kpi.descriptorTotal")}
                 amount={percentFormatter.format(kpis.sharingRate.value)}
                 delta={kpis.sharingRate.delta}
             />
             <OverviewKpiCard
-                label="Avg. CPA"
-                descriptor="All campaigns"
+                label={t("campaigns.overview.kpi.avgCpa")}
+                descriptor={t("campaigns.overview.kpi.descriptorAllCampaigns")}
                 amount={currencyFormatter.format(kpis.avgCpa.value)}
             />
         </div>
