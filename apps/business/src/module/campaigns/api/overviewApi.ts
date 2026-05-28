@@ -12,8 +12,7 @@ export function getOverviewSummaryMock(): OverviewSummaryResponse {
         topCampaigns:
             campaignsOverviewMock.topCampaigns as OverviewSummaryResponse["topCampaigns"],
         statusBreakdown: campaignsOverviewMock.statusBreakdown,
-        purchases: campaignsOverviewMock.purchases,
-        projectedRevenue: campaignsOverviewMock.projectedRevenue,
+        series: campaignsOverviewMock.series as OverviewSummaryResponse["series"],
     };
 }
 

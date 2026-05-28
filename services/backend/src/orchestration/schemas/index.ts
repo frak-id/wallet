@@ -1,4 +1,5 @@
 export {
+    type NumericKpi,
     type OverviewAnalyticsResponse,
     OverviewAnalyticsResponseSchema,
     type OverviewCampaignStatus,
@@ -6,12 +7,13 @@ export {
     type OverviewFunnelStep,
     type OverviewFunnels,
     OverviewFunnelsSchema,
+    type OverviewGranularity,
+    OverviewGranularitySchema,
     type OverviewKpis,
     OverviewKpisSchema,
-    type OverviewProjectedRevenue,
-    OverviewProjectedRevenueSchema,
-    type OverviewPurchases,
-    OverviewPurchasesSchema,
+    type OverviewSeries,
+    type OverviewSeriesBucket,
+    OverviewSeriesSchema,
     type OverviewSharing,
     type OverviewSharingBucket,
     OverviewSharingSchema,
@@ -23,6 +25,7 @@ export {
     OverviewTopCampaignSchema,
     type OverviewWindowQuery,
     OverviewWindowQuerySchema,
+    type RevenueKpi,
 } from "./campaignOverviewSchemas";
 export {
     type CampaignStatsItem,

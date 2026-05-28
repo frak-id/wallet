@@ -3,27 +3,46 @@ import type { Static } from "elysia";
 
 /**
  * Schemas for the campaigns overview dashboard endpoint
- * (`GET /business/merchant/:merchantId/campaigns/overview/summary`).
+ * (`GET /business/merchant/:merchantId/campaigns/overview/summary` and
+ * `.../overview/analytics`).
  *
- * The shape mirrors `apps/business/src/mock/campaignsOverview.json` so the
- * frontend cards can switch from mock to real data without touching their
- * rendering code. Sections sourced from Postgres only live here; funnels +
- * sharing breakdowns will land in a sibling `OverviewAnalyticsSchema` once
- * the OpenPanel integration ships (see `docs/campaigns-overview-endpoint.md`).
+ * Contract is intentionally raw-numbers + ISO-dates. The business
+ * dashboard derives:
+ *   - deltas (`(current - previous) / previous`)
+ *   - sharing rate, avg CPA (ratios of KPIs)
+ *   - localised currency / date labels (`Intl.NumberFormat`,
+ *     `Intl.DateTimeFormat`)
+ *   - revenue forecast (linear extrapolation in the chart)
+ * Keeping these on the client lets us i18n correctly, drop precision-loss
+ * rounding, and keep the response cacheable (no `now()`-dependent fields).
  */
 
-const KpiValueSchema = t.Object({
-    value: t.Number(),
-    delta: t.Optional(t.Number()),
+/** Window-comparable scalar KPI (counts, USD amounts). */
+const NumericKpiSchema = t.Object({
+    current: t.Number(),
+    previous: t.Number(),
 });
-export type KpiValue = Static<typeof KpiValueSchema>;
+export type NumericKpi = Static<typeof NumericKpiSchema>;
+
+/**
+ * Revenue KPI carries the merchant's purchase currency so the frontend
+ * can format with `Intl.NumberFormat`. `currency` is the modal currency
+ * code observed in the current window's purchases (or `null` when the
+ * window has no purchases — frontend falls back to merchant settings).
+ */
+const RevenueKpiSchema = t.Object({
+    current: t.Number(),
+    previous: t.Number(),
+    currency: t.Union([t.String(), t.Null()]),
+});
+export type RevenueKpi = Static<typeof RevenueKpiSchema>;
 
 export const OverviewKpisSchema = t.Object({
-    ambassadors: KpiValueSchema,
-    shares: KpiValueSchema,
-    revenue: KpiValueSchema,
-    sharingRate: KpiValueSchema,
-    avgCpa: KpiValueSchema,
+    ambassadors: NumericKpiSchema,
+    shares: NumericKpiSchema,
+    revenue: RevenueKpiSchema,
+    totalRewardsUsd: NumericKpiSchema,
+    purchaseCount: NumericKpiSchema,
 });
 export type OverviewKpis = Static<typeof OverviewKpisSchema>;
 
@@ -60,38 +79,36 @@ export type OverviewStatusBreakdown = Static<
     typeof OverviewStatusBreakdownSchema
 >;
 
-export const OverviewPurchasesSchema = t.Object({
-    total: t.Number(),
-    avgPerMonth: t.Number(),
-    series: t.Array(
-        t.Object({
-            label: t.String(),
-            value: t.Number(),
-        })
-    ),
-});
-export type OverviewPurchases = Static<typeof OverviewPurchasesSchema>;
+/** Bucketing granularity — backend picks day vs month from window width. */
+export const OverviewGranularitySchema = t.Union([
+    t.Literal("day"),
+    t.Literal("month"),
+]);
+export type OverviewGranularity = Static<typeof OverviewGranularitySchema>;
 
-export const OverviewProjectedRevenueSchema = t.Object({
-    total: t.Number(),
-    series: t.Array(
-        t.Object({
-            label: t.String(),
-            actual: t.Optional(t.Number()),
-            forecast: t.Optional(t.Number()),
-        })
-    ),
+/**
+ * One bucket on the purchases/revenue time series. `bucket` is the
+ * UTC-truncated boundary as an ISO 8601 string — frontend formats with
+ * `Intl.DateTimeFormat(locale)` and projects forecasts from `revenue`.
+ */
+const OverviewSeriesBucketSchema = t.Object({
+    bucket: t.String({ format: "date-time" }),
+    purchaseCount: t.Number(),
+    revenue: t.Number(),
 });
-export type OverviewProjectedRevenue = Static<
-    typeof OverviewProjectedRevenueSchema
->;
+export type OverviewSeriesBucket = Static<typeof OverviewSeriesBucketSchema>;
+
+export const OverviewSeriesSchema = t.Object({
+    granularity: OverviewGranularitySchema,
+    buckets: t.Array(OverviewSeriesBucketSchema),
+});
+export type OverviewSeries = Static<typeof OverviewSeriesSchema>;
 
 export const OverviewSummaryResponseSchema = t.Object({
     kpis: OverviewKpisSchema,
     topCampaigns: t.Array(OverviewTopCampaignSchema),
     statusBreakdown: OverviewStatusBreakdownSchema,
-    purchases: OverviewPurchasesSchema,
-    projectedRevenue: OverviewProjectedRevenueSchema,
+    series: OverviewSeriesSchema,
 });
 export type OverviewSummaryResponse = Static<
     typeof OverviewSummaryResponseSchema

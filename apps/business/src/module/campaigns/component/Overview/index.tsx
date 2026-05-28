@@ -41,9 +41,10 @@ export function CampaignsOverview({ from, to }: WindowProps) {
                     />
                 </div>
                 <div className={styles.threeColumns}>
-                    <PurchasesCard purchases={summary.purchases} />
+                    <PurchasesCard series={summary.series} />
                     <ProjectedRevenueCard
-                        projectedRevenue={summary.projectedRevenue}
+                        series={summary.series}
+                        revenue={summary.kpis.revenue}
                     />
                     <Suspense fallback={<SharingBySourceSkeleton />}>
                         <AnalyticsSharingCard from={from} to={to} />

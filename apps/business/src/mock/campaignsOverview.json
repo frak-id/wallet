@@ -1,10 +1,10 @@
 {
     "kpis": {
-        "ambassadors": { "value": 14446, "delta": 12 },
-        "shares": { "value": 7210, "delta": 8 },
-        "revenue": { "value": 286000, "delta": 5 },
-        "sharingRate": { "value": 0.493, "delta": -2 },
-        "avgCpa": { "value": 12.4 }
+        "ambassadors": { "current": 14446, "previous": 12898 },
+        "shares": { "current": 7210, "previous": 6676 },
+        "revenue": { "current": 286000, "previous": 272381, "currency": "EUR" },
+        "totalRewardsUsd": { "current": 297.6, "previous": 280 },
+        "purchaseCount": { "current": 24, "previous": 22 }
     },
     "funnels": {
         "website": [
@@ -55,28 +55,39 @@
         "draft": 1,
         "ended": 1
     },
-    "purchases": {
-        "total": 12100,
-        "avgPerMonth": 2100,
-        "series": [
-            { "label": "Jan", "value": 3500 },
-            { "label": "Feb", "value": 2200 },
-            { "label": "Mar", "value": 4500 },
-            { "label": "Apr", "value": 1200 },
-            { "label": "May", "value": 1700 },
-            { "label": "Jun", "value": 3000 }
-        ]
-    },
-    "projectedRevenue": {
-        "total": 54200,
-        "series": [
-            { "label": "Jan", "actual": 5000 },
-            { "label": "Feb", "actual": 8000 },
-            { "label": "Mar", "actual": 12000 },
-            { "label": "Apr", "actual": 14000 },
-            { "label": "May", "actual": 13500 },
-            { "label": "Jun", "actual": 14200, "forecast": 14200 },
-            { "label": "Jul", "forecast": 15000 }
+    "series": {
+        "granularity": "month",
+        "buckets": [
+            {
+                "bucket": "2025-01-01T00:00:00.000Z",
+                "purchaseCount": 3500,
+                "revenue": 5000
+            },
+            {
+                "bucket": "2025-02-01T00:00:00.000Z",
+                "purchaseCount": 2200,
+                "revenue": 8000
+            },
+            {
+                "bucket": "2025-03-01T00:00:00.000Z",
+                "purchaseCount": 4500,
+                "revenue": 12000
+            },
+            {
+                "bucket": "2025-04-01T00:00:00.000Z",
+                "purchaseCount": 1200,
+                "revenue": 14000
+            },
+            {
+                "bucket": "2025-05-01T00:00:00.000Z",
+                "purchaseCount": 1700,
+                "revenue": 13500
+            },
+            {
+                "bucket": "2025-06-01T00:00:00.000Z",
+                "purchaseCount": 3000,
+                "revenue": 14200
+            }
         ]
     },
     "sharing": {

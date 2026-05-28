@@ -2,8 +2,6 @@ import {
     and,
     asc,
     between,
-    count,
-    countDistinct,
     eq,
     inArray,
     isNull,
@@ -24,9 +22,9 @@ import {
 import { db } from "../infrastructure/persistence/postgres";
 import type { PricingRepository } from "../infrastructure/pricing/PricingRepository";
 import type {
+    OverviewGranularity,
     OverviewKpis,
-    OverviewProjectedRevenue,
-    OverviewPurchases,
+    OverviewSeries,
     OverviewStatusBreakdown,
     OverviewSummaryResponse,
     OverviewTopCampaign,
@@ -38,34 +36,52 @@ const DEFAULT_WINDOW_DAYS = 30;
 const TOP_CAMPAIGNS_LIMIT = 10;
 /** Switch from daily to monthly bucketing once the window spans this many days. */
 const MONTHLY_BUCKET_THRESHOLD_DAYS = 60;
-const MAX_BUCKETS = 12;
-const FORECAST_BUCKETS = 2;
-const FORECAST_LOOKBACK = 3;
 
 type DateRange = { from: Date; to: Date };
 type ResolvedWindow = { current: DateRange; previous: DateRange };
-
 type TokenPriceMap = Map<string, number>;
 
-type KpiAggregates = {
-    ambassadors: number;
-    shares: number;
-    revenue: number;
-    purchaseInteractions: number;
-    totalRewardsUsd: number;
+type AssetKpiRow = {
+    ambassadorsCurrent: string;
+    ambassadorsPrevious: string;
+    rewardsUsdCurrent: string;
+    rewardsUsdPrevious: string;
+    purchaseInteractionsCurrent: string;
+    purchaseInteractionsPrevious: string;
 };
 
-type PurchasesBucketRow = { bucket: Date; value: number };
-type RevenueBucketRow = { bucket: Date; value: string };
+type SharesKpiRow = {
+    sharesCurrent: string;
+    sharesPrevious: string;
+};
+
+type PurchaseKpiRow = {
+    revenueCurrent: string;
+    revenuePrevious: string;
+    purchaseCountCurrent: string;
+    purchaseCountPrevious: string;
+    currency: string | null;
+};
+
+type SeriesRow = {
+    bucket: Date;
+    purchaseCount: string;
+    revenue: string;
+};
 
 /**
  * Aggregates the "campaigns overview" dashboard summary from Postgres only.
  * OpenPanel-backed funnels and sharing breakdowns are handled by a sibling
- * `CampaignAnalyticsOrchestrator` (Phase 3).
+ * `CampaignAnalyticsOrchestrator`.
  *
- * All KPIs are scoped to a date window (defaulting to a trailing 30 days);
- * deltas are computed against the same-length window immediately preceding
- * the current one.
+ * Window contract:
+ *   - KPIs return `{ current, previous }` for both halves of the comparison.
+ *     The previous window is the same-length range ending immediately
+ *     before `current.from`. Both halves are computed in a single SQL
+ *     scan per source table using `FILTER (WHERE …)` aggregates.
+ *   - Series buckets are emitted as raw `{ bucket: ISO, purchaseCount,
+ *     revenue }` triples. Labels, forecasting and currency formatting are
+ *     a frontend concern (i18n + locale-aware).
  */
 export class CampaignOverviewOrchestrator {
     constructor(private readonly pricingRepository: PricingRepository) {}
@@ -76,174 +92,134 @@ export class CampaignOverviewOrchestrator {
     ): Promise<OverviewSummaryResponse> {
         const resolved = resolveWindow(window);
 
-        // Token prices are reused across the KPI + projected-revenue queries
-        // — fetch them once and pass the SQL expression down.
         const tokenPrices = await this.getTokenPricesForMerchant(merchantId);
         const usdRewardsExpr = buildUsdRewardsExpression(tokenPrices);
 
-        const [kpis, topAndStatus, purchases, projectedRevenue] =
-            await Promise.all([
-                this.getKpis(merchantId, resolved, usdRewardsExpr),
-                this.getTopCampaignsAndStatusBreakdown(
-                    merchantId,
-                    resolved.current
-                ),
-                this.getPurchases(merchantId, resolved.current),
-                this.getProjectedRevenue(merchantId, resolved.current),
-            ]);
+        const [kpis, topAndStatus, series] = await Promise.all([
+            this.getKpis(merchantId, resolved, usdRewardsExpr),
+            this.getTopCampaignsAndStatusBreakdown(
+                merchantId,
+                resolved.current
+            ),
+            this.getSeries(merchantId, resolved.current),
+        ]);
 
         return {
             kpis,
             topCampaigns: topAndStatus.topCampaigns,
             statusBreakdown: topAndStatus.statusBreakdown,
-            purchases,
-            projectedRevenue,
+            series,
         };
     }
 
+    /**
+     * Three SQL scans (asset_logs, interaction_logs, purchases) each
+     * computing current + previous via `FILTER (WHERE …)` aggregates so
+     * we read each source table exactly once.
+     */
     private async getKpis(
         merchantId: string,
         resolved: ResolvedWindow,
         usdRewardsExpr: SQL
     ): Promise<OverviewKpis> {
-        const [current, previous] = await Promise.all([
-            this.aggregateKpis(merchantId, resolved.current, usdRewardsExpr),
-            this.aggregateKpis(merchantId, resolved.previous, usdRewardsExpr),
+        const { current, previous } = resolved;
+        const outerFrom = previous.from;
+        const outerTo = current.to;
+
+        const [assetRows, sharesRows, purchaseRows] = await Promise.all([
+            db
+                .select({
+                    ambassadorsCurrent: sql<string>`COUNT(DISTINCT ${assetLogsTable.identityGroupId}) FILTER (WHERE ${assetLogsTable.recipientType} = 'referrer' AND ${assetLogsTable.createdAt} BETWEEN ${current.from} AND ${current.to})`,
+                    ambassadorsPrevious: sql<string>`COUNT(DISTINCT ${assetLogsTable.identityGroupId}) FILTER (WHERE ${assetLogsTable.recipientType} = 'referrer' AND ${assetLogsTable.createdAt} BETWEEN ${previous.from} AND ${previous.to})`,
+                    rewardsUsdCurrent: sql<string>`COALESCE(SUM(${usdRewardsExpr}) FILTER (WHERE ${assetLogsTable.createdAt} BETWEEN ${current.from} AND ${current.to}), 0)`,
+                    rewardsUsdPrevious: sql<string>`COALESCE(SUM(${usdRewardsExpr}) FILTER (WHERE ${assetLogsTable.createdAt} BETWEEN ${previous.from} AND ${previous.to}), 0)`,
+                    purchaseInteractionsCurrent: sql<string>`COUNT(DISTINCT ${interactionLogsTable.id}) FILTER (WHERE ${interactionLogsTable.type} = 'purchase' AND ${assetLogsTable.createdAt} BETWEEN ${current.from} AND ${current.to})`,
+                    purchaseInteractionsPrevious: sql<string>`COUNT(DISTINCT ${interactionLogsTable.id}) FILTER (WHERE ${interactionLogsTable.type} = 'purchase' AND ${assetLogsTable.createdAt} BETWEEN ${previous.from} AND ${previous.to})`,
+                })
+                .from(assetLogsTable)
+                .leftJoin(
+                    interactionLogsTable,
+                    eq(assetLogsTable.interactionLogId, interactionLogsTable.id)
+                )
+                .where(
+                    and(
+                        eq(assetLogsTable.merchantId, merchantId),
+                        isNull(assetLogsTable.cancelledAt),
+                        between(assetLogsTable.createdAt, outerFrom, outerTo)
+                    )
+                ),
+            db
+                .select({
+                    sharesCurrent: sql<string>`COUNT(*) FILTER (WHERE ${interactionLogsTable.createdAt} BETWEEN ${current.from} AND ${current.to})`,
+                    sharesPrevious: sql<string>`COUNT(*) FILTER (WHERE ${interactionLogsTable.createdAt} BETWEEN ${previous.from} AND ${previous.to})`,
+                })
+                .from(interactionLogsTable)
+                .where(
+                    and(
+                        eq(interactionLogsTable.merchantId, merchantId),
+                        eq(interactionLogsTable.type, "create_referral_link"),
+                        isNull(interactionLogsTable.cancelledAt),
+                        between(
+                            interactionLogsTable.createdAt,
+                            outerFrom,
+                            outerTo
+                        )
+                    )
+                ),
+            db
+                .select({
+                    revenueCurrent: sql<string>`COALESCE(SUM(${purchasesTable.totalPrice}::NUMERIC) FILTER (WHERE ${purchasesTable.createdAt} BETWEEN ${current.from} AND ${current.to}), 0)`,
+                    revenuePrevious: sql<string>`COALESCE(SUM(${purchasesTable.totalPrice}::NUMERIC) FILTER (WHERE ${purchasesTable.createdAt} BETWEEN ${previous.from} AND ${previous.to}), 0)`,
+                    purchaseCountCurrent: sql<string>`COUNT(*) FILTER (WHERE ${purchasesTable.createdAt} BETWEEN ${current.from} AND ${current.to})`,
+                    purchaseCountPrevious: sql<string>`COUNT(*) FILTER (WHERE ${purchasesTable.createdAt} BETWEEN ${previous.from} AND ${previous.to})`,
+                    // MODE() returns the most-frequent currency in the
+                    // current window. Strictly speaking purchases can
+                    // arrive in mixed currencies — taking the mode keeps
+                    // the SUM consistent with the displayed unit for the
+                    // vast majority of merchants who only use one.
+                    currency: sql<
+                        string | null
+                    >`MODE() WITHIN GROUP (ORDER BY ${purchasesTable.currencyCode}) FILTER (WHERE ${purchasesTable.createdAt} BETWEEN ${current.from} AND ${current.to})`,
+                })
+                .from(purchasesTable)
+                .innerJoin(
+                    merchantWebhooksTable,
+                    eq(merchantWebhooksTable.id, purchasesTable.webhookId)
+                )
+                .where(
+                    and(
+                        eq(merchantWebhooksTable.merchantId, merchantId),
+                        between(purchasesTable.createdAt, outerFrom, outerTo)
+                    )
+                ),
         ]);
 
-        const sharingRateCurrent = safeRatio(
-            current.shares,
-            current.ambassadors
-        );
-        const sharingRatePrevious = safeRatio(
-            previous.shares,
-            previous.ambassadors
-        );
+        const assetRow = (assetRows[0] ?? {}) as Partial<AssetKpiRow>;
+        const sharesRow = (sharesRows[0] ?? {}) as Partial<SharesKpiRow>;
+        const purchaseRow = (purchaseRows[0] ?? {}) as Partial<PurchaseKpiRow>;
 
         return {
             ambassadors: {
-                value: current.ambassadors,
-                delta: percentDelta(current.ambassadors, previous.ambassadors),
+                current: toNumber(assetRow.ambassadorsCurrent),
+                previous: toNumber(assetRow.ambassadorsPrevious),
             },
             shares: {
-                value: current.shares,
-                delta: percentDelta(current.shares, previous.shares),
+                current: toNumber(sharesRow.sharesCurrent),
+                previous: toNumber(sharesRow.sharesPrevious),
             },
             revenue: {
-                value: round2(current.revenue),
-                delta: percentDelta(current.revenue, previous.revenue),
+                current: toNumber(purchaseRow.revenueCurrent),
+                previous: toNumber(purchaseRow.revenuePrevious),
+                currency: purchaseRow.currency ?? null,
             },
-            sharingRate: {
-                value: round3(sharingRateCurrent),
-                delta: percentDelta(sharingRateCurrent, sharingRatePrevious),
+            totalRewardsUsd: {
+                current: toNumber(assetRow.rewardsUsdCurrent),
+                previous: toNumber(assetRow.rewardsUsdPrevious),
             },
-            avgCpa: {
-                // No delta on avgCpa — matches the existing mock contract.
-                value: round2(
-                    safeRatio(
-                        current.totalRewardsUsd,
-                        current.purchaseInteractions
-                    )
-                ),
+            purchaseCount: {
+                current: toNumber(purchaseRow.purchaseCountCurrent),
+                previous: toNumber(purchaseRow.purchaseCountPrevious),
             },
-        };
-    }
-
-    private async aggregateKpis(
-        merchantId: string,
-        range: DateRange,
-        usdRewardsExpr: SQL
-    ): Promise<KpiAggregates> {
-        const [ambassadorsRow, sharesRow, revenueRow, rewardsRow] =
-            await Promise.all([
-                db
-                    .select({
-                        value: countDistinct(assetLogsTable.identityGroupId),
-                    })
-                    .from(assetLogsTable)
-                    .where(
-                        and(
-                            eq(assetLogsTable.merchantId, merchantId),
-                            eq(assetLogsTable.recipientType, "referrer"),
-                            isNull(assetLogsTable.cancelledAt),
-                            between(
-                                assetLogsTable.createdAt,
-                                range.from,
-                                range.to
-                            )
-                        )
-                    ),
-                db
-                    .select({ value: count() })
-                    .from(interactionLogsTable)
-                    .where(
-                        and(
-                            eq(interactionLogsTable.merchantId, merchantId),
-                            eq(
-                                interactionLogsTable.type,
-                                "create_referral_link"
-                            ),
-                            isNull(interactionLogsTable.cancelledAt),
-                            between(
-                                interactionLogsTable.createdAt,
-                                range.from,
-                                range.to
-                            )
-                        )
-                    ),
-                db
-                    .select({
-                        value: sql<string>`COALESCE(SUM(${purchasesTable.totalPrice}::NUMERIC), 0)`,
-                    })
-                    .from(purchasesTable)
-                    .innerJoin(
-                        merchantWebhooksTable,
-                        eq(merchantWebhooksTable.id, purchasesTable.webhookId)
-                    )
-                    .where(
-                        and(
-                            eq(merchantWebhooksTable.merchantId, merchantId),
-                            between(
-                                purchasesTable.createdAt,
-                                range.from,
-                                range.to
-                            )
-                        )
-                    ),
-                db
-                    .select({
-                        totalRewardsUsd: sql<string>`COALESCE(SUM(${usdRewardsExpr}), 0)`,
-                        purchaseInteractions: sql<number>`COUNT(DISTINCT CASE WHEN ${interactionLogsTable.type} = 'purchase' THEN ${interactionLogsTable.id} END)`,
-                    })
-                    .from(assetLogsTable)
-                    .leftJoin(
-                        interactionLogsTable,
-                        eq(
-                            assetLogsTable.interactionLogId,
-                            interactionLogsTable.id
-                        )
-                    )
-                    .where(
-                        and(
-                            eq(assetLogsTable.merchantId, merchantId),
-                            isNull(assetLogsTable.cancelledAt),
-                            between(
-                                assetLogsTable.createdAt,
-                                range.from,
-                                range.to
-                            )
-                        )
-                    ),
-            ]);
-
-        return {
-            ambassadors: Number(ambassadorsRow[0]?.value ?? 0),
-            shares: Number(sharesRow[0]?.value ?? 0),
-            revenue: Number(revenueRow[0]?.value ?? 0),
-            totalRewardsUsd: Number(rewardsRow[0]?.totalRewardsUsd ?? 0),
-            purchaseInteractions: Number(
-                rewardsRow[0]?.purchaseInteractions ?? 0
-            ),
         };
     }
 
@@ -346,17 +322,24 @@ export class CampaignOverviewOrchestrator {
         return result;
     }
 
-    private async getPurchases(
+    /**
+     * Bucketed purchases + revenue series for the current window. Single
+     * scan over `purchases ⋈ merchant_webhooks` returns both metrics —
+     * the dashboard renders them as two separate cards but they share
+     * the same underlying data.
+     */
+    private async getSeries(
         merchantId: string,
         range: DateRange
-    ): Promise<OverviewPurchases> {
+    ): Promise<OverviewSeries> {
         const granularity = pickGranularity(range);
         const bucketExpr = sql`DATE_TRUNC(${granularity}, ${purchasesTable.createdAt})`;
 
         const rows = await db
             .select({
                 bucket: sql<Date>`${bucketExpr}`.as("bucket"),
-                value: count(),
+                purchaseCount: sql<string>`COUNT(*)`,
+                revenue: sql<string>`COALESCE(SUM(${purchasesTable.totalPrice}::NUMERIC), 0)`,
             })
             .from(purchasesTable)
             .innerJoin(
@@ -372,92 +355,13 @@ export class CampaignOverviewOrchestrator {
             .groupBy(sql`bucket`)
             .orderBy(asc(sql`bucket`));
 
-        const series = (rows as PurchasesBucketRow[])
-            .map((row) => ({
-                label: formatBucketLabel(row.bucket, granularity),
-                value: Number(row.value),
-            }))
-            .slice(-MAX_BUCKETS);
+        const buckets = (rows as SeriesRow[]).map((row) => ({
+            bucket: row.bucket.toISOString(),
+            purchaseCount: toNumber(row.purchaseCount),
+            revenue: toNumber(row.revenue),
+        }));
 
-        const total = series.reduce((acc, b) => acc + b.value, 0);
-        const monthsInWindow = Math.max(
-            (range.to.getTime() - range.from.getTime()) / DAY_MS / 30,
-            1
-        );
-        const avgPerMonth = total / monthsInWindow;
-
-        return {
-            total,
-            avgPerMonth: Math.round(avgPerMonth),
-            series,
-        };
-    }
-
-    private async getProjectedRevenue(
-        merchantId: string,
-        range: DateRange
-    ): Promise<OverviewProjectedRevenue> {
-        const granularity = pickGranularity(range);
-        const bucketExpr = sql`DATE_TRUNC(${granularity}, ${purchasesTable.createdAt})`;
-
-        const rows = await db
-            .select({
-                bucket: sql<Date>`${bucketExpr}`.as("bucket"),
-                value: sql<string>`COALESCE(SUM(${purchasesTable.totalPrice}::NUMERIC), 0)`,
-            })
-            .from(purchasesTable)
-            .innerJoin(
-                merchantWebhooksTable,
-                eq(merchantWebhooksTable.id, purchasesTable.webhookId)
-            )
-            .where(
-                and(
-                    eq(merchantWebhooksTable.merchantId, merchantId),
-                    between(purchasesTable.createdAt, range.from, range.to)
-                )
-            )
-            .groupBy(sql`bucket`)
-            .orderBy(asc(sql`bucket`));
-
-        const actualSeries = (rows as RevenueBucketRow[])
-            .map((row) => ({
-                label: formatBucketLabel(row.bucket, granularity),
-                value: Number(row.value),
-            }))
-            .slice(-MAX_BUCKETS);
-
-        const series: OverviewProjectedRevenue["series"] = actualSeries.map(
-            (b) => ({ label: b.label, actual: round2(b.value) })
-        );
-
-        // Anchor the forecast: the last actual bucket also carries the
-        // first forecast point so the chart line is continuous.
-        const forecastValues = projectForecast(
-            actualSeries.map((b) => b.value)
-        );
-        if (forecastValues.length > 0 && series.length > 0) {
-            const last = series[series.length - 1];
-            last.forecast = round2(forecastValues[0]);
-
-            for (let i = 1; i < forecastValues.length; i += 1) {
-                const nextDate = addBucket(
-                    parseBucketLabel(last.label, granularity),
-                    granularity,
-                    i
-                );
-                series.push({
-                    label: formatBucketLabel(nextDate, granularity),
-                    forecast: round2(forecastValues[i]),
-                });
-            }
-        }
-
-        const total = series.reduce(
-            (acc, b) => acc + (b.actual ?? b.forecast ?? 0),
-            0
-        );
-
-        return { total: round2(total), series };
+        return { granularity, buckets };
     }
 
     private async getTokenPricesForMerchant(
@@ -524,83 +428,9 @@ function endOfIsoDay(value: string): Date {
     return new Date(`${value}T23:59:59.999Z`);
 }
 
-function pickGranularity(range: DateRange): "day" | "month" {
+function pickGranularity(range: DateRange): OverviewGranularity {
     const days = (range.to.getTime() - range.from.getTime()) / DAY_MS;
     return days >= MONTHLY_BUCKET_THRESHOLD_DAYS ? "month" : "day";
-}
-
-const MONTH_LABELS = [
-    "Jan",
-    "Feb",
-    "Mar",
-    "Apr",
-    "May",
-    "Jun",
-    "Jul",
-    "Aug",
-    "Sep",
-    "Oct",
-    "Nov",
-    "Dec",
-];
-
-function formatBucketLabel(date: Date, granularity: "day" | "month"): string {
-    if (granularity === "month") {
-        return MONTH_LABELS[date.getUTCMonth()];
-    }
-    const day = `${date.getUTCDate()}`.padStart(2, "0");
-    return `${MONTH_LABELS[date.getUTCMonth()]} ${day}`;
-}
-
-function parseBucketLabel(label: string, granularity: "day" | "month"): Date {
-    const monthIdx = MONTH_LABELS.findIndex((m) => label.startsWith(m));
-    const now = new Date();
-    if (granularity === "month") {
-        return new Date(Date.UTC(now.getUTCFullYear(), monthIdx, 1));
-    }
-    const day = Number.parseInt(label.split(" ")[1] ?? "1", 10);
-    return new Date(Date.UTC(now.getUTCFullYear(), monthIdx, day));
-}
-
-function addBucket(
-    base: Date,
-    granularity: "day" | "month",
-    steps: number
-): Date {
-    const next = new Date(base.getTime());
-    if (granularity === "month") {
-        next.setUTCMonth(next.getUTCMonth() + steps);
-    } else {
-        next.setUTCDate(next.getUTCDate() + steps);
-    }
-    return next;
-}
-
-/**
- * Naive forecast: average the slope of the last `FORECAST_LOOKBACK` buckets
- * and project `FORECAST_BUCKETS` ahead. Good enough as a v1 — see
- * `docs/campaigns-overview-endpoint.md` for the upgrade plan.
- */
-function projectForecast(actuals: number[]): number[] {
-    if (actuals.length === 0) return [];
-    const lookback = actuals.slice(-FORECAST_LOOKBACK);
-    const last = lookback[lookback.length - 1];
-
-    if (lookback.length < 2) {
-        return Array.from({ length: FORECAST_BUCKETS }, () => last);
-    }
-
-    let slopeSum = 0;
-    for (let i = 1; i < lookback.length; i += 1) {
-        slopeSum += lookback[i] - lookback[i - 1];
-    }
-    const slope = slopeSum / (lookback.length - 1);
-
-    const forecasts: number[] = [];
-    for (let i = 1; i <= FORECAST_BUCKETS; i += 1) {
-        forecasts.push(Math.max(last + slope * i, 0));
-    }
-    return forecasts;
 }
 
 function surfaceCampaignStatus(
@@ -616,20 +446,13 @@ function surfaceCampaignStatus(
     return "ended";
 }
 
-function safeRatio(numerator: number, denominator: number): number {
-    if (denominator === 0) return 0;
-    return numerator / denominator;
-}
-
-function percentDelta(current: number, previous: number): number | undefined {
-    if (previous === 0) return current === 0 ? 0 : undefined;
-    return Math.round(((current - previous) / previous) * 100);
-}
-
-function round2(n: number): number {
-    return Math.round(n * 100) / 100;
-}
-
-function round3(n: number): number {
-    return Math.round(n * 1000) / 1000;
+/**
+ * Postgres `numeric` returns strings; counts come back as strings too
+ * via the node-postgres driver. Centralise the cast so `getKpis` /
+ * `getSeries` stay readable.
+ */
+function toNumber(value: string | number | null | undefined): number {
+    if (value === null || value === undefined) return 0;
+    const n = typeof value === "number" ? value : Number(value);
+    return Number.isFinite(n) ? n : 0;
 }
