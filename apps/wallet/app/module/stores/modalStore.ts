@@ -115,8 +115,21 @@ modalStore.subscribe((state, prev) => {
         trackEvent("wallet_modal_opened", {
             modal: current,
             from_stack: fromStack,
+            merchant_id: getModalMerchantId(state.modal),
         });
     } else {
         currentOpenedAt = null;
     }
 });
+
+function getModalMerchantId(modal: ModalState | null): string | undefined {
+    if (!modal) return undefined;
+    switch (modal.id) {
+        case "explorerDetail":
+            return modal.merchant.id;
+        case "rewardDetail":
+            return modal.item.merchant.id;
+        default:
+            return undefined;
+    }
+}

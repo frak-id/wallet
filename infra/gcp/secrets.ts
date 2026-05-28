@@ -119,10 +119,15 @@ export const elysiaEnv = {
     RUSTFS_CDN_BASE_URL: rustfsCdnBaseUrl,
 
     // OpenPanel client
-    OPEN_PANEL_API_URL: isProd ? "https://op-api.gcp.frak.id/" : "https://op-api.gcp-dev.frak.id/",
+    OPEN_PANEL_API_URL: isProd
+        ? "https://op-api.gcp.frak.id/"
+        : "https://op-api.gcp-dev.frak.id/",
     OPEN_PANEL_WALLET_PROJECT_ID: isProd ? "wallet" : "wallet-dev",
-    OPEN_PANEL_BACKEND_CLIENT_ID: new sst.Secret("OPEN_PANEL_BACKEND_CLIENT_ID").value,
-    OPEN_PANEL_BACKEND_CLIENT_SECRET: new sst.Secret("OPEN_PANEL_BACKEND_CLIENT_SECRET").value,
+    OPEN_PANEL_BACKEND_CLIENT_ID: new sst.Secret("OPEN_PANEL_BACKEND_CLIENT_ID")
+        .value,
+    OPEN_PANEL_BACKEND_CLIENT_SECRET: new sst.Secret(
+        "OPEN_PANEL_BACKEND_CLIENT_SECRET"
+    ).value,
 
     // Mobile app version floor (hard-update gate). `0.0.0` = disabled.
     // Bump when shipping a breaking change that requires a forced upgrade.
