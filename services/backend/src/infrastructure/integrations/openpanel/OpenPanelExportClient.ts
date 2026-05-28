@@ -1,10 +1,6 @@
 import { log } from "@backend-infrastructure/external/logger";
 import ky, { type KyInstance } from "ky";
-import type {
-    OpenPanelChartQuery,
-    OpenPanelChartResponse,
-    OpenPanelExportConfig,
-} from "./config";
+import type { OpenPanelChartQuery, OpenPanelChartResponse } from "./config";
 
 /**
  * Typed wrapper for the OpenPanel `/export/charts` endpoint.
@@ -20,13 +16,21 @@ import type {
  */
 export class OpenPanelExportClient {
     private readonly api: KyInstance;
+    private readonly projectId =
+        process.env.OPEN_PANEL_WALLET_PROJECT_ID ?? "wallet";
 
-    constructor(private readonly config: OpenPanelExportConfig) {
+    constructor() {
+        if (!process.env.OPEN_PANEL_API_URL) {
+            throw new Error("Invalid config");
+        }
+
         this.api = ky.create({
-            prefix: stripTrailingSlash(config.apiUrl),
+            prefix: stripTrailingSlash(process.env.OPEN_PANEL_API_URL),
             headers: {
-                "openpanel-client-id": config.clientId,
-                "openpanel-client-secret": config.clientSecret,
+                "openpanel-client-id":
+                    process.env.OPEN_PANEL_BACKEND_CLIENT_ID ?? "",
+                "openpanel-client-secret":
+                    process.env.OPEN_PANEL_BACKEND_CLIENT_SECRET ?? "",
             },
             timeout: 10_000,
             retry: {
@@ -42,7 +46,7 @@ export class OpenPanelExportClient {
     ): Promise<OpenPanelChartResponse> {
         const params = encodeNestedParams({
             ...query,
-            projectId: query.projectId ?? this.config.walletProjectId,
+            projectId: query.projectId ?? this.projectId,
         });
 
         try {

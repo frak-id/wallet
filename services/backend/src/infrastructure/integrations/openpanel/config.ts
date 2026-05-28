@@ -110,10 +110,3 @@ export type OpenPanelChartSerie = {
 export type OpenPanelChartResponse = {
     series: OpenPanelChartSerie[];
 };
-
-export type OpenPanelExportConfig = {
-    apiUrl: string;
-    clientId: string;
-    clientSecret: string;
-    walletProjectId: string;
-};
