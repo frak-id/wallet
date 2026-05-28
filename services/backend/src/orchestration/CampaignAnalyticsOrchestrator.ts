@@ -121,7 +121,7 @@ export class CampaignAnalyticsOrchestrator {
         const websiteDef = websiteFunnelDefinition();
         const walletDef = walletFunnelDefinition();
         const merchantFilter: OpenPanelChartFilter = {
-            name: "merchant_id",
+            name: "properties.merchant_id",
             operator: "is",
             value: [merchantId],
         };
@@ -173,7 +173,7 @@ export class CampaignAnalyticsOrchestrator {
         const totals = await this.getSharingBreakdown(
             merchantId,
             range,
-            "source"
+            "properties.source"
         );
 
         let walletApp = 0;
@@ -224,7 +224,7 @@ export class CampaignAnalyticsOrchestrator {
         breakdown: string
     ): Promise<Map<string, number>> {
         const merchantFilter: OpenPanelChartFilter = {
-            name: "merchant_id",
+            name: "properties.merchant_id",
             operator: "is",
             value: [merchantId],
         };
@@ -298,7 +298,7 @@ export class CampaignAnalyticsOrchestrator {
 
 function websiteFunnelDefinition(): FunnelStepDefinition[] {
     const websiteSourceFilter: OpenPanelChartFilter = {
-        name: "source",
+        name: "properties.source",
         operator: "is",
         value: WEBSITE_SHARING_SOURCES,
     };
@@ -321,12 +321,12 @@ function websiteFunnelDefinition(): FunnelStepDefinition[] {
 
 function walletFunnelDefinition(): FunnelStepDefinition[] {
     const walletSourceFilter: OpenPanelChartFilter = {
-        name: "source",
+        name: "properties.source",
         operator: "is",
         value: WALLET_SHARING_SOURCES,
     };
     const explorerModalFilter: OpenPanelChartFilter = {
-        name: "modal",
+        name: "properties.modal",
         operator: "is",
         value: ["explorerDetail"],
     };
@@ -364,13 +364,13 @@ function buildFunnelFilters(
         // global denominator. All other funnel events are scoped per
         // merchant.
         filters.push({
-            name: "__path",
+            name: "path",
             operator: "startsWith",
             value: ["/explorer"],
         });
     } else {
         filters.push({
-            name: "merchant_id",
+            name: "properties.merchant_id",
             operator: "is",
             value: [merchantId],
         });

@@ -10,9 +10,13 @@ import type { OpenPanelChartQuery, OpenPanelChartResponse } from "./config";
  * a single misbehaving aggregation never breaks the whole analytics page —
  * `CampaignAnalyticsOrchestrator` decides how to degrade.
  *
- * Query strings carry nested arrays/objects (`series[0][filters][0][name]`)
- * which `URLSearchParams` doesn't handle, so we encode them ourselves in
- * the bracket notation `fastify-querystring` consumes by default.
+ * Query strings carry nested arrays/objects (`series`, `breakdowns`). The
+ * OpenPanel API runs on Fastify's default querystring parser
+ * (`fast-querystring`) which does NOT expand bracket notation, then a
+ * `preValidation` hook calls `getSafeJson(v)` on every scalar — so the
+ * only supported way to pass composite params is as a JSON string.
+ * Bracket-notation (`series[0][name]=…`) silently leaves `series`
+ * undefined and the endpoint returns `{ series: [] }`.
  */
 export class OpenPanelExportClient {
     private readonly api: KyInstance;
@@ -44,7 +48,7 @@ export class OpenPanelExportClient {
     async getChart(
         query: Omit<OpenPanelChartQuery, "projectId"> & { projectId?: string }
     ): Promise<OpenPanelChartResponse> {
-        const params = encodeNestedParams({
+        const params = encodeChartParams({
             ...query,
             projectId: query.projectId ?? this.projectId,
         });
@@ -65,36 +69,19 @@ function stripTrailingSlash(value: string): string {
 }
 
 /**
- * Bracket-notation encoder for nested arrays / objects — mirrors the format
- * fastify's default querystring parser (`fast-querystring` + `qs`-style
- * brackets) understands. `{ a: [{ b: 1 }] } → a[0][b]=1`.
+ * Encode top-level params for `/export/charts`. Scalars are stringified,
+ * arrays/objects (`series`, `breakdowns`) are JSON-encoded — see the
+ * class docstring for why bracket notation does not work.
  */
-function encodeNestedParams(input: Record<string, unknown>): string {
+function encodeChartParams(input: Record<string, unknown>): string {
     const pairs: string[] = [];
     for (const [key, value] of Object.entries(input)) {
         if (value === undefined || value === null) continue;
-        appendParam(pairs, key, value);
+        const encoded =
+            Array.isArray(value) || typeof value === "object"
+                ? JSON.stringify(value)
+                : String(value);
+        pairs.push(`${encodeURIComponent(key)}=${encodeURIComponent(encoded)}`);
     }
     return pairs.join("&");
-}
-
-function appendParam(pairs: string[], key: string, value: unknown): void {
-    if (Array.isArray(value)) {
-        value.forEach((item, index) => {
-            appendParam(pairs, `${key}[${index}]`, item);
-        });
-        return;
-    }
-    if (value !== null && typeof value === "object") {
-        for (const [childKey, childValue] of Object.entries(
-            value as Record<string, unknown>
-        )) {
-            if (childValue === undefined) continue;
-            appendParam(pairs, `${key}[${childKey}]`, childValue);
-        }
-        return;
-    }
-    pairs.push(
-        `${encodeURIComponent(key)}=${encodeURIComponent(String(value))}`
-    );
 }
