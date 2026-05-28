@@ -1,4 +1,5 @@
 import { format, parseISO, startOfMonth, subDays } from "date-fns";
+import type { DateRange } from "react-day-picker";
 
 export type DateRangePresetKey = "last7" | "last30" | "last90" | "thisMonth";
 
@@ -20,6 +21,15 @@ const ISO = "yyyy-MM-dd";
 
 export function toIso(date: Date): string {
     return format(date, ISO);
+}
+
+/** Parse a stored `yyyy-MM-dd` window into a calendar `DateRange`. */
+export function isoToDateRange(
+    from?: string,
+    to?: string
+): DateRange | undefined {
+    if (!from) return undefined;
+    return { from: parseISO(from), to: to ? parseISO(to) : undefined };
 }
 
 /** Resolve a preset to a concrete `{from, to}` window ending today (inclusive). */
@@ -50,7 +60,7 @@ export function matchPreset(
     })?.key;
 }
 
-/** Chip label: preset name when the range matches one, else a formatted span. */
+/** Trigger label: preset name when the range matches one, else a formatted span. */
 export function formatRangeLabel(from?: string, to?: string): string {
     if (!from || !to) return "Date range";
 

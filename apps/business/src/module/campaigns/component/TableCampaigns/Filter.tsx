@@ -1,10 +1,5 @@
 import { Inline } from "@frak-labs/design-system/components/Inline";
 import {
-    Popover,
-    PopoverContent,
-    PopoverTrigger,
-} from "@frak-labs/design-system/components/Popover";
-import {
     Tabs,
     TabsList,
     TabsTrigger,
@@ -12,11 +7,11 @@ import {
 import { CalendarIcon, RefreshIcon } from "@frak-labs/design-system/icons";
 import type { ColumnFiltersState } from "@tanstack/react-table";
 import { format } from "date-fns";
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
 import type { DateRange } from "react-day-picker";
 import { useTranslation } from "react-i18next";
 import { Button } from "@/module/common/component/Button";
-import { Calendar } from "@/module/common/component/Calendar";
+import { DateRangePopover } from "@/module/common/component/DateRangePopover";
 import { InputSearch } from "@/module/forms/InputSearch";
 import type { CampaignStatus } from "@/types/Campaign";
 import * as styles from "./filter.css";
@@ -42,7 +37,6 @@ export function TableCampaignFilters({
     setColumnFilters,
 }: TableCampaignFiltersProps) {
     const { t } = useTranslation();
-    const [isPopoverOpen, setIsPopoverOpen] = useState(false);
 
     // Extract current values from columnFilters
     const currentTitle = useMemo(
@@ -109,8 +103,10 @@ export function TableCampaignFilters({
                     value={currentTitle}
                     onChange={(e) => setTitleFilter(e.target.value)}
                 />
-                <Popover open={isPopoverOpen} onOpenChange={setIsPopoverOpen}>
-                    <PopoverTrigger asChild>
+                <DateRangePopover
+                    value={currentDate}
+                    onChange={setDateFilter}
+                    trigger={
                         <Button variant="filter" size="filter">
                             <CalendarIcon />
                             <span>
@@ -135,17 +131,8 @@ export function TableCampaignFilters({
                                 )}
                             </span>
                         </Button>
-                    </PopoverTrigger>
-                    <PopoverContent align="start">
-                        <Calendar
-                            mode="range"
-                            defaultMonth={currentDate?.from}
-                            selected={currentDate}
-                            onSelect={setDateFilter}
-                            numberOfMonths={1}
-                        />
-                    </PopoverContent>
-                </Popover>
+                    }
+                />
                 <Button
                     variant="filter"
                     size="filter"
