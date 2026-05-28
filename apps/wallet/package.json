@@ -106,7 +106,7 @@
     "bun-types": "latest",
     "cbor": "^10.0.12",
     "jsdom": "^29.0.0",
-    "sst": "3.18.9",
+    "sst": "catalog:",
     "typescript": "^6.0.2",
     "vite": "catalog:",
     "vite-plugin-mkcert": "^1.17.10",
