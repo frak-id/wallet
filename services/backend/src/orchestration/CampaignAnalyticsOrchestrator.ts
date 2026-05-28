@@ -260,12 +260,16 @@ export class CampaignAnalyticsOrchestrator {
         const { current, previous } = resolved;
         const createdAt = interactionLogsTable.createdAt;
         const type = interactionLogsTable.type;
+        // FILTER clauses use drizzle's `between()` so Date params flow
+        // through the column encoder (Date → ISO). Raw `${date}` falls
+        // through to `String(date)` and PG rejects the timezone format.
+        // Mirrors the fix in `CampaignOverviewOrchestrator`.
         const rows = await db
             .select({
-                referredCurrent: sql<number>`COUNT(*) FILTER (WHERE ${type} = 'referral_arrival' AND ${createdAt} BETWEEN ${current.from} AND ${current.to})`,
-                referredPrevious: sql<number>`COUNT(*) FILTER (WHERE ${type} = 'referral_arrival' AND ${createdAt} BETWEEN ${previous.from} AND ${previous.to})`,
-                convertedCurrent: sql<number>`COUNT(*) FILTER (WHERE ${type} = 'purchase' AND ${createdAt} BETWEEN ${current.from} AND ${current.to})`,
-                convertedPrevious: sql<number>`COUNT(*) FILTER (WHERE ${type} = 'purchase' AND ${createdAt} BETWEEN ${previous.from} AND ${previous.to})`,
+                referredCurrent: sql<number>`COUNT(*) FILTER (WHERE ${type} = 'referral_arrival' AND ${between(createdAt, current.from, current.to)})`,
+                referredPrevious: sql<number>`COUNT(*) FILTER (WHERE ${type} = 'referral_arrival' AND ${between(createdAt, previous.from, previous.to)})`,
+                convertedCurrent: sql<number>`COUNT(*) FILTER (WHERE ${type} = 'purchase' AND ${between(createdAt, current.from, current.to)})`,
+                convertedPrevious: sql<number>`COUNT(*) FILTER (WHERE ${type} = 'purchase' AND ${between(createdAt, previous.from, previous.to)})`,
             })
             .from(interactionLogsTable)
             .where(

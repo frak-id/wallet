@@ -7,6 +7,7 @@ import {
 } from "@/module/campaigns/queries/queryOptions";
 import { PageShell } from "@/module/common/component/PageShell";
 import { DataLoadError } from "@/module/common/component/RouteError";
+import { resolvePreset } from "@/module/common/component/DateRangePopover/presets";
 import { queryClient } from "@/module/common/provider/RootProvider";
 
 export type CampaignsOverviewSearch = {
@@ -25,10 +26,16 @@ function parseIsoDate(value: unknown): string | undefined {
 export const Route = createFileRoute("/_restricted/m/$merchantId/campaigns/")({
     validateSearch: (
         search: Record<string, unknown>
-    ): CampaignsOverviewSearch => ({
-        from: parseIsoDate(search.from),
-        to: parseIsoDate(search.to),
-    }),
+    ): CampaignsOverviewSearch => {
+        // Default the overview window to the last 30 days when no range is in the URL.
+        // Keeps the loader's prefetch, the header DateRangeChip, and the
+        // overview component all reading the same effective window.
+        const fallback = resolvePreset("last30");
+        return {
+            from: parseIsoDate(search.from) ?? fallback.from,
+            to: parseIsoDate(search.to) ?? fallback.to,
+        };
+    },
     loaderDeps: ({ search }) => ({ from: search.from, to: search.to }),
     loader: ({ params, deps }) => {
         const args = {
