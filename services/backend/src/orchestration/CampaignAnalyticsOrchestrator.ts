@@ -299,7 +299,7 @@ function websiteFunnelDefinition(): FunnelStepDefinition[] {
         },
         {
             kind: "share_initiated",
-            eventNames: ["share_button_clicked"],
+            eventNames: ["sharing_page_viewed"],
         },
         {
             kind: "link_shared",

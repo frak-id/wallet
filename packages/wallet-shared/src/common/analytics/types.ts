@@ -1,4 +1,4 @@
-import type { Address, Hex } from "viem";
+import type { Address } from "viem";
 
 /**
  * Global open panel properties — kept intentionally small.
@@ -18,7 +18,6 @@ export type AnalyticsGlobalProperties = {
     // Pass a custom iframe referrer (since the event referrer could be overridden if user got multiple websites using frak open, see: https://github.com/Openpanel-dev/openpanel/issues/172)
     iframeReferrer?: string;
     // Embedded specifics
-    productId?: Hex;
     contextUrl?: string;
     // Session / build
     session_id?: string;
