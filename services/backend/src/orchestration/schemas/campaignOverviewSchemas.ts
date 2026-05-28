@@ -114,10 +114,27 @@ export type OverviewSummaryResponse = Static<
     typeof OverviewSummaryResponseSchema
 >;
 
+/**
+ * Stable identifier for each funnel step. Frontend looks up the
+ * user-facing label via `t("campaignsOverview.funnel.<kind>")` so the
+ * dashboard can i18n step names. The backend owns step composition
+ * (which OpenPanel events feed which step); the FE owns presentation.
+ */
+export const OverviewFunnelKindSchema = t.Union([
+    t.Literal("share_cta_seen"),
+    t.Literal("share_initiated"),
+    t.Literal("link_shared"),
+    t.Literal("explorer_impressions"),
+    t.Literal("brand_page_opened"),
+    t.Literal("referred"),
+    t.Literal("converted"),
+]);
+export type OverviewFunnelKind = Static<typeof OverviewFunnelKindSchema>;
+
 const OverviewFunnelStepSchema = t.Object({
-    label: t.String(),
+    kind: OverviewFunnelKindSchema,
     value: t.Number(),
-    delta: t.Optional(t.Number()),
+    previousValue: t.Number(),
 });
 export type OverviewFunnelStep = Static<typeof OverviewFunnelStepSchema>;
 
@@ -127,15 +144,49 @@ export const OverviewFunnelsSchema = t.Object({
 });
 export type OverviewFunnels = Static<typeof OverviewFunnelsSchema>;
 
-const OverviewSharingBucketSchema = t.Object({
-    label: t.String(),
+/** Where the share was initiated from. */
+export const OverviewSharingPlatformKindSchema = t.Union([
+    t.Literal("merchant_site"),
+    t.Literal("wallet_app"),
+]);
+export type OverviewSharingPlatformKind = Static<
+    typeof OverviewSharingPlatformKindSchema
+>;
+
+/**
+ * Device class as reported by OpenPanel (`device` autoprop). `other` is
+ * the catch-all for any value the backend can't classify into the
+ * canonical three.
+ */
+export const OverviewSharingDeviceKindSchema = t.Union([
+    t.Literal("mobile"),
+    t.Literal("desktop"),
+    t.Literal("tablet"),
+    t.Literal("other"),
+]);
+export type OverviewSharingDeviceKind = Static<
+    typeof OverviewSharingDeviceKindSchema
+>;
+
+const OverviewSharingPlatformBucketSchema = t.Object({
+    kind: OverviewSharingPlatformKindSchema,
     value: t.Number(),
 });
-export type OverviewSharingBucket = Static<typeof OverviewSharingBucketSchema>;
+export type OverviewSharingPlatformBucket = Static<
+    typeof OverviewSharingPlatformBucketSchema
+>;
+
+const OverviewSharingDeviceBucketSchema = t.Object({
+    kind: OverviewSharingDeviceKindSchema,
+    value: t.Number(),
+});
+export type OverviewSharingDeviceBucket = Static<
+    typeof OverviewSharingDeviceBucketSchema
+>;
 
 export const OverviewSharingSchema = t.Object({
-    platform: t.Array(OverviewSharingBucketSchema),
-    device: t.Array(OverviewSharingBucketSchema),
+    platform: t.Array(OverviewSharingPlatformBucketSchema),
+    device: t.Array(OverviewSharingDeviceBucketSchema),
 });
 export type OverviewSharing = Static<typeof OverviewSharingSchema>;
 

@@ -1,4 +1,8 @@
-import type { OverviewSharing } from "@frak-labs/backend-elysia/orchestration/schemas";
+import type {
+    OverviewSharing,
+    OverviewSharingDeviceKind,
+    OverviewSharingPlatformKind,
+} from "@frak-labs/backend-elysia/orchestration/schemas";
 import {
     PieChart,
     PieSlice,
@@ -26,7 +30,24 @@ const palette = {
     device: [vars.icon.action, vars.icon.success, vars.icon.warning],
 };
 
-function withColors(segments: { label: string; value: number }[], mode: Mode) {
+const PLATFORM_LABELS: Record<OverviewSharingPlatformKind, string> = {
+    merchant_site: "Merchant Site",
+    wallet_app: "Wallet App",
+};
+
+const DEVICE_LABELS: Record<OverviewSharingDeviceKind, string> = {
+    mobile: "Mobile",
+    desktop: "Desktop",
+    tablet: "Tablet",
+    other: "Other",
+};
+
+type LabeledSegment = { label: string; value: number; color: string };
+
+function withColors(
+    segments: { label: string; value: number }[],
+    mode: Mode
+): LabeledSegment[] {
     return segments.map((s, i) => ({
         ...s,
         color: palette[mode][i % palette[mode].length],
@@ -35,6 +56,21 @@ function withColors(segments: { label: string; value: number }[], mode: Mode) {
 
 export function SharingBySourceCard({ sharing }: { sharing: OverviewSharing }) {
     const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
+
+    function toLabeledSegments(mode: Mode): LabeledSegment[] {
+        if (mode === "platform") {
+            const labeled = sharing.platform.map((bucket) => ({
+                label: PLATFORM_LABELS[bucket.kind],
+                value: bucket.value,
+            }));
+            return withColors(labeled, "platform");
+        }
+        const labeled = sharing.device.map((bucket) => ({
+            label: DEVICE_LABELS[bucket.kind],
+            value: bucket.value,
+        }));
+        return withColors(labeled, "device");
+    }
 
     return (
         <div className={styles.card}>
@@ -48,7 +84,7 @@ export function SharingBySourceCard({ sharing }: { sharing: OverviewSharing }) {
                         Sharing by source
                     </Text>
                     {(["platform", "device"] as Mode[]).map((mode) => {
-                        const segments = withColors(sharing[mode], mode);
+                        const segments = toLabeledSegments(mode);
                         return (
                             <TabsContent key={mode} value={mode}>
                                 <Stack space="m">

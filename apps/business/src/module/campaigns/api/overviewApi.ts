@@ -19,8 +19,10 @@ export function getOverviewSummaryMock(): OverviewSummaryResponse {
 /** Slice of the mock JSON consumed by the analytics endpoint. */
 export function getOverviewAnalyticsMock(): OverviewAnalyticsResponse {
     return {
-        funnels: campaignsOverviewMock.funnels,
-        sharing: campaignsOverviewMock.sharing,
+        funnels:
+            campaignsOverviewMock.funnels as OverviewAnalyticsResponse["funnels"],
+        sharing:
+            campaignsOverviewMock.sharing as OverviewAnalyticsResponse["sharing"],
         accurateKpis: campaignsOverviewMock.accurateKpis,
     };
 }

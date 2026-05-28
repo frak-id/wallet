@@ -2,6 +2,7 @@ import { and, between, eq, isNull, sql } from "drizzle-orm";
 import { interactionLogsTable } from "../domain/rewards/db/schema";
 import type {
     OpenPanelChartFilter,
+    OpenPanelChartSerie,
     OpenPanelChartSeries,
     OpenPanelExportClient,
 } from "../infrastructure/integrations/openpanel";
@@ -9,25 +10,29 @@ import { db } from "../infrastructure/persistence/postgres";
 import type {
     OverviewAccurateKpis,
     OverviewAnalyticsResponse,
+    OverviewFunnelKind,
     OverviewFunnelStep,
     OverviewFunnels,
     OverviewSharing,
-    OverviewSharingBucket,
+    OverviewSharingDeviceBucket,
+    OverviewSharingDeviceKind,
+    OverviewSharingPlatformBucket,
     OverviewWindowQuery,
 } from "./schemas/campaignOverviewSchemas";
-
-const DAY_MS = 24 * 60 * 60 * 1000;
-const DEFAULT_WINDOW_DAYS = 30;
-
-type DateRange = { from: Date; to: Date };
+import {
+    type DateRange,
+    type ResolvedWindow,
+    resolveWindow,
+} from "./utils/window";
 
 /**
  * Per-step funnel definition. `eventNames` may carry multiple OpenPanel
  * events whose counts are summed for the step (e.g. `banner_impression +
- * post_purchase_impression → "Share CTA seen"`).
+ * post_purchase_impression → share_cta_seen`). `kind` is the stable
+ * identifier the frontend translates via i18n.
  */
 type FunnelStepDefinition = {
-    label: string;
+    kind: OverviewFunnelKind;
     eventNames: string[];
     extraFilters?: OpenPanelChartFilter[];
 };
@@ -45,6 +50,17 @@ const WEBSITE_SHARING_SOURCES = [
 ];
 
 /**
+ * OpenPanel's autotracked `device` property is `"mobile" | "desktop" |
+ * "tablet"` (plus the empty string when missing). Anything outside that
+ * maps to `"other"` so the FE never receives an unbounded label.
+ */
+const DEVICE_KIND_MAP: Record<string, OverviewSharingDeviceKind> = {
+    mobile: "mobile",
+    desktop: "desktop",
+    tablet: "tablet",
+};
+
+/**
  * Funnels + sharing breakdowns sourced from OpenPanel + small DB joins for
  * the conversion tail. Sibling to `CampaignOverviewOrchestrator` which
  * handles the cheaper Postgres-only summary section.
@@ -60,158 +76,101 @@ export class CampaignAnalyticsOrchestrator {
         merchantId: string,
         window: OverviewWindowQuery
     ): Promise<OverviewAnalyticsResponse> {
-        const range = resolveRange(window);
+        const resolved = resolveWindow(window);
 
-        const [
-            websiteSteps,
-            walletSteps,
-            platform,
-            device,
-            tail,
-            accurateKpis,
-        ] = await Promise.all([
-            this.getFunnelSteps(merchantId, range, websiteFunnelDefinition()),
-            this.getFunnelSteps(merchantId, range, walletFunnelDefinition()),
-            this.getSharingPlatform(merchantId, range),
-            this.getSharingDevice(merchantId, range),
-            this.getBackendFunnelTail(merchantId, range),
-            this.getAccurateKpis(merchantId, range),
+        const [core, platform, device, tail] = await Promise.all([
+            this.getCoreFunnelsAndKpis(merchantId, resolved.current),
+            this.getSharingPlatform(merchantId, resolved.current),
+            this.getSharingDevice(merchantId, resolved.current),
+            this.getBackendFunnelTail(merchantId, resolved),
         ]);
 
         const funnels: OverviewFunnels = {
-            website: [...websiteSteps, ...tail],
-            wallet: [...walletSteps, ...tail],
+            website: [...core.websiteSteps, ...tail],
+            wallet: [...core.walletSteps, ...tail],
         };
         const sharing: OverviewSharing = { platform, device };
 
-        return { funnels, sharing, accurateKpis };
+        return { funnels, sharing, accurateKpis: core.accurateKpis };
     }
 
     /**
-     * Source-of-truth `shares` (link send events) and `ambassadors`
-     * (distinct profiles who fired one) sourced from OpenPanel. The
-     * summary endpoint serves Postgres-backed approximations on the
-     * critical path; this method runs the slower OpenPanel query so the
-     * dashboard can swap in accurate values once they arrive.
+     * Both funnels + accurate KPIs in a single OpenPanel chart request.
+     * The three datasets share identical global parameters (custom date
+     * range, `previous: true`, no breakdowns) so they fold cleanly into
+     * one request. Series are laid out website → wallet → kpi and
+     * demuxed by slice. Halves OpenPanel round-trips on the critical
+     * path of `getAnalytics` (5 → 3, plus the Postgres tail).
      *
-     * Both metrics combine `sharing_link_shared` + `sharing_link_copied`
-     * — issued as 4 series in one chart request (2 events × `event`/`user`
-     * segments). Summing the user-segment totals overcounts the (rare)
-     * profiles who both shared AND copied a link in the window; treat
-     * this as a tight upper bound — strictly less wrong than the
-     * Postgres count which excludes anyone who hasn't earned a referrer
-     * reward yet.
+     * Accurate-KPI semantics: combines `sharing_link_shared` +
+     * `sharing_link_copied` for both `shares` (event segment) and
+     * `ambassadors` (user segment). Summing user-segment totals across
+     * the two events overcounts profiles who both shared AND copied a
+     * link in the window — treat this as a tight upper bound, still
+     * less wrong than the Postgres count which excludes anyone who
+     * hasn't earned a referrer reward yet.
      */
-    private async getAccurateKpis(
+    private async getCoreFunnelsAndKpis(
         merchantId: string,
         range: DateRange
-    ): Promise<OverviewAccurateKpis> {
+    ): Promise<{
+        websiteSteps: OverviewFunnelStep[];
+        walletSteps: OverviewFunnelStep[];
+        accurateKpis: OverviewAccurateKpis;
+    }> {
+        const websiteDef = websiteFunnelDefinition();
+        const walletDef = walletFunnelDefinition();
         const merchantFilter: OpenPanelChartFilter = {
             name: "merchant_id",
             operator: "is",
             value: [merchantId],
         };
 
+        const websiteSeries = buildFunnelSeries(merchantId, websiteDef);
+        const walletSeries = buildFunnelSeries(merchantId, walletDef);
+        const kpiSeries: OpenPanelChartSeries[] = (
+            ["sharing_link_shared", "sharing_link_copied"] as const
+        ).flatMap((name) =>
+            (["event", "user"] as const).map<OpenPanelChartSeries>(
+                (segment) => ({
+                    name,
+                    filters: [merchantFilter],
+                    segment,
+                })
+            )
+        );
+
+        const websiteEnd = websiteSeries.length;
+        const walletEnd = websiteEnd + walletSeries.length;
+
         const response = await this.openPanel.getChart({
-            series: [
-                {
-                    name: "sharing_link_shared",
-                    filters: [merchantFilter],
-                    segment: "event",
-                },
-                {
-                    name: "sharing_link_copied",
-                    filters: [merchantFilter],
-                    segment: "event",
-                },
-                {
-                    name: "sharing_link_shared",
-                    filters: [merchantFilter],
-                    segment: "user",
-                },
-                {
-                    name: "sharing_link_copied",
-                    filters: [merchantFilter],
-                    segment: "user",
-                },
-            ],
+            series: [...websiteSeries, ...walletSeries, ...kpiSeries],
             startDate: range.from.toISOString(),
             endDate: range.to.toISOString(),
             range: "custom",
             previous: true,
         });
-
-        const [sharedEvents, copiedEvents, sharedUsers, copiedUsers] =
-            response.series;
 
         return {
-            shares: {
-                current:
-                    (sharedEvents?.total ?? 0) + (copiedEvents?.total ?? 0),
-                previous:
-                    (sharedEvents?.previousTotal ?? 0) +
-                    (copiedEvents?.previousTotal ?? 0),
-            },
-            ambassadors: {
-                current: (sharedUsers?.total ?? 0) + (copiedUsers?.total ?? 0),
-                previous:
-                    (sharedUsers?.previousTotal ?? 0) +
-                    (copiedUsers?.previousTotal ?? 0),
-            },
+            websiteSteps: aggregateFunnelSteps(
+                websiteDef,
+                response.series.slice(0, websiteEnd)
+            ),
+            walletSteps: aggregateFunnelSteps(
+                walletDef,
+                response.series.slice(websiteEnd, walletEnd)
+            ),
+            accurateKpis: aggregateAccurateKpis(
+                response.series.slice(walletEnd)
+            ),
         };
-    }
-
-    private async getFunnelSteps(
-        merchantId: string,
-        range: DateRange,
-        definitions: FunnelStepDefinition[]
-    ): Promise<OverviewFunnelStep[]> {
-        // Flatten into one OpenPanel series per event so a single chart
-        // request covers the whole funnel. `seriesToStep[i]` records which
-        // step the i-th request series belongs to; the response is matched
-        // back by array position (OpenPanel preserves request order).
-        const series: OpenPanelChartSeries[] = [];
-        const seriesToStep: number[] = [];
-
-        definitions.forEach((step, stepIdx) => {
-            for (const event of step.eventNames) {
-                series.push({
-                    name: event,
-                    filters: buildFunnelFilters(merchantId, event, step),
-                });
-                seriesToStep.push(stepIdx);
-            }
-        });
-
-        const response = await this.openPanel.getChart({
-            series,
-            startDate: range.from.toISOString(),
-            endDate: range.to.toISOString(),
-            range: "custom",
-            previous: true,
-        });
-
-        const totals = definitions.map(() => 0);
-        const previousTotals = definitions.map(() => 0);
-        response.series.forEach((serie, idx) => {
-            const stepIdx = seriesToStep[idx];
-            if (stepIdx === undefined) return;
-            totals[stepIdx] += serie.total;
-            previousTotals[stepIdx] += serie.previousTotal ?? 0;
-        });
-
-        return definitions.map((step, idx) => ({
-            label: step.label,
-            value: totals[idx],
-            delta: percentDelta(totals[idx], previousTotals[idx]),
-        }));
     }
 
     private async getSharingPlatform(
         merchantId: string,
         range: DateRange
-    ): Promise<OverviewSharingBucket[]> {
-        const buckets = await this.getSharingBreakdown(
+    ): Promise<OverviewSharingPlatformBucket[]> {
+        const totals = await this.getSharingBreakdown(
             merchantId,
             range,
             "source"
@@ -219,45 +178,51 @@ export class CampaignAnalyticsOrchestrator {
 
         let walletApp = 0;
         let merchantSite = 0;
-        for (const bucket of buckets) {
-            if (WALLET_SHARING_SOURCES.includes(bucket.label)) {
-                walletApp += bucket.value;
-            } else if (WEBSITE_SHARING_SOURCES.includes(bucket.label)) {
-                merchantSite += bucket.value;
+        for (const [source, value] of totals) {
+            if (WALLET_SHARING_SOURCES.includes(source)) {
+                walletApp += value;
+            } else if (WEBSITE_SHARING_SOURCES.includes(source)) {
+                merchantSite += value;
             }
         }
 
         return [
-            { label: "Merchant Site", value: merchantSite },
-            { label: "Wallet App", value: walletApp },
+            { kind: "merchant_site", value: merchantSite },
+            { kind: "wallet_app", value: walletApp },
         ];
     }
 
     private async getSharingDevice(
         merchantId: string,
         range: DateRange
-    ): Promise<OverviewSharingBucket[]> {
+    ): Promise<OverviewSharingDeviceBucket[]> {
         // OpenPanel auto-collects `device` (mobile / desktop / tablet) on
-        // every event. iOS/Android are surfaced as `mobile` here — finer
-        // platform splits can be added later via the `platform` global
-        // prop (also set by the wallet/listener).
-        const buckets = await this.getSharingBreakdown(
+        // every event. iOS/Android both surface as `mobile`; finer
+        // platform splits would need the `platform` global prop instead.
+        const totals = await this.getSharingBreakdown(
             merchantId,
             range,
             "device"
         );
 
-        return buckets.map((b) => ({
-            label: capitalize(b.label),
-            value: b.value,
-        }));
+        // Collapse unknown values into a single `other` bucket so the FE
+        // never receives an enum value it can't render.
+        const byKind = new Map<OverviewSharingDeviceKind, number>();
+        for (const [source, value] of totals) {
+            const kind = DEVICE_KIND_MAP[source] ?? "other";
+            byKind.set(kind, (byKind.get(kind) ?? 0) + value);
+        }
+
+        return Array.from(byKind, ([kind, value]) => ({ kind, value })).sort(
+            (a, b) => b.value - a.value
+        );
     }
 
     private async getSharingBreakdown(
         merchantId: string,
         range: DateRange,
         breakdown: string
-    ): Promise<OverviewSharingBucket[]> {
+    ): Promise<Map<string, number>> {
         const merchantFilter: OpenPanelChartFilter = {
             name: "merchant_id",
             operator: "is",
@@ -276,21 +241,15 @@ export class CampaignAnalyticsOrchestrator {
 
         const totals = new Map<string, number>();
         for (const serie of response.series) {
-            const bucketLabel = serie.event ?? "unknown";
-            totals.set(
-                bucketLabel,
-                (totals.get(bucketLabel) ?? 0) + serie.total
-            );
+            const value = serie.event ?? "unknown";
+            totals.set(value, (totals.get(value) ?? 0) + serie.total);
         }
-
-        return Array.from(totals.entries())
-            .map(([label, value]) => ({ label, value }))
-            .sort((a, b) => b.value - a.value);
+        return totals;
     }
 
     private async getBackendFunnelTail(
         merchantId: string,
-        range: DateRange
+        resolved: ResolvedWindow
     ): Promise<OverviewFunnelStep[]> {
         // Backend can't tell whether a referral came from the wallet or the
         // partner site — both funnels reuse the same tail. Revisit when
@@ -298,27 +257,37 @@ export class CampaignAnalyticsOrchestrator {
         // matched via raw SQL to mirror `CampaignStatsOrchestrator` (the
         // `InteractionType` TS union is the legacy/v1 shape and doesn't
         // expose the actual stored literal yet).
+        const { current, previous } = resolved;
+        const createdAt = interactionLogsTable.createdAt;
+        const type = interactionLogsTable.type;
         const rows = await db
             .select({
-                referred: sql<number>`COUNT(*) FILTER (WHERE ${interactionLogsTable.type} = 'referral_arrival')`,
-                converted: sql<number>`COUNT(*) FILTER (WHERE ${interactionLogsTable.type} = 'purchase')`,
+                referredCurrent: sql<number>`COUNT(*) FILTER (WHERE ${type} = 'referral_arrival' AND ${createdAt} BETWEEN ${current.from} AND ${current.to})`,
+                referredPrevious: sql<number>`COUNT(*) FILTER (WHERE ${type} = 'referral_arrival' AND ${createdAt} BETWEEN ${previous.from} AND ${previous.to})`,
+                convertedCurrent: sql<number>`COUNT(*) FILTER (WHERE ${type} = 'purchase' AND ${createdAt} BETWEEN ${current.from} AND ${current.to})`,
+                convertedPrevious: sql<number>`COUNT(*) FILTER (WHERE ${type} = 'purchase' AND ${createdAt} BETWEEN ${previous.from} AND ${previous.to})`,
             })
             .from(interactionLogsTable)
             .where(
                 and(
                     eq(interactionLogsTable.merchantId, merchantId),
                     isNull(interactionLogsTable.cancelledAt),
-                    between(
-                        interactionLogsTable.createdAt,
-                        range.from,
-                        range.to
-                    )
+                    between(createdAt, previous.from, current.to)
                 )
             );
 
+        const row = rows[0];
         return [
-            { label: "Referred", value: Number(rows[0]?.referred ?? 0) },
-            { label: "Converted", value: Number(rows[0]?.converted ?? 0) },
+            {
+                kind: "referred",
+                value: Number(row?.referredCurrent ?? 0),
+                previousValue: Number(row?.referredPrevious ?? 0),
+            },
+            {
+                kind: "converted",
+                value: Number(row?.convertedCurrent ?? 0),
+                previousValue: Number(row?.convertedPrevious ?? 0),
+            },
         ];
     }
 }
@@ -331,12 +300,15 @@ function websiteFunnelDefinition(): FunnelStepDefinition[] {
     };
     return [
         {
-            label: "Share CTA seen",
+            kind: "share_cta_seen",
             eventNames: ["banner_impression", "post_purchase_impression"],
         },
-        { label: "Share initiated", eventNames: ["share_button_clicked"] },
         {
-            label: "Link shared",
+            kind: "share_initiated",
+            eventNames: ["share_button_clicked"],
+        },
+        {
+            kind: "link_shared",
             eventNames: ["sharing_link_shared", "sharing_link_copied"],
             extraFilters: [websiteSourceFilter],
         },
@@ -355,44 +327,25 @@ function walletFunnelDefinition(): FunnelStepDefinition[] {
         value: ["explorerDetail"],
     };
     return [
-        { label: "Explorer impressions", eventNames: ["screen_view"] },
         {
-            label: "Brand page opened",
+            kind: "explorer_impressions",
+            eventNames: ["screen_view"],
+        },
+        {
+            kind: "brand_page_opened",
             eventNames: ["wallet_modal_opened"],
             extraFilters: [explorerModalFilter],
         },
-        { label: "Share initiated", eventNames: ["sharing_page_viewed"] },
         {
-            label: "Link shared",
+            kind: "share_initiated",
+            eventNames: ["sharing_page_viewed"],
+        },
+        {
+            kind: "link_shared",
             eventNames: ["sharing_link_shared", "sharing_link_copied"],
             extraFilters: [walletSourceFilter],
         },
     ];
-}
-
-function resolveRange(window: OverviewWindowQuery): DateRange {
-    const to = window.to ? endOfIsoDay(window.to) : new Date();
-    const defaultFrom = new Date(to.getTime() - DEFAULT_WINDOW_DAYS * DAY_MS);
-    const from = window.from ? startOfIsoDay(window.from) : defaultFrom;
-    return { from, to };
-}
-
-function startOfIsoDay(value: string): Date {
-    return new Date(`${value}T00:00:00.000Z`);
-}
-
-function endOfIsoDay(value: string): Date {
-    return new Date(`${value}T23:59:59.999Z`);
-}
-
-function percentDelta(current: number, previous: number): number | undefined {
-    if (previous === 0) return current === 0 ? 0 : undefined;
-    return Math.round(((current - previous) / previous) * 100);
-}
-
-function capitalize(value: string): string {
-    if (value.length === 0) return value;
-    return value.charAt(0).toUpperCase() + value.slice(1);
 }
 
 function buildFunnelFilters(
@@ -420,4 +373,71 @@ function buildFunnelFilters(
     }
     if (step.extraFilters) filters.push(...step.extraFilters);
     return filters;
+}
+
+function buildFunnelSeries(
+    merchantId: string,
+    definitions: FunnelStepDefinition[]
+): OpenPanelChartSeries[] {
+    return definitions.flatMap((step) =>
+        step.eventNames.map((event) => ({
+            name: event,
+            filters: buildFunnelFilters(merchantId, event, step),
+        }))
+    );
+}
+
+/**
+ * Demux a slice of the chart response back into per-step totals.
+ * Mirrors the layout produced by `buildFunnelSeries`: one response
+ * serie per (step × eventName) in definition order. OpenPanel
+ * preserves request order, so we walk both arrays in lockstep.
+ */
+function aggregateFunnelSteps(
+    definitions: FunnelStepDefinition[],
+    responseSeries: OpenPanelChartSerie[]
+): OverviewFunnelStep[] {
+    const totals = definitions.map(() => 0);
+    const previousTotals = definitions.map(() => 0);
+
+    let serieIdx = 0;
+    definitions.forEach((step, stepIdx) => {
+        for (let i = 0; i < step.eventNames.length; i++) {
+            const serie = responseSeries[serieIdx++];
+            if (!serie) continue;
+            totals[stepIdx] += serie.total;
+            previousTotals[stepIdx] += serie.previousTotal ?? 0;
+        }
+    });
+
+    return definitions.map((step, idx) => ({
+        kind: step.kind,
+        value: totals[idx],
+        previousValue: previousTotals[idx],
+    }));
+}
+
+/**
+ * Demux the 4-series KPI slice. Order matches the request layout:
+ * [shared/event, copied/event, shared/user, copied/user].
+ */
+function aggregateAccurateKpis(
+    responseSeries: OpenPanelChartSerie[]
+): OverviewAccurateKpis {
+    const [sharedEvents, copiedEvents, sharedUsers, copiedUsers] =
+        responseSeries;
+    return {
+        shares: {
+            current: (sharedEvents?.total ?? 0) + (copiedEvents?.total ?? 0),
+            previous:
+                (sharedEvents?.previousTotal ?? 0) +
+                (copiedEvents?.previousTotal ?? 0),
+        },
+        ambassadors: {
+            current: (sharedUsers?.total ?? 0) + (copiedUsers?.total ?? 0),
+            previous:
+                (sharedUsers?.previousTotal ?? 0) +
+                (copiedUsers?.previousTotal ?? 0),
+        },
+    };
 }

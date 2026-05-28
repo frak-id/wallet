@@ -1,5 +1,11 @@
-import type { OverviewFunnels } from "@frak-labs/backend-elysia/orchestration/schemas";
-import { FunnelChart } from "@frak-labs/design-system/components/FunnelChart";
+import type {
+    OverviewFunnelKind,
+    OverviewFunnels,
+} from "@frak-labs/backend-elysia/orchestration/schemas";
+import {
+    FunnelChart,
+    type FunnelStep,
+} from "@frak-labs/design-system/components/FunnelChart";
 import { Stack } from "@frak-labs/design-system/components/Stack";
 import {
     Tabs,
@@ -12,31 +18,51 @@ import * as styles from "./overview.css";
 
 type Variant = "website" | "wallet";
 
-const labels: Record<Variant, string> = {
+const tabLabels: Record<Variant, string> = {
     website: "Website",
     wallet: "Wallet Frak",
 };
 
+const FUNNEL_LABELS: Record<OverviewFunnelKind, string> = {
+    share_cta_seen: "Share CTA seen",
+    share_initiated: "Share initiated",
+    link_shared: "Link shared",
+    explorer_impressions: "Explorer impressions",
+    brand_page_opened: "Brand page opened",
+    referred: "Referred",
+    converted: "Converted",
+};
+
 export function FunnelCard({ funnels }: { funnels: OverviewFunnels }) {
+    function toChartSteps(steps: OverviewFunnels[Variant]): FunnelStep[] {
+        return steps.map((step) => ({
+            label: FUNNEL_LABELS[step.kind],
+            value: step.value,
+            delta: percentDelta(step.value, step.previousValue),
+        }));
+    }
+
     return (
         <div className={styles.card}>
             <Tabs defaultValue="website">
                 <Stack space="m">
                     <TabsList>
                         <TabsTrigger value="website">
-                            {labels.website}
+                            {tabLabels.website}
                         </TabsTrigger>
                         <TabsTrigger value="wallet">
-                            {labels.wallet}
+                            {tabLabels.wallet}
                         </TabsTrigger>
                     </TabsList>
-                    {(Object.keys(labels) as Variant[]).map((variant) => (
+                    {(Object.keys(tabLabels) as Variant[]).map((variant) => (
                         <TabsContent key={variant} value={variant}>
                             <Stack space="m">
                                 <Text variant="bodySmall" color="secondary">
-                                    Global funnel · {labels[variant]}
+                                    Global funnel · {tabLabels[variant]}
                                 </Text>
-                                <FunnelChart steps={funnels[variant]} />
+                                <FunnelChart
+                                    steps={toChartSteps(funnels[variant])}
+                                />
                             </Stack>
                         </TabsContent>
                     ))}
@@ -44,4 +70,9 @@ export function FunnelCard({ funnels }: { funnels: OverviewFunnels }) {
             </Tabs>
         </div>
     );
+}
+
+function percentDelta(current: number, previous: number): number | undefined {
+    if (previous === 0) return current === 0 ? 0 : undefined;
+    return Math.round(((current - previous) / previous) * 100);
 }

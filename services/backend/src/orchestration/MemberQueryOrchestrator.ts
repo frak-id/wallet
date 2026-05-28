@@ -25,6 +25,10 @@ import type {
     MemberQueryResultSchema,
     MemberSortSchema,
 } from "./schemas/memberSchemas";
+import {
+    buildUsdRewardsExpression,
+    getTokenPricesForMerchants,
+} from "./utils/usdRewards";
 
 export type MemberQueryFilter = Static<typeof MemberFilterSchema>;
 export type MemberQuerySort = Static<typeof MemberSortSchema>;
@@ -37,8 +41,6 @@ export type MemberQueryParams = {
     sort?: MemberQuerySort;
     filter?: MemberQueryFilter;
 };
-
-type TokenPriceMap = Map<string, number>;
 
 export class MemberQueryOrchestrator {
     constructor(private readonly pricingRepository: PricingRepository) {}
@@ -68,8 +70,11 @@ export class MemberQueryOrchestrator {
             return { totalResult: 0, members: [] };
         }
 
-        const tokenPrices = await this.getTokenPricesForMerchants(merchantIds);
-        const usdRewardsExpr = this.buildUsdRewardsExpression(tokenPrices);
+        const tokenPrices = await getTokenPricesForMerchants(
+            this.pricingRepository,
+            merchantIds
+        );
+        const usdRewardsExpr = buildUsdRewardsExpression(tokenPrices);
 
         const havingConditions = this.buildHavingConditions(params.filter);
         const sortExpr = this.buildSortExpression(params.sort, usdRewardsExpr);
@@ -236,8 +241,11 @@ export class MemberQueryOrchestrator {
         );
         if (merchantIds.length === 0) return 0;
 
-        const tokenPrices = await this.getTokenPricesForMerchants(merchantIds);
-        const usdRewardsExpr = this.buildUsdRewardsExpression(tokenPrices);
+        const tokenPrices = await getTokenPricesForMerchants(
+            this.pricingRepository,
+            merchantIds
+        );
+        const usdRewardsExpr = buildUsdRewardsExpression(tokenPrices);
 
         const havingConditions = this.buildHavingConditions(filter);
 
@@ -292,51 +300,6 @@ export class MemberQueryOrchestrator {
         return result?.total ?? 0;
     }
 
-    // Produces: CASE WHEN token_address = '0x..' THEN amount * usd_price ... ELSE 0 END
-    private buildUsdRewardsExpression(tokenPrices: TokenPriceMap): SQL {
-        if (tokenPrices.size === 0) {
-            return sql`0`;
-        }
-
-        const whenClauses: SQL[] = [];
-        for (const [token, usdPrice] of tokenPrices) {
-            whenClauses.push(
-                sql`WHEN ${assetLogsTable.tokenAddress} = ${token} THEN ${assetLogsTable.amount}::NUMERIC * ${usdPrice}`
-            );
-        }
-
-        return sql`CASE ${sql.join(whenClauses, sql` `)} ELSE 0 END`;
-    }
-
-    private async getTokenPricesForMerchants(
-        merchantIds: string[]
-    ): Promise<TokenPriceMap> {
-        const tokenRows = await db
-            .selectDistinct({
-                tokenAddress: assetLogsTable.tokenAddress,
-            })
-            .from(assetLogsTable)
-            .where(inArray(assetLogsTable.merchantId, merchantIds));
-
-        const tokens = tokenRows
-            .map((r) => r.tokenAddress)
-            .filter((addr): addr is Address => addr !== null);
-
-        const priceMap: TokenPriceMap = new Map();
-        await Promise.all(
-            tokens.map(async (token) => {
-                const price = await this.pricingRepository.getTokenPrice({
-                    token,
-                });
-                if (price) {
-                    priceMap.set(token, price.usd);
-                }
-            })
-        );
-
-        return priceMap;
-    }
-
     private buildHavingConditions(
         filter: MemberQueryFilter | undefined
     ): SQL | undefined {
@@ -357,17 +320,13 @@ export class MemberQueryOrchestrator {
             const minDate = new Date(
                 filter.firstInteractionTimestamp.min * 1000
             );
-            conditions.push(
-                gte(min(interactionLogsTable.createdAt), minDate)
-            );
+            conditions.push(gte(min(interactionLogsTable.createdAt), minDate));
         }
         if (filter?.firstInteractionTimestamp?.max !== undefined) {
             const maxDate = new Date(
                 filter.firstInteractionTimestamp.max * 1000
             );
-            conditions.push(
-                lte(min(interactionLogsTable.createdAt), maxDate)
-            );
+            conditions.push(lte(min(interactionLogsTable.createdAt), maxDate));
         }
 
         if (conditions.length === 0) return undefined;

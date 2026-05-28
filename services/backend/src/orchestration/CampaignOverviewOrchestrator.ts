@@ -8,7 +8,6 @@ import {
     type SQL,
     sql,
 } from "drizzle-orm";
-import { type Address, getAddress } from "viem";
 import { campaignRulesTable } from "../domain/campaign/db/schema";
 import type { CampaignStatus } from "../domain/campaign/schemas";
 import {
@@ -30,16 +29,20 @@ import type {
     OverviewTopCampaign,
     OverviewWindowQuery,
 } from "./schemas/campaignOverviewSchemas";
+import {
+    buildUsdRewardsExpression,
+    getTokenPricesForMerchants,
+} from "./utils/usdRewards";
+import {
+    type DateRange,
+    type ResolvedWindow,
+    resolveWindow,
+} from "./utils/window";
 
 const DAY_MS = 24 * 60 * 60 * 1000;
-const DEFAULT_WINDOW_DAYS = 30;
 const TOP_CAMPAIGNS_LIMIT = 10;
 /** Switch from daily to monthly bucketing once the window spans this many days. */
 const MONTHLY_BUCKET_THRESHOLD_DAYS = 60;
-
-type DateRange = { from: Date; to: Date };
-type ResolvedWindow = { current: DateRange; previous: DateRange };
-type TokenPriceMap = Map<string, number>;
 
 type AssetKpiRow = {
     ambassadorsCurrent: string;
@@ -92,7 +95,10 @@ export class CampaignOverviewOrchestrator {
     ): Promise<OverviewSummaryResponse> {
         const resolved = resolveWindow(window);
 
-        const tokenPrices = await this.getTokenPricesForMerchant(merchantId);
+        const tokenPrices = await getTokenPricesForMerchants(
+            this.pricingRepository,
+            [merchantId]
+        );
         const usdRewardsExpr = buildUsdRewardsExpression(tokenPrices);
 
         const [kpis, topAndStatus, series] = await Promise.all([
@@ -366,69 +372,6 @@ export class CampaignOverviewOrchestrator {
 
         return { granularity, buckets };
     }
-
-    private async getTokenPricesForMerchant(
-        merchantId: string
-    ): Promise<TokenPriceMap> {
-        const tokenRows = await db
-            .selectDistinct({ tokenAddress: assetLogsTable.tokenAddress })
-            .from(assetLogsTable)
-            .where(eq(assetLogsTable.merchantId, merchantId));
-
-        const tokens = tokenRows
-            .map((r) => r.tokenAddress)
-            .filter((addr): addr is Address => addr !== null)
-            .map((addr) => getAddress(addr));
-
-        const prices: TokenPriceMap = new Map();
-        await Promise.all(
-            tokens.map(async (token) => {
-                const price = await this.pricingRepository.getTokenPrice({
-                    token,
-                });
-                if (price) prices.set(token, price.usd);
-            })
-        );
-        return prices;
-    }
-}
-
-/**
- * Build a CASE expression that converts on-chain reward amounts to USD.
- * Mirrors `MemberQueryOrchestrator.buildUsdRewardsExpression`.
- */
-function buildUsdRewardsExpression(prices: TokenPriceMap): SQL {
-    if (prices.size === 0) return sql`0`;
-    const whenClauses: SQL[] = [];
-    for (const [token, usdPrice] of prices) {
-        whenClauses.push(
-            sql`WHEN ${assetLogsTable.tokenAddress} = ${token} THEN ${assetLogsTable.amount}::NUMERIC * ${usdPrice}`
-        );
-    }
-    return sql`CASE ${sql.join(whenClauses, sql` `)} ELSE 0 END`;
-}
-
-function resolveWindow(window: OverviewWindowQuery): ResolvedWindow {
-    const to = window.to ? endOfIsoDay(window.to) : new Date();
-    const defaultFrom = new Date(to.getTime() - DEFAULT_WINDOW_DAYS * DAY_MS);
-    const from = window.from ? startOfIsoDay(window.from) : defaultFrom;
-
-    const lengthMs = Math.max(to.getTime() - from.getTime(), DAY_MS);
-    const previousTo = new Date(from.getTime() - 1);
-    const previousFrom = new Date(previousTo.getTime() - lengthMs);
-
-    return {
-        current: { from, to },
-        previous: { from: previousFrom, to: previousTo },
-    };
-}
-
-function startOfIsoDay(value: string): Date {
-    return new Date(`${value}T00:00:00.000Z`);
-}
-
-function endOfIsoDay(value: string): Date {
-    return new Date(`${value}T23:59:59.999Z`);
 }
 
 function pickGranularity(range: DateRange): OverviewGranularity {
