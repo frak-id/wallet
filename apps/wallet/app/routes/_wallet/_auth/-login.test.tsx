@@ -84,7 +84,7 @@ vi.mock("react-i18next", () => ({
     Trans: ({ i18nKey }: { i18nKey: string }) => i18nKey,
 }));
 
-import { Route } from "./login";
+import { Route } from "./login.index";
 
 const LoginPage = Route.options.component!;
 
