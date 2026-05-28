@@ -1,3 +1,4 @@
+import type { OverviewPurchases } from "@frak-labs/backend-elysia/orchestration/schemas";
 import {
     Bar,
     BarChart,
@@ -9,18 +10,13 @@ import {
 import { Stack } from "@frak-labs/design-system/components/Stack";
 import { Text } from "@frak-labs/design-system/components/Text";
 import { vars } from "@frak-labs/design-system/theme";
-import type { CampaignsOverview } from "@/module/campaigns/queries/queryOptions";
 import * as styles from "./overview.css";
 
 const numberFormatter = new Intl.NumberFormat("en-US");
 
 const chartMargin = { top: 8, right: 44, bottom: 40, left: 8 };
 
-export function PurchasesCard({
-    purchases,
-}: {
-    purchases: CampaignsOverview["purchases"];
-}) {
+export function PurchasesCard({ purchases }: { purchases: OverviewPurchases }) {
     return (
         <Stack space="m" className={styles.card}>
             <Stack space="xxs">

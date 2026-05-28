@@ -1,3 +1,4 @@
+import type { OverviewFunnels } from "@frak-labs/backend-elysia/orchestration/schemas";
 import { FunnelChart } from "@frak-labs/design-system/components/FunnelChart";
 import { Stack } from "@frak-labs/design-system/components/Stack";
 import {
@@ -7,7 +8,6 @@ import {
     TabsTrigger,
 } from "@frak-labs/design-system/components/Tabs";
 import { Text } from "@frak-labs/design-system/components/Text";
-import type { CampaignsOverview } from "@/module/campaigns/queries/queryOptions";
 import * as styles from "./overview.css";
 
 type Variant = "website" | "wallet";
@@ -17,11 +17,7 @@ const labels: Record<Variant, string> = {
     wallet: "Wallet Frak",
 };
 
-export function FunnelCard({
-    funnels,
-}: {
-    funnels: CampaignsOverview["funnels"];
-}) {
+export function FunnelCard({ funnels }: { funnels: OverviewFunnels }) {
     return (
         <div className={styles.card}>
             <Tabs defaultValue="website">

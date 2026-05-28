@@ -97,6 +97,39 @@ export type OverviewSummaryResponse = Static<
     typeof OverviewSummaryResponseSchema
 >;
 
+const OverviewFunnelStepSchema = t.Object({
+    label: t.String(),
+    value: t.Number(),
+    delta: t.Optional(t.Number()),
+});
+export type OverviewFunnelStep = Static<typeof OverviewFunnelStepSchema>;
+
+export const OverviewFunnelsSchema = t.Object({
+    website: t.Array(OverviewFunnelStepSchema),
+    wallet: t.Array(OverviewFunnelStepSchema),
+});
+export type OverviewFunnels = Static<typeof OverviewFunnelsSchema>;
+
+const OverviewSharingBucketSchema = t.Object({
+    label: t.String(),
+    value: t.Number(),
+});
+export type OverviewSharingBucket = Static<typeof OverviewSharingBucketSchema>;
+
+export const OverviewSharingSchema = t.Object({
+    platform: t.Array(OverviewSharingBucketSchema),
+    device: t.Array(OverviewSharingBucketSchema),
+});
+export type OverviewSharing = Static<typeof OverviewSharingSchema>;
+
+export const OverviewAnalyticsResponseSchema = t.Object({
+    funnels: OverviewFunnelsSchema,
+    sharing: OverviewSharingSchema,
+});
+export type OverviewAnalyticsResponse = Static<
+    typeof OverviewAnalyticsResponseSchema
+>;
+
 /**
  * Query parameters accepted by overview endpoints. Both bounds are optional
  * ISO `yyyy-MM-dd` strings; the orchestrator falls back to a trailing

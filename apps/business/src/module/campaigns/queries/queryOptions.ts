@@ -1,8 +1,10 @@
-import type { OverviewSummaryResponse } from "@frak-labs/backend-elysia/orchestration/schemas";
+import type {
+    OverviewAnalyticsResponse,
+    OverviewSummaryResponse,
+} from "@frak-labs/backend-elysia/orchestration/schemas";
 import { queryOptions } from "@tanstack/react-query";
 import { redirect } from "@tanstack/react-router";
 import campaignsMockData from "@/mock/campaigns.json";
-import campaignsOverviewMock from "@/mock/campaignsOverview.json";
 import {
     getCampaignDetail,
     getMerchantCampaigns,
@@ -13,36 +15,12 @@ import {
 } from "@/module/campaigns/api/campaignStatsApi";
 import { getCampaignDetailsMockSync } from "@/module/campaigns/api/mock";
 import {
+    getOverviewAnalytics,
+    getOverviewAnalyticsMock,
     getOverviewSummary,
     getOverviewSummaryMock,
 } from "@/module/campaigns/api/overviewApi";
 import type { Campaign, CampaignWithActions } from "@/types/Campaign";
-
-/**
- * Legacy aggregate shape: keeps the per-card prop types
- * (`CampaignsOverview["kpis"]`, etc.) referenced by the Overview/* cards
- * stable while the data source migrates from a single mock to the split
- * summary/analytics endpoints. Drop this alias once every consumer
- * imports the per-section types directly.
- */
-export type CampaignsOverview = typeof campaignsOverviewMock;
-
-/**
- * Funnels + sharing breakdown — still served from the mock until the
- * OpenPanel integration ships (Phase 3 of
- * `docs/campaigns-overview-endpoint.md`).
- */
-export type OverviewAnalyticsSlice = {
-    funnels: CampaignsOverview["funnels"];
-    sharing: CampaignsOverview["sharing"];
-};
-
-function getOverviewAnalyticsMock(): OverviewAnalyticsSlice {
-    return {
-        funnels: campaignsOverviewMock.funnels,
-        sharing: campaignsOverviewMock.sharing,
-    };
-}
 
 type CampaignStateValidator = (campaign: Campaign) => {
     shouldRedirect: boolean;
@@ -130,10 +108,10 @@ export const overviewSummaryQueryOptions = ({
     });
 
 /**
- * Funnels + sharing breakdown — placeholder served from the mock until
- * the OpenPanel-backed `/overview/analytics` endpoint ships (Phase 3).
- * Keeps the same `from`/`to` keying so it slots into the page without a
- * second refactor when the real call lands.
+ * Funnels + sharing breakdown — sourced from OpenPanel via
+ * `GET /business/merchant/:merchantId/campaigns/overview/analytics`.
+ * Lives behind its own Suspense boundary so the slower analytics call
+ * doesn't block the KPI/summary cards from painting.
  */
 export const overviewAnalyticsQueryOptions = ({
     merchantId,
@@ -146,7 +124,7 @@ export const overviewAnalyticsQueryOptions = ({
     from?: string;
     to?: string;
 }) =>
-    queryOptions<OverviewAnalyticsSlice>({
+    queryOptions<OverviewAnalyticsResponse>({
         queryKey: [
             "campaigns",
             "overview",
@@ -156,9 +134,10 @@ export const overviewAnalyticsQueryOptions = ({
             from ?? null,
             to ?? null,
         ],
-        queryFn: () => Promise.resolve(getOverviewAnalyticsMock()),
+        queryFn: () =>
+            getOverviewAnalytics({ merchantId, isDemoMode, from, to }),
         staleTime: isDemoMode ? Number.POSITIVE_INFINITY : 5 * 60 * 1000,
-        initialData: getOverviewAnalyticsMock(),
+        initialData: isDemoMode ? getOverviewAnalyticsMock() : undefined,
     });
 
 export const campaignsStatsQueryOptions = ({

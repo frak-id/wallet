@@ -1,3 +1,4 @@
+import type { OverviewSharing } from "@frak-labs/backend-elysia/orchestration/schemas";
 import {
     PieChart,
     PieSlice,
@@ -15,7 +16,6 @@ import { Text } from "@frak-labs/design-system/components/Text";
 import { vars } from "@frak-labs/design-system/theme";
 import clsx from "clsx";
 import { useState } from "react";
-import type { CampaignsOverview } from "@/module/campaigns/queries/queryOptions";
 import * as styles from "./overview.css";
 import * as local from "./sharingBySource.css";
 
@@ -33,11 +33,7 @@ function withColors(segments: { label: string; value: number }[], mode: Mode) {
     }));
 }
 
-export function SharingBySourceCard({
-    sharing,
-}: {
-    sharing: CampaignsOverview["sharing"];
-}) {
+export function SharingBySourceCard({ sharing }: { sharing: OverviewSharing }) {
     const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
 
     return (
