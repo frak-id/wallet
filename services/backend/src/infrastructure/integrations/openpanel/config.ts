@@ -2,10 +2,21 @@
  * Shared types for the OpenPanel `/export/*` API.
  *
  * Public docs: https://openpanel.dev/docs/api/export
- * Source schema (`chartSchemeFull`): packages/validation in
- * https://github.com/Openpanel-dev/openpanel — picks `breakdowns`, `interval`,
- * `range`, `previous`, `startDate`, `endDate` from `zReport` and adds a typed
- * `series` array.
+ * Source: `apps/api/src/controllers/export.controller.ts` (`chartSchemeFull`)
+ * and `packages/db/src/engine/format.ts` (`format()`) in
+ * https://github.com/Openpanel-dev/openpanel.
+ *
+ * Response shape sanity:
+ *   - Per-serie totals live under `metrics.sum` (NOT a top-level `total`).
+ *   - Previous-period values live under `metrics.previous.{sum,…}.value`
+ *     (NOT a top-level `previousTotal`). The whole `previous` object is
+ *     omitted when the matching previous-window serie has no data — not
+ *     zeroed. Read with `?.value ?? 0`.
+ *   - Per-datapoint previous lives under `data[i].previous.value` (NOT a
+ *     `previousCount` field).
+ *   - Breakdown values live under `event.breakdowns[breakdownKey]` — the
+ *     key matches what the request sent (e.g. `"properties.source"`,
+ *     `"device"`). One serie emitted per (event × breakdown value) tuple.
  *
  * Only the subset used by `CampaignAnalyticsOrchestrator` is modelled here.
  */
@@ -87,23 +98,58 @@ export type OpenPanelChartQuery = {
     breakdowns?: OpenPanelChartBreakdown[];
 };
 
+/**
+ * Previous-period comparison wrapper attached to both per-serie metrics
+ * and per-bucket data points when `previous: true` is requested.
+ * `value` is the raw previous-period count; `diff` is the percent change
+ * (null when the previous value was 0 or identical). `state` reflects the
+ * direction OpenPanel surfaces in its own UI.
+ */
+export type OpenPanelPreviousValue = {
+    value: number;
+    diff: number | null;
+    state: "positive" | "negative" | "neutral";
+};
+
 export type OpenPanelChartSerieDatum = {
     date: string;
     count: number;
-    /** Present when `previous: true` was requested. */
-    previousCount?: number;
+    /** Present when `previous: true` AND the previous-window serie has data. */
+    previous?: OpenPanelPreviousValue;
+};
+
+export type OpenPanelChartSerieMetrics = {
+    sum: number;
+    average: number;
+    min: number;
+    max: number;
+    count?: number;
+    /** Present when `previous: true` AND the previous-window serie has data. */
+    previous?: {
+        sum: OpenPanelPreviousValue;
+        average: OpenPanelPreviousValue;
+        min: OpenPanelPreviousValue;
+        max: OpenPanelPreviousValue;
+        count?: OpenPanelPreviousValue;
+    };
+};
+
+export type OpenPanelChartSerieEvent = {
+    id: string;
+    name: string;
+    /**
+     * Breakdown bucket values, keyed by the breakdown name sent in the
+     * request (e.g. `"properties.source"`, `"device"`). One serie is
+     * emitted per (event × breakdown value) tuple.
+     */
+    breakdowns?: Record<string, string>;
 };
 
 export type OpenPanelChartSerie = {
-    name: string;
-    /**
-     * Optional breakdown bucket label. Present when the request carried
-     * `breakdowns` — OpenPanel emits one serie per breakdown value with the
-     * value surfaced as `event` (typically the property value, e.g. `"ios"`).
-     */
-    event?: string;
-    total: number;
-    previousTotal?: number;
+    id: string;
+    names: string[];
+    event: OpenPanelChartSerieEvent;
+    metrics: OpenPanelChartSerieMetrics;
     data: OpenPanelChartSerieDatum[];
 };
 

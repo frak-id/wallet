@@ -241,8 +241,9 @@ export class CampaignAnalyticsOrchestrator {
 
         const totals = new Map<string, number>();
         for (const serie of response.series) {
-            const value = serie.event ?? "unknown";
-            totals.set(value, (totals.get(value) ?? 0) + serie.total);
+            const value = serie.event.breakdowns?.[breakdown] ?? "unknown";
+            const count = serie.metrics?.sum ?? 0;
+            totals.set(value, (totals.get(value) ?? 0) + count);
         }
         return totals;
     }
@@ -408,9 +409,8 @@ function aggregateFunnelSteps(
     definitions.forEach((step, stepIdx) => {
         for (let i = 0; i < step.eventNames.length; i++) {
             const serie = responseSeries[serieIdx++];
-            if (!serie) continue;
-            totals[stepIdx] += serie.total;
-            previousTotals[stepIdx] += serie.previousTotal ?? 0;
+            totals[stepIdx] += serieSum(serie);
+            previousTotals[stepIdx] += seriePreviousSum(serie);
         }
     });
 
@@ -432,16 +432,22 @@ function aggregateAccurateKpis(
         responseSeries;
     return {
         shares: {
-            current: (sharedEvents?.total ?? 0) + (copiedEvents?.total ?? 0),
+            current: serieSum(sharedEvents) + serieSum(copiedEvents),
             previous:
-                (sharedEvents?.previousTotal ?? 0) +
-                (copiedEvents?.previousTotal ?? 0),
+                seriePreviousSum(sharedEvents) + seriePreviousSum(copiedEvents),
         },
         ambassadors: {
-            current: (sharedUsers?.total ?? 0) + (copiedUsers?.total ?? 0),
+            current: serieSum(sharedUsers) + serieSum(copiedUsers),
             previous:
-                (sharedUsers?.previousTotal ?? 0) +
-                (copiedUsers?.previousTotal ?? 0),
+                seriePreviousSum(sharedUsers) + seriePreviousSum(copiedUsers),
         },
     };
+}
+
+function serieSum(serie: OpenPanelChartSerie | undefined): number {
+    return serie?.metrics?.sum ?? 0;
+}
+
+function seriePreviousSum(serie: OpenPanelChartSerie | undefined): number {
+    return serie?.metrics?.previous?.sum.value ?? 0;
 }
