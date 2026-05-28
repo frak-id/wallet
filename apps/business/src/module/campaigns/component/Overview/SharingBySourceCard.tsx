@@ -1,4 +1,8 @@
-import { DonutChart } from "@frak-labs/design-system/components/DonutChart";
+import {
+    PieChart,
+    PieSlice,
+    PieSliceLabels,
+} from "@frak-labs/design-system/components/DonutChart";
 import { Inline } from "@frak-labs/design-system/components/Inline";
 import { Stack } from "@frak-labs/design-system/components/Stack";
 import {
@@ -9,6 +13,7 @@ import {
 } from "@frak-labs/design-system/components/Tabs";
 import { Text } from "@frak-labs/design-system/components/Text";
 import { vars } from "@frak-labs/design-system/theme";
+import { useState } from "react";
 import type { CampaignsOverview } from "@/module/campaigns/queries/queryOptions";
 import * as styles from "./overview.css";
 import * as local from "./sharingBySource.css";
@@ -32,6 +37,8 @@ export function SharingBySourceCard({
 }: {
     sharing: CampaignsOverview["sharing"];
 }) {
+    const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
+
     return (
         <div className={styles.card}>
             <Tabs defaultValue="platform">
@@ -48,10 +55,47 @@ export function SharingBySourceCard({
                         return (
                             <TabsContent key={mode} value={mode}>
                                 <Stack space="m">
-                                    <DonutChart segments={segments} />
+                                    <Inline align="center" space="none">
+                                        <PieChart
+                                            cornerRadius={2}
+                                            data={segments}
+                                            hoverOffset={8}
+                                            hoveredIndex={hoveredIndex}
+                                            innerRadius={52}
+                                            onHoverChange={setHoveredIndex}
+                                            padAngle={0.02}
+                                            size={180}
+                                        >
+                                            {segments.map((s, i) => (
+                                                <PieSlice
+                                                    index={i}
+                                                    key={s.label}
+                                                />
+                                            ))}
+                                            <PieSliceLabels />
+                                        </PieChart>
+                                    </Inline>
                                     <Inline space="l" align="center" wrap>
-                                        {segments.map((s) => (
-                                            <Stack key={s.label} space="xxs">
+                                        {segments.map((s, i) => (
+                                            <div
+                                                className={[
+                                                    local.legendItem,
+                                                    hoveredIndex === i &&
+                                                        local.legendItemActive,
+                                                    hoveredIndex !== null &&
+                                                        hoveredIndex !== i &&
+                                                        local.legendItemDimmed,
+                                                ]
+                                                    .filter(Boolean)
+                                                    .join(" ")}
+                                                key={s.label}
+                                                onMouseEnter={() =>
+                                                    setHoveredIndex(i)
+                                                }
+                                                onMouseLeave={() =>
+                                                    setHoveredIndex(null)
+                                                }
+                                            >
                                                 <span
                                                     className={local.dot}
                                                     style={{
@@ -65,7 +109,7 @@ export function SharingBySourceCard({
                                                 >
                                                     {s.label}
                                                 </Text>
-                                            </Stack>
+                                            </div>
                                         ))}
                                     </Inline>
                                 </Stack>

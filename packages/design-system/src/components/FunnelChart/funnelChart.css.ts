@@ -48,16 +48,6 @@ export const funnelChartStyles = {
         borderRadius: "2px",
         overflow: "hidden",
     }),
-    bar: style({
-        height: "100%",
-        backgroundColor: vars.icon.action,
-        borderRadius: "2px",
-        transition: "width 240ms ease-out",
-    }),
-    barSuccess: style({
-        backgroundColor: vars.icon.success,
-        borderRadius: "2px",
-    }),
     valueCell: style({
         display: "flex",
         flexDirection: "column",

@@ -20,6 +20,7 @@
     "./assets/iphone.png": "./src/assets/iphone.png"
   },
   "dependencies": {
+    "@number-flow/react": "^0.6.0",
     "@radix-ui/react-accordion": "^1.2.12",
     "@radix-ui/react-alert-dialog": "^1.1.13",
     "@radix-ui/react-checkbox": "^1.1.4",
@@ -34,9 +35,20 @@
     "@vanilla-extract/css": "^1.19.1",
     "@vanilla-extract/recipes": "^0.5.5",
     "@vanilla-extract/sprinkles": "^1.6.5",
+    "@visx/curve": "4.0.1-alpha.0",
+    "@visx/event": "4.0.1-alpha.0",
+    "@visx/gradient": "4.0.1-alpha.0",
+    "@visx/grid": "4.0.1-alpha.0",
+    "@visx/group": "4.0.1-alpha.0",
+    "@visx/pattern": "4.0.1-alpha.0",
+    "@visx/responsive": "4.0.1-alpha.0",
+    "@visx/scale": "4.0.1-alpha.0",
+    "@visx/shape": "4.0.1-alpha.0",
     "clsx": "^2.1.1",
+    "d3-array": "^3.2.4",
+    "d3-shape": "^3.2.0",
     "lucide-react": "^0.577.0",
-    "recharts": "^2.15.0",
+    "motion": "^12.40.0",
     "vaul": "^1.1.2"
   },
   "devDependencies": {
@@ -44,6 +56,8 @@
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.3.2",
     "@testing-library/user-event": "^14.6.1",
+    "@types/d3-array": "^3.2.2",
+    "@types/d3-shape": "^3.1.8",
     "@types/react": "catalog:",
     "@types/react-dom": "catalog:",
     "@vanilla-extract/vite-plugin": "^5.2.0",

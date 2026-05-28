@@ -57,6 +57,13 @@ export const card = style({
     padding: alias.spacing.l,
 });
 
+// Fixed chart height — the cards live in a stretched grid row, so an explicit
+// height keeps the visx charts from filling the whole cell (aspect-ratio is
+// only honoured when a dimension is auto).
+export const chartBox = style({
+    height: "180px",
+});
+
 export const chartAmount = style({
     fontSize: "32px",
     lineHeight: "36px",
