@@ -13,6 +13,8 @@ import { StatusLegendBar } from "./StatusLegendBar";
 
 const columnHelper = createColumnHelper<OverviewTopCampaign>();
 
+const numberFormatter = new Intl.NumberFormat("en-US");
+
 const badgeVariantForStatus: Record<
     OverviewTopCampaign["status"],
     "success" | "warning" | "disabled" | "neutral"
@@ -65,8 +67,8 @@ export function TopCampaignsCard({
                         );
                     },
                 }),
-                columnHelper.accessor("sharingRate", {
-                    header: () => "Sharing rate",
+                columnHelper.accessor("rewardsCount", {
+                    header: () => "Rewards",
                     size: 140,
                     cell: ({ getValue }) => (
                         <Text
@@ -75,7 +77,7 @@ export function TopCampaignsCard({
                             weight="medium"
                             color="success"
                         >
-                            {Math.round(getValue() * 100)}%
+                            {numberFormatter.format(getValue())}
                         </Text>
                     ),
                     meta: { align: "right" },

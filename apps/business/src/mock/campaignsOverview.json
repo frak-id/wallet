@@ -28,25 +28,25 @@
             "id": "camp_001",
             "name": "Summer referral campaign",
             "status": "active",
-            "sharingRate": 0.57
+            "rewardsCount": 1284
         },
         {
             "id": "camp_002",
             "name": "Special offer spring",
             "status": "active",
-            "sharingRate": 0.42
-        },
-        {
-            "id": "camp_003",
-            "name": "Launch Prd",
-            "status": "paused",
-            "sharingRate": 0.12
+            "rewardsCount": 742
         },
         {
             "id": "camp_004",
             "name": "Campagne test",
             "status": "ended",
-            "sharingRate": 0.47
+            "rewardsCount": 318
+        },
+        {
+            "id": "camp_003",
+            "name": "Launch Prd",
+            "status": "paused",
+            "rewardsCount": 96
         }
     ],
     "statusBreakdown": {

@@ -46,7 +46,7 @@ export const OverviewTopCampaignSchema = t.Object({
     id: t.String(),
     name: t.String(),
     status: OverviewCampaignStatusSchema,
-    sharingRate: t.Number(),
+    rewardsCount: t.Number(),
 });
 export type OverviewTopCampaign = Static<typeof OverviewTopCampaignSchema>;
 

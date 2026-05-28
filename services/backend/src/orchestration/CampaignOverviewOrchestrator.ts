@@ -84,7 +84,10 @@ export class CampaignOverviewOrchestrator {
         const [kpis, topAndStatus, purchases, projectedRevenue] =
             await Promise.all([
                 this.getKpis(merchantId, resolved, usdRewardsExpr),
-                this.getTopCampaignsAndStatusBreakdown(merchantId),
+                this.getTopCampaignsAndStatusBreakdown(
+                    merchantId,
+                    resolved.current
+                ),
                 this.getPurchases(merchantId, resolved.current),
                 this.getProjectedRevenue(merchantId, resolved.current),
             ]);
@@ -245,7 +248,8 @@ export class CampaignOverviewOrchestrator {
     }
 
     private async getTopCampaignsAndStatusBreakdown(
-        merchantId: string
+        merchantId: string,
+        range: DateRange
     ): Promise<{
         topCampaigns: OverviewTopCampaign[];
         statusBreakdown: OverviewStatusBreakdown;
@@ -286,54 +290,58 @@ export class CampaignOverviewOrchestrator {
         }
 
         const campaignIds = campaigns.map((c) => c.id);
-        const sharingRates = await this.getSharingRatesByCampaign(campaignIds);
+        const rewardsCounts = await this.getRewardsCountByCampaign(
+            campaignIds,
+            range
+        );
 
         const topCampaigns: OverviewTopCampaign[] = campaigns
             .map((c) => ({
                 id: c.id,
                 name: c.name,
                 status: surfacedStatus.get(c.id) ?? "ended",
-                sharingRate: round3(sharingRates.get(c.id) ?? 0),
+                rewardsCount: rewardsCounts.get(c.id) ?? 0,
             }))
-            .sort((a, b) => b.sharingRate - a.sharingRate)
+            .sort((a, b) => b.rewardsCount - a.rewardsCount)
             .slice(0, TOP_CAMPAIGNS_LIMIT);
 
         return { topCampaigns, statusBreakdown };
     }
 
     /**
-     * Per-campaign sharing rate using the same formula as
-     * `CampaignStatsOrchestrator`:
-     *   `create_referral_link interactions / referral_arrival interactions`
-     * Calculated lifetime (not window-scoped) to keep the "Top campaigns"
-     * ranking stable across narrow date filters.
+     * Per-campaign reward count — counts un-cancelled `asset_logs` rows
+     * scoped to each campaign rule within the current window. Replaces
+     * the legacy "sharing rate" metric: `create_referral_link` is
+     * merchant-scoped (one row per share), so attributing it to a
+     * specific campaign rule via the `asset_logs` join was conflating
+     * "campaign drove sharing" with "campaign happened to reward
+     * sharing". `asset_logs` rows are unambiguously per-campaign.
      */
-    private async getSharingRatesByCampaign(
-        campaignIds: string[]
+    private async getRewardsCountByCampaign(
+        campaignIds: string[],
+        range: DateRange
     ): Promise<Map<string, number>> {
         if (campaignIds.length === 0) return new Map();
 
         const rows = await db
             .select({
                 campaignRuleId: assetLogsTable.campaignRuleId,
-                referred: sql<number>`COUNT(DISTINCT CASE WHEN ${interactionLogsTable.type} = 'referral_arrival' THEN ${interactionLogsTable.id} END)`,
-                created: sql<number>`COUNT(DISTINCT CASE WHEN ${interactionLogsTable.type} = 'create_referral_link' THEN ${interactionLogsTable.id} END)`,
+                rewardsCount: sql<number>`COUNT(*)`,
             })
             .from(assetLogsTable)
-            .leftJoin(
-                interactionLogsTable,
-                eq(assetLogsTable.interactionLogId, interactionLogsTable.id)
+            .where(
+                and(
+                    inArray(assetLogsTable.campaignRuleId, campaignIds),
+                    isNull(assetLogsTable.cancelledAt),
+                    between(assetLogsTable.createdAt, range.from, range.to)
+                )
             )
-            .where(inArray(assetLogsTable.campaignRuleId, campaignIds))
             .groupBy(assetLogsTable.campaignRuleId);
 
         const result = new Map<string, number>();
         for (const row of rows) {
             if (!row.campaignRuleId) continue;
-            result.set(
-                row.campaignRuleId,
-                safeRatio(Number(row.created), Number(row.referred))
-            );
+            result.set(row.campaignRuleId, Number(row.rewardsCount));
         }
         return result;
     }
