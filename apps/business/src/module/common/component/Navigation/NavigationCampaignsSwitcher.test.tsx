@@ -95,7 +95,7 @@ describe("NavigationCampaignsSwitcher", () => {
 
         const subItems = screen.getAllByTestId("sub-navigation-item");
         expect(subItems).toHaveLength(2);
-        expect(subItems[0]).toHaveAttribute("data-url", "/campaigns/overview");
+        expect(subItems[0]).toHaveAttribute("data-url", "/campaigns");
         expect(subItems[1]).toHaveAttribute("data-url", "/campaigns/list");
         expect(
             screen.getByText("shell.pages.campaignsOverview.nav")

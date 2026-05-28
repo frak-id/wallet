@@ -19,9 +19,7 @@ function parseIsoDate(value: unknown): string | undefined {
         : undefined;
 }
 
-export const Route = createFileRoute(
-    "/_restricted/m/$merchantId/campaigns/overview"
-)({
+export const Route = createFileRoute("/_restricted/m/$merchantId/campaigns/")({
     validateSearch: (
         search: Record<string, unknown>
     ): CampaignsOverviewSearch => ({

@@ -20,7 +20,7 @@ import {
 import { ProfileLink } from "./ProfileLink";
 
 const CAMPAIGNS_PATH = /^\/m\/[^/]+\/campaigns(\/|$)/;
-const CAMPAIGNS_OVERVIEW_PATH = /^\/m\/[^/]+\/campaigns\/overview$/;
+const CAMPAIGNS_OVERVIEW_PATH = /^\/m\/[^/]+\/campaigns$/;
 const DASHBOARD_PATH = /^\/m\/[^/]+\/dashboard$/;
 const MERCHANT_PATH = /^\/m\/[^/]+\/merchant(\/|$)/;
 const MEMBERS_PATH = /^\/m\/[^/]+\/members$/;
@@ -35,8 +35,7 @@ export function Header() {
     const showCreateCampaign =
         CAMPAIGNS_PATH.test(pathname) || pathname.startsWith("/campaigns");
     const showDateRange =
-        CAMPAIGNS_OVERVIEW_PATH.test(pathname) ||
-        pathname === "/campaigns/overview";
+        CAMPAIGNS_OVERVIEW_PATH.test(pathname) || pathname === "/campaigns";
     const showAddMerchant =
         DASHBOARD_PATH.test(pathname) ||
         pathname === "/dashboard" ||

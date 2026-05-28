@@ -24,8 +24,6 @@ function labelFor(segment: string, t: TFunction): string {
             return pageNav(t, "campaigns");
         case "list":
             return pageNav(t, "campaignsList");
-        case "overview":
-            return pageNav(t, "campaignsOverview");
         case "members":
             return pageNav(t, "members");
         case "push":

@@ -24,8 +24,8 @@ export function NavigationCampaignsSwitcher() {
         ? `/m/${merchantId}/campaigns/list`
         : "/campaigns/list";
     const overviewUrl = merchantId
-        ? `/m/${merchantId}/campaigns/overview`
-        : "/campaigns/overview";
+        ? `/m/${merchantId}/campaigns`
+        : "/campaigns";
 
     return isMobile ? (
         <NavigationItem
@@ -79,7 +79,7 @@ function NavigationCampaigns({
             </Collapsible.Trigger>
             <Collapsible.Content className={collapsibleContent}>
                 <ul>
-                    <SubNavigationItem url={overviewUrl}>
+                    <SubNavigationItem url={overviewUrl} fuzzy={false}>
                         {pageNav(t, "campaignsOverview")}
                     </SubNavigationItem>
                     <SubNavigationItem url={listUrl}>

@@ -103,6 +103,7 @@ type NavigationItemProps = HTMLAttributes<HTMLElement> & {
     isActive?: boolean;
     disabled?: boolean;
     isSub?: boolean;
+    fuzzy?: boolean;
 };
 
 export function NavigationItem({
@@ -113,10 +114,11 @@ export function NavigationItem({
     isActive,
     disabled,
     isSub = false,
+    fuzzy = true,
     ...rest
 }: PropsWithChildren<NavigationItemProps>) {
     const matchRoute = useMatchRoute();
-    const isRouteActive = url ? matchRoute({ to: url, fuzzy: true }) : false;
+    const isRouteActive = url ? matchRoute({ to: url, fuzzy }) : false;
     const active = Boolean(isRouteActive || isActive);
 
     const baseClass = isSub ? subItem : item;
