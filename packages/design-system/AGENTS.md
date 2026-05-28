@@ -21,7 +21,7 @@ import { brand, alias } from "@frak-labs/design-system/tokens";
 
 ## Non-Obvious Patterns
 - **Subpath exports are strict** — no wildcards. Public API is per-component: `@frak-labs/design-system/components/<Name>`.
-- **Named exports only** — no default exports.
+- **Named exports only** — no default exports. _Exception:_ `src/components/charts/**` is vendored from bklit (visx) and kept close to upstream, so those files may carry `export default` alongside named exports. The public surface (`charts/index.ts` + the `AreaChart`/`BarChart`/`DonutChart` re-export wrappers) stays named-only.
 - **Semantic tokens, not raw colors**: `vars.text.*`, `vars.surface.*`, `vars.border.*`, `vars.icon.*`. Brand/scale tokens are for defining aliases, not for direct component use.
 - **Sprinkles do NOT accept raw CSS**: only values from the token contract. Unknown values fail at compile time.
 - **Theme switch** lives on `[data-theme='dark']` selector; `html` element owns the attribute.

@@ -4,7 +4,9 @@ import { vars } from "../../theme.css";
 // Bridges bklit's `--chart-*` CSS variables (referenced verbatim across the
 // vendored visx chart files) onto Frak design tokens. Values are themselves
 // theme-aware `var(--…)` references, so light/dark switch automatically.
-globalStyle(":root", {
+// Scoped to `.frak-chart` (every chart root + the tooltip portal container)
+// so these variables don't leak into other design-system consumers.
+globalStyle(".frak-chart", {
     vars: {
         "--chart-background": vars.surface.background,
         "--chart-foreground": vars.text.primary,

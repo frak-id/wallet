@@ -136,6 +136,7 @@ function AnimatedSliceTranslate({
                 y: isHovered ? offset.y : 0,
             }}
             d={animatedPath}
+            initial={false}
             fill={fill}
             key={`slice-${animationKey}-${index}`}
             pointerEvents="none"
@@ -236,6 +237,7 @@ function AnimatedSliceGrow({
             }}
             d={animatedPath}
             fill={fill}
+            initial={false}
             key={`slice-${animationKey}-${index}`}
             pointerEvents="none"
             style={{
@@ -387,6 +389,7 @@ export function PieSlice({
                         d: grownPath,
                     }}
                     d={hitboxPath}
+                    initial={false}
                     fill={fill}
                     pointerEvents="none"
                     style={{
@@ -416,6 +419,7 @@ export function PieSlice({
                     y: translateY,
                 }}
                 d={hitboxPath}
+                initial={false}
                 fill={fill}
                 pointerEvents="none"
                 style={{

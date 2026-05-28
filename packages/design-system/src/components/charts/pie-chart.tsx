@@ -9,6 +9,7 @@ import {
     type ReactElement,
     type ReactNode,
     useCallback,
+    useEffect,
     useMemo,
     useRef,
     useState,
@@ -52,7 +53,7 @@ export interface PieChartProps {
      * Default: 10
      */
     hoverOffset?: number;
-    /** Child components (PieSlice, PieCenter, patterns, gradients, etc.) */
+    /** Child components (PieSlice, patterns, gradients, etc.) */
     children: ReactNode;
     /** Framer Motion transition for slice enter animation */
     enterTransition?: Transition;
@@ -76,16 +77,6 @@ interface PieChartInnerProps {
     onHoverChange?: (index: number | null) => void;
     enterTransition?: Transition;
     enterStaggerScale: number;
-}
-
-// Helper to check if a child is a PieCenter component
-function isPieCenter(child: ReactNode): boolean {
-    return (
-        isValidElement(child) &&
-        typeof child.type === "function" &&
-        ((child.type as { displayName?: string }).displayName === "PieCenter" ||
-            (child.type as { name?: string }).name === "PieCenter")
-    );
 }
 
 // Helper to check if a component is a gradient or pattern definition
@@ -211,29 +202,22 @@ const PieChartCore = memo(function PieChartCore({
         })) as PieArcData[];
     }, [data, startAngle, endAngle, padAngle]);
 
-    // Mark as loaded after initial render
-    useState(() => {
+    // Mark as loaded after initial render. (Upstream bklit wrote this as a
+    // useState initializer, which leaks the timer — corrected to useEffect.)
+    useEffect(() => {
         const timer = setTimeout(() => {
             setIsLoaded(true);
         }, 100);
         return () => clearTimeout(timer);
-    });
+    }, []);
 
     // Separate children into categories
-    const { svgChildren, centerChildren, defsChildren } = useMemo(() => {
+    const { svgChildren, defsChildren } = useMemo(() => {
         const svgNodes: ReactNode[] = [];
-        const centerNodes: ReactNode[] = [];
         const defsNodes: ReactElement[] = [];
 
         Children.forEach(children, (child) => {
-            if (!isValidElement(child)) {
-                svgNodes.push(child);
-                return;
-            }
-
-            if (isPieCenter(child)) {
-                centerNodes.push(child);
-            } else if (isDefsComponent(child)) {
+            if (isValidElement(child) && isDefsComponent(child)) {
                 defsNodes.push(child);
             } else {
                 svgNodes.push(child);
@@ -242,7 +226,6 @@ const PieChartCore = memo(function PieChartCore({
 
         return {
             svgChildren: svgNodes,
-            centerChildren: centerNodes,
             defsChildren: defsNodes,
         };
     }, [children]);
@@ -296,16 +279,6 @@ const PieChartCore = memo(function PieChartCore({
                         {svgChildren}
                     </Group>
                 </svg>
-
-                {/* HTML layer with center content - stacked on top via grid */}
-                {centerChildren.length > 0 && (
-                    <div
-                        className="pointer-events-none flex items-center justify-center"
-                        style={{ gridArea: "1 / 1" }}
-                    >
-                        {centerChildren}
-                    </div>
-                )}
             </div>
         </PieProvider>
     );

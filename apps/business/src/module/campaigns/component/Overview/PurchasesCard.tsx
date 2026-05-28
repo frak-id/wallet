@@ -5,7 +5,7 @@ import {
     ChartTooltip,
     NumericYAxis,
     ReferenceLine,
-} from "@frak-labs/design-system/components/BarChart";
+} from "@frak-labs/design-system/components/charts";
 import { Stack } from "@frak-labs/design-system/components/Stack";
 import { Text } from "@frak-labs/design-system/components/Text";
 import { vars } from "@frak-labs/design-system/theme";

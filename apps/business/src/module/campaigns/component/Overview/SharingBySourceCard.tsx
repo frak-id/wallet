@@ -2,7 +2,7 @@ import {
     PieChart,
     PieSlice,
     PieSliceLabels,
-} from "@frak-labs/design-system/components/DonutChart";
+} from "@frak-labs/design-system/components/charts";
 import { Inline } from "@frak-labs/design-system/components/Inline";
 import { Stack } from "@frak-labs/design-system/components/Stack";
 import {
@@ -13,6 +13,7 @@ import {
 } from "@frak-labs/design-system/components/Tabs";
 import { Text } from "@frak-labs/design-system/components/Text";
 import { vars } from "@frak-labs/design-system/theme";
+import clsx from "clsx";
 import { useState } from "react";
 import type { CampaignsOverview } from "@/module/campaigns/queries/queryOptions";
 import * as styles from "./overview.css";
@@ -78,16 +79,14 @@ export function SharingBySourceCard({
                                     <Inline space="l" align="center" wrap>
                                         {segments.map((s, i) => (
                                             <div
-                                                className={[
+                                                className={clsx(
                                                     local.legendItem,
                                                     hoveredIndex === i &&
                                                         local.legendItemActive,
                                                     hoveredIndex !== null &&
                                                         hoveredIndex !== i &&
-                                                        local.legendItemDimmed,
-                                                ]
-                                                    .filter(Boolean)
-                                                    .join(" ")}
+                                                        local.legendItemDimmed
+                                                )}
                                                 key={s.label}
                                                 onMouseEnter={() =>
                                                     setHoveredIndex(i)

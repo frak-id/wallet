@@ -7,6 +7,7 @@
   "main": "./src/index.ts",
   "module": "./src/index.ts",
   "exports": {
+    "./components/charts": "./src/components/charts/index.ts",
     "./components/*": "./src/components/*/index.tsx",
     "./hooks/useMediaQuery": "./src/hooks/useMediaQuery.ts",
     "./icons": "./src/icons/index.ts",

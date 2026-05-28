@@ -5,7 +5,7 @@ import {
     Grid,
     NumericYAxis,
     XAxis,
-} from "@frak-labs/design-system/components/AreaChart";
+} from "@frak-labs/design-system/components/charts";
 import { Inline } from "@frak-labs/design-system/components/Inline";
 import { Stack } from "@frak-labs/design-system/components/Stack";
 import { Text } from "@frak-labs/design-system/components/Text";
@@ -29,11 +29,14 @@ export function ProjectedRevenueCard({
     // monthly, so map each label to the first of its month.
     const chartData = useMemo(
         () =>
-            projectedRevenue.series.map((point, index) => ({
-                date: new Date(2024, MONTHS.indexOf(point.label) || index, 1),
-                actual: point.actual,
-                forecast: point.forecast,
-            })),
+            projectedRevenue.series.map((point, index) => {
+                const month = MONTHS.indexOf(point.label);
+                return {
+                    date: new Date(2024, month === -1 ? index : month, 1),
+                    actual: point.actual,
+                    forecast: point.forecast,
+                };
+            }),
         [projectedRevenue.series]
     );
 

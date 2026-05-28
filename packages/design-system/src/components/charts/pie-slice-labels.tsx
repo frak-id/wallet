@@ -50,25 +50,30 @@ export function PieSliceLabels({
                 const dx = isHovered ? Math.sin(mid) * hoverOffset : 0;
                 const dy = isHovered ? -Math.cos(mid) * hoverOffset : 0;
                 return (
-                    <text
-                        dy="0.32em"
-                        fill={color}
-                        fillOpacity={isFaded ? 0.4 : 1}
-                        fontSize={11}
-                        fontWeight={600}
+                    // Transform on a wrapping <g> (not <text>) — more robust
+                    // across browsers (Safari) for animating SVG transforms.
+                    <g
                         key={arc.index}
-                        pointerEvents="none"
                         style={{
                             transform: `translate(${dx}px, ${dy}px)`,
-                            transition:
-                                "transform 200ms ease, fill-opacity 150ms ease",
+                            transition: "transform 200ms ease",
                         }}
-                        textAnchor="middle"
-                        x={x}
-                        y={y}
                     >
-                        {formatter(fraction)}
-                    </text>
+                        <text
+                            dy="0.32em"
+                            fill={color}
+                            fillOpacity={isFaded ? 0.4 : 1}
+                            fontSize={11}
+                            fontWeight={600}
+                            pointerEvents="none"
+                            style={{ transition: "fill-opacity 150ms ease" }}
+                            textAnchor="middle"
+                            x={x}
+                            y={y}
+                        >
+                            {formatter(fraction)}
+                        </text>
+                    </g>
                 );
             })}
         </>
