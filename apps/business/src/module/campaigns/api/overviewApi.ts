@@ -21,6 +21,7 @@ export function getOverviewAnalyticsMock(): OverviewAnalyticsResponse {
     return {
         funnels: campaignsOverviewMock.funnels,
         sharing: campaignsOverviewMock.sharing,
+        accurateKpis: campaignsOverviewMock.accurateKpis,
     };
 }
 

@@ -30,7 +30,7 @@ export function CampaignsOverview({ from, to }: WindowProps) {
     return (
         <div className={styles.page}>
             <Stack space="l">
-                <KpiCardsRow kpis={summary.kpis} />
+                <KpiCardsRow kpis={summary.kpis} from={from} to={to} />
                 <div className={styles.twoColumns}>
                     <Suspense fallback={<FunnelCardSkeleton />}>
                         <AnalyticsFunnelCard from={from} to={to} />

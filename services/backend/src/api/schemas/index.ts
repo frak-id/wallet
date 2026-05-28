@@ -1,6 +1,7 @@
 // Re-export orchestration schemas (used by API routes, kept in orchestration for orchestrator use)
 export {
     type NumericKpi,
+    type OverviewAccurateKpis,
     type OverviewAnalyticsResponse,
     OverviewAnalyticsResponseSchema,
     type OverviewCampaignStatus,

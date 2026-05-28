@@ -139,9 +139,24 @@ export const OverviewSharingSchema = t.Object({
 });
 export type OverviewSharing = Static<typeof OverviewSharingSchema>;
 
+/**
+ * Real-time KPIs derived from OpenPanel events. The summary endpoint
+ * returns Postgres-backed approximations on `kpis` (cheap, immediate);
+ * the analytics endpoint exposes the same metrics computed from
+ * `sharing_link_shared` + `sharing_link_copied` events here. Frontend
+ * displays the Postgres values first, then swaps to these when the
+ * slower OpenPanel call resolves.
+ */
+const OverviewAccurateKpisSchema = t.Object({
+    ambassadors: NumericKpiSchema,
+    shares: NumericKpiSchema,
+});
+export type OverviewAccurateKpis = Static<typeof OverviewAccurateKpisSchema>;
+
 export const OverviewAnalyticsResponseSchema = t.Object({
     funnels: OverviewFunnelsSchema,
     sharing: OverviewSharingSchema,
+    accurateKpis: OverviewAccurateKpisSchema,
 });
 export type OverviewAnalyticsResponse = Static<
     typeof OverviewAnalyticsResponseSchema

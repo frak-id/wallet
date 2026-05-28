@@ -1,5 +1,6 @@
 export {
     type NumericKpi,
+    type OverviewAccurateKpis,
     type OverviewAnalyticsResponse,
     OverviewAnalyticsResponseSchema,
     type OverviewCampaignStatus,

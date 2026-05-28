@@ -1,6 +1,10 @@
 import type { OverviewKpis } from "@frak-labs/backend-elysia/orchestration/schemas";
+import { useQuery } from "@tanstack/react-query";
 import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
+import { overviewAnalyticsQueryOptions } from "@/module/campaigns/queries/queryOptions";
+import { useIsDemoMode } from "@/module/common/atoms/demoMode";
+import { useActiveMerchantId } from "@/module/common/hook/useActiveMerchantId";
 import { OverviewKpiCard } from "./OverviewKpiCard";
 import * as styles from "./overview.css";
 
@@ -8,8 +12,33 @@ const DEFAULT_REVENUE_CURRENCY = "EUR";
 /** Avg CPA is `total_rewards_usd / purchases`, so display in USD. */
 const REWARDS_CURRENCY = "USD";
 
-export function KpiCardsRow({ kpis }: { kpis: OverviewKpis }) {
+/**
+ * Hint shown on the three KPI cards whose Postgres-backed values
+ * (`ambassadors`, `shares`, derived `sharingRate`) under-report reality.
+ * Disappears once the OpenPanel analytics query resolves and the
+ * accurate counts overlay the postgres ones.
+ */
+const APPROXIMATE_HINT = "Approximate";
+
+type Props = {
+    kpis: OverviewKpis;
+    from?: string;
+    to?: string;
+};
+
+export function KpiCardsRow({ kpis, from, to }: Props) {
     const { i18n } = useTranslation();
+    const merchantId = useActiveMerchantId();
+    const isDemoMode = useIsDemoMode();
+    // Non-suspense read: KpiCardsRow renders immediately with the
+    // postgres-backed `kpis` while the (slower) OpenPanel analytics
+    // query loads. Shares the cache entry with the suspense readers in
+    // sibling Funnel / Sharing cards — only one network round-trip.
+    const { data: analytics } = useQuery(
+        overviewAnalyticsQueryOptions({ merchantId, isDemoMode, from, to })
+    );
+    const accurateKpis = analytics?.accurateKpis;
+
     const locale = i18n.language;
     const revenueCurrency = kpis.revenue.currency ?? DEFAULT_REVENUE_CURRENCY;
 
@@ -38,15 +67,18 @@ export function KpiCardsRow({ kpis }: { kpis: OverviewKpis }) {
         [locale, revenueCurrency]
     );
 
+    // Overlay accurate values when available — keeps sharingRate
+    // internally consistent with the displayed ambassadors / shares.
+    const ambassadors = accurateKpis?.ambassadors ?? kpis.ambassadors;
+    const shares = accurateKpis?.shares ?? kpis.shares;
+    const accuracyHint = accurateKpis ? undefined : APPROXIMATE_HINT;
+
     const sharingRate = useMemo(
         () => ({
-            current: safeRatio(kpis.shares.current, kpis.ambassadors.current),
-            previous: safeRatio(
-                kpis.shares.previous,
-                kpis.ambassadors.previous
-            ),
+            current: safeRatio(shares.current, ambassadors.current),
+            previous: safeRatio(shares.previous, ambassadors.previous),
         }),
-        [kpis.shares, kpis.ambassadors]
+        [shares, ambassadors]
     );
 
     const avgCpa = safeRatio(
@@ -59,17 +91,16 @@ export function KpiCardsRow({ kpis }: { kpis: OverviewKpis }) {
             <OverviewKpiCard
                 label="Ambassadors"
                 descriptor="total"
-                amount={formatters.integer.format(kpis.ambassadors.current)}
-                delta={percentDelta(
-                    kpis.ambassadors.current,
-                    kpis.ambassadors.previous
-                )}
+                amount={formatters.integer.format(ambassadors.current)}
+                delta={percentDelta(ambassadors.current, ambassadors.previous)}
+                hint={accuracyHint}
             />
             <OverviewKpiCard
                 label="Shares"
                 descriptor="total"
-                amount={formatters.integer.format(kpis.shares.current)}
-                delta={percentDelta(kpis.shares.current, kpis.shares.previous)}
+                amount={formatters.integer.format(shares.current)}
+                delta={percentDelta(shares.current, shares.previous)}
+                hint={accuracyHint}
             />
             <OverviewKpiCard
                 label="Generated Revenue"
@@ -85,6 +116,7 @@ export function KpiCardsRow({ kpis }: { kpis: OverviewKpis }) {
                 descriptor="total"
                 amount={formatters.percent.format(sharingRate.current)}
                 delta={percentDelta(sharingRate.current, sharingRate.previous)}
+                hint={accuracyHint}
             />
             <OverviewKpiCard
                 label="Avg. CPA"

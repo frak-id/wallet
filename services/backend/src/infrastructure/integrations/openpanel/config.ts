@@ -46,10 +46,25 @@ export type OpenPanelChartFilter = {
     value: string[];
 };
 
+/**
+ * Per-series aggregation. `event` (default) counts events, `user` counts
+ * distinct profiles (anonymous-id-derived), `session` counts distinct
+ * sessions, `group` counts distinct groups. Mirrors OpenPanel's
+ * `zChartEventSegment` enum.
+ */
+export type OpenPanelChartSegment =
+    | "event"
+    | "user"
+    | "session"
+    | "group"
+    | "user_average";
+
 export type OpenPanelChartSeries = {
     /** Event name to aggregate. Use `"*"` to count every event. */
     name: string;
     filters?: OpenPanelChartFilter[];
+    /** Aggregation segment — omit for total events. */
+    segment?: OpenPanelChartSegment;
 };
 
 export type OpenPanelChartBreakdown = {

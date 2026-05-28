@@ -100,5 +100,9 @@
             { "label": "Android", "value": 20 },
             { "label": "Desktop", "value": 60 }
         ]
+    },
+    "accurateKpis": {
+        "ambassadors": { "current": 17920, "previous": 15440 },
+        "shares": { "current": 9180, "previous": 8412 }
     }
 }

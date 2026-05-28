@@ -7,6 +7,7 @@ import type {
 } from "../infrastructure/integrations/openpanel";
 import { db } from "../infrastructure/persistence/postgres";
 import type {
+    OverviewAccurateKpis,
     OverviewAnalyticsResponse,
     OverviewFunnelStep,
     OverviewFunnels,
@@ -61,22 +62,21 @@ export class CampaignAnalyticsOrchestrator {
     ): Promise<OverviewAnalyticsResponse> {
         const range = resolveRange(window);
 
-        const [websiteSteps, walletSteps, platform, device, tail] =
-            await Promise.all([
-                this.getFunnelSteps(
-                    merchantId,
-                    range,
-                    websiteFunnelDefinition()
-                ),
-                this.getFunnelSteps(
-                    merchantId,
-                    range,
-                    walletFunnelDefinition()
-                ),
-                this.getSharingPlatform(merchantId, range),
-                this.getSharingDevice(merchantId, range),
-                this.getBackendFunnelTail(merchantId, range),
-            ]);
+        const [
+            websiteSteps,
+            walletSteps,
+            platform,
+            device,
+            tail,
+            accurateKpis,
+        ] = await Promise.all([
+            this.getFunnelSteps(merchantId, range, websiteFunnelDefinition()),
+            this.getFunnelSteps(merchantId, range, walletFunnelDefinition()),
+            this.getSharingPlatform(merchantId, range),
+            this.getSharingDevice(merchantId, range),
+            this.getBackendFunnelTail(merchantId, range),
+            this.getAccurateKpis(merchantId, range),
+        ]);
 
         const funnels: OverviewFunnels = {
             website: [...websiteSteps, ...tail],
@@ -84,7 +84,81 @@ export class CampaignAnalyticsOrchestrator {
         };
         const sharing: OverviewSharing = { platform, device };
 
-        return { funnels, sharing };
+        return { funnels, sharing, accurateKpis };
+    }
+
+    /**
+     * Source-of-truth `shares` (link send events) and `ambassadors`
+     * (distinct profiles who fired one) sourced from OpenPanel. The
+     * summary endpoint serves Postgres-backed approximations on the
+     * critical path; this method runs the slower OpenPanel query so the
+     * dashboard can swap in accurate values once they arrive.
+     *
+     * Both metrics combine `sharing_link_shared` + `sharing_link_copied`
+     * — issued as 4 series in one chart request (2 events × `event`/`user`
+     * segments). Summing the user-segment totals overcounts the (rare)
+     * profiles who both shared AND copied a link in the window; treat
+     * this as a tight upper bound — strictly less wrong than the
+     * Postgres count which excludes anyone who hasn't earned a referrer
+     * reward yet.
+     */
+    private async getAccurateKpis(
+        merchantId: string,
+        range: DateRange
+    ): Promise<OverviewAccurateKpis> {
+        const merchantFilter: OpenPanelChartFilter = {
+            name: "merchant_id",
+            operator: "is",
+            value: [merchantId],
+        };
+
+        const response = await this.openPanel.getChart({
+            series: [
+                {
+                    name: "sharing_link_shared",
+                    filters: [merchantFilter],
+                    segment: "event",
+                },
+                {
+                    name: "sharing_link_copied",
+                    filters: [merchantFilter],
+                    segment: "event",
+                },
+                {
+                    name: "sharing_link_shared",
+                    filters: [merchantFilter],
+                    segment: "user",
+                },
+                {
+                    name: "sharing_link_copied",
+                    filters: [merchantFilter],
+                    segment: "user",
+                },
+            ],
+            startDate: range.from.toISOString(),
+            endDate: range.to.toISOString(),
+            range: "custom",
+            previous: true,
+        });
+
+        const [sharedEvents, copiedEvents, sharedUsers, copiedUsers] =
+            response.series;
+
+        return {
+            shares: {
+                current:
+                    (sharedEvents?.total ?? 0) + (copiedEvents?.total ?? 0),
+                previous:
+                    (sharedEvents?.previousTotal ?? 0) +
+                    (copiedEvents?.previousTotal ?? 0),
+            },
+            ambassadors: {
+                current: (sharedUsers?.total ?? 0) + (copiedUsers?.total ?? 0),
+                previous:
+                    (sharedUsers?.previousTotal ?? 0) +
+                    (copiedUsers?.previousTotal ?? 0),
+            },
+        };
     }
 
     private async getFunnelSteps(
