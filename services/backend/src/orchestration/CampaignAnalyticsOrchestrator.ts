@@ -78,92 +78,82 @@ export class CampaignAnalyticsOrchestrator {
     ): Promise<OverviewAnalyticsResponse> {
         const resolved = resolveWindow(window);
 
-        const [core, platform, device, tail] = await Promise.all([
-            this.getCoreFunnelsAndKpis(merchantId, resolved.current),
+        const [
+            websiteSteps,
+            walletSteps,
+            accurateKpis,
+            platform,
+            device,
+            tail,
+        ] = await Promise.all([
+            this.getWebsiteFunnel(merchantId, resolved.current),
+            this.getWalletFunnel(merchantId, resolved.current),
+            this.getAccurateKpis(merchantId, resolved.current),
             this.getSharingPlatform(merchantId, resolved.current),
             this.getSharingDevice(merchantId, resolved.current),
             this.getBackendFunnelTail(merchantId, resolved),
         ]);
 
         const funnels: OverviewFunnels = {
-            website: [...core.websiteSteps, ...tail],
-            wallet: [...core.walletSteps, ...tail],
+            website: [...websiteSteps, ...tail],
+            wallet: [...walletSteps, ...tail],
         };
         const sharing: OverviewSharing = { platform, device };
 
-        return { funnels, sharing, accurateKpis: core.accurateKpis };
+        return { funnels, sharing, accurateKpis };
     }
 
-    /**
-     * Both funnels + accurate KPIs in a single OpenPanel chart request.
-     * The three datasets share identical global parameters (custom date
-     * range, `previous: true`, no breakdowns) so they fold cleanly into
-     * one request. Series are laid out website → wallet → kpi and
-     * demuxed by slice. Halves OpenPanel round-trips on the critical
-     * path of `getAnalytics` (5 → 3, plus the Postgres tail).
-     *
-     * Accurate-KPI semantics: combines `sharing_link_shared` +
-     * `sharing_link_copied` for both `shares` (event segment) and
-     * `ambassadors` (user segment). Summing user-segment totals across
-     * the two events overcounts profiles who both shared AND copied a
-     * link in the window — treat this as a tight upper bound, still
-     * less wrong than the Postgres count which excludes anyone who
-     * hasn't earned a referrer reward yet.
-     */
-    private async getCoreFunnelsAndKpis(
+    private async getWebsiteFunnel(
         merchantId: string,
         range: DateRange
-    ): Promise<{
-        websiteSteps: OverviewFunnelStep[];
-        walletSteps: OverviewFunnelStep[];
-        accurateKpis: OverviewAccurateKpis;
-    }> {
-        const websiteDef = websiteFunnelDefinition();
-        const walletDef = walletFunnelDefinition();
-        const merchantFilter: OpenPanelChartFilter = {
-            name: "properties.merchant_id",
-            operator: "is",
-            value: [merchantId],
-        };
-
-        const websiteSeries = buildFunnelSeries(merchantId, websiteDef);
-        const walletSeries = buildFunnelSeries(merchantId, walletDef);
-        const kpiSeries: OpenPanelChartSeries[] = (
-            ["sharing_link_shared", "sharing_link_copied"] as const
-        ).flatMap((name) =>
-            (["event", "user"] as const).map<OpenPanelChartSeries>(
-                (segment) => ({
-                    name,
-                    filters: [merchantFilter],
-                    segment,
-                })
-            )
-        );
-
-        const websiteEnd = websiteSeries.length;
-        const walletEnd = websiteEnd + walletSeries.length;
-
+    ): Promise<OverviewFunnelStep[]> {
+        const definitions = websiteFunnelDefinition();
         const response = await this.openPanel.getChart({
-            series: [...websiteSeries, ...walletSeries, ...kpiSeries],
+            series: buildFunnelSeries(merchantId, definitions),
             startDate: range.from.toISOString(),
             endDate: range.to.toISOString(),
             range: "custom",
             previous: true,
         });
+        return aggregateFunnelSteps(definitions, response.series);
+    }
 
-        return {
-            websiteSteps: aggregateFunnelSteps(
-                websiteDef,
-                response.series.slice(0, websiteEnd)
-            ),
-            walletSteps: aggregateFunnelSteps(
-                walletDef,
-                response.series.slice(websiteEnd, walletEnd)
-            ),
-            accurateKpis: aggregateAccurateKpis(
-                response.series.slice(walletEnd)
-            ),
-        };
+    private async getWalletFunnel(
+        merchantId: string,
+        range: DateRange
+    ): Promise<OverviewFunnelStep[]> {
+        const definitions = walletFunnelDefinition();
+        const response = await this.openPanel.getChart({
+            series: buildFunnelSeries(merchantId, definitions),
+            startDate: range.from.toISOString(),
+            endDate: range.to.toISOString(),
+            range: "custom",
+            previous: true,
+        });
+        return aggregateFunnelSteps(definitions, response.series);
+    }
+
+    /**
+     * Combines `sharing_link_shared` + `sharing_link_copied` for both
+     * `shares` (event segment) and `ambassadors` (user segment).
+     * Summing user-segment totals across the two events overcounts
+     * profiles who both shared AND copied a link in the window — treat
+     * this as a tight upper bound, still less wrong than the Postgres
+     * count which excludes anyone who hasn't earned a referrer reward
+     * yet.
+     */
+    private async getAccurateKpis(
+        merchantId: string,
+        range: DateRange
+    ): Promise<OverviewAccurateKpis> {
+        const response = await this.openPanel.getChart({
+            series: buildKpiSeries(merchantId),
+            startDate: range.from.toISOString(),
+            endDate: range.to.toISOString(),
+            range: "custom",
+            previous: true,
+        });
+        return aggregateAccurateKpis(response.series);
     }
 
     private async getSharingPlatform(
@@ -242,8 +232,7 @@ export class CampaignAnalyticsOrchestrator {
         const totals = new Map<string, number>();
         for (const serie of response.series) {
             const value = serie.event.breakdowns?.[breakdown] ?? "unknown";
-            const count = serie.metrics?.sum ?? 0;
-            totals.set(value, (totals.get(value) ?? 0) + count);
+            totals.set(value, (totals.get(value) ?? 0) + serieSum(serie));
         }
         return totals;
     }
@@ -306,7 +295,7 @@ function websiteFunnelDefinition(): FunnelStepDefinition[] {
     return [
         {
             kind: "share_cta_seen",
-            eventNames: ["banner_impression", "post_purchase_impression"],
+            eventNames: ["sharing_page_viewed"],
         },
         {
             kind: "share_initiated",
@@ -393,61 +382,121 @@ function buildFunnelSeries(
 }
 
 /**
- * Demux a slice of the chart response back into per-step totals.
- * Mirrors the layout produced by `buildFunnelSeries`: one response
- * serie per (step × eventName) in definition order. OpenPanel
- * preserves request order, so we walk both arrays in lockstep.
+ * Accurate-KPI request layout. Index `0..1` feeds `shares` (event
+ * segment), index `2..3` feeds `ambassadors` (user segment). The
+ * aggregator below relies on this exact order.
  */
+function buildKpiSeries(merchantId: string): OpenPanelChartSeries[] {
+    const merchantFilter: OpenPanelChartFilter = {
+        name: "properties.merchant_id",
+        operator: "is",
+        value: [merchantId],
+    };
+    return [
+        {
+            name: "sharing_link_shared",
+            filters: [merchantFilter],
+            segment: "event",
+        },
+        {
+            name: "sharing_link_copied",
+            filters: [merchantFilter],
+            segment: "event",
+        },
+        {
+            name: "sharing_link_shared",
+            filters: [merchantFilter],
+            segment: "user",
+        },
+        {
+            name: "sharing_link_copied",
+            filters: [merchantFilter],
+            segment: "user",
+        },
+    ];
+}
+
+/**
+ * Index returned series by their original request position so the
+ * aggregators below can stay positional.
+ *
+ * OpenPanel does NOT preserve request order in the response — it
+ * drops zero-sum series entirely and sorts the rest by `sum`
+ * descending. Each returned serie carries `event.id` as a single
+ * sequential letter (`"A"`, `"B"`, …) reflecting its 0-based position
+ * in the request. We invert that here so callers can read by index
+ * and get either the matching serie or `undefined` (= zero).
+ */
+function indexByRequestPosition(
+    responseSeries: OpenPanelChartSerie[]
+): Map<number, OpenPanelChartSerie> {
+    const indexed = new Map<number, OpenPanelChartSerie>();
+    for (const serie of responseSeries) {
+        const id = serie.event?.id;
+        if (typeof id !== "string" || id.length === 0) continue;
+        const position = id.charCodeAt(0) - "A".charCodeAt(0);
+        if (position >= 0) indexed.set(position, serie);
+    }
+    return indexed;
+}
+
 function aggregateFunnelSteps(
     definitions: FunnelStepDefinition[],
     responseSeries: OpenPanelChartSerie[]
 ): OverviewFunnelStep[] {
-    const totals = definitions.map(() => 0);
-    const previousTotals = definitions.map(() => 0);
-
-    let serieIdx = 0;
-    definitions.forEach((step, stepIdx) => {
+    const indexed = indexByRequestPosition(responseSeries);
+    let position = 0;
+    return definitions.map((step) => {
+        let value = 0;
+        let previousValue = 0;
         for (let i = 0; i < step.eventNames.length; i++) {
-            const serie = responseSeries[serieIdx++];
-            totals[stepIdx] += serieSum(serie);
-            previousTotals[stepIdx] += seriePreviousSum(serie);
+            const serie = indexed.get(position++);
+            value += serieSum(serie);
+            previousValue += seriePreviousSum(serie);
         }
+        return { kind: step.kind, value, previousValue };
     });
-
-    return definitions.map((step, idx) => ({
-        kind: step.kind,
-        value: totals[idx],
-        previousValue: previousTotals[idx],
-    }));
 }
 
-/**
- * Demux the 4-series KPI slice. Order matches the request layout:
- * [shared/event, copied/event, shared/user, copied/user].
- */
 function aggregateAccurateKpis(
     responseSeries: OpenPanelChartSerie[]
 ): OverviewAccurateKpis {
-    const [sharedEvents, copiedEvents, sharedUsers, copiedUsers] =
-        responseSeries;
+    const indexed = indexByRequestPosition(responseSeries);
+    const sharesSeries = [indexed.get(0), indexed.get(1)];
+    const ambassadorsSeries = [indexed.get(2), indexed.get(3)];
     return {
         shares: {
-            current: serieSum(sharedEvents) + serieSum(copiedEvents),
-            previous:
-                seriePreviousSum(sharedEvents) + seriePreviousSum(copiedEvents),
+            current: sharesSeries.reduce((a, s) => a + serieSum(s), 0),
+            previous: sharesSeries.reduce((a, s) => a + seriePreviousSum(s), 0),
         },
         ambassadors: {
-            current: serieSum(sharedUsers) + serieSum(copiedUsers),
-            previous:
-                seriePreviousSum(sharedUsers) + seriePreviousSum(copiedUsers),
+            current: ambassadorsSeries.reduce((a, s) => a + serieSum(s), 0),
+            previous: ambassadorsSeries.reduce(
+                (a, s) => a + seriePreviousSum(s),
+                0
+            ),
         },
     };
 }
 
+/**
+ * Defensive readers — coerce missing or non-finite values to 0.
+ *
+ * Elysia's TypeBox `t.Number()` validator rejects NaN (it calls
+ * `Number.isFinite`, and `AllowNaN` defaults to false), so a single
+ * malformed serie reaching the response would turn the whole analytics
+ * endpoint into a 422 — the error report shows the offending value as
+ * `null` because `JSON.stringify(NaN) === "null"`. `?? 0` alone is not
+ * sufficient because `??` only triggers on `null`/`undefined`, not NaN.
+ */
 function serieSum(serie: OpenPanelChartSerie | undefined): number {
-    return serie?.metrics?.sum ?? 0;
+    return finiteOrZero(serie?.metrics?.sum);
 }
 
 function seriePreviousSum(serie: OpenPanelChartSerie | undefined): number {
-    return serie?.metrics?.previous?.sum.value ?? 0;
+    return finiteOrZero(serie?.metrics?.previous?.sum.value);
+}
+
+function finiteOrZero(value: number | undefined): number {
+    return typeof value === "number" && Number.isFinite(value) ? value : 0;
 }
