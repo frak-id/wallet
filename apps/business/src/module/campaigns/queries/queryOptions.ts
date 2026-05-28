@@ -65,14 +65,21 @@ export const campaignsListQueryOptions = ({
 
 // Aggregated dashboard data for the campaigns overview page. v1 serves
 // mock data unconditionally; real backend aggregates will swap in here
-// once they ship. Split into per-section keys later if endpoints land
-// piecemeal.
+// once they ship (swap queryFn to
+// `api.merchant({ merchantId }).campaigns.overview.get({ from, to })`).
+// `from`/`to` (yyyy-MM-dd) are already threaded into the key so the
+// Date range chip refetches once the endpoint honours the window. Split
+// into per-section keys later if endpoints land piecemeal.
 export const campaignsOverviewQueryOptions = ({
     merchantId,
     isDemoMode,
+    from,
+    to,
 }: {
     merchantId: string;
     isDemoMode: boolean;
+    from?: string;
+    to?: string;
 }) =>
     queryOptions<CampaignsOverview>({
         queryKey: [
@@ -80,6 +87,8 @@ export const campaignsOverviewQueryOptions = ({
             "overview",
             merchantId,
             isDemoMode ? "demo" : "live",
+            from ?? null,
+            to ?? null,
         ],
         queryFn: () => Promise.resolve(campaignsOverviewMock),
         staleTime: isDemoMode ? Number.POSITIVE_INFINITY : 5 * 60 * 1000,

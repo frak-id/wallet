@@ -1,42 +1,66 @@
+import { vars } from "@frak-labs/design-system/theme";
 import { alias, brand } from "@frak-labs/design-system/tokens";
 import { globalStyle, style } from "@vanilla-extract/css";
 
-export const root = style({ padding: alias.spacing.s });
+// Anchor for the absolutely-positioned month-nav buttons (left/right
+// 4px). Without it they resolve to the nearest positioned ancestor —
+// e.g. a wider popover — and drift away from the calendar's edges.
+export const root = style({ position: "relative", padding: alias.spacing.s });
 
 export const months = style({
     display: "flex",
     flexDirection: "column",
 });
 
+const captionHeight = "32px";
+
 export const caption = style({
     display: "flex",
     position: "relative",
-    paddingTop: alias.spacing.xxs,
+    height: captionHeight,
     justifyContent: "center",
     alignItems: "center",
+    fontWeight: brand.typography.fontWeight.medium,
 });
 
+// Full-width row overlaying the caption so the arrows sit on the same
+// line as the month label (prev hard-left, next hard-right), shadcn-style.
 export const nav = style({
+    position: "absolute",
+    // Offset by the root's padding so the row lines up with the caption,
+    // which sits inside the padded content box (top:0 anchors to the
+    // padding-box edge and would float the arrows above the label).
+    top: alias.spacing.s,
+    left: 0,
+    right: 0,
+    zIndex: 1,
+    height: captionHeight,
     display: "flex",
     alignItems: "center",
+    justifyContent: "space-between",
 });
 
 const navButtonBase = {
     all: "unset" as const,
-    position: "absolute" as const,
-    zIndex: 1,
+    boxSizing: "border-box" as const,
     display: "flex",
-    opacity: 0.5,
+    alignItems: "center",
+    justifyContent: "center",
+    width: captionHeight,
+    height: captionHeight,
+    borderRadius: alias.cornerRadius.s,
+    border: `1px solid ${vars.border.subtle}`,
+    color: vars.text.primary,
     cursor: "pointer",
     selectors: {
-        "&:hover": { opacity: 1 },
+        "&:hover": { backgroundColor: vars.surface.muted },
         "&:disabled": { cursor: "not-allowed", opacity: 0.5 },
     },
 };
 
-export const navButtonPrevious = style([navButtonBase, { left: "4px" }]);
+export const navButtonPrevious = style([navButtonBase]);
 
-export const navButtonNext = style([navButtonBase, { right: "4px" }]);
+export const navButtonNext = style([navButtonBase]);
 
 export const table = style({
     marginTop: alias.spacing.m,

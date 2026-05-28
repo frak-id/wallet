@@ -6,14 +6,36 @@ import { PageShell } from "@/module/common/component/PageShell";
 import { DataLoadError } from "@/module/common/component/RouteError";
 import { queryClient } from "@/module/common/provider/RootProvider";
 
+export type CampaignsOverviewSearch = {
+    from?: string;
+    to?: string;
+};
+
+const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/;
+
+function parseIsoDate(value: unknown): string | undefined {
+    return typeof value === "string" && ISO_DATE.test(value)
+        ? value
+        : undefined;
+}
+
 export const Route = createFileRoute(
     "/_restricted/m/$merchantId/campaigns/overview"
 )({
-    loader: ({ params }) => {
+    validateSearch: (
+        search: Record<string, unknown>
+    ): CampaignsOverviewSearch => ({
+        from: parseIsoDate(search.from),
+        to: parseIsoDate(search.to),
+    }),
+    loaderDeps: ({ search }) => ({ from: search.from, to: search.to }),
+    loader: ({ params, deps }) => {
         queryClient.prefetchQuery(
             campaignsOverviewQueryOptions({
                 merchantId: params.merchantId,
                 isDemoMode: isDemoMode(),
+                from: deps.from,
+                to: deps.to,
             })
         );
     },
@@ -24,9 +46,10 @@ export const Route = createFileRoute(
 });
 
 function CampaignsOverviewPage() {
+    const { from, to } = Route.useSearch();
     return (
         <PageShell page="campaignsOverview">
-            <CampaignsOverview />
+            <CampaignsOverview from={from} to={to} />
         </PageShell>
     );
 }

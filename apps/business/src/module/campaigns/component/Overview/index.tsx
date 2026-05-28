@@ -12,11 +12,17 @@ import { PurchasesCard } from "./PurchasesCard";
 import { SharingBySourceCard } from "./SharingBySourceCard";
 import { TopCampaignsCard } from "./TopCampaignsCard";
 
-export function CampaignsOverview() {
+export function CampaignsOverview({
+    from,
+    to,
+}: {
+    from?: string;
+    to?: string;
+}) {
     const merchantId = useActiveMerchantId();
     const isDemoMode = useIsDemoMode();
     const { data } = useSuspenseQuery(
-        campaignsOverviewQueryOptions({ merchantId, isDemoMode })
+        campaignsOverviewQueryOptions({ merchantId, isDemoMode, from, to })
     );
 
     return (
