@@ -16,7 +16,7 @@ import { CampaignStatus } from "../components/Campaign";
 import { BankingStatus } from "../components/Funding/Bank";
 import {
     type BankStatus,
-    type CampaignResponse,
+    type CampaignListResponse,
     getMerchantBankStatus,
     getMerchantCampaigns,
 } from "../services.server/backendMerchant";
@@ -101,14 +101,14 @@ function ThemeSupported({
     onboardingData: OnboardingStepData;
 }) {
     const { t } = useTranslation();
-    const { campaigns, bankStatus } = useLoaderData<typeof loader>();
+    const { campaigns: list, bankStatus } = useLoaderData<typeof loader>();
     const validationResult = validateCompleteOnboarding(onboardingData);
 
     if (validationResult.hasMissedCriticalSteps) {
         return <Stepper redirectToApp={false} />;
     }
 
-    if (!campaigns || !bankStatus) {
+    if (!list || !bankStatus) {
         return (
             <s-section>
                 <s-banner tone="warning">
@@ -124,7 +124,7 @@ function ThemeSupported({
     return (
         <s-stack gap="large">
             <OnBoardingComplete
-                campaigns={campaigns}
+                campaigns={list}
                 bankStatus={bankStatus}
                 onboardingData={onboardingData}
             />
@@ -137,7 +137,7 @@ function OnBoardingComplete({
     bankStatus,
     onboardingData,
 }: {
-    campaigns: CampaignResponse[];
+    campaigns: CampaignListResponse;
     bankStatus: BankStatus;
     onboardingData: OnboardingStepData;
 }) {

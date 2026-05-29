@@ -34,7 +34,7 @@ export async function doSomething(
 | **purchase.ts**         | One-time app purchases, DB tracking                        | None     | Shopify GraphQL + Drizzle          |
 | **purchase.helpers.ts** | Validation (amount, bank address), GID parsing             | None     | Pure functions                     |
 | **merchant.ts**         | Merchant ID resolution (cache → metafield → backend)       | LRU 5min | Shopify GraphQL + backend API      |
-| **backendMerchant.ts**  | Campaigns, bank status, stats from Frak backend            | LRU 5s   | backend API (**unused by routes**) |
+| **backendMerchant.ts**  | Campaigns + bank status from Frak backend                  | LRU 5s   | backend API                        |
 | **mint.ts**             | Product setup code generation                              | None     | Pure crypto (keccak256)            |
 
 ## CONVENTIONS
@@ -59,7 +59,7 @@ export async function doSomething(
 | App purchases           | `purchase.ts`         | `startupPurchase()`, `getCurrentPurchases()`, `getPurchase()`                                                                                                 |
 | Purchase validation     | `purchase.helpers.ts` | `validatePurchaseAmount()`, `validateBank()`, `parseShopifyGid()`                                                                                             |
 | Resolve merchant        | `merchant.ts`         | `resolveMerchantId()`                                                                                                                                         |
-| Fetch merchant data     | `backendMerchant.ts`  | `getMerchantCampaigns()`, `getMerchantBankStatus()`, `getMerchantCampaignStats()`                                                                             |
+| Fetch merchant data     | `backendMerchant.ts`  | `getMerchantCampaigns()`, `getMerchantBankStatus()`                                                                                                          |
 | Setup codes             | `mint.ts`             | `getProductSetupCode()`                                                                                                                                       |
 
 ## DEPENDENCY GRAPH

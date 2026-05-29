@@ -1,6 +1,5 @@
 import { and, countDistinct, eq, inArray, sql, sum } from "drizzle-orm";
 import { type Address, bytesToHex, getAddress } from "viem";
-import type { CampaignRuleSelect } from "../domain/campaign/db/schema";
 import { campaignRulesTable } from "../domain/campaign/db/schema";
 import { identityNodesTable } from "../domain/identity/db/schema";
 import {
@@ -30,7 +29,7 @@ export class CampaignStatsOrchestrator {
         merchantId: string
     ): Promise<CampaignStatsItem[]> {
         const campaigns = await db
-            .select()
+            .select({ id: campaignRulesTable.id })
             .from(campaignRulesTable)
             .where(eq(campaignRulesTable.merchantId, merchantId));
 
@@ -48,11 +47,11 @@ export class CampaignStatsOrchestrator {
         );
         const assetMap = new Map(assetAggs.map((r) => [r.campaignRuleId, r]));
 
-        return campaigns.map((campaign) =>
+        return campaignIds.map((campaignId) =>
             this.buildStatsItem(
-                campaign,
-                interactionMap.get(campaign.id),
-                assetMap.get(campaign.id)
+                campaignId,
+                interactionMap.get(campaignId),
+                assetMap.get(campaignId)
             )
         );
     }
@@ -235,7 +234,7 @@ export class CampaignStatsOrchestrator {
     }
 
     private buildStatsItem(
-        campaign: CampaignRuleSelect,
+        campaignId: string,
         interactions: InteractionCountRow | undefined,
         assets: AssetAggRow | undefined
     ): CampaignStatsItem {
@@ -247,20 +246,20 @@ export class CampaignStatsOrchestrator {
         const avgBasketValue =
             purchases > 0 ? attributedRevenue / purchases : 0;
 
-        const createReferredLinkInteractions =
+        const createReferralLinkInteractions =
             interactions?.createReferralLinkInteractions ?? 0;
 
         const sharingRate =
-            referred > 0 ? createReferredLinkInteractions / referred : 0;
+            referred > 0 ? createReferralLinkInteractions / referred : 0;
 
         const ctr =
-            createReferredLinkInteractions > 0
-                ? referred / createReferredLinkInteractions
+            createReferralLinkInteractions > 0
+                ? referred / createReferralLinkInteractions
                 : 0;
 
         const costPerShare =
-            createReferredLinkInteractions > 0
-                ? totalRewards / createReferredLinkInteractions
+            createReferralLinkInteractions > 0
+                ? totalRewards / createReferralLinkInteractions
                 : 0;
 
         const costPerPurchase = purchases > 0 ? totalRewards / purchases : 0;
@@ -271,16 +270,14 @@ export class CampaignStatsOrchestrator {
         }
 
         return {
-            campaignId: campaign.id,
-            campaignName: campaign.name,
-            trigger: campaign.rule.trigger,
+            campaignId,
             tokenAddress: assets?.tokenAddress ?? null,
             referredInteractions: referred,
             purchaseInteractions: purchases,
+            createReferralLinkInteractions,
             totalRewards,
             attributedRevenue,
             avgBasketValue,
-            uniqueWallets,
             ambassador,
             sharingRate,
             ctr,

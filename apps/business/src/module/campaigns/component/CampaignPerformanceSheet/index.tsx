@@ -1,3 +1,4 @@
+import type { CampaignStatsItem } from "@frak-labs/backend-elysia/api/schemas";
 import {
     Sheet,
     SheetClose,
@@ -10,19 +11,18 @@ import {
 } from "@frak-labs/design-system/components/Sheet";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { useState } from "react";
-import type { CampaignStats } from "@/module/campaigns/api/campaignStatsApi";
-import { campaignsStatsQueryOptions } from "@/module/campaigns/queries/queryOptions";
+import { campaignsListQueryOptions } from "@/module/campaigns/queries/queryOptions";
 import { useIsDemoMode } from "@/module/common/atoms/demoMode";
 import { Button } from "@/module/common/component/Button";
 import { useActiveMerchantId } from "@/module/common/hook/useActiveMerchantId";
 import { useConvertToPreferredCurrency } from "@/module/common/hook/useConversionRate";
 import { formatPercent } from "@/module/common/utils/formatPercent";
-import type { Campaign } from "@/types/Campaign";
+import type { CampaignListItem } from "@/types/Campaign";
 import * as styles from "./campaign-performance-sheet.css";
 
 type Props = {
     campaignId: string;
-    campaign: Campaign;
+    campaign: Pick<CampaignListItem, "name">;
     trigger?: React.ReactNode;
     open?: boolean;
     onOpenChange?: (open: boolean) => void;
@@ -41,10 +41,11 @@ export function CampaignPerformanceSheet({
     const handleOpenChange = onOpenChangeProp ?? setInternalOpen;
     const isDemoMode = useIsDemoMode();
     const merchantId = useActiveMerchantId();
-    const { data: stats } = useSuspenseQuery(
-        campaignsStatsQueryOptions({ merchantId, isDemoMode })
+    const { data } = useSuspenseQuery(
+        campaignsListQueryOptions({ merchantId, isDemoMode })
     );
-    const campaignStats = stats?.find((s) => s.campaignId === campaignId);
+    const campaignStats =
+        data.campaigns.find((c) => c.id === campaignId)?.stats ?? null;
 
     return (
         <Sheet open={open} onOpenChange={handleOpenChange}>
@@ -79,14 +80,14 @@ export function CampaignPerformanceSheet({
     );
 }
 
-function PerformanceBody({ stats }: { stats: CampaignStats }) {
+function PerformanceBody({ stats }: { stats: CampaignStatsItem }) {
     return (
         <div className={styles.body}>
             <Section title="Activity">
                 <Row label="Ambassadors" value={stats.ambassador} />
                 <Row
                     label="Shares"
-                    value={stats.createReferredLinkInteractions}
+                    value={stats.createReferralLinkInteractions}
                 />
                 <Row
                     label="Referred users"
@@ -154,7 +155,7 @@ function CurrencyRow({
     amount,
 }: {
     label: string;
-    token: CampaignStats["tokenAddress"];
+    token: CampaignStatsItem["tokenAddress"];
     amount: number;
 }) {
     const converted = useConvertToPreferredCurrency({

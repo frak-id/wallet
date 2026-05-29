@@ -25,11 +25,11 @@ import {
 } from "@/module/campaigns/component/CampaignActionModals";
 import { CampaignPerformanceSheet } from "@/module/campaigns/component/CampaignPerformanceSheet";
 import { campaignStore } from "@/stores/campaignStore";
-import type { CampaignWithActions } from "@/types/Campaign";
+import type { CampaignListItemWithActions } from "@/types/Campaign";
 import * as styles from "./table-campaigns.css";
 
 type Props = {
-    row: Row<CampaignWithActions>;
+    row: Row<CampaignListItemWithActions>;
     merchantId: string;
 };
 
@@ -109,7 +109,7 @@ export function CellRowMenu({ row, merchantId }: Props) {
             <ModalPause
                 key="pause"
                 campaignId={id}
-                merchantId={row.original.merchantId}
+                merchantId={merchantId}
                 campaignName={name}
                 trigger={
                     <button type="button" className={styles.rowMenuItem}>
@@ -125,7 +125,7 @@ export function CellRowMenu({ row, merchantId }: Props) {
             <ModalResume
                 key="resume"
                 campaignId={id}
-                merchantId={row.original.merchantId}
+                merchantId={merchantId}
                 campaignName={name}
                 trigger={
                     <button type="button" className={styles.rowMenuItem}>
@@ -141,7 +141,7 @@ export function CellRowMenu({ row, merchantId }: Props) {
             <ModalArchive
                 key="archive"
                 campaignId={id}
-                merchantId={row.original.merchantId}
+                merchantId={merchantId}
                 campaignName={name}
                 trigger={
                     <button type="button" className={styles.rowMenuItem}>
@@ -159,7 +159,7 @@ export function CellRowMenu({ row, merchantId }: Props) {
             <ModalDelete
                 key="delete"
                 campaignId={id}
-                merchantId={row.original.merchantId}
+                merchantId={merchantId}
                 campaignName={name}
                 trigger={
                     <button

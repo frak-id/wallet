@@ -10,7 +10,7 @@ import { Trans, useTranslation } from "react-i18next";
 import { AlertDialog } from "@/module/common/component/AlertDialog";
 import { Button } from "@/module/common/component/Button";
 import { campaignSelectionStore } from "@/stores/campaignSelectionStore";
-import type { CampaignWithActions } from "@/types/Campaign";
+import type { CampaignListItemWithActions } from "@/types/Campaign";
 import * as styles from "./campaigns-edit-bar.css";
 import {
     type BulkAction,
@@ -41,7 +41,7 @@ const ACTION_KEYS = {
 
 type Props = {
     merchantId: string;
-    selected: CampaignWithActions[];
+    selected: CampaignListItemWithActions[];
 };
 
 export function CampaignsEditBar({ merchantId, selected }: Props) {

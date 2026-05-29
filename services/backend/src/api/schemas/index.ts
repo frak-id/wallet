@@ -45,8 +45,6 @@ export {
 export {
     type CampaignStatsItem,
     CampaignStatsItemSchema,
-    type CampaignStatsResponse,
-    CampaignStatsResponseSchema,
 } from "../../orchestration/schemas/campaignStatsSchemas";
 export {
     ExplorerMerchantItemSchema,
@@ -82,6 +80,11 @@ export {
 export {
     type CampaignCreateBody,
     CampaignCreateBodySchema,
+    type CampaignListItem,
+    CampaignListItemSchema,
+    type CampaignListResponse,
+    CampaignListResponseSchema,
+    type CampaignListReward,
     type CampaignUpdateBody,
     CampaignUpdateBodySchema,
 } from "./campaignApiSchemas";

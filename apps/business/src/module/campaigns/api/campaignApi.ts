@@ -1,12 +1,14 @@
+import type { CampaignDetailsResponse } from "@frak-labs/backend-elysia/orchestration/schemas";
 import { authenticatedBackendApi } from "@/api/backendClient";
+import campaignDetailsMock from "@/mock/campaignDetails.json";
 import type {
     BudgetConfig,
     Campaign,
     CampaignActions,
+    CampaignListResponse,
     CampaignMetadata,
     CampaignRuleDefinition,
     CampaignStatus,
-    CampaignWithActions,
 } from "@/types/Campaign";
 import { getCampaignDetailsMock, getMyCampaignsMock } from "./mock";
 
@@ -27,7 +29,7 @@ export async function getMerchantCampaigns({
 }: {
     merchantId: string;
     isDemoMode: boolean;
-}): Promise<CampaignWithActions[]> {
+}): Promise<CampaignListResponse> {
     if (isDemoMode) {
         return getMyCampaignsMock(merchantId);
     }
@@ -38,14 +40,16 @@ export async function getMerchantCampaigns({
 
     if (!data || error) {
         console.warn("Error fetching campaigns", error);
-        return [];
+        return { bankDistributionStatus: null, campaigns: [] };
     }
 
-    return data.campaigns.map((campaign) => ({
-        ...campaign,
-        merchantId,
-        actions: mapStatusToActions(campaign.status),
-    })) as CampaignWithActions[];
+    return {
+        bankDistributionStatus: data.bankDistributionStatus,
+        campaigns: data.campaigns.map((campaign) => ({
+            ...campaign,
+            actions: mapStatusToActions(campaign.status),
+        })),
+    } as CampaignListResponse;
 }
 
 export async function getCampaignDetail({
@@ -71,6 +75,41 @@ export async function getCampaignDetail({
     }
 
     return data as Campaign;
+}
+
+/**
+ * Per-campaign details: economic value, CPA breakdown, ambassador stats,
+ * top-ambassador leaderboard and efficiency KPIs. Backed by
+ * `GET /business/merchant/:merchantId/campaigns/:campaignId/details`.
+ *
+ * Demo mode returns the bundled mock fixture so the dashboard renders
+ * without a backend.
+ */
+export async function getCampaignDetails({
+    merchantId,
+    campaignId,
+    isDemoMode,
+}: {
+    merchantId: string;
+    campaignId: string;
+    isDemoMode: boolean;
+}): Promise<CampaignDetailsResponse> {
+    if (isDemoMode) {
+        return campaignDetailsMock as CampaignDetailsResponse;
+    }
+
+    const { data, error } = await authenticatedBackendApi
+        .merchant({ merchantId })
+        .campaigns({ campaignId })
+        .details.get();
+
+    if (!data || error) {
+        throw new Error(
+            `Failed to load campaign details: ${error?.toString() ?? "unknown error"}`
+        );
+    }
+
+    return data;
 }
 
 type CreateCampaignInput = {
