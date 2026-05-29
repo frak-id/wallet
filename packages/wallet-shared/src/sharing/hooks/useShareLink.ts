@@ -56,9 +56,10 @@ export type ShareLinkData = {
 /**
  * Hook to trigger the native Web Share API.
  *
- * Fires `sharing_link_shared` with `{source, merchant_id, link}` on success
- * so every sharing entry point emits uniform analytics without the caller
- * having to remember to track it.
+ * Fires `sharing_link_started` with `{source, merchant_id, link}` as soon as
+ * the share intent is confirmed (link present + platform can share), and
+ * `sharing_link_shared` with the same payload on successful completion.
+ * Comparing the two yields the OS chooser completion rate.
  *
  * `onShared` runs after the analytics event and is the integration point for
  * the listener's `useTrackSharing` backend interaction — keeps transport
@@ -100,6 +101,14 @@ export function useShareLink(
 
             // If we can't share, early exit
             if (!canShare) return;
+
+            // Emit before opening the OS share sheet so we capture intent
+            // even when the user dismisses the chooser without completing.
+            trackEvent("sharing_link_started", {
+                source,
+                merchant_id: merchantId,
+                link,
+            });
 
             // Tauri (iOS / Android) routes through the native plugin because
             // `navigator.share` is not exposed inside the Tauri WebView.

@@ -11,8 +11,13 @@
  *
  * Total sharing events emitted:
  *   - `sharing_page_viewed` / `sharing_page_opened` — lifecycle, no source
+ *   - `sharing_link_started`   — user triggered the share flow (intent), carries source
  *   - `sharing_link_shared`    — native share succeeded, carries source
  *   - `sharing_link_copied`    — clipboard copy, carries source
+ *
+ * `sharing_link_started` is emitted before the OS share sheet opens and
+ * has no completion guarantee. Comparing it against `sharing_link_shared`
+ * yields the share-completion rate (drop-offs in the native chooser).
  */
 export type SharingSource =
     | "sharing_page_wallet"
@@ -29,6 +34,7 @@ type SharingLinkProps = {
 };
 
 export type SharingEventMap = {
+    sharing_link_started: SharingLinkProps;
     sharing_link_shared: SharingLinkProps;
     sharing_link_copied: SharingLinkProps;
     sharing_page_viewed: { merchant_id?: string };
