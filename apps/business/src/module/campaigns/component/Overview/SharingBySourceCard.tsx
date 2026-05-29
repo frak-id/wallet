@@ -1,3 +1,8 @@
+import type {
+    OverviewSharing,
+    OverviewSharingDeviceKind,
+    OverviewSharingPlatformKind,
+} from "@frak-labs/backend-elysia/orchestration/schemas";
 import { Card } from "@frak-labs/design-system/components/Card";
 import {
     PieChart,
@@ -17,7 +22,6 @@ import { vars } from "@frak-labs/design-system/theme";
 import clsx from "clsx";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
-import type { CampaignsOverview } from "@/module/campaigns/queries/queryOptions";
 import * as local from "./sharingBySource.css";
 
 type Mode = "platform" | "device";
@@ -27,37 +31,58 @@ const palette = {
     device: [vars.icon.action, vars.icon.success, vars.icon.warning],
 };
 
-// Maps the known data-provided source labels to i18n keys; unknown labels
-// fall through untranslated.
-const sourceLabelKey: Record<
-    string,
+const platformLabelKey: Record<
+    OverviewSharingPlatformKind,
     | "campaigns.overview.sharing.sources.merchantSite"
     | "campaigns.overview.sharing.sources.walletApp"
-    | "campaigns.overview.sharing.sources.ios"
-    | "campaigns.overview.sharing.sources.android"
-    | "campaigns.overview.sharing.sources.desktop"
 > = {
-    "Merchant Site": "campaigns.overview.sharing.sources.merchantSite",
-    "Wallet App": "campaigns.overview.sharing.sources.walletApp",
-    iOS: "campaigns.overview.sharing.sources.ios",
-    Android: "campaigns.overview.sharing.sources.android",
-    Desktop: "campaigns.overview.sharing.sources.desktop",
+    merchant_site: "campaigns.overview.sharing.sources.merchantSite",
+    wallet_app: "campaigns.overview.sharing.sources.walletApp",
 };
 
-function withColors(segments: { label: string; value: number }[], mode: Mode) {
+const deviceLabelKey: Record<
+    OverviewSharingDeviceKind,
+    | "campaigns.overview.sharing.sources.mobile"
+    | "campaigns.overview.sharing.sources.desktop"
+    | "campaigns.overview.sharing.sources.tablet"
+    | "campaigns.overview.sharing.sources.other"
+> = {
+    mobile: "campaigns.overview.sharing.sources.mobile",
+    desktop: "campaigns.overview.sharing.sources.desktop",
+    tablet: "campaigns.overview.sharing.sources.tablet",
+    other: "campaigns.overview.sharing.sources.other",
+};
+
+type LabeledSegment = { label: string; value: number; color: string };
+
+function withColors(
+    segments: { label: string; value: number }[],
+    mode: Mode
+): LabeledSegment[] {
     return segments.map((s, i) => ({
         ...s,
         color: palette[mode][i % palette[mode].length],
     }));
 }
 
-export function SharingBySourceCard({
-    sharing,
-}: {
-    sharing: CampaignsOverview["sharing"];
-}) {
+export function SharingBySourceCard({ sharing }: { sharing: OverviewSharing }) {
     const { t } = useTranslation();
     const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
+
+    function toLabeledSegments(mode: Mode): LabeledSegment[] {
+        if (mode === "platform") {
+            const labeled = sharing.platform.map((bucket) => ({
+                label: t(platformLabelKey[bucket.kind]),
+                value: bucket.value,
+            }));
+            return withColors(labeled, "platform");
+        }
+        const labeled = sharing.device.map((bucket) => ({
+            label: t(deviceLabelKey[bucket.kind]),
+            value: bucket.value,
+        }));
+        return withColors(labeled, "device");
+    }
 
     return (
         <Card radius="m">
@@ -75,7 +100,7 @@ export function SharingBySourceCard({
                         {t("campaigns.overview.sharing.title")}
                     </Text>
                     {(["platform", "device"] as Mode[]).map((mode) => {
-                        const segments = withColors(sharing[mode], mode);
+                        const segments = toLabeledSegments(mode);
                         return (
                             <TabsContent key={mode} value={mode}>
                                 <Stack space="m">
@@ -130,13 +155,7 @@ export function SharingBySourceCard({
                                                     as="span"
                                                     variant="caption"
                                                 >
-                                                    {sourceLabelKey[s.label]
-                                                        ? t(
-                                                              sourceLabelKey[
-                                                                  s.label
-                                                              ]
-                                                          )
-                                                        : s.label}
+                                                    {s.label}
                                                 </Text>
                                             </div>
                                         ))}

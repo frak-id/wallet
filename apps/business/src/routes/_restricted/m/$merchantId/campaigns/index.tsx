@@ -1,7 +1,10 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { isDemoMode } from "@/config/auth";
 import { CampaignsOverview } from "@/module/campaigns/component/Overview";
-import { campaignsOverviewQueryOptions } from "@/module/campaigns/queries/queryOptions";
+import {
+    overviewAnalyticsQueryOptions,
+    overviewSummaryQueryOptions,
+} from "@/module/campaigns/queries/queryOptions";
 import { PageShell } from "@/module/common/component/PageShell";
 import { DataLoadError } from "@/module/common/component/RouteError";
 import { queryClient } from "@/module/common/provider/RootProvider";
@@ -22,20 +25,25 @@ function parseIsoDate(value: unknown): string | undefined {
 export const Route = createFileRoute("/_restricted/m/$merchantId/campaigns/")({
     validateSearch: (
         search: Record<string, unknown>
-    ): CampaignsOverviewSearch => ({
-        from: parseIsoDate(search.from),
-        to: parseIsoDate(search.to),
-    }),
+    ): CampaignsOverviewSearch => {
+        // Default to a lifetime window: when the URL carries no `from`/`to`,
+        // we pass `undefined` through to the backend, which treats missing
+        // bounds as "all-time" (no previous-window comparison).
+        return {
+            from: parseIsoDate(search.from),
+            to: parseIsoDate(search.to),
+        };
+    },
     loaderDeps: ({ search }) => ({ from: search.from, to: search.to }),
     loader: ({ params, deps }) => {
-        queryClient.prefetchQuery(
-            campaignsOverviewQueryOptions({
-                merchantId: params.merchantId,
-                isDemoMode: isDemoMode(),
-                from: deps.from,
-                to: deps.to,
-            })
-        );
+        const args = {
+            merchantId: params.merchantId,
+            isDemoMode: isDemoMode(),
+            from: deps.from,
+            to: deps.to,
+        };
+        queryClient.prefetchQuery(overviewSummaryQueryOptions(args));
+        queryClient.prefetchQuery(overviewAnalyticsQueryOptions(args));
     },
     component: CampaignsOverviewPage,
     errorComponent: (props) => (

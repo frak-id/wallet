@@ -60,6 +60,7 @@ export type RecipientType = Static<typeof RecipientTypeSchema>;
 // =============================================================================
 
 const MerchantInfoSchema = t.Object({
+    id: t.String(),
     name: t.String(),
     domain: t.String(),
     heroImageUrl: t.Optional(t.String()),

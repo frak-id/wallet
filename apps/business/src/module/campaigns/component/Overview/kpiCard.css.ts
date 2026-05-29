@@ -14,3 +14,8 @@ export const amount = style({
     color: vars.text.primary,
     fontVariantNumeric: "tabular-nums",
 });
+
+export const hint = style({
+    color: vars.text.disabled,
+    fontStyle: "italic",
+});

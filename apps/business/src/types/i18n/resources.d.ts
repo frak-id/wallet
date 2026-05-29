@@ -170,10 +170,11 @@ export default interface Resources {
                     device: "Device";
                     platform: "Platform";
                     sources: {
-                        android: "Android";
                         desktop: "Desktop";
-                        ios: "iOS";
                         merchantSite: "Merchant Site";
+                        mobile: "Mobile";
+                        other: "Other";
+                        tablet: "Tablet";
                         walletApp: "Wallet App";
                     };
                     title: "Sharing by source";
@@ -213,6 +214,7 @@ export default interface Resources {
                 noEndDate: "No end date";
                 published: "Published";
                 revenue: "Revenue";
+                rewards: "Rewards";
                 sharingRate: "Sharing rate";
                 status: "Status";
             };

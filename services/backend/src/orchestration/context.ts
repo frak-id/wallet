@@ -11,8 +11,11 @@ import { ReferralCodeContext } from "../domain/referral-code/context";
 import { RewardsContext } from "../domain/rewards/context";
 import { WalletContext } from "../domain/wallet/context";
 import { webAuthNValidatorReader } from "../infrastructure/blockchain/WebAuthNValidatorReader";
+import { openPanelExportClient } from "../infrastructure/integrations/openpanel";
 import { pricingRepository } from "../infrastructure/pricing/PricingRepository";
 import { BatchRewardOrchestrator } from "./BatchRewardOrchestrator";
+import { CampaignAnalyticsOrchestrator } from "./CampaignAnalyticsOrchestrator";
+import { CampaignOverviewOrchestrator } from "./CampaignOverviewOrchestrator";
 import { CampaignStatsOrchestrator } from "./CampaignStatsOrchestrator";
 import { ExplorerOrchestrator } from "./ExplorerOrchestrator";
 import {
@@ -128,6 +131,14 @@ const memberQueryOrchestrator = new MemberQueryOrchestrator(pricingRepository);
 
 const campaignStatsOrchestrator = new CampaignStatsOrchestrator();
 
+const campaignOverviewOrchestrator = new CampaignOverviewOrchestrator(
+    pricingRepository
+);
+
+const campaignAnalyticsOrchestrator = new CampaignAnalyticsOrchestrator(
+    openPanelExportClient
+);
+
 const explorerOrchestrator = new ExplorerOrchestrator();
 
 const interactionSubmissionOrchestrator = new InteractionSubmissionOrchestrator(
@@ -192,6 +203,8 @@ export namespace OrchestrationContext {
         interactionSubmission: interactionSubmissionOrchestrator,
         memberQuery: memberQueryOrchestrator,
         campaignStats: campaignStatsOrchestrator,
+        campaignOverview: campaignOverviewOrchestrator,
+        campaignAnalytics: campaignAnalyticsOrchestrator,
         anonymousMerge: anonymousMergeOrchestrator,
         batchReward: batchRewardOrchestrator,
         identity: identityOrchestrator,

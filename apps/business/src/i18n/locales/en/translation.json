@@ -107,6 +107,7 @@
             "endDate": "End date",
             "noEndDate": "No end date",
             "sharingRate": "Sharing rate",
+            "rewards": "Rewards",
             "ctr": "CTR",
             "revenue": "Revenue",
             "budgetSpend": "Budget & Spend"
@@ -260,9 +261,10 @@
                 "sources": {
                     "merchantSite": "Merchant Site",
                     "walletApp": "Wallet App",
-                    "ios": "iOS",
-                    "android": "Android",
-                    "desktop": "Desktop"
+                    "mobile": "Mobile",
+                    "desktop": "Desktop",
+                    "tablet": "Tablet",
+                    "other": "Other"
                 }
             },
             "top": {

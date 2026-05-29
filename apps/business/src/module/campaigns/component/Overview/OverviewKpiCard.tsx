@@ -10,9 +10,16 @@ type Props = {
     descriptor: string;
     amount: string;
     delta?: number;
+    hint?: string;
 };
 
-export function OverviewKpiCard({ label, descriptor, amount, delta }: Props) {
+export function OverviewKpiCard({
+    label,
+    descriptor,
+    amount,
+    delta,
+    hint,
+}: Props) {
     return (
         <Card className={styles.cell} radius="m">
             <Stack space="xxs">
@@ -33,6 +40,11 @@ export function OverviewKpiCard({ label, descriptor, amount, delta }: Props) {
                     <span className={styles.amount}>{amount}</span>
                     {delta !== undefined && <DeltaIndicator delta={delta} />}
                 </Stack>
+                {hint && (
+                    <Text as="span" variant="caption" className={styles.hint}>
+                        {hint}
+                    </Text>
+                )}
             </Stack>
         </Card>
     );

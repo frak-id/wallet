@@ -1,3 +1,7 @@
+import type {
+    OverviewFunnelKind,
+    OverviewFunnels,
+} from "@frak-labs/backend-elysia/orchestration/schemas";
 import { Card } from "@frak-labs/design-system/components/Card";
 import {
     FunnelChart,
@@ -15,13 +19,9 @@ import { useTranslation } from "react-i18next";
 
 type Variant = "website" | "wallet";
 
-/** Website/Wallet funnel datasets for the overview funnel card. */
-type FunnelsData = Record<Variant, FunnelStep[]>;
-
-// Maps the known data-provided funnel-stage labels to i18n keys; unknown
-// labels fall through untranslated.
+// Maps backend funnel-stage kinds to i18n keys.
 const stepLabelKey: Record<
-    string,
+    OverviewFunnelKind,
     | "campaigns.overview.funnel.steps.shareCtaSeen"
     | "campaigns.overview.funnel.steps.shareInitiated"
     | "campaigns.overview.funnel.steps.linkShared"
@@ -30,29 +30,29 @@ const stepLabelKey: Record<
     | "campaigns.overview.funnel.steps.explorerImpressions"
     | "campaigns.overview.funnel.steps.brandPageOpened"
 > = {
-    "Share CTA seen": "campaigns.overview.funnel.steps.shareCtaSeen",
-    "Share initiated": "campaigns.overview.funnel.steps.shareInitiated",
-    "Link shared": "campaigns.overview.funnel.steps.linkShared",
-    Referred: "campaigns.overview.funnel.steps.referred",
-    Converted: "campaigns.overview.funnel.steps.converted",
-    "Explorer impressions":
-        "campaigns.overview.funnel.steps.explorerImpressions",
-    "Brand page opened": "campaigns.overview.funnel.steps.brandPageOpened",
+    share_cta_seen: "campaigns.overview.funnel.steps.shareCtaSeen",
+    share_initiated: "campaigns.overview.funnel.steps.shareInitiated",
+    link_shared: "campaigns.overview.funnel.steps.linkShared",
+    explorer_impressions: "campaigns.overview.funnel.steps.explorerImpressions",
+    brand_page_opened: "campaigns.overview.funnel.steps.brandPageOpened",
+    referred: "campaigns.overview.funnel.steps.referred",
+    converted: "campaigns.overview.funnel.steps.converted",
 };
 
 /** Overview-page funnel card: Website/Wallet tabs + funnel chart in a DS `Card`. */
-export function FunnelCard({ funnels }: { funnels: FunnelsData }) {
+export function FunnelCard({ funnels }: { funnels: OverviewFunnels }) {
     const { t } = useTranslation();
     const labels: Record<Variant, string> = {
         website: t("campaigns.overview.funnel.website"),
         wallet: t("campaigns.overview.funnel.walletFrak"),
     };
 
-    const localizeSteps = (steps: FunnelStep[]) =>
-        steps.map((step) => {
-            const key = stepLabelKey[step.label];
-            return key ? { ...step, label: t(key) } : step;
-        });
+    const toChartSteps = (steps: OverviewFunnels[Variant]): FunnelStep[] =>
+        steps.map((step) => ({
+            label: t(stepLabelKey[step.kind]),
+            value: step.value,
+            delta: percentDelta(step.value, step.previousValue),
+        }));
 
     return (
         <Card radius="m">
@@ -75,7 +75,7 @@ export function FunnelCard({ funnels }: { funnels: FunnelsData }) {
                                     })}
                                 </Text>
                                 <FunnelChart
-                                    steps={localizeSteps(funnels[variant])}
+                                    steps={toChartSteps(funnels[variant])}
                                 />
                             </Stack>
                         </TabsContent>
@@ -84,4 +84,9 @@ export function FunnelCard({ funnels }: { funnels: FunnelsData }) {
             </Tabs>
         </Card>
     );
+}
+
+function percentDelta(current: number, previous: number): number | undefined {
+    if (previous === 0) return current === 0 ? 0 : undefined;
+    return Math.round(((current - previous) / previous) * 100);
 }

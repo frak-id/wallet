@@ -274,7 +274,12 @@ export function PostPurchase({
     useEffect(() => {
         if (!resolvedVariant) return;
         if (trackedImpressionVariantRef.current === resolvedVariant) return;
-        if (!isPreview && (!shouldRender || isHidden || !isClientReady)) return;
+        // Gate on client readiness for every path (preview included) so the
+        // impression isn't "tracked" against an undefined client — which would
+        // no-op the event yet still flip the ref, suppressing the real fire
+        // once the client is ready.
+        if (!isClientReady) return;
+        if (!isPreview && (!shouldRender || isHidden)) return;
         trackEvent(window.FrakSetup?.client, "post_purchase_impression", {
             placement: placementId,
             variant: resolvedVariant,

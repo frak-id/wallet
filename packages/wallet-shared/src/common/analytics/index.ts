@@ -7,6 +7,7 @@ export type {
     DiagnosticsEventMap,
     EmbeddedWalletEventMap,
     EventMap,
+    ExplorerEventMap,
     FlowEndExtras,
     FlowEvents,
     FlowOutcome,

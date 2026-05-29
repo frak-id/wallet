@@ -1,8 +1,11 @@
+import type {
+    OverviewAnalyticsResponse,
+    OverviewSummaryResponse,
+} from "@frak-labs/backend-elysia/orchestration/schemas";
 import { queryOptions } from "@tanstack/react-query";
 import { redirect } from "@tanstack/react-router";
 import campaignDetailsMock from "@/mock/campaignDetails.json";
 import campaignsMockData from "@/mock/campaigns.json";
-import campaignsOverviewMock from "@/mock/campaignsOverview.json";
 import {
     getCampaignDetail,
     getMerchantCampaigns,
@@ -12,9 +15,13 @@ import {
     getMerchantCampaignsStatsMock,
 } from "@/module/campaigns/api/campaignStatsApi";
 import { getCampaignDetailsMockSync } from "@/module/campaigns/api/mock";
+import {
+    getOverviewAnalytics,
+    getOverviewAnalyticsMock,
+    getOverviewSummary,
+    getOverviewSummaryMock,
+} from "@/module/campaigns/api/overviewApi";
 import type { Campaign, CampaignWithActions } from "@/types/Campaign";
-
-export type CampaignsOverview = typeof campaignsOverviewMock;
 
 export type CampaignDetailsStats = typeof campaignDetailsMock;
 
@@ -66,14 +73,14 @@ export const campaignsListQueryOptions = ({
             : undefined,
     });
 
-// Aggregated dashboard data for the campaigns overview page. v1 serves
-// mock data unconditionally; real backend aggregates will swap in here
-// once they ship (swap queryFn to
-// `api.merchant({ merchantId }).campaigns.overview.get({ from, to })`).
-// `from`/`to` (yyyy-MM-dd) are already threaded into the key so the
-// Date range chip refetches once the endpoint honours the window. Split
-// into per-section keys later if endpoints land piecemeal.
-export const campaignsOverviewQueryOptions = ({
+/**
+ * KPI row + top campaigns + status breakdown + purchases +
+ * projected revenue — sourced from Postgres via
+ * `GET /business/merchant/:merchantId/campaigns/overview/summary`.
+ * `from`/`to` (yyyy-MM-dd) are threaded into both the query key and the
+ * request so the Date range chip triggers a refetch.
+ */
+export const overviewSummaryQueryOptions = ({
     merchantId,
     isDemoMode,
     from,
@@ -84,18 +91,56 @@ export const campaignsOverviewQueryOptions = ({
     from?: string;
     to?: string;
 }) =>
-    queryOptions<CampaignsOverview>({
+    queryOptions<OverviewSummaryResponse>({
         queryKey: [
             "campaigns",
             "overview",
+            "summary",
             merchantId,
             isDemoMode ? "demo" : "live",
             from ?? null,
             to ?? null,
         ],
-        queryFn: () => Promise.resolve(campaignsOverviewMock),
+        queryFn: () => getOverviewSummary({ merchantId, isDemoMode, from, to }),
         staleTime: isDemoMode ? Number.POSITIVE_INFINITY : 5 * 60 * 1000,
-        initialData: campaignsOverviewMock,
+        // initialData must be gated on isDemoMode: with a merchant-keyed
+        // cache entry and `staleTime: Infinity`, seeding mock data in
+        // live mode would short-circuit the queryFn and never show real
+        // data.
+        initialData: isDemoMode ? getOverviewSummaryMock() : undefined,
+    });
+
+/**
+ * Funnels + sharing breakdown — sourced from OpenPanel via
+ * `GET /business/merchant/:merchantId/campaigns/overview/analytics`.
+ * Lives behind its own Suspense boundary so the slower analytics call
+ * doesn't block the KPI/summary cards from painting.
+ */
+export const overviewAnalyticsQueryOptions = ({
+    merchantId,
+    isDemoMode,
+    from,
+    to,
+}: {
+    merchantId: string;
+    isDemoMode: boolean;
+    from?: string;
+    to?: string;
+}) =>
+    queryOptions<OverviewAnalyticsResponse>({
+        queryKey: [
+            "campaigns",
+            "overview",
+            "analytics",
+            merchantId,
+            isDemoMode ? "demo" : "live",
+            from ?? null,
+            to ?? null,
+        ],
+        queryFn: () =>
+            getOverviewAnalytics({ merchantId, isDemoMode, from, to }),
+        staleTime: isDemoMode ? Number.POSITIVE_INFINITY : 5 * 60 * 1000,
+        initialData: isDemoMode ? getOverviewAnalyticsMock() : undefined,
     });
 
 // Per-campaign analytics for the campaign details sheet. v1 serves mock

@@ -13,10 +13,6 @@ export type ModalDismissSource =
     | "escape"
     | "final_action";
 
-type ModalBaseProps = {
-    productId?: string;
-};
-
 /**
  * Listener modal event map. Events are emitted from the iframe listener app
  * that hosts partner-initiated modals (login, siwe, sendTransaction, final).
@@ -26,22 +22,22 @@ type ModalBaseProps = {
  * `modal_dismissed` with `last_step`. `modal_step_error` surfaces failures.
  */
 export type ModalEventMap = {
-    modal_opened: ModalBaseProps & {
+    modal_opened: {
         steps: ModalStepKey[];
         /** Entry point: a modal step key, or the final-action key (sharing/reward) when opening on `final`. */
         entry_step: string;
     };
-    modal_dismissed: ModalBaseProps & {
+    modal_dismissed: {
         last_step?: ModalStepKey;
         completed: boolean;
         source: ModalDismissSource;
     };
-    modal_step_viewed: ModalBaseProps & {
+    modal_step_viewed: {
         step: string;
         index: number;
         total: number;
     };
-    modal_step_error: ModalBaseProps & {
+    modal_step_error: {
         step: string;
         reason: string;
         recoverable: boolean;
@@ -65,6 +61,12 @@ export type WalletModalEventMap = {
     wallet_modal_opened: {
         modal: string;
         from_stack: boolean;
+        /**
+         * Merchant id of the brand the modal is showing, when the modal
+         * payload carries one (`explorerDetail`, `rewardDetail`). Required
+         * to filter the wallet funnel "Brand page opened" step by merchant.
+         */
+        merchant_id?: string;
     };
     wallet_modal_closed: {
         modal: string;

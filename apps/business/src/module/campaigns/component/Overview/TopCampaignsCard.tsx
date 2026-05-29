@@ -1,3 +1,7 @@
+import type {
+    OverviewStatusBreakdown,
+    OverviewTopCampaign,
+} from "@frak-labs/backend-elysia/orchestration/schemas";
 import { Badge } from "@frak-labs/design-system/components/Badge";
 import { Card } from "@frak-labs/design-system/components/Card";
 import { Stack } from "@frak-labs/design-system/components/Stack";
@@ -5,16 +9,15 @@ import { Text } from "@frak-labs/design-system/components/Text";
 import { type ColumnDef, createColumnHelper } from "@tanstack/react-table";
 import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
-import type { CampaignsOverview } from "@/module/campaigns/queries/queryOptions";
 import { Table } from "@/module/common/component/Table";
 import { StatusLegendBar } from "./StatusLegendBar";
 
-type TopCampaign = CampaignsOverview["topCampaigns"][number];
+const columnHelper = createColumnHelper<OverviewTopCampaign>();
 
-const columnHelper = createColumnHelper<TopCampaign>();
+const numberFormatter = new Intl.NumberFormat("en-US");
 
 const badgeVariantForStatus: Record<
-    TopCampaign["status"],
+    OverviewTopCampaign["status"],
     "success" | "warning" | "disabled" | "neutral"
 > = {
     active: "success",
@@ -40,8 +43,8 @@ export function TopCampaignsCard({
     topCampaigns,
     statusBreakdown,
 }: {
-    topCampaigns: CampaignsOverview["topCampaigns"];
-    statusBreakdown: CampaignsOverview["statusBreakdown"];
+    topCampaigns: OverviewTopCampaign[];
+    statusBreakdown: OverviewStatusBreakdown;
 }) {
     const { t } = useTranslation();
     const columns = useMemo(
@@ -75,8 +78,8 @@ export function TopCampaignsCard({
                         );
                     },
                 }),
-                columnHelper.accessor("sharingRate", {
-                    header: () => t("campaigns.table.sharingRate"),
+                columnHelper.accessor("rewardsCount", {
+                    header: () => t("campaigns.table.rewards"),
                     size: 140,
                     cell: ({ getValue }) => (
                         <Text
@@ -85,12 +88,12 @@ export function TopCampaignsCard({
                             weight="medium"
                             color="success"
                         >
-                            {Math.round(getValue() * 100)}%
+                            {numberFormatter.format(getValue())}
                         </Text>
                     ),
                     meta: { align: "right" },
                 }),
-            ] as ColumnDef<TopCampaign>[],
+            ] as ColumnDef<OverviewTopCampaign>[],
         [t]
     );
 
