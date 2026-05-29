@@ -67,7 +67,11 @@ type PurchaseKpiRow = {
 };
 
 type SeriesRow = {
-    bucket: Date;
+    // `DATE_TRUNC(...)` is a raw `sql<Date>` expression, so Drizzle has no
+    // column metadata to decode it. Depending on the driver path it can
+    // surface as either a Date (postgres.js OID parser for timestamptz) or
+    // an ISO string (raw text fallback). Type both and normalise in JS.
+    bucket: Date | string;
     purchaseCount: string;
     revenue: string;
 };
@@ -365,7 +369,7 @@ export class CampaignOverviewOrchestrator {
             .orderBy(asc(sql`bucket`));
 
         const buckets = (rows as SeriesRow[]).map((row) => ({
-            bucket: row.bucket.toISOString(),
+            bucket: toIsoString(row.bucket),
             purchaseCount: toNumber(row.purchaseCount),
             revenue: toNumber(row.revenue),
         }));
@@ -401,4 +405,8 @@ function toNumber(value: string | number | null | undefined): number {
     if (value === null || value === undefined) return 0;
     const n = typeof value === "number" ? value : Number(value);
     return Number.isFinite(n) ? n : 0;
+}
+
+function toIsoString(value: Date | string): string {
+    return value instanceof Date ? value.toISOString() : new Date(value).toISOString();
 }
