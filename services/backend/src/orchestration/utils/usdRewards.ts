@@ -1,4 +1,4 @@
-import { inArray, type SQL, sql } from "drizzle-orm";
+import { eq, inArray, type SQL, sql } from "drizzle-orm";
 import type { Address } from "viem";
 import { assetLogsTable } from "../../domain/rewards/db/schema";
 import { db } from "../../infrastructure/persistence/postgres";
@@ -24,8 +24,12 @@ export function buildUsdRewardsExpression(prices: TokenPriceMap): SQL {
     if (prices.size === 0) return sql`0`;
     const whenClauses: SQL[] = [];
     for (const [token, usdPrice] of prices) {
+        // `eq()` carries the column's `customHex` encoder so the `token`
+        // param is bound as bytea. A bare `${token}` in the template
+        // would bind as text and Postgres would reject `0x…` (its bytea
+        // hex input is `\x…`).
         whenClauses.push(
-            sql`WHEN ${assetLogsTable.tokenAddress} = ${token} THEN ${assetLogsTable.amount}::NUMERIC * ${usdPrice}`
+            sql`WHEN ${eq(assetLogsTable.tokenAddress, token as Address)} THEN ${assetLogsTable.amount}::NUMERIC * ${usdPrice}`
         );
     }
     return sql`CASE ${sql.join(whenClauses, sql` `)} ELSE 0 END`;
