@@ -28,11 +28,14 @@ export const Actions = memo(function Actions({
     onSaveDraft,
     isSaving = false,
     isSaved = false,
+    hideSaveDraft = false,
 }: {
     isLoading?: boolean;
     onSaveDraft?: () => void;
     isSaving?: boolean;
     isSaved?: boolean;
+    /** Hide the inline "Save Draft" button (e.g. when it lives in the page header). */
+    hideSaveDraft?: boolean;
 }) {
     const navigate = useNavigate();
     const location = useLocation();
@@ -61,15 +64,17 @@ export const Actions = memo(function Actions({
         <ActionsWrapper
             left={
                 <>
-                    <Button
-                        type={"button"}
-                        variant={"secondary"}
-                        onClick={onSaveDraft}
-                        disabled={isLoading || isSaving}
-                        loading={isSaving}
-                    >
-                        Save Draft
-                    </Button>
+                    {!hideSaveDraft && (
+                        <Button
+                            type={"button"}
+                            variant={"secondary"}
+                            onClick={onSaveDraft}
+                            disabled={isLoading || isSaving}
+                            loading={isSaving}
+                        >
+                            Save Draft
+                        </Button>
+                    )}
                     {isSaved && <ActionsMessageSuccess />}
                 </>
             }

@@ -84,6 +84,57 @@
         }
     },
     "campaigns": {
+        "create": {
+            "steps": {
+                "basics": {
+                    "label": "Campaign basics",
+                    "hint": "Name, merchant & currency",
+                    "subtitle": "Name your campaign and choose the merchant it belongs to."
+                },
+                "goals": {
+                    "label": "Goals",
+                    "hint": "What action triggers rewards",
+                    "subtitle": "The choice of your goal defines the event that generates the distribution of rewards."
+                },
+                "territory": {
+                    "label": "Territory & categories",
+                    "hint": "Countries & Ad categories",
+                    "subtitle": "Choose where your campaign will run and declare any special advertising categories."
+                },
+                "budget": {
+                    "label": "Budget & schedule",
+                    "hint": "Amount, period & dates",
+                    "subtitle": "Set your campaign budget and timeline. Frak takes a 20% commission on the total budget."
+                },
+                "reward": {
+                    "label": "Reward setup",
+                    "hint": "Model, value & distribution",
+                    "subtitle": "Choose how rewards are calculated and who qualifies."
+                },
+                "chain": {
+                    "label": "Referral chain",
+                    "hint": "Multi-level ambassador",
+                    "subtitle": "Enable chain rewards to reward ambassadors across multiple referral levels — not just the direct referrer."
+                },
+                "validation": {
+                    "label": "Campaign validation",
+                    "hint": "Review & publish",
+                    "subtitle": "Review all settings before publishing. All fields are read-only at this stage."
+                }
+            },
+            "actions": {
+                "saveDraft": "Save as draft",
+                "continue": "Continue",
+                "back": "Back",
+                "publish": "Publish"
+            },
+            "cancel": {
+                "title": "Close draft without saving it?",
+                "description": "Closing this draft without saving it means you will lose all the information you filled up.",
+                "confirm": "Yes, close",
+                "dismiss": "Cancel"
+            }
+        },
         "tabs": {
             "all": "All",
             "active": "Active",

@@ -25,6 +25,7 @@ export { ConnectIcon } from "./ConnectIcon";
 export { CopyIcon } from "./CopyIcon";
 export { DocumentIcon } from "./DocumentIcon";
 export { EarningsIcon } from "./EarningsIcon";
+export { ExclamationIcon } from "./ExclamationIcon";
 export { ExplorerIcon } from "./ExplorerIcon";
 export { ExternalLinkIcon } from "./ExternalLinkIcon";
 export { EyeIcon } from "./EyeIcon";

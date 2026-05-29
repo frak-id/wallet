@@ -2,8 +2,6 @@ import { Stack } from "@frak-labs/design-system/components/Stack";
 import { useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo } from "react";
 import { useForm } from "react-hook-form";
-import { Actions } from "@/module/campaigns/component/Actions";
-import { ButtonCancel } from "@/module/campaigns/component/Creation/NewCampaign/ButtonCancel";
 import { FormBudget } from "@/module/campaigns/component/Creation/NewCampaign/FormBudget";
 import { FormGoals } from "@/module/campaigns/component/Creation/NewCampaign/FormGoals";
 import { FormRewardToken } from "@/module/campaigns/component/Creation/NewCampaign/FormRewardToken";
@@ -12,12 +10,15 @@ import { FormSpecialAdvertising } from "@/module/campaigns/component/Creation/Ne
 import { FormTerritory } from "@/module/campaigns/component/Creation/NewCampaign/FormTerritory";
 import { FormTitle } from "@/module/campaigns/component/Creation/NewCampaign/FormTitle";
 import { useSaveCampaign } from "@/module/campaigns/hook/useSaveCampaign";
-import { Head } from "@/module/common/component/Head";
 import { useActiveMerchantId } from "@/module/common/hook/useActiveMerchantId";
-import { Form, FormLayout } from "@/module/forms/Form";
+import { Form } from "@/module/forms/Form";
 import { type CampaignDraft, campaignStore } from "@/stores/campaignStore";
+import { WizardStep } from "../WizardStep";
 
-export function NewCampaign({ title }: { title: string }) {
+/** Links the sticky-footer Continue button to the form it submits. */
+const FORM_ID = "campaign-basics-form";
+
+export function NewCampaign() {
     const navigate = useNavigate();
     const merchantId = useActiveMerchantId();
     const draft = campaignStore((s) => s.draft);
@@ -38,6 +39,7 @@ export function NewCampaign({ title }: { title: string }) {
 
     const form = useForm<CampaignDraft>({
         values: useMemo(() => ({ ...draft, merchantId }), [draft, merchantId]),
+        mode: "onChange",
     });
 
     async function onSubmit(values: CampaignDraft) {
@@ -54,15 +56,16 @@ export function NewCampaign({ title }: { title: string }) {
     });
 
     return (
-        <FormLayout>
-            <Head
-                title={{ content: title, size: "small" }}
-                rightSection={
-                    <ButtonCancel onClick={() => form.reset(draft)} />
-                }
-            />
+        <WizardStep
+            stepKey="basics"
+            formId={FORM_ID}
+            isValid={form.formState.isValid}
+            isPending={saveCampaign.isPending}
+            onSaveDraft={handleSaveDraft}
+            onClose={() => form.reset(draft)}
+        >
             <Form {...form}>
-                <form onSubmit={form.handleSubmit(onSubmit)}>
+                <form id={FORM_ID} onSubmit={form.handleSubmit(onSubmit)}>
                     <Stack space="l">
                         <FormTitle />
                         <FormRewardToken />
@@ -71,15 +74,9 @@ export function NewCampaign({ title }: { title: string }) {
                         <FormBudget />
                         <FormTerritory />
                         <FormSchedule />
-                        <Actions
-                            isLoading={saveCampaign.isPending}
-                            onSaveDraft={handleSaveDraft}
-                            isSaving={saveCampaign.isPending}
-                            isSaved={saveCampaign.isSuccess}
-                        />
                     </Stack>
                 </form>
             </Form>
-        </FormLayout>
+        </WizardStep>
     );
 }

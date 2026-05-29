@@ -65,6 +65,57 @@ export default interface Resources {
                 selected_one: "{{count}} selected";
                 selected_other: "{{count}} selected";
             };
+            create: {
+                actions: {
+                    back: "Back";
+                    continue: "Continue";
+                    publish: "Publish";
+                    saveDraft: "Save as draft";
+                };
+                cancel: {
+                    confirm: "Yes, close";
+                    description: "Closing this draft without saving it means you will lose all the information you filled up.";
+                    dismiss: "Cancel";
+                    title: "Close draft without saving it?";
+                };
+                steps: {
+                    basics: {
+                        hint: "Name, merchant & currency";
+                        label: "Campaign basics";
+                        subtitle: "Name your campaign and choose the merchant it belongs to.";
+                    };
+                    budget: {
+                        hint: "Amount, period & dates";
+                        label: "Budget & schedule";
+                        subtitle: "Set your campaign budget and timeline. Frak takes a 20% commission on the total budget.";
+                    };
+                    chain: {
+                        hint: "Multi-level ambassador";
+                        label: "Referral chain";
+                        subtitle: "Enable chain rewards to reward ambassadors across multiple referral levels — not just the direct referrer.";
+                    };
+                    goals: {
+                        hint: "What action triggers rewards";
+                        label: "Goals";
+                        subtitle: "The choice of your goal defines the event that generates the distribution of rewards.";
+                    };
+                    reward: {
+                        hint: "Model, value & distribution";
+                        label: "Reward setup";
+                        subtitle: "Choose how rewards are calculated and who qualifies.";
+                    };
+                    territory: {
+                        hint: "Countries & Ad categories";
+                        label: "Territory & categories";
+                        subtitle: "Choose where your campaign will run and declare any special advertising categories.";
+                    };
+                    validation: {
+                        hint: "Review & publish";
+                        label: "Campaign validation";
+                        subtitle: "Review all settings before publishing. All fields are read-only at this stage.";
+                    };
+                };
+            };
             details: {
                 close: "Close campaign details";
                 cpa: {

@@ -17,5 +17,5 @@ export const Route = createFileRoute(
 });
 
 function CampaignsDraftNewPage() {
-    return <NewCampaign title="Create a new campaign" />;
+    return <NewCampaign />;
 }

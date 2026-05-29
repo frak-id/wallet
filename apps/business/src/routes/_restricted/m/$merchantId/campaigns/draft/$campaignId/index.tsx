@@ -17,5 +17,5 @@ export const Route = createFileRoute(
 function CampaignsDraftPage() {
     const { campaignId } = Route.useParams();
     useCampaignDraftSync(campaignId);
-    return <NewCampaign title="Edit campaign" />;
+    return <NewCampaign />;
 }

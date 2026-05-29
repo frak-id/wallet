@@ -84,6 +84,57 @@
         }
     },
     "campaigns": {
+        "create": {
+            "steps": {
+                "basics": {
+                    "label": "Informations de base",
+                    "hint": "Nom, marchand & devise",
+                    "subtitle": "Nommez votre campagne et choisissez le marchand auquel elle appartient."
+                },
+                "goals": {
+                    "label": "Objectifs",
+                    "hint": "Quelle action déclenche les récompenses",
+                    "subtitle": "Le choix de votre objectif définit l’événement qui génère la distribution des récompenses."
+                },
+                "territory": {
+                    "label": "Territoire & catégories",
+                    "hint": "Pays & catégories publicitaires",
+                    "subtitle": "Choisissez où votre campagne sera diffusée et déclarez les éventuelles catégories publicitaires spéciales."
+                },
+                "budget": {
+                    "label": "Budget & calendrier",
+                    "hint": "Montant, période & dates",
+                    "subtitle": "Définissez le budget et le calendrier de votre campagne. Frak prélève une commission de 20% sur le budget total."
+                },
+                "reward": {
+                    "label": "Configuration des récompenses",
+                    "hint": "Modèle, valeur & distribution",
+                    "subtitle": "Choisissez comment les récompenses sont calculées et qui peut en bénéficier."
+                },
+                "chain": {
+                    "label": "Chaîne de parrainage",
+                    "hint": "Ambassadeur multi-niveaux",
+                    "subtitle": "Activez les récompenses en chaîne pour récompenser les ambassadeurs sur plusieurs niveaux de parrainage — pas seulement le parrain direct."
+                },
+                "validation": {
+                    "label": "Validation de la campagne",
+                    "hint": "Vérifier & publier",
+                    "subtitle": "Vérifiez tous les paramètres avant de publier. Tous les champs sont en lecture seule à cette étape."
+                }
+            },
+            "actions": {
+                "saveDraft": "Enregistrer le brouillon",
+                "continue": "Continuer",
+                "back": "Retour",
+                "publish": "Publier"
+            },
+            "cancel": {
+                "title": "Fermer le brouillon sans l’enregistrer ?",
+                "description": "Fermer ce brouillon sans l’enregistrer signifie que vous perdrez toutes les informations saisies.",
+                "confirm": "Oui, fermer",
+                "dismiss": "Annuler"
+            }
+        },
         "tabs": {
             "all": "Tout",
             "active": "Active",
