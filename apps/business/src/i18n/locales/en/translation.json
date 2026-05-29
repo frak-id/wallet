@@ -160,6 +160,64 @@
             "confirmArchive": "Are you sure you want to archive the campaign <strong>{{name}}</strong>?",
             "confirmDelete": "Are you sure you want to delete the campaign <strong>{{name}}</strong>?"
         },
+        "details": {
+            "close": "Close campaign details",
+            "export": "Export",
+            "subtitle": {
+                "ambassadors_one": "{{count}} ambassador",
+                "ambassadors_other": "{{count}} ambassadors"
+            },
+            "tabs": {
+                "funnelRoi": "Funnel & ROI",
+                "ambassadors": "Ambassadors"
+            },
+            "economic": {
+                "title": "Economic value — Frak vs Meta",
+                "yourSpend": "Your spend",
+                "frakTag": "(Frak)",
+                "equivalentMeta": "Equivalent cost on Meta",
+                "conversionsCpa": "{{conversions}} conversions · {{cpa}} CPA",
+                "conversionsCpaMeta": "{{conversions}} conversions · ~{{cpa}} CPA on Meta",
+                "cheaperThanMeta": "{{percent}} cheaper than Meta",
+                "savedVsMeta": "{{amount}} saved vs Meta"
+            },
+            "cpa": {
+                "title": "CPA breakdown",
+                "costPerAction": "cost per action",
+                "frak": "Frak",
+                "ambassador": "Ambassador",
+                "referee": "Referee",
+                "legendItem": "{{label}} ({{percent}}) · {{amount}}"
+            },
+            "stats": {
+                "ambassadors": "Ambassadors",
+                "total": "total",
+                "registered": "Registered",
+                "activeUsers": "% Active users",
+                "sharedAtLeastOnce": "Shared at least once",
+                "refereesConverted": "% Referees Converted",
+                "clicksToPurchase": "Clicks → Purchase"
+            },
+            "top": {
+                "title": "Top Ambassadors",
+                "rank": "#",
+                "wallet": "Wallet",
+                "shares": "Shares",
+                "sales": "Sales",
+                "generatedRevenue": "Generated revenue",
+                "earned": "Earned"
+            },
+            "efficiency": {
+                "title": "Campaign Efficiency",
+                "ambassadors": "Ambassadors",
+                "roi": "ROI",
+                "revenueBudgetSpent": "Revenue/budget spent",
+                "avgRewardEarned": "Avg Reward Earned",
+                "perActiveAmbassador": "Per active ambassador",
+                "topPerformer": "Top Performer",
+                "ofCampaignRev": "{{wallet}} of campaign rev."
+            }
+        },
         "overview": {
             "kpi": {
                 "ambassadors": "Ambassadors",
@@ -179,7 +237,9 @@
                     "shareInitiated": "Share initiated",
                     "linkShared": "Link shared",
                     "referred": "Referred",
-                    "converted": "Converted"
+                    "converted": "Converted",
+                    "explorerImpressions": "Explorer impressions",
+                    "brandPageOpened": "Brand page opened"
                 }
             },
             "purchases": {

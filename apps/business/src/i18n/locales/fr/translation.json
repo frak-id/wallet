@@ -160,6 +160,64 @@
             "confirmArchive": "Voulez-vous vraiment archiver la campagne <strong>{{name}}</strong> ?",
             "confirmDelete": "Voulez-vous vraiment supprimer la campagne <strong>{{name}}</strong> ?"
         },
+        "details": {
+            "close": "Fermer les détails de la campagne",
+            "export": "Exporter",
+            "subtitle": {
+                "ambassadors_one": "{{count}} ambassadeur",
+                "ambassadors_other": "{{count}} ambassadeurs"
+            },
+            "tabs": {
+                "funnelRoi": "Tunnel & ROI",
+                "ambassadors": "Ambassadeurs"
+            },
+            "economic": {
+                "title": "Valeur économique — Frak vs Meta",
+                "yourSpend": "Vos dépenses",
+                "frakTag": "(Frak)",
+                "equivalentMeta": "Coût équivalent sur Meta",
+                "conversionsCpa": "{{conversions}} conversions · {{cpa}} CPA",
+                "conversionsCpaMeta": "{{conversions}} conversions · ~{{cpa}} CPA sur Meta",
+                "cheaperThanMeta": "{{percent}} moins cher que Meta",
+                "savedVsMeta": "{{amount}} économisés vs Meta"
+            },
+            "cpa": {
+                "title": "Répartition du CPA",
+                "costPerAction": "coût par action",
+                "frak": "Frak",
+                "ambassador": "Ambassadeur",
+                "referee": "Filleul",
+                "legendItem": "{{label}} ({{percent}}) · {{amount}}"
+            },
+            "stats": {
+                "ambassadors": "Ambassadeurs",
+                "total": "total",
+                "registered": "Inscrits",
+                "activeUsers": "% Utilisateurs actifs",
+                "sharedAtLeastOnce": "Ont partagé au moins une fois",
+                "refereesConverted": "% Filleuls convertis",
+                "clicksToPurchase": "Clics → Achat"
+            },
+            "top": {
+                "title": "Meilleurs ambassadeurs",
+                "rank": "#",
+                "wallet": "Wallet",
+                "shares": "Partages",
+                "sales": "Ventes",
+                "generatedRevenue": "Revenu généré",
+                "earned": "Gagné"
+            },
+            "efficiency": {
+                "title": "Efficacité de la campagne",
+                "ambassadors": "Ambassadeurs",
+                "roi": "ROI",
+                "revenueBudgetSpent": "Revenu/budget dépensé",
+                "avgRewardEarned": "Récompense moyenne gagnée",
+                "perActiveAmbassador": "Par ambassadeur actif",
+                "topPerformer": "Meilleur performeur",
+                "ofCampaignRev": "{{wallet}} du revenu de la campagne"
+            }
+        },
         "overview": {
             "kpi": {
                 "ambassadors": "Ambassadeurs",
@@ -179,7 +237,9 @@
                     "shareInitiated": "Partage initié",
                     "linkShared": "Lien partagé",
                     "referred": "Parrainé",
-                    "converted": "Converti"
+                    "converted": "Converti",
+                    "explorerImpressions": "Impressions explorateur",
+                    "brandPageOpened": "Page de marque ouverte"
                 }
             },
             "purchases": {

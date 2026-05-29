@@ -65,6 +65,64 @@ export default interface Resources {
                 selected_one: "{{count}} selected";
                 selected_other: "{{count}} selected";
             };
+            details: {
+                close: "Close campaign details";
+                cpa: {
+                    ambassador: "Ambassador";
+                    costPerAction: "cost per action";
+                    frak: "Frak";
+                    legendItem: "{{label}} ({{percent}}) · {{amount}}";
+                    referee: "Referee";
+                    title: "CPA breakdown";
+                };
+                economic: {
+                    cheaperThanMeta: "{{percent}} cheaper than Meta";
+                    conversionsCpa: "{{conversions}} conversions · {{cpa}} CPA";
+                    conversionsCpaMeta: "{{conversions}} conversions · ~{{cpa}} CPA on Meta";
+                    equivalentMeta: "Equivalent cost on Meta";
+                    frakTag: "(Frak)";
+                    savedVsMeta: "{{amount}} saved vs Meta";
+                    title: "Economic value — Frak vs Meta";
+                    yourSpend: "Your spend";
+                };
+                efficiency: {
+                    ambassadors: "Ambassadors";
+                    avgRewardEarned: "Avg Reward Earned";
+                    ofCampaignRev: "{{wallet}} of campaign rev.";
+                    perActiveAmbassador: "Per active ambassador";
+                    revenueBudgetSpent: "Revenue/budget spent";
+                    roi: "ROI";
+                    title: "Campaign Efficiency";
+                    topPerformer: "Top Performer";
+                };
+                export: "Export";
+                stats: {
+                    activeUsers: "% Active users";
+                    ambassadors: "Ambassadors";
+                    clicksToPurchase: "Clicks → Purchase";
+                    refereesConverted: "% Referees Converted";
+                    registered: "Registered";
+                    sharedAtLeastOnce: "Shared at least once";
+                    total: "total";
+                };
+                subtitle: {
+                    ambassadors_one: "{{count}} ambassador";
+                    ambassadors_other: "{{count}} ambassadors";
+                };
+                tabs: {
+                    ambassadors: "Ambassadors";
+                    funnelRoi: "Funnel & ROI";
+                };
+                top: {
+                    earned: "Earned";
+                    generatedRevenue: "Generated revenue";
+                    rank: "#";
+                    sales: "Sales";
+                    shares: "Shares";
+                    title: "Top Ambassadors";
+                    wallet: "Wallet";
+                };
+            };
             filter: {
                 dateRange: "Date range";
                 reset: "Reset filters";
@@ -77,7 +135,9 @@ export default interface Resources {
                 funnel: {
                     global: "Global funnel · {{variant}}";
                     steps: {
+                        brandPageOpened: "Brand page opened";
                         converted: "Converted";
+                        explorerImpressions: "Explorer impressions";
                         linkShared: "Link shared";
                         referred: "Referred";
                         shareCtaSeen: "Share CTA seen";
