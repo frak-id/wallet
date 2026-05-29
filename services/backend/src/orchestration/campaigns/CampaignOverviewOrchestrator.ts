@@ -55,7 +55,7 @@ import {
     WEBSITE_SHARING_SOURCES,
     walletFunnelDefinition,
     websiteFunnelDefinition,
-} from "./funnels";
+} from "./funnelDefinitions";
 import { distinctPurchases } from "./queries";
 import { buildRewardsExpression, getTokenPrices } from "./rewards";
 
@@ -454,17 +454,22 @@ export class CampaignOverviewOrchestrator {
         return { funnels, sharing, accurateKpis };
     }
 
+    /** Scope every OpenPanel chart request to a single merchant. */
+    private merchantFilter(merchantId: string): OpenPanelChartFilter {
+        return {
+            name: "properties.merchant_id",
+            operator: "is",
+            value: [merchantId],
+        };
+    }
+
     private async runFunnel(
         merchantId: string,
         definitions: ReturnType<typeof websiteFunnelDefinition>,
         range: DateRange,
         withPrevious: boolean
     ): Promise<OverviewFunnelStep[]> {
-        const merchantFilter: OpenPanelChartFilter = {
-            name: "properties.merchant_id",
-            operator: "is",
-            value: [merchantId],
-        };
+        const merchantFilter = this.merchantFilter(merchantId);
         const response = await this.openPanel.getChart({
             series: buildFunnelSeries(definitions, [merchantFilter]),
             startDate: range.from.toISOString(),
@@ -493,11 +498,7 @@ export class CampaignOverviewOrchestrator {
         range: DateRange,
         withPrevious: boolean
     ): Promise<OverviewAccurateKpis> {
-        const merchantFilter: OpenPanelChartFilter = {
-            name: "properties.merchant_id",
-            operator: "is",
-            value: [merchantId],
-        };
+        const merchantFilter = this.merchantFilter(merchantId);
         const response = await this.openPanel.getChart({
             series: [
                 {
@@ -584,11 +585,7 @@ export class CampaignOverviewOrchestrator {
         range: DateRange,
         breakdown: string
     ): Promise<Map<string, number>> {
-        const merchantFilter: OpenPanelChartFilter = {
-            name: "properties.merchant_id",
-            operator: "is",
-            value: [merchantId],
-        };
+        const merchantFilter = this.merchantFilter(merchantId);
         const response = await this.openPanel.getChart({
             series: [
                 { name: "sharing_link_shared", filters: [merchantFilter] },

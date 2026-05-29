@@ -4,6 +4,7 @@ import {
     countDistinct,
     eq,
     inArray,
+    isNotNull,
     isNull,
     type SQL,
     sql,
@@ -39,6 +40,20 @@ import {
 
 /** Top-N cap on the ambassador leaderboard. */
 const TOP_AMBASSADORS_LIMIT = 10;
+
+/** Per-campaign interaction counts, keyed by campaign rule id. */
+type InteractionCounts = {
+    referredInteractions: number;
+    purchaseInteractions: number;
+    createReferralLinkInteractions: number;
+};
+
+/** Per-campaign asset-log roll-up, keyed by campaign rule id. */
+type AssetAggregates = {
+    totalRewards: string;
+    tokenAddress: Address | null;
+    ambassadors: number;
+};
 
 /**
  * Cross-domain per-campaign reporting (rewards + identity + attribution
@@ -80,7 +95,7 @@ export class CampaignStatsOrchestrator {
                     i?.createReferralLinkInteractions ?? 0,
                 totalRewards: Number.parseFloat(a?.totalRewards ?? "0"),
                 attributedRevenue: revenue.get(campaignId) ?? 0,
-                uniqueWallets: a?.uniqueWallets ?? 0,
+                ambassadors: a?.ambassadors ?? 0,
             });
         });
     }
@@ -100,16 +115,7 @@ export class CampaignStatsOrchestrator {
     private async getInteractionCountsByCampaign(
         merchantId: string,
         campaignIds: string[]
-    ): Promise<
-        Map<
-            string,
-            {
-                referredInteractions: number;
-                purchaseInteractions: number;
-                createReferralLinkInteractions: number;
-            }
-        >
-    > {
+    ): Promise<Map<string, InteractionCounts>> {
         const rows = await db
             .select({
                 campaignRuleId: assetLogsTable.campaignRuleId,
@@ -130,14 +136,7 @@ export class CampaignStatsOrchestrator {
             )
             .groupBy(assetLogsTable.campaignRuleId);
 
-        const result = new Map<
-            string,
-            {
-                referredInteractions: number;
-                purchaseInteractions: number;
-                createReferralLinkInteractions: number;
-            }
-        >();
+        const result = new Map<string, InteractionCounts>();
         for (const row of rows) {
             if (!row.campaignRuleId) continue;
             result.set(row.campaignRuleId, {
@@ -181,36 +180,28 @@ export class CampaignStatsOrchestrator {
         return result;
     }
 
-    private async getAssetAggregatesByCampaign(campaignIds: string[]): Promise<
-        Map<
-            string,
-            {
-                totalRewards: string;
-                tokenAddress: Address | null;
-                uniqueWallets: number;
-            }
-        >
-    > {
+    /**
+     * Per-campaign asset-log roll-up: total reward amount, the campaign's
+     * reward token, and the ambassador count. `ambassadors` is the number
+     * of distinct identity groups that earned a `referrer` reward — read
+     * straight off `asset_logs` with no identity join (the canonical
+     * wallet resolution is only needed by the details leaderboard).
+     */
+    private async getAssetAggregatesByCampaign(
+        campaignIds: string[]
+    ): Promise<Map<string, AssetAggregates>> {
         const rows = await db
             .select({
                 campaignRuleId: assetLogsTable.campaignRuleId,
                 totalRewards: sql<string>`COALESCE(${sum(assetLogsTable.amount)}, '0')`,
                 tokenAddress: sql<Buffer | null>`MAX(${assetLogsTable.tokenAddress}::text)::bytea`,
-                uniqueWallets: countDistinct(identityNodesTable.identityValue),
+                ambassadors: sql<string>`COUNT(DISTINCT ${assetLogsTable.identityGroupId}) FILTER (WHERE ${assetLogsTable.recipientType} = 'referrer')`,
             })
             .from(assetLogsTable)
-            .leftJoin(identityNodesTable, walletIdentityJoinOn())
             .where(inArray(assetLogsTable.campaignRuleId, campaignIds))
             .groupBy(assetLogsTable.campaignRuleId);
 
-        const result = new Map<
-            string,
-            {
-                totalRewards: string;
-                tokenAddress: Address | null;
-                uniqueWallets: number;
-            }
-        >();
+        const result = new Map<string, AssetAggregates>();
         for (const row of rows) {
             if (!row.campaignRuleId) continue;
             result.set(row.campaignRuleId, {
@@ -218,7 +209,7 @@ export class CampaignStatsOrchestrator {
                 tokenAddress: row.tokenAddress
                     ? getAddress(bytesToHex(row.tokenAddress))
                     : null,
-                uniqueWallets: toNumber(row.uniqueWallets),
+                ambassadors: toNumber(row.ambassadors),
             });
         }
         return result;
@@ -279,7 +270,7 @@ export class CampaignStatsOrchestrator {
                 and(
                     eq(interactionLogsTable.merchantId, merchantId),
                     isNull(interactionLogsTable.cancelledAt),
-                    sql`${interactionLogsTable.identityGroupId} IS NOT NULL`
+                    isNotNull(interactionLogsTable.identityGroupId)
                 )
             );
         return toNumber(row?.count);

@@ -92,8 +92,8 @@ export function distinctCampaignPurchases(extraWhere: SQL[]) {
 /**
  * LEFT-JOIN predicate for resolving a wallet address from an asset_log's
  * `identityGroupId`. Filters identity_nodes to the canonical wallet row:
- * type=wallet, no merchant scope, not unlinked. Used by both the
- * stats-list `uniqueWallets` aggregate and the details leaderboard.
+ * type=wallet, no merchant scope, not unlinked. Used by the details
+ * leaderboard to label each ambassador group with its wallet address.
  */
 export function walletIdentityJoinOn(): SQL {
     return and(

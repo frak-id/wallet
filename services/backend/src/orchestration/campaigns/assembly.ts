@@ -40,17 +40,17 @@ export type CampaignStatsAggregates = {
     createReferralLinkInteractions: number;
     totalRewards: number;
     attributedRevenue: number;
-    uniqueWallets: number;
+    /**
+     * Distinct identity groups that earned a `referrer` reward on this
+     * campaign — the campaign's active ambassadors. Surfaced straight
+     * through, no derivation.
+     */
+    ambassadors: number;
 };
 
 export function buildStatsItem(
     agg: CampaignStatsAggregates
 ): CampaignStatsItem {
-    let ambassador = agg.uniqueWallets - agg.referredInteractions;
-    if (ambassador <= 0) {
-        ambassador = agg.referredInteractions > 0 ? 1 : 0;
-    }
-
     return {
         campaignId: agg.campaignId,
         tokenAddress: agg.tokenAddress,
@@ -63,7 +63,7 @@ export function buildStatsItem(
             agg.attributedRevenue,
             agg.purchaseInteractions
         ),
-        ambassador,
+        ambassador: agg.ambassadors,
         sharingRate: safeRatio(
             agg.createReferralLinkInteractions,
             agg.referredInteractions

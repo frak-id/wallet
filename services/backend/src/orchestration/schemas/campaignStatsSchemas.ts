@@ -18,6 +18,10 @@ export const CampaignStatsItemSchema = t.Object({
     attributedRevenue: t.Number(),
     /** `attributedRevenue / purchaseInteractions` (0 when no purchases). */
     avgBasketValue: t.Number(),
+    /**
+     * Distinct identity groups that earned a `referrer` reward on this
+     * campaign — its active ambassadors.
+     */
     ambassador: t.Number(),
     sharingRate: t.Number(),
     ctr: t.Number(),
