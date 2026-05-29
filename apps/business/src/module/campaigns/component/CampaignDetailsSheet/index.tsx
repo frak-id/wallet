@@ -17,14 +17,14 @@ import { CampaignStateTag } from "@/module/campaigns/component/TableCampaigns/Ca
 import { campaignDetailsQueryOptions } from "@/module/campaigns/queries/queryOptions";
 import { useIsDemoMode } from "@/module/common/atoms/demoMode";
 import { useActiveMerchantId } from "@/module/common/hook/useActiveMerchantId";
-import type { CampaignWithActions } from "@/types/Campaign";
+import type { CampaignListItemWithActions } from "@/types/Campaign";
 import { AmbassadorsTab } from "./AmbassadorsTab";
 import * as styles from "./campaign-details-sheet.css";
 import { ExportButton } from "./ExportButton";
 import { FunnelRoiTab } from "./FunnelRoiTab";
 
 type Props = {
-    campaign: CampaignWithActions | undefined;
+    campaign: CampaignListItemWithActions | undefined;
     onOpenChange: (open: boolean) => void;
 };
 
@@ -52,7 +52,7 @@ function CampaignDetailsContent({
     campaign,
     onClose,
 }: {
-    campaign: CampaignWithActions;
+    campaign: CampaignListItemWithActions;
     onClose: () => void;
 }) {
     const { t } = useTranslation();

@@ -1,10 +1,17 @@
+import type { CampaignStatsItem } from "@frak-labs/backend-elysia/api/schemas";
+import type { Address } from "viem";
+import campaignStatsData from "@/mock/campaignStats.json";
 import campaignsData from "@/mock/campaigns.json";
 import { type CampaignDraft, campaignStore } from "@/stores/campaignStore";
 import type {
     Campaign,
     CampaignActions,
+    CampaignListItem,
+    CampaignListItemWithActions,
+    CampaignListResponse,
+    CampaignListReward,
     CampaignStatus,
-    CampaignWithActions,
+    RewardDefinition,
 } from "@/types/Campaign";
 
 function mapStatusToActions(status: CampaignStatus): CampaignActions {
@@ -45,28 +52,107 @@ function draftToCampaign(draft: CampaignDraft): Campaign {
     } as Campaign;
 }
 
-/**
- * Returns the demo campaigns for a given merchant.
- *
- * Mock dataset is keyed by the real merchant UUIDs from
- * `merchants.json`, so the filter is a straight `merchantId` match. No
- * fallback / re-stamping — a demo merchant with no campaigns naturally
- * surfaces the empty state, matching production behaviour.
- */
-export async function getMyCampaignsMock(
-    merchantId?: string
-): Promise<CampaignWithActions[]> {
-    await new Promise((resolve) => setTimeout(resolve, 300));
+function toRewardSummary(reward: RewardDefinition): CampaignListReward {
+    switch (reward.amountType) {
+        case "fixed":
+            return {
+                recipient: reward.recipient,
+                amountType: "fixed",
+                amount: reward.amount,
+            };
+        case "percentage":
+            return {
+                recipient: reward.recipient,
+                amountType: "percentage",
+                percent: reward.percent,
+            };
+        case "tiered":
+            return {
+                recipient: reward.recipient,
+                amountType: "tiered",
+            };
+    }
+}
 
+type RawStats = (typeof campaignStatsData)[number];
+
+function rawStatsToItem(raw: RawStats): CampaignStatsItem {
+    return {
+        campaignId: raw.id,
+        tokenAddress: raw.token as Address,
+        referredInteractions: raw.referredInteractions,
+        purchaseInteractions: raw.purchaseInteractions,
+        createReferralLinkInteractions: raw.createReferredLinkInteractions,
+        totalRewards: raw.totalRewards,
+        attributedRevenue: raw.attributedRevenue,
+        avgBasketValue: raw.avgBasketValue,
+        ambassador: raw.ambassador,
+        sharingRate: raw.sharingRate,
+        ctr: raw.ctr,
+        costPerPurchase: raw.costPerPurchase,
+        costPerShare: raw.costPerShare,
+    };
+}
+
+function toListItem(campaign: Campaign): Omit<CampaignListItem, "stats"> {
+    return {
+        id: campaign.id,
+        name: campaign.name,
+        status: campaign.status,
+        rewards: (campaign.rule.rewards ?? []).map(toRewardSummary),
+        budgetConfig: campaign.budgetConfig,
+        budgetUsed: campaign.budgetUsed,
+        expiresAt: campaign.expiresAt,
+        publishedAt: campaign.publishedAt,
+        createdAt: campaign.createdAt,
+    };
+}
+
+function buildMockResponse(merchantId?: string): CampaignListResponse {
     const all = campaignsData as unknown as Campaign[];
-    const scoped = merchantId
+    const scopedCampaigns = merchantId
         ? all.filter((c) => c.merchantId === merchantId)
         : all;
 
-    return scoped.map((campaign) => ({
-        ...campaign,
-        actions: mapStatusToActions(campaign.status),
-    }));
+    const stats = (
+        merchantId
+            ? campaignStatsData.filter((s) => s.merchantId === merchantId)
+            : campaignStatsData
+    ).map(rawStatsToItem);
+    const statsById = new Map(stats.map((s) => [s.campaignId, s]));
+
+    const campaigns: CampaignListItemWithActions[] = scopedCampaigns.map(
+        (campaign) => ({
+            ...toListItem(campaign),
+            stats: statsById.get(campaign.id) ?? null,
+            actions: mapStatusToActions(campaign.status),
+        })
+    );
+
+    const bankDistributionStatus =
+        scopedCampaigns.find((c) => c.bankDistributionStatus)
+            ?.bankDistributionStatus ?? null;
+
+    return { bankDistributionStatus, campaigns };
+}
+
+/**
+ * Returns the demo campaigns response (campaigns + embedded stats) for a
+ * given merchant. Mocks are keyed by the real merchant UUIDs from
+ * `merchants.json`; a demo merchant with no campaigns naturally surfaces
+ * the empty state, matching production behaviour.
+ */
+export async function getMyCampaignsMock(
+    merchantId?: string
+): Promise<CampaignListResponse> {
+    await new Promise((resolve) => setTimeout(resolve, 300));
+    return buildMockResponse(merchantId);
+}
+
+export function getMyCampaignsMockSync(
+    merchantId?: string
+): CampaignListResponse {
+    return buildMockResponse(merchantId);
 }
 
 export async function getCampaignDetailsMock({

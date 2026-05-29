@@ -43,8 +43,6 @@ export {
 export {
     type CampaignStatsItem,
     CampaignStatsItemSchema,
-    type CampaignStatsResponse,
-    CampaignStatsResponseSchema,
 } from "./campaignStatsSchemas";
 export {
     type ExplorerMerchantItem,

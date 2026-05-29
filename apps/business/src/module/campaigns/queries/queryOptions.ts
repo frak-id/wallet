@@ -6,24 +6,22 @@ import type {
 import { queryOptions } from "@tanstack/react-query";
 import { redirect } from "@tanstack/react-router";
 import campaignDetailsMock from "@/mock/campaignDetails.json";
-import campaignsMockData from "@/mock/campaigns.json";
 import {
     getCampaignDetail,
+    getCampaignDetails,
     getMerchantCampaigns,
 } from "@/module/campaigns/api/campaignApi";
 import {
-    getCampaignDetails,
-    getMerchantCampaignsStats,
-    getMerchantCampaignsStatsMock,
-} from "@/module/campaigns/api/campaignStatsApi";
-import { getCampaignDetailsMockSync } from "@/module/campaigns/api/mock";
+    getCampaignDetailsMockSync,
+    getMyCampaignsMockSync,
+} from "@/module/campaigns/api/mock";
 import {
     getOverviewAnalytics,
     getOverviewAnalyticsMock,
     getOverviewSummary,
     getOverviewSummaryMock,
 } from "@/module/campaigns/api/overviewApi";
-import type { Campaign, CampaignWithActions } from "@/types/Campaign";
+import type { Campaign, CampaignListResponse } from "@/types/Campaign";
 
 export type CampaignDetailsStats = CampaignDetailsResponse;
 
@@ -35,25 +33,6 @@ type CampaignStateValidator = (campaign: Campaign) => {
     };
 };
 
-function getCampaignsInitialData(merchantId?: string): CampaignWithActions[] {
-    const all = campaignsMockData as unknown as Campaign[];
-    const scoped = merchantId
-        ? all.filter((c) => c.merchantId === merchantId)
-        : all;
-    return scoped.map((campaign) => ({
-        ...campaign,
-        actions: {
-            canEdit: campaign.status === "draft",
-            canDelete: campaign.status === "draft",
-            canPublish: campaign.status === "draft",
-            canPause: campaign.status === "active",
-            canResume: campaign.status === "paused",
-            canArchive:
-                campaign.status === "active" || campaign.status === "paused",
-        },
-    }));
-}
-
 export const campaignsListQueryOptions = ({
     merchantId,
     isDemoMode,
@@ -61,7 +40,7 @@ export const campaignsListQueryOptions = ({
     merchantId: string;
     isDemoMode: boolean;
 }) =>
-    queryOptions<CampaignWithActions[]>({
+    queryOptions<CampaignListResponse>({
         queryKey: [
             "campaigns",
             "list",
@@ -71,7 +50,7 @@ export const campaignsListQueryOptions = ({
         queryFn: () => getMerchantCampaigns({ merchantId, isDemoMode }),
         staleTime: isDemoMode ? Number.POSITIVE_INFINITY : 5 * 60 * 1000,
         initialData: isDemoMode
-            ? getCampaignsInitialData(merchantId)
+            ? getMyCampaignsMockSync(merchantId)
             : undefined,
     });
 
@@ -182,30 +161,6 @@ export const campaignDetailsQueryOptions = ({
         // entry would stick forever once the queryFn hits a real backend.
         initialData: isDemoMode
             ? (campaignDetailsMock as CampaignDetailsStats)
-            : undefined,
-    });
-
-export const campaignsStatsQueryOptions = ({
-    merchantId,
-    isDemoMode,
-}: {
-    merchantId: string;
-    isDemoMode: boolean;
-}) =>
-    queryOptions({
-        queryKey: [
-            "campaigns",
-            "stats",
-            merchantId,
-            isDemoMode ? "demo" : "live",
-        ],
-        queryFn: () => getMerchantCampaignsStats({ merchantId, isDemoMode }),
-        staleTime: isDemoMode ? Number.POSITIVE_INFINITY : 5 * 60 * 1000,
-        // initialData must be scoped to the active merchant — with
-        // `staleTime: Infinity` in demo, unscoped seed data would stick
-        // around forever under a merchant-keyed cache entry.
-        initialData: isDemoMode
-            ? getMerchantCampaignsStatsMock(merchantId)
             : undefined,
     });
 

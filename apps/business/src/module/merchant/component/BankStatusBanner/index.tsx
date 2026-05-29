@@ -45,9 +45,7 @@ export function BankStatusBanner({ merchantId }: { merchantId: string }) {
     const { t } = useTranslation();
     const { data: status } = useQuery({
         ...campaignsListQueryOptions({ merchantId, isDemoMode: isDemoMode() }),
-        select: (campaigns) =>
-            campaigns.find((campaign) => campaign.bankDistributionStatus)
-                ?.bankDistributionStatus ?? null,
+        select: (data) => data.bankDistributionStatus,
     });
 
     if (!status || status === "distributing") {

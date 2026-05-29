@@ -5,13 +5,13 @@ import {
     deleteCampaign,
     pauseCampaign,
 } from "@/module/campaigns/api/campaignApi";
-import type { CampaignWithActions } from "@/types/Campaign";
+import type { CampaignListItemWithActions } from "@/types/Campaign";
 
 type BulkAction = "pause" | "archive" | "delete";
 
 type BulkInput = {
     merchantId: string;
-    campaigns: CampaignWithActions[];
+    campaigns: CampaignListItemWithActions[];
 };
 
 function runFor(action: BulkAction) {
@@ -45,7 +45,7 @@ function runFor(action: BulkAction) {
 
 export function eligible(
     action: BulkAction,
-    campaign: CampaignWithActions
+    campaign: CampaignListItemWithActions
 ): boolean {
     if (action === "pause") return campaign.actions.canPause;
     if (action === "archive") return campaign.actions.canArchive;
