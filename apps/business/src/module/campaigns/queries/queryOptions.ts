@@ -1,4 +1,5 @@
 import type {
+    CampaignDetailsResponse,
     OverviewAnalyticsResponse,
     OverviewSummaryResponse,
 } from "@frak-labs/backend-elysia/orchestration/schemas";
@@ -11,6 +12,7 @@ import {
     getMerchantCampaigns,
 } from "@/module/campaigns/api/campaignApi";
 import {
+    getCampaignDetails,
     getMerchantCampaignsStats,
     getMerchantCampaignsStatsMock,
 } from "@/module/campaigns/api/campaignStatsApi";
@@ -23,7 +25,7 @@ import {
 } from "@/module/campaigns/api/overviewApi";
 import type { Campaign, CampaignWithActions } from "@/types/Campaign";
 
-export type CampaignDetailsStats = typeof campaignDetailsMock;
+export type CampaignDetailsStats = CampaignDetailsResponse;
 
 type CampaignStateValidator = (campaign: Campaign) => {
     shouldRedirect: boolean;
@@ -143,13 +145,19 @@ export const overviewAnalyticsQueryOptions = ({
         initialData: isDemoMode ? getOverviewAnalyticsMock() : undefined,
     });
 
-// Per-campaign analytics for the campaign details sheet. v1 serves mock
-// data unconditionally; a per-campaign backend aggregate swaps in here once
-// it ships (swap queryFn to
-// `api.merchant({ merchantId }).campaigns({ campaignId }).details.get()`).
-// Funnel stages, ambassador leaderboard, CPA-by-recipient and the Frak-vs-Meta
-// comparison are not computed by the backend yet — see the merchant-level
-// `feat/openpanel-stats-from-backend` work, which covers overview only.
+/**
+ * Per-campaign analytics for the campaign details sheet — sourced from
+ * `GET /business/merchant/:merchantId/campaigns/:campaignId/details`.
+ *
+ * Backend caveats baked into the schema docs:
+ *  - `cpaBreakdown.segments[].key='frak'` is a hardcoded platform-fee
+ *    overlay (no `platform` recipient_type on `asset_logs` yet).
+ *  - `metaCpa` / Meta comparison fields use a static industry benchmark
+ *    per currency, not real Meta Ads data.
+ *  - `ambassadorStats.activePct` and `topAmbassadors[].shares` are
+ *    best-effort campaign-attributed (merchant-scoped `create_referral_link`
+ *    counts joined to ambassadors who earned on this campaign).
+ */
 export const campaignDetailsQueryOptions = ({
     merchantId,
     campaignId,
@@ -167,11 +175,14 @@ export const campaignDetailsQueryOptions = ({
             campaignId,
             isDemoMode ? "demo" : "live",
         ],
-        queryFn: () => Promise.resolve(campaignDetailsMock),
+        queryFn: () =>
+            getCampaignDetails({ merchantId, campaignId, isDemoMode }),
         staleTime: isDemoMode ? Number.POSITIVE_INFINITY : 5 * 60 * 1000,
         // Seed only in demo — an unscoped mock under a merchant-keyed cache
         // entry would stick forever once the queryFn hits a real backend.
-        initialData: isDemoMode ? campaignDetailsMock : undefined,
+        initialData: isDemoMode
+            ? (campaignDetailsMock as CampaignDetailsStats)
+            : undefined,
     });
 
 export const campaignsStatsQueryOptions = ({

@@ -1,6 +1,10 @@
-import type { CampaignStatsItem } from "@frak-labs/backend-elysia/orchestration/schemas";
+import type {
+    CampaignDetailsResponse,
+    CampaignStatsItem,
+} from "@frak-labs/backend-elysia/orchestration/schemas";
 import type { Address } from "viem";
 import { authenticatedBackendApi } from "@/api/backendClient";
+import campaignDetailsMock from "@/mock/campaignDetails.json";
 import campaignStatsData from "@/mock/campaignStats.json";
 
 export type CampaignStats = CampaignStatsItem & {
@@ -64,4 +68,39 @@ export async function getMerchantCampaignsStats({
         createReferredLinkInteractions: 0,
         tokenAddress: stat.tokenAddress as Address | null,
     })) as CampaignStats[];
+}
+
+/**
+ * Per-campaign details: economic value, CPA breakdown, ambassador stats,
+ * top-ambassador leaderboard and efficiency KPIs. Backed by
+ * `GET /business/merchant/:merchantId/campaigns/:campaignId/details`.
+ *
+ * Demo mode returns the bundled mock fixture so the dashboard renders
+ * without a backend.
+ */
+export async function getCampaignDetails({
+    merchantId,
+    campaignId,
+    isDemoMode,
+}: {
+    merchantId: string;
+    campaignId: string;
+    isDemoMode: boolean;
+}): Promise<CampaignDetailsResponse> {
+    if (isDemoMode) {
+        return campaignDetailsMock as CampaignDetailsResponse;
+    }
+
+    const { data, error } = await authenticatedBackendApi
+        .merchant({ merchantId })
+        .campaigns({ campaignId })
+        .details.get();
+
+    if (!data || error) {
+        throw new Error(
+            `Failed to load campaign details: ${error?.toString() ?? "unknown error"}`
+        );
+    }
+
+    return data;
 }

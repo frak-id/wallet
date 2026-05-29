@@ -1,4 +1,9 @@
 export {
+    type CampaignDetailsResponse,
+    CampaignDetailsResponseSchema,
+    type CpaSegmentKey,
+} from "./campaignDetailsSchemas";
+export {
     type NumericKpi,
     type OverviewAccurateKpis,
     type OverviewAnalyticsResponse,

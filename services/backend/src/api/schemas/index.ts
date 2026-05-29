@@ -1,4 +1,10 @@
 // Re-export orchestration schemas (used by API routes, kept in orchestration for orchestrator use)
+
+export {
+    type CampaignDetailsResponse,
+    CampaignDetailsResponseSchema,
+    type CpaSegmentKey,
+} from "../../orchestration/schemas/campaignDetailsSchemas";
 export {
     type NumericKpi,
     type OverviewAccurateKpis,
