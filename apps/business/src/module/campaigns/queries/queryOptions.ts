@@ -1,5 +1,6 @@
 import { queryOptions } from "@tanstack/react-query";
 import { redirect } from "@tanstack/react-router";
+import campaignDetailsMock from "@/mock/campaignDetails.json";
 import campaignsMockData from "@/mock/campaigns.json";
 import campaignsOverviewMock from "@/mock/campaignsOverview.json";
 import {
@@ -14,6 +15,8 @@ import { getCampaignDetailsMockSync } from "@/module/campaigns/api/mock";
 import type { Campaign, CampaignWithActions } from "@/types/Campaign";
 
 export type CampaignsOverview = typeof campaignsOverviewMock;
+
+export type CampaignDetailsStats = typeof campaignDetailsMock;
 
 type CampaignStateValidator = (campaign: Campaign) => {
     shouldRedirect: boolean;
@@ -93,6 +96,37 @@ export const campaignsOverviewQueryOptions = ({
         queryFn: () => Promise.resolve(campaignsOverviewMock),
         staleTime: isDemoMode ? Number.POSITIVE_INFINITY : 5 * 60 * 1000,
         initialData: campaignsOverviewMock,
+    });
+
+// Per-campaign analytics for the campaign details sheet. v1 serves mock
+// data unconditionally; a per-campaign backend aggregate swaps in here once
+// it ships (swap queryFn to
+// `api.merchant({ merchantId }).campaigns({ campaignId }).details.get()`).
+// Funnel stages, ambassador leaderboard, CPA-by-recipient and the Frak-vs-Meta
+// comparison are not computed by the backend yet — see the merchant-level
+// `feat/openpanel-stats-from-backend` work, which covers overview only.
+export const campaignDetailsQueryOptions = ({
+    merchantId,
+    campaignId,
+    isDemoMode,
+}: {
+    merchantId: string;
+    campaignId: string;
+    isDemoMode: boolean;
+}) =>
+    queryOptions<CampaignDetailsStats>({
+        queryKey: [
+            "campaign",
+            "details",
+            merchantId,
+            campaignId,
+            isDemoMode ? "demo" : "live",
+        ],
+        queryFn: () => Promise.resolve(campaignDetailsMock),
+        staleTime: isDemoMode ? Number.POSITIVE_INFINITY : 5 * 60 * 1000,
+        // Seed only in demo — an unscoped mock under a merchant-keyed cache
+        // entry would stick forever once the queryFn hits a real backend.
+        initialData: isDemoMode ? campaignDetailsMock : undefined,
     });
 
 export const campaignsStatsQueryOptions = ({

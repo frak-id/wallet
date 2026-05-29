@@ -1,0 +1,77 @@
+{
+    "economicValue": {
+        "currency": "EUR",
+        "spend": 3103.8,
+        "conversions": 163,
+        "cpa": 18.4,
+        "metaEquivalentCost": 13659,
+        "metaCpa": 83.8,
+        "savedVsMeta": 10556,
+        "cheaperPct": 0.78
+    },
+    "cpaBreakdown": {
+        "currency": "EUR",
+        "total": 18.4,
+        "segments": [
+            { "key": "frak", "pct": 0.2, "amount": 3.68 },
+            { "key": "ambassador", "pct": 0.5, "amount": 9.2 },
+            { "key": "referee", "pct": 0.3, "amount": 5.52 }
+        ]
+    },
+    "ambassadorStats": {
+        "total": 5550,
+        "activePct": 0.57,
+        "refereesConvertedPct": 0.12
+    },
+    "topAmbassadors": [
+        {
+            "wallet": "0x742d35Cc6634C0532925a3b8D4f9f0bEb0",
+            "shares": 48,
+            "sales": 18,
+            "revenue": 2160,
+            "earned": 264.96
+        },
+        {
+            "wallet": "0x86268f1A2b3c4D5e6F7a8B9c0D1e2F39C1199",
+            "shares": 35,
+            "sales": 14,
+            "revenue": 1680,
+            "earned": 205.76
+        },
+        {
+            "wallet": "0xdD2F1a2B3c4D5e6F7a8B9c0D1e2F3a4Bf44C0",
+            "shares": 29,
+            "sales": 11,
+            "revenue": 1320,
+            "earned": 161.72
+        },
+        {
+            "wallet": "0xbDA5c1B2c3D4e5F6a7B8c9D0e1F2a3B4b1B197E",
+            "shares": 24,
+            "sales": 9,
+            "revenue": 1080,
+            "earned": 132.12
+        },
+        {
+            "wallet": "0x2546aB1c2D3e4F5a6B7c8D9e0F1a2B3cECEc30",
+            "shares": 21,
+            "sales": 7,
+            "revenue": 840,
+            "earned": 102.76
+        },
+        {
+            "wallet": "0x10A1b2C3d4E5f6A7b8C9d0E1f2A3b4C54F2e4f",
+            "shares": 18,
+            "sales": 5,
+            "revenue": 600,
+            "earned": 73.4
+        }
+    ],
+    "efficiency": {
+        "currency": "EUR",
+        "roi": 2.6,
+        "avgReward": 156.79,
+        "topPerformerPct": 0.28,
+        "topPerformerWallet": "0x742d35Cc6634C0532925a3b8D4f9f0bEb0"
+    }
+}
