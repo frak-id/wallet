@@ -4,6 +4,8 @@
         "spend": 3103.8,
         "conversions": 163,
         "cpa": 18.4,
+        "attributedGMV": 11084,
+        "avgBasketValue": 68,
         "metaEquivalentCost": 13659,
         "metaCpa": 83.8,
         "savedVsMeta": 10556,

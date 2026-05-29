@@ -55,6 +55,26 @@ export function EconomicValueCards({
                     value={economicValue.metaEquivalentCost}
                 />
             </MetricCard>
+
+            <MetricCard
+                label={t("campaigns.details.economic.attributedGMV")}
+                sub={t("campaigns.details.economic.attributedGMVSub")}
+            >
+                <BigNumber
+                    format={fmt.currency0}
+                    value={economicValue.attributedGMV}
+                />
+            </MetricCard>
+
+            <MetricCard
+                label={t("campaigns.details.economic.avgBasketValue")}
+                sub={t("campaigns.details.economic.avgBasketSub")}
+            >
+                <BigNumber
+                    format={fmt.currency}
+                    value={economicValue.avgBasketValue}
+                />
+            </MetricCard>
         </div>
     );
 }

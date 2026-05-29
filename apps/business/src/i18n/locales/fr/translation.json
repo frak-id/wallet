@@ -180,7 +180,11 @@
                 "conversionsCpa": "{{conversions}} conversions · {{cpa}} CPA",
                 "conversionsCpaMeta": "{{conversions}} conversions · ~{{cpa}} CPA sur Meta",
                 "cheaperThanMeta": "{{percent}} moins cher que Meta",
-                "savedVsMeta": "{{amount}} économisés vs Meta"
+                "savedVsMeta": "{{amount}} économisés vs Meta",
+                "attributedGMV": "Revenus attribués",
+                "attributedGMVSub": "GMV des achats attribués",
+                "avgBasketValue": "Panier moyen",
+                "avgBasketSub": "Par vente attribuée"
             },
             "cpa": {
                 "title": "Répartition du CPA",

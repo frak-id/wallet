@@ -15,6 +15,7 @@ import { openPanelExportClient } from "../infrastructure/integrations/openpanel"
 import { pricingRepository } from "../infrastructure/pricing/PricingRepository";
 import { BatchRewardOrchestrator } from "./BatchRewardOrchestrator";
 import { CampaignAnalyticsOrchestrator } from "./CampaignAnalyticsOrchestrator";
+import { CampaignDetailsOrchestrator } from "./CampaignDetailsOrchestrator";
 import { CampaignOverviewOrchestrator } from "./CampaignOverviewOrchestrator";
 import { CampaignStatsOrchestrator } from "./CampaignStatsOrchestrator";
 import { ExplorerOrchestrator } from "./ExplorerOrchestrator";
@@ -139,6 +140,10 @@ const campaignAnalyticsOrchestrator = new CampaignAnalyticsOrchestrator(
     openPanelExportClient
 );
 
+const campaignDetailsOrchestrator = new CampaignDetailsOrchestrator(
+    pricingRepository
+);
+
 const explorerOrchestrator = new ExplorerOrchestrator();
 
 const interactionSubmissionOrchestrator = new InteractionSubmissionOrchestrator(
@@ -205,6 +210,7 @@ export namespace OrchestrationContext {
         campaignStats: campaignStatsOrchestrator,
         campaignOverview: campaignOverviewOrchestrator,
         campaignAnalytics: campaignAnalyticsOrchestrator,
+        campaignDetails: campaignDetailsOrchestrator,
         anonymousMerge: anonymousMergeOrchestrator,
         batchReward: batchRewardOrchestrator,
         identity: identityOrchestrator,

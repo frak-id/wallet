@@ -15,6 +15,7 @@ type InteractionCountRow = {
     referredInteractions: number;
     purchaseInteractions: number;
     createReferralLinkInteractions: number;
+    attributedRevenue: number;
 };
 
 type AssetAggRow = {
@@ -67,42 +68,59 @@ export class CampaignStatsOrchestrator {
      *
      * Strategy: use asset_logs as the bridge table since it has both
      * campaignRuleId and interactionLogId.
+     *
+     * `attributedRevenue` is the basket value (`payload->>'amount'`)
+     * summed across each purchase interaction attributed to the
+     * campaign. To avoid double-counting when one purchase produced
+     * several asset_logs rows (multi-recipient / multi-depth rewards),
+     * a dedicated `SELECT DISTINCT` subquery collapses the
+     * (interactionLogId, amount) pairs before SUMming.
      */
     private async aggregateInteractions(
         merchantId: string,
         campaignIds: string[]
     ): Promise<InteractionCountRow[]> {
-        const rows = await db
-            .select({
-                campaignRuleId: assetLogsTable.campaignRuleId,
-                referredInteractions:
-                    sql<number>`COUNT(DISTINCT CASE WHEN ${interactionLogsTable.type} = 'referral_arrival' THEN ${interactionLogsTable.id} END)`.as(
-                        "referred_interactions"
-                    ),
-                purchaseInteractions:
-                    sql<number>`COUNT(DISTINCT CASE WHEN ${interactionLogsTable.type} = 'purchase' THEN ${interactionLogsTable.id} END)`.as(
-                        "purchase_interactions"
-                    ),
-                createReferralLinkInteractions:
-                    sql<number>`COUNT(DISTINCT CASE WHEN ${interactionLogsTable.type} = 'create_referral_link' THEN ${interactionLogsTable.id} END)`.as(
-                        "create_referral_link_interactions"
-                    ),
-            })
-            .from(assetLogsTable)
-            .leftJoin(
-                interactionLogsTable,
-                eq(assetLogsTable.interactionLogId, interactionLogsTable.id)
-            )
-            .where(
-                and(
-                    eq(assetLogsTable.merchantId, merchantId),
-                    inArray(assetLogsTable.campaignRuleId, campaignIds)
+        const [countRows, revenueRows] = await Promise.all([
+            db
+                .select({
+                    campaignRuleId: assetLogsTable.campaignRuleId,
+                    referredInteractions:
+                        sql<number>`COUNT(DISTINCT CASE WHEN ${interactionLogsTable.type} = 'referral_arrival' THEN ${interactionLogsTable.id} END)`.as(
+                            "referred_interactions"
+                        ),
+                    purchaseInteractions:
+                        sql<number>`COUNT(DISTINCT CASE WHEN ${interactionLogsTable.type} = 'purchase' THEN ${interactionLogsTable.id} END)`.as(
+                            "purchase_interactions"
+                        ),
+                    createReferralLinkInteractions:
+                        sql<number>`COUNT(DISTINCT CASE WHEN ${interactionLogsTable.type} = 'create_referral_link' THEN ${interactionLogsTable.id} END)`.as(
+                            "create_referral_link_interactions"
+                        ),
+                })
+                .from(assetLogsTable)
+                .leftJoin(
+                    interactionLogsTable,
+                    eq(assetLogsTable.interactionLogId, interactionLogsTable.id)
                 )
-            )
-            .groupBy(assetLogsTable.campaignRuleId);
+                .where(
+                    and(
+                        eq(assetLogsTable.merchantId, merchantId),
+                        inArray(assetLogsTable.campaignRuleId, campaignIds)
+                    )
+                )
+                .groupBy(assetLogsTable.campaignRuleId),
+            this.aggregateAttributedRevenue(merchantId, campaignIds),
+        ]);
 
-        return rows
-            .filter((r): r is InteractionCountRow => r.campaignRuleId !== null)
+        const revenueByCampaign = new Map(
+            revenueRows.map((r) => [r.campaignRuleId, r.attributedRevenue])
+        );
+
+        return countRows
+            .filter(
+                (r): r is typeof r & { campaignRuleId: string } =>
+                    r.campaignRuleId !== null
+            )
             .map((r) => ({
                 campaignRuleId: r.campaignRuleId,
                 referredInteractions: Number(r.referredInteractions),
@@ -110,6 +128,60 @@ export class CampaignStatsOrchestrator {
                 createReferralLinkInteractions: Number(
                     r.createReferralLinkInteractions
                 ),
+                attributedRevenue: revenueByCampaign.get(r.campaignRuleId) ?? 0,
+            }));
+    }
+
+    /**
+     * Per-campaign sum of attributed basket value. `SELECT DISTINCT`
+     * on `(interaction_log_id, amount)` collapses multi-recipient and
+     * multi-depth reward rows so the same purchase basket only counts
+     * once per campaign.
+     */
+    private async aggregateAttributedRevenue(
+        merchantId: string,
+        campaignIds: string[]
+    ): Promise<Array<{ campaignRuleId: string; attributedRevenue: number }>> {
+        const distinctPurchases = db
+            .selectDistinct({
+                campaignRuleId: assetLogsTable.campaignRuleId,
+                interactionLogId: assetLogsTable.interactionLogId,
+                amount: sql<string>`(${interactionLogsTable.payload}->>'amount')::NUMERIC`.as(
+                    "amount"
+                ),
+            })
+            .from(assetLogsTable)
+            .innerJoin(
+                interactionLogsTable,
+                eq(assetLogsTable.interactionLogId, interactionLogsTable.id)
+            )
+            .where(
+                and(
+                    eq(assetLogsTable.merchantId, merchantId),
+                    inArray(assetLogsTable.campaignRuleId, campaignIds),
+                    sql`${assetLogsTable.cancelledAt} IS NULL`,
+                    eq(interactionLogsTable.type, "purchase"),
+                    sql`${interactionLogsTable.cancelledAt} IS NULL`
+                )
+            )
+            .as("distinct_purchases");
+
+        const rows = await db
+            .select({
+                campaignRuleId: distinctPurchases.campaignRuleId,
+                attributedRevenue: sql<string>`COALESCE(SUM(${distinctPurchases.amount}), 0)`,
+            })
+            .from(distinctPurchases)
+            .groupBy(distinctPurchases.campaignRuleId);
+
+        return rows
+            .filter(
+                (r): r is typeof r & { campaignRuleId: string } =>
+                    r.campaignRuleId !== null
+            )
+            .map((r) => ({
+                campaignRuleId: r.campaignRuleId,
+                attributedRevenue: Number(r.attributedRevenue) || 0,
             }));
     }
 
@@ -171,6 +243,9 @@ export class CampaignStatsOrchestrator {
         const purchases = interactions?.purchaseInteractions ?? 0;
         const totalRewards = Number.parseFloat(assets?.totalRewards ?? "0");
         const uniqueWallets = assets?.uniqueWallets ?? 0;
+        const attributedRevenue = interactions?.attributedRevenue ?? 0;
+        const avgBasketValue =
+            purchases > 0 ? attributedRevenue / purchases : 0;
 
         const createReferredLinkInteractions =
             interactions?.createReferralLinkInteractions ?? 0;
@@ -203,6 +278,8 @@ export class CampaignStatsOrchestrator {
             referredInteractions: referred,
             purchaseInteractions: purchases,
             totalRewards,
+            attributedRevenue,
+            avgBasketValue,
             uniqueWallets,
             ambassador,
             sharingRate,

@@ -180,7 +180,11 @@
                 "conversionsCpa": "{{conversions}} conversions · {{cpa}} CPA",
                 "conversionsCpaMeta": "{{conversions}} conversions · ~{{cpa}} CPA on Meta",
                 "cheaperThanMeta": "{{percent}} cheaper than Meta",
-                "savedVsMeta": "{{amount}} saved vs Meta"
+                "savedVsMeta": "{{amount}} saved vs Meta",
+                "attributedGMV": "Attributed revenue",
+                "attributedGMVSub": "GMV from attributed purchases",
+                "avgBasketValue": "Avg. basket value",
+                "avgBasketSub": "Per attributed sale"
             },
             "cpa": {
                 "title": "CPA breakdown",
