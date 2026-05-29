@@ -14,10 +14,10 @@ import { webAuthNValidatorReader } from "../infrastructure/blockchain/WebAuthNVa
 import { openPanelExportClient } from "../infrastructure/integrations/openpanel";
 import { pricingRepository } from "../infrastructure/pricing/PricingRepository";
 import { BatchRewardOrchestrator } from "./BatchRewardOrchestrator";
-import { CampaignAnalyticsOrchestrator } from "./CampaignAnalyticsOrchestrator";
-import { CampaignDetailsOrchestrator } from "./CampaignDetailsOrchestrator";
-import { CampaignOverviewOrchestrator } from "./CampaignOverviewOrchestrator";
-import { CampaignStatsOrchestrator } from "./CampaignStatsOrchestrator";
+import {
+    CampaignOverviewOrchestrator,
+    CampaignStatsOrchestrator,
+} from "./campaigns";
 import { ExplorerOrchestrator } from "./ExplorerOrchestrator";
 import {
     AnonymousMergeOrchestrator,
@@ -130,18 +130,13 @@ const rewardHistoryOrchestrator = new RewardHistoryOrchestrator(
 // identity groups on merge token generation (same pattern as /track/arrival)
 const memberQueryOrchestrator = new MemberQueryOrchestrator(pricingRepository);
 
-const campaignStatsOrchestrator = new CampaignStatsOrchestrator();
+const campaignStatsOrchestrator = new CampaignStatsOrchestrator(
+    pricingRepository
+);
 
 const campaignOverviewOrchestrator = new CampaignOverviewOrchestrator(
-    pricingRepository
-);
-
-const campaignAnalyticsOrchestrator = new CampaignAnalyticsOrchestrator(
+    pricingRepository,
     openPanelExportClient
-);
-
-const campaignDetailsOrchestrator = new CampaignDetailsOrchestrator(
-    pricingRepository
 );
 
 const explorerOrchestrator = new ExplorerOrchestrator();
@@ -209,8 +204,6 @@ export namespace OrchestrationContext {
         memberQuery: memberQueryOrchestrator,
         campaignStats: campaignStatsOrchestrator,
         campaignOverview: campaignOverviewOrchestrator,
-        campaignAnalytics: campaignAnalyticsOrchestrator,
-        campaignDetails: campaignDetailsOrchestrator,
         anonymousMerge: anonymousMergeOrchestrator,
         batchReward: batchRewardOrchestrator,
         identity: identityOrchestrator,

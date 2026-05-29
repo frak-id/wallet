@@ -8,7 +8,7 @@ import type { OpenPanelChartQuery, OpenPanelChartResponse } from "./config";
  * Rate limit (per OpenPanel docs): 100 req / 10 s for the export API. We
  * retry once on `429`/`503` and surface anything else as an empty result so
  * a single misbehaving aggregation never breaks the whole analytics page —
- * `CampaignAnalyticsOrchestrator` decides how to degrade.
+ * `CampaignOverviewOrchestrator.getAnalytics` decides how to degrade.
  *
  * Query strings carry nested arrays/objects (`series`, `breakdowns`). The
  * OpenPanel API runs on Fastify's default querystring parser

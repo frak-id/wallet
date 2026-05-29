@@ -64,7 +64,7 @@ export const merchantCampaignOverviewRoutes = new Elysia({
                 return status(403, "Access denied");
             }
 
-            return OrchestrationContext.orchestrators.campaignAnalytics.getAnalytics(
+            return OrchestrationContext.orchestrators.campaignOverview.getAnalytics(
                 merchantId,
                 { from: query.from, to: query.to }
             );

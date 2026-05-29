@@ -19,16 +19,13 @@ import {
 } from "../domain/rewards/db/schema";
 import { db } from "../infrastructure/persistence/postgres";
 import type { PricingRepository } from "../infrastructure/pricing/PricingRepository";
+import { buildRewardsExpression, getTokenPrices } from "./campaigns/rewards";
 import type {
     MemberFilterSchema,
     MemberItemSchema,
     MemberQueryResultSchema,
     MemberSortSchema,
 } from "./schemas/memberSchemas";
-import {
-    buildUsdRewardsExpression,
-    getTokenPricesForMerchants,
-} from "./utils/usdRewards";
 
 export type MemberQueryFilter = Static<typeof MemberFilterSchema>;
 export type MemberQuerySort = Static<typeof MemberSortSchema>;
@@ -70,11 +67,12 @@ export class MemberQueryOrchestrator {
             return { totalResult: 0, members: [] };
         }
 
-        const tokenPrices = await getTokenPricesForMerchants(
+        const tokenPrices = await getTokenPrices(
             this.pricingRepository,
-            merchantIds
+            inArray(assetLogsTable.merchantId, merchantIds),
+            "USD"
         );
-        const usdRewardsExpr = buildUsdRewardsExpression(tokenPrices);
+        const usdRewardsExpr = buildRewardsExpression(tokenPrices);
 
         const havingConditions = this.buildHavingConditions(params.filter);
         const sortExpr = this.buildSortExpression(params.sort, usdRewardsExpr);
@@ -241,11 +239,12 @@ export class MemberQueryOrchestrator {
         );
         if (merchantIds.length === 0) return 0;
 
-        const tokenPrices = await getTokenPricesForMerchants(
+        const tokenPrices = await getTokenPrices(
             this.pricingRepository,
-            merchantIds
+            inArray(assetLogsTable.merchantId, merchantIds),
+            "USD"
         );
-        const usdRewardsExpr = buildUsdRewardsExpression(tokenPrices);
+        const usdRewardsExpr = buildRewardsExpression(tokenPrices);
 
         const havingConditions = this.buildHavingConditions(filter);
 
