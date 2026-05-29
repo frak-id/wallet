@@ -1,28 +1,38 @@
 import type { OverviewWindowQuery } from "../schemas/campaignOverviewSchemas";
 
 const DAY_MS = 24 * 60 * 60 * 1000;
-const DEFAULT_WINDOW_DAYS = 30;
+
+/**
+ * Sentinel "earliest possible date" — used as the lower bound when the
+ * request omits `from`, denoting an unbounded (lifetime) window. Predates
+ * any merchant data so PG `BETWEEN` filters degenerate to an open lower
+ * edge.
+ */
+const LIFETIME_START = new Date(0);
 
 export type DateRange = { from: Date; to: Date };
 
 /**
  * Same-length comparison window: `current` is the requested range,
  * `previous` is the trailing range of identical length ending 1ms
- * before `current.from`.
+ * before `current.from`. `hasComparison` is false when the request was
+ * unbounded (lifetime) — `previous` collapses to a degenerate empty
+ * range so FILTER aggregates yield 0 and the FE hides delta chips.
  */
-export type ResolvedWindow = { current: DateRange; previous: DateRange };
+export type ResolvedWindow = {
+    current: DateRange;
+    previous: DateRange;
+    hasComparison: boolean;
+};
 
 /**
  * Resolve a request's `from`/`to` (yyyy-MM-dd) into the active range.
- * Falls back to a trailing `DEFAULT_WINDOW_DAYS` window when either
- * bound is absent. Used by orchestrators that don't need a comparison
- * window (e.g. the OpenPanel analytics endpoint where `previous: true`
- * is handled inside the chart request).
+ * `from` defaults to a lifetime sentinel (epoch) and `to` defaults to
+ * now, so the unbounded case spans all of history.
  */
 export function resolveRange(window: OverviewWindowQuery): DateRange {
     const to = window.to ? endOfIsoDay(window.to) : new Date();
-    const defaultFrom = new Date(to.getTime() - DEFAULT_WINDOW_DAYS * DAY_MS);
-    const from = window.from ? startOfIsoDay(window.from) : defaultFrom;
+    const from = window.from ? startOfIsoDay(window.from) : LIFETIME_START;
     return { from, to };
 }
 
@@ -30,10 +40,21 @@ export function resolveRange(window: OverviewWindowQuery): DateRange {
  * Resolve a request's `from`/`to` into a current + previous comparison
  * window. The previous half is the same-length trailing window ending
  * 1ms before `current.from` — the 1ms gap prevents double-counting
- * rows on the boundary.
+ * rows on the boundary. When `from` is omitted (lifetime), there is no
+ * meaningful previous window: `previous` collapses to a degenerate
+ * empty range and `hasComparison` is false.
  */
 export function resolveWindow(window: OverviewWindowQuery): ResolvedWindow {
     const current = resolveRange(window);
+
+    if (!window.from) {
+        return {
+            current,
+            previous: { from: LIFETIME_START, to: LIFETIME_START },
+            hasComparison: false,
+        };
+    }
+
     const lengthMs = Math.max(
         current.to.getTime() - current.from.getTime(),
         DAY_MS
@@ -43,6 +64,7 @@ export function resolveWindow(window: OverviewWindowQuery): ResolvedWindow {
     return {
         current,
         previous: { from: previousFrom, to: previousTo },
+        hasComparison: true,
     };
 }
 

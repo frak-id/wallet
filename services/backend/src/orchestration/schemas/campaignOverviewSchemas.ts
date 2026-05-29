@@ -215,8 +215,8 @@ export type OverviewAnalyticsResponse = Static<
 
 /**
  * Query parameters accepted by overview endpoints. Both bounds are optional
- * ISO `yyyy-MM-dd` strings; the orchestrator falls back to a trailing
- * 30-day window when either is absent.
+ * ISO `yyyy-MM-dd` strings; omitting `from` puts the orchestrator into
+ * lifetime mode (all-time window, no previous-window comparison).
  */
 export const OverviewWindowQuerySchema = t.Object({
     from: t.Optional(t.String({ pattern: "^\\d{4}-\\d{2}-\\d{2}$" })),

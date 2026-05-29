@@ -77,6 +77,7 @@ export class CampaignAnalyticsOrchestrator {
         window: OverviewWindowQuery
     ): Promise<OverviewAnalyticsResponse> {
         const resolved = resolveWindow(window);
+        const withPrevious = resolved.hasComparison;
 
         const [
             websiteSteps,
@@ -86,9 +87,9 @@ export class CampaignAnalyticsOrchestrator {
             device,
             tail,
         ] = await Promise.all([
-            this.getWebsiteFunnel(merchantId, resolved.current),
-            this.getWalletFunnel(merchantId, resolved.current),
-            this.getAccurateKpis(merchantId, resolved.current),
+            this.getWebsiteFunnel(merchantId, resolved.current, withPrevious),
+            this.getWalletFunnel(merchantId, resolved.current, withPrevious),
+            this.getAccurateKpis(merchantId, resolved.current, withPrevious),
             this.getSharingPlatform(merchantId, resolved.current),
             this.getSharingDevice(merchantId, resolved.current),
             this.getBackendFunnelTail(merchantId, resolved),
@@ -105,7 +106,8 @@ export class CampaignAnalyticsOrchestrator {
 
     private async getWebsiteFunnel(
         merchantId: string,
-        range: DateRange
+        range: DateRange,
+        withPrevious: boolean
     ): Promise<OverviewFunnelStep[]> {
         const definitions = websiteFunnelDefinition();
         const response = await this.openPanel.getChart({
@@ -113,14 +115,15 @@ export class CampaignAnalyticsOrchestrator {
             startDate: range.from.toISOString(),
             endDate: range.to.toISOString(),
             range: "custom",
-            previous: true,
+            previous: withPrevious,
         });
         return aggregateFunnelSteps(definitions, response.series);
     }
 
     private async getWalletFunnel(
         merchantId: string,
-        range: DateRange
+        range: DateRange,
+        withPrevious: boolean
     ): Promise<OverviewFunnelStep[]> {
         const definitions = walletFunnelDefinition();
         const response = await this.openPanel.getChart({
@@ -128,7 +131,7 @@ export class CampaignAnalyticsOrchestrator {
             startDate: range.from.toISOString(),
             endDate: range.to.toISOString(),
             range: "custom",
-            previous: true,
+            previous: withPrevious,
         });
         return aggregateFunnelSteps(definitions, response.series);
     }
@@ -144,14 +147,15 @@ export class CampaignAnalyticsOrchestrator {
      */
     private async getAccurateKpis(
         merchantId: string,
-        range: DateRange
+        range: DateRange,
+        withPrevious: boolean
     ): Promise<OverviewAccurateKpis> {
         const response = await this.openPanel.getChart({
             series: buildKpiSeries(merchantId),
             startDate: range.from.toISOString(),
             endDate: range.to.toISOString(),
             range: "custom",
-            previous: true,
+            previous: withPrevious,
         });
         return aggregateAccurateKpis(response.series);
     }
@@ -298,6 +302,11 @@ function websiteFunnelDefinition(): FunnelStepDefinition[] {
             eventNames: ["sharing_page_viewed"],
         },
         {
+            kind: "share_initiated",
+            eventNames: ["sharing_link_started", "sharing_link_copied"],
+            extraFilters: [websiteSourceFilter],
+        },
+        {
             kind: "link_shared",
             eventNames: ["sharing_link_shared", "sharing_link_copied"],
             extraFilters: [websiteSourceFilter],
@@ -325,6 +334,11 @@ function walletFunnelDefinition(): FunnelStepDefinition[] {
             kind: "brand_page_opened",
             eventNames: ["wallet_modal_opened"],
             extraFilters: [explorerModalFilter],
+        },
+        {
+            kind: "share_initiated",
+            eventNames: ["sharing_link_started", "sharing_link_copied"],
+            extraFilters: [walletSourceFilter],
         },
         {
             kind: "link_shared",
