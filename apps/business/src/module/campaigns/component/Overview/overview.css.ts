@@ -12,7 +12,7 @@ export const page = style({
 export const kpiRow = style({
     display: "grid",
     gridTemplateColumns: "repeat(5, minmax(0, 1fr))",
-    gap: alias.spacing.s,
+    gap: alias.spacing.m,
     "@media": {
         "screen and (max-width: 1080px)": {
             gridTemplateColumns: "repeat(3, minmax(0, 1fr))",
@@ -47,14 +47,6 @@ export const threeColumns = style({
             gridTemplateColumns: "minmax(0, 1fr)",
         },
     },
-});
-
-// Surface-only card chrome. Layout (flex/gap) comes from the DS Stack
-// component wrapping the card content.
-export const card = style({
-    backgroundColor: vars.surface.background,
-    borderRadius: alias.cornerRadius.l,
-    padding: alias.spacing.l,
 });
 
 // Fixed chart height — the cards live in a stretched grid row, so an explicit

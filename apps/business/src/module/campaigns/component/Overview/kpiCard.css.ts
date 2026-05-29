@@ -1,11 +1,9 @@
 import { vars } from "@frak-labs/design-system/theme";
-import { alias } from "@frak-labs/design-system/tokens";
 import { style } from "@vanilla-extract/css";
 
-export const card = style({
-    backgroundColor: vars.surface.background,
-    borderRadius: alias.cornerRadius.l,
-    padding: alias.spacing.m,
+// Lets the KPI Card shrink inside the `repeat(N, minmax(0,1fr))` grid; the DS
+// Card supplies surface/radius/padding.
+export const cell = style({
     minWidth: 0,
 });
 
@@ -16,6 +14,3 @@ export const amount = style({
     color: vars.text.primary,
     fontVariantNumeric: "tabular-nums",
 });
-
-export const deltaUp = style({ color: vars.text.success });
-export const deltaDown = style({ color: vars.text.warning });

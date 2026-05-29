@@ -1,3 +1,4 @@
+import { Card } from "@frak-labs/design-system/components/Card";
 import {
     PieChart,
     PieSlice,
@@ -17,7 +18,6 @@ import clsx from "clsx";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import type { CampaignsOverview } from "@/module/campaigns/queries/queryOptions";
-import * as styles from "./overview.css";
 import * as local from "./sharingBySource.css";
 
 type Mode = "platform" | "device";
@@ -60,18 +60,18 @@ export function SharingBySourceCard({
     const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
 
     return (
-        <div className={styles.card}>
+        <Card radius="m">
             <Tabs defaultValue="platform">
                 <Stack space="m">
-                    <TabsList>
-                        <TabsTrigger value="platform">
+                    <TabsList fullWidth>
+                        <TabsTrigger fullWidth value="platform">
                             {t("campaigns.overview.sharing.platform")}
                         </TabsTrigger>
-                        <TabsTrigger value="device">
+                        <TabsTrigger fullWidth value="device">
                             {t("campaigns.overview.sharing.device")}
                         </TabsTrigger>
                     </TabsList>
-                    <Text variant="bodySmall" color="secondary">
+                    <Text as="h2" variant="bodySmall" color="secondary">
                         {t("campaigns.overview.sharing.title")}
                     </Text>
                     {(["platform", "device"] as Mode[]).map((mode) => {
@@ -124,6 +124,7 @@ export function SharingBySourceCard({
                                                         backgroundColor:
                                                             s.color,
                                                     }}
+                                                    aria-hidden="true"
                                                 />
                                                 <Text
                                                     as="span"
@@ -146,6 +147,6 @@ export function SharingBySourceCard({
                     })}
                 </Stack>
             </Tabs>
-        </div>
+        </Card>
     );
 }

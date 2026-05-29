@@ -1,4 +1,8 @@
-import { FunnelChart } from "@frak-labs/design-system/components/FunnelChart";
+import { Card } from "@frak-labs/design-system/components/Card";
+import {
+    FunnelChart,
+    type FunnelStep,
+} from "@frak-labs/design-system/components/FunnelChart";
 import { Stack } from "@frak-labs/design-system/components/Stack";
 import {
     Tabs,
@@ -8,10 +12,11 @@ import {
 } from "@frak-labs/design-system/components/Tabs";
 import { Text } from "@frak-labs/design-system/components/Text";
 import { useTranslation } from "react-i18next";
-import type { CampaignsOverview } from "@/module/campaigns/queries/queryOptions";
-import * as styles from "./overview.css";
 
 type Variant = "website" | "wallet";
+
+/** Website/Wallet funnel datasets for the overview funnel card. */
+type FunnelsData = Record<Variant, FunnelStep[]>;
 
 // Maps the known data-provided funnel-stage labels to i18n keys; unknown
 // labels fall through untranslated.
@@ -22,40 +27,42 @@ const stepLabelKey: Record<
     | "campaigns.overview.funnel.steps.linkShared"
     | "campaigns.overview.funnel.steps.referred"
     | "campaigns.overview.funnel.steps.converted"
+    | "campaigns.overview.funnel.steps.explorerImpressions"
+    | "campaigns.overview.funnel.steps.brandPageOpened"
 > = {
     "Share CTA seen": "campaigns.overview.funnel.steps.shareCtaSeen",
     "Share initiated": "campaigns.overview.funnel.steps.shareInitiated",
     "Link shared": "campaigns.overview.funnel.steps.linkShared",
     Referred: "campaigns.overview.funnel.steps.referred",
     Converted: "campaigns.overview.funnel.steps.converted",
+    "Explorer impressions":
+        "campaigns.overview.funnel.steps.explorerImpressions",
+    "Brand page opened": "campaigns.overview.funnel.steps.brandPageOpened",
 };
 
-export function FunnelCard({
-    funnels,
-}: {
-    funnels: CampaignsOverview["funnels"];
-}) {
+/** Overview-page funnel card: Website/Wallet tabs + funnel chart in a DS `Card`. */
+export function FunnelCard({ funnels }: { funnels: FunnelsData }) {
     const { t } = useTranslation();
     const labels: Record<Variant, string> = {
         website: t("campaigns.overview.funnel.website"),
         wallet: t("campaigns.overview.funnel.walletFrak"),
     };
 
-    const localizeSteps = (steps: CampaignsOverview["funnels"][Variant]) =>
+    const localizeSteps = (steps: FunnelStep[]) =>
         steps.map((step) => {
             const key = stepLabelKey[step.label];
             return key ? { ...step, label: t(key) } : step;
         });
 
     return (
-        <div className={styles.card}>
+        <Card radius="m">
             <Tabs defaultValue="website">
                 <Stack space="m">
-                    <TabsList>
-                        <TabsTrigger value="website">
+                    <TabsList fullWidth>
+                        <TabsTrigger fullWidth value="website">
                             {labels.website}
                         </TabsTrigger>
-                        <TabsTrigger value="wallet">
+                        <TabsTrigger fullWidth value="wallet">
                             {labels.wallet}
                         </TabsTrigger>
                     </TabsList>
@@ -75,6 +82,6 @@ export function FunnelCard({
                     ))}
                 </Stack>
             </Tabs>
-        </div>
+        </Card>
     );
 }

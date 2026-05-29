@@ -1,3 +1,4 @@
+import { Card } from "@frak-labs/design-system/components/Card";
 import {
     Bar,
     BarChart,
@@ -37,7 +38,10 @@ export function PurchasesCard({
     purchases: CampaignsOverview["purchases"];
 }) {
     const { t, i18n } = useTranslation();
-    const numberFormatter = new Intl.NumberFormat(i18n.language);
+    const numberFormatter = useMemo(
+        () => new Intl.NumberFormat(i18n.language),
+        [i18n.language]
+    );
 
     // The series carries English month abbreviations from the API; re-format
     // each to the active locale so the bar axis + tooltip title localize.
@@ -57,52 +61,65 @@ export function PurchasesCard({
     }, [purchases.series, i18n.language]);
 
     return (
-        <Stack space="m" className={styles.card}>
-            <Stack space="xxs">
-                <span className={styles.chartAmount}>
-                    {numberFormatter.format(purchases.total)}
-                </span>
-                <Text variant="bodySmall" color="secondary">
-                    {t("campaigns.overview.purchases.title")}
-                </Text>
+        <Card radius="m">
+            <Stack space="m">
+                <Stack space="xxs">
+                    <span className={styles.chartAmount}>
+                        {numberFormatter.format(purchases.total)}
+                    </span>
+                    <Text as="h2" variant="bodySmall" color="secondary">
+                        {t("campaigns.overview.purchases.title")}
+                    </Text>
+                </Stack>
+                <BarChart
+                    barWidth={16}
+                    className={styles.chartBox}
+                    data={series}
+                    locale={i18n.language}
+                    margin={chartMargin}
+                    xDataKey="label"
+                >
+                    <Bar
+                        dataKey="value"
+                        fill={vars.icon.action}
+                        lineCap="butt"
+                    />
+                    <ReferenceLine
+                        label={t("campaigns.overview.purchases.avgPerMonth", {
+                            value: numberFormatter.format(
+                                purchases.avgPerMonth
+                            ),
+                        })}
+                        y={purchases.avgPerMonth}
+                    />
+                    <BarXAxis fadeNearCursor={false} />
+                    <NumericYAxis
+                        formatter={(v) => (v === 0 ? "0" : `${v / 1000}k`)}
+                        ticks={[0, 5000]}
+                    />
+                    <ChartTooltip
+                        rows={(point) => [
+                            {
+                                color: vars.icon.action,
+                                label: t(
+                                    "campaigns.overview.purchases.tooltip"
+                                ),
+                                value: (point.value as number) ?? 0,
+                            },
+                        ]}
+                        showDatePill={false}
+                    />
+                </BarChart>
+                <Stack space="xxs">
+                    <span
+                        className={styles.legendDotPrimary}
+                        aria-hidden="true"
+                    />
+                    <Text as="span" variant="caption">
+                        {t("campaigns.overview.purchases.title")}
+                    </Text>
+                </Stack>
             </Stack>
-            <BarChart
-                barWidth={16}
-                className={styles.chartBox}
-                data={series}
-                locale={i18n.language}
-                margin={chartMargin}
-                xDataKey="label"
-            >
-                <Bar dataKey="value" fill={vars.icon.action} lineCap="butt" />
-                <ReferenceLine
-                    label={t("campaigns.overview.purchases.avgPerMonth", {
-                        value: numberFormatter.format(purchases.avgPerMonth),
-                    })}
-                    y={purchases.avgPerMonth}
-                />
-                <BarXAxis fadeNearCursor={false} />
-                <NumericYAxis
-                    formatter={(v) => (v === 0 ? "0" : `${v / 1000}k`)}
-                    ticks={[0, 5000]}
-                />
-                <ChartTooltip
-                    rows={(point) => [
-                        {
-                            color: vars.icon.action,
-                            label: t("campaigns.overview.purchases.tooltip"),
-                            value: (point.value as number) ?? 0,
-                        },
-                    ]}
-                    showDatePill={false}
-                />
-            </BarChart>
-            <Stack space="xxs">
-                <span className={styles.legendDotPrimary} />
-                <Text as="span" variant="caption">
-                    {t("campaigns.overview.purchases.title")}
-                </Text>
-            </Stack>
-        </Stack>
+        </Card>
     );
 }

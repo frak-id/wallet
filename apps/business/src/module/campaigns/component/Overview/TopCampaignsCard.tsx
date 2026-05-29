@@ -1,4 +1,5 @@
 import { Badge } from "@frak-labs/design-system/components/Badge";
+import { Card } from "@frak-labs/design-system/components/Card";
 import { Stack } from "@frak-labs/design-system/components/Stack";
 import { Text } from "@frak-labs/design-system/components/Text";
 import { type ColumnDef, createColumnHelper } from "@tanstack/react-table";
@@ -6,7 +7,6 @@ import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import type { CampaignsOverview } from "@/module/campaigns/queries/queryOptions";
 import { Table } from "@/module/common/component/Table";
-import * as styles from "./overview.css";
 import { StatusLegendBar } from "./StatusLegendBar";
 
 type TopCampaign = CampaignsOverview["topCampaigns"][number];
@@ -95,16 +95,18 @@ export function TopCampaignsCard({
     );
 
     return (
-        <Stack space="m" className={styles.card}>
-            <Text as="h2" variant="bodySmall" color="secondary">
-                {t("campaigns.overview.top.title")}
-            </Text>
-            <Table
-                data={topCampaigns}
-                columns={columns}
-                enableSorting={false}
-            />
-            <StatusLegendBar breakdown={statusBreakdown} />
-        </Stack>
+        <Card radius="m">
+            <Stack space="m">
+                <Text as="h2" variant="bodySmall" color="secondary">
+                    {t("campaigns.overview.top.title")}
+                </Text>
+                <Table
+                    data={topCampaigns}
+                    columns={columns}
+                    enableSorting={false}
+                />
+                <StatusLegendBar breakdown={statusBreakdown} />
+            </Stack>
+        </Card>
     );
 }

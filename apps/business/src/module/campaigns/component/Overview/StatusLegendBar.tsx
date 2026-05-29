@@ -34,7 +34,7 @@ export function StatusLegendBar({
             <Text as="span" variant="bodySmall" color="secondary">
                 {t("campaigns.overview.statusLegend.title")}
             </Text>
-            <div className={styles.bar}>
+            <div className={styles.bar} aria-hidden="true">
                 {statusOrder.map((key) =>
                     breakdown[key] > 0 ? (
                         <div
@@ -54,6 +54,7 @@ export function StatusLegendBar({
                         <span
                             className={styles.dot}
                             style={{ backgroundColor: statusColor[key] }}
+                            aria-hidden="true"
                         />
                         <Text as="span" variant="caption">
                             {breakdown[key]} {t(`campaigns.status.${key}`)}

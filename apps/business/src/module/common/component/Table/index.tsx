@@ -140,6 +140,7 @@ export function Table<TData extends object>({
                                 return (
                                     <th
                                         key={header.id}
+                                        scope="col"
                                         style={{
                                             ...(size !== undefined && {
                                                 width: size,
@@ -230,7 +231,7 @@ export function Table<TData extends object>({
                         {footerGroups.map((footerGroup) => (
                             <tr key={footerGroup.id}>
                                 {footerGroup.headers.map((header) => (
-                                    <th key={header.id}>
+                                    <th key={header.id} scope="col">
                                         {header.isPlaceholder
                                             ? null
                                             : flexRender(
