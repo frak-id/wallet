@@ -4,10 +4,14 @@ import {
     between,
     eq,
     inArray,
+    isNotNull,
     isNull,
+    notInArray,
+    or,
     type SQL,
     sql,
 } from "drizzle-orm";
+import { referralLinksTable } from "../domain/attribution/db/schema";
 import { campaignRulesTable } from "../domain/campaign/db/schema";
 import type { CampaignStatus } from "../domain/campaign/schemas";
 import {
@@ -43,6 +47,46 @@ const DAY_MS = 24 * 60 * 60 * 1000;
 const TOP_CAMPAIGNS_LIMIT = 10;
 /** Switch from daily to monthly bucketing once the window spans this many days. */
 const MONTHLY_BUCKET_THRESHOLD_DAYS = 60;
+
+/**
+ * Restricts purchase aggregates to rows that are:
+ *  1. Identified — `identity_group_id IS NOT NULL`. Redundant with the
+ *     EXISTS subquery below (an edge to NULL never matches) but kept
+ *     explicit so the planner can hit `purchases_identity_group_idx`
+ *     before walking referral_links.
+ *  2. Referrer-attributed — there is an ACTIVE `referral_links` row
+ *     where the buyer is the referee, scoped to either this merchant
+ *     (`scope='merchant' AND merchant_id=…`) or globally
+ *     (`scope='cross_merchant'`). Same precedence rules as
+ *     `ReferralLinkRepository.findReferrerForReferee` — whichever
+ *     scope wins for the merchant's reward calc also wins here.
+ *     EXISTS (not JOIN) so a buyer with both scopes active doesn't
+ *     duplicate the purchase row and inflate COUNT/SUM/MODE.
+ *     No `created_at` guard: matches reward calc's "attribution as of
+ *     now" semantics — same answer the merchant gets paid against.
+ *  3. Not refunded/cancelled. NULL status is kept (legacy pre-status
+ *     rows). PG's `NOT IN` silently drops NULLs, hence the OR-IS-NULL.
+ */
+function attributedPurchasePredicate(merchantId: string): SQL {
+    const referrerEdgeExists = sql`EXISTS (
+        SELECT 1
+        FROM ${referralLinksTable} rl
+        WHERE rl.referee_identity_group_id = ${purchasesTable.identityGroupId}
+          AND (
+              (rl.scope = 'merchant' AND rl.merchant_id = ${merchantId}::uuid)
+              OR rl.scope = 'cross_merchant'
+          )
+          AND rl.removed_at IS NULL
+    )`;
+    return and(
+        isNotNull(purchasesTable.identityGroupId),
+        or(
+            isNull(purchasesTable.status),
+            notInArray(purchasesTable.status, ["cancelled", "refunded"])
+        ),
+        referrerEdgeExists
+    ) as SQL;
+}
 
 type AssetKpiRow = {
     ambassadorsCurrent: string;
@@ -202,7 +246,8 @@ export class CampaignOverviewOrchestrator {
                 .where(
                     and(
                         eq(merchantWebhooksTable.merchantId, merchantId),
-                        between(purchasesTable.createdAt, outerFrom, outerTo)
+                        between(purchasesTable.createdAt, outerFrom, outerTo),
+                        attributedPurchasePredicate(merchantId)
                     )
                 ),
         ]);
@@ -362,7 +407,8 @@ export class CampaignOverviewOrchestrator {
             .where(
                 and(
                     eq(merchantWebhooksTable.merchantId, merchantId),
-                    between(purchasesTable.createdAt, range.from, range.to)
+                    between(purchasesTable.createdAt, range.from, range.to),
+                    attributedPurchasePredicate(merchantId)
                 )
             )
             .groupBy(sql`bucket`)
