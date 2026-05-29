@@ -264,9 +264,9 @@ export function TableCampaigns() {
                     meta: { align: "right" as const },
                     header: () => t("campaigns.table.revenue"),
                     accessorFn: (row: CampaignWithStats) =>
-                        row.stats?.totalRewards ?? null,
+                        row.stats?.attributedRevenue ?? null,
                     cell: ({ row }: { row: Row<CampaignWithStats> }) => {
-                        const value = row.original.stats?.totalRewards;
+                        const value = row.original.stats?.attributedRevenue;
                         if (value == null) return <MutedDash />;
                         return (
                             <Text
@@ -284,8 +284,8 @@ export function TableCampaigns() {
                         b: Row<CampaignWithStats>
                     ) =>
                         sortNullableNumber(
-                            a.original.stats?.totalRewards,
-                            b.original.stats?.totalRewards
+                            a.original.stats?.attributedRevenue,
+                            b.original.stats?.attributedRevenue
                         ),
                 },
                 columnHelper.accessor("budgetConfig", {

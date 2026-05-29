@@ -4,20 +4,12 @@ import {
     between,
     eq,
     inArray,
-    isNotNull,
     isNull,
-    notInArray,
-    or,
     type SQL,
     sql,
 } from "drizzle-orm";
-import { referralLinksTable } from "../domain/attribution/db/schema";
 import { campaignRulesTable } from "../domain/campaign/db/schema";
 import type { CampaignStatus } from "../domain/campaign/schemas";
-import {
-    merchantWebhooksTable,
-    purchasesTable,
-} from "../domain/purchases/db/schema";
 import {
     assetLogsTable,
     interactionLogsTable,
@@ -47,46 +39,6 @@ const DAY_MS = 24 * 60 * 60 * 1000;
 const TOP_CAMPAIGNS_LIMIT = 10;
 /** Switch from daily to monthly bucketing once the window spans this many days. */
 const MONTHLY_BUCKET_THRESHOLD_DAYS = 60;
-
-/**
- * Restricts purchase aggregates to rows that are:
- *  1. Identified — `identity_group_id IS NOT NULL`. Redundant with the
- *     EXISTS subquery below (an edge to NULL never matches) but kept
- *     explicit so the planner can hit `purchases_identity_group_idx`
- *     before walking referral_links.
- *  2. Referrer-attributed — there is an ACTIVE `referral_links` row
- *     where the buyer is the referee, scoped to either this merchant
- *     (`scope='merchant' AND merchant_id=…`) or globally
- *     (`scope='cross_merchant'`). Same precedence rules as
- *     `ReferralLinkRepository.findReferrerForReferee` — whichever
- *     scope wins for the merchant's reward calc also wins here.
- *     EXISTS (not JOIN) so a buyer with both scopes active doesn't
- *     duplicate the purchase row and inflate COUNT/SUM/MODE.
- *     No `created_at` guard: matches reward calc's "attribution as of
- *     now" semantics — same answer the merchant gets paid against.
- *  3. Not refunded/cancelled. NULL status is kept (legacy pre-status
- *     rows). PG's `NOT IN` silently drops NULLs, hence the OR-IS-NULL.
- */
-function attributedPurchasePredicate(merchantId: string): SQL {
-    const referrerEdgeExists = sql`EXISTS (
-        SELECT 1
-        FROM ${referralLinksTable} rl
-        WHERE rl.referee_identity_group_id = ${purchasesTable.identityGroupId}
-          AND (
-              (rl.scope = 'merchant' AND rl.merchant_id = ${merchantId}::uuid)
-              OR rl.scope = 'cross_merchant'
-          )
-          AND rl.removed_at IS NULL
-    )`;
-    return and(
-        isNotNull(purchasesTable.identityGroupId),
-        or(
-            isNull(purchasesTable.status),
-            notInArray(purchasesTable.status, ["cancelled", "refunded"])
-        ),
-        referrerEdgeExists
-    ) as SQL;
-}
 
 type AssetKpiRow = {
     ambassadorsCurrent: string;
@@ -167,9 +119,12 @@ export class CampaignOverviewOrchestrator {
     }
 
     /**
-     * Three SQL scans (asset_logs, interaction_logs, purchases) each
-     * computing current + previous via `FILTER (WHERE …)` aggregates so
-     * we read each source table exactly once.
+     * Three parallel scans. `asset_logs` (joined to `interaction_logs`
+     * for the `purchase` filter) and `interaction_logs` (for shares)
+     * compute current+previous via `FILTER (WHERE …)` aggregates so
+     * we read each source table exactly once. Revenue is fetched
+     * separately by `getRevenueKpis` — see its JSDoc for the swap to
+     * `payload->>'amount'` over the legacy `purchases` join.
      */
     private async getKpis(
         merchantId: string,
@@ -183,7 +138,7 @@ export class CampaignOverviewOrchestrator {
         // FILTER clauses use drizzle's `between()` so Date params flow
         // through the column encoder (Date → ISO). Raw `${date}` falls
         // through to `String(date)` and PG rejects the timezone format.
-        const [assetRows, sharesRows, purchaseRows] = await Promise.all([
+        const [assetRows, sharesRows, purchaseRow] = await Promise.all([
             db
                 .select({
                     ambassadorsCurrent: sql<string>`COUNT(DISTINCT ${assetLogsTable.identityGroupId}) FILTER (WHERE ${assetLogsTable.recipientType} = 'referrer' AND ${between(assetLogsTable.createdAt, current.from, current.to)})`,
@@ -223,38 +178,11 @@ export class CampaignOverviewOrchestrator {
                         )
                     )
                 ),
-            db
-                .select({
-                    revenueCurrent: sql<string>`COALESCE(SUM(${purchasesTable.totalPrice}::NUMERIC) FILTER (WHERE ${between(purchasesTable.createdAt, current.from, current.to)}), 0)`,
-                    revenuePrevious: sql<string>`COALESCE(SUM(${purchasesTable.totalPrice}::NUMERIC) FILTER (WHERE ${between(purchasesTable.createdAt, previous.from, previous.to)}), 0)`,
-                    purchaseCountCurrent: sql<string>`COUNT(*) FILTER (WHERE ${between(purchasesTable.createdAt, current.from, current.to)})`,
-                    purchaseCountPrevious: sql<string>`COUNT(*) FILTER (WHERE ${between(purchasesTable.createdAt, previous.from, previous.to)})`,
-                    // MODE() returns the most-frequent currency in the
-                    // current window. Strictly speaking purchases can
-                    // arrive in mixed currencies — taking the mode keeps
-                    // the SUM consistent with the displayed unit for the
-                    // vast majority of merchants who only use one.
-                    currency: sql<
-                        string | null
-                    >`MODE() WITHIN GROUP (ORDER BY ${purchasesTable.currencyCode}) FILTER (WHERE ${between(purchasesTable.createdAt, current.from, current.to)})`,
-                })
-                .from(purchasesTable)
-                .innerJoin(
-                    merchantWebhooksTable,
-                    eq(merchantWebhooksTable.id, purchasesTable.webhookId)
-                )
-                .where(
-                    and(
-                        eq(merchantWebhooksTable.merchantId, merchantId),
-                        between(purchasesTable.createdAt, outerFrom, outerTo),
-                        attributedPurchasePredicate(merchantId)
-                    )
-                ),
+            this.getRevenueKpis(merchantId, resolved),
         ]);
 
         const assetRow = (assetRows[0] ?? {}) as Partial<AssetKpiRow>;
         const sharesRow = (sharesRows[0] ?? {}) as Partial<SharesKpiRow>;
-        const purchaseRow = (purchaseRows[0] ?? {}) as Partial<PurchaseKpiRow>;
 
         return {
             ambassadors: {
@@ -279,6 +207,76 @@ export class CampaignOverviewOrchestrator {
                 previous: toNumber(purchaseRow.purchaseCountPrevious),
             },
         };
+    }
+
+    /**
+     * Revenue + purchase count + currency for both halves of the
+     * window. Reads `interaction_logs.payload.amount` over purchases
+     * reachable through an un-cancelled `asset_logs` row on this
+     * merchant — same semantic as `CampaignDetailsOrchestrator.
+     * getAttributedGMV`, just window-scoped instead of campaign-scoped.
+     *
+     * Drops the legacy `purchases ⋈ merchant_webhooks` join + the
+     * `attributedPurchasePredicate` EXISTS-subquery: any purchase that
+     * fired a reward already proves attribution (asset_logs row exists),
+     * and refund/cancel is already encoded as `cancelled_at`.
+     *
+     * Dedup via `SELECT DISTINCT (interaction_log_id, amount)` so
+     * multi-recipient / multi-depth rewards don't inflate the basket
+     * sum or the purchase count.
+     */
+    private async getRevenueKpis(
+        merchantId: string,
+        resolved: ResolvedWindow
+    ): Promise<Partial<PurchaseKpiRow>> {
+        const { current, previous } = resolved;
+        const outerFrom = previous.from;
+        const outerTo = current.to;
+
+        const distinctPurchases = db
+            .selectDistinct({
+                interactionLogId: assetLogsTable.interactionLogId,
+                createdAt: interactionLogsTable.createdAt,
+                amount: sql<string>`(${interactionLogsTable.payload}->>'amount')::NUMERIC`.as(
+                    "amount"
+                ),
+                currency: sql<
+                    string | null
+                >`${interactionLogsTable.payload}->>'currency'`.as("currency"),
+            })
+            .from(assetLogsTable)
+            .innerJoin(
+                interactionLogsTable,
+                eq(assetLogsTable.interactionLogId, interactionLogsTable.id)
+            )
+            .where(
+                and(
+                    eq(assetLogsTable.merchantId, merchantId),
+                    isNull(assetLogsTable.cancelledAt),
+                    eq(interactionLogsTable.type, "purchase"),
+                    isNull(interactionLogsTable.cancelledAt),
+                    between(interactionLogsTable.createdAt, outerFrom, outerTo)
+                )
+            )
+            .as("distinct_purchases");
+
+        const [row] = await db
+            .select({
+                revenueCurrent: sql<string>`COALESCE(SUM(${distinctPurchases.amount}) FILTER (WHERE ${between(distinctPurchases.createdAt, current.from, current.to)}), 0)`,
+                revenuePrevious: sql<string>`COALESCE(SUM(${distinctPurchases.amount}) FILTER (WHERE ${between(distinctPurchases.createdAt, previous.from, previous.to)}), 0)`,
+                purchaseCountCurrent: sql<string>`COUNT(*) FILTER (WHERE ${between(distinctPurchases.createdAt, current.from, current.to)})`,
+                purchaseCountPrevious: sql<string>`COUNT(*) FILTER (WHERE ${between(distinctPurchases.createdAt, previous.from, previous.to)})`,
+                // MODE() returns the most-frequent currency in the
+                // current window. Mixed-currency merchants are rare;
+                // we surface the modal value so the FE's SUM display
+                // matches the predominant unit.
+                currency: sql<
+                    string | null
+                >`MODE() WITHIN GROUP (ORDER BY ${distinctPurchases.currency}) FILTER (WHERE ${between(distinctPurchases.createdAt, current.from, current.to)})`,
+            })
+            .from(distinctPurchases);
+
+        return row ?? {};
     }
 
     private async getTopCampaignsAndStatusBreakdown(
@@ -381,36 +379,54 @@ export class CampaignOverviewOrchestrator {
     }
 
     /**
-     * Bucketed purchases + revenue series for the current window. Single
-     * scan over `purchases ⋈ merchant_webhooks` returns both metrics —
-     * the dashboard renders them as two separate cards but they share
-     * the same underlying data.
+     * Bucketed attributed-purchases + revenue series. Same data source
+     * as `getRevenueKpis` (asset_logs ⋈ interaction_logs, dedup via
+     * SELECT DISTINCT) — the chart and the KPI cards now read the
+     * exact same numbers.
      */
     private async getSeries(
         merchantId: string,
         range: DateRange
     ): Promise<OverviewSeries> {
         const granularity = pickGranularity(range);
-        const bucketExpr = sql`DATE_TRUNC(${granularity}, ${purchasesTable.createdAt})`;
+
+        const distinctPurchases = db
+            .selectDistinct({
+                interactionLogId: assetLogsTable.interactionLogId,
+                createdAt: interactionLogsTable.createdAt,
+                amount: sql<string>`(${interactionLogsTable.payload}->>'amount')::NUMERIC`.as(
+                    "amount"
+                ),
+            })
+            .from(assetLogsTable)
+            .innerJoin(
+                interactionLogsTable,
+                eq(assetLogsTable.interactionLogId, interactionLogsTable.id)
+            )
+            .where(
+                and(
+                    eq(assetLogsTable.merchantId, merchantId),
+                    isNull(assetLogsTable.cancelledAt),
+                    eq(interactionLogsTable.type, "purchase"),
+                    isNull(interactionLogsTable.cancelledAt),
+                    between(
+                        interactionLogsTable.createdAt,
+                        range.from,
+                        range.to
+                    )
+                )
+            )
+            .as("distinct_purchases");
+
+        const bucketExpr = sql`DATE_TRUNC(${granularity}, ${distinctPurchases.createdAt})`;
 
         const rows = await db
             .select({
                 bucket: sql<Date>`${bucketExpr}`.as("bucket"),
                 purchaseCount: sql<string>`COUNT(*)`,
-                revenue: sql<string>`COALESCE(SUM(${purchasesTable.totalPrice}::NUMERIC), 0)`,
+                revenue: sql<string>`COALESCE(SUM(${distinctPurchases.amount}), 0)`,
             })
-            .from(purchasesTable)
-            .innerJoin(
-                merchantWebhooksTable,
-                eq(merchantWebhooksTable.id, purchasesTable.webhookId)
-            )
-            .where(
-                and(
-                    eq(merchantWebhooksTable.merchantId, merchantId),
-                    between(purchasesTable.createdAt, range.from, range.to),
-                    attributedPurchasePredicate(merchantId)
-                )
-            )
+            .from(distinctPurchases)
             .groupBy(sql`bucket`)
             .orderBy(asc(sql`bucket`));
 

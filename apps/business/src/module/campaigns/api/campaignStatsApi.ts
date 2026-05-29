@@ -35,6 +35,8 @@ export function getMerchantCampaignsStatsMock(
         createReferredLinkInteractions: stat.createReferredLinkInteractions,
         purchaseInteractions: stat.purchaseInteractions,
         totalRewards: stat.totalRewards,
+        attributedRevenue: stat.attributedRevenue,
+        avgBasketValue: stat.avgBasketValue,
         uniqueWallets: stat.uniqueWallets,
         ambassador: stat.ambassador,
         sharingRate: stat.sharingRate,
