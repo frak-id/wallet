@@ -32,6 +32,22 @@ const EconomicValueSchema = t.Object({
     conversions: t.Number(),
     /** `spend / conversions`. `0` when there are no conversions. */
     cpa: t.Number(),
+    /**
+     * Cumulative GMV from attributed purchases — sum of fiat purchase
+     * amounts (`interaction_logs.payload.amount`) for purchases that
+     * triggered any reward on this campaign. Deduped across
+     * multi-recipient rewards so a single basket counts once.
+     *
+     * This is the numerator of `efficiency.roi` and pairs with `spend`
+     * to give the full "what we spent vs what we drove" picture.
+     */
+    attributedGMV: t.Number(),
+    /**
+     * Average basket value per attributed sale: `attributedGMV / conversions`.
+     * Pairs with `cpa` to read campaign unit economics — if AOV > CPA,
+     * gross margin per conversion is positive before product cost.
+     */
+    avgBasketValue: t.Number(),
     /** Hardcoded industry-average Meta CPA × `conversions`. */
     metaEquivalentCost: t.Number(),
     /** Industry-average Meta Ads CPA for this currency. */
@@ -95,12 +111,24 @@ const TopAmbassadorSchema = t.Object({
     wallet: t.Hex(),
     /**
      * Number of referral links this ambassador created with the campaign's
-     * merchant. Best-effort campaign attribution — see `activePct` note above.
+     * merchant. Merchant-scoped — `interaction_logs.create_referral_link`
+     * rows have no `campaign_rule_id`, so shares pushed before this
+     * campaign started still count when the ambassador also earned here.
      */
     shares: t.Number(),
-    /** Distinct attributed purchases by referees of this ambassador. */
+    /**
+     * Distinct purchases that triggered a `referrer` reward for this
+     * ambassador on this campaign. Counted via `asset_logs → interaction_logs`,
+     * so attribution is exact: only purchases this ambassador was actually
+     * paid out on contribute.
+     */
     sales: t.Number(),
-    /** Sum of `purchases.total_price` for those attributed purchases. */
+    /**
+     * Sum of fiat purchase amounts (from `interaction_logs.payload.amount`)
+     * for the purchases counted in `sales`. Same campaign-scoped attribution
+     * as `sales` — strictly the revenue this ambassador drove on this
+     * campaign, not all merchant-wide revenue from their referees.
+     */
     revenue: t.Number(),
     /** Total reward earnings on this campaign, denominated in `currency`. */
     earned: t.Number(),

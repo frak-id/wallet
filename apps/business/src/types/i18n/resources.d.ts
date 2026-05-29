@@ -76,6 +76,10 @@ export default interface Resources {
                     title: "CPA breakdown";
                 };
                 economic: {
+                    attributedGMV: "Attributed revenue";
+                    attributedGMVSub: "GMV from attributed purchases";
+                    avgBasketSub: "Per attributed sale";
+                    avgBasketValue: "Avg. basket value";
                     cheaperThanMeta: "{{percent}} cheaper than Meta";
                     conversionsCpa: "{{conversions}} conversions · {{cpa}} CPA";
                     conversionsCpaMeta: "{{conversions}} conversions · ~{{cpa}} CPA on Meta";

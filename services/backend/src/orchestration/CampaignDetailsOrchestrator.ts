@@ -5,18 +5,12 @@ import {
     inArray,
     isNotNull,
     isNull,
-    notInArray,
-    or,
     type SQL,
     sql,
 } from "drizzle-orm";
 import { type Address, bytesToHex, getAddress, zeroAddress } from "viem";
 import { referralLinksTable } from "../domain/attribution/db/schema";
 import { identityNodesTable } from "../domain/identity/db/schema";
-import {
-    merchantWebhooksTable,
-    purchasesTable,
-} from "../domain/purchases/db/schema";
 import {
     assetLogsTable,
     interactionLogsTable,
@@ -72,7 +66,7 @@ export class CampaignDetailsOrchestrator {
         // Build a token_address → fiat-price map keyed off the currency
         // we just resolved. `TokenPrice` exposes `{ eur, usd, gbp }` per
         // token directly so we don't need a separate FX step.
-        const tokenPrices = await this.getTokenFiatPrices(merchantId, currency);
+        const tokenPrices = await this.getTokenFiatPrices(campaignId, currency);
         const fiatRewardsExpr = buildFiatRewardsExpression(tokenPrices);
 
         const [campaignRollup, leaderboard, interactingUsers] =
@@ -119,13 +113,26 @@ export class CampaignDetailsOrchestrator {
     }
 
     /**
-     * Bundle C — modal purchase currency for this campaign's attributed
-     * purchases, plus the unique-referee / converted-referee counts that
-     * feed `ambassadorStats.refereesConvertedPct`.
+     * Bundle C — campaign currency + referee conversion stats.
      *
-     * "Attributed to this campaign" is approximated as "referee of an
-     * ambassador who has at least one referrer reward on this campaign".
-     * Same best-effort attribution caveat as `topAmbassadors[].shares`.
+     * Two queries, both campaign-scoped:
+     *  1. `asset_logs ⋈ interaction_logs` reads the modal purchase
+     *     currency and counts distinct referees who triggered a
+     *     `referrer` reward on this campaign (the `convertedReferees`).
+     *     The interaction's JSONB payload carries the fiat currency
+     *     directly, so no `purchases` join is needed.
+     *  2. A residual `referral_links` lookup gives the denominator
+     *     `totalReferees` — distinct referees brought in by any of this
+     *     campaign's ambassadors. Without it we can't compute
+     *     `refereesConvertedPct`.
+     *
+     * Evolution: if we ever drop `refereesConvertedPct` in favour of a
+     * more honest "salesPerReferee = attributedGMV / convertedReferees"
+     * or "repeatPurchaseRate = sales / convertedReferees", the residual
+     * `referral_links` query goes away and Bundle C becomes a single
+     * scan. The current metric requires the merchant-wide referrer
+     * graph since not all referees buy — the conversion rate is
+     * inherently asymmetric.
      */
     private async getCurrencyAndReferees(
         merchantId: string,
@@ -135,9 +142,55 @@ export class CampaignDetailsOrchestrator {
         totalReferees: number;
         convertedReferees: number;
     }> {
-        // Ambassadors who earned at least one referrer reward on this
-        // campaign — used as the entry point for "referees of this
-        // campaign's ambassadors".
+        const [purchaseRow, totalReferees] = await Promise.all([
+            this.getCurrencyAndConvertedReferees(campaignId),
+            this.getTotalRefereesForCampaign(merchantId, campaignId),
+        ]);
+
+        return {
+            currency: purchaseRow.currency,
+            totalReferees,
+            convertedReferees: purchaseRow.convertedReferees,
+        };
+    }
+
+    private async getCurrencyAndConvertedReferees(
+        campaignId: string
+    ): Promise<{ currency: string; convertedReferees: number }> {
+        const [row] = await db
+            .select({
+                currency: sql<
+                    string | null
+                >`MODE() WITHIN GROUP (ORDER BY ${interactionLogsTable.payload}->>'currency')`,
+                convertedReferees: countDistinct(
+                    interactionLogsTable.identityGroupId
+                ),
+            })
+            .from(assetLogsTable)
+            .innerJoin(
+                interactionLogsTable,
+                eq(assetLogsTable.interactionLogId, interactionLogsTable.id)
+            )
+            .where(
+                and(
+                    eq(assetLogsTable.campaignRuleId, campaignId),
+                    eq(assetLogsTable.recipientType, "referrer"),
+                    isNull(assetLogsTable.cancelledAt),
+                    eq(interactionLogsTable.type, "purchase"),
+                    isNull(interactionLogsTable.cancelledAt)
+                )
+            );
+
+        return {
+            currency: row?.currency ?? "EUR",
+            convertedReferees: toNumber(row?.convertedReferees),
+        };
+    }
+
+    private async getTotalRefereesForCampaign(
+        merchantId: string,
+        campaignId: string
+    ): Promise<number> {
         const ambassadorGroupsSql = sql`
             SELECT DISTINCT ${assetLogsTable.identityGroupId}
             FROM ${assetLogsTable}
@@ -146,80 +199,40 @@ export class CampaignDetailsOrchestrator {
               AND ${assetLogsTable.cancelledAt} IS NULL
         `;
 
-        const refereeRows = await db.execute<{
-            referee_identity_group_id: string;
-        }>(sql`
-            SELECT DISTINCT ${referralLinksTable.refereeIdentityGroupId} AS referee_identity_group_id
+        const [row] = await db.execute<{ total: string | number }>(sql`
+            SELECT COUNT(DISTINCT ${referralLinksTable.refereeIdentityGroupId}) AS total
             FROM ${referralLinksTable}
             WHERE ${referralLinksTable.merchantId} = ${merchantId}::uuid
               AND ${referralLinksTable.removedAt} IS NULL
               AND ${referralLinksTable.referrerIdentityGroupId} IN (${ambassadorGroupsSql})
         `);
 
-        const refereeIds = refereeRows
-            .map((r) => r.referee_identity_group_id)
-            .filter((id): id is string => !!id);
-
-        if (refereeIds.length === 0) {
-            return {
-                currency: "EUR",
-                totalReferees: 0,
-                convertedReferees: 0,
-            };
-        }
-
-        // Single scan over `purchases ⋈ merchant_webhooks` returns both
-        // the modal currency and the count of referees who completed at
-        // least one attributed purchase.
-        const [purchaseRow] = await db
-            .select({
-                currency: sql<
-                    string | null
-                >`MODE() WITHIN GROUP (ORDER BY ${purchasesTable.currencyCode})`,
-                convertedReferees: countDistinct(
-                    purchasesTable.identityGroupId
-                ),
-            })
-            .from(purchasesTable)
-            .innerJoin(
-                merchantWebhooksTable,
-                eq(merchantWebhooksTable.id, purchasesTable.webhookId)
-            )
-            .where(
-                and(
-                    eq(merchantWebhooksTable.merchantId, merchantId),
-                    inArray(purchasesTable.identityGroupId, refereeIds),
-                    or(
-                        isNull(purchasesTable.status),
-                        notInArray(purchasesTable.status, [
-                            "cancelled",
-                            "refunded",
-                        ])
-                    )
-                )
-            );
-
-        return {
-            currency: purchaseRow?.currency ?? "EUR",
-            totalReferees: refereeIds.length,
-            convertedReferees: Number(purchaseRow?.convertedReferees ?? 0),
-        };
+        return toNumber(row?.total);
     }
 
     /**
      * Look up the fiat spot price (in the requested currency) for every
-     * distinct token that has been rewarded on this merchant. Tokens
-     * whose price lookup fails are dropped — they contribute zero to
-     * fiat aggregates via the `ELSE 0` branch of the CASE expression.
+     * distinct token rewarded on this campaign. Scoping to the campaign
+     * (rather than the whole merchant) keeps the CoinGecko lookup tight
+     * — typically 1 token, sometimes 2 — and makes the CASE expression
+     * downstream a single WHEN branch.
+     *
+     * Tokens whose price lookup fails are dropped: they fall through to
+     * the `ELSE 0` branch of `buildFiatRewardsExpression`.
      */
     private async getTokenFiatPrices(
-        merchantId: string,
+        campaignId: string,
         currency: string
     ): Promise<Map<string, number>> {
         const tokenRows = await db
             .selectDistinct({ tokenAddress: assetLogsTable.tokenAddress })
             .from(assetLogsTable)
-            .where(eq(assetLogsTable.merchantId, merchantId));
+            .where(
+                and(
+                    eq(assetLogsTable.campaignRuleId, campaignId),
+                    isNull(assetLogsTable.cancelledAt)
+                )
+            );
 
         const tokens = tokenRows
             .map((r) => r.tokenAddress)
@@ -240,9 +253,24 @@ export class CampaignDetailsOrchestrator {
     }
 
     /**
-     * Bundle A — campaign-scoped roll-up. Returns total spend, conversions
-     * and the ambassador/referee split in a single scan over
-     * `asset_logs ⋈ interaction_logs`.
+     * Bundle A — campaign-scoped roll-up. Single scan over
+     * `asset_logs ⋈ interaction_logs` returns:
+     *   - `spend`, `ambassadorAmount`, `refereeAmount` — fiat reward
+     *     totals (in the campaign's modal currency) overall and split
+     *     by `recipient_type`.
+     *   - `conversions`, `ambassadorsTotal` — distinct counts.
+     *   - `attributedGMV` — sum of `payload->>'amount'` over the
+     *     purchase interactions that triggered a `referrer` reward on
+     *     this campaign. Properly campaign-scoped via the asset_log
+     *     bridge.
+     *
+     * `attributedGMV` is computed using a DISTINCT-aware aggregate so
+     * that multi-recipient rewards (referrer + referee paid on the same
+     * purchase) don't double-count the basket. We do this with a
+     * subquery on the asset_log row's interaction so PG can dedupe at
+     * the (interaction_log_id, payload->'amount') grain — a referrer
+     * and referee row both pointing at the same purchase contribute
+     * the basket value once.
      */
     private async getCampaignRollup(
         campaignId: string,
@@ -253,6 +281,7 @@ export class CampaignDetailsOrchestrator {
         refereeAmount: number;
         conversions: number;
         ambassadorsTotal: number;
+        attributedGMV: number;
     }> {
         const [row] = await db
             .select({
@@ -274,13 +303,59 @@ export class CampaignDetailsOrchestrator {
                 )
             );
 
+        const attributedGMV = await this.getAttributedGMV(campaignId);
+
         return {
             spend: toNumber(row?.spend),
             ambassadorAmount: toNumber(row?.ambassadorAmount),
             refereeAmount: toNumber(row?.refereeAmount),
             conversions: toNumber(row?.conversions),
             ambassadorsTotal: toNumber(row?.ambassadorsTotal),
+            attributedGMV,
         };
+    }
+
+    /**
+     * Sum of fiat purchase amounts for purchases that triggered any
+     * reward on this campaign. Uses a subquery on distinct
+     * `interaction_log_id` so multi-recipient rewards (a single
+     * purchase that paid both referrer and referee, or paid at multiple
+     * chain depths) only count the basket once.
+     *
+     * Walks `asset_logs → interaction_logs` end-to-end. The
+     * `recipient_type` filter is dropped here on purpose — a basket
+     * counts as long as *anyone* was rewarded for it on this campaign.
+     */
+    private async getAttributedGMV(campaignId: string): Promise<number> {
+        const distinctPurchases = db
+            .selectDistinct({
+                interactionLogId: assetLogsTable.interactionLogId,
+                amount: sql<string>`(${interactionLogsTable.payload}->>'amount')::NUMERIC`.as(
+                    "amount"
+                ),
+            })
+            .from(assetLogsTable)
+            .innerJoin(
+                interactionLogsTable,
+                eq(assetLogsTable.interactionLogId, interactionLogsTable.id)
+            )
+            .where(
+                and(
+                    eq(assetLogsTable.campaignRuleId, campaignId),
+                    isNull(assetLogsTable.cancelledAt),
+                    eq(interactionLogsTable.type, "purchase"),
+                    isNull(interactionLogsTable.cancelledAt)
+                )
+            )
+            .as("distinct_purchases");
+
+        const [row] = await db
+            .select({
+                gmv: sql<string>`COALESCE(SUM(${distinctPurchases.amount}), 0)`,
+            })
+            .from(distinctPurchases);
+
+        return toNumber(row?.gmv);
     }
 
     /**
@@ -348,7 +423,7 @@ export class CampaignDetailsOrchestrator {
 
         const [sharesRows, revenueRows] = await Promise.all([
             this.getSharesPerAmbassador(merchantId, ambassadorIds),
-            this.getRevenuePerAmbassador(merchantId, ambassadorIds),
+            this.getRevenuePerAmbassador(campaignId, ambassadorIds),
         ]);
 
         const sharesByGroup = new Map(
@@ -417,50 +492,49 @@ export class CampaignDetailsOrchestrator {
             }));
     }
 
+    /**
+     * Per-ambassador attributed revenue and sales — both campaign-scoped
+     * via the `asset_logs → interaction_logs` bridge.
+     *
+     * Each `referrer` asset_log on this campaign points (via
+     * `interaction_log_id`) at the purchase interaction that triggered
+     * the reward. The interaction's JSONB payload carries the fiat
+     * purchase amount and currency directly (set at webhook ingest),
+     * so we read it inline — no `purchases`/`referral_links` join needed.
+     *
+     * This is the cleanest attribution we have: an ambassador only
+     * contributes revenue for purchases they were actually paid out on
+     * for this specific campaign. Cancelled rewards drop out via
+     * `cancelled_at IS NULL`.
+     */
     private async getRevenuePerAmbassador(
-        merchantId: string,
+        campaignId: string,
         ambassadorIds: string[]
     ): Promise<
         Array<{ identityGroupId: string; revenue: number; sales: number }>
     > {
         const rows = await db
             .select({
-                referrerGroupId: referralLinksTable.referrerIdentityGroupId,
-                revenue: sql<string>`COALESCE(SUM(${purchasesTable.totalPrice}::NUMERIC), 0)`,
-                sales: sql<string>`COUNT(DISTINCT ${purchasesTable.id})`,
+                referrerGroupId: assetLogsTable.identityGroupId,
+                revenue: sql<string>`COALESCE(SUM((${interactionLogsTable.payload}->>'amount')::NUMERIC), 0)`,
+                sales: countDistinct(interactionLogsTable.id),
             })
-            .from(referralLinksTable)
+            .from(assetLogsTable)
             .innerJoin(
-                purchasesTable,
-                eq(
-                    purchasesTable.identityGroupId,
-                    referralLinksTable.refereeIdentityGroupId
-                )
-            )
-            .innerJoin(
-                merchantWebhooksTable,
-                eq(merchantWebhooksTable.id, purchasesTable.webhookId)
+                interactionLogsTable,
+                eq(assetLogsTable.interactionLogId, interactionLogsTable.id)
             )
             .where(
                 and(
-                    eq(referralLinksTable.merchantId, merchantId),
-                    isNull(referralLinksTable.removedAt),
-                    inArray(
-                        referralLinksTable.referrerIdentityGroupId,
-                        ambassadorIds
-                    ),
-                    eq(merchantWebhooksTable.merchantId, merchantId),
-                    or(
-                        isNull(purchasesTable.status),
-                        notInArray(purchasesTable.status, [
-                            "cancelled",
-                            "refunded",
-                        ])
-                    ),
-                    isNotNull(purchasesTable.identityGroupId)
+                    eq(assetLogsTable.campaignRuleId, campaignId),
+                    eq(assetLogsTable.recipientType, "referrer"),
+                    isNull(assetLogsTable.cancelledAt),
+                    eq(interactionLogsTable.type, "purchase"),
+                    isNull(interactionLogsTable.cancelledAt),
+                    inArray(assetLogsTable.identityGroupId, ambassadorIds)
                 )
             )
-            .groupBy(referralLinksTable.referrerIdentityGroupId);
+            .groupBy(assetLogsTable.identityGroupId);
 
         return rows.map((r) => ({
             identityGroupId: r.referrerGroupId,
@@ -482,6 +556,7 @@ export class CampaignDetailsOrchestrator {
             refereeAmount: number;
             conversions: number;
             ambassadorsTotal: number;
+            attributedGMV: number;
         };
         leaderboard: {
             rows: Array<{
@@ -507,6 +582,10 @@ export class CampaignDetailsOrchestrator {
         } = input;
 
         const cpa = safeRatio(campaignRollup.spend, campaignRollup.conversions);
+        const avgBasketValue = safeRatio(
+            campaignRollup.attributedGMV,
+            campaignRollup.conversions
+        );
         const metaCpa = metaCpaForCurrency(currency);
         const metaEquivalentCost = metaCpa * campaignRollup.conversions;
         const savedVsMeta = Math.max(
@@ -535,13 +614,24 @@ export class CampaignDetailsOrchestrator {
             totalReferees
         );
 
-        const roi = safeRatio(leaderboard.totalRevenue, campaignRollup.spend);
+        // True campaign ROI = total attributed GMV / total reward spend.
+        // Previous draft used the top-10 leaderboard `totalRevenue` as
+        // numerator, which under-counted whenever there were more than
+        // 10 earning ambassadors. `attributedGMV` is the exhaustive sum.
+        const roi = safeRatio(
+            campaignRollup.attributedGMV,
+            campaignRollup.spend
+        );
         const avgReward = safeRatio(
             campaignRollup.spend,
             campaignRollup.ambassadorsTotal
         );
 
         const top = leaderboard.rows[0];
+        // topPerformerPct is still scoped to the leaderboard's share of
+        // revenue, NOT campaign-wide GMV. Reads as "of the top 10
+        // ambassadors' revenue, X% comes from #1" — useful for spotting
+        // power-user concentration without conflating with the long tail.
         const topPerformerPct = top
             ? safeRatio(top.revenue, leaderboard.totalRevenue)
             : 0;
@@ -553,6 +643,8 @@ export class CampaignDetailsOrchestrator {
                 spend: campaignRollup.spend,
                 conversions: campaignRollup.conversions,
                 cpa,
+                attributedGMV: campaignRollup.attributedGMV,
+                avgBasketValue,
                 metaEquivalentCost,
                 metaCpa,
                 savedVsMeta,
