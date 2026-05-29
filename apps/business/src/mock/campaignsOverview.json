@@ -3,7 +3,7 @@
         "ambassadors": { "current": 14446, "previous": 12898 },
         "shares": { "current": 7210, "previous": 6676 },
         "revenue": { "current": 286000, "previous": 272381, "currency": "EUR" },
-        "totalRewardsUsd": { "current": 297.6, "previous": 280 },
+        "totalRewardsFiat": { "current": 297.6, "previous": 280 },
         "purchaseCount": { "current": 24, "previous": 22 }
     },
     "funnels": {

@@ -37,6 +37,12 @@ export type MemberQueryParams = {
     offset?: number;
     sort?: MemberQuerySort;
     filter?: MemberQueryFilter;
+    /**
+     * Caller's preferred display currency (lowercase SDK `Currency`).
+     * Drives the token→fiat conversion of `totalRewardsFiat`. Normalised
+     * via `toFiatCurrency` (defaults EUR).
+     */
+    currency?: string;
 };
 
 export class MemberQueryOrchestrator {
@@ -70,12 +76,12 @@ export class MemberQueryOrchestrator {
         const tokenPrices = await getTokenPrices(
             this.pricingRepository,
             inArray(assetLogsTable.merchantId, merchantIds),
-            "USD"
+            params.currency
         );
-        const usdRewardsExpr = buildRewardsExpression(tokenPrices);
+        const fiatRewardsExpr = buildRewardsExpression(tokenPrices);
 
         const havingConditions = this.buildHavingConditions(params.filter);
-        const sortExpr = this.buildSortExpression(params.sort, usdRewardsExpr);
+        const sortExpr = this.buildSortExpression(params.sort, fiatRewardsExpr);
 
         const limit = params.limit ?? 20;
         const offset = params.offset ?? 0;
@@ -87,9 +93,9 @@ export class MemberQueryOrchestrator {
                     totalInteractions: count(interactionLogsTable.id).as(
                         "total_interactions"
                     ),
-                    totalRewardsUsd:
-                        sql<number>`COALESCE(SUM(${usdRewardsExpr}), 0)`.as(
-                            "total_rewards_usd"
+                    totalRewardsFiat:
+                        sql<number>`COALESCE(SUM(${fiatRewardsExpr}), 0)`.as(
+                            "total_rewards_fiat"
                         ),
                     firstInteraction: min(interactionLogsTable.createdAt).as(
                         "first_interaction"
@@ -145,9 +151,9 @@ export class MemberQueryOrchestrator {
                 totalInteractions: count(interactionLogsTable.id).as(
                     "total_interactions"
                 ),
-                totalRewardsUsd:
-                    sql<number>`ROUND(COALESCE(SUM(${usdRewardsExpr}), 0)::NUMERIC, 2)`.as(
-                        "total_rewards_usd"
+                totalRewardsFiat:
+                    sql<number>`ROUND(COALESCE(SUM(${fiatRewardsExpr}), 0)::NUMERIC, 2)`.as(
+                        "total_rewards_fiat"
                     ),
                 firstInteraction: min(interactionLogsTable.createdAt).as(
                     "first_interaction"
@@ -213,7 +219,7 @@ export class MemberQueryOrchestrator {
             return {
                 user: getAddress(row.walletAddress),
                 totalInteractions: Number(row.totalInteractions),
-                totalRewardsUsd: Number(row.totalRewardsUsd),
+                totalRewardsFiat: Number(row.totalRewardsFiat),
                 firstInteractionTimestamp: row.firstInteraction
                     ? row.firstInteraction.toISOString()
                     : "",
@@ -239,13 +245,6 @@ export class MemberQueryOrchestrator {
         );
         if (merchantIds.length === 0) return 0;
 
-        const tokenPrices = await getTokenPrices(
-            this.pricingRepository,
-            inArray(assetLogsTable.merchantId, merchantIds),
-            "USD"
-        );
-        const usdRewardsExpr = buildRewardsExpression(tokenPrices);
-
         const havingConditions = this.buildHavingConditions(filter);
 
         const [result] = await db.select({ total: count() }).from(
@@ -255,10 +254,6 @@ export class MemberQueryOrchestrator {
                     totalInteractions: count(interactionLogsTable.id).as(
                         "total_interactions"
                     ),
-                    totalRewardsUsd:
-                        sql<number>`COALESCE(SUM(${usdRewardsExpr}), 0)`.as(
-                            "total_rewards_usd"
-                        ),
                     firstInteraction: min(interactionLogsTable.createdAt).as(
                         "first_interaction"
                     ),
@@ -334,15 +329,15 @@ export class MemberQueryOrchestrator {
 
     private buildSortExpression(
         sort: MemberQuerySort | undefined,
-        usdRewardsExpr: SQL
+        fiatRewardsExpr: SQL
     ): SQL {
         const direction = sort?.order === "asc" ? sql`ASC` : sql`DESC`;
 
         switch (sort?.by) {
             case "totalInteractions":
                 return sql`COUNT(${interactionLogsTable.id}) ${direction}`;
-            case "totalRewardsUsd":
-                return sql`COALESCE(SUM(${usdRewardsExpr}), 0) ${direction}`;
+            case "totalRewardsFiat":
+                return sql`COALESCE(SUM(${fiatRewardsExpr}), 0) ${direction}`;
             case "firstInteractionTimestamp":
                 return sql`MIN(${interactionLogsTable.createdAt}) ${direction}`;
             default:

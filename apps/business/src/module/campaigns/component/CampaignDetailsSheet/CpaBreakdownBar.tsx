@@ -33,7 +33,7 @@ export function CpaBreakdownBar({
     cpaBreakdown: CampaignDetailsStats["cpaBreakdown"];
 }) {
     const { t } = useTranslation();
-    const fmt = useDetailFormatters();
+    const fmt = useDetailFormatters(cpaBreakdown.currency);
 
     return (
         <Card radius="m">

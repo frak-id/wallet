@@ -16,10 +16,20 @@ export function truncateWallet(wallet: string) {
     return `${wallet.slice(0, 6)}…${wallet.slice(-6)}`;
 }
 
-/** Locale-bound number/currency/percent formatters for the details sheet. */
-export function useDetailFormatters() {
+/**
+ * Locale-bound number/currency/percent formatters for the details sheet.
+ *
+ * `currency` is the campaign's reporting currency — the modal purchase
+ * currency the backend already converted spend / CPA / earnings into.
+ * Revenue/GMV and rewards on a single campaign are coherent only in this
+ * one unit (no fiat↔fiat FX), so the whole sheet formats against it
+ * rather than the user's global preference. ISO-4217, uppercased for
+ * `Intl`, defaulting to EUR when the campaign has no purchases yet.
+ */
+export function useDetailFormatters(currency?: string) {
     const { i18n } = useTranslation();
     const locale = i18n.language;
+    const currencyCode = (currency || "EUR").toUpperCase();
     return useMemo(
         () => ({
             integer: new Intl.NumberFormat(locale, {
@@ -30,12 +40,12 @@ export function useDetailFormatters() {
             }),
             currency: new Intl.NumberFormat(locale, {
                 style: "currency",
-                currency: "EUR",
+                currency: currencyCode,
                 maximumFractionDigits: 2,
             }),
             currency0: new Intl.NumberFormat(locale, {
                 style: "currency",
-                currency: "EUR",
+                currency: currencyCode,
                 maximumFractionDigits: 0,
             }),
             percent0: new Intl.NumberFormat(locale, {
@@ -47,7 +57,7 @@ export function useDetailFormatters() {
                 maximumFractionDigits: 1,
             }),
         }),
-        [locale]
+        [locale, currencyCode]
     );
 }
 

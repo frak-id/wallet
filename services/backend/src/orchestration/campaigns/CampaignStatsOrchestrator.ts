@@ -32,11 +32,7 @@ import {
     distinctPurchases,
     walletIdentityJoinOn,
 } from "./queries";
-import {
-    buildRewardsExpression,
-    type FiatCurrency,
-    getTokenPrices,
-} from "./rewards";
+import { buildRewardsExpression, getTokenPrices } from "./rewards";
 
 /** Top-N cap on the ambassador leaderboard. */
 const TOP_AMBASSADORS_LIMIT = 10;
@@ -233,7 +229,7 @@ export class CampaignStatsOrchestrator {
                     eq(assetLogsTable.campaignRuleId, campaignId),
                     isNull(assetLogsTable.cancelledAt)
                 ) as SQL,
-                currency as FiatCurrency
+                currency
             )
         );
 

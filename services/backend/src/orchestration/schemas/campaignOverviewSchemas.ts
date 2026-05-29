@@ -17,7 +17,7 @@ import type { Static } from "elysia";
  * rounding, and keep the response cacheable (no `now()`-dependent fields).
  */
 
-/** Window-comparable scalar KPI (counts, USD amounts). */
+/** Window-comparable scalar KPI (counts, fiat amounts). */
 const NumericKpiSchema = t.Object({
     current: t.Number(),
     previous: t.Number(),
@@ -41,7 +41,7 @@ export const OverviewKpisSchema = t.Object({
     ambassadors: NumericKpiSchema,
     shares: NumericKpiSchema,
     revenue: RevenueKpiSchema,
-    totalRewardsUsd: NumericKpiSchema,
+    totalRewardsFiat: NumericKpiSchema,
     purchaseCount: NumericKpiSchema,
 });
 export type OverviewKpis = Static<typeof OverviewKpisSchema>;

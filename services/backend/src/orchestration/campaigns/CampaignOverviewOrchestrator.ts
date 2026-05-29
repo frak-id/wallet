@@ -64,8 +64,8 @@ const TOP_CAMPAIGNS_LIMIT = 10;
 type AssetKpiRow = {
     ambassadorsCurrent: string;
     ambassadorsPrevious: string;
-    rewardsUsdCurrent: string;
-    rewardsUsdPrevious: string;
+    rewardsFiatCurrent: string;
+    rewardsFiatPrevious: string;
     purchaseInteractionsCurrent: string;
     purchaseInteractionsPrevious: string;
 };
@@ -121,19 +121,20 @@ export class CampaignOverviewOrchestrator {
 
     async getSummary(
         merchantId: string,
-        window: OverviewWindowQuery
+        window: OverviewWindowQuery,
+        currency?: string
     ): Promise<OverviewSummaryResponse> {
         const resolved = resolveWindow(window);
 
         const tokenPrices = await getTokenPrices(
             this.pricingRepository,
             eq(assetLogsTable.merchantId, merchantId),
-            "USD"
+            currency
         );
-        const usdRewardsExpr = buildRewardsExpression(tokenPrices);
+        const fiatRewardsExpr = buildRewardsExpression(tokenPrices);
 
         const [kpis, topAndStatus, series] = await Promise.all([
-            this.getKpis(merchantId, resolved, usdRewardsExpr),
+            this.getKpis(merchantId, resolved, fiatRewardsExpr),
             this.getTopCampaignsAndStatusBreakdown(
                 merchantId,
                 resolved.current
@@ -160,7 +161,7 @@ export class CampaignOverviewOrchestrator {
     private async getKpis(
         merchantId: string,
         resolved: ResolvedWindow,
-        usdRewardsExpr: SQL
+        fiatRewardsExpr: SQL
     ): Promise<OverviewKpis> {
         const { current, previous } = resolved;
         const outerFrom = previous.from;
@@ -171,8 +172,8 @@ export class CampaignOverviewOrchestrator {
                 .select({
                     ambassadorsCurrent: sql<string>`COUNT(DISTINCT ${assetLogsTable.identityGroupId}) FILTER (WHERE ${assetLogsTable.recipientType} = 'referrer' AND ${between(assetLogsTable.createdAt, current.from, current.to)})`,
                     ambassadorsPrevious: sql<string>`COUNT(DISTINCT ${assetLogsTable.identityGroupId}) FILTER (WHERE ${assetLogsTable.recipientType} = 'referrer' AND ${between(assetLogsTable.createdAt, previous.from, previous.to)})`,
-                    rewardsUsdCurrent: sql<string>`COALESCE(SUM(${usdRewardsExpr}) FILTER (WHERE ${between(assetLogsTable.createdAt, current.from, current.to)}), 0)`,
-                    rewardsUsdPrevious: sql<string>`COALESCE(SUM(${usdRewardsExpr}) FILTER (WHERE ${between(assetLogsTable.createdAt, previous.from, previous.to)}), 0)`,
+                    rewardsFiatCurrent: sql<string>`COALESCE(SUM(${fiatRewardsExpr}) FILTER (WHERE ${between(assetLogsTable.createdAt, current.from, current.to)}), 0)`,
+                    rewardsFiatPrevious: sql<string>`COALESCE(SUM(${fiatRewardsExpr}) FILTER (WHERE ${between(assetLogsTable.createdAt, previous.from, previous.to)}), 0)`,
                     purchaseInteractionsCurrent: sql<string>`COUNT(DISTINCT ${interactionLogsTable.id}) FILTER (WHERE ${interactionLogsTable.type} = 'purchase' AND ${between(assetLogsTable.createdAt, current.from, current.to)})`,
                     purchaseInteractionsPrevious: sql<string>`COUNT(DISTINCT ${interactionLogsTable.id}) FILTER (WHERE ${interactionLogsTable.type} = 'purchase' AND ${between(assetLogsTable.createdAt, previous.from, previous.to)})`,
                 })
@@ -226,9 +227,9 @@ export class CampaignOverviewOrchestrator {
                 previous: toNumber(purchaseRow.revenuePrevious),
                 currency: purchaseRow.currency ?? null,
             },
-            totalRewardsUsd: {
-                current: toNumber(assetRow.rewardsUsdCurrent),
-                previous: toNumber(assetRow.rewardsUsdPrevious),
+            totalRewardsFiat: {
+                current: toNumber(assetRow.rewardsFiatCurrent),
+                previous: toNumber(assetRow.rewardsFiatPrevious),
             },
             purchaseCount: {
                 current: toNumber(purchaseRow.purchaseCountCurrent),

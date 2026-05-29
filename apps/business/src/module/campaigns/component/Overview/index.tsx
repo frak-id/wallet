@@ -7,6 +7,7 @@ import {
 } from "@/module/campaigns/queries/queryOptions";
 import { useIsDemoMode } from "@/module/common/atoms/demoMode";
 import { useActiveMerchantId } from "@/module/common/hook/useActiveMerchantId";
+import { currencyStore } from "@/stores/currencyStore";
 import { FunnelCard } from "./FunnelCard";
 import { FunnelCardSkeleton } from "./FunnelCardSkeleton";
 import { KpiCardsRow } from "./KpiCardsRow";
@@ -23,8 +24,15 @@ type WindowProps = { from?: string; to?: string };
 export function CampaignsOverview({ from, to }: WindowProps) {
     const merchantId = useActiveMerchantId();
     const isDemoMode = useIsDemoMode();
+    const currency = currencyStore((state) => state.preferredCurrency);
     const { data: summary } = useSuspenseQuery(
-        overviewSummaryQueryOptions({ merchantId, isDemoMode, from, to })
+        overviewSummaryQueryOptions({
+            merchantId,
+            isDemoMode,
+            from,
+            to,
+            currency,
+        })
     );
 
     return (

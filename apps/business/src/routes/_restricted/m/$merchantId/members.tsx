@@ -5,6 +5,7 @@ import { queryClient } from "@/module/common/provider/RootProvider";
 import { TableMembers } from "@/module/members/component/TableMembers";
 import { membersPageQueryOptions } from "@/module/members/queries/queryOptions";
 import { useAuthStore } from "@/stores/authStore";
+import { currencyStore } from "@/stores/currencyStore";
 import { membersStore } from "@/stores/membersStore";
 
 export const Route = createFileRoute("/_restricted/m/$merchantId/members")({
@@ -28,6 +29,7 @@ export const Route = createFileRoute("/_restricted/m/$merchantId/members")({
                 merchantId: params.merchantId,
                 filters,
                 isDemoMode,
+                currency: currencyStore.getState().preferredCurrency,
             })
         );
     },

@@ -3,6 +3,7 @@ import type {
     OverviewAnalyticsResponse,
     OverviewSummaryResponse,
 } from "@frak-labs/backend-elysia/orchestration/schemas";
+import type { Currency } from "@frak-labs/core-sdk";
 import { queryOptions } from "@tanstack/react-query";
 import { redirect } from "@tanstack/react-router";
 import campaignDetailsMock from "@/mock/campaignDetails.json";
@@ -66,11 +67,13 @@ export const overviewSummaryQueryOptions = ({
     isDemoMode,
     from,
     to,
+    currency,
 }: {
     merchantId: string;
     isDemoMode: boolean;
     from?: string;
     to?: string;
+    currency: Currency;
 }) =>
     queryOptions<OverviewSummaryResponse>({
         queryKey: [
@@ -81,8 +84,10 @@ export const overviewSummaryQueryOptions = ({
             isDemoMode ? "demo" : "live",
             from ?? null,
             to ?? null,
+            currency,
         ],
-        queryFn: () => getOverviewSummary({ merchantId, isDemoMode, from, to }),
+        queryFn: () =>
+            getOverviewSummary({ merchantId, isDemoMode, from, to, currency }),
         staleTime: isDemoMode ? Number.POSITIVE_INFINITY : 5 * 60 * 1000,
         // initialData must be gated on isDemoMode: with a merchant-keyed
         // cache entry and `staleTime: Infinity`, seeding mock data in

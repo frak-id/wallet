@@ -1,3 +1,4 @@
+import type { Currency } from "@frak-labs/core-sdk";
 import { authenticatedBackendApi } from "@/api/backendClient";
 import {
     getMerchantMembersMock,
@@ -7,7 +8,7 @@ import {
 export type GetMembersPageItem = {
     user: `0x${string}`;
     totalInteractions: number;
-    totalRewardsUsd: number;
+    totalRewardsFiat: number;
     firstInteractionTimestamp: string;
     merchantIds: string[];
     merchantNames: string[];
@@ -32,6 +33,9 @@ export type GetMembersParam = {
         interactions?: { min?: number; max?: number };
         firstInteractionTimestamp?: { min?: number; max?: number };
     };
+    // Preferred display currency. Backend converts `totalRewardsFiat`
+    // to this; part of the query key so a settings change refetches.
+    currency?: Currency;
 };
 
 export async function getMerchantMembers(
@@ -55,6 +59,7 @@ export async function getMerchantMembers(
                           params.filter.firstInteractionTimestamp,
                   }
                 : undefined,
+            currency: params.currency,
         }
     );
 

@@ -13,8 +13,8 @@ import { TopAmbassadorsTable } from "./TopAmbassadorsTable";
 
 export function AmbassadorsTab({ data }: { data: CampaignDetailsStats }) {
     const { t } = useTranslation();
-    const fmt = useDetailFormatters();
     const { ambassadorStats, efficiency } = data;
+    const fmt = useDetailFormatters(efficiency.currency);
 
     return (
         <Stack space="l">
@@ -50,7 +50,10 @@ export function AmbassadorsTab({ data }: { data: CampaignDetailsStats }) {
             </div>
 
             <Section title={t("campaigns.details.top.title")}>
-                <TopAmbassadorsTable topAmbassadors={data.topAmbassadors} />
+                <TopAmbassadorsTable
+                    topAmbassadors={data.topAmbassadors}
+                    currency={efficiency.currency}
+                />
             </Section>
 
             <Section title={t("campaigns.details.efficiency.title")}>

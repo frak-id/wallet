@@ -22,6 +22,24 @@ export type TokenPriceMap = Map<string, number>;
 export type FiatCurrency = "EUR" | "USD" | "GBP";
 
 /**
+ * Normalise a wire currency code to a {@link FiatCurrency}. The frontend
+ * sends the lowercase `Currency` union (`"eur" | "usd" | "gbp"`); the
+ * pricing layer keys on uppercase ISO-4217. Falls back to EUR for
+ * undefined, empty or unsupported codes — same default as
+ * {@link pickFiatPrice}, our launch market.
+ */
+export function toFiatCurrency(currency?: string): FiatCurrency {
+    switch (currency?.toUpperCase()) {
+        case "USD":
+            return "USD";
+        case "GBP":
+            return "GBP";
+        default:
+            return "EUR";
+    }
+}
+
+/**
  * Build a CASE expression that converts on-chain reward amounts to
  * the fiat unit baked into `prices`. Each WHEN clause matches one
  * token address and multiplies the row's `amount` by the
@@ -44,28 +62,26 @@ export function buildRewardsExpression(prices: TokenPriceMap): SQL {
 }
 
 /**
- * Resolve a `TokenPrice` to a single fiat scalar. Defaults to EUR
- * when the currency is unrecognised — matches the launch market and
- * keeps downstream CASE expressions populated rather than silently
- * zeroing.
+ * Resolve a `TokenPrice` to a single fiat scalar for the requested wire
+ * currency. {@link toFiatCurrency} owns the code mapping + EUR fallback
+ * (unrecognised/missing → EUR), so this only indexes the
+ * `{ eur, usd, gbp }` struct — no second switch to keep in sync.
  */
 function pickFiatPrice(
     price: { eur: number; usd: number; gbp: number },
-    currency: FiatCurrency
+    currency?: string
 ): number {
-    switch (currency) {
-        case "USD":
-            return price.usd;
-        case "GBP":
-            return price.gbp;
-        default:
-            return price.eur;
-    }
+    const key = toFiatCurrency(currency).toLowerCase() as keyof typeof price;
+    return price[key];
 }
 
 /**
- * Build a `TokenPriceMap` for the requested fiat currency over the
- * subset of `asset_logs` rows matched by `scope`.
+ * Build a `TokenPriceMap` for the requested currency over the subset of
+ * `asset_logs` rows matched by `scope`.
+ *
+ * `currency` is the raw wire value (lowercase SDK `Currency`, an uppercase
+ * ISO code, or `undefined`); normalisation to {@link FiatCurrency} happens
+ * once inside {@link pickFiatPrice}, so callers pass it straight through.
  *
  * `scope` is the WHERE clause that picks which rows we discover
  * token addresses from (typically merchant-scoped for overview, or
@@ -76,7 +92,7 @@ function pickFiatPrice(
 export async function getTokenPrices(
     pricingRepository: PricingRepository,
     scope: SQL,
-    currency: FiatCurrency
+    currency?: string
 ): Promise<TokenPriceMap> {
     const tokenRows = await db
         .selectDistinct({ tokenAddress: assetLogsTable.tokenAddress })

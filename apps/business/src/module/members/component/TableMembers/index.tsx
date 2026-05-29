@@ -25,6 +25,7 @@ import { MemberDetailsSheet } from "@/module/members/component/MemberDetailsShee
 import { TableMembersFilters } from "@/module/members/component/TableMembers/Filters";
 import { Pagination } from "@/module/members/component/TableMembers/Pagination";
 import { membersPageQueryOptions } from "@/module/members/queries/queryOptions";
+import { currencyStore } from "@/stores/currencyStore";
 import { membersStore } from "@/stores/membersStore";
 import * as styles from "./table-members.css";
 
@@ -44,6 +45,7 @@ export function TableMembers() {
     const clearSelection = membersStore((state) => state.clearSelection);
     const isDemoMode = useIsDemoMode();
     const merchantId = useActiveMerchantId();
+    const currency = currencyStore((state) => state.preferredCurrency);
 
     // Reset pagination when the active merchant changes — the previous
     // merchant's page index doesn't carry over to a different dataset
@@ -111,7 +113,12 @@ export function TableMembers() {
     }, [sortingState, setFilters]);
 
     const { data: page, isPending } = useQuery({
-        ...membersPageQueryOptions({ merchantId, filters, isDemoMode }),
+        ...membersPageQueryOptions({
+            merchantId,
+            filters,
+            isDemoMode,
+            currency,
+        }),
         placeholderData: keepPreviousData,
     });
 
@@ -181,13 +188,19 @@ export function TableMembers() {
                     header: () => "Interactions",
                     cell: ({ getValue }) => getValue(),
                 }),
-                columnHelper.accessor("totalRewardsUsd", {
+                columnHelper.accessor("totalRewardsFiat", {
                     enableSorting: true,
-                    header: () => "Rewards (USD)",
-                    cell: ({ getValue }) => formatAmount(getValue(), "usd"),
+                    header: () => "Rewards",
+                    cell: ({ getValue }) => formatAmount(getValue(), currency),
                 }),
             ] as ColumnDef<GetMembersPageItem>[],
-        [selectedMembers, addSelectedMember, removeSelectedMember, isDemoMode]
+        [
+            selectedMembers,
+            addSelectedMember,
+            removeSelectedMember,
+            isDemoMode,
+            currency,
+        ]
     );
 
     if (!page || isPending) {

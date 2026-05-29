@@ -15,6 +15,7 @@ import {
     WalletAddress,
 } from "@/module/common/component/HashDisplay";
 import type { GetMembersPageItem } from "@/module/members/api/getMerchantMembers";
+import { currencyStore } from "@/stores/currencyStore";
 import * as styles from "./member-details-sheet.css";
 
 type Props = {
@@ -33,6 +34,7 @@ export function MemberDetailsSheet({ member, onOpenChange }: Props) {
 }
 
 function MemberDetailsContent({ member }: { member: GetMembersPageItem }) {
+    const currency = currencyStore((state) => state.preferredCurrency);
     const memberSince = new Date(
         Number.parseInt(member.firstInteractionTimestamp, 10) * 1000
     ).toLocaleDateString();
@@ -56,7 +58,7 @@ function MemberDetailsContent({ member }: { member: GetMembersPageItem }) {
                     />
                     <Row
                         label="Rewards earned"
-                        value={formatAmount(member.totalRewardsUsd, "usd")}
+                        value={formatAmount(member.totalRewardsFiat, currency)}
                     />
                 </Section>
 
