@@ -4,9 +4,9 @@ import { BigNumber, truncateWallet } from "./parts";
 
 describe("truncateWallet", () => {
     it("shortens a full address to head…tail", () => {
-        expect(
-            truncateWallet("0x742d35Cc6634C0532925a3b8D4f9f0bEb0")
-        ).toBe("0x742d…f0bEb0");
+        expect(truncateWallet("0x742d35Cc6634C0532925a3b8D4f9f0bEb0")).toBe(
+            "0x742d…f0bEb0"
+        );
     });
 
     it("returns short inputs unchanged (no overlap)", () => {
