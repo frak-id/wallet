@@ -5,10 +5,14 @@ import { alias } from "../../tokens.css";
 
 export const card = recipe({
     base: {
-        borderRadius: alias.cornerRadius.l,
         overflow: "hidden",
     },
     variants: {
+        radius: {
+            s: { borderRadius: alias.cornerRadius.s },
+            m: { borderRadius: alias.cornerRadius.m },
+            l: { borderRadius: alias.cornerRadius.l },
+        },
         variant: {
             elevated: {
                 backgroundColor: vars.surface.elevated,
@@ -27,6 +31,7 @@ export const card = recipe({
         },
     },
     defaultVariants: {
+        radius: "l",
         variant: "elevated",
         padding: "default",
     },

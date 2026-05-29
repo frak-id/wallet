@@ -3,6 +3,7 @@ import { scaleLinear } from "@visx/scale";
 import { motion } from "motion/react";
 import { useState } from "react";
 import { vars } from "../../theme.css";
+import { DeltaIndicator } from "../DeltaIndicator";
 import { funnelChartStyles } from "./funnelChart.css";
 
 export type FunnelStep = {
@@ -69,22 +70,6 @@ function FunnelBar({
     );
 }
 
-function FunnelDelta({ delta }: { delta: number }) {
-    const positive = delta >= 0;
-    return (
-        <span
-            className={`${funnelChartStyles.delta} ${
-                positive
-                    ? funnelChartStyles.deltaUp
-                    : funnelChartStyles.deltaDown
-            }`}
-        >
-            {positive ? "▲" : "▼"} {delta > 0 ? "+" : ""}
-            {delta}%
-        </span>
-    );
-}
-
 function FunnelRow({
     step,
     isLast,
@@ -126,7 +111,9 @@ function FunnelRow({
                 >
                     {valueFormatter(step.value)}
                 </span>
-                {step.delta !== undefined && <FunnelDelta delta={step.delta} />}
+                {step.delta !== undefined && (
+                    <DeltaIndicator delta={step.delta} size="s" />
+                )}
             </div>
         </div>
     );

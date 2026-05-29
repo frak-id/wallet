@@ -1,25 +1,47 @@
 import { style } from "@vanilla-extract/css";
+import { recipe } from "@vanilla-extract/recipes";
 import { vars } from "../../theme.css";
 import { alias } from "../../tokens.css";
 
-export const tabsStyles = {
-    list: style({
+export const tabsList = recipe({
+    base: {
         display: "inline-flex",
         alignItems: "center",
         alignSelf: "flex-start",
         width: "fit-content",
-        padding: "2px",
-        borderRadius: "10px",
-        backgroundColor: vars.surface.muted,
-    }),
-    trigger: style({
+    },
+    variants: {
+        variant: {
+            // Grey-track segmented control (default), content-sized.
+            segmented: {
+                padding: "2px",
+                borderRadius: "10px",
+                backgroundColor: vars.surface.muted,
+            },
+            // Trackless navigation bar — active tab is a floating white pill
+            // (Figma "Tabs - Navigation bar").
+            navigation: {
+                gap: "0",
+            },
+        },
+        // Opt-in: stretch the list to fill its container so triggers can split
+        // the row equally (paired with `fullWidth` on each TabsTrigger).
+        fullWidth: {
+            true: { width: "100%" },
+            false: {},
+        },
+    },
+    defaultVariants: {
+        variant: "segmented",
+        fullWidth: false,
+    },
+});
+
+export const tabsTrigger = recipe({
+    base: {
         display: "inline-flex",
         alignItems: "center",
         justifyContent: "center",
-        height: "28px",
-        paddingLeft: alias.spacing.xl,
-        paddingRight: alias.spacing.xl,
-        borderRadius: alias.cornerRadius.s,
         border: "none",
         background: "transparent",
         fontFamily: "inherit",
@@ -32,10 +54,6 @@ export const tabsStyles = {
         outlineOffset: "2px",
         whiteSpace: "nowrap",
         selectors: {
-            '&[data-state="active"]': {
-                backgroundColor: vars.surface.elevated,
-                color: vars.text.primary,
-            },
             '&:not([data-state="active"]):hover': {
                 color: vars.text.secondary,
             },
@@ -44,8 +62,49 @@ export const tabsStyles = {
                 opacity: 0.5,
             },
         },
-    }),
-    content: style({
-        outline: "none",
-    }),
-};
+    },
+    variants: {
+        variant: {
+            segmented: {
+                height: "28px",
+                paddingLeft: alias.spacing.xl,
+                paddingRight: alias.spacing.xl,
+                borderRadius: alias.cornerRadius.s,
+                selectors: {
+                    '&[data-state="active"]': {
+                        backgroundColor: vars.surface.elevated,
+                        color: vars.text.primary,
+                    },
+                },
+            },
+            navigation: {
+                height: "36px",
+                paddingLeft: alias.spacing.m,
+                paddingRight: alias.spacing.m,
+                paddingTop: alias.spacing.xs,
+                paddingBottom: alias.spacing.xs,
+                borderRadius: alias.cornerRadius.m,
+                selectors: {
+                    '&[data-state="active"]': {
+                        backgroundColor: vars.surface.elevated,
+                        color: vars.text.primary,
+                    },
+                },
+            },
+        },
+        // Opt-in: each trigger grows to split the row equally (paired with
+        // `fullWidth` on TabsList).
+        fullWidth: {
+            true: { flex: 1, minWidth: 0 },
+            false: {},
+        },
+    },
+    defaultVariants: {
+        variant: "segmented",
+        fullWidth: false,
+    },
+});
+
+export const tabsContent = style({
+    outline: "none",
+});

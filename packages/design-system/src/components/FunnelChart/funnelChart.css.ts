@@ -63,13 +63,4 @@ export const funnelChartStyles = {
     valueSuccess: style({
         color: vars.text.success,
     }),
-    delta: style({
-        display: "inline-flex",
-        alignItems: "center",
-        gap: "4px",
-        fontSize: "12px",
-        lineHeight: "20px",
-    }),
-    deltaUp: style({ color: vars.text.success }),
-    deltaDown: style({ color: vars.text.warning }),
 };

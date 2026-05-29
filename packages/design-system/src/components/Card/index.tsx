@@ -12,6 +12,7 @@ type CardProps = HTMLAttributes<HTMLDivElement> &
 export function Card({
     padding,
     variant,
+    radius,
     children,
     className,
     color: _color,
@@ -19,7 +20,7 @@ export function Card({
 }: CardProps) {
     return (
         <Box
-            className={`${card({ variant, padding })}${className ? ` ${className}` : ""}`}
+            className={`${card({ variant, padding, radius })}${className ? ` ${className}` : ""}`}
             {...rest}
         >
             {children}
