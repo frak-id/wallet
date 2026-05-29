@@ -59,7 +59,7 @@ Single OpenPanel project, so funnels are pure event-name filters.
 5. Postgres `purchaseInteractions` → Converted
 
 **Wallet funnel** (4 OpenPanel steps + 2 backend steps):
-1. `screen_view` on `/explorer*` paths → Explorer impressions
+1. `explorer_card_viewed` (merchant-scoped) → Explorer impressions
 2. `wallet_modal_opened` where `modal in (explorerDetail, welcomeDetail)` → Brand page opened
 3. `sharing_page_viewed` → Share initiated
 4. `sharing_link_shared` / `sharing_link_copied` (wallet-context sources) → Link shared

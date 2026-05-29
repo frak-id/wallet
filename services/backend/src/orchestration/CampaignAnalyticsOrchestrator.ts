@@ -319,7 +319,7 @@ function walletFunnelDefinition(): FunnelStepDefinition[] {
     return [
         {
             kind: "explorer_impressions",
-            eventNames: ["screen_view"],
+            eventNames: ["explorer_card_viewed"],
         },
         {
             kind: "brand_page_opened",
@@ -336,27 +336,16 @@ function walletFunnelDefinition(): FunnelStepDefinition[] {
 
 function buildFunnelFilters(
     merchantId: string,
-    event: string,
+    _event: string,
     step: FunnelStepDefinition
 ): OpenPanelChartFilter[] {
-    const filters: OpenPanelChartFilter[] = [];
-    if (event === "screen_view") {
-        // `screen_view` is OpenPanel-autotracked and never carries
-        // `merchant_id` — the wallet "Explorer impressions" step is a
-        // global denominator. All other funnel events are scoped per
-        // merchant.
-        filters.push({
-            name: "path",
-            operator: "startsWith",
-            value: ["/explorer"],
-        });
-    } else {
-        filters.push({
+    const filters: OpenPanelChartFilter[] = [
+        {
             name: "properties.merchant_id",
             operator: "is",
             value: [merchantId],
-        });
-    }
+        },
+    ];
     if (step.extraFilters) filters.push(...step.extraFilters);
     return filters;
 }
