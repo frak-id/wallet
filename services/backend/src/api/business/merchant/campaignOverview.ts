@@ -2,6 +2,7 @@ import { t } from "@backend-utils";
 import { Elysia, status } from "elysia";
 import { OrchestrationContext } from "../../../orchestration/context";
 import {
+    CurrencyParamSchema,
     MerchantIdParamSchema,
     OverviewAnalyticsResponseSchema,
     OverviewSummaryResponseSchema,
@@ -33,12 +34,19 @@ export const merchantCampaignOverviewRoutes = new Elysia({
 
             return OrchestrationContext.orchestrators.campaignOverview.getSummary(
                 merchantId,
-                { from: query.from, to: query.to }
+                { from: query.from, to: query.to },
+                query.currency
             );
         },
         {
             params: MerchantIdParamSchema,
-            query: OverviewWindowQuerySchema,
+            // `currency` drives token→fiat conversion of the rewards KPI;
+            // composed onto the shared window schema so the analytics
+            // route (no rewards) keeps its lean contract.
+            query: t.Composite([
+                OverviewWindowQuerySchema,
+                t.Object({ currency: t.Optional(CurrencyParamSchema) }),
+            ]),
             response: {
                 200: OverviewSummaryResponseSchema,
                 401: t.String(),
@@ -64,7 +72,7 @@ export const merchantCampaignOverviewRoutes = new Elysia({
                 return status(403, "Access denied");
             }
 
-            return OrchestrationContext.orchestrators.campaignAnalytics.getAnalytics(
+            return OrchestrationContext.orchestrators.campaignOverview.getAnalytics(
                 merchantId,
                 { from: query.from, to: query.to }
             );

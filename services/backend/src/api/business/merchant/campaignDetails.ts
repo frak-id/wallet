@@ -38,7 +38,7 @@ export const merchantCampaignDetailsRoutes = new Elysia({
                 return status(404, "Campaign not found");
             }
 
-            return OrchestrationContext.orchestrators.campaignDetails.getDetailsForCampaign(
+            return OrchestrationContext.orchestrators.campaignStats.getDetailsForCampaign(
                 merchantId,
                 campaignId
             );

@@ -9,7 +9,7 @@ export function EconomicValueCards({
     economicValue: CampaignDetailsStats["economicValue"];
 }) {
     const { t } = useTranslation();
-    const fmt = useDetailFormatters();
+    const fmt = useDetailFormatters(economicValue.currency);
     const conversions = fmt.integer.format(economicValue.conversions);
 
     return (

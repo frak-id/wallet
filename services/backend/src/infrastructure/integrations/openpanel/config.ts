@@ -18,7 +18,7 @@
  *     key matches what the request sent (e.g. `"properties.source"`,
  *     `"device"`). One serie emitted per (event × breakdown value) tuple.
  *
- * Only the subset used by `CampaignAnalyticsOrchestrator` is modelled here.
+ * Only the subset used by `CampaignOverviewOrchestrator.getAnalytics` is modelled here.
  */
 
 export type OpenPanelChartInterval =

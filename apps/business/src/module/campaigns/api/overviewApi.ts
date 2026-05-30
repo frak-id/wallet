@@ -2,6 +2,7 @@ import type {
     OverviewAnalyticsResponse,
     OverviewSummaryResponse,
 } from "@frak-labs/backend-elysia/orchestration/schemas";
+import type { Currency } from "@frak-labs/core-sdk";
 import { authenticatedBackendApi } from "@/api/backendClient";
 import campaignsOverviewMock from "@/mock/campaignsOverview.json";
 
@@ -32,11 +33,13 @@ export async function getOverviewSummary({
     isDemoMode,
     from,
     to,
+    currency,
 }: {
     merchantId: string;
     isDemoMode: boolean;
     from?: string;
     to?: string;
+    currency?: Currency;
 }): Promise<OverviewSummaryResponse> {
     if (isDemoMode) {
         return getOverviewSummaryMock();
@@ -44,7 +47,7 @@ export async function getOverviewSummary({
 
     const { data, error } = await authenticatedBackendApi
         .merchant({ merchantId })
-        .campaigns.overview.summary.get({ query: { from, to } });
+        .campaigns.overview.summary.get({ query: { from, to, currency } });
 
     if (!data || error) {
         throw new Error("Failed to fetch campaigns overview summary");

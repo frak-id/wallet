@@ -8,7 +8,7 @@ import type {
 type MemberData = {
     user: string;
     totalInteractions: number;
-    totalRewardsUsd: number;
+    totalRewardsFiat: number;
     firstInteractionTimestamp: string;
     merchantIds: string[];
     productNames: string[];
@@ -121,8 +121,8 @@ function getMembersMockSync(params: GetMembersParam): GetMembersResponseDto {
                 case "totalInteractions":
                     comparison = a.totalInteractions - b.totalInteractions;
                     break;
-                case "totalRewardsUsd":
-                    comparison = a.totalRewardsUsd - b.totalRewardsUsd;
+                case "totalRewardsFiat":
+                    comparison = a.totalRewardsFiat - b.totalRewardsFiat;
                     break;
                 case "firstInteractionTimestamp":
                     comparison =

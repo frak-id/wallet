@@ -1,3 +1,4 @@
+import type { Currency } from "@frak-labs/core-sdk";
 import { queryOptions } from "@tanstack/react-query";
 import {
     type GetMembersParam,
@@ -16,13 +17,19 @@ export const membersPageQueryOptions = ({
     merchantId,
     filters,
     isDemoMode,
+    currency,
 }: {
     merchantId: string;
     filters: GetMembersParam;
     isDemoMode: boolean;
+    currency: Currency;
 }) => {
+    // `currency` rides inside `scoped`, which is already part of the
+    // query key — so flipping the preferred currency refetches and the
+    // backend re-converts `totalRewardsFiat` to the new unit.
     const scoped: GetMembersParam = {
         ...filters,
+        currency,
         filter: {
             ...(filters.filter ?? {}),
             merchantIds: [merchantId],

@@ -8,6 +8,7 @@ import {
 import { PageShell } from "@/module/common/component/PageShell";
 import { DataLoadError } from "@/module/common/component/RouteError";
 import { queryClient } from "@/module/common/provider/RootProvider";
+import { currencyStore } from "@/stores/currencyStore";
 
 export type CampaignsOverviewSearch = {
     from?: string;
@@ -42,7 +43,12 @@ export const Route = createFileRoute("/_restricted/m/$merchantId/campaigns/")({
             from: deps.from,
             to: deps.to,
         };
-        queryClient.prefetchQuery(overviewSummaryQueryOptions(args));
+        queryClient.prefetchQuery(
+            overviewSummaryQueryOptions({
+                ...args,
+                currency: currencyStore.getState().preferredCurrency,
+            })
+        );
         queryClient.prefetchQuery(overviewAnalyticsQueryOptions(args));
     },
     component: CampaignsOverviewPage,

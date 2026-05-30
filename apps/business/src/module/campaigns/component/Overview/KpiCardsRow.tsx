@@ -5,12 +5,11 @@ import { useTranslation } from "react-i18next";
 import { overviewAnalyticsQueryOptions } from "@/module/campaigns/queries/queryOptions";
 import { useIsDemoMode } from "@/module/common/atoms/demoMode";
 import { useActiveMerchantId } from "@/module/common/hook/useActiveMerchantId";
+import { currencyStore } from "@/stores/currencyStore";
 import { OverviewKpiCard } from "./OverviewKpiCard";
 import * as styles from "./overview.css";
 
 const DEFAULT_REVENUE_CURRENCY = "EUR";
-/** Avg CPA is `total_rewards_usd / purchases`, so display in USD. */
-const REWARDS_CURRENCY = "USD";
 
 /**
  * Hint shown on the three KPI cards whose Postgres-backed values
@@ -41,6 +40,12 @@ export function KpiCardsRow({ kpis, from, to }: Props) {
 
     const locale = i18n.language;
     const revenueCurrency = kpis.revenue.currency ?? DEFAULT_REVENUE_CURRENCY;
+    // Rewards/CPA are token→fiat converted to the user's chosen currency
+    // — the same one the summary query requested, so symbol and value
+    // stay in sync. ISO-4217 wants uppercase; the store holds lowercase.
+    const rewardsCurrency = currencyStore(
+        (state) => state.preferredCurrency
+    ).toUpperCase();
 
     const formatters = useMemo(
         () => ({
@@ -56,7 +61,7 @@ export function KpiCardsRow({ kpis, from, to }: Props) {
             }),
             cpa: new Intl.NumberFormat(locale, {
                 style: "currency",
-                currency: REWARDS_CURRENCY,
+                currency: rewardsCurrency,
                 maximumFractionDigits: 2,
             }),
             percent: new Intl.NumberFormat(locale, {
@@ -64,7 +69,7 @@ export function KpiCardsRow({ kpis, from, to }: Props) {
                 maximumFractionDigits: 1,
             }),
         }),
-        [locale, revenueCurrency]
+        [locale, revenueCurrency, rewardsCurrency]
     );
 
     // Overlay accurate values when available — keeps sharingRate
@@ -82,7 +87,7 @@ export function KpiCardsRow({ kpis, from, to }: Props) {
     );
 
     const avgCpa = safeRatio(
-        kpis.totalRewardsUsd.current,
+        kpis.totalRewardsFiat.current,
         kpis.purchaseCount.current
     );
 

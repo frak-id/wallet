@@ -4,6 +4,7 @@ import { Elysia, status } from "elysia";
 import { MerchantContext } from "../../../domain/merchant";
 import { OrchestrationContext } from "../../../orchestration/context";
 import {
+    CurrencyParamSchema,
     MemberFilterSchema,
     MemberQueryResultSchema,
     MemberSortSchema,
@@ -54,6 +55,7 @@ export const merchantMembersRoutes = new Elysia({ prefix: "/members" })
                     offset: body.offset,
                     sort: body.sort,
                     filter: body.filter,
+                    currency: body.currency,
                 }
             );
         },
@@ -63,6 +65,7 @@ export const merchantMembersRoutes = new Elysia({ prefix: "/members" })
                 offset: t.Optional(t.Number()),
                 sort: t.Optional(MemberSortSchema),
                 filter: t.Optional(MemberFilterSchema),
+                currency: t.Optional(CurrencyParamSchema),
             }),
             response: {
                 200: MemberQueryResultSchema,

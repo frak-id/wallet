@@ -44,6 +44,7 @@ export {
     type CampaignStatsItem,
     CampaignStatsItemSchema,
 } from "./campaignStatsSchemas";
+export { type CurrencyParam, CurrencyParamSchema } from "./currencySchemas";
 export {
     type ExplorerMerchantItem,
     ExplorerMerchantItemSchema,

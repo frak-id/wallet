@@ -28,11 +28,13 @@ function rankLabel(rank: number) {
 
 export function TopAmbassadorsTable({
     topAmbassadors,
+    currency,
 }: {
     topAmbassadors: CampaignDetailsStats["topAmbassadors"];
+    currency: string;
 }) {
     const { t } = useTranslation();
-    const fmt = useDetailFormatters();
+    const fmt = useDetailFormatters(currency);
 
     const columns = useMemo(
         () =>
