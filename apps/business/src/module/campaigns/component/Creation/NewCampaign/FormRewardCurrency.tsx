@@ -3,12 +3,10 @@ import {
     getTokenAddressForStablecoin,
     type Stablecoin,
 } from "@frak-labs/app-essentials";
-import { Card } from "@frak-labs/design-system/components/Card";
 import {
     RadioGroup,
     RadioGroupItem,
 } from "@frak-labs/design-system/components/RadioGroup";
-import { Stack } from "@frak-labs/design-system/components/Stack";
 import { Text } from "@frak-labs/design-system/components/Text";
 import {
     EurIcon,
@@ -22,6 +20,7 @@ import { useTranslation } from "react-i18next";
 import type { Address } from "viem";
 import { useMerchant } from "@/module/merchant/hook/useMerchant";
 import type { CampaignDraft } from "@/stores/campaignStore";
+import { WizardFieldCard } from "../WizardFieldCard";
 import * as styles from "./basics.css";
 
 /** Selectable tokens, in Figma order. Labels are currency codes (no i18n). */
@@ -70,157 +69,143 @@ export function FormRewardCurrency() {
         : t("campaigns.create.basics.currency.defaults.fallback");
 
     return (
-        <Card radius="m">
-            <Stack space="xs">
-                <Stack space="xxs">
-                    <Text variant="bodySmall" weight="medium" color="secondary">
-                        {t("campaigns.create.basics.currency.label")}
-                    </Text>
-                    <Text variant="caption" color="tertiary">
-                        {t("campaigns.create.basics.currency.description")}
-                    </Text>
-                </Stack>
+        <WizardFieldCard
+            space="xs"
+            label={t("campaigns.create.basics.currency.label")}
+            description={t("campaigns.create.basics.currency.description")}
+        >
+            <Controller
+                control={control}
+                name="rewardToken"
+                render={({ field }) => {
+                    const mode = field.value ? "other" : "default";
+                    const selected = field.value
+                        ? detectStablecoin(field.value)
+                        : undefined;
 
-                <Controller
-                    control={control}
-                    name="rewardToken"
-                    render={({ field }) => {
-                        const mode = field.value ? "other" : "default";
-                        const selected = field.value
-                            ? detectStablecoin(field.value)
-                            : undefined;
+                    const chooseAnotherRow = (
+                        <label
+                            htmlFor="currency-other"
+                            className={styles.cellRow}
+                        >
+                            <span className={styles.cellSelector}>
+                                <RadioGroupItem
+                                    id="currency-other"
+                                    value="other"
+                                />
+                            </span>
+                            <span className={styles.cellMain}>
+                                <Text variant="body" weight="medium">
+                                    {t(
+                                        "campaigns.create.basics.currency.chooseAnother"
+                                    )}
+                                </Text>
+                                <Text variant="bodySmall" color="secondary">
+                                    {t(
+                                        "campaigns.create.basics.currency.chooseAnotherDescription"
+                                    )}
+                                </Text>
+                            </span>
+                        </label>
+                    );
 
-                        const chooseAnotherRow = (
+                    return (
+                        <RadioGroup
+                            className={styles.cells}
+                            value={mode}
+                            onValueChange={(next) =>
+                                field.onChange(
+                                    next === "other"
+                                        ? getTokenAddressForStablecoin("eure")
+                                        : undefined
+                                )
+                            }
+                        >
                             <label
-                                htmlFor="currency-other"
+                                htmlFor="currency-default"
                                 className={styles.cellRow}
                             >
                                 <span className={styles.cellSelector}>
                                     <RadioGroupItem
-                                        id="currency-other"
-                                        value="other"
+                                        id="currency-default"
+                                        value="default"
                                     />
                                 </span>
                                 <span className={styles.cellMain}>
                                     <Text variant="body" weight="medium">
                                         {t(
-                                            "campaigns.create.basics.currency.chooseAnother"
+                                            "campaigns.create.basics.currency.useDefault"
                                         )}
                                     </Text>
                                     <Text variant="bodySmall" color="secondary">
+                                        {defaultLabel}
+                                    </Text>
+                                </span>
+                                <span className={styles.cellRight}>
+                                    <span className={styles.recommendedDot} />
+                                    <Text
+                                        variant="bodySmall"
+                                        className={styles.actionText}
+                                    >
                                         {t(
-                                            "campaigns.create.basics.currency.chooseAnotherDescription"
+                                            "campaigns.create.basics.currency.recommended"
                                         )}
                                     </Text>
                                 </span>
                             </label>
-                        );
 
-                        return (
-                            <RadioGroup
-                                className={styles.cells}
-                                value={mode}
-                                onValueChange={(next) =>
-                                    field.onChange(
-                                        next === "other"
-                                            ? getTokenAddressForStablecoin(
-                                                  "eure"
-                                              )
-                                            : undefined
-                                    )
-                                }
-                            >
-                                <label
-                                    htmlFor="currency-default"
-                                    className={styles.cellRow}
-                                >
-                                    <span className={styles.cellSelector}>
-                                        <RadioGroupItem
-                                            id="currency-default"
-                                            value="default"
-                                        />
-                                    </span>
-                                    <span className={styles.cellMain}>
-                                        <Text variant="body" weight="medium">
-                                            {t(
-                                                "campaigns.create.basics.currency.useDefault"
-                                            )}
-                                        </Text>
-                                        <Text
-                                            variant="bodySmall"
-                                            color="secondary"
-                                        >
-                                            {defaultLabel}
-                                        </Text>
-                                    </span>
-                                    <span className={styles.cellRight}>
-                                        <span
-                                            className={styles.recommendedDot}
-                                        />
-                                        <Text
-                                            variant="bodySmall"
-                                            className={styles.actionText}
-                                        >
-                                            {t(
-                                                "campaigns.create.basics.currency.recommended"
-                                            )}
-                                        </Text>
-                                    </span>
-                                </label>
-
-                                {mode === "default" ? (
-                                    chooseAnotherRow
-                                ) : (
-                                    <div className={styles.expandWrap}>
-                                        {chooseAnotherRow}
-                                        <RadioGroup
-                                            className={styles.tokensRow}
-                                            value={selected}
-                                            onValueChange={(stablecoin) =>
-                                                field.onChange(
-                                                    getTokenAddressForStablecoin(
-                                                        stablecoin as Stablecoin
-                                                    )
+                            {mode === "default" ? (
+                                chooseAnotherRow
+                            ) : (
+                                <div className={styles.expandWrap}>
+                                    {chooseAnotherRow}
+                                    <RadioGroup
+                                        className={styles.tokensRow}
+                                        value={selected}
+                                        onValueChange={(stablecoin) =>
+                                            field.onChange(
+                                                getTokenAddressForStablecoin(
+                                                    stablecoin as Stablecoin
                                                 )
-                                            }
-                                        >
-                                            {TOKENS.map((token) => (
-                                                <label
-                                                    key={token.stablecoin}
-                                                    htmlFor={`token-${token.stablecoin}`}
-                                                    className={styles.tokenCell}
+                                            )
+                                        }
+                                    >
+                                        {TOKENS.map((token) => (
+                                            <label
+                                                key={token.stablecoin}
+                                                htmlFor={`token-${token.stablecoin}`}
+                                                className={styles.tokenCell}
+                                            >
+                                                <RadioGroupItem
+                                                    id={`token-${token.stablecoin}`}
+                                                    value={token.stablecoin}
+                                                />
+                                                <span
+                                                    className={
+                                                        styles.tokenLabel
+                                                    }
                                                 >
-                                                    <RadioGroupItem
-                                                        id={`token-${token.stablecoin}`}
-                                                        value={token.stablecoin}
-                                                    />
-                                                    <span
-                                                        className={
-                                                            styles.tokenLabel
-                                                        }
+                                                    {
+                                                        CURRENCY_ICONS[
+                                                            token.stablecoin
+                                                        ]
+                                                    }
+                                                    <Text
+                                                        variant="body"
+                                                        weight="medium"
                                                     >
-                                                        {
-                                                            CURRENCY_ICONS[
-                                                                token.stablecoin
-                                                            ]
-                                                        }
-                                                        <Text
-                                                            variant="body"
-                                                            weight="medium"
-                                                        >
-                                                            {token.label}
-                                                        </Text>
-                                                    </span>
-                                                </label>
-                                            ))}
-                                        </RadioGroup>
-                                    </div>
-                                )}
-                            </RadioGroup>
-                        );
-                    }}
-                />
-            </Stack>
-        </Card>
+                                                        {token.label}
+                                                    </Text>
+                                                </span>
+                                            </label>
+                                        ))}
+                                    </RadioGroup>
+                                </div>
+                            )}
+                        </RadioGroup>
+                    );
+                }}
+            />
+        </WizardFieldCard>
     );
 }

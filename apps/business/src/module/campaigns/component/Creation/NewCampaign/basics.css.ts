@@ -2,14 +2,9 @@ import { vars } from "@frak-labs/design-system/theme";
 import { alias } from "@frak-labs/design-system/tokens";
 import { style } from "@vanilla-extract/css";
 
-/* ---- shared field chrome (title + merchant cards) ---- */
+/* ---- shared field chrome ---- */
 
-/** Card field label / hint sit inset by 16px, matching the Figma "Input". */
-export const fieldLabel = style({
-    paddingLeft: alias.spacing.m,
-    paddingRight: alias.spacing.m,
-});
-
+/** Input hint inset by 16px to line up with the field text. */
 export const fieldHint = style({
     paddingLeft: alias.spacing.m,
     paddingRight: alias.spacing.m,

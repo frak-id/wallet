@@ -1,4 +1,3 @@
-import { Card } from "@frak-labs/design-system/components/Card";
 import {
     Select,
     SelectContent,
@@ -6,12 +5,11 @@ import {
     SelectTrigger,
     SelectValue,
 } from "@frak-labs/design-system/components/Select";
-import { Stack } from "@frak-labs/design-system/components/Stack";
-import { Text } from "@frak-labs/design-system/components/Text";
 import { useNavigate } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
 import { useMyMerchants } from "@/module/dashboard/hooks/useMyMerchants";
 import { campaignStore } from "@/stores/campaignStore";
+import { WizardFieldCard } from "../WizardFieldCard";
 import * as styles from "./basics.css";
 
 /**
@@ -35,36 +33,29 @@ export function FormMerchant({ merchantId }: { merchantId: string }) {
     }
 
     return (
-        <Card radius="m">
-            <Stack space="m">
-                <Text
-                    variant="bodySmall"
-                    weight="medium"
-                    color="secondary"
-                    className={styles.fieldLabel}
-                >
-                    {t("campaigns.create.basics.merchant.label")}
-                </Text>
-                <Select
-                    value={merchantId || undefined}
-                    onValueChange={handleChange}
-                >
-                    <SelectTrigger className={styles.selectTrigger}>
-                        <SelectValue
-                            placeholder={t(
-                                "campaigns.create.basics.merchant.placeholder"
-                            )}
-                        />
-                    </SelectTrigger>
-                    <SelectContent>
-                        {merchants.map((merchant) => (
-                            <SelectItem key={merchant.id} value={merchant.id}>
-                                {merchant.name} — {merchant.domain}
-                            </SelectItem>
-                        ))}
-                    </SelectContent>
-                </Select>
-            </Stack>
-        </Card>
+        <WizardFieldCard
+            insetLabel
+            label={t("campaigns.create.basics.merchant.label")}
+        >
+            <Select
+                value={merchantId || undefined}
+                onValueChange={handleChange}
+            >
+                <SelectTrigger className={styles.selectTrigger}>
+                    <SelectValue
+                        placeholder={t(
+                            "campaigns.create.basics.merchant.placeholder"
+                        )}
+                    />
+                </SelectTrigger>
+                <SelectContent>
+                    {merchants.map((merchant) => (
+                        <SelectItem key={merchant.id} value={merchant.id}>
+                            {merchant.name} — {merchant.domain}
+                        </SelectItem>
+                    ))}
+                </SelectContent>
+            </Select>
+        </WizardFieldCard>
     );
 }
