@@ -50,17 +50,40 @@
             "preview": "Aperçu"
         },
         "pages": {
-            "dashboard": { "nav": "Tableau de bord" },
-            "campaigns": { "nav": "Campagnes" },
-            "campaignsOverview": { "nav": "Vue d'ensemble" },
-            "campaignsList": { "nav": "Liste" },
-            "members": { "nav": "Membres", "title": "Liste des membres" },
-            "wallet": { "nav": "Porte-monnaie" },
-            "settings": { "nav": "Paramètres" },
-            "merchant": { "nav": "Marchand" },
-            "push": { "nav": "Push" },
-            "pushCreate": { "nav": "Créer" },
-            "pushConfirm": { "nav": "Confirmer" }
+            "dashboard": {
+                "nav": "Tableau de bord"
+            },
+            "campaigns": {
+                "nav": "Campagnes"
+            },
+            "campaignsOverview": {
+                "nav": "Vue d'ensemble"
+            },
+            "campaignsList": {
+                "nav": "Liste"
+            },
+            "members": {
+                "nav": "Membres",
+                "title": "Liste des membres"
+            },
+            "wallet": {
+                "nav": "Porte-monnaie"
+            },
+            "settings": {
+                "nav": "Paramètres"
+            },
+            "merchant": {
+                "nav": "Marchand"
+            },
+            "push": {
+                "nav": "Push"
+            },
+            "pushCreate": {
+                "nav": "Créer"
+            },
+            "pushConfirm": {
+                "nav": "Confirmer"
+            }
         },
         "header": {
             "breadcrumbLabel": "Fil d'Ariane",
@@ -152,6 +175,32 @@
                         "title": "Inscription",
                         "description": "Générez plus d’inscriptions sur votre site pour des données qualifiées.",
                         "tags": "CRM · Données qualifiées"
+                    }
+                }
+            },
+            "basics": {
+                "title": {
+                    "label": "Titre de la campagne",
+                    "placeholder": "Ex. Soldes d’été 2026",
+                    "hint": "Visible uniquement par vous."
+                },
+                "merchant": {
+                    "label": "Marchand",
+                    "placeholder": "Sélectionner un marchand"
+                },
+                "currency": {
+                    "label": "Devise de récompense (ce que les utilisateurs gagnent)",
+                    "description": "La devise que vos ambassadeurs recevront en récompense.",
+                    "useDefault": "Utiliser la devise par défaut du marchand",
+                    "recommended": "Recommandé",
+                    "chooseAnother": "Choisir une autre devise",
+                    "chooseAnotherDescription": "Remplacer la devise par défaut du marchand pour cette campagne",
+                    "defaults": {
+                        "eure": "Euro (EUR) via Monerium",
+                        "gbpe": "Livre sterling (GBP) via Monerium",
+                        "usde": "Dollar US (USD) via Monerium",
+                        "usdc": "USD Coin (USDC) via Circle",
+                        "fallback": "Devise par défaut du marchand"
                     }
                 }
             }

@@ -50,17 +50,40 @@
             "preview": "Preview"
         },
         "pages": {
-            "dashboard": { "nav": "Dashboard" },
-            "campaigns": { "nav": "Campaigns" },
-            "campaignsOverview": { "nav": "Data overview" },
-            "campaignsList": { "nav": "List" },
-            "members": { "nav": "Members", "title": "Members List" },
-            "wallet": { "nav": "Wallet" },
-            "settings": { "nav": "Settings" },
-            "merchant": { "nav": "Merchant" },
-            "push": { "nav": "Push" },
-            "pushCreate": { "nav": "Create" },
-            "pushConfirm": { "nav": "Confirm" }
+            "dashboard": {
+                "nav": "Dashboard"
+            },
+            "campaigns": {
+                "nav": "Campaigns"
+            },
+            "campaignsOverview": {
+                "nav": "Data overview"
+            },
+            "campaignsList": {
+                "nav": "List"
+            },
+            "members": {
+                "nav": "Members",
+                "title": "Members List"
+            },
+            "wallet": {
+                "nav": "Wallet"
+            },
+            "settings": {
+                "nav": "Settings"
+            },
+            "merchant": {
+                "nav": "Merchant"
+            },
+            "push": {
+                "nav": "Push"
+            },
+            "pushCreate": {
+                "nav": "Create"
+            },
+            "pushConfirm": {
+                "nav": "Confirm"
+            }
         },
         "header": {
             "breadcrumbLabel": "Breadcrumb",
@@ -152,6 +175,32 @@
                         "title": "Registration",
                         "description": "Create more registrations on your website for more qualified data.",
                         "tags": "CRM · Qualified data"
+                    }
+                }
+            },
+            "basics": {
+                "title": {
+                    "label": "Campaign title",
+                    "placeholder": "E.g. Summer sales 2026",
+                    "hint": "Only visible by you."
+                },
+                "merchant": {
+                    "label": "Merchant",
+                    "placeholder": "Select a merchant"
+                },
+                "currency": {
+                    "label": "Reward currency (what users earn)",
+                    "description": "The currency your ambassadors will receive as rewards.",
+                    "useDefault": "Use merchant default",
+                    "recommended": "Recommended",
+                    "chooseAnother": "Choose another currency",
+                    "chooseAnotherDescription": "Override the merchant default for this campaign",
+                    "defaults": {
+                        "eure": "Euro (EUR) via Monerium",
+                        "gbpe": "British Pound (GBP) via Monerium",
+                        "usde": "US Dollar (USD) via Monerium",
+                        "usdc": "USD Coin (USDC) via Circle",
+                        "fallback": "Merchant default"
                     }
                 }
             }

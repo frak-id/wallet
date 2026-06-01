@@ -72,6 +72,32 @@ export default interface Resources {
                     publish: "Publish";
                     saveDraft: "Save as draft";
                 };
+                basics: {
+                    currency: {
+                        chooseAnother: "Choose another currency";
+                        chooseAnotherDescription: "Override the merchant default for this campaign";
+                        defaults: {
+                            eure: "Euro (EUR) via Monerium";
+                            fallback: "Merchant default";
+                            gbpe: "British Pound (GBP) via Monerium";
+                            usdc: "USD Coin (USDC) via Circle";
+                            usde: "US Dollar (USD) via Monerium";
+                        };
+                        description: "The currency your ambassadors will receive as rewards.";
+                        label: "Reward currency (what users earn)";
+                        recommended: "Recommended";
+                        useDefault: "Use merchant default";
+                    };
+                    merchant: {
+                        label: "Merchant";
+                        placeholder: "Select a merchant";
+                    };
+                    title: {
+                        hint: "Only visible by you.";
+                        label: "Campaign title";
+                        placeholder: "E.g. Summer sales 2026";
+                    };
+                };
                 cancel: {
                     confirm: "Yes, close";
                     description: "Closing this draft without saving it means you will lose all the information you filled up.";

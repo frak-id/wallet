@@ -102,6 +102,7 @@ export function WizardStep({
                     type="submit"
                     form={formId}
                     variant="primary"
+                    size="large"
                     loading={isPending}
                     disabled={!isValid || isPending}
                 >

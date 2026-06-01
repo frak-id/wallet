@@ -4,6 +4,7 @@ import type { ComponentPropsWithRef, ReactNode } from "react";
 export type InputProps = ComponentPropsWithRef<"input"> & {
     variant?: "default" | "bare" | "soft";
     length?: "small" | "medium" | "big";
+    tone?: "elevated" | "muted";
     classNameWrapper?: string;
     leftSection?: ReactNode;
     rightSection?: ReactNode;
@@ -14,6 +15,7 @@ export const Input = ({
     type,
     variant,
     length,
+    tone,
     className,
     classNameWrapper,
     leftSection,
@@ -25,6 +27,7 @@ export const Input = ({
         type={type}
         variant={variant}
         length={length}
+        tone={tone}
         leftSection={leftSection}
         rightSection={rightSection}
         className={classNameWrapper ?? className}

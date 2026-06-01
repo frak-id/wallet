@@ -1,4 +1,9 @@
-import { createFileRoute, Outlet, redirect } from "@tanstack/react-router";
+import {
+    createFileRoute,
+    Outlet,
+    redirect,
+    useRouterState,
+} from "@tanstack/react-router";
 import { isDemoMode } from "@/config/auth";
 import { queryClient } from "@/module/common/provider/RootProvider";
 import { BankStatusBanner } from "@/module/merchant/component/BankStatusBanner";
@@ -46,9 +51,15 @@ export const Route = createFileRoute("/_restricted/m/$merchantId")({
 
 function MerchantLayout() {
     const { merchantId } = Route.useParams();
+    // The campaign creation wizard is a full-bleed, immersive layout (it
+    // cancels the shell padding and fills the viewport), so the global bank
+    // banner would collide with its header. Hide it there.
+    const isCampaignWizard = useRouterState({
+        select: (s) => s.location.pathname.includes("/campaigns/draft/"),
+    });
     return (
         <>
-            <BankStatusBanner merchantId={merchantId} />
+            {!isCampaignWizard && <BankStatusBanner merchantId={merchantId} />}
             <Outlet />
         </>
     );

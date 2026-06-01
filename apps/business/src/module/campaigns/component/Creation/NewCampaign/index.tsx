@@ -2,11 +2,8 @@ import { Stack } from "@frak-labs/design-system/components/Stack";
 import { useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo } from "react";
 import { useForm } from "react-hook-form";
-import { FormBudget } from "@/module/campaigns/component/Creation/NewCampaign/FormBudget";
-import { FormRewardToken } from "@/module/campaigns/component/Creation/NewCampaign/FormRewardToken";
-import { FormSchedule } from "@/module/campaigns/component/Creation/NewCampaign/FormSchedule";
-import { FormSpecialAdvertising } from "@/module/campaigns/component/Creation/NewCampaign/FormSpecialAdvertising";
-import { FormTerritory } from "@/module/campaigns/component/Creation/NewCampaign/FormTerritory";
+import { FormMerchant } from "@/module/campaigns/component/Creation/NewCampaign/FormMerchant";
+import { FormRewardCurrency } from "@/module/campaigns/component/Creation/NewCampaign/FormRewardCurrency";
 import { FormTitle } from "@/module/campaigns/component/Creation/NewCampaign/FormTitle";
 import { useSaveCampaign } from "@/module/campaigns/hook/useSaveCampaign";
 import { useActiveMerchantId } from "@/module/common/hook/useActiveMerchantId";
@@ -67,11 +64,8 @@ export function NewCampaign() {
                 <form id={FORM_ID} onSubmit={form.handleSubmit(onSubmit)}>
                     <Stack space="l">
                         <FormTitle />
-                        <FormRewardToken />
-                        <FormSpecialAdvertising />
-                        <FormBudget />
-                        <FormTerritory />
-                        <FormSchedule />
+                        <FormMerchant merchantId={merchantId} />
+                        <FormRewardCurrency />
                     </Stack>
                 </form>
             </Form>
