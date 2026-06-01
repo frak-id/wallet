@@ -31,7 +31,7 @@ class Frak_Divi_Banner_Module extends Frak_Divi_Module_Base {
 	 */
 	public function init() {
 		$this->name      = esc_html__( 'Frak Banner', 'frak' );
-		$this->icon_path = FRAK_PLUGIN_DIR . 'includes/divi-icons/banner.svg';
+		$this->icon_path = FRAK_PLUGIN_DIR . 'includes/divi/icons/banner.svg';
 
 		$this->settings_modal_toggles = array(
 			'general' => array(
@@ -145,9 +145,10 @@ class Frak_Divi_Banner_Module extends Frak_Divi_Module_Base {
 					'options'         => array(
 						'referral' => esc_html__( 'Referral success', 'frak' ),
 						'inapp'    => esc_html__( 'In-app browser prompt', 'frak' ),
+						'none'     => esc_html__( 'Disabled', 'frak' ),
 					),
 					'default'         => 'referral',
-					'description'     => esc_html__( 'Only affects the editor preview — at runtime the mode is picked from the request context.', 'frak' ),
+					'description'     => esc_html__( 'Only affects the builder preview — at runtime the mode is picked from the request context. Choose "Disabled" to hide the preview in the builder (useful when the banner sits in a global header / footer / theme-builder template, where it would otherwise show on every page being edited).', 'frak' ),
 					'toggle_slug'     => 'preview',
 				),
 				'interaction'          => array(
@@ -170,11 +171,23 @@ class Frak_Divi_Banner_Module extends Frak_Divi_Module_Base {
 	 * paint. Outside the editor (`$preview = false`) it's stripped before the
 	 * renderer call so it never leaks as an unknown HTML attribute.
 	 *
+	 * The `none` value disables the builder preview entirely: a banner placed
+	 * in a global header / footer / theme-builder template otherwise paints on
+	 * every page the merchant edits. When selected, the editor render emits
+	 * nothing (the matching short-circuit lives in the React twin in
+	 * `builder-modules.js` for the live preview). The public frontend is never
+	 * affected — `$preview` is false there, so this branch is skipped and the
+	 * banner renders normally from the request context.
+	 *
 	 * @param array<string, mixed> $attrs   Filtered renderer attributes.
 	 * @param bool                 $preview Whether the bare `preview` attribute should be emitted.
 	 * @return string
 	 */
 	protected function render_component( array $attrs, bool $preview ): string {
+		if ( $preview && isset( $attrs['previewMode'] ) && 'none' === $attrs['previewMode'] ) {
+			return '';
+		}
+
 		$preview_overrides = array();
 		if ( $preview && ! empty( $attrs['previewMode'] ) ) {
 			$preview_overrides['preview-mode'] = (string) $attrs['previewMode'];

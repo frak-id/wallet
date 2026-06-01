@@ -34,14 +34,14 @@ class Frak_Frontend {
 	 * is never empty.
 	 */
 	public static function enqueue_scripts() {
-		// Inside the Divi Visual Builder the module markup is injected through
-		// partial (AJAX) re-renders *after* the page has loaded. A deferred,
-		// footer-loaded SDK can execute after those injections, leaving the
-		// `<frak-*>` custom elements unupgraded so the preview renders blank.
-		// Loading the SDK render-blocking in <head> guarantees
-		// `customElements.define()` has run before any partial render fires.
-		// The builder is not perf-sensitive, so the blocking load is an
-		// acceptable trade there; the public frontend keeps the deferred,
+		// Inside the Divi Visual Builder the module markup is injected by the
+		// React twins (`includes/divi/builder-modules.js`) *after* the page has
+		// loaded. A deferred, footer-loaded SDK can execute after those
+		// injections, leaving the `<frak-*>` custom elements unupgraded so the
+		// preview renders blank. Loading the SDK render-blocking in <head>
+		// guarantees `customElements.define()` has run before any module
+		// renders. The builder is not perf-sensitive, so the blocking load is
+		// an acceptable trade there; the public frontend keeps the deferred,
 		// footer-loaded script. Elementor's preview uses a full frontend
 		// iframe (no post-load injection) so it is intentionally not covered.
 		$in_divi_builder = class_exists( 'Frak_Divi' ) && Frak_Divi::is_editor_context();

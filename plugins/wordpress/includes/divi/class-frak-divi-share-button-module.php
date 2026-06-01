@@ -31,7 +31,7 @@ class Frak_Divi_Share_Button_Module extends Frak_Divi_Module_Base {
 	 */
 	public function init() {
 		$this->name      = esc_html__( 'Frak Share Button', 'frak' );
-		$this->icon_path = FRAK_PLUGIN_DIR . 'includes/divi-icons/share-button.svg';
+		$this->icon_path = FRAK_PLUGIN_DIR . 'includes/divi/icons/share-button.svg';
 
 		$this->settings_modal_toggles = array(
 			'general' => array(

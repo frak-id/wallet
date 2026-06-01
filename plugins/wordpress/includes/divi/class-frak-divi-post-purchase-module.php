@@ -36,7 +36,7 @@ class Frak_Divi_Post_Purchase_Module extends Frak_Divi_Module_Base {
 	 */
 	public function init() {
 		$this->name      = esc_html__( 'Frak Post-Purchase', 'frak' );
-		$this->icon_path = FRAK_PLUGIN_DIR . 'includes/divi-icons/post-purchase.svg';
+		$this->icon_path = FRAK_PLUGIN_DIR . 'includes/divi/icons/post-purchase.svg';
 
 		$this->settings_modal_toggles = array(
 			'general' => array(

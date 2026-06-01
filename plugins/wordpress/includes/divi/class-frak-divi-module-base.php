@@ -20,11 +20,16 @@
  *   - `render_component()` — delegate to {@see Frak_Component_Renderer}.
  *
  * Shared concerns lifted into the base:
- *   - `$vb_support = 'partial'` — Divi renders the PHP {@see render()} output
- *     via AJAX inside the Visual Builder, so the live preview works without a
- *     compiled React/JSX twin. Full (`'on'`) support would require shipping a
- *     JS component; `partial` keeps the PHP renderer as the single source of
- *     truth, matching the Elementor integration's deliberate pure-PHP render.
+ *   - `$vb_support = 'on'` — full Visual Builder support. Divi drives the live
+ *     in-builder preview from a registered React component (the JS twin in
+ *     `includes/divi/builder-modules.js`) instead of AJAX-re-running the PHP
+ *     {@see render()}. This silences Divi's "module has no React component"
+ *     notice and gives an instant, flicker-free preview that updates as the
+ *     merchant types. The JS twin is a thin wrapper that forwards the same
+ *     fields to the same `<frak-*>` web component the PHP renderer emits, so
+ *     builder and frontend stay byte-equivalent. The PHP {@see render()} below
+ *     still drives the *public* frontend (and any non-VB shortcode resolution)
+ *     — it remains the single source of truth off the builder canvas.
  *   - {@see render()} filters `$this->props` to the whitelisted keys,
  *     normalises snake_case → camelCase, detects the Visual Builder context,
  *     then returns the renderer output. The `preview` flag is forwarded so the
@@ -46,12 +51,15 @@
 abstract class Frak_Divi_Module_Base extends ET_Builder_Module {
 
 	/**
-	 * Visual Builder support level. `partial` renders the PHP {@see render()}
-	 * output over AJAX — no JS/JSX component required.
+	 * Visual Builder support level. `on` = full support: Divi renders the
+	 * live in-builder preview from the React twin registered in
+	 * `includes/divi/builder-modules.js` (keyed by the matching `$slug`),
+	 * not by AJAX-re-running {@see render()}. {@see render()} still produces
+	 * the public-frontend markup.
 	 *
 	 * @var string
 	 */
-	public $vb_support = 'partial';
+	public $vb_support = 'on';
 
 	/**
 	 * Whitelist of Divi field names (snake_case) forwarded to the renderer.
@@ -78,19 +86,21 @@ abstract class Frak_Divi_Module_Base extends ET_Builder_Module {
 	abstract protected function render_component( array $attrs, bool $preview ): string;
 
 	/**
-	 * Render the module on both the frontend and the Visual Builder preview.
+	 * Render the module's public-frontend markup.
+	 *
+	 * With full (`'on'`) Visual Builder support the in-builder live preview is
+	 * driven by the React twin (see {@see Frak_Divi_Module_Base::$vb_support}),
+	 * so this method is the *frontend* render path — Divi still calls it for
+	 * the published page and for any non-VB shortcode resolution.
 	 *
 	 * Values are read from the processed `$this->props` bag (not the raw
 	 * `$attrs` parameter, which carries unprocessed shortcode strings), so the
 	 * first two signature parameters are intentionally unused.
 	 *
 	 * The renderer output is wrapped in Divi's standard module container via
-	 * `_render_module_wrapper()`. This is required for `partial` Visual Builder
-	 * support: the wrapper carries the `.et_pb_module` markup + data attributes
-	 * the builder uses to locate and re-inject the module on each partial
-	 * (AJAX) re-render. Without it the live preview updates unreliably — the
-	 * symptom being components that fail to (re)appear in the editor. On the
-	 * public frontend it yields the same wrapper every native Divi module emits.
+	 * `_render_module_wrapper()` so the emitted markup carries the same
+	 * `.et_pb_module` wrapper + data attributes every native Divi module emits
+	 * on the frontend.
 	 *
 	 * @param array<string, string> $attrs       Raw shortcode attributes (unused).
 	 * @param string|null           $content     Inner content (unused).

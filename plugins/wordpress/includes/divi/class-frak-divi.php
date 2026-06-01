@@ -24,6 +24,16 @@
  * `waitForBackendConfig` off so `<frak-X preview>` renders immediately, even on
  * local dev without a real backend handshake.
  *
+ * Each module declares `$vb_support = 'on'` (full Visual Builder support), so
+ * Divi drives the live in-builder preview from a registered React component
+ * rather than AJAX-re-running the PHP render. Those React twins ship as a
+ * single hand-authored, no-build JS file (`includes/divi/builder-modules.js`)
+ * enqueued only inside the builder by {@see enqueue_builder_modules()}; they
+ * are thin wrappers that forward the merchant's fields to the same `<frak-*>`
+ * web components the PHP renderer emits. Registering them silences Divi's
+ * "module has no React component" notice and replaces the laggy AJAX preview
+ * with an instant one.
+ *
  * @package Frak_Integration
  */
 
@@ -42,6 +52,13 @@ class Frak_Divi {
 	 * where Divi has already booted by the time we run.
 	 */
 	public static function init() {
+		// The React twins that power the full-VB live preview load only inside
+		// the builder; the gate lives in {@see enqueue_builder_modules()} so
+		// registering the hook stays a cheap no-op on every public request and
+		// when Divi is absent (the callback short-circuits on
+		// {@see is_editor_context()}).
+		add_action( 'wp_enqueue_scripts', array( __CLASS__, 'enqueue_builder_modules' ) );
+
 		if ( did_action( 'et_builder_ready' ) ) {
 			self::register_modules();
 			return;
@@ -69,6 +86,35 @@ class Frak_Divi {
 			new Frak_Divi_Post_Purchase_Module(),
 		);
 		unset( $modules );
+	}
+
+	/**
+	 * Enqueue the React twins that drive the full Visual Builder preview.
+	 *
+	 * Hooked on `wp_enqueue_scripts` but gated on {@see is_editor_context()},
+	 * so the script downloads only inside the builder — public visitors and
+	 * sites without Divi never pay for it.
+	 *
+	 * Declares `react` + `jquery` as dependencies: the file builds its
+	 * components with `window.React` and registers them through
+	 * `jQuery( window ).on( 'et_builder_api_ready', … )`, both guaranteed in
+	 * the builder context. This mirrors the enqueue pattern in Elegant Themes'
+	 * own `d5-extension-example-modules` and needs no build pipeline — the JS
+	 * is hand-authored `React.createElement`, like the block `editor.js` files.
+	 *
+	 * @return void
+	 */
+	public static function enqueue_builder_modules() {
+		if ( ! self::is_editor_context() ) {
+			return;
+		}
+		wp_enqueue_script(
+			'frak-divi-builder-modules',
+			FRAK_PLUGIN_URL . 'includes/divi/builder-modules.js',
+			array( 'react', 'jquery' ),
+			FRAK_PLUGIN_VERSION,
+			true
+		);
 	}
 
 	/**
