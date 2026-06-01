@@ -16,6 +16,7 @@ export type {
     CampaignTrigger,
     ConditionGroup,
     FixedRewardDefinition,
+    RewardChaining,
     RewardDefinition,
     RuleCondition,
     RuleConditions,

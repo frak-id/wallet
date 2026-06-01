@@ -19,6 +19,7 @@ import { useIsDemoMode } from "@/module/common/atoms/demoMode";
 import { useActiveMerchantId } from "@/module/common/hook/useActiveMerchantId";
 import type { CampaignListItemWithActions } from "@/types/Campaign";
 import { AmbassadorsTab } from "./AmbassadorsTab";
+import { ConfigTab } from "./ConfigTab";
 import * as styles from "./campaign-details-sheet.css";
 import { ExportButton } from "./ExportButton";
 import { FunnelRoiTab } from "./FunnelRoiTab";
@@ -106,6 +107,9 @@ function CampaignDetailsContent({
                         <TabsTrigger variant="navigation" value="ambassadors">
                             {t("campaigns.details.tabs.ambassadors")}
                         </TabsTrigger>
+                        <TabsTrigger variant="navigation" value="config">
+                            {t("campaigns.details.tabs.configuration")}
+                        </TabsTrigger>
                     </TabsList>
                     <TabsContent value="funnel" className={styles.tabsContent}>
                         <FunnelRoiTab data={data} />
@@ -115,6 +119,9 @@ function CampaignDetailsContent({
                         className={styles.tabsContent}
                     >
                         <AmbassadorsTab data={data} />
+                    </TabsContent>
+                    <TabsContent value="config" className={styles.tabsContent}>
+                        <ConfigTab campaignId={campaign.id} />
                     </TabsContent>
                 </Tabs>
             </div>
