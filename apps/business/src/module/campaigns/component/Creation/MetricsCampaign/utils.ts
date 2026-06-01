@@ -1,4 +1,6 @@
 import { REWARD_LOCKUP } from "@frak-labs/app-essentials/constants/rewards";
+import type { Hex } from "viem";
+import { getMinPurchaseAmount, getReferralOnly } from "@/stores/campaignStore";
 import type {
     CampaignGoal,
     CampaignRuleDefinition,
@@ -89,12 +91,17 @@ export function calculateChainDistribution(
 }
 
 function buildRewardsFromFormState(
-    state: RewardFormState
+    state: RewardFormState,
+    rewardToken?: Hex
 ): FixedRewardDefinition[] {
     const { refereeAmount, referrerAmount } = calculateDistribution(
         state.cac,
         state.ratio
     );
+
+    // Apply the campaign's pending currency onto each reward. Left off when
+    // none is chosen, so the backend fills the merchant default.
+    const token = rewardToken ? { token: rewardToken } : {};
 
     const rewards: FixedRewardDefinition[] = [];
 
@@ -104,6 +111,7 @@ function buildRewardsFromFormState(
             type: "token",
             amountType: "fixed",
             amount: refereeAmount,
+            ...token,
         });
     }
 
@@ -113,6 +121,7 @@ function buildRewardsFromFormState(
             type: "token",
             amountType: "fixed",
             amount: referrerAmount,
+            ...token,
             chaining: state.chainingEnabled
                 ? {
                       deperditionPerLevel: state.deperditionPerLevel,
@@ -127,9 +136,10 @@ function buildRewardsFromFormState(
 
 export function updateRuleWithRewards(
     existingRule: CampaignRuleDefinition,
-    rewardState: RewardFormState
+    rewardState: RewardFormState,
+    rewardToken?: Hex
 ): CampaignRuleDefinition {
-    const rewards = buildRewardsFromFormState(rewardState);
+    const rewards = buildRewardsFromFormState(rewardState, rewardToken);
 
     return {
         ...existingRule,
@@ -169,43 +179,20 @@ export function extractFormStateFromRule(
             ? referrerReward.chaining
             : undefined;
 
-    const minPurchaseAmountFromConditions = Array.isArray(rule.conditions)
-        ? (rule.conditions.find(
-              (c) =>
-                  "field" in c &&
-                  c.field === "purchase.amount" &&
-                  c.operator === "gte"
-          )?.value as number | undefined)
-        : undefined;
-
-    const hasReferralCondition = Array.isArray(rule.conditions)
-        ? rule.conditions.some(
-              (c) =>
-                  "field" in c &&
-                  c.field === "attribution.referrerIdentityGroupId" &&
-                  c.operator === "exists"
-          )
-        : false;
-
     return {
         cac,
         ratio,
         chainingEnabled: false,
         deperditionPerLevel: chaining?.deperditionPerLevel ?? 80,
         maxDepth: chaining?.maxDepth ?? 5,
-        referralOnly:
-            hasReferralCondition ||
-            (Array.isArray(rule.conditions) && rule.conditions.length === 0),
+        referralOnly: getReferralOnly(rule),
         lockupDays:
             rule.defaultLockupSeconds !== undefined
                 ? Math.round(
                       rule.defaultLockupSeconds / REWARD_LOCKUP.SECONDS_PER_DAY
                   )
                 : REWARD_LOCKUP.DEFAULT_DAYS,
-        minPurchaseAmount:
-            typeof minPurchaseAmountFromConditions === "number"
-                ? minPurchaseAmountFromConditions
-                : 0,
+        minPurchaseAmount: getMinPurchaseAmount(rule),
     };
 }
 

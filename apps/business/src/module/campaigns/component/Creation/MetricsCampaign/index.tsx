@@ -22,7 +22,12 @@ import {
     FormItem,
     FormLayout,
 } from "@/module/forms/Form";
-import { type CampaignDraft, campaignStore } from "@/stores/campaignStore";
+import {
+    type CampaignDraft,
+    campaignStore,
+    setMinPurchaseAmount,
+    setReferralOnly,
+} from "@/stores/campaignStore";
 import type { CampaignTrigger } from "@/types/Campaign";
 import { CacInput } from "./CacInput";
 import { ChainingConfig } from "./ChainingConfig";
@@ -58,16 +63,16 @@ function formValuesToDraft(
     values: MetricsFormValues,
     currentDraft: CampaignDraft
 ): CampaignDraft {
-    const updatedRule = updateRuleWithRewards(currentDraft.rule, values);
-    return {
-        ...currentDraft,
-        referralOnly: values.referralOnly,
-        minPurchaseAmount: values.minPurchaseAmount,
-        rule: {
-            ...updatedRule,
-            trigger: values.trigger,
-        },
-    };
+    let rule = updateRuleWithRewards(
+        currentDraft.rule,
+        values,
+        currentDraft.rewardToken
+    );
+    rule = { ...rule, trigger: values.trigger };
+    // Referral-only + min-purchase live as rule conditions (single source).
+    rule = setReferralOnly(rule, values.referralOnly);
+    rule = setMinPurchaseAmount(rule, values.minPurchaseAmount);
+    return { ...currentDraft, rule };
 }
 
 export function MetricsCampaign() {

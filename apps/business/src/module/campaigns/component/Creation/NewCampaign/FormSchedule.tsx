@@ -22,12 +22,16 @@ import {
     FormLabel,
     FormMessage,
 } from "@/module/forms/Form";
-import type { CampaignDraft } from "@/stores/campaignStore";
 import * as styles from "./form-schedule.css";
+
+/** Minimal shape this form binds to; the host maps it to `rule`/`expiresAt`. */
+type ScheduleFormValues = {
+    scheduled: { startDate?: string; endDate?: string };
+};
 
 export function FormSchedule() {
     const { control, watch, setValue, getValues } =
-        useFormContext<CampaignDraft>();
+        useFormContext<ScheduleFormValues>();
     const [hasEndDate, setHasEndDate] = useState(false);
 
     const watchEndDate = watch("scheduled.endDate");
@@ -58,7 +62,7 @@ export function FormSchedule() {
                                 <FormControl>
                                     <ButtonCalendar>
                                         {field.value ? (
-                                            format(field.value, "PPP")
+                                            format(new Date(field.value), "PPP")
                                         ) : (
                                             <span>
                                                 Starts immediately on publish
@@ -70,16 +74,23 @@ export function FormSchedule() {
                             <PopoverContent align="start">
                                 <Calendar
                                     mode="single"
-                                    selected={field.value}
+                                    selected={
+                                        field.value
+                                            ? new Date(field.value)
+                                            : undefined
+                                    }
                                     onSelect={(date) => {
-                                        field.onChange(date);
+                                        field.onChange(date?.toISOString());
                                         if (hasEndDate && date) {
                                             const endDate =
                                                 getValues("scheduled.endDate");
-                                            if (endDate && date > endDate) {
+                                            if (
+                                                endDate &&
+                                                date > new Date(endDate)
+                                            ) {
                                                 setValue(
                                                     "scheduled.endDate",
-                                                    date
+                                                    date.toISOString()
                                                 );
                                             }
                                         }
@@ -133,7 +144,10 @@ export function FormSchedule() {
                                         <FormControl>
                                             <ButtonCalendar>
                                                 {field.value ? (
-                                                    format(field.value, "PPP")
+                                                    format(
+                                                        new Date(field.value),
+                                                        "PPP"
+                                                    )
                                                 ) : (
                                                     <span>Pick a date</span>
                                                 )}
@@ -143,8 +157,16 @@ export function FormSchedule() {
                                     <PopoverContent align="start">
                                         <Calendar
                                             mode="single"
-                                            selected={field.value}
-                                            onSelect={field.onChange}
+                                            selected={
+                                                field.value
+                                                    ? new Date(field.value)
+                                                    : undefined
+                                            }
+                                            onSelect={(date) =>
+                                                field.onChange(
+                                                    date?.toISOString()
+                                                )
+                                            }
                                             disabled={(date) => {
                                                 const startDate = getValues(
                                                     "scheduled.startDate"
@@ -155,9 +177,13 @@ export function FormSchedule() {
                                                 return isBefore(date, minDate);
                                             }}
                                             startMonth={
-                                                getValues(
-                                                    "scheduled.startDate"
-                                                ) ?? new Date()
+                                                getValues("scheduled.startDate")
+                                                    ? new Date(
+                                                          getValues(
+                                                              "scheduled.startDate"
+                                                          ) as string
+                                                      )
+                                                    : new Date()
                                             }
                                         />
                                     </PopoverContent>

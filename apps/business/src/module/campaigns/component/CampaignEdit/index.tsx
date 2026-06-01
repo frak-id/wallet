@@ -11,7 +11,17 @@ import { Button } from "@/module/common/component/Button";
 import { Head } from "@/module/common/component/Head";
 import { useActiveMerchantId } from "@/module/common/hook/useActiveMerchantId";
 import { Form, FormLayout } from "@/module/forms/Form";
-import { type CampaignDraft, campaignStore } from "@/stores/campaignStore";
+import {
+    type CampaignDraft,
+    campaignStore,
+    getStartDate,
+    setStartDate,
+} from "@/stores/campaignStore";
+
+/** The draft plus a flat schedule view that `FormSchedule` binds to. */
+type EditFormValues = CampaignDraft & {
+    scheduled: { startDate?: string; endDate?: string };
+};
 
 export function CampaignEdit({ campaignId }: { campaignId: string }) {
     const navigate = useNavigate();
@@ -19,17 +29,29 @@ export function CampaignEdit({ campaignId }: { campaignId: string }) {
     const draft = campaignStore((state) => state.draft);
     const saveCampaign = useSaveCampaign();
 
-    const formValues = useMemo(
-        () => ({ ...draft, id: campaignId }),
+    const formValues = useMemo<EditFormValues>(
+        () => ({
+            ...draft,
+            id: campaignId,
+            scheduled: {
+                startDate: getStartDate(draft.rule),
+                endDate: draft.expiresAt,
+            },
+        }),
         [draft, campaignId]
     );
 
-    const form = useForm<CampaignDraft>({
+    const form = useForm<EditFormValues>({
         values: formValues,
     });
 
-    async function onSubmit(values: CampaignDraft) {
-        await saveCampaign.mutateAsync(values);
+    async function onSubmit(values: EditFormValues) {
+        const { scheduled, ...rest } = values;
+        await saveCampaign.mutateAsync({
+            ...rest,
+            rule: setStartDate(rest.rule, scheduled.startDate),
+            expiresAt: scheduled.endDate,
+        });
         navigate({
             to: "/m/$merchantId/campaigns/list",
             params: { merchantId },

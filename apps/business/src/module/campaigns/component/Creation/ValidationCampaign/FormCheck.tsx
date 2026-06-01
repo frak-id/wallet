@@ -12,17 +12,21 @@ import { FormGoal } from "@/module/campaigns/component/Creation/ValidationCampai
 import { RewardsSummary } from "@/module/campaigns/component/RewardsSummary";
 import { FormDescription, FormItem } from "@/module/forms/Form";
 import { Input } from "@/module/forms/Input";
-import type { CampaignDraft } from "@/stores/campaignStore";
+import { type CampaignDraft, getStartDate } from "@/stores/campaignStore";
 
 export function FormCheck() {
     const form = useFormContext<CampaignDraft>();
-    const { metadata, scheduled, rule } = form.getValues();
+    const { metadata, rule, expiresAt } = form.getValues();
+    const scheduled = {
+        startDate: getStartDate(rule),
+        endDate: expiresAt,
+    };
 
     const territories = metadata.territories ?? [];
     const trigger = rule.trigger;
     const rewards = rule.rewards ?? [];
 
-    const formatDate = (date?: Date) => {
+    const formatDate = (date?: string) => {
         if (!date) return "Not set";
         return new Intl.DateTimeFormat("en-US", {
             dateStyle: "medium",

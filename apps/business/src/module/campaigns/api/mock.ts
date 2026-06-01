@@ -26,13 +26,7 @@ function mapStatusToActions(status: CampaignStatus): CampaignActions {
 }
 
 function draftToCampaign(draft: CampaignDraft): Campaign {
-    const endDate = draft.scheduled.endDate;
-    let expiresAt: string | null = null;
-    if (endDate) {
-        // Handle both Date objects and serialized strings (from Zustand persist)
-        expiresAt =
-            endDate instanceof Date ? endDate.toISOString() : String(endDate);
-    }
+    const expiresAt: string | null = draft.expiresAt ?? null;
 
     return {
         id: draft.id ?? "",
