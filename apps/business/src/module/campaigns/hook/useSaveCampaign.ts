@@ -23,7 +23,7 @@ function buildDemoCampaign(draft: CampaignDraft): Campaign {
         metadata: draft.metadata,
         budgetConfig: draft.budgetConfig,
         budgetUsed: null,
-        expiresAt: null,
+        expiresAt: draft.expiresAt ?? null,
         priority: draft.priority,
     } as Campaign;
 }
@@ -35,13 +35,18 @@ export function useSaveCampaign() {
     return useMutation({
         mutationKey: ["campaigns", "save"],
         mutationFn: async (draft: CampaignDraft): Promise<Campaign> => {
+            // Persist the just-saved draft (+ the returned id) back into the
+            // store so later wizard steps read the values that were actually
+            // saved, not a stale copy. We keep the submitted `draft` (which
+            // still carries the UI-only `rewardToken`) rather than rebuilding
+            // from the response — at create time the campaign has no rewards
+            // yet, so deriving the token from the response would drop it.
             if (isDemoMode) {
                 await new Promise((resolve) => setTimeout(resolve, 300));
                 const demoCampaign = buildDemoCampaign(draft);
-                campaignStore.getState().updateDraft((d) => ({
-                    ...d,
-                    id: demoCampaign.id,
-                }));
+                campaignStore
+                    .getState()
+                    .setDraft({ ...draft, id: demoCampaign.id });
                 return demoCampaign;
             }
 
@@ -55,17 +60,16 @@ export function useSaveCampaign() {
                 // one reward".
                 const { rule, ...rest } = payload;
                 const includeRule = rule.rewards.length > 0;
-                return updateCampaign({
+                const updated = await updateCampaign({
                     campaignId: draft.id,
                     ...rest,
                     ...(includeRule ? { rule } : {}),
                 });
+                campaignStore.getState().setDraft(draft);
+                return updated;
             }
             const created = await createCampaign(payload);
-            campaignStore.getState().updateDraft((d) => ({
-                ...d,
-                id: created.id,
-            }));
+            campaignStore.getState().setDraft({ ...draft, id: created.id });
             return created;
         },
         onSuccess: async (campaign) => {
