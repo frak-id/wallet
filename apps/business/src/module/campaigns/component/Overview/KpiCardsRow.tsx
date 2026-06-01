@@ -11,12 +11,10 @@ import * as styles from "./overview.css";
 
 const DEFAULT_REVENUE_CURRENCY = "EUR";
 
-/**
- * Hint shown on the three KPI cards whose Postgres-backed values
- * (`ambassadors`, `shares`, derived `sharingRate`) under-report reality.
- * Disappears once the OpenPanel analytics query resolves and the
- * accurate counts overlay the postgres ones.
- */
+// Shown on a KPI card when its value comes from the Postgres summary rather
+// than the accurate OpenPanel count — before analytics loads, or when
+// OpenPanel returns 0 and we fall back. Cleared per-card once OpenPanel
+// supplies a non-zero accurate count.
 const APPROXIMATE_HINT = "Approximate";
 
 type Props = {
@@ -72,11 +70,17 @@ export function KpiCardsRow({ kpis, from, to }: Props) {
         [locale, revenueCurrency, rewardsCurrency]
     );
 
-    // Overlay accurate values when available — keeps sharingRate
-    // internally consistent with the displayed ambassadors / shares.
-    const ambassadors = accurateKpis?.ambassadors ?? kpis.ambassadors;
-    const shares = accurateKpis?.shares ?? kpis.shares;
-    const accuracyHint = accurateKpis ? undefined : APPROXIMATE_HINT;
+    // Prefer the accurate OpenPanel counts, but fall back to the Postgres
+    // summary when OpenPanel reports 0 — a degraded/empty analytics result
+    // must not zero out a KPI the summary can still populate.
+    const { value: ambassadors, accurate: ambassadorsAccurate } = pickKpi(
+        accurateKpis?.ambassadors,
+        kpis.ambassadors
+    );
+    const { value: shares, accurate: sharesAccurate } = pickKpi(
+        accurateKpis?.shares,
+        kpis.shares
+    );
 
     const sharingRate = useMemo(
         () => ({
@@ -98,14 +102,14 @@ export function KpiCardsRow({ kpis, from, to }: Props) {
                 descriptor={t("campaigns.overview.kpi.descriptorTotal")}
                 amount={formatters.integer.format(ambassadors.current)}
                 delta={percentDelta(ambassadors.current, ambassadors.previous)}
-                hint={accuracyHint}
+                hint={ambassadorsAccurate ? undefined : APPROXIMATE_HINT}
             />
             <OverviewKpiCard
                 label={t("campaigns.overview.kpi.shares")}
                 descriptor={t("campaigns.overview.kpi.descriptorTotal")}
                 amount={formatters.integer.format(shares.current)}
                 delta={percentDelta(shares.current, shares.previous)}
-                hint={accuracyHint}
+                hint={sharesAccurate ? undefined : APPROXIMATE_HINT}
             />
             <OverviewKpiCard
                 label={t("campaigns.overview.kpi.revenue")}
@@ -121,7 +125,11 @@ export function KpiCardsRow({ kpis, from, to }: Props) {
                 descriptor={t("campaigns.overview.kpi.descriptorTotal")}
                 amount={formatters.percent.format(sharingRate.current)}
                 delta={percentDelta(sharingRate.current, sharingRate.previous)}
-                hint={accuracyHint}
+                hint={
+                    ambassadorsAccurate && sharesAccurate
+                        ? undefined
+                        : APPROXIMATE_HINT
+                }
             />
             <OverviewKpiCard
                 label={t("campaigns.overview.kpi.avgCpa")}
@@ -145,4 +153,19 @@ function safeRatio(numerator: number, denominator: number): number {
 function percentDelta(current: number, previous: number): number | undefined {
     if (previous === 0) return current === 0 ? 0 : undefined;
     return Math.round(((current - previous) / previous) * 100);
+}
+
+type Kpi = { current: number; previous: number };
+
+// Prefer the OpenPanel count; fall back to the Postgres value when OpenPanel
+// is absent or reports 0. `accurate` flags whether the accurate source won,
+// so the card can show the approximate hint on fallback.
+function pickKpi(
+    openPanel: Kpi | undefined,
+    fallback: Kpi
+): { value: Kpi; accurate: boolean } {
+    if (openPanel && openPanel.current > 0) {
+        return { value: openPanel, accurate: true };
+    }
+    return { value: fallback, accurate: false };
 }
