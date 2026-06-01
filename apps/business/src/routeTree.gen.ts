@@ -51,6 +51,7 @@ import { Route as RestrictedMMerchantIdCampaignsEditCampaignIdRouteImport } from
 import { Route as RestrictedMMerchantIdCampaignsDraftNewRouteImport } from './routes/_restricted/m/$merchantId/campaigns/draft/new'
 import { Route as RestrictedMMerchantIdCampaignsDraftCampaignIdIndexRouteImport } from './routes/_restricted/m/$merchantId/campaigns/draft/$campaignId/index'
 import { Route as RestrictedMMerchantIdCampaignsDraftCampaignIdValidationRouteImport } from './routes/_restricted/m/$merchantId/campaigns/draft/$campaignId/validation'
+import { Route as RestrictedMMerchantIdCampaignsDraftCampaignIdTerritoryRouteImport } from './routes/_restricted/m/$merchantId/campaigns/draft/$campaignId/territory'
 import { Route as RestrictedMMerchantIdCampaignsDraftCampaignIdMetricsRouteImport } from './routes/_restricted/m/$merchantId/campaigns/draft/$campaignId/metrics'
 import { Route as RestrictedMMerchantIdCampaignsDraftCampaignIdGoalsRouteImport } from './routes/_restricted/m/$merchantId/campaigns/draft/$campaignId/goals'
 
@@ -291,6 +292,12 @@ const RestrictedMMerchantIdCampaignsDraftCampaignIdValidationRoute =
     path: '/campaigns/draft/$campaignId/validation',
     getParentRoute: () => RestrictedMMerchantIdRoute,
   } as any)
+const RestrictedMMerchantIdCampaignsDraftCampaignIdTerritoryRoute =
+  RestrictedMMerchantIdCampaignsDraftCampaignIdTerritoryRouteImport.update({
+    id: '/campaigns/draft/$campaignId/territory',
+    path: '/campaigns/draft/$campaignId/territory',
+    getParentRoute: () => RestrictedMMerchantIdRoute,
+  } as any)
 const RestrictedMMerchantIdCampaignsDraftCampaignIdMetricsRoute =
   RestrictedMMerchantIdCampaignsDraftCampaignIdMetricsRouteImport.update({
     id: '/campaigns/draft/$campaignId/metrics',
@@ -346,6 +353,7 @@ export interface FileRoutesByFullPath {
   '/m/$merchantId/campaigns/edit/$campaignId': typeof RestrictedMMerchantIdCampaignsEditCampaignIdRoute
   '/m/$merchantId/campaigns/draft/$campaignId/goals': typeof RestrictedMMerchantIdCampaignsDraftCampaignIdGoalsRoute
   '/m/$merchantId/campaigns/draft/$campaignId/metrics': typeof RestrictedMMerchantIdCampaignsDraftCampaignIdMetricsRoute
+  '/m/$merchantId/campaigns/draft/$campaignId/territory': typeof RestrictedMMerchantIdCampaignsDraftCampaignIdTerritoryRoute
   '/m/$merchantId/campaigns/draft/$campaignId/validation': typeof RestrictedMMerchantIdCampaignsDraftCampaignIdValidationRoute
   '/m/$merchantId/campaigns/draft/$campaignId/': typeof RestrictedMMerchantIdCampaignsDraftCampaignIdIndexRoute
 }
@@ -391,6 +399,7 @@ export interface FileRoutesByTo {
   '/m/$merchantId/campaigns/edit/$campaignId': typeof RestrictedMMerchantIdCampaignsEditCampaignIdRoute
   '/m/$merchantId/campaigns/draft/$campaignId/goals': typeof RestrictedMMerchantIdCampaignsDraftCampaignIdGoalsRoute
   '/m/$merchantId/campaigns/draft/$campaignId/metrics': typeof RestrictedMMerchantIdCampaignsDraftCampaignIdMetricsRoute
+  '/m/$merchantId/campaigns/draft/$campaignId/territory': typeof RestrictedMMerchantIdCampaignsDraftCampaignIdTerritoryRoute
   '/m/$merchantId/campaigns/draft/$campaignId/validation': typeof RestrictedMMerchantIdCampaignsDraftCampaignIdValidationRoute
   '/m/$merchantId/campaigns/draft/$campaignId': typeof RestrictedMMerchantIdCampaignsDraftCampaignIdIndexRoute
 }
@@ -438,6 +447,7 @@ export interface FileRoutesById {
   '/_restricted/m/$merchantId/campaigns/edit/$campaignId': typeof RestrictedMMerchantIdCampaignsEditCampaignIdRoute
   '/_restricted/m/$merchantId/campaigns/draft/$campaignId/goals': typeof RestrictedMMerchantIdCampaignsDraftCampaignIdGoalsRoute
   '/_restricted/m/$merchantId/campaigns/draft/$campaignId/metrics': typeof RestrictedMMerchantIdCampaignsDraftCampaignIdMetricsRoute
+  '/_restricted/m/$merchantId/campaigns/draft/$campaignId/territory': typeof RestrictedMMerchantIdCampaignsDraftCampaignIdTerritoryRoute
   '/_restricted/m/$merchantId/campaigns/draft/$campaignId/validation': typeof RestrictedMMerchantIdCampaignsDraftCampaignIdValidationRoute
   '/_restricted/m/$merchantId/campaigns/draft/$campaignId/': typeof RestrictedMMerchantIdCampaignsDraftCampaignIdIndexRoute
 }
@@ -485,6 +495,7 @@ export interface FileRouteTypes {
     | '/m/$merchantId/campaigns/edit/$campaignId'
     | '/m/$merchantId/campaigns/draft/$campaignId/goals'
     | '/m/$merchantId/campaigns/draft/$campaignId/metrics'
+    | '/m/$merchantId/campaigns/draft/$campaignId/territory'
     | '/m/$merchantId/campaigns/draft/$campaignId/validation'
     | '/m/$merchantId/campaigns/draft/$campaignId/'
   fileRoutesByTo: FileRoutesByTo
@@ -530,6 +541,7 @@ export interface FileRouteTypes {
     | '/m/$merchantId/campaigns/edit/$campaignId'
     | '/m/$merchantId/campaigns/draft/$campaignId/goals'
     | '/m/$merchantId/campaigns/draft/$campaignId/metrics'
+    | '/m/$merchantId/campaigns/draft/$campaignId/territory'
     | '/m/$merchantId/campaigns/draft/$campaignId/validation'
     | '/m/$merchantId/campaigns/draft/$campaignId'
   id:
@@ -576,6 +588,7 @@ export interface FileRouteTypes {
     | '/_restricted/m/$merchantId/campaigns/edit/$campaignId'
     | '/_restricted/m/$merchantId/campaigns/draft/$campaignId/goals'
     | '/_restricted/m/$merchantId/campaigns/draft/$campaignId/metrics'
+    | '/_restricted/m/$merchantId/campaigns/draft/$campaignId/territory'
     | '/_restricted/m/$merchantId/campaigns/draft/$campaignId/validation'
     | '/_restricted/m/$merchantId/campaigns/draft/$campaignId/'
   fileRoutesById: FileRoutesById
@@ -885,6 +898,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof RestrictedMMerchantIdCampaignsDraftCampaignIdValidationRouteImport
       parentRoute: typeof RestrictedMMerchantIdRoute
     }
+    '/_restricted/m/$merchantId/campaigns/draft/$campaignId/territory': {
+      id: '/_restricted/m/$merchantId/campaigns/draft/$campaignId/territory'
+      path: '/campaigns/draft/$campaignId/territory'
+      fullPath: '/m/$merchantId/campaigns/draft/$campaignId/territory'
+      preLoaderRoute: typeof RestrictedMMerchantIdCampaignsDraftCampaignIdTerritoryRouteImport
+      parentRoute: typeof RestrictedMMerchantIdRoute
+    }
     '/_restricted/m/$merchantId/campaigns/draft/$campaignId/metrics': {
       id: '/_restricted/m/$merchantId/campaigns/draft/$campaignId/metrics'
       path: '/campaigns/draft/$campaignId/metrics'
@@ -919,6 +939,7 @@ interface RestrictedMMerchantIdRouteChildren {
   RestrictedMMerchantIdCampaignsEditCampaignIdRoute: typeof RestrictedMMerchantIdCampaignsEditCampaignIdRoute
   RestrictedMMerchantIdCampaignsDraftCampaignIdGoalsRoute: typeof RestrictedMMerchantIdCampaignsDraftCampaignIdGoalsRoute
   RestrictedMMerchantIdCampaignsDraftCampaignIdMetricsRoute: typeof RestrictedMMerchantIdCampaignsDraftCampaignIdMetricsRoute
+  RestrictedMMerchantIdCampaignsDraftCampaignIdTerritoryRoute: typeof RestrictedMMerchantIdCampaignsDraftCampaignIdTerritoryRoute
   RestrictedMMerchantIdCampaignsDraftCampaignIdValidationRoute: typeof RestrictedMMerchantIdCampaignsDraftCampaignIdValidationRoute
   RestrictedMMerchantIdCampaignsDraftCampaignIdIndexRoute: typeof RestrictedMMerchantIdCampaignsDraftCampaignIdIndexRoute
 }
@@ -952,6 +973,8 @@ const RestrictedMMerchantIdRouteChildren: RestrictedMMerchantIdRouteChildren = {
     RestrictedMMerchantIdCampaignsDraftCampaignIdGoalsRoute,
   RestrictedMMerchantIdCampaignsDraftCampaignIdMetricsRoute:
     RestrictedMMerchantIdCampaignsDraftCampaignIdMetricsRoute,
+  RestrictedMMerchantIdCampaignsDraftCampaignIdTerritoryRoute:
+    RestrictedMMerchantIdCampaignsDraftCampaignIdTerritoryRoute,
   RestrictedMMerchantIdCampaignsDraftCampaignIdValidationRoute:
     RestrictedMMerchantIdCampaignsDraftCampaignIdValidationRoute,
   RestrictedMMerchantIdCampaignsDraftCampaignIdIndexRoute:

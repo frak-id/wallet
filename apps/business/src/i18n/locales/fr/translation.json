@@ -203,6 +203,38 @@
                         "fallback": "Devise par défaut du marchand"
                     }
                 }
+            },
+            "territory": {
+                "card": {
+                    "label": "Territoire",
+                    "description": "Choisissez un ou plusieurs pays où votre campagne sera diffusée.",
+                    "placeholder": "Sélectionner un pays",
+                    "search": "Rechercher",
+                    "required": "Sélectionnez un pays"
+                },
+                "special": {
+                    "label": "Catégories publicitaires spéciales",
+                    "description": "Indiquez si vos publicités concernent le crédit, l’emploi, le logement ou un sujet social, électoral ou politique.",
+                    "notSupported": "Les catégories publicitaires spéciales ne sont pas encore prises en charge",
+                    "options": {
+                        "credit": {
+                            "title": "Crédit",
+                            "description": "Publicités pour des offres de carte de crédit, prêts auto, financements à long terme ou offres similaires."
+                        },
+                        "jobs": {
+                            "title": "Emploi",
+                            "description": "Publicités pour des offres d’emploi, stages, programmes de certification professionnelle ou offres similaires."
+                        },
+                        "housing": {
+                            "title": "Logement",
+                            "description": "Publicités pour des annonces immobilières, assurance habitation, prêts hypothécaires ou offres similaires."
+                        },
+                        "social": {
+                            "title": "Sujets sociaux, électoraux ou politiques",
+                            "description": "Publicités concernant des sujets sociaux, des élections, ou des personnalités ou campagnes politiques."
+                        }
+                    }
+                }
             }
         },
         "tabs": {

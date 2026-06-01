@@ -162,6 +162,38 @@ export default interface Resources {
                         subtitle: "Review all settings before publishing. All fields are read-only at this stage.";
                     };
                 };
+                territory: {
+                    card: {
+                        description: "Choose one or several countries where your campaign will be displayed.";
+                        label: "Territory";
+                        placeholder: "Select country";
+                        required: "Select a country";
+                        search: "Search";
+                    };
+                    special: {
+                        description: "Declare whether your ads concern credit, employment, housing or a social, electoral or political issue.";
+                        label: "Special advertising categories";
+                        notSupported: "Special advertising categories are not supported yet";
+                        options: {
+                            credit: {
+                                description: "Advertisements for credit card offers, car loans, long-term financing or similar offers.";
+                                title: "Credit";
+                            };
+                            housing: {
+                                description: "Advertisements for real estate ads, home insurance, mortgages or similar offers.";
+                                title: "Housing";
+                            };
+                            jobs: {
+                                description: "Advertisements for job offers, internships, professional certification programs or other similar offers.";
+                                title: "Jobs";
+                            };
+                            social: {
+                                description: "Advertisements concerning social issues, elections, or political figures or campaigns.";
+                                title: "Social, electoral or political issues";
+                            };
+                        };
+                    };
+                };
             };
             details: {
                 close: "Close campaign details";
