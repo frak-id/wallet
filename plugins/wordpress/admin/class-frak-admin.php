@@ -163,6 +163,7 @@ class Frak_Admin {
 				'logo_url'                  => $logo_url,
 				// Unchecked checkboxes are absent from the POST body, so
 				// `isset()` is the canonical on/off read for a boolean toggle.
+				'auto_render_banner'        => isset( $_POST['frak_auto_render_banner'] ),
 				'auto_render_post_purchase' => isset( $_POST['frak_auto_render_post_purchase'] ),
 			)
 		);

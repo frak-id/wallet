@@ -15,11 +15,65 @@
 class Frak_Frontend {
 
 	/**
+	 * Guard so the opt-in site-wide `<frak-banner>` is emitted at most once
+	 * per request, even if a theme fires `wp_body_open` more than once (rare,
+	 * but some page builders re-open the body wrapper). Mirrors the single-
+	 * boolean latch used for the auto-rendered post-purchase card in
+	 * {@see Frak_WooCommerce}.
+	 *
+	 * @var bool
+	 */
+	private static bool $banner_rendered = false;
+
+	/**
 	 * Register frontend hooks. Called once from {@see Frak_Plugin::init()}.
 	 */
 	public static function init() {
 		add_action( 'wp_enqueue_scripts', array( __CLASS__, 'enqueue_scripts' ), 20 );
 		add_filter( 'wp_resource_hints', array( __CLASS__, 'add_resource_hints' ), 10, 2 );
+
+		// Opt-in: inject <frak-banner> at the top of every page (right after
+		// <body> via wp_body_open) when the merchant enables "Auto-render
+		// Banner" in Settings → Frak. Lets merchants run the referral /
+		// in-app-browser banner site-wide without dropping the block, shortcode,
+		// or widget on every template — handy on theme/page builders where
+		// editing the global header is painful. The banner auto-hides when there
+		// is no referral or in-app context, so it stays inert on ordinary page
+		// views. No hook is registered (zero per-request cost) when off.
+		if ( Frak_Settings::get( 'auto_render_banner' ) ) {
+			add_action( 'wp_body_open', array( __CLASS__, 'render_banner' ) );
+		}
+	}
+
+	/**
+	 * Auto-inject the `<frak-banner>` at the top of every page.
+	 *
+	 * Hooked to `wp_body_open` (right after the opening `<body>` tag) only when
+	 * the merchant enables "Auto-render Banner" in Settings → Frak (see
+	 * {@see init()}). Gives merchants a zero-template-edit way to run the
+	 * referral / in-app-browser banner site-wide — useful on theme/page
+	 * builders where editing the global header to add a block is painful.
+	 *
+	 * Delegates to {@see Frak_Component_Renderer::banner()} with no
+	 * caller-supplied attributes, so the markup is byte-identical to the block,
+	 * shortcode, and widget surfaces and the SDK pulls all copy from the
+	 * merchant's backend config. `<frak-banner>` auto-hides when there is no
+	 * referral success or in-app-browser context, so it is inert on ordinary
+	 * page views.
+	 *
+	 * Emitted at most once per request (see {@see $banner_rendered}). Themes
+	 * that don't implement `wp_body_open()` won't render it — acceptable since
+	 * that hook is the canonical top-of-body injection point on WP 5.2+ (this
+	 * plugin requires 6.4+).
+	 */
+	public static function render_banner() {
+		if ( self::$banner_rendered ) {
+			return;
+		}
+		self::$banner_rendered = true;
+
+		// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Frak_Component_Renderer escapes every attribute internally; the bare web component markup carries no wrapper.
+		echo Frak_Component_Renderer::banner( array() );
 	}
 
 	/**
