@@ -11,6 +11,13 @@ version on dispatch.
 
 ## [Unreleased]
 
+### Added
+
+- **Divi 4 Builder integration: three native modules (Frak Banner, Frak Share Button, Frak Post-Purchase) with full Visual Builder support.** Merchants on a Divi theme find the Frak components in the module list (search "Frak") and edit them in the Visual Builder, mirroring the Gutenberg blocks / Elementor widgets 1:1. All rendering goes through the shared `Frak_Component_Renderer` so every surface emits identical `<frak-*>` markup, and registration is gated on `et_builder_ready` so non-Divi sites pay nothing. Code lives under `includes/divi/`.
+  - **Full VB support (`$vb_support = 'on'`)** via React "twins" registered through Divi's `et_builder_api_ready` JS API — instant live preview, no "module has no React component" notice. The twins (`includes/divi/builder-modules.js`) are thin, no-build `React.createElement` wrappers over the same `<frak-*>` web components; the PHP `render()` still drives the public frontend.
+  - **Banner *Editor preview → Disabled*** option to suppress the builder preview, so a banner in a global header / footer / template doesn't paint on every edited page (frontend unaffected).
+  - Editor-only plumbing: SDK loaded render-blocking in `<head>` and `waitForBackendConfig` flipped off in the builder so `<frak-X preview>` paints immediately; design-tab options disabled (SDK ships its own styles); PHPStan stubs for the Divi classes.
+
 ## [1.1.8] - 2026-05-27
 
 ### Changed
