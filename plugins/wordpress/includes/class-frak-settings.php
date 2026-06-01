@@ -72,11 +72,24 @@ class Frak_Settings {
 	/**
 	 * Default values per setting key.
 	 *
+	 * `auto_render_banner` and `auto_render_post_purchase` are opt-in booleans
+	 * (default off) that auto-inject a Frak web component without the merchant
+	 * placing a block / shortcode / widget — handy on theme/page builders
+	 * (Divi, etc.) where editing templates is painful:
+	 *   - `auto_render_banner`        — {@see Frak_Frontend} emits `<frak-banner>`
+	 *     at the top of every page (via `wp_body_open`).
+	 *   - `auto_render_post_purchase` — {@see Frak_WooCommerce} emits
+	 *     `<frak-post-purchase>` on the WooCommerce thank-you page.
+	 * No migration is needed when these keys are added — {@see all()} merges the
+	 * defaults at read time, so installs predating a key resolve to `false`.
+	 *
 	 * @var array<string, mixed>
 	 */
 	private const DEFAULTS = array(
-		'app_name' => '',
-		'logo_url' => '',
+		'app_name'                  => '',
+		'logo_url'                  => '',
+		'auto_render_banner'        => false,
+		'auto_render_post_purchase' => false,
 	);
 
 	/**

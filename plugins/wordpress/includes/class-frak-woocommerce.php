@@ -53,6 +53,18 @@ class Frak_WooCommerce {
 	private static array $emitted_order_ids = array();
 
 	/**
+	 * Guard so the opt-in `<frak-post-purchase>` card is emitted at most once
+	 * per request, even if `woocommerce_thankyou` fires more than once (some
+	 * custom thank-you templates re-run the action). A single boolean is the
+	 * correct granularity here — unlike the per-order tracker latch above, the
+	 * auto-rendered card is one share-and-earn surface for the page regardless
+	 * of how many orders the request carries.
+	 *
+	 * @var bool
+	 */
+	private static bool $post_purchase_card_rendered = false;
+
+	/**
 	 * Register WooCommerce hooks. Called once from {@see Frak_Plugin::init()}.
 	 *
 	 * Tracker registration uses `woocommerce_thankyou` and `woocommerce_view_order`
@@ -68,6 +80,19 @@ class Frak_WooCommerce {
 	public static function init() {
 		add_action( 'woocommerce_thankyou', array( __CLASS__, 'render_purchase_tracker_for_order' ) );
 		add_action( 'woocommerce_view_order', array( __CLASS__, 'render_purchase_tracker_for_order' ) );
+
+		// Opt-in surface: render the full <frak-post-purchase> share-and-earn
+		// card directly on the thank-you page when the merchant flips the
+		// "Auto-render Post-Purchase" toggle in Settings → Frak. This spares
+		// merchants on theme/page builders (Divi, etc.) from hand-editing the
+		// WooCommerce thank-you template — a content-erasing operation in those
+		// builders. Registered at priority 20 so the card lands after
+		// WooCommerce's own order-details output. No hook is added (and zero
+		// per-request cost is paid) when the toggle is off, so stores that drop
+		// the block / shortcode / widget themselves are unaffected.
+		if ( Frak_Settings::get( 'auto_render_post_purchase' ) ) {
+			add_action( 'woocommerce_thankyou', array( __CLASS__, 'render_post_purchase_card' ), 20 );
+		}
 	}
 
 	/**
@@ -289,6 +314,46 @@ class Frak_WooCommerce {
 
 		wp_print_inline_script_tag( $script, array( 'id' => 'frak-purchase-tracker-inline-' . $order_id ) );
 		self::$emitted_order_ids[ $order_id ] = true;
+	}
+
+	/**
+	 * Auto-render the `<frak-post-purchase>` share-and-earn card on the
+	 * WooCommerce thank-you page.
+	 *
+	 * Hooked to `woocommerce_thankyou` only when the merchant enables
+	 * "Auto-render Post-Purchase" in Settings → Frak (see {@see init()}). It
+	 * gives merchants on theme/page builders that make the thank-you template
+	 * hard to edit without wiping its content (Divi, etc.) a zero-template-edit
+	 * way to surface the card.
+	 *
+	 * Delegates to {@see Frak_Component_Renderer::post_purchase()} with no
+	 * caller-supplied attributes: the renderer auto-injects the WooCommerce
+	 * order context (`customer-id` / `order-id` / `token` + product line items)
+	 * from the resolved `order-received` order — identical to the block,
+	 * shortcode, and widget surfaces — and the SDK pulls all UI copy from the
+	 * merchant's backend config. The component fires `trackPurchaseStatus` on
+	 * mount; the always-on inline tracker emitted by
+	 * {@see render_purchase_tracker_for_order()} fires the same call, and the
+	 * SDK is idempotent on the `(customerId, orderId, token)` triple, so the
+	 * duplicate is intentional — attribution keeps working while the component
+	 * warms up.
+	 *
+	 * Emitted at most once per request (see {@see $post_purchase_card_rendered}).
+	 *
+	 * @param int $order_id Order ID provided by the WooCommerce action. Unused —
+	 *                      the renderer resolves the order from the endpoint URL
+	 *                      with the same key/capability guards as every other
+	 *                      surface.
+	 */
+	public static function render_post_purchase_card( $order_id ) {
+		unset( $order_id );
+		if ( self::$post_purchase_card_rendered ) {
+			return;
+		}
+		self::$post_purchase_card_rendered = true;
+
+		// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Frak_Component_Renderer escapes every attribute internally; the bare web component markup carries no wrapper.
+		echo Frak_Component_Renderer::post_purchase( array() );
 	}
 
 	/**

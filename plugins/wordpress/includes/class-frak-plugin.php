@@ -39,6 +39,10 @@ class Frak_Plugin {
 		// unconditionally — it only adds an extra hook registration when
 		// `did_action( 'elementor/loaded' )` is positive.
 		Frak_Elementor::init();
+		// Divi integration registers its modules on the `et_builder_ready`
+		// action. Same contract as Elementor: a no-op when Divi is absent
+		// (the action never fires), so it's safe to call unconditionally.
+		Frak_Divi::init();
 	}
 
 	/**
