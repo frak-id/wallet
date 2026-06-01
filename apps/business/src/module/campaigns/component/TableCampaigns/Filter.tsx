@@ -110,7 +110,7 @@ export function TableCampaignFilters({
                     onChange={setDateFilter}
                     trigger={
                         <Button variant="filter" size="filter">
-                            <CalendarIcon />
+                            <CalendarIcon width={16} height={16} />
                             <span>
                                 {currentDate?.from ? (
                                     currentDate.to ? (
