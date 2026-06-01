@@ -34,15 +34,30 @@ class Frak_Frontend {
 	 * is never empty.
 	 */
 	public static function enqueue_scripts() {
+		// Inside the Divi Visual Builder the module markup is injected through
+		// partial (AJAX) re-renders *after* the page has loaded. A deferred,
+		// footer-loaded SDK can execute after those injections, leaving the
+		// `<frak-*>` custom elements unupgraded so the preview renders blank.
+		// Loading the SDK render-blocking in <head> guarantees
+		// `customElements.define()` has run before any partial render fires.
+		// The builder is not perf-sensitive, so the blocking load is an
+		// acceptable trade there; the public frontend keeps the deferred,
+		// footer-loaded script. Elementor's preview uses a full frontend
+		// iframe (no post-load injection) so it is intentionally not covered.
+		$in_divi_builder = class_exists( 'Frak_Divi' ) && Frak_Divi::is_editor_context();
+		$script_args     = $in_divi_builder
+			? array( 'in_footer' => false )
+			: array(
+				'in_footer' => true,
+				'strategy'  => 'defer',
+			);
+
 		wp_enqueue_script(
 			'frak-sdk',
 			'https://cdn.jsdelivr.net/npm/@frak-labs/components',
 			array(),
 			null, // phpcs:ignore WordPress.WP.EnqueuedResourceParameters -- CDN serves latest version; avoid ?ver= query param.
-			array(
-				'in_footer' => true,
-				'strategy'  => 'defer',
-			)
+			$script_args
 		);
 
 		// Inline config injected 'before' the SDK so window.FrakSetup is populated prior to SDK bootstrap.
@@ -76,13 +91,14 @@ class Frak_Frontend {
 	 * Shape matches the current SDK contract (see @frak-labs/components):
 	 *   window.FrakSetup = { config: FrakWalletSdkConfig };
 	 *
-	 * Site-level metadata (name + logoUrl) is always emitted. Inside the
-	 * Elementor editor / preview iframe (detected via
-	 * {@see Frak_Elementor::is_editor_context()}) we additionally flip
-	 * `waitForBackendConfig` off so the live `<frak-X preview>` web components
-	 * render immediately even on local dev where the merchant dashboard hasn't
-	 * registered the domain yet — same trick the Gutenberg editor uses (see
-	 * {@see Frak_Blocks::generate_editor_config_script()}).
+	 * Site-level metadata (name + logoUrl) is always emitted. Inside a page
+	 * builder's editor / preview context — Elementor (detected via
+	 * {@see Frak_Elementor::is_editor_context()}) or the Divi Visual Builder
+	 * (detected via {@see Frak_Divi::is_editor_context()}) — we additionally
+	 * flip `waitForBackendConfig` off so the live `<frak-X preview>` web
+	 * components render immediately even on local dev where the merchant
+	 * dashboard hasn't registered the domain yet — same trick the Gutenberg
+	 * editor uses (see {@see Frak_Blocks::generate_editor_config_script()}).
 	 *
 	 * @return string
 	 */
@@ -102,7 +118,10 @@ class Frak_Frontend {
 		);
 
 		$config = array( 'metadata' => $metadata );
-		if ( class_exists( 'Frak_Elementor' ) && Frak_Elementor::is_editor_context() ) {
+		if (
+			( class_exists( 'Frak_Elementor' ) && Frak_Elementor::is_editor_context() )
+			|| ( class_exists( 'Frak_Divi' ) && Frak_Divi::is_editor_context() )
+		) {
 			$config['waitForBackendConfig'] = false;
 		}
 

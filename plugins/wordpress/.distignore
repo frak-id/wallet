@@ -35,6 +35,7 @@ phpunit.xml
 phpstan.neon
 phpstan-bootstrap.php
 phpstan-elementor-stubs.php
+phpstan-divi-stubs.php
 phpcs.xml.dist
 
 # Documentation source files
