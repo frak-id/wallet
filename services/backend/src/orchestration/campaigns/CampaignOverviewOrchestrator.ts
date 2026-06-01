@@ -61,6 +61,22 @@ import { buildRewardsExpression, getTokenPrices } from "./rewards";
 
 const TOP_CAMPAIGNS_LIMIT = 10;
 
+// Current event schema (merchant_id, source, sharing_link_*) only exists
+// from the Sept-2025 analytics refactor on, so flooring OpenPanel queries
+// here is lossless. Critical: a lifetime window resolves `from` to 1970, and
+// OpenPanel `/export/charts` zero-fills one bucket per interval across the
+// whole span — 1970→now is ~20k daily buckets/series and times out the
+// export client. Keep this clamp. Postgres uses the true (unclamped) window.
+const OPENPANEL_EVENT_EPOCH = new Date("2025-09-01T00:00:00.000Z");
+
+function clampOpenPanelRange(range: DateRange): DateRange {
+    const floorMs = OPENPANEL_EVENT_EPOCH.getTime();
+    if (range.from.getTime() >= floorMs) return range;
+    // A fully pre-epoch range yields from > to → OpenPanel returns zero,
+    // which is correct (no events exist there).
+    return { from: new Date(floorMs), to: range.to };
+}
+
 type AssetKpiRow = {
     ambassadorsCurrent: string;
     ambassadorsPrevious: string;
@@ -419,6 +435,7 @@ export class CampaignOverviewOrchestrator {
     ): Promise<OverviewAnalyticsResponse> {
         const resolved = resolveWindow(window);
         const withPrevious = resolved.hasComparison;
+        const openPanelRange = clampOpenPanelRange(resolved.current);
 
         const [
             websiteSteps,
@@ -431,18 +448,18 @@ export class CampaignOverviewOrchestrator {
             this.runFunnel(
                 merchantId,
                 websiteFunnelDefinition(),
-                resolved.current,
+                openPanelRange,
                 withPrevious
             ),
             this.runFunnel(
                 merchantId,
                 walletFunnelDefinition(),
-                resolved.current,
+                openPanelRange,
                 withPrevious
             ),
-            this.getAccurateKpis(merchantId, resolved.current, withPrevious),
-            this.getSharingPlatform(merchantId, resolved.current),
-            this.getSharingDevice(merchantId, resolved.current),
+            this.getAccurateKpis(merchantId, openPanelRange, withPrevious),
+            this.getSharingPlatform(merchantId, openPanelRange),
+            this.getSharingDevice(merchantId, openPanelRange),
             this.getBackendFunnelTail(merchantId, resolved),
         ]);
 
@@ -476,6 +493,7 @@ export class CampaignOverviewOrchestrator {
             startDate: range.from.toISOString(),
             endDate: range.to.toISOString(),
             range: "custom",
+            interval: "month",
             previous: withPrevious,
         });
         return aggregateFunnelSteps(definitions, response.series);
@@ -526,6 +544,7 @@ export class CampaignOverviewOrchestrator {
             startDate: range.from.toISOString(),
             endDate: range.to.toISOString(),
             range: "custom",
+            interval: "month",
             previous: withPrevious,
         });
         return {
@@ -595,6 +614,7 @@ export class CampaignOverviewOrchestrator {
             startDate: range.from.toISOString(),
             endDate: range.to.toISOString(),
             range: "custom",
+            interval: "month",
             breakdowns: [{ name: breakdown }],
         });
 

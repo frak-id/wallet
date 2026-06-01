@@ -36,7 +36,7 @@ export class OpenPanelExportClient {
                 "openpanel-client-secret":
                     process.env.OPEN_PANEL_BACKEND_CLIENT_SECRET ?? "",
             },
-            timeout: 10_000,
+            timeout: 20_000,
             retry: {
                 limit: 1,
                 statusCodes: [429, 503],
