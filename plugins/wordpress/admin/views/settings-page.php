@@ -44,11 +44,80 @@ $auto_render_pp     = (bool) Frak_Settings::get( 'auto_render_post_purchase' );
 		<a href="https://business.frak.id/" target="_blank" rel="noopener">🎯 Dashboard</a>
 	</div>
 
-	<form method="post" action="" enctype="multipart/form-data">
+	<!-- Connection status (read-only + Refresh action; deliberately outside the
+	settings form so its reload action is visually separate from saved settings). -->
+	<div class="frak-section frak-section--connection">
+		<h2><?php esc_html_e( 'Connection', 'frak' ); ?></h2>
+		<p class="description">
+			<?php esc_html_e( 'Frak resolves your merchant account from this site\'s domain. Register the domain in your Frak business dashboard, then refresh here.', 'frak' ); ?>
+		</p>
+		<table class="form-table">
+			<tr>
+				<th scope="row"><?php esc_html_e( 'Merchant', 'frak' ); ?></th>
+				<td>
+					<?php if ( $merchant_record ) : ?>
+						<span class="frak-webhook-status status-active">
+							<?php esc_html_e( '✓ Connected:', 'frak' ); ?> <strong><?php echo esc_html( $merchant_record['name'] ); ?></strong>
+						</span>
+					<?php else : ?>
+						<span class="frak-webhook-status status-inactive">
+							<?php esc_html_e( '✗ Not resolved for this domain', 'frak' ); ?>
+						</span>
+						<p class="description" style="margin-top: 8px;">
+							<?php
+							printf(
+								wp_kses(
+									/* translators: 1: current site host, 2: business dashboard URL. */
+									__( 'If you just moved the site to a new domain or this is a fresh install, add <code>%1$s</code> under <a href="%2$s" target="_blank" rel="noopener">Merchant → Allowed Domains</a> in the Frak dashboard, then click "Refresh Merchant".', 'frak' ),
+									array(
+										'a'    => array(
+											'href'   => array(),
+											'target' => array(),
+											'rel'    => array(),
+										),
+										'code' => array(),
+									)
+								),
+								esc_html( wp_parse_url( home_url(), PHP_URL_HOST ) ),
+								esc_url( 'https://business.frak.id/' )
+							);
+							?>
+						</p>
+					<?php endif; ?>
+					<p style="margin-top: 10px;">
+						<button type="button" id="refresh-merchant" class="button">
+							<?php esc_html_e( 'Refresh Merchant', 'frak' ); ?>
+						</button>
+						<?php if ( $merchant_record ) : ?>
+							<a href="<?php echo esc_url( 'https://business.frak.id/merchant/' . $merchant_record['id'] ); ?>"
+								target="_blank" rel="noopener" class="button">
+								<?php esc_html_e( 'Manage on Frak', 'frak' ); ?>
+							</a>
+						<?php endif; ?>
+					</p>
+				</td>
+			</tr>
+			<tr>
+				<th scope="row"><?php esc_html_e( 'Domain', 'frak' ); ?></th>
+				<td><code><?php echo esc_html( wp_parse_url( home_url(), PHP_URL_HOST ) ); ?></code></td>
+			</tr>
+			<?php if ( $merchant_record ) : ?>
+				<tr>
+					<th scope="row"><?php esc_html_e( 'Merchant ID', 'frak' ); ?></th>
+					<td><code><?php echo esc_html( $merchant_record['id'] ); ?></code></td>
+				</tr>
+			<?php endif; ?>
+		</table>
+	</div>
+
+	<form id="frak-settings-form" method="post" action="" enctype="multipart/form-data">
 		<?php wp_nonce_field( Frak_Admin::SETTINGS_NONCE_ACTION ); ?>
-		<!-- Generic Website Info Section -->
+		<!-- Branding Section -->
 		<div class="frak-section">
-			<h2><?php esc_html_e( 'Website Information', 'frak' ); ?></h2>
+			<h2><?php esc_html_e( 'Branding', 'frak' ); ?></h2>
+			<p class="description">
+				<?php esc_html_e( 'Name and logo shown to users in the Frak wallet and share UI.', 'frak' ); ?>
+			</p>
 			<table class="form-table">
 				<tr>
 					<th scope="row">
@@ -236,56 +305,7 @@ $auto_render_pp     = (bool) Frak_Settings::get( 'auto_render_post_purchase' );
 							</p>
 						</td>
 					</tr>
-					<tr>
-						<th scope="row"><?php esc_html_e( 'Merchant', 'frak' ); ?></th>
-						<td>
-							<?php if ( $merchant_record ) : ?>
-								<span class="frak-webhook-status status-active">
-									<?php esc_html_e( '✓ Connected:', 'frak' ); ?> <strong><?php echo esc_html( $merchant_record['name'] ); ?></strong>
-								</span>
-							<?php else : ?>
-								<span class="frak-webhook-status status-inactive">
-									<?php esc_html_e( '✗ Not resolved for this domain', 'frak' ); ?>
-								</span>
-								<p class="description" style="margin-top: 8px;">
-									<?php
-									printf(
-										wp_kses(
-											/* translators: 1: current site host, 2: business dashboard URL. */
-											__( 'If you just moved the site to a new domain or this is a fresh install, add <code>%1$s</code> under <a href="%2$s" target="_blank" rel="noopener">Merchant → Allowed Domains</a> in the Frak dashboard, then click "Refresh Merchant".', 'frak' ),
-											array(
-												'a'    => array(
-													'href' => array(),
-													'target' => array(),
-													'rel'  => array(),
-												),
-												'code' => array(),
-											)
-										),
-										esc_html( wp_parse_url( home_url(), PHP_URL_HOST ) ),
-										esc_url( 'https://business.frak.id/' )
-									);
-									?>
-								</p>
-							<?php endif; ?>
-							<button type="button" id="refresh-merchant" class="button" style="margin-left: 10px;">
-								<?php esc_html_e( 'Refresh Merchant', 'frak' ); ?>
-							</button>
-							<?php if ( $merchant_record ) : ?>
-								<a href="<?php echo esc_url( 'https://business.frak.id/merchant/' . $merchant_record['id'] ); ?>"
-									target="_blank" rel="noopener" class="button">
-									<?php esc_html_e( 'Manage on Frak', 'frak' ); ?>
-								</a>
-							<?php endif; ?>
-						</td>
-					</tr>
 				</table>
-
-				<h4><?php esc_html_e( 'Site Information', 'frak' ); ?></h4>
-				<p><strong><?php esc_html_e( 'Domain:', 'frak' ); ?></strong> <?php echo esc_html( wp_parse_url( home_url(), PHP_URL_HOST ) ); ?></p>
-				<?php if ( $merchant_record ) : ?>
-					<p><strong><?php esc_html_e( 'Merchant ID:', 'frak' ); ?></strong> <code><?php echo esc_html( $merchant_record['id'] ); ?></code></p>
-				<?php endif; ?>
 			</div>
 
 			<?php if ( null !== $wc_status ) : ?>
@@ -454,6 +474,12 @@ $auto_render_pp     = (bool) Frak_Settings::get( 'auto_render_post_purchase' );
 			<?php endif; ?>
 		</div>
 
-		<?php submit_button( __( 'Save Settings', 'frak' ) ); ?>
+		<div class="frak-save-bar" id="frak-save-bar">
+			<?php // The PHP save handler keys off `isset( $_POST['submit'] )`, so this button must keep name="submit". ?>
+			<button type="submit" name="submit" id="submit" class="button button-primary">
+				<?php esc_html_e( 'Save Settings', 'frak' ); ?>
+			</button>
+			<span class="frak-save-bar__status" id="frak-save-status" aria-live="polite"></span>
+		</div>
 	</form>
 </div>

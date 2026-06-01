@@ -10,6 +10,43 @@
 	const nonce = frak_ajax.nonce;
 	const siteInfo = frak_ajax.site_info || {};
 
+	const DISCARD_MESSAGE =
+		'You have unsaved changes that will be discarded. Click Cancel to go back and save first, or OK to continue.';
+
+	// True once the settings form has edits the user hasn't saved.
+	let isDirty = false;
+	let saveBar = null;
+	let saveStatus = null;
+
+	/**
+	 * Flag the form dirty: highlight the sticky save bar and show the hint.
+	 */
+	function markDirty() {
+		if ( isDirty ) {
+			return;
+		}
+		isDirty = true;
+		if ( saveBar ) {
+			saveBar.classList.add( 'frak-save-bar--dirty' );
+		}
+		if ( saveStatus ) {
+			saveStatus.textContent = 'You have unsaved changes.';
+		}
+	}
+
+	/**
+	 * When the form is dirty, confirm before an action that reloads the page.
+	 * Returns true when it's safe to proceed.
+	 *
+	 * @returns {boolean}
+	 */
+	function confirmDiscardIfDirty() {
+		if ( ! isDirty ) {
+			return true;
+		}
+		return window.confirm( DISCARD_MESSAGE );
+	}
+
 	/**
 	 * POST to admin-ajax.php and coerce any failure mode (network, non-2xx,
 	 * non-JSON body, fatal PHP output, nonce "0" response) into a uniform
@@ -169,6 +206,9 @@
 	 */
 	async function handleRefreshMerchant( event ) {
 		event.preventDefault();
+		if ( ! confirmDiscardIfDirty() ) {
+			return;
+		}
 		const button = event.currentTarget;
 		button.disabled = true;
 		button.textContent = 'Refreshing...';
@@ -177,6 +217,7 @@
 		const message = response.data?.message || ( response.success ? 'Merchant refreshed' : 'Failed to refresh merchant' );
 		if ( response.success ) {
 			showNotice( message, 'success' );
+			isDirty = false;
 			setTimeout( () => window.location.reload(), 800 );
 		} else {
 			showNotice( message, 'error' );
@@ -196,6 +237,9 @@
 	 */
 	async function handleSetupWcWebhook( event ) {
 		event.preventDefault();
+		if ( ! confirmDiscardIfDirty() ) {
+			return;
+		}
 		const button = event.currentTarget;
 		const originalLabel = button.textContent;
 		button.disabled = true;
@@ -205,6 +249,7 @@
 		const message = response.data?.message || ( response.success ? 'Webhook synced' : 'Failed to sync webhook' );
 		if ( response.success ) {
 			showNotice( message, 'success' );
+			isDirty = false;
 			setTimeout( () => window.location.reload(), 800 );
 		} else {
 			showNotice( message, 'error' );
@@ -217,6 +262,29 @@
 	 * Wire up all event listeners once the DOM is ready.
 	 */
 	function init() {
+		saveBar = document.getElementById( 'frak-save-bar' );
+		saveStatus = document.getElementById( 'frak-save-status' );
+
+		const form = document.getElementById( 'frak-settings-form' );
+		if ( form ) {
+			form.addEventListener( 'input', markDirty );
+			form.addEventListener( 'change', markDirty );
+			// A real submit persists the form, so let that navigation through.
+			form.addEventListener( 'submit', () => {
+				isDirty = false;
+			} );
+		}
+
+		// Warn on leaving with unsaved edits. The AJAX actions clear isDirty
+		// before their reload, so this only fires on unintended navigation.
+		window.addEventListener( 'beforeunload', ( event ) => {
+			if ( ! isDirty ) {
+				return;
+			}
+			event.preventDefault();
+			event.returnValue = '';
+		} );
+
 		const appNameButton = document.getElementById( 'autofill_app_name' );
 		if ( appNameButton && siteInfo.name ) {
 			appNameButton.addEventListener( 'click', () => {
