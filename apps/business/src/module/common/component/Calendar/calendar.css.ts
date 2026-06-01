@@ -41,6 +41,10 @@ export const nav = style({
     display: "flex",
     alignItems: "center",
     justifyContent: "space-between",
+    // Inset the arrows by the root padding so they line up with the day
+    // grid edges instead of hugging the popover border.
+    paddingLeft: alias.spacing.s,
+    paddingRight: alias.spacing.s,
 });
 
 const navButtonBase = {
