@@ -24,8 +24,10 @@ import {
     buildFunnelSeries,
     type OpenPanelChartFilter,
     type OpenPanelExportClient,
+    serieCount,
+    seriePreviousCount,
+    seriePreviousSum,
     serieSum,
-    sumSeriesAtPositions,
 } from "../../infrastructure/integrations/openpanel";
 import { db } from "../../infrastructure/persistence/postgres";
 import type { PricingRepository } from "../../infrastructure/pricing/PricingRepository";
@@ -500,45 +502,33 @@ export class CampaignOverviewOrchestrator {
     }
 
     /**
-     * Combines `sharing_link_shared` + `sharing_link_copied` for both
-     * `shares` (event segment) and `ambassadors` (user segment).
-     * Summing user-segment totals across the two events overcounts
-     * profiles who both shared AND copied a link in the window — treat
-     * this as a tight upper bound, still less wrong than the Postgres
-     * count which excludes anyone who hasn't earned a referrer reward
-     * yet.
-     *
-     * Request layout: positions 0..1 = shares (event segment), 2..3 =
-     * ambassadors (user segment). `sumSeriesAtPositions` reads back by
-     * request slot, since OpenPanel re-orders the response by sum.
+     * Accurate `shares` + `ambassadors` from one OpenPanel series spanning
+     * both share events. `metrics.sum` (default event segment) is the total
+     * share count; `metrics.count` is `uniq(profile_id)` over the whole
+     * range — a true distinct-ambassador count that de-duplicates profiles
+     * across both buckets and events, unlike a per-bucket user-segment sum.
+     * `previous.*` feeds the FE delta chips.
      */
     private async getAccurateKpis(
         merchantId: string,
         range: DateRange,
         withPrevious: boolean
     ): Promise<OverviewAccurateKpis> {
-        const merchantFilter = this.merchantFilter(merchantId);
         const response = await this.openPanel.getChart({
             series: [
                 {
-                    name: "sharing_link_shared",
-                    filters: [merchantFilter],
-                    segment: "event",
-                },
-                {
-                    name: "sharing_link_copied",
-                    filters: [merchantFilter],
-                    segment: "event",
-                },
-                {
-                    name: "sharing_link_shared",
-                    filters: [merchantFilter],
-                    segment: "user",
-                },
-                {
-                    name: "sharing_link_copied",
-                    filters: [merchantFilter],
-                    segment: "user",
+                    name: "*",
+                    filters: [
+                        this.merchantFilter(merchantId),
+                        {
+                            name: "name",
+                            operator: "is",
+                            value: [
+                                "sharing_link_shared",
+                                "sharing_link_copied",
+                            ],
+                        },
+                    ],
                 },
             ],
             startDate: range.from.toISOString(),
@@ -547,9 +537,16 @@ export class CampaignOverviewOrchestrator {
             interval: "month",
             previous: withPrevious,
         });
+        const serie = response.series[0];
         return {
-            shares: sumSeriesAtPositions(response.series, [0, 1]),
-            ambassadors: sumSeriesAtPositions(response.series, [2, 3]),
+            shares: {
+                current: serieSum(serie),
+                previous: seriePreviousSum(serie),
+            },
+            ambassadors: {
+                current: serieCount(serie),
+                previous: seriePreviousCount(serie),
+            },
         };
     }
 

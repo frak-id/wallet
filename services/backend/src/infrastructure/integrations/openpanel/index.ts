@@ -17,9 +17,10 @@ export {
     buildFunnelSeries,
     type FunnelStepDefinition,
     type FunnelStepResult,
+    serieCount,
+    seriePreviousCount,
     seriePreviousSum,
     serieSum,
-    sumSeriesAtPositions,
 } from "./funnels";
 export { OpenPanelExportClient } from "./OpenPanelExportClient";
 

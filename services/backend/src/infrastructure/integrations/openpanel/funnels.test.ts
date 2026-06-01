@@ -4,9 +4,10 @@ import {
     aggregateFunnelSteps,
     buildFunnelSeries,
     type FunnelStepDefinition,
+    serieCount,
+    seriePreviousCount,
     seriePreviousSum,
     serieSum,
-    sumSeriesAtPositions,
 } from "./funnels";
 
 /**
@@ -130,21 +131,6 @@ describe("aggregateFunnelSteps", () => {
     });
 });
 
-describe("sumSeriesAtPositions", () => {
-    it("sums current + previous across the requested request slots", () => {
-        const response = [
-            serieAt(0, 1, 10),
-            serieAt(1, 2, 20),
-            serieAt(2, 4, 40),
-        ];
-
-        expect(sumSeriesAtPositions(response, [0, 2])).toEqual({
-            current: 5,
-            previous: 50,
-        });
-    });
-});
-
 describe("serieSum / seriePreviousSum", () => {
     it("returns 0 for an undefined serie", () => {
         expect(serieSum(undefined)).toBe(0);
@@ -160,5 +146,39 @@ describe("serieSum / seriePreviousSum", () => {
 
     it("returns 0 previous when the previous block is absent", () => {
         expect(seriePreviousSum(serieAt(0, 9))).toBe(0);
+    });
+});
+
+describe("serieCount / seriePreviousCount", () => {
+    it("returns 0 for an undefined serie", () => {
+        expect(serieCount(undefined)).toBe(0);
+        expect(seriePreviousCount(undefined)).toBe(0);
+    });
+
+    it("reads metrics.count and metrics.previous.count.value", () => {
+        const serie = {
+            metrics: {
+                sum: 12,
+                average: 0,
+                min: 0,
+                max: 0,
+                count: 5,
+                previous: {
+                    sum: { value: 8, diff: null, state: "neutral" },
+                    average: { value: 0, diff: null, state: "neutral" },
+                    min: { value: 0, diff: null, state: "neutral" },
+                    max: { value: 0, diff: null, state: "neutral" },
+                    count: { value: 3, diff: null, state: "neutral" },
+                },
+            },
+        } as unknown as OpenPanelChartSerie;
+
+        expect(serieCount(serie)).toBe(5);
+        expect(seriePreviousCount(serie)).toBe(3);
+    });
+
+    it("returns 0 count when metrics.count is absent", () => {
+        expect(serieCount(serieAt(0, 9))).toBe(0);
+        expect(seriePreviousCount(serieAt(0, 9))).toBe(0);
     });
 });

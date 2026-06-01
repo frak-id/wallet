@@ -93,26 +93,6 @@ export function aggregateFunnelSteps<Kind extends string>(
 }
 
 /**
- * Sum a contiguous slice of the response series by their original
- * request position. Used when several series compose a single
- * derived KPI (e.g. `shares = sharing_link_shared + sharing_link_copied`).
- */
-export function sumSeriesAtPositions(
-    responseSeries: OpenPanelChartSerie[],
-    positions: number[]
-): { current: number; previous: number } {
-    const indexed = indexByRequestPosition(responseSeries);
-    let current = 0;
-    let previous = 0;
-    for (const position of positions) {
-        const serie = indexed.get(position);
-        current += serieSum(serie);
-        previous += seriePreviousSum(serie);
-    }
-    return { current, previous };
-}
-
-/**
  * Index returned series by their original request position.
  *
  * OpenPanel does NOT preserve request order in its response — it drops
@@ -153,6 +133,20 @@ export function seriePreviousSum(
     serie: OpenPanelChartSerie | undefined
 ): number {
     return finiteOrZero(serie?.metrics?.previous?.sum.value);
+}
+
+/**
+ * `metrics.count` is `uniq(profile_id)` over the whole range (NOT a
+ * per-bucket sum) — the accurate distinct-actor count for a series.
+ */
+export function serieCount(serie: OpenPanelChartSerie | undefined): number {
+    return finiteOrZero(serie?.metrics?.count);
+}
+
+export function seriePreviousCount(
+    serie: OpenPanelChartSerie | undefined
+): number {
+    return finiteOrZero(serie?.metrics?.previous?.count?.value);
 }
 
 function finiteOrZero(value: number | undefined): number {
