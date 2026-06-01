@@ -235,6 +235,41 @@
                         }
                     }
                 }
+            },
+            "budget": {
+                "period": {
+                    "label": "Budget period",
+                    "global": "Global",
+                    "daily": "Daily",
+                    "weekly": "Weekly",
+                    "monthly": "Monthly"
+                },
+                "cap": {
+                    "label": "Budget cap",
+                    "placeholder": "E.g. 1000",
+                    "hint": "Total budget for the entire campaign. Stops when exhausted.",
+                    "rewards": "Rewards distributed",
+                    "commission": "Frak commission"
+                },
+                "schedule": {
+                    "label": "Schedule",
+                    "description": "If you don’t set an end date, the campaign stops when the budget is exhausted.",
+                    "immediate": {
+                        "title": "Start immediately",
+                        "description": "Goes live immediately on publish"
+                    },
+                    "startOnly": {
+                        "title": "Start date only",
+                        "description": "Schedule a starting date"
+                    },
+                    "range": {
+                        "title": "Start + End date",
+                        "description": "Set a fixed campaign window"
+                    },
+                    "startDate": "Start date",
+                    "endDate": "End date",
+                    "datePlaceholder": "dd/mm/yyyy"
+                }
             }
         },
         "tabs": {

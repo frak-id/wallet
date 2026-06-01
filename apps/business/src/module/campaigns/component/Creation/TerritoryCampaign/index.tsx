@@ -160,7 +160,7 @@ export function TerritoryCampaign() {
     async function onSubmit(values: CampaignDraft) {
         const saved = await saveCampaign.mutateAsync({ ...values, merchantId });
         navigate({
-            to: "/m/$merchantId/campaigns/draft/$campaignId/metrics",
+            to: "/m/$merchantId/campaigns/draft/$campaignId/budget",
             params: { merchantId, campaignId: saved.id },
         });
     }

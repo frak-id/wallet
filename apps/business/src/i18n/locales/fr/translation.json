@@ -235,6 +235,41 @@
                         }
                     }
                 }
+            },
+            "budget": {
+                "period": {
+                    "label": "Période du budget",
+                    "global": "Global",
+                    "daily": "Quotidien",
+                    "weekly": "Hebdomadaire",
+                    "monthly": "Mensuel"
+                },
+                "cap": {
+                    "label": "Plafond du budget",
+                    "placeholder": "Ex. 1000",
+                    "hint": "Budget total pour toute la campagne. S’arrête une fois épuisé.",
+                    "rewards": "Récompenses distribuées",
+                    "commission": "Commission Frak"
+                },
+                "schedule": {
+                    "label": "Calendrier",
+                    "description": "Si vous ne définissez pas de date de fin, la campagne s’arrête une fois le budget épuisé.",
+                    "immediate": {
+                        "title": "Démarrer immédiatement",
+                        "description": "Mise en ligne dès la publication"
+                    },
+                    "startOnly": {
+                        "title": "Date de début seulement",
+                        "description": "Planifier une date de début"
+                    },
+                    "range": {
+                        "title": "Date de début + fin",
+                        "description": "Définir une fenêtre de campagne fixe"
+                    },
+                    "startDate": "Date de début",
+                    "endDate": "Date de fin",
+                    "datePlaceholder": "jj/mm/aaaa"
+                }
             }
         },
         "tabs": {

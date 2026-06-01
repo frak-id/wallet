@@ -98,6 +98,41 @@ export default interface Resources {
                         placeholder: "E.g. Summer sales 2026";
                     };
                 };
+                budget: {
+                    cap: {
+                        commission: "Frak commission";
+                        hint: "Total budget for the entire campaign. Stops when exhausted.";
+                        label: "Budget cap";
+                        placeholder: "E.g. 1000";
+                        rewards: "Rewards distributed";
+                    };
+                    period: {
+                        daily: "Daily";
+                        global: "Global";
+                        label: "Budget period";
+                        monthly: "Monthly";
+                        weekly: "Weekly";
+                    };
+                    schedule: {
+                        datePlaceholder: "dd/mm/yyyy";
+                        description: "If you don’t set an end date, the campaign stops when the budget is exhausted.";
+                        endDate: "End date";
+                        immediate: {
+                            description: "Goes live immediately on publish";
+                            title: "Start immediately";
+                        };
+                        label: "Schedule";
+                        range: {
+                            description: "Set a fixed campaign window";
+                            title: "Start + End date";
+                        };
+                        startDate: "Start date";
+                        startOnly: {
+                            description: "Schedule a starting date";
+                            title: "Start date only";
+                        };
+                    };
+                };
                 cancel: {
                     confirm: "Yes, close";
                     description: "Closing this draft without saving it means you will lose all the information you filled up.";
