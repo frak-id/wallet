@@ -9,7 +9,6 @@ import {
     BarChartIcon,
     CartIcon,
     CommunityIcon,
-    InfoIcon,
 } from "@frak-labs/design-system/icons";
 import { useNavigate } from "@tanstack/react-router";
 import { useMemo } from "react";
@@ -18,6 +17,7 @@ import { useTranslation } from "react-i18next";
 import { useSaveCampaign } from "@/module/campaigns/hook/useSaveCampaign";
 import { useActiveMerchantId } from "@/module/common/hook/useActiveMerchantId";
 import { type CampaignDraft, campaignStore } from "@/stores/campaignStore";
+import { InfoBanner } from "../InfoBanner";
 import { WizardStep } from "../WizardStep";
 import * as styles from "./goalsCampaign.css";
 
@@ -84,16 +84,9 @@ export function GoalsCampaign() {
             <form id={FORM_ID} onSubmit={form.handleSubmit(onSubmit)}>
                 <Card>
                     <Stack space="m">
-                        <div className={styles.infoBanner}>
-                            <InfoIcon
-                                width={20}
-                                height={20}
-                                className={styles.infoIcon}
-                            />
-                            <Text variant="bodySmall" color="primary">
-                                {t("campaigns.create.goals.info")}
-                            </Text>
-                        </div>
+                        <InfoBanner>
+                            {t("campaigns.create.goals.info")}
+                        </InfoBanner>
                         <Controller
                             control={form.control}
                             name="metadata.goal"

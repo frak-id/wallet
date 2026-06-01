@@ -2,24 +2,6 @@ import { vars } from "@frak-labs/design-system/theme";
 import { alias } from "@frak-labs/design-system/tokens";
 import { style } from "@vanilla-extract/css";
 
-/** Info banner: light-blue bar, blue icon + black text. */
-export const infoBanner = style({
-    display: "flex",
-    gap: alias.spacing.m,
-    alignItems: "center",
-    paddingLeft: alias.spacing.m,
-    paddingRight: alias.spacing.l,
-    paddingTop: alias.spacing.s,
-    paddingBottom: alias.spacing.s,
-    backgroundColor: vars.surface.secondary,
-    borderRadius: alias.cornerRadius.m,
-});
-
-export const infoIcon = style({
-    color: vars.text.action,
-    flexShrink: 0,
-});
-
 /** Vertical list of goal option rows inside the card (rows are flush; their
  * own 16px padding provides the spacing). */
 export const list = style({
