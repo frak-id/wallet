@@ -1,7 +1,8 @@
 import * as SelectPrimitive from "@radix-ui/react-select";
 import clsx from "clsx";
-import { Check, ChevronDown, ChevronUp } from "lucide-react";
+import { ChevronDown, ChevronUp } from "lucide-react";
 import type { ComponentPropsWithRef } from "react";
+import { ChevronDownIcon } from "../../icons";
 import { selectStyles, triggerLength } from "./select.css";
 
 /**
@@ -46,7 +47,11 @@ export function SelectTrigger({
         <SelectPrimitive.Trigger ref={ref} className={combined} {...props}>
             {children}
             <SelectPrimitive.Icon asChild>
-                <ChevronDown size={20} className={selectStyles.icon} />
+                <ChevronDownIcon
+                    width={24}
+                    height={24}
+                    className={selectStyles.icon}
+                />
             </SelectPrimitive.Icon>
         </SelectPrimitive.Trigger>
     );
@@ -95,6 +100,7 @@ export function SelectContent({
     className,
     children,
     position = "popper",
+    sideOffset = 8,
     ...props
 }: ComponentPropsWithRef<typeof SelectPrimitive.Content>) {
     const combined = clsx(selectStyles.content, className);
@@ -105,6 +111,7 @@ export function SelectContent({
                 ref={ref}
                 className={combined}
                 position={position}
+                sideOffset={sideOffset}
                 {...props}
             >
                 <SelectScrollUpButton />
@@ -131,11 +138,6 @@ export function SelectItem({
 
     return (
         <SelectPrimitive.Item ref={ref} className={combined} {...props}>
-            <span className={selectStyles.itemIndicator}>
-                <SelectPrimitive.ItemIndicator asChild>
-                    <Check size={16} />
-                </SelectPrimitive.ItemIndicator>
-            </span>
             <SelectPrimitive.ItemText>{children}</SelectPrimitive.ItemText>
         </SelectPrimitive.Item>
     );
