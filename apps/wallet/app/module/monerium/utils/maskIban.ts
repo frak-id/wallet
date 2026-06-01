@@ -1,8 +1,8 @@
 /**
  * Mask an IBAN string for display, showing only the last 4 characters
- * after a row of bullets — matches Figma's `639:22528` "**** 154"-style
- * recap row, but with 4 trailing chars (vs Figma's 3) for slightly
- * better disambiguation when a user has several accounts.
+ * after a row of bullets — a "**** 154"-style recap row, but with 4
+ * trailing chars (vs the design's 3) for slightly better disambiguation
+ * when a user has several accounts.
  *
  * @example maskIban("FR7630006000011234567890189") → "•••• 0189"
  */

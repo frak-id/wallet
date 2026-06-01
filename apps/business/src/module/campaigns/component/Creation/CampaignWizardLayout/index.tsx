@@ -9,7 +9,7 @@ import type { ReactNode } from "react";
 import * as styles from "./campaignWizardLayout.css";
 
 /**
- * The 7 campaign creation steps, as defined in Figma (Dashboard 222:75304).
+ * The 7 campaign creation steps.
  * Only the first step ("Campaign basics") is wired today; the remaining
  * steps are shown for context and become navigable once their routes exist.
  */

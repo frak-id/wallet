@@ -12,9 +12,8 @@ import { campaignStore } from "@/stores/campaignStore";
 import * as styles from "./buttonCancel.css";
 
 /**
- * Round glass "X" in the wizard header. Opens a confirmation matching the Figma
- * "Close draft without saving it?" screen (Dashboard 338:54688) before resetting
- * the draft and leaving the wizard.
+ * Round glass "X" in the wizard header. Opens a "Close draft without saving it?"
+ * confirmation before resetting the draft and leaving the wizard.
  */
 export function ButtonCancel({
     onClick,
@@ -58,7 +57,12 @@ export function ButtonCancel({
             }
             footer={{ className: styles.footer }}
             cancel={
-                <Button variant="secondary" size="large" width="full">
+                <Button
+                    variant="secondary"
+                    size="large"
+                    width="full"
+                    className={styles.footerButton}
+                >
                     {t("campaigns.create.cancel.dismiss")}
                 </Button>
             }
@@ -68,6 +72,7 @@ export function ButtonCancel({
                     variant="primary"
                     size="large"
                     width="full"
+                    className={styles.footerButton}
                     onClick={() => {
                         reset();
                         onClick();
