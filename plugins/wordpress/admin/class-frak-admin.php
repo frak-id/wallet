@@ -159,8 +159,11 @@ class Frak_Admin {
 
 		Frak_Settings::replace(
 			array(
-				'app_name' => isset( $_POST['frak_app_name'] ) ? sanitize_text_field( wp_unslash( $_POST['frak_app_name'] ) ) : '',
-				'logo_url' => $logo_url,
+				'app_name'                  => isset( $_POST['frak_app_name'] ) ? sanitize_text_field( wp_unslash( $_POST['frak_app_name'] ) ) : '',
+				'logo_url'                  => $logo_url,
+				// Unchecked checkboxes are absent from the POST body, so
+				// `isset()` is the canonical on/off read for a boolean toggle.
+				'auto_render_post_purchase' => isset( $_POST['frak_auto_render_post_purchase'] ),
 			)
 		);
 

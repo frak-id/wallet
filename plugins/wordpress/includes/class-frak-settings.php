@@ -72,11 +72,20 @@ class Frak_Settings {
 	/**
 	 * Default values per setting key.
 	 *
+	 * `auto_render_post_purchase` is an opt-in boolean (default off): when on,
+	 * {@see Frak_WooCommerce} auto-renders the `<frak-post-purchase>` card on
+	 * the WooCommerce thank-you page so merchants on theme/page builders that
+	 * make the thank-you step hard to edit (Divi, etc.) don't have to touch the
+	 * template. No migration is needed when this key is added — {@see all()}
+	 * merges the default at read time, so installs predating the key resolve to
+	 * `false`.
+	 *
 	 * @var array<string, mixed>
 	 */
 	private const DEFAULTS = array(
-		'app_name' => '',
-		'logo_url' => '',
+		'app_name'                  => '',
+		'logo_url'                  => '',
+		'auto_render_post_purchase' => false,
 	);
 
 	/**

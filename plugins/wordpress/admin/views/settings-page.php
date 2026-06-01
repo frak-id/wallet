@@ -31,6 +31,9 @@ $wc_logs_url     = $wc_active ? admin_url( 'admin.php?page=wc-status&tab=logs' )
 // guard — the WC gate above is the only one that matters.
 $funnelkit_active = $wc_active && Frak_Funnel_Compat::is_funnelkit_active();
 $cartflows_active = $wc_active && Frak_Funnel_Compat::is_cartflows_active();
+// Opt-in: auto-render the <frak-post-purchase> card on the WooCommerce
+// thank-you page (see Frak_WooCommerce::render_post_purchase_card()).
+$auto_render_pp = (bool) Frak_Settings::get( 'auto_render_post_purchase' );
 ?>
 <div class="wrap">
 	<h1><?php echo esc_html( get_admin_page_title() ); ?></h1>
@@ -156,6 +159,29 @@ $cartflows_active = $wc_active && Frak_Funnel_Compat::is_cartflows_active();
 						</strong>
 						<?php esc_html_e( 'Browser-side purchase tracking is auto-wired to funnel-step thank-you pages, including FunnelKit One-Click Upsell offers. For maximum reliability across custom funnel templates, also drop the Frak Post-Purchase block (or the matching shortcode / Elementor widget) on your funnel’s thank-you step — it provides the same attribution call plus a share-and-earn UI.', 'frak' ); ?>
 					</p>
+				</div>
+			<?php endif; ?>
+
+			<?php if ( $wc_active ) : ?>
+				<!-- Auto-render Post-Purchase component on the thank-you page -->
+				<div class="frak-subsection">
+					<h3><?php esc_html_e( 'Thank-You Page Component', 'frak' ); ?></h3>
+					<table class="form-table">
+						<tr>
+							<th scope="row"><?php esc_html_e( 'Auto-render Post-Purchase', 'frak' ); ?></th>
+							<td>
+								<label for="frak_auto_render_post_purchase">
+									<input type="checkbox" id="frak_auto_render_post_purchase"
+										name="frak_auto_render_post_purchase" value="1"
+										<?php checked( $auto_render_pp ); ?>>
+									<?php esc_html_e( 'Automatically display the Frak Post-Purchase card on the WooCommerce thank-you page.', 'frak' ); ?>
+								</label>
+								<p class="description">
+									<?php esc_html_e( 'Turn this on if your theme or page builder (e.g. Divi) makes it hard to edit the thank-you step without erasing its content. The share-and-earn card is injected automatically on the order-received page — no block, shortcode, or widget needed. Leave it off if you place the Frak Post-Purchase block / shortcode / widget yourself.', 'frak' ); ?>
+								</p>
+							</td>
+						</tr>
+					</table>
 				</div>
 			<?php endif; ?>
 
