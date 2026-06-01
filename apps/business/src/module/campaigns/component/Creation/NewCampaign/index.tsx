@@ -3,7 +3,6 @@ import { useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo } from "react";
 import { useForm } from "react-hook-form";
 import { FormBudget } from "@/module/campaigns/component/Creation/NewCampaign/FormBudget";
-import { FormGoals } from "@/module/campaigns/component/Creation/NewCampaign/FormGoals";
 import { FormRewardToken } from "@/module/campaigns/component/Creation/NewCampaign/FormRewardToken";
 import { FormSchedule } from "@/module/campaigns/component/Creation/NewCampaign/FormSchedule";
 import { FormSpecialAdvertising } from "@/module/campaigns/component/Creation/NewCampaign/FormSpecialAdvertising";
@@ -46,7 +45,7 @@ export function NewCampaign() {
         const payload = { ...values, merchantId };
         const saved = await saveCampaign.mutateAsync(payload);
         navigate({
-            to: "/m/$merchantId/campaigns/draft/$campaignId/metrics",
+            to: "/m/$merchantId/campaigns/draft/$campaignId/goals",
             params: { merchantId, campaignId: saved.id },
         });
     }
@@ -69,7 +68,6 @@ export function NewCampaign() {
                     <Stack space="l">
                         <FormTitle />
                         <FormRewardToken />
-                        <FormGoals />
                         <FormSpecialAdvertising />
                         <FormBudget />
                         <FormTerritory />

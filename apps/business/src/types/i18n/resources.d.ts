@@ -78,6 +78,27 @@ export default interface Resources {
                     dismiss: "Cancel";
                     title: "Close draft without saving it?";
                 };
+                goals: {
+                    info: "You can only choose one goal per campaign, it determines which action triggers reward distribution.";
+                    options: {
+                        registration: {
+                            description: "Create more registrations on your website for more qualified data.";
+                            tags: "CRM · Qualified data";
+                            title: "Registration";
+                        };
+                        sales: {
+                            description: "Find people likely to subscribe or buy product on a pay-per-view basis.";
+                            tags: "Subscription · Revenue · Conversion";
+                            title: "Sales";
+                        };
+                        traffic: {
+                            description: "Redirect to a destination, such as your website, application...";
+                            tags: "Link clicks · Landing page views";
+                            title: "Traffic";
+                        };
+                    };
+                    required: "Select a goal";
+                };
                 steps: {
                     basics: {
                         hint: "Name, merchant & currency";

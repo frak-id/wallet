@@ -1,3 +1,7 @@
+import {
+    RadioGroup,
+    RadioGroupItem,
+} from "@frak-labs/design-system/components/RadioGroup";
 import { useEffect, useMemo } from "react";
 import { useFormContext } from "react-hook-form";
 import {
@@ -6,7 +10,6 @@ import {
     FormItem,
     FormLabel,
 } from "@/module/forms/Form";
-import { RadioGroup, RadioGroupItem } from "@/module/forms/RadioGroup";
 import { campaignStore } from "@/stores/campaignStore";
 import * as styles from "./metrics-campaign.css";
 import { getTriggersForGoal } from "./utils";

@@ -133,6 +133,27 @@
                 "description": "Closing this draft without saving it means you will lose all the information you filled up.",
                 "confirm": "Yes, close",
                 "dismiss": "Cancel"
+            },
+            "goals": {
+                "info": "You can only choose one goal per campaign, it determines which action triggers reward distribution.",
+                "required": "Select a goal",
+                "options": {
+                    "sales": {
+                        "title": "Sales",
+                        "description": "Find people likely to subscribe or buy product on a pay-per-view basis.",
+                        "tags": "Subscription · Revenue · Conversion"
+                    },
+                    "traffic": {
+                        "title": "Traffic",
+                        "description": "Redirect to a destination, such as your website, application...",
+                        "tags": "Link clicks · Landing page views"
+                    },
+                    "registration": {
+                        "title": "Registration",
+                        "description": "Create more registrations on your website for more qualified data.",
+                        "tags": "CRM · Qualified data"
+                    }
+                }
             }
         },
         "tabs": {

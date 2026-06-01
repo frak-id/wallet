@@ -1,4 +1,8 @@
 import { Inline } from "@frak-labs/design-system/components/Inline";
+import {
+    RadioGroup,
+    RadioGroupItem,
+} from "@frak-labs/design-system/components/RadioGroup";
 import { Stack } from "@frak-labs/design-system/components/Stack";
 import { CircleDollarSign, Wallet } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
@@ -15,7 +19,6 @@ import {
     FormMessage,
 } from "@/module/forms/Form";
 import type { InputNumberProps } from "@/module/forms/InputNumber";
-import { RadioGroup, RadioGroupItem } from "@/module/forms/RadioGroup";
 import type { CampaignDraft } from "@/stores/campaignStore";
 import { currencyStore } from "@/stores/currencyStore";
 import * as styles from "./form-budget-row.css";

@@ -133,6 +133,27 @@
                 "description": "Fermer ce brouillon sans l’enregistrer signifie que vous perdrez toutes les informations saisies.",
                 "confirm": "Oui, fermer",
                 "dismiss": "Annuler"
+            },
+            "goals": {
+                "info": "Vous ne pouvez choisir qu’un seul objectif par campagne ; il détermine quelle action déclenche la distribution des récompenses.",
+                "required": "Sélectionnez un objectif",
+                "options": {
+                    "sales": {
+                        "title": "Ventes",
+                        "description": "Touchez les personnes susceptibles de s’abonner ou d’acheter un produit.",
+                        "tags": "Abonnement · Revenu · Conversion"
+                    },
+                    "traffic": {
+                        "title": "Trafic",
+                        "description": "Rediriger vers une destination, comme votre site web ou votre application...",
+                        "tags": "Clics sur lien · Vues de page"
+                    },
+                    "registration": {
+                        "title": "Inscription",
+                        "description": "Générez plus d’inscriptions sur votre site pour des données qualifiées.",
+                        "tags": "CRM · Données qualifiées"
+                    }
+                }
             }
         },
         "tabs": {
