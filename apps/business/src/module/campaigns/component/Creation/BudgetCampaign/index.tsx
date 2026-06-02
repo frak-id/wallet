@@ -91,6 +91,9 @@ function draftToBudgetValues(draft: CampaignDraft): BudgetFormValues {
     let scheduleMode: ScheduleMode | undefined;
     if (endDate) scheduleMode = "range";
     else if (startDate) scheduleMode = "startOnly";
+    // No dates but the step was saved (budget exists) ⇒ the user explicitly
+    // chose "immediate". A never-visited draft has no budget ⇒ leave unset.
+    else if (budget) scheduleMode = "immediate";
 
     return {
         period: periodFromDuration(budget?.durationInSeconds),
