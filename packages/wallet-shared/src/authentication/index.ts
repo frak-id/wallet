@@ -10,6 +10,12 @@ export { ssoKey } from "./queryKeys/sso";
 
 // Utils
 export { compressedSsoToParams } from "./utils/ssoDataCompression";
-
+export {
+    CredentialManagerError,
+    classifyNativeWebauthnError,
+    getWebauthnErrorDetails,
+    type WebauthnErrorCode,
+    type WebauthnErrorDetails,
+} from "./webauthn/errors";
 // WebAuthn Tauri bridge
 export { getTauriCreateFn, getTauriGetFn } from "./webauthn/tauriBridge";

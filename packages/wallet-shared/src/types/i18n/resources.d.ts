@@ -215,6 +215,12 @@ interface Resources {
             webauthn: {
                 generic: "An error occurred. Please try again.";
                 notAllowed: "You have cancelled the authentication process, please try again.";
+                passkeyManager: {
+                    action1: "Open your phone Settings, make sure Google Password Manager is the active passkey provider and that passkey sync is turned on.";
+                    action2: "Update Google Play Services, then restart your phone and try again.";
+                    action3: "Still stuck? Sign in on another device, or recover your wallet from the settings.";
+                    intro: "Your phone couldn't complete the passkey step. This is usually a Google Password Manager sync issue on this device — not a problem with your account.";
+                };
                 userOperationExecution: "An error occurred while executing the transaction. Please try again.";
             };
         };

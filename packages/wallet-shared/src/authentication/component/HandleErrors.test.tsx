@@ -1,5 +1,9 @@
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
+import {
+    CredentialManagerError,
+    classifyNativeWebauthnError,
+} from "../webauthn/errors";
 import { HandleErrors } from "./HandleErrors";
 
 vi.mock("react-i18next", () => ({
@@ -10,6 +14,10 @@ vi.mock("react-i18next", () => ({
                 "error.webauthn.userOperationExecution":
                     "Transaction execution failed",
                 "error.webauthn.generic": "An error occurred",
+                "error.webauthn.passkeyManager.intro": "Passkey manager issue",
+                "error.webauthn.passkeyManager.action1": "Action one",
+                "error.webauthn.passkeyManager.action2": "Action two",
+                "error.webauthn.passkeyManager.action3": "Action three",
             };
             return translations[key] || key;
         },
@@ -131,6 +139,26 @@ describe("HandleErrors", () => {
             expect(
                 screen.getByText("Authentication was cancelled")
             ).toBeInTheDocument();
+        });
+    });
+
+    describe("Credential Manager passkey-sync failure (folsom / 50162)", () => {
+        it("renders actionable passkey-manager guidance, not a generic error", () => {
+            const native = new CredentialManagerError(
+                classifyNativeWebauthnError(
+                    "Unsuccessful result from folsom activity."
+                )
+            );
+            const bridge = new Error("Tauri get credential error");
+            bridge.cause = native;
+            const error = oxWrapped("Authentication.SignFailedError", bridge);
+
+            render(<HandleErrors error={error} />);
+
+            expect(
+                screen.getByText("Passkey manager issue")
+            ).toBeInTheDocument();
+            expect(screen.getByText("Action one")).toBeInTheDocument();
         });
     });
 

@@ -8,8 +8,11 @@ import androidx.credentials.GetCredentialRequest
 import androidx.credentials.GetPublicKeyCredentialOption
 import androidx.credentials.PublicKeyCredential
 import androidx.credentials.exceptions.CreateCredentialCancellationException
+import androidx.credentials.exceptions.CreateCredentialException
 import androidx.credentials.exceptions.GetCredentialCancellationException
+import androidx.credentials.exceptions.GetCredentialException
 import androidx.credentials.exceptions.publickeycredential.CreatePublicKeyCredentialDomException
+import androidx.credentials.exceptions.publickeycredential.GetPublicKeyCredentialDomException
 import app.tauri.annotation.Command
 import app.tauri.annotation.TauriPlugin
 import app.tauri.plugin.Invoke
@@ -52,9 +55,11 @@ class FrakWebauthnPlugin(activity: Activity) : Plugin(activity) {
             } catch (e: CreateCredentialCancellationException) {
                 invoke.reject("NotAllowedError")
             } catch (e: CreatePublicKeyCredentialDomException) {
-                invoke.reject(e.domError.type)
+                invoke.reject(webauthnErrorPayload(e, e.domError.type))
+            } catch (e: CreateCredentialException) {
+                invoke.reject(webauthnErrorPayload(e, e.type))
             } catch (e: Exception) {
-                invoke.reject(e.message ?: "WebAuthn registration failed")
+                invoke.reject(webauthnErrorPayload(e, null))
             }
         }
     }
@@ -81,9 +86,26 @@ class FrakWebauthnPlugin(activity: Activity) : Plugin(activity) {
                 }
             } catch (e: GetCredentialCancellationException) {
                 invoke.reject("NotAllowedError")
+            } catch (e: GetPublicKeyCredentialDomException) {
+                invoke.reject(webauthnErrorPayload(e, e.domError.type))
+            } catch (e: GetCredentialException) {
+                invoke.reject(webauthnErrorPayload(e, e.type))
             } catch (e: Exception) {
-                invoke.reject(e.message ?: "WebAuthn authentication failed")
+                invoke.reject(webauthnErrorPayload(e, null))
             }
         }
+    }
+
+    // Forwards the full `message` (carries the GPS `[50xxx]` code, e.g. 50162
+    // folsom) that `domError.type` alone discards; parsed by the JS bridge.
+    private fun webauthnErrorPayload(throwable: Throwable, type: String?): String {
+        val payload = JSObject()
+        payload.put("source", "frak-webauthn-plugin")
+        payload.put("exceptionClass", throwable.javaClass.simpleName)
+        if (type != null) {
+            payload.put("type", type)
+        }
+        payload.put("message", throwable.message ?: "")
+        return payload.toString()
     }
 }

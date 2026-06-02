@@ -19,6 +19,7 @@ import {
 import { sessionStore } from "../../stores/sessionStore";
 import type { Session } from "../../types/Session";
 import { authKey } from "../queryKeys/auth";
+import { getWebauthnErrorDetails } from "../webauthn/errors";
 import { getTauriGetFn } from "../webauthn/tauriBridge";
 
 type UseLoginArgs = {
@@ -125,10 +126,16 @@ export function useLogin(
         },
         onError: (err, vars, ctx, mutationCtx) => {
             const { reason, error_type } = extractAuthError(err);
+            const webauthn = getWebauthnErrorDetails(err);
             ctx?.flow.end("failed", {
                 method: ctx?.method,
                 error_type,
                 error_message: reason,
+                ...(webauthn && {
+                    webauthn_error_code: webauthn.code,
+                    gps_code: webauthn.gpsCode,
+                    cm_exception_class: webauthn.exceptionClass,
+                }),
             });
             options?.onError?.(err, vars, ctx, mutationCtx);
         },

@@ -1,6 +1,7 @@
 import clsx from "clsx";
 import type { PropsWithChildren } from "react";
 import { useTranslation } from "react-i18next";
+import { getWebauthnErrorDetails } from "../webauthn/errors";
 import * as styles from "./HandleErrors.css";
 
 type HandleErrorsProps = {
@@ -46,6 +47,15 @@ export function HandleErrors({ error, className }: HandleErrorsProps) {
         return <ErrorNotAllowed className={className} />;
     }
 
+    // Device-side passkey-manager failures are fixed in settings, not by retry.
+    const webauthnDetails = getWebauthnErrorDetails(error);
+    if (
+        webauthnDetails?.code === "passkey-sync-failed" ||
+        webauthnDetails?.code === "provider-unavailable"
+    ) {
+        return <ErrorPasskeyManager className={className} />;
+    }
+
     if (error.name === "UserOperationExecutionError") {
         return <ErrorUserOperationExecution className={className} />;
     }
@@ -77,6 +87,20 @@ function ErrorUserOperationExecution({ className }: { className?: string }) {
         <ErrorWrapper className={className}>
             {t("error.webauthn.userOperationExecution")}
         </ErrorWrapper>
+    );
+}
+
+function ErrorPasskeyManager({ className }: { className?: string }) {
+    const { t } = useTranslation();
+    return (
+        <div className={clsx("error", styles.errorWrapper, className)}>
+            <p>{t("error.webauthn.passkeyManager.intro")}</p>
+            <ul>
+                <li>{t("error.webauthn.passkeyManager.action1")}</li>
+                <li>{t("error.webauthn.passkeyManager.action2")}</li>
+                <li>{t("error.webauthn.passkeyManager.action3")}</li>
+            </ul>
+        </div>
     );
 }
 

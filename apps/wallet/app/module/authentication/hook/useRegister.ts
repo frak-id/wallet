@@ -16,6 +16,7 @@ import {
     extractAuthError,
     getRegisterOptions,
     getTauriCreateFn,
+    getWebauthnErrorDetails,
     identifyAuthenticatedUser,
     recordError,
     recoveryHintStorage,
@@ -117,14 +118,21 @@ export function useRegister(
             options?.onSuccess?.(session, vars, ctx, mutationCtx);
         },
         onError: (err, vars, ctx, mutationCtx) => {
+            const webauthn = getWebauthnErrorDetails(err);
+            const webauthnContext = webauthn && {
+                webauthn_error_code: webauthn.code,
+                gps_code: webauthn.gpsCode,
+                cm_exception_class: webauthn.exceptionClass,
+            };
             recordError(err, {
                 source: "registration",
-                context: { merchant: vars?.merchantId },
+                context: { merchant: vars?.merchantId, ...webauthnContext },
             });
             const { reason, error_type } = extractAuthError(err);
             ctx?.flow.end("failed", {
                 error_type,
                 error_message: reason,
+                ...webauthnContext,
             });
             options?.onError?.(err, vars, ctx, mutationCtx);
         },
