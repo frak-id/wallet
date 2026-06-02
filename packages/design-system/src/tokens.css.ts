@@ -335,3 +335,19 @@ export const fontSize = {
     "6xl": "48px",
     "7xl": "60px",
 } as const;
+
+/**
+ * Safe-area inset expressions for use in `*.css.ts` calc()/max() strings.
+ *
+ * On Android Tauri the WebView draws edge-to-edge but does NOT populate the CSS
+ * `env(safe-area-inset-*)` values, so `safeArea.ts` mirrors the native insets
+ * into `--safe-area-inset-*` custom properties on `<html>`. Always prefer the
+ * var (set on Android), fall back to `env()` (iOS/web), then `0px`. Using raw
+ * `env(...)` alone clips bottom content behind the Android nav bar.
+ */
+export const safeArea = {
+    top: "var(--safe-area-inset-top, env(safe-area-inset-top, 0px))",
+    bottom: "var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 0px))",
+    left: "var(--safe-area-inset-left, env(safe-area-inset-left, 0px))",
+    right: "var(--safe-area-inset-right, env(safe-area-inset-right, 0px))",
+} as const;

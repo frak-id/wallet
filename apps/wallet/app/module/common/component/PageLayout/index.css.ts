@@ -1,5 +1,5 @@
 import { vars } from "@frak-labs/design-system/theme";
-import { alias } from "@frak-labs/design-system/tokens";
+import { alias, safeArea } from "@frak-labs/design-system/tokens";
 import { style } from "@vanilla-extract/css";
 
 export const container = style({
@@ -75,7 +75,7 @@ export const footer = style({
 // Onboarding screens (those passing `fixedViewport`) keep the CTA off the
 // home indicator with a 32px floor that grows on devices with a larger inset.
 export const footerFixed = style({
-    paddingBottom: `max(${alias.spacing.xl}, env(safe-area-inset-bottom))`,
+    paddingBottom: `max(${alias.spacing.xl}, ${safeArea.bottom})`,
 });
 
 // Pin the page to main's content box height so the footer stays in view

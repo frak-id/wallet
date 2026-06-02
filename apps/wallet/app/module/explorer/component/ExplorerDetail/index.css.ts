@@ -1,5 +1,5 @@
 import { vars } from "@frak-labs/design-system/theme";
-import { alias } from "@frak-labs/design-system/tokens";
+import { alias, safeArea } from "@frak-labs/design-system/tokens";
 import { style } from "@vanilla-extract/css";
 
 const heroOverlap = 25;
@@ -102,7 +102,7 @@ export const bodyContent = style({
     flexDirection: "column",
     gap: alias.spacing.m,
     margin: 0,
-    paddingBottom: `calc(96px + env(safe-area-inset-bottom, 0px))`,
+    paddingBottom: `calc(96px + ${safeArea.bottom})`,
 });
 
 /**
