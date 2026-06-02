@@ -11,6 +11,8 @@ version on dispatch.
 
 ## [Unreleased]
 
+## [1.1.9] - 2026-06-02
+
 ### Added
 
 - **Divi 4 Builder integration: three native modules (Frak Banner, Frak Share Button, Frak Post-Purchase) with full Visual Builder support.** Merchants on a Divi theme find the Frak components in the module list (search "Frak") and edit them in the Visual Builder, mirroring the Gutenberg blocks / Elementor widgets 1:1. All rendering goes through the shared `Frak_Component_Renderer` so every surface emits identical `<frak-*>` markup, and registration is gated on `et_builder_ready` so non-Divi sites pay nothing. Code lives under `includes/divi/`.
@@ -191,7 +193,9 @@ version on dispatch.
 
 - Initial release of the Frak WordPress plugin.
 
-[Unreleased]: https://github.com/frak-id/wallet/compare/wordpress-1.1.8...HEAD
+[Unreleased]: https://github.com/frak-id/wallet/compare/wordpress-1.1.9...HEAD
+
+[1.1.9]: https://github.com/frak-id/wallet/compare/wordpress-1.1.8...wordpress-1.1.9
 
 [1.1.8]: https://github.com/frak-id/wallet/compare/wordpress-1.1.7...wordpress-1.1.8
 
