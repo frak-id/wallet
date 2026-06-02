@@ -55,6 +55,24 @@ class FrakInstaller
     ];
 
     /**
+     * Canonical hook set a healthy install subscribes to: the always-on
+     * plumbing hooks ({@see self::CORE_HOOKS}) plus every placement-driven
+     * `display*` hook from {@see FrakPlacementRegistry::distinctHooks()}.
+     *
+     * Single source of truth shared by the fresh-install path
+     * ({@see self::install()}) and the healing upgrade script
+     * (`upgrade/install-1.0.8.php`), so the two can never drift on which
+     * hooks a working module must carry. A hook added to `CORE_HOOKS` or to
+     * the placement registry is automatically picked up by both paths.
+     *
+     * @return string[]
+     */
+    public static function allHooks(): array
+    {
+        return array_merge(self::CORE_HOOKS, FrakPlacementRegistry::distinctHooks());
+    }
+
+    /**
      * Run the install chain on behalf of {@see FrakIntegration::install()}.
      *
      * Caller is responsible for invoking `parent::install()` first so the
@@ -108,7 +126,7 @@ class FrakInstaller
             // keeps the install / uninstall / upgrade chains in lock-step.
             'register hooks' => static function () use ($module): bool {
                 $hookOk = true;
-                foreach (array_merge(self::CORE_HOOKS, FrakPlacementRegistry::distinctHooks()) as $hook) {
+                foreach (self::allHooks() as $hook) {
                     if (!$module->registerHook($hook)) {
                         PrestaShopLogger::addLog('[FrakSDK] registerHook failed: ' . $hook, 3);
                         $hookOk = false;
@@ -317,7 +335,29 @@ class FrakInstaller
             [
             // 1. Hook registrations. Removed first because the join via
             //    `id_module` survives until we delete the parent `module` row.
-            'hook_module' => static function () use ($db, $prefix, $name): bool {
+            //
+            //    GATED on `!keep_module_row`: the upgrade-path callers
+            //    (`upgrade/install-1.0.X.php`) pass `keep_module_row=true` to
+            //    mean "this is a LIVE module being healed — keep it
+            //    functional." A functional module MUST keep its hook
+            //    subscriptions: the upgrade scripts only re-register the admin
+            //    `Tab` + module-access roles after this scrub, NOT the
+            //    front-office hooks. Wiping `hook_module` here without a
+            //    re-register silently strips `header` /
+            //    `actionFrontControllerSetMedia` / every `display*` placement
+            //    AND the webhook hooks, so SDK injection + purchase webhooks
+            //    go dark while the module still reports as installed + enabled.
+            //    That regression took every legacy → 1.0.4+ upgrade offline
+            //    (the 1.0.4 convergence guard calls this with
+            //    `keep_module_row=true`). The install / uninstall paths
+            //    (`keep_module_row=false`) still scrub: install re-registers
+            //    immediately after via `FrakInstaller::install()`, uninstall
+            //    wants every row gone. `upgrade/install-1.0.8.php` re-registers
+            //    the canonical set for shops already broken by the old behaviour.
+            'hook_module' => static function () use ($db, $prefix, $name, $keepModuleRow): bool {
+                if ($keepModuleRow) {
+                    return true;
+                }
                 return (bool) $db->execute(
                     'DELETE hm FROM `' . $prefix . 'hook_module` hm'
                     . ' INNER JOIN `' . $prefix . 'module` m ON m.id_module = hm.id_module'
