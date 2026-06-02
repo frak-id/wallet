@@ -7,19 +7,31 @@ vi.mock("react-i18next", () => ({
     useTranslation: () => ({
         t: (key: string) => {
             const translations: Record<string, string> = {
-                "error.webauthn.notAllowed": "Authentication was cancelled",
-                "error.webauthn.userOperationExecution":
+                "error.webauthn.notAllowed.title": "Prompt closed",
+                "error.webauthn.notAllowed.message":
+                    "Authentication was cancelled",
+                "error.webauthn.userOperationExecution.title":
+                    "Transaction failed",
+                "error.webauthn.userOperationExecution.message":
                     "Transaction execution failed",
-                "error.webauthn.generic": "An error occurred",
+                "error.webauthn.generic.title": "Something went wrong",
+                "error.webauthn.generic.message": "An error occurred",
                 "error.webauthn.retry": "Try again",
-                "error.webauthn.alreadyRegistered": "Already registered",
-                "error.webauthn.noCredential": "No passkey on device",
-                "error.webauthn.noScreenLock": "Set up a screen lock",
-                "error.webauthn.unsupported": "Passkeys unsupported",
-                "error.webauthn.passkeyManager.intro": "Passkey manager issue",
-                "error.webauthn.passkeyManager.action1": "Action one",
-                "error.webauthn.passkeyManager.action2": "Action two",
-                "error.webauthn.passkeyManager.action3": "Action three",
+                "error.webauthn.alreadyRegistered.title":
+                    "Already have a passkey",
+                "error.webauthn.alreadyRegistered.message":
+                    "Already registered",
+                "error.webauthn.noCredential.title": "No passkey found",
+                "error.webauthn.noCredential.message": "No passkey on device",
+                "error.webauthn.noScreenLock.title": "Screen lock required",
+                "error.webauthn.noScreenLock.message": "Set up a screen lock",
+                "error.webauthn.unsupported.title": "Passkeys unavailable",
+                "error.webauthn.unsupported.message": "Passkeys unsupported",
+                "error.webauthn.syncFailed.title": "Passkey sync issue",
+                "error.webauthn.syncFailed.message": "Passkey manager issue",
+                "error.webauthn.syncFailed.step1": "Action one",
+                "error.webauthn.syncFailed.step2": "Action two",
+                "error.webauthn.syncFailed.step3": "Action three",
             };
             return translations[key] || key;
         },
@@ -146,11 +158,13 @@ describe("HandleErrors", () => {
         expect(screen.getByText("An error occurred")).toBeInTheDocument();
     });
 
-    it("keeps the error text in a p.error element", () => {
+    it("wraps the error in an alert container carrying the legacy error class", () => {
         const { container } = render(
             <HandleErrors error={new Error("boom")} />
         );
-        expect(container.querySelector("p.error")).toBeInTheDocument();
+        expect(
+            container.querySelector("[role='alert'].error")
+        ).toBeInTheDocument();
     });
 
     describe("retry affordance", () => {
