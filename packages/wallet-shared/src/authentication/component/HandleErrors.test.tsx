@@ -158,13 +158,11 @@ describe("HandleErrors", () => {
         expect(screen.getByText("An error occurred")).toBeInTheDocument();
     });
 
-    it("wraps the error in an alert container carrying the legacy error class", () => {
+    it("wraps the error in an alert container", () => {
         const { container } = render(
             <HandleErrors error={new Error("boom")} />
         );
-        expect(
-            container.querySelector("[role='alert'].error")
-        ).toBeInTheDocument();
+        expect(container.querySelector("[role='alert']")).toBeInTheDocument();
     });
 
     describe("retry affordance", () => {

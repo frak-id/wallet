@@ -1,4 +1,7 @@
+import { Box } from "@frak-labs/design-system/components/Box";
 import { Button } from "@frak-labs/design-system/components/Button";
+import { Inline } from "@frak-labs/design-system/components/Inline";
+import { Text } from "@frak-labs/design-system/components/Text";
 import {
     ClockIcon,
     LockIcon,
@@ -155,37 +158,58 @@ function ErrorCallout({
 }) {
     const { t } = useTranslation();
     return (
-        <div
+        <Box
+            as="div"
             role="alert"
+            display="flex"
+            flexDirection="column"
+            gap="s"
+            padding="m"
             className={clsx(
-                "error",
                 styles.container,
                 styles.containerTone[view.tone],
                 className
             )}
         >
-            <div className={styles.header}>
-                <span
-                    className={clsx(
-                        styles.iconWrapper,
-                        styles.iconTone[view.tone]
-                    )}
+            <Inline space="xs" alignY="center" wrap={false}>
+                <Box
+                    display="flex"
+                    alignItems="center"
+                    flexShrink={0}
+                    className={styles.iconTone[view.tone]}
                 >
                     {view.icon}
-                </span>
-                <p className={styles.title}>{t(`${view.baseKey}.title`)}</p>
-            </div>
-            <p className={styles.description}>{t(`${view.baseKey}.message`)}</p>
+                </Box>
+                <Text
+                    as="p"
+                    variant="heading5"
+                    weight="semiBold"
+                    color="primary"
+                >
+                    {t(`${view.baseKey}.title`)}
+                </Text>
+            </Inline>
+            <Text variant="bodySmall" color="secondary">
+                {t(`${view.baseKey}.message`)}
+            </Text>
             {view.stepKeys && (
                 <ol className={styles.steps}>
                     {view.stepKeys.map((key) => (
-                        <li key={key}>{t(key)}</li>
+                        <li key={key}>
+                            <Text
+                                as="span"
+                                variant="bodySmall"
+                                color="secondary"
+                            >
+                                {t(key)}
+                            </Text>
+                        </li>
                     ))}
                 </ol>
             )}
             {onRetry && (
                 <Button
-                    variant="secondary"
+                    variant="ghost"
                     size="small"
                     onClick={onRetry}
                     className={styles.retryButton}
@@ -193,6 +217,6 @@ function ErrorCallout({
                     {t("error.webauthn.retry")}
                 </Button>
             )}
-        </div>
+        </Box>
     );
 }
