@@ -90,6 +90,7 @@ function RegisterPage() {
     // forwarded to the register endpoint when the user activates their
     // secure space.
     const [email, setEmail] = useState("");
+    const [loginError, setLoginError] = useState<Error | null>(null);
 
     // Detect pairing context once at mount: user landed on /register
     // because they hit a /pairing?id=xxx deep link before authenticating
@@ -106,6 +107,7 @@ function RegisterPage() {
 
     const goToStep = useCallback(
         (next: FlowStep, direction: "forward" | "backward" = "forward") => {
+            setLoginError(null);
             withStepTransition(direction, () => setStep(next));
         },
         []
@@ -169,6 +171,7 @@ function RegisterPage() {
 
     const { login, isLoading: isLoginLoading } = useLogin({
         onSuccess: handlePostLoginRedirect,
+        onError: (error) => setLoginError(error),
     });
 
     const handleAlreadyHaveAccount = useCallback(() => {
@@ -176,6 +179,7 @@ function RegisterPage() {
             action: "login",
         });
         if (ua.isMobile) {
+            setLoginError(null);
             login({});
             return;
         }
@@ -320,6 +324,7 @@ function RegisterPage() {
                     loginLabel={t("onboarding.alreadyHaveAccount")}
                     onLoginClick={handleAlreadyHaveAccount}
                     isLoginLoading={isLoginLoading}
+                    loginError={loginError}
                     onRecoveryCodeClick={() => {
                         trackEvent("auth_recovery_code_clicked");
                         flowRef.current?.track("onboarding_action_clicked", {
@@ -374,6 +379,7 @@ function RegisterPage() {
                         flowRef.current?.track("onboarding_action_clicked", {
                             action: "login",
                         });
+                        setLoginError(null);
                         // Wallet is optional in the response (legacy rows
                         // without `smart_wallet_address`); fall back to the
                         // global account chooser when missing.
@@ -389,6 +395,7 @@ function RegisterPage() {
                         );
                     }}
                     isLoginLoading={isLoginLoading}
+                    loginError={loginError}
                 />
             )}
             {step === "onboardingThree" && (

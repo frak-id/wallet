@@ -1,4 +1,5 @@
 import { Button } from "@frak-labs/design-system/components/Button";
+import { HandleErrors } from "@frak-labs/wallet-shared";
 import { useTranslation } from "react-i18next";
 import { Back } from "@/module/common/component/Back";
 import { PageLayout } from "@/module/common/component/PageLayout";
@@ -23,6 +24,8 @@ type OnboardingStepProps = {
     onLoginClick?: () => void;
     /** Whether the login action is in progress */
     isLoginLoading?: boolean;
+    /** Login error surfaced above the actions (login-enabled step only) */
+    loginError?: Error | null;
     /** Called when the user clicks the recovery code link */
     onRecoveryCodeClick?: () => void;
 };
@@ -35,6 +38,7 @@ export function OnboardingStep({
     loginLabel,
     onLoginClick,
     isLoginLoading,
+    loginError,
     onRecoveryCodeClick,
 }: OnboardingStepProps) {
     const { t } = useTranslation();
@@ -45,6 +49,9 @@ export function OnboardingStep({
             back={onBack ? <Back onClick={() => onBack()} /> : undefined}
             footer={
                 <>
+                    {loginError && (
+                        <HandleErrors error={loginError} operation="login" />
+                    )}
                     <Button onClick={() => onContinue()}>{buttonLabel}</Button>
                     {loginLabel && onLoginClick && (
                         <Button
