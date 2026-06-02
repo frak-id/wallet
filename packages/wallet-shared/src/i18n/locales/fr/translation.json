@@ -486,6 +486,11 @@
             "notAllowed": "Vous avez annulé le processus d'authentification, veuillez réessayer.",
             "userOperationExecution": "Une erreur est survenue lors de l'exécution de la transaction. Veuillez réessayer.",
             "generic": "Une erreur est survenue. Veuillez réessayer.",
+            "retry": "Réessayer",
+            "alreadyRegistered": "Cet appareil possède déjà une passkey pour votre compte. Essayez plutôt de vous connecter.",
+            "noCredential": "Aucune passkey trouvée sur cet appareil. Créez-en une, ou connectez-vous depuis l'appareil sur lequel vous l'avez enregistrée.",
+            "noScreenLock": "Votre appareil a besoin d'un verrouillage d'écran (code, schéma ou biométrie) pour utiliser les passkeys. Ajoutez-en un dans vos réglages, puis réessayez.",
+            "unsupported": "Les passkeys ne peuvent pas être utilisées sur cet appareil pour le moment. Vérifiez que votre gestionnaire de passkeys est configuré, ou essayez un autre appareil.",
             "passkeyManager": {
                 "intro": "Votre téléphone n'a pas pu finaliser l'étape passkey. C'est généralement un problème de synchronisation de Google Password Manager sur cet appareil — pas un problème de votre compte.",
                 "action1": "Ouvrez les Réglages de votre téléphone, vérifiez que Google Password Manager est le gestionnaire de passkeys actif et que la synchronisation des passkeys est activée.",

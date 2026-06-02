@@ -6,6 +6,7 @@ import {
     startFlow,
     ua,
     useMountedTimeout,
+    webauthnErrorContext,
 } from "@frak-labs/wallet-shared/common";
 import { sessionStore } from "@frak-labs/wallet-shared/stores/sessionStore";
 import { encodeWalletMulticall } from "@frak-labs/wallet-shared/wallet/utils/multicall";
@@ -72,8 +73,10 @@ export function TransactionModalStep({
             onError: (err) => {
                 flowRef.current?.end("failed", {
                     tx_count: txs.length,
+                    operation: "sign",
                     error_type: err?.name,
                     error_message: err?.message ?? "unknown",
+                    ...webauthnErrorContext(err),
                 });
             },
         },
@@ -143,7 +146,13 @@ function DesktopTransactionStep({
                 })}
             </ButtonAuth>
 
-            {isError && error && <HandleErrors error={error} />}
+            {isError && error && (
+                <HandleErrors
+                    error={error}
+                    operation="sign"
+                    onRetry={() => sendTransaction(toSendTx)}
+                />
+            )}
         </>
     );
 }
@@ -266,7 +275,13 @@ function MobileTransactionStep({
                 </div>
             )}
 
-            {isError && error && <HandleErrors error={error} />}
+            {isError && error && (
+                <HandleErrors
+                    error={error}
+                    operation="sign"
+                    onRetry={triggerTransaction}
+                />
+            )}
         </>
     );
 }

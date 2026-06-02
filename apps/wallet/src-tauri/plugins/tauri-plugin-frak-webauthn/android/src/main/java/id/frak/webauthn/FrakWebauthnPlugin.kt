@@ -55,11 +55,11 @@ class FrakWebauthnPlugin(activity: Activity) : Plugin(activity) {
             } catch (e: CreateCredentialCancellationException) {
                 invoke.reject("NotAllowedError")
             } catch (e: CreatePublicKeyCredentialDomException) {
-                invoke.reject(webauthnErrorPayload(e, e.domError.type))
+                invoke.reject(webauthnError(e.domError.type, e.message))
             } catch (e: CreateCredentialException) {
-                invoke.reject(webauthnErrorPayload(e, e.type))
+                invoke.reject(webauthnError(e.type, e.message))
             } catch (e: Exception) {
-                invoke.reject(webauthnErrorPayload(e, null))
+                invoke.reject(webauthnError(null, e.message))
             }
         }
     }
@@ -87,25 +87,23 @@ class FrakWebauthnPlugin(activity: Activity) : Plugin(activity) {
             } catch (e: GetCredentialCancellationException) {
                 invoke.reject("NotAllowedError")
             } catch (e: GetPublicKeyCredentialDomException) {
-                invoke.reject(webauthnErrorPayload(e, e.domError.type))
+                invoke.reject(webauthnError(e.domError.type, e.message))
             } catch (e: GetCredentialException) {
-                invoke.reject(webauthnErrorPayload(e, e.type))
+                invoke.reject(webauthnError(e.type, e.message))
             } catch (e: Exception) {
-                invoke.reject(webauthnErrorPayload(e, null))
+                invoke.reject(webauthnError(null, e.message))
             }
         }
     }
 
-    // Forwards the full `message` (carries the GPS `[50xxx]` code, e.g. 50162
-    // folsom) that `domError.type` alone discards; parsed by the JS bridge.
-    private fun webauthnErrorPayload(throwable: Throwable, type: String?): String {
+    // Keep the `type` enum + full `message` (carries the GPS `[50xxx]` code,
+    // e.g. 50162 folsom) the JS bridge classifies on. Both are locale-stable.
+    private fun webauthnError(type: String?, message: String?): String {
         val payload = JSObject()
-        payload.put("source", "frak-webauthn-plugin")
-        payload.put("exceptionClass", throwable.javaClass.simpleName)
         if (type != null) {
             payload.put("type", type)
         }
-        payload.put("message", throwable.message ?: "")
+        payload.put("message", message ?: "")
         return payload.toString()
     }
 }

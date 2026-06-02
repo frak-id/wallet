@@ -7,6 +7,7 @@ import {
     extractAuthError,
     type Flow,
     identifyAuthenticatedUser,
+    recordError,
     startFlow,
 } from "../../common/analytics";
 import { authenticatedWalletApi } from "../../common/api/backendClient";
@@ -19,7 +20,10 @@ import {
 import { sessionStore } from "../../stores/sessionStore";
 import type { Session } from "../../types/Session";
 import { authKey } from "../queryKeys/auth";
-import { getWebauthnErrorDetails } from "../webauthn/errors";
+import {
+    isReportableWebauthnError,
+    webauthnErrorContext,
+} from "../webauthn/errors";
 import { getTauriGetFn } from "../webauthn/tauriBridge";
 
 type UseLoginArgs = {
@@ -126,16 +130,19 @@ export function useLogin(
         },
         onError: (err, vars, ctx, mutationCtx) => {
             const { reason, error_type } = extractAuthError(err);
-            const webauthn = getWebauthnErrorDetails(err);
+            const webauthn = webauthnErrorContext(err);
+            if (isReportableWebauthnError(err)) {
+                recordError(err, {
+                    source: "authentication",
+                    context: { method: ctx?.method, ...webauthn },
+                });
+            }
             ctx?.flow.end("failed", {
+                operation: "login",
                 method: ctx?.method,
                 error_type,
                 error_message: reason,
-                ...(webauthn && {
-                    webauthn_error_code: webauthn.code,
-                    gps_code: webauthn.gpsCode,
-                    cm_exception_class: webauthn.exceptionClass,
-                }),
+                ...webauthn,
             });
             options?.onError?.(err, vars, ctx, mutationCtx);
         },

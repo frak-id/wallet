@@ -213,7 +213,10 @@ interface Resources {
         };
         error: {
             webauthn: {
+                alreadyRegistered: "This device already has a passkey for your account. Try logging in instead.";
                 generic: "An error occurred. Please try again.";
+                noCredential: "No passkey was found on this device. Create one, or sign in on the device where you registered.";
+                noScreenLock: "Your device needs a screen lock (PIN, pattern, or biometrics) to use passkeys. Add one in your settings, then try again.";
                 notAllowed: "You have cancelled the authentication process, please try again.";
                 passkeyManager: {
                     action1: "Open your phone Settings, make sure Google Password Manager is the active passkey provider and that passkey sync is turned on.";
@@ -221,6 +224,8 @@ interface Resources {
                     action3: "Still stuck? Sign in on another device, or recover your wallet from the settings.";
                     intro: "Your phone couldn't complete the passkey step. This is usually a Google Password Manager sync issue on this device — not a problem with your account.";
                 };
+                retry: "Try again";
+                unsupported: "Passkeys can't be used on this device right now. Make sure your passkey provider is set up, or try another device.";
                 userOperationExecution: "An error occurred while executing the transaction. Please try again.";
             };
         };

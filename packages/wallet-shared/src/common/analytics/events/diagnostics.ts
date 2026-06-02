@@ -7,6 +7,7 @@
  */
 export type AppErrorSource =
     | "registration"
+    | "authentication"
     | "bootstrap"
     | "window_error"
     | "unhandled_rejection"

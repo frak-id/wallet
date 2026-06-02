@@ -87,7 +87,13 @@ export function SiweAuthenticateModalStep({
                 </div>
             </div>
 
-            {isError && error && <HandleErrors error={error} />}
+            {isError && error && (
+                <HandleErrors
+                    error={error}
+                    operation="sign"
+                    onRetry={() => signMessage({ message })}
+                />
+            )}
         </>
     );
 }

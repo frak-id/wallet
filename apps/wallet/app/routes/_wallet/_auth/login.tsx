@@ -77,6 +77,7 @@ function LoginPage() {
                         <HandleErrors
                             error={error}
                             className={layout.errorText}
+                            operation="login"
                         />
                     )}
                     <Box className={layout.actions}>

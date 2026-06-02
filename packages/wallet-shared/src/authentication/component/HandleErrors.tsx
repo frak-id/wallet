@@ -1,96 +1,123 @@
+import { Button } from "@frak-labs/design-system/components/Button";
 import clsx from "clsx";
-import type { PropsWithChildren } from "react";
 import { useTranslation } from "react-i18next";
-import { getWebauthnErrorDetails } from "../webauthn/errors";
+import { classifyWebauthnError } from "../webauthn/errors";
 import * as styles from "./HandleErrors.css";
+
+type WebauthnOperation = "login" | "register" | "sign";
 
 type HandleErrorsProps = {
     error: Error;
     /** Optional class to override error text styling (e.g. design system color token) */
     className?: string;
+    /** Auth context — enables `already-registered`/`no-credential` routing copy. Omit for transaction signing. */
+    operation?: WebauthnOperation;
+    /** When set, retryable failures render a "Try again" button invoking it. */
+    onRetry?: () => void;
 };
 
-const cancellationNames = new Set(["NotAllowedError", "AbortError"]);
-const cancellationMessages = ["cancel", "aborted", "error 1001"];
-
-/**
- * Walk the error `.cause` chain to detect user cancellation.
- *
- * Cancellation errors get wrapped differently per platform:
- *  - Web: Ox wraps DOMException{NotAllowedError} → CreateFailedError/SignFailedError
- *  - Firefox: same but DOMException{AbortError}
- *  - iOS Tauri: Ox → BaseError → Error("The operation was canceled.")
- *  - Android Tauri: Ox → BaseError → Error("...cancel...")
- */
-export function isUserCancellation(error: Error): boolean {
-    let current: unknown = error;
-    for (let depth = 0; depth < 4 && current; depth++) {
-        if (current instanceof Error) {
-            if (cancellationNames.has(current.name)) return true;
-            if (
-                cancellationMessages.some(
-                    (pattern) =>
-                        current instanceof Error &&
-                        current.message.toLowerCase().includes(pattern)
-                )
-            ) {
-                return true;
-            }
-        }
-        current = current instanceof Error ? current.cause : undefined;
-    }
-    return false;
-}
-
-export function HandleErrors({ error, className }: HandleErrorsProps) {
-    if (isUserCancellation(error)) {
-        return <ErrorNotAllowed className={className} />;
-    }
-
-    // Device-side passkey-manager failures are fixed in settings, not by retry.
-    const webauthnDetails = getWebauthnErrorDetails(error);
-    if (
-        webauthnDetails?.code === "passkey-sync-failed" ||
-        webauthnDetails?.code === "provider-unavailable"
-    ) {
-        return <ErrorPasskeyManager className={className} />;
-    }
-
+export function HandleErrors({
+    error,
+    className,
+    operation,
+    onRetry,
+}: HandleErrorsProps) {
     if (error.name === "UserOperationExecutionError") {
-        return <ErrorUserOperationExecution className={className} />;
+        return (
+            <SimpleError
+                messageKey="error.webauthn.userOperationExecution"
+                className={className}
+            />
+        );
     }
 
-    // Show a generic error
-    return <GenericError className={className} />;
+    const { kind, retryable } = classifyWebauthnError(error);
+    const retry = retryable ? onRetry : undefined;
+    const isAuth = operation === "login" || operation === "register";
+
+    switch (kind) {
+        case "sync-failed":
+            return (
+                <PasskeyManagerError className={className} onRetry={retry} />
+            );
+        case "no-screen-lock":
+            return (
+                <SimpleError
+                    messageKey="error.webauthn.noScreenLock"
+                    className={className}
+                    onRetry={retry}
+                />
+            );
+        case "already-registered":
+            return (
+                <SimpleError
+                    messageKey={
+                        isAuth
+                            ? "error.webauthn.alreadyRegistered"
+                            : "error.webauthn.generic"
+                    }
+                    className={className}
+                />
+            );
+        case "no-credential":
+            return (
+                <SimpleError
+                    messageKey={
+                        isAuth
+                            ? "error.webauthn.noCredential"
+                            : "error.webauthn.generic"
+                    }
+                    className={className}
+                />
+            );
+        case "unsupported":
+            return (
+                <SimpleError
+                    messageKey="error.webauthn.unsupported"
+                    className={className}
+                />
+            );
+        case "cancelled":
+            return (
+                <SimpleError
+                    messageKey="error.webauthn.notAllowed"
+                    className={className}
+                    onRetry={retry}
+                />
+            );
+        default:
+            return (
+                <SimpleError
+                    messageKey="error.webauthn.generic"
+                    className={className}
+                    onRetry={retry}
+                />
+            );
+    }
 }
 
-/**
- * Error when the user cancel the authentication process
- * @returns The error message
- */
-function ErrorNotAllowed({ className }: { className?: string }) {
+type ViewProps = {
+    className?: string;
+    onRetry?: () => void;
+};
+
+function SimpleError({
+    messageKey,
+    className,
+    onRetry,
+}: ViewProps & { messageKey: string }) {
     const { t } = useTranslation();
     return (
-        <ErrorWrapper className={className}>
-            {t("error.webauthn.notAllowed")}
-        </ErrorWrapper>
+        <>
+            <p className={clsx("error", styles.errorWrapper, className)}>
+                {t(messageKey)}
+            </p>
+            {onRetry && <RetryButton onRetry={onRetry} />}
+        </>
     );
 }
 
-/**
- * Error when the user transaction execution fails
- * @returns The error message
- */
-function ErrorUserOperationExecution({ className }: { className?: string }) {
-    const { t } = useTranslation();
-    return (
-        <ErrorWrapper className={className}>
-            {t("error.webauthn.userOperationExecution")}
-        </ErrorWrapper>
-    );
-}
-
-function ErrorPasskeyManager({ className }: { className?: string }) {
+function PasskeyManagerError({ className, onRetry }: ViewProps) {
     const { t } = useTranslation();
     return (
         <div className={clsx("error", styles.errorWrapper, className)}>
@@ -100,35 +127,20 @@ function ErrorPasskeyManager({ className }: { className?: string }) {
                 <li>{t("error.webauthn.passkeyManager.action2")}</li>
                 <li>{t("error.webauthn.passkeyManager.action3")}</li>
             </ul>
+            {onRetry && <RetryButton onRetry={onRetry} />}
         </div>
     );
 }
 
-/**
- * Generic error
- * @returns The error message
- */
-function GenericError({ className }: { className?: string }) {
+function RetryButton({ onRetry }: { onRetry: () => void }) {
     const { t } = useTranslation();
     return (
-        <ErrorWrapper className={className}>
-            {t("error.webauthn.generic")}
-        </ErrorWrapper>
-    );
-}
-
-/**
- * Wrapper for the error message
- * @param children - The children to render
- * @returns The error message
- */
-function ErrorWrapper({
-    children,
-    className,
-}: PropsWithChildren<{ className?: string }>) {
-    return (
-        <p className={clsx("error", styles.errorWrapper, className)}>
-            {children}
-        </p>
+        <Button
+            variant="secondary"
+            onClick={onRetry}
+            className={styles.retryButton}
+        >
+            {t("error.webauthn.retry")}
+        </Button>
     );
 }

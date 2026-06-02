@@ -1,5 +1,5 @@
 // Components
-export { HandleErrors, isUserCancellation } from "./component/HandleErrors";
+export { HandleErrors } from "./component/HandleErrors";
 
 // Hooks
 export { useLogin } from "./hook/useLogin";
@@ -11,11 +11,13 @@ export { ssoKey } from "./queryKeys/sso";
 // Utils
 export { compressedSsoToParams } from "./utils/ssoDataCompression";
 export {
-    CredentialManagerError,
-    classifyNativeWebauthnError,
-    getWebauthnErrorDetails,
-    type WebauthnErrorCode,
-    type WebauthnErrorDetails,
+    classifyWebauthnError,
+    isAuthenticatorAlreadyRegistered,
+    isReportableWebauthnError,
+    isUserCancellation,
+    type WebauthnError,
+    type WebauthnErrorKind,
+    webauthnErrorContext,
 } from "./webauthn/errors";
 // WebAuthn Tauri bridge
 export { getTauriCreateFn, getTauriGetFn } from "./webauthn/tauriBridge";

@@ -16,13 +16,8 @@ import {
     IS_TAURI,
 } from "@frak-labs/app-essentials/utils/platform";
 import type { WebAuthnP256 } from "ox";
-import { BaseError } from "ox/Errors";
 import { getInvoke } from "../../common/tauri";
-import {
-    CredentialManagerError,
-    classifyNativeWebauthnError,
-    parsePluginErrorPayload,
-} from "./errors";
+import { parseNativeWebauthnError } from "./errors";
 
 // ============================================================================
 // Types matching what the plugin returns (base64url JSON)
@@ -204,27 +199,14 @@ function extractTauriErrorMessage(e: unknown): string {
     return String(e);
 }
 
-/**
- * Detect user cancellation from native platforms.
- *  - iOS: ASAuthorizationError.canceled → "NotAllowedError" or "error 1001"
- *  - Android: CreateCredentialCancellationException → "NotAllowedError"
- *  - Android (legacy/localized): message contains "cancel"
- *
- * Structured plugin rejects (JSON payloads) are never cancellations — they are
- * routed to `classifyNativeWebauthnError` instead. This guard also stops a
- * folsom failure whose `nativeType` is `TYPE_NOT_ALLOWED_ERROR` from being
- * misread as a user cancel (the literal substring "notallowederror" would
- * otherwise match).
- */
-function isTauriCancellation(e: unknown): boolean {
-    const raw = extractTauriErrorMessage(e);
-    if (parsePluginErrorPayload(raw)) return false;
-    const msg = raw.toLowerCase();
-    return (
-        msg.includes("notallowederror") ||
-        msg.includes("error 1001") ||
-        msg.includes("cancel")
+function nativeErrorToError(e: unknown): Error {
+    const { name, gpsCode, message } = parseNativeWebauthnError(
+        extractTauriErrorMessage(e)
     );
+    const error = new Error(message || name || "WebAuthn request failed");
+    if (name) error.name = name;
+    if (gpsCode) (error as Error & { gpsCode?: string }).gpsCode = gpsCode;
+    return error;
 }
 
 // ============================================================================
@@ -319,19 +301,8 @@ export function getTauriCreateFn(): OxCreateFn {
                 );
             return fromPluginRegistration(response);
         } catch (e) {
-            if (isTauriCancellation(e)) {
-                const err = new Error("User cancelled the operation");
-                err.name = "NotAllowedError";
-                throw err;
-            }
-
             console.warn("Tauri create error", e);
-            const details = classifyNativeWebauthnError(
-                extractTauriErrorMessage(e)
-            );
-            throw new BaseError("Tauri create credential error", {
-                cause: new CredentialManagerError(details),
-            });
+            throw nativeErrorToError(e);
         }
     };
 }
@@ -400,19 +371,8 @@ export function getTauriGetFn(): OxGetFn {
                 ReturnType<NonNullable<OxGetFn>>
             >;
         } catch (e) {
-            if (isTauriCancellation(e)) {
-                const err = new Error("User cancelled the operation");
-                err.name = "NotAllowedError";
-                throw err;
-            }
-
             console.warn("Tauri get error", e);
-            const details = classifyNativeWebauthnError(
-                extractTauriErrorMessage(e)
-            );
-            throw new BaseError("Tauri get credential error", {
-                cause: new CredentialManagerError(details),
-            });
+            throw nativeErrorToError(e);
         }
     };
 }
