@@ -268,7 +268,8 @@
                     },
                     "startDate": "Date de début",
                     "endDate": "Date de fin",
-                    "datePlaceholder": "jj/mm/aaaa"
+                    "datePlaceholder": "jj/mm/aaaa",
+                    "openCalendar": "Ouvrir le calendrier"
                 }
             }
         },

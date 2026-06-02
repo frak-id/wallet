@@ -349,6 +349,9 @@ function ScheduleField({ control }: { control: Control<BudgetFormValues> }) {
                             value={field.value}
                             onChange={field.onChange}
                             minDate={today}
+                            ariaLabel={t(
+                                "campaigns.create.budget.schedule.startDate"
+                            )}
                         />
                     )}
                 />
@@ -375,6 +378,9 @@ function ScheduleField({ control }: { control: Control<BudgetFormValues> }) {
                                     maxDate={
                                         endDate ? new Date(endDate) : undefined
                                     }
+                                    ariaLabel={t(
+                                        "campaigns.create.budget.schedule.startDate"
+                                    )}
                                 />
                             )}
                         />
@@ -401,6 +407,9 @@ function ScheduleField({ control }: { control: Control<BudgetFormValues> }) {
                                     minDate={
                                         startDate ? new Date(startDate) : today
                                     }
+                                    ariaLabel={t(
+                                        "campaigns.create.budget.schedule.endDate"
+                                    )}
                                 />
                             )}
                         />

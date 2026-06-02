@@ -122,6 +122,7 @@ export default interface Resources {
                             title: "Start immediately";
                         };
                         label: "Schedule";
+                        openCalendar: "Open calendar";
                         range: {
                             description: "Set a fixed campaign window";
                             title: "Start + End date";

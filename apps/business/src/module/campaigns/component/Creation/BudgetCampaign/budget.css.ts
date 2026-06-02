@@ -216,9 +216,8 @@ export const dateColumn = style({
     minWidth: 0,
 });
 
-/** Date trigger styled like the other muted fields. */
+/** Muted field shell: typeable date input + calendar-popover trigger. */
 export const dateField = style({
-    all: "unset",
     boxSizing: "border-box",
     display: "flex",
     alignItems: "center",
@@ -229,19 +228,28 @@ export const dateField = style({
     padding: `0 ${alias.spacing.m}`,
     backgroundColor: vars.surface.tertiary,
     borderRadius: alias.cornerRadius.m,
-    cursor: "pointer",
 });
 
-export const datePlaceholder = style({
-    color: vars.text.disabled,
+/** The dd/mm/yyyy text input filling the field. */
+export const dateInput = style({
+    all: "unset",
+    flex: 1,
+    minWidth: 0,
     fontSize: "16px",
     lineHeight: "26px",
-});
-
-export const dateValue = style({
     color: vars.text.primary,
-    fontSize: "16px",
-    lineHeight: "26px",
+    selectors: {
+        "&::placeholder": { color: vars.text.disabled, opacity: 1 },
+    },
+});
+
+/** Calendar icon button (opens the popover). */
+export const dateIconButton = style({
+    all: "unset",
+    display: "flex",
+    alignItems: "center",
+    flexShrink: 0,
+    cursor: "pointer",
 });
 
 export const dateIcon = style({
