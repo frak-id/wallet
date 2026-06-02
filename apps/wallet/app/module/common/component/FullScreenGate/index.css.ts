@@ -1,5 +1,5 @@
 import { vars } from "@frak-labs/design-system/theme";
-import { alias } from "@frak-labs/design-system/tokens";
+import { alias, safeArea } from "@frak-labs/design-system/tokens";
 import { style } from "@vanilla-extract/css";
 
 /**
@@ -17,7 +17,7 @@ export const gate = style({
     paddingLeft: alias.spacing.l,
     paddingRight: alias.spacing.l,
     paddingTop: `calc(env(safe-area-inset-top, 0px) + ${alias.spacing.l})`,
-    paddingBottom: `calc(env(safe-area-inset-bottom, 0px) + ${alias.spacing.l})`,
+    paddingBottom: `calc(${safeArea.bottom} + ${alias.spacing.l})`,
 });
 
 export const content = style({
