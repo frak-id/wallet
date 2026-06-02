@@ -11,6 +11,8 @@ version on dispatch.
 
 ## [Unreleased]
 
+## [1.0.8] - 2026-06-02
+
 ### Fixed
 
 - **Upgrade path silently stripped every front-office + webhook hook (legacy → 1.0.4+ went dark).** `FrakInstaller::cleanLeftovers()` step 1 deleted every `ps_hook_module` row for the module *unconditionally*, including when called with `keep_module_row=true` from the upgrade-path convergence guards (`upgrade/install-1.0.1.php`, `upgrade/install-1.0.4.php`). The upgrade scripts only re-register the admin `Tab` + module-access roles after the scrub — never the front-office hooks — so the bump to 1.0.4 stripped `header`, `actionFrontControllerSetMedia`, every `display*` placement, and the webhook hooks (`actionOrderStatusPostUpdate`, `actionOrderSlipAdd`, `actionCronJob`) and never put them back. A shop that ran the legacy `frak-id/prestashop-plugin` (internal version 1.0.0) and upgraded to any 1.0.4–1.0.7 release ended up with the module still showing installed + enabled and a reachable configuration page, but ZERO Frak output on the storefront — no SDK `<script>`, no `window.FrakSetup`, no purchase webhooks. SDK analytics and purchase attribution went silent the instant the upgrade ran, with nothing surfaced where a merchant would look. `cleanLeftovers()` now skips the `hook_module` delete when `keep_module_row=true` (the live-module healing path), so the orphan-row scrub that exists to prevent a 1062 on `authorization_role.slug` no longer takes the module's live hook subscriptions down with it; the install / uninstall paths (`keep_module_row=false`) still scrub as before (install re-registers immediately after, uninstall wants every row gone).
@@ -213,7 +215,9 @@ version on dispatch.
 - New `views/templates/hook/post-purchase.tpl` Smarty partial: theme-overridable wrapper for the post-purchase markup. Override path: `themes/<theme>/modules/frakintegration/views/templates/hook/post-purchase.tpl`.
 - New `FrakOrderResolver` class: single-pass extraction of customer/order/token context plus product line items from a resolved `Order`, fail-soft on missing images / deleted products. Sibling of the WordPress `Frak_WooCommerce::get_post_purchase_data()` helper.
 
-[Unreleased]: https://github.com/frak-id/wallet/compare/prestashop-1.0.7...HEAD
+[Unreleased]: https://github.com/frak-id/wallet/compare/prestashop-1.0.8...HEAD
+
+[1.0.8]: https://github.com/frak-id/wallet/compare/prestashop-1.0.7...prestashop-1.0.8
 
 [1.0.7]: https://github.com/frak-id/wallet/compare/prestashop-1.0.6...prestashop-1.0.7
 
