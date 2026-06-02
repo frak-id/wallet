@@ -144,7 +144,13 @@ export function LoginModalStep({
                 </p>
             )}
 
-            {isError && error && <HandleErrors error={error} />}
+            {isError && error && (
+                <HandleErrors
+                    error={error}
+                    operation="login"
+                    onRetry={() => login({})}
+                />
+            )}
         </>
     );
 }

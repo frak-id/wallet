@@ -662,9 +662,42 @@
     },
     "error": {
         "webauthn": {
-            "notAllowed": "Vous avez annulé le processus d'authentification, veuillez réessayer.",
-            "userOperationExecution": "Une erreur est survenue lors de l'exécution de la transaction. Veuillez réessayer.",
-            "generic": "Une erreur est survenue. Veuillez réessayer."
+            "retry": "Réessayer",
+            "notAllowed": {
+                "title": "Fenêtre fermée",
+                "message": "La fenêtre de passkey a été fermée ou a expiré. Veuillez réessayer."
+            },
+            "userOperationExecution": {
+                "title": "Échec de la transaction",
+                "message": "Une erreur est survenue lors de l'exécution de la transaction. Veuillez réessayer."
+            },
+            "generic": {
+                "title": "Une erreur est survenue",
+                "message": "Une erreur est survenue. Veuillez réessayer."
+            },
+            "alreadyRegistered": {
+                "title": "Passkey déjà présente",
+                "message": "Cet appareil possède déjà une passkey pour votre compte. Essayez plutôt de vous connecter."
+            },
+            "noCredential": {
+                "title": "Aucune passkey trouvée",
+                "message": "Aucune passkey trouvée sur cet appareil. Créez-en une, ou connectez-vous depuis l'appareil sur lequel vous l'avez enregistrée."
+            },
+            "noScreenLock": {
+                "title": "Verrouillage d'écran requis",
+                "message": "Votre appareil a besoin d'un verrouillage d'écran (code, schéma ou biométrie) pour utiliser les passkeys. Ajoutez-en un dans vos réglages, puis réessayez."
+            },
+            "unsupported": {
+                "title": "Passkeys indisponibles",
+                "message": "Les passkeys ne peuvent pas être utilisées sur cet appareil pour le moment. Vérifiez que votre gestionnaire de passkeys est configuré, ou essayez un autre appareil."
+            },
+            "syncFailed": {
+                "title": "Problème de synchronisation",
+                "message": "Votre téléphone n'a pas pu finaliser l'étape passkey. C'est généralement un problème de synchronisation de Google Password Manager sur cet appareil — pas un problème de votre compte.",
+                "step1": "Ouvrez les Réglages de votre téléphone, vérifiez que Google Password Manager est le gestionnaire de passkeys actif et que la synchronisation des passkeys est activée.",
+                "step2": "Mettez à jour les services Google Play, puis redémarrez votre téléphone et réessayez.",
+                "step3": "Toujours bloqué ? Connectez-vous sur un autre appareil, ou récupérez votre portefeuille depuis les réglages."
+            }
         }
     },
     "recoveryCode": {

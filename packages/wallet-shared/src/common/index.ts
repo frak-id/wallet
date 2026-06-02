@@ -3,14 +3,19 @@ export {
     LogoFrakBadge,
     LogoFrakWithName,
 } from "@frak-labs/design-system/icons";
-// HandleErrors lives under `authentication/component/` for historical reasons
-// but is dependency-free (clsx + react-i18next only). Re-exporting it from
-// `common` so the listener can pull it without touching the `authentication`
-// barrel — which transitively drags `ox` + `viem/accounts` via `useLogin`.
+// HandleErrors + the webauthn error classifier carry no `ox` / `viem/accounts`
+// dependency. Re-exported from `common` so the listener can pull them without
+// the `authentication` barrel, which drags those in via `useLogin`.
+export { HandleErrors } from "../authentication/component/HandleErrors";
 export {
-    HandleErrors,
+    classifyWebauthnError,
+    isAuthenticatorAlreadyRegistered,
+    isReportableWebauthnError,
     isUserCancellation,
-} from "../authentication/component/HandleErrors";
+    type WebauthnError,
+    type WebauthnErrorKind,
+    webauthnErrorContext,
+} from "../authentication/webauthn/errors";
 export type {
     AppErrorSource,
     AuthEventMap,

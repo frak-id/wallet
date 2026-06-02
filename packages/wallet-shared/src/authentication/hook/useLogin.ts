@@ -7,6 +7,7 @@ import {
     extractAuthError,
     type Flow,
     identifyAuthenticatedUser,
+    recordError,
     startFlow,
 } from "../../common/analytics";
 import { authenticatedWalletApi } from "../../common/api/backendClient";
@@ -20,6 +21,10 @@ import { detachedPairingSessionStore } from "../../stores/detachedPairingSession
 import { sessionStore } from "../../stores/sessionStore";
 import type { Session } from "../../types/Session";
 import { authKey } from "../queryKeys/auth";
+import {
+    isReportableWebauthnError,
+    webauthnErrorContext,
+} from "../webauthn/errors";
 import { getTauriGetFn } from "../webauthn/tauriBridge";
 
 type UseLoginArgs = {
@@ -79,6 +84,14 @@ export function useLogin(
         mutationFn: async (args?: UseLoginArgs) => {
             // Only pass getFn if defined (Android), omit for iOS/web to use browser default
             const challenge = generatePrivateKey();
+            // TODO(prefer-immediate): on Tauri we can't tell "user cancelled" from
+            // "no passkey on this device" — both collapse onto NotAllowedError →
+            // `cancelled`. The native `preferImmediatelyAvailableCredentials` flag
+            // fixes this (Android: GetCredentialRequest →NoCredentialException; iOS:
+            // performRequests(.preferImmediatelyAvailableCredentials) →.notInteractive
+            // 1005). It isn't exposed via ox's getFn, so adopting it means threading
+            // a flag through getTauriGetFn → the register/authenticate plugin commands,
+            // then mapping the resulting signal to the `no-credential` kind.
             const tauriGetFn = getTauriGetFn();
             const allowedCredentialIds =
                 args?.allowedCredentialIds ??
@@ -170,10 +183,19 @@ export function useLogin(
         },
         onError: (err, vars, ctx, mutationCtx) => {
             const { reason, error_type } = extractAuthError(err);
+            const webauthn = webauthnErrorContext(err);
+            if (isReportableWebauthnError(err)) {
+                recordError(err, {
+                    source: "authentication",
+                    context: { method: ctx?.method, ...webauthn },
+                });
+            }
             ctx?.flow.end("failed", {
+                operation: "login",
                 method: ctx?.method,
                 error_type,
                 error_message: reason,
+                ...webauthn,
             });
             options?.onError?.(err, vars, ctx, mutationCtx);
         },

@@ -1,186 +1,210 @@
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
+import { parseNativeWebauthnError } from "../webauthn/errors";
 import { HandleErrors } from "./HandleErrors";
 
 vi.mock("react-i18next", () => ({
     useTranslation: () => ({
         t: (key: string) => {
             const translations: Record<string, string> = {
-                "error.webauthn.notAllowed": "Authentication was cancelled",
-                "error.webauthn.userOperationExecution":
+                "error.webauthn.notAllowed.title": "Prompt closed",
+                "error.webauthn.notAllowed.message":
+                    "Authentication was cancelled",
+                "error.webauthn.userOperationExecution.title":
+                    "Transaction failed",
+                "error.webauthn.userOperationExecution.message":
                     "Transaction execution failed",
-                "error.webauthn.generic": "An error occurred",
+                "error.webauthn.generic.title": "Something went wrong",
+                "error.webauthn.generic.message": "An error occurred",
+                "error.webauthn.retry": "Try again",
+                "error.webauthn.alreadyRegistered.title":
+                    "Already have a passkey",
+                "error.webauthn.alreadyRegistered.message":
+                    "Already registered",
+                "error.webauthn.noCredential.title": "No passkey found",
+                "error.webauthn.noCredential.message": "No passkey on device",
+                "error.webauthn.noScreenLock.title": "Screen lock required",
+                "error.webauthn.noScreenLock.message": "Set up a screen lock",
+                "error.webauthn.unsupported.title": "Passkeys unavailable",
+                "error.webauthn.unsupported.message": "Passkeys unsupported",
+                "error.webauthn.syncFailed.title": "Passkey sync issue",
+                "error.webauthn.syncFailed.message": "Passkey manager issue",
+                "error.webauthn.syncFailed.step1": "Action one",
+                "error.webauthn.syncFailed.step2": "Action two",
+                "error.webauthn.syncFailed.step3": "Action three",
             };
             return translations[key] || key;
         },
     }),
 }));
 
-function oxWrapped(name: string, cause: Error): Error {
-    const err = new Error(
-        `Failed to create credential.\n\nDetails: ${cause.message}`
-    );
+function ox(name: string, cause: Error): Error {
+    const err = new Error("Failed.");
     err.name = name;
     err.cause = cause;
     return err;
 }
 
-function tauriWrapped(nativeMessage: string): Error {
-    const native = new Error(nativeMessage);
-    const bridge = new Error("Tauri create credential error");
-    bridge.cause = native;
-    const ox = new Error("Failed to create credential.");
-    ox.name = "Registration.CreateFailedError";
-    ox.cause = bridge;
-    return ox;
+function dom(name: string): Error {
+    const err = new Error(`${name} occurred`);
+    err.name = name;
+    return err;
 }
 
+function native(raw: string): Error {
+    const { name, gpsCode, message } = parseNativeWebauthnError(raw);
+    const err = new Error(message) as Error & { gpsCode?: string };
+    if (name) err.name = name;
+    if (gpsCode) err.gpsCode = gpsCode;
+    return ox("Registration.CreateFailedError", err);
+}
+
+const folsom = () =>
+    native(
+        JSON.stringify({
+            type: "androidx.credentials.TYPE_NOT_ALLOWED_ERROR",
+            message: "[50162] folsom",
+        })
+    );
+
 describe("HandleErrors", () => {
-    describe("direct cancellation (raw DOMException)", () => {
-        it("should detect NotAllowedError", () => {
-            const error = new Error("The operation was not allowed.");
-            error.name = "NotAllowedError";
-
-            render(<HandleErrors error={error} />);
-
-            expect(
-                screen.getByText("Authentication was cancelled")
-            ).toBeInTheDocument();
-        });
-
-        it("should detect AbortError (Firefox)", () => {
-            const error = new Error("Aborted");
-            error.name = "AbortError";
-
-            render(<HandleErrors error={error} />);
-
-            expect(
-                screen.getByText("Authentication was cancelled")
-            ).toBeInTheDocument();
-        });
+    it("renders cancellation copy for NotAllowedError", () => {
+        render(
+            <HandleErrors
+                error={ox("SignFailedError", dom("NotAllowedError"))}
+            />
+        );
+        expect(
+            screen.getByText("Authentication was cancelled")
+        ).toBeInTheDocument();
     });
 
-    describe("Ox-wrapped cancellation (web browser)", () => {
-        it("should detect NotAllowedError wrapped by CreateFailedError", () => {
-            const dom = new Error("The operation was not allowed.");
-            dom.name = "NotAllowedError";
-            const error = oxWrapped("Registration.CreateFailedError", dom);
-
-            render(<HandleErrors error={error} />);
-
-            expect(
-                screen.getByText("Authentication was cancelled")
-            ).toBeInTheDocument();
-        });
-
-        it("should detect NotAllowedError wrapped by SignFailedError", () => {
-            const dom = new Error("The operation was not allowed.");
-            dom.name = "NotAllowedError";
-            const error = oxWrapped("Authentication.SignFailedError", dom);
-
-            render(<HandleErrors error={error} />);
-
-            expect(
-                screen.getByText("Authentication was cancelled")
-            ).toBeInTheDocument();
-        });
-
-        it("should detect AbortError wrapped by SignFailedError (Firefox)", () => {
-            const dom = new Error("Aborted");
-            dom.name = "AbortError";
-            const error = oxWrapped("Authentication.SignFailedError", dom);
-
-            render(<HandleErrors error={error} />);
-
-            expect(
-                screen.getByText("Authentication was cancelled")
-            ).toBeInTheDocument();
-        });
+    it("renders cancellation copy for AbortError", () => {
+        render(<HandleErrors error={dom("AbortError")} />);
+        expect(
+            screen.getByText("Authentication was cancelled")
+        ).toBeInTheDocument();
     });
 
-    describe("Tauri-wrapped cancellation (iOS/Android)", () => {
-        it("should detect iOS cancellation (The operation was canceled.)", () => {
-            const error = tauriWrapped("The operation was canceled.");
+    it("renders actionable passkey-manager guidance for folsom/sync-failed", () => {
+        render(<HandleErrors error={folsom()} />);
+        expect(screen.getByText("Passkey manager issue")).toBeInTheDocument();
+        expect(screen.getByText("Action one")).toBeInTheDocument();
+    });
 
-            render(<HandleErrors error={error} />);
+    it("renders passkey-manager guidance for a CredMan folsom with no [50xxx] prefix", () => {
+        const err = native(
+            JSON.stringify({
+                type: "androidx.credentials.TYPE_NOT_ALLOWED_ERROR",
+                message:
+                    "Can't find the proper key to decrypt the private key from WebauthnCredentialSpecifics.",
+            })
+        );
+        render(<HandleErrors error={err} />);
+        expect(screen.getByText("Passkey manager issue")).toBeInTheDocument();
+    });
 
-            expect(
-                screen.getByText("Authentication was cancelled")
-            ).toBeInTheDocument();
-        });
+    it("renders no-screen-lock copy for ConstraintError", () => {
+        render(<HandleErrors error={dom("ConstraintError")} />);
+        expect(screen.getByText("Set up a screen lock")).toBeInTheDocument();
+    });
 
-        it("should detect Android cancellation (user cancelled)", () => {
-            const error = tauriWrapped(
-                "User cancelled the credential manager selector"
+    it("renders unsupported copy for NotSupportedError", () => {
+        render(<HandleErrors error={dom("NotSupportedError")} />);
+        expect(screen.getByText("Passkeys unsupported")).toBeInTheDocument();
+    });
+
+    it("routes already-registered copy only in an auth context", () => {
+        const { rerender } = render(
+            <HandleErrors
+                error={dom("InvalidStateError")}
+                operation="register"
+            />
+        );
+        expect(screen.getByText("Already registered")).toBeInTheDocument();
+
+        rerender(
+            <HandleErrors error={dom("InvalidStateError")} operation="sign" />
+        );
+        expect(screen.getByText("An error occurred")).toBeInTheDocument();
+    });
+
+    it("routes no-credential copy only in an auth context", () => {
+        render(
+            <HandleErrors
+                error={native(
+                    JSON.stringify({
+                        type: "androidx.credentials.TYPE_NO_CREDENTIAL",
+                        message: "No credentials available",
+                    })
+                )}
+                operation="login"
+            />
+        );
+        expect(screen.getByText("No passkey on device")).toBeInTheDocument();
+    });
+
+    it("renders the transaction-execution error branch", () => {
+        const error = new Error("Execution failed");
+        error.name = "UserOperationExecutionError";
+        render(<HandleErrors error={error} />);
+        expect(
+            screen.getByText("Transaction execution failed")
+        ).toBeInTheDocument();
+    });
+
+    it("renders generic copy for an unknown error", () => {
+        render(<HandleErrors error={new Error("boom")} />);
+        expect(screen.getByText("An error occurred")).toBeInTheDocument();
+    });
+
+    it("wraps the error in an alert container", () => {
+        const { container } = render(
+            <HandleErrors error={new Error("boom")} />
+        );
+        expect(container.querySelector("[role='alert']")).toBeInTheDocument();
+    });
+
+    describe("retry affordance", () => {
+        it("renders a Try again button for retryable kinds when onRetry is set", () => {
+            const onRetry = vi.fn();
+            render(
+                <HandleErrors
+                    error={dom("NotAllowedError")}
+                    onRetry={onRetry}
+                />
             );
+            const button = screen.getByRole("button", { name: "Try again" });
+            fireEvent.click(button);
+            expect(onRetry).toHaveBeenCalledOnce();
+        });
 
-            render(<HandleErrors error={error} />);
-
+        it("offers retry alongside the folsom guidance", () => {
+            const onRetry = vi.fn();
+            render(<HandleErrors error={folsom()} onRetry={onRetry} />);
             expect(
-                screen.getByText("Authentication was cancelled")
+                screen.getByRole("button", { name: "Try again" })
             ).toBeInTheDocument();
         });
 
-        it("should detect iOS ASAuthorizationError.canceled (error 1001)", () => {
-            const error = tauriWrapped(
-                "The operation couldn't be completed. (com.apple.AuthenticationServices.AuthorizationError error 1001.)"
+        it("does not render retry for non-retryable kinds", () => {
+            render(
+                <HandleErrors
+                    error={dom("InvalidStateError")}
+                    operation="register"
+                    onRetry={vi.fn()}
+                />
             );
-
-            render(<HandleErrors error={error} />);
-
             expect(
-                screen.getByText("Authentication was cancelled")
-            ).toBeInTheDocument();
+                screen.queryByRole("button", { name: "Try again" })
+            ).not.toBeInTheDocument();
         });
-    });
 
-    describe("UserOperationExecutionError", () => {
-        it("should render userOperationExecution error", () => {
-            const error = new Error("Execution failed");
-            error.name = "UserOperationExecutionError";
-
-            render(<HandleErrors error={error} />);
-
+        it("does not render retry when onRetry is omitted", () => {
+            render(<HandleErrors error={dom("NotAllowedError")} />);
             expect(
-                screen.getByText("Transaction execution failed")
-            ).toBeInTheDocument();
-        });
-    });
-
-    describe("GenericError", () => {
-        it("should render generic error for unknown error types", () => {
-            const error = new Error("Something went wrong");
-
-            render(<HandleErrors error={error} />);
-
-            expect(screen.getByText("An error occurred")).toBeInTheDocument();
-        });
-
-        it("should render generic error for TypeError", () => {
-            const error = new TypeError("Type mismatch");
-
-            render(<HandleErrors error={error} />);
-
-            expect(screen.getByText("An error occurred")).toBeInTheDocument();
-        });
-
-        it("should render generic error for RangeError", () => {
-            const error = new RangeError("Out of range");
-
-            render(<HandleErrors error={error} />);
-
-            expect(screen.getByText("An error occurred")).toBeInTheDocument();
-        });
-    });
-
-    describe("error wrapper styling", () => {
-        it("should render error in paragraph with error class", () => {
-            const error = new Error("Test error");
-
-            const { container } = render(<HandleErrors error={error} />);
-
-            const errorElement = container.querySelector("p.error");
-            expect(errorElement).toBeInTheDocument();
+                screen.queryByRole("button", { name: "Try again" })
+            ).not.toBeInTheDocument();
         });
     });
 });

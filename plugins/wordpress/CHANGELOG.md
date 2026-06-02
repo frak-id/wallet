@@ -11,6 +11,21 @@ version on dispatch.
 
 ## [Unreleased]
 
+## [1.1.9] - 2026-06-02
+
+### Added
+
+- **Divi 4 Builder integration: three native modules (Frak Banner, Frak Share Button, Frak Post-Purchase) with full Visual Builder support.** Merchants on a Divi theme find the Frak components in the module list (search "Frak") and edit them in the Visual Builder, mirroring the Gutenberg blocks / Elementor widgets 1:1. All rendering goes through the shared `Frak_Component_Renderer` so every surface emits identical `<frak-*>` markup, and registration is gated on `et_builder_ready` so non-Divi sites pay nothing. Code lives under `includes/divi/`.
+  - **Full VB support (`$vb_support = 'on'`)** via React "twins" registered through Divi's `et_builder_api_ready` JS API — instant live preview, no "module has no React component" notice. The twins (`includes/divi/builder-modules.js`) are thin, no-build `React.createElement` wrappers over the same `<frak-*>` web components; the PHP `render()` still drives the public frontend.
+  - **Banner *Editor preview → Disabled*** option to suppress the builder preview, so a banner in a global header / footer / template doesn't paint on every edited page (frontend unaffected).
+  - Editor-only plumbing: SDK loaded render-blocking in `<head>` and `waitForBackendConfig` flipped off in the builder so `<frak-X preview>` paints immediately; design-tab options disabled (SDK ships its own styles); PHPStan stubs for the Divi classes.
+- **Auto-inject the Frak Banner at the top of every page (opt-in).** New **Automatic Display → Banner** toggle under *Settings → Frak*. When enabled, the plugin hooks `wp_body_open` and emits `<frak-banner>` right after the opening `<body>` tag on every frontend page, so merchants can run the referral / in-app-browser banner site-wide without dropping the block, shortcode, or widget on each template (handy on theme/page builders where editing the global header is painful). Rendering goes through the shared `Frak_Component_Renderer::banner()`, so the markup matches every other surface; the banner auto-hides when there is no referral or in-app context, so it stays inert on ordinary page views. Emitted at most once per request. Persisted as a new `auto_render_banner` boolean inside the bundled `frak_settings` option (default off); no migration needed because `Frak_Settings::all()` merges the default at read time. No hook is registered when the toggle is off, and themes that don't implement `wp_body_open()` simply skip it.
+- **Auto-render the Frak Post-Purchase card on the WooCommerce thank-you page (opt-in).** New **Automatic Display → Post-Purchase** toggle under *Settings → Frak* (shown only when WooCommerce is active). When enabled, the plugin hooks `woocommerce_thankyou` (priority 20, after WooCommerce's own order-details output) and emits `<frak-post-purchase>` automatically — so merchants on theme/page builders that make the thank-you step painful to edit without wiping its content (Divi, etc.) get the share-and-earn card with zero template edits. Rendering goes through the shared `Frak_Component_Renderer::post_purchase()`, so the WooCommerce order context (`customer-id` / `order-id` / `token` + product line items) is auto-injected exactly as it is for the block / shortcode / widget surfaces. The card is emitted at most once per request and is independent of the always-on inline `trackPurchaseStatus` tracker (the SDK is idempotent on the `(customerId, orderId, token)` triple, so both surfaces firing is intentional). Persisted as a new `auto_render_post_purchase` boolean inside the bundled `frak_settings` option (default off); no migration is needed because `Frak_Settings::all()` merges the default at read time. Stores that keep the toggle off — or that place the block / shortcode / widget themselves — pay zero extra per-request cost (no hook is registered).
+
+### Changed
+
+- **Reworked the *Settings → Frak* admin page for clarity and to prevent silent loss of unsaved edits.** The page now opens with a read-only **Connection** panel (merchant status, domain, merchant ID, *Refresh Merchant*) kept outside the settings form so its page-reloading action is visually separate from saved settings; the editable settings follow in a clearer order — **Branding** (app name, logo), **Automatic Display** (banner / post-purchase toggles), **Purchase Tracking** (webhook secret + WooCommerce webhook health, with the merchant/site-info rows that used to live here relocated to the Connection panel). The bottom *Save Settings* button is replaced by a **sticky save bar** that stays reachable while scrolling and highlights with an "unsaved changes" hint once any field is edited. A `beforeunload` guard warns before navigating away with unsaved edits, and the *Refresh Merchant* / *Set up / Sync webhook* AJAX buttons (which reload the page) now prompt for confirmation when the form is dirty — previously they silently discarded any typed-but-unsaved changes, including a freshly pasted webhook secret. No settings keys or save semantics changed: the save button keeps `name="submit"` so the existing POST handler is untouched.
+
 ## [1.1.8] - 2026-05-27
 
 ### Changed
@@ -178,7 +193,9 @@ version on dispatch.
 
 - Initial release of the Frak WordPress plugin.
 
-[Unreleased]: https://github.com/frak-id/wallet/compare/wordpress-1.1.8...HEAD
+[Unreleased]: https://github.com/frak-id/wallet/compare/wordpress-1.1.9...HEAD
+
+[1.1.9]: https://github.com/frak-id/wallet/compare/wordpress-1.1.8...wordpress-1.1.9
 
 [1.1.8]: https://github.com/frak-id/wallet/compare/wordpress-1.1.7...wordpress-1.1.8
 

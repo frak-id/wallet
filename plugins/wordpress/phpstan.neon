@@ -12,5 +12,6 @@ parameters:
     scanFiles:
         - vendor/php-stubs/woocommerce-stubs/woocommerce-stubs.php
         - phpstan-elementor-stubs.php
+        - phpstan-divi-stubs.php
     bootstrapFiles:
         - phpstan-bootstrap.php

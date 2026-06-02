@@ -16,8 +16,8 @@ import {
     IS_TAURI,
 } from "@frak-labs/app-essentials/utils/platform";
 import type { WebAuthnP256 } from "ox";
-import { BaseError } from "ox/Errors";
 import { getInvoke } from "../../common/tauri";
+import { parseNativeWebauthnError } from "./errors";
 
 // ============================================================================
 // Types matching what the plugin returns (base64url JSON)
@@ -199,24 +199,14 @@ function extractTauriErrorMessage(e: unknown): string {
     return String(e);
 }
 
-function tauriErrorToCause(e: unknown): Error {
-    if (e instanceof Error) return e;
-    return new Error(extractTauriErrorMessage(e));
-}
-
-/**
- * Detect user cancellation from native platforms.
- *  - iOS: ASAuthorizationError.canceled → "NotAllowedError" or "error 1001"
- *  - Android: CreateCredentialCancellationException → "NotAllowedError"
- *  - Android (legacy/localized): message contains "cancel"
- */
-function isTauriCancellation(e: unknown): boolean {
-    const msg = extractTauriErrorMessage(e).toLowerCase();
-    return (
-        msg.includes("notallowederror") ||
-        msg.includes("error 1001") ||
-        msg.includes("cancel")
+function nativeErrorToError(e: unknown): Error {
+    const { name, gpsCode, message } = parseNativeWebauthnError(
+        extractTauriErrorMessage(e)
     );
+    const error = new Error(message || name || "WebAuthn request failed");
+    if (name) error.name = name;
+    if (gpsCode) (error as Error & { gpsCode?: string }).gpsCode = gpsCode;
+    return error;
 }
 
 // ============================================================================
@@ -311,16 +301,8 @@ export function getTauriCreateFn(): OxCreateFn {
                 );
             return fromPluginRegistration(response);
         } catch (e) {
-            if (isTauriCancellation(e)) {
-                const err = new Error("User cancelled the operation");
-                err.name = "NotAllowedError";
-                throw err;
-            }
-
             console.warn("Tauri create error", e);
-            throw new BaseError("Tauri create credential error", {
-                cause: tauriErrorToCause(e),
-            });
+            throw nativeErrorToError(e);
         }
     };
 }
@@ -389,16 +371,8 @@ export function getTauriGetFn(): OxGetFn {
                 ReturnType<NonNullable<OxGetFn>>
             >;
         } catch (e) {
-            if (isTauriCancellation(e)) {
-                const err = new Error("User cancelled the operation");
-                err.name = "NotAllowedError";
-                throw err;
-            }
-
             console.warn("Tauri get error", e);
-            throw new BaseError("Tauri get credential error", {
-                cause: tauriErrorToCause(e),
-            });
+            throw nativeErrorToError(e);
         }
     };
 }

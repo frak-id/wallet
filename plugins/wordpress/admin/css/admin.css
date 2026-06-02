@@ -164,6 +164,41 @@ select {
 	min-width: 150px;
 }
 
+/* Sticky save bar (dirty state toggled by admin.js) */
+.frak-save-bar {
+	position: sticky;
+	bottom: 0;
+	z-index: 100;
+	display: flex;
+	align-items: center;
+	gap: 12px;
+	margin: 20px 0 0;
+	padding: 12px 20px;
+	background: #fff;
+	border: 1px solid #ccd0d4;
+	border-top: 3px solid #2271b1;
+	box-shadow: 0 -2px 6px rgba(0, 0, 0, 0.08);
+}
+
+.frak-save-bar--dirty {
+	border-top-color: #dba617;
+	background: #fcf9e8;
+}
+
+.frak-save-bar__status {
+	color: #646970;
+}
+
+.frak-save-bar--dirty .frak-save-bar__status {
+	color: #8a6d00;
+	font-weight: 600;
+}
+
+/* Connection panel */
+.frak-section--connection .form-table th {
+	width: 160px;
+}
+
 /* Responsive adjustments */
 @media screen and (max-width: 782px) {
 	.frak-section .form-table th,
@@ -173,5 +208,10 @@ select {
 
 	.frak-stats-grid {
 		grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+	}
+
+	.frak-save-bar {
+		flex-wrap: wrap;
+		gap: 8px;
 	}
 }

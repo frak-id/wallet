@@ -84,11 +84,15 @@ function KeypassBlock({
     description,
     footer,
     error,
+    operation,
+    onRetry,
 }: {
     title: string;
     description: string;
     footer: ReactNode;
     error?: Error | null;
+    operation?: "login" | "register";
+    onRetry?: () => void;
 }) {
     return (
         <Box className={styles.keypass}>
@@ -101,7 +105,12 @@ function KeypassBlock({
                 footer={footer}
             >
                 {error && (
-                    <HandleErrors error={error} className={styles.errorText} />
+                    <HandleErrors
+                        error={error}
+                        className={styles.errorText}
+                        operation={operation}
+                        onRetry={onRetry}
+                    />
                 )}
             </ContentBlock>
         </Box>
@@ -155,6 +164,8 @@ function KeypassContent({
                     "onboarding.keypass.existingAccount.description"
                 )}
                 error={loginError}
+                operation="login"
+                onRetry={onLogin}
                 footer={
                     <Button onClick={onLogin} loading={isLoginLoading}>
                         {t("onboarding.keypass.existingAccount.button")}
@@ -169,6 +180,8 @@ function KeypassContent({
             title={t("onboarding.keypass.title")}
             description={t("onboarding.keypass.description")}
             error={registerError}
+            operation="register"
+            onRetry={onRegister}
             footer={
                 <>
                     <Button onClick={onRegister} loading={isRegistering}>

@@ -213,9 +213,42 @@ interface Resources {
         };
         error: {
             webauthn: {
-                generic: "An error occurred. Please try again.";
-                notAllowed: "You have cancelled the authentication process, please try again.";
-                userOperationExecution: "An error occurred while executing the transaction. Please try again.";
+                alreadyRegistered: {
+                    message: "This device already has a passkey for your account. Try logging in instead.";
+                    title: "Already have a passkey";
+                };
+                generic: {
+                    message: "An error occurred. Please try again.";
+                    title: "Something went wrong";
+                };
+                noCredential: {
+                    message: "No passkey was found on this device. Create one, or sign in on the device where you registered.";
+                    title: "No passkey found";
+                };
+                noScreenLock: {
+                    message: "Your device needs a screen lock (PIN, pattern, or biometrics) to use passkeys. Add one in your settings, then try again.";
+                    title: "Screen lock required";
+                };
+                notAllowed: {
+                    message: "The passkey prompt was closed or timed out. Please try again.";
+                    title: "Prompt closed";
+                };
+                retry: "Try again";
+                syncFailed: {
+                    message: "Your phone couldn't complete the passkey step. This is usually a Google Password Manager sync issue on this device — not a problem with your account.";
+                    step1: "Open your phone Settings, make sure Google Password Manager is the active passkey provider and that passkey sync is turned on.";
+                    step2: "Update Google Play Services, then restart your phone and try again.";
+                    step3: "Still stuck? Sign in on another device, or recover your wallet from the settings.";
+                    title: "Passkey sync issue";
+                };
+                unsupported: {
+                    message: "Passkeys can't be used on this device right now. Make sure your passkey provider is set up, or try another device.";
+                    title: "Passkeys unavailable";
+                };
+                userOperationExecution: {
+                    message: "An error occurred while executing the transaction. Please try again.";
+                    title: "Transaction failed";
+                };
             };
         };
         explorer: {
