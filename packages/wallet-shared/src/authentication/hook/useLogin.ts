@@ -62,6 +62,14 @@ export function useLogin(
         mutationFn: async (args?: UseLoginArgs) => {
             // Only pass getFn if defined (Android), omit for iOS/web to use browser default
             const challenge = generatePrivateKey();
+            // TODO(prefer-immediate): on Tauri we can't tell "user cancelled" from
+            // "no passkey on this device" — both collapse onto NotAllowedError →
+            // `cancelled`. The native `preferImmediatelyAvailableCredentials` flag
+            // fixes this (Android: GetCredentialRequest →NoCredentialException; iOS:
+            // performRequests(.preferImmediatelyAvailableCredentials) →.notInteractive
+            // 1005). It isn't exposed via ox's getFn, so adopting it means threading
+            // a flag through getTauriGetFn → the register/authenticate plugin commands,
+            // then mapping the resulting signal to the `no-credential` kind.
             const tauriGetFn = getTauriGetFn();
             const { metadata, signature, raw } = await WebAuthnP256.sign({
                 credentialId: args?.lastAuthentication?.authenticatorId,

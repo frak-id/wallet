@@ -80,6 +80,18 @@ describe("HandleErrors", () => {
         expect(screen.getByText("Action one")).toBeInTheDocument();
     });
 
+    it("renders passkey-manager guidance for a CredMan folsom with no [50xxx] prefix", () => {
+        const err = native(
+            JSON.stringify({
+                type: "androidx.credentials.TYPE_NOT_ALLOWED_ERROR",
+                message:
+                    "Can't find the proper key to decrypt the private key from WebauthnCredentialSpecifics.",
+            })
+        );
+        render(<HandleErrors error={err} />);
+        expect(screen.getByText("Passkey manager issue")).toBeInTheDocument();
+    });
+
     it("renders no-screen-lock copy for ConstraintError", () => {
         render(<HandleErrors error={dom("ConstraintError")} />);
         expect(screen.getByText("Set up a screen lock")).toBeInTheDocument();

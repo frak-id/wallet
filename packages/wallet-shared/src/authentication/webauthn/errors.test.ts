@@ -152,36 +152,120 @@ describe("classifyWebauthnError — Android GPS", () => {
         ).toBe("no-credential");
     });
 
-    it("treats an unmapped GPS code as unknown, never cancelled", () => {
+    it("classifies a CredMan-path folsom decrypt failure (no [50xxx] prefix, no 'folsom' word) as sync-failed", () => {
+        // Android 14+ Credential Manager strips the [50162] prefix; the decrypt
+        // message is the only locale-stable signal left and must NOT fall to
+        // cancelled — this is the production blind spot the fix targets.
         const result = classifyWebauthnError(
             nativeError(
-                androidEnvelope(ANDROID_NOT_ALLOWED, "[50128] transient")
+                androidEnvelope(
+                    ANDROID_NOT_ALLOWED,
+                    "Can't find the proper key to decrypt the private key from WebauthnCredentialSpecifics."
+                )
             )
         );
-        expect(result.kind).toBe("unknown");
+        expect(result.kind).toBe("sync-failed");
         expect(result.retryable).toBe(true);
+        expect(result.gpsCode).toBeUndefined();
+    });
+
+    it("classifies TYPE_NO_CREATE_OPTIONS (no eligible provider) as unsupported", () => {
+        expect(
+            classifyWebauthnError(
+                nativeError(
+                    androidEnvelope(
+                        "android.credentials.CreateCredentialException.TYPE_NO_CREATE_OPTIONS",
+                        "No create options available."
+                    )
+                )
+            ).kind
+        ).toBe("unsupported");
+    });
+
+    it("classifies TYPE_INTERRUPTED as a retryable cancel", () => {
+        const result = classifyWebauthnError(
+            nativeError(
+                androidEnvelope(
+                    "android.credentials.GetCredentialException.TYPE_INTERRUPTED",
+                    "The operation was interrupted."
+                )
+            )
+        );
+        expect(result.kind).toBe("cancelled");
+        expect(result.retryable).toBe(true);
+    });
+
+    it("reports a provider-configuration failure as unknown", () => {
+        const err = nativeError(
+            androidEnvelope(
+                "androidx.credentials.TYPE_CREATE_CREDENTIAL_PROVIDER_CONFIGURATION_EXCEPTION",
+                "Missing credentials-play-services-auth dependency."
+            )
+        );
+        expect(classifyWebauthnError(err).kind).toBe("unknown");
+        expect(isReportableWebauthnError(err)).toBe(true);
+    });
+
+    it("falls an unmapped GPS code through to the DOMException signal instead of forcing unknown", () => {
+        // [50118] SECURITY_ERR is not in GPS_KIND; the fall-through keeps it
+        // classified as security via the TYPE_SECURITY_ERROR token.
+        expect(
+            classifyWebauthnError(
+                nativeError(
+                    androidEnvelope(
+                        "androidx.credentials.TYPE_SECURITY_ERROR",
+                        "[50118] Security policy violation."
+                    )
+                )
+            ).kind
+        ).toBe("security");
+    });
+
+    it("treats an unmapped NOT_ALLOWED GPS code as a soft cancel, not a reported bug", () => {
+        // [50164] biometric error — environmental/transient, not developer-actionable.
+        const err = nativeError(
+            androidEnvelope(ANDROID_NOT_ALLOWED, "[50164] biometric error")
+        );
+        expect(classifyWebauthnError(err).kind).toBe("cancelled");
+        expect(isReportableWebauthnError(err)).toBe(false);
     });
 });
 
-describe("classifyWebauthnError — iOS + cancellation", () => {
-    it("classifies a bare iOS cancellation as cancelled", () => {
-        expect(classifyWebauthnError(nativeError("NotAllowedError")).kind).toBe(
-            "cancelled"
-        );
+describe("classifyWebauthnError — iOS envelope", () => {
+    // The iOS plugin maps the ASAuthorizationError code → a DOMException-name
+    // `type` and surfaces the numeric code in the message as `[100x]`.
+    const iosError = (type: string, code: number) =>
+        nativeError(JSON.stringify({ type, message: `[${code}] failure` }));
+
+    it("classifies .canceled (1001 → NotAllowedError) as cancelled", () => {
+        expect(
+            classifyWebauthnError(iosError("NotAllowedError", 1001)).kind
+        ).toBe("cancelled");
     });
 
-    it("classifies iOS matchedExcludedCredential (1006) as already-registered", () => {
+    it("classifies .matchedExcludedCredential (1006 → InvalidStateError) as already-registered", () => {
         expect(
-            classifyWebauthnError(nativeError("InvalidStateError")).kind
+            classifyWebauthnError(iosError("InvalidStateError", 1006)).kind
         ).toBe("already-registered");
     });
 
-    it("classifies the legacy iOS error-1001 message as cancelled", () => {
+    it("classifies .failed (1004 → UnknownError) as a reported unknown, code stays out of gpsCode", () => {
+        const err = iosError("UnknownError", 1004);
+        const result = classifyWebauthnError(err);
+        expect(result.kind).toBe("unknown");
+        // 4-digit iOS code must never match the [5xxxx] GPS-code regex.
+        expect(result.gpsCode).toBeUndefined();
+        expect(isReportableWebauthnError(err)).toBe(true);
+    });
+
+    it("classifies a bare-string fatal precondition reject as unknown", () => {
+        // Early native guards (missing options, no window) keep rejecting bare
+        // strings — the JS bridge treats those as opaque.
         expect(
             classifyWebauthnError(
-                nativeError("The operation couldn't be completed. error 1001.")
+                nativeError("No active foreground window for WebAuthn")
             ).kind
-        ).toBe("cancelled");
+        ).toBe("unknown");
     });
 });
 

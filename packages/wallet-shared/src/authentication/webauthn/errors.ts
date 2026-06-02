@@ -4,13 +4,16 @@
  * One taxonomy keyed on the WebAuthn DOMException name + Google Play Services
  * `[50xxx]` code — the locale-stable signals shared by all three surfaces:
  *  - Web: ox surfaces the raw DOMException (`.name`) as the failure `cause`.
- *  - iOS: the native plugin rejects with the DOMException name as a string.
- *  - Android: GPS collapses ~50 internal codes onto the same enum and keeps the
- *    numeric `[50xxx]` code in the message (e.g. 50162 = Google Password Manager
- *    "folsom" sync/decrypt failure).
+ *  - iOS: the native plugin rejects a `{ type, message }` envelope where `type`
+ *    is the DOMException name mapped from the ASAuthorizationError code.
+ *  - Android: GPS collapses ~50 internal codes onto the same enum. On the legacy
+ *    FIDO2 path the message keeps the numeric `[50xxx]` prefix (e.g. 50162 =
+ *    Google Password Manager "folsom" sync/decrypt failure); on the Credential
+ *    Manager path that prefix is STRIPPED for 5xxxx codes, so the only signals
+ *    left are the `TYPE_*` enum token and the (mostly non-localized) message.
  *
- * Prose is only a last-resort signal — native messages are localized, whereas
- * the numeric code and the DOMException / `TYPE_*` enum tokens are not.
+ * Prose is a fallback signal — some native messages are localized, but the GPS
+ * internal strings we match (folsom/decrypt) and the `TYPE_*` enum tokens are not.
  *
  * @see https://www.corbado.com/blog/google-play-services-passkey-error-codes
  * @see https://www.corbado.com/blog/native-app-passkey-errors
@@ -122,8 +125,9 @@ export function parseNativeWebauthnError(raw: string): {
 
 type KindResult = { kind: WebauthnErrorKind; retryable: boolean };
 
-// GPS code → bucket. Codes from the Corbado reference; a code outside this map
-// still means a real failure (handled as `unknown`, never a user cancel).
+// GPS code → bucket (FIDO2 path, where the `[50xxx]` prefix survives). Codes
+// from the Corbado reference. A code outside this map falls through to the
+// DOMException/`TYPE_*`/prose signals rather than forcing `unknown`.
 const GPS_KIND: Record<string, KindResult> = {
     "50162": { kind: "sync-failed", retryable: true },
     "50161": { kind: "sync-failed", retryable: true },
@@ -179,7 +183,15 @@ function kindFromSignals(
     name: string | undefined,
     haystack: string
 ): KindResult {
-    if (haystack.includes("folsom"))
+    // GPM "folsom" sync/decrypt failure (50162/50161/50191). On the Credential
+    // Manager path GPS strips the `[50xxx]` prefix, so the numeric code is gone
+    // and the localized DOMException name collapses onto NotAllowedError — the
+    // decrypt/folsom message text is the only locale-stable signal left, and it
+    // MUST win over the `cancelled` fallback below.
+    if (
+        haystack.includes("folsom") ||
+        haystack.includes("decrypt the private key")
+    )
         return { kind: "sync-failed", retryable: true };
     if (
         name === "InvalidStateError" ||
@@ -193,19 +205,25 @@ function kindFromSignals(
         haystack.includes("no credential")
     )
         return { kind: "no-credential", retryable: false };
+    // Platform/provider can't satisfy the request: register with no eligible
+    // provider (TYPE_NO_CREATE_OPTIONS), Credential Manager unsupported
+    // (TYPE_GET_CREDENTIAL_UNSUPPORTED_EXCEPTION), or a web NotSupportedError.
     if (
         name === "NotSupportedError" ||
         haystack.includes("type_no_create_option") ||
-        haystack.includes("no create option")
+        haystack.includes("no create option") ||
+        haystack.includes("type_get_credential_unsupported")
     )
         return { kind: "unsupported", retryable: false };
     if (name === "SecurityError") return { kind: "security", retryable: false };
+    // User dismissed/aborted, or a transient concurrency interruption
+    // (TYPE_USER_CANCELED / TYPE_INTERRUPTED) — soft, retryable, not reported.
     if (
         name === "NotAllowedError" ||
         name === "AbortError" ||
         haystack.includes("cancel") ||
         haystack.includes("aborted") ||
-        haystack.includes("error 1001")
+        haystack.includes("interrupted")
     )
         return { kind: "cancelled", retryable: true };
     return { kind: "unknown", retryable: true };
@@ -214,15 +232,19 @@ function kindFromSignals(
 /**
  * Classify any thrown value (web DOMException, ox `CreateFailedError`/
  * `SignFailedError`, or a bridge-normalised native `Error`) by walking its
- * `.cause` chain. Signal priority: GPS code → DOMException/`TYPE_*` enum →
- * prose. A present GPS code always means a real failure, never a user cancel.
+ * `.cause` chain. Signal priority: mapped GPS code → DOMException/`TYPE_*` enum
+ * → prose. A *mapped* GPS code wins outright; an unmapped one defers to the
+ * DOMException/`TYPE_*`/prose signals (see `classifyWebauthnError`).
  */
 export function classifyWebauthnError(error: unknown): WebauthnError {
     const { haystack, gpsCode, message } = collectSignals(error);
     const name = resolveDomName(haystack);
-    const { kind, retryable } = gpsCode
-        ? (GPS_KIND[gpsCode] ?? { kind: "unknown", retryable: true })
-        : kindFromSignals(name, haystack);
+    // A *mapped* GPS code is the most precise signal (FIDO2 path, where the
+    // `[50xxx]` prefix survives) and wins outright. An *unmapped* code defers
+    // to the DOMException/`TYPE_*`/prose signals instead of forcing `unknown`,
+    // so a real security/unsupported/folsom failure keeps its actionable bucket.
+    const mapped = gpsCode ? GPS_KIND[gpsCode] : undefined;
+    const { kind, retryable } = mapped ?? kindFromSignals(name, haystack);
     return { kind, retryable, name, gpsCode, message };
 }
 
