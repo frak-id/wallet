@@ -45,8 +45,8 @@ export const identityGroupsTable = pgTable("identity_groups", {
  *
  * `blob` is opaque ciphertext sealed client-side with the user's password: the
  * backend is a zero-knowledge store, it never receives the password nor decrypts.
- * One row per group (`group_id` unique); the API refuses to overwrite (no update
- * this round).
+ * One row per group (`group_id` unique); the API upserts — a recovery refresh
+ * that mints a fresh burner replaces the blob and stamps `updated_at`.
  */
 export const recoveryBlobsTable = pgTable("recovery_blobs", {
     id: uuid("id").primaryKey().defaultRandom(),

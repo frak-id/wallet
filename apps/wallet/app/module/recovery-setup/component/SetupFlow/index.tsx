@@ -6,6 +6,12 @@ import { PasswordStep } from "./PasswordStep";
 import { SignStep } from "./SignStep";
 import { SuccessStep } from "./SuccessStep";
 
+/**
+ * `setup` mints the first recovery key; `refresh` mints a fresh burner that
+ * replaces the existing one (same pipeline, a few different wordings).
+ */
+export type RecoveryFlowMode = "setup" | "refresh";
+
 type Step =
     | { kind: "password" }
     | { kind: "sign"; password: string; validAfter: number; validUntil: number }
@@ -20,6 +26,8 @@ const RECOVERY_STEP_NUMBER: Record<Exclude<Step["kind"], "success">, number> = {
 };
 
 type RecoverySetupFlowProps = {
+    /** `setup` (default) for first-time setup, `refresh` to replace an existing key. */
+    mode?: RecoveryFlowMode;
     /** Leave the flow before completion (back to the recovery landing). */
     onAbort: () => void;
     /** Recovery is set up and backed up — typically navigates to the profile. */
@@ -32,6 +40,7 @@ type RecoverySetupFlowProps = {
  * is carried forward only as the encrypted blob.
  */
 export function RecoverySetupFlow({
+    mode = "setup",
     onAbort,
     onCompleted,
 }: RecoverySetupFlowProps) {
@@ -43,6 +52,7 @@ export function RecoverySetupFlow({
     if (step.kind === "password") {
         return (
             <PasswordStep
+                mode={mode}
                 onSubmit={({ password, validAfter, validUntil }) =>
                     setStep({ kind: "sign", password, validAfter, validUntil })
                 }
@@ -55,6 +65,7 @@ export function RecoverySetupFlow({
     if (step.kind === "sign") {
         return (
             <SignStep
+                mode={mode}
                 password={step.password}
                 validAfter={step.validAfter}
                 validUntil={step.validUntil}
@@ -75,7 +86,7 @@ export function RecoverySetupFlow({
         );
     }
 
-    return <SuccessStep onDone={onCompleted} />;
+    return <SuccessStep mode={mode} onDone={onCompleted} />;
 }
 
 function renderStepIndicator(

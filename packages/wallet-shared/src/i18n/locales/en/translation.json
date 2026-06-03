@@ -508,12 +508,54 @@
                 "startLabel": "Usable from",
                 "endLabel": "Expires",
                 "never": "Never",
+                "refreshTitle": "Refresh recovery",
+                "refreshDescription": "Keep your current recovery key and move its validity window, or replace it with a brand new one.",
+                "updateDatesAction": "Update validity dates",
+                "replaceKeyAction": "Create a new recovery key",
                 "testTitle": "Test your password",
                 "testDescription": "Check that you still remember your recovery password. It never leaves this device.",
                 "testPlaceholder": "Enter your password",
                 "testButton": "Test password",
                 "testValid": "Password is correct.",
                 "testInvalid": "That password doesn't match your backup."
+            },
+            "refresh": {
+                "replaceNote": "This replaces your current recovery key and password. Your old backup stops working once you authorize the change.",
+                "signDescription": "Confirm to replace your recovery key on-chain. Your previous key stops working immediately.",
+                "successTitle": "Recovery key replaced",
+                "successDescription": "Your new recovery key is active and your previous backup has been replaced."
+            },
+            "dates": {
+                "password": {
+                    "title": "Confirm your password",
+                    "description": "Enter your recovery password to keep your current recovery key. It never leaves this device.",
+                    "placeholder": "Enter your password",
+                    "continue": "Continue",
+                    "invalid": "That password doesn't match your backup. If you've lost it, create a new recovery key instead.",
+                    "replaceAction": "Create a new recovery key"
+                },
+                "dates": {
+                    "title": "Update validity dates",
+                    "description": "Choose when your recovery can be used. Your recovery key stays the same.",
+                    "continue": "Continue"
+                },
+                "confirm": {
+                    "title": "Confirm the new dates",
+                    "description": "Confirm to update your recovery validity on-chain. Your recovery key stays the same.",
+                    "keyLabel": "Recovery key",
+                    "keyUnchanged": "Unchanged",
+                    "authorise": "Update dates",
+                    "retry": "Try again",
+                    "failedDescription": "Something went wrong while updating your recovery. You can try again.",
+                    "failed": "Recovery update failed.",
+                    "cancelledDescription": "You cancelled the authorization. You can try again whenever you're ready.",
+                    "cancelled": "Authorization was cancelled."
+                },
+                "success": {
+                    "title": "Validity updated",
+                    "description": "Your recovery validity dates are now updated on-chain.",
+                    "done": "Back to my profile"
+                }
             }
         },
         "register": {

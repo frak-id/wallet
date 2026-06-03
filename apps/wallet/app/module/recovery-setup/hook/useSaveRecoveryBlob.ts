@@ -4,7 +4,8 @@ import { recoverySetupKey } from "@/module/recovery-setup/queryKeys/recovery-set
 
 /**
  * Store the encrypted recovery blob on the backend (zero-knowledge: ciphertext
- * only). Returns `{ status: "success" | "alreadyConfigured" }`.
+ * only). The backend upserts, so a refresh that mints a fresh burner replaces
+ * the previous blob. Returns `{ status: "success" }`.
  */
 export function useSaveRecoveryBlob() {
     const queryClient = useQueryClient();

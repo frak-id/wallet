@@ -91,13 +91,10 @@ export const recoveryRoutes = new Elysia({ prefix: "/recovery" })
                 return status(404, "Wallet identity not found");
             }
 
-            const saved = await IdentityContext.repositories.recovery.save({
+            await IdentityContext.repositories.recovery.save({
                 groupId: group.id,
                 blob,
             });
-            if (!saved) {
-                return { status: "alreadyConfigured" as const };
-            }
 
             return { status: "success" as const };
         },

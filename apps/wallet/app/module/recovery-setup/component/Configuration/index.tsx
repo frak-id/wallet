@@ -1,22 +1,30 @@
 import { Badge } from "@frak-labs/design-system/components/Badge";
-import { Box } from "@frak-labs/design-system/components/Box";
 import { Button } from "@frak-labs/design-system/components/Button";
 import { Card } from "@frak-labs/design-system/components/Card";
 import { Stack } from "@frak-labs/design-system/components/Stack";
 import { Text } from "@frak-labs/design-system/components/Text";
-import { type ReactNode, useId, useMemo, useState } from "react";
+import { useId, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { FlowStepScreen } from "@/module/common/component/FlowStepScreen";
 import { PasswordInput } from "@/module/common/component/PasswordInput";
+import { SummaryRow } from "@/module/recovery-setup/component/SummaryRow";
 import { useRecoverySetupStatus } from "@/module/recovery-setup/hook/useRecoverySetupStatus";
 import { useTestRecoveryPassword } from "@/module/recovery-setup/hook/useTestRecoveryPassword";
 import * as styles from "../SetupFlow/styles.css";
 
 type RecoveryConfigurationProps = {
     onBack: () => void;
+    /** Keep the same burner, change only the on-chain validity dates. */
+    onUpdateDates: () => void;
+    /** Mint a fresh burner and replace the stored backup. */
+    onReplaceKey: () => void;
 };
 
-export function RecoveryConfiguration({ onBack }: RecoveryConfigurationProps) {
+export function RecoveryConfiguration({
+    onBack,
+    onUpdateDates,
+    onReplaceKey,
+}: RecoveryConfigurationProps) {
     const { t, i18n } = useTranslation();
     const formId = useId();
     const { recoverySetupStatus } = useRecoverySetupStatus();
@@ -47,7 +55,7 @@ export function RecoveryConfiguration({ onBack }: RecoveryConfigurationProps) {
         >
             <Card variant="muted" padding="default">
                 <Stack space="s">
-                    <ConfigRow
+                    <SummaryRow
                         label={t("wallet.recoverySetup.config.statusLabel")}
                         value={
                             <Badge variant="success">
@@ -57,7 +65,7 @@ export function RecoveryConfiguration({ onBack }: RecoveryConfigurationProps) {
                     />
                     {recoverySetupStatus && (
                         <>
-                            <ConfigRow
+                            <SummaryRow
                                 label={t(
                                     "wallet.recoverySetup.config.startLabel"
                                 )}
@@ -67,7 +75,7 @@ export function RecoveryConfiguration({ onBack }: RecoveryConfigurationProps) {
                                     )
                                 )}
                             />
-                            <ConfigRow
+                            <SummaryRow
                                 label={t(
                                     "wallet.recoverySetup.config.endLabel"
                                 )}
@@ -86,6 +94,33 @@ export function RecoveryConfiguration({ onBack }: RecoveryConfigurationProps) {
                     )}
                 </Stack>
             </Card>
+
+            <Stack space="s">
+                <Text variant="bodySmall" weight="medium">
+                    {t("wallet.recoverySetup.config.refreshTitle")}
+                </Text>
+                <Text variant="caption" color="tertiary">
+                    {t("wallet.recoverySetup.config.refreshDescription")}
+                </Text>
+                <Button
+                    type="button"
+                    variant="secondary"
+                    size="large"
+                    width="full"
+                    onClick={onUpdateDates}
+                >
+                    {t("wallet.recoverySetup.config.updateDatesAction")}
+                </Button>
+                <Button
+                    type="button"
+                    variant="secondary"
+                    size="large"
+                    width="full"
+                    onClick={onReplaceKey}
+                >
+                    {t("wallet.recoverySetup.config.replaceKeyAction")}
+                </Button>
+            </Stack>
 
             <Stack space="s">
                 <Text variant="bodySmall" weight="medium">
@@ -137,27 +172,5 @@ export function RecoveryConfiguration({ onBack }: RecoveryConfigurationProps) {
                 )}
             </Stack>
         </FlowStepScreen>
-    );
-}
-
-function ConfigRow({ label, value }: { label: string; value: ReactNode }) {
-    return (
-        <Box
-            display="flex"
-            justifyContent="space-between"
-            alignItems="center"
-            gap="s"
-        >
-            <Text variant="bodySmall" color="secondary">
-                {label}
-            </Text>
-            {typeof value === "string" ? (
-                <Text variant="bodySmall" weight="medium">
-                    {value}
-                </Text>
-            ) : (
-                value
-            )}
-        </Box>
     );
 }

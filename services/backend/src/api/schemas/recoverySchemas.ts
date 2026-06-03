@@ -28,8 +28,7 @@ export const SaveRecoveryBlobBodySchema = t.Object({
 });
 export type SaveRecoveryBlobBody = Static<typeof SaveRecoveryBlobBodySchema>;
 
-export const SaveRecoveryResponseSchema = t.Union([
-    t.Object({ status: t.Literal("success") }),
-    t.Object({ status: t.Literal("alreadyConfigured") }),
-]);
+export const SaveRecoveryResponseSchema = t.Object({
+    status: t.Literal("success"),
+});
 export type SaveRecoveryResponse = Static<typeof SaveRecoveryResponseSchema>;

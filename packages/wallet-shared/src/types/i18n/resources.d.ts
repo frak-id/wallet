@@ -1026,6 +1026,9 @@ export default interface Resources {
                     description: "Your wallet recovery configuration.";
                     endLabel: "Expires";
                     never: "Never";
+                    refreshDescription: "Keep your current recovery key and move its validity window, or replace it with a brand new one.";
+                    refreshTitle: "Refresh recovery";
+                    replaceKeyAction: "Create a new recovery key";
                     startLabel: "Usable from";
                     statusLabel: "Status";
                     testButton: "Test password";
@@ -1035,6 +1038,39 @@ export default interface Resources {
                     testTitle: "Test your password";
                     testValid: "Password is correct.";
                     title: "Recovery";
+                    updateDatesAction: "Update validity dates";
+                };
+                dates: {
+                    confirm: {
+                        authorise: "Update dates";
+                        cancelled: "Authorization was cancelled.";
+                        cancelledDescription: "You cancelled the authorization. You can try again whenever you're ready.";
+                        description: "Confirm to update your recovery validity on-chain. Your recovery key stays the same.";
+                        failed: "Recovery update failed.";
+                        failedDescription: "Something went wrong while updating your recovery. You can try again.";
+                        keyLabel: "Recovery key";
+                        keyUnchanged: "Unchanged";
+                        retry: "Try again";
+                        title: "Confirm the new dates";
+                    };
+                    dates: {
+                        continue: "Continue";
+                        description: "Choose when your recovery can be used. Your recovery key stays the same.";
+                        title: "Update validity dates";
+                    };
+                    password: {
+                        continue: "Continue";
+                        description: "Enter your recovery password to keep your current recovery key. It never leaves this device.";
+                        invalid: "That password doesn't match your backup. If you've lost it, create a new recovery key instead.";
+                        placeholder: "Enter your password";
+                        replaceAction: "Create a new recovery key";
+                        title: "Confirm your password";
+                    };
+                    success: {
+                        description: "Your recovery validity dates are now updated on-chain.";
+                        done: "Back to my profile";
+                        title: "Validity updated";
+                    };
                 };
                 password: {
                     continue: "Continue";
@@ -1049,6 +1085,12 @@ export default interface Resources {
                     title: "Protect your recovery";
                     toggle: "Toggle password visibility";
                     warning: "Choose a strong password. We can never reset or recover it — if you forget it, your backup is permanently useless.";
+                };
+                refresh: {
+                    replaceNote: "This replaces your current recovery key and password. Your old backup stops working once you authorize the change.";
+                    signDescription: "Confirm to replace your recovery key on-chain. Your previous key stops working immediately.";
+                    successDescription: "Your new recovery key is active and your previous backup has been replaced.";
+                    successTitle: "Recovery key replaced";
                 };
                 setupNew: "Setup new recovery";
                 sign: {

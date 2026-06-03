@@ -1,21 +1,17 @@
 import { Button } from "@frak-labs/design-system/components/Button";
-import {
-    isUserCancellation,
-    selectWebauthnSession,
-    sessionStore,
-} from "@frak-labs/wallet-shared";
-import { tryit } from "radash";
-import { type ReactNode, useCallback, useState } from "react";
+import { selectWebauthnSession, sessionStore } from "@frak-labs/wallet-shared";
+import { type ReactNode, useCallback } from "react";
 import { useTranslation } from "react-i18next";
 import { useStore } from "zustand";
 import { FlowStepScreen } from "@/module/common/component/FlowStepScreen";
 import { WarningCard } from "@/module/common/component/WarningCard";
 import { useGenerateRecoveryOptions } from "@/module/recovery-setup/hook/useGenerateRecoveryOptions";
+import { useRecoveryAuthorization } from "@/module/recovery-setup/hook/useRecoveryAuthorization";
 import { useSetupRecovery } from "@/module/recovery-setup/hook/useSetupRecovery";
-
-type SignError = "cancelled" | "failed";
+import type { RecoveryFlowMode } from "./index";
 
 type SignStepProps = {
+    mode: RecoveryFlowMode;
     password: string;
     validAfter: number;
     validUntil: number;
@@ -26,6 +22,7 @@ type SignStepProps = {
 };
 
 export function SignStep({
+    mode,
     password,
     validAfter,
     validUntil,
@@ -38,44 +35,43 @@ export function SignStep({
     const { generateRecoveryOptionsAsync, isPending: isGenerating } =
         useGenerateRecoveryOptions();
     const { setupRecoveryAsync, isPending: isSettingUp } = useSetupRecovery();
-    const [error, setError] = useState<SignError | null>(null);
+    const { error, authorize } = useRecoveryAuthorization();
 
     const isPending = isGenerating || isSettingUp;
 
     const handleConfirm = useCallback(async () => {
         if (!session) return;
-        setError(null);
 
-        const [txError, blob] = await tryit(async () => {
-            const { setupTxData, blob: generatedBlob } =
-                await generateRecoveryOptionsAsync({
-                    wallet: session,
-                    password,
-                    validAfter,
-                    validUntil,
-                });
+        const result = await authorize(async () => {
+            const { setupTxData, blob } = await generateRecoveryOptionsAsync({
+                wallet: session,
+                password,
+                validAfter,
+                validUntil,
+            });
             await setupRecoveryAsync({ setupTxData });
-            return generatedBlob;
-        })();
+            return blob;
+        });
 
-        if (txError || !blob) {
-            setError(isUserCancellation(txError) ? "cancelled" : "failed");
-            return;
-        }
-        onSigned(blob);
+        if (result.ok) onSigned(result.value);
     }, [
         session,
         password,
         validAfter,
         validUntil,
+        authorize,
         generateRecoveryOptionsAsync,
         setupRecoveryAsync,
         onSigned,
     ]);
 
+    const defaultDescription =
+        mode === "refresh"
+            ? t("wallet.recoverySetup.refresh.signDescription")
+            : t("wallet.recoverySetup.sign.description");
     const description = error
         ? t(`wallet.recoverySetup.sign.${error}Description`)
-        : t("wallet.recoverySetup.sign.description");
+        : defaultDescription;
 
     return (
         <FlowStepScreen

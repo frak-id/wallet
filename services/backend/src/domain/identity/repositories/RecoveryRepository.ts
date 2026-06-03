@@ -11,19 +11,22 @@ export class RecoveryRepository {
     }
 
     /**
-     * Insert the encrypted blob for a group. Returns `null` when a blob already
-     * exists (`group_id` is unique): the setup flow is insert-only, so callers
-     * treat a conflict as "already configured" rather than silently overwriting.
+     * Upsert the encrypted blob for a group (`group_id` is unique). Setup inserts
+     * the first blob; a recovery refresh that mints a fresh burner replaces it,
+     * stamping `updated_at`. The blob is opaque ciphertext either way.
      */
     async save(params: {
         groupId: string;
         blob: string;
-    }): Promise<RecoveryBlobSelect | null> {
+    }): Promise<RecoveryBlobSelect> {
         const [result] = await db
             .insert(recoveryBlobsTable)
             .values({ groupId: params.groupId, blob: params.blob })
-            .onConflictDoNothing({ target: recoveryBlobsTable.groupId })
+            .onConflictDoUpdate({
+                target: recoveryBlobsTable.groupId,
+                set: { blob: params.blob, updatedAt: new Date() },
+            })
             .returning();
-        return result ?? null;
+        return result;
     }
 }

@@ -506,12 +506,54 @@
                 "startLabel": "Utilisable à partir du",
                 "endLabel": "Expire le",
                 "never": "Jamais",
+                "refreshTitle": "Actualiser la récupération",
+                "refreshDescription": "Conservez votre clé de récupération actuelle et déplacez sa période de validité, ou remplacez-la par une toute nouvelle.",
+                "updateDatesAction": "Mettre à jour les dates de validité",
+                "replaceKeyAction": "Créer une nouvelle clé de récupération",
                 "testTitle": "Testez votre mot de passe",
                 "testDescription": "Vérifiez que vous vous souvenez de votre mot de passe de récupération. Il ne quitte jamais cet appareil.",
                 "testPlaceholder": "Saisissez votre mot de passe",
                 "testButton": "Tester le mot de passe",
                 "testValid": "Le mot de passe est correct.",
                 "testInvalid": "Ce mot de passe ne correspond pas à votre sauvegarde."
+            },
+            "refresh": {
+                "replaceNote": "Ceci remplace votre clé de récupération et votre mot de passe actuels. Votre ancienne sauvegarde cesse de fonctionner dès que vous autorisez le changement.",
+                "signDescription": "Confirmez pour remplacer votre clé de récupération sur la blockchain. Votre clé précédente cesse immédiatement de fonctionner.",
+                "successTitle": "Clé de récupération remplacée",
+                "successDescription": "Votre nouvelle clé de récupération est active et votre sauvegarde précédente a été remplacée."
+            },
+            "dates": {
+                "password": {
+                    "title": "Confirmez votre mot de passe",
+                    "description": "Saisissez votre mot de passe de récupération pour conserver votre clé actuelle. Il ne quitte jamais cet appareil.",
+                    "placeholder": "Saisissez votre mot de passe",
+                    "continue": "Continuer",
+                    "invalid": "Ce mot de passe ne correspond pas à votre sauvegarde. Si vous l'avez perdu, créez plutôt une nouvelle clé de récupération.",
+                    "replaceAction": "Créer une nouvelle clé de récupération"
+                },
+                "dates": {
+                    "title": "Mettre à jour les dates de validité",
+                    "description": "Choisissez quand votre récupération peut être utilisée. Votre clé de récupération reste la même.",
+                    "continue": "Continuer"
+                },
+                "confirm": {
+                    "title": "Confirmez les nouvelles dates",
+                    "description": "Confirmez pour mettre à jour la validité de votre récupération sur la blockchain. Votre clé de récupération reste la même.",
+                    "keyLabel": "Clé de récupération",
+                    "keyUnchanged": "Inchangée",
+                    "authorise": "Mettre à jour les dates",
+                    "retry": "Réessayer",
+                    "failedDescription": "Une erreur est survenue lors de la mise à jour de votre récupération. Vous pouvez réessayer.",
+                    "failed": "Échec de la mise à jour de la récupération.",
+                    "cancelledDescription": "Vous avez annulé l'autorisation. Vous pouvez réessayer quand vous le souhaitez.",
+                    "cancelled": "L'autorisation a été annulée."
+                },
+                "success": {
+                    "title": "Validité mise à jour",
+                    "description": "Les dates de validité de votre récupération sont désormais mises à jour sur la blockchain.",
+                    "done": "Retour à mon profil"
+                }
             }
         },
         "register": {
