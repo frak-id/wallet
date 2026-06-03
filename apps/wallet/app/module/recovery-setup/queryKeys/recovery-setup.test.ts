@@ -56,25 +56,27 @@ describe("recoverySetupKey", () => {
     });
 
     describe("mutation keys", () => {
-        describe("generateFile", () => {
+        describe("generateOptions", () => {
             test("should return constant mutation key", () => {
-                expect(recoverySetupKey.generateFile).toEqual([
+                expect(recoverySetupKey.generateOptions).toEqual([
                     "recovery-setup",
-                    "generate-file",
+                    "generate-options",
                 ]);
             });
 
             test("should be an array with 2 elements", () => {
-                expect(recoverySetupKey.generateFile).toHaveLength(2);
+                expect(recoverySetupKey.generateOptions).toHaveLength(2);
             });
 
             test("should have recovery-setup as base key", () => {
-                expect(recoverySetupKey.generateFile[0]).toBe("recovery-setup");
+                expect(recoverySetupKey.generateOptions[0]).toBe(
+                    "recovery-setup"
+                );
             });
 
             test("should always return the same reference", () => {
-                const ref1 = recoverySetupKey.generateFile;
-                const ref2 = recoverySetupKey.generateFile;
+                const ref1 = recoverySetupKey.generateOptions;
+                const ref2 = recoverySetupKey.generateOptions;
 
                 expect(ref1).toBe(ref2);
             });

@@ -25,7 +25,7 @@ export namespace recoverySetupKey {
     /**
      * Mutation keys
      */
-    export const generateFile = [base, "generate-file"] as const;
+    export const generateOptions = [base, "generate-options"] as const;
     export const saveBlob = [base, "save-blob"] as const;
     export const testPassword = [base, "test-password"] as const;
     export const setup = (address?: Hex) =>

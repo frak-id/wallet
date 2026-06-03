@@ -3,11 +3,11 @@ import type { Static } from "elysia";
 
 /**
  * Whether the current wallet's identity group has a stored recovery backup.
- * Dates (start/end) are read on-chain by the client, not stored here.
+ * Dates (start/end) are read on-chain by the client, not stored here. The
+ * blob's `created_at` is kept server-side for bookkeeping but not exposed.
  */
 export const RecoveryStatusResponseSchema = t.Object({
     configured: t.Boolean(),
-    createdAt: t.Optional(t.String()),
 });
 export type RecoveryStatusResponse = Static<
     typeof RecoveryStatusResponseSchema

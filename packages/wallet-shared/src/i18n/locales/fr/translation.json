@@ -476,8 +476,10 @@
                 "description": "Confirmez pour activer la récupération sur votre porte-monnaie. Cela crée votre clé de récupération et l'enregistre sur la blockchain.",
                 "authorise": "Autoriser la récupération",
                 "retry": "Réessayer",
-                "errorDescription": "Une erreur est survenue lors de l'activation de la récupération. Vous pouvez réessayer.",
-                "error": "Échec de la configuration de récupération."
+                "failedDescription": "Une erreur est survenue lors de l'activation de la récupération. Vous pouvez réessayer.",
+                "failed": "Échec de la configuration de récupération.",
+                "cancelledDescription": "Vous avez annulé l'autorisation. Vous pouvez réessayer quand vous le souhaitez.",
+                "cancelled": "L'autorisation a été annulée."
             },
             "backup": {
                 "title": "Sauvegardez votre récupération",
@@ -487,7 +489,8 @@
                 "copy": "Copier",
                 "copied": "Copié",
                 "warning": "Quiconque possède à la fois ce code de sauvegarde et votre mot de passe peut prendre le contrôle total de votre porte-monnaie. Conservez-les à des endroits séparés.",
-                "saveError": "Nous n'avons pas pu enregistrer votre sauvegarde sur nos serveurs, mais votre propre copie reste valable. Vous pourrez réessayer plus tard.",
+                "saveError": "Nous n'avons pas pu enregistrer votre sauvegarde sur nos serveurs. Veuillez réessayer avant de continuer.",
+                "retry": "Réenregistrer",
                 "continue": "Terminé"
             },
             "success": {

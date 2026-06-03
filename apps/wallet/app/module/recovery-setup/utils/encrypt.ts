@@ -1,17 +1,12 @@
-import { bufferToBase64URLString } from "@frak-labs/wallet-shared/common/utils/base64url";
-import { random } from "radash";
-import {
-    type Address,
-    concat,
-    concatBytes,
-    type Hex,
-    keccak256,
-    stringToBytes,
-    toBytes,
-} from "viem";
+import { stringToBytes } from "viem";
 
 /**
- * Convert a pass to a cryptographical key
+ * Convert a pass to a cryptographical key.
+ *
+ * Kept for the legacy restore flow (`recovery/utils/decrypt.ts`), which still
+ * reads blobs sealed with the old 300k-iteration format. New setup code uses
+ * `recoveryBlob.ts` (600k iterations); do not reuse this for new blobs.
+ *
  * @param pass
  * @param salt
  */
@@ -42,59 +37,5 @@ export async function passToKey({
         { name: "AES-GCM", length: 256 },
         true,
         ["encrypt", "decrypt"]
-    );
-}
-
-/**
- * Function used to generate an encrypted burner wallet string
- * @param privateKey
- * @param initialAddress
- */
-export async function encryptPrivateKey({
-    privateKey,
-    initialAddress,
-    pass,
-}: {
-    privateKey: Hex;
-    initialAddress: Address;
-    pass: string;
-}) {
-    if (typeof window === "undefined") {
-        throw new Error("This function should only be used in the browser");
-    }
-
-    // Create our encryption parameters
-    const ivLength = random(16, 64);
-    const iv = window.crypto.getRandomValues(new Uint8Array(ivLength));
-
-    // Append wallet address to the salt
-    const saltLength = random(16, 128);
-    const randomSalt = window.crypto.getRandomValues(
-        new Uint8Array(saltLength)
-    );
-    const salt = concatBytes([randomSalt, toBytes(keccak256(initialAddress))]);
-
-    // Generate the encryption key
-    const key = await passToKey({ pass, salt });
-
-    // Encrypt the private key
-    const encyptedPrivKey = await window.crypto.subtle.encrypt(
-        {
-            name: "AES-GCM",
-            iv: iv,
-        },
-        key,
-        new Uint8Array(stringToBytes(privateKey))
-    );
-
-    // Concat all the data and return them
-    return bufferToBase64URLString(
-        concat([
-            toBytes(ivLength),
-            iv,
-            toBytes(saltLength),
-            salt,
-            new Uint8Array(encyptedPrivKey),
-        ]).buffer as ArrayBuffer
     );
 }

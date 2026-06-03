@@ -1,19 +1,19 @@
-import { Box } from "@frak-labs/design-system/components/Box";
 import { Button } from "@frak-labs/design-system/components/Button";
-import { Card } from "@frak-labs/design-system/components/Card";
-import { Stack } from "@frak-labs/design-system/components/Stack";
-import { Text } from "@frak-labs/design-system/components/Text";
-import { selectWebauthnSession, sessionStore } from "@frak-labs/wallet-shared";
+import {
+    isUserCancellation,
+    selectWebauthnSession,
+    sessionStore,
+} from "@frak-labs/wallet-shared";
 import { tryit } from "radash";
 import { type ReactNode, useCallback, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useStore } from "zustand";
-import { Back } from "@/module/common/component/Back";
-import { PageLayout } from "@/module/common/component/PageLayout";
-import { Title } from "@/module/common/component/Title";
+import { FlowStepScreen } from "@/module/common/component/FlowStepScreen";
+import { WarningCard } from "@/module/common/component/WarningCard";
 import { useGenerateRecoveryOptions } from "@/module/recovery-setup/hook/useGenerateRecoveryOptions";
 import { useSetupRecovery } from "@/module/recovery-setup/hook/useSetupRecovery";
-import * as styles from "./styles.css";
+
+type SignError = "cancelled" | "failed";
 
 type SignStepProps = {
     password: string;
@@ -38,15 +38,15 @@ export function SignStep({
     const { generateRecoveryOptionsAsync, isPending: isGenerating } =
         useGenerateRecoveryOptions();
     const { setupRecoveryAsync, isPending: isSettingUp } = useSetupRecovery();
-    const [isError, setIsError] = useState(false);
+    const [error, setError] = useState<SignError | null>(null);
 
     const isPending = isGenerating || isSettingUp;
 
     const handleConfirm = useCallback(async () => {
         if (!session) return;
-        setIsError(false);
+        setError(null);
 
-        const [error, blob] = await tryit(async () => {
+        const [txError, blob] = await tryit(async () => {
             const { setupTxData, blob: generatedBlob } =
                 await generateRecoveryOptionsAsync({
                     wallet: session,
@@ -58,8 +58,8 @@ export function SignStep({
             return generatedBlob;
         })();
 
-        if (error || !blob) {
-            setIsError(true);
+        if (txError || !blob) {
+            setError(isUserCancellation(txError) ? "cancelled" : "failed");
             return;
         }
         onSigned(blob);
@@ -73,48 +73,38 @@ export function SignStep({
         onSigned,
     ]);
 
+    const description = error
+        ? t(`wallet.recoverySetup.sign.${error}Description`)
+        : t("wallet.recoverySetup.sign.description");
+
     return (
-        <PageLayout
-            back={<Back onClick={onBack} disabled={isPending} />}
-            headerCenter={stepIndicator}
+        <FlowStepScreen
+            title={t("wallet.recoverySetup.sign.title")}
+            description={description}
+            onBack={onBack}
+            backDisabled={isPending}
+            stepIndicator={stepIndicator}
             footer={
-                <Box className={styles.footer}>
-                    <Button
-                        type="button"
-                        variant="primary"
-                        size="large"
-                        width="full"
-                        onClick={handleConfirm}
-                        loading={isPending}
-                        disabled={isPending}
-                    >
-                        {isError
-                            ? t("wallet.recoverySetup.sign.retry")
-                            : t("wallet.recoverySetup.sign.authorise")}
-                    </Button>
-                </Box>
+                <Button
+                    type="button"
+                    variant="primary"
+                    size="large"
+                    width="full"
+                    onClick={handleConfirm}
+                    loading={isPending}
+                    disabled={isPending}
+                >
+                    {error
+                        ? t("wallet.recoverySetup.sign.retry")
+                        : t("wallet.recoverySetup.sign.authorise")}
+                </Button>
             }
         >
-            <Stack space="l" className={styles.body}>
-                <Stack space="s">
-                    <Title size="page">
-                        {t("wallet.recoverySetup.sign.title")}
-                    </Title>
-                    <Text variant="body" color="secondary">
-                        {isError
-                            ? t("wallet.recoverySetup.sign.errorDescription")
-                            : t("wallet.recoverySetup.sign.description")}
-                    </Text>
-                </Stack>
-
-                {isError && (
-                    <Card variant="muted" padding="default">
-                        <Text variant="bodySmall" color="error">
-                            {t("wallet.recoverySetup.sign.error")}
-                        </Text>
-                    </Card>
-                )}
-            </Stack>
-        </PageLayout>
+            {error ? (
+                <WarningCard>
+                    {t(`wallet.recoverySetup.sign.${error}`)}
+                </WarningCard>
+            ) : null}
+        </FlowStepScreen>
     );
 }

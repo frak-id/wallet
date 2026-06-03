@@ -2,14 +2,12 @@ import { Badge } from "@frak-labs/design-system/components/Badge";
 import { Box } from "@frak-labs/design-system/components/Box";
 import { Button } from "@frak-labs/design-system/components/Button";
 import { Card } from "@frak-labs/design-system/components/Card";
-import { Input } from "@frak-labs/design-system/components/Input";
 import { Stack } from "@frak-labs/design-system/components/Stack";
 import { Text } from "@frak-labs/design-system/components/Text";
 import { type ReactNode, useId, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Back } from "@/module/common/component/Back";
-import { PageLayout } from "@/module/common/component/PageLayout";
-import { Title } from "@/module/common/component/Title";
+import { FlowStepScreen } from "@/module/common/component/FlowStepScreen";
+import { PasswordInput } from "@/module/common/component/PasswordInput";
 import { useRecoverySetupStatus } from "@/module/recovery-setup/hook/useRecoverySetupStatus";
 import { useTestRecoveryPassword } from "@/module/recovery-setup/hook/useTestRecoveryPassword";
 import * as styles from "../SetupFlow/styles.css";
@@ -42,116 +40,103 @@ export function RecoveryConfiguration({ onBack }: RecoveryConfigurationProps) {
     };
 
     return (
-        <PageLayout back={<Back onClick={onBack} />}>
-            <Stack space="l" className={styles.body}>
+        <FlowStepScreen
+            title={t("wallet.recoverySetup.config.title")}
+            description={t("wallet.recoverySetup.config.description")}
+            onBack={onBack}
+        >
+            <Card variant="muted" padding="default">
                 <Stack space="s">
-                    <Title size="page">
-                        {t("wallet.recoverySetup.config.title")}
-                    </Title>
-                    <Text variant="body" color="secondary">
-                        {t("wallet.recoverySetup.config.description")}
-                    </Text>
+                    <ConfigRow
+                        label={t("wallet.recoverySetup.config.statusLabel")}
+                        value={
+                            <Badge variant="success">
+                                {t("wallet.recoverySetup.config.active")}
+                            </Badge>
+                        }
+                    />
+                    {recoverySetupStatus && (
+                        <>
+                            <ConfigRow
+                                label={t(
+                                    "wallet.recoverySetup.config.startLabel"
+                                )}
+                                value={formatter.format(
+                                    new Date(
+                                        recoverySetupStatus.validAfter * 1000
+                                    )
+                                )}
+                            />
+                            <ConfigRow
+                                label={t(
+                                    "wallet.recoverySetup.config.endLabel"
+                                )}
+                                value={
+                                    recoverySetupStatus.validUntil
+                                        ? formatter.format(
+                                              new Date(
+                                                  recoverySetupStatus.validUntil *
+                                                      1000
+                                              )
+                                          )
+                                        : t("wallet.recoverySetup.config.never")
+                                }
+                            />
+                        </>
+                    )}
                 </Stack>
+            </Card>
 
-                <Card variant="muted" padding="default">
-                    <Stack space="s">
-                        <ConfigRow
-                            label={t("wallet.recoverySetup.config.statusLabel")}
-                            value={
-                                <Badge variant="success">
-                                    {t("wallet.recoverySetup.config.active")}
-                                </Badge>
-                            }
-                        />
-                        {recoverySetupStatus && (
-                            <>
-                                <ConfigRow
-                                    label={t(
-                                        "wallet.recoverySetup.config.startLabel"
-                                    )}
-                                    value={formatter.format(
-                                        new Date(
-                                            recoverySetupStatus.validAfter *
-                                                1000
-                                        )
-                                    )}
-                                />
-                                <ConfigRow
-                                    label={t(
-                                        "wallet.recoverySetup.config.endLabel"
-                                    )}
-                                    value={
-                                        recoverySetupStatus.validUntil
-                                            ? formatter.format(
-                                                  new Date(
-                                                      recoverySetupStatus.validUntil *
-                                                          1000
-                                                  )
-                                              )
-                                            : t(
-                                                  "wallet.recoverySetup.config.never"
-                                              )
-                                    }
-                                />
-                            </>
+            <Stack space="s">
+                <Text variant="bodySmall" weight="medium">
+                    {t("wallet.recoverySetup.config.testTitle")}
+                </Text>
+                <Text variant="caption" color="tertiary">
+                    {t("wallet.recoverySetup.config.testDescription")}
+                </Text>
+                <form
+                    id={formId}
+                    className={styles.form}
+                    onSubmit={(event) => {
+                        event.preventDefault();
+                        handleTest();
+                    }}
+                >
+                    <PasswordInput
+                        toggleLabel={t("wallet.recoverySetup.password.toggle")}
+                        placeholder={t(
+                            "wallet.recoverySetup.config.testPlaceholder"
                         )}
-                    </Stack>
-                </Card>
-
-                <Stack space="s">
-                    <Text variant="bodySmall" weight="medium">
-                        {t("wallet.recoverySetup.config.testTitle")}
-                    </Text>
-                    <Text variant="caption" color="tertiary">
-                        {t("wallet.recoverySetup.config.testDescription")}
-                    </Text>
-                    <form
-                        id={formId}
-                        className={styles.form}
-                        onSubmit={(event) => {
-                            event.preventDefault();
-                            handleTest();
+                        autoComplete="off"
+                        value={password}
+                        onChange={(value) => {
+                            setPassword(value);
+                            setResult(null);
                         }}
+                    />
+                    <Button
+                        type="submit"
+                        variant="secondary"
+                        size="large"
+                        width="full"
+                        loading={isPending}
+                        disabled={isPending || password.length === 0}
                     >
-                        <Input
-                            type="password"
-                            variant="bare"
-                            tone="muted"
-                            length="big"
-                            autoComplete="off"
-                            placeholder={t(
-                                "wallet.recoverySetup.config.testPlaceholder"
-                            )}
-                            value={password}
-                            onChange={(event) => {
-                                setPassword(event.target.value);
-                                setResult(null);
-                            }}
-                        />
-                        <Button
-                            type="submit"
-                            variant="secondary"
-                            size="large"
-                            width="full"
-                            loading={isPending}
-                            disabled={isPending || password.length === 0}
-                        >
-                            {t("wallet.recoverySetup.config.testButton")}
-                        </Button>
-                    </form>
-                    {result === "valid" && (
-                        <Text variant="bodySmall" color="secondary">
-                            {t("wallet.recoverySetup.config.testValid")}
-                        </Text>
-                    )}
-                    {result === "invalid" && (
-                        <Text variant="bodySmall" color="error">
-                            {t("wallet.recoverySetup.config.testInvalid")}
-                        </Text>
-                    )}
-                </Stack>
+                        {t("wallet.recoverySetup.config.testButton")}
+                    </Button>
+                </form>
+                {result === "valid" && (
+                    <Text variant="bodySmall" color="secondary">
+                        {t("wallet.recoverySetup.config.testValid")}
+                    </Text>
+                )}
+                {result === "invalid" && (
+                    <Text variant="bodySmall" color="error">
+                        {t("wallet.recoverySetup.config.testInvalid")}
+                    </Text>
+                )}
             </Stack>
-        </PageLayout>
+        </FlowStepScreen>
     );
 }
 

@@ -17,6 +17,7 @@ import { Title } from "@/module/common/component/Title";
 // import { Logout } from "@/module/authentication/component/Logout";
 import { MoneriumConnect } from "@/module/monerium/component/MoneriumConnect";
 import { useRecoverySetupStatus } from "@/module/recovery-setup/hook/useRecoverySetupStatus";
+import { useRecoveryStatus } from "@/module/recovery-setup/hook/useRecoveryStatus";
 import { isExpiringSoon } from "@/module/recovery-setup/utils/recoveryDates";
 import { CrashlyticsDebug } from "@/module/settings/component/CrashlyticsDebug";
 import { PrivateKey } from "@/module/settings/component/PrivateKey";
@@ -51,7 +52,11 @@ export function ProfilePage() {
     const { data: emailStatus } = useCurrentEmail();
     const hasEmail = emailStatus?.email != null;
     const { recoverySetupStatus } = useRecoverySetupStatus();
-    const hasRecovery = !!recoverySetupStatus;
+    const { data: backendRecoveryStatus } = useRecoveryStatus();
+    // Configured = enabled on-chain AND blob synced on the backend; on-chain
+    // only falls back to setup so the user can finish storing the blob.
+    const hasRecovery =
+        !!recoverySetupStatus && !!backendRecoveryStatus?.configured;
     const recoveryExpiringSoon = recoverySetupStatus
         ? isExpiringSoon(recoverySetupStatus.validUntil)
         : false;

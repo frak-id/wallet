@@ -15,7 +15,7 @@ import { encodeRecoveryBlob } from "@/module/recovery-setup/utils/recoveryBlob";
  */
 export function useGenerateRecoveryOptions() {
     const { mutate, mutateAsync, ...mutationStuff } = useMutation({
-        mutationKey: recoverySetupKey.generateFile,
+        mutationKey: recoverySetupKey.generateOptions,
         gcTime: 0,
         mutationFn: async ({
             wallet,

@@ -40,13 +40,7 @@ export const recoveryRoutes = new Elysia({ prefix: "/recovery" })
                 await IdentityContext.repositories.recovery.findByGroup(
                     group.id
                 );
-            if (!recovery) {
-                return { configured: false };
-            }
-            return {
-                configured: true,
-                createdAt: recovery.createdAt.toISOString(),
-            };
+            return { configured: !!recovery };
         },
         {
             withWalletAuthent: true,

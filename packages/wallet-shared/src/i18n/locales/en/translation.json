@@ -478,8 +478,10 @@
                 "description": "Confirm to enable recovery on your wallet. This creates your recovery key and registers it on-chain.",
                 "authorise": "Authorize recovery",
                 "retry": "Try again",
-                "errorDescription": "Something went wrong while enabling recovery. You can try again.",
-                "error": "Recovery setup failed."
+                "failedDescription": "Something went wrong while enabling recovery. You can try again.",
+                "failed": "Recovery setup failed.",
+                "cancelledDescription": "You cancelled the authorization. You can try again whenever you're ready.",
+                "cancelled": "Authorization was cancelled."
             },
             "backup": {
                 "title": "Save your backup",
@@ -489,7 +491,8 @@
                 "copy": "Copy",
                 "copied": "Copied",
                 "warning": "Anyone who has both this backup code and your password can take full control of your wallet. Store them in separate places.",
-                "saveError": "We couldn't save your backup to our servers, but your own copy still works. You can retry later.",
+                "saveError": "We couldn't save your backup to our servers. Please retry before continuing.",
+                "retry": "Save again",
                 "continue": "Done"
             },
             "success": {

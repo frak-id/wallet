@@ -1015,8 +1015,9 @@ export default interface Resources {
                     copy: "Copy";
                     description: "This is your encrypted recovery backup. Keep your own copy somewhere safe, like a password manager.";
                     hide: "Hide";
+                    retry: "Save again";
                     reveal: "Reveal";
-                    saveError: "We couldn't save your backup to our servers, but your own copy still works. You can retry later.";
+                    saveError: "We couldn't save your backup to our servers. Please retry before continuing.";
                     title: "Save your backup";
                     warning: "Anyone who has both this backup code and your password can take full control of your wallet. Store them in separate places.";
                 };
@@ -1052,9 +1053,11 @@ export default interface Resources {
                 setupNew: "Setup new recovery";
                 sign: {
                     authorise: "Authorize recovery";
+                    cancelled: "Authorization was cancelled.";
+                    cancelledDescription: "You cancelled the authorization. You can try again whenever you're ready.";
                     description: "Confirm to enable recovery on your wallet. This creates your recovery key and registers it on-chain.";
-                    error: "Recovery setup failed.";
-                    errorDescription: "Something went wrong while enabling recovery. You can try again.";
+                    failed: "Recovery setup failed.";
+                    failedDescription: "Something went wrong while enabling recovery. You can try again.";
                     retry: "Try again";
                     title: "Authorize recovery";
                 };

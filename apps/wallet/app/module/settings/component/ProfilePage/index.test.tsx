@@ -76,6 +76,10 @@ vi.mock("@/module/recovery-setup/hook/useRecoverySetupStatus", () => ({
     useRecoverySetupStatus: () => ({ recoverySetupStatus: undefined }),
 }));
 
+vi.mock("@/module/recovery-setup/hook/useRecoveryStatus", () => ({
+    useRecoveryStatus: () => ({ data: undefined }),
+}));
+
 describe("ProfilePage", () => {
     test("should render the redesigned profile sections and footer info", async ({
         freshAuthenticationStore,

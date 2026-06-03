@@ -5,10 +5,10 @@ import { Stack } from "@frak-labs/design-system/components/Stack";
 import { Text } from "@frak-labs/design-system/components/Text";
 import { Check, Copy, Eye, EyeOff } from "lucide-react";
 import { tryit } from "radash";
-import { type ReactNode, useEffect, useState } from "react";
+import { type ReactNode, useCallback, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { PageLayout } from "@/module/common/component/PageLayout";
-import { Title } from "@/module/common/component/Title";
+import { FlowStepScreen } from "@/module/common/component/FlowStepScreen";
+import { WarningCard } from "@/module/common/component/WarningCard";
 import { useSaveRecoveryBlob } from "@/module/recovery-setup/hook/useSaveRecoveryBlob";
 import * as styles from "./styles.css";
 
@@ -20,13 +20,22 @@ type BackupStepProps = {
 
 export function BackupStep({ blob, onDone, stepIndicator }: BackupStepProps) {
     const { t } = useTranslation();
-    const { saveRecoveryBlob, isError } = useSaveRecoveryBlob();
+    const { saveRecoveryBlobAsync, isPending, isError } = useSaveRecoveryBlob();
+    const [saved, setSaved] = useState(false);
     const [revealed, setRevealed] = useState(false);
     const [copied, setCopied] = useState(false);
 
+    // Persist the encrypted blob to the backend. The user can only leave this
+    // step once it lands (or via the explicit retry below), so the success
+    // screen never lies about the backup being stored server-side.
+    const save = useCallback(async () => {
+        const [error] = await tryit(saveRecoveryBlobAsync)({ blob });
+        if (!error) setSaved(true);
+    }, [blob, saveRecoveryBlobAsync]);
+
     useEffect(() => {
-        saveRecoveryBlob({ blob });
-    }, [blob, saveRecoveryBlob]);
+        save();
+    }, [save]);
 
     const handleCopy = async () => {
         const [error] = await tryit(() =>
@@ -38,92 +47,96 @@ export function BackupStep({ blob, onDone, stepIndicator }: BackupStepProps) {
     };
 
     const masked = "•".repeat(blob.length);
+    const saveFailed = isError && !saved;
 
     return (
-        <PageLayout
-            headerCenter={stepIndicator}
+        <FlowStepScreen
+            title={t("wallet.recoverySetup.backup.title")}
+            description={t("wallet.recoverySetup.backup.description")}
+            stepIndicator={stepIndicator}
             footer={
-                <Box className={styles.footer}>
+                <Stack space="s">
                     <Button
                         type="button"
                         variant="primary"
                         size="large"
                         width="full"
                         onClick={onDone}
+                        disabled={!saved}
+                        loading={isPending}
                     >
                         {t("wallet.recoverySetup.backup.continue")}
                     </Button>
-                </Box>
+                    {saveFailed ? (
+                        <Button
+                            type="button"
+                            variant="secondary"
+                            size="large"
+                            width="full"
+                            onClick={save}
+                            loading={isPending}
+                        >
+                            {t("wallet.recoverySetup.backup.retry")}
+                        </Button>
+                    ) : null}
+                </Stack>
             }
         >
-            <Stack space="l" className={styles.body}>
+            <Card variant="muted" padding="default">
                 <Stack space="s">
-                    <Title size="page">
-                        {t("wallet.recoverySetup.backup.title")}
-                    </Title>
-                    <Text variant="body" color="secondary">
-                        {t("wallet.recoverySetup.backup.description")}
+                    <Text variant="bodySmall" className={styles.blob}>
+                        {revealed ? blob : masked}
                     </Text>
+                    <Box className={styles.blobActions}>
+                        <Button
+                            type="button"
+                            variant="secondary"
+                            size="small"
+                            width="auto"
+                            onClick={() => setRevealed((prev) => !prev)}
+                            icon={
+                                revealed ? (
+                                    <EyeOff size={16} />
+                                ) : (
+                                    <Eye size={16} />
+                                )
+                            }
+                        >
+                            {revealed
+                                ? t("wallet.recoverySetup.backup.hide")
+                                : t("wallet.recoverySetup.backup.reveal")}
+                        </Button>
+                        <Button
+                            type="button"
+                            variant="secondary"
+                            size="small"
+                            width="auto"
+                            onClick={handleCopy}
+                            icon={
+                                copied ? (
+                                    <Check size={16} />
+                                ) : (
+                                    <Copy size={16} />
+                                )
+                            }
+                        >
+                            {copied
+                                ? t("wallet.recoverySetup.backup.copied")
+                                : t("wallet.recoverySetup.backup.copy")}
+                        </Button>
+                    </Box>
                 </Stack>
+            </Card>
 
-                <Card variant="muted" padding="default">
-                    <Stack space="s">
-                        <Text variant="bodySmall" className={styles.blob}>
-                            {revealed ? blob : masked}
-                        </Text>
-                        <Box className={styles.blobActions}>
-                            <Button
-                                type="button"
-                                variant="secondary"
-                                size="small"
-                                width="auto"
-                                onClick={() => setRevealed((prev) => !prev)}
-                                icon={
-                                    revealed ? (
-                                        <EyeOff size={16} />
-                                    ) : (
-                                        <Eye size={16} />
-                                    )
-                                }
-                            >
-                                {revealed
-                                    ? t("wallet.recoverySetup.backup.hide")
-                                    : t("wallet.recoverySetup.backup.reveal")}
-                            </Button>
-                            <Button
-                                type="button"
-                                variant="secondary"
-                                size="small"
-                                width="auto"
-                                onClick={handleCopy}
-                                icon={
-                                    copied ? (
-                                        <Check size={16} />
-                                    ) : (
-                                        <Copy size={16} />
-                                    )
-                                }
-                            >
-                                {copied
-                                    ? t("wallet.recoverySetup.backup.copied")
-                                    : t("wallet.recoverySetup.backup.copy")}
-                            </Button>
-                        </Box>
-                    </Stack>
-                </Card>
+            <WarningCard>
+                {t("wallet.recoverySetup.backup.warning")}
+            </WarningCard>
 
-                <Card variant="muted" padding="default">
-                    <Text variant="bodySmall" color="error">
-                        {t("wallet.recoverySetup.backup.warning")}
-                    </Text>
-                </Card>
-
-                {isError && (
-                    <Text variant="bodySmall" color="error">
-                        {t("wallet.recoverySetup.backup.saveError")}
-                    </Text>
-                )}
-            </Stack>
-        </PageLayout>
+            {saveFailed ? (
+                <WarningCard>
+                    {t("wallet.recoverySetup.backup.saveError")}
+                </WarningCard>
+            ) : null}
+        </FlowStepScreen>
     );
 }
