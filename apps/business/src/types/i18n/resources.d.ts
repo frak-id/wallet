@@ -233,6 +233,100 @@ export default interface Resources {
             };
             details: {
                 close: "Close campaign details";
+                config: {
+                    budget: {
+                        none: "No budget cap configured.";
+                        period: {
+                            daily: "Daily budget";
+                            global: "Total budget";
+                            monthly: "Monthly budget";
+                            weekly: "Weekly budget";
+                        };
+                        title: "Budget";
+                    };
+                    conditions: {
+                        all: "All of the following";
+                        and: "and";
+                        any: "Any of the following";
+                        description: "Extra rules that must be met for the reward to apply.";
+                        none: "No extra conditions — rewards apply to every qualifying action.";
+                        noneOf: "None of the following";
+                        title: "Conditions";
+                    };
+                    limits: {
+                        lockup: "Reward lockup";
+                        lockupNone: "No lockup";
+                        lockupValue: "{{duration}} before settlement";
+                        maxRewardsPerUser: "Max rewards per user (this campaign)";
+                        merchantMaxRewardsPerUser: "Max rewards per user (all campaigns)";
+                        pendingExpiration: "Reward claim window";
+                        pendingExpirationValue_one: "{{count}} day to claim";
+                        pendingExpirationValue_other: "{{count}} days to claim";
+                        title: "Limits & timing";
+                        unlimited: "Unlimited";
+                    };
+                    rewards: {
+                        base: {
+                            purchase_amount: "the order total";
+                            purchase_subtotal: "the order subtotal";
+                        };
+                        bounds: "Between {{min}} and {{max}} {{currency}}";
+                        boundsMax: "Up to {{max}} {{currency}}";
+                        boundsMin: "At least {{min}} {{currency}}";
+                        chaining: "Multi-level rewards";
+                        chainingDetail: "{{decay}}% decay per level · up to {{depth}} levels";
+                        chainingDetailNoDepth: "{{decay}}% decay per level · unlimited levels";
+                        empty: "No rewards configured yet.";
+                        fixed: "{{amount}} {{currency}}";
+                        percentage: "{{percent}}% of {{base}}";
+                        recipient: {
+                            referee: "Referred friend";
+                            referrer: "Ambassador";
+                        };
+                        recipientHint: {
+                            referee: "The new customer who was referred";
+                            referrer: "The person who shared and brought in the customer";
+                        };
+                        tierRow: "{{range}} → {{amount}} {{currency}}";
+                        tiered: "Tiered by {{field}}";
+                        title: "Rewards";
+                    };
+                    schedule: {
+                        expires: "Ends on";
+                        noExpiration: "No end date";
+                        notPublished: "Not published yet";
+                        published: "Published on";
+                        title: "Schedule";
+                    };
+                    targeting: {
+                        allTerritories: "All countries";
+                        goal: "Campaign goal";
+                        goalValue: {
+                            awareness: "Awareness";
+                            registration: "Registration";
+                            retention: "Retention";
+                            sales: "Sales";
+                            traffic: "Traffic";
+                        };
+                        specialCategories: "Special ad categories";
+                        specialCategoryValue: {
+                            credit: "Credit";
+                            housing: "Housing";
+                            jobs: "Employment";
+                            social: "Social, elections or politics";
+                        };
+                        territories: "Countries";
+                        title: "Targeting";
+                    };
+                    trigger: {
+                        create_referral_link: "A user creates a sharing link";
+                        custom: "A custom interaction is tracked";
+                        description: "The action a customer must complete for rewards to be distributed.";
+                        purchase: "A customer completes a purchase";
+                        referral: "A referred friend is converted";
+                        title: "What earns a reward";
+                    };
+                };
                 cpa: {
                     ambassador: "Ambassador";
                     costPerAction: "cost per action";
@@ -281,6 +375,7 @@ export default interface Resources {
                 };
                 tabs: {
                     ambassadors: "Ambassadors";
+                    configuration: "Configuration";
                     funnelRoi: "Funnel & ROI";
                 };
                 top: {

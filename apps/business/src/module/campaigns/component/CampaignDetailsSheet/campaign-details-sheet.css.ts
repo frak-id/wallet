@@ -71,3 +71,73 @@ export const legendSquare = style({
 });
 
 export const subtitleDot = style({ color: vars.text.tertiary });
+
+// --- Configuration tab ---------------------------------------------------
+
+// A label/value definition row with a hairline separator between entries.
+export const definitionRow = style({
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "baseline",
+    gap: alias.spacing.m,
+    paddingTop: alias.spacing.s,
+    paddingBottom: alias.spacing.s,
+    borderTop: `1px solid ${vars.border.subtle}`,
+    selectors: {
+        "&:first-child": {
+            paddingTop: 0,
+            borderTop: "none",
+        },
+        "&:last-child": {
+            paddingBottom: 0,
+        },
+    },
+});
+
+// Value side of a definition row — right aligned, can wrap onto a new line.
+export const definitionValue = style({
+    textAlign: "right",
+    fontVariantNumeric: "tabular-nums",
+});
+
+// Highlighted callout describing the reward trigger.
+export const triggerCallout = style({
+    display: "flex",
+    alignItems: "center",
+    gap: alias.spacing.s,
+});
+
+// Round badge holding the trigger glyph.
+export const triggerIcon = style({
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    width: "40px",
+    height: "40px",
+    flexShrink: 0,
+    borderRadius: alias.cornerRadius.full,
+    backgroundColor: vars.surface.secondary,
+    fontSize: "20px",
+});
+
+// Recipient pill colour accent at the top of a reward card.
+export const rewardHeader = style({
+    display: "flex",
+    alignItems: "center",
+    gap: alias.spacing.xs,
+});
+
+// Inline wrap container for tags (territories, categories, tiers).
+export const tagRow = style({
+    display: "flex",
+    flexWrap: "wrap",
+    gap: alias.spacing.xs,
+});
+
+// One tiered-reward line inside a reward card.
+export const tierRow = style({
+    display: "flex",
+    justifyContent: "space-between",
+    gap: alias.spacing.m,
+    fontVariantNumeric: "tabular-nums",
+});

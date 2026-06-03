@@ -359,7 +359,8 @@
             },
             "tabs": {
                 "funnelRoi": "Tunnel & ROI",
-                "ambassadors": "Ambassadeurs"
+                "ambassadors": "Ambassadeurs",
+                "configuration": "Configuration"
             },
             "economic": {
                 "title": "Valeur économique — Frak vs Meta",
@@ -410,6 +411,100 @@
                 "perActiveAmbassador": "Par ambassadeur actif",
                 "topPerformer": "Meilleur performeur",
                 "ofCampaignRev": "{{wallet}} du revenu de la campagne"
+            },
+            "config": {
+                "trigger": {
+                    "title": "Ce qui déclenche une récompense",
+                    "description": "L'action que le client doit réaliser pour que les récompenses soient distribuées.",
+                    "purchase": "Un client finalise un achat",
+                    "referral": "Un ami parrainé est converti",
+                    "create_referral_link": "Un utilisateur crée un lien de partage",
+                    "custom": "Une interaction personnalisée est suivie"
+                },
+                "rewards": {
+                    "title": "Récompenses",
+                    "empty": "Aucune récompense configurée pour le moment.",
+                    "recipient": {
+                        "referrer": "Ambassadeur",
+                        "referee": "Ami parrainé"
+                    },
+                    "recipientHint": {
+                        "referrer": "La personne qui a partagé et amené le client",
+                        "referee": "Le nouveau client qui a été parrainé"
+                    },
+                    "fixed": "{{amount}} {{currency}}",
+                    "percentage": "{{percent}} % de {{base}}",
+                    "base": {
+                        "purchase_amount": "le montant total de la commande",
+                        "purchase_subtotal": "le sous-total de la commande"
+                    },
+                    "bounds": "Entre {{min}} et {{max}} {{currency}}",
+                    "boundsMin": "Au moins {{min}} {{currency}}",
+                    "boundsMax": "Jusqu'à {{max}} {{currency}}",
+                    "tiered": "Par paliers selon {{field}}",
+                    "tierRow": "{{range}} → {{amount}} {{currency}}",
+                    "chaining": "Récompenses multi-niveaux",
+                    "chainingDetail": "{{decay}} % de déperdition par niveau · jusqu'à {{depth}} niveaux",
+                    "chainingDetailNoDepth": "{{decay}} % de déperdition par niveau · niveaux illimités"
+                },
+                "conditions": {
+                    "title": "Conditions",
+                    "description": "Règles supplémentaires à remplir pour que la récompense s'applique.",
+                    "none": "Aucune condition supplémentaire — les récompenses s'appliquent à chaque action éligible.",
+                    "all": "Toutes les conditions suivantes",
+                    "any": "L'une des conditions suivantes",
+                    "noneOf": "Aucune des conditions suivantes",
+                    "and": "et"
+                },
+                "limits": {
+                    "title": "Limites et délais",
+                    "pendingExpiration": "Délai pour réclamer la récompense",
+                    "pendingExpirationValue_one": "{{count}} jour pour réclamer",
+                    "pendingExpirationValue_other": "{{count}} jours pour réclamer",
+                    "lockup": "Blocage de la récompense",
+                    "lockupValue": "{{duration}} avant règlement",
+                    "lockupNone": "Aucun blocage",
+                    "maxRewardsPerUser": "Récompenses max par utilisateur (cette campagne)",
+                    "merchantMaxRewardsPerUser": "Récompenses max par utilisateur (toutes campagnes)",
+                    "unlimited": "Illimité"
+                },
+                "budget": {
+                    "title": "Budget",
+                    "none": "Aucun plafond de budget configuré.",
+                    "period": {
+                        "global": "Budget total",
+                        "daily": "Budget quotidien",
+                        "weekly": "Budget hebdomadaire",
+                        "monthly": "Budget mensuel"
+                    }
+                },
+                "targeting": {
+                    "title": "Ciblage",
+                    "goal": "Objectif de la campagne",
+                    "goalValue": {
+                        "awareness": "Notoriété",
+                        "traffic": "Trafic",
+                        "registration": "Inscription",
+                        "sales": "Ventes",
+                        "retention": "Fidélisation"
+                    },
+                    "territories": "Pays",
+                    "allTerritories": "Tous les pays",
+                    "specialCategories": "Catégories de publicité spéciales",
+                    "specialCategoryValue": {
+                        "credit": "Crédit",
+                        "jobs": "Emploi",
+                        "housing": "Logement",
+                        "social": "Sujets sociaux, élections ou politique"
+                    }
+                },
+                "schedule": {
+                    "title": "Planification",
+                    "published": "Publiée le",
+                    "notPublished": "Pas encore publiée",
+                    "expires": "Se termine le",
+                    "noExpiration": "Aucune date de fin"
+                }
             }
         },
         "overview": {

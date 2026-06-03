@@ -359,7 +359,8 @@
             },
             "tabs": {
                 "funnelRoi": "Funnel & ROI",
-                "ambassadors": "Ambassadors"
+                "ambassadors": "Ambassadors",
+                "configuration": "Configuration"
             },
             "economic": {
                 "title": "Economic value — Frak vs Meta",
@@ -410,6 +411,100 @@
                 "perActiveAmbassador": "Per active ambassador",
                 "topPerformer": "Top Performer",
                 "ofCampaignRev": "{{wallet}} of campaign rev."
+            },
+            "config": {
+                "trigger": {
+                    "title": "What earns a reward",
+                    "description": "The action a customer must complete for rewards to be distributed.",
+                    "purchase": "A customer completes a purchase",
+                    "referral": "A referred friend is converted",
+                    "create_referral_link": "A user creates a sharing link",
+                    "custom": "A custom interaction is tracked"
+                },
+                "rewards": {
+                    "title": "Rewards",
+                    "empty": "No rewards configured yet.",
+                    "recipient": {
+                        "referrer": "Ambassador",
+                        "referee": "Referred friend"
+                    },
+                    "recipientHint": {
+                        "referrer": "The person who shared and brought in the customer",
+                        "referee": "The new customer who was referred"
+                    },
+                    "fixed": "{{amount}} {{currency}}",
+                    "percentage": "{{percent}}% of {{base}}",
+                    "base": {
+                        "purchase_amount": "the order total",
+                        "purchase_subtotal": "the order subtotal"
+                    },
+                    "bounds": "Between {{min}} and {{max}} {{currency}}",
+                    "boundsMin": "At least {{min}} {{currency}}",
+                    "boundsMax": "Up to {{max}} {{currency}}",
+                    "tiered": "Tiered by {{field}}",
+                    "tierRow": "{{range}} → {{amount}} {{currency}}",
+                    "chaining": "Multi-level rewards",
+                    "chainingDetail": "{{decay}}% decay per level · up to {{depth}} levels",
+                    "chainingDetailNoDepth": "{{decay}}% decay per level · unlimited levels"
+                },
+                "conditions": {
+                    "title": "Conditions",
+                    "description": "Extra rules that must be met for the reward to apply.",
+                    "none": "No extra conditions — rewards apply to every qualifying action.",
+                    "all": "All of the following",
+                    "any": "Any of the following",
+                    "noneOf": "None of the following",
+                    "and": "and"
+                },
+                "limits": {
+                    "title": "Limits & timing",
+                    "pendingExpiration": "Reward claim window",
+                    "pendingExpirationValue_one": "{{count}} day to claim",
+                    "pendingExpirationValue_other": "{{count}} days to claim",
+                    "lockup": "Reward lockup",
+                    "lockupValue": "{{duration}} before settlement",
+                    "lockupNone": "No lockup",
+                    "maxRewardsPerUser": "Max rewards per user (this campaign)",
+                    "merchantMaxRewardsPerUser": "Max rewards per user (all campaigns)",
+                    "unlimited": "Unlimited"
+                },
+                "budget": {
+                    "title": "Budget",
+                    "none": "No budget cap configured.",
+                    "period": {
+                        "global": "Total budget",
+                        "daily": "Daily budget",
+                        "weekly": "Weekly budget",
+                        "monthly": "Monthly budget"
+                    }
+                },
+                "targeting": {
+                    "title": "Targeting",
+                    "goal": "Campaign goal",
+                    "goalValue": {
+                        "awareness": "Awareness",
+                        "traffic": "Traffic",
+                        "registration": "Registration",
+                        "sales": "Sales",
+                        "retention": "Retention"
+                    },
+                    "territories": "Countries",
+                    "allTerritories": "All countries",
+                    "specialCategories": "Special ad categories",
+                    "specialCategoryValue": {
+                        "credit": "Credit",
+                        "jobs": "Employment",
+                        "housing": "Housing",
+                        "social": "Social, elections or politics"
+                    }
+                },
+                "schedule": {
+                    "title": "Schedule",
+                    "published": "Published on",
+                    "notPublished": "Not published yet",
+                    "expires": "Ends on",
+                    "noExpiration": "No end date"
+                }
             }
         },
         "overview": {
