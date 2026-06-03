@@ -1,4 +1,4 @@
-interface Resources {
+export default interface Resources {
     customized: {
         sdk: {
             modal: {
@@ -640,7 +640,7 @@ interface Resources {
                     back: "Back to my profile";
                     combine: "Combine my accounts";
                     description: "This email is already linked to another wallet. Use a different email or come back later.";
-                    descriptionMergeable: "This email is already on another of your accounts. You can combine them into one — we'll guide you through, whether the other account is on this device or another one.";
+                    descriptionMergeable: "This email is already on another of your accounts. You can combine them into one. We'll guide you through, whether the other account is on this device or another one.";
                     title: "Email already in use";
                     useDifferent: "Use a different email";
                 };
@@ -676,9 +676,22 @@ interface Resources {
                 accountCreation: "Account creation";
                 anotherAccount: "Connect another account";
                 button: "Use biometrics";
+                email: {
+                    checkError: "Unable to verify this email right now. Please try again.";
+                    description: "Enter the email linked to your wallet. We'll surface every passkey attached to it so you can pick the right one.";
+                    notFound: {
+                        create: "Create an account";
+                        description: "We couldn't find a wallet linked to {{email}}. Want to create one with this email?";
+                        title: "No account found";
+                        useDifferent: "Use a different email";
+                    };
+                    submit: "Continue";
+                    title: "Sign in with your email";
+                };
                 privy: "Connect via Privy";
                 recover: "Recover wallet from file";
                 title: "Log in to your wallet";
+                useEmail: "Sign in with email";
                 useMyAccount: "Continue with my account";
                 useQRCode: "Use QR code to connect";
             };
@@ -688,7 +701,7 @@ interface Resources {
                     description: "We need a quick confirmation with the passkey from the other account to make sure both belong to you. You'll see a system prompt.";
                     error: "We couldn't confirm with the other passkey on this device. Make sure it's available here, then try again.";
                     help: {
-                        description: "Your device will ask you to confirm with face, fingerprint or PIN — same as when you log in. We never see your biometrics.";
+                        description: "Your device will ask you to confirm with face, fingerprint or PIN, same as when you log in. We never see your biometrics.";
                         title: "What happens here";
                     };
                     remote: {
@@ -702,7 +715,7 @@ interface Resources {
                     verify: "Confirm";
                 };
                 discovery: {
-                    description: "Pick how you want to confirm — on this device, or on the device that holds your other passkey.";
+                    description: "Pick how you want to confirm: on this device, or on the device that holds your other passkey.";
                     localError: "We couldn't find the other passkey on this device. Try scanning the code with your other device instead.";
                     localHint: {
                         body: "Tap above to confirm with the passkey of your other account here. Works automatically if you use iCloud Keychain across your devices.";
@@ -716,35 +729,35 @@ interface Resources {
                 migrate: {
                     cancel: "Cancel";
                     description: "Sending everything to your primary account before we finalise the combine. This takes a few seconds.";
-                    error: "The transfer didn't go through. Tap retry — we'll re-check your balances and try again.";
-                    errorDescription: "Something interrupted the transfer. Your accounts are safe — tap retry to try again with the latest balances.";
+                    error: "The transfer didn't go through. Tap retry. We'll re-check your balances and try again.";
+                    errorDescription: "Something interrupted the transfer. Your accounts are safe. Tap retry to try again with the latest balances.";
                     errorTitle: "We couldn't move your funds";
                     holdings: {
                         title: "Funds to move";
                     };
-                    loading: "Loading your balances — one second.";
+                    loading: "Loading your balances, one second.";
                     loadingDescription: "We need to know what's on your other account before we move it.";
                     loadingTitle: "Checking your balances…";
-                    pending: "Sending the transfer on-chain — hang tight.";
+                    pending: "Sending the transfer on-chain. Hang tight.";
                     readyDescription: "Tap below to transfer everything from your other account to your primary account in one go.";
                     readyTitle: "Move your funds";
                     retry: "Retry";
                     start: "Move my funds";
                     summaryError: "Loading your balances failed. Tap retry to try again.";
-                    summaryErrorDescription: "Tap retry — we need this before we can move your funds.";
+                    summaryErrorDescription: "Tap retry. We need this before we can move your funds.";
                     summaryErrorTitle: "We couldn't load your balances";
                     summaryRetry: "Retry";
                     title: "Moving your funds…";
                 };
                 peerWaiting: {
-                    description: "We sent the request to your paired device — confirm it there and we'll continue automatically.";
+                    description: "We sent the request to your paired device. Confirm it there and we'll continue automatically.";
                     title: "Approve on your other device";
                 };
                 preview: {
                     cancel: "Cancel";
                     combineArrow: "↓ combine into ↓";
                     continue: "Continue";
-                    description: "We found another account of yours using {{email}}. Here's what will move when you combine them — no changes happen until you confirm.";
+                    description: "We found another account of yours using {{email}}. Here's what will move when you combine them. No changes happen until you confirm.";
                     errorDescription: "Something went wrong while preparing the combine. Please try again.";
                     errorRetry: "Try again";
                     errorTitle: "We couldn't load your accounts";
@@ -753,7 +766,7 @@ interface Resources {
                         title: "Funds to move";
                     };
                     gains: {
-                        description: "{{referrals}} referrals, {{interactions}} interactions and {{assets}} reward events — all on one account.";
+                        description: "{{referrals}} referrals, {{interactions}} interactions and {{assets}} reward events, all on one account.";
                         title: "What you'll get";
                     };
                     labels: {
@@ -773,8 +786,8 @@ interface Resources {
                 settling: {
                     cancel: "Cancel";
                     description: "We're putting everything together. This usually takes a few seconds.";
-                    error: "The combine couldn't finish. Tap retry — we'll pick up where we left off.";
-                    errorDescription: "Something slipped on our side after you authorised. Tap retry — your accounts are safe.";
+                    error: "The combine couldn't finish. Tap retry. We'll pick up where we left off.";
+                    errorDescription: "Something slipped on our side after you authorised. Tap retry. Your accounts are safe.";
                     errorTitle: "Almost there";
                     progress: {
                         body: "Linking your accounts, transferring referrals and rewards. Hang tight.";
@@ -782,17 +795,17 @@ interface Resources {
                     };
                     recover: {
                         invalidConsent: {
-                            body: "Too much time passed since you confirmed with your other passkey. Reconfirm to continue — your accounts are safe.";
+                            body: "Too much time passed since you confirmed with your other passkey. Reconfirm to continue. Your accounts are safe.";
                             cta: "Reconfirm";
                             title: "Confirmation expired";
                         };
                         migrateReverted: {
-                            body: "The transfer didn't land on-chain. Run it again to finish — your accounts are safe.";
+                            body: "The transfer didn't land on-chain. Run it again to finish. Your accounts are safe.";
                             cta: "Move funds again";
                             title: "Funds didn't move";
                         };
                         onChainMismatch: {
-                            body: "Your accounts moved while we were combining them. Let's start over from the preview — nothing is lost.";
+                            body: "Your accounts moved while we were combining them. Let's start over from the preview. Nothing is lost.";
                             cta: "Start over";
                             title: "Something looks different";
                         };
@@ -804,15 +817,15 @@ interface Resources {
                     authorise: "Authorise";
                     cancel: "Cancel";
                     description: "One last confirmation to bring your two accounts together.";
-                    error: "The combine couldn't be authorised. Tap try again — your accounts are safe.";
-                    errorDescription: "Something interrupted the combine. Your accounts are safe — try again to finish.";
+                    error: "The combine couldn't be authorised. Tap try again. Your accounts are safe.";
+                    errorDescription: "Something interrupted the combine. Your accounts are safe. Try again to finish.";
                     retry: "Try again";
                     title: "Authorise the combine";
                 };
                 stepIndicator: "Step {{current}}/{{total}}";
                 success: {
                     back: "Back to my profile";
-                    description: "{{email}} is linked to your wallet. Everything from your other account moved over — referrals, history, rewards.";
+                    description: "{{email}} is linked to your wallet. Everything from your other account moved over: referrals, history, rewards.";
                     title: "Your accounts are now one";
                 };
             };
@@ -962,7 +975,10 @@ interface Resources {
                 pageTitle: "Profil";
                 privacyPolicy: "Privacy Policy";
                 rateApp: "Rate the app";
+                recoveryConfiguration: "Recovery";
                 recoveryConfigured: "Configured";
+                refreshRecovery: "Refresh recovery";
+                setupRecovery: "Set up recovery";
             };
             recovery: {
                 continue: "Continue recovery";
@@ -992,16 +1008,62 @@ interface Resources {
                 uploadOrDrag: "Upload or drag recovery file";
             };
             recoverySetup: {
-                currentGuardian: "Current guardian:";
-                disclaimer: "Warning<br />- We do not store any information related to your wallet recovery.<br />- You are solely responsible for keeping your recovery file and password secure and private.\n                <br />- The recovery file can be generated now, but the actual recovery process will only be available one week after the file is created to prevent malicious usage.";
-                download: "Download my recovery file";
-                generating: "Generating recovery data";
+                active: "Active";
+                backup: {
+                    continue: "Done";
+                    copied: "Copied";
+                    copy: "Copy";
+                    description: "This is your encrypted recovery backup. Keep your own copy somewhere safe, like a password manager.";
+                    hide: "Hide";
+                    reveal: "Reveal";
+                    saveError: "We couldn't save your backup to our servers, but your own copy still works. You can retry later.";
+                    title: "Save your backup";
+                    warning: "Anyone who has both this backup code and your password can take full control of your wallet. Store them in separate places.";
+                };
+                config: {
+                    active: "Active";
+                    description: "Your wallet recovery configuration.";
+                    endLabel: "Expires";
+                    never: "Never";
+                    startLabel: "Usable from";
+                    statusLabel: "Status";
+                    testButton: "Test password";
+                    testDescription: "Check that you still remember your recovery password. It never leaves this device.";
+                    testInvalid: "That password doesn't match your backup.";
+                    testPlaceholder: "Enter your password";
+                    testTitle: "Test your password";
+                    testValid: "Password is correct.";
+                    title: "Recovery";
+                };
+                password: {
+                    continue: "Continue";
+                    description: "Choose a password to encrypt your recovery backup, and optionally control when it can be used.";
+                    endHelp: "Recovery stops working after this date. Defaults to and is capped at two years from now.";
+                    endLabel: "End date (optional)";
+                    hint: "At least {{min}} characters.";
+                    label: "Password";
+                    placeholder: "Enter a strong password";
+                    startHelp: "Recovery can only be used after this date. Defaults to one week from now as a safety delay.";
+                    startLabel: "Start date (optional)";
+                    title: "Protect your recovery";
+                    toggle: "Toggle password visibility";
+                    warning: "Choose a strong password. We can never reset or recover it — if you forget it, your backup is permanently useless.";
+                };
                 setupNew: "Setup new recovery";
-                setupOn: "Setup recovery on {{name}}";
-                step1: "Encryption password";
-                step2: "Generate recovery data";
-                step3: "Download recovery file";
-                step4: "Enable recovery on-chain";
+                sign: {
+                    authorise: "Authorize recovery";
+                    description: "Confirm to enable recovery on your wallet. This creates your recovery key and registers it on-chain.";
+                    error: "Recovery setup failed.";
+                    errorDescription: "Something went wrong while enabling recovery. You can try again.";
+                    retry: "Try again";
+                    title: "Authorize recovery";
+                };
+                stepIndicator: "Step {{current}}/{{total}}";
+                success: {
+                    description: "Your wallet recovery is now active and your encrypted backup is saved.";
+                    done: "Back to my profile";
+                    title: "Recovery is set up";
+                };
                 title: "Recovery setup";
             };
             referral: {
@@ -1174,5 +1236,3 @@ interface Resources {
         };
     };
 }
-
-export default Resources;

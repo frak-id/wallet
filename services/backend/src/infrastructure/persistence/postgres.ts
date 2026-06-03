@@ -8,6 +8,7 @@ import {
     identityGroupsTable,
     identityNodesTable,
     installCodesTable,
+    recoveryBlobsTable,
 } from "../../domain/identity/db/schema";
 import {
     merchantAdminsTable,
@@ -60,6 +61,7 @@ export const db = drizzle({
         identityGroupsTable,
         identityNodesTable,
         installCodesTable,
+        recoveryBlobsTable,
         referralCodesTable,
         merchantsTable,
         merchantAdminsTable,

@@ -106,10 +106,7 @@ export function AddEmail() {
             <SuccessStep
                 email={flowState.email}
                 onBack={goToProfile}
-                onSetupRecovery={() => {
-                    // Recovery flow rework is still in flight, so this is
-                    // intentionally a no-op for now.
-                }}
+                onSetupRecovery={() => navigate({ to: "/profile/recovery" })}
             />
         );
     }

@@ -4,6 +4,10 @@ import type { WebAuthNWallet } from "./WebAuthN";
 export type CurrentRecovery = {
     executor: Address;
     guardianAddress: Address;
+    /** Recovery becomes executable after this unix timestamp (seconds). */
+    validAfter: number;
+    /** Recovery stops working after this unix timestamp (seconds); 0 = never. */
+    validUntil: number;
 };
 
 export type GeneratedRecoveryData = {

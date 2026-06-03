@@ -40,6 +40,24 @@ export const identityGroupsTable = pgTable("identity_groups", {
     updatedAt: timestamp("updated_at").defaultNow(),
 });
 
+/**
+ * Encrypted recovery backup, anchored on an identity group like email.
+ *
+ * `blob` is opaque ciphertext sealed client-side with the user's password: the
+ * backend is a zero-knowledge store, it never receives the password nor decrypts.
+ * One row per group (`group_id` unique); the API refuses to overwrite (no update
+ * this round).
+ */
+export const recoveryBlobsTable = pgTable("recovery_blobs", {
+    id: uuid("id").primaryKey().defaultRandom(),
+    groupId: uuid("group_id").notNull().unique(),
+    blob: text("blob").notNull(),
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+    updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
+export type RecoveryBlobSelect = typeof recoveryBlobsTable.$inferSelect;
+
 export const identityNodesTable = pgTable(
     "identity_nodes",
     {

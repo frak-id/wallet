@@ -120,6 +120,16 @@ export {
     RegisterTokenBodySchema,
 } from "./notificationTokenSchemas";
 export {
+    type RecoveryBlobResponse,
+    RecoveryBlobResponseSchema,
+    type RecoveryStatusResponse,
+    RecoveryStatusResponseSchema,
+    type SaveRecoveryBlobBody,
+    SaveRecoveryBlobBodySchema,
+    type SaveRecoveryResponse,
+    SaveRecoveryResponseSchema,
+} from "./recoverySchemas";
+export {
     type RewardHistoryResponse,
     RewardHistoryResponseSchema,
 } from "./rewardHistorySchemas";

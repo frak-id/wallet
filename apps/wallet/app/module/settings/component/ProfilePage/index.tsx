@@ -7,7 +7,7 @@ import {
     selectLastAuthenticationAt,
     useGetActivePairings,
 } from "@frak-labs/wallet-shared";
-import { Mail } from "lucide-react";
+import { Mail, Shield } from "lucide-react";
 import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { useStore } from "zustand";
@@ -16,6 +16,8 @@ import { InfoCard, InfoRow } from "@/module/common/component/InfoCard";
 import { Title } from "@/module/common/component/Title";
 // import { Logout } from "@/module/authentication/component/Logout";
 import { MoneriumConnect } from "@/module/monerium/component/MoneriumConnect";
+import { useRecoverySetupStatus } from "@/module/recovery-setup/hook/useRecoverySetupStatus";
+import { isExpiringSoon } from "@/module/recovery-setup/utils/recoveryDates";
 import { CrashlyticsDebug } from "@/module/settings/component/CrashlyticsDebug";
 import { PrivateKey } from "@/module/settings/component/PrivateKey";
 import { ProfileIdentityCard } from "@/module/settings/component/ProfileIdentityCard";
@@ -47,7 +49,12 @@ export function ProfilePage() {
     const { data: pairings } = useGetActivePairings();
     const hasPairings = (pairings?.length ?? 0) > 0;
     const { data: emailStatus } = useCurrentEmail();
-    const showAddEmail = emailStatus?.email === null;
+    const hasEmail = emailStatus?.email != null;
+    const { recoverySetupStatus } = useRecoverySetupStatus();
+    const hasRecovery = !!recoverySetupStatus;
+    const recoveryExpiringSoon = recoverySetupStatus
+        ? isExpiringSoon(recoverySetupStatus.validUntil)
+        : false;
 
     return (
         <Box
@@ -59,7 +66,7 @@ export function ProfilePage() {
             <Title size="page">{t("wallet.profile.pageTitle")}</Title>
             <ProfileIdentityCard />
             <ProfilePreferencesCard />
-            {showAddEmail ? (
+            {!hasEmail ? (
                 <InfoCard>
                     <InfoRow
                         icon={Mail}
@@ -67,7 +74,27 @@ export function ProfilePage() {
                         to="/profile/add-email"
                     />
                 </InfoCard>
-            ) : null}
+            ) : !hasRecovery || recoveryExpiringSoon ? (
+                <InfoCard>
+                    <InfoRow
+                        icon={Shield}
+                        label={t(
+                            hasRecovery
+                                ? "wallet.profile.refreshRecovery"
+                                : "wallet.profile.setupRecovery"
+                        )}
+                        to="/profile/recovery"
+                    />
+                </InfoCard>
+            ) : (
+                <InfoCard>
+                    <InfoRow
+                        icon={Shield}
+                        label={t("wallet.profile.recoveryConfiguration")}
+                        to="/profile/recovery"
+                    />
+                </InfoCard>
+            )}
             {/*<ProfileSecurityCard />*/}
             <InfoCard>
                 <InfoRow

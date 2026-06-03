@@ -100,7 +100,10 @@
             "managePairings": "Gérer les appareils connectés",
             "lastConnection": "Dernière connexion",
             "currentDeviceConnected": "Connecté",
-            "addEmail": "Ajouter mon e-mail"
+            "addEmail": "Ajouter mon e-mail",
+            "setupRecovery": "Configurer la récupération",
+            "refreshRecovery": "Actualiser la récupération",
+            "recoveryConfiguration": "Récupération"
         },
         "addEmail": {
             "title": "Ajoute ton e-mail",
@@ -450,17 +453,63 @@
             "successful": "La récupération est réussie, vous pouvez maintenant vous <pLink>connecter</pLink>"
         },
         "recoverySetup": {
-            "currentGuardian": "Gardien actuel :",
-            "disclaimer": "Avertissement<br /> - Nous ne stockons aucune information liée à la récupération de votre porte-monnaie.<br /> - Vous êtes seul responsable de la sécurité et de la confidentialité de votre fichier de récupération et de votre mot de passe.<br /> - Le fichier de récupération peut être généré maintenant, mais le processus de récupération réel ne sera disponible qu'une semaine après la création du fichier pour éviter toute utilisation malveillante.",
-            "download": "Télécharger mon fichier de récupération",
-            "generating": "Génération de données de récupération",
+            "title": "Configuration de récupération",
             "setupNew": "Configurer une nouvelle récupération",
-            "setupOn": "Installer sur {{name}}",
-            "step1": "Mot de passe de cryptage",
-            "step2": "Générer les données de récupération",
-            "step3": "Télécharger le fichier de récupération",
-            "step4": "Activer la récupération",
-            "title": "Configuration de récupération"
+            "active": "Active",
+            "stepIndicator": "Étape {{current}}/{{total}}",
+            "password": {
+                "title": "Protégez votre récupération",
+                "description": "Choisissez un mot de passe pour chiffrer votre sauvegarde de récupération, et définissez éventuellement quand elle pourra être utilisée.",
+                "label": "Mot de passe",
+                "placeholder": "Saisissez un mot de passe robuste",
+                "hint": "Au moins {{min}} caractères.",
+                "toggle": "Afficher/masquer le mot de passe",
+                "startLabel": "Date de début (facultatif)",
+                "startHelp": "La récupération ne pourra être utilisée qu'après cette date. Par défaut, une semaine à partir de maintenant, par sécurité.",
+                "endLabel": "Date de fin (facultatif)",
+                "endHelp": "La récupération cesse de fonctionner après cette date. Par défaut et au maximum deux ans à partir de maintenant.",
+                "warning": "Choisissez un mot de passe robuste. Nous ne pouvons ni le réinitialiser ni le récupérer — si vous l'oubliez, votre sauvegarde devient définitivement inutilisable.",
+                "continue": "Continuer"
+            },
+            "sign": {
+                "title": "Autoriser la récupération",
+                "description": "Confirmez pour activer la récupération sur votre porte-monnaie. Cela crée votre clé de récupération et l'enregistre sur la blockchain.",
+                "authorise": "Autoriser la récupération",
+                "retry": "Réessayer",
+                "errorDescription": "Une erreur est survenue lors de l'activation de la récupération. Vous pouvez réessayer.",
+                "error": "Échec de la configuration de récupération."
+            },
+            "backup": {
+                "title": "Sauvegardez votre récupération",
+                "description": "Voici votre sauvegarde de récupération chiffrée. Conservez votre propre copie en lieu sûr, par exemple dans un gestionnaire de mots de passe.",
+                "reveal": "Afficher",
+                "hide": "Masquer",
+                "copy": "Copier",
+                "copied": "Copié",
+                "warning": "Quiconque possède à la fois ce code de sauvegarde et votre mot de passe peut prendre le contrôle total de votre porte-monnaie. Conservez-les à des endroits séparés.",
+                "saveError": "Nous n'avons pas pu enregistrer votre sauvegarde sur nos serveurs, mais votre propre copie reste valable. Vous pourrez réessayer plus tard.",
+                "continue": "Terminé"
+            },
+            "success": {
+                "title": "La récupération est configurée",
+                "description": "La récupération de votre porte-monnaie est désormais active et votre sauvegarde chiffrée est enregistrée.",
+                "done": "Retour à mon profil"
+            },
+            "config": {
+                "title": "Récupération",
+                "description": "Configuration de la récupération de votre porte-monnaie.",
+                "statusLabel": "Statut",
+                "active": "Active",
+                "startLabel": "Utilisable à partir du",
+                "endLabel": "Expire le",
+                "never": "Jamais",
+                "testTitle": "Testez votre mot de passe",
+                "testDescription": "Vérifiez que vous vous souvenez de votre mot de passe de récupération. Il ne quitte jamais cet appareil.",
+                "testPlaceholder": "Saisissez votre mot de passe",
+                "testButton": "Tester le mot de passe",
+                "testValid": "Le mot de passe est correct.",
+                "testInvalid": "Ce mot de passe ne correspond pas à votre sauvegarde."
+            }
         },
         "register": {
             "button": {

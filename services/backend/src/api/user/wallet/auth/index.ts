@@ -5,6 +5,7 @@ import { WalletAuthResponseDto } from "../../../../domain/auth";
 import { emailRoutes } from "./email";
 import { emailStatusRoutes } from "./emailStatus";
 import { loginRoutes } from "./login";
+import { recoveryRoutes } from "./recovery";
 import { registerRoutes } from "./register";
 import { walletSdkRoutes } from "./sdk";
 
@@ -15,6 +16,7 @@ export const authRoutes = new Elysia({ prefix: "/auth" })
     .use(registerRoutes)
     .use(emailStatusRoutes)
     .use(emailRoutes)
+    .use(recoveryRoutes)
     // Logout
     .post("/logout", async ({ cookie: { businessAuth } }) => {
         businessAuth.remove();

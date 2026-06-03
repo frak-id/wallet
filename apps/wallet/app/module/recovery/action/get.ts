@@ -79,6 +79,8 @@ export async function getCurrentRecoveryOption({
     return {
         executor: recoveryOption.executor,
         guardianAddress,
+        validAfter: recoveryOption.validAfter,
+        validUntil: recoveryOption.validUntil,
     };
 }
 

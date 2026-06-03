@@ -1,16 +1,17 @@
-import type {
-    RecoveryFileContent,
-    WebAuthNWallet,
-} from "@frak-labs/wallet-shared";
+import type { WebAuthNWallet } from "@frak-labs/wallet-shared";
 import { useMutation } from "@tanstack/react-query";
 import { type Hex, isAddressEqual } from "viem";
 import { generatePrivateKey, privateKeyToAddress } from "viem/accounts";
 import { generateRecoveryData } from "@/module/recovery/action/generate";
 import { recoverySetupKey } from "@/module/recovery-setup/queryKeys/recovery-setup";
-import { encryptPrivateKey } from "@/module/recovery-setup/utils/encrypt";
+import { encodeRecoveryBlob } from "@/module/recovery-setup/utils/recoveryBlob";
 
 /**
- * Generate the recovery file
+ * Generate the on-chain recovery setup tx and the encrypted backup blob.
+ *
+ * Mints a burner (the ECDSA guardian) and seals `{ smartWalletAddress, burnerKey }`
+ * with the user's password into the blob. The burner key only lives inside this
+ * mutation — it leaves solely as ciphertext.
  */
 export function useGenerateRecoveryOptions() {
     const { mutate, mutateAsync, ...mutationStuff } = useMutation({
@@ -18,41 +19,35 @@ export function useGenerateRecoveryOptions() {
         gcTime: 0,
         mutationFn: async ({
             wallet,
-            pass,
+            password,
+            validAfter,
+            validUntil,
         }: {
             wallet: WebAuthNWallet;
-            pass: string;
-        }): Promise<{ setupTxData: Hex; file: RecoveryFileContent }> => {
-            // Create the burner wallet
-            const burnerWallet = generatePrivateKey();
-            const burnerAddress = privateKeyToAddress(burnerWallet);
+            password: string;
+            validAfter: number;
+            validUntil: number;
+        }): Promise<{ setupTxData: Hex; blob: string }> => {
+            const burnerPrivateKey = generatePrivateKey();
+            const burnerAddress = privateKeyToAddress(burnerPrivateKey);
 
-            // Get the recovery options
             const options = await generateRecoveryData({
                 guardianAddress: burnerAddress,
+                validAfter,
+                validUntil,
             });
 
-            // Ensure the burner address is the same (prevent potential caching issue)
             if (!isAddressEqual(burnerAddress, options.guardianAddress)) {
                 throw new Error("Burner address mismatch");
             }
 
-            // Generate the secure string
-            const guardianPrivateKeyEncrypted = await encryptPrivateKey({
-                privateKey: burnerWallet,
-                initialAddress: wallet.address,
-                pass,
+            const blob = await encodeRecoveryBlob({
+                smartWalletAddress: wallet.address,
+                burnerPrivateKey,
+                password,
             });
 
-            // Return the file product
-            return {
-                setupTxData: options.setupTxData,
-                file: {
-                    initialWallet: wallet,
-                    guardianAddress: burnerAddress,
-                    guardianPrivateKeyEncrypted,
-                },
-            };
+            return { setupTxData: options.setupTxData, blob };
         },
     });
 

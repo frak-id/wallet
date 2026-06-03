@@ -102,7 +102,10 @@
             "managePairings": "Manage paired devices",
             "lastConnection": "Last connection",
             "currentDeviceConnected": "Connected",
-            "addEmail": "Add my email"
+            "addEmail": "Add my email",
+            "setupRecovery": "Set up recovery",
+            "refreshRecovery": "Refresh recovery",
+            "recoveryConfiguration": "Recovery"
         },
         "addEmail": {
             "title": "Add your email",
@@ -452,17 +455,63 @@
             "successful": "Recovery is successful, you can now <pLink>login</pLink>"
         },
         "recoverySetup": {
-            "currentGuardian": "Current guardian:",
-            "disclaimer": "Warning<br />- We do not store any information related to your wallet recovery.<br />- You are solely responsible for keeping your recovery file and password secure and private.\n                <br />- The recovery file can be generated now, but the actual recovery process will only be available one week after the file is created to prevent malicious usage.",
-            "download": "Download my recovery file",
-            "generating": "Generating recovery data",
+            "title": "Recovery setup",
             "setupNew": "Setup new recovery",
-            "setupOn": "Setup recovery on {{name}}",
-            "step1": "Encryption password",
-            "step2": "Generate recovery data",
-            "step3": "Download recovery file",
-            "step4": "Enable recovery on-chain",
-            "title": "Recovery setup"
+            "active": "Active",
+            "stepIndicator": "Step {{current}}/{{total}}",
+            "password": {
+                "title": "Protect your recovery",
+                "description": "Choose a password to encrypt your recovery backup, and optionally control when it can be used.",
+                "label": "Password",
+                "placeholder": "Enter a strong password",
+                "hint": "At least {{min}} characters.",
+                "toggle": "Toggle password visibility",
+                "startLabel": "Start date (optional)",
+                "startHelp": "Recovery can only be used after this date. Defaults to one week from now as a safety delay.",
+                "endLabel": "End date (optional)",
+                "endHelp": "Recovery stops working after this date. Defaults to and is capped at two years from now.",
+                "warning": "Choose a strong password. We can never reset or recover it — if you forget it, your backup is permanently useless.",
+                "continue": "Continue"
+            },
+            "sign": {
+                "title": "Authorize recovery",
+                "description": "Confirm to enable recovery on your wallet. This creates your recovery key and registers it on-chain.",
+                "authorise": "Authorize recovery",
+                "retry": "Try again",
+                "errorDescription": "Something went wrong while enabling recovery. You can try again.",
+                "error": "Recovery setup failed."
+            },
+            "backup": {
+                "title": "Save your backup",
+                "description": "This is your encrypted recovery backup. Keep your own copy somewhere safe, like a password manager.",
+                "reveal": "Reveal",
+                "hide": "Hide",
+                "copy": "Copy",
+                "copied": "Copied",
+                "warning": "Anyone who has both this backup code and your password can take full control of your wallet. Store them in separate places.",
+                "saveError": "We couldn't save your backup to our servers, but your own copy still works. You can retry later.",
+                "continue": "Done"
+            },
+            "success": {
+                "title": "Recovery is set up",
+                "description": "Your wallet recovery is now active and your encrypted backup is saved.",
+                "done": "Back to my profile"
+            },
+            "config": {
+                "title": "Recovery",
+                "description": "Your wallet recovery configuration.",
+                "statusLabel": "Status",
+                "active": "Active",
+                "startLabel": "Usable from",
+                "endLabel": "Expires",
+                "never": "Never",
+                "testTitle": "Test your password",
+                "testDescription": "Check that you still remember your recovery password. It never leaves this device.",
+                "testPlaceholder": "Enter your password",
+                "testButton": "Test password",
+                "testValid": "Password is correct.",
+                "testInvalid": "That password doesn't match your backup."
+            }
         },
         "register": {
             "button": {
