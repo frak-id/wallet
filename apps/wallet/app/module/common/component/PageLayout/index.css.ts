@@ -36,21 +36,36 @@ export const footer = style({
     padding: alias.spacing.m,
 });
 
-// Onboarding screens (those passing `fixedViewport`) keep the CTA off the
-// home indicator with a 32px floor that grows on devices with a larger inset.
+// Onboarding bottom block: 24px top, 32px (or safe-area) bottom; above the fade.
 export const footerFixed = style({
+    position: "relative",
+    zIndex: 1,
+    paddingTop: alias.spacing.l,
     paddingBottom: `max(${alias.spacing.xl}, env(safe-area-inset-bottom))`,
 });
 
-// Pin the page to main's content box height so the footer stays in view
-// instead of being pushed out by tall content. Negative-margin bleed from
-// `container` is compensated by adding 2 * spacing.m to the target height.
-export const containerFixed = style({
-    height: `calc(100% + 2 * ${alias.spacing.m})`,
-    minHeight: 0,
+// Reserve the footer's height (measured in PageLayout) so the last line clears it.
+export const contentFixed = style({
+    paddingBottom: "var(--footer-height, 0px)",
 });
 
-// Suppress scroll inside the page so children must shrink to fit.
-export const contentFixed = style({
-    overflow: "hidden",
+// Pin to the viewport bottom while content scrolls (sticks within AppShell's
+// `mainContent`, the single scroller). Negative margin overlaps the reserved
+// padding so content scrolls behind the footer.
+export const footerSticky = style({
+    position: "sticky",
+    bottom: 0,
+    marginTop: "calc(-1 * var(--footer-height, 0px))",
+});
+
+// White-wash fade so content dissolves (unreadable) behind the CTA. Avoids
+// backdrop-filter: it whitens over the white bg on iOS and Chromium drops it
+// under a mask — a wash renders identically on every engine.
+export const footerBlur = style({
+    position: "absolute",
+    inset: 0,
+    pointerEvents: "none",
+    zIndex: 0,
+    background:
+        "linear-gradient(to top, rgba(255, 255, 255, 0.98) 0%, rgba(255, 255, 255, 0.92) 45%, rgba(255, 255, 255, 0.6) 72%, rgba(255, 255, 255, 0) 100%)",
 });
