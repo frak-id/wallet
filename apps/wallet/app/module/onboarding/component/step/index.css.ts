@@ -4,7 +4,7 @@ import { style } from "@vanilla-extract/css";
 export const body = style({
     display: "flex",
     flexDirection: "column",
-    gap: alias.spacing.l,
+    gap: alias.spacing.m,
     flex: 1,
     minHeight: 0,
 });
