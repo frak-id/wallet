@@ -1,5 +1,5 @@
 import { style } from "@vanilla-extract/css";
-import { alias } from "../tokens.css";
+import { alias, zIndex } from "../tokens.css";
 
 /**
  * Fixed top-of-viewport container for stacked status banners. Owns the
@@ -12,7 +12,7 @@ export const stack = style({
     top: `calc(env(safe-area-inset-top) + ${alias.spacing.xs})`,
     left: alias.spacing.m,
     right: alias.spacing.m,
-    zIndex: 1000,
+    zIndex: zIndex.toast,
     display: "flex",
     flexDirection: "column",
     gap: alias.spacing.xs,
