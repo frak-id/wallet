@@ -7,9 +7,7 @@ type HeroContentProps = {
     /** Content rendered inside the image area */
     image: ReactNode;
     /** Image area layout variant */
-    imageVariant?: "cover" | "center";
-    /** When true, image bleeds to edges (no horizontal margin) */
-    bleed?: boolean;
+    imageVariant?: "cover" | "center" | "centerTall";
     title: ReactNode;
     description: ReactNode;
 };
@@ -17,15 +15,14 @@ type HeroContentProps = {
 export function HeroContent({
     image,
     imageVariant = "center",
-    bleed = false,
     title,
     description,
 }: HeroContentProps) {
     const imageClassName =
         imageVariant === "cover"
             ? styles.heroImage
-            : bleed
-              ? styles.heroImageCenterBleed
+            : imageVariant === "centerTall"
+              ? styles.heroImageTall
               : styles.heroImageCenter;
 
     return (

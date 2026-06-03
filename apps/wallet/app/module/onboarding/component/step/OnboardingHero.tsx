@@ -9,7 +9,7 @@ export type OnboardingHeroProps = {
     /** Image source */
     image: string;
     /** Image layout variant */
-    imageVariant?: "cover" | "center";
+    imageVariant?: "cover" | "center" | "centerTall";
     /** Optional max-width for the image (e.g. "223px") */
     imageMaxWidth?: string;
     /** Hint that this step owns the LCP — enables fetchpriority=high. */

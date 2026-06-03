@@ -74,7 +74,13 @@ export function OnboardingStep({
                 </>
             }
         >
-            <div className={stepStyles.body}>
+            <div
+                className={
+                    onBack
+                        ? `${stepStyles.body} ${stepStyles.bodyWithBack}`
+                        : stepStyles.body
+                }
+            >
                 <OnboardingHero {...hero} />
             </div>
         </PageLayout>
