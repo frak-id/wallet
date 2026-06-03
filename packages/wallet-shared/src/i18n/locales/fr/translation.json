@@ -484,9 +484,11 @@
     "error": {
         "webauthn": {
             "retry": "Réessayer",
+            "login": "Se connecter",
+            "dismiss": "Fermer",
             "notAllowed": {
-                "title": "Fenêtre fermée",
-                "message": "La fenêtre de passkey a été fermée ou a expiré. Veuillez réessayer."
+                "title": "Authentification annulée",
+                "message": "La fenêtre de passkey a été fermée ou a expiré avant la fin de l'opération."
             },
             "userOperationExecution": {
                 "title": "Échec de la transaction",

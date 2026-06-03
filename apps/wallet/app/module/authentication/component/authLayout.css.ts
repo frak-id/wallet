@@ -8,10 +8,6 @@ import { style } from "@vanilla-extract/css";
  * to the top so the QR code sits just under the page top.
  */
 
-export const errorText = style({
-    color: vars.text.error,
-});
-
 export const heroIcon = style({
     width: "48px",
     height: "48px",

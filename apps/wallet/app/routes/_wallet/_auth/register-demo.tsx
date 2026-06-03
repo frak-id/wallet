@@ -2,7 +2,11 @@ import { Box } from "@frak-labs/design-system/components/Box";
 import { Button } from "@frak-labs/design-system/components/Button";
 import { LogoFrak } from "@frak-labs/design-system/icons";
 import type { Session } from "@frak-labs/wallet-shared";
-import { authKey, HandleErrors, sessionStore } from "@frak-labs/wallet-shared";
+import {
+    authKey,
+    sessionStore,
+    useWebauthnErrorToast,
+} from "@frak-labs/wallet-shared";
 import { type UseMutationOptions, useMutation } from "@tanstack/react-query";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useMemo } from "react";
@@ -25,6 +29,8 @@ function RegisterDemo() {
         onSuccess: () => navigate({ to: "/wallet", replace: true }),
     });
 
+    useWebauthnErrorToast(error, { onRetry: () => register() });
+
     const buttonLabel = useMemo(() => {
         if (error) return t("wallet.registerDemo.button.error");
         if (isRegisterInProgress)
@@ -36,23 +42,15 @@ function RegisterDemo() {
         <PageLayout
             back={<Back onClick={() => navigate({ to: "/login" })} />}
             footer={
-                <>
-                    {error && (
-                        <HandleErrors
-                            error={error}
-                            className={layout.errorText}
-                        />
-                    )}
-                    <Box className={layout.actions}>
-                        <Button
-                            variant="primary"
-                            loading={isRegisterInProgress}
-                            onClick={() => register()}
-                        >
-                            {buttonLabel}
-                        </Button>
-                    </Box>
-                </>
+                <Box className={layout.actions}>
+                    <Button
+                        variant="primary"
+                        loading={isRegisterInProgress}
+                        onClick={() => register()}
+                    >
+                        {buttonLabel}
+                    </Button>
+                </Box>
             }
         >
             <Box className={layout.content}>

@@ -19,9 +19,6 @@ vi.mock("@frak-labs/wallet-shared", async () => {
             isError: false,
             error: null,
         }),
-        HandleErrors: ({ error }: { error: Error }) => (
-            <span data-testid="error">{error.message}</span>
-        ),
     };
 });
 

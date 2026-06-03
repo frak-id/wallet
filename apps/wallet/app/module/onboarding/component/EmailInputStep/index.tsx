@@ -4,7 +4,7 @@ import { Input } from "@frak-labs/design-system/components/Input";
 import { Stack } from "@frak-labs/design-system/components/Stack";
 import { Text } from "@frak-labs/design-system/components/Text";
 import { CloseIcon } from "@frak-labs/design-system/icons";
-import { HandleErrors } from "@frak-labs/wallet-shared";
+import { useWebauthnErrorToast } from "@frak-labs/wallet-shared";
 import { type ChangeEvent, useCallback, useState } from "react";
 import { useTranslation } from "react-i18next";
 import type { Address } from "viem";
@@ -116,6 +116,11 @@ export function EmailInputStep({
         });
     };
 
+    useWebauthnErrorToast(showAlreadyUsed ? loginError : null, {
+        operation: "login",
+        onRetry: handleLoginExisting,
+    });
+
     return (
         <PageLayout
             fixedViewport
@@ -215,10 +220,6 @@ export function EmailInputStep({
                             {t("onboarding.email.alreadyUsed.login")}
                         </Button>
                     </Box>
-                )}
-
-                {showAlreadyUsed && loginError && (
-                    <HandleErrors error={loginError} operation="login" />
                 )}
 
                 {!showAlreadyUsed && checkError && (

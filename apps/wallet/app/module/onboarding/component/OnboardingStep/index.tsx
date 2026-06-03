@@ -1,5 +1,5 @@
 import { Button } from "@frak-labs/design-system/components/Button";
-import { HandleErrors } from "@frak-labs/wallet-shared";
+import { useWebauthnErrorToast } from "@frak-labs/wallet-shared";
 import { useTranslation } from "react-i18next";
 import { Back } from "@/module/common/component/Back";
 import { PageLayout } from "@/module/common/component/PageLayout";
@@ -43,15 +43,17 @@ export function OnboardingStep({
 }: OnboardingStepProps) {
     const { t } = useTranslation();
 
+    useWebauthnErrorToast(loginError, {
+        operation: "login",
+        onRetry: onLoginClick,
+    });
+
     return (
         <PageLayout
             fixedViewport
             back={onBack ? <Back onClick={() => onBack()} /> : undefined}
             footer={
                 <>
-                    {loginError && (
-                        <HandleErrors error={loginError} operation="login" />
-                    )}
                     <Button onClick={() => onContinue()}>{buttonLabel}</Button>
                     {loginLabel && onLoginClick && (
                         <Button
