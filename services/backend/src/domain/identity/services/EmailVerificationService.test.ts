@@ -30,8 +30,7 @@ const createEmailVerificationRepository = () =>
 const createIdentityRepository = () =>
     ({
         findEmailStatusForGroup: vi.fn(),
-        addNode: vi.fn(),
-        markEmailVerified: vi.fn(),
+        attachVerifiedEmail: vi.fn(async () => true),
         unlinkOtherActiveEmails: vi.fn(),
     }) as unknown as IdentityRepository &
         Record<string, ReturnType<typeof vi.fn>>;
@@ -85,11 +84,6 @@ describe("EmailVerificationService", () => {
         });
 
         it("throttles a resend inside the 30s debounce window", async () => {
-            identityRepository.findEmailStatusForGroup.mockResolvedValue({
-                email: "user@test.com",
-                verifiedAt: null,
-                pendingEmail: null,
-            });
             emailVerificationRepository.findByGroup.mockResolvedValue({
                 lastSentAt: new Date(),
             });
@@ -105,7 +99,7 @@ describe("EmailVerificationService", () => {
             expect(emailSender.send).not.toHaveBeenCalled();
         });
 
-        it("adds a pending node when rotating to a new address", async () => {
+        it("sends a code to a new address without attaching it (rotation)", async () => {
             emailVerificationRepository.findByGroup.mockResolvedValue(null);
 
             const result = await service.sendCode({
@@ -114,13 +108,37 @@ describe("EmailVerificationService", () => {
             });
 
             expect(result).toEqual({ status: "sent" });
-            expect(identityRepository.addNode).toHaveBeenCalledWith({
-                groupId: GROUP_ID,
-                type: "email",
-                value: "new@test.com",
-            });
+            expect(emailVerificationRepository.upsert).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    groupId: GROUP_ID,
+                    email: "new@test.com",
+                    code: expect.stringMatching(/^\d{6}$/),
+                })
+            );
             expect(emailSender.send).toHaveBeenCalledWith(
                 expect.objectContaining({ to: "new@test.com" })
+            );
+            expect(
+                identityRepository.attachVerifiedEmail
+            ).not.toHaveBeenCalled();
+            expect(
+                identityRepository.findEmailStatusForGroup
+            ).not.toHaveBeenCalled();
+        });
+
+        it("resends to the in-flight challenge target when no address is given", async () => {
+            emailVerificationRepository.findByGroup.mockResolvedValue({
+                email: "rotating@test.com",
+                lastSentAt: new Date(Date.now() - 60_000),
+                consumedAt: null,
+                expiresAt: new Date(Date.now() + 60_000),
+            });
+
+            const result = await service.sendCode({ groupId: GROUP_ID });
+
+            expect(result).toEqual({ status: "sent" });
+            expect(emailSender.send).toHaveBeenCalledWith(
+                expect.objectContaining({ to: "rotating@test.com" })
             );
             expect(
                 identityRepository.findEmailStatusForGroup
@@ -128,6 +146,7 @@ describe("EmailVerificationService", () => {
         });
 
         it("throws when there is no email to verify", async () => {
+            emailVerificationRepository.findByGroup.mockResolvedValue(null);
             identityRepository.findEmailStatusForGroup.mockResolvedValue({
                 email: null,
                 verifiedAt: null,
@@ -202,10 +221,12 @@ describe("EmailVerificationService", () => {
             expect(
                 emailVerificationRepository.incrementAttempts
             ).toHaveBeenCalledWith(GROUP_ID);
-            expect(identityRepository.markEmailVerified).not.toHaveBeenCalled();
+            expect(
+                identityRepository.attachVerifiedEmail
+            ).not.toHaveBeenCalled();
         });
 
-        it("verifies, unlinks others and consumes on a correct code", async () => {
+        it("attaches the email, unlinks others and consumes on a correct code", async () => {
             emailVerificationRepository.findByGroup.mockResolvedValue(
                 validRow()
             );
@@ -220,13 +241,33 @@ describe("EmailVerificationService", () => {
                 expect(result.email).toBe("user@test.com");
                 expect(typeof result.verifiedAt).toBe("string");
             }
-            expect(identityRepository.markEmailVerified).toHaveBeenCalledWith(
+            expect(identityRepository.attachVerifiedEmail).toHaveBeenCalledWith(
                 GROUP_ID,
                 "user@test.com"
             );
             expect(
                 identityRepository.unlinkOtherActiveEmails
             ).toHaveBeenCalledWith(GROUP_ID, "user@test.com");
+            expect(emailVerificationRepository.consume).toHaveBeenCalledWith(
+                GROUP_ID
+            );
+        });
+
+        it("skips the unlink but still consumes when the address is owned by another group", async () => {
+            emailVerificationRepository.findByGroup.mockResolvedValue(
+                validRow()
+            );
+            identityRepository.attachVerifiedEmail.mockResolvedValue(false);
+
+            const result = await service.verifyCode({
+                groupId: GROUP_ID,
+                code: "123456",
+            });
+
+            expect(result.status).toBe("verified");
+            expect(
+                identityRepository.unlinkOtherActiveEmails
+            ).not.toHaveBeenCalled();
             expect(emailVerificationRepository.consume).toHaveBeenCalledWith(
                 GROUP_ID
             );

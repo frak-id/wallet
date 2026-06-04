@@ -201,21 +201,51 @@ export class IdentityRepository {
         };
     }
 
-    async markEmailVerified(groupId: string, email: string): Promise<void> {
-        await db
+    /**
+     * Make `email` the group's verified, active email, reactivating a prior
+     * (possibly unlinked) node when one exists so the soft-unlink audit trail
+     * survives. Returns `false` without mutating anything when the address is
+     * already owned by another group.
+     */
+    async attachVerifiedEmail(
+        groupId: string,
+        email: string
+    ): Promise<boolean> {
+        const normalizedValue = this.normalizeValue("email", email);
+        const now = new Date();
+
+        const reactivated = await db
             .update(identityNodesTable)
-            .set({ verifiedAt: new Date() })
+            .set({ verifiedAt: now, unlinkedAt: null })
             .where(
                 and(
                     eq(identityNodesTable.groupId, groupId),
                     eq(identityNodesTable.identityType, "email"),
-                    eq(
-                        identityNodesTable.identityValue,
-                        this.normalizeValue("email", email)
-                    ),
-                    isNull(identityNodesTable.unlinkedAt)
+                    eq(identityNodesTable.identityValue, normalizedValue)
                 )
-            );
+            )
+            .returning({ id: identityNodesTable.id });
+
+        if (reactivated.length === 0) {
+            const inserted = await db
+                .insert(identityNodesTable)
+                .values({
+                    groupId,
+                    identityType: "email",
+                    identityValue: normalizedValue,
+                    verifiedAt: now,
+                })
+                .onConflictDoNothing()
+                .returning({ id: identityNodesTable.id });
+            if (inserted.length === 0) {
+                return false;
+            }
+        }
+
+        this.identityGroupIdCache.delete(
+            this.buildIdentityCacheKey("email", normalizedValue)
+        );
+        return true;
     }
 
     async unlinkOtherActiveEmails(

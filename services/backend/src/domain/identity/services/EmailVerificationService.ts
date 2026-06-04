@@ -2,6 +2,7 @@ import { randomInt } from "node:crypto";
 import { log } from "@backend-infrastructure";
 import { HttpError } from "@backend-utils";
 import { buildVerificationEmail } from "../../../infrastructure/integrations/email";
+import type { EmailVerificationCodeSelect } from "../db/schema";
 import type { EmailVerificationRepository } from "../repositories/EmailVerificationRepository";
 import type { IdentityRepository } from "../repositories/IdentityRepository";
 import type { EmailSender } from "./EmailSender";
@@ -34,8 +35,8 @@ export class EmailVerificationService {
         groupId: string;
         email?: string;
     }): Promise<SendCodeResult> {
-        const target = await this.resolveTarget(groupId, email);
-
+        // Debounce first — before any side effect — so a throttled resend never
+        // touches the identity graph or the challenge row.
         const existing =
             await this.emailVerificationRepository.findByGroup(groupId);
         if (existing) {
@@ -49,6 +50,8 @@ export class EmailVerificationService {
                 };
             }
         }
+
+        const target = await this.resolveTarget({ groupId, email, existing });
 
         const code = randomInt(0, 1_000_000).toString().padStart(6, "0");
         await this.emailVerificationRepository.upsert({
@@ -85,11 +88,25 @@ export class EmailVerificationService {
             return { status: "invalid" };
         }
 
-        await this.identityRepository.markEmailVerified(groupId, row.email);
-        await this.identityRepository.unlinkOtherActiveEmails(
+        // Attach the now-proven address as the group's verified email. Only
+        // retire the previous active email(s) once the attach succeeds, so a
+        // lost cross-group race (the address verified elsewhere between send
+        // and verify) can never wipe the user's current email.
+        const attached = await this.identityRepository.attachVerifiedEmail(
             groupId,
             row.email
         );
+        if (attached) {
+            await this.identityRepository.unlinkOtherActiveEmails(
+                groupId,
+                row.email
+            );
+        } else {
+            log.warn(
+                { groupId },
+                "Email verified but not attached (already owned by another group)"
+            );
+        }
         await this.emailVerificationRepository.consume(groupId);
 
         log.info({ groupId }, "Email verified");
@@ -100,26 +117,39 @@ export class EmailVerificationService {
         };
     }
 
-    private async resolveTarget(
-        groupId: string,
-        email?: string
-    ): Promise<string> {
+    private async resolveTarget({
+        groupId,
+        email,
+        existing,
+    }: {
+        groupId: string;
+        email?: string;
+        existing: EmailVerificationCodeSelect | null;
+    }): Promise<string> {
+        // Rotation: a new address is only proven once the code is entered, so
+        // it is NOT attached as an identity node here — it lives on the
+        // challenge row until `verifyCode` attaches it. Keeps unverified
+        // addresses out of the identity graph (no squatting, no orphan nodes).
         if (email) {
-            const target = email.trim().toLowerCase();
-            await this.identityRepository.addNode({
-                groupId,
-                type: "email",
-                value: target,
-            });
-            return target;
+            return email.trim().toLowerCase();
+        }
+
+        // Resend with no explicit address: prefer an in-flight challenge's
+        // target (a rotation whose code hasn't been entered yet lives only on
+        // the challenge row), otherwise fall back to the group's current email.
+        if (
+            existing &&
+            !existing.consumedAt &&
+            existing.expiresAt.getTime() > Date.now()
+        ) {
+            return existing.email;
         }
 
         const status =
             await this.identityRepository.findEmailStatusForGroup(groupId);
-        const resolved = status.pendingEmail ?? status.email;
-        if (!resolved) {
+        if (!status.email) {
             throw HttpError.notFound("NO_EMAIL", "No email to verify");
         }
-        return resolved;
+        return status.email;
     }
 }
