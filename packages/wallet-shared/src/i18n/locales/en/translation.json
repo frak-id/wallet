@@ -665,9 +665,11 @@
     "error": {
         "webauthn": {
             "retry": "Try again",
+            "login": "Log in",
+            "dismiss": "Dismiss",
             "notAllowed": {
-                "title": "Prompt closed",
-                "message": "The passkey prompt was closed or timed out. Please try again."
+                "title": "Authentication cancelled",
+                "message": "The passkey prompt was closed or timed out before the operation completed."
             },
             "userOperationExecution": {
                 "title": "Transaction failed",

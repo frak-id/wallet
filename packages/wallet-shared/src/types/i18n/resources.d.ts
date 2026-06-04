@@ -217,10 +217,12 @@ interface Resources {
                     message: "This device already has a passkey for your account. Try logging in instead.";
                     title: "Already have a passkey";
                 };
+                dismiss: "Dismiss";
                 generic: {
                     message: "An error occurred. Please try again.";
                     title: "Something went wrong";
                 };
+                login: "Log in";
                 noCredential: {
                     message: "No passkey was found on this device. Create one, or sign in on the device where you registered.";
                     title: "No passkey found";
@@ -230,8 +232,8 @@ interface Resources {
                     title: "Screen lock required";
                 };
                 notAllowed: {
-                    message: "The passkey prompt was closed or timed out. Please try again.";
-                    title: "Prompt closed";
+                    message: "The passkey prompt was closed or timed out before the operation completed.";
+                    title: "Authentication cancelled";
                 };
                 retry: "Try again";
                 syncFailed: {

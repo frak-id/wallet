@@ -29,7 +29,6 @@ vi.mock("@frak-labs/wallet-shared", async (importOriginal) => {
         await importOriginal<typeof import("@frak-labs/wallet-shared")>();
     return {
         ...original,
-        HandleErrors: () => null,
     };
 });
 

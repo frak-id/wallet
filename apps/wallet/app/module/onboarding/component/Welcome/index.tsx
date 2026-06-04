@@ -43,12 +43,15 @@ export function Welcome({ onContinue }: WelcomeProps) {
         >
             <div className={stepStyles.body}>
                 <HeroContent
-                    bleed
+                    imageVariant="centerTall"
                     image={
                         <img
                             src={welcomeImg}
                             alt=""
                             className={stepStyles.heroImageCenter}
+                            // 2x asset → 1x width 786/2 = 393px; bleeds past the
+                            // 375px frame (overflow-clipped) to fill the screen.
+                            style={{ maxWidth: "393px" }}
                         />
                     }
                     title={t("onboarding.welcome.title")}

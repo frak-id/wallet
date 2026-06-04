@@ -1,4 +1,5 @@
 import { Button } from "@frak-labs/design-system/components/Button";
+import { useWebauthnErrorToast } from "@frak-labs/wallet-shared";
 import { useTranslation } from "react-i18next";
 import { EmailFlowResultScreen } from "@/module/common/component/EmailFlowResultScreen";
 
@@ -7,6 +8,8 @@ type EmailAlreadyUsedStepProps = {
     onLogin: () => void;
     onBack: () => void;
     isLoginLoading?: boolean;
+    /** Error from the parent login mutation, surfaced as a top toast. */
+    loginError?: Error | null;
 };
 
 export function EmailAlreadyUsedStep({
@@ -14,8 +17,14 @@ export function EmailAlreadyUsedStep({
     onLogin,
     onBack,
     isLoginLoading = false,
+    loginError,
 }: EmailAlreadyUsedStepProps) {
     const { t } = useTranslation();
+
+    useWebauthnErrorToast(loginError, {
+        operation: "login",
+        onRetry: onLogin,
+    });
     return (
         <EmailFlowResultScreen
             title={t("onboarding.email.alreadyUsed.title")}
