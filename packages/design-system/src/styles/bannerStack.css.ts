@@ -1,5 +1,5 @@
 import { style } from "@vanilla-extract/css";
-import { alias, zIndex } from "../tokens.css";
+import { alias, safeArea, zIndex } from "../tokens.css";
 
 /**
  * Stacked top banners, absolutely positioned within the app shell so they track
@@ -8,7 +8,7 @@ import { alias, zIndex } from "../tokens.css";
  */
 export const stack = style({
     position: "absolute",
-    top: `calc(env(safe-area-inset-top) + ${alias.spacing.xs})`,
+    top: `calc(${safeArea.top} + ${alias.spacing.xs})`,
     left: alias.spacing.m,
     right: alias.spacing.m,
     zIndex: zIndex.toast,
