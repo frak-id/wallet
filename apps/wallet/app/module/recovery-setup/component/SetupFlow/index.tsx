@@ -1,6 +1,5 @@
-import { Text } from "@frak-labs/design-system/components/Text";
-import { type ReactNode, useState } from "react";
-import { useTranslation } from "react-i18next";
+import { useState } from "react";
+import { StepIndicator } from "@/module/common/component/StepIndicator";
 import { BackupStep } from "./BackupStep";
 import { PasswordStep } from "./PasswordStep";
 import { SignStep } from "./SignStep";
@@ -44,10 +43,16 @@ export function RecoverySetupFlow({
     onAbort,
     onCompleted,
 }: RecoverySetupFlowProps) {
-    const { t } = useTranslation();
     const [step, setStep] = useState<Step>({ kind: "password" });
 
-    const stepIndicator = renderStepIndicator(t, step.kind);
+    const stepIndicator =
+        step.kind === "success" ? null : (
+            <StepIndicator
+                current={RECOVERY_STEP_NUMBER[step.kind]}
+                total={RECOVERY_STEP_TOTAL}
+                translationKey="wallet.recoverySetup.stepIndicator"
+            />
+        );
 
     if (step.kind === "password") {
         return (
@@ -87,19 +92,4 @@ export function RecoverySetupFlow({
     }
 
     return <SuccessStep mode={mode} onDone={onCompleted} />;
-}
-
-function renderStepIndicator(
-    t: ReturnType<typeof useTranslation>["t"],
-    kind: Step["kind"]
-): ReactNode {
-    if (kind === "success") return null;
-    return (
-        <Text variant="bodySmall" color="secondary">
-            {t("wallet.recoverySetup.stepIndicator", {
-                current: RECOVERY_STEP_NUMBER[kind],
-                total: RECOVERY_STEP_TOTAL,
-            })}
-        </Text>
-    );
 }

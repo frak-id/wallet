@@ -94,4 +94,10 @@ describe("recoveryBlob", () => {
             })
         ).toBeNull();
     });
+
+    test("returns null for malformed base64 instead of throwing", async () => {
+        expect(
+            await decodeRecoveryBlob({ blob: "not-valid-base64-!!!", password })
+        ).toBeNull();
+    });
 });

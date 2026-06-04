@@ -1,8 +1,8 @@
 import { Button } from "@frak-labs/design-system/components/Button";
-import { Text } from "@frak-labs/design-system/components/Text";
-import { type ReactNode, useState } from "react";
+import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { EmailFlowResultScreen } from "@/module/common/component/EmailFlowResultScreen";
+import { StepIndicator } from "@/module/common/component/StepIndicator";
 import { useRecoverySetupStatus } from "@/module/recovery-setup/hook/useRecoverySetupStatus";
 import { ConfirmStep } from "./ConfirmStep";
 import { DatesStep } from "./DatesStep";
@@ -49,7 +49,14 @@ export function RefreshDatesFlow({
     // present; guard defensively in case the status query is still settling.
     const guardianAddress = recoverySetupStatus?.guardianAddress;
 
-    const stepIndicator = renderStepIndicator(t, step.kind);
+    const stepIndicator =
+        step.kind === "success" ? null : (
+            <StepIndicator
+                current={STEP_NUMBER[step.kind]}
+                total={STEP_TOTAL}
+                translationKey="wallet.recoverySetup.stepIndicator"
+            />
+        );
 
     if (step.kind === "password") {
         return (
@@ -103,20 +110,5 @@ export function RefreshDatesFlow({
                 {t("wallet.recoverySetup.dates.success.done")}
             </Button>
         </EmailFlowResultScreen>
-    );
-}
-
-function renderStepIndicator(
-    t: ReturnType<typeof useTranslation>["t"],
-    kind: Step["kind"]
-): ReactNode {
-    if (kind === "success") return null;
-    return (
-        <Text variant="bodySmall" color="secondary">
-            {t("wallet.recoverySetup.stepIndicator", {
-                current: STEP_NUMBER[kind],
-                total: STEP_TOTAL,
-            })}
-        </Text>
     );
 }

@@ -3,10 +3,11 @@ import { Button } from "@frak-labs/design-system/components/Button";
 import { Card } from "@frak-labs/design-system/components/Card";
 import { Stack } from "@frak-labs/design-system/components/Stack";
 import { Text } from "@frak-labs/design-system/components/Text";
-import { useId, useMemo, useState } from "react";
+import { useId, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { FlowStepScreen } from "@/module/common/component/FlowStepScreen";
 import { PasswordInput } from "@/module/common/component/PasswordInput";
+import { useDateFormatter } from "@/module/common/hook/useDateFormatter";
 import { SummaryRow } from "@/module/recovery-setup/component/SummaryRow";
 import { useRecoverySetupStatus } from "@/module/recovery-setup/hook/useRecoverySetupStatus";
 import { useTestRecoveryPassword } from "@/module/recovery-setup/hook/useTestRecoveryPassword";
@@ -25,21 +26,13 @@ export function RecoveryConfiguration({
     onUpdateDates,
     onReplaceKey,
 }: RecoveryConfigurationProps) {
-    const { t, i18n } = useTranslation();
+    const { t } = useTranslation();
     const formId = useId();
     const { recoverySetupStatus } = useRecoverySetupStatus();
     const { testPasswordAsync, isPending } = useTestRecoveryPassword();
     const [password, setPassword] = useState("");
     const [result, setResult] = useState<"valid" | "invalid" | null>(null);
-
-    const formatter = useMemo(
-        () =>
-            new Intl.DateTimeFormat(
-                i18n.language?.startsWith("fr") ? "fr-FR" : "en-US",
-                { dateStyle: "long" }
-            ),
-        [i18n.language]
-    );
+    const formatter = useDateFormatter();
 
     const handleTest = async () => {
         setResult(null);

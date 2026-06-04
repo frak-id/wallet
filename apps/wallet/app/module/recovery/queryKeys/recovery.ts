@@ -9,12 +9,19 @@ export namespace recoveryKey {
      */
     const base = "recovery" as const;
 
+    export const all = [base] as const;
+
     /**
-     * Query key for the on-chain recovery option of a wallet being recovered.
+     * Query key for the on-chain recovery option of a wallet (the connected
+     * wallet for setup status, or a wallet being recovered).
      */
     export const currentOption = {
-        full: (params: { walletAddress: Address }) =>
-            [base, "current-option", params.walletAddress] as const,
+        full: (params: { walletAddress?: Address }) =>
+            [
+                base,
+                "current-option",
+                params.walletAddress ?? "no-address",
+            ] as const,
     };
 
     /**

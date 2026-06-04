@@ -5,6 +5,7 @@ import {
 } from "@tanstack/react-query";
 import type { Hex } from "viem";
 import { useConnection, useSendTransaction } from "wagmi";
+import { recoveryKey } from "@/module/recovery/queryKeys/recovery";
 import { recoverySetupKey } from "@/module/recovery-setup/queryKeys/recovery-setup";
 
 type MutationParams = {
@@ -35,9 +36,10 @@ export function useSetupRecovery(
                 data: setupTxData,
             });
 
-            // Invalidate the recovery options for the given chain
             await client.invalidateQueries({
-                queryKey: recoverySetupKey.status(address),
+                queryKey: recoveryKey.currentOption.full({
+                    walletAddress: address,
+                }),
             });
 
             return txHash;

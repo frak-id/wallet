@@ -9,6 +9,7 @@ import {
 import {
     dateToValidAfter,
     dateToValidUntil,
+    isValidDateRange,
 } from "@/module/recovery-setup/utils/recoveryDates";
 import * as styles from "../SetupFlow/styles.css";
 
@@ -25,15 +26,19 @@ export function DatesStep({ onSubmit, onBack, stepIndicator }: DatesStepProps) {
     const [startDate, setStartDate] = useState(initial.start);
     const [endDate, setEndDate] = useState(initial.end);
 
+    const validAfter = useMemo(
+        () => dateToValidAfter(startDate ? new Date(startDate) : undefined),
+        [startDate]
+    );
+    const validUntil = useMemo(
+        () => dateToValidUntil(endDate ? new Date(endDate) : undefined),
+        [endDate]
+    );
+    const invalidRange = !isValidDateRange(validAfter, validUntil);
+
     const handleSubmit = () => {
-        onSubmit({
-            validAfter: dateToValidAfter(
-                startDate ? new Date(startDate) : undefined
-            ),
-            validUntil: dateToValidUntil(
-                endDate ? new Date(endDate) : undefined
-            ),
-        });
+        if (invalidRange) return;
+        onSubmit({ validAfter, validUntil });
     };
 
     return (
@@ -50,6 +55,7 @@ export function DatesStep({ onSubmit, onBack, stepIndicator }: DatesStepProps) {
                     variant="primary"
                     size="large"
                     width="full"
+                    disabled={invalidRange}
                 >
                     {t("wallet.recoverySetup.dates.dates.continue")}
                 </Button>
@@ -68,6 +74,11 @@ export function DatesStep({ onSubmit, onBack, stepIndicator }: DatesStepProps) {
                     endDate={endDate}
                     onStartChange={setStartDate}
                     onEndChange={setEndDate}
+                    errorMessage={
+                        invalidRange
+                            ? t("wallet.recoverySetup.password.dateRangeError")
+                            : undefined
+                    }
                 />
             </form>
         </FlowStepScreen>

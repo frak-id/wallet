@@ -1,27 +1,13 @@
-import { useQuery } from "@tanstack/react-query";
 import { useConnection } from "wagmi";
-import { getCurrentRecoveryOption } from "@/module/recovery/action/get";
-import { recoverySetupKey } from "@/module/recovery-setup/queryKeys/recovery-setup";
+import { useCurrentRecoveryOption } from "@/module/recovery/hook/useCurrentRecoveryOption";
 
 /**
- * Fetch the recovery status for the given chain
+ * On-chain recovery status for the connected wallet — a thin wrapper over the
+ * shared `useCurrentRecoveryOption` reader.
  */
 export function useRecoverySetupStatus() {
     const { address } = useConnection();
-
-    const { data, ...queryStuff } = useQuery({
-        queryKey: recoverySetupKey.status(address),
-        gcTime: 0,
-        enabled: !!address,
-        queryFn: async () => {
-            if (!address) return null;
-            // Fetch the recovery options
-            const options = await getCurrentRecoveryOption({
-                wallet: address,
-            });
-            return options ?? null;
-        },
-    });
+    const { data, ...queryStuff } = useCurrentRecoveryOption(address);
     return {
         ...queryStuff,
         recoverySetupStatus: data,

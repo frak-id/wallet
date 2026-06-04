@@ -1,4 +1,3 @@
-import { kernelAddresses } from "@frak-labs/app-essentials";
 import type {
     BaseFrakSmartAccount,
     currentViemClient,

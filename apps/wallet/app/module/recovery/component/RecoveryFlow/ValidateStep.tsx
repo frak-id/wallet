@@ -1,15 +1,14 @@
 import { Button } from "@frak-labs/design-system/components/Button";
 import { Stack } from "@frak-labs/design-system/components/Stack";
-import { useQuery } from "@tanstack/react-query";
 import { type ReactNode, useCallback } from "react";
 import { useTranslation } from "react-i18next";
 import type { Address, LocalAccount } from "viem";
 import { EmailFlowResultScreen } from "@/module/common/component/EmailFlowResultScreen";
 import { FlowStepScreen } from "@/module/common/component/FlowStepScreen";
 import { WarningCard } from "@/module/common/component/WarningCard";
-import { getCurrentRecoveryOption } from "@/module/recovery/action/get";
+import { useDateFormatter } from "@/module/common/hook/useDateFormatter";
+import { useCurrentRecoveryOption } from "@/module/recovery/hook/useCurrentRecoveryOption";
 import { useRunRecovery } from "@/module/recovery/hook/useRunRecovery";
-import { recoveryKey } from "@/module/recovery/queryKeys/recovery";
 import {
     evaluateRecoveryReadiness,
     type RecoveryReadiness,
@@ -33,11 +32,8 @@ export function ValidateStep({
     stepIndicator,
 }: ValidateStepProps) {
     const { t } = useTranslation();
-    const { data: recovery, isLoading } = useQuery({
-        queryKey: recoveryKey.currentOption.full({ walletAddress }),
-        queryFn: () => getCurrentRecoveryOption({ wallet: walletAddress }),
-        gcTime: 0,
-    });
+    const { data: recovery, isLoading } =
+        useCurrentRecoveryOption(walletAddress);
 
     if (isLoading || recovery === undefined) {
         return (
@@ -95,6 +91,7 @@ function ReadyScreen({
     stepIndicator?: ReactNode;
 }) {
     const { t } = useTranslation();
+    const formatter = useDateFormatter();
     const { runRecoveryAsync, isPending } = useRunRecovery();
     const { error, authorize } = useRecoveryAuthorization();
 
@@ -147,7 +144,7 @@ function ReadyScreen({
                     label={t("wallet.recoveryUsage.validate.expiresLabel")}
                     value={
                         validUntil
-                            ? formatDate(validUntil)
+                            ? formatter.format(new Date(validUntil * 1000))
                             : t("wallet.recoveryUsage.validate.never")
                     }
                 />
@@ -172,11 +169,12 @@ function BlockedScreen({
     stepIndicator?: ReactNode;
 }) {
     const { t } = useTranslation();
+    const formatter = useDateFormatter();
     const date =
         readiness.kind === "tooEarly"
-            ? formatDate(readiness.validAfter)
+            ? formatter.format(new Date(readiness.validAfter * 1000))
             : readiness.kind === "expired"
-              ? formatDate(readiness.validUntil)
+              ? formatter.format(new Date(readiness.validUntil * 1000))
               : "";
 
     return (
@@ -204,8 +202,4 @@ function BlockedScreen({
 
 function shortenAddress(address: Address): string {
     return `${address.slice(0, 6)}…${address.slice(-4)}`;
-}
-
-function formatDate(unixSeconds: number): string {
-    return new Date(unixSeconds * 1000).toLocaleDateString();
 }

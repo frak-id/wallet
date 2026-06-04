@@ -1,3 +1,5 @@
+import { Box } from "@frak-labs/design-system/components/Box";
+import { Spinner } from "@frak-labs/design-system/components/Spinner";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 import { RecoveryConfiguration } from "@/module/recovery-setup/component/Configuration";
@@ -24,7 +26,11 @@ function ProfileRecovery() {
     const backToConfig = () => setView("config");
 
     if (isChainLoading || isBackendLoading) {
-        return null;
+        return (
+            <Box display="flex" justifyContent="center" padding="l">
+                <Spinner />
+            </Box>
+        );
     }
 
     // "Configured" means recovery is enabled on-chain AND the encrypted blob is

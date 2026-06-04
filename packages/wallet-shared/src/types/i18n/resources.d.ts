@@ -1105,6 +1105,7 @@ export default interface Resources {
                 };
                 password: {
                     continue: "Continue";
+                    dateRangeError: "The start date must be before the end date.";
                     description: "Choose a password to encrypt your recovery backup, and optionally control when it can be used.";
                     endHelp: "Recovery stops working after this date. Defaults to and is capped at two years from now.";
                     endLabel: "End date (optional)";

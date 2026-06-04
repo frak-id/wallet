@@ -116,7 +116,12 @@ export async function decodeRecoveryBlob({
     blob: string;
     password: string;
 }): Promise<RecoveryBlobContent | null> {
-    const envelope = new Uint8Array(base64URLStringToBuffer(blob));
+    // atob throws on malformed input — a corrupt blob is a failed decode, not a crash.
+    const [, buffer] = tryit(() => base64URLStringToBuffer(blob))();
+    if (!buffer) {
+        return null;
+    }
+    const envelope = new Uint8Array(buffer);
     if (envelope[0] !== BLOB_VERSION) {
         return null;
     }

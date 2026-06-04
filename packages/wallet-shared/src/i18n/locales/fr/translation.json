@@ -499,6 +499,7 @@
                 "startHelp": "La récupération ne pourra être utilisée qu'après cette date. Par défaut, une semaine à partir de maintenant, par sécurité.",
                 "endLabel": "Date de fin (facultatif)",
                 "endHelp": "La récupération cesse de fonctionner après cette date. Par défaut et au maximum deux ans à partir de maintenant.",
+                "dateRangeError": "La date de début doit précéder la date de fin.",
                 "warning": "Choisissez un mot de passe robuste. Nous ne pouvons ni le réinitialiser ni le récupérer — si vous l'oubliez, votre sauvegarde devient définitivement inutilisable.",
                 "continue": "Continuer"
             },

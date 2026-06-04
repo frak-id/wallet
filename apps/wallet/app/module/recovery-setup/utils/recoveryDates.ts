@@ -14,7 +14,7 @@ function nowSeconds(): number {
  * week in production so a stolen backup can't be used immediately. No delay in
  * dev to keep local testing fast.
  */
-export function defaultValidAfter(): number {
+function defaultValidAfter(): number {
     return isRunningInProd ? nowSeconds() + ONE_WEEK_SECONDS : nowSeconds();
 }
 
@@ -36,6 +36,22 @@ export function dateToValidUntil(date: Date | undefined): number {
         return max;
     }
     return Math.min(Math.floor(date.getTime() / 1000), max);
+}
+
+/**
+ * The on-chain validity window is usable only when it opens strictly before it
+ * closes. `validUntil === 0` means "never expires" and is always valid. Guards
+ * against a start date set after the end date, which would configure recovery
+ * on-chain in a permanently unusable state.
+ */
+export function isValidDateRange(
+    validAfter: number,
+    validUntil: number
+): boolean {
+    if (validUntil === 0) {
+        return true;
+    }
+    return validAfter < validUntil;
 }
 
 /**

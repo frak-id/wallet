@@ -1,8 +1,8 @@
-import { Text } from "@frak-labs/design-system/components/Text";
 import { useNavigate } from "@tanstack/react-router";
-import { type ReactNode, useState } from "react";
-import { useTranslation } from "react-i18next";
+import { useMemo, useState } from "react";
 import type { Address, LocalAccount } from "viem";
+import { StepIndicator } from "@/module/common/component/StepIndicator";
+import { isRecoveryBlobEnvelope } from "@/module/recovery-setup/utils/recoveryBlob";
 import { BlobStep } from "./BlobStep";
 import { PasswordStep } from "./PasswordStep";
 import { SuccessStep } from "./SuccessStep";
@@ -37,14 +37,29 @@ type RecoveryUsageFlowProps = {
  * the backup is carried forward only as far as the on-chain push that uses it.
  */
 export function RecoveryUsageFlow({ initialBlob }: RecoveryUsageFlowProps) {
-    const { t } = useTranslation();
     const navigate = useNavigate();
+    // A malformed `#blob=` link otherwise lands straight on the password step
+    // and fails to decode; only skip ahead when it's actually a recovery envelope.
+    const linkBlob = useMemo(
+        () =>
+            initialBlob && isRecoveryBlobEnvelope(initialBlob)
+                ? initialBlob
+                : undefined,
+        [initialBlob]
+    );
     const [step, setStep] = useState<Step>(
-        initialBlob ? { kind: "password", blob: initialBlob } : { kind: "blob" }
+        linkBlob ? { kind: "password", blob: linkBlob } : { kind: "blob" }
     );
 
     const leaveToLogin = () => navigate({ to: "/login" });
-    const stepIndicator = renderStepIndicator(t, step.kind);
+    const stepIndicator =
+        step.kind === "success" ? null : (
+            <StepIndicator
+                current={RECOVERY_STEP_NUMBER[step.kind]}
+                total={RECOVERY_STEP_TOTAL}
+                translationKey="wallet.recoveryUsage.stepIndicator"
+            />
+        );
 
     if (step.kind === "blob") {
         return (
@@ -69,7 +84,7 @@ export function RecoveryUsageFlow({ initialBlob }: RecoveryUsageFlowProps) {
                     })
                 }
                 onBack={
-                    initialBlob ? leaveToLogin : () => setStep({ kind: "blob" })
+                    linkBlob ? leaveToLogin : () => setStep({ kind: "blob" })
                 }
                 stepIndicator={stepIndicator}
             />
@@ -89,19 +104,4 @@ export function RecoveryUsageFlow({ initialBlob }: RecoveryUsageFlowProps) {
     }
 
     return <SuccessStep onDone={() => navigate({ to: "/wallet" })} />;
-}
-
-function renderStepIndicator(
-    t: ReturnType<typeof useTranslation>["t"],
-    kind: Step["kind"]
-): ReactNode {
-    if (kind === "success") return null;
-    return (
-        <Text variant="bodySmall" color="secondary">
-            {t("wallet.recoveryUsage.stepIndicator", {
-                current: RECOVERY_STEP_NUMBER[kind],
-                total: RECOVERY_STEP_TOTAL,
-            })}
-        </Text>
-    );
 }

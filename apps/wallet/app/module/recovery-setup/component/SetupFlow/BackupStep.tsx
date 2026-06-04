@@ -55,7 +55,18 @@ export function BackupStep({ blob, onDone, stepIndicator }: BackupStepProps) {
             description={t("wallet.recoverySetup.backup.description")}
             stepIndicator={stepIndicator}
             footer={
-                <Stack space="s">
+                saveFailed ? (
+                    <Button
+                        type="button"
+                        variant="secondary"
+                        size="large"
+                        width="full"
+                        onClick={save}
+                        loading={isPending}
+                    >
+                        {t("wallet.recoverySetup.backup.retry")}
+                    </Button>
+                ) : (
                     <Button
                         type="button"
                         variant="primary"
@@ -63,23 +74,11 @@ export function BackupStep({ blob, onDone, stepIndicator }: BackupStepProps) {
                         width="full"
                         onClick={onDone}
                         disabled={!saved}
-                        loading={isPending}
+                        loading={!saved}
                     >
                         {t("wallet.recoverySetup.backup.continue")}
                     </Button>
-                    {saveFailed ? (
-                        <Button
-                            type="button"
-                            variant="secondary"
-                            size="large"
-                            width="full"
-                            onClick={save}
-                            loading={isPending}
-                        >
-                            {t("wallet.recoverySetup.backup.retry")}
-                        </Button>
-                    ) : null}
-                </Stack>
+                )
             }
         >
             <Card variant="muted" padding="default">

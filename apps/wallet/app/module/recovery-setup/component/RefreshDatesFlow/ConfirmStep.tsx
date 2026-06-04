@@ -2,11 +2,12 @@ import { Badge } from "@frak-labs/design-system/components/Badge";
 import { Button } from "@frak-labs/design-system/components/Button";
 import { Card } from "@frak-labs/design-system/components/Card";
 import { Stack } from "@frak-labs/design-system/components/Stack";
-import { type ReactNode, useCallback, useMemo } from "react";
+import { type ReactNode, useCallback } from "react";
 import { useTranslation } from "react-i18next";
 import type { Address } from "viem";
 import { FlowStepScreen } from "@/module/common/component/FlowStepScreen";
 import { WarningCard } from "@/module/common/component/WarningCard";
+import { useDateFormatter } from "@/module/common/hook/useDateFormatter";
 import { generateRecoveryData } from "@/module/recovery/action/generate";
 import { SummaryRow } from "@/module/recovery-setup/component/SummaryRow";
 import { useRecoveryAuthorization } from "@/module/recovery-setup/hook/useRecoveryAuthorization";
@@ -30,18 +31,10 @@ export function ConfirmStep({
     onBack,
     stepIndicator,
 }: ConfirmStepProps) {
-    const { t, i18n } = useTranslation();
+    const { t } = useTranslation();
     const { setupRecoveryAsync, isPending } = useSetupRecovery();
     const { error, authorize } = useRecoveryAuthorization();
-
-    const formatter = useMemo(
-        () =>
-            new Intl.DateTimeFormat(
-                i18n.language?.startsWith("fr") ? "fr-FR" : "en-US",
-                { dateStyle: "long" }
-            ),
-        [i18n.language]
-    );
+    const formatter = useDateFormatter();
 
     const handleConfirm = useCallback(async () => {
         const result = await authorize(async () => {

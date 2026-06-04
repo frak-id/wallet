@@ -22,6 +22,7 @@ type ValidityDateFieldsProps = {
     endDate: string;
     onStartChange: (value: string) => void;
     onEndChange: (value: string) => void;
+    errorMessage?: string;
 };
 
 /**
@@ -33,6 +34,7 @@ export function ValidityDateFields({
     endDate,
     onStartChange,
     onEndChange,
+    errorMessage,
 }: ValidityDateFieldsProps) {
     const { t } = useTranslation();
     const today = useMemo(() => toDateInputValue(new Date()), []);
@@ -58,7 +60,7 @@ export function ValidityDateFields({
                     tone="muted"
                     length="big"
                     min={today}
-                    max={maxDate}
+                    max={endDate || maxDate}
                     value={startDate}
                     onChange={(event) => onStartChange(event.target.value)}
                 />
@@ -81,7 +83,7 @@ export function ValidityDateFields({
                     variant="bare"
                     tone="muted"
                     length="big"
-                    min={today}
+                    min={startDate || today}
                     max={maxDate}
                     value={endDate}
                     onChange={(event) => onEndChange(event.target.value)}
@@ -90,6 +92,12 @@ export function ValidityDateFields({
                     {t("wallet.recoverySetup.password.endHelp")}
                 </Text>
             </Stack>
+
+            {errorMessage ? (
+                <Text variant="caption" color="error">
+                    {errorMessage}
+                </Text>
+            ) : null}
         </>
     );
 }

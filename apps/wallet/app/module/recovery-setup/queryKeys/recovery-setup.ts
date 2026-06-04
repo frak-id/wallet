@@ -12,12 +12,6 @@ export namespace recoverySetupKey {
     export const all = [base] as const;
 
     /**
-     * Query keys for status
-     */
-    export const status = (address?: Hex) =>
-        [base, "status", address ?? "no-address"] as const;
-
-    /**
      * Backend recovery-blob status (does a stored blob exist for this group).
      */
     export const backendStatus = [base, "backend-status"] as const;

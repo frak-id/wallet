@@ -1,5 +1,5 @@
 import { Button } from "@frak-labs/design-system/components/Button";
-import { type ReactNode, useId, useState } from "react";
+import { type ReactNode, useId, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { FlowStepScreen } from "@/module/common/component/FlowStepScreen";
 import { PasswordInput } from "@/module/common/component/PasswordInput";
@@ -8,6 +8,7 @@ import { ValidityDateFields } from "@/module/recovery-setup/component/ValidityDa
 import {
     dateToValidAfter,
     dateToValidUntil,
+    isValidDateRange,
 } from "@/module/recovery-setup/utils/recoveryDates";
 import type { RecoveryFlowMode } from "./index";
 import * as styles from "./styles.css";
@@ -37,19 +38,20 @@ export function PasswordStep({
     const [startDate, setStartDate] = useState("");
     const [endDate, setEndDate] = useState("");
 
+    const validAfter = useMemo(
+        () => dateToValidAfter(startDate ? new Date(startDate) : undefined),
+        [startDate]
+    );
+    const validUntil = useMemo(
+        () => dateToValidUntil(endDate ? new Date(endDate) : undefined),
+        [endDate]
+    );
     const tooShort = password.length < MIN_PASSWORD_LENGTH;
+    const invalidRange = !isValidDateRange(validAfter, validUntil);
 
     const handleSubmit = () => {
-        if (tooShort) return;
-        onSubmit({
-            password,
-            validAfter: dateToValidAfter(
-                startDate ? new Date(startDate) : undefined
-            ),
-            validUntil: dateToValidUntil(
-                endDate ? new Date(endDate) : undefined
-            ),
-        });
+        if (tooShort || invalidRange) return;
+        onSubmit({ password, validAfter, validUntil });
     };
 
     return (
@@ -66,7 +68,7 @@ export function PasswordStep({
                     variant="primary"
                     size="large"
                     width="full"
-                    disabled={tooShort}
+                    disabled={tooShort || invalidRange}
                 >
                     {t("wallet.recoverySetup.password.continue")}
                 </Button>
@@ -103,6 +105,11 @@ export function PasswordStep({
                     endDate={endDate}
                     onStartChange={setStartDate}
                     onEndChange={setEndDate}
+                    errorMessage={
+                        invalidRange
+                            ? t("wallet.recoverySetup.password.dateRangeError")
+                            : undefined
+                    }
                 />
             </form>
 

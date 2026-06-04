@@ -501,6 +501,7 @@
                 "startHelp": "Recovery can only be used after this date. Defaults to one week from now as a safety delay.",
                 "endLabel": "End date (optional)",
                 "endHelp": "Recovery stops working after this date. Defaults to and is capped at two years from now.",
+                "dateRangeError": "The start date must be before the end date.",
                 "warning": "Choose a strong password. We can never reset or recover it — if you forget it, your backup is permanently useless.",
                 "continue": "Continue"
             },
