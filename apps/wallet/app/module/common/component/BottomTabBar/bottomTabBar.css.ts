@@ -3,6 +3,7 @@ import {
     alias,
     brand,
     easing,
+    safeArea,
     transition,
 } from "@frak-labs/design-system/tokens";
 import { style } from "@vanilla-extract/css";
@@ -27,7 +28,7 @@ export const bottomTabBarStyles = {
         justifyContent: "center",
         alignItems: "flex-end",
         padding: `${alias.spacing.s} ${alias.spacing.m}`,
-        paddingBottom: `calc(${alias.spacing.s} + env(safe-area-inset-bottom, 0px))`,
+        paddingBottom: `calc(${alias.spacing.s} + ${safeArea.bottom})`,
     }),
 
     /**

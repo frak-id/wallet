@@ -5,7 +5,7 @@
         <meta
             id="viewport"
             name="viewport"
-            content="width=device-width, initial-scale=1, viewport-fit=cover"
+            content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content"
         >
         <script>
         // Disable pinch-to-zoom only in Tauri (native app) for better native feel.
@@ -16,7 +16,7 @@
                 .getElementById("viewport")
                 ?.setAttribute(
                     "content",
-                    "width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover"
+                    "width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover, interactive-widget=resizes-content"
                 );
             document.documentElement.setAttribute("data-platform", "tauri");
         }

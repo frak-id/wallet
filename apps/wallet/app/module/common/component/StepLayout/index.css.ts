@@ -1,4 +1,4 @@
-import { brand } from "@frak-labs/design-system/tokens";
+import { brand, safeArea } from "@frak-labs/design-system/tokens";
 import { style } from "@vanilla-extract/css";
 
 export const stepLayout = style({
@@ -6,9 +6,8 @@ export const stepLayout = style({
     flexDirection: "column",
     flex: 1,
     minHeight: 0,
-    paddingTop: "var(--safe-area-inset-top, env(safe-area-inset-top, 0px))",
-    paddingBottom:
-        "var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 0px))",
+    paddingTop: safeArea.top,
+    paddingBottom: safeArea.bottom,
 });
 
 export const stepLayoutContent = style({

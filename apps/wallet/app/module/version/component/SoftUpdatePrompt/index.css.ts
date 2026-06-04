@@ -1,5 +1,10 @@
 import { vars } from "@frak-labs/design-system/theme";
-import { alias, shadow, zIndex } from "@frak-labs/design-system/tokens";
+import {
+    alias,
+    safeArea,
+    shadow,
+    zIndex,
+} from "@frak-labs/design-system/tokens";
 import { keyframes, style } from "@vanilla-extract/css";
 
 /**
@@ -11,7 +16,7 @@ export const banner = style({
     position: "fixed",
     left: alias.spacing.s,
     right: alias.spacing.s,
-    bottom: `calc(env(safe-area-inset-bottom, 0px) + ${alias.spacing.s})`,
+    bottom: `calc(${safeArea.bottom} + ${alias.spacing.s})`,
     zIndex: zIndex.toast,
     boxShadow: shadow.dialog,
     "@media": {

@@ -1,14 +1,11 @@
 import { tablet } from "@frak-labs/design-system/breakpoints";
+import { safeArea } from "@frak-labs/design-system/tokens";
 import { style } from "@vanilla-extract/css";
 
-const safeTop = "var(--safe-area-inset-top, env(safe-area-inset-top, 0px))";
-const safeBottom =
-    "var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 0px))";
-
 export const main = style({
-    marginTop: safeTop,
-    marginBottom: safeBottom,
-    height: `calc(100dvh - 94px - ${safeTop} - ${safeBottom})`,
+    marginTop: safeArea.top,
+    marginBottom: safeArea.bottom,
+    height: `calc(100dvh - 94px - ${safeArea.top} - ${safeArea.bottom})`,
     overflow: "auto",
     display: "flex",
     flexDirection: "column",
@@ -31,7 +28,7 @@ export const mainNoHeader = style({
 
 export const mainNoNav = style({
     marginBottom: 0,
-    height: `calc(100dvh - ${safeTop})`,
+    height: `calc(100dvh - ${safeArea.top})`,
     "@media": {
         [`(min-width: ${tablet}px)`]: {
             height: "759px",
