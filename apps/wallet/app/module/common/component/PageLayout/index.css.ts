@@ -1,5 +1,5 @@
 import { vars } from "@frak-labs/design-system/theme";
-import { alias, safeArea } from "@frak-labs/design-system/tokens";
+import { alias } from "@frak-labs/design-system/tokens";
 import { style } from "@vanilla-extract/css";
 
 export const container = style({
@@ -36,12 +36,13 @@ export const footer = style({
     padding: alias.spacing.m,
 });
 
-// Onboarding bottom block: 24px top, 32px (or safe-area) bottom; above the fade.
+// Small gap above the system bar; the bar inset is reserved once by
+// mainContentNoNav (AppShell), above which this sticky footer rests.
 export const footerFixed = style({
     position: "relative",
     zIndex: 1,
     paddingTop: alias.spacing.l,
-    paddingBottom: `max(${alias.spacing.xl}, ${safeArea.bottom})`,
+    paddingBottom: alias.spacing.m,
 });
 
 // Reserve the footer's height (measured in PageLayout) so the last line clears it.

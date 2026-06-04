@@ -57,6 +57,7 @@ export function RecoveryCodePage() {
 
     return (
         <PageLayout
+            fixedViewport
             back={<Back href="/register" replace />}
             footer={
                 <Button
