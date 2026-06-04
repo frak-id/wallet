@@ -17,10 +17,12 @@ import {
     getRegisterOptions,
     getTauriCreateFn,
     identifyAuthenticatedUser,
+    isReportableWebauthnError,
     recordError,
     recoveryHintStorage,
     sessionStore,
     startFlow,
+    webauthnErrorContext,
 } from "@frak-labs/wallet-shared";
 import type { UseMutationOptions } from "@tanstack/react-query";
 import { useMutation } from "@tanstack/react-query";
@@ -117,14 +119,19 @@ export function useRegister(
             options?.onSuccess?.(session, vars, ctx, mutationCtx);
         },
         onError: (err, vars, ctx, mutationCtx) => {
-            recordError(err, {
-                source: "registration",
-                context: { merchant: vars?.merchantId },
-            });
             const { reason, error_type } = extractAuthError(err);
+            const webauthn = webauthnErrorContext(err);
+            if (isReportableWebauthnError(err)) {
+                recordError(err, {
+                    source: "registration",
+                    context: { merchant: vars?.merchantId, ...webauthn },
+                });
+            }
             ctx?.flow.end("failed", {
+                operation: "register",
                 error_type,
                 error_message: reason,
+                ...webauthn,
             });
             options?.onError?.(err, vars, ctx, mutationCtx);
         },

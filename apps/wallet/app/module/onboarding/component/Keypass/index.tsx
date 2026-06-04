@@ -3,9 +3,9 @@ import { Button } from "@frak-labs/design-system/components/Button";
 import { ResponsiveModal } from "@frak-labs/design-system/components/ResponsiveModal";
 import { FaceIdIcon } from "@frak-labs/design-system/icons";
 import {
-    HandleErrors,
     isWebAuthNSupported,
     useLogin,
+    useWebauthnErrorToast,
 } from "@frak-labs/wallet-shared";
 import { useNavigate } from "@tanstack/react-router";
 import type { ReactNode } from "react";
@@ -62,7 +62,7 @@ export function Keypass({ onClose, onAuthSuccess, email }: KeypassProps) {
             <KeypassContent
                 onRegister={handleRegister}
                 isRegistering={isRegistering}
-                registerError={existingAccount ? null : registerError}
+                registerError={registerError}
                 existingAccount={existingAccount}
                 isLoginLoading={isLoginLoading}
                 loginError={loginError}
@@ -84,12 +84,17 @@ function KeypassBlock({
     description,
     footer,
     error,
+    operation,
+    onRetry,
 }: {
     title: string;
     description: string;
     footer: ReactNode;
     error?: Error | null;
+    operation?: "login" | "register";
+    onRetry?: () => void;
 }) {
+    useWebauthnErrorToast(error, { operation, onRetry });
     return (
         <Box className={styles.keypass}>
             <ContentBlock
@@ -99,11 +104,7 @@ function KeypassBlock({
                 description={description}
                 textSpacing="m"
                 footer={footer}
-            >
-                {error && (
-                    <HandleErrors error={error} className={styles.errorText} />
-                )}
-            </ContentBlock>
+            />
         </Box>
     );
 }
@@ -154,7 +155,12 @@ function KeypassContent({
                 description={t(
                     "onboarding.keypass.existingAccount.description"
                 )}
-                error={loginError}
+                // Before a login attempt, surface the already-registered alert
+                // (`registerError`) so the toast offers "Log in"; once the user
+                // tries, show that attempt's failure with a retry instead.
+                error={loginError ?? registerError}
+                operation={loginError ? "login" : "register"}
+                onRetry={onLogin}
                 footer={
                     <Button onClick={onLogin} loading={isLoginLoading}>
                         {t("onboarding.keypass.existingAccount.button")}
@@ -169,6 +175,8 @@ function KeypassContent({
             title={t("onboarding.keypass.title")}
             description={t("onboarding.keypass.description")}
             error={registerError}
+            operation="register"
+            onRetry={onRegister}
             footer={
                 <>
                     <Button onClick={onRegister} loading={isRegistering}>

@@ -1,110 +1,46 @@
-import clsx from "clsx";
-import type { PropsWithChildren } from "react";
+import { AlertMessage } from "@frak-labs/design-system/components/AlertMessage";
 import { useTranslation } from "react-i18next";
-import * as styles from "./HandleErrors.css";
+import type { WebauthnToastOperation } from "../stores/webauthnErrorToastStore";
+import { resolveWebauthnErrorView } from "../webauthn/errorView";
 
 type HandleErrorsProps = {
     error: Error;
-    /** Optional class to override error text styling (e.g. design system color token) */
+    /** Optional class appended to the callout root. */
     className?: string;
+    /** Auth context — enables `already-registered`/`no-credential` routing copy. Omit for signing. */
+    operation?: WebauthnToastOperation;
+    /** When set, retryable failures render a "Try again" action invoking it. */
+    onRetry?: () => void;
 };
 
-const cancellationNames = new Set(["NotAllowedError", "AbortError"]);
-const cancellationMessages = ["cancel", "aborted", "error 1001"];
-
 /**
- * Walk the error `.cause` chain to detect user cancellation.
- *
- * Cancellation errors get wrapped differently per platform:
- *  - Web: Ox wraps DOMException{NotAllowedError} → CreateFailedError/SignFailedError
- *  - Firefox: same but DOMException{AbortError}
- *  - iOS Tauri: Ox → BaseError → Error("The operation was canceled.")
- *  - Android Tauri: Ox → BaseError → Error("...cancel...")
+ * Inline WebAuthn error callout — renders the shared `AlertMessage` card without
+ * a dismiss control. It is used on surfaces that lack the top toast, such as the
+ * listener iframe modals; the wallet app shows the same errors as a dismissible
+ * top toast via `useWebauthnErrorToast`.
  */
-export function isUserCancellation(error: Error): boolean {
-    let current: unknown = error;
-    for (let depth = 0; depth < 4 && current; depth++) {
-        if (current instanceof Error) {
-            if (cancellationNames.has(current.name)) return true;
-            if (
-                cancellationMessages.some(
-                    (pattern) =>
-                        current instanceof Error &&
-                        current.message.toLowerCase().includes(pattern)
-                )
-            ) {
-                return true;
-            }
-        }
-        current = current instanceof Error ? current.cause : undefined;
-    }
-    return false;
-}
-
-export function HandleErrors({ error, className }: HandleErrorsProps) {
-    if (isUserCancellation(error)) {
-        return <ErrorNotAllowed className={className} />;
-    }
-
-    if (error.name === "UserOperationExecutionError") {
-        return <ErrorUserOperationExecution className={className} />;
-    }
-
-    // Show a generic error
-    return <GenericError className={className} />;
-}
-
-/**
- * Error when the user cancel the authentication process
- * @returns The error message
- */
-function ErrorNotAllowed({ className }: { className?: string }) {
-    const { t } = useTranslation();
-    return (
-        <ErrorWrapper className={className}>
-            {t("error.webauthn.notAllowed")}
-        </ErrorWrapper>
-    );
-}
-
-/**
- * Error when the user transaction execution fails
- * @returns The error message
- */
-function ErrorUserOperationExecution({ className }: { className?: string }) {
-    const { t } = useTranslation();
-    return (
-        <ErrorWrapper className={className}>
-            {t("error.webauthn.userOperationExecution")}
-        </ErrorWrapper>
-    );
-}
-
-/**
- * Generic error
- * @returns The error message
- */
-function GenericError({ className }: { className?: string }) {
-    const { t } = useTranslation();
-    return (
-        <ErrorWrapper className={className}>
-            {t("error.webauthn.generic")}
-        </ErrorWrapper>
-    );
-}
-
-/**
- * Wrapper for the error message
- * @param children - The children to render
- * @returns The error message
- */
-function ErrorWrapper({
-    children,
+export function HandleErrors({
+    error,
     className,
-}: PropsWithChildren<{ className?: string }>) {
+    operation,
+    onRetry,
+}: HandleErrorsProps) {
+    const { t } = useTranslation();
+    const view = resolveWebauthnErrorView(error, operation);
+    const action =
+        view.actionKey && onRetry
+            ? { label: t(view.actionKey), onClick: onRetry }
+            : undefined;
+
     return (
-        <p className={clsx("error", styles.errorWrapper, className)}>
-            {children}
-        </p>
+        <AlertMessage
+            tone={view.tone}
+            icon={view.icon}
+            title={t(`${view.baseKey}.title`)}
+            description={t(`${view.baseKey}.message`)}
+            steps={view.stepKeys?.map((key) => t(key))}
+            action={action}
+            className={className}
+        />
     );
 }

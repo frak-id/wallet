@@ -194,18 +194,44 @@ class FrakWebauthnPlugin: Plugin, ASAuthorizationControllerDelegate, ASAuthoriza
 
         guard let invoke = invoke else { return }
 
-        if let authError = error as? ASAuthorizationError {
-            if authError.code == .canceled {
-                invoke.reject("NotAllowedError")
-            } else if authError.code.rawValue == 1006 {
-                // matchedExcludedCredential (iOS 16.6+) — credential already registered
-                invoke.reject("InvalidStateError")
-            } else {
-                invoke.reject(error.localizedDescription)
-            }
-        } else {
-            invoke.reject(error.localizedDescription)
+        // `(error as NSError).code` is always the ASAuthorizationError rawValue
+        // (domain ASAuthorizationErrorDomain) — reliable without an `as?` cast
+        // and locale-independent, unlike `localizedDescription`.
+        let code = (error as NSError).code
+
+        // Map the ASAuthorizationError code → WebAuthn DOMException name so the
+        // cross-platform JS classifier stays locale-independent. The numeric
+        // code is surfaced in `message` (4 digits, so the JS `[5xxxx]` GPS-code
+        // regex can never mistake it) for analytics + debugging.
+        let type: String
+        switch code {
+        case 1001: // .canceled — user dismissed (or, on the interactive path, no credential)
+            type = "NotAllowedError"
+        case 1006: // .matchedExcludedCredential (iOS 18+) — passkey already registered
+            type = "InvalidStateError"
+        // TODO(prefer-immediate): once we adopt preferImmediatelyAvailableCredentials,
+        // .notInteractive (1005) becomes a clean "no credential on this device"
+        // signal — surface it as a no-credential token rather than UnknownError.
+        default: // .failed / .unknown / .invalidResponse / .notHandled / .notInteractive / …
+            type = "UnknownError"
         }
+
+        invoke.reject(webauthnError(type, "[\(code)] \(error.localizedDescription)"))
+    }
+
+    /// Unified `{ type, message }` reject envelope the JS bridge classifies on,
+    /// mirroring the Android plugin. `type` is a locale-stable WebAuthn
+    /// DOMException name. Precondition guards (missing options, no window, etc.)
+    /// intentionally keep rejecting bare strings — the JS bridge treats those as
+    /// opaque fatal messages.
+    private func webauthnError(_ type: String, _ message: String) -> String {
+        let payload: [String: Any] = ["type": type, "message": message]
+        guard let data = try? JSONSerialization.data(withJSONObject: payload),
+              let json = String(data: data, encoding: .utf8)
+        else {
+            return type
+        }
+        return json
     }
 
     // MARK: - ASAuthorizationControllerPresentationContextProviding

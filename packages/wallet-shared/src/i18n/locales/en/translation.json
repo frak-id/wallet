@@ -485,9 +485,44 @@
     },
     "error": {
         "webauthn": {
-            "notAllowed": "You have cancelled the authentication process, please try again.",
-            "userOperationExecution": "An error occurred while executing the transaction. Please try again.",
-            "generic": "An error occurred. Please try again."
+            "retry": "Try again",
+            "login": "Log in",
+            "dismiss": "Dismiss",
+            "notAllowed": {
+                "title": "Authentication cancelled",
+                "message": "The passkey prompt was closed or timed out before the operation completed."
+            },
+            "userOperationExecution": {
+                "title": "Transaction failed",
+                "message": "An error occurred while executing the transaction. Please try again."
+            },
+            "generic": {
+                "title": "Something went wrong",
+                "message": "An error occurred. Please try again."
+            },
+            "alreadyRegistered": {
+                "title": "Already have a passkey",
+                "message": "This device already has a passkey for your account. Try logging in instead."
+            },
+            "noCredential": {
+                "title": "No passkey found",
+                "message": "No passkey was found on this device. Create one, or sign in on the device where you registered."
+            },
+            "noScreenLock": {
+                "title": "Screen lock required",
+                "message": "Your device needs a screen lock (PIN, pattern, or biometrics) to use passkeys. Add one in your settings, then try again."
+            },
+            "unsupported": {
+                "title": "Passkeys unavailable",
+                "message": "Passkeys can't be used on this device right now. Make sure your passkey provider is set up, or try another device."
+            },
+            "syncFailed": {
+                "title": "Passkey sync issue",
+                "message": "Your phone couldn't complete the passkey step. This is usually a Google Password Manager sync issue on this device — not a problem with your account.",
+                "step1": "Open your phone Settings, make sure Google Password Manager is the active passkey provider and that passkey sync is turned on.",
+                "step2": "Update Google Play Services, then restart your phone and try again.",
+                "step3": "Still stuck? Sign in on another device, or recover your wallet from the settings."
+            }
         }
     },
     "recoveryCode": {

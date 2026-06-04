@@ -3,8 +3,10 @@ import { alias, fontSize } from "@frak-labs/design-system/tokens";
 import { style } from "@vanilla-extract/css";
 
 const heroImageBase = style({
-    height: "350px",
-    flex: "0 0 350px",
+    // ~220px on iPhone SE (667px) → 350px on iPhone 12+ (844px), via
+    // height = 73.5dvh - 270px clamped. Keeps the CTAs on screen on short devices.
+    height: "clamp(220px, calc(73.5dvh - 270px), 350px)",
+    flex: "0 0 auto",
     overflow: "hidden",
 });
 
@@ -24,7 +26,16 @@ export const heroImageCenter = style([
     },
 ]);
 
-export const heroImageCenterBleed = style([heroImageBase, heroImageCenterBase]);
+// Centered image at its natural size (steps 2 & 3 via imageMaxWidth, Welcome
+// full-bleed) — not the step-1 band clamp, whose 220px floor shrank these on
+// small screens. Too-tall pages scroll (PageLayout) rather than shrink it.
+export const heroImageTall = style({
+    display: "flex",
+    justifyContent: "center",
+    alignItems: "center",
+    flex: "0 0 auto",
+    overflow: "hidden",
+});
 
 export const heroContent = style({
     display: "flex",
@@ -40,6 +51,7 @@ export const heroTitle = style({
 
 export const heroDescription = style({
     fontSize: fontSize.m,
+    lineHeight: "26px",
     color: vars.text.secondary,
     textAlign: "center",
     margin: 0,

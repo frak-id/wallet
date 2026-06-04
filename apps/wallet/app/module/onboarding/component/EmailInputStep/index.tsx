@@ -4,6 +4,7 @@ import { Input } from "@frak-labs/design-system/components/Input";
 import { Stack } from "@frak-labs/design-system/components/Stack";
 import { Text } from "@frak-labs/design-system/components/Text";
 import { CloseIcon } from "@frak-labs/design-system/icons";
+import { useWebauthnErrorToast } from "@frak-labs/wallet-shared";
 import { type ChangeEvent, useCallback, useState } from "react";
 import { useTranslation } from "react-i18next";
 import type { Address } from "viem";
@@ -32,6 +33,8 @@ type EmailInputStepProps = {
     onLoginExisting: (args: EmailExistingLoginArgs) => void;
     /** Reflects whether the parent login mutation is in-flight. */
     isLoginLoading?: boolean;
+    /** Error from the parent's `onLoginExisting` mutation, shown beneath the block. */
+    loginError?: Error | null;
     initialValue?: string;
 };
 
@@ -46,6 +49,7 @@ export function EmailInputStep({
     onBack,
     onLoginExisting,
     isLoginLoading = false,
+    loginError,
     initialValue = "",
 }: EmailInputStepProps) {
     const { t } = useTranslation();
@@ -111,6 +115,11 @@ export function EmailInputStep({
             wallet: alreadyUsed.wallet,
         });
     };
+
+    useWebauthnErrorToast(showAlreadyUsed ? loginError : null, {
+        operation: "login",
+        onRetry: handleLoginExisting,
+    });
 
     return (
         <PageLayout

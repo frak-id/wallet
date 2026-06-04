@@ -2,10 +2,10 @@ import { Box } from "@frak-labs/design-system/components/Box";
 import { Button } from "@frak-labs/design-system/components/Button";
 import { LogoFrak } from "@frak-labs/design-system/icons";
 import {
-    HandleErrors,
     PairingView,
     trackEvent,
     ua,
+    useWebauthnErrorToast,
 } from "@frak-labs/wallet-shared";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useCallback, useState } from "react";
@@ -35,6 +35,8 @@ function LoginPage() {
     const [error, setError] = useState<Error | null>(null);
     const [view, setView] = useState<"choose" | "pairing">("choose");
     const { executePendingActions } = useExecutePendingActions();
+
+    useWebauthnErrorToast(error, { operation: "login" });
 
     const handlePostLoginRedirect = useCallback(async () => {
         const navigated = await executePendingActions();
@@ -72,36 +74,27 @@ function LoginPage() {
                 />
             }
             footer={
-                <>
-                    {error && (
-                        <HandleErrors
-                            error={error}
-                            className={layout.errorText}
-                        />
+                <Box className={layout.actions}>
+                    <AuthActions
+                        onSuccess={handlePostLoginRedirect}
+                        onError={setError}
+                    />
+                    {!ua.isMobile && (
+                        <Box>
+                            <Button
+                                variant="ghost"
+                                onClick={() => {
+                                    trackEvent("auth_login_method_selected", {
+                                        method: "qr",
+                                    });
+                                    setView("pairing");
+                                }}
+                            >
+                                {t("wallet.login.useQRCode")}
+                            </Button>
+                        </Box>
                     )}
-                    <Box className={layout.actions}>
-                        <AuthActions
-                            onSuccess={handlePostLoginRedirect}
-                            onError={setError}
-                        />
-                        {!ua.isMobile && (
-                            <Box>
-                                <Button
-                                    variant="ghost"
-                                    onClick={() => {
-                                        trackEvent(
-                                            "auth_login_method_selected",
-                                            { method: "qr" }
-                                        );
-                                        setView("pairing");
-                                    }}
-                                >
-                                    {t("wallet.login.useQRCode")}
-                                </Button>
-                            </Box>
-                        )}
-                    </Box>
-                </>
+                </Box>
             }
         >
             <Box className={layout.content}>

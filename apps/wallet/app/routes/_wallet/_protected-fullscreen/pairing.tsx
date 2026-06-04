@@ -166,7 +166,7 @@ function PairingPage() {
                 </Text>
                 <Inline space="xs" align="center" alignY="center">
                     <WarningIcon width={24} height={24} />
-                    <Text as="span">{t("error.webauthn.generic")}</Text>
+                    <Text as="span">{t("error.webauthn.generic.message")}</Text>
                 </Inline>
                 <Stack space="m" className={styles.pairingFooter}>
                     <Button
