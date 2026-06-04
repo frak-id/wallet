@@ -1,11 +1,5 @@
 import { Box } from "@frak-labs/design-system/components/Box";
-import {
-    type CSSProperties,
-    type ReactNode,
-    useEffect,
-    useRef,
-    useState,
-} from "react";
+import type { ReactNode } from "react";
 import * as styles from "./index.css";
 
 type PageLayoutProps = {
@@ -28,53 +22,22 @@ export function PageLayout({
     footer,
     fixedViewport = false,
 }: PageLayoutProps) {
-    const footerRef = useRef<HTMLDivElement>(null);
-    const [footerHeight, setFooterHeight] = useState(0);
-    const hasFooter = Boolean(footer);
-
-    // Feed the footer height to `--footer-height` (content padding + footer
-    // negative margin). It varies per screen, so measure rather than hardcode.
-    useEffect(() => {
-        if (!fixedViewport || !hasFooter) return;
-        const el = footerRef.current;
-        if (!el) return;
-        const measure = () => setFooterHeight(el.offsetHeight);
-        measure();
-        const observer = new ResizeObserver(measure);
-        observer.observe(el);
-        return () => observer.disconnect();
-    }, [fixedViewport, hasFooter]);
-
     return (
         <div
-            className={styles.container}
-            style={
+            className={
                 fixedViewport
-                    ? ({
-                          "--footer-height": `${footerHeight}px`,
-                      } as CSSProperties)
-                    : undefined
+                    ? `${styles.container} ${styles.containerFixed}`
+                    : styles.container
             }
         >
-            <div
-                className={
-                    fixedViewport
-                        ? `${styles.content} ${styles.contentFixed}`
-                        : styles.content
-                }
-            >
+            <div className={styles.content}>
                 {back && <Box paddingLeft="m">{back}</Box>}
                 {children}
             </div>
             {footer &&
                 (fixedViewport ? (
-                    <div ref={footerRef} className={styles.footerSticky}>
-                        <div className={styles.footerBlur} aria-hidden="true" />
-                        <div
-                            className={`${styles.footer} ${styles.footerFixed}`}
-                        >
-                            {footer}
-                        </div>
+                    <div className={`${styles.footer} ${styles.footerSticky}`}>
+                        {footer}
                     </div>
                 ) : (
                     <div className={styles.footer}>{footer}</div>

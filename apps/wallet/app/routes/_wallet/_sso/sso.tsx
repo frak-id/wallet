@@ -371,6 +371,7 @@ function Sso() {
 
     return (
         <PageLayout
+            fixedViewport
             footer={
                 <>
                     <Box className={layout.actions}>
