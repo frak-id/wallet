@@ -4,7 +4,9 @@ import { IS_TAURI } from "@frak-labs/app-essentials/utils/platform";
  * Mirror `window.visualViewport.height` into a `--viewport-height` CSS
  * variable on `:root`. The app shell consumes it as
  * `height: var(--viewport-height, 100dvh)` so the layout shrinks when the
- * soft keyboard opens, keeping pinned footers above it.
+ * soft keyboard opens, keeping pinned footers above it. Also publishes
+ * `--keyboard-open` (`0`/`1`), read by initSafeAreaInsets to collapse the
+ * nav-bar inset while the keyboard is up.
  *
  * Why not `100dvh` alone: on Tauri iOS (WKWebView) `dvh` does not react to
  * the keyboard at all, and on Tauri Android the WebView often runs in
@@ -30,13 +32,18 @@ export function initKeyboardInset(): () => void {
     if (!vv) return () => {};
 
     let rafId: number | null = null;
+    // Max height seen = "no keyboard" baseline (robust under edge-to-edge).
+    let baseline = vv.height;
+    // Smaller shrinkage is toolbar jitter, not the IME (keyboard ~250-350px).
+    const KEYBOARD_THRESHOLD_PX = 120;
 
     const write = () => {
         rafId = null;
-        document.documentElement.style.setProperty(
-            "--viewport-height",
-            `${vv.height}px`
-        );
+        baseline = Math.max(baseline, vv.height);
+        const keyboardOpen = baseline - vv.height > KEYBOARD_THRESHOLD_PX;
+        const root = document.documentElement.style;
+        root.setProperty("--viewport-height", `${vv.height}px`);
+        root.setProperty("--keyboard-open", keyboardOpen ? "1" : "0");
     };
 
     const schedule = () => {
@@ -58,5 +65,6 @@ export function initKeyboardInset(): () => void {
         vv.removeEventListener("resize", schedule);
         vv.removeEventListener("scroll", schedule);
         document.documentElement.style.removeProperty("--viewport-height");
+        document.documentElement.style.removeProperty("--keyboard-open");
     };
 }

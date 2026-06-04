@@ -28,9 +28,15 @@ export async function initSafeAreaInsets() {
             "--safe-area-inset-top",
             `${insets.top}px`
         );
+        // Bottom inset collapses to 0 while the keyboard is open (it covers the
+        // nav bar); `--keyboard-open` is owned by initKeyboardInset.
+        document.documentElement.style.setProperty(
+            "--nav-bar-inset",
+            `${insets.bottom}px`
+        );
         document.documentElement.style.setProperty(
             "--safe-area-inset-bottom",
-            `${insets.bottom}px`
+            "calc(var(--nav-bar-inset, 0px) * (1 - var(--keyboard-open, 0)))"
         );
         document.documentElement.style.setProperty(
             "--safe-area-inset-left",

@@ -95,9 +95,10 @@ describe.sequential("initSafeAreaInsets", () => {
             "--safe-area-inset-top",
             "24px"
         );
+        expect(setPropertySpy).toHaveBeenCalledWith("--nav-bar-inset", "48px");
         expect(setPropertySpy).toHaveBeenCalledWith(
             "--safe-area-inset-bottom",
-            "48px"
+            "calc(var(--nav-bar-inset, 0px) * (1 - var(--keyboard-open, 0)))"
         );
         expect(setPropertySpy).toHaveBeenCalledWith(
             "--safe-area-inset-left",

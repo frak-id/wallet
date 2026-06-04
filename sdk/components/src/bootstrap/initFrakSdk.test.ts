@@ -351,6 +351,100 @@ describe.sequential("initFrakSdk", () => {
         consoleLogSpy.mockRestore();
     });
 
+    it("should open sharing page when the frakAction key is lowercased", async () => {
+        const mockClient = {
+            config: { domain: "example.com" },
+        } as any;
+        vi.mocked(coreSdkIndex.setupClient).mockResolvedValue(mockClient);
+
+        Object.defineProperty(window, "location", {
+            value: {
+                href: "https://example.com/?frakaction=share",
+            },
+            writable: true,
+        });
+
+        const consoleLogSpy = vi
+            .spyOn(console, "log")
+            .mockImplementation(() => {});
+
+        await initFrakSdk();
+
+        expect(sharingPageUtils.openSharingPage).toHaveBeenCalledWith(
+            undefined,
+            undefined,
+            { link: undefined, products: undefined }
+        );
+        expect(window.history.replaceState).toHaveBeenCalledWith(
+            {},
+            "",
+            "https://example.com/"
+        );
+
+        consoleLogSpy.mockRestore();
+    });
+
+    it("should open sharing page when the frakAction value is uppercased", async () => {
+        const mockClient = {
+            config: { domain: "example.com" },
+        } as any;
+        vi.mocked(coreSdkIndex.setupClient).mockResolvedValue(mockClient);
+
+        Object.defineProperty(window, "location", {
+            value: {
+                href: "https://example.com/?frakAction=SHARE",
+            },
+            writable: true,
+        });
+
+        const consoleLogSpy = vi
+            .spyOn(console, "log")
+            .mockImplementation(() => {});
+
+        await initFrakSdk();
+
+        expect(sharingPageUtils.openSharingPage).toHaveBeenCalledWith(
+            undefined,
+            undefined,
+            { link: undefined, products: undefined }
+        );
+
+        consoleLogSpy.mockRestore();
+    });
+
+    it("should read companion params case-insensitively", async () => {
+        const mockClient = {
+            config: { domain: "example.com" },
+        } as any;
+        vi.mocked(coreSdkIndex.setupClient).mockResolvedValue(mockClient);
+
+        Object.defineProperty(window, "location", {
+            value: {
+                href: "https://example.com/?FrakAction=Share&LINK=https%3A%2F%2Fexample.com%2Forder%2F1&Placement=hero",
+            },
+            writable: true,
+        });
+
+        const consoleLogSpy = vi
+            .spyOn(console, "log")
+            .mockImplementation(() => {});
+
+        await initFrakSdk();
+
+        expect(sharingPageUtils.openSharingPage).toHaveBeenCalledWith(
+            undefined,
+            "hero",
+            { link: "https://example.com/order/1", products: undefined }
+        );
+        expect(window.history.replaceState).toHaveBeenCalledWith(
+            {},
+            "",
+            "https://example.com/"
+        );
+
+        consoleLogSpy.mockRestore();
+    });
+
     it("should not open sharing page when frakAction query param is not present", async () => {
         const mockClient = {
             config: {
