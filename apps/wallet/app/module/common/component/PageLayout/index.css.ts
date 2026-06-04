@@ -1,5 +1,5 @@
 import { vars } from "@frak-labs/design-system/theme";
-import { alias } from "@frak-labs/design-system/tokens";
+import { alias, safeArea } from "@frak-labs/design-system/tokens";
 import { style } from "@vanilla-extract/css";
 
 export const container = style({
@@ -41,7 +41,7 @@ export const footerFixed = style({
     position: "relative",
     zIndex: 1,
     paddingTop: alias.spacing.l,
-    paddingBottom: `max(${alias.spacing.xl}, env(safe-area-inset-bottom))`,
+    paddingBottom: `max(${alias.spacing.xl}, ${safeArea.bottom})`,
 });
 
 // Reserve the footer's height (measured in PageLayout) so the last line clears it.

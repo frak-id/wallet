@@ -1,9 +1,7 @@
 import { tablet } from "@frak-labs/design-system/breakpoints";
 import { vars } from "@frak-labs/design-system/theme";
-import { alias } from "@frak-labs/design-system/tokens";
+import { alias, safeArea } from "@frak-labs/design-system/tokens";
 import { style } from "@vanilla-extract/css";
-
-const safeTop = "var(--safe-area-inset-top, env(safe-area-inset-top, 0px))";
 
 /**
  * Outer shell — fills the viewport, flex column so main + bottom bar stack.
@@ -16,23 +14,27 @@ export const shellContainer = style({
     position: "relative",
     display: "flex",
     flexDirection: "column",
-    height: "100dvh",
-    paddingTop: safeTop,
+    // `--viewport-height` is mirrored from `window.visualViewport.height` by
+    // `initKeyboardInset` on Tauri so the shell shrinks when the soft keyboard
+    // opens (WKWebView and edge-to-edge Android WebView do not honor `dvh` or
+    // `adjustResize`). Falls back to `100dvh` everywhere else.
+    height: "var(--viewport-height, 100dvh)",
+    paddingTop: safeArea.top,
     overflow: "hidden",
     width: "100%",
     "@media": {
         [`(min-width: ${tablet}px)`]: {
             width: "393px",
             minHeight: "unset",
-            height: "min(100dvh, 852px)",
+            height: "min(var(--viewport-height, 100dvh), 852px)",
         },
     },
     selectors: {
         // Native app: opt out of the tablet phone-frame and fill the whole device.
         ':root[data-platform="tauri"] &': {
             width: "100%",
-            height: "100dvh",
-            minHeight: "100dvh",
+            height: "var(--viewport-height, 100dvh)",
+            minHeight: "var(--viewport-height, 100dvh)",
         },
     },
 });
@@ -61,7 +63,7 @@ export const mainContentWithNav = style([
     {
         // Bar is absolute-positioned on all breakpoints, so content
         // needs bottom padding everywhere to stay above it.
-        paddingBottom: `calc(110px + env(safe-area-inset-bottom, 0px))`,
+        paddingBottom: `calc(110px + ${safeArea.bottom})`,
     },
 ]);
 
@@ -74,7 +76,7 @@ export const mainContentNoNav = style([
     {
         // Reserve the home-indicator safe area so PageLayout's footer is not
         // clipped by the iOS gesture bar on auth/onboarding screens.
-        paddingBottom: `calc(${alias.spacing.m} + env(safe-area-inset-bottom, 0px))`,
+        paddingBottom: `calc(${alias.spacing.m} + ${safeArea.bottom})`,
         "@media": {
             [`(min-width: ${tablet}px)`]: {
                 maxHeight: "758px",

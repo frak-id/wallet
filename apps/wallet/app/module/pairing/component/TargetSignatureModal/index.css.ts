@@ -1,5 +1,10 @@
 import { vars } from "@frak-labs/design-system/theme";
-import { brand, fontSize, shadow } from "@frak-labs/design-system/tokens";
+import {
+    brand,
+    fontSize,
+    safeArea,
+    shadow,
+} from "@frak-labs/design-system/tokens";
 import { keyframes, style } from "@vanilla-extract/css";
 
 /**
@@ -41,7 +46,7 @@ export const bannerLayout = style({
     position: "fixed",
     left: brand.scale[400],
     right: brand.scale[400],
-    bottom: `calc(${brand.scale[400]} + env(safe-area-inset-bottom, 0px))`,
+    bottom: `calc(${brand.scale[400]} + ${safeArea.bottom})`,
     zIndex: 50,
     border: "none",
     boxShadow: shadow.dialog,
