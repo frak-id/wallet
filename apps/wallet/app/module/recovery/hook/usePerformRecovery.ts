@@ -1,16 +1,12 @@
-import type {
-    RecoveryFileContent,
-    WebAuthNWallet,
-} from "@frak-labs/wallet-shared";
 import {
     getPimlicoClient,
     getPimlicoTransport,
 } from "@frak-labs/wallet-shared";
-import type { UseMutationOptions } from "@tanstack/react-query";
-import { type DefaultError, useMutation } from "@tanstack/react-query";
+import { useMutation } from "@tanstack/react-query";
 import { smartAccountActions } from "permissionless";
 import { getUserOperationGasPrice } from "permissionless/actions/pimlico";
 import {
+    type Address,
     encodeFunctionData,
     type Hex,
     keccak256,
@@ -23,37 +19,37 @@ import { recoveryKey } from "@/module/recovery/queryKeys/recovery";
 import { doAddPassKeyFnAbi } from "@/module/recovery/utils/abi";
 import { recoverySmartAccount } from "@/module/wallet/smartWallet/RecoverySmartWallet";
 
+/** The freshly-created passkey we want to register on the recovered wallet. */
+export type RecoveryPasskey = {
+    authenticatorId: string;
+    publicKey: { x: Hex; y: Hex };
+};
+
 type MutationParams = {
-    file: RecoveryFileContent;
+    /** The wallet being recovered (decrypted from the recovery blob). */
+    walletAddress: Address;
+    /** Guardian account derived from the blob's burner private key. */
     recoveryAccount: LocalAccount<string>;
-    newWallet: Omit<WebAuthNWallet, "address">;
+    /** The new passkey to push on-chain via `doAddPasskey`. */
+    newPasskey: RecoveryPasskey;
 };
 
 /**
- * Perform the recovery on the given chain
- * Steps for recovery
- *  - Upload the recovery file
- *  - Perform a test using the `useLogin` hook to try to do a softRecover (passing wallet address and authenticator id from the file as param)
- *  - If login good, then proceed as usual
- *  - Create a webauthn authenticator
- *  - Enter file passphrase
- *  - Decrypt the guardian private key and build local account
- *  - Display options to recover the wallet on every deployed chains
+ * Push the new passkey onto the recovered wallet on-chain, signed by the
+ * recovery guardian. Resolves once the user operation is included, so the
+ * passkey is guaranteed registered on-chain when this returns.
  */
-export function usePerformRecovery(
-    options?: UseMutationOptions<Hex, DefaultError, MutationParams>
-) {
+export function usePerformRecovery() {
     // Get the viem client for the given chain
     const client = useClient();
 
     const { mutateAsync, mutate, ...mutationStuff } = useMutation({
-        ...options,
         mutationKey: recoveryKey.performRecovery,
         gcTime: 0,
         mutationFn: async ({
-            file,
+            walletAddress,
             recoveryAccount,
-            newWallet,
+            newPasskey,
         }: MutationParams) => {
             if (!client) {
                 throw new Error("No client found");
@@ -62,7 +58,7 @@ export function usePerformRecovery(
             // Build the recovery account
             const smartAccount = await recoverySmartAccount(client, {
                 localAccount: recoveryAccount,
-                initialWallet: file.initialWallet,
+                walletAddress,
             });
 
             // Get the bundler and paymaster clients
@@ -91,15 +87,15 @@ export function usePerformRecovery(
                 abi: [doAddPassKeyFnAbi],
                 functionName: "doAddPasskey",
                 args: [
-                    keccak256(toHex(newWallet.authenticatorId)),
-                    BigInt(newWallet.publicKey.x),
-                    BigInt(newWallet.publicKey.y),
+                    keccak256(toHex(newPasskey.authenticatorId)),
+                    BigInt(newPasskey.publicKey.x),
+                    BigInt(newPasskey.publicKey.y),
                 ],
             });
 
             // Then send the recovery transaction and return the tx hash
             return await accountClient.sendTransaction({
-                to: file.initialWallet.address,
+                to: walletAddress,
                 data: fnData,
             });
         },

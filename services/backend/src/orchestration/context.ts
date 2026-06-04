@@ -25,6 +25,7 @@ import {
     IdentityMergeService,
     IdentityOrchestrator,
     IdentityWeightService,
+    RecoveryClaimOrchestrator,
     WalletMergeOrchestrator,
     WalletSessionOrchestrator,
 } from "./identity";
@@ -165,6 +166,15 @@ const walletSessionOrchestrator = new WalletSessionOrchestrator(
     AuthContext.services.walletJwt
 );
 
+const recoveryClaimOrchestrator = new RecoveryClaimOrchestrator(
+    AuthContext.repositories.authenticator,
+    IdentityContext.repositories.walletBinding,
+    AuthContext.services.webAuthN,
+    webAuthNValidatorReader,
+    identityOrchestrator,
+    walletSessionOrchestrator
+);
+
 const pairingRouterOrchestrator = new PairingRouterOrchestrator(
     PairingContext.repositories.pairing,
     PairingContext.repositories.pairingSignature,
@@ -217,6 +227,7 @@ export namespace OrchestrationContext {
         referralCodeRedemption: referralCodeRedemptionOrchestrator,
         walletMerge: walletMergeOrchestrator,
         walletSession: walletSessionOrchestrator,
+        recoveryClaim: recoveryClaimOrchestrator,
         authenticatorLookup: authenticatorLookupOrchestrator,
         pairing: pairingOrchestrator,
         pairingRouter: pairingRouterOrchestrator,

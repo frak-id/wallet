@@ -980,32 +980,63 @@ export default interface Resources {
                 refreshRecovery: "Refresh recovery";
                 setupRecovery: "Set up recovery";
             };
-            recovery: {
-                continue: "Continue recovery";
-                createPasskey: "create passkey";
-                errorLoading: "Error loading recovery account";
-                invalidFile: "Invalid file";
-                invalidPassword: "Invalid password";
-                loadingRecovery: "Loading recovery";
-                needCreatePasskey: "You need to create a new passkey on your device";
-                pushPasskey: "Push new passkey";
-                status: {
-                    done: "Done";
-                    error: "Error";
-                    inProgress: "In progress";
-                    loading: "Loading ...";
-                    pending: "Pending";
-                    walletAlready: "Wallet already recovered";
+            recoveryUsage: {
+                blob: {
+                    continue: "Continue";
+                    description: "Paste the recovery backup you saved when you set up recovery. You'll need your recovery password next.";
+                    invalid: "This doesn't look like a valid recovery backup. Make sure you copied the whole code.";
+                    label: "Recovery backup";
+                    placeholder: "Paste your recovery backup here";
+                    title: "Recover your wallet";
                 };
-                step1: "Upload your recovery file";
-                step2: "Review recovery data";
-                step3: "Decryption with password";
-                step4: "Create new passkey";
-                step5: "Execute recovery";
-                step6: "Success";
-                successful: "Recovery is successful, you can now <pLink>login</pLink>";
-                title: "Recover a wallet";
-                uploadOrDrag: "Upload or drag recovery file";
+                password: {
+                    continue: "Continue";
+                    description: "Enter the recovery password you chose during setup. It never leaves this device.";
+                    invalid: "That password doesn't match this backup.";
+                    placeholder: "Enter your recovery password";
+                    title: "Unlock your backup";
+                };
+                signIn: {
+                    action: "I still have my passkey — sign in";
+                };
+                stepIndicator: "Step {{current}}/{{total}}";
+                success: {
+                    description: "Your new passkey has been added and your wallet is recovered. You're now signed in.";
+                    done: "Go to my wallet";
+                    title: "Welcome back";
+                };
+                validate: {
+                    authorise: "Recover my wallet";
+                    cancelled: "Recovery was cancelled.";
+                    cancelledDescription: "You cancelled the prompt. You can try again whenever you're ready.";
+                    description: "Confirm to add a new passkey to this wallet. You'll be asked to create it on this device.";
+                    expired: {
+                        description: "This recovery expired on {{date}}. Set up recovery again from a logged-in device to get a fresh backup.";
+                        title: "Recovery expired";
+                    };
+                    expiresLabel: "Usable until";
+                    failed: "Recovery failed.";
+                    failedDescription: "Something went wrong while recovering your wallet. You can try again.";
+                    guardianMismatch: {
+                        description: "This backup belongs to a different recovery setup than the one configured on this wallet.";
+                        title: "Backup doesn't match";
+                    };
+                    loadingDescription: "Reading this wallet's recovery configuration on-chain…";
+                    loadingTitle: "Checking your recovery";
+                    never: "No expiry";
+                    notConfigured: {
+                        description: "This wallet doesn't have recovery enabled, so it can't be recovered with a backup.";
+                        title: "No recovery on this wallet";
+                    };
+                    retry: "Try again";
+                    title: "Confirm recovery";
+                    tooEarly: {
+                        description: "For your security, this wallet can only be recovered from {{date}}. Please come back then.";
+                        title: "Not available yet";
+                    };
+                    tryAnother: "Use a different backup";
+                    walletLabel: "Wallet";
+                };
             };
             recoverySetup: {
                 active: "Active";

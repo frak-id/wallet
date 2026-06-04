@@ -6,6 +6,11 @@ export {
 export { IdentityMergeService } from "./IdentityMergeService";
 export { IdentityOrchestrator } from "./IdentityOrchestrator";
 export { IdentityWeightService } from "./IdentityWeightService";
+export {
+    RecoveryClaimOrchestrator,
+    type RecoveryClaimParams,
+    type RecoveryClaimResult,
+} from "./RecoveryClaimOrchestrator";
 export type {
     AssociateResult,
     GroupWeight,

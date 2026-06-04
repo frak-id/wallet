@@ -1,22 +1,20 @@
-import { KernelWallet, kernelAddresses } from "@frak-labs/app-essentials";
+import { kernelAddresses } from "@frak-labs/app-essentials";
 import type {
     BaseFrakSmartAccount,
     currentViemClient,
-    WebAuthNWallet,
 } from "@frak-labs/wallet-shared";
 import { isSmartAccountDeployed } from "permissionless";
 import { getAccountNonce } from "permissionless/actions";
 import { memo, tryit } from "radash";
 import {
+    type Address,
     type Chain,
     type Client,
     concatHex,
     type Hex,
     isAddressEqual,
-    keccak256,
     type LocalAccount,
     type Transport,
-    toHex,
 } from "viem";
 import {
     entryPoint06Abi,
@@ -27,10 +25,13 @@ import {
 import { estimateGas, signMessage } from "viem/actions";
 
 /**
- * Build a kernel smart account from a private key, that use the ECDSA signer behind the scene
- * @param client
- * @param localAccount
- * @param deployedAccountAddress
+ * Build a kernel smart account that signs with the recovery guardian ECDSA
+ * key. Used to push the `doAddPasskey` recovery transaction onto an existing
+ * (already deployed) wallet.
+ *
+ * Recovery only ever targets a deployed wallet — the recovery execution is
+ * configured on-chain via `setExecution`, which requires deployment — so this
+ * account never needs factory init code, only the wallet address + guardian.
  */
 export function recoverySmartAccount<
     TAccountSource extends string,
@@ -40,20 +41,20 @@ export function recoverySmartAccount<
     client: Client<TTransport, TChain>,
     {
         localAccount,
-        initialWallet,
+        walletAddress,
     }: {
         localAccount: LocalAccount<TAccountSource>;
-        initialWallet: WebAuthNWallet;
+        walletAddress: Address;
     }
 ): Promise<BaseFrakSmartAccount> {
-    if (!initialWallet?.address) throw new Error("Account address not found");
+    if (!walletAddress) throw new Error("Account address not found");
 
     // Helper to check if the smart account is already deployed (with caching)
     const isKernelAccountDeployed = memo(
         async () => {
-            return await isSmartAccountDeployed(client, initialWallet.address);
+            return await isSmartAccountDeployed(client, walletAddress);
         },
-        { key: () => `${initialWallet.address}-id-deployed` }
+        { key: () => `${walletAddress}-id-deployed` }
     );
 
     // Build the smart account itself
@@ -65,7 +66,7 @@ export function recoverySmartAccount<
             address: entryPoint06Address,
         },
         // Account address
-        getAddress: async () => initialWallet.address,
+        getAddress: async () => walletAddress,
         // Get nonce
         async getNonce() {
             return getAccountNonce(client, {
@@ -73,20 +74,15 @@ export function recoverySmartAccount<
                 entryPointAddress: entryPoint06Address,
             });
         },
-        // Factory args
+        // Factory args — recovery only acts on a deployed wallet, so the
+        // account must already exist on-chain.
         async getFactoryArgs() {
             if (await isKernelAccountDeployed()) {
                 return { factory: undefined, factoryData: undefined };
             }
-            return {
-                factory: kernelAddresses.factory,
-                factoryData: KernelWallet.getWebAuthNSmartWalletInitCode({
-                    authenticatorIdHash: keccak256(
-                        toHex(initialWallet.authenticatorId)
-                    ),
-                    signerPubKey: initialWallet.publicKey,
-                }),
-            };
+            throw new Error(
+                "Cannot recover a wallet that is not deployed on-chain"
+            );
         },
 
         /**
@@ -97,7 +93,7 @@ export function recoverySmartAccount<
             const hash = getUserOperationHash({
                 userOperation: {
                     ...userOperation,
-                    sender: userOperation.sender ?? initialWallet.address,
+                    sender: userOperation.sender ?? walletAddress,
                     signature: "0x",
                 },
                 entryPointAddress: entryPoint06Address,
@@ -120,7 +116,7 @@ export function recoverySmartAccount<
                 );
             }
             const call = calls[0];
-            if (!isAddressEqual(call.to, initialWallet.address)) {
+            if (!isAddressEqual(call.to, walletAddress)) {
                 throw new Error(
                     "Recovery account doesn't support transactions to other addresses"
                 );
@@ -154,8 +150,8 @@ export function recoverySmartAccount<
 
                 const [, estimation] = await tryit(() =>
                     estimateGas(client as unknown as typeof currentViemClient, {
-                        account: userOperation.sender ?? initialWallet.address,
-                        to: userOperation.sender ?? initialWallet.address,
+                        account: userOperation.sender ?? walletAddress,
+                        to: userOperation.sender ?? walletAddress,
                         data: userOperation.callData as Hex,
                     })
                 )();

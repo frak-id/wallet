@@ -2,7 +2,7 @@
  * Vitest Setup File for Wallet App Unit Tests
  *
  * Test Organization:
- * - Tests are co-located with source files (e.g., app/module/stores/recoveryStore.test.ts)
+ * - Tests are co-located with source files (e.g., app/module/recovery/utils/recoveryReadiness.test.ts)
  * - Use .test.ts or .test.tsx extension for test files
  * - Run tests with: bun run test (or bun run test:ui for Vitest UI)
  *

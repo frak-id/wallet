@@ -29,11 +29,28 @@ const PBKDF2_ITERATIONS = 600_000;
 const ADDRESS_BYTES = 20;
 const PRIVATE_KEY_BYTES = 32;
 const PLAINTEXT_BYTES = ADDRESS_BYTES + PRIVATE_KEY_BYTES;
+const GCM_TAG_BYTES = 16;
+const ENVELOPE_BYTES =
+    1 + IV_LENGTH + SALT_LENGTH + PLAINTEXT_BYTES + GCM_TAG_BYTES;
 
 export type RecoveryBlobContent = {
     smartWalletAddress: Address;
     burnerPrivateKey: Hex;
 };
+
+/**
+ * Structural-only check (NOT a password check): a valid base64url envelope of
+ * the right version and size. A wrong password still only fails later as a
+ * failed AES-GCM tag in `decodeRecoveryBlob`.
+ */
+export function isRecoveryBlobEnvelope(blob: string): boolean {
+    const [, buffer] = tryit(() => base64URLStringToBuffer(blob))();
+    if (!buffer) {
+        return false;
+    }
+    const envelope = new Uint8Array(buffer);
+    return envelope.length === ENVELOPE_BYTES && envelope[0] === BLOB_VERSION;
+}
 
 async function deriveKey(
     password: string,

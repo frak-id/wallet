@@ -1,4 +1,4 @@
-import type { Hex } from "viem";
+import type { Address } from "viem";
 
 /**
  * Query keys for recovery-related queries
@@ -10,17 +10,11 @@ export namespace recoveryKey {
     const base = "recovery" as const;
 
     /**
-     * Query keys for available chains
+     * Query key for the on-chain recovery option of a wallet being recovered.
      */
-    const availableChainsBase = "get-available-chains" as const;
-    export const availableChains = {
-        full: (params: { walletAddress: Hex; guardianAddress: Hex }) =>
-            [
-                base,
-                availableChainsBase,
-                params.walletAddress,
-                params.guardianAddress,
-            ] as const,
+    export const currentOption = {
+        full: (params: { walletAddress: Address }) =>
+            [base, "current-option", params.walletAddress] as const,
     };
 
     /**
@@ -28,5 +22,6 @@ export namespace recoveryKey {
      */
     export const createRecoveryPasskey = [base, "create-passkey"] as const;
     export const performRecovery = [base, "perform-recovery"] as const;
-    export const parseRecoveryFile = [base, "parse-file"] as const;
+    export const claimRecovery = [base, "claim-recovery"] as const;
+    export const runRecovery = [base, "run-recovery"] as const;
 }

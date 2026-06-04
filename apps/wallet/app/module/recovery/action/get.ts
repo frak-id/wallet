@@ -9,16 +9,13 @@ import { tryit } from "radash";
 import {
     type Address,
     isAddressEqual,
-    keccak256,
     toFunctionSelector,
-    toHex,
     zeroAddress,
 } from "viem";
 import { readContract } from "viem/actions";
 import {
     doAddPassKeyFnAbi,
     ecdsaValidatorStorageAbi,
-    webAuthNGetPasskeyAbi,
 } from "@/module/recovery/utils/abi";
 
 /**
@@ -81,55 +78,5 @@ export async function getCurrentRecoveryOption({
         guardianAddress,
         validAfter: recoveryOption.validAfter,
         validUntil: recoveryOption.validUntil,
-    };
-}
-
-export type GetRecoveryAvailabilityParams = {
-    wallet: Address;
-    expectedGuardian: Address;
-    newAuthenticatorId: string;
-};
-
-export type GetRecoveryAvailabilityResponse = {
-    available: boolean;
-    alreadyRecovered?: boolean;
-};
-
-/**
- * Get all the chains available chains for recovery for the given wallet
- * @param wallet
- * @param expectedGuardian
- * @param newAuthenticatorId
- */
-export async function getRecoveryAvailability({
-    wallet,
-    expectedGuardian,
-    newAuthenticatorId,
-}: GetRecoveryAvailabilityParams): Promise<GetRecoveryAvailabilityResponse> {
-    // Get the recovery option for the wallet
-    const currentRecovery = await getCurrentRecoveryOption({
-        wallet,
-    });
-    if (!currentRecovery) {
-        return { available: false };
-    }
-    // If the address doesn't match, tell the user that the guardian is not the same
-    if (!isAddressEqual(currentRecovery.guardianAddress, expectedGuardian)) {
-        return { available: false };
-    }
-    const [, potentiallyExistingPasskey] = await tryit(() =>
-        readContract(currentViemClient, {
-            address: addresses.webAuthNValidator,
-            abi: [webAuthNGetPasskeyAbi],
-            functionName: "getPasskey",
-            args: [wallet, keccak256(toHex(newAuthenticatorId))],
-        })
-    )();
-    // Check if the wallet already have this authenticator id enabled
-    return {
-        available: true,
-        alreadyRecovered:
-            potentiallyExistingPasskey &&
-            potentiallyExistingPasskey[1].x !== 0n,
     };
 }

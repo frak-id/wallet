@@ -425,32 +425,63 @@
             "text": "Vous avez obtenu {{eurClaimable}} EUR en attente grâce à vos activités de parrainage !",
             "title": "Récompense de parrainage en attente"
         },
-        "recovery": {
-            "title": "Récupérer un porte-monnaie",
-            "step1": "Téléchargez votre fichier de récupération",
-            "step2": "Examiner les données de récupération",
-            "step3": "Décryptage avec mot de passe",
-            "step4": "Créer une nouvelle clé d'accès",
-            "step5": "Exécuter la récupération",
-            "step6": "Succès",
-            "uploadOrDrag": "Téléchargez ou faites glisser le fichier de récupération",
-            "invalidFile": "Fichier invalide",
-            "continue": "Poursuivre la récupération",
-            "invalidPassword": "Mot de passe invalide",
-            "errorLoading": "Erreur lors du chargement du compte de récupération",
-            "needCreatePasskey": "Vous devez créer une nouvelle clé d'accès sur votre appareil",
-            "createPasskey": "créer une clé d'accès",
-            "loadingRecovery": "Chargement de la récupération",
-            "pushPasskey": "Envoyer la nouvelle clé d'accès",
-            "status": {
-                "loading": "Chargement ...",
-                "walletAlready": "Porte-monnaie déjà récupéré",
-                "inProgress": "En cours",
-                "done": "Fait",
-                "error": "Erreur",
-                "pending": "En attente"
+        "recoveryUsage": {
+            "stepIndicator": "Étape {{current}}/{{total}}",
+            "signIn": {
+                "action": "J'ai toujours ma clé d'accès — me connecter"
             },
-            "successful": "La récupération est réussie, vous pouvez maintenant vous <pLink>connecter</pLink>"
+            "blob": {
+                "title": "Récupérez votre porte-monnaie",
+                "description": "Collez la sauvegarde de récupération que vous avez conservée lors de la configuration. Votre mot de passe de récupération sera demandé ensuite.",
+                "label": "Sauvegarde de récupération",
+                "placeholder": "Collez votre sauvegarde de récupération ici",
+                "invalid": "Cela ne ressemble pas à une sauvegarde de récupération valide. Vérifiez que vous avez copié le code en entier.",
+                "continue": "Continuer"
+            },
+            "password": {
+                "title": "Déverrouillez votre sauvegarde",
+                "description": "Saisissez le mot de passe de récupération choisi lors de la configuration. Il ne quitte jamais cet appareil.",
+                "placeholder": "Saisissez votre mot de passe de récupération",
+                "invalid": "Ce mot de passe ne correspond pas à cette sauvegarde.",
+                "continue": "Continuer"
+            },
+            "validate": {
+                "loadingTitle": "Vérification de votre récupération",
+                "loadingDescription": "Lecture de la configuration de récupération de ce porte-monnaie sur la blockchain…",
+                "title": "Confirmer la récupération",
+                "description": "Confirmez pour ajouter une nouvelle clé d'accès à ce porte-monnaie. Il vous sera demandé de la créer sur cet appareil.",
+                "walletLabel": "Porte-monnaie",
+                "expiresLabel": "Utilisable jusqu'au",
+                "never": "Sans expiration",
+                "authorise": "Récupérer mon porte-monnaie",
+                "retry": "Réessayer",
+                "failed": "Échec de la récupération.",
+                "failedDescription": "Une erreur s'est produite lors de la récupération de votre porte-monnaie. Vous pouvez réessayer.",
+                "cancelled": "Récupération annulée.",
+                "cancelledDescription": "Vous avez annulé la demande. Vous pouvez réessayer quand vous le souhaitez.",
+                "tryAnother": "Utiliser une autre sauvegarde",
+                "notConfigured": {
+                    "title": "Pas de récupération sur ce porte-monnaie",
+                    "description": "Ce porte-monnaie n'a pas de récupération activée, il ne peut donc pas être récupéré avec une sauvegarde."
+                },
+                "guardianMismatch": {
+                    "title": "La sauvegarde ne correspond pas",
+                    "description": "Cette sauvegarde appartient à une autre configuration de récupération que celle définie sur ce porte-monnaie."
+                },
+                "tooEarly": {
+                    "title": "Pas encore disponible",
+                    "description": "Pour votre sécurité, ce porte-monnaie ne peut être récupéré qu'à partir du {{date}}. Merci de revenir à ce moment-là."
+                },
+                "expired": {
+                    "title": "Récupération expirée",
+                    "description": "Cette récupération a expiré le {{date}}. Reconfigurez la récupération depuis un appareil connecté pour obtenir une nouvelle sauvegarde."
+                }
+            },
+            "success": {
+                "title": "Bon retour",
+                "description": "Votre nouvelle clé d'accès a été ajoutée et votre porte-monnaie est récupéré. Vous êtes maintenant connecté.",
+                "done": "Aller à mon porte-monnaie"
+            }
         },
         "recoverySetup": {
             "title": "Configuration de récupération",
