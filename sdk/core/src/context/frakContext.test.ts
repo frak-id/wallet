@@ -584,6 +584,61 @@ describe("FrakContextManager", () => {
         });
     });
 
+    describe("case-insensitive fCtx key", () => {
+        const context: FrakContextV2 = {
+            v: 2,
+            c: "550e8400-e29b-41d4-a716-446655440001",
+            m: "550e8400-e29b-41d4-a716-446655440000",
+            t: 1709654400,
+        };
+
+        it("should parse a lowercased fctx key with an intact value", () => {
+            const compressed = FrakContextManager.compress(context);
+            const url = `https://example.com?fctx=${compressed}`;
+
+            const result = FrakContextManager.parse({ url });
+
+            expect(result).toEqual(context);
+        });
+
+        it("should parse an uppercased FCTX key with an intact value", () => {
+            const compressed = FrakContextManager.compress(context);
+            const url = `https://example.com?FCTX=${compressed}`;
+
+            const result = FrakContextManager.parse({ url });
+
+            expect(result).toEqual(context);
+        });
+
+        it("should prefer the exact-case fCtx key when both variants exist", () => {
+            const canonical = FrakContextManager.compress(context);
+            const url = `https://example.com?fctx=stale&fCtx=${canonical}`;
+
+            const result = FrakContextManager.parse({ url });
+
+            expect(result).toEqual(context);
+        });
+
+        it("should remove a lowercased fctx key", () => {
+            const url = "https://example.com?fctx=abc&keep=me";
+
+            const result = FrakContextManager.remove(url);
+
+            expect(result).not.toContain("fctx");
+            expect(result).toContain("keep=me");
+        });
+
+        it("should not leave a stale lowercased fctx variant on update", () => {
+            const url = "https://example.com?fctx=stale";
+
+            const result = FrakContextManager.update({ url, context });
+
+            expect(result).toContain("fCtx=");
+            expect(result).not.toContain("fctx=stale");
+            expect(FrakContextManager.parse({ url: result! })).toEqual(context);
+        });
+    });
+
     describe("replaceUrl", () => {
         const mockAddress =
             "0x1234567890123456789012345678901234567890" as Address;

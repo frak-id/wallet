@@ -6,6 +6,10 @@ import type {
 } from "../types";
 import { isV2Context } from "../types";
 import { base64urlDecode, base64urlEncode } from "../utils/compression/b64";
+import {
+    deleteQueryParamCaseInsensitive,
+    getQueryParamCaseInsensitive,
+} from "../utils/url/queryParams";
 import { addressToBytes, bytesToAddress, isAddress } from "./address";
 import { decodeFrakContextV2, encodeFrakContextV2 } from "./frakContextV2Codec";
 
@@ -77,6 +81,9 @@ function decompress(context?: string): FrakContext | undefined {
 /**
  * Parse a URL to extract the Frak referral context from the `fCtx` query parameter.
  *
+ * The key is matched case-insensitively: some link channels (emails, messaging
+ * apps) lowercase query-param keys in transit, so `fCtx` can arrive as `fctx`.
+ *
  * @param args
  * @param args.url - The URL to parse
  * @returns The parsed FrakContext, or null if absent
@@ -85,7 +92,10 @@ function parse({ url }: { url: string }): FrakContext | null | undefined {
     if (!url) return null;
 
     const urlObj = new URL(url);
-    const frakContext = urlObj.searchParams.get(contextKey);
+    const frakContext = getQueryParamCaseInsensitive(
+        urlObj.searchParams,
+        contextKey
+    );
     if (!frakContext) return null;
 
     return decompress(frakContext);
@@ -165,6 +175,7 @@ function update({
     if (!compressedContext) return null;
 
     const urlObj = new URL(url);
+    deleteQueryParamCaseInsensitive(urlObj.searchParams, contextKey);
     urlObj.searchParams.set(contextKey, compressedContext);
     applyAttributionParams(urlObj, attribution);
     return urlObj.toString();
@@ -178,7 +189,7 @@ function update({
  */
 function remove(url: string): string {
     const urlObj = new URL(url);
-    urlObj.searchParams.delete(contextKey);
+    deleteQueryParamCaseInsensitive(urlObj.searchParams, contextKey);
     return urlObj.toString();
 }
 
