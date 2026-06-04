@@ -1,5 +1,11 @@
 import * as coreSdkIndex from "@frak-labs/core-sdk";
-import { setupClient, trackEvent, withCache } from "@frak-labs/core-sdk";
+import {
+    deleteQueryParamCaseInsensitive,
+    getQueryParamCaseInsensitive,
+    setupClient,
+    trackEvent,
+    withCache,
+} from "@frak-labs/core-sdk";
 import * as coreSdkActions from "@frak-labs/core-sdk/actions";
 import { openSharingPage } from "../actions/sharingPage";
 import { decodeProductsParam } from "../utils/sharingPageProducts";
@@ -98,25 +104,35 @@ async function doInit(): Promise<void> {
  * soon as they are read, so refreshes / shares of the current URL do not
  * re-trigger the auto-open. Matches the `fmt` (merge token) and `sso`
  * cleanup patterns elsewhere in the SDK.
+ *
+ * Param keys and the `frakAction` keyword value are matched case-insensitively
+ * because some email tools and browsers lowercase the whole URL in transit
+ * (e.g. `?FrakAction=Share` → `?frakaction=share`).
  */
 function handleActionQueryParam() {
     const url = new URL(window.location.href);
-    if (url.searchParams.get("frakAction") !== "share") {
+    const action = getQueryParamCaseInsensitive(url.searchParams, "frakAction");
+    if (action?.toLowerCase() !== "share") {
         return;
     }
 
     console.log("[Frak SDK] Auto open share via query param");
 
-    const link = url.searchParams.get("link") ?? undefined;
-    const placement = url.searchParams.get("placement") ?? undefined;
-    const products = decodeProductsParam(url.searchParams.get("products"));
+    const link =
+        getQueryParamCaseInsensitive(url.searchParams, "link") ?? undefined;
+    const placement =
+        getQueryParamCaseInsensitive(url.searchParams, "placement") ??
+        undefined;
+    const products = decodeProductsParam(
+        getQueryParamCaseInsensitive(url.searchParams, "products")
+    );
 
     // Clean URL immediately so a refresh / share of the current URL does
     // not re-trigger the auto-open. Same idiom as `fmt` / `sso` cleanup.
-    url.searchParams.delete("frakAction");
-    url.searchParams.delete("link");
-    url.searchParams.delete("placement");
-    url.searchParams.delete("products");
+    deleteQueryParamCaseInsensitive(url.searchParams, "frakAction");
+    deleteQueryParamCaseInsensitive(url.searchParams, "link");
+    deleteQueryParamCaseInsensitive(url.searchParams, "placement");
+    deleteQueryParamCaseInsensitive(url.searchParams, "products");
     window.history.replaceState({}, "", url.toString());
 
     openSharingPage(undefined, placement, { link, products });
