@@ -5,7 +5,11 @@ import {
     ProfileIcon,
     WalletIcon,
 } from "@frak-labs/design-system/icons";
-import { InAppBrowserToast, OfflineBanner } from "@frak-labs/wallet-shared";
+import {
+    InAppBrowserToast,
+    OfflineBanner,
+    WebauthnErrorToast,
+} from "@frak-labs/wallet-shared";
 import { Outlet, useRouterState } from "@tanstack/react-router";
 import type { ReactNode } from "react";
 import { useMemo, useRef } from "react";
@@ -94,6 +98,7 @@ export function AppShell({
                 <BannerStack>
                     <OfflineBanner />
                     <PairingInProgress />
+                    <WebauthnErrorToast />
                 </BannerStack>
                 <Box
                     as="main"

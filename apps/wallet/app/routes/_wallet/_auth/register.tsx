@@ -135,6 +135,7 @@ function RegisterPage() {
     const [alreadyUsed, setAlreadyUsed] = useState<EmailAlreadyUsedArgs | null>(
         null
     );
+    const [loginError, setLoginError] = useState<Error | null>(null);
 
     // Detect pairing context once at mount: user landed on /register
     // because they hit a /pairing?id=xxx deep link before authenticating
@@ -151,6 +152,7 @@ function RegisterPage() {
 
     const goToStep = useCallback(
         (next: FlowStep, direction: "forward" | "backward" = "forward") => {
+            setLoginError(null);
             withStepTransition(direction, () => setStep(next));
         },
         []
@@ -214,6 +216,7 @@ function RegisterPage() {
 
     const { login, isLoading: isLoginLoading } = useLogin({
         onSuccess: handlePostLoginRedirect,
+        onError: (error) => setLoginError(error),
     });
 
     const handleAlreadyHaveAccount = useCallback(() => {
@@ -221,6 +224,7 @@ function RegisterPage() {
             action: "login",
         });
         if (ua.isMobile) {
+            setLoginError(null);
             login({});
             return;
         }
@@ -365,6 +369,7 @@ function RegisterPage() {
                     loginLabel={t("onboarding.alreadyHaveAccount")}
                     onLoginClick={handleAlreadyHaveAccount}
                     isLoginLoading={isLoginLoading}
+                    loginError={loginError}
                     onRecoveryCodeClick={() => {
                         trackEvent("auth_recovery_code_clicked");
                         flowRef.current?.track("onboarding_action_clicked", {
@@ -425,6 +430,7 @@ function RegisterPage() {
                         flowRef.current?.track("onboarding_action_clicked", {
                             action: "login",
                         });
+                        setLoginError(null);
                         // Pass every credential id bound to the resolved
                         // wallet to WebAuthn's `allowCredentials` — a wallet
                         // routinely accepts multiple passkeys post-merge.
@@ -444,6 +450,7 @@ function RegisterPage() {
                         setAlreadyUsed(null);
                         goToStep("emailInput", "backward");
                     }}
+                    loginError={loginError}
                 />
             )}
             {step === "onboardingThree" && (

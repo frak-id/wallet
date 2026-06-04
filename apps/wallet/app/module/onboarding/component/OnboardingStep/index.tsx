@@ -1,4 +1,5 @@
 import { Button } from "@frak-labs/design-system/components/Button";
+import { useWebauthnErrorToast } from "@frak-labs/wallet-shared";
 import { useTranslation } from "react-i18next";
 import { Back } from "@/module/common/component/Back";
 import { PageLayout } from "@/module/common/component/PageLayout";
@@ -23,6 +24,8 @@ type OnboardingStepProps = {
     onLoginClick?: () => void;
     /** Whether the login action is in progress */
     isLoginLoading?: boolean;
+    /** Login error surfaced above the actions (login-enabled step only) */
+    loginError?: Error | null;
     /** Called when the user clicks the recovery code link */
     onRecoveryCodeClick?: () => void;
 };
@@ -35,9 +38,15 @@ export function OnboardingStep({
     loginLabel,
     onLoginClick,
     isLoginLoading,
+    loginError,
     onRecoveryCodeClick,
 }: OnboardingStepProps) {
     const { t } = useTranslation();
+
+    useWebauthnErrorToast(loginError, {
+        operation: "login",
+        onRetry: onLoginClick,
+    });
 
     return (
         <PageLayout
@@ -67,7 +76,13 @@ export function OnboardingStep({
                 </>
             }
         >
-            <div className={stepStyles.body}>
+            <div
+                className={
+                    onBack
+                        ? `${stepStyles.body} ${stepStyles.bodyWithBack}`
+                        : stepStyles.body
+                }
+            >
                 <OnboardingHero {...hero} />
             </div>
         </PageLayout>

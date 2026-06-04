@@ -4,9 +4,15 @@ import { style } from "@vanilla-extract/css";
 export const body = style({
     display: "flex",
     flexDirection: "column",
-    gap: alias.spacing.l,
-    flex: 1,
-    minHeight: 0,
+    gap: alias.spacing.m,
+    // Size to content (not flex:1) so tall content extends the scroll area
+    // instead of being trapped under the footer.
+    flexShrink: 0,
+});
+
+// Gap between the Back arrow row and the hero image (steps with `onBack`).
+export const bodyWithBack = style({
+    marginTop: alias.spacing.m,
 });
 
 export const heroImage = style({

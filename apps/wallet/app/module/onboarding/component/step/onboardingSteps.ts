@@ -10,6 +10,19 @@ export const onboardingSteps: readonly OnboardingHeroProps[] = [
         imageVariant: "cover",
         priority: true,
     },
-    { translationKey: "two", image: stepImgTwo, imageMaxWidth: "320px" },
-    { translationKey: "three", image: stepImgThree, imageMaxWidth: "223px" },
+    {
+        translationKey: "two",
+        image: stepImgTwo,
+        // 2x asset → 1x display width 688/2 = 344px (matches the Figma cards).
+        imageVariant: "centerTall",
+        imageMaxWidth: "344px",
+    },
+    {
+        translationKey: "three",
+        image: stepImgThree,
+        imageVariant: "centerTall",
+        // 2x asset → 1x display width 476/2 = 238px (the artwork box reads
+        // 223.6px, but the export includes the badge's shadow bleed).
+        imageMaxWidth: "238px",
+    },
 ];

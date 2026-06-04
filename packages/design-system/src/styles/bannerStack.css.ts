@@ -1,17 +1,17 @@
 import { style } from "@vanilla-extract/css";
-import { alias } from "../tokens.css";
+import { alias, safeArea, zIndex } from "../tokens.css";
 
 /**
- * Fixed top-of-viewport container for stacked status banners. Owns the
- * safe-area offset, side margins, gap and z-index so child banners stay
- * positioning-agnostic and compose cleanly.
+ * Stacked top banners, absolutely positioned within the app shell so they track
+ * the main content (centered phone-frame on tablet/desktop, full width on
+ * mobile/native). Owns safe-area gap, side margins and z-index.
  */
 export const stack = style({
-    position: "fixed",
-    top: `max(${alias.spacing.xs}, env(safe-area-inset-top))`,
+    position: "absolute",
+    top: `calc(${safeArea.top} + ${alias.spacing.xs})`,
     left: alias.spacing.m,
     right: alias.spacing.m,
-    zIndex: 1000,
+    zIndex: zIndex.toast,
     display: "flex",
     flexDirection: "column",
     gap: alias.spacing.xs,

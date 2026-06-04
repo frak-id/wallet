@@ -23,13 +23,14 @@ import {
     clientIdStore,
     compressedSsoToParams,
     ExternalLink,
-    HandleErrors,
     openExternalUrl,
     PairingView,
     recordError,
+    resolveWebauthnErrorView,
     sessionStore,
     ssoKey,
     ua,
+    useWebauthnErrorToast,
 } from "@frak-labs/wallet-shared";
 import { type UseMutationOptions, useMutation } from "@tanstack/react-query";
 import { createFileRoute, redirect } from "@tanstack/react-router";
@@ -163,6 +164,7 @@ function Sso() {
      * The action error state (from login/register, retryable)
      */
     const [error, setError] = useState<Error | null>(null);
+    useWebauthnErrorToast(error);
 
     /**
      * Current view: initial auth choices or QR-code pairing screen.
@@ -297,18 +299,14 @@ function Sso() {
 
     // Show error state if loader failed
     if (loaderError) {
+        const view = resolveWebauthnErrorView(loaderError);
         return (
             <>
                 <SsoHeader />
                 <StepLayout
                     icon={<span>⚠️</span>}
                     title="An error occurred"
-                    description={
-                        <HandleErrors
-                            error={loaderError}
-                            className={layout.errorText}
-                        />
-                    }
+                    description={t(`${view.baseKey}.message`)}
                     footer={
                         <Button variant="ghost" onClick={() => window.close()}>
                             Close
@@ -380,12 +378,6 @@ function Sso() {
         <PageLayout
             footer={
                 <>
-                    {error && (
-                        <HandleErrors
-                            error={error}
-                            className={layout.errorText}
-                        />
-                    )}
                     <Box className={layout.actions}>
                         {useSessionShortcut ? (
                             <ContinueAsSession
