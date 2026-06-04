@@ -49,4 +49,19 @@ export const footerSticky = style({
     zIndex: 1,
     background: vars.surface.background,
     paddingTop: alias.spacing.l,
+    selectors: {
+        // Scroll-edge fade: content dissolves into the bar as it scrolls up to
+        // it. A strip above the (opaque) bar, not an overlay over it — so
+        // trailing content stays in flow above the bar, never hidden behind it.
+        "&::before": {
+            content: '""',
+            position: "absolute",
+            left: 0,
+            right: 0,
+            bottom: "100%",
+            height: alias.spacing.xl,
+            pointerEvents: "none",
+            background: `linear-gradient(to top, ${vars.surface.background}, transparent)`,
+        },
+    },
 });
