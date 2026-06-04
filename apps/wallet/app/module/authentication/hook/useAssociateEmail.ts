@@ -45,6 +45,8 @@ export function useAssociateEmail(
                 // without waiting for a refetch.
                 context.client.setQueryData(authKey.myEmail, {
                     email: result.email,
+                    verified: false,
+                    verifiedAt: null,
                 });
             }
             options?.onSuccess?.(result, variables, _onMutateResult, context);

@@ -49,6 +49,12 @@ export namespace authKey {
     const myEmailBase = "myEmail" as const;
     export const myEmail = [base, myEmailBase] as const;
     export const associateEmail = [base, myEmailBase, "associate"] as const;
+    export const sendEmailVerification = [
+        base,
+        myEmailBase,
+        "sendVerification",
+    ] as const;
+    export const verifyEmail = [base, myEmailBase, "verify"] as const;
 
     /**
      * Best-known "last authenticator" hint read from the platform's

@@ -105,7 +105,8 @@
             "addEmail": "Add my email",
             "setupRecovery": "Set up recovery",
             "refreshRecovery": "Refresh recovery",
-            "recoveryConfiguration": "Recovery"
+            "recoveryConfiguration": "Recovery",
+            "verifyEmail": "Verify my email"
         },
         "addEmail": {
             "title": "Add your email",
@@ -125,13 +126,49 @@
             },
             "success": {
                 "title": "Email saved",
-                "description": "{{email}} is now linked to your wallet. Set up recovery next so you can recover it if you ever lose access.",
-                "setupRecovery": "Set up recovery",
+                "description": "{{email}} is now linked to your wallet. Verify it next so you can use it to recover your account.",
+                "verifyEmail": "Verify my email",
                 "back": "Back to my profile"
             },
             "card": {
                 "title": "Add your email",
                 "description": "Add your email to be able to recover your wallet later."
+            }
+        },
+        "verifyEmail": {
+            "title": "Verify your email",
+            "description": "Enter the 6-digit code we email you to confirm your address. You can paste it or tap the button in the email.",
+            "statusPending": "Not verified yet",
+            "sendCode": "Send verification code",
+            "resendIn": "Resend in {{seconds}}s",
+            "pasteCode": "Paste code",
+            "digitLabel": "Digit {{index}}",
+            "verify": "Verify",
+            "changeEmailLink": "Use a different email",
+            "verifying": {
+                "title": "Verifying your email…",
+                "description": "Hang tight while we confirm your code."
+            },
+            "error": {
+                "invalid": "Incorrect code. Please try again.",
+                "expired": "This code has expired. Send a new one.",
+                "tooManyAttempts": "Too many attempts. Send a new code.",
+                "network": "Something went wrong. Please try again.",
+                "send": "Couldn't send the code. Please try again."
+            },
+            "success": {
+                "title": "Email verified",
+                "description": "{{email}} is now verified. Set up recovery next so you can recover your account if you ever lose access.",
+                "setupRecovery": "Set up recovery",
+                "back": "Back to my profile"
+            },
+            "changeEmail": {
+                "title": "Change your email",
+                "description": "Enter a new email address. We'll send a code to verify it; your current email stays active until then.",
+                "label": "Email",
+                "placeholder": "your.email@gmail.com",
+                "clearAriaLabel": "Clear email address",
+                "continue": "Send code"
             }
         },
         "merge": {

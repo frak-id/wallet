@@ -14,10 +14,15 @@ export type EmailStatusResponse = Static<typeof EmailStatusResponseSchema>;
 /**
  * Current authenticator's email status. Returned by the wallet "do I have an
  * email on file" check used to decide whether to offer the post-auth
- * "add my email" flow.
+ * "add my email" flow, and now whether to offer verification / show a pending
+ * rotation. `email` stays the primary field existing clients read; `verified`,
+ * `verifiedAt` and `pendingEmail` are additive.
  */
 export const MyEmailResponseSchema = t.Object({
     email: t.Union([t.String(), t.Null()]),
+    verified: t.Boolean(),
+    verifiedAt: t.Union([t.String(), t.Null()]),
+    pendingEmail: t.Optional(t.Union([t.String(), t.Null()])),
 });
 export type MyEmailResponse = Static<typeof MyEmailResponseSchema>;
 

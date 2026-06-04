@@ -101,6 +101,16 @@ export {
     MerchantIdParamSchema,
 } from "./commonApiSchemas";
 export {
+    type SendEmailVerificationBody,
+    SendEmailVerificationBodySchema,
+    type SendEmailVerificationResponse,
+    SendEmailVerificationResponseSchema,
+    type VerifyEmailBody,
+    VerifyEmailBodySchema,
+    type VerifyEmailResponse,
+    VerifyEmailResponseSchema,
+} from "./emailVerificationSchemas";
+export {
     type InteractionSubmission,
     InteractionSubmissionSchema,
     validateArrivalReferrer,

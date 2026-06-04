@@ -103,7 +103,8 @@
             "addEmail": "Ajouter mon e-mail",
             "setupRecovery": "Configurer la récupération",
             "refreshRecovery": "Actualiser la récupération",
-            "recoveryConfiguration": "Récupération"
+            "recoveryConfiguration": "Récupération",
+            "verifyEmail": "Vérifier mon e-mail"
         },
         "addEmail": {
             "title": "Ajoute ton e-mail",
@@ -123,13 +124,49 @@
             },
             "success": {
                 "title": "E-mail enregistré",
-                "description": "{{email}} est maintenant lié à ton portefeuille. Configure la récupération pour pouvoir le restaurer si tu perds l'accès.",
-                "setupRecovery": "Configurer la récupération",
+                "description": "{{email}} est maintenant lié à ton portefeuille. Vérifie-le pour pouvoir t'en servir pour récupérer ton compte.",
+                "verifyEmail": "Vérifier mon e-mail",
                 "back": "Retour au profil"
             },
             "card": {
                 "title": "Ajoute ton e-mail",
                 "description": "Ajoute ton e-mail pour pouvoir récupérer ton portefeuille plus tard."
+            }
+        },
+        "verifyEmail": {
+            "title": "Vérifie ton e-mail",
+            "description": "Saisis le code à 6 chiffres que nous t'envoyons par e-mail pour confirmer ton adresse. Tu peux le coller ou appuyer sur le bouton dans l'e-mail.",
+            "statusPending": "Pas encore vérifié",
+            "sendCode": "Envoyer le code de vérification",
+            "resendIn": "Renvoyer dans {{seconds}}s",
+            "pasteCode": "Coller le code",
+            "digitLabel": "Chiffre {{index}}",
+            "verify": "Vérifier",
+            "changeEmailLink": "Utiliser un autre e-mail",
+            "verifying": {
+                "title": "Vérification de ton e-mail…",
+                "description": "Patiente pendant que nous confirmons ton code."
+            },
+            "error": {
+                "invalid": "Code incorrect. Réessaie.",
+                "expired": "Ce code a expiré. Demandes-en un nouveau.",
+                "tooManyAttempts": "Trop de tentatives. Demande un nouveau code.",
+                "network": "Une erreur est survenue. Réessaie.",
+                "send": "Impossible d'envoyer le code. Réessaie."
+            },
+            "success": {
+                "title": "E-mail vérifié",
+                "description": "{{email}} est maintenant vérifié. Configure la récupération pour pouvoir restaurer ton compte si tu perds l'accès.",
+                "setupRecovery": "Configurer la récupération",
+                "back": "Retour au profil"
+            },
+            "changeEmail": {
+                "title": "Change ton e-mail",
+                "description": "Saisis une nouvelle adresse e-mail. Nous enverrons un code pour la vérifier ; ton e-mail actuel reste actif jusque-là.",
+                "label": "E-mail",
+                "placeholder": "ton.email@gmail.com",
+                "clearAriaLabel": "Effacer l'adresse e-mail",
+                "continue": "Envoyer le code"
             }
         },
         "merge": {

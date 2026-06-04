@@ -1,5 +1,5 @@
 import { db } from "@backend-infrastructure";
-import { and, eq, isNull } from "drizzle-orm";
+import { and, eq, isNull, ne } from "drizzle-orm";
 import { LRUCache } from "lru-cache";
 import type { Address } from "viem";
 import { identityGroupsTable, identityNodesTable } from "../db/schema";
@@ -166,6 +166,76 @@ export class IdentityRepository {
             orderBy: (nodes, { asc }) => [asc(nodes.createdAt)],
         });
         return node?.identityValue ?? null;
+    }
+
+    /**
+     * Resolve a group's active email nodes into a verified address + its stamp
+     * and a distinct pending address (rotation in progress). `email` falls back
+     * to the oldest active node, matching `findEmailForGroup` pre-verification.
+     */
+    async findEmailStatusForGroup(groupId: string): Promise<{
+        email: string | null;
+        verifiedAt: Date | null;
+        pendingEmail: string | null;
+    }> {
+        const nodes = await db.query.identityNodesTable.findMany({
+            where: and(
+                eq(identityNodesTable.groupId, groupId),
+                eq(identityNodesTable.identityType, "email"),
+                isNull(identityNodesTable.unlinkedAt)
+            ),
+            orderBy: (n, { asc }) => [asc(n.createdAt)],
+        });
+
+        const verified = nodes.find((n) => n.verifiedAt !== null);
+        const email =
+            verified?.identityValue ?? nodes[0]?.identityValue ?? null;
+        const pending = nodes.find(
+            (n) => n.verifiedAt === null && n.identityValue !== email
+        );
+
+        return {
+            email,
+            verifiedAt: verified?.verifiedAt ?? null,
+            pendingEmail: pending?.identityValue ?? null,
+        };
+    }
+
+    async markEmailVerified(groupId: string, email: string): Promise<void> {
+        await db
+            .update(identityNodesTable)
+            .set({ verifiedAt: new Date() })
+            .where(
+                and(
+                    eq(identityNodesTable.groupId, groupId),
+                    eq(identityNodesTable.identityType, "email"),
+                    eq(
+                        identityNodesTable.identityValue,
+                        this.normalizeValue("email", email)
+                    ),
+                    isNull(identityNodesTable.unlinkedAt)
+                )
+            );
+    }
+
+    async unlinkOtherActiveEmails(
+        groupId: string,
+        exceptEmail: string
+    ): Promise<void> {
+        await db
+            .update(identityNodesTable)
+            .set({ unlinkedAt: new Date() })
+            .where(
+                and(
+                    eq(identityNodesTable.groupId, groupId),
+                    eq(identityNodesTable.identityType, "email"),
+                    isNull(identityNodesTable.unlinkedAt),
+                    ne(
+                        identityNodesTable.identityValue,
+                        this.normalizeValue("email", exceptEmail)
+                    )
+                )
+            );
     }
 
     async createGroup(): Promise<IdentityGroupSelect> {

@@ -5,13 +5,13 @@ import { EmailFlowResultScreen } from "@/module/common/component/EmailFlowResult
 type SuccessStepProps = {
     email: string;
     onBack: () => void;
-    onSetupRecovery: () => void;
+    onVerifyEmail: () => void;
 };
 
 export function SuccessStep({
     email,
     onBack,
-    onSetupRecovery,
+    onVerifyEmail,
 }: SuccessStepProps) {
     const { t } = useTranslation();
     return (
@@ -25,9 +25,9 @@ export function SuccessStep({
                 variant="primary"
                 size="large"
                 width="full"
-                onClick={onSetupRecovery}
+                onClick={onVerifyEmail}
             >
-                {t("wallet.addEmail.success.setupRecovery")}
+                {t("wallet.addEmail.success.verifyEmail")}
             </Button>
             <Button
                 type="button"

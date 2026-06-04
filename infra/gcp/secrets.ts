@@ -8,12 +8,14 @@ import {
     nexusRpcSecret,
     pimlicoApiKey,
     productSetupCodeSalt,
+    resendApiKey,
     rustfsCdnBaseUrl,
     rustfsEndpoint,
     shopifyApiSecret,
     shopifyClientId,
     sqldUrl,
     vapidPublicKey,
+    walletUrl,
 } from "../config";
 import { isProd, normalizedStageName } from "../utils";
 
@@ -73,6 +75,7 @@ export const elysiaEnv = {
     // Global
     STAGE: normalizedStageName,
     ERPC_URL: erpcUrl,
+    FRAK_WALLET_URL: walletUrl,
     MASTER_KEY_SECRET: masterPkey,
     // Postgres related
     ...postgresEnv,
@@ -101,6 +104,10 @@ export const elysiaEnv = {
     NEXUS_RPC_SECRET: nexusRpcSecret.value,
     AIRTABLE_API_KEY: new sst.Secret("AIRTABLE_API_KEY").value,
     SLACK_BOT_TOKEN: new sst.Secret("SLACK_BOT_TOKEN").value,
+
+    // Resend (transactional email)
+    RESEND_API_KEY: resendApiKey.value,
+    RESEND_FROM_EMAIL: "noreply@frak.id",
 
     // Shopify related
     SHOPIFY_API_SECRET: shopifyApiSecret.value,

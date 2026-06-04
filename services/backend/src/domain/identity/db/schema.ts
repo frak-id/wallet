@@ -75,6 +75,10 @@ export const identityNodesTable = pgTable(
         // available for `findGroupByIdentity` (prevents stray references to
         // the loser wallet from accidentally creating a new identity group).
         unlinkedAt: timestamp("unlinked_at"),
+        // Verification stamp for email nodes (`null` for unverified + every
+        // non-email type). With `unlinked_at` it encodes the email lifecycle:
+        // pending (both null) -> verified (set, null) -> legacy (unlinked set).
+        verifiedAt: timestamp("verified_at"),
     },
     (table) => [
         unique("identity_nodes_unique_identity")
@@ -155,3 +159,29 @@ export const installCodesTable = pgTable(
         index("install_codes_expires_at_idx").on(table.expiresAt),
     ]
 );
+
+/**
+ * Transient email-verification challenge, one active row per identity group
+ * (`group_id` unique -> a resend upserts in place). `email` is the address
+ * being proven: for a first verify it equals the group's current email, for a
+ * rotation it is the pending address. `last_sent_at` drives the resend
+ * debounce, `attempts` caps brute-force, `expires_at` bounds the TTL.
+ */
+export const emailVerificationCodesTable = pgTable(
+    "email_verification_codes",
+    {
+        id: uuid("id").primaryKey().defaultRandom(),
+        groupId: uuid("group_id").notNull().unique(),
+        email: text("email").notNull(),
+        code: varchar("code", { length: 6 }).notNull(),
+        attempts: integer("attempts").notNull().default(0),
+        createdAt: timestamp("created_at").notNull().defaultNow(),
+        lastSentAt: timestamp("last_sent_at").notNull().defaultNow(),
+        expiresAt: timestamp("expires_at").notNull(),
+        consumedAt: timestamp("consumed_at"),
+    },
+    (table) => [index("evc_expires_at_idx").on(table.expiresAt)]
+);
+
+export type EmailVerificationCodeSelect =
+    typeof emailVerificationCodesTable.$inferSelect;

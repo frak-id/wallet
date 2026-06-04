@@ -27,6 +27,67 @@ import { ProfilePreferencesCard } from "@/module/settings/component/ProfilePrefe
 // import { ProfileSecurityCard } from "@/module/settings/component/ProfileSecurityCard";
 import * as styles from "./index.css";
 
+function EmailSecurityCard({
+    hasEmail,
+    isEmailVerified,
+    hasRecovery,
+    recoveryExpiringSoon,
+}: {
+    hasEmail: boolean;
+    isEmailVerified: boolean;
+    hasRecovery: boolean;
+    recoveryExpiringSoon: boolean;
+}) {
+    const { t } = useTranslation();
+
+    if (!hasEmail) {
+        return (
+            <InfoCard>
+                <InfoRow
+                    icon={Mail}
+                    label={t("wallet.profile.addEmail")}
+                    to="/profile/add-email"
+                />
+            </InfoCard>
+        );
+    }
+    if (!isEmailVerified) {
+        return (
+            <InfoCard>
+                <InfoRow
+                    icon={Mail}
+                    label={t("wallet.profile.verifyEmail")}
+                    to="/profile/verify-email"
+                />
+            </InfoCard>
+        );
+    }
+    if (!hasRecovery || recoveryExpiringSoon) {
+        return (
+            <InfoCard>
+                <InfoRow
+                    icon={Shield}
+                    label={t(
+                        hasRecovery
+                            ? "wallet.profile.refreshRecovery"
+                            : "wallet.profile.setupRecovery"
+                    )}
+                    to="/profile/recovery"
+                />
+            </InfoCard>
+        );
+    }
+    return (
+        <InfoCard>
+            <InfoRow
+                icon={Shield}
+                label={t("wallet.profile.recoveryConfiguration")}
+                to="/profile/recovery"
+            />
+        </InfoCard>
+    );
+}
+
 export function ProfilePage() {
     const { t, i18n } = useTranslation();
     const version = process.env.APP_VERSION;
@@ -51,6 +112,7 @@ export function ProfilePage() {
     const hasPairings = (pairings?.length ?? 0) > 0;
     const { data: emailStatus } = useCurrentEmail();
     const hasEmail = emailStatus?.email != null;
+    const isEmailVerified = emailStatus?.verified === true;
     const { recoverySetupStatus } = useRecoverySetupStatus();
     const { data: backendRecoveryStatus } = useRecoveryStatus();
     // Configured = enabled on-chain AND blob synced on the backend; on-chain
@@ -71,35 +133,12 @@ export function ProfilePage() {
             <Title size="page">{t("wallet.profile.pageTitle")}</Title>
             <ProfileIdentityCard />
             <ProfilePreferencesCard />
-            {!hasEmail ? (
-                <InfoCard>
-                    <InfoRow
-                        icon={Mail}
-                        label={t("wallet.profile.addEmail")}
-                        to="/profile/add-email"
-                    />
-                </InfoCard>
-            ) : !hasRecovery || recoveryExpiringSoon ? (
-                <InfoCard>
-                    <InfoRow
-                        icon={Shield}
-                        label={t(
-                            hasRecovery
-                                ? "wallet.profile.refreshRecovery"
-                                : "wallet.profile.setupRecovery"
-                        )}
-                        to="/profile/recovery"
-                    />
-                </InfoCard>
-            ) : (
-                <InfoCard>
-                    <InfoRow
-                        icon={Shield}
-                        label={t("wallet.profile.recoveryConfiguration")}
-                        to="/profile/recovery"
-                    />
-                </InfoCard>
-            )}
+            <EmailSecurityCard
+                hasEmail={hasEmail}
+                isEmailVerified={isEmailVerified}
+                hasRecovery={hasRecovery}
+                recoveryExpiringSoon={recoveryExpiringSoon}
+            />
             {/*<ProfileSecurityCard />*/}
             <InfoCard>
                 <InfoRow

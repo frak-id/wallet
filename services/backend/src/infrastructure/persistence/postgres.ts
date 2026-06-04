@@ -5,6 +5,7 @@ import postgres from "postgres";
 import { referralLinksTable } from "../../domain/attribution/db/schema";
 import { campaignRulesTable } from "../../domain/campaign/db/schema";
 import {
+    emailVerificationCodesTable,
     identityGroupsTable,
     identityNodesTable,
     installCodesTable,
@@ -61,6 +62,7 @@ export const db = drizzle({
         identityGroupsTable,
         identityNodesTable,
         installCodesTable,
+        emailVerificationCodesTable,
         recoveryBlobsTable,
         referralCodesTable,
         merchantsTable,

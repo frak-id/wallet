@@ -7,6 +7,10 @@ import { OrchestrationContext } from "../../../../orchestration/context";
 import {
     AssociateEmailResponseSchema,
     MyEmailResponseSchema,
+    SendEmailVerificationBodySchema,
+    SendEmailVerificationResponseSchema,
+    VerifyEmailBodySchema,
+    VerifyEmailResponseSchema,
 } from "../../../schemas";
 
 /**
@@ -30,20 +34,25 @@ export const emailRoutes = new Elysia({ prefix: "/email" })
         "/",
         async ({ walletSession }) => {
             if (walletSession.type === "ecdsa") {
-                return { email: null };
+                return { email: null, verified: false, verifiedAt: null };
             }
             const group =
                 await IdentityContext.repositories.identity.findGroupByIdentity(
                     { type: "wallet", value: walletSession.address }
                 );
             if (!group) {
-                return { email: null };
+                return { email: null, verified: false, verifiedAt: null };
             }
-            const email =
-                await IdentityContext.repositories.identity.findEmailForGroup(
+            const status =
+                await IdentityContext.repositories.identity.findEmailStatusForGroup(
                     group.id
                 );
-            return { email };
+            return {
+                email: status.email,
+                verified: status.verifiedAt !== null,
+                verifiedAt: status.verifiedAt?.toISOString() ?? null,
+                pendingEmail: status.pendingEmail,
+            };
         },
         {
             withWalletAuthent: true,
@@ -136,6 +145,87 @@ export const emailRoutes = new Elysia({ prefix: "/email" })
                 401: t.String(),
                 404: t.String(),
                 200: AssociateEmailResponseSchema,
+            },
+        }
+    )
+    .post(
+        "/verification",
+        async ({ walletSession, body: { email } }) => {
+            if (walletSession.type === "ecdsa") {
+                return status(400, "Unsupported wallet type");
+            }
+
+            const identityRepo = IdentityContext.repositories.identity;
+            const walletGroup = await identityRepo.findGroupByIdentity({
+                type: "wallet",
+                value: walletSession.address,
+            });
+            if (!walletGroup) {
+                return status(404, "Wallet identity not found");
+            }
+
+            // Rotation conflict: another group owns it -> defer to merge flow.
+            if (email) {
+                const conflicting =
+                    await OrchestrationContext.orchestrators.authenticatorLookup.findByEmail(
+                        email
+                    );
+                if (conflicting && conflicting.groupId !== walletGroup.id) {
+                    return {
+                        status: "conflict" as const,
+                        authenticatorIds: conflicting.authenticatorIds,
+                        wallet: conflicting.wallet,
+                    };
+                }
+            }
+
+            return IdentityContext.services.emailVerification.sendCode({
+                groupId: walletGroup.id,
+                email,
+            });
+        },
+        {
+            withWalletAuthent: true,
+            body: SendEmailVerificationBodySchema,
+            response: {
+                400: t.String(),
+                401: t.String(),
+                404: t.String(),
+                200: SendEmailVerificationResponseSchema,
+            },
+        }
+    )
+    .post(
+        "/verify",
+        async ({ walletSession, body: { code } }) => {
+            if (walletSession.type === "ecdsa") {
+                return status(400, "Unsupported wallet type");
+            }
+
+            const walletGroup =
+                await IdentityContext.repositories.identity.findGroupByIdentity(
+                    {
+                        type: "wallet",
+                        value: walletSession.address,
+                    }
+                );
+            if (!walletGroup) {
+                return status(404, "Wallet identity not found");
+            }
+
+            return IdentityContext.services.emailVerification.verifyCode({
+                groupId: walletGroup.id,
+                code,
+            });
+        },
+        {
+            withWalletAuthent: true,
+            body: VerifyEmailBodySchema,
+            response: {
+                400: t.String(),
+                401: t.String(),
+                404: t.String(),
+                200: VerifyEmailResponseSchema,
             },
         }
     );

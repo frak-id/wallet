@@ -106,7 +106,7 @@ export function AddEmail() {
             <SuccessStep
                 email={flowState.email}
                 onBack={goToProfile}
-                onSetupRecovery={() => navigate({ to: "/profile/recovery" })}
+                onVerifyEmail={() => navigate({ to: "/profile/verify-email" })}
             />
         );
     }
