@@ -193,6 +193,28 @@ describe("EmailVerificationService", () => {
             expect(result).toEqual({ status: "expired" });
         });
 
+        it("returns alreadyVerified for a consumed challenge even past expiry", async () => {
+            emailVerificationRepository.findByGroup.mockResolvedValue({
+                ...validRow(),
+                consumedAt: new Date(),
+                expiresAt: new Date(Date.now() - 1_000),
+            });
+
+            const result = await service.verifyCode({
+                groupId: GROUP_ID,
+                code: "123456",
+            });
+
+            expect(result).toEqual({
+                status: "alreadyVerified",
+                email: "user@test.com",
+            });
+            expect(
+                identityRepository.attachVerifiedEmail
+            ).not.toHaveBeenCalled();
+            expect(emailVerificationRepository.consume).not.toHaveBeenCalled();
+        });
+
         it("returns tooManyAttempts past the cap", async () => {
             emailVerificationRepository.findByGroup.mockResolvedValue({
                 ...validRow(),

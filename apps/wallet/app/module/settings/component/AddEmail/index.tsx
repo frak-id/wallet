@@ -160,8 +160,7 @@ export function AddEmail() {
         };
         return (
             <ConflictStep
-                targetAuthenticatorIds={flowState.targetAuthenticatorIds}
-                targetWallet={flowState.targetWallet}
+                canMerge={canMerge}
                 onMerge={startMerge}
                 onUseDifferent={backToInput}
                 onBack={goToProfile}

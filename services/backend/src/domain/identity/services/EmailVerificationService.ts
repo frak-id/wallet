@@ -17,6 +17,7 @@ export type SendCodeResult =
 
 export type VerifyCodeResult =
     | { status: "verified"; email: string; verifiedAt: string }
+    | { status: "alreadyVerified"; email: string }
     | { status: "invalid" }
     | { status: "expired" }
     | { status: "tooManyAttempts" };
@@ -77,7 +78,13 @@ export class EmailVerificationService {
         code: string;
     }): Promise<VerifyCodeResult> {
         const row = await this.emailVerificationRepository.findByGroup(groupId);
-        if (!row || row.consumedAt || row.expiresAt.getTime() < Date.now()) {
+        if (!row) {
+            return { status: "expired" };
+        }
+        if (row.consumedAt) {
+            return { status: "alreadyVerified", email: row.email };
+        }
+        if (row.expiresAt.getTime() < Date.now()) {
             return { status: "expired" };
         }
         if (row.attempts >= MAX_VERIFY_ATTEMPTS) {

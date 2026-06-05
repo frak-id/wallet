@@ -14,6 +14,28 @@ import {
 } from "../../../schemas";
 
 /**
+ * Resolve whether `email` is already owned by a *different* identity group.
+ * Returns the `conflict` payload the merge UI consumes (the conflicting wallet
+ * + its active-chain credentials), or `null` when the address is free or
+ * already sits on the caller's own group. Shared by the associate and the
+ * verification routes so both surface an identical conflict shape.
+ */
+async function findEmailConflict(email: string, walletGroupId: string) {
+    const conflicting =
+        await OrchestrationContext.orchestrators.authenticatorLookup.findByEmail(
+            email
+        );
+    if (!conflicting || conflicting.groupId === walletGroupId) {
+        return null;
+    }
+    return {
+        status: "conflict" as const,
+        authenticatorIds: conflicting.authenticatorIds,
+        wallet: conflicting.wallet,
+    };
+}
+
+/**
  * Post-auth email management for the *current* authenticator.
  *
  * Distinct from `/auth/emailStatus`, which is a pre-registration availability
@@ -96,20 +118,10 @@ export const emailRoutes = new Elysia({ prefix: "/email" })
             }
 
             // Email already attached to a different identity group -> defer
-            // to the wallet-merge flow. Resolve the conflicting wallet + every
-            // credential currently bound to it on the active chain so the UI
-            // can pick one as the merge target / advertise the full list to a
-            // login ceremony.
-            const conflicting =
-                await OrchestrationContext.orchestrators.authenticatorLookup.findByEmail(
-                    email
-                );
-            if (conflicting && conflicting.groupId !== walletGroup.id) {
-                return {
-                    status: "conflict" as const,
-                    authenticatorIds: conflicting.authenticatorIds,
-                    wallet: conflicting.wallet,
-                };
+            // to the wallet-merge flow.
+            const conflict = await findEmailConflict(email, walletGroup.id);
+            if (conflict) {
+                return conflict;
             }
 
             // Authenticated credential must still exist — otherwise the wallet
@@ -166,16 +178,9 @@ export const emailRoutes = new Elysia({ prefix: "/email" })
 
             // Rotation conflict: another group owns it -> defer to merge flow.
             if (email) {
-                const conflicting =
-                    await OrchestrationContext.orchestrators.authenticatorLookup.findByEmail(
-                        email
-                    );
-                if (conflicting && conflicting.groupId !== walletGroup.id) {
-                    return {
-                        status: "conflict" as const,
-                        authenticatorIds: conflicting.authenticatorIds,
-                        wallet: conflicting.wallet,
-                    };
+                const conflict = await findEmailConflict(email, walletGroup.id);
+                if (conflict) {
+                    return conflict;
                 }
             }
 

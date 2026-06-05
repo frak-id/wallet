@@ -37,6 +37,7 @@ export const VerifyEmailResponseSchema = t.Union([
         email: t.String(),
         verifiedAt: t.String(),
     }),
+    t.Object({ status: t.Literal("alreadyVerified"), email: t.String() }),
     t.Object({ status: t.Literal("invalid") }),
     t.Object({ status: t.Literal("expired") }),
     t.Object({ status: t.Literal("tooManyAttempts") }),

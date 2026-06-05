@@ -17,6 +17,10 @@ export function useVerifyEmailCode() {
             return data;
         },
         onSuccess: (result) => {
+            if (result.status === "alreadyVerified") {
+                queryClient.invalidateQueries({ queryKey: authKey.myEmail });
+                return;
+            }
             if (result.status !== "verified") return;
             queryClient.setQueryData<MyEmailResponse>(authKey.myEmail, {
                 email: result.email,

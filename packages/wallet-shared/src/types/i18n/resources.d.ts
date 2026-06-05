@@ -1303,9 +1303,11 @@ export default interface Resources {
                     tooManyAttempts: "Too many attempts. Send a new code.";
                 };
                 pasteCode: "Paste code";
+                pasteError: "Couldn't read the clipboard. Paste or type the code manually.";
                 resendIn: "Resend in {{seconds}}s";
                 sendCode: "Send verification code";
                 statusPending: "Not verified yet";
+                statusPendingNew: "Verify your new email address";
                 success: {
                     back: "Back to my profile";
                     description: "{{email}} is now verified. Set up recovery next so you can recover your account if you ever lose access.";

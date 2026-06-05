@@ -56,7 +56,9 @@ function resolveVerifyErrorKey(mutation: {
     isError: boolean;
 }): string | undefined {
     const status = mutation.data?.status;
-    if (status && status !== "verified") return status;
+    if (status && status !== "verified" && status !== "alreadyVerified") {
+        return status;
+    }
     if (mutation.isError) return "network";
     return undefined;
 }
@@ -98,7 +100,10 @@ export function VerifyEmail({ initialCode }: VerifyEmailProps) {
     const handleVerify = useCallback(
         async (value: string) => {
             const result = await verifyMutation.mutateAsync(value);
-            if (result.status === "verified") {
+            if (
+                result.status === "verified" ||
+                result.status === "alreadyVerified"
+            ) {
                 setFlowState({ kind: "success", email: result.email });
             }
         },
@@ -196,8 +201,18 @@ export function VerifyEmail({ initialCode }: VerifyEmailProps) {
     }
 
     if (flowState.kind === "conflict") {
+        const canMerge = Boolean(
+            flowState.targetAuthenticatorIds.length &&
+                flowState.targetWallet &&
+                session?.authenticatorId
+        );
         const startMerge = () => {
-            if (!flowState.targetWallet || !session?.authenticatorId) return;
+            if (
+                !canMerge ||
+                !flowState.targetWallet ||
+                !session?.authenticatorId
+            )
+                return;
             setFlowState({
                 kind: "merging",
                 email: flowState.email,
@@ -208,8 +223,7 @@ export function VerifyEmail({ initialCode }: VerifyEmailProps) {
         };
         return (
             <ConflictStep
-                targetAuthenticatorIds={flowState.targetAuthenticatorIds}
-                targetWallet={flowState.targetWallet}
+                canMerge={canMerge}
                 onMerge={startMerge}
                 onUseDifferent={() => setFlowState({ kind: "changeEmail" })}
                 onBack={goToProfile}
@@ -249,6 +263,11 @@ export function VerifyEmail({ initialCode }: VerifyEmailProps) {
 
     const displayEmail =
         targetEmail ?? emailStatus?.pendingEmail ?? emailStatus?.email ?? "";
+    const isRotation = Boolean(
+        emailStatus?.verified &&
+            displayEmail &&
+            displayEmail !== emailStatus.email
+    );
 
     const isAutoVerifying = shouldShowAutoVerifyLoading({
         initialCode,
@@ -262,6 +281,7 @@ export function VerifyEmail({ initialCode }: VerifyEmailProps) {
             <EmailFlowResultScreen
                 title={t("wallet.verifyEmail.verifying.title")}
                 description={t("wallet.verifyEmail.verifying.description")}
+                onBack={goToProfile}
             />
         );
     }
@@ -299,7 +319,11 @@ export function VerifyEmail({ initialCode }: VerifyEmailProps) {
                         {displayEmail}
                     </Text>
                     <Text variant="bodySmall" color="secondary">
-                        {t("wallet.verifyEmail.statusPending")}
+                        {t(
+                            isRotation
+                                ? "wallet.verifyEmail.statusPendingNew"
+                                : "wallet.verifyEmail.statusPending"
+                        )}
                     </Text>
                 </Stack>
 
@@ -323,6 +347,7 @@ export function VerifyEmail({ initialCode }: VerifyEmailProps) {
                     <CodeInput
                         mode="numeric"
                         length={CODE_LENGTH}
+                        defaultValue={targetEmail ? undefined : initialCode}
                         onChange={setCode}
                         error={
                             verifyErrorKey
@@ -332,6 +357,7 @@ export function VerifyEmail({ initialCode }: VerifyEmailProps) {
                                 : undefined
                         }
                         pasteLabel={t("wallet.verifyEmail.pasteCode")}
+                        pasteErrorLabel={t("wallet.verifyEmail.pasteError")}
                         digitLabel={(index) =>
                             t("wallet.verifyEmail.digitLabel", { index })
                         }

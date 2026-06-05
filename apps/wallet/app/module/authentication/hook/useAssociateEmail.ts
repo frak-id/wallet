@@ -47,6 +47,7 @@ export function useAssociateEmail(
                     email: result.email,
                     verified: false,
                     verifiedAt: null,
+                    pendingEmail: null,
                 });
             }
             options?.onSuccess?.(result, variables, _onMutateResult, context);
