@@ -1,4 +1,4 @@
-import { IS_TAURI } from "@frak-labs/app-essentials/utils/platform";
+import { IS_IOS, IS_TAURI } from "@frak-labs/app-essentials/utils/platform";
 
 /**
  * Mirror `window.visualViewport.height` into a `--viewport-height` CSS
@@ -27,6 +27,14 @@ import { IS_TAURI } from "@frak-labs/app-essentials/utils/platform";
 export function initKeyboardInset(): () => void {
     if (typeof window === "undefined") return () => {};
     if (!IS_TAURI) return () => {};
+
+    // iOS keyboard handling lives in `tauri-plugin-frak-keyboard`: it resizes the
+    // WKWebView frame so the layout viewport matches the visible area, which is
+    // what prevents WKWebView's caret-reveal (the `visualViewport.offsetTop`
+    // jump). Running this JS too would only set `--viewport-height` from
+    // `visualViewport` — redundant, and it cannot fix the layout-viewport
+    // mismatch. Android still uses the JS path.
+    if (IS_IOS) return () => {};
 
     const vv = window.visualViewport;
     if (!vv) return () => {};

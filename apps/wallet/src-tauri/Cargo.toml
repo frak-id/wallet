@@ -42,6 +42,11 @@ tauri-plugin-clipboard-manager = "2"
 tauri-plugin-share = "2.0.5"
 tauri-plugin-fs = "2.5.1"
 
+# iOS-only: native keyboard avoidance (resizes the WKWebView on the keyboard
+# curve so the web layout reacts natively; makes the JS keyboardInset hack inert).
+[target.'cfg(target_os = "ios")'.dependencies]
+tauri-plugin-frak-keyboard = { path = "plugins/tauri-plugin-frak-keyboard" }
+
 # Optimized release profile for smaller, faster builds.
 # `strip = false` keeps Rust debug symbols in the unstripped `.so` so the
 # Firebase Crashlytics Gradle plugin can extract + upload them via
