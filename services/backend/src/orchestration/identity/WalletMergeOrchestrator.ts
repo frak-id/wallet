@@ -290,9 +290,8 @@ export class WalletMergeOrchestrator {
         //    a single postgres transaction. Email is stored as an identity
         //    node on the wallet's identity group, so it moves with the loser
         //    group during the merge. When both sides held a different email
-        //    the anchor group ends up with multiple active email nodes;
-        //    `findEmailForGroup` returns the oldest one deterministically
-        //    (the surviving credential's email).
+        //    `mergeGroups` reconciles them to a single active email on the
+        //    anchor (verified first, then most recent), retiring the rest.
         const mergeResult = await db.transaction(async (tx) => {
             await this.walletBindingRepository.repointBinding({
                 credentialId: preview.loserAuthenticatorId,

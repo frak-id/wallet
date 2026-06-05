@@ -42,8 +42,7 @@ export class EmailVerificationService {
      * sourced here rather than from the identity graph.
      */
     async getEmailStatus(groupId: string): Promise<EmailStatus> {
-        const status =
-            await this.identityRepository.findEmailStatusForGroup(groupId);
+        const current = await this.identityRepository.findLinkedEmail(groupId);
         const challenge =
             await this.emailVerificationRepository.findByGroup(groupId);
 
@@ -52,13 +51,13 @@ export class EmailVerificationService {
             !challenge.consumedAt &&
             challenge.expiresAt.getTime() > Date.now();
         const pendingEmail =
-            isActiveChallenge && challenge.email !== status.email
+            isActiveChallenge && challenge.email !== current?.email
                 ? challenge.email
                 : null;
 
         return {
-            email: status.email,
-            verifiedAt: status.verifiedAt,
+            email: current?.email ?? null,
+            verifiedAt: current?.verifiedAt ?? null,
             pendingEmail,
         };
     }
@@ -146,26 +145,21 @@ export class EmailVerificationService {
             return { status: "invalid" };
         }
 
-        // Attach + retire previous emails + consume the challenge atomically:
-        // a partial commit could either leave the code replayable or strand the
-        // group with two active emails masking the freshly-verified one.
+        // Attach the email + retire any previous one + consume the challenge
+        // atomically: a partial commit could either leave the code replayable
+        // or strand the group with two active emails.
         const verifiedAt = new Date();
         let attached = false;
         await db.transaction(async (tx) => {
-            attached = await this.identityRepository.attachVerifiedEmail(
+            attached = await this.identityRepository.confirmEmail(
                 groupId,
                 row.email,
                 tx
             );
             // Address owned by another group (race between send and verify):
-            // `attachVerifiedEmail` wrote nothing, so this commits as a no-op
-            // and we surface a conflict rather than a phantom "verified".
+            // `confirmEmail` wrote nothing, so this commits as a no-op and we
+            // surface a conflict rather than a phantom "verified".
             if (!attached) return;
-            await this.identityRepository.unlinkOtherActiveEmails(
-                groupId,
-                row.email,
-                tx
-            );
             await this.emailVerificationRepository.consume(groupId, tx);
         });
 
@@ -213,11 +207,10 @@ export class EmailVerificationService {
             return existing.email;
         }
 
-        const status =
-            await this.identityRepository.findEmailStatusForGroup(groupId);
-        if (!status.email) {
+        const current = await this.identityRepository.findLinkedEmail(groupId);
+        if (!current) {
             throw HttpError.notFound("NO_EMAIL", "No email to verify");
         }
-        return status.email;
+        return current.email;
     }
 }

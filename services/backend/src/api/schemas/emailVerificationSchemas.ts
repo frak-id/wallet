@@ -19,6 +19,7 @@ export const SendEmailVerificationResponseSchema = t.Union([
     t.Object({ status: t.Literal("sent") }),
     t.Object({ status: t.Literal("throttled"), retryAfterSec: t.Number() }),
     t.Object({ status: t.Literal("conflict"), ...conflictTargetFields }),
+    t.Object({ status: t.Literal("unavailable") }),
 ]);
 export type SendEmailVerificationResponse = Static<
     typeof SendEmailVerificationResponseSchema

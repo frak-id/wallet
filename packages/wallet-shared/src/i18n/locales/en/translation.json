@@ -116,6 +116,7 @@
             "continue": "Continue",
             "clearAriaLabel": "Clear email address",
             "submitError": "Unable to save this email right now. Please try again.",
+            "alreadyUsed": "This email address is already in use and can't be added. Try a different one.",
             "conflict": {
                 "title": "Email already in use",
                 "description": "This email is already linked to another wallet. Use a different email or come back later.",
@@ -170,7 +171,8 @@
                 "label": "Email",
                 "placeholder": "your.email@gmail.com",
                 "clearAriaLabel": "Clear email address",
-                "continue": "Send code"
+                "continue": "Send code",
+                "alreadyUsed": "This email address is already in use. Try a different one."
             }
         },
         "merge": {

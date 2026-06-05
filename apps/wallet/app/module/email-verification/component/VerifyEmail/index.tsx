@@ -81,6 +81,15 @@ function shouldShowAutoVerifyLoading(params: {
     return params.isPending || (!params.hasData && !params.isError);
 }
 
+function resolveTargetEmail(
+    targetEmail: string | undefined,
+    emailStatus:
+        | { email?: string | null; pendingEmail?: string | null }
+        | undefined
+): string {
+    return targetEmail ?? emailStatus?.pendingEmail ?? emailStatus?.email ?? "";
+}
+
 /**
  * The "this address belongs to another wallet" screen, reached from a send- or
  * verify-time conflict. Extracted so the merge-gating logic lives outside the
@@ -134,6 +143,7 @@ export function VerifyEmail({ initialCode }: VerifyEmailProps) {
         cooldownSeconds,
         error: sendError,
         reset: resetSend,
+        data: sendData,
     } = useSendEmailVerification();
     const verifyMutation = useVerifyEmailCode();
 
@@ -162,11 +172,7 @@ export function VerifyEmail({ initialCode }: VerifyEmailProps) {
                 if (result.status === "conflict") {
                     setFlowState({
                         kind: "conflict",
-                        email:
-                            targetEmail ??
-                            emailStatus?.pendingEmail ??
-                            emailStatus?.email ??
-                            "",
+                        email: resolveTargetEmail(targetEmail, emailStatus),
                         targetAuthenticatorIds: result.authenticatorIds,
                         targetWallet: result.wallet,
                     });
@@ -209,6 +215,11 @@ export function VerifyEmail({ initialCode }: VerifyEmailProps) {
                         targetAuthenticatorIds: result.authenticatorIds,
                         targetWallet: result.wallet,
                     });
+                    return;
+                }
+                // Retired address: not reusable. The inline banner reads off
+                // the mutation result, so just stay on the change-email form.
+                if (result.status === "unavailable") {
                     return;
                 }
                 setTargetEmail(email);
@@ -299,8 +310,19 @@ export function VerifyEmail({ initialCode }: VerifyEmailProps) {
                 onBack={() => setFlowState({ kind: "verify" })}
                 onSubmit={handleChangeEmailSubmit}
                 isSubmitting={isSending}
+                submitDisabled={sendData?.status === "unavailable"}
                 onEmailChange={() => resetSend()}
             >
+                {sendData?.status === "unavailable" && (
+                    <Box
+                        role="alert"
+                        className={emailFormScreenStyles.inlineError}
+                    >
+                        <Text variant="bodySmall" color="error">
+                            {t("wallet.verifyEmail.changeEmail.alreadyUsed")}
+                        </Text>
+                    </Box>
+                )}
                 {sendError && (
                     <Box
                         role="alert"
@@ -315,8 +337,7 @@ export function VerifyEmail({ initialCode }: VerifyEmailProps) {
         );
     }
 
-    const displayEmail =
-        targetEmail ?? emailStatus?.pendingEmail ?? emailStatus?.email ?? "";
+    const displayEmail = resolveTargetEmail(targetEmail, emailStatus);
     const isRotation = Boolean(
         emailStatus?.verified &&
             displayEmail &&

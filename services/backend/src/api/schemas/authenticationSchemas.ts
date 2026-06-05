@@ -48,6 +48,7 @@ export const AssociateEmailResponseSchema = t.Union([
     t.Object({ status: t.Literal("success"), email: t.String() }),
     t.Object({ status: t.Literal("alreadyHasEmail"), email: t.String() }),
     t.Object({ status: t.Literal("conflict"), ...conflictTargetFields }),
+    t.Object({ status: t.Literal("unavailable") }),
 ]);
 export type AssociateEmailResponse = Static<
     typeof AssociateEmailResponseSchema

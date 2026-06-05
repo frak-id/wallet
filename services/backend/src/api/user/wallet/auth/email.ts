@@ -15,25 +15,28 @@ import {
 import { walletGroupContext } from "./walletGroupContext";
 
 /**
- * Resolve whether `email` is already owned by a *different* identity group.
- * Returns the `conflict` payload the merge UI consumes (the conflicting wallet
- * + its active-chain credentials), or `null` when the address is free or
- * already sits on the caller's own group. Shared by the associate and the
- * verification routes so both surface an identical conflict shape.
+ * Map an email-availability resolution to the response shape shared by the
+ * associate + verification routes: a merge target becomes the `conflict`
+ * payload (wallet + credentials), a retired address becomes `unavailable`,
+ * and a free or own-group address yields `null` so the caller proceeds.
  */
-async function findEmailConflict(email: string, walletGroupId: string) {
-    const conflicting =
-        await OrchestrationContext.orchestrators.authenticatorLookup.findByEmail(
-            email
+async function checkEmailAvailability(email: string, walletGroupId: string) {
+    const resolution =
+        await OrchestrationContext.orchestrators.authenticatorLookup.resolveEmail(
+            email,
+            walletGroupId
         );
-    if (!conflicting || conflicting.groupId === walletGroupId) {
-        return null;
+    if (resolution.status === "merge") {
+        return {
+            status: "conflict" as const,
+            authenticatorIds: resolution.authenticatorIds,
+            wallet: resolution.wallet,
+        };
     }
-    return {
-        status: "conflict" as const,
-        authenticatorIds: conflicting.authenticatorIds,
-        wallet: conflicting.wallet,
-    };
+    if (resolution.status === "unavailable") {
+        return { status: "unavailable" as const };
+    }
+    return null;
 }
 
 /**
@@ -95,21 +98,19 @@ export const emailRoutes = new Elysia({ prefix: "/email" })
             // Refuse silent overwrite: the post-auth UI only exposes this when
             // no email is set, so reaching this with an existing email means
             // either a race or a stale client. Surface it so we don't lose data.
-            const currentEmail = await identityRepo.findEmailForGroup(
-                walletGroup.id
-            );
-            if (currentEmail) {
+            const current = await identityRepo.findLinkedEmail(walletGroup.id);
+            if (current) {
                 return {
                     status: "alreadyHasEmail" as const,
-                    email: currentEmail,
+                    email: current.email,
                 };
             }
 
-            // Email already attached to a different identity group -> defer
-            // to the wallet-merge flow.
-            const conflict = await findEmailConflict(email, walletGroup.id);
-            if (conflict) {
-                return conflict;
+            // Owned by another group (-> merge conflict) or retired elsewhere
+            // (-> unavailable); either way we must not attach it here.
+            const blocked = await checkEmailAvailability(email, walletGroup.id);
+            if (blocked) {
+                return blocked;
             }
 
             // Authenticated credential must still exist — otherwise the wallet
@@ -151,11 +152,15 @@ export const emailRoutes = new Elysia({ prefix: "/email" })
     .post(
         "/verification",
         async ({ walletGroup, body: { email } }) => {
-            // Rotation conflict: another group owns it -> defer to merge flow.
+            // Rotation target must be free: another group owns it (-> merge
+            // conflict) or it was retired (-> unavailable).
             if (email) {
-                const conflict = await findEmailConflict(email, walletGroup.id);
-                if (conflict) {
-                    return conflict;
+                const blocked = await checkEmailAvailability(
+                    email,
+                    walletGroup.id
+                );
+                if (blocked) {
+                    return blocked;
                 }
             }
 
@@ -185,15 +190,17 @@ export const emailRoutes = new Elysia({ prefix: "/email" })
                 });
 
             // The address was claimed by another group between send and verify.
-            // Enrich the bare conflict into the merge-capable payload the client
-            // already handles; if it resolved free again (rare), fall back to
-            // `invalid` so the client retries rather than showing a stale target.
+            // Re-resolve into the merge-capable payload the client handles; if
+            // it is no longer an active foreign group (resolved free, or now
+            // retired), fall back to `invalid` so the client retries.
             if (result.status === "conflict") {
-                const conflict = await findEmailConflict(
+                const blocked = await checkEmailAvailability(
                     result.email,
                     walletGroup.id
                 );
-                return conflict ?? { status: "invalid" as const };
+                return blocked?.status === "conflict"
+                    ? blocked
+                    : { status: "invalid" as const };
             }
 
             return result;

@@ -159,113 +159,161 @@ export class IdentityRepository {
     }
 
     /**
-     * Return the active email currently attached to a group, or `null` when
-     * none exists. A group may hold several emails (a merged wallet keeps the
-     * loser's email as historical context); the oldest active node wins so
-     * the result is stable across subsequent merges that absorb newer rows.
+     * The group's single linked (non-unlinked) email node, or `null`. The
+     * single-active-email invariant — enforced on verify (`confirmEmail`) and
+     * on merge (`reconcileGroupEmails`) — guarantees at most one such row, so
+     * no ordering or verified-vs-oldest disambiguation is needed.
      */
-    async findEmailForGroup(groupId: string): Promise<string | null> {
-        const node = await db.query.identityNodesTable.findFirst({
-            where: and(
-                eq(identityNodesTable.groupId, groupId),
-                eq(identityNodesTable.identityType, "email"),
-                isNull(identityNodesTable.unlinkedAt)
-            ),
-            orderBy: (nodes, { asc }) => [asc(nodes.createdAt)],
-        });
-        return node?.identityValue ?? null;
-    }
-
-    /**
-     * Resolve a group's active email nodes into its current address + the
-     * verification stamp. `email` is the verified node when present, else the
-     * oldest active node (matching `findEmailForGroup` pre-verification).
-     *
-     * Pending-rotation state is intentionally NOT derived here: a rotation
-     * target only lives on the verification challenge row until the code is
-     * entered (it is never an identity node before that), so the in-flight
-     * pending address is sourced from the challenge in
-     * `EmailVerificationService.getEmailStatus`, not from the graph.
-     */
-    async findEmailStatusForGroup(groupId: string): Promise<{
-        email: string | null;
-        verifiedAt: Date | null;
-    }> {
-        const nodes = await db.query.identityNodesTable.findMany({
-            where: and(
-                eq(identityNodesTable.groupId, groupId),
-                eq(identityNodesTable.identityType, "email"),
-                isNull(identityNodesTable.unlinkedAt)
-            ),
-            orderBy: (n, { asc }) => [asc(n.createdAt)],
-        });
-
-        const verified = nodes.find((n) => n.verifiedAt !== null);
-        const email =
-            verified?.identityValue ?? nodes[0]?.identityValue ?? null;
-
-        return {
-            email,
-            verifiedAt: verified?.verifiedAt ?? null,
-        };
-    }
-
-    /**
-     * Make `email` the group's verified, active email, reactivating a prior
-     * (possibly unlinked) node when one exists so the soft-unlink audit trail
-     * survives. Returns `false` without mutating anything when the address is
-     * already owned by another group.
-     */
-    async attachVerifiedEmail(
+    async findLinkedEmail(
         groupId: string,
-        email: string,
-        tx?: PgTx
-    ): Promise<boolean> {
-        const runner: PgRunner = tx ?? db;
-        const normalizedValue = this.normalizeValue("email", email);
-        const now = new Date();
-
-        const reactivated = await runner
-            .update(identityNodesTable)
-            .set({ verifiedAt: now, unlinkedAt: null })
+        runner: PgRunner = db
+    ): Promise<{ email: string; verifiedAt: Date | null } | null> {
+        const [node] = await runner
+            .select({
+                email: identityNodesTable.identityValue,
+                verifiedAt: identityNodesTable.verifiedAt,
+            })
+            .from(identityNodesTable)
             .where(
                 and(
                     eq(identityNodesTable.groupId, groupId),
                     eq(identityNodesTable.identityType, "email"),
-                    eq(identityNodesTable.identityValue, normalizedValue)
+                    isNull(identityNodesTable.unlinkedAt)
                 )
             )
-            .returning({ id: identityNodesTable.id });
+            .limit(1);
+        return node ?? null;
+    }
 
-        if (reactivated.length === 0) {
-            const inserted = await runner
-                .insert(identityNodesTable)
-                .values({
-                    groupId,
-                    identityType: "email",
-                    identityValue: normalizedValue,
-                    verifiedAt: now,
-                })
-                .onConflictDoNothing()
-                .returning({ id: identityNodesTable.id });
-            if (inserted.length === 0) {
-                return false;
-            }
+    /**
+     * Any email node for `email` across the whole table (linked OR unlinked),
+     * regardless of group. Backs availability checks: an unlinked row still
+     * occupies the global unique slot, so a previously-used address resolves
+     * here and is rejected as non-reusable.
+     */
+    async findEmailNode(email: string): Promise<IdentityNodeSelect | null> {
+        const normalizedValue = this.normalizeValue("email", email);
+        const node = await db.query.identityNodesTable.findFirst({
+            where: and(
+                eq(identityNodesTable.identityType, "email"),
+                eq(identityNodesTable.identityValue, normalizedValue),
+                isNull(identityNodesTable.merchantId)
+            ),
+        });
+        return node ?? null;
+    }
+
+    /**
+     * Promote `email` to the group's single verified + linked email, inside
+     * the caller's transaction.
+     *
+     *  - First-time verify / resend: the proven address is already the
+     *    group's current linked node → just stamp `verifiedAt`.
+     *  - Rotation: insert the new verified node, then soft-unlink every other
+     *    linked email so exactly one active email remains (rule: single
+     *    active email per group).
+     *
+     * Returns `false` without mutating when the address is already present
+     * globally (owned by another group, or a retired node still holding the
+     * unique slot) — the insert hits the unique constraint and writes nothing.
+     */
+    async confirmEmail(
+        groupId: string,
+        email: string,
+        tx: PgTx
+    ): Promise<boolean> {
+        const normalizedValue = this.normalizeValue("email", email);
+        const now = new Date();
+        const current = await this.findLinkedEmail(groupId, tx);
+
+        // First-time verify / resend: stamp the existing current node.
+        if (current?.email === normalizedValue) {
+            await tx
+                .update(identityNodesTable)
+                .set({ verifiedAt: now })
+                .where(
+                    and(
+                        eq(identityNodesTable.groupId, groupId),
+                        eq(identityNodesTable.identityType, "email"),
+                        eq(identityNodesTable.identityValue, normalizedValue)
+                    )
+                );
+            this.invalidateEmailCache(normalizedValue);
+            return true;
         }
 
-        this.identityGroupIdCache.delete(
-            this.buildIdentityCacheKey("email", normalizedValue)
-        );
+        // Rotation: the new address must be globally free. The unique
+        // constraint rejects anything already present → nothing is written
+        // and we report the conflict to the caller.
+        const inserted = await tx
+            .insert(identityNodesTable)
+            .values({
+                groupId,
+                identityType: "email",
+                identityValue: normalizedValue,
+                verifiedAt: now,
+            })
+            .onConflictDoNothing()
+            .returning({ id: identityNodesTable.id });
+        if (inserted.length === 0) {
+            return false;
+        }
+
+        // Retire every other linked email so a single active email remains.
+        await tx
+            .update(identityNodesTable)
+            .set({ unlinkedAt: now })
+            .where(
+                and(
+                    eq(identityNodesTable.groupId, groupId),
+                    eq(identityNodesTable.identityType, "email"),
+                    isNull(identityNodesTable.unlinkedAt),
+                    ne(identityNodesTable.identityValue, normalizedValue)
+                )
+            );
+
+        this.invalidateEmailCache(normalizedValue);
         return true;
     }
 
-    async unlinkOtherActiveEmails(
-        groupId: string,
-        exceptEmail: string,
-        tx?: PgTx
-    ): Promise<void> {
-        const runner: PgRunner = tx ?? db;
-        await runner
+    /**
+     * Enforce the single-active-email invariant on a group: keep one linked
+     * email (verified first, then most recently created) and soft-unlink the
+     * rest. Idempotent — a no-op when the group already has ≤1 linked email.
+     * Called from the merge flow, where moving nodes onto the anchor can
+     * leave it holding one linked email per merged group.
+     */
+    async reconcileGroupEmails(groupId: string, tx: PgTx): Promise<void> {
+        const linked = await tx
+            .select({
+                id: identityNodesTable.id,
+                verifiedAt: identityNodesTable.verifiedAt,
+                createdAt: identityNodesTable.createdAt,
+            })
+            .from(identityNodesTable)
+            .where(
+                and(
+                    eq(identityNodesTable.groupId, groupId),
+                    eq(identityNodesTable.identityType, "email"),
+                    isNull(identityNodesTable.unlinkedAt)
+                )
+            );
+
+        if (linked.length <= 1) {
+            return;
+        }
+
+        // Winner policy: prefer verified, then most-recent `createdAt`.
+        const [winner] = [...linked].sort((a, b) => {
+            const aVerified = a.verifiedAt ? 1 : 0;
+            const bVerified = b.verifiedAt ? 1 : 0;
+            if (aVerified !== bVerified) return bVerified - aVerified;
+            return (
+                (b.createdAt?.getTime() ?? 0) - (a.createdAt?.getTime() ?? 0)
+            );
+        });
+
+        await tx
             .update(identityNodesTable)
             .set({ unlinkedAt: new Date() })
             .where(
@@ -273,12 +321,15 @@ export class IdentityRepository {
                     eq(identityNodesTable.groupId, groupId),
                     eq(identityNodesTable.identityType, "email"),
                     isNull(identityNodesTable.unlinkedAt),
-                    ne(
-                        identityNodesTable.identityValue,
-                        this.normalizeValue("email", exceptEmail)
-                    )
+                    ne(identityNodesTable.id, winner.id)
                 )
             );
+    }
+
+    private invalidateEmailCache(normalizedEmail: string): void {
+        this.identityGroupIdCache.delete(
+            this.buildIdentityCacheKey("email", normalizedEmail)
+        );
     }
 
     async createGroup(): Promise<IdentityGroupSelect> {

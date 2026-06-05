@@ -114,6 +114,7 @@
             "continue": "Continuer",
             "clearAriaLabel": "Effacer l'adresse e-mail",
             "submitError": "Impossible d'enregistrer cet e-mail pour le moment. Réessaie.",
+            "alreadyUsed": "Cette adresse e-mail est déjà utilisée et ne peut pas être ajoutée. Essaie-en une autre.",
             "conflict": {
                 "title": "E-mail déjà utilisé",
                 "description": "Cet e-mail est déjà associé à un autre portefeuille. Utilise-en un autre, ou reviens plus tard.",
@@ -168,7 +169,8 @@
                 "label": "E-mail",
                 "placeholder": "ton.email@gmail.com",
                 "clearAriaLabel": "Effacer l'adresse e-mail",
-                "continue": "Envoyer le code"
+                "continue": "Envoyer le code",
+                "alreadyUsed": "Cette adresse e-mail est déjà utilisée. Essaie-en une autre."
             }
         },
         "merge": {

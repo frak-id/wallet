@@ -19,18 +19,24 @@ import { EmailStatusResponseSchema } from "../../../schemas";
 export const emailStatusRoutes = new Elysia().post(
     "/emailStatus",
     async ({ body: { email } }) => {
-        const lookup =
-            await OrchestrationContext.orchestrators.authenticatorLookup.findByEmail(
+        const resolution =
+            await OrchestrationContext.orchestrators.authenticatorLookup.resolveEmail(
                 email
             );
-        if (!lookup) {
+        if (resolution.status === "available") {
             return { used: false } as const;
         }
 
+        // A retired (`unavailable`) address is still taken but has no active
+        // wallet to log into — report it used with an empty credential set.
         return {
             used: true,
-            authenticatorIds: lookup.authenticatorIds,
-            wallet: lookup.wallet,
+            authenticatorIds:
+                resolution.status === "merge"
+                    ? resolution.authenticatorIds
+                    : [],
+            wallet:
+                resolution.status === "merge" ? resolution.wallet : undefined,
         } as const;
     },
     {

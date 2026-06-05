@@ -57,6 +57,7 @@ export function AddEmail() {
     const navigate = useNavigate();
     const session = useStore(sessionStore, selectSession);
     const [flowState, setFlowState] = useState<FlowState>({ kind: "input" });
+    const [unavailable, setUnavailable] = useState(false);
     const {
         associateEmail,
         isAssociating,
@@ -70,10 +71,12 @@ export function AddEmail() {
 
     const backToInput = useCallback(() => {
         setFlowState({ kind: "input" });
+        setUnavailable(false);
         if (submitError) reset();
     }, [submitError, reset]);
 
     const clearSubmitError = useCallback(() => {
+        setUnavailable(false);
         if (submitError) reset();
     }, [submitError, reset]);
 
@@ -88,6 +91,12 @@ export function AddEmail() {
                         targetAuthenticatorIds: result.authenticatorIds,
                         targetWallet: result.wallet,
                     });
+                    return;
+                }
+                // Globally taken (retired on another group): not reusable, so
+                // surface an inline banner and keep the user on the form.
+                if (result.status === "unavailable") {
+                    setUnavailable(true);
                     return;
                 }
                 // Both `success` and `alreadyHasEmail` mean the credential
@@ -179,8 +188,16 @@ export function AddEmail() {
             onBack={goToProfile}
             onSubmit={handleSubmit}
             isSubmitting={isAssociating}
+            submitDisabled={unavailable}
             onEmailChange={clearSubmitError}
         >
+            {unavailable && (
+                <Box role="alert" className={emailFormScreenStyles.inlineError}>
+                    <Text variant="bodySmall" color="error">
+                        {t("wallet.addEmail.alreadyUsed")}
+                    </Text>
+                </Box>
+            )}
             {submitError && (
                 <Box role="alert" className={emailFormScreenStyles.inlineError}>
                     <Text variant="bodySmall" color="error">
