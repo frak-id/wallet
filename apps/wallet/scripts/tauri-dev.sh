@@ -20,9 +20,29 @@ cleanup() {
 trap cleanup EXIT INT TERM
 
 start_dev_server() {
-    if curl -s --connect-timeout 1 "$DEV_SERVER_URL" >/dev/null 2>&1; then
-        echo "[tauri-dev] Dev server already running at $DEV_SERVER_URL"
-        return 0
+    # Port 3010 is dedicated to the Tauri dev server (the web app dev server
+    # uses 3000). A stale or flag-less server squatting this port would be
+    # silently reused and serve a bundle built WITHOUT `TAURI_CLI_RUNNING` —
+    # i.e. `__IS_TAURI__`/`__IS_ANDROID__` baked false, so native plugins are
+    # stubbed and safe-area insets never reach the WebView. Always reclaim the
+    # port and start a fresh flagged `vite dev` so the bundle is correct.
+    local existing
+    existing="$(lsof -ti "tcp:$DEV_SERVER_PORT" -sTCP:LISTEN 2>/dev/null || true)"
+    if [ -n "$existing" ]; then
+        echo "[tauri-dev] Reclaiming port $DEV_SERVER_PORT (killing PID(s): $existing)"
+        # shellcheck disable=SC2086
+        kill $existing 2>/dev/null || true
+        local wait_release=10
+        while lsof -ti "tcp:$DEV_SERVER_PORT" -sTCP:LISTEN >/dev/null 2>&1; do
+            wait_release=$((wait_release - 1))
+            if [ $wait_release -le 0 ]; then
+                echo "[tauri-dev] Force-killing stragglers on port $DEV_SERVER_PORT"
+                lsof -ti "tcp:$DEV_SERVER_PORT" -sTCP:LISTEN 2>/dev/null \
+                    | xargs kill -9 2>/dev/null || true
+                break
+            fi
+            sleep 1
+        done
     fi
 
     echo "[tauri-dev] Starting dev server..."
@@ -128,6 +148,14 @@ setup_firebase_config() {
 }
 
 run_android() {
+    # The dev server is started by this script (not by Tauri's beforeDevCommand,
+    # which is disabled below via `-c {beforeDevCommand:""}`). Vite bakes the
+    # platform flags from env at build time: `__IS_TAURI__` from TAURI_CLI_RUNNING
+    # and `__IS_ANDROID__` from TAURI_ENV_PLATFORM. Without TAURI_ENV_PLATFORM the
+    # bundle gets IS_ANDROID=false, so `initSafeAreaInsets()` early-returns and the
+    # nav-bar inset never reaches CSS. Export both before `start_dev_server`.
+    export TAURI_CLI_RUNNING=1
+    export TAURI_ENV_PLATFORM=android
     setup_android_signing
     setup_firebase_config
     start_dev_server
@@ -148,6 +176,11 @@ run_android() {
 
 run_ios() {
     local device="${1:-iPhone 17}"
+    # See run_android: vite bakes platform flags from env. Set TAURI_ENV_PLATFORM
+    # so the dev-server bundle gets IS_IOS=true (env() handles iOS insets, but the
+    # flag still gates other native init). Export before `start_dev_server`.
+    export TAURI_CLI_RUNNING=1
+    export TAURI_ENV_PLATFORM=ios
     setup_firebase_config
     start_dev_server
     cd "$WALLET_DIR"

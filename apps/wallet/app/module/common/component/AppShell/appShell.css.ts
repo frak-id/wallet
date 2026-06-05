@@ -105,3 +105,23 @@ export const bottomBar = style({
     right: 0,
     zIndex: 20,
 });
+
+/**
+ * Edge-to-edge draws content under the system bars (Android nav bar, iOS home
+ * indicator), so scrolling content shows through in the bottom inset. Paint a
+ * solid strip over it. Height matches `mainContentNoNav`'s reserved padding
+ * (`max(spacing.m, safeArea.bottom)`) so it covers exactly the region content
+ * scrolls behind: Android nav bar (~48px) / gesture (~16-24px), iOS notch
+ * (~34px), iPhone SE / web (16px floor). Sits above scrolling content, below
+ * the tab bar.
+ */
+export const navBarScrim = style({
+    position: "absolute",
+    left: 0,
+    right: 0,
+    bottom: 0,
+    height: `max(${alias.spacing.m}, ${safeArea.bottom})`,
+    background: vars.surface.background,
+    zIndex: 5,
+    pointerEvents: "none",
+});

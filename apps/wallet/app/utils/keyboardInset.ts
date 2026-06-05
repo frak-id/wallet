@@ -37,6 +37,13 @@ export function initKeyboardInset(): () => void {
     // Smaller shrinkage is toolbar jitter, not the IME (keyboard ~250-350px).
     const KEYBOARD_THRESHOLD_PX = 120;
 
+    // iOS scrolls the document to reveal a focused input, dragging the shell up
+    // and leaving a gap below the footer. Snap it back to the top.
+    const pinScroll = () => {
+        if (window.scrollY !== 0 || window.scrollX !== 0)
+            window.scrollTo({ top: 0, left: 0, behavior: "instant" });
+    };
+
     const write = () => {
         rafId = null;
         baseline = Math.max(baseline, vv.height);
@@ -44,6 +51,7 @@ export function initKeyboardInset(): () => void {
         const root = document.documentElement.style;
         root.setProperty("--viewport-height", `${vv.height}px`);
         root.setProperty("--keyboard-open", keyboardOpen ? "1" : "0");
+        pinScroll();
     };
 
     const schedule = () => {
@@ -56,6 +64,7 @@ export function initKeyboardInset(): () => void {
 
     vv.addEventListener("resize", schedule);
     vv.addEventListener("scroll", schedule);
+    window.addEventListener("scroll", pinScroll, { passive: true });
 
     return () => {
         if (rafId !== null) {
@@ -64,6 +73,7 @@ export function initKeyboardInset(): () => void {
         }
         vv.removeEventListener("resize", schedule);
         vv.removeEventListener("scroll", schedule);
+        window.removeEventListener("scroll", pinScroll);
         document.documentElement.style.removeProperty("--viewport-height");
         document.documentElement.style.removeProperty("--keyboard-open");
     };
