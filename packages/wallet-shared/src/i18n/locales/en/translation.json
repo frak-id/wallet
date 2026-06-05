@@ -125,12 +125,6 @@
                 "useDifferent": "Use a different email",
                 "back": "Back to my profile"
             },
-            "success": {
-                "title": "Email saved",
-                "description": "{{email}} is now linked to your wallet. Verify it next so you can use it to recover your account.",
-                "verifyEmail": "Verify my email",
-                "back": "Back to my profile"
-            },
             "card": {
                 "title": "Add your email",
                 "description": "Add your email to be able to recover your wallet later."

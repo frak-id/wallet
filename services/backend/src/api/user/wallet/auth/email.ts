@@ -1,11 +1,9 @@
 import { sessionContext } from "@backend-infrastructure";
 import { t } from "@backend-utils";
-import { Elysia, status } from "elysia";
-import { AuthContext } from "../../../../domain/auth";
+import { Elysia } from "elysia";
 import { IdentityContext } from "../../../../domain/identity/context";
 import { OrchestrationContext } from "../../../../orchestration/context";
 import {
-    AssociateEmailResponseSchema,
     MyEmailResponseSchema,
     SendEmailVerificationBodySchema,
     SendEmailVerificationResponseSchema,
@@ -16,9 +14,9 @@ import { walletGroupContext } from "./walletGroupContext";
 
 /**
  * Map an email-availability resolution to the response shape shared by the
- * associate + verification routes: a merge target becomes the `conflict`
- * payload (wallet + credentials), a retired address becomes `unavailable`,
- * and a free or own-group address yields `null` so the caller proceeds.
+ * verification routes: a merge target becomes the `conflict` payload (wallet +
+ * credentials), a retired address becomes `unavailable`, and a free or
+ * own-group address yields `null` so the caller proceeds.
  */
 async function checkEmailAvailability(email: string, walletGroupId: string) {
     const resolution =
@@ -90,77 +88,35 @@ export const emailRoutes = new Elysia({ prefix: "/email" })
         }
     )
     .post(
-        "/",
-        async ({ walletSession, walletGroup, body: { email } }) => {
-            const credentialId = walletSession.authenticatorId;
-            const identityRepo = IdentityContext.repositories.identity;
-
-            // Refuse silent overwrite: the post-auth UI only exposes this when
-            // no email is set, so reaching this with an existing email means
-            // either a race or a stale client. Surface it so we don't lose data.
-            const current = await identityRepo.findLinkedEmail(walletGroup.id);
-            if (current) {
-                return {
-                    status: "alreadyHasEmail" as const,
-                    email: current.email,
-                };
-            }
-
-            // Owned by another group (-> merge conflict) or retired elsewhere
-            // (-> unavailable); either way we must not attach it here.
-            const blocked = await checkEmailAvailability(email, walletGroup.id);
-            if (blocked) {
-                return blocked;
-            }
-
-            // Authenticated credential must still exist — otherwise the wallet
-            // session is dangling and `getByCredentialId` will return null. We
-            // keep the historical 404 to distinguish a missing credential
-            // from a successful update.
-            const credential =
-                await AuthContext.repositories.authenticator.getByCredentialId(
-                    credentialId
-                );
-            if (!credential) {
-                return status(404, "Authenticator not found");
-            }
-
-            await identityRepo.addNode({
-                groupId: walletGroup.id,
-                type: "email",
-                value: email,
-            });
-
-            return {
-                status: "success" as const,
-                email: email.trim().toLowerCase(),
-            };
-        },
-        {
-            withWalletGroup: true,
-            body: t.Object({
-                email: t.String({ format: "email", maxLength: 320 }),
-            }),
-            response: {
-                400: t.String(),
-                401: t.String(),
-                404: t.String(),
-                200: AssociateEmailResponseSchema,
-            },
-        }
-    )
-    .post(
         "/verification",
         async ({ walletGroup, body: { email } }) => {
-            // Rotation target must be free: another group owns it (-> merge
-            // conflict) or it was retired (-> unavailable).
+            const identityRepo = IdentityContext.repositories.identity;
+
             if (email) {
+                // Target must be free: another group owns it (-> merge
+                // conflict) or it was retired (-> unavailable).
                 const blocked = await checkEmailAvailability(
                     email,
                     walletGroup.id
                 );
                 if (blocked) {
                     return blocked;
+                }
+
+                // First email for the group: materialise the unverified node
+                // now so the wallet immediately reflects "email on file" and a
+                // later resend can resolve the target. A rotation (the group
+                // already has a linked email) keeps the new address on the
+                // challenge row only, attached on verify.
+                const current = await identityRepo.findLinkedEmail(
+                    walletGroup.id
+                );
+                if (!current) {
+                    await identityRepo.addNode({
+                        groupId: walletGroup.id,
+                        type: "email",
+                        value: email,
+                    });
                 }
             }
 

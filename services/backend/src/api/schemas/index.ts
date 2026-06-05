@@ -70,8 +70,6 @@ export {
     MergeWeightSchema,
 } from "../../orchestration/schemas/walletMergeSchemas";
 export {
-    type AssociateEmailResponse,
-    AssociateEmailResponseSchema,
     type EmailStatusResponse,
     EmailStatusResponseSchema,
     type MyEmailResponse,

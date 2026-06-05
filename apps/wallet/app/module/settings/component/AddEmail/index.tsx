@@ -1,19 +1,20 @@
+import type { MyEmailResponse } from "@frak-labs/backend-elysia/api/schemas";
 import { Box } from "@frak-labs/design-system/components/Box";
 import { Text } from "@frak-labs/design-system/components/Text";
-import { selectSession, sessionStore } from "@frak-labs/wallet-shared";
+import { authKey, selectSession, sessionStore } from "@frak-labs/wallet-shared";
+import { useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
 import { useCallback, useState } from "react";
 import { useTranslation } from "react-i18next";
 import type { Address } from "viem";
 import { useStore } from "zustand";
-import { useAssociateEmail } from "@/module/authentication/hook/useAssociateEmail";
 import {
     EmailFormScreen,
     emailFormScreenStyles,
 } from "@/module/common/component/EmailFormScreen";
+import { useSendEmailVerification } from "@/module/email-verification/hook/useSendEmailVerification";
 import { MergeFlow } from "@/module/walletMerge/component/MergeFlow";
 import { ConflictStep } from "./ConflictStep";
-import { SuccessStep } from "./SuccessStep";
 
 type FlowState =
     | { kind: "input" }
@@ -40,30 +41,30 @@ type FlowState =
           currentAuthenticatorId: string;
           targetAuthenticatorIds: string[];
           targetWallet: Address;
-      }
-    | { kind: "success"; email: string };
+      };
 
 /**
  * Post-auth "add my email" page. Mounted at `/profile/add-email`, reachable
  * from the wallet home card and the profile row when the current credential
  * has no email attached.
  *
- * Each terminal state (success, conflict, merging) renders as a dedicated
- * screen so the input step stays clean and the user can navigate back
- * without a patchwork of conditional banners.
+ * Submitting an email sends a verification code and hands off to the verify
+ * screen; the conflict + merging branches render as dedicated in-page screens
+ * so the input step stays clean.
  */
 export function AddEmail() {
     const { t } = useTranslation();
     const navigate = useNavigate();
+    const queryClient = useQueryClient();
     const session = useStore(sessionStore, selectSession);
     const [flowState, setFlowState] = useState<FlowState>({ kind: "input" });
     const [unavailable, setUnavailable] = useState(false);
     const {
-        associateEmail,
-        isAssociating,
+        sendCode,
+        isSending,
         error: submitError,
         reset,
-    } = useAssociateEmail();
+    } = useSendEmailVerification();
 
     const goToProfile = useCallback(() => {
         navigate({ to: "/profile" });
@@ -83,7 +84,7 @@ export function AddEmail() {
     const handleSubmit = useCallback(
         async (email: string) => {
             try {
-                const result = await associateEmail(email);
+                const result = await sendCode(email);
                 if (result.status === "conflict") {
                     setFlowState({
                         kind: "conflict",
@@ -99,26 +100,24 @@ export function AddEmail() {
                     setUnavailable(true);
                     return;
                 }
-                // Both `success` and `alreadyHasEmail` mean the credential
-                // now has an email on file; treat them identically.
-                setFlowState({ kind: "success", email: result.email });
+                // `sent` / `throttled`: a code is on its way (or just was).
+                // Prime the "my email" cache so the verify screen shows the
+                // address immediately instead of flashing empty while
+                // `useCurrentEmail` (5-min staleTime) refetches.
+                queryClient.setQueryData<MyEmailResponse>(authKey.myEmail, {
+                    email,
+                    verified: false,
+                    verifiedAt: null,
+                    pendingEmail: null,
+                });
+                navigate({ to: "/profile/verify-email" });
             } catch {
                 // Surface via `submitError` from the hook so the user can
                 // retry from the form.
             }
         },
-        [associateEmail]
+        [sendCode, queryClient, navigate]
     );
-
-    if (flowState.kind === "success") {
-        return (
-            <SuccessStep
-                email={flowState.email}
-                onBack={goToProfile}
-                onVerifyEmail={() => navigate({ to: "/profile/verify-email" })}
-            />
-        );
-    }
 
     if (flowState.kind === "merging") {
         // `currentAuthenticatorId` is captured from the session at flow
@@ -187,7 +186,7 @@ export function AddEmail() {
             submitLabel={t("wallet.addEmail.continue")}
             onBack={goToProfile}
             onSubmit={handleSubmit}
-            isSubmitting={isAssociating}
+            isSubmitting={isSending}
             submitDisabled={unavailable}
             onEmailChange={clearSubmitError}
         >

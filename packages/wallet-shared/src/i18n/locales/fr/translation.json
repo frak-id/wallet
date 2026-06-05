@@ -123,12 +123,6 @@
                 "useDifferent": "Utiliser un autre e-mail",
                 "back": "Retour au profil"
             },
-            "success": {
-                "title": "E-mail enregistré",
-                "description": "{{email}} est maintenant lié à ton portefeuille. Vérifie-le pour pouvoir t'en servir pour récupérer ton compte.",
-                "verifyEmail": "Vérifier mon e-mail",
-                "back": "Retour au profil"
-            },
             "card": {
                 "title": "Ajoute ton e-mail",
                 "description": "Ajoute ton e-mail pour pouvoir récupérer ton portefeuille plus tard."

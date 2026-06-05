@@ -48,7 +48,6 @@ export namespace authKey {
      */
     const myEmailBase = "myEmail" as const;
     export const myEmail = [base, myEmailBase] as const;
-    export const associateEmail = [base, myEmailBase, "associate"] as const;
     export const sendEmailVerification = [
         base,
         myEmailBase,

@@ -5,7 +5,7 @@ import type { Static } from "elysia";
  * Shape returned when an email is already owned by a *different* identity group
  * — the conflicting wallet + its active-chain credentials the merge UI consumes.
  * Declared once and reused by every route that surfaces a conflict (email
- * availability, associate, verification send + verify) so they stay identical.
+ * availability, verification send + verify) so they stay identical.
  */
 export const conflictTargetFields = {
     authenticatorIds: t.Array(t.String()),
@@ -34,22 +34,3 @@ export const MyEmailResponseSchema = t.Object({
     pendingEmail: t.Optional(t.Union([t.String(), t.Null()])),
 });
 export type MyEmailResponse = Static<typeof MyEmailResponseSchema>;
-
-/**
- * Result of an attempt to associate an email with the current authenticator.
- *
- * - `success`: email saved on the credential
- * - `alreadyHasEmail`: the credential already has an email; the caller should
- *   not silently overwrite (current UI only exposes the flow when missing)
- * - `conflict`: another wallet already owns this email — UI will eventually
- *   trigger the merge flow; for now it just surfaces a friendly error
- */
-export const AssociateEmailResponseSchema = t.Union([
-    t.Object({ status: t.Literal("success"), email: t.String() }),
-    t.Object({ status: t.Literal("alreadyHasEmail"), email: t.String() }),
-    t.Object({ status: t.Literal("conflict"), ...conflictTargetFields }),
-    t.Object({ status: t.Literal("unavailable") }),
-]);
-export type AssociateEmailResponse = Static<
-    typeof AssociateEmailResponseSchema
->;
