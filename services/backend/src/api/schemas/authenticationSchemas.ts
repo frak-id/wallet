@@ -1,13 +1,22 @@
 import { t } from "@backend-utils";
 import type { Static } from "elysia";
 
+/**
+ * Shape returned when an email is already owned by a *different* identity group
+ * — the conflicting wallet + its active-chain credentials the merge UI consumes.
+ * Declared once and reused by every route that surfaces a conflict (email
+ * availability, associate, verification send + verify) so they stay identical.
+ */
+export const conflictTargetFields = {
+    authenticatorIds: t.Array(t.String()),
+    wallet: t.Optional(t.Address()),
+};
+export const ConflictTargetSchema = t.Object(conflictTargetFields);
+export type ConflictTarget = Static<typeof ConflictTargetSchema>;
+
 export const EmailStatusResponseSchema = t.Union([
     t.Object({ used: t.Literal(false) }),
-    t.Object({
-        used: t.Literal(true),
-        authenticatorIds: t.Array(t.String()),
-        wallet: t.Optional(t.Address()),
-    }),
+    t.Object({ used: t.Literal(true), ...conflictTargetFields }),
 ]);
 export type EmailStatusResponse = Static<typeof EmailStatusResponseSchema>;
 
@@ -38,11 +47,7 @@ export type MyEmailResponse = Static<typeof MyEmailResponseSchema>;
 export const AssociateEmailResponseSchema = t.Union([
     t.Object({ status: t.Literal("success"), email: t.String() }),
     t.Object({ status: t.Literal("alreadyHasEmail"), email: t.String() }),
-    t.Object({
-        status: t.Literal("conflict"),
-        authenticatorIds: t.Array(t.String()),
-        wallet: t.Optional(t.Address()),
-    }),
+    t.Object({ status: t.Literal("conflict"), ...conflictTargetFields }),
 ]);
 export type AssociateEmailResponse = Static<
     typeof AssociateEmailResponseSchema

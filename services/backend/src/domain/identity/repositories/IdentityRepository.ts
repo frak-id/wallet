@@ -8,6 +8,14 @@ import type { IdentityType } from "../schemas";
 type IdentityGroupSelect = typeof identityGroupsTable.$inferSelect;
 type IdentityNodeSelect = typeof identityNodesTable.$inferSelect;
 
+/**
+ * Postgres transaction handle as passed to `db.transaction(async (trx) => …)`.
+ * The email attach/unlink writes accept one so the verify flow can commit them
+ * atomically with the challenge consumption.
+ */
+type PgTx = Parameters<Parameters<typeof db.transaction>[0]>[0];
+type PgRunner = typeof db | PgTx;
+
 export class IdentityRepository {
     private readonly identityGroupIdCache = new LRUCache<
         string,
@@ -169,14 +177,19 @@ export class IdentityRepository {
     }
 
     /**
-     * Resolve a group's active email nodes into a verified address + its stamp
-     * and a distinct pending address (rotation in progress). `email` falls back
-     * to the oldest active node, matching `findEmailForGroup` pre-verification.
+     * Resolve a group's active email nodes into its current address + the
+     * verification stamp. `email` is the verified node when present, else the
+     * oldest active node (matching `findEmailForGroup` pre-verification).
+     *
+     * Pending-rotation state is intentionally NOT derived here: a rotation
+     * target only lives on the verification challenge row until the code is
+     * entered (it is never an identity node before that), so the in-flight
+     * pending address is sourced from the challenge in
+     * `EmailVerificationService.getEmailStatus`, not from the graph.
      */
     async findEmailStatusForGroup(groupId: string): Promise<{
         email: string | null;
         verifiedAt: Date | null;
-        pendingEmail: string | null;
     }> {
         const nodes = await db.query.identityNodesTable.findMany({
             where: and(
@@ -190,14 +203,10 @@ export class IdentityRepository {
         const verified = nodes.find((n) => n.verifiedAt !== null);
         const email =
             verified?.identityValue ?? nodes[0]?.identityValue ?? null;
-        const pending = nodes.find(
-            (n) => n.verifiedAt === null && n.identityValue !== email
-        );
 
         return {
             email,
             verifiedAt: verified?.verifiedAt ?? null,
-            pendingEmail: pending?.identityValue ?? null,
         };
     }
 
@@ -209,12 +218,14 @@ export class IdentityRepository {
      */
     async attachVerifiedEmail(
         groupId: string,
-        email: string
+        email: string,
+        tx?: PgTx
     ): Promise<boolean> {
+        const runner: PgRunner = tx ?? db;
         const normalizedValue = this.normalizeValue("email", email);
         const now = new Date();
 
-        const reactivated = await db
+        const reactivated = await runner
             .update(identityNodesTable)
             .set({ verifiedAt: now, unlinkedAt: null })
             .where(
@@ -227,7 +238,7 @@ export class IdentityRepository {
             .returning({ id: identityNodesTable.id });
 
         if (reactivated.length === 0) {
-            const inserted = await db
+            const inserted = await runner
                 .insert(identityNodesTable)
                 .values({
                     groupId,
@@ -250,9 +261,11 @@ export class IdentityRepository {
 
     async unlinkOtherActiveEmails(
         groupId: string,
-        exceptEmail: string
+        exceptEmail: string,
+        tx?: PgTx
     ): Promise<void> {
-        await db
+        const runner: PgRunner = tx ?? db;
+        await runner
             .update(identityNodesTable)
             .set({ unlinkedAt: new Date() })
             .where(

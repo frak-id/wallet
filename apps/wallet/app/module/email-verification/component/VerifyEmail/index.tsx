@@ -1,3 +1,4 @@
+import { EMAIL_VERIFICATION } from "@frak-labs/app-essentials/constants/emailVerification";
 import { Box } from "@frak-labs/design-system/components/Box";
 import { Button } from "@frak-labs/design-system/components/Button";
 import { Stack } from "@frak-labs/design-system/components/Stack";
@@ -26,7 +27,7 @@ import { useVerifyEmailCode } from "@/module/email-verification/hook/useVerifyEm
 import { ConflictStep } from "@/module/settings/component/AddEmail/ConflictStep";
 import { MergeFlow } from "@/module/walletMerge/component/MergeFlow";
 
-const CODE_LENGTH = 6;
+const CODE_LENGTH = EMAIL_VERIFICATION.CODE_LENGTH;
 
 type FlowState =
     | { kind: "verify" }
@@ -56,7 +57,13 @@ function resolveVerifyErrorKey(mutation: {
     isError: boolean;
 }): string | undefined {
     const status = mutation.data?.status;
-    if (status && status !== "verified" && status !== "alreadyVerified") {
+    if (
+        status &&
+        status !== "verified" &&
+        status !== "alreadyVerified" &&
+        // `conflict` is not an inline error — it hands off to the merge flow.
+        status !== "conflict"
+    ) {
         return status;
     }
     if (mutation.isError) return "network";
@@ -72,6 +79,48 @@ function shouldShowAutoVerifyLoading(params: {
 }): boolean {
     if (!params.initialCode || params.verifyErrorKey) return false;
     return params.isPending || (!params.hasData && !params.isError);
+}
+
+/**
+ * The "this address belongs to another wallet" screen, reached from a send- or
+ * verify-time conflict. Extracted so the merge-gating logic lives outside the
+ * main flow component.
+ */
+function ConflictResolutionStep({
+    conflict,
+    currentAuthenticatorId,
+    onStartMerge,
+    onUseDifferent,
+    onBack,
+}: {
+    conflict: Extract<FlowState, { kind: "conflict" }>;
+    currentAuthenticatorId?: string;
+    onStartMerge: (merge: Extract<FlowState, { kind: "merging" }>) => void;
+    onUseDifferent: () => void;
+    onBack: () => void;
+}) {
+    const { targetAuthenticatorIds, targetWallet, email } = conflict;
+    const canMerge = Boolean(
+        targetAuthenticatorIds.length && targetWallet && currentAuthenticatorId
+    );
+    const startMerge = () => {
+        if (!canMerge || !targetWallet || !currentAuthenticatorId) return;
+        onStartMerge({
+            kind: "merging",
+            email,
+            currentAuthenticatorId,
+            targetAuthenticatorIds,
+            targetWallet,
+        });
+    };
+    return (
+        <ConflictStep
+            canMerge={canMerge}
+            onMerge={startMerge}
+            onUseDifferent={onUseDifferent}
+            onBack={onBack}
+        />
+    );
 }
 
 export function VerifyEmail({ initialCode }: VerifyEmailProps) {
@@ -99,15 +148,35 @@ export function VerifyEmail({ initialCode }: VerifyEmailProps) {
 
     const handleVerify = useCallback(
         async (value: string) => {
-            const result = await verifyMutation.mutateAsync(value);
-            if (
-                result.status === "verified" ||
-                result.status === "alreadyVerified"
-            ) {
-                setFlowState({ kind: "success", email: result.email });
+            try {
+                const result = await verifyMutation.mutateAsync(value);
+                if (
+                    result.status === "verified" ||
+                    result.status === "alreadyVerified"
+                ) {
+                    setFlowState({ kind: "success", email: result.email });
+                    return;
+                }
+                // The address was claimed by another group between send and
+                // verify — hand off to the same merge flow as a send conflict.
+                if (result.status === "conflict") {
+                    setFlowState({
+                        kind: "conflict",
+                        email:
+                            targetEmail ??
+                            emailStatus?.pendingEmail ??
+                            emailStatus?.email ??
+                            "",
+                        targetAuthenticatorIds: result.authenticatorIds,
+                        targetWallet: result.wallet,
+                    });
+                }
+            } catch {
+                // Network failure is surfaced via `verifyErrorKey`; nothing to
+                // do here beyond swallowing the rejection.
             }
         },
-        [verifyMutation]
+        [verifyMutation.mutateAsync, targetEmail, emailStatus]
     );
 
     // Magic-link path: a `#code` in the URL auto-submits once before the user
@@ -122,8 +191,12 @@ export function VerifyEmail({ initialCode }: VerifyEmailProps) {
 
     const handleSendCurrent = useCallback(async () => {
         verifyMutation.reset();
-        await sendCode(targetEmail);
-    }, [sendCode, targetEmail, verifyMutation]);
+        // Resend to the address actually being verified. Passing the pending
+        // rotation target explicitly (rather than letting the server fall back
+        // to the current email) keeps a resend after the rotation code expired
+        // from silently retargeting the old, already-verified address.
+        await sendCode(targetEmail ?? emailStatus?.pendingEmail ?? undefined);
+    }, [sendCode, targetEmail, emailStatus, verifyMutation.reset]);
 
     const handleChangeEmailSubmit = useCallback(
         async (email: string) => {
@@ -201,30 +274,11 @@ export function VerifyEmail({ initialCode }: VerifyEmailProps) {
     }
 
     if (flowState.kind === "conflict") {
-        const canMerge = Boolean(
-            flowState.targetAuthenticatorIds.length &&
-                flowState.targetWallet &&
-                session?.authenticatorId
-        );
-        const startMerge = () => {
-            if (
-                !canMerge ||
-                !flowState.targetWallet ||
-                !session?.authenticatorId
-            )
-                return;
-            setFlowState({
-                kind: "merging",
-                email: flowState.email,
-                currentAuthenticatorId: session.authenticatorId,
-                targetAuthenticatorIds: flowState.targetAuthenticatorIds,
-                targetWallet: flowState.targetWallet,
-            });
-        };
         return (
-            <ConflictStep
-                canMerge={canMerge}
-                onMerge={startMerge}
+            <ConflictResolutionStep
+                conflict={flowState}
+                currentAuthenticatorId={session?.authenticatorId}
+                onStartMerge={setFlowState}
                 onUseDifferent={() => setFlowState({ kind: "changeEmail" })}
                 onBack={goToProfile}
             />
@@ -345,7 +399,11 @@ export function VerifyEmail({ initialCode }: VerifyEmailProps) {
                     </Button>
 
                     <CodeInput
-                        mode="numeric"
+                        // Remount (fresh empty inputs) when the verified
+                        // target changes, so digits typed for one address never
+                        // bleed into the next during a rotation.
+                        key={targetEmail ?? "current"}
+                        mode="alphanumeric"
                         length={CODE_LENGTH}
                         defaultValue={targetEmail ? undefined : initialCode}
                         onChange={setCode}

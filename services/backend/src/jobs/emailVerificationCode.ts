@@ -9,13 +9,9 @@ CronRegistry.register(
         run: async ({ context: { logger } }) => {
             logger.debug("Cleaning up expired email verification codes");
 
-            const result =
-                await IdentityContext.repositories.emailVerification.deleteExpired();
+            await IdentityContext.repositories.emailVerification.deleteExpired();
 
-            logger.info(
-                { deletedCount: result },
-                "Expired email verification codes cleanup completed"
-            );
+            logger.info("Expired email verification codes cleanup completed");
         },
     })
 );

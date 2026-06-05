@@ -1,15 +1,17 @@
+import { EMAIL_VERIFICATION } from "@frak-labs/app-essentials/constants/emailVerification";
 import type { SendEmailVerificationResponse } from "@frak-labs/backend-elysia/api/schemas";
 import { authenticatedWalletApi, authKey } from "@frak-labs/wallet-shared";
 import { useMutation } from "@tanstack/react-query";
 import { useCallback, useEffect, useState } from "react";
 
-const RESEND_COOLDOWN_MS = 30_000;
-
 /**
- * Send (or resend) an email-verification code. Owns the 30s resend cooldown:
- * it starts after a `sent` result and is reconciled to the server's
- * `retryAfterSec` whenever the backend reports `throttled`, so the button stays
- * disabled for the authoritative remaining window even across remounts.
+ * Send (or resend) an email-verification code. Owns the resend cooldown: it
+ * starts after a `sent` result and is reconciled to the server's
+ * `retryAfterSec` whenever the backend reports `throttled`.
+ *
+ * The cooldown is component-local state, so it resets on remount — the
+ * server-side debounce (surfaced as `throttled`) is the durable backstop that
+ * keeps a remounted client from sending again too soon.
  */
 export function useSendEmailVerification() {
     const [cooldownUntil, setCooldownUntil] = useState(0);
@@ -17,7 +19,14 @@ export function useSendEmailVerification() {
 
     useEffect(() => {
         if (cooldownUntil <= Date.now()) return;
-        const id = setInterval(() => setNowMs(Date.now()), 1000);
+        // Tick once a second, and stop the interval the moment the window
+        // elapses — otherwise it would keep firing (a render per second)
+        // forever, since the effect only re-runs when `cooldownUntil` changes.
+        const id = setInterval(() => {
+            const now = Date.now();
+            setNowMs(now);
+            if (now >= cooldownUntil) clearInterval(id);
+        }, 1000);
         return () => clearInterval(id);
     }, [cooldownUntil]);
 
@@ -37,7 +46,9 @@ export function useSendEmailVerification() {
         },
         onSuccess: (result) => {
             if (result.status === "sent") {
-                setCooldownUntil(Date.now() + RESEND_COOLDOWN_MS);
+                setCooldownUntil(
+                    Date.now() + EMAIL_VERIFICATION.RESEND_DEBOUNCE_MS
+                );
             } else if (result.status === "throttled") {
                 setCooldownUntil(Date.now() + result.retryAfterSec * 1000);
             }

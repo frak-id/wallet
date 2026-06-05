@@ -12,6 +12,7 @@ import {
     VerifyEmailBodySchema,
     VerifyEmailResponseSchema,
 } from "../../../schemas";
+import { walletGroupContext } from "./walletGroupContext";
 
 /**
  * Resolve whether `email` is already owned by a *different* identity group.
@@ -52,6 +53,7 @@ async function findEmailConflict(email: string, walletGroupId: string) {
  */
 export const emailRoutes = new Elysia({ prefix: "/email" })
     .use(sessionContext)
+    .use(walletGroupContext)
     .get(
         "/",
         async ({ walletSession }) => {
@@ -65,15 +67,15 @@ export const emailRoutes = new Elysia({ prefix: "/email" })
             if (!group) {
                 return { email: null, verified: false, verifiedAt: null };
             }
-            const status =
-                await IdentityContext.repositories.identity.findEmailStatusForGroup(
+            const emailStatus =
+                await IdentityContext.services.emailVerification.getEmailStatus(
                     group.id
                 );
             return {
-                email: status.email,
-                verified: status.verifiedAt !== null,
-                verifiedAt: status.verifiedAt?.toISOString() ?? null,
-                pendingEmail: status.pendingEmail,
+                email: emailStatus.email,
+                verified: emailStatus.verifiedAt !== null,
+                verifiedAt: emailStatus.verifiedAt?.toISOString() ?? null,
+                pendingEmail: emailStatus.pendingEmail,
             };
         },
         {
@@ -86,23 +88,9 @@ export const emailRoutes = new Elysia({ prefix: "/email" })
     )
     .post(
         "/",
-        async ({ walletSession, body: { email } }) => {
-            if (walletSession.type === "ecdsa") {
-                // No credential row to attach an email to. The UI shouldn't
-                // surface the flow for ECDSA sessions, but guard anyway.
-                return status(400, "Unsupported wallet type");
-            }
-
+        async ({ walletSession, walletGroup, body: { email } }) => {
             const credentialId = walletSession.authenticatorId;
             const identityRepo = IdentityContext.repositories.identity;
-
-            const walletGroup = await identityRepo.findGroupByIdentity({
-                type: "wallet",
-                value: walletSession.address,
-            });
-            if (!walletGroup) {
-                return status(404, "Wallet identity not found");
-            }
 
             // Refuse silent overwrite: the post-auth UI only exposes this when
             // no email is set, so reaching this with an existing email means
@@ -148,7 +136,7 @@ export const emailRoutes = new Elysia({ prefix: "/email" })
             };
         },
         {
-            withWalletAuthent: true,
+            withWalletGroup: true,
             body: t.Object({
                 email: t.String({ format: "email", maxLength: 320 }),
             }),
@@ -162,20 +150,7 @@ export const emailRoutes = new Elysia({ prefix: "/email" })
     )
     .post(
         "/verification",
-        async ({ walletSession, body: { email } }) => {
-            if (walletSession.type === "ecdsa") {
-                return status(400, "Unsupported wallet type");
-            }
-
-            const identityRepo = IdentityContext.repositories.identity;
-            const walletGroup = await identityRepo.findGroupByIdentity({
-                type: "wallet",
-                value: walletSession.address,
-            });
-            if (!walletGroup) {
-                return status(404, "Wallet identity not found");
-            }
-
+        async ({ walletGroup, body: { email } }) => {
             // Rotation conflict: another group owns it -> defer to merge flow.
             if (email) {
                 const conflict = await findEmailConflict(email, walletGroup.id);
@@ -190,7 +165,7 @@ export const emailRoutes = new Elysia({ prefix: "/email" })
             });
         },
         {
-            withWalletAuthent: true,
+            withWalletGroup: true,
             body: SendEmailVerificationBodySchema,
             response: {
                 400: t.String(),
@@ -202,29 +177,29 @@ export const emailRoutes = new Elysia({ prefix: "/email" })
     )
     .post(
         "/verify",
-        async ({ walletSession, body: { code } }) => {
-            if (walletSession.type === "ecdsa") {
-                return status(400, "Unsupported wallet type");
-            }
+        async ({ walletGroup, body: { code } }) => {
+            const result =
+                await IdentityContext.services.emailVerification.verifyCode({
+                    groupId: walletGroup.id,
+                    code,
+                });
 
-            const walletGroup =
-                await IdentityContext.repositories.identity.findGroupByIdentity(
-                    {
-                        type: "wallet",
-                        value: walletSession.address,
-                    }
+            // The address was claimed by another group between send and verify.
+            // Enrich the bare conflict into the merge-capable payload the client
+            // already handles; if it resolved free again (rare), fall back to
+            // `invalid` so the client retries rather than showing a stale target.
+            if (result.status === "conflict") {
+                const conflict = await findEmailConflict(
+                    result.email,
+                    walletGroup.id
                 );
-            if (!walletGroup) {
-                return status(404, "Wallet identity not found");
+                return conflict ?? { status: "invalid" as const };
             }
 
-            return IdentityContext.services.emailVerification.verifyCode({
-                groupId: walletGroup.id,
-                code,
-            });
+            return result;
         },
         {
-            withWalletAuthent: true,
+            withWalletGroup: true,
             body: VerifyEmailBodySchema,
             response: {
                 400: t.String(),

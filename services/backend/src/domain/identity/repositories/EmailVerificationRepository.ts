@@ -5,6 +5,14 @@ import {
     emailVerificationCodesTable,
 } from "../db/schema";
 
+/**
+ * Postgres transaction handle as passed to `db.transaction(async (trx) => …)`.
+ * `consume` accepts one so it can commit atomically with the identity-graph
+ * writes the verify flow performs alongside it.
+ */
+type PgTx = Parameters<Parameters<typeof db.transaction>[0]>[0];
+type PgRunner = typeof db | PgTx;
+
 export class EmailVerificationRepository {
     async findByGroup(
         groupId: string
@@ -59,17 +67,17 @@ export class EmailVerificationRepository {
             .where(eq(emailVerificationCodesTable.groupId, groupId));
     }
 
-    async consume(groupId: string): Promise<void> {
-        await db
+    async consume(groupId: string, tx?: PgTx): Promise<void> {
+        const runner: PgRunner = tx ?? db;
+        await runner
             .update(emailVerificationCodesTable)
             .set({ consumedAt: new Date() })
             .where(eq(emailVerificationCodesTable.groupId, groupId));
     }
 
-    async deleteExpired(): Promise<number> {
-        const result = await db
+    async deleteExpired(): Promise<void> {
+        await db
             .delete(emailVerificationCodesTable)
             .where(lt(emailVerificationCodesTable.expiresAt, new Date()));
-        return result.length;
     }
 }

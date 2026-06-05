@@ -1,15 +1,11 @@
-import { randomInt } from "node:crypto";
-import { log } from "@backend-infrastructure";
-import { HttpError } from "@backend-utils";
+import { db, log } from "@backend-infrastructure";
+import { generateCode, HttpError } from "@backend-utils";
+import { EMAIL_VERIFICATION } from "@frak-labs/app-essentials/constants/emailVerification";
 import { buildVerificationEmail } from "../../../infrastructure/integrations/email";
 import type { EmailVerificationCodeSelect } from "../db/schema";
 import type { EmailVerificationRepository } from "../repositories/EmailVerificationRepository";
 import type { IdentityRepository } from "../repositories/IdentityRepository";
 import type { EmailSender } from "./EmailSender";
-
-const RESEND_DEBOUNCE_MS = 30_000;
-const CODE_TTL_MS = 10 * 60_000;
-const MAX_VERIFY_ATTEMPTS = 5;
 
 export type SendCodeResult =
     | { status: "sent" }
@@ -18,9 +14,18 @@ export type SendCodeResult =
 export type VerifyCodeResult =
     | { status: "verified"; email: string; verifiedAt: string }
     | { status: "alreadyVerified"; email: string }
+    // The address was claimed by another identity group between send and
+    // verify — the route enriches this into the merge-capable conflict payload.
+    | { status: "conflict"; email: string }
     | { status: "invalid" }
     | { status: "expired" }
     | { status: "tooManyAttempts" };
+
+export type EmailStatus = {
+    email: string | null;
+    verifiedAt: Date | null;
+    pendingEmail: string | null;
+};
 
 export class EmailVerificationService {
     constructor(
@@ -28,6 +33,35 @@ export class EmailVerificationService {
         private readonly identityRepository: IdentityRepository,
         private readonly emailSender: EmailSender
     ) {}
+
+    /**
+     * Resolve a group's email status for the wallet UI: the current address +
+     * its verification stamp, plus any rotation address currently in flight.
+     * The pending address lives only on the active challenge row (a rotation
+     * target is never an identity node until its code is entered), so it is
+     * sourced here rather than from the identity graph.
+     */
+    async getEmailStatus(groupId: string): Promise<EmailStatus> {
+        const status =
+            await this.identityRepository.findEmailStatusForGroup(groupId);
+        const challenge =
+            await this.emailVerificationRepository.findByGroup(groupId);
+
+        const isActiveChallenge =
+            !!challenge &&
+            !challenge.consumedAt &&
+            challenge.expiresAt.getTime() > Date.now();
+        const pendingEmail =
+            isActiveChallenge && challenge.email !== status.email
+                ? challenge.email
+                : null;
+
+        return {
+            email: status.email,
+            verifiedAt: status.verifiedAt,
+            pendingEmail,
+        };
+    }
 
     async sendCode({
         groupId,
@@ -42,29 +76,46 @@ export class EmailVerificationService {
             await this.emailVerificationRepository.findByGroup(groupId);
         if (existing) {
             const elapsedMs = Date.now() - existing.lastSentAt.getTime();
-            if (elapsedMs < RESEND_DEBOUNCE_MS) {
+            if (elapsedMs < EMAIL_VERIFICATION.RESEND_DEBOUNCE_MS) {
                 return {
                     status: "throttled",
                     retryAfterSec: Math.ceil(
-                        (RESEND_DEBOUNCE_MS - elapsedMs) / 1000
+                        (EMAIL_VERIFICATION.RESEND_DEBOUNCE_MS - elapsedMs) /
+                            1000
                     ),
                 };
             }
         }
 
         const target = await this.resolveTarget({ groupId, email, existing });
+        const code = generateCode();
+        const link = `${process.env.FRAK_WALLET_URL}/profile/verify-email#code=${code}`;
+        const { subject, html } = buildVerificationEmail({ code, link });
 
-        const code = randomInt(0, 1_000_000).toString().padStart(6, "0");
+        // Send BEFORE persisting: a failed send must not stamp `lastSentAt`
+        // (which would wrongly throttle the user's immediate retry) nor leave
+        // an undelivered code on the row. Only once the provider accepts the
+        // message do we upsert the challenge + reset the debounce window.
+        try {
+            await this.emailSender.send({ to: target, subject, html });
+        } catch (err) {
+            log.error(
+                { groupId, err },
+                "Failed to send email verification code"
+            );
+            throw new HttpError({
+                status: 502,
+                code: "EMAIL_SEND_FAILED",
+                message: "Could not send the verification email",
+            });
+        }
+
         await this.emailVerificationRepository.upsert({
             groupId,
             email: target,
             code,
-            expiresAt: new Date(Date.now() + CODE_TTL_MS),
+            expiresAt: new Date(Date.now() + EMAIL_VERIFICATION.CODE_TTL_MS),
         });
-
-        const link = `${process.env.FRAK_WALLET_URL}/profile/verify-email#code=${code}`;
-        const { subject, html } = buildVerificationEmail({ code, link });
-        await this.emailSender.send({ to: target, subject, html });
 
         log.info({ groupId }, "Email verification code sent");
         return { status: "sent" };
@@ -87,40 +138,50 @@ export class EmailVerificationService {
         if (row.expiresAt.getTime() < Date.now()) {
             return { status: "expired" };
         }
-        if (row.attempts >= MAX_VERIFY_ATTEMPTS) {
+        if (row.attempts >= EMAIL_VERIFICATION.MAX_VERIFY_ATTEMPTS) {
             return { status: "tooManyAttempts" };
         }
-        if (row.code !== code) {
+        if (row.code !== code.trim().toUpperCase()) {
             await this.emailVerificationRepository.incrementAttempts(groupId);
             return { status: "invalid" };
         }
 
-        // Attach the now-proven address as the group's verified email. Only
-        // retire the previous active email(s) once the attach succeeds, so a
-        // lost cross-group race (the address verified elsewhere between send
-        // and verify) can never wipe the user's current email.
-        const attached = await this.identityRepository.attachVerifiedEmail(
-            groupId,
-            row.email
-        );
-        if (attached) {
+        // Attach + retire previous emails + consume the challenge atomically:
+        // a partial commit could either leave the code replayable or strand the
+        // group with two active emails masking the freshly-verified one.
+        const verifiedAt = new Date();
+        let attached = false;
+        await db.transaction(async (tx) => {
+            attached = await this.identityRepository.attachVerifiedEmail(
+                groupId,
+                row.email,
+                tx
+            );
+            // Address owned by another group (race between send and verify):
+            // `attachVerifiedEmail` wrote nothing, so this commits as a no-op
+            // and we surface a conflict rather than a phantom "verified".
+            if (!attached) return;
             await this.identityRepository.unlinkOtherActiveEmails(
                 groupId,
-                row.email
+                row.email,
+                tx
             );
-        } else {
+            await this.emailVerificationRepository.consume(groupId, tx);
+        });
+
+        if (!attached) {
             log.warn(
                 { groupId },
-                "Email verified but not attached (already owned by another group)"
+                "Email verification lost the attach race (owned by another group)"
             );
+            return { status: "conflict", email: row.email };
         }
-        await this.emailVerificationRepository.consume(groupId);
 
         log.info({ groupId }, "Email verified");
         return {
             status: "verified",
             email: row.email,
-            verifiedAt: new Date().toISOString(),
+            verifiedAt: verifiedAt.toISOString(),
         };
     }
 

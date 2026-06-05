@@ -6,6 +6,9 @@ import { EmailVerificationService } from "./EmailVerificationService";
 
 vi.mock("@backend-infrastructure", () => ({
     log: { debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn() },
+    // Transaction simply runs the callback with a throwaway handle — the repo
+    // methods are mocked and ignore the `tx` argument.
+    db: { transaction: vi.fn(async (cb: (tx: unknown) => unknown) => cb({})) },
 }));
 
 vi.mock("@backend-infrastructure/integrations/email", () => ({
@@ -16,6 +19,8 @@ vi.mock("@backend-infrastructure/integrations/email", () => ({
 }));
 
 const GROUP_ID = "group-1";
+// Codes are now ambiguity-free uppercase alphanumeric (shared `generateCode`).
+const CODE_PATTERN = /^[A-Z0-9]{6}$/;
 
 const createEmailVerificationRepository = () =>
     ({
@@ -59,12 +64,65 @@ describe("EmailVerificationService", () => {
         );
     });
 
-    describe("sendCode", () => {
-        it("sends a 6-digit code to the group's current email", async () => {
+    describe("getEmailStatus", () => {
+        it("surfaces an in-flight rotation target as the pending email", async () => {
+            identityRepository.findEmailStatusForGroup.mockResolvedValue({
+                email: "old@test.com",
+                verifiedAt: new Date(),
+            });
+            emailVerificationRepository.findByGroup.mockResolvedValue({
+                email: "new@test.com",
+                consumedAt: null,
+                expiresAt: new Date(Date.now() + 60_000),
+            });
+
+            const status = await service.getEmailStatus(GROUP_ID);
+
+            expect(status).toEqual({
+                email: "old@test.com",
+                verifiedAt: expect.any(Date),
+                pendingEmail: "new@test.com",
+            });
+        });
+
+        it("returns no pending email when the challenge matches the current email", async () => {
             identityRepository.findEmailStatusForGroup.mockResolvedValue({
                 email: "user@test.com",
                 verifiedAt: null,
-                pendingEmail: null,
+            });
+            emailVerificationRepository.findByGroup.mockResolvedValue({
+                email: "user@test.com",
+                consumedAt: null,
+                expiresAt: new Date(Date.now() + 60_000),
+            });
+
+            const status = await service.getEmailStatus(GROUP_ID);
+
+            expect(status.pendingEmail).toBeNull();
+        });
+
+        it("ignores a consumed or expired challenge for pending", async () => {
+            identityRepository.findEmailStatusForGroup.mockResolvedValue({
+                email: "old@test.com",
+                verifiedAt: new Date(),
+            });
+            emailVerificationRepository.findByGroup.mockResolvedValue({
+                email: "new@test.com",
+                consumedAt: new Date(),
+                expiresAt: new Date(Date.now() + 60_000),
+            });
+
+            const status = await service.getEmailStatus(GROUP_ID);
+
+            expect(status.pendingEmail).toBeNull();
+        });
+    });
+
+    describe("sendCode", () => {
+        it("sends a code to the group's current email", async () => {
+            identityRepository.findEmailStatusForGroup.mockResolvedValue({
+                email: "user@test.com",
+                verifiedAt: null,
             });
             emailVerificationRepository.findByGroup.mockResolvedValue(null);
 
@@ -75,7 +133,7 @@ describe("EmailVerificationService", () => {
                 expect.objectContaining({
                     groupId: GROUP_ID,
                     email: "user@test.com",
-                    code: expect.stringMatching(/^\d{6}$/),
+                    code: expect.stringMatching(CODE_PATTERN),
                 })
             );
             expect(emailSender.send).toHaveBeenCalledWith(
@@ -83,7 +141,23 @@ describe("EmailVerificationService", () => {
             );
         });
 
-        it("throttles a resend inside the 30s debounce window", async () => {
+        it("persists the challenge only after a successful send", async () => {
+            identityRepository.findEmailStatusForGroup.mockResolvedValue({
+                email: "user@test.com",
+                verifiedAt: null,
+            });
+            emailVerificationRepository.findByGroup.mockResolvedValue(null);
+            emailSender.send.mockRejectedValue(new Error("resend down"));
+
+            await expect(
+                service.sendCode({ groupId: GROUP_ID })
+            ).rejects.toMatchObject({ code: "EMAIL_SEND_FAILED" });
+
+            // A failed send must not stamp the challenge / debounce window.
+            expect(emailVerificationRepository.upsert).not.toHaveBeenCalled();
+        });
+
+        it("throttles a resend inside the debounce window", async () => {
             emailVerificationRepository.findByGroup.mockResolvedValue({
                 lastSentAt: new Date(),
             });
@@ -112,7 +186,7 @@ describe("EmailVerificationService", () => {
                 expect.objectContaining({
                     groupId: GROUP_ID,
                     email: "new@test.com",
-                    code: expect.stringMatching(/^\d{6}$/),
+                    code: expect.stringMatching(CODE_PATTERN),
                 })
             );
             expect(emailSender.send).toHaveBeenCalledWith(
@@ -150,7 +224,6 @@ describe("EmailVerificationService", () => {
             identityRepository.findEmailStatusForGroup.mockResolvedValue({
                 email: null,
                 verifiedAt: null,
-                pendingEmail: null,
             });
 
             await expect(
@@ -162,7 +235,7 @@ describe("EmailVerificationService", () => {
     describe("verifyCode", () => {
         const validRow = () => ({
             email: "user@test.com",
-            code: "123456",
+            code: "ABC234",
             attempts: 0,
             expiresAt: new Date(Date.now() + 60_000),
             consumedAt: null,
@@ -173,7 +246,7 @@ describe("EmailVerificationService", () => {
 
             const result = await service.verifyCode({
                 groupId: GROUP_ID,
-                code: "123456",
+                code: "ABC234",
             });
 
             expect(result).toEqual({ status: "expired" });
@@ -187,7 +260,7 @@ describe("EmailVerificationService", () => {
 
             const result = await service.verifyCode({
                 groupId: GROUP_ID,
-                code: "123456",
+                code: "ABC234",
             });
 
             expect(result).toEqual({ status: "expired" });
@@ -202,7 +275,7 @@ describe("EmailVerificationService", () => {
 
             const result = await service.verifyCode({
                 groupId: GROUP_ID,
-                code: "123456",
+                code: "ABC234",
             });
 
             expect(result).toEqual({
@@ -223,7 +296,7 @@ describe("EmailVerificationService", () => {
 
             const result = await service.verifyCode({
                 groupId: GROUP_ID,
-                code: "123456",
+                code: "ABC234",
             });
 
             expect(result).toEqual({ status: "tooManyAttempts" });
@@ -236,7 +309,7 @@ describe("EmailVerificationService", () => {
 
             const result = await service.verifyCode({
                 groupId: GROUP_ID,
-                code: "000000",
+                code: "ZZZ999",
             });
 
             expect(result).toEqual({ status: "invalid" });
@@ -248,6 +321,19 @@ describe("EmailVerificationService", () => {
             ).not.toHaveBeenCalled();
         });
 
+        it("matches the code case-insensitively", async () => {
+            emailVerificationRepository.findByGroup.mockResolvedValue(
+                validRow()
+            );
+
+            const result = await service.verifyCode({
+                groupId: GROUP_ID,
+                code: "abc234",
+            });
+
+            expect(result.status).toBe("verified");
+        });
+
         it("attaches the email, unlinks others and consumes on a correct code", async () => {
             emailVerificationRepository.findByGroup.mockResolvedValue(
                 validRow()
@@ -255,7 +341,7 @@ describe("EmailVerificationService", () => {
 
             const result = await service.verifyCode({
                 groupId: GROUP_ID,
-                code: "123456",
+                code: "ABC234",
             });
 
             expect(result.status).toBe("verified");
@@ -265,17 +351,23 @@ describe("EmailVerificationService", () => {
             }
             expect(identityRepository.attachVerifiedEmail).toHaveBeenCalledWith(
                 GROUP_ID,
-                "user@test.com"
+                "user@test.com",
+                expect.anything()
             );
             expect(
                 identityRepository.unlinkOtherActiveEmails
-            ).toHaveBeenCalledWith(GROUP_ID, "user@test.com");
+            ).toHaveBeenCalledWith(
+                GROUP_ID,
+                "user@test.com",
+                expect.anything()
+            );
             expect(emailVerificationRepository.consume).toHaveBeenCalledWith(
-                GROUP_ID
+                GROUP_ID,
+                expect.anything()
             );
         });
 
-        it("skips the unlink but still consumes when the address is owned by another group", async () => {
+        it("returns conflict and writes nothing when the address is owned by another group", async () => {
             emailVerificationRepository.findByGroup.mockResolvedValue(
                 validRow()
             );
@@ -283,16 +375,17 @@ describe("EmailVerificationService", () => {
 
             const result = await service.verifyCode({
                 groupId: GROUP_ID,
-                code: "123456",
+                code: "ABC234",
             });
 
-            expect(result.status).toBe("verified");
+            expect(result).toEqual({
+                status: "conflict",
+                email: "user@test.com",
+            });
             expect(
                 identityRepository.unlinkOtherActiveEmails
             ).not.toHaveBeenCalled();
-            expect(emailVerificationRepository.consume).toHaveBeenCalledWith(
-                GROUP_ID
-            );
+            expect(emailVerificationRepository.consume).not.toHaveBeenCalled();
         });
     });
 });
