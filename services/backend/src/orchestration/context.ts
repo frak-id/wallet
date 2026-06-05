@@ -11,7 +11,6 @@ import { ReferralCodeContext } from "../domain/referral-code/context";
 import { RewardsContext } from "../domain/rewards/context";
 import { WalletContext } from "../domain/wallet/context";
 import { webAuthNValidatorReader } from "../infrastructure/blockchain/WebAuthNValidatorReader";
-import { openPanelExportClient } from "../infrastructure/integrations/openpanel";
 import { pricingRepository } from "../infrastructure/pricing/PricingRepository";
 import { BatchRewardOrchestrator } from "./BatchRewardOrchestrator";
 import {
@@ -136,8 +135,7 @@ const campaignStatsOrchestrator = new CampaignStatsOrchestrator(
 );
 
 const campaignOverviewOrchestrator = new CampaignOverviewOrchestrator(
-    pricingRepository,
-    openPanelExportClient
+    pricingRepository
 );
 
 const explorerOrchestrator = new ExplorerOrchestrator();

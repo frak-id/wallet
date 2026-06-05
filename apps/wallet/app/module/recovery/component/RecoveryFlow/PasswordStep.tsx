@@ -1,5 +1,4 @@
 import { Button } from "@frak-labs/design-system/components/Button";
-import { Stack } from "@frak-labs/design-system/components/Stack";
 import { type ReactNode, useId, useState } from "react";
 import { useTranslation } from "react-i18next";
 import type { Address, LocalAccount } from "viem";
@@ -9,7 +8,6 @@ import { PasswordInput } from "@/module/common/component/PasswordInput";
 import { WarningCard } from "@/module/common/component/WarningCard";
 import { decodeRecoveryBlob } from "@/module/recovery-setup/utils/recoveryBlob";
 import * as styles from "./styles.css";
-import { TryExistingPasskey } from "./TryExistingPasskey";
 
 type PasswordStepProps = {
     blob: string;
@@ -55,20 +53,17 @@ export function PasswordStep({
             backDisabled={isPending}
             stepIndicator={stepIndicator}
             footer={
-                <Stack space="s">
-                    <Button
-                        type="submit"
-                        form={formId}
-                        variant="primary"
-                        size="large"
-                        width="full"
-                        loading={isPending}
-                        disabled={isPending || password.length === 0}
-                    >
-                        {t("wallet.recoveryUsage.password.continue")}
-                    </Button>
-                    <TryExistingPasskey />
-                </Stack>
+                <Button
+                    type="submit"
+                    form={formId}
+                    variant="primary"
+                    size="large"
+                    width="full"
+                    loading={isPending}
+                    disabled={isPending || password.length === 0}
+                >
+                    {t("wallet.recoveryUsage.password.continue")}
+                </Button>
             }
         >
             <form

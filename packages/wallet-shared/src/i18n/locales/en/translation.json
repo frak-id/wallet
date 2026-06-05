@@ -489,16 +489,22 @@
         },
         "recoveryUsage": {
             "stepIndicator": "Step {{current}}/{{total}}",
-            "signIn": {
-                "action": "I still have my passkey — sign in"
+            "title": "Recover your wallet",
+            "description": "Enter your email and we'll send you a recovery link, if your wallet is set up for email recovery.",
+            "email": {
+                "label": "Email address",
+                "placeholder": "you@example.com",
+                "action": "Send recovery link",
+                "sent": "If that email is registered and verified, we've sent your recovery link. Check your inbox.",
+                "error": "Something went wrong. Please try again."
             },
             "blob": {
-                "title": "Recover your wallet",
-                "description": "Paste the recovery backup you saved when you set up recovery. You'll need your recovery password next.",
+                "toggle": "I have a recovery backup instead",
                 "label": "Recovery backup",
                 "placeholder": "Paste your recovery backup here",
-                "invalid": "This doesn't look like a valid recovery backup. Make sure you copied the whole code.",
-                "continue": "Continue"
+                "paste": "Paste",
+                "continue": "Continue",
+                "invalid": "This doesn't look like a valid recovery backup. Make sure you copied the whole code."
             },
             "password": {
                 "title": "Unlock your backup",

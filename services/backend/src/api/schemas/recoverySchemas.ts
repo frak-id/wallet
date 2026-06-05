@@ -32,3 +32,22 @@ export const SaveRecoveryResponseSchema = t.Object({
     status: t.Literal("success"),
 });
 export type SaveRecoveryResponse = Static<typeof SaveRecoveryResponseSchema>;
+
+export const RequestRecoveryEmailBodySchema = t.Object({
+    email: t.String({ format: "email", maxLength: 320 }),
+});
+export type RequestRecoveryEmailBody = Static<
+    typeof RequestRecoveryEmailBodySchema
+>;
+
+/**
+ * Deliberately generic acknowledgement — identical whether or not the address
+ * is registered, verified, or recoverable. The endpoint never confirms account
+ * existence (anti-enumeration); the email itself is the only signal.
+ */
+export const RequestRecoveryEmailResponseSchema = t.Object({
+    status: t.Literal("requested"),
+});
+export type RequestRecoveryEmailResponse = Static<
+    typeof RequestRecoveryEmailResponseSchema
+>;

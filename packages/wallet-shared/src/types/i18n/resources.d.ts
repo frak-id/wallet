@@ -1106,11 +1106,19 @@ export default interface Resources {
       "recoveryUsage": {
         "blob": {
           "continue": "Continue",
-          "description": "Paste the recovery backup you saved when you set up recovery. You'll need your recovery password next.",
           "invalid": "This doesn't look like a valid recovery backup. Make sure you copied the whole code.",
           "label": "Recovery backup",
+          "paste": "Paste",
           "placeholder": "Paste your recovery backup here",
-          "title": "Recover your wallet"
+          "toggle": "I have a recovery backup instead"
+        },
+        "description": "Enter your email and we'll send you a recovery link, if your wallet is set up for email recovery.",
+        "email": {
+          "action": "Send recovery link",
+          "error": "Something went wrong. Please try again.",
+          "label": "Email address",
+          "placeholder": "you@example.com",
+          "sent": "If that email is registered and verified, we've sent your recovery link. Check your inbox."
         },
         "password": {
           "continue": "Continue",
@@ -1119,15 +1127,13 @@ export default interface Resources {
           "placeholder": "Enter your recovery password",
           "title": "Unlock your backup"
         },
-        "signIn": {
-          "action": "I still have my passkey — sign in"
-        },
         "stepIndicator": "Step {{current}}/{{total}}",
         "success": {
           "description": "Your new passkey has been added and your wallet is recovered. You're now signed in.",
           "done": "Go to my wallet",
           "title": "Welcome back"
         },
+        "title": "Recover your wallet",
         "validate": {
           "authorise": "Recover my wallet",
           "cancelled": "Recovery was cancelled.",

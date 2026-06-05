@@ -1,11 +1,13 @@
 import { db, log } from "@backend-infrastructure";
 import { generateCode, HttpError } from "@backend-utils";
 import { EMAIL_VERIFICATION } from "@frak-labs/app-essentials/constants/emailVerification";
-import { buildVerificationEmail } from "../../../infrastructure/integrations/email";
+import {
+    buildVerificationEmail,
+    resendClient,
+} from "../../../infrastructure/integrations/email";
 import type { EmailVerificationCodeSelect } from "../db/schema";
 import type { EmailVerificationRepository } from "../repositories/EmailVerificationRepository";
 import type { IdentityRepository } from "../repositories/IdentityRepository";
-import type { EmailSender } from "./EmailSender";
 
 export type SendCodeResult =
     | { status: "sent" }
@@ -30,8 +32,7 @@ export type EmailStatus = {
 export class EmailVerificationService {
     constructor(
         private readonly emailVerificationRepository: EmailVerificationRepository,
-        private readonly identityRepository: IdentityRepository,
-        private readonly emailSender: EmailSender
+        private readonly identityRepository: IdentityRepository
     ) {}
 
     /**
@@ -96,7 +97,7 @@ export class EmailVerificationService {
         // an undelivered code on the row. Only once the provider accepts the
         // message do we upsert the challenge + reset the debounce window.
         try {
-            await this.emailSender.send({ to: target, subject, html });
+            await resendClient.send({ to: target, subject, html });
         } catch (err) {
             log.error(
                 { groupId, err },

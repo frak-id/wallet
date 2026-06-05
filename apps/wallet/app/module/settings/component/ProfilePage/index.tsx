@@ -59,15 +59,6 @@ export function ProfilePage() {
             <SecurityProgressCard />
             <ProfileIdentityCard />
             <ProfilePreferencesCard />
-            {hasRecovery ? (
-                <InfoCard>
-                    <InfoRow
-                        icon={ShieldCheck}
-                        label={t("wallet.profile.recoveryOptions")}
-                        to="/profile/recovery"
-                    />
-                </InfoCard>
-            ) : null}
             <InfoCard>
                 <InfoRow
                     icon={HeartIcon}
@@ -81,6 +72,15 @@ export function ProfilePage() {
                         icon={SettingsIcon}
                         label={t("wallet.profile.managePairings")}
                         to="/profile/devices"
+                    />
+                </InfoCard>
+            ) : null}
+            {hasRecovery ? (
+                <InfoCard>
+                    <InfoRow
+                        icon={ShieldCheck}
+                        label={t("wallet.profile.recoveryOptions")}
+                        to="/profile/recovery"
                     />
                 </InfoCard>
             ) : null}

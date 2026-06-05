@@ -31,4 +31,5 @@ export namespace recoveryKey {
     export const performRecovery = [base, "perform-recovery"] as const;
     export const claimRecovery = [base, "claim-recovery"] as const;
     export const runRecovery = [base, "run-recovery"] as const;
+    export const requestEmail = [base, "request-email"] as const;
 }

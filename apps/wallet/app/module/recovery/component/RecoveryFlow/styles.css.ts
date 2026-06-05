@@ -7,11 +7,9 @@ export const form = style({
     gap: alias.spacing.m,
 });
 
-export const blobInput = style({
-    selectors: {
-        "textarea &": {
-            fontFamily: "monospace",
-            wordBreak: "break-all",
-        },
-    },
+export const blobContent = style({
+    display: "flex",
+    flexDirection: "column",
+    gap: alias.spacing.s,
+    paddingTop: alias.spacing.s,
 });

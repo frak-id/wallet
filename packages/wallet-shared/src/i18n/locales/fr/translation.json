@@ -487,16 +487,22 @@
         },
         "recoveryUsage": {
             "stepIndicator": "Étape {{current}}/{{total}}",
-            "signIn": {
-                "action": "J'ai toujours ma clé d'accès — me connecter"
+            "title": "Récupérez votre porte-monnaie",
+            "description": "Saisissez votre e-mail et nous vous enverrons un lien de récupération, si votre porte-monnaie est configuré pour la récupération par e-mail.",
+            "email": {
+                "label": "Adresse e-mail",
+                "placeholder": "vous@exemple.com",
+                "action": "Envoyer le lien de récupération",
+                "sent": "Si cet e-mail est enregistré et vérifié, nous avons envoyé votre lien de récupération. Consultez votre boîte de réception.",
+                "error": "Une erreur s'est produite. Veuillez réessayer."
             },
             "blob": {
-                "title": "Récupérez votre porte-monnaie",
-                "description": "Collez la sauvegarde de récupération que vous avez conservée lors de la configuration. Votre mot de passe de récupération sera demandé ensuite.",
+                "toggle": "J'ai une sauvegarde de récupération",
                 "label": "Sauvegarde de récupération",
                 "placeholder": "Collez votre sauvegarde de récupération ici",
-                "invalid": "Cela ne ressemble pas à une sauvegarde de récupération valide. Vérifiez que vous avez copié le code en entier.",
-                "continue": "Continuer"
+                "paste": "Coller",
+                "continue": "Continuer",
+                "invalid": "Cela ne ressemble pas à une sauvegarde de récupération valide. Vérifiez que vous avez copié le code en entier."
             },
             "password": {
                 "title": "Déverrouillez votre sauvegarde",

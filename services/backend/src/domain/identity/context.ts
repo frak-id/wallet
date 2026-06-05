@@ -1,4 +1,3 @@
-import { resendClient } from "../../infrastructure/integrations/email";
 import { EmailVerificationRepository } from "./repositories/EmailVerificationRepository";
 import { IdentityRepository } from "./repositories/IdentityRepository";
 import { InstallCodeRepository } from "./repositories/InstallCodeRepository";
@@ -7,6 +6,7 @@ import { WalletBindingRepository } from "./repositories/WalletBindingRepository"
 import { AnonymousMergeService } from "./services/AnonymousMergeService";
 import { EmailVerificationService } from "./services/EmailVerificationService";
 import { InstallCodeService } from "./services/InstallCodeService";
+import { RecoveryEmailService } from "./services/RecoveryEmailService";
 
 const identityRepository = new IdentityRepository();
 const installCodeRepository = new InstallCodeRepository();
@@ -17,8 +17,11 @@ const anonymousMergeService = new AnonymousMergeService(identityRepository);
 const installCodeService = new InstallCodeService(installCodeRepository);
 const emailVerificationService = new EmailVerificationService(
     emailVerificationRepository,
+    identityRepository
+);
+const recoveryEmailService = new RecoveryEmailService(
     identityRepository,
-    resendClient
+    recoveryRepository
 );
 
 export namespace IdentityContext {
@@ -33,5 +36,6 @@ export namespace IdentityContext {
         anonymousMerge: anonymousMergeService,
         installCode: installCodeService,
         emailVerification: emailVerificationService,
+        recoveryEmail: recoveryEmailService,
     };
 }

@@ -5,6 +5,8 @@ import { IdentityContext } from "../../../../domain/identity/context";
 import {
     RecoveryBlobResponseSchema,
     RecoveryStatusResponseSchema,
+    RequestRecoveryEmailBodySchema,
+    RequestRecoveryEmailResponseSchema,
     SaveRecoveryBlobBodySchema,
     SaveRecoveryResponseSchema,
 } from "../../../schemas";
@@ -106,6 +108,24 @@ export const recoveryRoutes = new Elysia({ prefix: "/recovery" })
                 401: t.String(),
                 404: t.String(),
                 200: SaveRecoveryResponseSchema,
+            },
+        }
+    )
+    // Intentionally public (no `withWalletAuthent`): a logged-out user requests
+    // their backup by email. The ack is identical whether or not the address is
+    // recoverable, so this never reveals account existence.
+    .post(
+        "/request",
+        async ({ body: { email } }) => {
+            await IdentityContext.services.recoveryEmail.requestRecoveryEmail(
+                email
+            );
+            return { status: "requested" as const };
+        },
+        {
+            body: RequestRecoveryEmailBodySchema,
+            response: {
+                200: RequestRecoveryEmailResponseSchema,
             },
         }
     );
