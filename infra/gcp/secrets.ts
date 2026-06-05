@@ -107,7 +107,7 @@ export const elysiaEnv = {
 
     // Resend (transactional email)
     RESEND_API_KEY: resendApiKey.value,
-    RESEND_FROM_EMAIL: "noreply@frak.id",
+    RESEND_FROM_EMAIL: "noreply@frak-labs.com",
 
     // Shopify related
     SHOPIFY_API_SECRET: shopifyApiSecret.value,

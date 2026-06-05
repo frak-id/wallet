@@ -19,7 +19,7 @@ export class ResendClient {
     private readonly from: string;
 
     constructor() {
-        this.from = process.env.RESEND_FROM_EMAIL ?? "noreply@frak.id";
+        this.from = process.env.RESEND_FROM_EMAIL ?? "noreply@frak-labs.com";
         this.api = ky.create({
             prefix: "https://api.resend.com",
             headers: {

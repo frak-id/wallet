@@ -9,7 +9,7 @@ export const form = style({
 
 export const blobInput = style({
     selectors: {
-        "& textarea": {
+        "textarea &": {
             fontFamily: "monospace",
             wordBreak: "break-all",
         },
