@@ -93,18 +93,43 @@
             "enableNotifications": "Activer les notifications",
             "notificationDeniedHelp": "Notifications bloquées par le navigateur. Active-les depuis les paramètres du navigateur.",
             "biometricPrompt": "Demander {{biometryLabel}} à chaque ouverture de l'app",
-            "recoveryConfigured": "Configurée",
             "privacyPolicy": "Politique de confidentialité",
             "helpSupport": "Aide & support",
             "rateApp": "Noter l'application",
             "managePairings": "Gérer les appareils connectés",
             "lastConnection": "Dernière connexion",
             "currentDeviceConnected": "Connecté",
-            "addEmail": "Ajouter mon e-mail",
-            "setupRecovery": "Configurer la récupération",
-            "refreshRecovery": "Actualiser la récupération",
-            "recoveryConfiguration": "Récupération",
-            "verifyEmail": "Vérifier mon e-mail"
+            "recoveryOptions": "Options de récupération",
+            "security": {
+                "heading": "Renforce la sécurité de ton wallet",
+                "headingSecured": "Ton wallet est sécurisé",
+                "progressLabel": "Progression de la sécurité du wallet",
+                "steps": {
+                    "addEmail": {
+                        "title": "Ajoute un email",
+                        "description": "Protège ton wallet et récupère ton accès en cas de perte ou de changement d'appareil.",
+                        "cta": "Ajouter un email"
+                    },
+                    "verifyEmail": {
+                        "title": "Valide ton email",
+                        "description": "Confirme ton adresse email pour qu'elle puisse servir à récupérer ton wallet.",
+                        "cta": "Valider mon email"
+                    },
+                    "setupRecovery": {
+                        "title": "Configure la récupération",
+                        "description": "Ajoute une option de récupération pour toujours pouvoir restaurer l'accès à ton wallet.",
+                        "cta": "Configurer la récupération"
+                    },
+                    "updateRecovery": {
+                        "title": "Mets à jour la récupération",
+                        "description": "Ta récupération expire bientôt. Actualise-la pour garder ton wallet protégé.",
+                        "cta": "Mettre à jour la récupération"
+                    },
+                    "secured": {
+                        "description": "Ton email et ta récupération sont configurés. Ton wallet est entièrement protégé."
+                    }
+                }
+            }
         },
         "addEmail": {
             "title": "Ajoute ton e-mail",
@@ -519,9 +544,6 @@
             }
         },
         "recoverySetup": {
-            "title": "Configuration de récupération",
-            "setupNew": "Configurer une nouvelle récupération",
-            "active": "Active",
             "stepIndicator": "Étape {{current}}/{{total}}",
             "password": {
                 "title": "Protégez votre récupération",

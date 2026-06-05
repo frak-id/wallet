@@ -95,18 +95,43 @@
             "enableNotifications": "Enable notifications",
             "notificationDeniedHelp": "Notifications blocked by browser. Enable them in browser settings.",
             "biometricPrompt": "Require {{biometryLabel}} at every app launch",
-            "recoveryConfigured": "Configured",
             "privacyPolicy": "Privacy Policy",
             "helpSupport": "Help & support",
             "rateApp": "Rate the app",
             "managePairings": "Manage paired devices",
             "lastConnection": "Last connection",
             "currentDeviceConnected": "Connected",
-            "addEmail": "Add my email",
-            "setupRecovery": "Set up recovery",
-            "refreshRecovery": "Refresh recovery",
-            "recoveryConfiguration": "Recovery",
-            "verifyEmail": "Verify my email"
+            "recoveryOptions": "Recovery options",
+            "security": {
+                "heading": "Secure your wallet",
+                "headingSecured": "Your wallet is secured",
+                "progressLabel": "Wallet security progress",
+                "steps": {
+                    "addEmail": {
+                        "title": "Add an email",
+                        "description": "Protect your wallet and recover your access if you lose or change device.",
+                        "cta": "Add an email"
+                    },
+                    "verifyEmail": {
+                        "title": "Validate your email",
+                        "description": "Confirm your email address so it can be used to recover your wallet.",
+                        "cta": "Validate my email"
+                    },
+                    "setupRecovery": {
+                        "title": "Set up recovery",
+                        "description": "Add a recovery option so you can always restore access to your wallet.",
+                        "cta": "Set up recovery"
+                    },
+                    "updateRecovery": {
+                        "title": "Update recovery options",
+                        "description": "Your recovery expires soon. Refresh it to keep your wallet protected.",
+                        "cta": "Update recovery options"
+                    },
+                    "secured": {
+                        "description": "Your email and recovery are all set. Your wallet is fully protected."
+                    }
+                }
+            }
         },
         "addEmail": {
             "title": "Add your email",
@@ -521,9 +546,6 @@
             }
         },
         "recoverySetup": {
-            "title": "Recovery setup",
-            "setupNew": "Setup new recovery",
-            "active": "Active",
             "stepIndicator": "Step {{current}}/{{total}}",
             "password": {
                 "title": "Protect your recovery",

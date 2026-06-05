@@ -8,7 +8,7 @@ import { RecoverySetupFlow } from "@/module/recovery-setup/component/SetupFlow";
 import { useRecoverySetupStatus } from "@/module/recovery-setup/hook/useRecoverySetupStatus";
 import { useRecoveryStatus } from "@/module/recovery-setup/hook/useRecoveryStatus";
 
-export const Route = createFileRoute("/_wallet/_protected/profile/recovery")({
+export const Route = createFileRoute("/_wallet/_protected-fullscreen/profile/recovery")({
     component: ProfileRecovery,
 });
 
