@@ -19,11 +19,6 @@ export const container = style({
     },
 });
 
-// Cancel the bottom bleed so the sticky footer clears main's nav-bar inset.
-export const containerFixed = style({
-    marginBottom: 0,
-});
-
 export const content = style({
     display: "flex",
     flexDirection: "column",
@@ -41,27 +36,37 @@ export const footer = style({
     padding: alias.spacing.m,
 });
 
-// Opaque bar pinned at the scrollport bottom; content scrolls above it (no
-// overlap). main owns the safe-area inset; this adds the design gap.
+// Small gap above the system bar; the bar inset is reserved once by
+// mainContentNoNav (AppShell), above which this sticky footer rests.
+export const footerFixed = style({
+    position: "relative",
+    zIndex: 1,
+    paddingTop: alias.spacing.l,
+    paddingBottom: alias.spacing.m,
+});
+
+// Reserve the footer's height (measured in PageLayout) so the last line clears it.
+export const contentFixed = style({
+    paddingBottom: "var(--footer-height, 0px)",
+});
+
+// Pin to the viewport bottom while content scrolls (sticks within AppShell's
+// `mainContent`, the single scroller). Negative margin overlaps the reserved
+// padding so content scrolls behind the footer.
 export const footerSticky = style({
     position: "sticky",
     bottom: 0,
-    zIndex: 1,
-    background: vars.surface.background,
-    paddingTop: alias.spacing.l,
-    selectors: {
-        // Scroll-edge fade: content dissolves into the bar as it scrolls up to
-        // it. A strip above the (opaque) bar, not an overlay over it — so
-        // trailing content stays in flow above the bar, never hidden behind it.
-        "&::before": {
-            content: '""',
-            position: "absolute",
-            left: 0,
-            right: 0,
-            bottom: "100%",
-            height: alias.spacing.xl,
-            pointerEvents: "none",
-            background: `linear-gradient(to top, ${vars.surface.background}, transparent)`,
-        },
-    },
+    marginTop: "calc(-1 * var(--footer-height, 0px))",
+});
+
+// White-wash fade so content dissolves (unreadable) behind the CTA. Avoids
+// backdrop-filter: it whitens over the white bg on iOS and Chromium drops it
+// under a mask — a wash renders identically on every engine.
+export const footerBlur = style({
+    position: "absolute",
+    inset: 0,
+    pointerEvents: "none",
+    zIndex: 0,
+    background:
+        "linear-gradient(to top, rgba(255, 255, 255, 0.98) 0%, rgba(255, 255, 255, 0.92) 45%, rgba(255, 255, 255, 0.6) 72%, rgba(255, 255, 255, 0) 100%)",
 });
