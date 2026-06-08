@@ -56,18 +56,31 @@ export function Stepper({
                 const status = getStatus(index, activeStep);
                 const isLast = index === steps.length - 1;
                 const isClickable = !!onStepClick && status === "completed";
+                // Only the step just crossed animates; earlier ones render
+                // settled, so navigating doesn't replay every line at once.
+                const justCompleted = index === activeStep - 1;
 
                 const content = (
                     <>
                         <span className={styles.indicatorColumn}>
                             <span className={styles.indicator[status]}>
                                 {status === "completed" ? (
-                                    <CheckIcon className={styles.checkIcon} />
+                                    <CheckIcon
+                                        className={clsx(
+                                            styles.checkIcon,
+                                            justCompleted && styles.checkIconPop
+                                        )}
+                                    />
                                 ) : (
                                     index + 1
                                 )}
                             </span>
-                            {!isLast && <Connector status={status} />}
+                            {!isLast && (
+                                <Connector
+                                    status={status}
+                                    animate={justCompleted}
+                                />
+                            )}
                         </span>
                         <span className={styles.cell}>
                             <Text
@@ -122,7 +135,13 @@ export function Stepper({
     );
 }
 
-function Connector({ status }: { status: StepStatus }) {
+function Connector({
+    status,
+    animate,
+}: {
+    status: StepStatus;
+    animate: boolean;
+}) {
     if (status === "active") {
         return (
             <span className={styles.connectorWrap}>
@@ -134,7 +153,12 @@ function Connector({ status }: { status: StepStatus }) {
         <span className={styles.connectorWrap}>
             <span className={styles.connectorBase} />
             {status === "completed" && (
-                <span className={styles.connectorFill} />
+                <span
+                    className={clsx(
+                        styles.connectorFill,
+                        animate && styles.connectorFillSweep
+                    )}
+                />
             )}
         </span>
     );

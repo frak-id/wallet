@@ -107,6 +107,10 @@ export const indicator = styleVariants({
 export const checkIcon = style({
     width: 16,
     height: 16,
+});
+
+/** Pop-in, applied only to the step the user has just completed. */
+export const checkIconPop = style({
     animation: `${checkPopIn} 250ms cubic-bezier(0.34, 1.56, 0.64, 1)`,
     "@media": {
         "(prefers-reduced-motion: reduce)": {
@@ -134,6 +138,10 @@ export const connectorFill = style({
     inset: 0,
     backgroundColor: vars.text.action,
     transformOrigin: "top",
+});
+
+/** Top-down sweep, applied only to the connector the user has just crossed. */
+export const connectorFillSweep = style({
     animation: `${connectorSweep} 300ms ease`,
     "@media": {
         "(prefers-reduced-motion: reduce)": {
