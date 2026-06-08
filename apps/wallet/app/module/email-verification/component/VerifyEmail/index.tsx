@@ -14,14 +14,12 @@ import { useTranslation } from "react-i18next";
 import type { Address } from "viem";
 import { useStore } from "zustand";
 import { useCurrentEmail } from "@/module/authentication/hook/useCurrentEmail";
-import { Back } from "@/module/common/component/Back";
 import { EmailFlowResultScreen } from "@/module/common/component/EmailFlowResultScreen";
 import {
     EmailFormScreen,
     emailFormScreenStyles,
 } from "@/module/common/component/EmailFormScreen";
-import { PageLayout } from "@/module/common/component/PageLayout";
-import { Title } from "@/module/common/component/Title";
+import { FlowStepScreen } from "@/module/common/component/FlowStepScreen";
 import { useSendEmailVerification } from "@/module/email-verification/hook/useSendEmailVerification";
 import { useVerifyEmailCode } from "@/module/email-verification/hook/useVerifyEmailCode";
 import { ConflictStep } from "@/module/settings/component/AddEmail/ConflictStep";
@@ -362,9 +360,11 @@ export function VerifyEmail({ initialCode }: VerifyEmailProps) {
     }
 
     return (
-        <PageLayout
+        <FlowStepScreen
             fixedViewport
-            back={<Back onClick={goToProfile} />}
+            title={t("wallet.verifyEmail.title")}
+            description={t("wallet.verifyEmail.description")}
+            onBack={goToProfile}
             footer={
                 <Button
                     type="button"
@@ -381,92 +381,81 @@ export function VerifyEmail({ initialCode }: VerifyEmailProps) {
                 </Button>
             }
         >
-            <Stack space="l">
-                <Stack space="s">
-                    <Title size="page">{t("wallet.verifyEmail.title")}</Title>
-                    <Text variant="body" color="secondary">
-                        {t("wallet.verifyEmail.description")}
-                    </Text>
-                </Stack>
-
-                <Stack space="xs">
-                    <Text variant="bodySmall" weight="medium">
-                        {displayEmail}
-                    </Text>
-                    <Text variant="bodySmall" color="secondary">
-                        {t(
-                            isRotation
-                                ? "wallet.verifyEmail.statusPendingNew"
-                                : "wallet.verifyEmail.statusPending"
-                        )}
-                    </Text>
-                </Stack>
-
-                <Stack space="s">
-                    <Button
-                        type="button"
-                        variant="secondary"
-                        size="small"
-                        width="auto"
-                        disabled={isSending || cooldownSeconds > 0}
-                        loading={isSending}
-                        onClick={handleSendCurrent}
-                    >
-                        {cooldownSeconds > 0
-                            ? t("wallet.verifyEmail.resendIn", {
-                                  seconds: cooldownSeconds,
-                              })
-                            : t("wallet.verifyEmail.sendCode")}
-                    </Button>
-
-                    <CodeInput
-                        // Remount (fresh empty inputs) when the verified
-                        // target changes, so digits typed for one address never
-                        // bleed into the next during a rotation.
-                        key={targetEmail ?? "current"}
-                        mode="alphanumeric"
-                        length={CODE_LENGTH}
-                        defaultValue={targetEmail ? undefined : initialCode}
-                        onChange={setCode}
-                        error={
-                            verifyErrorKey
-                                ? t(
-                                      `wallet.verifyEmail.error.${verifyErrorKey}`
-                                  )
-                                : undefined
-                        }
-                        pasteLabel={t("wallet.verifyEmail.pasteCode")}
-                        pasteErrorLabel={t("wallet.verifyEmail.pasteError")}
-                        digitLabel={(index) =>
-                            t("wallet.verifyEmail.digitLabel", { index })
-                        }
-                    />
-
-                    {sendError && (
-                        <Box
-                            role="alert"
-                            className={emailFormScreenStyles.inlineError}
-                        >
-                            <Text variant="bodySmall" color="error">
-                                {t("wallet.verifyEmail.error.send")}
-                            </Text>
-                        </Box>
+            <Stack space="xs">
+                <Text variant="bodySmall" weight="medium">
+                    {displayEmail}
+                </Text>
+                <Text variant="bodySmall" color="secondary">
+                    {t(
+                        isRotation
+                            ? "wallet.verifyEmail.statusPendingNew"
+                            : "wallet.verifyEmail.statusPending"
                     )}
-                </Stack>
+                </Text>
+            </Stack>
 
+            <Stack space="s">
                 <Button
                     type="button"
-                    variant="ghost"
+                    variant="secondary"
                     size="small"
                     width="auto"
-                    onClick={() => {
-                        resetSend();
-                        setFlowState({ kind: "changeEmail" });
-                    }}
+                    disabled={isSending || cooldownSeconds > 0}
+                    loading={isSending}
+                    onClick={handleSendCurrent}
                 >
-                    {t("wallet.verifyEmail.changeEmailLink")}
+                    {cooldownSeconds > 0
+                        ? t("wallet.verifyEmail.resendIn", {
+                              seconds: cooldownSeconds,
+                          })
+                        : t("wallet.verifyEmail.sendCode")}
                 </Button>
+
+                <CodeInput
+                    // Remount (fresh empty inputs) when the verified
+                    // target changes, so digits typed for one address never
+                    // bleed into the next during a rotation.
+                    key={targetEmail ?? "current"}
+                    mode="alphanumeric"
+                    length={CODE_LENGTH}
+                    defaultValue={targetEmail ? undefined : initialCode}
+                    onChange={setCode}
+                    error={
+                        verifyErrorKey
+                            ? t(`wallet.verifyEmail.error.${verifyErrorKey}`)
+                            : undefined
+                    }
+                    pasteLabel={t("wallet.verifyEmail.pasteCode")}
+                    pasteErrorLabel={t("wallet.verifyEmail.pasteError")}
+                    digitLabel={(index) =>
+                        t("wallet.verifyEmail.digitLabel", { index })
+                    }
+                />
+
+                {sendError && (
+                    <Box
+                        role="alert"
+                        className={emailFormScreenStyles.inlineError}
+                    >
+                        <Text variant="bodySmall" color="error">
+                            {t("wallet.verifyEmail.error.send")}
+                        </Text>
+                    </Box>
+                )}
             </Stack>
-        </PageLayout>
+
+            <Button
+                type="button"
+                variant="ghost"
+                size="small"
+                width="auto"
+                onClick={() => {
+                    resetSend();
+                    setFlowState({ kind: "changeEmail" });
+                }}
+            >
+                {t("wallet.verifyEmail.changeEmailLink")}
+            </Button>
+        </FlowStepScreen>
     );
 }

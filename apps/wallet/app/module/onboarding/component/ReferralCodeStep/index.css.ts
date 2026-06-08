@@ -2,13 +2,6 @@ import { vars } from "@frak-labs/design-system/theme";
 import { alias } from "@frak-labs/design-system/tokens";
 import { style } from "@vanilla-extract/css";
 
-// PageLayout content has no horizontal padding (so HeroContent images can
-// bleed to the edges in other onboarding screens). This screen has only
-// text + form, so we re-introduce the standard 16px page gutter here.
-export const body = style({
-    paddingInline: alias.spacing.m,
-});
-
 // Label and error caption sit inside the input's own gutter so they align
 // with the placeholder/typed text (inset 16 from the input edge).
 export const labelRow = style({

@@ -1,7 +1,7 @@
 import { alias } from "@frak-labs/design-system/tokens";
 import { style } from "@vanilla-extract/css";
 
-export { body, footer } from "../stepLayout.css";
+export { footer } from "../stepLayout.css";
 
 export const arrow = style({
     display: "flex",

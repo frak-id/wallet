@@ -25,9 +25,7 @@ import { useTranslation } from "react-i18next";
 import { generatePrivateKey } from "viem/accounts";
 import { useStore } from "zustand";
 import { useShallow } from "zustand/react/shallow";
-import { Back } from "@/module/common/component/Back";
-import { PageLayout } from "@/module/common/component/PageLayout";
-import { Title } from "@/module/common/component/Title";
+import { FlowStepScreen } from "@/module/common/component/FlowStepScreen";
 import { MergeError } from "../../errors";
 import * as styles from "../stepLayout.css";
 
@@ -175,9 +173,11 @@ export function DiscoveryStep({
     }, [targetAuthenticatorIds, settle, localRunning]);
 
     return (
-        <PageLayout
-            back={<Back onClick={onAbort} />}
-            headerCenter={stepIndicator}
+        <FlowStepScreen
+            title={t("wallet.merge.discovery.title")}
+            description={t("wallet.merge.discovery.description")}
+            onBack={onAbort}
+            stepIndicator={stepIndicator}
             footer={
                 <Box className={styles.footer}>
                     <Button
@@ -194,65 +194,54 @@ export function DiscoveryStep({
                 </Box>
             }
         >
-            <Stack space="l" className={styles.body}>
-                <Stack space="s">
-                    <Title size="page">
-                        {t("wallet.merge.discovery.title")}
-                    </Title>
-                    <Text variant="body" color="secondary">
-                        {t("wallet.merge.discovery.description")}
-                    </Text>
-                </Stack>
-
-                {pairing ? (
-                    <Box role="status" aria-live="polite">
-                        <Stack space="m" align="center">
-                            <PairingQrCode
-                                value={`${process.env.FRAK_WALLET_URL ?? ""}/p/${pairing.id}`}
-                                size={200}
-                                errorCorrection="quartile"
-                            />
-                            <PairingStatus status={status} />
-                            <Text variant="bodySmall" color="secondary">
-                                {t("wallet.merge.discovery.scanHint")}
-                            </Text>
-                        </Stack>
-                    </Box>
-                ) : (
-                    <Box role="status" aria-live="polite">
-                        <Stack space="m" align="center">
-                            <Spinner />
-                            <Text variant="bodySmall" color="secondary">
-                                {t("wallet.merge.discovery.preparing")}
-                            </Text>
-                        </Stack>
-                    </Box>
-                )}
-
-                <Card variant="muted" padding="default">
-                    <Stack space="xs">
-                        <Text variant="bodySmall" weight="semiBold">
-                            {t("wallet.merge.discovery.localHint.title")}
-                        </Text>
+            {pairing ? (
+                <Box role="status" aria-live="polite">
+                    <Stack space="m" align="center">
+                        <PairingQrCode
+                            value={`${process.env.FRAK_WALLET_URL ?? ""}/p/${pairing.id}`}
+                            size={200}
+                            errorCorrection="quartile"
+                        />
+                        <PairingStatus status={status} />
                         <Text variant="bodySmall" color="secondary">
-                            {t("wallet.merge.discovery.localHint.body")}
+                            {t("wallet.merge.discovery.scanHint")}
                         </Text>
                     </Stack>
-                </Card>
-
-                {localError && (
-                    <Card
-                        variant="muted"
-                        padding="default"
-                        role="alert"
-                        aria-live="assertive"
-                    >
-                        <Text variant="bodySmall" color="error">
-                            {t("wallet.merge.discovery.localError")}
+                </Box>
+            ) : (
+                <Box role="status" aria-live="polite">
+                    <Stack space="m" align="center">
+                        <Spinner />
+                        <Text variant="bodySmall" color="secondary">
+                            {t("wallet.merge.discovery.preparing")}
                         </Text>
-                    </Card>
-                )}
-            </Stack>
-        </PageLayout>
+                    </Stack>
+                </Box>
+            )}
+
+            <Card variant="muted" padding="default">
+                <Stack space="xs">
+                    <Text variant="bodySmall" weight="semiBold">
+                        {t("wallet.merge.discovery.localHint.title")}
+                    </Text>
+                    <Text variant="bodySmall" color="secondary">
+                        {t("wallet.merge.discovery.localHint.body")}
+                    </Text>
+                </Stack>
+            </Card>
+
+            {localError && (
+                <Card
+                    variant="muted"
+                    padding="default"
+                    role="alert"
+                    aria-live="assertive"
+                >
+                    <Text variant="bodySmall" color="error">
+                        {t("wallet.merge.discovery.localError")}
+                    </Text>
+                </Card>
+            )}
+        </FlowStepScreen>
     );
 }

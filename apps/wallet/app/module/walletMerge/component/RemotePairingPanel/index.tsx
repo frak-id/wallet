@@ -7,9 +7,7 @@ import { Text } from "@frak-labs/design-system/components/Text";
 import { PairingQrCode, PairingStatus } from "@frak-labs/wallet-shared";
 import type { ReactNode } from "react";
 import { useTranslation } from "react-i18next";
-import { Back } from "@/module/common/component/Back";
-import { PageLayout } from "@/module/common/component/PageLayout";
-import { Title } from "@/module/common/component/Title";
+import { FlowStepScreen } from "@/module/common/component/FlowStepScreen";
 import type { MergeStrategy } from "../../strategy/types";
 import { RemotePeerWaitingCard } from "../RemotePeerWaitingCard";
 import * as styles from "../stepLayout.css";
@@ -58,9 +56,11 @@ export function RemotePairingPanel({
     const status = strategy.remote?.pairingState.status ?? "idle";
 
     return (
-        <PageLayout
-            back={<Back onClick={onBack} />}
-            headerCenter={stepIndicator}
+        <FlowStepScreen
+            title={t(i18nKeys.title)}
+            description={t(i18nKeys.description)}
+            onBack={onBack}
+            stepIndicator={stepIndicator}
             footer={
                 isError ? (
                     <Box className={styles.footer}>
@@ -77,51 +77,42 @@ export function RemotePairingPanel({
                 ) : undefined
             }
         >
-            <Stack space="l" className={styles.body}>
-                <Stack space="s">
-                    <Title size="page">{t(i18nKeys.title)}</Title>
-                    <Text variant="body" color="secondary">
-                        {t(i18nKeys.description)}
-                    </Text>
-                </Stack>
-
-                {pairingInfo ? (
-                    <Box role="status" aria-live="polite">
-                        <Stack space="m" align="center">
-                            <PairingQrCode
-                                value={`${process.env.FRAK_WALLET_URL ?? ""}/p/${pairingInfo.id}`}
-                                size={200}
-                                errorCorrection="quartile"
-                            />
-                            <PairingStatus status={status} />
-                        </Stack>
-                    </Box>
-                ) : (
-                    <Box role="status" aria-live="polite">
-                        <Stack space="m" align="center">
-                            <Spinner />
-                            <Text variant="bodySmall" color="secondary">
-                                {t(i18nKeys.preparing)}
-                            </Text>
-                        </Stack>
-                    </Box>
-                )}
-
-                {showPeerWaiting && <RemotePeerWaitingCard />}
-
-                {isError && (
-                    <Card
-                        variant="muted"
-                        padding="default"
-                        role="alert"
-                        aria-live="assertive"
-                    >
-                        <Text variant="bodySmall" color="error">
-                            {t(i18nKeys.error)}
+            {pairingInfo ? (
+                <Box role="status" aria-live="polite">
+                    <Stack space="m" align="center">
+                        <PairingQrCode
+                            value={`${process.env.FRAK_WALLET_URL ?? ""}/p/${pairingInfo.id}`}
+                            size={200}
+                            errorCorrection="quartile"
+                        />
+                        <PairingStatus status={status} />
+                    </Stack>
+                </Box>
+            ) : (
+                <Box role="status" aria-live="polite">
+                    <Stack space="m" align="center">
+                        <Spinner />
+                        <Text variant="bodySmall" color="secondary">
+                            {t(i18nKeys.preparing)}
                         </Text>
-                    </Card>
-                )}
-            </Stack>
-        </PageLayout>
+                    </Stack>
+                </Box>
+            )}
+
+            {showPeerWaiting && <RemotePeerWaitingCard />}
+
+            {isError && (
+                <Card
+                    variant="muted"
+                    padding="default"
+                    role="alert"
+                    aria-live="assertive"
+                >
+                    <Text variant="bodySmall" color="error">
+                        {t(i18nKeys.error)}
+                    </Text>
+                </Card>
+            )}
+        </FlowStepScreen>
     );
 }
